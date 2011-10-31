@@ -106,7 +106,7 @@ material_t* MaterialBind_Material(const materialbind_t* mb);
 struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb);
 
 /// @return  Unique identifier of the namespace within which this binding resides.
-materialnamespaceid_t MaterialBind_NamespaceId(const materialbind_t* mb);
+materialnamespaceid_t Materials_NamespaceId(const materialbind_t* mb);
 
 /// @return  Symbolic name/path-to this binding. Must be destroyed with Str_Delete().
 ddstring_t* MaterialBind_ComposePath(const materialbind_t* mb);
@@ -261,7 +261,7 @@ static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenam
         /* TN_SPRITES */   MN_SPRITES,
         /* TN_PATCHES */   MN_ANY // No materials for these yet.
     };
-    if(VALID_TEXTURENAMESPACE(id))
+    if(VALID_TEXTURENAMESPACEID(id))
         return namespaceIds[id-TEXTURENAMESPACE_FIRST];
     return MATERIALNAMESPACE_COUNT; // Unknown.
 }
@@ -731,7 +731,7 @@ static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
         if(0 == ml->tex) continue;
 
-        GL_ReleaseGLTexturesForTexture(GL_ToTexture(ml->tex));
+        GL_ReleaseGLTexturesForTexture(Textures_ToTexture(ml->tex));
     }
     return 0; // Continue iteration.
     }
@@ -921,7 +921,6 @@ material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
 material_t* Materials_MaterialForUri(const Uri* uri)
 {
     return Materials_MaterialForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
-
 }
 
 material_t* Materials_MaterialForUriCString2(const char* path, boolean quiet)
@@ -1002,7 +1001,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         const ded_material_layer_t* l = &def->layers[0];
         if(l->stages[0].texture) // Not unused.
         {
-            tex = GL_TextureByUri(l->stages[0].texture);
+            tex = Textures_TextureForUri2(l->stages[0].texture, true/*quiet please*/);
             if(!tex)
             {
                 ddstring_t* materialPath = Uri_ToString(def->id);
@@ -1111,7 +1110,7 @@ static texture_t* findDetailTextureForDef(const ded_detailtexture_t* def)
     {
     detailtex_t* dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal);
     if(!dTex) return NULL;
-    return GL_ToTexture(dTex->id);
+    return Textures_ToTexture(dTex->id);
     }
 }
 
@@ -1121,7 +1120,7 @@ static texture_t* findShinyTextureForDef(const ded_reflection_t* def)
     {
     shinytex_t* sTex = R_FindShinyTextureForName(def->shinyMap);
     if(!sTex) return NULL;
-    return GL_ToTexture(sTex->id);
+    return Textures_ToTexture(sTex->id);
     }
 }
 
@@ -1131,7 +1130,7 @@ static texture_t* findShinyMaskTextureForDef(const ded_reflection_t* def)
     {
     masktex_t* mTex = R_FindMaskTextureForName(def->maskMap);
     if(!mTex) return NULL;
-    return GL_ToTexture(mTex->id);
+    return Textures_ToTexture(mTex->id);
     }
 }
 
@@ -1237,7 +1236,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
         if(0 == ml->tex) continue;
 
         // Pick the instance matching the specified context.
-        tex = GL_ToTexture(ml->tex);
+        tex = Textures_ToTexture(ml->tex);
         texUnits[i].tex = GL_PrepareTextureVariant2(tex, spec->primarySpec, &result);
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
@@ -1338,7 +1337,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
         int magMode = glmode[texMagMode];
         float sScale, tScale;
 
-        if(TN_SPRITES == Texture_Namespace(TextureVariant_GeneralCase(tex)))
+        if(TN_SPRITES == Textures_NamespaceId(TextureVariant_GeneralCase(tex)))
             magMode = filterSprites? GL_LINEAR : GL_NEAREST;
         sScale = 1.f / snapshot->width;
         tScale = 1.f / snapshot->height;
@@ -1473,8 +1472,7 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 
 uint Materials_Count(void)
 {
-    if(initedOk)
-        return bindingsCount;
+    if(initedOk) return bindingsCount;
     return 0;
 }
 
@@ -1543,7 +1541,7 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     for(i = 0; i < layers; ++i)
     {
         const materialvariant_layer_t* l = MaterialVariant_Layer(variant, i);
-        Uri* uri = GL_NewUriForTexture(GL_ToTexture(l->tex));
+        Uri* uri = Textures_ComposeUri(Textures_ToTexture(l->tex));
         ddstring_t* path = Uri_ToString(uri);
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%i)"
@@ -1591,7 +1589,7 @@ static void printMaterialInfo(material_t* mat)
 
 static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
-    int numDigits = M_NumDigits(Materials_Count());
+    int numDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Count()));
     Uri* uri = Materials_ComposeUri(mat);
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
@@ -1704,9 +1702,10 @@ static int compareMaterialBindByPath(const void* mbA, const void* mbB)
 static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* like,
     boolean printNamespace)
 {
-    int numDigits = M_NumDigits(Materials_Count());
-    int count = 0;
+    int numDigits, count = 0;
     materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, NULL);
+
+    if(!foundMaterials) return 0;
 
     if(!printNamespace)
         Con_FPrintf(CPF_YELLOW, "Known materials in namespace '%s'", Str_Text(nameForMaterialNamespaceId(namespaceId)));
@@ -1717,12 +1716,10 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
         Con_FPrintf(CPF_YELLOW, " like \"%s\"", like);
     Con_FPrintf(CPF_YELLOW, ":\n");
 
-    if(!foundMaterials)
-        return 0;
-
     // Print the result index key.
+    numDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Count()));
     Con_Printf(" %*s: %-*s %12s  envclass origin\n", numDigits, "uid",
-        printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
+        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
         "dimensions");
     Con_PrintRuler();
 
@@ -1946,7 +1943,7 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         /*{ ded_material_t* def = Material_Definition(mat);
         if(def && def->layers[0].stageCount.num > 1)
         {
-            if(GL_TextureByUri(def->layers[0].stages[0].texture))
+            if(Textures_TextureForUri(def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
         }}*/
 
@@ -2010,6 +2007,11 @@ void Materials_ResetAnimGroups(void)
     animateAnimGroups();
 }
 
+materialnamespaceid_t Materials_NamespaceId(const materialbind_t* mb)
+{
+    return namespaceIdForMaterialDirectory(PathDirectoryNode_Directory(MaterialBind_DirectoryNode(mb)));
+}
+
 materialnum_t MaterialBind_Id(const materialbind_t* mb)
 {
     assert(mb);
@@ -2028,11 +2030,6 @@ struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb
     return mb->_directoryNode;
 }
 
-materialnamespaceid_t MaterialBind_NamespaceId(const materialbind_t* mb)
-{
-    return namespaceIdForMaterialDirectory(PathDirectoryNode_Directory(MaterialBind_DirectoryNode(mb)));
-}
-
 ddstring_t* MaterialBind_ComposePath(const materialbind_t* mb)
 {
     struct pathdirectory_node_s* node = mb->_directoryNode;
@@ -2043,7 +2040,7 @@ Uri* MaterialBind_ComposeUri(const materialbind_t* mb)
 {
     ddstring_t* path = MaterialBind_ComposePath(mb);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(nameForMaterialNamespaceId(MaterialBind_NamespaceId(mb))));
+    Uri_SetScheme(uri, Str_Text(nameForMaterialNamespaceId(Materials_NamespaceId(mb))));
     Str_Delete(path);
     return uri;
 }

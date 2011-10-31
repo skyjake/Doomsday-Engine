@@ -439,8 +439,8 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
-uint GL_TextureIndexForUri(const Uri* uri);
-uint GL_TextureIndexForUri2(const Uri* uri, boolean silent);
+uint Textures_TypeIndexForUri(const Uri* uri);
+uint Textures_TypeIndexForUri2(const Uri* uri, boolean silent);
 
 //------------------------------------------------------------------------
 //

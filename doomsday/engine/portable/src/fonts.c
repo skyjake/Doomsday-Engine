@@ -943,18 +943,18 @@ void Fonts_CharDimensions(font_t* font, int* width, int* height, unsigned char c
 
 static void printFontInfo(const fontbind_t* fb, boolean printNamespace)
 {
-    int numDigits = M_NumDigits(Fonts_Count());
+    int numDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Count()));
     font_t* font = FontBind_Font(fb);
-    ddstring_t* path = FontBind_ComposePath(fb);
+    Uri* uri = Fonts_ComposeUri(font);
+    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
-    Con_Printf(" %*u: \"", numDigits, (unsigned int) Fonts_ToFontNum(font));
-    if(printNamespace)
-        Con_Printf("%s:", Str_Text(nameForFontNamespaceId(FontBind_NamespaceId(fb))));
+    Con_Printf(" %*u: %-*s %s", numDigits, (unsigned int) Fonts_ToFontNum(font),
+        printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
 
-    Con_Printf("%s\" %s ", Str_Text(path), Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
     if(Font_IsPrepared(font))
     {
-        Con_Printf("(ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
+        Con_Printf(" (ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
         if(Font_Type(font) == FT_BITMAP && BitmapFont_GLTextureName(font))
         {
             Con_Printf(", texWidth:%i, texHeight:%i", BitmapFont_TextureWidth(font), BitmapFont_TextureHeight(font));
@@ -966,7 +966,9 @@ static void printFontInfo(const fontbind_t* fb, boolean printNamespace)
         Con_Printf("\n");
     }
 
-    Str_Delete(path);
+    Uri_Delete(uri);
+    if(printNamespace)
+        Str_Delete((ddstring_t*)path);
 }
 
 /**
@@ -1067,9 +1069,10 @@ static int compareFontBindByPath(const void* fbA, const void* fbB)
 static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like,
     boolean printNamespace)
 {
-    int numDigits = M_NumDigits(Fonts_Count());
-    int count = 0;
+    int numDigits, count = 0;
     fontbind_t** foundFonts = collectFonts(namespaceId, like, &count, NULL);
+
+    if(!foundFonts) return 0;
 
     if(!printNamespace)
         Con_FPrintf(CPF_YELLOW, "Known fonts in namespace '%s'", Str_Text(nameForFontNamespaceId(namespaceId)));
@@ -1080,11 +1083,11 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like,
         Con_FPrintf(CPF_YELLOW, " like \"%s\"", like);
     Con_FPrintf(CPF_YELLOW, ":\n");
 
-    if(!foundFonts)
-        return 0;
-
     // Print the result index key.
-    Con_Printf(" uid: \"%s\" font-type", VALID_FONTNAMESPACEID(namespaceId)? "font-name" : "<namespace>:font-name");
+    numDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Count()));
+    Con_Printf(" %*s: %-*s type", numDigits, "uid",
+        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path");
+
     // Fonts may be prepared only if GL is inited thus if we can't prepare, we can't list property values.
     if(GL_IsInited())
     {

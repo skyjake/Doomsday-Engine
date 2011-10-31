@@ -165,8 +165,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         Uri_SetPath(startPath, animDefs[i].startname);
         Uri_SetPath(endPath, animDefs[i].endname);
         
-        if(0 == (startFrame = GL_TextureIndexForUri2(startPath, !isCustom)) ||
-           0 == (endFrame   = GL_TextureIndexForUri2(endPath, !isCustom)))
+        if(0 == (startFrame = Textures_TypeIndexForUri2(startPath, !isCustom)) ||
+           0 == (endFrame   = Textures_TypeIndexForUri2(endPath, !isCustom)))
             continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;

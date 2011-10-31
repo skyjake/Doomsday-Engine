@@ -78,25 +78,15 @@ typedef struct texturevariantspecificationlist_node_s {
 
 typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 
-#define TEXTURENAMESPACE_NAMEHASH_SIZE (512)
-
-typedef struct texturenamespace_namehash_node_s {
-    struct texturenamespace_namehash_node_s* next;
-    texture_t* tex;
-} texturenamespace_namehash_node_t;
-typedef texturenamespace_namehash_node_t* texturenamespace_namehash_t[TEXTURENAMESPACE_NAMEHASH_SIZE];
-
-typedef struct texturenamespace_s {
-    texturenamespace_namehash_t hashTable;
-} texturenamespace_t;
-
 D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
+D_CMD(ListTextures);
+#if _DEBUG
+D_CMD(PrintTextureStats);
+#endif
 
-static uint hashForTextureName(const char* name);
 static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
-static texturenamespace_namehash_node_t* findNamespaceHashNodeForTextureByName(const char* name, uint hash, texturenamespaceid_t texNamespace);
 
 void GL_DoResetDetailTextures(void);
 
@@ -140,7 +130,7 @@ ddtexture_t lightingTextures[NUM_LIGHTING_TEXTURES];
 // Names of the flare textures (halos).
 ddtexture_t sysFlareTextures[NUM_SYSFLARE_TEXTURES];
 
-static boolean texInited = false; // Init done.
+static boolean initedOk = false; // Init done.
 
 // Image file handlers.
 static const imagehandler_t handlers[] = {
@@ -159,7 +149,7 @@ static variantspecificationlist_t* detailVariantSpecs[DETAILVARIANT_CONTRAST_HAS
 
 static int texturesCount;
 static texture_t** textures;
-static texturenamespace_t textureNamespaces[TEXTURENAMESPACE_COUNT];
+static pathdirectory_t* namespaces[TEXTURENAMESPACE_COUNT];
 
 void GL_TexRegister(void)
 {
@@ -181,6 +171,10 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
+    C_CMD("listtextures", NULL, ListTextures)
+#if _DEBUG
+    C_CMD("texturestats", NULL, PrintTextureStats)
+#endif
 }
 
 static __inline texture_t* getTexture(textureid_t id)
@@ -199,19 +193,26 @@ static textureid_t findTextureId(texture_t* tex)
     return 0; // Not linked.
 }
 
-static texturenamespace_t* textureNamespaceForId(texturenamespaceid_t id)
+static __inline pathdirectory_t* directoryForTextureNamespaceId(texturenamespaceid_t id)
 {
-    if(!VALID_TEXTURENAMESPACE(id))
-    {
-        Con_Error("textureNamespaceForId: Invalid id %i.", (int) id);
-        exit(1); // Unreachable.
-    }
-    return textureNamespaces + (id-TEXTURENAMESPACE_FIRST);
+    assert(VALID_TEXTURENAMESPACEID(id));
+    return namespaces[id-TEXTURENAMESPACE_FIRST];
+}
+
+static materialnamespaceid_t namespaceIdForTextureDirectory(pathdirectory_t* pd)
+{
+    texturenamespaceid_t id;
+    assert(pd);
+    for(id = TEXTURENAMESPACE_FIRST; id <= TEXTURENAMESPACE_LAST; ++id)
+        if(namespaces[id-TEXTURENAMESPACE_FIRST] == pd) return id;
+    // Should never happen.
+    Con_Error("Textures::namespaceIdForTextureDirectory: Failed to determine id for directory %p.", (void*)pd);
+    exit(1); // Unreachable.
 }
 
 static texturevariantspecification_t* unlinkVariantSpecification(texturevariantspecification_t* spec)
 {
-    assert(texInited && spec);
+    assert(initedOk && spec);
     {
     variantspecificationlist_t** listHead;
 
@@ -350,7 +351,7 @@ static int compareDetailVariantSpecifications(const detailvariantspecification_t
 static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpecification(
     colorpalettetranslationspecification_t* spec, int tClass, int tMap)
 {
-    assert(texInited && spec);
+    assert(initedOk && spec);
 
     spec->tClass = MAX_OF(0, tClass);
     spec->tMap   = MAX_OF(0, tMap);
@@ -370,7 +371,7 @@ static variantspecification_t* applyVariantSpecification(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter, boolean mipmapped,
     boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    assert(texInited && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
+    assert(initedOk && spec && (tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc)));
 
     flags &= ~TSF_INTERNAL_MASK;
 
@@ -419,7 +420,7 @@ static int hashDetailVariantSpecification(const detailvariantspecification_t* sp
 static texturevariantspecification_t* linkVariantSpecification(
     texturevariantspecificationtype_t type, texturevariantspecification_t* spec)
 {
-    assert(texInited && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
+    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
     {
     texturevariantspecificationlist_node_t* node;
     if(NULL == (node = (texturevariantspecificationlist_node_t*) malloc(sizeof(*node))))
@@ -448,7 +449,7 @@ static texturevariantspecification_t* findVariantSpecification(
     texturevariantspecificationtype_t type, const texturevariantspecification_t* tpl,
     boolean canCreate)
 {
-    assert(texInited && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
+    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
     {
     texturevariantspecificationlist_node_t* node;
 
@@ -490,7 +491,7 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    assert(texInited);
+    assert(initedOk);
     {
     static texturevariantspecification_t tpl;
     static colorpalettetranslationspecification_t cptTpl;
@@ -515,7 +516,7 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
 static texturevariantspecification_t* getDetailVariantSpecificationForContext(
     float contrast)
 {
-    assert(texInited);
+    assert(initedOk);
     {
     static texturevariantspecification_t tpl;
     tpl.type = TST_DETAIL;
@@ -526,10 +527,9 @@ static texturevariantspecification_t* getDetailVariantSpecificationForContext(
 
 static void emptyVariantSpecificationList(variantspecificationlist_t* list)
 {
-    assert(texInited);
+    assert(initedOk);
     {
-    texturevariantspecificationlist_node_t* node =
-        (texturevariantspecificationlist_node_t*) list;
+    texturevariantspecificationlist_node_t* node = (texturevariantspecificationlist_node_t*) list;
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
@@ -541,13 +541,8 @@ static void emptyVariantSpecificationList(variantspecificationlist_t* list)
 
 static int compareTextureVariantWithVariantSpecification(texturevariant_t* tex, void* paramaters)
 {
-    assert(NULL != tex);
-    {
     texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
-    if(TextureVariant_Spec(tex) == spec)
-        return 1;
-    return 0;
-    }
+    return (TextureVariant_Spec(tex) == spec? 1 : 0);
 }
 
 static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* list)
@@ -576,7 +571,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* li
 
 static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t specType)
 {
-    assert(texInited);
+    assert(initedOk);
     switch(specType)
     {
     case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
@@ -596,7 +591,7 @@ static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t sp
 
 static void destroyVariantSpecifications(void)
 {
-    assert(texInited);
+    assert(initedOk);
     emptyVariantSpecificationList(variantSpecs); variantSpecs = NULL;
     { int i;
     for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
@@ -655,7 +650,7 @@ static int chooseVariantWorker(texturevariant_t* variant, void* context)
 static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(texInited && tex && spec);
+    assert(initedOk && tex && spec);
     {
     choosevariantworker_paramaters_t params;
     params.method = method;
@@ -699,102 +694,58 @@ static void unlinkTextureFromGlobalList(texture_t* tex)
     }
     else
     {
-        texturenamespace_namehash_node_t* node = Texture_NamespaceHashNode(tex);
-        if(NULL == node)
+        if(tex != textures[texturesCount-1])
         {
-            Con_Error("unlinkTextureFromGlobalList: Internal error, mistracked textures!");
-            exit(1); // Unreachable
+            uint idx = findTextureId(tex)-1/*1-based index*/;
+            memmove(textures + idx, textures + idx + 1, sizeof *textures * (texturesCount - 1 - idx));
         }
 
-        if(node->tex != textures[texturesCount-1])
-        {
-            uint idx = findTextureId(node->tex)-1/*1-based index*/;
-            memmove(textures + idx, textures + idx + 1, sizeof(*textures) * (texturesCount - 1 - idx));
-        }
-
-        textures = (texture_t**) realloc(textures, sizeof(*textures) * (--texturesCount));
-        if(NULL == textures)
+        textures = (texture_t**) realloc(textures, sizeof *textures * (--texturesCount));
+        if(!textures)
             Con_Error("unlinkTextureFromGlobalList: Failed on reallocation of %lu bytes when resizing list.",
-                (unsigned long) (sizeof(*textures) * texturesCount));
+                (unsigned long) sizeof *textures * (texturesCount+1));
     }
 }
 
-static void unlinkTextureFromTextureNamespace(texture_t* tex)
+static int destroyTexture(struct pathdirectory_node_s* node, void* paramaters)
 {
-    assert(NULL != tex);
+    texture_t* tex = (texture_t*)PathDirectoryNode_DetachUserData(node);
+    if(tex)
     {
-    texturenamespace_namehash_node_t* node = Texture_NamespaceHashNode(tex);
-    texturenamespace_t* tn;
-    uint hash;
-
-    if(NULL == node)
-        return; // Not currently linked.
-
-    hash = hashForTextureName(Texture_Name(tex));
-    tn = textureNamespaceForId(Texture_Namespace(tex));
-    if(node == tn->hashTable[hash])
-    {
-        tn->hashTable[hash] = node->next;
+        GL_ReleaseGLTexturesForTexture(tex);
+        unlinkTextureFromGlobalList(tex);
+        Texture_Delete(tex);
     }
-    else
-    {
-        // Find the node previous.
-        texturenamespace_namehash_node_t* prevNode;
-        for(prevNode = tn->hashTable[hash]; prevNode->next && prevNode->next != node;
-            prevNode = prevNode->next) {}
-
-        prevNode->next = node->next;
-    }
-    free(node);
-    }
-}
-
-static void unlinkTexture(texture_t* tex)
-{
-    unlinkTextureFromGlobalList(tex);
-    unlinkTextureFromTextureNamespace(tex);
-}
-
-static void destroyTexture(texture_t* tex)
-{
-    GL_ReleaseGLTexturesForTexture(tex);
-    unlinkTexture(tex);
-    Texture_Delete(tex);
+    return 0; // Continue iteration.
 }
 
 static void destroyTextures(texturenamespaceid_t texNamespace)
 {
-    assert(texInited);
+    texturenamespaceid_t from, to, iter;
+
+    assert(initedOk);
 
     if(texNamespace == TN_ANY)
     {
-        while(textures)
-        {
-            destroyTexture(*textures);
-        }
-        return;
+        from = TEXTURENAMESPACE_FIRST;
+        to   = TEXTURENAMESPACE_LAST;
     }
-    
-    if(VALID_TEXTURENAMESPACE(texNamespace))
+    else if(VALID_TEXTURENAMESPACEID(texNamespace))
     {
-        texturenamespace_t* tn = textureNamespaceForId(texNamespace);
-        uint i;
-        for(i = 0; i < TEXTURENAMESPACE_NAMEHASH_SIZE; ++i)
-        {
-            texturenamespace_namehash_node_t* node = tn->hashTable[i];
-            texturenamespace_namehash_node_t* next;
-            while(node)
-            {
-                next = node->next;
-                destroyTexture(node->tex);
-                node = next;
-            }
-        }
-        return;
+        from = to = texNamespace;
+    }
+    else
+    {
+        Con_Error("destroyTextures: Invalid texture namespace %i.", (int) texNamespace);
+        exit(1); // Unreachable.
     }
 
-    Con_Error("destroyTextures: Invalid texture namespace %i.", (int) texNamespace);
-    exit(1); // Unreachable.
+    for(iter = from; iter <= to; ++iter)
+    {
+        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(iter);
+        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTexture);
+        PathDirectory_Clear(texDirectory);
+    }
 }
 
 static void uploadContent(uploadcontentmethod_t uploadMethod, const texturecontent_t* content)
@@ -893,7 +844,7 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
     {
     const variantspecification_t* spec = TS_GENERAL(baseSpec);
     byte loadResult = 0;
-    switch(Texture_Namespace(tex))
+    switch(Textures_NamespaceId(tex))
     {
     case TN_FLATS: {
         const flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(tex));
@@ -1035,14 +986,14 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
     case TN_FLAREMAPS:
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
-        ddstring_t* path = Uri_ComposePath(searchPath(Texture_Namespace(tex), Texture_TypeIndex(tex)));
+        ddstring_t* path = Uri_ComposePath(searchPath(Textures_NamespaceId(tex), Texture_TypeIndex(tex)));
         loadResult = GL_LoadExtTextureEX(image, Str_Text(path), NULL, false);
         Str_Delete(path);
         break;
       }
     default:
         Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.",
-                  (int) Texture_Namespace(tex));
+                  (int) Textures_NamespaceId(tex));
         return 0; // Unreachable.
     }
     return loadResult;
@@ -1277,8 +1228,12 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     EqualizeLuma(image->pixels, image->width, image->height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
+        Uri* uri = Texture_ComposeUri(TextureVariant_GeneralCase(tex));
+        ddstring_t* path = Uri_ToString(uri);
         Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-            Texture_Name(TextureVariant_GeneralCase(tex)), baMul, hiMul, loMul);
+            Str_Text(path), baMul, hiMul, loMul);
+        Str_Delete(path);
+        Uri_Delete(uri);
     }}
 
     // Disable compression?
@@ -1310,89 +1265,29 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     }
 }
 
-/**
- * This is a hash function. Given a texture name it generates a
- * somewhat-random number between 0 and TEXTURENAMESPACE_NAMEHASH_SIZE.
- *
- * @return  The generated hash index.
- */
-static uint hashForTextureName(const char* name)
-{
-    ushort key = 0;
-    int i;
-
-    // Stop when the name ends.
-    for(i = 0; *name; ++i, name++)
-    {
-        int c = (int)tolower(*name);
-        if(i == 0)
-            key ^= c;
-        else if(i == 1)
-            key *= c;
-        else if(i == 2)
-        {
-            key -= c;
-            i = -1;
-        }
-    }
-
-    return key % TEXTURENAMESPACE_NAMEHASH_SIZE;
-}
-
-/**
- * Given a name and texture type, search the gltextures db for a match.
- * \assume Caller knows what it's doing; params arn't validity checked.
- *
- * @param name  Name of the texture to search for. Must have been
- *      transformed to all lower case.
- * @param type  Specific texture data.
- * @return  Ptr to the found texture_t else, @c NULL.
- */
-static texturenamespace_namehash_node_t* findNamespaceHashNodeForTextureByName(
-    const char* name, uint hash, texturenamespaceid_t texNamespace)
-{
-    texturenamespace_t* tn = NULL;
-    if(name && name[0])
-        tn = textureNamespaceForId(texNamespace);
-    if(tn != NULL)
-    {
-        texturenamespace_namehash_node_t* node;
-        for(node = tn->hashTable[hash]; node; node = node->next)
-        {
-            if(!strnicmp(Texture_Name(node->tex), name, 8))
-                return node;
-        }
-    }
-    return 0; // Not found.
-}
-
-static const texture_t* findTextureByName(const char* name, texturenamespaceid_t texNamespace)
-{
-    texturenamespace_namehash_node_t* node =
-        findNamespaceHashNodeForTextureByName(name, hashForTextureName(name), texNamespace);
-    return ((node != NULL)? node->tex : 0);
-}
-
 void GL_EarlyInitTextureManager(void)
 {
+    VERBOSE( Con_Message("Initializing Textures collection...\n") )
+
     GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
     variantSpecs = NULL;
     memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
+
     textures = NULL;
     texturesCount = 0;
 
     { int i;
     for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
-        memset(textureNamespaces[i].hashTable, 0, sizeof(textureNamespaces[i].hashTable));
-    }
+    {
+        namespaces[i] = PathDirectory_New();
+    }}
 }
 
 void GL_InitTextureManager(void)
 {
-    if(texInited)
-        return; // Don't init again.
+    if(initedOk) return; // Already been here.
 
     // Disable the use of 'high resolution' textures and/or patches?
     noHighResTex = ArgExists("-nohightex");
@@ -1406,13 +1301,12 @@ void GL_InitTextureManager(void)
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
     // Initialization done.
-    texInited = true;
+    initedOk = true;
 }
 
 void GL_ResetTextureManager(void)
 {
-    if(!texInited)
-        return;
+    if(!initedOk) return;
     GL_ClearTextureMemory();
     GL_PruneTextureVariantSpecifications();
 }
@@ -1525,7 +1419,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    if(!texInited)
+    if(!initedOk)
         Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
     return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
@@ -1535,7 +1429,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast)
 {
-    if(!texInited)
+    if(!initedOk)
         Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection "
             "not yet initialized.");
     return getDetailVariantSpecificationForContext(contrast);
@@ -1543,7 +1437,7 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
 
 void GL_DestroyRuntimeTextures(void)
 {
-    if(!texInited) return;
+    if(!initedOk) return;
 
     destroyTextures(TN_FLATS);
     destroyTextures(TN_TEXTURES);
@@ -1561,7 +1455,7 @@ void GL_DestroyRuntimeTextures(void)
 
 void GL_DestroySystemTextures(void)
 {
-    if(!texInited) return;
+    if(!initedOk) return;
 
     destroyTextures(TN_SYSTEM);
     GL_PruneTextureVariantSpecifications();
@@ -1576,11 +1470,25 @@ void GL_DestroyTextures(void)
 
 void GL_ShutdownTextureManager(void)
 {
-    if(!texInited) return;
+    if(!initedOk) return;
 
     destroyVariantSpecifications();
     destroyTextures(TN_ANY);
-    texInited = false;
+
+    { int i;
+    for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
+    {
+        PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
+    }}
+
+    // Clear the texture index/map.
+    if(textures)
+    {
+        free(textures), textures = NULL;
+    }
+    texturesCount = 0;
+
+    initedOk = false;
 }
 
 static void calcGammaTable(void)
@@ -1593,7 +1501,7 @@ static void calcGammaTable(void)
 
 void GL_LoadSystemTextures(void)
 {
-    if(isDedicated || !texInited)
+    if(isDedicated || !initedOk)
         return;
 
     UI_LoadTextures();
@@ -1615,7 +1523,7 @@ void GL_LoadSystemTextures(void)
 
 void GL_ReleaseSystemTextures(void)
 {
-    if(!texInited)
+    if(!initedOk)
         return;
 
     { int i;
@@ -1638,7 +1546,7 @@ void GL_ReleaseSystemTextures(void)
 
 void GL_ReleaseRuntimeTextures(void)
 {
-    if(!texInited)
+    if(!initedOk)
         return;
 
     // The rendering lists contain persistent references to texture names.
@@ -1667,7 +1575,7 @@ void GL_ReleaseRuntimeTextures(void)
 
 void GL_ClearTextureMemory(void)
 {
-    if(!texInited)
+    if(!initedOk)
         return;
     GL_ReleaseRuntimeTextures();
 }
@@ -3081,7 +2989,7 @@ DGLuint GL_GetLightMapTexture(const Uri* uri)
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
                     0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
-            return GL_PrepareTexture(GL_ToTexture(lmap->id), texSpec);
+            return GL_PrepareTexture(Textures_ToTexture(lmap->id), texSpec);
         }
     }
     // Return the default texture name.
@@ -3107,7 +3015,7 @@ DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
                 GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                     1, 1, 0, false, false, false, true);
-            return GL_PrepareTexture(GL_ToTexture(fTex->id), texSpec);
+            return GL_PrepareTexture(Textures_ToTexture(fTex->id), texSpec);
         }
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
@@ -3126,7 +3034,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
                 0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
                   | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
                 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-        return GL_PrepareTexture(GL_ToTexture(patchTex->texId), texSpec);
+        return GL_PrepareTexture(Textures_ToTexture(patchTex->texId), texSpec);
     }
     return 0;
 }
@@ -3288,7 +3196,7 @@ void GL_TexReset(void)
 
 void GL_DoUpdateTexGamma(void)
 {
-    if(texInited)
+    if(initedOk)
     {
         calcGammaTable();
         GL_TexReset();
@@ -3344,64 +3252,232 @@ void GL_SetAllTexturesMinFilter(int minFilter)
         Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
 }
 
-const texture_t* GL_CreateTexture2(const char* name, uint index,
-    texturenamespaceid_t texNamespace, int width, int height)
-{
-    assert(VALID_TEXTURENAMESPACE(texNamespace));
-    {
-    texturenamespace_namehash_node_t* node;
-    texturenamespace_t* tn;
-    texture_t* tex;
-    uint hash;
+/**
+ * @defgroup validateTextureUriFlags  Validate Texture Uri Flags
+ * @{
+ */
+#define VTUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
+/**@}*/
 
-    // Check if we've already created a texture for this.
-    { const texture_t* existingTex = GL_TextureByIndex(index, texNamespace);
-    if(NULL != existingTex)
-        return existingTex;
+/**
+ * @param uri  Uri to be validated.
+ * @param flags  @see validateTextureUriFlags
+ * @param quiet  @c true= Do not output validation remarks to the log.
+ * @return  @c true if @a Uri passes validation.
+ */
+static boolean validateTextureUri2(const Uri* uri, int flags, boolean quiet)
+{
+    texturenamespaceid_t namespaceId;
+
+    if(!uri || Str_IsEmpty(Uri_Path(uri)))
+    {
+        if(!quiet)
+        {
+            ddstring_t* uriStr = Uri_ToString(uri);
+            Con_Message("Invalid path '%s' in Texture uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
+            Str_Delete(uriStr);
+        }
+        return false;
     }
 
-    if(!name || !name[0])
-        Con_Error("GL_CreateTexture: Cannot create texture with NULL name.");
+    namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
+    if(!((flags & VTUF_ALLOW_NAMESPACE_ANY) && namespaceId == TN_ANY) &&
+       !VALID_TEXTURENAMESPACEID(namespaceId))
+    {
+        if(!quiet)
+        {
+            ddstring_t* uriStr = Uri_ToString(uri);
+            Con_Message("Unknown namespace '%s' in Texture uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
+            Str_Delete(uriStr);
+        }
+        return false;
+    }
 
-    /**
-     * A new texture.
-     */
+    return true;
+}
 
-    tex = Texture_NewWithDimensions(texturesCount+1/*1-based index*/, name,
-        index, width, height);
+static boolean validateTextureUri(const Uri* uri, int flags)
+{
+    return validateTextureUri2(uri, flags, false);
+}
 
-    // We hash the name for faster searching.
-    hash = hashForTextureName(name);
-    tn = textureNamespaceForId(texNamespace);
+/**
+ * Given a directory and path, search the Textures collection for a match.
+ *
+ * @param directory  Namespace-specific PathDirectory to search in.
+ * @param path  Path of the texture to search for.
+ * @return  Found Texture else @c 0
+ */
+static texture_t* findTextureForPath(pathdirectory_t* texDirectory, const char* path)
+{
+    struct pathdirectory_node_s* node = DD_SearchPathDirectory(texDirectory,
+        PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTUREDIRECTORY_DELIMITER);
+    if(node)
+    {
+        return (texture_t*)PathDirectoryNode_UserData(node);
+    }
+    return NULL; // Not found.
+}
 
-    if(NULL == (node = (texturenamespace_namehash_node_t*) malloc(sizeof(*node))))
-        Con_Error("GL_CreateTexture: Failed on allocation of %lu bytes for "
-                  "namespace hashnode.", (unsigned long) sizeof(*node));
-    node->tex = tex;
-    node->next = tn->hashTable[hash];
-    tn->hashTable[hash] = node;
-    Texture_SetNamespace(tex, texNamespace, node);
+/// \assume @a uri has already been validated and is well-formed.
+static texture_t* findTextureForUri(const Uri* uri)
+{
+    texturenamespaceid_t namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
+    const char* path = Str_Text(Uri_Path(uri));
+    texture_t* tex = NULL;
+    if(namespaceId != TN_ANY)
+    {
+        // Caller wants a texture in a specific namespace.
+        tex = findTextureForPath(directoryForTextureNamespaceId(namespaceId), path);
+    }
+    else
+    {
+        // Caller does not care which namespace.
+        // Check for the texture in these namespaces in priority order.
+        static const texturenamespaceid_t order[] = {
+            TN_SPRITES,
+            TN_TEXTURES,
+            TN_FLATS,
+            TN_PATCHES,
+            TN_SYSTEM,
+            TN_DETAILS,
+            TN_REFLECTIONS,
+            TN_MASKS,
+            TN_MODELSKINS,
+            TN_MODELREFLECTIONSKINS,
+            TN_LIGHTMAPS,
+            TN_FLAREMAPS,
+        };
+        int n = 0;
+        do
+        {
+            tex = findTextureForPath(directoryForTextureNamespaceId(order[n]), path);
+        } while(!tex && order[++n] != MN_ANY);
+    }
+    return tex;
+}
 
-    // Link the new texture into the global list of gltextures.
-    textures = (texture_t**) realloc(textures, sizeof(texture_t*) * ++texturesCount);
+texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet)
+{
+    texture_t* tex;
+    if(!initedOk || !uri) return NULL;
+    if(!validateTextureUri2(uri, VTUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
+    {
+#if _DEBUG
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning:Textures::TextureForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Str_Delete(uriStr);
+#endif
+        return NULL;
+    }
+
+    // Perform the search.
+    tex = findTextureForUri(uri);
+    if(tex) return tex;
+
+    // Not found.
+    if(!quiet && !ddMapSetup) // Do not announce during map setup.
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Textures::TextureForUri: \"%s\" not found!\n", Str_Text(path));
+        Str_Delete(path);
+    }
+    return NULL;
+}
+
+texture_t* Textures_TextureForUri(const Uri* uri)
+{
+    return Textures_TextureForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
+}
+
+texture_t* Textures_TextureForUriCString2(const char* path, boolean quiet)
+{
+    if(path && path[0])
+    {
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
+        texture_t* tex = Textures_TextureForUri2(uri, quiet);
+        Uri_Delete(uri);
+        return tex;
+    }
+    return NULL;
+}
+
+texture_t* Textures_TextureForUriCString(const char* path)
+{
+    return Textures_TextureForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+}
+
+Uri* Textures_ComposeUri(texture_t* tex)
+{
+    if(!tex)
+    {
+#if _DEBUG
+        Con_Message("Warning:Textures::ComposeUri: Attempted with invalid reference [%p], returning null-object.\n", (void*)tex);
+#endif
+        return Uri_New();
+    }
+    return Texture_ComposeUri(tex);
+}
+
+
+texture_t* Textures_CreateWithDimensions(const Uri* uri, uint typeIndex, int width, int height)
+{
+    assert(uri);
+    {
+    pathdirectory_t* texDirectory;
+    struct pathdirectory_node_s* node;
+    texturenamespaceid_t texNamespace;
+    texture_t* tex;
+
+    // We require a properly formed uri.
+    if(!validateTextureUri2(uri, 0, (verbose >= 1)))
+    {
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning, failed to create Texture \"%s\", ignoring.\n", Str_Text(uriStr));
+        Str_Delete(uriStr);
+        return NULL;
+    }
+
+    // Have we already created a texture for this?
+    texNamespace = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
+    tex = Textures_TextureForTypeIndex(typeIndex, texNamespace);
+    if(tex)
+    {
+#if _DEBUG
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning:Textures::CreateWithDimensions: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        Str_Delete(path);
+#endif
+        return tex;
+    }
+
+    // A new texture.
+    texDirectory = directoryForTextureNamespaceId(texNamespace);
+    node = PathDirectory_Insert(texDirectory, Str_Text(Uri_Path(uri)), TEXTUREDIRECTORY_DELIMITER);
+
+    tex = Texture_NewWithDimensions(texturesCount+1/*1-based index*/, node, typeIndex, width, height);
+    PathDirectoryNode_AttachUserData(node, tex);
+
+    // Link the new texture into the global list of textures.
+    textures = (texture_t**) realloc(textures, sizeof *textures * ++texturesCount);
+    if(!textures)
+        Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textures * (texturesCount-1));
     textures[texturesCount - 1] = tex;
 
     return tex;
     }
 }
 
-const texture_t* GL_CreateTexture(const char* rawName, uint index,
-    texturenamespaceid_t texNamespace)
+texture_t* Textures_Create(const Uri* uri, uint typeIndex)
 {
-    return GL_CreateTexture2(rawName, index, texNamespace, 0, 0);
+    return Textures_CreateWithDimensions(uri, typeIndex, 0, 0);
 }
 
-uint GL_TextureIndexForUri2(const Uri* uri, boolean silent)
+uint Textures_TypeIndexForUri2(const Uri* uri, boolean quiet)
 {
-    const texture_t* glTex;
-    if((glTex = GL_TextureByUri2(uri, silent)))
-        return Texture_TypeIndex(glTex) + 1; // 1-based index.
-    if(!silent)
+    const texture_t* glTex = Textures_TextureForUri2(uri, quiet);
+    if(glTex) return Texture_TypeIndex(glTex) + 1; // 1-based index.
+    if(!quiet)
     {
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning, unknown texture: %s\n", Str_Text(path));
@@ -3410,19 +3486,14 @@ uint GL_TextureIndexForUri2(const Uri* uri, boolean silent)
     return 0;
 }
 
-uint GL_TextureIndexForUri(const Uri* uri)
+uint Textures_TypeIndexForUri(const Uri* uri)
 {
-    return GL_TextureIndexForUri2(uri, false);
+    return Textures_TypeIndexForUri2(uri, false);
 }
 
-Uri* GL_NewUriForTexture(struct texture_s* tex)
+texturenamespaceid_t Textures_NamespaceId(const texture_t* tex)
 {
-    assert(tex);
-    {
-    Uri* uri = Uri_NewWithPath2(Texture_Name(tex), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Texture_Namespace(tex))));
-    return uri;
-    }
+    return namespaceIdForTextureDirectory(PathDirectoryNode_Directory(Texture_DirectoryNode(tex)));
 }
 
 static void performImageAnalyses(texture_t* tex, const image_t* image,
@@ -3534,14 +3605,14 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     texturevariantspecification_t* spec, texturevariant_t* variant,
     byte* result)
 {
-    assert(texInited && spec);
+    assert(initedOk && spec);
     {
     uploadcontentmethod_t uploadMethod;
     byte loadResult = 0;
     image_t image;
     
     // Load the source image data.
-    if(TN_TEXTURES == Texture_Namespace(tex))
+    if(TN_TEXTURES == Textures_NamespaceId(tex))
     {
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
@@ -3587,8 +3658,12 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(0 == Texture_Width(tex) || 0 == Texture_Height(tex))
     {
 #if _DEBUG
+        Uri* uri = Texture_ComposeUri(tex);
+        ddstring_t* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
-            Texture_Name(tex), image.width, image.height) );
+            Str_Text(path), image.width, image.height) );
+        Str_Delete(path);
+        Uri_Delete(uri);
 #endif
         Texture_SetDimensions(tex, image.width, image.height);
     }
@@ -3624,9 +3699,13 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 
 #ifdef _DEBUG
     VERBOSE(
+        Uri* uri = Texture_ComposeUri(tex);
+        ddstring_t* path = Uri_ToString(uri);
         Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
-            Texture_Name(tex), (unsigned int) TextureVariant_GLName(variant),
+            Str_Text(path), (unsigned int) TextureVariant_GLName(variant),
             (METHOD_IMMEDIATE == uploadMethod)? " while not busy!" : "");
+        Str_Delete(path);
+        Uri_Delete(uri);
         )
     VERBOSE2(
         Con_Printf("  Content: ");
@@ -3643,7 +3722,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 static texturevariant_t* findVariantForSpec(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(texInited);
+    assert(initedOk);
     { // Look for an exact match.
     texturevariant_t* variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
@@ -3665,7 +3744,7 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
 const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
-    assert(texInited);
+    assert(initedOk);
     {
     // Have we already prepared something suitable?
     texturevariant_t* variant = findVariantForSpec(tex, spec);
@@ -3727,7 +3806,7 @@ void GL_ReleaseGLTexturesForTexture(texture_t* tex)
 
 void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace)
 {
-    if(texNamespace != TN_ANY && !VALID_TEXTURENAMESPACE(texNamespace))
+    if(texNamespace != TN_ANY && !VALID_TEXTURENAMESPACEID(texNamespace))
         Con_Error("GL_ReleaseGLTexturesByNamespace: Internal error, "
                   "invalid namespace %i.", (int) texNamespace);
 
@@ -3735,7 +3814,7 @@ void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace)
     for(i = 0; i < texturesCount; ++i)
     {
         texture_t* tex = textures[i];
-        if(texNamespace != TN_ANY && Texture_Namespace(tex) != texNamespace)
+        if(texNamespace != TN_ANY && Textures_NamespaceId(tex) != texNamespace)
             continue;
         GL_ReleaseGLTexturesForTexture(tex);
     }}
@@ -3755,57 +3834,218 @@ void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId)
     }}
 }
 
-texture_t* GL_ToTexture(textureid_t id)
+static void printTextureInfo(texture_t* tex, boolean printNamespace)
+{
+    int numDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Count()));
+    Uri* uri = Textures_ComposeUri(tex);
+    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+
+    Con_Printf(" %*u: %-*s %5d x %-5d %s\n", numDigits, (unsigned int) Textures_ToTextureNum(tex),
+        printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        Texture_Width(tex), Texture_Height(tex), Texture_IsFromIWAD(tex) ? "iwad" : "addon");
+
+    Uri_Delete(uri);
+    if(printNamespace)
+        Str_Delete((ddstring_t*)path);
+}
+
+/**
+ * \todo A horridly inefficent algorithm. This should be implemented in PathDirectory
+ * itself and not force users of this class to implement this sort of thing themselves.
+ * However this is only presently used for the texture search/listing console commands
+ * so is not hugely important right now.
+ */
+typedef struct {
+    const char* like;
+    int idx;
+    texture_t** storage;
+} collecttextureworker_paramaters_t;
+
+static int collectTextureWorker(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    texture_t* tex = (texture_t*)PathDirectoryNode_UserData(node);
+    collecttextureworker_paramaters_t* p = (collecttextureworker_paramaters_t*)paramaters;
+
+    if(p->like && p->like[0])
+    {
+        Uri* uri = Texture_ComposeUri(tex);
+        int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
+        Uri_Delete(uri);
+        if(delta) return 0; // Continue iteration.
+    }
+
+    if(p->storage)
+    {
+        p->storage[p->idx++] = tex;
+    }
+    else
+    {
+        ++p->idx;
+    }
+
+    return 0; // Continue iteration.
+}
+
+static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char* like,
+    int* count, texture_t** storage)
+{
+    collecttextureworker_paramaters_t p;
+    texturenamespaceid_t fromId, toId, iterId;
+
+    if(VALID_TEXTURENAMESPACEID(namespaceId))
+    {
+        // Only consider textures in this namespace.
+        fromId = toId = namespaceId;
+    }
+    else
+    {
+        // Consider textures in any namespace.
+        fromId = TEXTURENAMESPACE_FIRST;
+        toId   = TEXTURENAMESPACE_LAST;
+    }
+
+    p.idx = 0;
+    p.like = like;
+    p.storage = storage;
+    for(iterId  = fromId; iterId <= toId; ++iterId)
+    {
+        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(iterId);
+        PathDirectory_Iterate2_Const(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
+            PATHDIRECTORY_NOHASH, collectTextureWorker, (void*)&p);
+    }
+
+    if(storage)
+    {
+        storage[p.idx] = 0; // Terminate.
+        if(count) *count = p.idx;
+        return storage;
+    }
+
+    if(p.idx == 0)
+    {
+        if(count) *count = 0;
+        return 0;
+    }
+
+    storage = (texture_t**)malloc(sizeof *storage * (p.idx+1));
+    if(!storage)
+        Con_Error("collectTextures: Failed on allocation of %lu bytes for new collection.",
+            (unsigned long) (sizeof* storage * (p.idx+1)));
+    return collectTextures(namespaceId, like, count, storage);
+}
+
+static int compareTextureByPath(const void* tA, const void* tB)
+{
+    Uri* a = Texture_ComposeUri(*(const texture_t**)tA);
+    Uri* b = Texture_ComposeUri(*(const texture_t**)tB);
+    int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
+    Uri_Delete(b);
+    Uri_Delete(a);
+    return delta;
+}
+
+static size_t printTextures2(texturenamespaceid_t namespaceId, const char* like,
+    boolean printNamespace)
+{
+    int numDigits, count = 0;
+    texture_t** foundTextures = collectTextures(namespaceId, like, &count, NULL);
+
+    if(!foundTextures) return 0;
+
+    if(!printNamespace)
+        Con_FPrintf(CPF_YELLOW, "Known textures in namespace '%s'", Str_Text(DD_TextureNamespaceNameForId(namespaceId)));
+    else // Any namespace.
+        Con_FPrintf(CPF_YELLOW, "Known textures");
+
+    if(like && like[0])
+        Con_FPrintf(CPF_YELLOW, " like \"%s\"", like);
+    Con_FPrintf(CPF_YELLOW, ":\n");
+
+    // Print the result index key.
+    numDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Count()));
+    Con_Printf(" %*s: %-*s %12s  origin\n", numDigits, "uid",
+        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
+        "dimensions");
+    Con_PrintRuler();
+
+    // Sort and print the index.
+    qsort(foundTextures, (size_t)count, sizeof *foundTextures, compareTextureByPath);
+
+    { texture_t* const* ptr;
+    for(ptr = foundTextures; *ptr; ++ptr)
+    {
+        texture_t* tex = *ptr;
+        printTextureInfo(tex, printNamespace);
+    }}
+
+    free(foundTextures);
+    return count;
+}
+
+static void printTextures(texturenamespaceid_t namespaceId, const char* like)
+{
+    size_t printTotal = 0;
+    // Do we care which namespace?
+    if(namespaceId == TN_ANY && like && like[0])
+    {
+        printTotal = printTextures2(namespaceId, like, true);
+        Con_PrintRuler();
+    }
+    // Only one namespace to print?
+    else if(VALID_TEXTURENAMESPACEID(namespaceId))
+    {
+        printTotal = printTextures2(namespaceId, like, false);
+        Con_PrintRuler();
+    }
+    else
+    {
+        // Collect and sort in each namespace separately.
+        int i;
+        for(i = TEXTURENAMESPACE_FIRST; i <= TEXTURENAMESPACE_LAST; ++i)
+        {
+            size_t printed = printTextures2((texturenamespaceid_t)i, like, false);
+            if(printed != 0)
+            {
+                printTotal += printed;
+                Con_PrintRuler();
+            }
+        }
+    }
+    Con_Printf("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Texture" : "Textures");
+}
+
+uint Textures_Count(void)
+{
+    if(initedOk) return texturesCount;
+    return 0;
+}
+
+texture_t* Textures_ToTexture(textureid_t id)
 {
     texture_t* tex = getTexture(id);
 #if _DEBUG
     if(NULL == tex)
-        Con_Message("Warning:GL_ToTexture: Failed to locate texture for id #%i.\n", id);
+        Con_Message("Warning:Textures_ToTexture: Failed to locate texture for id #%i.\n", id);
 #endif
     return tex;
 }
 
-const texture_t* GL_TextureByUri2(const Uri* uri, boolean silent)
+textureid_t Textures_ToTextureNum(texture_t* tex)
 {
-    ddstring_t* path;
-    if(uri && NULL != (path = Uri_Resolved(uri)))
-    {
-        texturenamespaceid_t texNamespace = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-        const texture_t* tex;
-
-        if(texNamespace == TEXTURENAMESPACE_COUNT)
-        {
-            if(!silent)
-            {
-                ddstring_t* path = Uri_ToString(uri);
-                Con_Message("Warning, unknown texture namespace '%s' encountered parsing "
-                            "uri: %s", Str_Text(Uri_Scheme(uri)), Str_Text(path));
-                Str_Delete(path);
-            }
-            return NULL;
-        }
-
-        tex = findTextureByName(Str_Text(Uri_Path(uri)), texNamespace);
-        Str_Delete(path);
-        return tex;
-    }
-    return NULL;
+    if(!initedOk) return 0;
+    if(!tex) return 0;
+    return Texture_Id(tex);
 }
 
-const texture_t* GL_TextureByUri(const Uri* uri)
+texture_t* Textures_TextureForTypeIndex(int index, texturenamespaceid_t texNamespace)
 {
-    return GL_TextureByUri2(uri, false);
-}
-
-const texture_t* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace)
-{
-    if(VALID_TEXTURENAMESPACE(texNamespace))
+    if(VALID_TEXTURENAMESPACEID(texNamespace))
     {
         int i;
         for(i = 0; i < texturesCount; ++i)
         {
             texture_t* tex = textures[i];
-            if(Texture_Namespace(tex) == texNamespace && Texture_TypeIndex(tex) == index)
+            if(Textures_NamespaceId(tex) == texNamespace && Texture_TypeIndex(tex) == index)
                 return tex;
         }
     }
@@ -3926,3 +4166,88 @@ D_CMD(MipMap)
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
     return true;
 }
+
+D_CMD(ListTextures)
+{
+    texturenamespaceid_t namespaceId = TN_ANY;
+    const char* like = NULL;
+    Uri* uri = NULL;
+
+    if(!Textures_Count())
+    {
+        Con_Message("There are currently no textures defined/loaded.\n");
+        return true;
+    }
+
+    // "listtextures [namespace] [name]"
+    if(argc > 2)
+    {
+        uri = Uri_New();
+        Uri_SetScheme(uri, argv[1]);
+        Uri_SetPath(uri, argv[2]);
+
+        namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
+        if(!VALID_TEXTURENAMESPACEID(namespaceId))
+        {
+            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
+            Uri_Delete(uri);
+            return false;
+        }
+        like = Str_Text(Uri_Path(uri));
+    }
+    // "listtextures [namespace:name]" i.e., a partial Uri
+    else if(argc > 1)
+    {
+        uri = Uri_NewWithPath2(argv[1], RC_NULL);
+        if(!Str_IsEmpty(Uri_Scheme(uri)))
+        {
+            namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
+            if(!VALID_TEXTURENAMESPACEID(namespaceId))
+            {
+                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
+                Uri_Delete(uri);
+                return false;
+            }
+
+            if(!Str_IsEmpty(Uri_Path(uri)))
+                like = Str_Text(Uri_Path(uri));
+        }
+        else
+        {
+            namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Path(uri)));
+
+            if(!VALID_TEXTURENAMESPACEID(namespaceId))
+            {
+                namespaceId = TN_ANY;
+                like = argv[1];
+            }
+        }
+    }
+
+    printTextures(namespaceId, like);
+
+    if(uri != NULL)
+        Uri_Delete(uri);
+    return true;
+}
+
+#if _DEBUG
+D_CMD(PrintTextureStats)
+{
+    texturenamespaceid_t namespaceId;
+    Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
+    for(namespaceId = TEXTURENAMESPACE_FIRST; namespaceId <= TEXTURENAMESPACE_LAST; ++namespaceId)
+    {
+        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(namespaceId);
+        uint size;
+
+        if(!texDirectory) continue;
+
+        size = PathDirectory_Size(texDirectory);
+        Con_Printf("Namespace: %s (%u %s)\n", Str_Text(DD_TextureNamespaceNameForId(namespaceId)), size, size==1? "texture":"textures");
+        PathDirectory_PrintHashDistribution(texDirectory);
+        PathDirectory_Print(texDirectory, TEXTUREDIRECTORY_DELIMITER);
+    }
+    return true;
+}
+#endif

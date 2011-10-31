@@ -36,15 +36,18 @@
 #include "gl_defer.h"
 #include "texturevariantspecification.h"
 
-#define TEXQ_BEST               8
-#define MINTEXWIDTH             8
-#define MINTEXHEIGHT            8
-
 struct image_s;
 struct texturecontent_s;
 struct texture_s;
 struct texturevariant_s;
 struct texturevariantspecification_s;
+
+#define TEXQ_BEST               8
+#define MINTEXWIDTH             8
+#define MINTEXHEIGHT            8
+
+/// Components within a Texture path hierarchy are delimited by this character.
+#define TEXTUREDIRECTORY_DELIMITER       '/'
 
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
@@ -313,12 +316,6 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* sp
 
 void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
 
-/**
- * Given a texture identifier retrieve the associated texture.
- * @return  Found Texture object else @c NULL
- */
-struct texture_s* GL_ToTexture(textureid_t id);
-
 /// Result of a request to prepare a TextureVariant
 typedef enum {
     PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
@@ -345,38 +342,48 @@ typedef enum {
  *
  * @return  GL-name of the prepared variant if successful else @c 0
  */
-DGLuint GL_PrepareTexture2(struct texture_s* tex,
-    texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-DGLuint GL_PrepareTexture(struct texture_s* tex,
-    texturevariantspecification_t* spec);
+DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
  * \todo Should not need to be public.
  */
-const struct texturevariant_s* GL_PrepareTextureVariant2(struct texture_s* tex,
-    texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTextureVariant(struct texture_s* tex,
-    texturevariantspecification_t* spec);
+const struct texturevariant_s* GL_PrepareTextureVariant2(struct texture_s* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+const struct texturevariant_s* GL_PrepareTextureVariant(struct texture_s* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
 
-const struct texture_s* GL_CreateTexture2(const char* name, uint index,
-    texturenamespaceid_t texNamespace, int width, int height);
-const struct texture_s* GL_CreateTexture(const char* name, uint index,
-    texturenamespaceid_t texNamespace);
+/// @return  Number of unique Textures in the collection.
+uint Textures_Count(void);
 
-const struct texture_s* GL_TextureByUri2(const Uri* uri, boolean silent);
-const struct texture_s* GL_TextureByUri(const Uri* uri);
-const struct texture_s* GL_TextureByIndex(int index, texturenamespaceid_t texNamespace);
+/// @return  Texture associated with unique identifier @a textureNum else @c NULL.
+struct texture_s* Textures_ToTexture(textureid_t textureNum);
 
-uint GL_TextureIndexForUri2(const Uri* uri, boolean silent);
-uint GL_TextureIndexForUri(const Uri* uri);
+/// @return  Unique identifier associated with @a material else @c 0.
+textureid_t Textures_ToTextureNum(struct texture_s* texture);
 
 /**
- * Given a Texture construct a new Uri reference to it.
- * \todo Do not construct. Store into a resource namespace and return a reference.
- * @return  Associated Uri.
+ * Search the Textures collection for a Texture associated with @a uri.
+ * @return  Found Texture else @c NULL.
  */
-Uri* GL_NewUriForTexture(struct texture_s* tex);
+struct texture_s* Textures_TextureForUri2(const Uri* uri, boolean quiet);
+struct texture_s* Textures_TextureForUri(const Uri* uri); /* quiet=false */
+
+/// Same as Textures::TextureForUri except @a uri is a C-string.
+struct texture_s* Textures_TextureForUriCString2(const char* uri, boolean quiet);
+struct texture_s* Textures_TextureForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+
+/// @return  Unique name/path-to @a Texture. Must be destroyed with Uri_Delete().
+Uri* Textures_ComposeUri(struct texture_s* texture);
+
+struct texture_s* Textures_TextureForTypeIndex(int index, texturenamespaceid_t texNamespace);
+
+uint Textures_TypeIndexForUri2(const Uri* uri, boolean quiet);
+uint Textures_TypeIndexForUri(const Uri* uri); /* quiet=false */
+
+texturenamespaceid_t Textures_NamespaceId(const struct texture_s* tex);
+
+struct texture_s* Textures_CreateWithDimensions(const Uri* uri, uint typeIndex, int width, int height);
+struct texture_s* Textures_Create(const Uri* uri, uint typeIndex); /* width=0, height=0*/
 
 /**
  * Change the GL minification filter for all prepared TextureVariants.

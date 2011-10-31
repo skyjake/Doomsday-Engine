@@ -1019,7 +1019,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         case PFT_PATCH:
             if(NULL != (patch = R_PatchTextureByIndex(f->texRef.patch)))
             {
-                texture_t* tex = GL_ToTexture(patch->texId);
+                texture_t* tex = Textures_ToTexture(patch->texId);
                 glTexName = (renderTextures==1? GL_PreparePatch(patch) : 0);
                 V3_Set(offset, patch->offX, patch->offY, 0);
                 V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);

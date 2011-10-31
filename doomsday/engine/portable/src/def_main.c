@@ -918,7 +918,7 @@ void Def_GenerateAutoMaterials(void)
 
         if(0 == pcomTex->texId)
             continue;
-        tex = GL_ToTexture(pcomTex->texId);
+        tex = Textures_ToTexture(pcomTex->texId);
 
         idx = DED_AddMaterial(&defs, NULL);
         mat = &defs.materials[idx];
@@ -932,7 +932,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_NewUriForTexture(tex);
+        st->texture = Textures_ComposeUri(tex);
     }}
 
     // Flats.
@@ -947,7 +947,7 @@ void Def_GenerateAutoMaterials(void)
 
         if(0 == flatTex->texId)
             continue;
-        tex = GL_ToTexture(flatTex->texId);
+        tex = Textures_ToTexture(flatTex->texId);
 
         idx = DED_AddMaterial(&defs, NULL);
         mat = &defs.materials[idx];
@@ -960,7 +960,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_NewUriForTexture(tex);
+        st->texture = Textures_ComposeUri(tex);
     }}
 
     // Sprites.
@@ -975,7 +975,7 @@ void Def_GenerateAutoMaterials(void)
 
         if(0 == sprTex->texId)
             continue;
-        tex = GL_ToTexture(sprTex->texId);
+        tex = Textures_ToTexture(sprTex->texId);
 
         idx = DED_AddMaterial(&defs, NULL);
         mat = &defs.materials[idx];
@@ -988,7 +988,7 @@ void Def_GenerateAutoMaterials(void)
 
         stage = DED_AddMaterialLayerStage(&mat->layers[0]);
         st = &mat->layers[0].stages[stage];
-        st->texture = GL_NewUriForTexture(tex);
+        st->texture = Textures_ComposeUri(tex);
         st->texOrigin[0] = sprTex->offX;
         st->texOrigin[1] = sprTex->offY;
     }}

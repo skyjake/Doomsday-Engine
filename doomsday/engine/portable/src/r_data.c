@@ -994,30 +994,42 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 
 void R_InitSystemTextures(void)
 {
-    struct texdef_s {
-        const char* name;
-        const char* path;
-    } static const defs[] = {
+    static const struct texdef_s {
+        const char* texPath;
+        const char* filePath;
+    } defs[] = {
         { "unknown", GRAPHICS_RESOURCE_NAMESPACE_NAME":unknown" },
         { "missing", GRAPHICS_RESOURCE_NAMESPACE_NAME":missing" },
         { "bbox",    GRAPHICS_RESOURCE_NAMESPACE_NAME":bbox" },
         { "gray",    GRAPHICS_RESOURCE_NAMESPACE_NAME":gray" },
         { NULL, NULL }
     };
-    { uint i;
-    for(i = 0; defs[i].name; ++i)
+    Uri* uri = Uri_New();
+    uint i;
+
+    Uri_SetScheme(uri, TN_SYSTEM_NAME);
+    for(i = 0; defs[i].texPath; ++i)
     {
-        const texture_t* glTex = GL_CreateTexture(defs[i].name, i, TN_SYSTEM);
+        texture_t* tex;
         systex_t* sysTex;
     
-        sysTex = malloc(sizeof(*sysTex));
-        sysTex->id = Texture_Id(glTex);
-        sysTex->external = Uri_NewWithPath(defs[i].path);
+        sysTex = (systex_t*)malloc(sizeof *sysTex);
+        if(!sysTex)
+            Con_Error("R_InitSystemTextures: Failed on allocation of %lu bytes for Systex.", (unsigned long) sizeof *sysTex);
+
+        Uri_SetPath(uri, defs[i].texPath);
+        tex = Textures_Create(uri, i);
+
+        sysTex->id = Texture_Id(tex);
+        sysTex->external = Uri_NewWithPath(defs[i].filePath);
 
         // Add it to the list.
-        sysTextures = realloc(sysTextures, sizeof(systex_t*) * ++sysTexturesCount);
+        sysTextures = (systex_t**)realloc(sysTextures, sizeof *sysTextures * ++sysTexturesCount);
+        if(!sysTextures)
+            Con_Error("R_InitSystemTextures: Failed on (re)allocation of %lu bytes enlarging Systex list.", (unsigned long) sizeof *sysTextures * (sysTexturesCount-1));
         sysTextures[sysTexturesCount-1] = sysTex;
-    }}
+    }
+    Uri_Delete(uri);
 }
 
 void R_DestroySystemTextures(void)
@@ -1047,14 +1059,13 @@ static patchid_t findPatchTextureByName(const char* name)
 {
     assert(name && name[0]);
     {
-    const texture_t* glTex;
+    texture_t* tex;
     Uri* uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
-    glTex = GL_TextureByUri(uri);
+    tex = Textures_TextureForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
-    if(glTex == NULL)
-        return 0;
-    return (patchid_t) Texture_TypeIndex(glTex);
+    if(!tex) return 0;
+    return (patchid_t) Texture_TypeIndex(tex);
     }
 }
 
@@ -1131,15 +1142,16 @@ patchid_t R_RegisterPatch(const char* name)
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
-    if(monochrome)
-        p->flags |= PF_MONOCHROME;
-    if(upscaleAndSharpenPatches)
-        p->flags |= PF_UPSCALE_AND_SHARPEN;
+    if(monochrome)               p->flags |= PF_MONOCHROME;
+    if(upscaleAndSharpenPatches) p->flags |= PF_UPSCALE_AND_SHARPEN;
 
     // Register a texture for this.
-    { const texture_t* glTex = GL_CreateTexture2(name, ++patchTexturesCount,
-        TN_PATCHES, SHORT(patch->width), SHORT(patch->height));
-    p->texId = Texture_Id(glTex);
+    { texture_t* tex;
+    Uri* uri = Uri_NewWithPath2(Str_Text(&p->name), RC_NULL);
+    Uri_SetScheme(uri, TN_PATCHES_NAME);
+    tex = Textures_CreateWithDimensions(uri, ++patchTexturesCount, SHORT(patch->width), SHORT(patch->height));
+    p->texId = Texture_Id(tex);
+    Uri_Delete(uri);
     }
 
     // Add it to the pointer array.
@@ -1161,7 +1173,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     patch = getPatchTex(id);
     if(NULL != patch)
     {
-        texture_t* tex = GL_ToTexture(patch->texId);
+        texture_t* tex = Textures_ToTexture(patch->texId);
         assert(NULL != tex);
         info->id = id;
         info->width = Texture_Width(tex);
@@ -1924,20 +1936,24 @@ static void loadPatchCompositeDefs(void)
 
 static void createTexturesForPatchCompositeDefs(void)
 {
+    Uri* uri = Uri_New();
     int i;
+    Uri_SetScheme(uri, TN_TEXTURES_NAME);
     for(i = 0; i < patchCompositeTexturesCount; ++i)
     {
         patchcompositetex_t* pcomTex = patchCompositeTextures[i];       
-        const texture_t* tex = GL_CreateTexture2(Str_Text(&pcomTex->name), i, TN_TEXTURES,
-            pcomTex->width, pcomTex->height);
-        if(NULL == tex)
+        texture_t* tex;
+
+        Uri_SetPath(uri, Str_Text(&pcomTex->name));
+        tex = Textures_CreateWithDimensions(uri, i, pcomTex->width, pcomTex->height);
+        if(!tex)
         {
-            Con_Message("Warning, failed creating Texture for new patch composite %s.\n",
-                Str_Text(&pcomTex->name));
+            Con_Message("Warning, failed creating Texture for new patch composite %s.\n", Str_Text(&pcomTex->name));
             continue;
         }
         pcomTex->texId = Texture_Id(tex);
     }
+    Uri_Delete(uri);
 }
 
 int R_PatchCompositeCount(void)
@@ -2095,18 +2111,25 @@ void R_InitFlatTextures(void)
     Stack_Delete(stack);
 
     // Create Textures for all known flats.
-    { int i;
+    { Uri* uri = Uri_New();
+    int i;
+    Uri_SetScheme(uri, TN_FLATS_NAME);
     for(i = 0; i < flatTexturesCount; ++i)
     {
         flat_t* flat = flatTextures[i];
-        const texture_t* tex = GL_CreateTexture2(Str_Text(&flat->name), i, TN_FLATS, 64, 64);
-        if(NULL == tex)
+        texture_t* tex;
+
+        Uri_SetPath(uri, Str_Text(&flat->name));
+        tex = Textures_CreateWithDimensions(uri, i, 64, 64);
+        if(!tex)
         {
             Con_Message("Warning, failed creating Texture for new flat %s.\n", Str_Text(&flat->name));
             continue;
         }
         flat->texId = Texture_Id(tex);
-    }}
+    }
+    Uri_Delete(uri);
+    }
 
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
@@ -2221,7 +2244,9 @@ void R_InitSpriteTextures(void)
     /**
      * Step 2: Create Textures for all known sprite textures.
      */
-    { int i;
+    { Uri* uri = Uri_New();
+    int i;
+    Uri_SetScheme(uri, TN_SPRITES_NAME);
     for(i = 0; i < spriteTexturesCount; ++i)
     {
         spritetex_t* sprTex = spriteTextures[i];
@@ -2243,8 +2268,9 @@ void R_InitSpriteTextures(void)
         fsObject = F_FindFileForLumpNum2(sprTex->lumpNum, &lumpIdx);
         patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
-        tex = GL_CreateTexture2(Str_Text(&sprTex->name), i, TN_SPRITES, SHORT(patch->width), SHORT(patch->height));
-        if(NULL == tex)
+        Uri_SetPath(uri, Str_Text(&sprTex->name));
+        tex = Textures_CreateWithDimensions(uri, i, SHORT(patch->width), SHORT(patch->height));
+        if(!tex)
         {
             Con_Message("Warning, failed creating Texture for sprite frame lump %s (#%i).\n",
                 Str_Text(&sprTex->name), sprTex->lumpNum);
@@ -2257,7 +2283,9 @@ void R_InitSpriteTextures(void)
         sprTex->offX = SHORT(patch->leftOffset);
         sprTex->offY = SHORT(patch->topOffset);
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-    }}
+    }
+    Uri_Delete(uri);
+    }
 
     VERBOSE2(
         Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n",
@@ -2268,17 +2296,18 @@ uint R_CreateSkinTex(const Uri* skin, boolean isShinySkin)
 {
     assert(skin);
     {
-    char name[9];
-    const texture_t* glTex;
+    texture_t* tex;
     skinname_t* st;
+    char name[9];
+    Uri* uri;
     int id;
 
     if(Str_IsEmpty(Uri_Path(skin)))
         return 0;
 
     // Have we already created one for this?
-    if(0 != (id = R_GetSkinNumForName(skin)))
-        return id;
+    id = R_GetSkinNumForName(skin);
+    if(id) return id;
 
     if(M_NumDigits(numSkinNames + 1) > 8)
     {
@@ -2294,22 +2323,25 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
+    tex = Textures_Create(uri, numSkinNames);
 
-    glTex = GL_CreateTexture(name, numSkinNames, (isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS));
-
-    skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
+    skinNames = (skinname_t*)realloc(skinNames, sizeof *skinNames * ++numSkinNames);
+    if(!skinNames)
+        Con_Error("R_CreateSkinTex: Failed on (re)allocation of %lu bytes enlarging SkinName list.", (unsigned long) sizeof *skinNames * (numSkinNames-1));
     st = skinNames + (numSkinNames - 1);
 
     st->path = Uri_NewCopy(skin);
-    st->id = Texture_Id(glTex);
+    st->id = Texture_Id(tex);
 
     if(verbose)
     {
         ddstring_t* searchPath = Uri_ToString(skin);
-        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(Str_Text(searchPath)),
-            (long) (1 + (st - skinNames)));
+        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(Str_Text(searchPath)), (long) (1 + (st - skinNames)));
         Str_Delete(searchPath);
     }
+    Uri_Delete(uri);
     return 1 + (st - skinNames); // 1-based index.
     }
 }
@@ -2406,7 +2438,7 @@ void R_ReleaseGLTexturesForSkins(void)
     for(i = 0; i < numSkinNames; ++i)
     {
         skinname_t* sn = skinNames + i;
-        texture_t* tex = GL_ToTexture(sn->id);
+        texture_t* tex = Textures_ToTexture(sn->id);
         if(tex == NULL) continue;
 
         GL_ReleaseGLTexturesForTexture(tex);
@@ -2650,13 +2682,14 @@ void R_InitAnimGroup(ded_group_t* def)
 
 detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 {
-    const texture_t* glTex;
+    texture_t* tex;
     detailtex_t* dTex;
     char name[9];
+    Uri* uri;
 
     // Have we already created one for this?
-    if(NULL != (dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal)))
-        return dTex;
+    dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal);
+    if(dTex) return dTex;
 
     if(M_NumDigits(detailTexturesCount + 1) > 8)
     {
@@ -2670,18 +2703,24 @@ detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, detailTexturesCount + 1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_DETAILS_NAME);
+    tex = Textures_Create(uri, detailTexturesCount);
 
-    glTex = GL_CreateTexture(name, detailTexturesCount, TN_DETAILS);
-
-    dTex = M_Malloc(sizeof(*dTex));
-    dTex->id = Texture_Id(glTex);
+    dTex = (detailtex_t*)malloc(sizeof *dTex);
+    if(!dTex)
+        Con_Error("R_CreateDetailTextureFromDef: Failed on allocation of %lu bytes for new DetailTex.", (unsigned long) sizeof *dTex);
+    dTex->id = Texture_Id(tex);
     dTex->isExternal = def->isExternal;
     dTex->filePath = def->detailTex;
 
     // Add it to the list.
-    detailTextures = M_Realloc(detailTextures, sizeof(detailtex_t*) * ++detailTexturesCount);
+    detailTextures = (detailtex_t**)realloc(detailTextures, sizeof *detailTextures * ++detailTexturesCount);
+    if(!detailTextures)
+        Con_Error("R_CreateDetailTextureFromDef: Failed on (re)allocation of %lu bytes enlarging DetailTex list.", (unsigned long) sizeof *detailTextures * (detailTexturesCount-1));
     detailTextures[detailTexturesCount-1] = dTex;
 
+    Uri_Delete(uri);
     return dTex;
 }
 
@@ -2726,18 +2765,19 @@ void R_DestroyDetailTextures(void)
     detailTexturesCount = 0;
 }
 
-lightmap_t* R_CreateLightMap(const Uri* path)
+lightmap_t* R_CreateLightMap(const Uri* filePath)
 {
-    const texture_t* glTex;
+    texture_t* tex;
     lightmap_t* lmap;
     char name[9];
+    Uri* uri;
 
-    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
+    if(!filePath || Str_IsEmpty(Uri_Path(filePath)) || !Str_CompareIgnoreCase(Uri_Path(filePath), "-"))
         return 0; // Not a lightmap
 
     // Have we already created one for this?
-    if(NULL != (lmap = R_GetLightMap(path)))
-        return lmap;
+    lmap = R_GetLightMap(filePath);
+    if(lmap) return lmap;
 
     if(M_NumDigits(lightmapTexturesCount + 1) > 8)
     {
@@ -2751,17 +2791,23 @@ lightmap_t* R_CreateLightMap(const Uri* path)
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, lightmapTexturesCount + 1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
+    tex = Textures_Create(uri, lightmapTexturesCount);
 
-    glTex = GL_CreateTexture(name, lightmapTexturesCount, TN_LIGHTMAPS);
-
-    lmap = M_Malloc(sizeof(*lmap));
-    lmap->id = Texture_Id(glTex);
-    lmap->external = path;
+    lmap = (lightmap_t*)malloc(sizeof *lmap);
+    if(!lmap)
+        Con_Error("R_CreateLightMap: Failed on allocation of %lu bytes for new LightMap.", (unsigned long) sizeof *lmap);
+    lmap->id = Texture_Id(tex);
+    lmap->external = filePath;
 
     // Add it to the list.
-    lightmapTextures = M_Realloc(lightmapTextures, sizeof(lightmap_t*) * ++lightmapTexturesCount);
+    lightmapTextures = (lightmap_t**)realloc(lightmapTextures, sizeof *lightmapTextures * ++lightmapTexturesCount);
+    if(!lightmapTextures)
+        Con_Error("R_CreateLightMap: Failed on (re)allocation of %lu bytes enlarging LightMap list.", (unsigned long) sizeof *lightmapTextures * (lightmapTexturesCount-1));
     lightmapTextures[lightmapTexturesCount-1] = lmap;
 
+    Uri_Delete(uri);
     return lmap;
 }
 
@@ -2800,23 +2846,24 @@ void R_DestroyLightMaps(void)
     lightmapTexturesCount = 0;
 }
 
-flaretex_t* R_CreateFlareTexture(const Uri* path)
+flaretex_t* R_CreateFlareTexture(const Uri* filePath)
 {
-    const texture_t* glTex;
+    texture_t* tex;
     flaretex_t* fTex;
     char name[9];
+    Uri* uri;
 
-    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
+    if(!filePath || Str_IsEmpty(Uri_Path(filePath)) || !Str_CompareIgnoreCase(Uri_Path(filePath), "-"))
         return 0; // Not a flare texture.
 
     // Perhaps a "built-in" flare texture id?
     // Try to convert the id to a system flare tex constant idx
-    if(Str_At(Uri_Path(path), 0) >= '0' && Str_At(Uri_Path(path), 0) <= '4' && !Str_At(Uri_Path(path), 1))
+    if(Str_At(Uri_Path(filePath), 0) >= '0' && Str_At(Uri_Path(filePath), 0) <= '4' && !Str_At(Uri_Path(filePath), 1))
         return 0; // Don't create a flaretex for this
 
     // Have we already created one for this?
-    if(NULL != (fTex = R_GetFlareTexture(path)))
-        return fTex;
+    fTex = R_GetFlareTexture(filePath);
+    if(fTex) return fTex;
 
     if(M_NumDigits(flareTexturesCount + 1) > 8)
     {
@@ -2829,17 +2876,24 @@ flaretex_t* R_CreateFlareTexture(const Uri* path)
      */
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, flareTexturesCount + 1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
+    tex = Textures_Create(uri, flareTexturesCount);
 
-    glTex = GL_CreateTexture(name, flareTexturesCount, TN_FLAREMAPS);
+    fTex = (flaretex_t*)malloc(sizeof *fTex);
+    if(!fTex)
+        Con_Error("R_CreateFlareTexture: Failed on allocation of %lu bytes for new FlareTex.", (unsigned long) sizeof *fTex);
 
-    fTex = M_Malloc(sizeof(*fTex));
-    fTex->external = path;
-    fTex->id = Texture_Id(glTex);
+    fTex->external = filePath;
+    fTex->id = Texture_Id(tex);
 
     // Add it to the list.
-    flareTextures = M_Realloc(flareTextures, sizeof(flaretex_t*) * ++flareTexturesCount);
+    flareTextures = (flaretex_t**)realloc(flareTextures, sizeof  *flareTextures * ++flareTexturesCount);
+    if(!flareTextures)
+        Con_Error("R_CreateFlareTexture: Failed on (re)allocation of %lu bytes enlarging FlareTex list.", (unsigned long) sizeof *flareTextures * (flareTexturesCount-1));
     flareTextures[flareTexturesCount-1] = fTex;
 
+    Uri_Delete(uri);
     return fTex;
 }
 
@@ -2878,15 +2932,16 @@ void R_DestroyFlareTextures(void)
     flareTexturesCount = 0;
 }
 
-shinytex_t* R_CreateShinyTexture(const Uri* uri)
+shinytex_t* R_CreateShinyTexture(const Uri* filePath)
 {
-    const texture_t* glTex;
+    texture_t* tex;
     shinytex_t* sTex;
     char name[9];
+    Uri* uri;
 
     // Have we already created one for this?
-    if(NULL != (sTex = R_FindShinyTextureForName(uri)))
-        return sTex;
+    sTex = R_FindShinyTextureForName(filePath);
+    if(sTex) return sTex;
 
     if(M_NumDigits(shinyTexturesCount + 1) > 8)
     {
@@ -2900,17 +2955,23 @@ shinytex_t* R_CreateShinyTexture(const Uri* uri)
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, shinyTexturesCount + 1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
+    tex = Textures_Create(uri, shinyTexturesCount);
 
-    glTex = GL_CreateTexture(name, shinyTexturesCount, TN_REFLECTIONS);
-
-    sTex = M_Malloc(sizeof(*sTex));
-    sTex->id = Texture_Id(glTex);
-    sTex->external = uri;
+    sTex = (shinytex_t*)malloc(sizeof *sTex);
+    if(!sTex)
+        Con_Error("R_CreateShinyTexture: Failed on allocation of %lu bytes for new ShinyTex.", (unsigned long) sizeof *sTex);
+    sTex->id = Texture_Id(tex);
+    sTex->external = filePath;
 
     // Add it to the list.
-    shinyTextures = M_Realloc(shinyTextures, sizeof(shinytex_t*) * ++shinyTexturesCount);
+    shinyTextures = (shinytex_t**)realloc(shinyTextures, sizeof *shinyTextures * ++shinyTexturesCount);
+    if(!shinyTextures)
+        Con_Error("R_CreateShinyTextures: Failed on (re)allocation of %lu bytes enlarging ShinyTex list.", (unsigned long) sizeof *shinyTextures * (shinyTexturesCount-1));
     shinyTextures[shinyTexturesCount-1] = sTex;
 
+    Uri_Delete(uri);
     return sTex;
 }
 
@@ -2949,15 +3010,16 @@ void R_DestroyShinyTextures(void)
     shinyTexturesCount = 0;
 }
 
-masktex_t* R_CreateMaskTexture(const Uri* uri, int width, int height)
+masktex_t* R_CreateMaskTexture(const Uri* filePath, int width, int height)
 {
-    const texture_t* glTex;
+    texture_t* tex;
     masktex_t* mTex;
     char name[9];
+    Uri* uri;
 
     // Have we already created one for this?
-    if(NULL != (mTex = R_FindMaskTextureForName(uri)))
-        return mTex;
+    mTex = R_FindMaskTextureForName(filePath);
+    if(mTex) return mTex;
 
     if(M_NumDigits(maskTexturesCount + 1) > 8)
     {
@@ -2971,24 +3033,31 @@ masktex_t* R_CreateMaskTexture(const Uri* uri, int width, int height)
 
     // Create a texture for it.
     dd_snprintf(name, 9, "%-*i", 8, maskTexturesCount + 1);
-
-    glTex = GL_CreateTexture2(name, maskTexturesCount, TN_MASKS, width, height);
-    if(NULL == glTex)
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_MASKS_NAME);
+    tex = Textures_CreateWithDimensions(uri, maskTexturesCount, width, height);
+    if(!tex)
     {
-        ddstring_t* path = Uri_ToString(uri);
+        ddstring_t* path = Uri_ToString(filePath);
         Con_Message("Warning, failed creating Texture for mask image: %s\n", F_PrettyPath(Str_Text(path)));
         Str_Delete(path);
+        Uri_Delete(uri);
         return 0;
     }
 
-    mTex = M_Malloc(sizeof(*mTex));
-    mTex->id = Texture_Id(glTex);
-    mTex->external = uri;
+    mTex = (masktex_t*)malloc(sizeof *mTex);
+    if(!mTex)
+        Con_Error("R_CreateMaskTexture: Failed on allocation of %lu bytes for new MaskTex.", (unsigned long) sizeof *mTex);
+    mTex->id = Texture_Id(tex);
+    mTex->external = filePath;
 
     // Add it to the list.
-    maskTextures = M_Realloc(maskTextures, sizeof(masktex_t*) * ++maskTexturesCount);
+    maskTextures = (masktex_t**)realloc(maskTextures, sizeof *maskTextures * ++maskTexturesCount);
+    if(!maskTextures)
+        Con_Error("R_CreateMaskTexture: Failed on (re)allocation of %lu bytes enlarging MaskTex list.", (unsigned long) sizeof *maskTextures * (maskTexturesCount-1));
     maskTextures[maskTexturesCount-1] = mTex;
 
+    Uri_Delete(uri);
     return mTex;
 }
 

@@ -26,7 +26,7 @@
 #define LIBDENG_GL_TEXTURE_H
 
 struct texturevariant_s;
-struct texturenamespace_namehash_node_s;
+struct pathdirectory_node_s;
 
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
@@ -56,10 +56,8 @@ typedef struct texture_s {
     /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
     int _width, _height;
 
-    /// Unique Texture Namespace Identifier.
-    /// \todo make external.
-    texturenamespaceid_t _texNamespace;
-    struct texturenamespace_namehash_node_s* _texNamespaceHashNode;
+    /// Pointer to this texture's node in the directory.
+    struct pathdirectory_node_s* _directoryNode;
 
     /// List of variants (e.g., color translations).
     struct texture_variantlist_node_s* _variants;
@@ -67,13 +65,10 @@ typedef struct texture_s {
     /// Table of analyses object ptrs, used for various purposes depending
     /// on the variant specification.
     void* _analyses[TEXTURE_ANALYSIS_COUNT];
-
-    /// Symbolic name.
-    char _name[9];
 } texture_t;
 
-texture_t* Texture_New(textureid_t id, const char name[9], int index);
-texture_t* Texture_NewWithDimensions(textureid_t id, const char name[9], int index, int width, int height);
+texture_t* Texture_New(textureid_t id, struct pathdirectory_node_s* directoryNode, int index);
+texture_t* Texture_NewWithDimensions(textureid_t id, struct pathdirectory_node_s* directoryNode, int index, int width, int height);
 
 void Texture_Delete(texture_t* tex);
 
@@ -124,9 +119,6 @@ void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis);
 /// @return  Unique identifier.
 textureid_t Texture_Id(const texture_t* tex);
 
-/// @return  Symbolic name.
-const char* Texture_Name(const texture_t* tex);
-
 /// @return  @c true iff Texture represents an image loaded from an IWAD.
 boolean Texture_IsFromIWAD(const texture_t* tex);
 
@@ -161,12 +153,16 @@ void Texture_SetHeight(texture_t* tex, int height);
 /// @return  Type-specific index of the wrapped image object.
 int Texture_TypeIndex(const texture_t* tex);
 
-/// @return  Texture namespace identifier.
-texturenamespaceid_t Texture_Namespace(const texture_t* tex);
+/// @return  PathDirectory node associated with this.
+struct pathdirectory_node_s* Texture_DirectoryNode(const texture_t* texture);
 
-/// @return  Texture namespace hash node.
-struct texturenamespace_namehash_node_s* Texture_NamespaceHashNode(const texture_t* tex);
+/// @return  Unique identifier of the namespace within which this Texture resides.
+texturenamespaceid_t Textures_NamespaceId(const texture_t* texture);
 
-void Texture_SetNamespace(texture_t* tex, texturenamespaceid_t texNamespace,
-    struct texturenamespace_namehash_node_s* texNamespaceHashNode);
+/// @return  Symbolic name/path-to this Texture. Must be destroyed with Str_Delete().
+ddstring_t* Texture_ComposePath(const texture_t* texture);
+
+/// @return  Fully qualified/absolute Uri to this Texture. Must be destroyed with Uri_Delete().
+Uri* Texture_ComposeUri(const texture_t* texture);
+
 #endif /* LIBDENG_GL_TEXTURE_H */

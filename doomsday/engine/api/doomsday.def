@@ -506,8 +506,8 @@ EXPORTS
     GL_GrabScreen               @109 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
-    GL_TextureIndexForUri       @438 NONAME
-    GL_TextureIndexForUri2      @501 NONAME
+    Textures_TypeIndexForUri       @438 NONAME
+    Textures_TypeIndexForUri2      @501 NONAME
 
     GL_ConfigureBorderedProjection @507 NONAME
     GL_ConfigureBorderedProjection2 @508 NONAME

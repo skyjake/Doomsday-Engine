@@ -683,7 +683,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
                     false, false, false, false);
-            shinyTexture = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
+            shinyTexture = GL_PrepareTexture(Textures_ToTexture(sn->id), texSpec);
         }
         else
         {
@@ -784,7 +784,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                     (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
                     GL_REPEAT, 1, -2, -1, true, true, false, false);
-            skinTexture = GL_PrepareTexture(GL_ToTexture(sn->id), texSpec);
+            skinTexture = GL_PrepareTexture(Textures_ToTexture(sn->id), texSpec);
         }
     }
 

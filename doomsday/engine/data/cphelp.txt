@@ -400,6 +400,9 @@ desc = List all known surface materials.
 [listmobjtypes]
 desc = List all known mobj types.
 
+[listtextures]
+desc = List all known textures.
+
 [listvars]
 desc = List all console variables and their values.
 

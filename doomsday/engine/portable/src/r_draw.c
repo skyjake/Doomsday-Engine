@@ -187,14 +187,14 @@ void R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h)
 
 void R_DrawPatch(patchtex_t* p, int x, int y)
 {
-    texture_t* tex = GL_ToTexture(p->texId);
+    texture_t* tex = Textures_ToTexture(p->texId);
     if(NULL == tex) return;
     R_DrawPatch2(p, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
 void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
 {
-    texture_t* tex = GL_ToTexture(p->texId);
+    texture_t* tex = Textures_ToTexture(p->texId);
     if(NULL == tex) return;
 
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));

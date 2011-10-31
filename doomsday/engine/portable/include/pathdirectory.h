@@ -154,12 +154,10 @@ pathdirectory_search_t* PathDirectory_Search(pathdirectory_t* pd);
  *
  * @param path  New path to add to the directory.
  * @param delimiter  Fragments of the path are delimited by this character.
- * @param value  Associated data value.
+ * @param userData  User data to associate with the new path.
  */
-struct pathdirectory_node_s* PathDirectory_Insert2(pathdirectory_t* pd,
-    const char* path, char delimiter, void* value);
-struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd,
-    const char* path, char delimiter);
+struct pathdirectory_node_s* PathDirectory_Insert2(pathdirectory_t* pd, const char* path, char delimiter, void* userData);
+struct pathdirectory_node_s* PathDirectory_Insert(pathdirectory_t* pd, const char* path, char delimiter); /*userData = NULL*/
 
 /**
  * Iterate over nodes in the directory making a callback for each.
