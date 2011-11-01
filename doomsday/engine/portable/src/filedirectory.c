@@ -400,8 +400,8 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectory_nodetype_t nodeTyp
     F_FixSlashes(&searchPath, &searchPath);
 
     // Perform the search.
-    flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
-    foundNode = DD_SearchPathDirectory(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
+    flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
+    foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
@@ -419,14 +419,14 @@ static int C_DECL comparePaths(const void* a, const void* b)
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
 }
 
+#if _DEBUG
 void FileDirectory_Print(filedirectory_t* fd)
 {
-    assert(NULL != fd);
-    {
     size_t numFiles, n = 0;
     ddstring_t* fileList;
+    assert(fd);
 
-    Con_Printf("FileDirectory:\n");
+    Con_Printf("FileDirectory [%p]:\n", (void*)fd);
     if(NULL != (fileList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, FILEDIRECTORY_DELIMITER, &numFiles)))
     {
         qsort(fileList, numFiles, sizeof(*fileList), comparePaths);
@@ -438,7 +438,6 @@ void FileDirectory_Print(filedirectory_t* fd)
         free(fileList);
     }
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
-    }
 }
 
 void FileDirectory_PrintHashDistribution(filedirectory_t* fd)
@@ -446,3 +445,4 @@ void FileDirectory_PrintHashDistribution(filedirectory_t* fd)
     assert(NULL != fd);
     PathDirectory_PrintHashDistribution(fd->_pathDirectory);
 }
+#endif

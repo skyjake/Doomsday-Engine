@@ -78,8 +78,8 @@ static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
 
     if(VALID_RESOURCE_CLASS(defaultResourceClass))
     {
-        resourcenamespace_t* rn = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(defaultResourceClass));
-        Str_Copy(&uri->_scheme, ResourceNamespace_Name(rn));
+        const ddstring_t* name = F_ResourceNamespaceName(F_DefaultResourceNamespaceForClass(defaultResourceClass));
+        Str_Copy(&uri->_scheme, name);
     }
 }
 

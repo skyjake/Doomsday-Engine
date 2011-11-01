@@ -140,7 +140,9 @@ int FileDirectory_Iterate_Const(const filedirectory_t* fd, pathdirectory_nodetyp
     const struct pathdirectory_node_s* parent, ushort hash,
     int (*callback) (const struct pathdirectory_node_s* node, void* paramaters));
 
+#if _DEBUG
 void FileDirectory_Print(filedirectory_t* fd);
 void FileDirectory_PrintHashDistribution(filedirectory_t* fd);
+#endif
 
 #endif /* LIBDENG_FILEDIRECTORY_H */

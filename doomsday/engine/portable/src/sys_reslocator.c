@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Routines for locating resources.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #ifdef WIN32
 #  include <direct.h>
 #endif
@@ -50,12 +44,8 @@
 #include "resourcerecord.h"
 #include "resourcenamespace.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define PATH_DELIMIT_CHAR       ';'
 #define PATH_DELIMIT_STR        ";"
-
-// TYPES -------------------------------------------------------------------
 
 #define MAX_EXTENSIONS          (3)
 typedef struct {
@@ -64,17 +54,33 @@ typedef struct {
     char* knownFileNameExtensions[MAX_EXTENSIONS];
 } resourcetypeinfo_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+/**
+ * @defGroup ResourceNamespaceFlags Resource Namespace Flags
+ * @ingroup core.
+ */
+/*@{*/
+#define RNF_USE_VMAP            0x01 // Map resources in packages.
+#define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
+/*@}*/
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+#define RESOURCENAMESPACE_MINNAMELENGTH    URI_MINSCHEMELENGTH
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+typedef struct {
+    /// Unique symbolic name of this namespace (e.g., "Models").
+    /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
+    ddstring_t name;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+    /// ResourceNamespace.
+    resourcenamespace_t* rnamespace;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+    /// Associated path directory for this namespace.
+    filedirectory_t* directory;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+    /// Algorithm used to compose the name of a resource in this namespace.
+    ddstring_t* (*composeName) (const ddstring_t* path);
+
+    byte flags; // @see resourceNamespaceFlags
+} resourcenamespaceinfo_t;
 
 static boolean inited = false;
 
@@ -118,10 +124,8 @@ static const ddstring_t defaultNamespaceForClass[RESOURCECLASS_COUNT] = {
     /* RC_FONT */       { FONTS_RESOURCE_NAMESPACE_NAME }
 };
 
-static resourcenamespace_t** namespaces = 0;
+static resourcenamespaceinfo_t* namespaces = 0;
 static uint numNamespaces = 0;
-
-// CODE --------------------------------------------------------------------
 
 static void errorIfNotInited(const char* callerName)
 {
@@ -137,23 +141,23 @@ static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t 
     return &typeInfo[((uint)type)-1];
 }
 
-static __inline resourcenamespace_t* getNamespaceForId(resourcenamespaceid_t rni)
+static __inline resourcenamespaceinfo_t* getNamespaceInfoForId(resourcenamespaceid_t rni)
 {
     errorIfNotInited("getNamespaceForId");
     if(!F_IsValidResourceNamespaceId(rni))
         Con_Error("getNamespaceForId: Invalid namespace id %i.", (int)rni);
-    return namespaces[((uint)rni)-1];
+    return &namespaces[((uint)rni)-1];
 }
 
 static resourcenamespaceid_t findNamespaceId(resourcenamespace_t* rnamespace)
 {
-    if(NULL != rnamespace)
+    if(rnamespace)
     {
         uint i;
         for(i = 0; i < numNamespaces; ++i)
         {
-            resourcenamespace_t* other = namespaces[i];
-            if(other == rnamespace)
+            resourcenamespaceinfo_t* info = &namespaces[i];
+            if(info->rnamespace == rnamespace)
                 return (resourcenamespaceid_t)(i+1);
         }
     }
@@ -167,8 +171,8 @@ static resourcenamespaceid_t findNamespaceForName(const char* name)
         uint i;
         for(i = 0; i < numNamespaces; ++i)
         {
-            resourcenamespace_t* rnamespace = namespaces[i];
-            if(!stricmp(Str_Text(ResourceNamespace_Name(rnamespace)), name))
+            resourcenamespaceinfo_t* info = &namespaces[i];
+            if(!stricmp(Str_Text(&info->name), name))
                 return (resourcenamespaceid_t)(i+1);
         }
     }
@@ -177,51 +181,205 @@ static resourcenamespaceid_t findNamespaceForName(const char* name)
 
 static void destroyAllNamespaces(void)
 {
-    if(numNamespaces == 0)
-        return;
-    { uint i;
+    uint i;
+    if(numNamespaces == 0) return;
+
     for(i = 0; i < numNamespaces; ++i)
     {
-        resourcenamespace_t* rnamespace = namespaces[i];
-        if(NULL != ResourceNamespace_Directory(rnamespace))
-        {
-            FileDirectory_Delete(ResourceNamespace_Directory(rnamespace));
-        }
-        ResourceNamespace_Delete(rnamespace);
-    }}
+        resourcenamespaceinfo_t* info = &namespaces[i];
+        if(info->directory) FileDirectory_Delete(info->directory);
+        ResourceNamespace_Delete(info->rnamespace);
+        Str_Free(&info->name);
+    }
     free(namespaces);
     namespaces = 0;
 }
 
 static void resetAllNamespaces(void)
 {
-    uint i;
-    for(i = 0; i < numNamespaces; ++i)
-        ResourceNamespace_Reset(namespaces[i]);
+    resourcenamespaceid_t rni;
+    for(rni = 1; rni < numNamespaces+1; ++rni)
+    {
+        F_ResetResourceNamespace(rni);
+    }
 }
 
-static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* searchPath,
-    ddstring_t* foundPath, resourcenamespace_t* rnamespace)
+static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const struct pathdirectory_node_s* node)
 {
-    assert(inited && searchPath && !Str_IsEmpty(searchPath));
+    ddstring_t* name;
+    assert(rnInfo && node);
+
+    name = rnInfo->composeName(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+    if(ResourceNamespace_Add(rnInfo->rnamespace, name, node))
+    {
+        // We will need to rebuild this namespace (if we aren't already doing so,
+        // in the case of auto-populated namespaces built from FileDirectorys).
+        rnInfo->flags |= RNF_IS_DIRTY;
+    }
+    Str_Delete(name);
+}
+
+static int addFileResourceWorker(const struct pathdirectory_node_s* node, void* paramaters)
+{
+    resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*) paramaters;
+    // We are only interested in leafs (i.e., files and not directories).
+    if(PathDirectoryNode_Type(node) == PT_LEAF)
+    {
+        addResourceToNamespace(rnInfo, node);
+    }
+    return 0; // Continue adding.
+}
+
+static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
+{
+/*#if _DEBUG
+    uint startTime;
+#endif*/
+    ddstring_t* searchPaths;
+
+    assert(rnInfo);
+    if(!(rnInfo->flags & RNF_IS_DIRTY)) return;
+
+/*#if _DEBUG
+    VERBOSE( Con_Message("Rebuilding rnamespace '%s'...\n", Str_Text(&rnInfo->name)) )
+    VERBOSE2( startTime = Sys_GetRealTime() )
+#endif*/
+
+    ResourceNamespace_Clear(rnInfo->rnamespace);
+    FileDirectory_Clear(rnInfo->directory);
+
+    searchPaths = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
+    if(searchPaths)
+    {
+        if(!Str_IsEmpty(searchPaths))
+        {
+/*#if _DEBUG
+            VERBOSE2( Con_PrintPathList(Str_Text(searchPaths)) )
+#endif*/
+
+            // (Re)populate the directory and insert found paths into the resource namespace.
+            // \todo It should not be necessary for a unique directory per namespace.
+            FileDirectory_AddPathList3(rnInfo->directory, Str_Text(searchPaths), addFileResourceWorker, (void*)rnInfo);
+            FileDirectory_Print(rnInfo->directory);
+        }
+        Str_Delete(searchPaths);
+    }
+    rnInfo->flags &= ~RNF_IS_DIRTY;
+
+/*#if _DEBUG
+    VERBOSE2( ResourceNamespace_Print(rnInfo->rnamespace) )
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
+#endif*/
+}
+
+typedef struct {
+    const char* path;
+    char delimiter;
+    pathdirectorysearch_t search;
+    boolean searchInited;
+    struct pathdirectory_node_s* foundNode;
+} findresourceinnamespaceworker_params_t;
+
+static int findResourceInNamespaceWorker(struct pathdirectory_node_s* node, void* paramaters)
+{
+    findresourceinnamespaceworker_params_t* p = (findresourceinnamespaceworker_params_t*)paramaters;
+    assert(node && p);
+    // Are we yet to initialize the search?
+    if(!p->searchInited)
+    {
+        PathDirectory_InitSearch(&p->search, PCF_NO_BRANCH, p->path, p->delimiter);
+        p->searchInited = true;
+    }
+    // Stop iteration of resources as soon as a match is found.
+    if(PathDirectoryNode_MatchDirectory(node, &p->search, NULL))
+    {
+        p->foundNode = node;
+        return 1;
+    }
+    return 0; // Continue iteration.
+}
+
+/**
+ * Find a named resource in this namespace.
+ *
+ * @param name  Name of the resource being searched for.
+ * @param searchPath  Relative or absolute path to the resource.
+ * @param delimiter  Fragments of @a searchPath are delimited by this character.
+ * @param foundPath  If not @c NULL and a path is found, it is written back here.
+ * @return  @c true= A resource was found.
+ */
+static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const ddstring_t* name,
+    const ddstring_t* searchPath, char delimiter, ddstring_t* foundPath)
+{
+    boolean found = false;
+    assert(rnInfo && name && searchPath);
+
+    if(!Str_IsEmpty(searchPath))
+    {
+        findresourceinnamespaceworker_params_t p;
+
+        // Ensure the namespace is up to date.
+        rebuildResourceNamespace(rnInfo);
+
+        // There may not be any matching named resources, so we defer initialization
+        // of the PathDirectorySearch until the first name-match is found.
+        p.path = Str_Text(searchPath);
+        p.delimiter = delimiter;
+        p.searchInited = false;
+        p.foundNode = NULL;
+
+        // Perform the search.
+        if(found = ResourceNamespace_Iterate2(rnInfo->rnamespace, name, findResourceInNamespaceWorker, (void*)&p))
+        {
+            // Does the caller want to know the matched path?
+            if(foundPath)
+            {
+                struct pathdirectory_node_s* node = p.foundNode;
+                PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, delimiter);
+            }
+        }
+
+        // Cleanup.
+        if(p.searchInited) PathDirectory_DestroySearch(&p.search);
+    }
+    return found;
+}
+
+static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSearchPath,
+    ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
+{
+    ddstring_t searchPath;
+    assert(inited && rawSearchPath && !Str_IsEmpty(rawSearchPath));
+
+    Str_Init(&searchPath);
+    F_FixSlashes(&searchPath, rawSearchPath);
+
     // Is there a namespace we should use?
-    if(rnamespace && ResourceNamespace_Find2(rnamespace, searchPath, foundPath))
+    if(rnamespaceInfo)
     {
-        if(foundPath)
-            F_PrependBasePath(foundPath, foundPath);
+        ddstring_t* name = rnamespaceInfo->composeName(&searchPath);
+        if(findResourceInNamespace(rnamespaceInfo, name, &searchPath, FILEDIRECTORY_DELIMITER, foundPath))
+        {
+            Str_Free(&searchPath);
+            Str_Delete(name);
+            if(foundPath) F_PrependBasePath(foundPath, foundPath);
+            return true;
+        }
+        Str_Delete(name);
+    }
+
+    if(0 != F_Access(Str_Text(&searchPath)))
+    {
+        Str_Free(&searchPath);
+        if(foundPath) F_PrependBasePath(foundPath, &searchPath);
         return true;
     }
-    if(0 != F_Access(Str_Text(searchPath)))
-    {
-        if(foundPath)
-            F_PrependBasePath(foundPath, searchPath);
-        return true;
-    }
+    Str_Free(&searchPath);
     return false;
 }
 
 static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchPath,
-    ddstring_t* foundPath, resourcenamespace_t* rnamespace)
+    ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
 {
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
     {
@@ -231,7 +389,7 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
     // Has an extension been specified?
     ptr = F_FindFileExtension(Str_Text(searchPath));
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindResource2(rclass, searchPath, foundPath, rnamespace);
+        found = tryFindResource2(rclass, searchPath, foundPath, rnamespaceInfo);
 
     if(!found)
     {
@@ -256,15 +414,15 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
             Str_Init(&tmp);
             do
             {
-                const resourcetypeinfo_t* info = getInfoForResourceType(*type);
-                if(info->knownFileNameExtensions[0])
+                const resourcetypeinfo_t* typeInfo = getInfoForResourceType(*type);
+                if(typeInfo->knownFileNameExtensions[0])
                 {
-                    char* const* ext = info->knownFileNameExtensions;
+                    char* const* ext = typeInfo->knownFileNameExtensions;
                     do
                     {
                         Str_Clear(&tmp);
                         Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
-                        found = tryFindResource2(rclass, &tmp, foundPath, rnamespace);
+                        found = tryFindResource2(rclass, &tmp, foundPath, rnamespaceInfo);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);
@@ -278,14 +436,14 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
 }
 
 static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPath,
-    const ddstring_t* optionalSuffix, ddstring_t* foundPath, resourcenamespace_t* rnamespace)
+    const ddstring_t* optionalSuffix, ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
 {
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
     {
     boolean found = false;
 
 #if _DEBUG
-    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespace? Str_Text(ResourceNamespace_Name(rnamespace)) : "None") )
+    VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespaceInfo? Str_Text(&rnamespaceInfo->name) : "None") )
 #endif
 
     // First try with the optional suffix.
@@ -309,13 +467,13 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
             Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
         }}
 
-        found = tryFindResource(rclass, &fn, foundPath, rnamespace);
+        found = tryFindResource(rclass, &fn, foundPath, rnamespaceInfo);
         Str_Free(&fn);
     }
 
     // Try without a suffix.
     if(!found)
-        found = tryFindResource(rclass, searchPath, foundPath, rnamespace);
+        found = tryFindResource(rclass, searchPath, foundPath, rnamespaceInfo);
 
     return found;
     }
@@ -348,10 +506,11 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
             // Has a namespace identifier been included?
             if(!Str_IsEmpty(Uri_Scheme(searchPath)))
             {
-                resourcenamespaceid_t rni;
-                if((rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)))) != 0)
+                resourcenamespaceid_t rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)));
+                if(rni)
                 {
-                    if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, getNamespaceForId(rni)))
+                    resourcenamespaceinfo_t* rnamespaceInfo = getNamespaceInfoForId(rni);
+                    if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, rnamespaceInfo))
                         result = n;
                 }
                 else
@@ -634,12 +793,22 @@ void F_ResetAllResourceNamespaces(void)
 
 void F_ResetResourceNamespace(resourcenamespaceid_t rni)
 {
-    ResourceNamespace_Reset(F_ToResourceNamespace(rni));
+    resourcenamespaceinfo_t* info;
+    if(!F_IsValidResourceNamespaceId(rni)) return;
+
+    info = getNamespaceInfoForId(rni);
+    ResourceNamespace_ClearSearchPaths(info->rnamespace, SPG_EXTRA);
+    ResourceNamespace_Clear(info->rnamespace);
+    if(info->directory)
+    {
+        FileDirectory_Clear(info->directory);
+    }
+    info->flags |= RNF_IS_DIRTY;
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
-    return getNamespaceForId(rni);
+    return getNamespaceInfoForId(rni)->rnamespace;
 }
 
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
@@ -668,23 +837,62 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+resourcenamespace_t* F_CreateResourceNamespace(const char* name, filedirectory_t* directory,
+    ddstring_t* (*composeNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
-    assert(name);
+    resourcenamespaceinfo_t* info;
+    resourcenamespace_t* rn;
+
+    assert(name && directory && composeNameFunc);
     errorIfNotInited("F_CreateResourceNamespace");
-    {
-    resourcenamespace_t* rn = ResourceNamespace_New2(name, directory, composeHashNameFunc, hashNameFunc, flags);
+
+    if(strlen(name) < RESOURCENAMESPACE_MINNAMELENGTH)
+        Con_Error("F_CreateResourceNamespace: Invalid name '%s' (min length:%i)",
+            name, (int)RESOURCENAMESPACE_MINNAMELENGTH);
+
+    rn = ResourceNamespace_New(hashNameFunc);
 
     // Add this new namespace to the global list.
-    namespaces = (resourcenamespace_t**) realloc(namespaces, sizeof(*namespaces) * ++numNamespaces);
-    if(namespaces == NULL)
+    namespaces = (resourcenamespaceinfo_t*) realloc(namespaces, sizeof *namespaces * ++numNamespaces);
+    if(!namespaces)
         Con_Error("F_CreateResourceNamespace: Failed on (re)allocation of %lu bytes for new resource namespace\n",
-            (unsigned long) (sizeof(*namespaces) * numNamespaces));
-    namespaces[numNamespaces-1] = rn;
+            (unsigned long) sizeof *namespaces * numNamespaces);
+    info = &namespaces[numNamespaces-1];
+
+    Str_Init(&info->name);
+    Str_Set(&info->name, name);
+    info->rnamespace = rn;
+    info->directory = directory;
+    info->composeName = composeNameFunc;
+    info->flags = flags | RNF_IS_DIRTY;
+
     return rn;
+}
+
+boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,
+    resourcenamespace_searchpathgroup_t group)
+{
+    resourcenamespaceinfo_t* info;
+    errorIfNotInited("F_AddSearchPathToResourceNamespace");
+    info = getNamespaceInfoForId(rni);
+    if(ResourceNamespace_AddSearchPath(info->rnamespace, uri, group))
+    {
+        info->flags |= RNF_IS_DIRTY;
+        return true;
     }
+    return false;
+}
+
+void F_AddResourceToNamespace(resourcenamespaceid_t rni, const struct pathdirectory_node_s* node)
+{
+    errorIfNotInited("F_AddResourceToNamespace");
+    addResourceToNamespace(getNamespaceInfoForId(rni), node);
+}
+
+const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni)
+{
+    return &(getNamespaceInfoForId(rni))->name;
 }
 
 Uri** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths,
@@ -992,13 +1200,32 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
     return RT_NONE; // Unrecognizable.
 }
 
+boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
+{
+    if(path && !Str_IsEmpty(path))
+    {
+        resourcenamespaceinfo_t* info = getNamespaceInfoForId(rni);
+        if(info->flags & RNF_USE_VMAP)
+        {
+            int nameLen = Str_Length(&info->name), pathLen = Str_Length(path);
+            if(nameLen <= pathLen && Str_At(path, nameLen) == DIR_SEP_CHAR &&
+               !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
+            {
+                Str_Prepend(path, Str_Text(GameInfo_DataPath(DD_GameInfo())));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 boolean F_ApplyPathMapping(ddstring_t* path)
 {
     assert(path);
     errorIfNotInited("F_ApplyPathMapping");
-    { uint i = 0;
+    { uint i = 1;
     boolean result = false;
-    while(i < numNamespaces && !(result = ResourceNamespace_MapPath(namespaces[i++], path)));
+    while(i < numNamespaces+1 && !(result = F_MapResourcePath(i++, path)));
     return result;
     }
 }

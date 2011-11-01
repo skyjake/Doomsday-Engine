@@ -217,7 +217,7 @@ static boolean validateFontUri(const Uri* uri, int flags)
  */
 static font_t* findFontForPath(pathdirectory_t* fontDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = DD_SearchPathDirectory(fontDirectory,
+    struct pathdirectory_node_s* node = PathDirectory_Find(fontDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTDIRECTORY_DELIMITER);
     if(node)
     {

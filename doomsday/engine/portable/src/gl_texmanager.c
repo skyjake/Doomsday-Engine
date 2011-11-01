@@ -1586,7 +1586,7 @@ void GL_PruneTextureVariantSpecifications(void)
     numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
     numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
 #if _DEBUG
-    Con_Message("Pruned %i unused texture variant %s.\n", numPruned, numPruned == 1? "specification" : "specifications");
+    VERBOSE( Con_Message("Pruned %i unused texture variant %s.\n", numPruned, numPruned == 1? "specification" : "specifications") )
 #endif
 }
 
@@ -3310,7 +3310,7 @@ static boolean validateTextureUri(const Uri* uri, int flags)
  */
 static texture_t* findTextureForPath(pathdirectory_t* texDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = DD_SearchPathDirectory(texDirectory,
+    struct pathdirectory_node_s* node = PathDirectory_Find(texDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTUREDIRECTORY_DELIMITER);
     if(node)
     {

@@ -818,7 +818,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             READSTR(label);
             CHECKSC;
             { Uri* newUri = Uri_NewWithPath2(label, RC_NULL);
-            ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), newUri, SPG_EXTRA);
+            F_AddSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL), newUri, SPG_EXTRA);
             Uri_Delete(newUri);
             }
         }

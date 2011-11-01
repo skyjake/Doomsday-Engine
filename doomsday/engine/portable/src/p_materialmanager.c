@@ -853,7 +853,7 @@ static boolean validateMaterialUri(const Uri* uri, int flags)
  */
 static material_t* findMaterialForPath(pathdirectory_t* matDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = DD_SearchPathDirectory(matDirectory,
+    struct pathdirectory_node_s* node = PathDirectory_Find(matDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALDIRECTORY_DELIMITER);
     if(node)
     {

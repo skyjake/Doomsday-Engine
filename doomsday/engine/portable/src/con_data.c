@@ -835,7 +835,7 @@ cvar_t* Con_FindVariable(const char* path)
     {
     struct pathdirectory_node_s* node;
     if(0 == cvarCount) return NULL;
-    node = DD_SearchPathDirectory(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
+    node = PathDirectory_Find(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
     if(!node) return NULL;
     return (cvar_t*) PathDirectoryNode_UserData(node);
     }

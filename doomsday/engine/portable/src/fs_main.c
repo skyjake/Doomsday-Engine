@@ -727,7 +727,8 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
     Str_Free(&searchPath);
     if(!file)
     {
-        Str_Delete(foundPath);
+        if(foundPath)
+            Str_Delete(foundPath);
         if(!silent)
         {
             Con_Message("Warning:F_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", path);

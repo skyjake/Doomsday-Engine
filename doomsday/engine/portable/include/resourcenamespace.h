@@ -27,11 +27,13 @@
 
 #include "dd_string.h"
 #include "uri.h"
-#include "filedirectory.h"
 
 typedef struct resourcenamespace_namehash_node_s {
     struct resourcenamespace_namehash_node_s* next;
-    void* data;
+#if _DEBUG
+    ddstring_t name;
+#endif
+    void* userData;
 } resourcenamespace_namehash_node_t;
 
 /**
@@ -58,53 +60,32 @@ typedef enum {
 #define VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(g) ((g) >= SPG_OVERRIDE && (g) < SEARCHPATHGROUP_COUNT)
 
 /**
- * @defGroup ResourceNamespaceFlags Resource Namespace Flags
- * @ingroup core.
- */
-/*@{*/
-#define RNF_USE_VMAP            0x01 // Map resources in packages.
-#define RNF_IS_DIRTY            0x80 // Filehash needs to be (re)built (avoid allocating an empty name hash).
-/*@}*/
-
-/**
  * Resource Namespace.
  *
  * @ingroup core
  */
-#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
 typedef struct resourcenamespace_s {
-    /// Unique symbolic name of this namespace (e.g., "Models").
-    /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
-    ddstring_t _name;
-
-    /// @see ResourceNamespaceFlags
-    byte _flags;
-
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
     Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Path hash table.
-    filedirectory_t* _directory;
-    ddstring_t* (*_composeHashName) (const ddstring_t* path);
-    resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
     resourcenamespace_namehash_t _pathHash;
+
+    /// Resource name hashing callback.
+    resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
 } resourcenamespace_t;
 
-resourcenamespace_t* ResourceNamespace_New(const char* name,
-    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+resourcenamespace_t* ResourceNamespace_New(
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
-resourcenamespace_t* ResourceNamespace_New2(const char* name,
-    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
-    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
 void ResourceNamespace_Delete(resourcenamespace_t* rn);
 
 /**
  * Reset the namespace back to it's "empty" state (i.e., no known symbols).
  */
-void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
+void ResourceNamespace_Clear(resourcenamespace_t* rnamespace);
 
 /**
  * Add a new path to this namespace.
@@ -123,38 +104,43 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* path
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespace_searchpathgroup_t group);
 
 /**
- * Find a path to a named resource in the namespace.
+ * Compose the list of search paths into a @a delimited string.
+ *
+ * @param delimiter  Discreet paths will be delimited by this character.
+ * @return  Resultant string which should be released with Str_Delete().
+ */
+ddstring_t* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter);
+ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*delimiter= ';'*/
+
+/**
+ * Add a new named resource into the namespace. Multiple names for a given
+ * resource may coexist however duplicates are automatically pruned.
  *
  * \post Name hash may have been rebuilt.
  *
- * @param searchPath    Relative or absolute path.
- * @param foundPath     If not @c NULL and a path is found, it is written back here.
- *
- * @return  Ptr to the name hash to use when searching.
+ * @param name  Name of the resource being added.
+ * @param node  PathDirectoryNode representing the resource in the owning PathDirectory.
+ * @return  @c true= If the namespace did not already contain this resource.
  */
-boolean ResourceNamespace_Find2(resourcenamespace_t* rnamespace, const ddstring_t* searchPath, ddstring_t* foundPath);
-boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const ddstring_t* searchPath);
+boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
+    const struct pathdirectory_node_s* node);
 
 /**
- * Apply mapping for this namespace to the specified path (if enabled).
+ * Iterate over resources in this namespace. Iteration ends when all
+ * selected resources have been visited or a callback returns non-zero.
  *
- * This mapping will translate directives and symbolic identifiers into their default paths,
- * which themselves are determined using the current GameInfo.
- *
- *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
- *
- * @param path          Ptr to the path to be mapped.
- * @return  @c true iff mapping was applied to the path.
+ * @param name  If not @c NULL, only consider resources with this name.
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
+ * @return  @c 0 iff iteration completed wholly.
  */
-boolean ResourceNamespace_MapPath(resourcenamespace_t* rnamespace, ddstring_t* path);
+int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
+int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
+    int (*callback) (struct pathdirectory_node_s* node, void* paramaters)); /*paramaters=NULL*/
 
-/**
- * Accessor methods.
- */
-/// @return  Ptr to a string containing the symbolic name.
-const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rnamespace);
-
-/// @return  Ptr to the path directory used with this namespace.
-filedirectory_t* ResourceNamespace_Directory(const resourcenamespace_t* rnamespace);
+#if _DEBUG
+void ResourceNamespace_Print(resourcenamespace_t* rn);
+#endif
 
 #endif /* LIBDENG_SYSTEM_RESOURCENAMESPACE_H */

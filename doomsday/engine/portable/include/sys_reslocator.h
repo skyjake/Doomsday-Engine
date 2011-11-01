@@ -22,6 +22,10 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * Routines for locating resources.
+ */
+
 #ifndef LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 #define LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 
@@ -120,8 +124,13 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    filedirectory_t* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    struct filedirectory_s* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
+
+boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,
+    resourcenamespace_searchpathgroup_t group);
+
+const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni);
 
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
@@ -209,6 +218,20 @@ resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
  * @return  Type determined for this resource else @c RT_NONE.
  */
 resourcetype_t F_GuessResourceTypeByName(const char* name);
+
+/**
+ * Apply mapping for this namespace to the specified path (if enabled).
+ *
+ * This mapping will translate directives and symbolic identifiers into their default paths,
+ * which themselves are determined using the current GameInfo.
+ *
+ *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
+ *
+ * @param rni  Unique identifier of the namespace whose mappings to apply.
+ * @param path  The path to be mapped (applied in-place).
+ * @return  @c true iff mapping was applied to the path.
+ */
+boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path);
 
 /**
  * Apply all resource namespace mappings to the specified path.
