@@ -210,7 +210,6 @@ void LegacyNetwork::removeFromSet(int set, int socket)
 {
     DENG2_ASSERT(d->sets.contains(set));
     DENG2_ASSERT(d->sockets.contains(socket));
-    DENG2_ASSERT(d->sets[set].members.contains(d->sockets[socket]));
 
     d->sets[set].members.removeOne(d->sockets[socket]);
 }

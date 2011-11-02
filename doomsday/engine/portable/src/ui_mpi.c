@@ -398,6 +398,12 @@ void MPIStartServer(ui_object_t *ob)
     UI_End();
 }
 
+void MPIFinishCustomServerSearch(int nodeId, const byte* data, int size)
+{
+    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
+    MPIUpdateServerList();
+}
+
 void MPISearch(ui_object_t *ob)
 {
     if(retrieving)
@@ -410,10 +416,8 @@ void MPISearch(ui_object_t *ob)
     if(searchMode == SEARCH_CUSTOM)
     {
         // This is a synchronous operation.
-        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0));
+        N_LookForHosts(str_ipaddr, strtol(str_ipport, 0, 0), MPIFinishCustomServerSearch);
         lookedForHosts = true;
-
-        MPIUpdateServerList();
     }
     else
     {

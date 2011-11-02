@@ -59,12 +59,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct connectparam_s {
-    char        address[256];
-    int         port;
-    serverinfo_t info;
-} connectparam_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 D_CMD(HuffmanStats); // in net_buf.c
@@ -1201,25 +1195,44 @@ D_CMD(SetConsole)
     return true;
 }
 
-int Net_ConnectWorker(void *ptr)
+void Net_FinishConnection(int nodeId, const byte* data, int size)
 {
-    connectparam_t     *param = ptr;
-    double              startTime = 0;
-    boolean             isDone = false;
-    int                 returnValue = false;
+    serverinfo_t info;
 
-    // Make sure TCP/IP is active.
-    if(N_InitService(false))
+    Con_Message("Net_FinishConnection: Got reply with %i bytes.\n", size);
+
+    // Parse the response for server info.
+    N_ClientHandleResponseToInfoQuery(nodeId, data, size);
+
+    if(N_GetHostInfo(0, &info))
     {
-        Con_Message("Connecting to %s...\n", param->address);
+        // Found something!
+        //Net_PrintServerInfo(0, NULL);
+        //Net_PrintServerInfo(0, &info);
+        Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
+    }
+    else
+    {
+        Con_Message("Net_FinishConnection: Failed to retrieve server info.\n");
+    }
+}
 
-        // Start searching at the specified location.
-        N_LookForHosts(param->address, param->port);
+int Net_StartConnection(const char* address, int port)
+{
+    // Make sure TCP/IP is active.
+    if(!N_InitService(false))
+    {
+        Con_Message("TCP/IP not available.\n");
+        return false;
+    }
 
-        startTime = Sys_GetSeconds();
-        isDone = false;
-        while(!isDone)
-        {
+    Con_Message("Net_StartConnection: Connecting to %s...\n", address);
+
+    // Start searching at the specified location.
+    return N_LookForHosts(address, port, Net_FinishConnection);
+
+
+/*
             if(N_GetHostInfo(0, &param->info))
             {   // Found something!
                 Net_PrintServerInfo(0, NULL);
@@ -1247,7 +1260,7 @@ int Net_ConnectWorker(void *ptr)
     }
 
     Con_BusyWorkerEnd();
-    return returnValue;
+    return returnValue;*/
 }
 
 /**
@@ -1256,8 +1269,8 @@ int Net_ConnectWorker(void *ptr)
  */
 D_CMD(Connect)
 {
-    connectparam_t      param;
-    char               *ptr;
+    char *ptr;
+    int port = 0;
 
     if(argc < 2 || argc > 3)
     {
@@ -1273,22 +1286,19 @@ D_CMD(Connect)
         return false;
     }
 
-    strcpy(param.address, argv[1]);
-
     // If there is a port specified in the address, use it.
-    param.port = 0;
-    if((ptr = strrchr(param.address, ':')))
+    port = 0;
+    if((ptr = strrchr(argv[1], ':')))
     {
-        param.port = strtol(ptr + 1, 0, 0);
+        port = strtol(ptr + 1, 0, 0);
         *ptr = 0;
     }
     if(argc == 3)
     {
-        param.port = strtol(argv[2], 0, 0);
+        port = strtol(argv[2], 0, 0);
     }
 
-    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                    NULL, Net_ConnectWorker, &param);
+    return Net_StartConnection(argv[1], port);
 }
 
 /**
@@ -1455,7 +1465,7 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], 0);
+            success = N_LookForHosts(argv[2], 0, 0);
         }
         else if(!stricmp(argv[1], "connect"))
         {
@@ -1500,7 +1510,7 @@ D_CMD(Net)
     {
         if(!stricmp(argv[1], "search"))
         {
-            success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0));
+            success = N_LookForHosts(argv[2], strtol(argv[3], 0, 0), 0);
         }
     }
 

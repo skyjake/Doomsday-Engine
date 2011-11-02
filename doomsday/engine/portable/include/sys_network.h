@@ -41,6 +41,8 @@ extern          "C" {
 #define DEFAULT_TCP_PORT    13209
 #define DEFAULT_UDP_PORT    13209
 
+    typedef void (*expectedresponder_t)(int, const byte*, int);
+
     // If a master action fails, the action queue is emptied.
     typedef enum {
         MAC_REQUEST, // Retrieve the list of servers from the master.
@@ -73,7 +75,8 @@ extern          "C" {
     boolean         N_IsAvailable(void);
     boolean         N_UsingInternet(void);
     void            N_PrintInfo(void);
-    boolean         N_LookForHosts(const char *address, int port);
+    boolean         N_LookForHosts(const char *address, int port, expectedresponder_t responder);
+    void            N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size);
     void            N_Listen(void);
     void            N_ListenNodes(void);
 

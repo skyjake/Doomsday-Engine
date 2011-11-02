@@ -83,7 +83,7 @@ typedef struct netnode_s {
     // This is the client's remote address.
     ipaddress_t addr;
 
-    void (*expectedResponder)(struct netnode_s* node, const byte* data, int size);
+    expectedresponder_t expectedResponder;
 
 #if 0
     // Send queue statistics.
@@ -349,7 +349,9 @@ boolean N_UsingInternet(void)
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
     if(!located.valid || index != 0)
+    {
         return false;
+    }
     memcpy(info, &located.info, sizeof(*info));
     return true;
 }
@@ -392,7 +394,7 @@ void N_TerminateNode(nodeid_t id)
 
     if(netServerMode && node->hasJoined)
     {
-        LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
+        LegacyNetwork_SocketSet_Remove(joinedSockSet, node->sock);
 
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
@@ -473,7 +475,7 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
 
     // Move it to the joined socket set.
     LegacyNetwork_SocketSet_Remove(sockSet, node->sock);
-    LegacyNetwork_SocketSet_Remove_Add(joinedSockSet, node->sock);
+    LegacyNetwork_SocketSet_Add(joinedSockSet, node->sock);
 
     // \fixme We should use more discretion with the name. It has
     // been provided by an untrusted source.
@@ -487,8 +489,9 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
     return true;
 }
 
-void N_ClientHandleResponseToInfoQuery(netnode_t *svNode, const byte *data, int size)
+void N_ClientHandleResponseToInfoQuery(int nodeId, const byte *data, int size)
 {
+    netnode_t* svNode = &netNodes[nodeId];
     const char* response = (const char*) data;
 
     // Close the connection; that was all the information we need.
@@ -521,6 +524,7 @@ void N_ClientHandleResponseToInfoQuery(netnode_t *svNode, const byte *data, int 
     }
     else
     {
+        located.valid = false;
         Con_Message("N_ClientHandleResponseToInfoQuery: Reply from %s (port %i) was invalid.\n",
                     svNode->addr.host, svNode->addr.port);
     }
@@ -531,7 +535,7 @@ void N_ClientHandleResponseToInfoQuery(netnode_t *svNode, const byte *data, int 
 /**
  * Maybe it would be wisest to run this in a separate thread?
  */
-boolean N_LookForHosts(const char *address, int port)
+boolean N_LookForHosts(const char *address, int port, expectedresponder_t responder)
 {
     netnode_t* svNode = &netNodes[0];
 
@@ -563,20 +567,21 @@ boolean N_LookForHosts(const char *address, int port)
     LegacyNetwork_Send(svNode->sock, "Info?", 5);
     Con_Message("N_LookForHosts: Sent info query to %s (port %i).\n", address, port);
 
-    svNode->expectedResponder = N_ClientHandleResponseToInfoQuery;
+    svNode->expectedResponder = (responder? responder : N_ClientHandleResponseToInfoQuery);
     return true;
 }
 
 /**
  * Handles the server's response to a client's join request.
  */
-void N_ClientHandleResponseToJoin(struct netnode_s* svNode, const byte* data, int size)
+void N_ClientHandleResponseToJoin(int nodeId, const byte* data, int size)
 {
+    struct netnode_s* svNode = &netNodes[nodeId];
     const char* buf = (const char*) data;
 
-    if(size < 6 || strncmp(buf, "Enter ", 6))
+    if(size < 5 || strncmp(buf, "Enter", 5))
     {
-        Con_Message("N_Connect: Server refused connection.\n");
+        Con_Message("N_Connect: Server refused connection (received %i bytes).\n", size);
         N_Disconnect();
         return;
     }
@@ -611,7 +616,7 @@ void N_ClientHandleResponseToJoin(struct netnode_s* svNode, const byte* data, in
  */
 boolean N_Connect(int index)
 {
-    netnode_t *svNode;
+    netnode_t *svNode = 0;
     foundhost_t *host;
     char buf[300], *pName;
 
@@ -626,8 +631,8 @@ boolean N_Connect(int index)
     host = &located;
 
     // We'll use node number zero for all communications.
-    svNode->expectedResponder = NULL;
     svNode = &netNodes[0];
+    svNode->expectedResponder = NULL;
     if(!(svNode->sock = LegacyNetwork_Open(host->addr.host, host->addr.port)))
     {
         N_IPToString(buf, &host->addr);
@@ -645,7 +650,7 @@ boolean N_Connect(int index)
     sprintf(buf, "Join %s", pName);
     LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
 
-    VERBOSE(Con_Message("N_Connect: %s", buf));
+    //VERBOSE(Con_Message("N_Connect: %s", buf));
 
     svNode->expectedResponder = N_ClientHandleResponseToJoin;
     return true;
@@ -795,7 +800,7 @@ static boolean N_ServerHandleNodeRequest(nodeid_t node, const char *command, int
             LegacyNetwork_Send(sock, "Bye", 3);
             N_TerminateNode(node);
         }
-        Str_Delete(&name);
+        Str_Free(&name);
     }
     /*
     else if(length == 3 && !strcmp(command, "Bye"))
@@ -889,7 +894,7 @@ void N_ClientListenUnjoined(void)
             if(svNode->expectedResponder)
             {
                 // The responder may change during the execution of this.
-                svNode->expectedResponder(svNode, data, size);
+                svNode->expectedResponder(0, data, size);
             }
             else
             {
@@ -919,9 +924,10 @@ void N_ServerListenJoinedNodes(void)
             netnode_t* node = netNodes + i;
 
             // Does this socket have got any activity?
-            if(node->hasJoined && LegacyNetwork_BytesReady(node->sock))
+            if(node->hasJoined)
             {
-                if(!N_ReceiveReliably(i))
+                if(LegacyNetwork_IsDisconnected(node->sock) ||
+                   (LegacyNetwork_BytesReady(node->sock) && !N_ReceiveReliably(i)))
                 {
                     netevent_t nev;
                     nev.type = NE_TERMINATE_NODE;
@@ -930,6 +936,9 @@ void N_ServerListenJoinedNodes(void)
                 }
             }
         }
+
+        // Should we go take care of the events?
+        if(N_NEPending()) break;
     }
 }
 
