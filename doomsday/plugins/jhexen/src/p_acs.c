@@ -335,9 +335,13 @@ void P_CheckACSStore(uint map)
     if(ACSStoreSize != origSize)
     {
         if(ACSStoreSize)
+        {
             ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+        }
         else
+        {
             Z_Free(ACSStore); ACSStore = NULL;
+        }
     }
 }
 

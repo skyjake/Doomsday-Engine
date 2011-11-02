@@ -1,4 +1,4 @@
-/**\file
+/**\file s_mus.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_mus.c: Music Subsystem.
+ * Music Subsystem
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -167,16 +167,12 @@ boolean Mus_Init(void)
         Con_Message("Mus_Init: Interfaces:");
         for(i = 0; i < NUM_INTERFACES; ++i)
         {
-            if(*interfaces[i].ip)
-            {
-                if(!(*interfaces[i].ip)->Get(MUSIP_ID, buf))
-                    strcpy(buf, "?");
-
-                Con_Message(" %s", buf);
-            }
+            if(!(*interfaces[i].ip))
+                strcpy(buf, "N/A");
+            else if( !(*interfaces[i].ip)->Get(MUSIP_ID, buf))
+                strcpy(buf, "?");
+            Con_Message("  %s: %s\n", interfaces[i].name, buf);
         }
-
-        Con_Message("\n");
     }
 
     currentSong = -1;
