@@ -28,27 +28,6 @@
 #include "dd_string.h"
 #include "uri.h"
 
-typedef struct resourcenamespace_namehash_node_s {
-    struct resourcenamespace_namehash_node_s* next;
-#if _DEBUG
-    ddstring_t name;
-#endif
-    void* userData;
-} resourcenamespace_namehash_node_t;
-
-/**
- * Name search hash.
- */
-// Number of entries in the hash table.
-#define RESOURCENAMESPACE_HASHSIZE 512
-typedef unsigned short resourcenamespace_namehash_key_t;
-
-typedef struct {
-    resourcenamespace_namehash_node_t* first;
-    resourcenamespace_namehash_node_t* last;
-} resourcenamespace_hashentry_t;
-typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMESPACE_HASHSIZE];
-
 typedef enum {
     SPG_OVERRIDE = 0, // Override paths
     SPG_EXTRA, // Extra/runtime paths
@@ -64,14 +43,18 @@ typedef enum {
  *
  * @ingroup core
  */
-typedef struct resourcenamespace_s {
+// Number of entries in the hash table.
+#define RESOURCENAMESPACE_HASHSIZE 512
+typedef unsigned short resourcenamespace_namehash_key_t;
+
+typedef struct {
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
     Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Name hash table.
-    resourcenamespace_namehash_t _nameHash;
+    struct resourcenamespace_namehash_s* _nameHash;
 
     /// Resource name hashing callback.
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);

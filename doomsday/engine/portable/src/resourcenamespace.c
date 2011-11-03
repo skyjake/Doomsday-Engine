@@ -33,14 +33,35 @@
 
 #include "resourcenamespace.h"
 
+typedef struct resourcenamespace_namehash_node_s {
+    struct resourcenamespace_namehash_node_s* next;
+#if _DEBUG
+    ddstring_t name;
+#endif
+    void* userData;
+} resourcenamespace_namehash_node_t;
+
+/**
+ * Name search hash.
+ */
+typedef struct {
+    resourcenamespace_namehash_node_t* first;
+    resourcenamespace_namehash_node_t* last;
+} resourcenamespace_hashentry_t;
+
+typedef struct resourcenamespace_namehash_s {
+    resourcenamespace_hashentry_t hash[RESOURCENAMESPACE_HASHSIZE];
+} resourcenamespace_namehash_t;
+
 static void clearNameHash(resourcenamespace_t* rn)
 {
     uint i;
     assert(rn);
+    if(!rn->_nameHash) return;
 
     for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
     {
-        resourcenamespace_hashentry_t* entry = &rn->_nameHash[i];
+        resourcenamespace_hashentry_t* entry = &rn->_nameHash->hash[i];
         while(entry->first)
         {
             resourcenamespace_namehash_node_t* nextNode = entry->first->next;
@@ -52,6 +73,13 @@ static void clearNameHash(resourcenamespace_t* rn)
         }
         entry->last = 0;
     }
+}
+
+static void destroyNameHash(resourcenamespace_t* rn)
+{
+    if(!rn->_nameHash) return;
+    clearNameHash(rn);
+    free(rn->_nameHash), rn->_nameHash = NULL;
 }
 
 static void appendSearchPathsInGroup(resourcenamespace_t* rn,
@@ -80,12 +108,15 @@ static ddstring_t* formSearchPathList(resourcenamespace_t* rn, ddstring_t* pathL
 static resourcenamespace_namehash_node_t* findPathNodeInHash(resourcenamespace_t* rn,
     resourcenamespace_namehash_key_t key, const PathDirectoryNode* pdNode)
 {
-    resourcenamespace_namehash_node_t* node;
+    resourcenamespace_namehash_node_t* node = NULL;
     assert(rn && pdNode);
-    node = rn->_nameHash[key].first;
-    while(node && node->userData != pdNode)
+    if(rn->_nameHash)
     {
-        node = node->next;
+        node = rn->_nameHash->hash[key].first;
+        while(node && node->userData != pdNode)
+        {
+            node = node->next;
+        }
     }
     return node;
 }
@@ -107,8 +138,8 @@ resourcenamespace_t* ResourceNamespace_New(
         rn->_searchPaths[i] = NULL;
     }
 
+    rn->_nameHash = NULL;
     rn->_hashName = hashNameFunc;
-    memset(rn->_nameHash, 0, sizeof(rn->_nameHash));
 
     return rn;
 }
@@ -121,7 +152,7 @@ void ResourceNamespace_Delete(resourcenamespace_t* rn)
     {
         ResourceNamespace_ClearSearchPaths(rn, (resourcenamespace_searchpathgroup_t)i);
     }
-    clearNameHash(rn);
+    destroyNameHash(rn);
     free(rn);
 }
 
@@ -216,7 +247,7 @@ int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
 
         for(key = from; key < to+1; ++key)
         {
-            node = rn->_nameHash[key].first;
+            node = rn->_nameHash->hash[key].first;
             while(node)
             {
                 next = node->next;
@@ -255,15 +286,21 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
     node = findPathNodeInHash(rn, key, pdNode);
     if(!node)
     {
-        // Create a new node for this name.
         resourcenamespace_hashentry_t* slot;
 
-        isNewNode = true;
+        // Is it time to allocate the name hash?
+        if(!rn->_nameHash)
+        {
+            rn->_nameHash = (resourcenamespace_namehash_t*)calloc(1, sizeof *rn->_nameHash);
+            if(!rn->_nameHash)
+                Con_Error("ResourceNamespace::Add: Failed on allocation of %lu bytes for new ResourceNamespace::NameHash.", (unsigned long) sizeof *rn->_nameHash);
+        }
+
+        // Create a new node for this name.
         node = (resourcenamespace_namehash_node_t*)malloc(sizeof *node);
         if(!node)
-            Con_Error("ResourceNamespace::Add: Failed on allocation of %lu bytes for "
-                "new ResourceNamespace::NameHash::Node.", (unsigned long) sizeof *node);
-
+            Con_Error("ResourceNamespace::Add: Failed on allocation of %lu bytes for new ResourceNamespace::NameHash::Node.", (unsigned long) sizeof *node);
+        isNewNode = true;
 #if _DEBUG
         Str_Init(&node->name); Str_Set(&node->name, Str_Text(name));
 #endif
@@ -271,7 +308,7 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
         node->next = NULL;
 
         // Link it to the list for this bucket.
-        slot = &rn->_nameHash[key];
+        slot = &rn->_nameHash->hash[key];
         if(slot->last) slot->last->next = node;
         slot->last = node;
         if(!slot->first) slot->first = node;
@@ -294,9 +331,10 @@ void ResourceNamespace_Print(resourcenamespace_t* rn)
     Con_Printf("ResourceNamespace [%p]:\n", (void*)rn);
     n = 0;
     Str_Init(&path);
+    if(rn->_nameHash)
     for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
     {
-        resourcenamespace_hashentry_t* entry = &rn->_nameHash[i];
+        resourcenamespace_hashentry_t* entry = &rn->_nameHash->hash[i];
         resourcenamespace_namehash_node_t* node = entry->first;
         while(node)
         {
