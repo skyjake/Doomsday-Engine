@@ -33,14 +33,14 @@
 
 #include "resourcenamespace.h"
 
-static void clearPathHash(resourcenamespace_t* rn)
+static void clearNameHash(resourcenamespace_t* rn)
 {
     uint i;
     assert(rn);
 
     for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
     {
-        resourcenamespace_hashentry_t* entry = &rn->_pathHash[i];
+        resourcenamespace_hashentry_t* entry = &rn->_nameHash[i];
         while(entry->first)
         {
             resourcenamespace_namehash_node_t* nextNode = entry->first->next;
@@ -78,11 +78,11 @@ static ddstring_t* formSearchPathList(resourcenamespace_t* rn, ddstring_t* pathL
 }
 
 static resourcenamespace_namehash_node_t* findPathNodeInHash(resourcenamespace_t* rn,
-    resourcenamespace_namehash_key_t key, const struct pathdirectory_node_s* pdNode)
+    resourcenamespace_namehash_key_t key, const PathDirectoryNode* pdNode)
 {
     resourcenamespace_namehash_node_t* node;
     assert(rn && pdNode);
-    node = rn->_pathHash[key].first;
+    node = rn->_nameHash[key].first;
     while(node && node->userData != pdNode)
     {
         node = node->next;
@@ -108,7 +108,7 @@ resourcenamespace_t* ResourceNamespace_New(
     }
 
     rn->_hashName = hashNameFunc;
-    memset(rn->_pathHash, 0, sizeof(rn->_pathHash));
+    memset(rn->_nameHash, 0, sizeof(rn->_nameHash));
 
     return rn;
 }
@@ -121,13 +121,13 @@ void ResourceNamespace_Delete(resourcenamespace_t* rn)
     {
         ResourceNamespace_ClearSearchPaths(rn, (resourcenamespace_searchpathgroup_t)i);
     }
-    clearPathHash(rn);
+    clearNameHash(rn);
     free(rn);
 }
 
 void ResourceNamespace_Clear(resourcenamespace_t* rn)
 {
-    clearPathHash(rn);
+    clearNameHash(rn);
 }
 
 boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newUri,
@@ -190,11 +190,11 @@ ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn)
 }
 
 int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (struct pathdirectory_node_s* node, void* paramaters), void* paramaters)
+    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
 {
     int result = 0;
     assert(rn);
-    if(rn->_pathHash && callback)
+    if(rn->_nameHash && callback)
     {
         resourcenamespace_namehash_node_t* node, *next;
         resourcenamespace_namehash_key_t from, to, key;
@@ -216,7 +216,7 @@ int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
 
         for(key = from; key < to+1; ++key)
         {
-            node = rn->_pathHash[key].first;
+            node = rn->_nameHash[key].first;
             while(node)
             {
                 next = node->next;
@@ -231,13 +231,13 @@ int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
 }
 
 int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (struct pathdirectory_node_s* node, void* paramaters))
+    int (*callback) (PathDirectoryNode* node, void* paramaters))
 {
     return ResourceNamespace_Iterate2(rn, name, callback, NULL);
 }
 
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    const struct pathdirectory_node_s* pdNode)
+    const PathDirectoryNode* pdNode)
 {
     resourcenamespace_namehash_node_t* node;
     resourcenamespace_namehash_key_t key;
@@ -271,7 +271,7 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
         node->next = NULL;
 
         // Link it to the list for this bucket.
-        slot = &rn->_pathHash[key];
+        slot = &rn->_nameHash[key];
         if(slot->last) slot->last->next = node;
         slot->last = node;
         if(!slot->first) slot->first = node;
@@ -296,7 +296,7 @@ void ResourceNamespace_Print(resourcenamespace_t* rn)
     Str_Init(&path);
     for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
     {
-        resourcenamespace_hashentry_t* entry = &rn->_pathHash[i];
+        resourcenamespace_hashentry_t* entry = &rn->_nameHash[i];
         resourcenamespace_namehash_node_t* node = entry->first;
         while(node)
         {

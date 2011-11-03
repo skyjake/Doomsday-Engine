@@ -34,6 +34,7 @@
 #include "dd_types.h"
 #include "de_system.h"
 #include "dd_input.h"
+#include "pathdirectory.h"
 
 #define CMDLINE_SIZE 256
 #define MAX_ARGS            256
@@ -87,7 +88,7 @@ typedef struct cvar_s {
     cvartype_t type;
 
     /// Pointer to this variable's node in the directory.
-    struct pathdirectory_node_s* directoryNode;
+    PathDirectoryNode* directoryNode;
 
     /// Pointer to the user data.
     void* ptr;

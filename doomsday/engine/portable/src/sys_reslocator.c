@@ -204,7 +204,7 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const struct pathdirectory_node_s* node)
+static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const PathDirectoryNode* node)
 {
     ddstring_t* name;
     assert(rnInfo && node);
@@ -219,7 +219,7 @@ static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const struct
     Str_Delete(name);
 }
 
-static int addFileResourceWorker(const struct pathdirectory_node_s* node, void* paramaters)
+static int addFileResourceWorker(const PathDirectoryNode* node, void* paramaters)
 {
     resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*) paramaters;
     // We are only interested in leafs (i.e., files and not directories).
@@ -277,10 +277,10 @@ typedef struct {
     char delimiter;
     pathdirectorysearch_t search;
     boolean searchInited;
-    struct pathdirectory_node_s* foundNode;
+    PathDirectoryNode* foundNode;
 } findresourceinnamespaceworker_params_t;
 
-static int findResourceInNamespaceWorker(struct pathdirectory_node_s* node, void* paramaters)
+static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramaters)
 {
     findresourceinnamespaceworker_params_t* p = (findresourceinnamespaceworker_params_t*)paramaters;
     assert(node && p);
@@ -334,7 +334,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
             // Does the caller want to know the matched path?
             if(foundPath)
             {
-                struct pathdirectory_node_s* node = p.foundNode;
+                PathDirectoryNode* node = p.foundNode;
                 PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, delimiter);
             }
         }
@@ -884,7 +884,7 @@ boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri*
     return false;
 }
 
-void F_AddResourceToNamespace(resourcenamespaceid_t rni, const struct pathdirectory_node_s* node)
+void F_AddResourceToNamespace(resourcenamespaceid_t rni, const PathDirectoryNode* node)
 {
     errorIfNotInited("F_AddResourceToNamespace");
     addResourceToNamespace(getNamespaceInfoForId(rni), node);

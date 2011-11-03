@@ -1078,7 +1078,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
 }
 
 static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* searchPath,
-    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters)
 {
     assert(pattern && searchPath && !Str_IsEmpty(searchPath) && callback);
@@ -1129,7 +1129,7 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
 
 typedef struct {
     /// Callback to make for each processed file.
-    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters);
+    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters);
 
     /// Data passed to the callback.
     void* paramaters;
@@ -1152,7 +1152,7 @@ static int findLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 }
 
 int F_AllResourcePaths2(const char* rawSearchPattern,
-    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters),
+    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters)
 {
     ddstring_t searchPattern, searchName, searchDirectory;
@@ -1221,7 +1221,7 @@ searchEnded:
 }
 
 int F_AllResourcePaths(const char* searchPath,
-    int (*callback) (const ddstring_t* path, pathdirectory_nodetype_t type, void* paramaters))
+    int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, callback, 0);
 }
@@ -2057,10 +2057,10 @@ static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
  * Prints the resource path to the console.
  * This is a f_allresourcepaths_callback_t.
  */
-int printResourcePath(const ddstring_t* fileNameStr, pathdirectory_nodetype_t type,
+int printResourcePath(const ddstring_t* fileNameStr, pathdirectorynode_type_t type,
     void* paramaters)
 {
-    assert(fileNameStr && VALID_PATHDIRECTORY_NODETYPE(type));
+    assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
     {
     const char* fileName = Str_Text(fileNameStr);
     boolean makePretty = F_IsRelativeToBasePath(fileName);

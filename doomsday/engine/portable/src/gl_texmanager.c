@@ -149,7 +149,7 @@ static variantspecificationlist_t* detailVariantSpecs[DETAILVARIANT_CONTRAST_HAS
 
 static int texturesCount;
 static texture_t** textures;
-static pathdirectory_t* namespaces[TEXTURENAMESPACE_COUNT];
+static PathDirectory* namespaces[TEXTURENAMESPACE_COUNT];
 
 void GL_TexRegister(void)
 {
@@ -193,13 +193,13 @@ static textureid_t findTextureId(texture_t* tex)
     return 0; // Not linked.
 }
 
-static __inline pathdirectory_t* directoryForTextureNamespaceId(texturenamespaceid_t id)
+static __inline PathDirectory* directoryForTextureNamespaceId(texturenamespaceid_t id)
 {
     assert(VALID_TEXTURENAMESPACEID(id));
     return namespaces[id-TEXTURENAMESPACE_FIRST];
 }
 
-static materialnamespaceid_t namespaceIdForTextureDirectory(pathdirectory_t* pd)
+static materialnamespaceid_t namespaceIdForTextureDirectory(PathDirectory* pd)
 {
     texturenamespaceid_t id;
     assert(pd);
@@ -707,7 +707,7 @@ static void unlinkTextureFromGlobalList(texture_t* tex)
     }
 }
 
-static int destroyTexture(struct pathdirectory_node_s* node, void* paramaters)
+static int destroyTexture(PathDirectoryNode* node, void* paramaters)
 {
     texture_t* tex = (texture_t*)PathDirectoryNode_DetachUserData(node);
     if(tex)
@@ -742,7 +742,7 @@ static void destroyTextures(texturenamespaceid_t texNamespace)
 
     for(iter = from; iter <= to; ++iter)
     {
-        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(iter);
+        PathDirectory* texDirectory = directoryForTextureNamespaceId(iter);
         PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTexture);
         PathDirectory_Clear(texDirectory);
     }
@@ -3308,9 +3308,9 @@ static boolean validateTextureUri(const Uri* uri, int flags)
  * @param path  Path of the texture to search for.
  * @return  Found Texture else @c 0
  */
-static texture_t* findTextureForPath(pathdirectory_t* texDirectory, const char* path)
+static texture_t* findTextureForPath(PathDirectory* texDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = PathDirectory_Find(texDirectory,
+    PathDirectoryNode* node = PathDirectory_Find(texDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTUREDIRECTORY_DELIMITER);
     if(node)
     {
@@ -3424,8 +3424,8 @@ texture_t* Textures_CreateWithDimensions(const Uri* uri, uint typeIndex, int wid
 {
     assert(uri);
     {
-    pathdirectory_t* texDirectory;
-    struct pathdirectory_node_s* node;
+    PathDirectory* texDirectory;
+    PathDirectoryNode* node;
     texturenamespaceid_t texNamespace;
     texture_t* tex;
 
@@ -3861,7 +3861,7 @@ typedef struct {
     texture_t** storage;
 } collecttextureworker_paramaters_t;
 
-static int collectTextureWorker(const struct pathdirectory_node_s* node, void* paramaters)
+static int collectTextureWorker(const PathDirectoryNode* node, void* paramaters)
 {
     texture_t* tex = (texture_t*)PathDirectoryNode_UserData(node);
     collecttextureworker_paramaters_t* p = (collecttextureworker_paramaters_t*)paramaters;
@@ -3909,7 +3909,7 @@ static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char*
     p.storage = storage;
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
-        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(iterId);
+        PathDirectory* texDirectory = directoryForTextureNamespaceId(iterId);
         PathDirectory_Iterate2_Const(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
             PATHDIRECTORY_NOHASH, collectTextureWorker, (void*)&p);
     }
@@ -4238,7 +4238,7 @@ D_CMD(PrintTextureStats)
     Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
     for(namespaceId = TEXTURENAMESPACE_FIRST; namespaceId <= TEXTURENAMESPACE_LAST; ++namespaceId)
     {
-        pathdirectory_t* texDirectory = directoryForTextureNamespaceId(namespaceId);
+        PathDirectory* texDirectory = directoryForTextureNamespaceId(namespaceId);
         uint size;
 
         if(!texDirectory) continue;

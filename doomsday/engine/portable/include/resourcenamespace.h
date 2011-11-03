@@ -70,8 +70,8 @@ typedef struct resourcenamespace_s {
     Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
-    /// Path hash table.
-    resourcenamespace_namehash_t _pathHash;
+    /// Name hash table.
+    resourcenamespace_namehash_t _nameHash;
 
     /// Resource name hashing callback.
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
@@ -123,7 +123,7 @@ ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*
  * @return  @c true= If the namespace did not already contain this resource.
  */
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    const struct pathdirectory_node_s* node);
+    const PathDirectoryNode* node);
 
 /**
  * Iterate over resources in this namespace. Iteration ends when all
@@ -135,9 +135,9 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
  * @return  @c 0 iff iteration completed wholly.
  */
 int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (struct pathdirectory_node_s* node, void* paramaters), void* paramaters);
+    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
 int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
-    int (*callback) (struct pathdirectory_node_s* node, void* paramaters)); /*paramaters=NULL*/
+    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
 
 #if _DEBUG
 void ResourceNamespace_Print(resourcenamespace_t* rn);

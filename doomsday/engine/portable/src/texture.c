@@ -39,7 +39,7 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_New(textureid_t id, struct pathdirectory_node_s* directoryNode, int index)
+texture_t* Texture_New(textureid_t id, PathDirectoryNode* directoryNode, int index)
 {
     assert(directoryNode);
     {
@@ -59,7 +59,7 @@ texture_t* Texture_New(textureid_t id, struct pathdirectory_node_s* directoryNod
     }
 }
 
-texture_t* Texture_NewWithDimensions(textureid_t id, struct pathdirectory_node_s* directoryNode,
+texture_t* Texture_NewWithDimensions(textureid_t id, PathDirectoryNode* directoryNode,
     int index, int width, int height)
 {
     texture_t* tex = Texture_New(id, directoryNode, index);
@@ -225,7 +225,7 @@ int Texture_TypeIndex(const texture_t* tex)
     return tex->_index;
 }
 
-struct pathdirectory_node_s* Texture_DirectoryNode(const texture_t* tex)
+PathDirectoryNode* Texture_DirectoryNode(const texture_t* tex)
 {
     assert(tex);
     return tex->_directoryNode;
@@ -233,7 +233,7 @@ struct pathdirectory_node_s* Texture_DirectoryNode(const texture_t* tex)
 
 ddstring_t* Texture_ComposePath(const texture_t* tex)
 {
-    struct pathdirectory_node_s* node = tex->_directoryNode;
+    PathDirectoryNode* node = tex->_directoryNode;
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, TEXTUREDIRECTORY_DELIMITER);
 }
 

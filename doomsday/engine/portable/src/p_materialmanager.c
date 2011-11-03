@@ -84,7 +84,7 @@ typedef struct materialbindinfo_s {
 
 typedef struct materialbind_s {
     /// Pointer to this binding's node in the directory.
-    struct pathdirectory_node_s* _directoryNode;
+    PathDirectoryNode* _directoryNode;
 
     /// Bound material.
     material_t* _material;
@@ -103,7 +103,7 @@ materialnum_t MaterialBind_Id(const materialbind_t* mb);
 material_t* MaterialBind_Material(const materialbind_t* mb);
 
 /// @return  PathDirectory node associated with this.
-struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb);
+PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb);
 
 /// @return  Unique identifier of the namespace within which this binding resides.
 materialnamespaceid_t Materials_NamespaceId(const materialbind_t* mb);
@@ -202,7 +202,7 @@ static materialnum_t bindingsCount;
 static materialnum_t bindingsMax;
 static materialbind_t** bindings;
 
-static pathdirectory_t* namespaces[MATERIALNAMESPACE_COUNT];
+static PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
 
 void P_MaterialsRegister(void)
 {
@@ -221,13 +221,13 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static __inline pathdirectory_t* directoryForMaterialNamespaceId(materialnamespaceid_t id)
+static __inline PathDirectory* directoryForMaterialNamespaceId(materialnamespaceid_t id)
 {
     assert(VALID_MATERIALNAMESPACEID(id));
     return namespaces[id-MATERIALNAMESPACE_FIRST];
 }
 
-static materialnamespaceid_t namespaceIdForMaterialDirectory(pathdirectory_t* pd)
+static materialnamespaceid_t namespaceIdForMaterialDirectory(PathDirectory* pd)
 {
     materialnamespaceid_t id;
     assert(pd);
@@ -470,8 +470,8 @@ static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
 
 static boolean newMaterialBind(const Uri* uri, material_t* material)
 {
-    pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri))));
-    struct pathdirectory_node_s* node;
+    PathDirectory* matDirectory = directoryForMaterialNamespaceId(DD_ParseMaterialNamespace(Str_Text(Uri_Scheme(uri))));
+    PathDirectoryNode* node;
     materialbind_t* mb;
 
     node = PathDirectory_Insert(matDirectory, Str_Text(Uri_Path(uri)), MATERIALDIRECTORY_DELIMITER);
@@ -591,7 +591,7 @@ static void destroyMaterials(void)
     materialsBlockSet = NULL;
 }
 
-static int clearBinding(struct pathdirectory_node_s* node, void* paramaters)
+static int clearBinding(PathDirectoryNode* node, void* paramaters)
 {
     materialbind_t* mb = PathDirectoryNode_DetachUserData(node);
     materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
@@ -636,7 +636,7 @@ void Materials_Shutdown(void)
     initedOk = false;
 }
 
-static int clearBindingDefinitionLinks(const struct pathdirectory_node_s* node, void* paramaters)
+static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* paramaters)
 {
     materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
     materialbindinfo_t* info = MaterialBind_Info(mb);
@@ -665,7 +665,7 @@ void Materials_ClearDefinitionLinks(void)
 
     for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
     {
-        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+        PathDirectory* matDirectory = directoryForMaterialNamespaceId(namespaceId);
         PathDirectory_Iterate_Const(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBindingDefinitionLinks);
     }
 }
@@ -737,7 +737,7 @@ static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant,
     }
 }
 
-static int releaseGLTexturesForMaterial(struct pathdirectory_node_s* node, void* paramaters)
+static int releaseGLTexturesForMaterial(PathDirectoryNode* node, void* paramaters)
 {
     materialbind_t* mb = PathDirectoryNode_UserData(node);
     material_t* mat = MaterialBind_Material(mb);
@@ -750,7 +750,7 @@ static int releaseGLTexturesForMaterial(struct pathdirectory_node_s* node, void*
 
 void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId)
 {
-    pathdirectory_t* matDirectory;
+    PathDirectory* matDirectory;
 
     if(namespaceId == MN_ANY)
     {   // Delete the lot.
@@ -851,9 +851,9 @@ static boolean validateMaterialUri(const Uri* uri, int flags)
  * @param path  Path of the material to search for.
  * @return  Found Material else @c 0
  */
-static material_t* findMaterialForPath(pathdirectory_t* matDirectory, const char* path)
+static material_t* findMaterialForPath(PathDirectory* matDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = PathDirectory_Find(matDirectory,
+    PathDirectoryNode* node = PathDirectory_Find(matDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALDIRECTORY_DELIMITER);
     if(node)
     {
@@ -1616,7 +1616,7 @@ typedef struct {
     materialbind_t** storage;
 } collectmaterialworker_paramaters_t;
 
-static int collectMaterialWorker(const struct pathdirectory_node_s* node, void* paramaters)
+static int collectMaterialWorker(const PathDirectoryNode* node, void* paramaters)
 {
     materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
     collectmaterialworker_paramaters_t* p = (collectmaterialworker_paramaters_t*)paramaters;
@@ -1664,7 +1664,7 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
     p.storage = storage;
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
-        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(iterId);
+        PathDirectory* matDirectory = directoryForMaterialNamespaceId(iterId);
         PathDirectory_Iterate2_Const(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
             PATHDIRECTORY_NOHASH, collectMaterialWorker, (void*)&p);
     }
@@ -2024,7 +2024,7 @@ material_t* MaterialBind_Material(const materialbind_t* mb)
     return mb->_material;
 }
 
-struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb)
+PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb)
 {
     assert(mb);
     return mb->_directoryNode;
@@ -2032,7 +2032,7 @@ struct pathdirectory_node_s* MaterialBind_DirectoryNode(const materialbind_t* mb
 
 ddstring_t* MaterialBind_ComposePath(const materialbind_t* mb)
 {
-    struct pathdirectory_node_s* node = mb->_directoryNode;
+    PathDirectoryNode* node = mb->_directoryNode;
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, MATERIALDIRECTORY_DELIMITER);
 }
 
@@ -2210,7 +2210,7 @@ D_CMD(PrintMaterialStats)
     Con_FPrintf(CPF_YELLOW, "Material Statistics:\n");
     for(namespaceId = MATERIALNAMESPACE_FIRST; namespaceId <= MATERIALNAMESPACE_LAST; ++namespaceId)
     {
-        pathdirectory_t* matDirectory = directoryForMaterialNamespaceId(namespaceId);
+        PathDirectory* matDirectory = directoryForMaterialNamespaceId(namespaceId);
         uint size;
 
         if(!matDirectory) continue;

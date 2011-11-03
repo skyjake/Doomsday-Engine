@@ -26,7 +26,7 @@
 #define LIBDENG_GL_TEXTURE_H
 
 struct texturevariant_s;
-struct pathdirectory_node_s;
+PathDirectoryNode;
 
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
@@ -57,7 +57,7 @@ typedef struct texture_s {
     int _width, _height;
 
     /// Pointer to this texture's node in the directory.
-    struct pathdirectory_node_s* _directoryNode;
+    PathDirectoryNode* _directoryNode;
 
     /// List of variants (e.g., color translations).
     struct texture_variantlist_node_s* _variants;
@@ -67,8 +67,8 @@ typedef struct texture_s {
     void* _analyses[TEXTURE_ANALYSIS_COUNT];
 } texture_t;
 
-texture_t* Texture_New(textureid_t id, struct pathdirectory_node_s* directoryNode, int index);
-texture_t* Texture_NewWithDimensions(textureid_t id, struct pathdirectory_node_s* directoryNode, int index, int width, int height);
+texture_t* Texture_New(textureid_t id, PathDirectoryNode* directoryNode, int index);
+texture_t* Texture_NewWithDimensions(textureid_t id, PathDirectoryNode* directoryNode, int index, int width, int height);
 
 void Texture_Delete(texture_t* tex);
 
@@ -154,7 +154,7 @@ void Texture_SetHeight(texture_t* tex, int height);
 int Texture_TypeIndex(const texture_t* tex);
 
 /// @return  PathDirectory node associated with this.
-struct pathdirectory_node_s* Texture_DirectoryNode(const texture_t* texture);
+PathDirectoryNode* Texture_DirectoryNode(const texture_t* texture);
 
 /// @return  Unique identifier of the namespace within which this Texture resides.
 texturenamespaceid_t Textures_NamespaceId(const texture_t* texture);

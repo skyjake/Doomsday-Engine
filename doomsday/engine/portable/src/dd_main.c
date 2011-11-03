@@ -761,7 +761,7 @@ void DD_PrintGameInfo(gameinfo_t* info, int flags)
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, pathdirectory_nodetype_t type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, pathdirectorynode_type_t type, void* paramaters)
 {
     assert(fileName && paramaters);
     // We are only interested in files.

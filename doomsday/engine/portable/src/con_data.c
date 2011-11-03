@@ -71,8 +71,7 @@ D_CMD(PrintVarStats);
 static boolean inited = false;
 
 /// Console variable directory.
-static uint cvarCount = 0;
-static pathdirectory_t* cvarDirectory;
+static PathDirectory* cvarDirectory;
 
 static ccmd_t* ccmdListHead;
 /// \todo Replace with a data structure that allows for deletion of elements.
@@ -106,7 +105,7 @@ void Con_DataRegister(void)
 #endif
 }
 
-static int markVariableUserDataFreed(struct pathdirectory_node_s* node, void* paramaters)
+static int markVariableUserDataFreed(PathDirectoryNode* node, void* paramaters)
 {
     assert(node && paramaters);
     {
@@ -127,7 +126,7 @@ static int markVariableUserDataFreed(struct pathdirectory_node_s* node, void* pa
     }
 }
 
-static int clearVariable(struct pathdirectory_node_s* node, void* paramaters)
+static int clearVariable(PathDirectoryNode* node, void* paramaters)
 {
     cvar_t* var = (cvar_t*)PathDirectoryNode_DetachUserData(node);
     if(var)
@@ -180,25 +179,23 @@ static void clearVariables(void)
 #endif
     PathDirectory_Iterate(cvarDirectory, flags, NULL, PATHDIRECTORY_NOHASH, clearVariable);
     PathDirectory_Clear(cvarDirectory);
-    cvarCount = 0;
 }
 
 /// Construct a new variable from the specified template and add it to the database.
 static cvar_t* addVariable(const cvartemplate_t* tpl)
 {
-    struct pathdirectory_node_s* node = PathDirectory_Insert(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
+    PathDirectoryNode* node = PathDirectory_Insert(cvarDirectory, tpl->path, CVARDIRECTORY_DELIMITER);
     cvar_t* newVar;
 
-    if(NULL != PathDirectoryNode_UserData(node))
+    if(PathDirectoryNode_UserData(node))
     {
         Con_Error("Con_AddVariable: A variable with path '%s' is already known!", tpl->path);
         return NULL; // Unreachable.
     }
 
-    newVar = (cvar_t*) malloc(sizeof(*newVar));
-    if(NULL == newVar)
-        Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for new CVar.",
-            (unsigned long) sizeof(*newVar));
+    newVar = (cvar_t*) malloc(sizeof *newVar);
+    if(!newVar)
+        Con_Error("Con_AddVariable: Failed on allocation of %lu bytes for new CVar.", (unsigned long) sizeof *newVar);
 
     newVar->flags = tpl->flags;
     newVar->type = tpl->type;
@@ -208,7 +205,6 @@ static cvar_t* addVariable(const cvartemplate_t* tpl)
     newVar->notifyChanged = tpl->notifyChanged;
     newVar->directoryNode = node;
     PathDirectoryNode_AttachUserData(node, newVar);
-    ++cvarCount;
 
     knownWordsNeedUpdate = true;
     return newVar;
@@ -330,7 +326,7 @@ typedef struct {
     boolean ignoreHidden;
 } countvariableparams_t;
 
-static int countVariable(const struct pathdirectory_node_s* node, void* paramaters)
+static int countVariable(const PathDirectoryNode* node, void* paramaters)
 {
     assert(NULL != node && NULL != paramaters);
     {
@@ -353,7 +349,7 @@ static int countVariable(const struct pathdirectory_node_s* node, void* paramate
     }
 }
 
-static int addVariableToKnownWords(const struct pathdirectory_node_s* node, void* paramaters)
+static int addVariableToKnownWords(const PathDirectoryNode* node, void* paramaters)
 {
     assert(NULL != node && NULL != paramaters);
     {
@@ -831,14 +827,11 @@ void Con_AddVariableList(const cvartemplate_t* tplList)
 
 cvar_t* Con_FindVariable(const char* path)
 {
+    PathDirectoryNode* node;
     assert(inited);
-    {
-    struct pathdirectory_node_s* node;
-    if(0 == cvarCount) return NULL;
     node = PathDirectory_Find(cvarDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, CVARDIRECTORY_DELIMITER);
     if(!node) return NULL;
     return (cvar_t*) PathDirectoryNode_UserData(node);
-    }
 }
 
 /// \note Part of the Doomsday public API
@@ -1458,7 +1451,6 @@ void Con_InitDatabases(void)
 
     // Create the empty variable directory now.
     cvarDirectory = PathDirectory_New();
-    cvarCount = 0;
 
     ccmdListHead = 0;
     ccmdBlockSet = 0;
@@ -1766,7 +1758,7 @@ D_CMD(PrintVarStats)
     p.type = -1;
     p.hidden = true;
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &p);
-    Con_Printf("       Total: %u\n      Hidden: %u\n\n", cvarCount, p.count);
+    Con_Printf("       Total: %u\n      Hidden: %u\n\n", PathDirectory_Size(cvarDirectory), p.count);
     PathDirectory_PrintHashDistribution(cvarDirectory);
     PathDirectory_Print(cvarDirectory, CVARDIRECTORY_DELIMITER);
     return true;

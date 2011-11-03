@@ -50,7 +50,7 @@ typedef fontlist_node_t fontlist_t;
 
 typedef struct fontbind_s {
     /// Pointer to this binding's node in the directory.
-    struct pathdirectory_node_s* _directoryNode;
+    PathDirectoryNode* _directoryNode;
 
     /// Bound font.
     font_t* _font;
@@ -66,7 +66,7 @@ fontnum_t FontBind_Id(const fontbind_t* fb);
 font_t* FontBind_Font(const fontbind_t* fb);
 
 /// @return  PathDirectory node associated with this.
-struct pathdirectory_node_s* FontBind_DirectoryNode(const fontbind_t* fb);
+PathDirectoryNode* FontBind_DirectoryNode(const fontbind_t* fb);
 
 /// @return  Unique identifier of the namespace within which this binding resides.
 fontnamespaceid_t FontBind_NamespaceId(const fontbind_t* fb);
@@ -99,7 +99,7 @@ static fontnum_t bindingsCount;
 static fontnum_t bindingsMax;
 static fontbind_t** bindings;
 
-static pathdirectory_t* namespaces[FONTNAMESPACE_COUNT];
+static PathDirectory* namespaces[FONTNAMESPACE_COUNT];
 
 D_CMD(ListFonts);
 #if _DEBUG
@@ -124,13 +124,13 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static __inline pathdirectory_t* directoryForFontNamespaceId(fontnamespaceid_t id)
+static __inline PathDirectory* directoryForFontNamespaceId(fontnamespaceid_t id)
 {
     assert(VALID_FONTNAMESPACEID(id));
     return namespaces[id-FONTNAMESPACE_FIRST];
 }
 
-static fontnamespaceid_t namespaceIdForFontDirectory(pathdirectory_t* pd)
+static fontnamespaceid_t namespaceIdForFontDirectory(PathDirectory* pd)
 {
     materialnamespaceid_t id;
     assert(pd);
@@ -215,9 +215,9 @@ static boolean validateFontUri(const Uri* uri, int flags)
  * @param path  Path of the font to search for.
  * @return  Found Font else @c 0
  */
-static font_t* findFontForPath(pathdirectory_t* fontDirectory, const char* path)
+static font_t* findFontForPath(PathDirectory* fontDirectory, const char* path)
 {
-    struct pathdirectory_node_s* node = PathDirectory_Find(fontDirectory,
+    PathDirectoryNode* node = PathDirectory_Find(fontDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTDIRECTORY_DELIMITER);
     if(node)
     {
@@ -334,8 +334,8 @@ Uri* Fonts_ComposeUri(font_t* font)
 
 static boolean newFontBind(const Uri* uri, font_t* font)
 {
-    pathdirectory_t* fontDirectory = directoryForFontNamespaceId(DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri))));
-    struct pathdirectory_node_s* node;
+    PathDirectory* fontDirectory = directoryForFontNamespaceId(DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri))));
+    PathDirectoryNode* node;
     fontbind_t* fb;
 
     node = PathDirectory_Insert(fontDirectory, Str_Text(Uri_Path(uri)), FONTDIRECTORY_DELIMITER);
@@ -446,7 +446,7 @@ static void destroyFonts(void)
     }
 }
 
-static int clearBinding(struct pathdirectory_node_s* node, void* paramaters)
+static int clearBinding(PathDirectoryNode* node, void* paramaters)
 {
     fontbind_t* fb = PathDirectoryNode_DetachUserData(node);
     free(fb);
@@ -485,7 +485,7 @@ font_t* FontBind_Font(const fontbind_t* fb)
     return fb->_font;
 }
 
-struct pathdirectory_node_s* FontBind_DirectoryNode(const fontbind_t* fb)
+PathDirectoryNode* FontBind_DirectoryNode(const fontbind_t* fb)
 {
     assert(fb);
     return fb->_directoryNode;
@@ -498,7 +498,7 @@ fontnamespaceid_t FontBind_NamespaceId(const fontbind_t* fb)
 
 ddstring_t* FontBind_ComposePath(const fontbind_t* fb)
 {
-    struct pathdirectory_node_s* node = fb->_directoryNode;
+    PathDirectoryNode* node = fb->_directoryNode;
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, FONTDIRECTORY_DELIMITER);
 }
 
@@ -983,7 +983,7 @@ typedef struct {
     fontbind_t** storage;
 } collectfontworker_paramaters_t;
 
-static int collectFontWorker(const struct pathdirectory_node_s* node, void* paramaters)
+static int collectFontWorker(const PathDirectoryNode* node, void* paramaters)
 {
     fontbind_t* fb = (fontbind_t*)PathDirectoryNode_UserData(node);
     collectfontworker_paramaters_t* p = (collectfontworker_paramaters_t*)paramaters;
@@ -1031,7 +1031,7 @@ static fontbind_t** collectFonts(fontnamespaceid_t namespaceId, const char* like
     p.storage = storage;
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
-        pathdirectory_t* fontDirectory = directoryForFontNamespaceId(iterId);
+        PathDirectory* fontDirectory = directoryForFontNamespaceId(iterId);
         PathDirectory_Iterate2_Const(fontDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
             PATHDIRECTORY_NOHASH, collectFontWorker, (void*)&p);
     }
@@ -1246,7 +1246,7 @@ D_CMD(PrintFontStats)
     Con_FPrintf(CPF_YELLOW, "Font Statistics:\n");
     for(namespaceId = FONTNAMESPACE_FIRST; namespaceId <= FONTNAMESPACE_LAST; ++namespaceId)
     {
-        pathdirectory_t* fontDirectory = directoryForFontNamespaceId(namespaceId);
+        PathDirectory* fontDirectory = directoryForFontNamespaceId(namespaceId);
         uint size;
 
         if(!fontDirectory) continue;
