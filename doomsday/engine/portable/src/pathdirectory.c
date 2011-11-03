@@ -63,7 +63,7 @@ static void PathDirectoryNode_Delete(PathDirectoryNode* node);
 StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
 
 typedef struct {
-    PathDirectoryNode* head[PATHDIRECTORYNODE_TYPE_COUNT];
+    PathDirectoryNode* head;
 } pathdirectory_nodelist_t;
 typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH_SIZE];
 
@@ -75,7 +75,8 @@ struct pathdirectory_s {
     } _internPool;
 
     /// Path hash map.
-    pathdirectory_pathhash_t* _pathHash;
+    pathdirectory_pathhash_t* _pathLeafHash;
+    pathdirectory_pathhash_t* _pathBranchHash;
 
     /// Number of unique paths in the directory.
     uint _size;
@@ -112,22 +113,26 @@ static ushort hashName(const char* path, size_t len, char delimiter)
     return key % PATHDIRECTORY_PATHHASH_SIZE;
 }
 
-static void initPathHash(PathDirectory* pd)
+static __inline pathdirectory_pathhash_t** hashAddressForNodeType(PathDirectory* pd,
+    pathdirectorynode_type_t type)
 {
-    assert(pd);
-    pd->_pathHash = (pathdirectory_pathhash_t*) calloc(1, sizeof *pd->_pathHash);
-    if(!pd->_pathHash)
-        Con_Error("PathDirectory::initPathHash: Failed on allocation of %lu bytes for new PathDirectory::PathHash.", (unsigned long) sizeof *pd->_pathHash);
+    assert(pd && VALID_PATHDIRECTORYNODE_TYPE(type));
+    return (type == PT_LEAF? &pd->_pathLeafHash : &pd->_pathBranchHash);
 }
 
-static void destroyPathHash(PathDirectory* pd)
+static void initPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 {
-    assert(pd);
-    if(pd->_pathHash)
-    {
-        free(pd->_pathHash);
-        pd->_pathHash = NULL;
-    }
+    pathdirectory_pathhash_t** hashAdr = hashAddressForNodeType(pd, type);
+    *hashAdr = (pathdirectory_pathhash_t*) calloc(1, sizeof **hashAdr);
+    if(!*hashAdr)
+        Con_Error("PathDirectory::initPathHash: Failed on allocation of %lu bytes for new PathDirectory::PathHash.", (unsigned long) sizeof **hashAdr);
+}
+
+static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
+{
+    pathdirectory_pathhash_t** hashAdr = hashAddressForNodeType(pd, type);
+    if(!*hashAdr) return;
+    free(*hashAdr), *hashAdr = NULL;
 }
 
 static void clearInternPool(PathDirectory* pd)
@@ -161,52 +166,46 @@ static void clearNodeList(PathDirectoryNode** list)
 
 static void clearPathHash(pathdirectory_pathhash_t* ph)
 {
+    ushort hash = 0;
+    if(!ph) return;
+    for(; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+        clearNodeList(&(*ph)[hash].head);
+}
+
+static size_t countNodesInPathHash(pathdirectory_pathhash_t* ph)
+{
+    size_t count = 0;
     if(ph)
     {
-        pathdirectorynode_type_t type;
+        PathDirectoryNode* node;
         ushort hash = 0;
         for(; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
-        for(type = PATHDIRECTORYNODE_TYPE_FIRST;
-            type < PATHDIRECTORYNODE_TYPE_COUNT-PATHDIRECTORYNODE_TYPE_FIRST; ++type)
-        {
-            clearNodeList((*ph)[hash].head + type);
-        }
+        for(node = (PathDirectoryNode*) (*ph)[hash].head; node; node = node->next)
+            ++count;
     }
+    return count;
 }
 
 static size_t countNodes(PathDirectory* pd, int flags)
 {
     size_t count = 0;
     assert(pd);
-
-    if(pd->_pathHash)
-    {
-        pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
-        pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
-        PathDirectoryNode* node;
-        ushort hash;
-
-        for(; type <= lastType; ++type)
-        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
-        for(node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-            node; node = node->next)
-        {
-            ++count;
-        }
-    }
+    if(!(flags & PCF_NO_LEAF))
+        count += countNodesInPathHash(*hashAddressForNodeType(pd, PT_LEAF));
+    if(!(flags & PCF_NO_BRANCH))
+        count += countNodesInPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
     return count;
 }
 
 static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, StringPoolInternId internId)
 {
+    pathdirectory_pathhash_t* ph = *hashAddressForNodeType(pd, nodeType);
     PathDirectoryNode* node = NULL;
-    assert(pd && 0 != internId);
-
-    if(pd->_pathHash)
+    if(ph)
     {
         ushort hash = pd->_internPool.idHashMap[internId-1];
-        for(node = (*pd->_pathHash)[hash].head[nodeType]; node; node = node->next)
+        for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
             if(internId == PathDirectoryNode_InternId(node))
@@ -264,6 +263,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
     StringPoolInternId internId = 0;
+    pathdirectory_pathhash_t** phAdr;
     PathDirectoryNode* node;
     ushort hash;
     assert(pd && name);
@@ -301,14 +301,15 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     node = PathDirectoryNode_New(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
-    if(!pd->_pathHash)
+    phAdr = hashAddressForNodeType(pd, nodeType);
+    if(!*phAdr)
     {
-        initPathHash(pd);
+        initPathHash(pd, nodeType);
     }
 
     // Insert the new node into the path hash.
-    node->next = (*pd->_pathHash)[hash].head[nodeType];
-    (*pd->_pathHash)[hash].head[nodeType] = node;
+    node->next = (**phAdr)[hash].head;
+    (**phAdr)[hash].head = node;
 
     return node;
 }
@@ -364,6 +365,52 @@ static PathDirectoryNode* addPath(PathDirectory* pd, const char* path,
     return node;
 }
 
+static int iteratePathsInHash(pathdirectory_pathhash_t* ph, int flags, PathDirectoryNode* parent,
+    ushort hash, int (*callback) (PathDirectoryNode* node, void* paramaters),
+    void* paramaters)
+{
+    PathDirectoryNode* node, *next;
+    int result = 0;
+
+    if(ph)
+    if(hash != PATHDIRECTORY_NOHASH)
+    {
+        if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
+            Con_Error("PathDirectory:iteratePathsInHash: Invalid hash %u (valid range is [0...%u]).",
+                      hash, PATHDIRECTORY_PATHHASH_SIZE-1);
+
+        node = (PathDirectoryNode*)(*ph)[hash].head;
+        while(node)
+        {
+            next = node->next;
+            if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
+            {
+                result = callback(node, paramaters);
+                if(result) break;
+            }
+            node = next;
+        }
+    }
+    else
+    {
+        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+        {
+            node = (PathDirectoryNode*) (*ph)[hash].head;
+            while(node)
+            {
+                next = node->next;
+                if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
+                {
+                    result = callback(node, paramaters);
+                    if(result) break;
+                }
+                node = next;
+            }
+        }
+    }
+    return result;
+}
+
 static int iteratePaths(PathDirectory* pd, int flags, PathDirectoryNode* parent,
     ushort hash, int (*callback) (PathDirectoryNode* node, void* paramaters),
     void* paramaters)
@@ -371,106 +418,74 @@ static int iteratePaths(PathDirectory* pd, int flags, PathDirectoryNode* parent,
     int result = 0;
     assert(pd && callback);
 
-    if(pd->_pathHash)
+    if(!(flags & PCF_NO_LEAF))
+        result = iteratePathsInHash(*hashAddressForNodeType(pd, PT_LEAF), flags, parent, hash, callback, paramaters);
+
+    if(!result && !(flags & PCF_NO_BRANCH))
+        result = iteratePathsInHash(*hashAddressForNodeType(pd, PT_BRANCH), flags, parent, hash, callback, paramaters);
+
+    return result;
+}
+
+static int iteratePathsInHash_Const(const pathdirectory_pathhash_t* ph, int flags,
+    const PathDirectoryNode* parent, ushort hash,
+    int (*callback) (const PathDirectoryNode* node, void* paramaters), void* paramaters)
+{
+    PathDirectoryNode* node, *next;
+    int result = 0;
+
+    if(ph)
+    if(hash != PATHDIRECTORY_NOHASH)
     {
-        pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
-        pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
-        PathDirectoryNode* node, *next;
+        if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
+            Con_Error("PathDirectory:iteratePathsInHash: Invalid hash %u (valid range is [0...%u]).",
+                      hash, PATHDIRECTORY_PATHHASH_SIZE-1);
 
-        if(hash != PATHDIRECTORY_NOHASH)
+        node = (PathDirectoryNode*)(*ph)[hash].head;
+        while(node)
         {
-            if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
-                Con_Error("PathDirectory:iteratePaths: Invalid hash %u (valid range is [0...%u]).",
-                    hash, PATHDIRECTORY_PATHHASH_SIZE-1);
-
-            for(; type <= lastType; ++type)
+            next = node->next;
+            if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
             {
-                node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-                while(node)
-                {
-                    next = node->next;
-                    if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
-                    {
-                        result = callback(node, paramaters);
-                        if(result) break;
-                    }
-                    node = next;
-                }
+                result = callback(node, paramaters);
+                if(result) break;
             }
+            node = next;
         }
-        else
+    }
+    else
+    {
+        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
         {
-            for(; type <= lastType; ++type)
-            for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+            node = (PathDirectoryNode*)(*ph)[hash].head;
+            while(node)
             {
-                node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-                while(node)
+                next = node->next;
+                if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
                 {
-                    next = node->next;
-                    if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
-                    {
-                        result = callback(node, paramaters);
-                        if(result) break;
-                    }
-                    node = next;
+                    result = callback(node, paramaters);
+                    if(result) break;
                 }
+                node = next;
             }
         }
     }
     return result;
 }
 
-static int iteratePaths_const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
-    ushort hash, int (*callback) (const PathDirectoryNode* node, void* paramaters), void* paramaters)
+static int iteratePaths_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
+    ushort hash, int (*callback) (const PathDirectoryNode* node, void* paramaters),
+    void* paramaters)
 {
     int result = 0;
     assert(pd && callback);
 
-    if(pd->_pathHash)
-    {
-        pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
-        pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
-        PathDirectoryNode* node, *next;
+    if(!(flags & PCF_NO_LEAF))
+        result = iteratePathsInHash_Const(*hashAddressForNodeType((PathDirectory*)pd, PT_LEAF), flags, parent, hash, callback, paramaters);
 
-        if(hash != PATHDIRECTORY_NOHASH)
-        {
-            if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
-                Con_Error("PathDirectory:iteratePaths_const: Invalid hash %u (valid range is [0...%u]).", hash, PATHDIRECTORY_PATHHASH_SIZE-1);
+    if(!result && !(flags & PCF_NO_BRANCH))
+        result = iteratePathsInHash_Const(*hashAddressForNodeType((PathDirectory*)pd, PT_BRANCH), flags, parent, hash, callback, paramaters);
 
-            for(; type <= lastType; ++type)
-            {
-                node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-                while(node)
-                {
-                    next = node->next;
-                    if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
-                    {
-                        result = callback(node, paramaters);
-                        if(result) break;
-                    }
-                    node = next;
-                }
-            }
-        }
-        else
-        {
-            for(; type <= lastType; ++type)
-            for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
-            {
-                node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-                while(node)
-                {
-                    next = node->next;
-                    if(!((flags & PCF_MATCH_PARENT) && parent == PathDirectoryNode_Parent(node)))
-                    {
-                        result = callback(node, paramaters);
-                        if(result) break;
-                    }
-                    node = next;
-                }
-            }
-        }
-    }
     return result;
 }
 
@@ -482,7 +497,8 @@ PathDirectory* PathDirectory_New(void)
 
     pd->_internPool.strings = NULL;
     pd->_internPool.idHashMap = NULL;
-    pd->_pathHash = NULL;
+    pd->_pathLeafHash = NULL;
+    pd->_pathBranchHash = NULL;
     pd->_size = 0;
     return pd;
 }
@@ -490,8 +506,12 @@ PathDirectory* PathDirectory_New(void)
 void PathDirectory_Delete(PathDirectory* pd)
 {
     assert(pd);
-    clearPathHash(pd->_pathHash);
-    destroyPathHash(pd);
+    clearPathHash(*hashAddressForNodeType(pd, PT_LEAF));
+    destroyPathHash(pd, PT_LEAF);
+
+    clearPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
+    destroyPathHash(pd, PT_BRANCH);
+
     clearInternPool(pd);
     free(pd);
 }
@@ -505,7 +525,8 @@ uint PathDirectory_Size(PathDirectory* pd)
 void PathDirectory_Clear(PathDirectory* pd)
 {
     assert(pd);
-    clearPathHash(pd->_pathHash);
+    clearPathHash(*hashAddressForNodeType(pd, PT_LEAF));
+    clearPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
     clearInternPool(pd);
     pd->_size = 0;
 }
@@ -537,7 +558,7 @@ int PathDirectory_Iterate(PathDirectory* pd, int flags, PathDirectoryNode* paren
 int PathDirectory_Iterate2_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
     ushort hash, pathdirectory_iterateconstcallback_t callback, void* paramaters)
 {
-    return iteratePaths_const(pd, flags, parent, hash, callback, paramaters);
+    return iteratePaths_Const(pd, flags, parent, hash, callback, paramaters);
 }
 
 int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
@@ -679,6 +700,22 @@ ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode
     }
 }
 
+static void PathDirectory_CollectPathsInHash(pathdirectory_pathhash_t* ph, char delimiter,
+    ddstring_t** pathListAdr)
+{
+    PathDirectoryNode* node;
+    ushort hash;
+
+    if(ph)
+    for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
+    for(node = (PathDirectoryNode*) (*ph)[hash].head; node; node = node->next)
+    {
+        Str_Init(*pathListAdr);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, (*pathListAdr), NULL, delimiter);
+        (*pathListAdr)++;
+    }
+}
+
 ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimiter,
     size_t* retCount)
 {
@@ -687,11 +724,7 @@ ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimi
 
     if(count)
     {
-        pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
-        pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
-        PathDirectoryNode* node;
         ddstring_t* pathPtr;
-        ushort hash;
 
         paths = (ddstring_t*) malloc(sizeof *paths * count);
         if(!paths)
@@ -699,15 +732,11 @@ ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimi
                 "new path list.", (unsigned long) (sizeof *paths * count));
         pathPtr = paths;
 
-        for(; type <= lastType; ++type)
-        for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
-        for(node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-            node; node = node->next)
-        {
-            Str_Init(pathPtr);
-            PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, pathPtr, NULL, delimiter);
-            pathPtr++;
-        }
+        if(!(flags & PCF_NO_BRANCH))
+            PathDirectory_CollectPathsInHash(*hashAddressForNodeType(pd, PT_BRANCH), delimiter, &pathPtr);
+
+        if(!(flags & PCF_NO_LEAF))
+            PathDirectory_CollectPathsInHash(*hashAddressForNodeType(pd, PT_LEAF), delimiter, &pathPtr);
     }
 
     if(retCount) *retCount = count;
@@ -877,6 +906,7 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
 #define NUMCOLS             4/*range+total+PATHDIRECTORYNODE_TYPE_COUNT*/
     size_t totalForRange, total, nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
     int hashIndexDigits, col, colWidths[2+/*range+total*/PATHDIRECTORYNODE_TYPE_COUNT];
+    pathdirectory_pathhash_t** phAdr;
     PathDirectoryNode* node;
     int i, j;
     assert(pd);
@@ -928,12 +958,15 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
 
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
     {
-        if(pd->_pathHash)
-        {
-            for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
-                for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
-                    ++nodeCount[j];
-        }
+        phAdr = hashAddressForNodeType(pd, PT_BRANCH);
+        if(*phAdr)
+        for(node = (**phAdr)[i].head; node; node = node->next)
+            ++nodeCount[PT_BRANCH];
+
+        phAdr = hashAddressForNodeType(pd, PT_LEAF);
+        if(*phAdr)
+        for(node = (**phAdr)[i].head; node; node = node->next)
+            ++nodeCount[PT_LEAF];
 
         if(size != 0 && (++n != range && i != PATHDIRECTORY_PATHHASH_SIZE-1))
             continue;
@@ -1022,20 +1055,14 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
            nodeBucketCollisionsMax[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketCollisionsMaxTotal = 0,
            nodeBucketEmpty[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketEmptyTotal = 0,
            nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
+    pathdirectory_pathhash_t** phAdr;
     size_t totalForRange;
     PathDirectoryNode* node;
     int j;
     assert(pd);
 
-    memset(nodeCountTotal, 0, sizeof(nodeCountTotal));
-    if(NULL != pd->_pathHash)
-    {
-        ushort i;
-        for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
-        for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
-        for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
-            ++nodeCountTotal[j];
-    }
+    nodeCountTotal[PT_BRANCH] = countNodesInPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
+    nodeCountTotal[PT_LEAF]   = countNodesInPathHash(*hashAddressForNodeType(pd, PT_LEAF));
 
     memset(nodeCountSum, 0, sizeof(nodeCountSum));
     memset(nodeBucketCollisions, 0, sizeof(nodeBucketCollisions));
@@ -1045,22 +1072,25 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     { ushort i;
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
     {
-        memset(nodeCount, 0, sizeof(nodeCount));
-        totalForRange = 0;
-        if(NULL != pd->_pathHash)
+        phAdr = hashAddressForNodeType(pd, PT_BRANCH);
+        nodeCount[PT_BRANCH] = 0;
+        if(*phAdr)
+        for(node = (**phAdr)[i].head; node; node = node->next)
+            ++nodeCount[PT_BRANCH];
+
+        phAdr = hashAddressForNodeType(pd, PT_LEAF);
+        nodeCount[PT_LEAF] = 0;
+        if(*phAdr)
         {
             size_t chainHeight = 0;
-
-            for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
-            for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
-                ++nodeCount[j];
-
-            for(node = (*pd->_pathHash)[i].head[PT_LEAF]; NULL != node; node = node->next)
+            for(node = (**phAdr)[i].head; node; node = node->next)
             {
                 size_t height = 0;
                 PathDirectoryNode* other = node;
-                while(NULL != (other = PathDirectoryNode_Parent(other)))
-                { ++height; }
+
+                ++nodeCount[PT_LEAF];
+
+                while((other = PathDirectoryNode_Parent(other))) { ++height; }
 
                 if(height > chainHeight)
                     chainHeight = height;
@@ -1068,13 +1098,12 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 
             if(chainHeight > nodeBucketHeight)
                 nodeBucketHeight = chainHeight;
-
-            for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
-            {
-                totalForRange += nodeCount[j];
-                nodeCountSum[j] += nodeCount[j];
-            }
         }
+
+        totalForRange = nodeCount[PT_BRANCH] + nodeCount[PT_LEAF];
+
+        nodeCountSum[PT_BRANCH] += nodeCount[PT_BRANCH];
+        nodeCountSum[PT_LEAF]   += nodeCount[PT_LEAF];
 
         for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
         {
