@@ -26,7 +26,6 @@
 #define LIBDENG_PATHDIRECTORY_H
 
 #include "dd_string.h"
-#include "stringpool.h"
 
 typedef enum {
     PT_ANY = -1,
@@ -316,9 +315,6 @@ pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node);
 
 /// @return  Print-ready name for node @a type.
 const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
-
-/// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
 
 /**
  * @param node  Right-most node in path.

@@ -53,6 +53,15 @@ struct pathdirectorynode_s {
     pathdirectorynode_userdatapair_t _pair;
 };
 
+static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
+    pathdirectorynode_type_t type, PathDirectoryNode* parent,
+    StringPoolInternId internId, void* userData);
+
+static void PathDirectoryNode_Delete(PathDirectoryNode* node);
+
+/// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
+StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
+
 typedef struct {
     PathDirectoryNode* head[PATHDIRECTORYNODE_TYPE_COUNT];
 } pathdirectory_nodelist_t;
@@ -72,12 +81,6 @@ struct pathdirectory_s {
     uint _size;
 };
 
-static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
-    pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData);
-
-static void PathDirectoryNode_Delete(PathDirectoryNode* node);
-
 /**
  * This is a hash function. It uses the path fragment string to generate
  * a somewhat-random number between @c 0 and @c PATHDIRECTORY_PATHHASH_SIZE
@@ -86,12 +89,12 @@ static void PathDirectoryNode_Delete(PathDirectoryNode* node);
  */
 static ushort hashName(const char* path, size_t len, char delimiter)
 {
-    assert(path);
-    {
     const char* c = path + len - 1;
     ushort key = 0;
     int op = 0;
     size_t i;
+
+    assert(path);
 
     // Skip over any trailing delimiters.
     for(i = len; *c && *c == delimiter && i-- > 0; c--) {}
@@ -107,16 +110,14 @@ static ushort hashName(const char* path, size_t len, char delimiter)
         }
     }
     return key % PATHDIRECTORY_PATHHASH_SIZE;
-    }
 }
 
 static void initPathHash(PathDirectory* pd)
 {
     assert(pd);
-    pd->_pathHash = (pathdirectory_pathhash_t*) calloc(1, sizeof(*pd->_pathHash));
+    pd->_pathHash = (pathdirectory_pathhash_t*) calloc(1, sizeof *pd->_pathHash);
     if(!pd->_pathHash)
-        Con_Error("PathDirectory::initPathHash: Failed on allocation of %lu bytes for "
-            "new PathDirectory::PathHash.", (unsigned long) sizeof(*pd->_pathHash));
+        Con_Error("PathDirectory::initPathHash: Failed on allocation of %lu bytes for new PathDirectory::PathHash.", (unsigned long) sizeof *pd->_pathHash);
 }
 
 static void destroyPathHash(PathDirectory* pd)
@@ -142,7 +143,6 @@ static void clearInternPool(PathDirectory* pd)
 static void clearNodeList(PathDirectoryNode** list)
 {
     PathDirectoryNode* next;
-
     if(!*list) return;
 
     do
@@ -176,10 +176,10 @@ static void clearPathHash(pathdirectory_pathhash_t* ph)
 
 static size_t countNodes(PathDirectory* pd, int flags)
 {
-    assert(pd);
-    {
     size_t count = 0;
-    if(NULL != pd->_pathHash)
+    assert(pd);
+
+    if(pd->_pathHash)
     {
         pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
         pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
@@ -189,25 +189,24 @@ static size_t countNodes(PathDirectory* pd, int flags)
         for(; type <= lastType; ++type)
         for(hash = 0; hash < PATHDIRECTORY_PATHHASH_SIZE; ++hash)
         for(node = (PathDirectoryNode*) (*pd->_pathHash)[hash].head[type];
-            NULL != node; node = node->next)
+            node; node = node->next)
         {
             ++count;
         }
     }
     return count;
-    }
 }
 
 static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, StringPoolInternId internId)
 {
-    assert(pd && 0 != internId);
-    {
     PathDirectoryNode* node = NULL;
-    if(NULL != pd->_pathHash)
+    assert(pd && 0 != internId);
+
+    if(pd->_pathHash)
     {
         ushort hash = pd->_internPool.idHashMap[internId-1];
-        for(node = (*pd->_pathHash)[hash].head[nodeType]; NULL != node; node = node->next)
+        for(node = (*pd->_pathHash)[hash].head[nodeType]; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
             if(internId == PathDirectoryNode_InternId(node))
@@ -215,7 +214,6 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
         }
     }
     return node;
-    }
 }
 
 static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
@@ -229,13 +227,13 @@ static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
 static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     const ddstring_t* name, ushort hash)
 {
-    assert(pd);
-    {
-    StringPool* pool = pd->_internPool.strings;
+    StringPool* pool;
     StringPoolInternId internId;
     uint oldSize;
+    assert(pd);
 
-    if(NULL == pool)
+    pool = pd->_internPool.strings;
+    if(!pool)
     {
         pool = pd->_internPool.strings = StringPool_New();
     }
@@ -245,18 +243,17 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
-        pd->_internPool.idHashMap = (ushort*) realloc(pd->_internPool.idHashMap, sizeof(*pd->_internPool.idHashMap) * StringPool_Size(pool));
-        if(NULL == pd->_internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of "
-                "%lu bytes for the IdHashMap", (unsigned long) (sizeof(*pd->_internPool.idHashMap) * StringPool_Size(pool)));
+        pd->_internPool.idHashMap = (ushort*) realloc(pd->_internPool.idHashMap, sizeof *pd->_internPool.idHashMap * StringPool_Size(pool));
+        if(!pd->_internPool.idHashMap)
+            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->_internPool.idHashMap * StringPool_Size(pool)));
+
         if(internId < StringPool_Size(pool))
         {
-            memmove(pd->_internPool.idHashMap + internId, pd->_internPool.idHashMap + (internId-1), sizeof(*pd->_internPool.idHashMap) * (StringPool_Size(pool) - internId));
+            memmove(pd->_internPool.idHashMap + internId, pd->_internPool.idHashMap + (internId-1), sizeof *pd->_internPool.idHashMap * (StringPool_Size(pool) - internId));
         }
         pd->_internPool.idHashMap[internId-1] = hash;
     }
     return internId;
-    }
 }
 
 /**
@@ -266,11 +263,10 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
 static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
-    assert(pd && name);
-    {
     StringPoolInternId internId = 0;
     PathDirectoryNode* node;
     ushort hash;
+    assert(pd && name);
 
     // Have we already encountered this?
     if(pd->_internPool.strings)
@@ -315,7 +311,6 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     (*pd->_pathHash)[hash].head[nodeType] = node;
 
     return node;
-    }
 }
 
 /**
@@ -326,22 +321,20 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
 static PathDirectoryNode* buildDirecNodes(PathDirectory* pd, const char* path,
     char delimiter, void* userData)
 {
-    assert(pd && path);
-    {
     PathDirectoryNode* node = NULL, *parent = NULL;
     ddstring_t part;
     const char* p;
+    assert(pd && path);
 
     // Continue splitting as long as there are parts.
     Str_Init(&part);
     p = path;
-    while(NULL != (p = Str_CopyDelim2(&part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
+    while((p = Str_CopyDelim2(&part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
     {
         node = direcNode(pd, parent, PT_BRANCH, &part, delimiter, NULL);
         /// \todo Do not error here. If we're out of storage undo this action and return.
         if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to "
-                "insert nodes for path \"%s\".", path);
+            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
         parent = node;
     }
 
@@ -350,13 +343,11 @@ static PathDirectoryNode* buildDirecNodes(PathDirectory* pd, const char* path,
         node = direcNode(pd, parent, PT_LEAF, &part, delimiter, NULL);
         /// \todo Do not error here. If we're out of storage undo this action and return.
         if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to "
-                "insert nodes for path \"%s\".", path);
+            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
     }
 
     Str_Free(&part);
     return node;
-    }
 }
 
 static PathDirectoryNode* addPath(PathDirectory* pd, const char* path,
@@ -377,9 +368,9 @@ static int iteratePaths(PathDirectory* pd, int flags, PathDirectoryNode* parent,
     ushort hash, int (*callback) (PathDirectoryNode* node, void* paramaters),
     void* paramaters)
 {
-    assert(pd && callback);
-    {
     int result = 0;
+    assert(pd && callback);
+
     if(pd->_pathHash)
     {
         pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
@@ -427,16 +418,15 @@ static int iteratePaths(PathDirectory* pd, int flags, PathDirectoryNode* parent,
         }
     }
     return result;
-    }
 }
 
 static int iteratePaths_const(const PathDirectory* pd, int flags, const PathDirectoryNode* parent,
     ushort hash, int (*callback) (const PathDirectoryNode* node, void* paramaters), void* paramaters)
 {
-    assert(pd && callback);
-    {
     int result = 0;
-    if(NULL != pd->_pathHash)
+    assert(pd && callback);
+
+    if(pd->_pathHash)
     {
         pathdirectorynode_type_t type     = ((flags & PCF_NO_BRANCH) != 0? PT_LEAF   : PT_BRANCH);
         pathdirectorynode_type_t lastType = ((flags & PCF_NO_LEAF)   != 0? PT_BRANCH : PT_LEAF);
@@ -445,8 +435,7 @@ static int iteratePaths_const(const PathDirectory* pd, int flags, const PathDire
         if(hash != PATHDIRECTORY_NOHASH)
         {
             if(hash >= PATHDIRECTORY_PATHHASH_SIZE)
-                Con_Error("PathDirectory:iteratePaths_const: Invalid hash %u (valid range is [0...%u]).",
-                    hash, PATHDIRECTORY_PATHHASH_SIZE-1);
+                Con_Error("PathDirectory:iteratePaths_const: Invalid hash %u (valid range is [0...%u]).", hash, PATHDIRECTORY_PATHHASH_SIZE-1);
 
             for(; type <= lastType; ++type)
             {
@@ -483,15 +472,14 @@ static int iteratePaths_const(const PathDirectory* pd, int flags, const PathDire
         }
     }
     return result;
-    }
 }
 
 PathDirectory* PathDirectory_New(void)
 {
     PathDirectory* pd = (PathDirectory*) malloc(sizeof *pd);
     if(!pd)
-        Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for "
-            "new PathDirectory.", (unsigned long) sizeof *pd);
+        Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
+
     pd->_internPool.strings = NULL;
     pd->_internPool.idHashMap = NULL;
     pd->_pathHash = NULL;
@@ -525,9 +513,7 @@ void PathDirectory_Clear(PathDirectory* pd)
 PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter,
     void* value)
 {
-    assert(pd);
-    if(NULL == path || !path[0])
-        return NULL;
+    if(!path || !path[0]) return NULL;
     return addPath(pd, path, delimiter, value);
 }
 
@@ -625,7 +611,6 @@ static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNo
 {
     const int delimiterLen = delimiter? 1 : 0;
     int requiredLen = 0;
-
     assert(pd && node);
 
     if(PT_BRANCH == PathDirectoryNode_Type(node))
@@ -654,7 +639,6 @@ static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDire
     const int delimiterLen = delimiter? 1 : 0;
     const PathDirectoryNode* trav;
     const ddstring_t* fragment;
-
     assert(pd && node && foundPath);
 
     if(PT_BRANCH == PathDirectoryNode_Type(node) && 0 != delimiterLen)
@@ -746,7 +730,7 @@ void PathDirectory_Print(PathDirectory* pd, char delimiter)
     pathList = PathDirectory_CollectPaths(pd, PT_LEAF, delimiter, &numLeafs);
     if(pathList)
     {
-        qsort(pathList, numLeafs, sizeof(*pathList), comparePaths);
+        qsort(pathList, numLeafs, sizeof *pathList, comparePaths);
         do
         {
             Con_Printf("  %s\n", F_PrettyPath(Str_Text(pathList + n)));
@@ -801,10 +785,10 @@ static void printDistributionOverview(PathDirectory* pd,
     size_t nodeCount[PATHDIRECTORYNODE_TYPE_COUNT])
 {
 #define NUMCOLS             10/*type+count+used:+empty+collideMax+collideCount+collidePercent+coverage+variance+maxheight*/
-    assert(pd);
-    {
+
     size_t collisionsMax = 0, countSum = 0, countTotal = 0;
     int i, nodeCountDigits, colWidths[NUMCOLS], spans[4][2], *span, *col;
+    assert(pd);
 
     for(i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
     {
@@ -883,7 +867,7 @@ static void printDistributionOverview(PathDirectory* pd,
         nodeBucketEmptyTotal, nodeBucketHeight,
         nodeBucketCollisionsTotal, collisionsMax,
         countSum / PATHDIRECTORYNODE_TYPE_COUNT, countTotal);
-    }
+
 #undef NUMCOLS
 }
 
@@ -891,12 +875,11 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
     size_t nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT])
 {
 #define NUMCOLS             4/*range+total+PATHDIRECTORYNODE_TYPE_COUNT*/
-    assert(pd);
-    {
     size_t totalForRange, total, nodeCount[PATHDIRECTORYNODE_TYPE_COUNT];
     int hashIndexDigits, col, colWidths[2+/*range+total*/PATHDIRECTORYNODE_TYPE_COUNT];
     PathDirectoryNode* node;
     int i, j;
+    assert(pd);
 
     total = 0;
     for(i = 0; i < PATHDIRECTORYNODE_TYPE_COUNT; ++i)
@@ -945,7 +928,7 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
 
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
     {
-        if(NULL != pd->_pathHash)
+        if(pd->_pathHash)
         {
             for(j = 0; j < PATHDIRECTORYNODE_TYPE_COUNT; ++j)
                 for(node = (*pd->_pathHash)[i].head[j]; NULL != node; node = node->next)
@@ -1027,14 +1010,12 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
         }
     }
     Con_Printf("\n");
-    }
+
 #undef NUMCOLS
 }
 
 void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 {
-    assert(pd);
-    {
     size_t nodeCountSum[PATHDIRECTORYNODE_TYPE_COUNT],
            nodeCountTotal[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketHeight = 0,
            nodeBucketCollisions[PATHDIRECTORYNODE_TYPE_COUNT], nodeBucketCollisionsTotal = 0,
@@ -1044,6 +1025,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     size_t totalForRange;
     PathDirectoryNode* node;
     int j;
+    assert(pd);
 
     memset(nodeCountTotal, 0, sizeof(nodeCountTotal));
     if(NULL != pd->_pathHash)
@@ -1138,7 +1120,6 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
         nodeBucketHeight, nodeCount);
     Con_Printf("\n");
     printDistributionHistogram(pd, 16, nodeCountTotal);
-    }
 }
 #endif
 
@@ -1298,7 +1279,6 @@ static void PathDirectorySearch_BuildFragmentMap(pathdirectorysearch_t* s,
     const char* to = begin + searchPathLen - 1;
     const char* from;
     size_t i;
-
     assert(s && searchPath && searchPath[0] && searchPathLen != 0);
 
     // Skip over any trailing delimiters.

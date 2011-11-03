@@ -806,7 +806,7 @@ void F_ResetResourceNamespace(resourcenamespaceid_t rni)
     info->flags |= RNF_IS_DIRTY;
 }
 
-struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
+resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
     return getNamespaceInfoForId(rni)->rnamespace;
 }
