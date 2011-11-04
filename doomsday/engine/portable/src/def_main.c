@@ -860,11 +860,10 @@ static void readAllDefinitions(void)
                 const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
                 if(!resolvedPath)
                 {
-                    ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
-                    Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".",
-                              Str_Text(searchPaths));
+                    ddstring_t* names = ResourceRecord_NameStringList(rec);
+                    Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
                     // Unreachable.
-                    Str_Delete(searchPaths);
+                    Str_Delete(names);
                 }
                 VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
                 readDefinitionFile(Str_Text(resolvedPath));

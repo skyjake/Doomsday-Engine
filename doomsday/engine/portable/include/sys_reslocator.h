@@ -33,9 +33,8 @@
 
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
+#include "filedirectory.h"
 
-struct resourcerecord_s;
-struct filedirectory_s;
 struct uri_s;
 
 #define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
@@ -124,7 +123,7 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
 #define F_HashKeyForFilePathHashName F_HashKeyForAlphaNumericNameIgnoreCase
 
 resourcenamespace_t* F_CreateResourceNamespace(const char* name,
-    struct filedirectory_s* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    FileDirectory* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
 boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,

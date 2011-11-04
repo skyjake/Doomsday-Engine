@@ -31,45 +31,47 @@ static __inline size_t countElements(ddstring_t** list)
 {
     size_t n = 0;
     if(list)
-        while(list[n++]);
+    {
+        while(list[n++]) { }
+    }
     return n;
 }
 
-static ddstring_t* buildSearchPathList(resourcerecord_t* rec)
+static ddstring_t* buildNameStringList(resourcerecord_t* rec, char delimiter)
 {
-    assert(rec);
-    {
     int i, requiredLength = 0;
-    ddstring_t* pathList;
+    ddstring_t* list;
 
-    if(!rec->_namesCount)
-        return 0;
+    assert(rec);
+
+    if(!rec->_namesCount) return 0;
 
     for(i = 0; i < rec->_namesCount; ++i)
         requiredLength += Str_Length(rec->_names[i]);
     requiredLength += rec->_namesCount - 1;
 
-    if(!requiredLength)
-        return 0;
+    if(!requiredLength) return 0;
 
-    // Build path list in reverse; newer paths have precedence.
-    pathList = Str_New();
-    Str_Reserve(pathList, requiredLength);
-    Str_Clear(pathList);
+    // Build name list in reverse; newer names have precedence.
+    list = Str_New();
+    Str_Reserve(list, requiredLength);
+    Str_Clear(list);
 
     i = rec->_namesCount-1;
-    Str_Set(pathList, Str_Text(rec->_names[i--]));
+    Str_Set(list, Str_Text(rec->_names[i--]));
     for(; i >= 0; i--)
-        Str_Appendf(pathList, ";%s", Str_Text(rec->_names[i]));
+        Str_Appendf(list, "%c%s", delimiter, Str_Text(rec->_names[i]));
 
-    return pathList;
-    }
+    return list;
 }
 
 resourcerecord_t* ResourceRecord_NewWithName(resourceclass_t rclass, int rflags,
     const ddstring_t* name)
 {
-    resourcerecord_t* rec = malloc(sizeof(*rec));
+    resourcerecord_t* rec = (resourcerecord_t*)malloc(sizeof *rec);
+    if(!rec)
+        Con_Error("ResourceRecord::NewWithName: Failed on allocation of %lu bytes.", (unsigned long) sizeof *rec);
+
     rec->_rclass = rclass;
     rec->_rflags = rflags;
     rec->_names = 0;
@@ -78,6 +80,7 @@ resourcerecord_t* ResourceRecord_NewWithName(resourceclass_t rclass, int rflags,
     rec->_searchPaths = 0;
     rec->_searchPathUsed = 0;
     Str_Init(&rec->_foundPath);
+
     ResourceRecord_AddName(rec, name);
     return rec;
 }
@@ -97,6 +100,7 @@ void ResourceRecord_Delete(resourcerecord_t* rec)
             Str_Delete(rec->_names[i]);
         free(rec->_names);
     }
+
     if(rec->_identityKeys)
     {
         size_t i;
@@ -104,6 +108,7 @@ void ResourceRecord_Delete(resourcerecord_t* rec)
             Str_Delete(rec->_identityKeys[i]);
         free(rec->_identityKeys);
     }
+
     F_DestroyUriList(rec->_searchPaths);
     Str_Free(&rec->_foundPath);
     free(rec);
@@ -111,24 +116,27 @@ void ResourceRecord_Delete(resourcerecord_t* rec)
 
 void ResourceRecord_AddName(resourcerecord_t* rec, const ddstring_t* name)
 {
+    int i;
     assert(rec);
-    if(name == 0 || Str_IsEmpty(name))
-        return;
+
+    if(name == 0 || Str_IsEmpty(name)) return;
 
     // Is this name unique? We don't want duplicates.
-    { int i;
     for(i = 0; i < rec->_namesCount; ++i)
+    {
         if(!Str_CompareIgnoreCase(rec->_names[i], Str_Text(name)))
             return;
     }
 
     // Add the new name.
-    rec->_names = realloc(rec->_names, sizeof(*rec->_names) * ++rec->_namesCount);
+    rec->_names = (ddstring_t**)realloc(rec->_names, sizeof *rec->_names * ++rec->_namesCount);
+    if(!rec->_names)
+        Con_Error("ResourceRecord::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *rec->_names * (rec->_namesCount-1));
+
     rec->_names[rec->_namesCount-1] = Str_New();
     Str_Copy(rec->_names[rec->_namesCount-1], name);
 
-    if(!rec->_searchPaths)
-        return;
+    if(!rec->_searchPaths) return;
 
     F_DestroyUriList(rec->_searchPaths);
     rec->_searchPaths = 0;
@@ -138,33 +146,35 @@ void ResourceRecord_AddName(resourcerecord_t* rec, const ddstring_t* name)
 
 void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* identityKey)
 {
+    size_t num;
     assert(rec && identityKey);
-    {
-    size_t num = countElements(rec->_identityKeys);
-    rec->_identityKeys = realloc(rec->_identityKeys, sizeof(*rec->_identityKeys) * MAX_OF(num+1, 2));
+
+    num = countElements(rec->_identityKeys);
+    rec->_identityKeys = (ddstring_t**)realloc(rec->_identityKeys, sizeof *rec->_identityKeys * MAX_OF(num+1, 2));
+    if(!rec->_identityKeys)
+        Con_Error("ResourceRecord::AddIdentityKey: Failed on (re)allocation of %lu bytes for identitykey list.", (unsigned long) sizeof *rec->_identityKeys * MAX_OF(num+1, 2));
+
     if(num) num -= 1;
     rec->_identityKeys[num] = Str_New();
     Str_Copy(rec->_identityKeys[num], identityKey);
     rec->_identityKeys[num+1] = 0; // Terminate.
-    }
 }
 
 Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
 {
     assert(rec);
-    if(rec->_searchPaths)
-        return (Uri* const*) rec->_searchPaths;
-    { ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
-    rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
-    if(searchPaths)
-        Str_Delete(searchPaths);
+    if(!rec->_searchPaths)
+    {
+        ddstring_t* searchPaths = ResourceRecord_NameStringList(rec);
+        rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
+        if(searchPaths) Str_Delete(searchPaths);
     }
     return (Uri* const*) rec->_searchPaths;
 }
 
-ddstring_t* ResourceRecord_SearchPathsAsStringList(resourcerecord_t* rec)
+ddstring_t* ResourceRecord_NameStringList(resourcerecord_t* rec)
 {
-    return buildSearchPathList(rec);
+    return buildNameStringList(rec, ';');
 }
 
 const ddstring_t* ResourceRecord_ResolvedPath(resourcerecord_t* rec, boolean canLocate)
@@ -175,7 +185,9 @@ const ddstring_t* ResourceRecord_ResolvedPath(resourcerecord_t* rec, boolean can
         rec->_searchPathUsed = F_FindResourceForRecord(rec, &rec->_foundPath);
     }
     if(rec->_searchPathUsed != 0)
+    {
         return &rec->_foundPath;
+    }
     return 0;
 }
 
@@ -199,9 +211,7 @@ ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec)
 
 void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
 {
-    assert(rec);
-    {
-    ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
+    ddstring_t* searchPaths = ResourceRecord_NameStringList(rec);
 
     if(printStatus)
         Con_Printf("%s", rec->_searchPathUsed == 0? " ! ":"   ");
@@ -215,5 +225,4 @@ void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
     }
     Con_Printf("\n");
     Str_Delete(searchPaths);
-    }
 }

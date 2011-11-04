@@ -29,16 +29,26 @@
 #include "de_filesys.h"
 
 #include "m_args.h"
-#include "filedirectory.h"
+#include "pathdirectory.h"
 
 #include "resourcenamespace.h"
 
-typedef struct resourcenamespace_namehash_node_s {
-    struct resourcenamespace_namehash_node_s* next;
+typedef struct {
+    /// Directory node for this resource in the owning PathDirectory
+    PathDirectoryNode* directoryNode;
+
 #if _DEBUG
+    /// Symbolic name of this resource.
     ddstring_t name;
 #endif
+
+    /// User data associated with this resource.
     void* userData;
+} resourcenamespace_record_t;
+
+typedef struct resourcenamespace_namehash_node_s {
+    struct resourcenamespace_namehash_node_s* next;
+    resourcenamespace_record_t resource;
 } resourcenamespace_namehash_node_t;
 
 /**
@@ -53,6 +63,25 @@ typedef struct resourcenamespace_namehash_s {
     resourcenamespace_hashentry_t hash[RESOURCENAMESPACE_HASHSIZE];
 } resourcenamespace_namehash_t;
 
+static resourcenamespace_record_t* initResourceRecord(resourcenamespace_record_t* res)
+{
+    assert(res);
+    res->directoryNode = NULL;
+#if _DEBUG
+    Str_Init(&res->name);
+#endif
+    res->userData = NULL;
+    return res;
+}
+
+static void destroyResourceRecord(resourcenamespace_record_t* res)
+{
+    assert(res);
+#if _DEBUG
+    Str_Free(&res->name);
+#endif
+}
+
 static void clearNameHash(resourcenamespace_t* rn)
 {
     uint i;
@@ -66,7 +95,7 @@ static void clearNameHash(resourcenamespace_t* rn)
         {
             resourcenamespace_namehash_node_t* nextNode = entry->first->next;
 #if _DEBUG
-            Str_Free(&entry->first->name);
+            destroyResourceRecord(&entry->first->resource);
 #endif
             free(entry->first);
             entry->first = nextNode;
@@ -113,7 +142,7 @@ static resourcenamespace_namehash_node_t* findPathNodeInHash(resourcenamespace_t
     if(rn->_nameHash)
     {
         node = rn->_nameHash->hash[key].first;
-        while(node && node->userData != pdNode)
+        while(node && node->resource.directoryNode != pdNode)
         {
             node = node->next;
         }
@@ -251,7 +280,7 @@ int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,
             while(node)
             {
                 next = node->next;
-                result = callback(node->userData, paramaters);
+                result = callback(node->resource.directoryNode, paramaters);
                 if(result) break;
                 node = next;
             }
@@ -268,10 +297,11 @@ int ResourceNamespace_Iterate(resourcenamespace_t* rn, const ddstring_t* name,
 }
 
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    const PathDirectoryNode* pdNode)
+    PathDirectoryNode* pdNode, void* userData)
 {
     resourcenamespace_namehash_node_t* node;
     resourcenamespace_namehash_key_t key;
+    resourcenamespace_record_t* res;
     boolean isNewNode = false;
     assert(rn && name && pdNode);
 
@@ -296,57 +326,70 @@ boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
                 Con_Error("ResourceNamespace::Add: Failed on allocation of %lu bytes for new ResourceNamespace::NameHash.", (unsigned long) sizeof *rn->_nameHash);
         }
 
-        // Create a new node for this name.
+        // Create a new node for this.
         node = (resourcenamespace_namehash_node_t*)malloc(sizeof *node);
+        node->next = NULL;
         if(!node)
             Con_Error("ResourceNamespace::Add: Failed on allocation of %lu bytes for new ResourceNamespace::NameHash::Node.", (unsigned long) sizeof *node);
         isNewNode = true;
-#if _DEBUG
-        Str_Init(&node->name); Str_Set(&node->name, Str_Text(name));
-#endif
-        node->userData = NULL;
-        node->next = NULL;
 
         // Link it to the list for this bucket.
         slot = &rn->_nameHash->hash[key];
         if(slot->last) slot->last->next = node;
         slot->last = node;
         if(!slot->first) slot->first = node;
+
+        res = initResourceRecord(&node->resource);
+#if _DEBUG
+        Str_Set(&res->name, Str_Text(name));
+#endif
+    }
+    else
+    {
+        res = &node->resource;
     }
 
-    // (Re)configure this node.
-    node->userData = (void*)pdNode;
+    // (Re)configure this record.
+    res->directoryNode = pdNode;
+    res->userData = userData;
 
     return isNewNode;
 }
 
 #if _DEBUG
-void ResourceNamespace_Print(resourcenamespace_t* rn)
+static void printResourceRecord(resourcenamespace_record_t* res)
 {
     ddstring_t path;
+    Str_Init(&path);
+    PathDirectory_ComposePath(PathDirectoryNode_Directory(res->directoryNode), res->directoryNode, &path, NULL, '/');
+    Con_Printf("\"%s\" -> %s\n", Str_Text(&res->name), Str_Text(&path));
+    Str_Free(&path);
+}
+
+void ResourceNamespace_Print(resourcenamespace_t* rn)
+{
+    resourcenamespace_hashentry_t* entry;
+    resourcenamespace_namehash_node_t* node;
     size_t n;
     uint i;
     assert(rn);
 
     Con_Printf("ResourceNamespace [%p]:\n", (void*)rn);
     n = 0;
-    Str_Init(&path);
     if(rn->_nameHash)
     for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
     {
-        resourcenamespace_hashentry_t* entry = &rn->_nameHash->hash[i];
-        resourcenamespace_namehash_node_t* node = entry->first;
+        entry = &rn->_nameHash->hash[i];
+        node = entry->first;
+
         while(node)
         {
-            Str_Clear(&path);
-            PathDirectory_ComposePath(PathDirectoryNode_Directory(node->userData), node->userData, &path, NULL, FILEDIRECTORY_DELIMITER);
-            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, (unsigned long)i,
-                Str_Text(&node->name), Str_Text(&path));
-            ++n;
+            Con_Printf("  %lu: %lu:", (unsigned long)n, (unsigned long)i);
+            printResourceRecord(&node->resource);
             node = node->next;
+            ++n;
         }
     }
     Con_Printf("  %lu %s in namespace.\n", (unsigned long) n, (n==1? "resource":"resources"));
-    Str_Free(&path);
 }
 #endif

@@ -63,14 +63,14 @@ void ResourceRecord_Delete(resourcerecord_t* rec);
 /**
  * Add a new name to the list of known names for this resource.
  *
- * @param name          New name for this resource. Newer names have precedence.
+ * @param name  New name for this resource. Newer names have precedence.
  */
 void ResourceRecord_AddName(resourcerecord_t* rec, const ddstring_t* name);
 
 /**
  * Add a new subrecord identity key to the list for this resource.
  *
- * @param identityKey   New identity key (e.g., a lump/file name) to add to this resource.
+ * @param identityKey  New identity key (e.g., a lump/file name) to add to this resource.
  */
 void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* identityKey);
 
@@ -84,9 +84,9 @@ const ddstring_t* ResourceRecord_ResolvedPath(resourcerecord_t* rec, boolean can
 void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus);
 
 /**
- * @return  String list of paths delimited with semicolons.
+ * @return  String list of (potential) names delimited with semicolons.
  */
-ddstring_t* ResourceRecord_SearchPathsAsStringList(resourcerecord_t* rec);
+ddstring_t* ResourceRecord_NameStringList(resourcerecord_t* rec);
 
 /**
  * Accessor methods.

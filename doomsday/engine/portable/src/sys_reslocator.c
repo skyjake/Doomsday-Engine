@@ -74,7 +74,7 @@ typedef struct {
     resourcenamespace_t* rnamespace;
 
     /// Associated path directory for this namespace.
-    filedirectory_t* directory;
+    FileDirectory* directory;
 
     /// Algorithm used to compose the name of a resource in this namespace.
     ddstring_t* (*composeName) (const ddstring_t* path);
@@ -204,13 +204,13 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const PathDirectoryNode* node)
+static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, PathDirectoryNode* node)
 {
     ddstring_t* name;
     assert(rnInfo && node);
 
     name = rnInfo->composeName(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
-    if(ResourceNamespace_Add(rnInfo->rnamespace, name, node))
+    if(ResourceNamespace_Add(rnInfo->rnamespace, name, node, NULL))
     {
         // We will need to rebuild this namespace (if we aren't already doing so,
         // in the case of auto-populated namespaces built from FileDirectorys).
@@ -219,7 +219,7 @@ static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, const PathDi
     Str_Delete(name);
 }
 
-static int addFileResourceWorker(const PathDirectoryNode* node, void* paramaters)
+static int addFileResourceWorker(PathDirectoryNode* node, void* paramaters)
 {
     resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*) paramaters;
     // We are only interested in leafs (i.e., files and not directories).
@@ -563,7 +563,7 @@ static void createPackagesResourceNamespace(void)
     ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
     uint doomWadPathsCount = 0, searchPathsCount, idx;
     resourcenamespace_t* rnamespace;
-    filedirectory_t* directory;
+    FileDirectory* directory;
     Uri** searchPaths;
 
     // Is the DOOMWADPATH environment variable in use?
@@ -728,7 +728,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, defaultPathCount;
         struct namespacedef_s* def = &defs[i];
-        filedirectory_t* directory = FileDirectory_New();
+        FileDirectory* directory = FileDirectory_New();
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 
@@ -837,7 +837,7 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-resourcenamespace_t* F_CreateResourceNamespace(const char* name, filedirectory_t* directory,
+resourcenamespace_t* F_CreateResourceNamespace(const char* name, FileDirectory* directory,
     ddstring_t* (*composeNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags)
 {
@@ -884,7 +884,7 @@ boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri*
     return false;
 }
 
-void F_AddResourceToNamespace(resourcenamespaceid_t rni, const PathDirectoryNode* node)
+void F_AddResourceToNamespace(resourcenamespaceid_t rni, PathDirectoryNode* node)
 {
     errorIfNotInited("F_AddResourceToNamespace");
     addResourceToNamespace(getNamespaceInfoForId(rni), node);
@@ -1103,11 +1103,11 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
         return 0;
     }
 
-    if((list = F_CreateUriListStr(rclass, searchPaths)) != 0)
-    {
-        result = findResource(rclass, (const Uri**)list, optionalSuffix, foundPath);
-        F_DestroyUriList(list);
-    }
+    list = F_CreateUriListStr(rclass, searchPaths);
+    if(!list) return 0;
+
+    result = findResource(rclass, (const Uri**)list, optionalSuffix, foundPath);
+    F_DestroyUriList(list);
     return result;
 }
 

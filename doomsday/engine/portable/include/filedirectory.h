@@ -34,6 +34,18 @@
 #define FILEDIRECTORY_DELIMITER         DIR_SEP_CHAR
 
 /**
+ * Callback function type for FileDirectory::Iterate
+ *
+ * @param node  PathDirectoryNode being processed.
+ * @param paramaters  User data passed to this.
+ * @return  Non-zero if iteration should stop.
+ */
+typedef pathdirectory_iteratecallback_t filedirectory_iteratecallback_t;
+
+/// Const variant.
+typedef pathdirectory_iterateconstcallback_t filedirectory_iterateconstcallback_t;
+
+/**
  * FileDirectory. Core system component representing a hierarchical
  * file path structure.
  *
@@ -46,21 +58,19 @@
  *
  * @ingroup fs
  */
-typedef struct filedirectory_s {
-    /// Path hash table.
-    PathDirectory* _pathDirectory;
-} filedirectory_t;
+struct filedirectory_s; // The filedirectory instance (opaque).
+typedef struct filedirectory_s FileDirectory;
 
-filedirectory_t* FileDirectory_New(void);
-filedirectory_t* FileDirectory_NewWithPathListStr(const ddstring_t* pathList);
-filedirectory_t* FileDirectory_NewWithPathList(const char* pathList);
+FileDirectory* FileDirectory_New(void);
+FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList);
+FileDirectory* FileDirectory_NewWithPathList(const char* pathList);
 
-void FileDirectory_Delete(filedirectory_t* fd);
+void FileDirectory_Delete(FileDirectory* fd);
 
 /**
  * Clear the directory contents.
  */
-void FileDirectory_Clear(filedirectory_t* fd);
+void FileDirectory_Clear(FileDirectory* fd);
 
 /**
  * Resolve and collate all paths in the directory into a list.
@@ -71,8 +81,7 @@ void FileDirectory_Clear(filedirectory_t* fd);
  * @return  Ptr to the allocated list; it is the responsibility of the caller to
  *      Str_Free each string in the list and Z_Free the list itself.
  */
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, pathdirectorynode_type_t type,
-    size_t* count);
+ddstring_t* FileDirectory_AllPaths(FileDirectory* fd, pathdirectorynode_type_t type, size_t* count);
 
 /**
  * Add a new set of paths. Duplicates are automatically pruned.
@@ -82,11 +91,11 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, pathdirectorynode_type_t
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  */
-void FileDirectory_AddPaths3(filedirectory_t* fd, const Uri* const* paths, uint pathsCount,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPaths2(filedirectory_t* fd, const Uri* const* paths, uint pathsCount,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters));
-void FileDirectory_AddPaths(filedirectory_t* fd, const Uri* const* paths, uint pathsCount);
+void FileDirectory_AddPaths3(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
+    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
+void FileDirectory_AddPaths2(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
+    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
+void FileDirectory_AddPaths(FileDirectory* fd, const Uri* const* paths, uint pathsCount); /*callback=NULL*/
 
 /**
  * Add a new set of paths from a path list. Duplicates are automatically pruned.
@@ -95,11 +104,11 @@ void FileDirectory_AddPaths(filedirectory_t* fd, const Uri* const* paths, uint p
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  */
-void FileDirectory_AddPathList3(filedirectory_t* fd, const char* pathList,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPathList2(filedirectory_t* fd, const char* pathList,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters));
-void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList);
+void FileDirectory_AddPathList3(FileDirectory* fd, const char* pathList,
+    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
+void FileDirectory_AddPathList2(FileDirectory* fd, const char* pathList,
+    int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
+void FileDirectory_AddPathList(FileDirectory* fd, const char* pathList); /*callback=NULL*/
 
 /**
  * Find a path in the directory.
@@ -110,7 +119,7 @@ void FileDirectory_AddPathList(filedirectory_t* fd, const char* pathList);
  *
  * @return  @c true, iff successful.
  */
-boolean FileDirectory_Find(filedirectory_t* fd, pathdirectorynode_type_t type,
+boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t type,
     const char* searchPath, ddstring_t* foundPath);
 
 /**
@@ -124,25 +133,19 @@ boolean FileDirectory_Find(filedirectory_t* fd, pathdirectorynode_type_t type,
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(filedirectory_t* fd, pathdirectorynode_type_t type,
-    PathDirectoryNode* parent, ushort hash,
-    int (*callback) (PathDirectoryNode* node, void* paramaters),
-    void* paramaters);
-int FileDirectory_Iterate(filedirectory_t* fd, pathdirectorynode_type_t type,
-    PathDirectoryNode* parent, ushort hash,
-    int (*callback) (PathDirectoryNode* node, void* paramaters));
+int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
+    filedirectory_iteratecallback_t callback, void* paramaters);
+int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t type, PathDirectoryNode* parent, ushort hash,
+    filedirectory_iteratecallback_t callback); /*paramaters=NULL*/
 
-int FileDirectory_Iterate2_Const(const filedirectory_t* fd, pathdirectorynode_type_t type,
-    const PathDirectoryNode* parent, ushort hash,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters),
-    void* paramaters);
-int FileDirectory_Iterate_Const(const filedirectory_t* fd, pathdirectorynode_type_t type,
-    const PathDirectoryNode* parent, ushort hash,
-    int (*callback) (const PathDirectoryNode* node, void* paramaters));
+int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
+    filedirectory_iterateconstcallback_t callback, void* paramaters);
+int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_t type, const PathDirectoryNode* parent, ushort hash,
+    filedirectory_iterateconstcallback_t callback); /*paramaters=NULL*/
 
 #if _DEBUG
-void FileDirectory_Print(filedirectory_t* fd);
-void FileDirectory_PrintHashDistribution(filedirectory_t* fd);
+void FileDirectory_Print(FileDirectory* fd);
+void FileDirectory_PrintHashDistribution(FileDirectory* fd);
 #endif
 
 #endif /* LIBDENG_FILEDIRECTORY_H */

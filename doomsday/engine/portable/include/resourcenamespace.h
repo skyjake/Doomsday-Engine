@@ -103,10 +103,11 @@ ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*
  *
  * @param name  Name of the resource being added.
  * @param node  PathDirectoryNode representing the resource in the owning PathDirectory.
+ * @param userData  User data to be attached to the new resource record.
  * @return  @c true= If the namespace did not already contain this resource.
  */
 boolean ResourceNamespace_Add(resourcenamespace_t* rn, const ddstring_t* name,
-    const PathDirectoryNode* node);
+    PathDirectoryNode* node, void* userData);
 
 /**
  * Iterate over resources in this namespace. Iteration ends when all
