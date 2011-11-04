@@ -79,6 +79,7 @@
 # include "p_inventory.h"
 # include "hu_inventory.h"
 #endif
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -924,6 +925,7 @@ void G_CommonShutdown(void)
 
     Hu_MsgShutdown();
     Hu_UnloadData();
+    D_NetClearBuffer();
 
     SV_Shutdown();
     P_Shutdown();
