@@ -1574,7 +1574,7 @@ static void printMaterialInfo(material_t* mat)
         Material_IsGroupAnimated(mat)? "yes" : "no",
         Material_IsDrawable(mat)     ? "yes" : "no",
         Material_EnvironmentClass(mat) == MEC_UNKNOWN? "N/A" : S_MaterialEnvClassName(Material_EnvironmentClass(mat)),
-        Material_HasDecorations(mat) ? "yes" : "no",
+        Materials_HasDecorations(mat) ? "yes" : "no",
         Material_DetailTexture(mat)  ? "yes" : "no",
         Material_HasGlow(mat)        ? "yes" : "no",
         Material_ShinyTexture(mat)   ? "yes" : "no",
@@ -1779,6 +1779,35 @@ boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
     return false;
 }
 
+boolean Materials_HasDecorations(material_t* mat)
+{
+    assert(mat);
+    /// \fixme We should not need to prepare to determine this.
+    /// Nor should we need to process the group each time. Cache this decision.
+    if(Materials_DecorationDef(mat)) return true;
+    if(Material_IsGroupAnimated(mat))
+    {
+        int g, i, numGroups = Materials_AnimGroupCount();
+        for(g = 0; g < numGroups; ++g)
+        {
+            animgroup_t* group = &groups[g];
+
+            // Precache groups don't apply.
+            if(Materials_IsPrecacheAnimGroup(g)) continue;
+            // Is this material in this group?
+            if(!Materials_IsMaterialInAnimGroup(mat, g)) continue;
+
+            // If any material in this group has decorations then this
+            // material is considered to be decorated also.
+            for(i = 0; i < group->count; ++i)
+            {
+                if(Materials_DecorationDef(group->frames[i].mat)) return true;
+            }
+        }
+    }
+    return false;
+}
+
 int Materials_AnimGroupCount(void)
 {
     return numgroups;
@@ -1925,6 +1954,9 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
             params.current = group->frames[(group->index + i    ) % group->count].mat;
             params.next    = group->frames[(group->index + i + 1) % group->count].mat;
             Material_IterateVariants(real, setVariantTranslationWorker, &params);
+
+            // Surfaces using this material may need to be updated.
+            R_UpdateMapSurfacesOnMaterialChange(real);
 
             // Just animate the first in the sequence?
             if(group->flags & AGF_FIRST_ONLY)

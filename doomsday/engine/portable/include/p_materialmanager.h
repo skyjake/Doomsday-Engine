@@ -73,6 +73,9 @@ void Materials_ResetAnimGroups(void);
 /// To be called to destroy all animation groups when they are no longer needed.
 void Materials_ClearAnimGroups(void);
 
+/// @return  @c true if one or more light decorations are defined for this material.
+boolean Materials_HasDecorations(material_t* mat);
+
 /// @return  Symbolic name of the material namespace associated with @a textureNamespace.
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t textureNamespace);
 

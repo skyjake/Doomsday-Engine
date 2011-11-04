@@ -101,7 +101,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
             {
                 if(Material_HasGlow(mat))
                     R_SurfaceListAdd(glowingSurfaceList, suf);
-                if(Material_HasDecorations(mat))
+                if(Materials_HasDecorations(mat))
                     R_SurfaceListAdd(decoratedSurfaceList, suf);
 
                 if(DMU_GetType(suf->owner) == DMU_PLANE)

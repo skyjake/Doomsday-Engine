@@ -418,42 +418,34 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
  */
 static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < 2; ++i)
     {
         // Skip must be at least one.
         skip[i] = patternSkip[i] + 1;
-
-        if(skip[i] < 1)
-            skip[i] = 1;
+        if(skip[i] < 1) skip[i] = 1;
     }
 }
 
-static uint generateDecorLights(const ded_decorlight_t* def,
-                                surface_t* suf, const pvec3_t v1,
-                                const pvec3_t v2, float width, float height,
-                                const pvec3_t delta, int axis,
-                                float offsetS, float offsetT, sector_t* sec)
+static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
+    material_t* mat, const pvec3_t v1, const pvec3_t v2, float width, float height,
+    const pvec3_t delta, int axis, float offsetS, float offsetT, sector_t* sec)
 {
-    uint                num;
-    float               s, t; // Horizontal and vertical offset.
-    vec3_t              posBase, pos;
-    float               patternW, patternH;
-    int                 skip[2];
-    material_t*         mat = suf->material;
+    vec3_t posBase, pos;
+    float patternW, patternH;
+    float s, t; // Horizontal and vertical offset.
+    int skip[2];
+    uint num;
 
-    if(!R_IsValidLightDecoration(def))
-        return 0;
+    if(!mat || !R_IsValidLightDecoration(def)) return 0;
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
 
-    patternW = Material_Width(mat) * skip[0];
+    patternW = Material_Width(mat)  * skip[0];
     patternH = Material_Height(mat) * skip[1];
 
-    if(0 == patternW && 0 == patternH)
-        return 0;
+    if(0 == patternW && 0 == patternH) return 0;
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -473,8 +465,8 @@ static uint generateDecorLights(const ded_decorlight_t* def,
 
         for(; t < height; t += patternH)
         {
-            surfacedecor_t*     d;
-            float               offS = s / width, offT = t / height;
+            surfacedecor_t* d;
+            float offS = s / width, offT = t / height;
 
             V3_Set(pos, delta[VX] * offS,
                         delta[VY] * (axis == VZ? offT : offS),
@@ -488,7 +480,8 @@ static uint generateDecorLights(const ded_decorlight_t* def,
                     continue;
             }
 
-            if(NULL != (d = R_CreateSurfaceDecoration(suf)))
+            d = R_CreateSurfaceDecoration(suf);
+            if(d)
             {
                 V3_Copy(d->pos, pos);
                 d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
@@ -504,9 +497,8 @@ static uint generateDecorLights(const ded_decorlight_t* def,
 /**
  * Generate decorations for the specified surface.
  */
-static void updateSurfaceDecorations2(surface_t* suf, float offsetS,
-                                      float offsetT, vec3_t v1, vec3_t v2,
-                                      sector_t* sec, boolean visible)
+static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offsetT,
+    vec3_t v1, vec3_t v2, sector_t* sec, boolean visible)
 {
     vec3_t delta;
 
@@ -517,7 +509,10 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS,
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        const ded_decor_t* def = Materials_DecorationDef(suf->material);
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        material_t* mat = MaterialVariant_GeneralCase(Materials_ChooseVariant(suf->material, spec, true, true));
+        const ded_decor_t* def = Materials_DecorationDef(mat);
         if(def)
         {
             int axis = V3_MajorAxis(suf->normal);
@@ -534,15 +529,14 @@ static void updateSurfaceDecorations2(surface_t* suf, float offsetS,
                 width = sqrt(delta[VX] * delta[VX]);
                 height = delta[VY];
             }
-            if(width < 0)
-                width = -width;
-            if(height < 0)
-                height = -height;
+
+            if(width < 0)  width  = -width;
+            if(height < 0) height = -height;
 
             // Generate a number of lights.
             for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                generateDecorLights(&def->lights[i], suf, v1, v2, width, height, delta, axis, offsetS, offsetT, sec);
+                generateDecorLights(&def->lights[i], suf, mat, v1, v2, width, height, delta, axis, offsetS, offsetT, sec);
             }
         }
     }

@@ -1312,11 +1312,10 @@ void R_MapInitSurfaces(boolean forceUpdate)
 
 static void addToSurfaceLists(surface_t* suf, material_t* mat)
 {
-    if(NULL == suf || NULL == mat)
-        return;
+    if(!suf || !mat) return;
 
     if(Material_HasGlow(mat))        R_SurfaceListAdd(glowingSurfaceList,   suf);
-    if(Material_HasDecorations(mat)) R_SurfaceListAdd(decoratedSurfaceList, suf);
+    if(Materials_HasDecorations(mat)) R_SurfaceListAdd(decoratedSurfaceList, suf);
 }
 
 void R_MapInitSurfaceLists(void)

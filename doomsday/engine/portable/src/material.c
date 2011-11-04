@@ -169,13 +169,6 @@ boolean Material_HasGlow(material_t* mat)
     return (ms->glowing > .0001f);
 }
 
-boolean Material_HasDecorations(material_t* mat)
-{
-    assert(mat);
-    /// \fixme We should not need to prepare to determine this.
-    return NULL != Materials_DecorationDef(mat);
-}
-
 boolean Material_HasTranslation(const material_t* mat)
 {
     assert(mat);
