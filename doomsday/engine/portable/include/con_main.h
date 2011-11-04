@@ -184,6 +184,9 @@ boolean Con_Responder(ddevent_t* ev);
  */
 void Con_Open(int yes);
 
+/// To be called after a resolution change to resize the console.
+void Con_Resize(void);
+
 boolean Con_IsActive(void);
 
 boolean Con_IsLocked(void);
@@ -197,8 +200,6 @@ uint Con_CommandLineCursorPosition(void);
 struct cbuffer_s* Con_HistoryBuffer(void);
 
 uint Con_HistoryOffset(void);
-
-void Con_ResizeHistoryBuffer(void);
 
 fontnum_t Con_Font(void);
 

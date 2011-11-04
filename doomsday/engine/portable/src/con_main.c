@@ -498,10 +498,10 @@ void Con_SetFont(fontnum_t font)
 {
     if(!ConsoleInited)
         Con_Error("Con_SetFont: Console is not yet initialised.");
-    if(consoleFont == font)
-        return;
+    if(consoleFont == font) return;
     consoleFont = font;
     Con_ResizeHistoryBuffer();
+    Rend_ConsoleResize(true/*force*/);
 }
 
 con_textfilter_t Con_PrintFilter(void)
@@ -537,6 +537,7 @@ void Con_SetFontScale(float scaleX, float scaleY)
     if(scaleY > 0.0001f)
         consoleFontScale[1] = MAX_OF(.5f, scaleY);
     Con_ResizeHistoryBuffer();
+    Rend_ConsoleResize(true/*force*/);
 }
 
 float Con_FontLeading(void)
@@ -552,6 +553,7 @@ void Con_SetFontLeading(float value)
         Con_Error("Con_SetFontLeading: Console is not yet initialised.");
     consoleFontLeading = MAX_OF(.1f, value);
     Con_ResizeHistoryBuffer();
+    Rend_ConsoleResize(true/*force*/);
 }
 
 int Con_FontTracking(void)
@@ -567,6 +569,7 @@ void Con_SetFontTracking(int value)
         Con_Error("Con_SetFontTracking: Console is not yet initialised.");
     consoleFontTracking = MAX_OF(0, value);
     Con_ResizeHistoryBuffer();
+    Rend_ConsoleResize(true/*force*/);
 }
 
 /**
@@ -1466,6 +1469,13 @@ void Con_Open(int yes)
     }
 
     B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), yes);
+}
+
+void Con_Resize(void)
+{
+    if(!ConsoleInited) return;
+    Con_ResizeHistoryBuffer();
+    Rend_ConsoleResize(true/*force*/);
 }
 
 boolean Con_Responder(ddevent_t* ev)

@@ -46,12 +46,14 @@
  */
 #define FR_SMALL_TEXT_BUFFER_SIZE   (160)
 
-/**
- * Initialize the font renderer.
- * @return  @c 0 iff there are no errors.
- */
-int FR_Init(void);
+/// Initialize this module.
+void FR_Init(void);
+
+/// Shutdown this module.
 void FR_Shutdown(void);
+
+/// @return  @c true= Font renderer has been initialized and is available.
+boolean FR_Available(void);
 
 void FR_Ticker(timespan_t ticLength);
 

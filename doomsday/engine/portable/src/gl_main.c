@@ -802,7 +802,7 @@ void GL_TotalRestore(void)
     
     // Choose fonts again.
     R_LoadSystemFonts();
-    Con_ResizeHistoryBuffer();
+    Con_Resize();
 
     map = P_GetCurrentMap();
     if(map)

@@ -143,27 +143,27 @@ static __inline fr_state_attributes_t* currentAttribs(void)
     return fr.attribStack + fr.attribStackDepth;
 }
 
-int FR_Init(void)
+void FR_Init(void)
 {
-    if(inited)
-        return -1; // No reinitializations...
-
-    if(isDedicated)
-        return -1;
+    // No reinitializations...
+    if(inited) return;
+    if(isDedicated) return;
 
     inited = true;
     fr.fontNum = 0;
     FR_LoadDefaultAttrib();
     typeInTime = 0;
-
-    return 0;
 }
 
 void FR_Shutdown(void)
 {
-    if(!inited)
-        return;
+    if(!inited) return;
     inited = false;
+}
+
+boolean FR_Available(void)
+{
+    return inited;
 }
 
 void FR_Ticker(timespan_t ticLength)

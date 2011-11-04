@@ -26,8 +26,6 @@
  * Console rendering.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -41,21 +39,15 @@
 
 #include "rend_console.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// Console (display) Modes:
+typedef enum {
+    CM_HALFSCREEN, // Half vertical window height.
+    CM_FULLSCREEN, // Full window height.
+    CM_SINGLELINE, // Line height x1.
+    CM_CUSTOM      // Some other offset positioned by the user.
+} consolemode_t;
 
 void Rend_ConsoleUpdateBackground(void);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 float ConsoleOpenY; // Where the console bottom is when open.
 float consoleMoveSpeed = .5f; // Speed of console opening/closing.
@@ -69,9 +61,10 @@ float consoleBackgroundZoom = 1.0f;
 byte consoleTextShadow = false;
 byte consoleShowFPS = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean inited = false;
+static consolemode_t consoleMode;
+static boolean needResize = false; /// @c true= We are waiting on a successful resize to draw.
+static int moveLineDelta; // Number of lines to move the console when we are next able.
 static float ConsoleY; // Where the console bottom is currently?
 static float ConsoleDestY; // Where the console bottom should be?
 static float ConsoleBlink; // Cursor blink timer (35 Hz tics).
@@ -88,8 +81,6 @@ static const char* consoleTitle = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
 static char secondaryTitleText[256];
 static char statusText[256];
 
-// CODE --------------------------------------------------------------------
-
 void Rend_ConsoleRegister(void)
 {
     C_VAR_FLOAT("con-background-alpha", &consoleBackgroundAlpha, 0, 0, 1);
@@ -105,16 +96,14 @@ void Rend_ConsoleRegister(void)
 
 static float calcConsoleTitleBarHeight(void)
 {
+    int oldFont, border = theWindow->width / 120, height;
     assert(inited);
-    {
-    int border = theWindow->width / 120, height;
-    int oldFont = FR_Font();
 
+    oldFont = FR_Font();
     FR_SetFont(fontVariable[FS_BOLD]);
     height = FR_SingleLineHeight("Con") + border;
     FR_SetFont(oldFont);
     return height;
-    }
 }
 
 static __inline int calcConsoleMinHeight(void)
@@ -127,45 +116,84 @@ void Rend_ConsoleInit(void)
 {
     if(!inited)
     {   // First init.
+        consoleMode = CM_HALFSCREEN;
         ConsoleY = 0;
         ConsoleOpenY = SCREENHEIGHT/2;
         ConsoleDestY = 0;
-        ConsoleBlink = 0;
+        moveLineDelta = 0;
         openingOrClosing = false;
         consoleAlpha = 0;
         consoleAlphaTarget = 0;
+        funnyAng = 0;
+        ConsoleBlink = 0;
+        memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
+        memset(statusText, 0, sizeof(statusText));
     }
 
     consoleBackgroundMaterial = 0;
     funnyAng = 0;
-    // Font size in VGA coordinates. (Everything is in VGA coords.)
-    fontSy = 9;
 
     if(inited)
     {
         Rend_ConsoleUpdateTitle();
         Rend_ConsoleUpdateBackground();
     }
-    else
-    {   // First init.
-        memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
-        memset(statusText, 0, sizeof(statusText));
-    }
+
+    needResize = true;
     inited = true;
+}
+
+boolean Rend_ConsoleResize(boolean force)
+{
+    if(!inited) return false;
+
+    // Are we forcing a resize?
+    if(force) needResize = true;
+
+    // If there is no pending resize we can get out of here.
+    if(!needResize) return false;
+
+    // We can only resize if the font renderer is available.
+    if(FR_Available())
+    {
+        float scale[2], fontScaledY, gtosMulY;
+        int lineHeight;
+
+        FR_SetFont(Con_Font());
+        FR_LoadDefaultAttrib();
+        FR_SetTracking(Con_FontTracking());
+
+        gtosMulY = theWindow->height / 200.0f;
+        lineHeight = FR_SingleLineHeight("Con");
+        Con_FontScale(&scale[0], &scale[1]);
+
+        fontScaledY = lineHeight * Con_FontLeading() * scale[1];
+        fontSy = fontScaledY / gtosMulY;
+
+        if(consoleMode == CM_SINGLELINE)
+        {
+            ConsoleDestY = calcConsoleMinHeight();
+        }
+
+        // Rendering of the console can now continue.
+        needResize = false;
+    }
+
+    return needResize;
 }
 
 void Rend_ConsoleCursorResetBlink(void)
 {
-    assert(inited);
+    if(!inited) return;
     ConsoleBlink = 0;
 }
 
 // Calculate the average of the given color flags.
 static void calcAvgColor(int fl, float rgb[3])
 {
-    assert(inited && rgb);
-    {
     int count = 0;
+    assert(inited && rgb);
+
     rgb[CR] = rgb[CG] = rgb[CB] = 0;
 
     if(fl & CBLF_BLACK)
@@ -226,20 +254,17 @@ static void calcAvgColor(int fl, float rgb[3])
         rgb[CG] += (1 - rgb[CG]) / 2;
         rgb[CB] += (1 - rgb[CB]) / 2;
     }
-    }
 }
 
 static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
 {
-    assert(inited);
-    {
     int xoff = 3, yoff = lineHeight / 4, rh = MIN_OF(5, lineHeight / 2);
+    assert(inited);
 
     UI_GradientEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
                   rh / 3, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 2, alpha);
     UI_DrawRectEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
                   -rh / 3, false, UI_Color(UIC_BRD_HI), 0, 0, alpha / 3);
-    }
 }
 
 /**
@@ -248,10 +273,7 @@ static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
  */
 void Rend_ConsoleUpdateTitle(void)
 {
-    if(isDedicated)
-        return;
-
-    assert(inited);
+    if(isDedicated || !inited) return;
 
     // Update the secondary title and the game status.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
@@ -260,6 +282,7 @@ void Rend_ConsoleUpdateTitle(void)
         strncpy(statusText, Str_Text(GameInfo_Title(DD_GameInfo())), sizeof(statusText) - 1);
         return;
     }
+
     // No game currently loaded.
     memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
     memset(statusText, 0, sizeof(statusText));
@@ -275,30 +298,28 @@ void Rend_ConsoleUpdateBackground(void)
 void Rend_ConsoleToggleFullscreen(void)
 {
     float y;
-    int minHeight;
 
-    if(isDedicated)
+    if(isDedicated || !inited) return;
+    if(needResize)
+    {
+        /// \todo enqueue toggle (don't resize here, do it in the ticker).
         return;
+    }
 
-    assert(inited);
-
-    minHeight = calcConsoleMinHeight();
-    if(ConsoleDestY == minHeight)
-        y = SCREENHEIGHT/2;
-    else if(ConsoleDestY == SCREENHEIGHT/2)
-        y = SCREENHEIGHT;
-    else
-        y = minHeight;
+    if(++consoleMode > CM_SINGLELINE) consoleMode = CM_HALFSCREEN;
+    switch(consoleMode)
+    {
+    case CM_HALFSCREEN: y = SCREENHEIGHT/2; break;
+    case CM_FULLSCREEN: y = SCREENHEIGHT; break;
+    case CM_SINGLELINE: y = calcConsoleMinHeight(); break;
+    }
 
     ConsoleDestY = ConsoleOpenY = y;
 }
 
 void Rend_ConsoleOpen(int yes)
 {
-    if(isDedicated)
-        return;
-
-    assert(inited);
+    if(isDedicated || !inited) return;
 
     if(yes)
     {
@@ -315,29 +336,43 @@ void Rend_ConsoleOpen(int yes)
 
 void Rend_ConsoleMove(int numLines)
 {
-    if(isDedicated)
-        return;
+    if(isDedicated || !inited) return;
 
-    assert(inited);
+    moveLineDelta += numLines;
 
-    if(numLines == 0)
-        return;
+    if(needResize || moveLineDelta == 0) return;
 
-    if(numLines < 0)
+    consoleMode = CM_CUSTOM;
+    if(moveLineDelta < 0)
     {
-        int minHeight = calcConsoleMinHeight();
-
-        ConsoleOpenY -= fontSy * -numLines;
-        if(ConsoleOpenY < minHeight)
-            ConsoleOpenY = minHeight;
+        ConsoleOpenY -= fontSy * -moveLineDelta;
     }
     else
     {
-        ConsoleOpenY += fontSy * numLines;
-        if(ConsoleOpenY > SCREENHEIGHT)
-            ConsoleOpenY = SCREENHEIGHT;
+        ConsoleOpenY += fontSy * moveLineDelta;
     }
 
+    if(INRANGE_OF(ConsoleOpenY, SCREENHEIGHT/2, 2))
+    {
+        ConsoleOpenY = SCREENHEIGHT/2;
+        consoleMode = CM_HALFSCREEN;
+    }
+    else if(ConsoleOpenY >= SCREENHEIGHT)
+    {
+        ConsoleOpenY = SCREENHEIGHT;
+        consoleMode = CM_FULLSCREEN;
+    }
+    else
+    {
+        int minHeight = calcConsoleMinHeight();
+        if(ConsoleOpenY <= minHeight)
+        {
+            ConsoleOpenY = minHeight;
+            consoleMode = CM_SINGLELINE;
+        }
+    }
+
+    moveLineDelta = 0;
     ConsoleDestY = ConsoleOpenY;
 }
 
@@ -345,42 +380,15 @@ void Rend_ConsoleTicker(timespan_t time)
 {
     float step;
 
-    if(isDedicated)
-        return;
-
-    assert(inited);
+    if(isDedicated || !inited) return;
 
     step = time * 35;
-
-    if(ConsoleY == 0)
-        openingOrClosing = true;
-
-    // Move the console to the destination Y.
-    if(ConsoleDestY > ConsoleY)
-    {
-        float   diff = (ConsoleDestY - ConsoleY) * consoleMoveSpeed;
-
-        if(diff < 1)
-            diff = 1;
-        ConsoleY += diff * step;
-        if(ConsoleY > ConsoleDestY)
-            ConsoleY = ConsoleDestY;
-    }
-    else if(ConsoleDestY < ConsoleY)
-    {
-        float   diff = (ConsoleY - ConsoleDestY) * consoleMoveSpeed;
-
-        if(diff < 1)
-            diff = 1;
-        ConsoleY -= diff * step;
-        if(ConsoleY < ConsoleDestY)
-            ConsoleY = ConsoleDestY;
-    }
 
     // Move the console alpha to the target.
     if(consoleAlphaTarget > consoleAlpha)
     {
         float diff = MAX_OF(consoleAlphaTarget - consoleAlpha, .0001f) * consoleMoveSpeed;
+
         consoleAlpha += diff * step;
         if(consoleAlpha > consoleAlphaTarget)
             consoleAlpha = consoleAlphaTarget;
@@ -388,9 +396,36 @@ void Rend_ConsoleTicker(timespan_t time)
     else if(consoleAlphaTarget < consoleAlpha)
     {
         float diff = MAX_OF(consoleAlpha - consoleAlphaTarget, .0001f) * consoleMoveSpeed;
+
         consoleAlpha -= diff * step;
         if(consoleAlpha < consoleAlphaTarget)
             consoleAlpha = consoleAlphaTarget;
+    }
+
+    if(ConsoleY == 0)
+        openingOrClosing = true;
+
+    if(!needResize)
+    {
+        // Move the console to the destination Y.
+        if(ConsoleDestY > ConsoleY)
+        {
+            float diff = (ConsoleDestY - ConsoleY) * consoleMoveSpeed;
+            if(diff < 1) diff = 1;
+
+            ConsoleY += diff * step;
+            if(ConsoleY > ConsoleDestY)
+                ConsoleY = ConsoleDestY;
+        }
+        else if(ConsoleDestY < ConsoleY)
+        {
+            float diff = (ConsoleY - ConsoleDestY) * consoleMoveSpeed;
+            if(diff < 1) diff = 1;
+
+            ConsoleY -= diff * step;
+            if(ConsoleY < ConsoleDestY)
+                ConsoleY = ConsoleDestY;
+        }
     }
 
     if(ConsoleY == ConsoleOpenY)
@@ -410,13 +445,11 @@ void Rend_ConsoleFPS(int x, int y)
     int w, h;
     char buf[160];
 
-    if(isDedicated)
-        return;
+    if(isDedicated || !inited) return;
+    if(!consoleShowFPS) return;
 
-    assert(inited);
-
-    if(!consoleShowFPS)
-        return;
+    // Try to fulfill any pending resize.
+    if(Rend_ConsoleResize(false/*no force*/)) return; // No FPS counter for you...
 
     // If the ui is active draw the counter a bit further down
     if(UI_IsActive())
@@ -442,12 +475,10 @@ void Rend_ConsoleFPS(int x, int y)
 
 static void drawConsoleTitleBar(float alpha)
 {
-    assert(inited);
-    {
     int width = 0, height, border;
+    assert(inited);
 
-    if(alpha < .0001f)
-        return;
+    if(alpha < .0001f) return;
 
     border = theWindow->width / 120;
 
@@ -486,15 +517,12 @@ static void drawConsoleTitleBar(float alpha)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-    }
 }
 
-static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
-    float closeFade)
+static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
 {
-    assert(inited);
-    {
     int bgX = 0, bgY = 0;
+    assert(inited);
 
     if(consoleBackgroundMaterial)
     {
@@ -530,7 +558,6 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
             glPopMatrix();
         }
     }
-    }
 }
 
 /**
@@ -541,11 +568,10 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
  */
 static void drawSideText(const char* text, int line, float alpha)
 {
-    assert(inited);
-    {
     float gtosMulY = theWindow->height / 200.0f, fontScaledY, y, scale[2];
     char buf[300];
     int ssw;
+    assert(inited);
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
@@ -570,11 +596,10 @@ static void drawSideText(const char* text, int line, float alpha)
         FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
         FR_DrawText3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
-    }
 }
 
 /**
- * NOTE: Slightly messy...
+ * \note Slightly messy...
  */
 static void drawConsole(float consoleAlpha)
 {
@@ -583,8 +608,6 @@ static void drawConsole(float consoleAlpha)
 #define PADDING             (2)
 #define LOCALBUFFSIZE       (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/)
 
-    assert(inited);
-    {
     static const cbline_t** lines = 0;
     static int bufferSize = 0;
 
@@ -597,6 +620,7 @@ static void drawConsole(float consoleAlpha)
     int lineHeight, textOffsetY;
     con_textfilter_t printFilter = Con_PrintFilter();
     uint reqLines, maxLineLength;
+    assert(inited);
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
@@ -607,12 +631,10 @@ static void drawConsole(float consoleAlpha)
     lineHeight = FR_SingleLineHeight("Con");
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = lineHeight * Con_FontLeading() * scale[1];
-    fontSy = fontScaledY / gtosMulY;
     textOffsetY = PADDING + fontScaledY / 4;
 
     drawConsoleBackground(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY),
-                          theWindow->width, -theWindow->height,
-                          gtosMulY, consoleAlpha);
+                          theWindow->width, -theWindow->height, consoleAlpha);
 
     // The border.
     UI_Gradient(XORIGIN, YORIGIN + (int) ((ConsoleY - 10) * gtosMulY), theWindow->width,
@@ -791,7 +813,6 @@ static void drawConsole(float consoleAlpha)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     }
-    }
 #undef LOCALBUFFSIZE
 #undef PADDING
 #undef YORIGIN
@@ -802,14 +823,13 @@ void Rend_Console(void)
 {
     boolean consoleShow;
 
-    if(isDedicated)
-        return;
+    if(isDedicated || !inited) return;
 
-    assert(inited);
+    // Try to fulfill any pending resize.
+    if(Rend_ConsoleResize(false/*no force*/)) return; // No console on this frame at least...
 
     consoleShow = (ConsoleY > 0);// || openingOrClosing);
-    if(!consoleShow && !consoleShowFPS)
-        return;
+    if(!consoleShow && !consoleShowFPS) return;
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);

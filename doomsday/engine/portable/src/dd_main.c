@@ -1467,10 +1467,7 @@ int DD_Main(void)
     F_Init();
 
     Fonts_Initialize();
-    if(!isDedicated)
-    {
-        FR_Init();
-    }
+    FR_Init();
 
     // Enter busy mode until startup complete.
     Con_InitProgress(200);

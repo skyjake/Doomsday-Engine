@@ -37,7 +37,17 @@ void Rend_ConsoleRegister(void);
  * Initialize the console renderer (allows re-init).
  */
 void Rend_ConsoleInit(void);
+
 void Rend_ConsoleTicker(timespan_t time);
+
+/**
+ * Try to fulfill any pending console resize request.
+ * To be called after a resolution change to resize the console.
+ *
+ * @param force  @c true= Force a new resize request.
+ * @return  @c true= A resize is still pending.
+ */
+boolean Rend_ConsoleResize(boolean force);
 
 void Rend_ConsoleOpen(int yes);
 void Rend_ConsoleMove(int numLines);
