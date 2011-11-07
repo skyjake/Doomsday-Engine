@@ -228,7 +228,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            m->num = P_ToIndex(DD_MaterialForTextureIndex(1+idx, (isFlat? TN_FLATS : TN_TEXTURES)));
+            m->id = P_ToIndex(DD_MaterialForOriginalTextureIndex(idx, (isFlat? TN_FLATS : TN_TEXTURES)));
         }
         else
         {
@@ -242,19 +242,19 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
             {
                 // All we need do is make this a null-reference as the engine will
                 // determine the best course of action.
-                m->num = 0;
+                m->id = 0;
             }
             else
             {
                 // First try the prefered namespace, then any.
                 Uri* uri = Uri_NewWithPath2(m->name, RC_NULL);
                 Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-                m->num = P_ToIndex(Materials_MaterialForUri(uri));
+                m->id = P_ToIndex(Materials_MaterialForUri(uri));
 
-                if(!m->num)
+                if(m->id == 0)
                 {
                     Uri_SetScheme(uri, "");
-                    m->num = P_ToIndex(Materials_MaterialForUri(uri));
+                    m->id = P_ToIndex(Materials_MaterialForUri(uri));
                 }
                 Uri_Delete(uri);
             }
@@ -1787,10 +1787,10 @@ boolean TransferMap(void)
         sectorIDX = MPE_SectorCreate((float) sec->lightLevel / 255.0f, 1, 1, 1);
 
         MPE_PlaneCreate(sectorIDX, sec->floorHeight,
-                        sec->floorMaterial->num,
+                        sec->floorMaterial->id,
                         0, 0, 1, 1, 1, 1, 0, 0, 1);
         MPE_PlaneCreate(sectorIDX, sec->ceilHeight,
-                        sec->ceilMaterial->num,
+                        sec->ceilMaterial->id,
                         0, 0, 1, 1, 1, 1, 0, 0, -1);
 
         MPE_GameObjProperty("XSector", i, "Tag", DDVT_SHORT, &sec->tag);
@@ -1820,11 +1820,11 @@ boolean TransferMap(void)
             frontIdx =
                 MPE_SidedefCreate(front->sector,
                                   (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  front->topMaterial->num,
+                                  front->topMaterial->id,
                                   front->offset[VX], front->offset[VY], 1, 1, 1,
-                                  front->middleMaterial->num,
+                                  front->middleMaterial->id,
                                   front->offset[VX], front->offset[VY], 1, 1, 1, 1,
-                                  front->bottomMaterial->num,
+                                  front->bottomMaterial->id,
                                   front->offset[VX], front->offset[VY], 1, 1, 1);
         }
 
@@ -1834,11 +1834,11 @@ boolean TransferMap(void)
             backIdx =
                 MPE_SidedefCreate(back->sector,
                                   (map->format == MF_DOOM64? SDF_MIDDLE_STRETCH : 0),
-                                  back->topMaterial->num,
+                                  back->topMaterial->id,
                                   back->offset[VX], back->offset[VY], 1, 1, 1,
-                                  back->middleMaterial->num,
+                                  back->middleMaterial->id,
                                   back->offset[VX], back->offset[VY], 1, 1, 1, 1,
-                                  back->bottomMaterial->num,
+                                  back->bottomMaterial->id,
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 

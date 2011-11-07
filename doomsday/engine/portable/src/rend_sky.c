@@ -476,7 +476,7 @@ static void internalSkyParams(int layer, int param, void* data)
         break;
 
     case DD_MATERIAL: {
-        material_t* mat = Materials_ToMaterial(*((materialnum_t*) data));
+        material_t* mat = Materials_ToMaterial(*((materialid_t*) data));
         R_SkyLayerSetMaterial(layer, mat);
         break;
       }

@@ -163,7 +163,7 @@ typedef struct {
 
 typedef struct {
     char name[256];
-    uint id;
+    struct texture_s* texture;
 } dmd_skin_t;
 
 typedef struct {

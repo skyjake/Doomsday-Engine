@@ -473,7 +473,7 @@ static void destroyBindings(void)
     bindingsCount = bindingsMax = 0;
 }
 
-materialnum_t FontBind_Id(const fontbind_t* fb)
+fontnum_t FontBind_Id(const fontbind_t* fb)
 {
     assert(fb);
     return fb->_id;

@@ -27,12 +27,12 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_ui.h"
+#include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include "texture.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -973,22 +973,22 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     if(p->numFrames)
     {
         fidata_pic_frame_t* f = p->frames[frame];
-        patchtex_t* patch;
-        rawtex_t* rawTex;
 
         flipTextureS = (f->flags.flip != 0);
         showEdges = false;
 
         switch(f->type)
         {
-        case PFT_RAW:
-            if(NULL != (rawTex = R_GetRawTex(f->texRef.lumpNum)))
+        case PFT_RAW: {
+            rawtex_t* rawTex = R_GetRawTex(f->texRef.lumpNum);
+            if(rawTex)
             {
                 glTexName = GL_PrepareRawTex(rawTex);
                 V3_Set(offset, 0, 0, 0);
                 V3_Set(dimensions, rawTex->width, rawTex->height, 0);
             }
             break;
+          }
         case PFT_XIMAGE:
             glTexName = (DGLuint)f->texRef.tex;
             V3_Set(offset, 0, 0, 0);
@@ -1016,8 +1016,9 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             }
             break;
           }
-        case PFT_PATCH:
-            if(NULL != (patch = R_PatchTextureByIndex(f->texRef.patch)))
+        case PFT_PATCH: {
+            patchtex_t* patch = R_PatchTextureByIndex(f->texRef.patch);
+            if(patch)
             {
                 texture_t* tex = Textures_ToTexture(patch->texId);
                 glTexName = (renderTextures==1? GL_PreparePatch(patch) : 0);
@@ -1025,6 +1026,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);
             }
             break;
+          }
         default:
             Con_Error("drawPicFrame: Invalid FI_PIC frame type %i.", (int)f->type);
         }

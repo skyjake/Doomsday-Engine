@@ -740,9 +740,8 @@ static void addLuminous(mobj_t* mo)
     mat = sprFrame->mats[0];
 
 #if _DEBUG
-if(!mat)
-Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
-          (int) mo->sprite, mo->frame);
+    if(!mat)
+        Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.", (int) mo->sprite, mo->frame);
 #endif
 
     // Ensure we have up-to-date information about the material.
@@ -752,8 +751,7 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
 
     pl = (const pointlight_analysis_t*) Texture_Analysis(
         MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
-    if(NULL == pl)
-        return; // Not good...
+    if(!pl) return; // Not good...
 
     size = pl->brightMul;
     yOffset = ms->height * pl->originY;
@@ -770,8 +768,13 @@ Con_Error("LO_AddLuminous: Sprite '%i' frame '%i' missing material.",
     autoLightColor[CG] = pl->color[CG];
     autoLightColor[CB] = pl->color[CB];
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
-    assert(NULL != sprTex);
+#if _DEBUG
+    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+        Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
+
+    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    assert(sprTex);
 
     center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 

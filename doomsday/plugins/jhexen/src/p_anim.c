@@ -32,7 +32,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 {
     boolean ignore = true, done;
     int groupNumber = 0;
-    uint texNumBase = 0;
+    int texNumBase = -1;
     Uri* path;
 
     if(!SC_GetString()) // Name.
@@ -43,7 +43,8 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     path = Uri_New();
     Uri_SetScheme(path, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
     Uri_SetPath(path, sc_String);
-    if((texNumBase = Textures_TypeIndexForUri2(path, !isCustom)) != 0)
+    texNumBase = R_OriginalIndexForTexture2(path, !isCustom);
+    if(texNumBase != -1)
         ignore = false;
 
     if(!ignore)
@@ -82,7 +83,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 
                 if(!ignore)
                 {
-                    material_t* frame = DD_MaterialForTextureIndex(texNumBase + picNum - 1, isTexture? TN_TEXTURES : TN_FLATS);
+                    material_t* frame = DD_MaterialForOriginalTextureIndex(texNumBase + picNum - 1, isTexture? TN_TEXTURES : TN_FLATS);
                     if(frame != 0)
                         Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }

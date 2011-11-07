@@ -51,38 +51,31 @@
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
 typedef struct systex_s {
-    textureid_t id;
     Uri* external;
 } systex_t;
 
 typedef struct detailtex_s {
-    textureid_t id;
     boolean isExternal;
-    const Uri* filePath;
+    const Uri* path;
 } detailtex_t;
 
 typedef struct lightmap_s {
-    textureid_t id;
     const Uri* external;
 } lightmap_t;
 
 typedef struct flaretex_s {
-    textureid_t id;
     const Uri* external;
 } flaretex_t;
 
 typedef struct shinytex_s {
-    textureid_t id;
     const Uri* external;
 } shinytex_t;
 
 typedef struct masktex_s {
     const Uri* external;
-    textureid_t id;
 } masktex_t;
 
 typedef struct skinname_s {
-    textureid_t id;
     Uri* path;
 } skinname_t;
 
@@ -151,8 +144,8 @@ typedef struct {
     short offY; /// Accounted for the patch's internal origin
 } texpatch_t;
 
-#define TXDF_NODRAW         0x0001 // Not to be drawn.
-#define TXDF_IWAD           0x0002 // Defines an IWAD texture. Note the definition may NOT be from the IWAD.
+#define TXDF_NODRAW         0x0001 /// Not to be drawn.
+#define TXDF_CUSTOM         0x0002 /// Definition does not define a texture that originates from the current game.
 
 // Describes a rectangular texture, which is composed of one
 // or more texpatch_t structures that arrange graphic patches.
@@ -160,23 +153,20 @@ typedef struct {
     ddstring_t name;
     short width, height;
     short flags;
-    textureid_t texId; /// Name of the associated Texture.
+    /// Index of this resource according to the logic of the original game's indexing algorithm.
+    int origIndex;
     short patchCount;
-    texpatch_t patches[1]; // [patchcount] drawn back to front into the cached texture.
+    texpatch_t* patches; // [patchcount] drawn back to front into the cached texture.
 } patchcompositetex_t;
 
 typedef struct flat_s {
-    ddstring_t name;
     lumpnum_t lumpNum;
-    textureid_t texId; /// Name of the associated Texture.
-    boolean isCustom;
+    /// Index of this resource according to the logic of the original game's indexing algorithm.
+    int origIndex;
 } flat_t;
 
 typedef struct {
-    ddstring_t name;
     lumpnum_t lumpNum;
-    textureid_t texId; /// Name of the associated Texture.
-    boolean isCustom;
     /// Offset to texture origin in logical pixels.
     short offX, offY;
 } spritetex_t;
@@ -187,10 +177,8 @@ typedef struct {
 
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
-    ddstring_t name;
     lumpnum_t lumpNum;
     textureid_t texId; /// Name of the associated Texture.
-    boolean isCustom;
     short flags;
     /// Offset to texture origin in logical pixels.
     short offX, offY;
@@ -264,24 +252,6 @@ extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 
 extern byte* translationTables;
 
-extern systex_t** sysTextures;
-extern int sysTexturesCount;
-
-extern lightmap_t** lightmapTextures;
-extern int lightmapTexturesCount;
-
-extern flaretex_t** flareTextures;
-extern int flareTexturesCount;
-
-extern shinytex_t** shinyTextures;
-extern int shinyTexturesCount;
-
-extern masktex_t** maskTextures;
-extern int maskTexturesCount;
-
-extern uint numSkinNames;
-extern skinname_t* skinNames;
-
 void            R_UpdateData(void);
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
@@ -305,34 +275,19 @@ void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);
 
 /**
- * Registers the "system" textures that are part of the Doomsday data resource package.
+ * To be called when the texture LUTs are no longer needed.
  */
+void R_DestroyTextureLUTs(void);
+
+struct texture_s* R_TextureForOriginalIndex(int index, texturenamespaceid_t texNamespace);
+
+int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet);
+int R_OriginalIndexForTexture(const Uri* uri); /* quiet=false */
+
 void R_InitSystemTextures(void);
-void R_DestroySystemTextures(void);
-
 void R_InitPatchComposites(void);
-
-/// @return  Number of PatchCompositeTextures.
-int R_PatchCompositeCount(void);
-
-/// @return  PatchCompositeTex associated to index# @a idx
-patchcompositetex_t* R_PatchCompositeTextureByIndex(int idx);
-
 void R_InitFlatTextures(void);
-
-/// @return  Number of Flats.
-int R_FlatTextureCount(void);
-
-/// @return  Flat associated to index# @a idx
-flat_t* R_FlatTextureByIndex(int idx);
-
 void R_InitSpriteTextures(void);
-
-/// @return  Number of SpriteTextures.
-int R_SpriteTextureCount(void);
-
-/// @return  SpriteTexture associated to index# @a idx
-spritetex_t* R_SpriteTextureByIndex(int idx);
 
 /// Prepare for color palette creation.
 void R_InitColorPalettes(void);
@@ -403,10 +358,8 @@ colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
  * @param rgb  Final color will be written back here.
  * @param correctGamma  @c true if the texture gamma ramp should be applied.
  */
-void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3],
-    boolean applyTexGamma);
-void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3],
-    boolean applyTexGamma);
+void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
+void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
 
 /**
  * Change the default color palette.
@@ -436,16 +389,12 @@ void R_PrecacheForMap(void);
  */
 void R_PrecacheMobjNum(int mobjtypeNum);
 
-uint            R_GetSkinNumForName(const Uri* path);
-const skinname_t* R_GetSkinNameByIndex(uint id);
-uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
-void            R_DestroySkins(void);
+struct texture_s* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
+struct texture_s* R_FindModelSkinForFilePath(const Uri* filePath);
 
-void R_ReleaseGLTexturesForSkins(void);
+boolean R_DrawVLightVector(const vlight_t* light, void* context);
 
-boolean         R_DrawVLightVector(const vlight_t* light, void* context);
-
-void            R_InitAnimGroup(ded_group_t* def);
+void R_InitAnimGroup(ded_group_t* def);
 
 /**
  * Construct a DetailTexture according to the paramaters of the definition.
@@ -455,49 +404,41 @@ void            R_InitAnimGroup(ded_group_t* def);
  * @param def  Definition describing the desired DetailTexture.
  * @return  DetailTexture inferred from the definition or @c NULL if invalid.
  */
-detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
+struct texture_s* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
 
 /**
- * Lookup a DetailTexture by it's unique path/name.
+ * Lookup a detail Texture by it's unique path/name.
  *
  * @param path  Path/name reference to the potential candidate.
  * @param isExternal  @c true= @a path is an "external" path, else a WAD lump name.
- * @return  DetailTexture associated to this path if found else @c NULL.
+ * @return  Texture associated to this path if found else @c NULL.
  */
-detailtex_t* R_FindDetailTextureForName(const Uri* path, boolean isExternal);
+struct texture_s* R_FindDetailTextureForFilePath(const Uri* path, boolean isExternal);
 
-/// @return  DetailTexture associated with the specified index.
-detailtex_t* R_DetailTextureByIndex(int idx);
+struct texture_s* R_CreateLightMap(const Uri* filePath);
+struct texture_s* R_FindLightMapForFilePath(const Uri* filePath);
 
-/// @return  Number of DetailTextures.
-int R_DetailTextureCount(void);
+struct texture_s* R_CreateFlareTexture(const Uri* filePath);
+struct texture_s* R_FindFlareTextureForFilePath(const Uri* filePath);
+
+struct texture_s* R_CreateShinyTexture(const Uri* filePath);
+struct texture_s* R_FindReflectionTextureForFilePath(const Uri* filePath);
+
+struct texture_s* R_CreateMaskTexture(const Uri* filePath, int logicalWidth, int logicalHeight);
+struct texture_s* R_FindMaskTextureForFilePath(const Uri* filePath);
+
+patchid_t R_PrecachePatch(const char* name, patchinfo_t* info);
 
 /**
- * Destroy all DetailTextures. To be called when they are no longer needed.
+ * Get a patchtex_t data structure for a patch specified with a WAD lump
+ * number. Allocates a new patchtex_t if it hasn't been loaded yet.
  */
-void R_DestroyDetailTextures(void);
+patchid_t R_RegisterPatch(const char* name);
 
-lightmap_t*     R_CreateLightMap(const Uri* uri);
-lightmap_t*     R_GetLightMap(const Uri* uri);
-void            R_DestroyLightMaps(void);
-
-flaretex_t*     R_CreateFlareTexture(const Uri* uri);
-flaretex_t*     R_GetFlareTexture(const Uri* uri);
-void            R_DestroyFlareTextures(void);
-
-shinytex_t*     R_CreateShinyTexture(const Uri* uri);
-shinytex_t*     R_FindShinyTextureForName(const Uri* uri);
-void            R_DestroyShinyTextures(void);
-
-masktex_t*      R_CreateMaskTexture(const Uri* uri, int logicalWidth, int logicalHeight);
-masktex_t*      R_FindMaskTextureForName(const Uri* uri);
-void            R_DestroyMaskTextures(void);
-
-patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
-patchid_t       R_RegisterPatch(const char* name);
-
-patchtex_t*     R_PatchTextureByIndex(patchid_t id);
-void            R_ClearPatchTexs(void);
+/**
+ * Returns a patchtex_t* for the given lump, if one already exists.
+ */
+patchtex_t* R_PatchTextureByIndex(patchid_t id);
 
 /**
  * Retrieve extended info for the patch associated with @a id.
@@ -507,14 +448,28 @@ void            R_ClearPatchTexs(void);
  */
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 
-/// @return  Name of the patch associated with @a id.
-const ddstring_t* R_GetPatchName(patchid_t id);
+/// @return  Uri for the patch associated with @a id. Should be released with Uri_Delete()
+Uri* R_ComposePatchUri(patchid_t id);
 
 void R_InitRawTexs(void);
 void R_UpdateRawTexs(void);
-rawtex_t*       R_FindRawTex(lumpnum_t lumpNum); // May return NULL.
-rawtex_t*       R_GetRawTex(lumpnum_t lumpNum); // Creates new entries.
-rawtex_t**      R_CollectRawTexs(int* count);
+
+/**
+ * Returns a rawtex_t* for the given lump if one already exists else @c NULL.
+ */
+rawtex_t* R_FindRawTex(lumpnum_t lumpNum);
+
+/**
+ * Get a rawtex_t data structure for a raw texture specified with a WAD lump
+ * number. Allocates a new rawtex_t if it hasn't been loaded yet.
+ */
+rawtex_t* R_GetRawTex(lumpnum_t lumpNum);
+
+/**
+ * Returns a NULL-terminated array of pointers to all the rawtexs.
+ * The array must be freed with Z_Free.
+ */
+rawtex_t** R_CollectRawTexs(int* count);
 
 /**
  * @return  @c true if the given decoration works under the specified circumstances.
@@ -533,8 +488,8 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, bool
 
 boolean R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
-void            R_InitVectorGraphics(void);
-void            R_UnloadVectorGraphics(void);
-void            R_ShutdownVectorGraphics(void);
+void R_InitVectorGraphics(void);
+void R_UnloadVectorGraphics(void);
+void R_ShutdownVectorGraphics(void);
 
 #endif /* LIBDENG_REFRESH_DATA_H */

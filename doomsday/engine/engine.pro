@@ -294,6 +294,7 @@ DENG_HEADERS = \
     portable/include/s_wav.h \
     portable/include/tab_anorms.h \
     portable/include/texture.h \
+    portable/include/textures.h \
     portable/include/texturecontent.h \
     portable/include/texturevariant.h \
     portable/include/texturevariantspecification.h \
@@ -538,6 +539,7 @@ SOURCES += \
     portable/src/sys_timer.c \
     portable/src/tab_tables.c \
     portable/src/texture.c \
+    portable/src/textures.c \
     portable/src/texturevariant.c \
     portable/src/ui_main.c \
     portable/src/ui2_main.c \

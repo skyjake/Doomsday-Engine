@@ -188,14 +188,14 @@ void R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h)
 void R_DrawPatch(patchtex_t* p, int x, int y)
 {
     texture_t* tex = Textures_ToTexture(p->texId);
-    if(NULL == tex) return;
+    if(!tex) return;
     R_DrawPatch2(p, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
 void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
 {
     texture_t* tex = Textures_ToTexture(p->texId);
-    if(NULL == tex) return;
+    if(!tex) return;
 
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
@@ -210,15 +210,13 @@ void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, D
  */
 void R_DrawViewBorder(void)
 {
-    assert(inited);
-    {
     const viewport_t* port = R_CurrentViewPort();
     const viewdata_t* vd = R_ViewData(displayPlayer);
     material_t* mat;
     int border;
+    assert(inited);
 
-    assert(NULL != port);
-    assert(NULL != vd);
+    assert(port && vd);
 
     if(0 == vd->window.width || 0 == vd->window.height) return;
     if(vd->window.width == port->dimensions.width && vd->window.height == port->dimensions.height) return;
@@ -276,5 +274,4 @@ void R_DrawViewBorder(void)
     }
 
     glDisable(GL_TEXTURE_2D);
-    }
 }

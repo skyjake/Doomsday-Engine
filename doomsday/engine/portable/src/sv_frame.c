@@ -502,9 +502,9 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_ToMaterialNum(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_ToMaterialNum(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -572,11 +572,11 @@ void Sv_WriteSideDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_ToMaterialNum(d->top.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_ToMaterialNum(d->middle.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_ToMaterialNum(d->bottom.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
         Writer_WriteByte(msgWriter, d->lineFlags);

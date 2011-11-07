@@ -34,20 +34,19 @@ struct materialvariant_s;
 struct materialsnapshot_s;
 struct materialbind_s;
 
+enum materialnamespaceid_t; // Defined in dd_share.h
+
 /// Components within a Material path hierarchy are delimited by this character.
-#define MATERIALDIRECTORY_DELIMITER      '/'
+#define MATERIALS_PATH_DELIMITER      '/'
 
 /// To be called during init to register the cvars and ccmds for this module.
-void P_MaterialsRegister(void);
+void Materials_Register(void);
 
 /// Initialize this module.
-void Materials_Initialize(void);
+void Materials_Init(void);
 
 /// Shutdown this module.
 void Materials_Shutdown(void);
-
-/// @return  Number of unique Materials in the collection.
-uint Materials_Count(void);
 
 /**
  * Process a tic of length @a elapsed, animating materials and anim-groups.
@@ -64,37 +63,61 @@ void Materials_PurgeCacheQueue(void);
 /// To be called during a definition database reset to clear all links to defs.
 void Materials_ClearDefinitionLinks(void);
 
-/// @return  Number of animation/precache groups in the collection.
-int Materials_AnimGroupCount(void);
-
-/// To be called to reset all animation groups back to their initial state.
-void Materials_ResetAnimGroups(void);
-
-/// To be called to destroy all animation groups when they are no longer needed.
-void Materials_ClearAnimGroups(void);
-
-/// @return  @c true if one or more light decorations are defined for this material.
-boolean Materials_HasDecorations(material_t* mat);
-
-/// @return  Symbolic name of the material namespace associated with @a textureNamespace.
-const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t textureNamespace);
-
 /**
- * Delete all GL texture instances linked to Materials.
- *
- * @param mnamespace @c MN_ANY = delete everything, ELSE
- *      Only delete those currently in use by Materials in @a materialNamespace.
+ * Try to interpret a known material namespace identifier from @a str. If found to match
+ * a known namespace name, return the associated identifier. If the reference @a str is
+ * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
+ * @c MN_ANY is returned. Otherwise @c MN_INVALID.
  */
-void Materials_ReleaseGLTextures(materialnamespaceid_t materialNamespace);
+materialnamespaceid_t Materials_ParseNamespace(const char* str);
 
-/// @return  Material associated with unique identifier @a materialNum else @c NULL.
-material_t* Materials_ToMaterial(materialnum_t materialNum);
+/// @return  Name associated with the identified @a namespaceId else a zero-length string.
+const ddstring_t* Materials_NamespaceName(materialnamespaceid_t namespaceId);
+
+/// @return  Total number of unique Materials in the collection.
+uint Materials_Size(void);
+
+/// @return  Number of unique Materials in the identified @a namespaceId.
+uint Materials_Count(materialnamespaceid_t namespaceId);
+
+/// @return  Material associated with unique identifier @a materialId else @c NULL.
+material_t* Materials_ToMaterial(materialid_t materialId);
 
 /// @return  Unique identifier associated with @a material else @c 0.
-materialnum_t Materials_ToMaterialNum(material_t* material);
+materialid_t Materials_Id(material_t* material);
+
+/// @return  Unique identifier of the namespace within which this material resides.
+materialnamespaceid_t Materials_Namespace(struct materialbind_s* materialBind);
+
+/// @return  Symbolic name/path-to this Material. Must be destroyed with Str_Delete().
+ddstring_t* Materials_ComposePath(material_t* material);
+
+/// @return  Unique name/path-to @a Material. Must be destroyed with Uri_Delete().
+Uri* Materials_ComposeUri(material_t* material);
+
+/**
+ * Update @a material according to the supplied definition @a def.
+ * To be called after an engine update/reset.
+ *
+ * @param material  Material to be updated.
+ * @param def  Material definition to update using.
+ */
+void Materials_Rebuild(material_t* material, struct ded_material_s* def);
+
+/// @return  @c true if one or more light decorations are defined for this material.
+boolean Materials_HasDecorations(material_t* material);
 
 /// @return  Primary MaterialBind associated with @a material else @c NULL.
 struct materialbind_s* Materials_PrimaryBind(material_t* material);
+
+/// @return  Decoration defintion associated with @a material else @c NULL.
+const ded_decor_t*  Materials_DecorationDef(material_t* material);
+
+/// @return  (Particle) Generator definition associated with @a material else @c NULL.
+const ded_ptcgen_t* Materials_PtcGenDef(material_t* material);
+
+/// @return  @c true iff @a material is linked to the identified @a animGroupNum.
+boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
 
 /**
  * Search the Materials collection for a material associated with @a uri.
@@ -107,9 +130,6 @@ material_t* Materials_MaterialForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 material_t* Materials_MaterialForUriCString2(const char* uri, boolean quiet);
 material_t* Materials_MaterialForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
 
-/// @return  Unique name/path-to @a Material. Must be destroyed with Uri_Delete().
-Uri* Materials_ComposeUri(material_t* material);
-
 /**
  * Create a new Material unless an existing Material is found at the path
  * (and within the same namespace) as that specified in @a def, in which case
@@ -121,6 +141,26 @@ Uri* Materials_ComposeUri(material_t* material);
  * @return  The newly-created/existing Material else @c NULL.
  */
 material_t* Materials_CreateFromDef(ded_material_t* def);
+
+/// @return  Number of animation/precache groups in the collection.
+int Materials_AnimGroupCount(void);
+
+/// To be called to reset all animation groups back to their initial state.
+void Materials_ResetAnimGroups(void);
+
+/// To be called to destroy all animation groups when they are no longer needed.
+void Materials_ClearAnimGroups(void);
+
+/// @return  Symbolic name of the material namespace associated with @a namespaceId.
+const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t namespaceId);
+
+/**
+ * Delete all GL texture instances linked to Materials.
+ *
+ * @param mnamespace @c MN_ANY = delete everything, ELSE
+ *      Only delete those currently in use by Materials in @a namespaceId.
+ */
+void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId);
 
 /**
  * Prepare a MaterialVariantSpecification according to a usage context. If
@@ -148,15 +188,6 @@ const struct materialvariantspecification_s* Materials_VariantSpecificationForCo
     materialcontext_t materialContext, int flags, byte border, int tClass,
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
-
-/**
- * Update @a material according to the supplied definition @a def.
- * To be called after an engine update/reset.
- *
- * @param material  Material to be updated.
- * @param def  Material definition to update using.
- */
-void Materials_Rebuild(material_t* material, struct ded_material_s* def);
 
 /**
  * Add a variant of @a material to the cache queue for deferred preparation.
@@ -214,15 +245,6 @@ const struct materialsnapshot_s* Materials_PrepareVariant(struct materialvariant
  */
 struct materialvariant_s* Materials_ChooseVariant(material_t* material,
     const struct materialvariantspecification_s* spec, boolean smoothed, boolean canCreate);
-
-/// @return  Decoration defintion associated with @a material else @c NULL.
-const ded_decor_t*  Materials_DecorationDef(material_t* material);
-
-/// @return  (Particle) Generator definition associated with @a material else @c NULL.
-const ded_ptcgen_t* Materials_PtcGenDef(material_t* material);
-
-/// @return  @c true iff @a material is linked to the identified @a animGroupNum.
-boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
 
 /**
  * Create a new animation group.

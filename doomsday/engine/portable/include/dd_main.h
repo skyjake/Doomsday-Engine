@@ -81,13 +81,12 @@ void* DD_GetVariable(int ddvalue);
 ddplayer_t* DD_GetPlayer(int number);
 
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
-const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id);
 
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
 fontnamespaceid_t DD_ParseFontNamespace(const char* str);
 
-struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
+struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
 
 const char* value_Str(int val);
 

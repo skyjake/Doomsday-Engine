@@ -24,9 +24,8 @@
  */
 
 /**
- * Texture management routines.
+ * GL-Texture management routines.
  *
- * Much of this stuff actually belongs in Refresh.
  * This file needs to be split into smaller portions.
  */
 
@@ -56,7 +55,6 @@
 #include "colorpalette.h"
 #include "image.h"
 #include "texturecontent.h"
-#include "texture.h"
 #include "texturevariant.h"
 
 typedef enum {
@@ -81,10 +79,6 @@ typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
-D_CMD(ListTextures);
-#if _DEBUG
-D_CMD(PrintTextureStats);
-#endif
 
 static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
 
@@ -147,10 +141,6 @@ static variantspecificationlist_t* variantSpecs;
 #define DETAILVARIANT_CONTRAST_HASHSIZE     (DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR+1)
 static variantspecificationlist_t* detailVariantSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
-static int texturesCount;
-static texture_t** textures;
-static PathDirectory* namespaces[TEXTURENAMESPACE_COUNT];
-
 void GL_TexRegister(void)
 {
     C_VAR_INT("rend-tex", &renderTextures, CVF_NO_ARCHIVE, 0, 2);
@@ -171,50 +161,14 @@ void GL_TexRegister(void)
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
-    C_CMD("listtextures", NULL, ListTextures)
-#if _DEBUG
-    C_CMD("texturestats", NULL, PrintTextureStats)
-#endif
-}
 
-static __inline texture_t* getTexture(textureid_t id)
-{
-    if(id > 0 && id <= texturesCount)
-        return textures[id - 1];
-    return NULL;
-}
-
-static textureid_t findTextureId(texture_t* tex)
-{
-    int i;
-    for(i = 0; i < texturesCount; ++i)
-        if(textures[i] == tex)
-            return (textureid_t)(i+1); // 1-based index.
-    return 0; // Not linked.
-}
-
-static __inline PathDirectory* directoryForTextureNamespaceId(texturenamespaceid_t id)
-{
-    assert(VALID_TEXTURENAMESPACEID(id));
-    return namespaces[id-TEXTURENAMESPACE_FIRST];
-}
-
-static materialnamespaceid_t namespaceIdForTextureDirectory(PathDirectory* pd)
-{
-    texturenamespaceid_t id;
-    assert(pd);
-    for(id = TEXTURENAMESPACE_FIRST; id <= TEXTURENAMESPACE_LAST; ++id)
-        if(namespaces[id-TEXTURENAMESPACE_FIRST] == pd) return id;
-    // Should never happen.
-    Con_Error("Textures::namespaceIdForTextureDirectory: Failed to determine id for directory %p.", (void*)pd);
-    exit(1); // Unreachable.
+    Textures_Register();
 }
 
 static texturevariantspecification_t* unlinkVariantSpecification(texturevariantspecification_t* spec)
 {
-    assert(initedOk && spec);
-    {
     variantspecificationlist_t** listHead;
+    assert(initedOk && spec);
 
     // Select list head according to variant specification type.
     switch(spec->type)
@@ -256,12 +210,11 @@ static texturevariantspecification_t* unlinkVariantSpecification(texturevariants
     }
 
     return spec;
-    }
 }
 
 static void destroyVariantSpecification(texturevariantspecification_t* spec)
 {
-    assert(NULL != spec);
+    assert(spec);
     unlinkVariantSpecification(spec);
     if(spec->type == TST_GENERAL && (TS_GENERAL(spec)->flags & TSF_HAS_COLORPALETTE_XLAT))
         free(TS_GENERAL(spec)->translated);
@@ -271,19 +224,17 @@ static void destroyVariantSpecification(texturevariantspecification_t* spec)
 static texturevariantspecification_t* copyVariantSpecification(
     const texturevariantspecification_t* tpl)
 {
-    texturevariantspecification_t* spec;
-    if(NULL == (spec = (texturevariantspecification_t*) malloc(sizeof(*spec))))
-        Con_Error("Textures::copyVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new TextureVariantSpecification.",
-                  (unsigned long) sizeof(*spec));
+    texturevariantspecification_t* spec = (texturevariantspecification_t*) malloc(sizeof *spec);
+    if(!spec)
+        Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof *spec);
+
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
     if(TS_GENERAL(tpl)->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
-        colorpalettetranslationspecification_t* cpt;
-        if(NULL == (cpt = (colorpalettetranslationspecification_t*) malloc(sizeof(*cpt))))
-            Con_Error("Textures::copyVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new ColorPaletteTranslationSpecification.",
-                  (unsigned long) sizeof(*cpt));
+        colorpalettetranslationspecification_t* cpt = (colorpalettetranslationspecification_t*) malloc(sizeof *cpt);
+        if(!cpt)
+            Con_Error("Textures::copyVariantSpecification: Failed on allocation of %lu bytes for new ColorPaletteTranslationSpecification.", (unsigned long) sizeof *cpt);
+
         memcpy(cpt, TS_GENERAL(tpl)->translated, sizeof(colorpalettetranslationspecification_t));
         TS_GENERAL(spec)->translated = cpt;
     }
@@ -293,11 +244,9 @@ static texturevariantspecification_t* copyVariantSpecification(
 static texturevariantspecification_t* copyDetailVariantSpecification(
     const texturevariantspecification_t* tpl)
 {
-    texturevariantspecification_t* spec;
-    if(NULL == (spec = (texturevariantspecification_t*) malloc(sizeof(*spec))))
-        Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new TextureVariantSpecification.",
-                  (unsigned long) sizeof(*spec));
+    texturevariantspecification_t* spec = (texturevariantspecification_t*) malloc(sizeof *spec);
+    if(!spec)
+        Con_Error("Textures::copyDetailVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecification.", (unsigned long) sizeof *spec);
     memcpy(spec, tpl, sizeof(texturevariantspecification_t));
     return spec;
 }
@@ -343,8 +292,7 @@ static int compareVariantSpecifications(const variantspecification_t* a,
 static int compareDetailVariantSpecifications(const detailvariantspecification_t* a,
     const detailvariantspecification_t* b)
 {
-    if(a->contrast != b->contrast)
-        return 1;
+    if(a->contrast != b->contrast) return 1;
     return 0; // Equal.
 }
 
@@ -358,8 +306,7 @@ static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpeci
 
 #if _DEBUG
     if(0 == tClass && 0 == tMap)
-        Con_Message("Warning:applyColorPaletteTranslationSpecification: Applied "
-            "unnecessary zero-translation (tClass:0 tMap:0).\n");
+        Con_Message("Warning:applyColorPaletteTranslationSpecification: Applied unnecessary zero-translation (tClass:0 tMap:0).\n");
 #endif
 
     return spec;
@@ -387,7 +334,7 @@ static variantspecification_t* applyVariantSpecification(
     spec->gammaCorrection = gammaCorrection;
     spec->noStretch = noStretch;
     spec->toAlpha = toAlpha;
-    if(NULL != colorPaletteTranslationSpec)
+    if(colorPaletteTranslationSpec)
     {
         spec->flags |= TSF_HAS_COLORPALETTE_XLAT;
         spec->translated = colorPaletteTranslationSpec;
@@ -403,12 +350,11 @@ static variantspecification_t* applyVariantSpecification(
 static detailvariantspecification_t* applyDetailVariantSpecification(
     detailvariantspecification_t* spec, float contrast)
 {
-    assert(spec);
-    {
     const int quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+    assert(spec);
+
     spec->contrast = 255 * (int)MINMAX_OF(0, contrast * quantFactor + .5f, quantFactor) * (1/(float)quantFactor);
     return spec;
-    }
 }
 
 static int hashDetailVariantSpecification(const detailvariantspecification_t* spec)
@@ -420,13 +366,13 @@ static int hashDetailVariantSpecification(const detailvariantspecification_t* sp
 static texturevariantspecification_t* linkVariantSpecification(
     texturevariantspecificationtype_t type, texturevariantspecification_t* spec)
 {
-    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
-    {
     texturevariantspecificationlist_node_t* node;
-    if(NULL == (node = (texturevariantspecificationlist_node_t*) malloc(sizeof(*node))))
-        Con_Error("Textures::linkVariantSpecification: Failed on allocation of "
-                  "%lu bytes for new TextureVariantSpecificationListNode.",
-                  (unsigned long) sizeof(*node));
+    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && spec);
+
+    node = (texturevariantspecificationlist_node_t*) malloc(sizeof *node);
+    if(!node)
+        Con_Error("Textures::linkVariantSpecification: Failed on allocation of %lu bytes for new TextureVariantSpecificationListNode.", (unsigned long) sizeof *node);
+
     node->spec = spec;
     switch(type)
     {
@@ -442,16 +388,14 @@ static texturevariantspecification_t* linkVariantSpecification(
       }
     }
     return spec;
-    }
 }
 
 static texturevariantspecification_t* findVariantSpecification(
     texturevariantspecificationtype_t type, const texturevariantspecification_t* tpl,
     boolean canCreate)
 {
-    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
-    {
     texturevariantspecificationlist_node_t* node;
+    assert(initedOk && VALID_TEXTUREVARIANTSPECIFICATIONTYPE(type) && tpl);
 
     // Select list head according to variant specification type.
     switch(type)
@@ -483,7 +427,6 @@ static texturevariantspecification_t* findVariantSpecification(
     }
 
     return NULL;
-    }
 }
 
 static texturevariantspecification_t* getVariantSpecificationForContext(
@@ -491,11 +434,10 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
     int tMap, int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
-    assert(initedOk);
-    {
     static texturevariantspecification_t tpl;
     static colorpalettetranslationspecification_t cptTpl;
     boolean haveCpt = false;
+    assert(initedOk);
 
     tpl.type = TST_GENERAL;
     if(0 != tClass || 0 != tMap)
@@ -510,32 +452,29 @@ static texturevariantspecification_t* getVariantSpecificationForContext(
 
     // Retrieve a concrete version of the rationalized specification.
     return findVariantSpecification(tpl.type, &tpl, true);
-    }
 }
 
 static texturevariantspecification_t* getDetailVariantSpecificationForContext(
     float contrast)
 {
-    assert(initedOk);
-    {
     static texturevariantspecification_t tpl;
+    assert(initedOk);
+
     tpl.type = TST_DETAIL;
     applyDetailVariantSpecification(TS_DETAIL(&tpl), contrast);
     return findVariantSpecification(tpl.type, &tpl, true);
-    }
 }
 
 static void emptyVariantSpecificationList(variantspecificationlist_t* list)
 {
-    assert(initedOk);
-    {
     texturevariantspecificationlist_node_t* node = (texturevariantspecificationlist_node_t*) list;
+    assert(initedOk);
+
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
         destroyVariantSpecification(node->spec);
         node = next;
-    }
     }
 }
 
@@ -545,6 +484,15 @@ static int compareTextureVariantWithVariantSpecification(texturevariant_t* tex, 
     return (TextureVariant_Spec(tex) == spec? 1 : 0);
 }
 
+static int findTextureUsingVariantSpecificationWorker(texture_t* tex, void* paramaters)
+{
+    if(Texture_IterateVariants(tex, compareTextureVariantWithVariantSpecification, paramaters))
+    {
+        return Textures_Id(tex);
+    }
+    return 0; // Continue iteration.
+}
+
 static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* list)
 {
     texturevariantspecificationlist_node_t* node = list;
@@ -552,14 +500,7 @@ static int pruneUnusedVariantSpecificationsInList(variantspecificationlist_t* li
     while(node)
     {
         texturevariantspecificationlist_node_t* next = node->next;
-        int i, result = 0;
-        for(i = 0; i < texturesCount; ++i)
-        {
-            texture_t* tex = textures[i];
-            if(0 != (result = Texture_IterateVariants(tex, compareTextureVariantWithVariantSpecification, (void*)node->spec)))
-                break;
-        }
-        if(result == 0)
+        if(!Textures_Iterate2(TN_ANY, findTextureUsingVariantSpecificationWorker, (void*)node->spec))
         {
             destroyVariantSpecification(node->spec);
             ++numPruned;
@@ -575,7 +516,7 @@ static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t sp
     switch(specType)
     {
     case TST_GENERAL: return pruneUnusedVariantSpecificationsInList(variantSpecs);
-    case TST_DETAIL:  {
+    case TST_DETAIL: {
         int i, numPruned = 0;
         for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
         {
@@ -591,13 +532,14 @@ static int pruneUnusedVariantSpecifications(texturevariantspecificationtype_t sp
 
 static void destroyVariantSpecifications(void)
 {
+    int i;
     assert(initedOk);
+
     emptyVariantSpecificationList(variantSpecs); variantSpecs = NULL;
-    { int i;
     for(i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
     {
         emptyVariantSpecificationList(detailVariantSpecs[i]); detailVariantSpecs[i] = NULL;
-    }}
+    }
 }
 
 static uploadcontentmethod_t chooseContentUploadMethod(const texturecontent_t* content)
@@ -622,10 +564,10 @@ typedef struct {
 
 static int chooseVariantWorker(texturevariant_t* variant, void* context)
 {
-    assert(variant && context);
-    {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
+    assert(p);
+
     switch(p->method)
     {
     case METHOD_MATCH:
@@ -644,21 +586,19 @@ static int chooseVariantWorker(texturevariant_t* variant, void* context)
         break;
     }
     return 0; // Continue iteration.
-    }
 }
 
 static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(initedOk && tex && spec);
-    {
     choosevariantworker_paramaters_t params;
+    assert(initedOk && tex && spec);
+
     params.method = method;
     params.spec = spec;
     params.chosen = NULL;
     Texture_IterateVariants(tex, chooseVariantWorker, &params);
     return params.chosen;
-    }
 }
 
 static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
@@ -673,79 +613,6 @@ static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
         TextureVariant_FlagUploaded(variant, false);
     }
     return 0; // Continue iteration.
-}
-
-static void unlinkTextureFromGlobalList(texture_t* tex)
-{
-    if(texturesCount == 0)
-        return; // Not linked.
-
-    if(texturesCount == 1)
-    {
-        if(*textures != tex)
-        {
-            Con_Error("unlinkTextureFromGlobalList: Internal error, mistracked textures!");
-            exit(1); // Unreachable
-        }
-
-        free(textures);
-        textures = NULL;
-        texturesCount = 0;
-    }
-    else
-    {
-        if(tex != textures[texturesCount-1])
-        {
-            uint idx = findTextureId(tex)-1/*1-based index*/;
-            memmove(textures + idx, textures + idx + 1, sizeof *textures * (texturesCount - 1 - idx));
-        }
-
-        textures = (texture_t**) realloc(textures, sizeof *textures * (--texturesCount));
-        if(!textures)
-            Con_Error("unlinkTextureFromGlobalList: Failed on reallocation of %lu bytes when resizing list.",
-                (unsigned long) sizeof *textures * (texturesCount+1));
-    }
-}
-
-static int destroyTexture(PathDirectoryNode* node, void* paramaters)
-{
-    texture_t* tex = (texture_t*)PathDirectoryNode_DetachUserData(node);
-    if(tex)
-    {
-        GL_ReleaseGLTexturesForTexture(tex);
-        unlinkTextureFromGlobalList(tex);
-        Texture_Delete(tex);
-    }
-    return 0; // Continue iteration.
-}
-
-static void destroyTextures(texturenamespaceid_t texNamespace)
-{
-    texturenamespaceid_t from, to, iter;
-
-    assert(initedOk);
-
-    if(texNamespace == TN_ANY)
-    {
-        from = TEXTURENAMESPACE_FIRST;
-        to   = TEXTURENAMESPACE_LAST;
-    }
-    else if(VALID_TEXTURENAMESPACEID(texNamespace))
-    {
-        from = to = texNamespace;
-    }
-    else
-    {
-        Con_Error("destroyTextures: Invalid texture namespace %i.", (int) texNamespace);
-        exit(1); // Unreachable.
-    }
-
-    for(iter = from; iter <= to; ++iter)
-    {
-        PathDirectory* texDirectory = directoryForTextureNamespaceId(iter);
-        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTexture);
-        PathDirectory_Clear(texDirectory);
-    }
 }
 
 static void uploadContent(uploadcontentmethod_t uploadMethod, const texturecontent_t* content)
@@ -787,12 +654,14 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static const Uri* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
+static const Uri* searchPath(texture_t* tex)
 {
-    switch(texNamespace)
+    assert(tex);
+    switch(Textures_Namespace(tex))
     {
     case TN_SYSTEM: {
-        systex_t* sysTex = sysTextures[typeIndex];
+        systex_t* sysTex = (systex_t*)Texture_UserData(tex);
+        assert(sysTex);
         return sysTex->external;
       }
     /*case TN_FLATS:
@@ -811,49 +680,56 @@ static const Uri* searchPath(texturenamespaceid_t texNamespace, int typeIndex)
         tmpResult = GL_LoadDetailTexture(&image, texInst->tex, context);
         break;*/
     case TN_REFLECTIONS: {
-        shinytex_t* sTex = shinyTextures[typeIndex];
+        shinytex_t* sTex = (shinytex_t*)Texture_UserData(tex);
+        assert(sTex);
         return sTex->external;
       }
     case TN_MASKS: {
-        masktex_t* mTex = maskTextures[typeIndex];
+        masktex_t* mTex = (masktex_t*)Texture_UserData(tex);
+        assert(mTex);
         return mTex->external;
       }
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
-        skinname_t* sn = &skinNames[typeIndex];
+        skinname_t* sn = (skinname_t*)Texture_UserData(tex);
+        assert(sn);
         return sn->path;
       }
     case TN_LIGHTMAPS: {
-        lightmap_t* lmap = lightmapTextures[typeIndex];
+        lightmap_t* lmap = (lightmap_t*)Texture_UserData(tex);
+        assert(lmap);
         return lmap->external;
       }
     case TN_FLAREMAPS: {
-        flaretex_t* fTex = flareTextures[typeIndex];
+        flaretex_t* fTex = (flaretex_t*)Texture_UserData(tex);
+        assert(fTex);
         return fTex->external;
       }
     default:
-        Con_Error("Texture::SearchPath: Unknown namespace %i.", (int) texNamespace);
-        return NULL; // Unreachable.
+        Con_Error("Texture::SearchPath: Unknown namespace %i.", (int) Textures_Namespace(tex));
+        exit(1); // Unreachable.
     }
 }
 
-static byte loadSourceImage(const texture_t* tex, const texturevariantspecification_t* baseSpec,
+static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t* baseSpec,
     image_t* image)
 {
-    assert(tex && baseSpec && image);
-    {
-    const variantspecification_t* spec = TS_GENERAL(baseSpec);
+    const variantspecification_t* spec;
     byte loadResult = 0;
-    switch(Textures_NamespaceId(tex))
+    assert(tex && baseSpec && image);
+
+    spec = TS_GENERAL(baseSpec);
+    switch(Textures_Namespace(tex))
     {
     case TN_FLATS: {
-        const flat_t* flat = R_FlatTextureByIndex(Texture_TypeIndex(tex));
-        assert(NULL != flat);
+        const flat_t* flat = (flat_t*)Texture_UserData(tex);
+        assert(flat);
 
         // Attempt to load an external replacement for this flat?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const ddstring_t suffix = { "-ck" };
+            ddstring_t* path = Textures_ComposePath(tex);
             ddstring_t searchPath;
 
             // First try the flats namespace then the old-fashioned "flat-name"
@@ -861,10 +737,11 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
             Str_Init(&searchPath);
             Str_Appendf(&searchPath,
                 FLATS_RESOURCE_NAMESPACE_NAME":%s;"
-                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(&flat->name), Str_Text(&flat->name));
+                TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
+            Str_Delete(path);
         }
         if(0 == loadResult)
         {
@@ -878,10 +755,9 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         break;
       }
     case TN_PATCHES: {
-        patchtex_t* pTex = R_PatchTextureByIndex(Texture_TypeIndex(tex));
+        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
         int tclass = 0, tmap = 0;
-
-        assert(NULL != pTex);
+        assert(pTex);
 
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -891,32 +767,34 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         }
 
         // Attempt to load an external replacement for this patch?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const ddstring_t suffix = { "-ck" };
+            ddstring_t* path = Textures_ComposePath(tex);
             ddstring_t searchPath;
+
             Str_Init(&searchPath);
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&pTex->name));
+            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
+            Str_Delete(path);
         }
         if(0 == loadResult)
         {
             if(pTex->lumpNum >= 0)
             {
                 DFile* file = F_OpenLump(pTex->lumpNum);
-                loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, pTex);
+                loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
                 F_Delete(file);
             }
         }
         break;
       }
     case TN_SPRITES: {
-        spritetex_t* sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(tex));
+        spritetex_t* sprTex = (spritetex_t*)Texture_UserData(tex);
         int tclass = 0, tmap = 0;
-
-        assert(NULL != sprTex);
+        assert(sprTex);
 
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
@@ -929,47 +807,49 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
         if(!noHighResPatches)
         {
             ddstring_t searchPath, suffix = { "-ck" };
+            ddstring_t* path = Textures_ComposePath(tex);
 
             // Prefer psprite or translated versions if available.
             Str_Init(&searchPath);
             if(TC_PSPRITE_DIFFUSE == spec->context)
             {
-                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(&sprTex->name));
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", Str_Text(path));
             }
             else if(tclass || tmap)
             {
                 Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;",
-                    Str_Text(&sprTex->name), tclass, tmap);
+                    Str_Text(path), tclass, tmap);
             }
-            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(&sprTex->name));
+            Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
 
             loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
+            Str_Delete(path);
         }
         if(0 == loadResult)
         {
             if(sprTex->lumpNum >= 0)
             {
                 DFile* file = F_OpenLump(sprTex->lumpNum);
-                loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, sprTex);
+                loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, tex);
                 F_Delete(file);
             }
         }
         break;
       }
     case TN_DETAILS: {
-        const detailtex_t* dTex = R_DetailTextureByIndex(Texture_TypeIndex(tex));
-        assert(NULL != dTex);
+        const detailtex_t* dTex = (detailtex_t*)Texture_UserData(tex);
+        assert(dTex);
 
         if(dTex->isExternal)
         {
-            ddstring_t* searchPath = Uri_ComposePath(dTex->filePath);
+            ddstring_t* searchPath = Uri_ComposePath(dTex->path);
             loadResult = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, false);
             Str_Delete(searchPath);
         }
         else
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->filePath)), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->path)), true);
             if(lumpNum >= 0)
             {
                 DFile* file = F_OpenLump(lumpNum);
@@ -986,24 +866,21 @@ static byte loadSourceImage(const texture_t* tex, const texturevariantspecificat
     case TN_FLAREMAPS:
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
-        ddstring_t* path = Uri_ComposePath(searchPath(Textures_NamespaceId(tex), Texture_TypeIndex(tex)));
+        ddstring_t* path = Uri_ComposePath(searchPath(tex));
         loadResult = GL_LoadExtTextureEX(image, Str_Text(path), NULL, false);
         Str_Delete(path);
         break;
       }
     default:
         Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.",
-                  (int) Textures_NamespaceId(tex));
+                  (int) Textures_Namespace(tex));
         return 0; // Unreachable.
     }
     return loadResult;
-    }
 }
 
 static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* image)
 {
-    assert(tex && image);
-    {
     const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(tex));
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
     boolean noCompression = (spec->flags & TSF_NO_COMPRESSION) != 0;
@@ -1014,6 +891,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     dgltexformat_t dglFormat;
     texturecontent_t c;
     float s, t;
+    assert(image);
 
     if(spec->toAlpha)
     {
@@ -1116,17 +994,10 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     if(noCompression || (image->width < 128 || image->height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
-    if(spec->gammaCorrection)
-        flags |= TXCF_APPLY_GAMMACORRECTION;
-
-    if(spec->noStretch)
-        flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-
-    if(spec->mipmapped)
-        flags |= TXCF_MIPMAP;
-
-    if(noSmartFilter)
-        flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
+    if(spec->gammaCorrection) flags |= TXCF_APPLY_GAMMACORRECTION;
+    if(spec->noStretch)       flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
+    if(spec->mipmapped)       flags |= TXCF_MIPMAP;
+    if(noSmartFilter)         flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
     if(monochrome)
     {
@@ -1208,44 +1079,41 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     c.grayMipmap = grayMipmap;
 
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
-    }
 }
 
 static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t* image)
 {
-    assert(tex && image);
-    {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
+    float baMul, hiMul, loMul, s, t;
+    int pw, ph, flags = 0;
     texturecontent_t c;
-    int flags = 0;
+    assert(image);
 
     if(image->pixelSize > 2)
     {
         GL_ConvertToLuminance(image, false);
     }
 
-    { float baMul, hiMul, loMul;
     EqualizeLuma(image->pixels, image->width, image->height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
-        Uri* uri = Texture_ComposeUri(TextureVariant_GeneralCase(tex));
+        Uri* uri = Textures_ComposeUri(TextureVariant_GeneralCase(tex));
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n",
-            Str_Text(path), baMul, hiMul, loMul);
+        Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n", Str_Text(path), baMul, hiMul, loMul);
         Str_Delete(path);
         Uri_Delete(uri);
-    }}
+    }
 
     // Disable compression?
     if(image->width < 128 || image->height < 128)
         flags |= TXCF_NO_COMPRESSION;
 
     // Calculate prepared texture coordinates.
-    { int pw = M_CeilPow2(image->width), ph = M_CeilPow2(image->height);
-    float s =  image->width / (float) pw;
-    float t = image->height / (float) ph;
+    pw = M_CeilPow2(image->width);
+    ph = M_CeilPow2(image->height);
+    s =  image->width / (float) pw;
+    t = image->height / (float) ph;
     TextureVariant_SetCoords(tex, s, t);
-    }
 
     GL_InitTextureContent(&c);
     c.name = TextureVariant_GLName(tex);
@@ -1262,7 +1130,6 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     c.wrap[1] = GL_REPEAT;
 
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
-    }
 }
 
 void GL_EarlyInitTextureManager(void)
@@ -1275,14 +1142,7 @@ void GL_EarlyInitTextureManager(void)
     variantSpecs = NULL;
     memset(detailVariantSpecs, 0, sizeof(detailVariantSpecs));
 
-    textures = NULL;
-    texturesCount = 0;
-
-    { int i;
-    for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
-    {
-        namespaces[i] = PathDirectory_New();
-    }}
+    Textures_Init();
 }
 
 void GL_InitTextureManager(void)
@@ -1315,10 +1175,8 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
     const texturevariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b)
-        return 0;
-    if(a->type != b->type)
-        return 1;
+    if(a == b) return 0;
+    if(a->type != b->type) return 1;
     switch(a->type)
     {
     case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(a), TS_GENERAL(b));
@@ -1354,7 +1212,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
         "nearest_mipmap_linear", "linear_mipmap_linear"
     };
 
-    if(NULL == baseSpec) return;
+    if(!baseSpec) return;
 
     Con_Printf("type:%s", textureSpecificationTypeNames[baseSpec->type]);
 
@@ -1420,8 +1278,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     if(!initedOk)
-        Con_Error("GL_TextureVariantSpecificationForContext: Textures collection "
-            "not yet initialized.");
+        Con_Error("GL_TextureVariantSpecificationForContext: Textures collection not yet initialized.");
     return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
         wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
@@ -1430,42 +1287,8 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast)
 {
     if(!initedOk)
-        Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection "
-            "not yet initialized.");
+        Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection not yet initialized.");
     return getDetailVariantSpecificationForContext(contrast);
-}
-
-void GL_DestroyRuntimeTextures(void)
-{
-    if(!initedOk) return;
-
-    destroyTextures(TN_FLATS);
-    destroyTextures(TN_TEXTURES);
-    destroyTextures(TN_PATCHES);
-    destroyTextures(TN_SPRITES);
-    destroyTextures(TN_DETAILS);
-    destroyTextures(TN_REFLECTIONS);
-    destroyTextures(TN_MASKS);
-    destroyTextures(TN_MODELSKINS);
-    destroyTextures(TN_MODELREFLECTIONSKINS);
-    destroyTextures(TN_LIGHTMAPS);
-    destroyTextures(TN_FLAREMAPS);
-    GL_PruneTextureVariantSpecifications();
-}
-
-void GL_DestroySystemTextures(void)
-{
-    if(!initedOk) return;
-
-    destroyTextures(TN_SYSTEM);
-    GL_PruneTextureVariantSpecifications();
-}
-
-void GL_DestroyTextures(void)
-{
-    GL_DestroyRuntimeTextures();
-    GL_DestroySystemTextures();
-    destroyVariantSpecifications();
 }
 
 void GL_ShutdownTextureManager(void)
@@ -1473,20 +1296,7 @@ void GL_ShutdownTextureManager(void)
     if(!initedOk) return;
 
     destroyVariantSpecifications();
-    destroyTextures(TN_ANY);
-
-    { int i;
-    for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
-    {
-        PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
-    }}
-
-    // Clear the texture index/map.
-    if(textures)
-    {
-        free(textures), textures = NULL;
-    }
-    texturesCount = 0;
+    Textures_Shutdown();
 
     initedOk = false;
 }
@@ -1501,8 +1311,7 @@ static void calcGammaTable(void)
 
 void GL_LoadSystemTextures(void)
 {
-    if(isDedicated || !initedOk)
-        return;
+    if(isDedicated || !initedOk) return;
 
     UI_LoadTextures();
 
@@ -1523,17 +1332,17 @@ void GL_LoadSystemTextures(void)
 
 void GL_ReleaseSystemTextures(void)
 {
-    if(!initedOk)
-        return;
+    int i;
+    if(!initedOk) return;
 
-    { int i;
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
+    {
         glDeleteTextures(1, (const GLuint*) &lightingTextures[i].tex);
     }
     memset(lightingTextures, 0, sizeof(lightingTextures));
 
-    { int i;
     for(i = 0; i < NUM_SYSFLARE_TEXTURES; ++i)
+    {
         glDeleteTextures(1, (const GLuint*) &sysFlareTextures[i].tex);
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
@@ -1546,8 +1355,7 @@ void GL_ReleaseSystemTextures(void)
 
 void GL_ReleaseRuntimeTextures(void)
 {
-    if(!initedOk)
-        return;
+    if(!initedOk) return;
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -1567,7 +1375,6 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
-    R_ReleaseGLTexturesForSkins();
     R_ReleaseGLTexturesForSkies();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
@@ -1575,14 +1382,15 @@ void GL_ReleaseRuntimeTextures(void)
 
 void GL_ClearTextureMemory(void)
 {
-    if(!initedOk)
-        return;
+    if(!initedOk) return;
     GL_ReleaseRuntimeTextures();
 }
 
 void GL_PruneTextureVariantSpecifications(void)
 {
     int numPruned = 0;
+    if(!initedOk) return;
+
     numPruned += pruneUnusedVariantSpecifications(TST_GENERAL);
     numPruned += pruneUnusedVariantSpecifications(TST_DETAIL);
 #if _DEBUG
@@ -1636,8 +1444,8 @@ static boolean tryLoadTGA(image_t* img, DFile* file)
 const imagehandler_t* findHandlerFromFileName(const char* filePath)
 {
     const imagehandler_t* hdlr = 0; // No handler for this format.
-    const char* p;
-    if(0 != (p = F_FindFileExtension(filePath)))
+    const char* p = F_FindFileExtension(filePath);
+    if(p)
     {
         int i = 0;
         do
@@ -1654,7 +1462,7 @@ static boolean isColorKeyed(const char* path)
 {
     boolean result = false;
     ddstring_t buf;
-    if(NULL != path && path[0])
+    if(path && path[0])
     {
         Str_Init(&buf);
         F_FileName(&buf, path);
@@ -1669,9 +1477,9 @@ static boolean isColorKeyed(const char* path)
 
 uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 {
-    assert(img && file);
-    {
     const imagehandler_t* hdlr;
+    int n = 0;
+    assert(img && file);
 
     GL_InitImage(img);
 
@@ -1684,15 +1492,13 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 
     // If not loaded. Try each recognisable format.
     /// \todo Order here should be determined by the resource locator.
-    { int n = 0;
     for(n = 0; 0 == img->pixels && 0 != handlers[n].name; ++n)
     {
         if(&handlers[n] == hdlr) continue; // We already know its not in this format.
         handlers[n].loadFunc(img, file);
-    }}
+    }
 
-    if(0 == img->pixels)
-        return 0; // Not a recogniseable format.
+    if(!img->pixels) return NULL; // Not a recogniseable format.
 
     VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n",
         F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->width, img->height) );
@@ -1716,36 +1522,33 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
         img->flags |= IMGF_IS_MASKED;
 
     return img->pixels;
-    }
 }
 
 uint8_t* GL_LoadImage(image_t* img, const char* filePath)
 {
-    assert(img);
-    {
-    byte* result = 0;
     DFile* file = F_Open(filePath, "rb");
+    uint8_t* result = NULL;
+    assert(img);
+
     if(file)
     {
         result = GL_LoadImageFromFile(img, file);
         F_Delete(file);
     }
     return result;
-    }
 }
 
 uint8_t* GL_LoadImageStr(image_t* img, const ddstring_t* filePath)
 {
-    if(filePath)
-        return GL_LoadImage(img, Str_Text(filePath));
-    return 0;
+    if(!filePath)return NULL;
+    return GL_LoadImage(img, Str_Text(filePath));
 }
 
 void GL_DestroyImage(image_t* img)
 {
     assert(img);
-    if(NULL == img->pixels) return;
-    free(img->pixels); img->pixels = NULL;
+    if(!img->pixels) return;
+    free(img->pixels), img->pixels = NULL;
 }
 
 static int BytesPerPixelFmt(dgltexformat_t format)
@@ -1848,12 +1651,11 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
 boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
     int width, int height, float grayFactor)
 {
-    assert(pixels);
-    {
-    int w, h, numpels = width * height, numLevels, pixelSize;
+    int i, w, h, numpels = width * height, numLevels, pixelSize;
     uint8_t* image, *faded, *out;
     const uint8_t* in;
     float invFactor;
+    assert(pixels);
 
     if(!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
         Con_Error("GL_TexImageGrayMipmap: Unsupported load format %i.", (int) loadFormat);
@@ -1883,12 +1685,11 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
     // Initial fading.
     in = pixels;
     out = image;
-    { int i;
     for(i = 0; i < numpels; ++i)
     {
         *out++ = (uint8_t) MINMAX_OF(0, (*in * grayFactor + 127 * invFactor), 255);
         in += pixelSize;
-    }}
+    }
 
     // Upload the first level right away.
     glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, (GLint)loadFormat,
@@ -1897,7 +1698,6 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
     // Generate all mipmaps levels.
     w = width;
     h = height;
-    { int i;
     for(i = 0; i < numLevels; ++i)
     {
         GL_DownMipmap8(image, faded, w, h, (i * 1.75f) / numLevels);
@@ -1910,7 +1710,7 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
 
         glTexImage2D(GL_TEXTURE_2D, i + 1, glFormat, w, h, 0, (GLint)loadFormat,
             GL_UNSIGNED_BYTE, faded);
-    }}
+    }
 
     // Do we need to free the temp buffer?
     free(faded);
@@ -1918,17 +1718,15 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
 
     assert(!Sys_GLCheckError());
     return true;
-    }
 }
 
 boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
     int width,  int height, int genMipmaps)
 {
-    assert(pixels);
-    {
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
     const int unpackRowLength = 0, unpackAlignment = 1, unpackSkipRows = 0, unpackSkipPixels = 0;
     int mipLevel = 0;
+    assert(pixels);
 
     if(!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
@@ -2008,7 +1806,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
                 unpackRowLength, unpackAlignment, unpackSkipRows, unpackSkipPixels,
                 neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
                 packSkipRows, packSkipPixels);
-            if(NULL == newimage)
+            if(!newimage)
                 Con_Error("GL_TexImage: Unknown error resizing mipmap level #%i.", mipLevel);
 
             if(image != pixels)
@@ -2032,7 +1830,6 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
     assert(!Sys_GLCheckError());
 
     return true;
-    }
 }
 
 DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
@@ -2095,13 +1892,14 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         if(applyTexGamma && texGamma > .0001f)
         {
             uint8_t* dst, *localBuffer = NULL;
-            long numPels = loadWidth * loadHeight;
+            long i, numPels = loadWidth * loadHeight;
             const uint8_t* src;
 
             src = loadPixels;
             if(loadPixels == content->pixels)
             {
-                if(0 == (localBuffer = (uint8_t*) malloc(comps * numPels)))
+                localBuffer = (uint8_t*) malloc(comps * numPels);
+                if(!localBuffer)
                     Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for"
                               "tex-gamma translation buffer.", (unsigned long) (comps * numPels));
                 dst = localBuffer;
@@ -2111,7 +1909,6 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
                 dst = (uint8_t*)loadPixels;
             }
 
-            { long i;
             for(i = 0; i < numPels; ++i)
             {
                 dst[CR] = gammaTable[src[CR]];
@@ -2119,9 +1916,9 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
                 dst[CB] = gammaTable[src[CB]];
                 src += comps;
                 dst += comps;
-            }}
+            }
 
-            if(NULL != localBuffer)
+            if(localBuffer)
             {
                 if(loadPixels != content->pixels)
                     free((uint8_t*)loadPixels);
@@ -2135,7 +1932,8 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
             uint8_t* filtered;
 
             if(comps == 3)
-            {   // Need to add an alpha channel.
+            {
+                // Need to add an alpha channel.
                 uint8_t* newPixels = GL_ConvertBuffer(loadPixels, loadWidth, loadHeight, 3, 0, 4);
                 if(loadPixels != content->pixels)
                     free((uint8_t*)loadPixels);
@@ -2155,22 +1953,22 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
     }
 
     if(DGL_LUMINANCE_PLUS_A8 == dglFormat)
-    {   // Needs converting. This adds some overhead.
-        long numPixels = content->width * content->height;
+    {
+        // Needs converting. This adds some overhead.
+        long i, numPixels = content->width * content->height;
         uint8_t* pixel, *localBuffer;
 
-        if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
-            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for "
-                "luminance conversion buffer.", (unsigned long) (2 * numPixels));
+        localBuffer = (uint8_t*) malloc(2 * numPixels);
+        if(!localBuffer)
+            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for luminance conversion buffer.", (unsigned long) (2 * numPixels));
         
         pixel = localBuffer;
-        { long i;
         for(i = 0; i < numPixels; ++i)
         {
             pixel[0] = loadPixels[i];
             pixel[1] = loadPixels[numPixels + i];
             pixel += 2;
-        }}
+        }
 
         if(loadPixels != content->pixels)
             free((uint8_t*)loadPixels);
@@ -2178,23 +1976,23 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
     }
 
     if(DGL_LUMINANCE == dglFormat && (content->flags & TXCF_CONVERT_8BIT_TO_ALPHA))
-    {   // Needs converting. This adds some overhead.
-        long numPixels = content->width * content->height;
+    {
+        // Needs converting. This adds some overhead.
+        long i, numPixels = content->width * content->height;
         uint8_t* pixel, *localBuffer;
 
-        if(NULL == (localBuffer = (uint8_t*) malloc(2 * numPixels)))
-            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for "
-                "luminance conversion buffer.", (unsigned long) (2 * numPixels));
+        localBuffer = (uint8_t*) malloc(2 * numPixels);
+        if(!localBuffer)
+            Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for luminance conversion buffer.", (unsigned long) (2 * numPixels));
 
         // Move the average color to the alpha channel, make the actual color white.
         pixel = localBuffer;
-        { long i;
         for(i = 0; i < numPixels; ++i)
         {
             pixel[0] = 255;
             pixel[1] = loadPixels[i];
             pixel += 2;
-        }}
+        }
 
         if(loadPixels != content->pixels)
             free((uint8_t*)loadPixels);
@@ -2215,27 +2013,29 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
         int comps = BytesPerPixelFmt(dglFormat);
 
         if(noStretch)
-        {   // Copy the texture into a power-of-two canvas.
-            uint8_t* localBuffer;
-            if(NULL == (localBuffer = (uint8_t*) calloc(1, comps * loadWidth * loadHeight)))
-                Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for"
-                          "upscale buffer.", (unsigned long) (comps * loadWidth * loadHeight));
+        {
+            // Copy the texture into a power-of-two canvas.
+            uint8_t* localBuffer = (uint8_t*) calloc(1, comps * loadWidth * loadHeight);
+            int i;
+
+            if(!localBuffer)
+                Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for upscale buffer.", (unsigned long) (comps * loadWidth * loadHeight));
 
             // Copy line by line.
-            { int i;
             for(i = 0; i < height; ++i)
             {
                 memcpy(localBuffer + loadWidth * comps * i,
                        loadPixels  + width     * comps * i, comps * width);
-            }}
+            }
+
             if(loadPixels != content->pixels)
                 free((uint8_t*)loadPixels);
             loadPixels = localBuffer;
         }
         else
-        {   // Stretch into a new power-of-two texture.
-            uint8_t* newPixels = GL_ScaleBuffer(loadPixels, width, height,
-                comps, loadWidth, loadHeight);
+        {
+            // Stretch into a new power-of-two texture.
+            uint8_t* newPixels = GL_ScaleBuffer(loadPixels, width, height, comps, loadWidth, loadHeight);
             if(loadPixels != content->pixels)
                 free((uint8_t*)loadPixels);
             loadPixels = newPixels;
@@ -2249,8 +2049,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, content->wrap[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, content->wrap[1]);
     if(GL_state.features.texFilterAniso)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                        GL_GetTexAnisoMul(content->anisoFilter));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(content->anisoFilter));
 
     if(!(content->flags & TXCF_GRAY_MIPMAP))
     {
@@ -2309,27 +2108,25 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 byte GL_LoadExtTextureEX(image_t* image, const char* searchPath, const char* optionalSuffix,
     boolean silent)
 {
-    assert(image && searchPath);
-    {
     ddstring_t foundPath;
+    assert(image && searchPath);
+
     Str_Init(&foundPath);
-    if(0 == F_FindResource3(RC_GRAPHIC, searchPath, &foundPath, optionalSuffix))
+    if(!F_FindResource3(RC_GRAPHIC, searchPath, &foundPath, optionalSuffix))
     {
         Str_Free(&foundPath);
-        if(!silent)
-            Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);
+        if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);
         return 0;
     }
+
     if(GL_LoadImage(image, Str_Text(&foundPath)))
     {
         Str_Free(&foundPath);
         return 2;
     }
     Str_Free(&foundPath);
-    if(!silent)
-        Con_Message("GL_LoadExtTextureEX: Warning, failed to load \"%s\"\n", F_PrettyPath(searchPath));
+    if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to load \"%s\"\n", F_PrettyPath(searchPath));
     return 0;
-    }
 }
 
 DGLuint GL_PrepareLSTexture(lightingtexid_t which)
@@ -2346,8 +2143,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
         { "radioOE",    GL_CLAMP_TO_EDGE,   GL_CLAMP_TO_EDGE }
     };
 
-    if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES)
-        return 0;
+    if(novideo || which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
 
     if(!lightingTextures[which].tex)
     {
@@ -2360,8 +2156,7 @@ DGLuint GL_PrepareLSTexture(lightingtexid_t which)
 
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
 {
-    if(novideo || flare < 0 || flare >= NUM_SYSFLARE_TEXTURES)
-        return 0;
+    if(novideo || flare < 0 || flare >= NUM_SYSFLARE_TEXTURES) return 0;
 
     if(!sysFlareTextures[flare].tex)
     {
@@ -2450,11 +2245,8 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     const doompatch_header_t* patch, int origx, int origy, int tclass,
     int tmap, boolean maskZero)
 {
-    assert(buffer && texwidth > 0 && texheight > 0 && patch);
-    {
     int count, col = 0, trans = -1;
-    int x = origx, y, top; // Keep track of pos (clipping).
-    int w = SHORT(patch->width);
+    int w, x = origx, y, top; // Keep track of pos (clipping).
     size_t bufsize = texwidth * texheight;
     const column_t* column;
     const uint8_t* source;
@@ -2462,7 +2254,9 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
     // Column offsets begin immediately following the header.
     const int32_t* columnOfs = (const int32_t*)((const uint8_t*) patch + sizeof(doompatch_header_t));
     // \todo Validate column offset is within the Patch!
+    assert(buffer && texwidth > 0 && texheight > 0 && patch);
 
+    w = SHORT(patch->width);
     if(tmap || tclass)
     {   // We need to translate the patch.
         trans = MAX_OF(0, -256 + tclass * ((8-1) * 256) + tmap * 256);
@@ -2527,27 +2321,26 @@ static void loadDoomPatch(uint8_t* buffer, int texwidth, int texheight,
             column = (const column_t*) ((const uint8_t*) column + column->length + 4);
         }
     }
-    }
 }
 
 static boolean palettedIsMasked(const uint8_t* pixels, int width, int height)
 {
+    int i;
     assert(pixels);
     // Jump to the start of the alpha data.
     pixels += width * height;
-    { int i;
     for(i = 0; i < width * height; ++i)
-        if(255 != pixels[i])
-            return true;
+    {
+        if(255 != pixels[i]) return true;
     }
     return false;
 }
 
 byte GL_LoadDetailTextureLump(image_t* image, DFile* file)
 {
-    assert(image && file);
-    {
     byte result = 0;
+    assert(image && file);
+
     if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 1;
@@ -2589,14 +2382,13 @@ byte GL_LoadDetailTextureLump(image_t* image, DFile* file)
         result = 1;
     }
     return result;
-    }
 }
 
 byte GL_LoadFlatLump(image_t* image, DFile* file)
 {
-    assert(image && file);
-    {
     byte result = 0;
+    assert(image && file);
+
     if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 1;
@@ -2632,14 +2424,13 @@ byte GL_LoadFlatLump(image_t* image, DFile* file)
 #undef FLAT_WIDTH
     }
     return result;
-    }
 }
 
 static byte loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int border)
 {
-    assert(image && file);
-    {
     byte result = 0;
+    assert(image && file);
+
     if(0 != GL_LoadImageFromFile(image, file))
     {
         result = 2;
@@ -2680,43 +2471,46 @@ static byte loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int
         }
     }
     return result;
-    }
 }
 
-byte GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass,
-    int tmap, int border, patchtex_t* patchTex)
+byte GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int tmap, int border,
+    texture_t* tex)
 {
-    assert(file);
-    {
     byte result = loadPatchLump(image, file, tclass, tmap, border);
-    if(1 == result && NULL != patchTex)
-    {   // Loaded from a lump assumed to be in DOOM's Patch format.
-        // Load the extended metadata from the lump.
-        doompatch_header_t hdr;
-        F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
-        patchTex->offX = -SHORT(hdr.leftOffset);
-        patchTex->offY = -SHORT(hdr.topOffset);
+    if(1 == result && tex)
+    {
+        // Loaded from a lump assumed to be in DOOM's Patch format.
+        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+        if(pTex)
+        {
+            // Load the extended metadata from the lump.
+            doompatch_header_t hdr;
+            F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
+            pTex->offX = -SHORT(hdr.leftOffset);
+            pTex->offY = -SHORT(hdr.topOffset);
+        }
     }
     return MIN_OF(1, result);
-    }
 }
 
-byte GL_LoadPatchLumpAsSprite(image_t* image, DFile* file, int tclass,
-    int tmap, int border, spritetex_t* spriteTex)
+byte GL_LoadPatchLumpAsSprite(image_t* image, DFile* file, int tclass, int tmap, int border,
+    texture_t* tex)
 {
-    assert(file);
-    {
     byte result = loadPatchLump(image, file, tclass, tmap, border);
-    if(1 == result && NULL != spriteTex)
-    {   // Loaded from a lump assumed to be in DOOM's Patch format.
-        // Load the extended metadata from the lump.
-        doompatch_header_t hdr;
-        F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
-        spriteTex->offX = SHORT(hdr.leftOffset);
-        spriteTex->offY = SHORT(hdr.topOffset);
+    if(1 == result && tex)
+    {
+        // Loaded from a lump assumed to be in DOOM's Patch format.
+        spritetex_t* sTex = (spritetex_t*)Texture_UserData(tex);
+        if(sTex)
+        {
+            // Load the extended metadata from the lump.
+            doompatch_header_t hdr;
+            F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
+            sTex->offX = SHORT(hdr.leftOffset);
+            sTex->offY = SHORT(hdr.topOffset);
+        }
     }
     return MIN_OF(1, result);
-    }
 }
 
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
@@ -2726,7 +2520,8 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     DGLuint texture = 0;
 
     if(GL_LoadExtTexture(&image, name, mode))
-    {   // Loaded successfully and converted accordingly.
+    {
+        // Loaded successfully and converted accordingly.
         // Upload the image to GL.
         texture = GL_NewTextureWithParams2(
             ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
@@ -2745,23 +2540,29 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
+byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
 {
+    patchcompositetex_t* texDef;
+    int i;
     assert(image && tex);
-    {
-    patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
-    assert(NULL != texDef);
+
+#if _DEBUG
+    if(Textures_Namespace(tex) != TN_TEXTURES)
+        Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
+#endif
+    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    assert(texDef);
 
     GL_InitImage(image);
     image->pixelSize = 1;
     image->width = texDef->width;
     image->height = texDef->height;
     image->paletteId = defaultColorPalette;
-    if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
-        Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for ",
-            "new image pixel data.", (unsigned long) (2 * image->width * image->height));
 
-    { int i;
+    image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+    if(!image->pixels)
+        Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new image pixel data.", (unsigned long) (2 * image->width * image->height));
+
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
@@ -2776,24 +2577,26 @@ byte GL_LoadPatchComposite(image_t* image, const texture_t* tex)
                 (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
         }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-    }}
+    }
 
     if(palettedIsMasked(image->pixels, image->width, image->height))
         image->flags |= IMGF_IS_MASKED;
 
     return 1;
-    }
 }
 
-byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
-    boolean zeroMask)
+byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask)
 {
+    patchcompositetex_t* texDef;
+    int i, width, height, offX, offY;
     assert(image && tex);
-    {
-    patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
-    int width, height, offX, offY;
 
-    assert(NULL != texDef);
+#if _DEBUG
+    if(Textures_Namespace(tex) != TN_TEXTURES)
+        Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
+#endif
+    texDef = (patchcompositetex_t*)Texture_UserData(tex);
+    assert(texDef);
 
     /**
      * Heretic sky textures are reported to be 128 tall, despite the patch
@@ -2822,11 +2625,11 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
     image->width = width;
     image->height = height;
     image->paletteId = defaultColorPalette;
-    if(NULL == (image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height)))
-        Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for ",
-            "new image pixel data.", (unsigned long) (2 * image->width * image->height));
 
-    { int i;
+    image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+    if(!image->pixels)
+        Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for new image pixel data.", (unsigned long) (2 * image->width * image->height));
+
     for(i = 0; i < texDef->patchCount; ++i)
     {
         const texpatch_t* patchDef = &texDef->patches[i];
@@ -2848,21 +2651,20 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, const texture_t* tex,
             loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
         }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-    }}
+    }
 
     if(zeroMask)
         image->flags |= IMGF_IS_MASKED;
 
     return 1;
-    }
 }
 
 byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
-    assert(image);
-    {
     ddstring_t searchPath, foundPath;
     byte result = 0;
+
+    assert(image);
 
     // First try to find an external resource.
     Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&r->name));
@@ -2913,13 +2715,11 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     Str_Free(&foundPath);
 
     return result;
-    }
 }
 
 DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 {
-    if(!raw)
-        return 0; // Wha?
+    if(!raw) return 0; // Wha?
 
     if(raw->lumpNum < 0 || raw->lumpNum >= F_LumpCount())
     {
@@ -2976,20 +2776,20 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
     return 0;
 }
 
-DGLuint GL_GetLightMapTexture(const Uri* uri)
+DGLuint GL_GetLightMapTexture(const Uri* filePath)
 {
-    if(uri)
+    if(filePath)
     {
-        lightmap_t* lmap;
-        if(!Str_CompareIgnoreCase(Uri_Path(uri), "-"))
-            return 0;
+        texture_t* tex;
+        if(!Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return 0;
 
-        if(0 != (lmap = R_GetLightMap(uri)))
+        tex = R_FindLightMapForFilePath(filePath);
+        if(tex)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_LIGHTMAP,
                     0, 0, 0, 0, GL_CLAMP, GL_CLAMP, 1, -1, -1, false, false, false, true);
-            return GL_PrepareTexture(Textures_ToTexture(lmap->id), texSpec);
+            return GL_PrepareTexture(tex, texSpec);
         }
     }
     // Return the default texture name.
@@ -3001,7 +2801,7 @@ DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
     if(uri)
     {
         const ddstring_t* path = Uri_Path(uri);
-        flaretex_t* fTex;
+        texture_t* tex;
 
         if(Str_At(path, 0) == '-' || (Str_At(path, 0) == '0' && !Str_At(path, 1)))
             return 0; // Use the automatic selection logic.
@@ -3009,13 +2809,14 @@ DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
         if(Str_At(path, 0) >= '1' && Str_At(path, 0) <= '4' && !Str_At(path, 1))
             return GL_PrepareSysFlareTexture(Str_At(path, 0) - '1');
 
-        if((fTex = R_GetFlareTexture(uri)))
+        tex = R_FindFlareTextureForFilePath(uri);
+        if(tex)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_HALO_LUMINANCE,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                     1, 1, 0, false, false, false, true);
-            return GL_PrepareTexture(Textures_ToTexture(fTex->id), texSpec);
+            return GL_PrepareTexture(tex, texSpec);
         }
     }
     else if(oldIdx > 0 && oldIdx < NUM_SYSFLARE_TEXTURES)
@@ -3232,10 +3033,10 @@ void GL_ReleaseTexturesForRawImages(void)
     Z_Free(rawTexs);
 }
 
-int setGLMinFilter(texturevariant_t* tex, void* paramaters)
+static int setVariantMinFilter(texturevariant_t* tex, void* paramaters)
 {
-    DGLuint glName;
-    if(0 != (glName = TextureVariant_GLName(tex)))
+    DGLuint glName = TextureVariant_GLName(tex);
+    if(glName)
     {
         int minFilter = *((int*)paramaters);
         glBindTexture(GL_TEXTURE_2D, glName);
@@ -3244,256 +3045,16 @@ int setGLMinFilter(texturevariant_t* tex, void* paramaters)
     return 0; // Continue iteration.
 }
 
+static int setVariantMinFilterWorker(texture_t* tex, void* paramaters)
+{
+    Texture_IterateVariants(tex, setVariantMinFilter, paramaters);
+    return 0; // Continue iteration.
+}
+
 void GL_SetAllTexturesMinFilter(int minFilter)
 {
     int localMinFilter = minFilter;
-    int i;
-    for(i = 0; i < texturesCount; ++i)
-        Texture_IterateVariants(textures[i], setGLMinFilter, (void*)&localMinFilter);
-}
-
-/**
- * @defgroup validateTextureUriFlags  Validate Texture Uri Flags
- * @{
- */
-#define VTUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
-/**@}*/
-
-/**
- * @param uri  Uri to be validated.
- * @param flags  @see validateTextureUriFlags
- * @param quiet  @c true= Do not output validation remarks to the log.
- * @return  @c true if @a Uri passes validation.
- */
-static boolean validateTextureUri2(const Uri* uri, int flags, boolean quiet)
-{
-    texturenamespaceid_t namespaceId;
-
-    if(!uri || Str_IsEmpty(Uri_Path(uri)))
-    {
-        if(!quiet)
-        {
-            ddstring_t* uriStr = Uri_ToString(uri);
-            Con_Message("Invalid path '%s' in Texture uri \"%s\".\n", Str_Text(Uri_Path(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
-        }
-        return false;
-    }
-
-    namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-    if(!((flags & VTUF_ALLOW_NAMESPACE_ANY) && namespaceId == TN_ANY) &&
-       !VALID_TEXTURENAMESPACEID(namespaceId))
-    {
-        if(!quiet)
-        {
-            ddstring_t* uriStr = Uri_ToString(uri);
-            Con_Message("Unknown namespace '%s' in Texture uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
-            Str_Delete(uriStr);
-        }
-        return false;
-    }
-
-    return true;
-}
-
-static boolean validateTextureUri(const Uri* uri, int flags)
-{
-    return validateTextureUri2(uri, flags, false);
-}
-
-/**
- * Given a directory and path, search the Textures collection for a match.
- *
- * @param directory  Namespace-specific PathDirectory to search in.
- * @param path  Path of the texture to search for.
- * @return  Found Texture else @c 0
- */
-static texture_t* findTextureForPath(PathDirectory* texDirectory, const char* path)
-{
-    PathDirectoryNode* node = PathDirectory_Find(texDirectory,
-        PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTUREDIRECTORY_DELIMITER);
-    if(node)
-    {
-        return (texture_t*)PathDirectoryNode_UserData(node);
-    }
-    return NULL; // Not found.
-}
-
-/// \assume @a uri has already been validated and is well-formed.
-static texture_t* findTextureForUri(const Uri* uri)
-{
-    texturenamespaceid_t namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-    const char* path = Str_Text(Uri_Path(uri));
-    texture_t* tex = NULL;
-    if(namespaceId != TN_ANY)
-    {
-        // Caller wants a texture in a specific namespace.
-        tex = findTextureForPath(directoryForTextureNamespaceId(namespaceId), path);
-    }
-    else
-    {
-        // Caller does not care which namespace.
-        // Check for the texture in these namespaces in priority order.
-        static const texturenamespaceid_t order[] = {
-            TN_SPRITES,
-            TN_TEXTURES,
-            TN_FLATS,
-            TN_PATCHES,
-            TN_SYSTEM,
-            TN_DETAILS,
-            TN_REFLECTIONS,
-            TN_MASKS,
-            TN_MODELSKINS,
-            TN_MODELREFLECTIONSKINS,
-            TN_LIGHTMAPS,
-            TN_FLAREMAPS,
-        };
-        int n = 0;
-        do
-        {
-            tex = findTextureForPath(directoryForTextureNamespaceId(order[n]), path);
-        } while(!tex && order[++n] != MN_ANY);
-    }
-    return tex;
-}
-
-texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet)
-{
-    texture_t* tex;
-    if(!initedOk || !uri) return NULL;
-    if(!validateTextureUri2(uri, VTUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
-    {
-#if _DEBUG
-        ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Textures::TextureForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
-#endif
-        return NULL;
-    }
-
-    // Perform the search.
-    tex = findTextureForUri(uri);
-    if(tex) return tex;
-
-    // Not found.
-    if(!quiet && !ddMapSetup) // Do not announce during map setup.
-    {
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Textures::TextureForUri: \"%s\" not found!\n", Str_Text(path));
-        Str_Delete(path);
-    }
-    return NULL;
-}
-
-texture_t* Textures_TextureForUri(const Uri* uri)
-{
-    return Textures_TextureForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-texture_t* Textures_TextureForUriCString2(const char* path, boolean quiet)
-{
-    if(path && path[0])
-    {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        texture_t* tex = Textures_TextureForUri2(uri, quiet);
-        Uri_Delete(uri);
-        return tex;
-    }
-    return NULL;
-}
-
-texture_t* Textures_TextureForUriCString(const char* path)
-{
-    return Textures_TextureForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-Uri* Textures_ComposeUri(texture_t* tex)
-{
-    if(!tex)
-    {
-#if _DEBUG
-        Con_Message("Warning:Textures::ComposeUri: Attempted with invalid reference [%p], returning null-object.\n", (void*)tex);
-#endif
-        return Uri_New();
-    }
-    return Texture_ComposeUri(tex);
-}
-
-
-texture_t* Textures_CreateWithDimensions(const Uri* uri, uint typeIndex, int width, int height)
-{
-    assert(uri);
-    {
-    PathDirectory* texDirectory;
-    PathDirectoryNode* node;
-    texturenamespaceid_t texNamespace;
-    texture_t* tex;
-
-    // We require a properly formed uri.
-    if(!validateTextureUri2(uri, 0, (verbose >= 1)))
-    {
-        ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Texture \"%s\", ignoring.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
-        return NULL;
-    }
-
-    // Have we already created a texture for this?
-    texNamespace = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-    tex = Textures_TextureForTypeIndex(typeIndex, texNamespace);
-    if(tex)
-    {
-#if _DEBUG
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning:Textures::CreateWithDimensions: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
-#endif
-        return tex;
-    }
-
-    // A new texture.
-    texDirectory = directoryForTextureNamespaceId(texNamespace);
-    node = PathDirectory_Insert(texDirectory, Str_Text(Uri_Path(uri)), TEXTUREDIRECTORY_DELIMITER);
-
-    tex = Texture_NewWithDimensions(texturesCount+1/*1-based index*/, node, typeIndex, width, height);
-    PathDirectoryNode_AttachUserData(node, tex);
-
-    // Link the new texture into the global list of textures.
-    textures = (texture_t**) realloc(textures, sizeof *textures * ++texturesCount);
-    if(!textures)
-        Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textures * (texturesCount-1));
-    textures[texturesCount - 1] = tex;
-
-    return tex;
-    }
-}
-
-texture_t* Textures_Create(const Uri* uri, uint typeIndex)
-{
-    return Textures_CreateWithDimensions(uri, typeIndex, 0, 0);
-}
-
-uint Textures_TypeIndexForUri2(const Uri* uri, boolean quiet)
-{
-    const texture_t* glTex = Textures_TextureForUri2(uri, quiet);
-    if(glTex) return Texture_TypeIndex(glTex) + 1; // 1-based index.
-    if(!quiet)
-    {
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning, unknown texture: %s\n", Str_Text(path));
-        Str_Delete(path);
-    }
-    return 0;
-}
-
-uint Textures_TypeIndexForUri(const Uri* uri)
-{
-    return Textures_TypeIndexForUri2(uri, false);
-}
-
-texturenamespaceid_t Textures_NamespaceId(const texture_t* tex)
-{
-    return namespaceIdForTextureDirectory(PathDirectoryNode_Directory(Texture_DirectoryNode(tex)));
+    Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
 }
 
 static void performImageAnalyses(texture_t* tex, const image_t* image,
@@ -3505,13 +3066,13 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     if(TST_GENERAL == spec->type && image->paletteId != 0)
     {
         colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
-        boolean firstInit = (NULL == cp);
+        boolean firstInit = (!cp);
 
         if(firstInit)
         {
-            if(NULL == (cp = (colorpalette_analysis_t*) malloc(sizeof(*cp))))
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
-                    "new ColorPaletteAnalysis.", (unsigned long) sizeof(*cp));
+            cp = (colorpalette_analysis_t*) malloc(sizeof *cp);
+            if(!cp)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new ColorPaletteAnalysis.", (unsigned long) sizeof *cp);
             Texture_AttachAnalysis(tex, TA_COLORPALETTE, cp);
         }
 
@@ -3523,13 +3084,13 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         pointlight_analysis_t* pl = (pointlight_analysis_t*) Texture_Analysis(tex, TA_SPRITE_AUTOLIGHT);
-        boolean firstInit = (NULL == pl);
+        boolean firstInit = (!pl);
 
         if(firstInit)
         {
-            if(NULL == (pl = (pointlight_analysis_t*) malloc(sizeof(*pl))))
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
-                    "new PointLightAnalysis.", (unsigned long) sizeof(*pl));
+            pl = (pointlight_analysis_t*) malloc(sizeof *pl);
+            if(!pl)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new PointLightAnalysis.", (unsigned long) sizeof *pl);
             Texture_AttachAnalysis(tex, TA_SPRITE_AUTOLIGHT, pl);
         }
 
@@ -3544,13 +3105,13 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         TC_SKYSPHERE_DIFFUSE  == TS_GENERAL(spec)->context))
     {
         ambientlight_analysis_t* al = (ambientlight_analysis_t*) Texture_Analysis(tex, TA_MAP_AMBIENTLIGHT);
-        boolean firstInit = (NULL == al);
+        boolean firstInit = (!al);
 
         if(firstInit)
         {
-            if(NULL == (al = (ambientlight_analysis_t*) malloc(sizeof(*al))))
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
-                    "new AmbientLightAnalysis.", (unsigned long) sizeof(*al));
+            al = (ambientlight_analysis_t*) malloc(sizeof *al);
+            if(!al)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AmbientLightAnalysis.", (unsigned long) sizeof *al);
             Texture_AttachAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
         }
 
@@ -3575,13 +3136,13 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
         averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_SPHEREFADEOUT);
-        boolean firstInit = (NULL == sf);
+        boolean firstInit = (!sf);
 
         if(firstInit)
         {
-            if(NULL == (sf = (averagecolor_analysis_t*) malloc(sizeof(*sf))))
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for "
-                    "new AverageColorAnalysis.", (unsigned long) sizeof(*sf));
+            sf = (averagecolor_analysis_t*) malloc(sizeof *sf);
+            if(!sf)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *sf);
             Texture_AttachAnalysis(tex, TA_SKY_SPHEREFADEOUT, sf);
         }
 
@@ -3605,22 +3166,22 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     texturevariantspecification_t* spec, texturevariant_t* variant,
     byte* result)
 {
-    assert(initedOk && spec);
-    {
     uploadcontentmethod_t uploadMethod;
     byte loadResult = 0;
     image_t image;
-    
+    assert(initedOk && spec);
+
     // Load the source image data.
-    if(TN_TEXTURES == Textures_NamespaceId(tex))
+    if(TN_TEXTURES == Textures_Namespace(tex))
     {
         // Try to load a replacement version of this texture?
-        if(!noHighResTex && (loadExtAlways || highResWithPWAD || Texture_IsFromIWAD(tex)))
+        if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
-            patchcompositetex_t* texDef = R_PatchCompositeTextureByIndex(Texture_TypeIndex(tex));
+            patchcompositetex_t* texDef = (patchcompositetex_t*)Texture_UserData(tex);
             const ddstring_t suffix = { "-ck" };
             ddstring_t searchPath;
-            assert(NULL != texDef);
+            assert(texDef);
+
             Str_Init(&searchPath);
             Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&texDef->name));
             loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
@@ -3648,7 +3209,8 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(result) *result = loadResult;
 
     if(0 == loadResult)
-    {   // No image found/failed to load.
+    {
+        // No image found/failed to load.
         //Con_Message("Warning:Textures::tryLoadImageAndPrepareVariant: No image found for "
         //      "\"%s\"\n", Texture_Name(tex));
         return NULL;
@@ -3658,7 +3220,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(0 == Texture_Width(tex) || 0 == Texture_Height(tex))
     {
 #if _DEBUG
-        Uri* uri = Texture_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(tex);
         ddstring_t* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
             Str_Text(path), image.width, image.height) );
@@ -3671,7 +3233,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     performImageAnalyses(tex, &image, spec, true /*Always update*/);
 
     // Do we need to allocate a variant?
-    if(NULL == variant)
+    if(!variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
         variant = TextureVariant_New(tex, newGLName, spec);
@@ -3699,7 +3261,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 
 #ifdef _DEBUG
     VERBOSE(
-        Uri* uri = Texture_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(tex);
         ddstring_t* path = Uri_ToString(uri);
         Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
             Str_Text(path), (unsigned int) TextureVariant_GLName(variant),
@@ -3716,14 +3278,12 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 #endif
 
     return variant;
-    }
 }
 
 static texturevariant_t* findVariantForSpec(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
-    assert(initedOk);
-    { // Look for an exact match.
+    // Look for an exact match.
     texturevariant_t* variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
@@ -3731,25 +3291,23 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
     // this subsystem has been implemented correctly.
     //
     // Presently this is used as a sanity check.
-    if(NULL == variant)
-    {   /// No luck, try fuzzy.
+    if(!variant)
+    {
+        /// No luck, try fuzzy.
         variant = chooseVariant(METHOD_FUZZY, tex, spec);
         assert(NULL == variant);
     }
 #endif
     return variant;
-    }
 }
 
 const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
-    assert(initedOk);
-    {
     // Have we already prepared something suitable?
     texturevariant_t* variant = findVariantForSpec(tex, spec);
 
-    if(NULL != variant && TextureVariant_IsPrepared(variant))
+    if(variant && TextureVariant_IsPrepared(variant))
     {
         if(returnOutcome) *returnOutcome = PTR_FOUND;
     }
@@ -3769,7 +3327,6 @@ const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariant
     }
 
     return variant;
-    }
 }
 
 const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec)
@@ -3781,9 +3338,8 @@ DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t*
     preparetextureresult_t* returnOutcome)
 {
     const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
-    if(NULL != variant)
-        return TextureVariant_GLName(variant);
-    return 0;
+    if(!variant) return 0;
+    return TextureVariant_GLName(variant);
 }
 
 DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
@@ -3791,265 +3347,47 @@ DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* 
     return GL_PrepareTexture2(tex, spec, NULL);
 }
 
-void GL_ReleaseGLTexturesForTexture(texture_t* tex)
+int GL_ReleaseGLTexturesForTexture2(texture_t* tex, void* paramaters)
 {
+    int i;
     assert(tex);
+
     Texture_IterateVariants(tex, releaseVariantGLTexture, 0);
-    { int i;
     for(i = (int) TEXTURE_ANALYSIS_FIRST; i < (int) TEXTURE_ANALYSIS_COUNT; ++i)
     {
         void* data = Texture_DetachAnalysis(tex, (texture_analysisid_t) i);
-        if(NULL != data)
-            free(data);
-    }}
+        if(data) free(data);
+    }
+    return 0; // Continue iteration.
+}
+
+int GL_ReleaseGLTexturesForTexture(texture_t* tex)
+{
+    return GL_ReleaseGLTexturesForTexture2(tex, NULL);
 }
 
 void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace)
 {
-    if(texNamespace != TN_ANY && !VALID_TEXTURENAMESPACEID(texNamespace))
-        Con_Error("GL_ReleaseGLTexturesByNamespace: Internal error, "
-                  "invalid namespace %i.", (int) texNamespace);
+    Textures_Iterate(texNamespace, GL_ReleaseGLTexturesForTexture2);
+}
 
-    { int i;
-    for(i = 0; i < texturesCount; ++i)
+static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramaters)
+{
+    colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
+    colorpaletteid_t paletteId = *(colorpaletteid_t*)paramaters;
+    assert(tex && paramaters);
+
+    if(cp && cp->paletteId == paletteId)
     {
-        texture_t* tex = textures[i];
-        if(texNamespace != TN_ANY && Textures_NamespaceId(tex) != texNamespace)
-            continue;
         GL_ReleaseGLTexturesForTexture(tex);
-    }}
+    }
+    return 0; // Continue iteration.
 }
 
 void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    { int i;
-    for(i = 0; i < texturesCount; ++i)
-    {
-        texture_t* tex = textures[i];
-        colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
-        if(cp != NULL && cp->paletteId == paletteId)
-        {
-            GL_ReleaseGLTexturesForTexture(tex);
-        }
-    }}
-}
-
-static void printTextureInfo(texture_t* tex, boolean printNamespace)
-{
-    int numDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Count()));
-    Uri* uri = Textures_ComposeUri(tex);
-    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
-
-    Con_Printf(" %*u: %-*s %5d x %-5d %s\n", numDigits, (unsigned int) Textures_ToTextureNum(tex),
-        printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        Texture_Width(tex), Texture_Height(tex), Texture_IsFromIWAD(tex) ? "iwad" : "addon");
-
-    Uri_Delete(uri);
-    if(printNamespace)
-        Str_Delete((ddstring_t*)path);
-}
-
-/**
- * \todo A horridly inefficent algorithm. This should be implemented in PathDirectory
- * itself and not force users of this class to implement this sort of thing themselves.
- * However this is only presently used for the texture search/listing console commands
- * so is not hugely important right now.
- */
-typedef struct {
-    const char* like;
-    int idx;
-    texture_t** storage;
-} collecttextureworker_paramaters_t;
-
-static int collectTextureWorker(const PathDirectoryNode* node, void* paramaters)
-{
-    texture_t* tex = (texture_t*)PathDirectoryNode_UserData(node);
-    collecttextureworker_paramaters_t* p = (collecttextureworker_paramaters_t*)paramaters;
-
-    if(p->like && p->like[0])
-    {
-        Uri* uri = Texture_ComposeUri(tex);
-        int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
-        Uri_Delete(uri);
-        if(delta) return 0; // Continue iteration.
-    }
-
-    if(p->storage)
-    {
-        p->storage[p->idx++] = tex;
-    }
-    else
-    {
-        ++p->idx;
-    }
-
-    return 0; // Continue iteration.
-}
-
-static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char* like,
-    int* count, texture_t** storage)
-{
-    collecttextureworker_paramaters_t p;
-    texturenamespaceid_t fromId, toId, iterId;
-
-    if(VALID_TEXTURENAMESPACEID(namespaceId))
-    {
-        // Only consider textures in this namespace.
-        fromId = toId = namespaceId;
-    }
-    else
-    {
-        // Consider textures in any namespace.
-        fromId = TEXTURENAMESPACE_FIRST;
-        toId   = TEXTURENAMESPACE_LAST;
-    }
-
-    p.idx = 0;
-    p.like = like;
-    p.storage = storage;
-    for(iterId  = fromId; iterId <= toId; ++iterId)
-    {
-        PathDirectory* texDirectory = directoryForTextureNamespaceId(iterId);
-        PathDirectory_Iterate2_Const(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-            PATHDIRECTORY_NOHASH, collectTextureWorker, (void*)&p);
-    }
-
-    if(storage)
-    {
-        storage[p.idx] = 0; // Terminate.
-        if(count) *count = p.idx;
-        return storage;
-    }
-
-    if(p.idx == 0)
-    {
-        if(count) *count = 0;
-        return 0;
-    }
-
-    storage = (texture_t**)malloc(sizeof *storage * (p.idx+1));
-    if(!storage)
-        Con_Error("collectTextures: Failed on allocation of %lu bytes for new collection.",
-            (unsigned long) (sizeof* storage * (p.idx+1)));
-    return collectTextures(namespaceId, like, count, storage);
-}
-
-static int compareTextureByPath(const void* tA, const void* tB)
-{
-    Uri* a = Texture_ComposeUri(*(const texture_t**)tA);
-    Uri* b = Texture_ComposeUri(*(const texture_t**)tB);
-    int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
-    Uri_Delete(b);
-    Uri_Delete(a);
-    return delta;
-}
-
-static size_t printTextures2(texturenamespaceid_t namespaceId, const char* like,
-    boolean printNamespace)
-{
-    int numDigits, count = 0;
-    texture_t** foundTextures = collectTextures(namespaceId, like, &count, NULL);
-
-    if(!foundTextures) return 0;
-
-    if(!printNamespace)
-        Con_FPrintf(CPF_YELLOW, "Known textures in namespace '%s'", Str_Text(DD_TextureNamespaceNameForId(namespaceId)));
-    else // Any namespace.
-        Con_FPrintf(CPF_YELLOW, "Known textures");
-
-    if(like && like[0])
-        Con_FPrintf(CPF_YELLOW, " like \"%s\"", like);
-    Con_FPrintf(CPF_YELLOW, ":\n");
-
-    // Print the result index key.
-    numDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Count()));
-    Con_Printf(" %*s: %-*s %12s  origin\n", numDigits, "uid",
-        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
-        "dimensions");
-    Con_PrintRuler();
-
-    // Sort and print the index.
-    qsort(foundTextures, (size_t)count, sizeof *foundTextures, compareTextureByPath);
-
-    { texture_t* const* ptr;
-    for(ptr = foundTextures; *ptr; ++ptr)
-    {
-        texture_t* tex = *ptr;
-        printTextureInfo(tex, printNamespace);
-    }}
-
-    free(foundTextures);
-    return count;
-}
-
-static void printTextures(texturenamespaceid_t namespaceId, const char* like)
-{
-    size_t printTotal = 0;
-    // Do we care which namespace?
-    if(namespaceId == TN_ANY && like && like[0])
-    {
-        printTotal = printTextures2(namespaceId, like, true);
-        Con_PrintRuler();
-    }
-    // Only one namespace to print?
-    else if(VALID_TEXTURENAMESPACEID(namespaceId))
-    {
-        printTotal = printTextures2(namespaceId, like, false);
-        Con_PrintRuler();
-    }
-    else
-    {
-        // Collect and sort in each namespace separately.
-        int i;
-        for(i = TEXTURENAMESPACE_FIRST; i <= TEXTURENAMESPACE_LAST; ++i)
-        {
-            size_t printed = printTextures2((texturenamespaceid_t)i, like, false);
-            if(printed != 0)
-            {
-                printTotal += printed;
-                Con_PrintRuler();
-            }
-        }
-    }
-    Con_Printf("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Texture" : "Textures");
-}
-
-uint Textures_Count(void)
-{
-    if(initedOk) return texturesCount;
-    return 0;
-}
-
-texture_t* Textures_ToTexture(textureid_t id)
-{
-    texture_t* tex = getTexture(id);
-#if _DEBUG
-    if(NULL == tex)
-        Con_Message("Warning:Textures_ToTexture: Failed to locate texture for id #%i.\n", id);
-#endif
-    return tex;
-}
-
-textureid_t Textures_ToTextureNum(texture_t* tex)
-{
-    if(!initedOk) return 0;
-    if(!tex) return 0;
-    return Texture_Id(tex);
-}
-
-texture_t* Textures_TextureForTypeIndex(int index, texturenamespaceid_t texNamespace)
-{
-    if(VALID_TEXTURENAMESPACEID(texNamespace))
-    {
-        int i;
-        for(i = 0; i < texturesCount; ++i)
-        {
-            texture_t* tex = textures[i];
-            if(Textures_NamespaceId(tex) == texNamespace && Texture_TypeIndex(tex) == index)
-                return tex;
-        }
-    }
-    return 0; // Not found.
+    colorpaletteid_t localPaletteId = paletteId;
+    Textures_Iterate2(TN_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
 }
 
 void GL_InitTextureContent(texturecontent_t* content)
@@ -4072,12 +3410,15 @@ void GL_InitTextureContent(texturecontent_t* content)
 
 texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
 {
-    assert(other);
-    {
-    texturecontent_t* c = malloc(sizeof(*c));
+    texturecontent_t* c;
     uint8_t* pixels;
     int bytesPerPixel;
     size_t bufferSize;
+    assert(other);
+
+    c = (texturecontent_t*)malloc(sizeof *c);
+    if(!c)
+        Con_Error("GL_ConstructTextureContentCopy: Failed on allocation of %lu bytes for new TextureContent.", (unsigned long) sizeof *c);
 
     memcpy(c, other, sizeof(*c));
 
@@ -4088,14 +3429,12 @@ texturecontent_t* GL_ConstructTextureContentCopy(const texturecontent_t* other)
     memcpy(pixels, other->pixels, bufferSize);
     c->pixels = pixels;
     return c;
-    }
 }
 
 void GL_DestroyTextureContent(texturecontent_t* content)
 {
     assert(content);
-    if(NULL != content->pixels)
-        free((uint8_t*)content->pixels);
+    if(content->pixels) free((uint8_t*)content->pixels);
     free(content);
 }
 
@@ -4166,88 +3505,3 @@ D_CMD(MipMap)
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
     return true;
 }
-
-D_CMD(ListTextures)
-{
-    texturenamespaceid_t namespaceId = TN_ANY;
-    const char* like = NULL;
-    Uri* uri = NULL;
-
-    if(!Textures_Count())
-    {
-        Con_Message("There are currently no textures defined/loaded.\n");
-        return true;
-    }
-
-    // "listtextures [namespace] [name]"
-    if(argc > 2)
-    {
-        uri = Uri_New();
-        Uri_SetScheme(uri, argv[1]);
-        Uri_SetPath(uri, argv[2]);
-
-        namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-        if(!VALID_TEXTURENAMESPACEID(namespaceId))
-        {
-            Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-            Uri_Delete(uri);
-            return false;
-        }
-        like = Str_Text(Uri_Path(uri));
-    }
-    // "listtextures [namespace:name]" i.e., a partial Uri
-    else if(argc > 1)
-    {
-        uri = Uri_NewWithPath2(argv[1], RC_NULL);
-        if(!Str_IsEmpty(Uri_Scheme(uri)))
-        {
-            namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Scheme(uri)));
-            if(!VALID_TEXTURENAMESPACEID(namespaceId))
-            {
-                Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
-                Uri_Delete(uri);
-                return false;
-            }
-
-            if(!Str_IsEmpty(Uri_Path(uri)))
-                like = Str_Text(Uri_Path(uri));
-        }
-        else
-        {
-            namespaceId = DD_ParseTextureNamespace(Str_Text(Uri_Path(uri)));
-
-            if(!VALID_TEXTURENAMESPACEID(namespaceId))
-            {
-                namespaceId = TN_ANY;
-                like = argv[1];
-            }
-        }
-    }
-
-    printTextures(namespaceId, like);
-
-    if(uri != NULL)
-        Uri_Delete(uri);
-    return true;
-}
-
-#if _DEBUG
-D_CMD(PrintTextureStats)
-{
-    texturenamespaceid_t namespaceId;
-    Con_FPrintf(CPF_YELLOW, "Texture Statistics:\n");
-    for(namespaceId = TEXTURENAMESPACE_FIRST; namespaceId <= TEXTURENAMESPACE_LAST; ++namespaceId)
-    {
-        PathDirectory* texDirectory = directoryForTextureNamespaceId(namespaceId);
-        uint size;
-
-        if(!texDirectory) continue;
-
-        size = PathDirectory_Size(texDirectory);
-        Con_Printf("Namespace: %s (%u %s)\n", Str_Text(DD_TextureNamespaceNameForId(namespaceId)), size, size==1? "texture":"textures");
-        PathDirectory_PrintHashDistribution(texDirectory);
-        PathDirectory_Print(texDirectory, TEXTUREDIRECTORY_DELIMITER);
-    }
-    return true;
-}
-#endif

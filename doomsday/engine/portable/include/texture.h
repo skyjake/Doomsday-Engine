@@ -25,8 +25,9 @@
 #ifndef LIBDENG_GL_TEXTURE_H
 #define LIBDENG_GL_TEXTURE_H
 
+#include "pathdirectory.h"
+
 struct texturevariant_s;
-PathDirectoryNode;
 
 typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
@@ -41,22 +42,26 @@ typedef enum {
     (id) >= TEXTURE_ANALYSIS_FIRST && (id) < TEXTURE_ANALYSIS_COUNT)
 
 /**
+ * @defgroup textureFlags  Texture Flags.
+ * @{
+ */
+#define TXF_CUSTOM              0x1 /// Texture does not originate from the current game.
+/**@}*/
+
+/**
  * Texture
  *
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */
 typedef struct texture_s {
-    /// Unique identifier.
-    textureid_t _id;
-
-    /// Type specific index (e.g., if _texNamespace=TN_FLATS this is a flat index).
-    int _index;
+    /// @see textureFlags
+    int _flags;
 
     /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
     int _width, _height;
 
-    /// Pointer to this texture's node in the directory.
+    /// Pointer to this texture's node in the owning PathDirectory.
     PathDirectoryNode* _directoryNode;
 
     /// List of variants (e.g., color translations).
@@ -65,12 +70,44 @@ typedef struct texture_s {
     /// Table of analyses object ptrs, used for various purposes depending
     /// on the variant specification.
     void* _analyses[TEXTURE_ANALYSIS_COUNT];
+
+    /// User data associated with this texture.
+    void* _userData;
 } texture_t;
 
-texture_t* Texture_New(textureid_t id, PathDirectoryNode* directoryNode, int index);
-texture_t* Texture_NewWithDimensions(textureid_t id, PathDirectoryNode* directoryNode, int index, int width, int height);
+/**
+ * Construct a new Texture.
+ *
+ * @param directoryNode  Node in the owning PathDirectory to associate with the
+ *    resultant texture.
+ * @param flags  @see textureFlags
+ * @param width  Logical width of the texture. Can be zero in which case it will be
+ *    inherited from the actual pixel width of the texture at load time.
+ * @param height  Logical height of the texture. Can be zero in which case it will be
+ *    inherited from the actual pixel height of the texture at load time.
+ * @param userData  User data to associate with the resultant texture.
+ */
+texture_t* Texture_NewWithDimensions(PathDirectoryNode* directoryNode, int flags, int width, int height, void* userData);
+texture_t* Texture_New(PathDirectoryNode* directoryNode, int flags, void* userData);
 
 void Texture_Delete(texture_t* tex);
+
+/**
+ * Attach new user data. If data is already present it will be replaced.
+ * Ownership is given to Texture.
+ *
+ * @param userData  Data to be attached.
+ */
+void Texture_AttachUserData(texture_t* tex, void* userData);
+
+/**
+ * Detach any associated user data. Ownership is relinquished to caller.
+ * @return  Associated user data.
+ */
+void* Texture_DetachUserData(texture_t* tex);
+
+/// @return  Associated user data if any else @c NULL.
+void* Texture_UserData(const texture_t* tex);
 
 /// Destroy all prepared variants owned by this texture.
 void Texture_ClearVariants(texture_t* tex);
@@ -116,11 +153,20 @@ void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis);
 /// @return  Associated data for the specified analysis identifier.
 void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis);
 
-/// @return  Unique identifier.
-textureid_t Texture_Id(const texture_t* tex);
+/// @return  @c true iff the data associated with @a tex does not originate from the current game.
+boolean Texture_IsCustom(const texture_t* tex);
 
-/// @return  @c true iff Texture represents an image loaded from an IWAD.
-boolean Texture_IsFromIWAD(const texture_t* tex);
+/// @return  @c true iff the texture has not yet been loaded.
+boolean Texture_IsNull(const texture_t* tex);
+
+/// @return  @see textureFlags
+int Texture_Flags(const texture_t* tex);
+
+/**
+ * Change the value of the flags property.
+ * @param flags  @see textureFlags
+ */
+void Texture_SetFlags(texture_t* tex, int flags);
 
 /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
 void Texture_Dimensions(const texture_t* tex, int* width, int* height);
@@ -150,19 +196,7 @@ int Texture_Height(const texture_t* tex);
  */
 void Texture_SetHeight(texture_t* tex, int height);
 
-/// @return  Type-specific index of the wrapped image object.
-int Texture_TypeIndex(const texture_t* tex);
-
 /// @return  PathDirectory node associated with this.
 PathDirectoryNode* Texture_DirectoryNode(const texture_t* texture);
-
-/// @return  Unique identifier of the namespace within which this Texture resides.
-texturenamespaceid_t Textures_NamespaceId(const texture_t* texture);
-
-/// @return  Symbolic name/path-to this Texture. Must be destroyed with Str_Delete().
-ddstring_t* Texture_ComposePath(const texture_t* texture);
-
-/// @return  Fully qualified/absolute Uri to this Texture. Must be destroyed with Uri_Delete().
-Uri* Texture_ComposeUri(const texture_t* texture);
 
 #endif /* LIBDENG_GL_TEXTURE_H */

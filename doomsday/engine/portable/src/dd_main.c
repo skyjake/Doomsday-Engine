@@ -1115,11 +1115,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Cl_Reset();
 
         R_ShutdownVectorGraphics();
-        R_ClearPatchTexs();
-        R_DestroySkins();
         R_DestroyColorPalettes();
 
-        GL_DestroyRuntimeTextures();
+        Textures_ClearRuntime();
         Fonts_ClearRuntimeFonts();
 
         Sfx_InitLogical();
@@ -1166,7 +1164,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         DD_ComposeMainWindowTitle(buf);
         Sys_SetWindowTitle(windowIDX, buf);
 
-        Materials_Initialize();
+        Materials_Init();
         FI_Init();
         P_PtcInit();
 
@@ -1180,7 +1178,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
 
-    Materials_Initialize();
+    Materials_Init();
     FI_Init();
     P_PtcInit();
 
@@ -1749,7 +1747,7 @@ static int DD_StartupWorker(void* parm)
     // Get the material manager up and running.
     Con_SetProgress(90);
     GL_EarlyInitTextureManager();
-    Materials_Initialize();
+    Materials_Init();
 
     Con_SetProgress(140);
     Con_Message("Initializing Binding subsystem...\n");
@@ -2040,7 +2038,7 @@ void* DD_GetVariable(int ddvalue)
     case DD_MATERIAL_COUNT:
         {
         static uint value;
-        value = Materials_Count();
+        value = Materials_Size();
         return &value;
         }
     case DD_TRACE_ADDRESS:
@@ -2239,44 +2237,22 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
+/// \note Part of the Doomsday public API.
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str)
 {
-    if(!str || 0 == strlen(str))
-        return MN_ANY;
-
-    if(!stricmp(str, MN_TEXTURES_NAME)) return MN_TEXTURES;
-    if(!stricmp(str, MN_FLATS_NAME))    return MN_FLATS;
-    if(!stricmp(str, MN_SPRITES_NAME))  return MN_SPRITES;
-    if(!stricmp(str, MN_SYSTEM_NAME))   return MN_SYSTEM;
-
-    return MATERIALNAMESPACE_COUNT; // Unknown.
+    return Materials_ParseNamespace(str);
 }
 
+/// \note Part of the Doomsday public API.
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
 {
-    if(!str || 0 == strlen(str))
-        return TN_ANY;
-
-    if(!stricmp(str, TN_TEXTURES_NAME))             return TN_TEXTURES;
-    if(!stricmp(str, TN_FLATS_NAME))                return TN_FLATS;
-    if(!stricmp(str, TN_SPRITES_NAME))              return TN_SPRITES;
-    if(!stricmp(str, TN_PATCHES_NAME))              return TN_PATCHES;
-    if(!stricmp(str, TN_SYSTEM_NAME))               return TN_SYSTEM;
-    if(!stricmp(str, TN_DETAILS_NAME))              return TN_DETAILS;
-    if(!stricmp(str, TN_REFLECTIONS_NAME))          return TN_REFLECTIONS;
-    if(!stricmp(str, TN_MASKS_NAME))                return TN_MASKS;
-    if(!stricmp(str, TN_MODELSKINS_NAME))           return TN_MASKS;
-    if(!stricmp(str, TN_MODELREFLECTIONSKINS_NAME)) return TN_MODELREFLECTIONSKINS;
-    if(!stricmp(str, TN_LIGHTMAPS_NAME))            return TN_LIGHTMAPS;
-    if(!stricmp(str, TN_FLAREMAPS_NAME))            return TN_FLAREMAPS;
-
-    return TEXTURENAMESPACE_COUNT; // Unknown.
+    return Textures_ParseNamespace(str);
 }
 
+/// \note Part of the Doomsday public API.
 fontnamespaceid_t DD_ParseFontNamespace(const char* str)
 {
-    if(!str || 0 == strlen(str))
-        return FN_ANY;
+    if(!str || 0 == strlen(str)) return FN_ANY;
 
     if(!stricmp(str, FN_GAME_NAME))     return FN_GAME;
     if(!stricmp(str, FN_SYSTEM_NAME))   return FN_SYSTEM;
@@ -2284,40 +2260,16 @@ fontnamespaceid_t DD_ParseFontNamespace(const char* str)
     return FONTNAMESPACE_COUNT; // Unknown.
 }
 
-const ddstring_t* DD_TextureNamespaceNameForId(texturenamespaceid_t id)
+struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace)
 {
-    static const ddstring_t namespaceNames[TEXTURENAMESPACE_COUNT+1] = {
-        /* No namespace name */         { "" },
-        /* TN_SYSTEM */                 { TN_SYSTEM_NAME },
-        /* TN_FLATS */                  { TN_FLATS_NAME  },
-        /* TN_TEXTURES */               { TN_TEXTURES_NAME },
-        /* TN_SPRITES */                { TN_SPRITES_NAME },
-        /* TN_PATCHES */                { TN_PATCHES_NAME },
-        /* TN_DETAILS */                { TN_DETAILS_NAME },
-        /* TN_REFLECTIONS */            { TN_REFLECTIONS_NAME },
-        /* TN_MASKS */                  { TN_MASKS_NAME },
-        /* TN_MODELSKINS */             { TN_MODELSKINS_NAME },
-        /* TN_MODELREFLECTIONSKINS */   { TN_MODELREFLECTIONSKINS_NAME },
-        /* TN_LIGHTMAPS */              { TN_LIGHTMAPS_NAME },
-        /* TN_FLAREMAPS */              { TN_FLAREMAPS_NAME }
-    };
-    if(VALID_TEXTURENAMESPACEID(id))
-        return namespaceNames + 1 + (id - TEXTURENAMESPACE_FIRST);
-    return namespaceNames + 0;
-}
-
-struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace)
-{
-    const texture_t* tex;
+    texture_t* tex = R_TextureForOriginalIndex(index, texNamespace);
     ddstring_t* texPath;
     material_t* mat;
     Uri* uri;
 
-    if(index == 0) return NULL;
-    tex = Textures_TextureForTypeIndex(index-1, texNamespace);
     if(!tex) return NULL;
 
-    texPath = Texture_ComposePath(tex);
+    texPath = Textures_ComposePath(tex);
     uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
     Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
     mat = Materials_MaterialForUri2(uri, true/*quiet please*/);

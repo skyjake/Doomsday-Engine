@@ -212,7 +212,7 @@ static void* AllocAndLoad(DFile* file, int offset, int len)
 static void R_MissingModel(const char* fn)
 {
     //if(verbose)
-    Con_Printf("Warning: Failed to locate model \"%s\".\n", fn);
+    Con_Printf("Warning, failed to locate model \"%s\".\n", fn);
 }
 
 static void R_LoadModelMD2(DFile* file, model_t* mdl)
@@ -424,11 +424,11 @@ static void R_LoadModelDMD(DFile* file, model_t* mo)
         M_Free(triangles[i]);
 }
 
-static void R_RegisterModelSkin(model_t* mdl, int index)
+static void registerModelSkin(model_t* mdl, int index)
 {
-    mdl->skins[index].id = R_RegisterSkin(0, mdl->skins[index].name, mdl->fileName, false);
+    mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
 
-    if(!mdl->skins[index].id)
+    if(!mdl->skins[index].texture)
     {   // Not found!
         VERBOSE(Con_Printf("  \"%s\" (#%i) not found.\n", mdl->skins[index].name, index));
     }
@@ -443,13 +443,11 @@ static int R_LoadModel(const Uri* uri)
     ddstring_t foundPath;
     DFile* file = NULL;
     model_t* mdl;
-    int index;
+    int i, index;
 
-    if(!uri)
-        return 0; // No model specified.
+    if(!uri) return 0;
     searchPath = Str_Text(Uri_Path(uri));
-    if(!searchPath || !searchPath[0])
-        return 0; // No model specified.
+    if(!searchPath || !searchPath[0]) return 0;
 
     Str_Init(&foundPath);
     if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
@@ -520,23 +518,21 @@ static int R_LoadModel(const Uri* uri)
     strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.
-    { int i;
     for(i = 0; i < mdl->info.numSkins; ++i)
     {
-        R_RegisterModelSkin(mdl, i);
-    }}
+        registerModelSkin(mdl, i);
+    }
 
     Str_Free(&foundPath);
     return index;
 }
 
-int R_ModelFrameNumForName(int modelnum, char *fname)
+int R_ModelFrameNumForName(int modelnum, char* fname)
 {
-    int                 i;
-    model_t            *mdl;
+    model_t* mdl;
+    int i;
 
-    if(!modelnum)
-        return 0;
+    if(!modelnum) return 0;
 
     mdl = modellist[modelnum];
     for(i = 0; i < mdl->info.numFrames; ++i)
@@ -815,8 +811,13 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
-    assert(NULL != sprTex);
+#if _DEBUG
+    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+        Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
+
+    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    assert(sprTex);
 
     off = sprTex->offY - ms->height;
     if(off < 0)
@@ -862,22 +863,24 @@ static short R_NewModelSkin(model_t* mdl, const Uri* path)
     int added = mdl->info.numSkins, i;
     const char* fileName = Str_Text(Uri_Path(path));
 
-    mdl->skins = M_Realloc(mdl->skins, sizeof(dmd_skin_t) * ++mdl->info.numSkins);
+    mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * ++mdl->info.numSkins);
+    if(!mdl->skins)
+        Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes enlarging DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
     memset(mdl->skins + added, 0, sizeof(dmd_skin_t));
+
     strncpy(mdl->skins[added].name, fileName, 64);
-    R_RegisterModelSkin(mdl, added);
+    registerModelSkin(mdl, added);
 
     // Did we get a dupe?
     for(i = 0; i < mdl->info.numSkins - 1; ++i)
     {
-        if(mdl->skins[i].id == mdl->skins[added].id)
-        {
-            // This is the same skin file.
-            // We did a lot of unnecessary work...
-            mdl->info.numSkins--;
-            mdl->skins = M_Realloc(mdl->skins, sizeof(dmd_skin_t) * mdl->info.numSkins);
-            return i;
-        }
+        if(mdl->skins[i].texture != mdl->skins[added].texture) continue;
+
+        // This is the same skin file. We did a lot of unnecessary work...
+        mdl->skins = (dmd_skin_t*)realloc(mdl->skins, sizeof *mdl->skins * --mdl->info.numSkins);
+        if(!mdl->skins)
+            Con_Error("R_NewModelSkin: Failed on (re)allocation of %lu bytes shrinking DmdSkin list.", sizeof *mdl->skins * mdl->info.numSkins);
+        return i;
     }
 
     return added;
@@ -886,17 +889,16 @@ static short R_NewModelSkin(model_t* mdl, const Uri* path)
 /**
  * Create a new modeldef or find an existing one. This is for ID'd models.
  */
-static modeldef_t *R_GetIDModelDef(const char *id)
+static modeldef_t* R_GetIDModelDef(const char* id)
 {
-    modeldef_t         *md;
+    modeldef_t* md;
 
     // ID defined?
-    if(!id[0])
-        return NULL;
+    if(!id[0]) return NULL;
 
     // First try to find an existing modef.
-    if((md = R_CheckIDModelFor(id)) != NULL)
-        return md;
+    md = R_CheckIDModelFor(id);
+    if(md) return md;
 
     // Get a new entry.
     md = modefs + numModelDefs++;
@@ -909,13 +911,13 @@ static modeldef_t *R_GetIDModelDef(const char *id)
  * Create a new modeldef or find an existing one. There can be only one
  * model definition associated with a state/intermark pair.
  */
-static modeldef_t *R_GetModelDef(int state, float interMark, int select)
+static modeldef_t* R_GetModelDef(int state, float interMark, int select)
 {
-    int                 i;
-    modeldef_t         *md;
+    modeldef_t* md;
+    int i;
 
-    if(state < 0 || state >= countStates.num)
-        return NULL; // Not a valid state.
+    // Is this a valid state?
+    if(state < 0 || state >= countStates.num) return NULL;
 
     // First try to find an existing modef.
     for(i = 0; i < numModelDefs; ++i)
@@ -928,8 +930,7 @@ static modeldef_t *R_GetModelDef(int state, float interMark, int select)
         }
 
     // This is impossible, but checking won't hurt...
-    if(numModelDefs >= maxModelDefs)
-        return NULL;
+    if(numModelDefs >= maxModelDefs) return NULL;
 
     md = modefs + numModelDefs++;
     memset(md, 0, sizeof(*md));
@@ -960,7 +961,7 @@ static void setupModel(ded_model_t* def)
 
     // Is this an ID'd model?
     modef = R_GetIDModelDef(def->id);
-    if(NULL == modef)
+    if(!modef)
     {
         // No, normal State-model.
         if(statenum < 0)
@@ -970,8 +971,7 @@ static void setupModel(ded_model_t* def)
         }
 
         modef = R_GetModelDef(statenum + def->off, def->interMark, def->selector);
-        if(NULL == modef)
-            return; // Can't get a modef, quit!
+        if(!modef) return; // Can't get a modef, quit!
     }
 
     // Init modef info (state & intermark already set).
@@ -1069,7 +1069,7 @@ static void setupModel(ded_model_t* def)
         for(k = 0; k < 3; ++k)
             sub->offset[k] = subdef->offset[k];
 
-        sub->shinySkin = R_RegisterSkin(NULL, subdef->shinySkin, modellist[sub->model]->fileName, true);
+        sub->shinySkin = R_RegisterModelSkin(NULL, subdef->shinySkin, modellist[sub->model]->fileName, true);
 
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
@@ -1306,28 +1306,28 @@ void R_SetModelFrame(modeldef_t* modef, int frame)
 
 void R_PrecacheModelSkins(modeldef_t* modef)
 {
-    int                 k, sub;
-    model_t*            mdl;
+    int k, sub;
+    model_t* mdl;
 
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
-        const skinname_t*       sn;
+        texture_t* tex;
 
-        if(!modef->sub[sub].model)
-            continue;
+        if(!modef->sub[sub].model) continue;
 
         mdl = modellist[modef->sub[sub].model];
         // Load all skins.
         for(k = 0; k < mdl->info.numSkins; ++k)
         {
-            if((sn = R_GetSkinNameByIndex(mdl->skins[k].id)))
+            tex = mdl->skins[k].texture;
+            if(tex)
             {
                 texturevariantspecification_t* texSpec =
                     GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                         (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
                         GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-                GL_PrepareTexture(Textures_ToTexture(sn->id), texSpec);
+                GL_PrepareTexture(tex, texSpec);
             }
         }
     }

@@ -289,7 +289,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
     {
         boolean isTexture = animDefs[i].istexture != 0;
         int groupNum, ticsPerFrame, numFrames;
-        uint startFrame, endFrame;
+        int startFrame, endFrame;
 
         if(i == 0 || isTexture != lastIsTexture)
         {
@@ -300,9 +300,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         Uri_SetPath(startPath, animDefs[i].startname);
         Uri_SetPath(endPath, animDefs[i].endname);
         
-        if(0 == (startFrame = Textures_TypeIndexForUri2(startPath, !isCustom)) ||
-           0 == (endFrame   = Textures_TypeIndexForUri2(endPath, !isCustom)))
-            continue;
+        startFrame = R_OriginalIndexForTexture2(startPath, !isCustom);
+        endFrame   = R_OriginalIndexForTexture2(endPath, !isCustom);
+        if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
         ticsPerFrame = LONG(animDefs[i].speed);
@@ -312,9 +312,6 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
             Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
             continue;
         }
-
-        if(0 == startFrame && 0 == endFrame)
-            continue;
 
         /**
          * A valid animation.
@@ -330,8 +327,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         {
             ddstring_t* from = Uri_ToString(startPath);
             ddstring_t* to = Uri_ToString(endPath);
-            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n",
-                        i, Str_Text(from), Str_Text(to), ticsPerFrame);
+            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
             Str_Delete(from);
             Str_Delete(to);
         }
@@ -342,20 +338,20 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         // Add all frames from start to end to the group.
         if(endFrame > startFrame)
         {
-            uint n;
+            int n;
             for(n = startFrame; n <= endFrame; ++n)
             {
-                material_t* frame = DD_MaterialForTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                material_t* frame = DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }
         }
         else
         {
-            uint n;
+            int n;
             for(n = endFrame; n >= startFrame; n--)
             {
-                material_t* frame = DD_MaterialForTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                material_t* frame = DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }

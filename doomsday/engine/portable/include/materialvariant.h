@@ -24,8 +24,9 @@
 #ifndef LIBDENG_MATERIALVARIANT_H
 #define LIBDENG_MATERIALVARIANT_H
 
+#include "textures.h"
+
 struct texturevariantspecification_s;
-struct texturevariant_s;
 
 /// Material (Usage) Context identifiers.
 typedef enum {
@@ -62,7 +63,7 @@ enum {
 
 typedef struct material_textureunit_s {
     struct material_textureunit_texture {
-        const struct texture_s* texture;
+        texture_t* texture;
         const struct texturevariantspecification_s* spec;
         DGLuint glName;
         float s, t;
@@ -109,7 +110,7 @@ typedef struct materialsnapshot_s {
 
 typedef struct materialvariant_layer_s {
     int stage; // -1 => layer not in use.
-    textureid_t tex;
+    textureid_t texId;
     float texOrigin[2]; /// Origin of the texture in material-space.
     float glow;
     short tics;

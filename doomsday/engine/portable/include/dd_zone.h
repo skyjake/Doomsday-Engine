@@ -34,15 +34,8 @@
  */
 //#define FAKE_MEMORY_ZONE 1
 
-#define PU_REFRESHFLAT      10 // Flats
-#define PU_REFRESHTEX       11 // Textures
-//#define PU_REFRESHCM        12 // Colormap.
 #define PU_REFRESHTRANS     13
-//#define PU_REFRESHSPR       14
-#define PU_PATCH            15
-//#define PU_MODEL            16
 #define PU_REFRESHRAW       17
-#define PU_SPRITE           20
 
 int             Z_Init(void);
 void            Z_Shutdown(void);

@@ -20,7 +20,7 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialForTextureIndex  @234 NONAME
+    DD_MaterialForOriginalTextureIndex  @234 NONAME
     DD_ParseTextureNamespace    @502 NONAME
     DD_ParseMaterialNamespace   @503 NONAME
 
@@ -392,22 +392,30 @@ EXPORTS
 ; Refresh.
     DD_IsSharpTick              @589 NONAME
     DD_GetFrameRate             @88 NONAME
+
     R_SetupMap                  @89 NONAME
+
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheSkinsForState     @240 NONAME
     R_PrecachePatch             @335 NONAME
+
     R_RenderPlayerView          @90 NONAME
     R_ViewWindowDimensions      @91 NONAME
     R_SetViewWindowDimensions   @92 NONAME
     R_ViewportDimensions        @430 NONAME
     R_SetViewPortPlayer         @65 NONAME
+
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
-    R_GetPatchName              @247 NONAME
+    R_ComposePatchUri           @247 NONAME
+    R_OriginalIndexForTexture   @438 NONAME
+    R_OriginalIndexForTexture2  @501 NONAME
+
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME
+
     R_CreateColorPalette        @444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
     R_GetColorPaletteNameForNum @445 NONAME
@@ -514,10 +522,6 @@ EXPORTS
     GL_ConfigureBorderedProjection2 @508 NONAME
     GL_BeginBorderedProjection  @509 NONAME
     GL_EndBorderedProjection    @510 NONAME
-
-; Graphics: Textures
-    Textures_TypeIndexForUri    @438 NONAME
-    Textures_TypeIndexForUri2   @501 NONAME
 
 ; Graphics: Text
     FR_Font                     @106 NONAME

@@ -39,30 +39,29 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_New(textureid_t id, PathDirectoryNode* directoryNode, int index)
+texture_t* Texture_New(PathDirectoryNode* directoryNode, int flags, void* userData)
 {
-    assert(directoryNode);
-    {
     texture_t* tex;
-    if(NULL == (tex = (texture_t*) malloc(sizeof(*tex))))
-        Con_Error("Texture::Construct: Failed on allocation of %lu bytes for "
-            "new Texture.", (unsigned long) sizeof(*tex));
+    assert(directoryNode);
 
-    tex->_id = id;
+    tex = (texture_t*)malloc(sizeof *tex);
+    if(!tex)
+        Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
+
+    tex->_flags = flags;
     tex->_width = tex->_height = 0;
     tex->_variants = NULL;
-    tex->_index = index;
     tex->_directoryNode = directoryNode;
+    tex->_userData = userData;
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
 
     return tex;
-    }
 }
 
-texture_t* Texture_NewWithDimensions(textureid_t id, PathDirectoryNode* directoryNode,
-    int index, int width, int height)
+texture_t* Texture_NewWithDimensions(PathDirectoryNode* directoryNode, int flags,
+    int width, int height, void* userData)
 {
-    texture_t* tex = Texture_New(id, directoryNode, index);
+    texture_t* tex = Texture_New(directoryNode, flags, userData);
     Texture_SetDimensions(tex, width, height);
     return tex;
 }
@@ -78,11 +77,11 @@ static void destroyVariants(texture_t* tex)
         DGLuint glName = TextureVariant_GLName(variant);
         if(glName)
         {
-            Uri* uri = Texture_ComposeUri(tex);
+            Uri* uri = Textures_ComposeUri(tex);
             ddstring_t* path = Uri_ToString(uri);
             Con_Printf("Warning:Texture::Destruct: GLName (%i) still set for "
                 "a variant of \"%s\" (id:%i). Perhaps it wasn't released?\n",
-                (unsigned int) glName, Str_Text(path), (int) Texture_Id(tex));
+                (unsigned int) glName, Str_Text(path), (int) Textures_Id(tex));
             GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
             Str_Delete(path);
             Uri_Delete(uri);
@@ -96,11 +95,11 @@ static void destroyVariants(texture_t* tex)
 
 static void destroyAnalyses(texture_t* tex)
 {
+    int i;
     assert(tex);
-    { int i;
     for(i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
-        if(tex->_analyses[i])
-            free(tex->_analyses[i]);
+    {
+        if(tex->_analyses[i]) free(tex->_analyses[i]);
     }
 }
 
@@ -112,6 +111,33 @@ void Texture_Delete(texture_t* tex)
     free(tex);
 }
 
+void Texture_AttachUserData(texture_t* tex, void* userData)
+{
+    assert(tex);
+#if _DEBUG
+    if(tex->_userData)
+    {
+        Con_Message("Warning:Texture::AttachUserData: User data is already present for [%p id:%i], it will be replaced.\n", (void*)tex, Textures_Id(tex));
+    }
+#endif
+    tex->_userData = userData;
+}
+
+void* Texture_DetachUserData(texture_t* tex)
+{
+    void* data;
+    assert(tex);
+    data = tex->_userData;
+    tex->_userData = NULL;
+    return data;
+}
+
+void* Texture_UserData(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_userData;
+}
+
 void Texture_ClearVariants(texture_t* tex)
 {
     assert(tex);
@@ -120,9 +146,8 @@ void Texture_ClearVariants(texture_t* tex)
 
 texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
 {
-    assert(tex);
-    {
     texture_variantlist_node_t* node;
+    assert(tex);
 
     if(!variant)
     {
@@ -140,46 +165,30 @@ texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
     node->next = tex->_variants;
     tex->_variants = node;
     return variant;
-    }
 }
 
-textureid_t Texture_Id(const texture_t* tex)
+boolean Texture_IsCustom(const texture_t* tex)
 {
     assert(tex);
-    return tex->_id;
+    return (tex->_flags & TXF_CUSTOM) != 0;
 }
 
-boolean Texture_IsFromIWAD(const texture_t* tex)
+boolean Texture_IsNull(const texture_t* tex)
 {
-    texturenamespaceid_t texNamespace = Textures_NamespaceId(tex);
-    switch(texNamespace)
-    {
-    case TN_FLATS:
-        return !R_FlatTextureByIndex(tex->_index)->isCustom;
+    assert(tex);
+    return (Texture_Width(tex) == 0 && Texture_Height(tex) == 0);
+}
 
-    case TN_TEXTURES:
-        return (R_PatchCompositeTextureByIndex(tex->_index)->flags & TXDF_IWAD) != 0;
+int Texture_Flags(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_flags;
+}
 
-    case TN_SPRITES:
-        return !R_SpriteTextureByIndex(tex->_index)->isCustom;
-
-    case TN_PATCHES:
-        return !R_PatchTextureByIndex(tex->_index)->isCustom;
-
-    case TN_DETAILS:
-    case TN_REFLECTIONS:
-    case TN_MASKS:
-    case TN_SYSTEM:
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS:
-    case TN_LIGHTMAPS:
-    case TN_FLAREMAPS:
-        return false; // Its definitely not.
-
-    default:
-        Con_Error("Texture::IsFromIWAD: Internal Error, invalid type %i.", (int) texNamespace);
-        exit(1); // Unreachable.
-    }
+void Texture_SetFlags(texture_t* tex, int flags)
+{
+    assert(tex);
+    tex->_flags = flags;
 }
 
 int Texture_Width(const texture_t* tex)
@@ -219,52 +228,30 @@ void Texture_SetDimensions(texture_t* tex, int width, int height)
     tex->_height = height;
 }
 
-int Texture_TypeIndex(const texture_t* tex)
-{
-    assert(tex);
-    return tex->_index;
-}
-
 PathDirectoryNode* Texture_DirectoryNode(const texture_t* tex)
 {
     assert(tex);
     return tex->_directoryNode;
 }
 
-ddstring_t* Texture_ComposePath(const texture_t* tex)
-{
-    PathDirectoryNode* node = tex->_directoryNode;
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, TEXTUREDIRECTORY_DELIMITER);
-}
-
-Uri* Texture_ComposeUri(const texture_t* tex)
-{
-    ddstring_t* path = Texture_ComposePath(tex);
-    Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(DD_TextureNamespaceNameForId(Textures_NamespaceId(tex))));
-    Str_Delete(path);
-    return uri;
-}
-
 int Texture_IterateVariants(texture_t* tex,
     int (*callback)(texturevariant_t* variant, void* paramaters), void* paramaters)
 {
-    assert(tex);
-    {
     int result = 0;
+    assert(tex);
+
     if(callback)
     {
         texture_variantlist_node_t* node = tex->_variants;
         while(node)
         {
             texture_variantlist_node_t* next = node->next;
-            if(0 != (result = callback(node->variant, paramaters)))
-                break;
+            result = callback(node->variant, paramaters);
+            if(result) break;
             node = next;
         }
     }
     return result;
-    }
 }
 
 void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis)
@@ -279,7 +266,7 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
     if(tex->_analyses[analysis])
     {
-        Uri* uri = Texture_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(tex);
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning, image analysis #%i already present for \"%s\", will replace.\n",
             (int) analysis, Str_Text(path));
@@ -291,10 +278,10 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
 
 void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis)
 {
+    void* data;
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
-    {
-    void* data = tex->_analyses[analysis];
+
+    data = tex->_analyses[analysis];
     tex->_analyses[analysis] = NULL;
     return data;
-    }
 }

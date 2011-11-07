@@ -128,7 +128,7 @@ void R_Register(void)
 
     C_CMD("viewgrid", "ii", ViewGrid);
 
-    P_MaterialsRegister();
+    Materials_Register();
 }
 
 const char* R_ChooseFixedFont(void)
@@ -541,6 +541,8 @@ void R_Update(void)
  */
 void R_Shutdown(void)
 {
+    R_DestroyTextureLUTs();
+    R_ShutdownSprites();
     R_ShutdownModels();
     R_ShutdownVectorGraphics();
     R_ShutdownViewWindow();
@@ -1064,7 +1066,9 @@ void R_RenderPlayerView(int num)
     // Setup for rendering the frame.
     R_SetupFrame(player);
     if(!freezeRLs)
-        R_ClearSprites();
+    {
+        R_ClearVisSprites();
+    }
 
     R_ProjectPlayerSprites(); // Only if 3D models exists for them.
 

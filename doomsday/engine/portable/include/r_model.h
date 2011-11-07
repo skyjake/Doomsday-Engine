@@ -74,7 +74,7 @@ typedef struct {
     char            skinRange;
     float           offset[3];
     byte            alpha;
-    uint            shinySkin; // Skinname ID (index)
+    struct texture_s* shinySkin;
     blendmode_t     blendMode;
 } submodeldef_t;
 

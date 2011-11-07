@@ -131,7 +131,7 @@ void ResourceRecord_AddName(resourcerecord_t* rec, const ddstring_t* name)
     // Add the new name.
     rec->_names = (ddstring_t**)realloc(rec->_names, sizeof *rec->_names * ++rec->_namesCount);
     if(!rec->_names)
-        Con_Error("ResourceRecord::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *rec->_names * (rec->_namesCount-1));
+        Con_Error("ResourceRecord::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *rec->_names * rec->_namesCount);
 
     rec->_names[rec->_namesCount-1] = Str_New();
     Str_Copy(rec->_names[rec->_namesCount-1], name);

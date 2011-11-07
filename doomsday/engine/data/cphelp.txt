@@ -362,6 +362,10 @@ desc = Add 1 to a cvar.
 desc = Print extended information about a Material to the console.
 inf = Params: inspectmaterial (uri)\nFor example, 'inspectmaterial flats:fwater1'.
 
+[inspecttexture]
+desc = Print extended information about a Texture to the console.
+inf = Params: inspecttexture (uri)\nFor example, 'inspecttexture flats:fwater1'.
+
 [keymap]
 desc = Load a DKM keymap file.
 inf = Params: keymap (dkm-file)\nFor example, 'keymap finnish'.

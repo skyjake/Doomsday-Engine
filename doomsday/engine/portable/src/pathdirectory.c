@@ -406,6 +406,7 @@ static int iteratePathsInHash(pathdirectory_pathhash_t* ph, int flags, PathDirec
                 }
                 node = next;
             }
+            if(result) break;
         }
     }
     return result;
@@ -468,6 +469,7 @@ static int iteratePathsInHash_Const(const pathdirectory_pathhash_t* ph, int flag
                 }
                 node = next;
             }
+            if(result) break;
         }
     }
     return result;

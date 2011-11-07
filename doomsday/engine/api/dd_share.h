@@ -1028,14 +1028,14 @@ typedef enum {
     MN_FLATS,
     MN_TEXTURES,
     MN_SPRITES,
-    MATERIALNAMESPACE_LAST = MN_SPRITES
+    MATERIALNAMESPACE_LAST = MN_SPRITES,
+    MN_INVALID /// Special value used to signify an invalid namespace identifier.
 } materialnamespaceid_t;
 
-#define MATERIALNAMESPACE_COUNT (\
-    MATERIALNAMESPACE_LAST + 1 - MATERIALNAMESPACE_FIRST )
+#define MATERIALNAMESPACE_COUNT  (MATERIALNAMESPACE_LAST + 1 - MATERIALNAMESPACE_FIRST)
 
-#define VALID_MATERIALNAMESPACEID(id) (\
-    (id) >= MATERIALNAMESPACE_FIRST && (id) <= MATERIALNAMESPACE_LAST)
+/// @c true= val can be interpreted as a valid material namespace identifier.
+#define VALID_MATERIALNAMESPACEID(val) ((val) >= MATERIALNAMESPACE_FIRST && (val) <= MATERIALNAMESPACE_LAST)
 
 /**
  * Texture Namespaces
@@ -1074,14 +1074,14 @@ typedef enum {
     TN_MODELREFLECTIONSKINS,
     TN_LIGHTMAPS,
     TN_FLAREMAPS,
-    TEXTURENAMESPACE_LAST = TN_FLAREMAPS
+    TEXTURENAMESPACE_LAST = TN_FLAREMAPS,
+    TN_INVALID /// Special value used to signify an invalid namespace identifier.
 } texturenamespaceid_t;
 
-#define TEXTURENAMESPACE_COUNT (\
-    TEXTURENAMESPACE_LAST + 1 - TEXTURENAMESPACE_FIRST )
+#define TEXTURENAMESPACE_COUNT  (TEXTURENAMESPACE_LAST - TEXTURENAMESPACE_FIRST + 1)
 
-#define VALID_TEXTURENAMESPACEID(id) (\
-    (id) >= TEXTURENAMESPACE_FIRST && (id) <= TEXTURENAMESPACE_LAST)
+/// @c true= val can be interpreted as a valid texture namespace identifier.
+#define VALID_TEXTURENAMESPACEID(val) ((val) >= TEXTURENAMESPACE_FIRST && (val) <= TEXTURENAMESPACE_LAST)
 
 /**
  * Font Namespaces
@@ -1110,7 +1110,7 @@ typedef enum {
 /// Patch Info
 typedef struct {
     patchid_t id;
-    boolean isCustom; // @c true if the patch does not originate from an IWAD.
+    boolean isCustom; // @c true if the patch does not originate from the current game.
     short offset;
     short topOffset;
     short width;

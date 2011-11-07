@@ -676,14 +676,14 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        const skinname_t* sn;
-        if(NULL != (sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
+        texture_t* tex = mf->sub[number].shinySkin;
+        if(tex)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
                     false, false, false, false);
-            shinyTexture = GL_PrepareTexture(Textures_ToTexture(sn->id), texSpec);
+            shinyTexture = GL_PrepareTexture(tex, texSpec);
         }
         else
         {
@@ -771,20 +771,20 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        const skinname_t* sn;
+        texture_t* tex;
 
+        skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;
 
-        skinTexture = 0;
-
-        if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
+        tex = mdl->skins[useSkin].texture;
+        if(tex)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                     (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
                     GL_REPEAT, 1, -2, -1, true, true, false, false);
-            skinTexture = GL_PrepareTexture(Textures_ToTexture(sn->id), texSpec);
+            skinTexture = GL_PrepareTexture(tex, texSpec);
         }
     }
 

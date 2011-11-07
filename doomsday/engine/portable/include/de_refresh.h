@@ -30,7 +30,7 @@
 #define LIBDENG_REFRESH
 
 #include "p_materialmanager.h"
-
+#include "textures.h"
 #include "r_data.h"
 #include "r_draw.h"
 #include "r_fakeradio.h"

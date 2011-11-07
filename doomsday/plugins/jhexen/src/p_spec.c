@@ -69,8 +69,8 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
 
 mobj_t lavaInflictor;
 
-materialnum_t sky1Material;
-materialnum_t sky2Material;
+materialid_t sky1Material;
+materialid_t sky2Material;
 float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;

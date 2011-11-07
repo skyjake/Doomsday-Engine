@@ -260,7 +260,10 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
             // (Re)populate the directory and insert found paths into the resource namespace.
             // \todo It should not be necessary for a unique directory per namespace.
             FileDirectory_AddPathList3(rnInfo->directory, Str_Text(searchPaths), addFileResourceWorker, (void*)rnInfo);
-            FileDirectory_Print(rnInfo->directory);
+
+/*#if _DEBUG
+            VERBOSE2( FileDirectory_Print(rnInfo->directory) )
+#endif*/
         }
         Str_Delete(searchPaths);
     }
@@ -370,8 +373,8 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSea
 
     if(0 != F_Access(Str_Text(&searchPath)))
     {
-        Str_Free(&searchPath);
         if(foundPath) F_PrependBasePath(foundPath, &searchPath);
+        Str_Free(&searchPath);
         return true;
     }
     Str_Free(&searchPath);
@@ -381,10 +384,9 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSea
 static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
 {
-    assert(inited && searchPath && !Str_IsEmpty(searchPath));
-    {
     boolean found = false;
     const char* ptr;
+    assert(inited && searchPath && !Str_IsEmpty(searchPath));
 
     // Has an extension been specified?
     ptr = F_FindFileExtension(Str_Text(searchPath));
@@ -432,15 +434,13 @@ static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchP
     }
 
     return found;
-    }
 }
 
 static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPath,
     const ddstring_t* optionalSuffix, ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
 {
-    assert(inited && searchPath && !Str_IsEmpty(searchPath));
-    {
     boolean found = false;
+    assert(inited && searchPath && !Str_IsEmpty(searchPath));
 
 #if _DEBUG
     VERBOSE2( Con_Message("Using rnamespace '%s'...\n", rnamespaceInfo? Str_Text(&rnamespaceInfo->name) : "None") )
@@ -449,23 +449,24 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
     // First try with the optional suffix.
     if(optionalSuffix)
     {
+        const char* ptr;
         ddstring_t fn;
-
         Str_Init(&fn);
 
         // Has an extension been specified?
-        { const char* ptr = F_FindFileExtension(Str_Text(searchPath));
+        ptr = F_FindFileExtension(Str_Text(searchPath));
         if(ptr && *ptr != '*')
         {
             char ext[10];
             strncpy(ext, ptr, 10);
+
             Str_PartAppend(&fn, Str_Text(searchPath), 0, ptr - 1 - Str_Text(searchPath));
             Str_Appendf(&fn, "%s%s", Str_Text(optionalSuffix), ext);
         }
         else
         {
             Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
-        }}
+        }
 
         found = tryFindResource(rclass, &fn, foundPath, rnamespaceInfo);
         Str_Free(&fn);
@@ -476,24 +477,23 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
         found = tryFindResource(rclass, searchPath, foundPath, rnamespaceInfo);
 
     return found;
-    }
 }
 
 static int findResource(resourceclass_t rclass, const Uri* const* list,
     const ddstring_t* optionalSuffix, ddstring_t* foundPath)
 {
-    assert(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
-    {
     uint result = 0, n = 1;
     const Uri* const* ptr;
+    assert(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
 
     for(ptr = list; *ptr; ptr++, n++)
     {
         const Uri* searchPath = *ptr;
         ddstring_t* resolvedPath;
 
-        if((resolvedPath = Uri_Resolved(searchPath)) == 0)
-            continue; // Incomplete path; ignore it.
+        resolvedPath = Uri_Resolved(searchPath);
+        // Ignore incomplete paths.
+        if(!resolvedPath || Str_IsEmpty(resolvedPath)) continue;
 
         // If this is an absolute path, locate using it.
         if(F_IsAbsolute(resolvedPath))
@@ -528,7 +528,6 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
             break;
     }
     return result;
-    }
 }
 
 ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath)
@@ -540,11 +539,11 @@ ddstring_t* F_ComposeHashNameForFilePath(const ddstring_t* filePath)
 
 resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const ddstring_t* name)
 {
-    assert(name);
-    {
     resourcenamespace_namehash_key_t key = 0;
     byte op = 0;
     const char* c;
+    assert(name);
+
     for(c = Str_Text(name); *c; c++)
     {
         switch(op)
@@ -555,7 +554,6 @@ resourcenamespace_namehash_key_t F_HashKeyForAlphaNumericNameIgnoreCase(const dd
         }
     }
     return key % RESOURCENAMESPACE_HASHSIZE;
-    }
 }
 
 static void createPackagesResourceNamespace(void)

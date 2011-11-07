@@ -137,7 +137,7 @@ byte Material_Prepared(const material_t* mat);
 /**
  * Change the prepared status of this material.
  * @param state  @c 0: Not yet prepared.
- *               @c 1: Prepared from IWAD-original textures.
+ *               @c 1: Prepared from original game textures.
  *               @c 2: Prepared from custom or replacement textures.
  */
 void Material_SetPrepared(material_t* mat, byte state);

@@ -198,15 +198,15 @@ typedef struct collectaffectinglights_params_s {
 } collectaffectinglights_params_t;
 
 extern spritedef_t* sprites;
-extern int      numSprites;
-extern float    pspOffset[2], pspLightLevelMultiplier;
-extern int      alwaysAlign;
-extern float    weaponOffsetScale, weaponFOVShift;
-extern int      weaponOffsetScaleY;
-extern byte     weaponScaleMode; // cvar
-extern float    modelSpinSpeed;
-extern int      maxModelDistance, noSpriteZWrite;
-extern int      useSRVO, useSRVOAngle;
+extern int numSprites;
+extern float pspOffset[2], pspLightLevelMultiplier;
+extern int alwaysAlign;
+extern float weaponOffsetScale, weaponFOVShift;
+extern int weaponOffsetScaleY;
+extern byte weaponScaleMode; // cvar
+extern float modelSpinSpeed;
+extern int maxModelDistance, noSpriteZWrite;
+extern int useSRVO, useSRVOAngle;
 extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 extern vissprite_t visSprSortedHead;
 extern vispsprite_t visPSprites[DDMAXPSPRITES];
@@ -237,18 +237,18 @@ float           R_MovementYaw(float momx, float momy);
 float           R_MovementPitch(float momx, float momy, float momz);
 void            R_ProjectSprite(struct mobj_s* mobj);
 void            R_ProjectPlayerSprites(void);
-void            R_SortVisSprites(void);
-vissprite_t*    R_NewVisSprite(void);
-void            R_AddSprites(subsector_t* ssec);
-void            R_AddPSprites(void);
-void            R_DrawSprites(void);
 
-void            R_InitSprites(void);
+void R_SortVisSprites(void);
+vissprite_t* R_NewVisSprite(void);
+void R_AddSprites(subsector_t* ssec);
 
-void            R_ClearSprites(void);
-void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
+/// To be called at the start of the current render frame to clear the vissprite list.
+void R_ClearVisSprites(void);
 
-uint            R_CollectAffectingLights(const collectaffectinglights_params_t* params);
+void R_InitSprites(void);
+void R_ShutdownSprites(void);
+
+uint R_CollectAffectingLights(const collectaffectinglights_params_t* params);
 
 /**
  * Initialize the vlight system in preparation for rendering view(s) of the

@@ -32,15 +32,14 @@
 materialvariant_t* MaterialVariant_New(material_t* generalCase,
     const materialvariantspecification_t* spec)
 {
-    assert(generalCase && spec);
-    {
-    materialvariant_t* mat = (materialvariant_t*) malloc(sizeof(*mat));
+    materialvariant_t* mat;
     ded_material_t* def = Material_Definition(generalCase);
-    int layerCount = Material_LayerCount(generalCase);
+    int i, layerCount = Material_LayerCount(generalCase);
+    assert(generalCase && spec);
 
-    if(NULL == mat)
-        Con_Error("MaterialVariant::Construct: Failed on allocation of %lu bytes for "
-            "new MaterialVariant.", (unsigned long) sizeof(*mat));
+    mat = (materialvariant_t*) malloc(sizeof *mat);
+    if(!mat)
+        Con_Error("MaterialVariant::Construct: Failed on allocation of %lu bytes for new MaterialVariant.", (unsigned long) sizeof *mat);
 
     mat->_generalCase = generalCase;
     mat->_spec = spec;
@@ -49,18 +48,16 @@ materialvariant_t* MaterialVariant_New(material_t* generalCase,
     mat->_snapshot = NULL;
 
     // Initialize layers.
-    { int i;
     for(i = 0; i < layerCount; ++i)
     {
         mat->_layers[i].stage = 0;
         mat->_layers[i].tics = def->layers[i].stages[0].tics;
         mat->_layers[i].glow = def->layers[i].stages[0].glow;
-        mat->_layers[i].tex  = Texture_Id(Textures_TextureForUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
+        mat->_layers[i].texId  = Textures_Id(Textures_TextureForUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
         mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
         mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
-    }}
-    return mat;
     }
+    return mat;
 }
 
 void MaterialVariant_Delete(materialvariant_t* mat)
@@ -73,12 +70,12 @@ void MaterialVariant_Delete(materialvariant_t* mat)
 
 void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
 {
-    assert(mat);
-    {
-    const ded_material_t* def = Material_Definition(mat->_generalCase);
+    const ded_material_t* def;
     int i, layerCount;
+    assert(mat);
 
-    if(NULL == def)
+    def = Material_Definition(mat->_generalCase);
+    if(!def)
     {
         // Material is no longer valid. We can't yet purge them because
         // we lack a reference counting mechanism (the game may be holding
@@ -95,8 +92,7 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
         materialvariant_layer_t* layer = &mat->_layers[i];
         float inter;
 
-        if(!(lDef->stageCount.num > 1))
-            continue;
+        if(!(lDef->stageCount.num > 1)) continue;
 
         if(layer->tics-- <= 0)
         {
@@ -149,21 +145,19 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
         layer->texOrigin[0] = lsDefNext->texOrigin[0] * inter + lsDef->texOrigin[0] * (1 - inter);
         layer->texOrigin[1] = lsDefNext->texOrigin[1] * inter + lsDef->texOrigin[1] * (1 - inter);
     }
-    }
 }
 
 void MaterialVariant_ResetAnim(materialvariant_t* mat)
 {
+    int i, layerCount;
     assert(mat);
-    {
-    int i, layerCount = Material_LayerCount(mat->_generalCase);
+
+    layerCount = Material_LayerCount(mat->_generalCase);
     for(i = 0; i < layerCount; ++i)
     {
         materialvariant_layer_t* ml = &mat->_layers[i];
-        if(ml->stage == -1)
-            break;
+        if(ml->stage == -1) break;
         ml->stage = 0;
-    }
     }
 }
 
@@ -193,8 +187,7 @@ materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, mater
     if(mat->_snapshot)
     {
 #if _DEBUG
-        Con_Message("Warning:MaterialVariant::AttachSnapshot: A snapshot is already attached to %p, "
-                    "it will be replaced.\n", (void*) mat);
+        Con_Message("Warning:MaterialVariant::AttachSnapshot: A snapshot is already attached to %p, it will be replaced.\n", (void*) mat);
 #endif
         free(mat->_snapshot);
     }
@@ -204,12 +197,11 @@ materialsnapshot_t* MaterialVariant_AttachSnapshot(materialvariant_t* mat, mater
 
 materialsnapshot_t* MaterialVariant_DetachSnapshot(materialvariant_t* mat)
 {
+    materialsnapshot_t* ms;
     assert(mat);
-    {
-    materialsnapshot_t* ms = mat->_snapshot;
+    ms = mat->_snapshot;
     mat->_snapshot = NULL;
     return ms;
-    }
 }
 
 materialsnapshot_t* MaterialVariant_Snapshot(const materialvariant_t* mat)
@@ -252,7 +244,6 @@ void MaterialVariant_SetTranslation(materialvariant_t* mat,
     materialvariant_t* current, materialvariant_t* next)
 {
     assert(mat);
-
     if(next && current)
     {
         mat->_current = current;

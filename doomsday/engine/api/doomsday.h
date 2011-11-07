@@ -143,7 +143,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
-struct material_s* DD_MaterialForTextureIndex(uint index, texturenamespaceid_t texNamespace);
+struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -256,10 +256,10 @@ boolean MPE_End(void);
 
     uint            MPE_VertexCreate(float x, float y);
     boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
-    uint            MPE_SidedefCreate(uint sector, short flags, materialnum_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialnum_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialnum_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    uint            MPE_SidedefCreate(uint sector, short flags, materialid_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialid_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialid_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
     uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-    uint            MPE_PlaneCreate(uint sector, float height, materialnum_t num, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
+    uint            MPE_PlaneCreate(uint sector, float height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
 
@@ -383,33 +383,34 @@ fontnum_t Fonts_IndexForUri(const Uri* uri);
 //
 //------------------------------------------------------------------------
 
-    boolean         DD_IsSharpTick(void);
-    int             DD_GetFrameRate(void);
+boolean DD_IsSharpTick(void);
+int DD_GetFrameRate(void);
 
-    void            R_SetupMap(int mode, int flags);
-    void            R_PrecacheMobjNum(int mobjtypeNum);
-    patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
-    void            R_PrecacheSkinsForState(int stateIndex);
+void R_SetupMap(int mode, int flags);
 
-    void            R_RenderPlayerView(int num);
+void R_PrecacheMobjNum(int mobjtypeNum);
+patchid_t R_PrecachePatch(const char* name, patchinfo_t* info);
+void R_PrecacheSkinsForState(int stateIndex);
+
+void R_RenderPlayerView(int num);
 
 int R_ViewWindowDimensions(int player, int* x, int* y, int* w, int* h);
 void R_SetViewWindowDimensions(int player, int x, int y, int w, int h, boolean interpolate);
 
 int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h);
+void R_SetBorderGfx(const Uri* const* paths);
+void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
-    void            R_SetBorderGfx(const Uri* const* paths);
-    boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
-const ddstring_t* R_GetPatchName(patchid_t id);
-    void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
-    void            R_HSVToRGB(float* rgb, float h, float s, float v);
-    angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
-    struct subsector_s* R_PointInSubsector(float x, float y);
+Uri* R_ComposePatchUri(patchid_t id);
+
+int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet);
+int R_OriginalIndexForTexture(const Uri* uri); /*quiet=false*/
 
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
@@ -417,6 +418,11 @@ const char* R_GetColorPaletteNameForNum(colorpaletteid_t id);
 
 void R_GetColorPaletteRGBubv(colorpaletteid_t id, int colorIdx, uint8_t rgb[3], boolean applyTexGamma);
 void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], boolean applyTexGamma);
+
+void R_HSVToRGB(float* rgb, float h, float s, float v);
+
+angle_t R_PointToAngle2(float x1, float y1, float x2, float y2);
+struct subsector_s* R_PointInSubsector(float x, float y);
 
 //------------------------------------------------------------------------
 //
@@ -441,9 +447,6 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags, i
 void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
-
-uint Textures_TypeIndexForUri(const Uri* uri);
-uint Textures_TypeIndexForUri2(const Uri* uri, boolean silent);
 
 //------------------------------------------------------------------------
 //

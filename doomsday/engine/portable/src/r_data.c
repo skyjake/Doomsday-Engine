@@ -101,32 +101,6 @@ byte precacheSprites = true;
 
 byte* translationTables = NULL;
 
-uint patchTexturesCount = 0;
-patchtex_t** patchTextures = NULL;
-
-int sysTexturesCount = 0;
-systex_t** sysTextures = NULL;
-
-int lightmapTexturesCount = 0;
-lightmap_t** lightmapTextures = NULL;
-
-int flareTexturesCount = 0;
-flaretex_t** flareTextures = NULL;
-
-int shinyTexturesCount = 0;
-shinytex_t** shinyTextures = NULL;
-
-int maskTexturesCount = 0;
-masktex_t** maskTextures = NULL;
-
-// Skinnames will only *grow*. It will never be destroyed, not even
-// at resets. The skin textures themselves will be deleted, though.
-// This is because we want to have permanent ID numbers for skins,
-// and the ID numbers are the same as indices to the skinNames array.
-// Created in r_model.c, when registering the skins.
-uint numSkinNames = 0;
-skinname_t* skinNames = NULL;
-
 int gameDataFormat; // Use a game-specifc data format where applicable.
 byte rendInfoRPolys = 0;
 
@@ -134,17 +108,21 @@ colorpaletteid_t defaultColorPalette = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int spriteTexturesCount = 0;
-static spritetex_t** spriteTextures = NULL;
+// LUT which translates flat "original indices" to their associated Texture* (if any).
+// Index with origIndex - flatOrigIndexBase
+static int flatOrigIndexBase = 0;
+static uint flatOrigIndexMapSize = 0;
+static texture_t** flatOrigIndexMap = NULL;
 
-static int flatTexturesCount = 0;
-static flat_t** flatTextures = NULL;
+// LUT which translates patchcomposite "original indices" to their associated Texture* (if any).
+// Index with origIndex - patchCompositeOrigIndexBase
+static int patchCompositeOrigIndexBase = 0;
+static uint patchCompositeOrigIndexMapSize = 0;
+static texture_t** patchCompositeOrigIndexMap = NULL;
 
-static int patchCompositeTexturesCount;
-static patchcompositetex_t** patchCompositeTextures;
-
-static int detailTexturesCount = 0;
-static detailtex_t** detailTextures = NULL;
+// LUT which translates patchid_t to patchtex_t*. Index with patchid_t-1
+static uint patchTextureIdMapSize = 0;
+static patchtex_t** patchTextureIdMap = NULL;
 
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
@@ -992,6 +970,90 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 #undef COPYVCOLOR
 }
 
+int R_GetTextureOriginalIndex(texture_t* tex)
+{
+    assert(tex);
+    switch(Textures_Namespace(tex))
+    {
+    case TN_FLATS: {
+        flat_t* flat = (flat_t*)Texture_UserData(tex);
+        assert(flat);
+        return flat->origIndex;
+      }
+    case TN_TEXTURES: {
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
+        assert(pcTex);
+        return pcTex->origIndex;
+      }
+    default:
+        Con_Error("R_GetTextureOriginalIndex: Textures in namespace '%s' do not have an 'original index'.", Str_Text(Textures_NamespaceName(Textures_Namespace(tex))));
+        exit(1); // Unreachable.
+    }
+}
+
+texture_t* R_TextureForOriginalIndex(int index, texturenamespaceid_t texNamespace)
+{
+    if(VALID_TEXTURENAMESPACEID(texNamespace))
+    {
+        switch(texNamespace)
+        {
+        case TN_FLATS:
+            if(index >= flatOrigIndexBase && (unsigned)(index - flatOrigIndexBase) <= flatOrigIndexMapSize)
+            {
+                return flatOrigIndexMap[index - flatOrigIndexBase];
+            }
+            break;
+        case TN_TEXTURES:
+            if(index >= patchCompositeOrigIndexBase &&
+               (unsigned)(index - patchCompositeOrigIndexBase) <= patchCompositeOrigIndexMapSize)
+            {
+                return patchCompositeOrigIndexMap[index - patchCompositeOrigIndexBase];
+            }
+            break;
+        default:
+            Con_Message("Warning, textures in namespace '%s' do not have an 'original index', returning null-object.\n", Str_Text(Textures_NamespaceName(texNamespace)));
+            break;
+        }
+    }
+    return NULL; // Not found.
+}
+
+/// \note Part of the Doomsday public API.
+int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet)
+{
+    texture_t* tex = Textures_TextureForUri2(uri, quiet);
+    if(tex)
+    {
+        switch(Textures_Namespace(tex))
+        {
+        case TN_FLATS:
+        case TN_TEXTURES:
+            return R_GetTextureOriginalIndex(tex);
+        default:
+            if(!quiet)
+            {
+                ddstring_t* path = Uri_ToString(uri);
+                Con_Message("Warning texture \"%s\" does not have an 'original index', returning 0.\n", Str_Text(path));
+                Str_Delete(path);
+            }
+            return -1;
+        }
+    }
+    if(!quiet)
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning, unknown texture: %s\n", Str_Text(path));
+        Str_Delete(path);
+    }
+    return -1;
+}
+
+/// \note Part of the Doomsday public API.
+int R_OriginalIndexForTexture(const Uri* uri)
+{
+    return R_OriginalIndexForTexture2(uri, false);
+}
+
 void R_InitSystemTextures(void)
 {
     static const struct texdef_s {
@@ -1007,71 +1069,83 @@ void R_InitSystemTextures(void)
     Uri* uri = Uri_New();
     uint i;
 
+    VERBOSE( Con_Message("Initializing System textures...\n") )
+
     Uri_SetScheme(uri, TN_SYSTEM_NAME);
     for(i = 0; defs[i].texPath; ++i)
     {
         texture_t* tex;
         systex_t* sysTex;
-    
-        sysTex = (systex_t*)malloc(sizeof *sysTex);
-        if(!sysTex)
-            Con_Error("R_InitSystemTextures: Failed on allocation of %lu bytes for Systex.", (unsigned long) sizeof *sysTex);
 
+        // Have we already encountered this name?
         Uri_SetPath(uri, defs[i].texPath);
-        tex = Textures_Create(uri, i);
+        tex = Textures_TextureForUri2(uri, true/*quiet please*/);
+        if(!tex)
+        {
+            // A new systex.
+            sysTex = (systex_t*)malloc(sizeof *sysTex);
+            if(!sysTex)
+                Con_Error("R_InitSystemTextures: Failed on allocation of %lu bytes for new SysTex.", (unsigned long) sizeof *sysTex);
+            sysTex->external = NULL;
 
-        sysTex->id = Texture_Id(tex);
-        sysTex->external = Uri_NewWithPath(defs[i].filePath);
+            tex = Textures_Create(uri, TXF_CUSTOM, (void*)sysTex);
+            if(!tex)
+            {
+                ddstring_t* path = Uri_ToString(uri);
+                Con_Message("Warning, failed creating Texture for new SysTex %s.\n", Str_Text(path));
+                Str_Delete(path);
+                free(sysTex);
+            }
+        }
+        else
+        {
+            sysTex = (systex_t*)Texture_UserData(tex);
 
-        // Add it to the list.
-        sysTextures = (systex_t**)realloc(sysTextures, sizeof *sysTextures * ++sysTexturesCount);
-        if(!sysTextures)
-            Con_Error("R_InitSystemTextures: Failed on (re)allocation of %lu bytes enlarging Systex list.", (unsigned long) sizeof *sysTextures * (sysTexturesCount-1));
-        sysTextures[sysTexturesCount-1] = sysTex;
+            /// \fixme Update any Materials (and thus Surfaces) which reference this.
+        }
+
+        // (Re)configure this SysTex.
+        if(!sysTex->external)
+            sysTex->external = Uri_New();
+        Uri_SetUri2(sysTex->external, defs[i].filePath);
     }
     Uri_Delete(uri);
-}
-
-void R_DestroySystemTextures(void)
-{
-    { int i;
-    for(i = 0; i < sysTexturesCount; ++i)
-    {
-        systex_t* rec = sysTextures[i];
-        Uri_Delete(rec->external);
-        free(rec);
-    }}
-
-    if(sysTextures)
-        free(sysTextures);
-    sysTextures = NULL;
-    sysTexturesCount = 0;
 }
 
 static patchtex_t* getPatchTex(patchid_t id)
 {
-    if(id != 0 && id <= patchTexturesCount)
-        return patchTextures[id-1];
-    return NULL;
+    if(id == 0 || id > patchTextureIdMapSize) return NULL;
+    return patchTextureIdMap[id-1];
 }
 
-static patchid_t findPatchTextureByName(const char* name)
+static patchid_t getPatchId(patchtex_t* ptex)
 {
-    assert(name && name[0]);
+    uint i;
+    assert(ptex);
+
+    for(i = 0; i < patchTextureIdMapSize; ++i)
     {
+        if(patchTextureIdMap[i] == ptex)
+            return i+1; // 1-based index.
+    }
+    Con_Error("getPatchId: Failed to locate id for ptex [%p].", (void*)ptex);
+    exit(1); // Unreachable.
+}
+
+static patchtex_t* findPatchTextureByName(const char* name)
+{
     texture_t* tex;
-    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri* uri;
+    assert(name && name[0]);
+
+    uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     tex = Textures_TextureForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
-    if(!tex) return 0;
-    return (patchid_t) Texture_TypeIndex(tex);
-    }
+    if(!tex) return NULL;
+    return (patchtex_t*)Texture_UserData(tex);
 }
 
-/**
- * Returns a patchtex_t* for the given lump, if one already exists.
- */
 patchtex_t* R_PatchTextureByIndex(patchid_t id)
 {
     patchtex_t* patchTex = getPatchTex(id);
@@ -1080,41 +1154,21 @@ patchtex_t* R_PatchTextureByIndex(patchid_t id)
     return patchTex;
 }
 
-void R_ClearPatchTexs(void)
-{
-    uint i;
-    for(i = 0; i < patchTexturesCount; ++i)
-    {
-        patchtex_t* patchTex = patchTextures[i];
-        Str_Free(&patchTex->name);
-    }
-    Z_FreeTags(PU_PATCH, PU_PATCH);
-    patchTextures = 0;
-    patchTexturesCount = 0;
-}
-
-/**
- * Get a patchtex_t data structure for a patch specified with a WAD lump
- * number. Allocates a new patchtex_t if it hasn't been loaded yet.
- */
 patchid_t R_RegisterPatch(const char* name)
 {
-    assert(name);
-    {
     const doompatch_header_t* patch;
     abstractfile_t* fsObject;
+    int lumpIdx, flags = 0;
     lumpnum_t lumpNum;
+    texture_t* tex;
     patchtex_t* p;
-    patchid_t id;
-    int lumpIdx;
+    Uri* uri;
 
-    if(!name[0])
-        return 0;
+    if(!name || !name[0]) return 0;
 
     // Already defined as a patch?
-    id = findPatchTextureByName(name);
-    if(0 != id)
-        return id;
+    p = findPatchTextureByName(name);
+    if(p) return getPatchId(p);
 
     lumpNum = F_CheckLumpNumForName2(name, true);
     if(lumpNum < 0)
@@ -1128,9 +1182,10 @@ patchid_t R_RegisterPatch(const char* name)
     patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
 
     // An entirely new patch.
-    p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
-    Str_Init(&p->name);
-    Str_Set(&p->name, name);
+    p = (patchtex_t*)malloc(sizeof *p);
+    if(!p)
+        Con_Error("R_RegisterPatch: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *p);
+
     p->lumpNum = lumpNum;
     /**
      * \fixme: Cannot be sure this is in Patch format until a load attempt
@@ -1138,29 +1193,37 @@ patchid_t R_RegisterPatch(const char* name)
      */
     p->offX = -SHORT(patch->leftOffset);
     p->offY = -SHORT(patch->topOffset);
-    p->isCustom = F_LumpIsCustom(lumpNum);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
+    p->flags = 0;
     if(monochrome)               p->flags |= PF_MONOCHROME;
     if(upscaleAndSharpenPatches) p->flags |= PF_UPSCALE_AND_SHARPEN;
 
     // Register a texture for this.
-    { texture_t* tex;
-    Uri* uri = Uri_NewWithPath2(Str_Text(&p->name), RC_NULL);
+    if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
+
+    uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
-    tex = Textures_CreateWithDimensions(uri, ++patchTexturesCount, SHORT(patch->width), SHORT(patch->height));
-    p->texId = Texture_Id(tex);
-    Uri_Delete(uri);
-    }
-
-    // Add it to the pointer array.
-    patchTextures = Z_Realloc(patchTextures, sizeof(patchtex_t*) * patchTexturesCount, PU_PATCH);
-    patchTextures[patchTexturesCount-1] = p;
-
+    tex = Textures_CreateWithDimensions(uri, flags, SHORT(patch->width), SHORT(patch->height), (void*)p);
     F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-    return patchTexturesCount;
+    Uri_Delete(uri);
+
+    if(!tex)
+    {
+        Con_Message("Warning, failed creating Texture for patch lump %s.\n", name);
+        free(p);
+        return 0;
     }
+    p->texId = Textures_Id(tex);
+
+    // Add it to the patch id map.
+    patchTextureIdMap = (patchtex_t**)realloc(patchTextureIdMap, sizeof *patchTextureIdMap * ++patchTextureIdMapSize);
+    if(!patchTextureIdMap)
+        Con_Error("R_RegisterPatch: Failed on (re)allocation of %lu bytes enlarging PatchTex id map.", (unsigned long) sizeof *patchTextureIdMap * patchTextureIdMapSize);
+    patchTextureIdMap[patchTextureIdMapSize-1] = p;
+
+    return patchTextureIdMapSize; // 1-based index.
 }
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
@@ -1171,16 +1234,17 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 
     memset(info, 0, sizeof(*info));
     patch = getPatchTex(id);
-    if(NULL != patch)
+    if(patch)
     {
         texture_t* tex = Textures_ToTexture(patch->texId);
-        assert(NULL != tex);
+        assert(tex);
+
         info->id = id;
         info->width = Texture_Width(tex);
         info->height = Texture_Height(tex);
+        info->isCustom = Texture_IsCustom(tex);
         info->offset = patch->offX;
         info->topOffset = patch->offY;
-        info->isCustom = patch->isCustom;
         /// \kludge:
         info->extraOffset[0] = info->extraOffset[1] = (patch->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
@@ -1192,16 +1256,14 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     return false;
 }
 
-const ddstring_t* R_GetPatchName(patchid_t id)
+/// \note Part of the Doomsday public API.
+Uri* R_ComposePatchUri(patchid_t id)
 {
     const patchtex_t* patch = getPatchTex(id);
-    if(NULL != patch)
-    {
-        return &patch->name;
-    }
+    if(patch && patch->texId) return Textures_ComposeUri(Textures_ToTexture(patch->texId));
     if(id != 0)
     {
-        VERBOSE( Con_Message("Warning:R_GetPatchName: Invalid Patch id #%u.\n", (uint)id) )
+        VERBOSE( Con_Message("Warning:R_ComposePatchUri: Invalid Patch id #%u.\n", (uint)id) )
     }
     return NULL;
 }
@@ -1211,16 +1273,18 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     patchid_t patchId;
 
     if(info)
+    {
         memset(info, 0, sizeof(patchinfo_t));
+    }
 
-    if(NULL == name || !name[0])
+    if(!name || !name[0])
     {
         Con_Message("Warning:R_PrecachePatch: Invalid 'name' argument, ignoring.\n");
         return 0;
     }
 
     patchId = R_RegisterPatch(name);
-    if(0 != patchId)
+    if(patchId)
     {
         GL_PreparePatch(getPatchTex(patchId));
         if(info)
@@ -1231,31 +1295,30 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     return patchId;
 }
 
-/**
- * Returns a NULL-terminated array of pointers to all the rawtexs.
- * The array must be freed with Z_Free.
- */
 rawtex_t** R_CollectRawTexs(int* count)
 {
-    int                 i, num;
-    rawtex_t*           r, **list;
+    rawtex_t* r, **list;
+    int i, num;
 
     // First count the number of patchtexs.
     for(num = 0, i = 0; i < RAWTEX_HASH_SIZE; ++i)
+    {
         for(r = rawtexhash[i].first; r; r = r->next)
             num++;
+    }
 
     // Tell this to the caller.
-    if(count)
-        *count = num;
+    if(count) *count = num;
 
     // Allocate the array, plus one for the terminator.
     list = Z_Malloc(sizeof(r) * (num + 1), PU_APPSTATIC, NULL);
 
     // Collect the pointers.
     for(num = 0, i = 0; i < RAWTEX_HASH_SIZE; ++i)
+    {
         for(r = rawtexhash[i].first; r; r = r->next)
             list[num++] = r;
+    }
 
     // Terminate.
     list[num] = NULL;
@@ -1263,9 +1326,6 @@ rawtex_t** R_CollectRawTexs(int* count)
     return list;
 }
 
-/**
- * Returns a rawtex_t* for the given lump, if one already exists.
- */
 rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
 {
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
@@ -1286,10 +1346,6 @@ rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
     return 0;
 }
 
-/**
- * Get a rawtex_t data structure for a raw texture specified with a WAD lump
- * number. Allocates a new rawtex_t if it hasn't been loaded yet.
- */
 rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
 {
     rawtexhash_t* hash = 0;
@@ -1341,22 +1397,6 @@ void R_UpdateRawTexs(void)
     R_InitRawTexs();
 }
 
-static void clearPatchComposites(void)
-{
-    int i;
-
-    if(patchCompositeTexturesCount == 0) return;
-
-    for(i = 0; i < patchCompositeTexturesCount; ++i)
-    {
-        patchcompositetex_t* pcomTex = patchCompositeTextures[i];
-        Str_Free(&pcomTex->name);
-    }
-    Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
-    patchCompositeTextures = NULL;
-    patchCompositeTexturesCount = 0;
-}
-
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     int lumpIdx;
@@ -1364,48 +1404,45 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     size_t lumpSize = F_LumpLength(lumpNum);
     const uint8_t* lump = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
     patchname_t* names, *name;
-    int numNames;
+    int i, numNames;
 
     if(lumpSize < 4)
     {
-        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) is not valid PNAMES data.\n",
-            F_LumpName(lumpNum), lumpNum);
-        if(NULL != num) *num = 0;
+        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) is not valid PNAMES data.\n", F_LumpName(lumpNum), lumpNum);
+        if(num) *num = 0;
         return NULL;
     }
 
     numNames = LONG(*((const int*) lump));
     if(numNames <= 0)
     {
-        if(NULL != num) *num = 0;
+        if(num) *num = 0;
         return NULL;
     }
 
     if((unsigned)numNames > (lumpSize - 4) / 8)
-    {   // Lump is truncated.
+    {
+        // Lump is truncated.
         Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) truncated (%lu bytes, expected %lu).\n",
             F_LumpName(lumpNum), lumpNum, (unsigned long) lumpSize, (unsigned long) (numNames * 8 + 4));
         numNames = (int) ((lumpSize - 4) / 8);
     }
 
-    names = (patchname_t*) calloc(1, numNames * sizeof(*names));
-    if(NULL == names)
-        Con_Error("loadPatchNames: Failed on allocation of %lu bytes for patch name list.",
-            (unsigned long) (numNames * sizeof(*names)));
+    names = (patchname_t*) calloc(1, sizeof *names * numNames);
+    if(!names)
+        Con_Error("loadPatchNames: Failed on allocation of %lu bytes for patch name list.", (unsigned long) sizeof *names * numNames);
 
     name = names;
-    { int i;
     for(i = 0; i < numNames; ++i)
     {
         /// \fixme Some filtering of invalid characters wouldn't go amiss...
         strncpy(*name, (const char*) (lump + 4 + i * 8), 8);
         name++;
-    }}
+    }
 
     F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
-    if(NULL != num)
-        *num = numNames;
+    if(num) *num = numNames;
 
     return names;
 }
@@ -1414,7 +1451,7 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
  * Read DOOM and Strife format texture definitions from the specified lump.
  */
 static patchcompositetex_t** readDoomTextureDefLump(lumpnum_t lumpNum,
-    patchname_t* patchNames, int numPatchNames, boolean firstNull, int* numDefs)
+    patchname_t* patchNames, int numPatchNames, int* origIndexBase, boolean firstNull, int* numDefs)
 {
 #pragma pack(1)
 typedef struct {
@@ -1466,25 +1503,22 @@ typedef struct {
     size_t lumpSize, offset, n, numValidPatchRefs;
     int numTexDefs, numValidTexDefs;
     abstractfile_t* fsObject;
+    int* directory, *maptex1;
     short* texDefNumPatches;
     patchinfo_t* patchInfo;
     byte* validTexDefs;
-    int* directory;
-    void* storage;
-    int* maptex1;
-    int lumpIdx;
-    int i;
+    int i, lumpIdx;
+    assert(patchNames && origIndexBase);
 
-    patchInfo = (patchinfo_t*)calloc(1, sizeof(*patchInfo) * numPatchNames);
-    if(NULL == patchInfo)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for patch info.",
-            (unsigned long) (sizeof(*patchInfo) * numPatchNames));
+    patchInfo = (patchinfo_t*)calloc(1, sizeof *patchInfo * numPatchNames);
+    if(!patchInfo)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for patch info.", (unsigned long) sizeof *patchInfo * numPatchNames);
 
     lumpSize = F_LumpLength(lumpNum);
     maptex1 = (int*) malloc(lumpSize);
-    if(NULL == maptex1)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of "
-            "archived DOOM texture definitions.", (unsigned long) lumpSize);
+    if(!maptex1)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for temporary copy of archived DOOM texture definitions.", (unsigned long) lumpSize);
+
     fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     F_ReadLumpSection(fsObject, lumpIdx, (uint8_t*)maptex1, 0, lumpSize);
 
@@ -1492,15 +1526,13 @@ typedef struct {
 
     VERBOSE( Con_Message("  Processing lump \"%s\"...\n", F_LumpName(lumpNum)) )
 
-    validTexDefs = (byte*) calloc(1, numTexDefs * sizeof(*validTexDefs));
-    if(NULL == validTexDefs)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.",
-            (unsigned long) (numTexDefs * sizeof(*validTexDefs)));
+    validTexDefs = (byte*) calloc(1, sizeof *validTexDefs * numTexDefs);
+    if(!validTexDefs)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.", (unsigned long) sizeof *validTexDefs * numTexDefs);
 
-    texDefNumPatches = (short*) calloc(1, numTexDefs * sizeof(*texDefNumPatches));
-    if(NULL == texDefNumPatches)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.",
-            (unsigned long) (numTexDefs * sizeof(*texDefNumPatches)));
+    texDefNumPatches = (short*) calloc(1, sizeof *texDefNumPatches * numTexDefs);
+    if(!texDefNumPatches)
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.", (unsigned long) sizeof *texDefNumPatches * numTexDefs);
 
     /**
      * Pass #1
@@ -1515,8 +1547,7 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("Warning:R_ReadTextureDefs: Bad offset %lu for definition %i in lump \"%s\".\n",
-                (unsigned long) offset, i, F_LumpName(lumpNum));
+            Con_Message("Warning, bad offset %lu for definition %i in lump \"%s\".\n", (unsigned long) offset, i, F_LumpName(lumpNum));
             continue;
         }
 
@@ -1537,8 +1568,7 @@ typedef struct {
 
                     if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("Warning:R_ReadTextureDefs: Invalid patch %i in texture '%s'.\n",
-                            (int) patchNum, mtexture->name);
+                        Con_Message("Warning, invalid Patch %i in texture definition '%s'.\n", (int) patchNum, mtexture->name);
                         continue;
                     }
                     pinfo = patchInfo + patchNum;
@@ -1549,14 +1579,13 @@ typedef struct {
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
-                            Con_Message("Warning:R_ReadTextureDefs: Failed to locate patch '%s'.\n", *(patchNames + patchNum));
+                            Con_Message("Warning, failed to locate Patch '%s'.\n", *(patchNames + patchNum));
                         }
                     }
 
                     if(-1 == pinfo->lumpNum)
                     {
-                        Con_Message("Warning:R_ReadTextureDefs: Missing patch %i in texture '%s'.\n",
-                            (int) j, mtexture->name);
+                        Con_Message("Warning, missing Patch %i in texture definition '%s'.\n", (int) j, mtexture->name);
                         continue;
                     }
                     ++n;
@@ -1564,8 +1593,7 @@ typedef struct {
             }
             else
             {
-                Con_Message("Warning:R_ReadTextureDefs: Invalid patchcount %i in texture '%s'.\n",
-                    (int) patchCount, mtexture->name);
+                Con_Message("Warning, invalid patchcount %i in texture definition '%s'.\n", (int) patchCount, mtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1587,8 +1615,7 @@ typedef struct {
 
                     if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("Warning:R_ReadTextureDefs: Invalid patch %i in texture '%s'.\n",
-                            (int) patchNum, smtexture->name);
+                        Con_Message("Warning, invalid Patch %i in texture definition '%s'.\n", (int) patchNum, smtexture->name);
                         continue;
                     }
                     pinfo = patchInfo + patchNum;
@@ -1599,14 +1626,13 @@ typedef struct {
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
-                            Con_Message("Warning:R_ReadTextureDefs: Failed to locate patch '%s'.\n", *(patchNames + patchNum));
+                            Con_Message("Warning, failed to locate Patch '%s'.\n", *(patchNames + patchNum));
                         }
                     }
 
                     if(-1 == pinfo->lumpNum)
                     {
-                        Con_Message("Warning:R_ReadTextureDefs: Missing patch %i in texture '%s'.\n",
-                            (int) j, smtexture->name);
+                        Con_Message("Warning, missing patch %i in texture definition '%s'.\n", (int) j, smtexture->name);
                         continue;
                     }
                     ++n;
@@ -1614,8 +1640,7 @@ typedef struct {
             }
             else
             {
-                Con_Message("Warning:R_ReadTextureDefs: Invalid patchcount %i in texture '%s'.\n",
-                    (int) patchCount, smtexture->name);
+                Con_Message("Warning, invalid patchcount %i in texture definition '%s'.\n", (int) patchCount, smtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1639,9 +1664,7 @@ typedef struct {
          */
 
         // Build the texturedef index.
-        texDefs = Z_Malloc(numValidTexDefs * sizeof(*texDefs), PU_REFRESHTEX, 0);
-        storage = Z_Calloc(sizeof(patchcompositetex_t) * numValidTexDefs +
-                           sizeof(texpatch_t) * numValidPatchRefs, PU_REFRESHTEX, 0);
+        texDefs = (patchcompositetex_t**)malloc(sizeof *texDefs * numValidTexDefs);
         directory = maptex1 + 1;
         n = 0;
         for(i = 0; i < numTexDefs; ++i, directory++)
@@ -1649,8 +1672,7 @@ typedef struct {
             patchcompositetex_t* texDef;
             short j;
 
-            if(!validTexDefs[i])
-                continue;
+            if(!validTexDefs[i]) continue;
 
             offset = LONG(*directory);
 
@@ -1661,16 +1683,24 @@ typedef struct {
                 mappatch_t* mpatch;
                 maptexture_t* mtexture = (maptexture_t*) ((byte*) maptex1 + offset);
 
-                texDef = storage;
+                texDef = (patchcompositetex_t*) malloc(sizeof *texDef);
+                if(!texDef)
+                    Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new PatchComposite.", (unsigned long) sizeof *texDef);
+
                 texDef->patchCount = texDefNumPatches[i];
+                texDef->flags = 0;
+                texDef->origIndex = (*origIndexBase) + i;
                 Str_Init(&texDef->name);
                 Str_PartAppend(&texDef->name, (const char*) mtexture->name, 0, 8);
                 texDef->width = SHORT(mtexture->width);
                 texDef->height = SHORT(mtexture->height);
-                storage = (byte *) storage + sizeof(patchcompositetex_t) + sizeof(texpatch_t) * texDef->patchCount;
+
+                texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
+                if(!texDef->patches)
+                    Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new TexPatch list for texture definition '%s'.", (unsigned long) sizeof *texDef->patches * texDef->patchCount, Str_Text(&texDef->name));
 
                 mpatch = &mtexture->patches[0];
-                patch = &texDef->patches[0];
+                patch = texDef->patches;
                 for(j = 0; j < SHORT(mtexture->patchCount); ++j, mpatch++)
                 {
                     short patchNum = SHORT(mpatch->patch);
@@ -1691,16 +1721,24 @@ typedef struct {
                 strifemappatch_t* smpatch;
                 strifemaptexture_t* smtexture = (strifemaptexture_t*) ((byte*) maptex1 + offset);
 
-                texDef = storage;
+                texDef = (patchcompositetex_t*) malloc(sizeof *texDef);
+                if(!texDef)
+                    Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new PatchComposite.", (unsigned long) sizeof *texDef);
+
                 texDef->patchCount = texDefNumPatches[i];
+                texDef->flags = 0;
+                texDef->origIndex = (*origIndexBase) + i;
                 Str_Init(&texDef->name);
                 Str_PartAppend(&texDef->name, (const char*) smtexture->name, 0, 8);
                 texDef->width = SHORT(smtexture->width);
                 texDef->height = SHORT(smtexture->height);
-                storage = (byte*) storage + sizeof(patchcompositetex_t) + sizeof(texpatch_t) * texDef->patchCount;
+
+                texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
+                if(!texDef->patches)
+                    Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new TexPatch list for texture definition '%s'.", (unsigned long) sizeof *texDef->patches * texDef->patchCount, Str_Text(&texDef->name));
 
                 smpatch = &smtexture->patches[0];
-                patch = &texDef->patches[0];
+                patch = texDef->patches;
                 for(j = 0; j < SHORT(smtexture->patchCount); ++j, smpatch++)
                 {
                     short patchNum = SHORT(smpatch->patch);
@@ -1728,17 +1766,12 @@ typedef struct {
             if(firstNull && i == 0)
                 texDef->flags |= TXDF_NODRAW;
 
-            /**
-             * Is this a non-IWAD texture?
-             * At this stage we assume it is an IWAD texture definition unless one of the
-             * patches is not.
-             */
-            texDef->flags |= TXDF_IWAD;
+            /// Is this a custom texture?
             j = 0;
-            while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
+            while(j < texDef->patchCount && !(texDef->flags & TXDF_CUSTOM))
             {
                 if(F_LumpIsCustom(texDef->patches[j].lumpNum))
-                    texDef->flags &= ~TXDF_IWAD;
+                    texDef->flags |= TXDF_CUSTOM;
                 else
                     j++;
             }
@@ -1748,6 +1781,8 @@ typedef struct {
         }
     }
 
+    *origIndexBase += numTexDefs;
+
     VERBOSE2( Con_Message("  Loaded %i of %i definitions.\n", numValidTexDefs, numTexDefs) )
 
     // Free all temporary storage.
@@ -1756,30 +1791,90 @@ typedef struct {
     free(maptex1);
     free(patchInfo);
 
-    if(numDefs)
-        *numDefs = numValidTexDefs;
+    if(numDefs) *numDefs = numValidTexDefs;
 
     return texDefs;
 }
 
-static void loadPatchCompositeDefs(void)
+static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
 {
-    patchcompositetex_t** list = 0, **listCustom = 0, ***eList = 0;
-    int count = 0, countCustom = 0, *eCount = 0;
-    lumpnum_t i, pnamesLump;
-    patchname_t* patchNames;
-    int numPatchNames;
-    boolean firstNull;
+    int patchCompositeTexturesCount = 0;
+    patchcompositetex_t** patchCompositeTextures = NULL;
 
-    if(-1 == (pnamesLump = F_CheckLumpNumForName2("PNAMES", true)))
-        return;
+    patchcompositetex_t** list = 0, **listCustom = 0, ***eList = 0;
+    lumpnum_t pnames, firstTexLump, secondTexLump;
+    int count = 0, countCustom = 0, *eCount = 0;
+    int i, numLumps, numPatchNames, origIndexBase;
+    patchcompositetex_t** newTexDefs;
+    boolean firstNull, isCustom;
+    patchname_t* patchNames;
+    int newNumTexDefs;
+    int defLumpsSize;
+    lumpnum_t* defLumps;
+
+    pnames = F_CheckLumpNumForName2("PNAMES", true);
+    if(-1 == pnames)
+    {
+        if(numDefs) *numDefs = 0;
+        return NULL;
+    }
 
     // Load the patch names from the PNAMES lump.
-    patchNames = loadPatchNames(pnamesLump, &numPatchNames);
-    if(NULL == patchNames)
+    patchNames = loadPatchNames(pnames, &numPatchNames);
+    if(!patchNames)
     {
         Con_Message("Warning:loadPatchCompositeDefs: Unexpected error occured loading PNAMES.\n");
-        return;
+        if(numDefs) *numDefs = 0;
+        return NULL;
+    }
+
+    /**
+     * Precedence order of definitions is defined by id tech1 which processes
+     * the TEXTURE1/2 lumps in the following order:
+     *
+     * (last)TEXTURE2 > (last)TEXTURE1
+     */
+    defLumpsSize = 0;
+    defLumps = NULL;
+    firstTexLump = W_CheckLumpNumForName2("TEXTURE1", true/*quiet please*/);
+    secondTexLump = W_CheckLumpNumForName2("TEXTURE2", true/*quiet please*/);
+
+    /**
+     * In Doomsday we also process all other lumps named TEXTURE1/2 which
+     * will not processed according to the predefined order.
+     */
+    numLumps = F_LumpCount();
+    for(i = 0; i < numLumps; ++i)
+    {
+        const lumpinfo_t* info;
+
+        // Will this be processed anyway?
+        if(i == firstTexLump || i == secondTexLump) continue;
+
+        info = F_FindInfoForLumpNum(i);
+        assert(info);
+        if(strnicmp(info->name, "TEXTURE1", 8) && strnicmp(info->name, "TEXTURE2", 8)) continue;
+
+        defLumps = (lumpnum_t*)realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
+        if(!defLumps)
+            Con_Error("loadPatchCompositeDefs: Failed on (re)allocation of %lu bytes enlarging definition lump list.", (unsigned long) sizeof *defLumps * defLumpsSize);
+        defLumps[defLumpsSize-1] = i;
+    }
+
+    if(firstTexLump >= 0)
+    {
+        defLumps = (lumpnum_t*)realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
+        if(!defLumps)
+            Con_Error("loadPatchCompositeDefs: Failed on (re)allocation of %lu bytes enlarging definition lump list.", (unsigned long) sizeof *defLumps * defLumpsSize);
+        defLumps[defLumpsSize-1] = firstTexLump;
+    }
+
+    if(secondTexLump >= 0)
+    {
+        defLumps = (lumpnum_t*)realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
+        if(!defLumps)
+            Con_Error("loadPatchCompositeDefs: Failed on (re)allocation of %lu bytes enlarging definition lump list.", (unsigned long) sizeof *defLumps * defLumpsSize);
+        defLumps[defLumpsSize-1] = secondTexLump;
     }
 
     /**
@@ -1790,59 +1885,54 @@ static void loadPatchCompositeDefs(void)
      * they should be considered as IWAD resources, even though the doomtexture
      * definition does not come from an IWAD lump.
      */
+    origIndexBase = 0;
     firstNull = true;
-    for(i = 0; i < F_LumpCount(); ++i)
+    for(i = 0; i < defLumpsSize; ++i)
     {
-        char name[9];
+        lumpnum_t lumpNum = defLumps[i];
 
-        memset(name, 0, sizeof(name));
-        strncpy(name, F_LumpName(i), 8);
-        strupr(name); // Case insensitive.
+        // Read in the new texture defs.
+        newTexDefs = readDoomTextureDefLump(lumpNum, patchNames, numPatchNames, &origIndexBase, firstNull, &newNumTexDefs);
 
-        if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
+        isCustom = F_LumpIsCustom(lumpNum);
+        eList  = (!isCustom? &list  : &listCustom);
+        eCount = (!isCustom? &count : &countCustom);
+        if(*eList)
         {
-            boolean isFromIWAD = !F_LumpIsCustom(i);
-            int newNumTexDefs;
-            patchcompositetex_t** newTexDefs;
+            patchcompositetex_t** newList;
+            size_t n;
+            int i;
 
-            // Read in the new texture defs.
-            newTexDefs = readDoomTextureDefLump(i, patchNames, numPatchNames, firstNull, &newNumTexDefs);
+            // Merge with the existing doomtexturedefs.
+            newList = (patchcompositetex_t**)malloc(sizeof *newList * ((*eCount) + newNumTexDefs));
+            if(!newList)
+                Con_Error("loadPatchCompositeDefs: Failed on allocation of %lu bytes for merged PatchComposite list.", (unsigned long) sizeof *newList * ((*eCount) + newNumTexDefs));
 
-            eList = (isFromIWAD? &list : &listCustom);
-            eCount = (isFromIWAD? &count : &countCustom);
-            if(*eList)
-            {
-                patchcompositetex_t** newList;
-                size_t n;
-                int i;
+            n = 0;
+            for(i = 0; i < *eCount; ++i)
+                newList[n++] = (*eList)[i];
+            for(i = 0; i < newNumTexDefs; ++i)
+                newList[n++] = newTexDefs[i];
 
-                // Merge with the existing doomtexturedefs.
-                newList = Z_Malloc(sizeof(*newList) * ((*eCount) + newNumTexDefs), PU_REFRESHTEX, 0);
-                n = 0;
-                for(i = 0; i < *eCount; ++i)
-                    newList[n++] = (*eList)[i];
-                for(i = 0; i < newNumTexDefs; ++i)
-                    newList[n++] = newTexDefs[i];
+            free(*eList);
+            free(newTexDefs);
 
-                Z_Free(*eList);
-                Z_Free(newTexDefs);
-
-                *eList = newList;
-                *eCount += newNumTexDefs;
-            }
-            else
-            {
-                *eList = newTexDefs;
-                *eCount = newNumTexDefs;
-            }
-
-            // No more NULL textures.
-            firstNull = false;
+            *eList = newList;
+            *eCount += newNumTexDefs;
         }
+        else
+        {
+            *eList = newTexDefs;
+            *eCount = newNumTexDefs;
+        }
+
+        // No more "not-drawn" textures.
+        firstNull = false;
     }
 
     if(listCustom)
-    {   // There are custom doomtexturedefs, cross compare with the IWAD
+    {
+        // There are custom doomtexturedefs, cross compare with the IWAD
         // originals to see if they have been changed.
         patchcompositetex_t** newList;
         size_t n;
@@ -1859,8 +1949,9 @@ static void loadPatchCompositeDefs(void)
                 patchcompositetex_t* custom = listCustom[j];
 
                 if(!Str_CompareIgnoreCase(&orig->name, Str_Text(&custom->name)))
-                {   // This is a newer version of an IWAD doomtexturedef.
-                    if(!(custom->flags & TXDF_IWAD))
+                {
+                    // This is a newer version of an IWAD doomtexturedef.
+                    if(custom->flags & TXDF_CUSTOM)
                     {
                         hasReplacement = true; // Uses a non-IWAD patch.
                     }
@@ -1871,7 +1962,7 @@ static void loadPatchCompositeDefs(void)
                         // Check the patches.
                         short k = 0;
 
-                        while(k < orig->patchCount && (custom->flags & TXDF_IWAD))
+                        while(k < orig->patchCount && !(custom->flags & TXDF_CUSTOM))
                         {
                             texpatch_t* origP   = orig->patches  + k;
                             texpatch_t* customP = custom->patches + k;
@@ -1880,7 +1971,7 @@ static void loadPatchCompositeDefs(void)
                                origP->offX != customP->offX &&
                                origP->offY != customP->offY)
                             {
-                                custom->flags &= ~TXDF_IWAD;
+                                custom->flags |= TXDF_CUSTOM;
                             }
                             else
                             {
@@ -1899,18 +1990,24 @@ static void loadPatchCompositeDefs(void)
             }
 
             if(hasReplacement)
-            {   // Let the PWAD "copy" override the IWAD original.
-                int n;
-                for(n = i + 1; n < count; ++n)
-                    list[n-1] = list[n];
+            {
+                // Let the PWAD "copy" override the IWAD original.
+                if(orig->patches) free(orig->patches);
+                free(orig);
+                if(i < count - 1)
+                    memmove(list + i, list + i + 1, sizeof *list * (count - i - 1));
                 count--;
             }
             else
+            {
                 i++;
+            }
         }
 
         // List contains only non-replaced doomtexturedefs, merge them.
-        newList = Z_Malloc(sizeof(*newList) * (count + countCustom), PU_REFRESHTEX, 0);
+        newList = (patchcompositetex_t**)malloc(sizeof *newList * (count + countCustom));
+        if(!newList)
+            Con_Error("loadPatchCompositeDefs: Failed on allocation of %lu bytes for the unique PatchComposite list.", (unsigned long) sizeof *newList * (count + countCustom));
 
         n = 0;
         for(i = 0; i < count; ++i)
@@ -1918,8 +2015,8 @@ static void loadPatchCompositeDefs(void)
         for(i = 0; i < countCustom; ++i)
             newList[n++] = listCustom[i];
 
-        Z_Free(list);
-        Z_Free(listCustom);
+        free(list);
+        free(listCustom);
 
         patchCompositeTextures = newList;
         patchCompositeTexturesCount = count + countCustom;
@@ -1930,271 +2027,373 @@ static void loadPatchCompositeDefs(void)
         patchCompositeTexturesCount = count;
     }
 
-    // We're finished with the patch names now.
+    if(defLumps) free(defLumps);
+
+    // We are finished with the patch names now.
     free(patchNames);
+
+    if(numDefs) *numDefs = patchCompositeTexturesCount;
+    return patchCompositeTextures;
 }
 
-static void createTexturesForPatchCompositeDefs(void)
+/// \note Definitions for Textures that are not created successfully will be pruned from the set.
+static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int count)
 {
     Uri* uri = Uri_New();
     int i;
+    assert(defs);
+
     Uri_SetScheme(uri, TN_TEXTURES_NAME);
-    for(i = 0; i < patchCompositeTexturesCount; ++i)
+    for(i = 0; i < count; ++i)
     {
-        patchcompositetex_t* pcomTex = patchCompositeTextures[i];       
+        patchcompositetex_t* pcTex = defs[i];
+        int flags = 0;
         texture_t* tex;
 
-        Uri_SetPath(uri, Str_Text(&pcomTex->name));
-        tex = Textures_CreateWithDimensions(uri, i, pcomTex->width, pcomTex->height);
+        if(pcTex->flags & TXDF_CUSTOM) flags |= TXF_CUSTOM;
+
+        Uri_SetPath(uri, Str_Text(&pcTex->name));
+        tex = Textures_CreateWithDimensions(uri, flags, pcTex->width, pcTex->height, (void*)pcTex);
         if(!tex)
         {
-            Con_Message("Warning, failed creating Texture for new patch composite %s.\n", Str_Text(&pcomTex->name));
+            Con_Message("Warning, failed creating Texture for new patch composite %s.\n", Str_Text(&pcTex->name));
+            if(pcTex->patches) free(pcTex->patches);
+            free(pcTex);
+            defs[i] = NULL;
             continue;
         }
-        pcomTex->texId = Texture_Id(tex);
     }
     Uri_Delete(uri);
 }
 
-int R_PatchCompositeCount(void)
+typedef struct {
+    int minIdx, maxIdx;
+} findpatchcompositeoriginalindexbounds_params_t;
+
+static int findPatchCompositeOriginalIndexBounds(texture_t* tex, void* paramaters)
 {
-    return patchCompositeTexturesCount;
+    patchcompositetex_t* pcTex= (patchcompositetex_t*)Texture_UserData(tex);
+    findpatchcompositeoriginalindexbounds_params_t* p = (findpatchcompositeoriginalindexbounds_params_t*)paramaters;
+    if(pcTex)
+    {
+        if(pcTex->origIndex < p->minIdx) p->minIdx = pcTex->origIndex;
+        if(pcTex->origIndex > p->maxIdx) p->maxIdx = pcTex->origIndex;
+    }
+    return 0; // Continue iteration.
 }
 
-/**
- * Reads in the texture defs and creates materials for them.
- */
+/// \assume patchCompositeOrigIndexMap has been initialized and is large enough!
+static int insertPatchCompositeInOriginalIndexMap(texture_t* tex, void* paramaters)
+{
+    patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
+    if(pcTex)
+    {
+        patchCompositeOrigIndexMap[pcTex->origIndex - patchCompositeOrigIndexBase] = tex;
+    }
+    return 0; // Continue iteration.
+}
+
+void R_RebuildPatchCompositeOriginalIndexMap(void)
+{
+    findpatchcompositeoriginalindexbounds_params_t p;
+
+    // Determine the size of the LUT.
+    p.minIdx = DDMAXINT;
+    p.maxIdx = DDMININT;
+    Textures_Iterate2(TN_TEXTURES, findPatchCompositeOriginalIndexBounds, (void*)&p);
+
+    if(p.minIdx > p.maxIdx)
+    {
+        // None found.
+        patchCompositeOrigIndexBase = 0;
+        patchCompositeOrigIndexMapSize = 0;
+    }
+    else
+    {
+        patchCompositeOrigIndexBase = p.minIdx;
+        patchCompositeOrigIndexMapSize = p.maxIdx - p.minIdx + 1;
+    }
+
+    // Construct and (re)populate the LUT.
+    patchCompositeOrigIndexMap = (texture_t**)realloc(patchCompositeOrigIndexMap, sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
+    if(!patchCompositeOrigIndexMap && patchCompositeOrigIndexMapSize)
+        Con_Error("R_RebuildPatchCompositeOriginalIndexMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
+    if(!patchCompositeOrigIndexMapSize) return;
+
+    memset(patchCompositeOrigIndexMap, 0, sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
+    Textures_Iterate(TN_TEXTURES, insertPatchCompositeInOriginalIndexMap);
+}
+
+void R_DestroyPatchCompositeOriginalIndexMap(void)
+{
+    if(!patchCompositeOrigIndexMap) return;
+    free(patchCompositeOrigIndexMap), patchCompositeOrigIndexMap = NULL;
+    patchCompositeOrigIndexMapSize = 0;
+    patchCompositeOrigIndexBase = 0;
+}
+
 void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    patchcompositetex_t** defs;
+    int defsCount;
 
-    clearPatchComposites();
-    VERBOSE( Con_Message("Initializing PatchComposites...\n") )
+    //Textures_ClearByNamespace(TN_TEXTURES);
+    //assert(Textures_Count(TN_TEXTURES) == 0);
+
+    VERBOSE( Con_Message("Initializing PatchComposite textures...\n") )
 
     // Load texture definitions from TEXTURE1/2 lumps.
-    loadPatchCompositeDefs();
-    createTexturesForPatchCompositeDefs();
+    defs = loadPatchCompositeDefs(&defsCount);
+    if(defs)
+    {
+        createTexturesForPatchCompositeDefs(defs, defsCount);
+        free(defs);
+    }
+
+    R_RebuildPatchCompositeOriginalIndexMap();
 
     VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-patchcompositetex_t* R_PatchCompositeTextureByIndex(int num)
+typedef struct {
+    int minIdx, maxIdx;
+} findflatoriginalindexbounds_params_t;
+
+static int findFlatOriginalIndexBounds(texture_t* tex, void* paramaters)
 {
-    if(num < 0 || num >= patchCompositeTexturesCount)
+    flat_t* flat = (flat_t*)Texture_UserData(tex);
+    findflatoriginalindexbounds_params_t* p = (findflatoriginalindexbounds_params_t*)paramaters;
+    if(flat)
     {
-#if _DEBUG
-        Con_Error("R_PatchCompositeTextureByIndex: Invalid def num %i.", num);
-#endif
-        return NULL;
+        if(flat->origIndex < p->minIdx) p->minIdx = flat->origIndex;
+        if(flat->origIndex > p->maxIdx) p->maxIdx = flat->origIndex;
+    }
+    return 0; // Continue iteration.
+}
+
+/// \assume flatOrigIndexMap has been initialized and is large enough!
+static int insertFlatInOriginalIndexMap(texture_t* tex, void* paramaters)
+{
+    flat_t* flat = (flat_t*)Texture_UserData(tex);
+    if(flat)
+    {
+        flatOrigIndexMap[flat->origIndex - flatOrigIndexBase] = tex;
+    }
+    return 0; // Continue iteration.
+}
+
+void R_RebuildFlatOriginalIndexMap(void)
+{
+    findflatoriginalindexbounds_params_t p;
+
+    // Determine the size of the LUT.
+    p.minIdx = DDMAXINT;
+    p.maxIdx = DDMININT;
+    Textures_Iterate2(TN_FLATS, findFlatOriginalIndexBounds, (void*)&p);
+
+    if(p.minIdx > p.maxIdx)
+    {
+        // None found.
+        flatOrigIndexBase = 0;
+        flatOrigIndexMapSize = 0;
+    }
+    else
+    {
+        flatOrigIndexBase = p.minIdx;
+        flatOrigIndexMapSize = p.maxIdx - p.minIdx + 1;
     }
 
-    return patchCompositeTextures[num];
+    // Construct and (re)populate the LUT.
+    flatOrigIndexMap = (texture_t**)realloc(flatOrigIndexMap, sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
+    if(!flatOrigIndexMap && flatOrigIndexMapSize)
+        Con_Error("R_RebuildFlatOriginalIndexMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
+    if(!flatOrigIndexMapSize) return;
+
+    memset(flatOrigIndexMap, 0, sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
+    Textures_Iterate(TN_FLATS, insertFlatInOriginalIndexMap);
 }
 
-int R_FlatTextureCount(void)
+void R_DestroyFlatOriginalIndexMap(void)
 {
-    return flatTexturesCount;
+    if(!flatOrigIndexMap) return;
+    free(flatOrigIndexMap), flatOrigIndexMap = NULL;
+    flatOrigIndexMapSize = 0;
+    flatOrigIndexBase = 0;
 }
 
-flat_t* R_FlatTextureByIndex(int idx)
+static boolean createFlatForLump(lumpnum_t lumpNum, flat_t** rFlat)
 {
-    assert(idx >= 0 && idx < flatTexturesCount);
-    return flatTextures[idx];
-}
+    const lumpinfo_t* info = F_FindInfoForLumpNum(lumpNum);
+    boolean isNewFlat = false;
+    texture_t* tex;
+    flat_t* flat;
+    int flags;
+    Uri* uri;
 
-int R_FindFlatIdxForName(const char* name)
-{
-    if(name && name[0])
+    if(rFlat) *rFlat = NULL;
+
+    // We can only perform some basic filtering of lumps at this time.
+    if(!info || info->size == 0) return false;
+
+    uri = Uri_New();
+    Uri_SetScheme(uri, TN_FLATS_NAME);
+
+    // Have we already encountered this name?
+    Uri_SetPath(uri, info->name);
+    tex = Textures_TextureForUri2(uri, true/*quiet please*/);
+    if(!tex)
     {
-        int i;
-        for(i = 0; i < flatTexturesCount; ++i)
+        // A new flat.
+        flat = (flat_t*)malloc(sizeof *flat);
+        if(!flat)
+            Con_Error("R_InitFlatTextures: Failed on allocation of %lu bytes for new Flat.", (unsigned long) sizeof *flat);
+        isNewFlat = true;
+
+        flags = 0;
+        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
+
+        tex = Textures_Create(uri, flags, (void*)flat);
+        if(!tex)
         {
-            if(!Str_CompareIgnoreCase(&flatTextures[i]->name, name))
-                return i;
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Warning, failed creating Texture for new flat %s.\n", Str_Text(path));
+            Str_Delete(path);
+            free(flat);
         }
     }
-    return -1;
-}
-
-/// @return  Associated flat index.
-static int R_NewFlat(const char* name, lumpnum_t lumpNum, boolean isCustom)
-{
-    assert(name && name[0]);
-
-    // Is this a known identifer?
-    { int idx;
-    if(-1 != (idx = R_FindFlatIdxForName(name)))
+    else
     {
-        // Update metadata and move the flat to the end (relative indices must be respected).
-        flatTextures[idx]->isCustom = isCustom;
-        flatTextures[idx]->lumpNum = lumpNum;
-        if(idx != flatTexturesCount-1)
-        {
-            flat_t* ptr = flatTextures[idx];
-            memmove(flatTextures+idx, flatTextures+idx+1, sizeof(flat_t*) * (flatTexturesCount-1-idx));
-            flatTextures[flatTexturesCount-1] = ptr;
-        }
-        return flatTexturesCount-1;
-    }}
+        flat = (flat_t*)Texture_UserData(tex);
+        flags = 0;
+        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
+        Texture_SetFlags(tex, flags);
 
-    // A new flat.
-    flatTextures = Z_Realloc(flatTextures, sizeof(flat_t*) * ++flatTexturesCount, PU_REFRESHFLAT);
-    { flat_t* flat = flatTextures[flatTexturesCount - 1] = Z_Malloc(sizeof(*flat), PU_REFRESHFLAT, 0);
-    Str_Init(&flat->name);
-    Str_Set(&flat->name, name);
+        /// \fixme Update any Materials (and thus Surfaces) which reference this.
+    }
+    Uri_Delete(uri);
+
+    // (Re)configure this flat.
     flat->lumpNum = lumpNum;
-    flat->isCustom = isCustom;
-    flat->texId = 0;
-    }
-    return flatTexturesCount - 1;
-}
+    if(rFlat) *rFlat = flat;
 
-/**
- * Free all memory acquired for Flat textures.
- * \note  Does nothing about any Textures or Materials created from these!
- */
-static void clearFlatTextures(void)
-{
-    int i;
-    if(0 == flatTexturesCount) return;
-
-    for(i = 0; i < flatTexturesCount; ++i)
-    {
-        flat_t* flat = flatTextures[i];
-        Str_Free(&flat->name);
-    }
-    Z_FreeTags(PU_REFRESHFLAT, PU_REFRESHFLAT);
-    flatTextures = NULL;
-    flatTexturesCount = 0;
+    return isNewFlat;
 }
 
 void R_InitFlatTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
-    ddstack_t* stack = Stack_New();
+    lumpnum_t origRangeFrom, origRangeTo;
 
-    clearFlatTextures();
-    assert(flatTexturesCount == 0);
+    VERBOSE( Con_Message("Initializing Flat textures...\n") )
 
-    VERBOSE( Con_Message("Initializing Flats...\n") )
-    { int i, numLumps = F_LumpCount();
-    for(i = 0; i < numLumps; ++i)
+    origRangeFrom = W_CheckLumpNumForName("F_START");
+    origRangeTo   = W_CheckLumpNumForName("F_END");
+
+    if(origRangeFrom >= 0 && origRangeTo >= 0)
     {
-        const char* name = F_LumpName(i);
+        int i, numLumps, origIndexBase = 0;
+        ddstack_t* stack;
+        flat_t* flat;
+        lumpnum_t n;
 
-        if(name[0] == 'F')
+        // First add all flats between all flat marker lumps exclusive of the
+        // range defined by the last marker lumps.
+        origIndexBase = (int)origRangeTo;
+        stack = Stack_New();
+        numLumps = F_LumpCount();
+        for(i = 0; i < numLumps; ++i)
         {
-            if(!strnicmp(name + 1, "_START", 6) ||
-               !strnicmp(name + 2, "_START", 6))
+            const lumpinfo_t* info = F_FindInfoForLumpNum(i);
+            assert(info);
+
+            if(info->name[0] == 'F')
             {
-                // We've arrived at *a* flat block.
-                Stack_Push(stack, NULL);
-                continue;
+                if(!strnicmp(info->name + 1, "_START", 6) ||
+                   !strnicmp(info->name + 2, "_START", 6))
+                {
+                    // We've arrived at *a* sprite block.
+                    Stack_Push(stack, NULL);
+                    continue;
+                }
+                else if(!strnicmp(info->name + 1, "_END", 4) ||
+                        !strnicmp(info->name + 2, "_END", 4))
+                {
+                    // The sprite block ends.
+                    Stack_Pop(stack);
+                    continue;
+                }
             }
-            else if(!strnicmp(name + 1, "_END", 4) ||
-                    !strnicmp(name + 2, "_END", 4))
-            {
-                // The flat block ends.
-                Stack_Pop(stack);
-                continue;
-            }
+
+            if(!Stack_Height(stack)) continue;
+            if(i >= origRangeFrom && i <= origRangeTo) continue;
+
+            createFlatForLump(i, &flat);
+            if(!flat) continue;
+            flat->origIndex = origIndexBase++;
         }
 
-        if(!Stack_Height(stack))
-            continue;
+        while(Stack_Height(stack)) { Stack_Pop(stack); }
+        Stack_Delete(stack);
 
-        R_NewFlat(name, (lumpnum_t)i, F_LumpIsCustom(i));
-    }}
-
-    while(Stack_Height(stack))
-        Stack_Pop(stack);
-    Stack_Delete(stack);
-
-    // Create Textures for all known flats.
-    { Uri* uri = Uri_New();
-    int i;
-    Uri_SetScheme(uri, TN_FLATS_NAME);
-    for(i = 0; i < flatTexturesCount; ++i)
-    {
-        flat_t* flat = flatTextures[i];
-        texture_t* tex;
-
-        Uri_SetPath(uri, Str_Text(&flat->name));
-        tex = Textures_CreateWithDimensions(uri, i, 64, 64);
-        if(!tex)
+        // Now add all lumps in the primary (overridding) range.
+        origRangeFrom += 1; // Skip over marker lump.
+        for(n = origRangeFrom; n < origRangeTo; ++n)
         {
-            Con_Message("Warning, failed creating Texture for new flat %s.\n", Str_Text(&flat->name));
-            continue;
+            createFlatForLump(n, &flat);
+            if(!flat) continue;
+            flat->origIndex = (int) (n - origRangeFrom);
         }
-        flat->texId = Texture_Id(tex);
     }
-    Uri_Delete(uri);
-    }
+
+    R_RebuildFlatOriginalIndexMap();
 
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-/**
- * Free all memory acquired for SpriteTextures.
- * \note  Does nothing about any Textures or Materials created from these!
- */
-static void clearSpriteTextures(void)
+static boolean validSpriteName(const char* name)
 {
-    int i;
-    if(0 == spriteTexturesCount) return;
-
-    for(i = 0; i < spriteTexturesCount; ++i)
-    {
-        spritetex_t* sprTex = spriteTextures[i];
-        Str_Free(&sprTex->name);
-    }
-    Z_FreeTags(PU_SPRITE, PU_SPRITE);
-    spriteTextures = NULL;
-    spriteTexturesCount = 0;
-}
-
-int R_SpriteTextureCount(void)
-{
-    return spriteTexturesCount;
-}
-
-spritetex_t* R_SpriteTextureByIndex(int idx)
-{
-    assert(idx >= 0 && idx < spriteTexturesCount);
-    return spriteTextures[idx];
+    if(!name || !name[0]) return false;
+    if(!name[4] || !name[5] || (name[6] && !name[7])) return false;
+    // Indices 5 and 7 must be numbers (0-8).
+    if(name[5] < '0' || name[5] > '8') return false;
+    if(name[7] && (name[7] < '0' || name[7] > '8')) return false;
+    // Its good!
+    return true;
 }
 
 void R_InitSpriteTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    int i, numLumps, origIndex = 0;
     ddstack_t* stack;
+    Uri* uri;
 
-    VERBOSE( Con_Message("Initializing sprite textures...\n") )
+    VERBOSE( Con_Message("Initializing Sprite textures...\n") )
 
-    clearSpriteTextures();
-    assert(spriteTexturesCount == 0);
-
-    /**
-     * Step 1: Collection.
-     */
+    uri = Uri_New();
+    Uri_SetScheme(uri, TN_SPRITES_NAME);
     stack = Stack_New();
-    { int i, numLumps = F_LumpCount();
+    numLumps = F_LumpCount();
+    /// \fixme Load order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
-        const char* name = F_LumpName(i);
-        spritetex_t* sprTex = NULL;
+        const lumpinfo_t* info = F_FindInfoForLumpNum((lumpnum_t)i);
+        spritetex_t* sprTex;
+        texture_t* tex;
+        int flags;
 
-        if(name[0] == 'S')
+        if(info->name[0] == 'S')
         {
-            if(!strnicmp(name + 1, "_START", 6) ||
-               !strnicmp(name + 2, "_START", 6))
+            if(!strnicmp(info->name + 1, "_START", 6) ||
+               !strnicmp(info->name + 2, "_START", 6))
             {
                 // We've arrived at *a* sprite block.
                 Stack_Push(stack, NULL);
                 continue;
             }
-            else if(!strnicmp(name + 1, "_END", 4) ||
-                    !strnicmp(name + 2, "_END", 4))
+            else if(!strnicmp(info->name + 1, "_END", 4) ||
+                    !strnicmp(info->name + 2, "_END", 4))
             {
                 // The sprite block ends.
                 Stack_Pop(stack);
@@ -2202,156 +2401,114 @@ void R_InitSpriteTextures(void)
             }
         }
 
-        if(!Stack_Height(stack))
-            continue;
+        if(!Stack_Height(stack)) continue;
+        if(!validSpriteName(info->name)) continue;
 
-        // Is this a known identifer?
-        { int j;
-        for(j = 0; j < spriteTexturesCount; ++j)
-        {
-            if(!Str_CompareIgnoreCase(&spriteTextures[j]->name, name))
-            {
-                // Update metadata and move the sprite to the end (relative indices must be respected).
-                spriteTextures[j]->isCustom = F_LumpIsCustom(i);
-                spriteTextures[j]->lumpNum = (lumpnum_t) i;
-                if(j != spriteTexturesCount-1)
-                {
-                    spritetex_t* ptr = spriteTextures[j];
-                    memmove(spriteTextures+j, spriteTextures+j+1, sizeof(spritetex_t*) * (spriteTexturesCount-1-j));
-                    spriteTextures[spriteTexturesCount-1] = ptr;
-                }
-                sprTex = spriteTextures[spriteTexturesCount-1];
-            }
-        }}
+        origIndex++;
 
-        if(NULL != sprTex)
-            continue;
-
-        // A new sprite texture.
-        spriteTextures = Z_Realloc(spriteTextures, sizeof(spritetex_t*) * ++spriteTexturesCount, PU_SPRITE);
-        sprTex = spriteTextures[spriteTexturesCount-1] = Z_Calloc(sizeof(spritetex_t), PU_SPRITE, 0);
-
-        Str_Init(&sprTex->name);
-        Str_Set(&sprTex->name, name);
-        sprTex->lumpNum = (lumpnum_t)i;
-        sprTex->isCustom = F_LumpIsCustom(i);
-    }}
-
-    while(Stack_Height(stack))
-        Stack_Pop(stack);
-    Stack_Delete(stack);
-
-    /**
-     * Step 2: Create Textures for all known sprite textures.
-     */
-    { Uri* uri = Uri_New();
-    int i;
-    Uri_SetScheme(uri, TN_SPRITES_NAME);
-    for(i = 0; i < spriteTexturesCount; ++i)
-    {
-        spritetex_t* sprTex = spriteTextures[i];
-        const doompatch_header_t* patch;
-        abstractfile_t* fsObject;
-        const texture_t* tex;
-        int lumpIdx;
-
-        /// \fixme Do NOT assume this is in DOOM's Patch format. Defer until prepare-time.
-        if(F_LumpLength(sprTex->lumpNum) < sizeof(doompatch_header_t))
-        {
-            Con_Message("Warning, sprite frame lump %s (#%i) does not appear to be a valid Patch.\n",
-                Str_Text(&sprTex->name), sprTex->lumpNum);
-            sprTex->offX = sprTex->offY = 0;
-            sprTex->lumpNum = -1;
-            continue;
-        }
-
-        fsObject = F_FindFileForLumpNum2(sprTex->lumpNum, &lumpIdx);
-        patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-
-        Uri_SetPath(uri, Str_Text(&sprTex->name));
-        tex = Textures_CreateWithDimensions(uri, i, SHORT(patch->width), SHORT(patch->height));
+        // Have we already encountered this name?
+        Uri_SetPath(uri, info->name);
+        tex = Textures_TextureForUri2(uri, true/*quiet please*/);
         if(!tex)
         {
-            Con_Message("Warning, failed creating Texture for sprite frame lump %s (#%i).\n",
-                Str_Text(&sprTex->name), sprTex->lumpNum);
-            sprTex->offX = sprTex->offY = 0;
-            sprTex->lumpNum = -1;
-            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-            continue;
+            // A new sprite texture.
+            sprTex = (spritetex_t*)malloc(sizeof *sprTex);
+            if(!sprTex)
+                Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new SpriteTex.", (unsigned long) sizeof *sprTex);
+            sprTex->offX = sprTex->offY = 0; // Deferred until texture load time.
+
+            flags = 0;
+            if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
+
+            tex = Textures_Create(uri, flags, (void*)sprTex);
+            if(!tex)
+            {
+                ddstring_t* path = Uri_ComposePath(uri);
+                Con_Message("Warning, failed creating Texture for sprite frame lump %s (#%i).\n", Str_Text(path), (lumpnum_t)i);
+                Str_Delete(path);
+                free(sprTex);
+            }
         }
-        sprTex->texId = Texture_Id(tex);
-        sprTex->offX = SHORT(patch->leftOffset);
-        sprTex->offY = SHORT(patch->topOffset);
-        F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-    }
-    Uri_Delete(uri);
+        else
+        {
+            sprTex = (spritetex_t*)Texture_UserData(tex);
+            flags = 0;
+            if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
+            Texture_SetFlags(tex, flags);
+
+            // Sprite offsets may have changed so release any currently loaded
+            // GL-textures for this, so the offsets will be updated.
+            GL_ReleaseGLTexturesForTexture(tex);
+
+            /// \fixme Update any Materials (and thus Surfaces) which reference this.
+        }
+
+        // (Re)configure this sprite.
+        sprTex->lumpNum = (lumpnum_t)i;
     }
 
-    VERBOSE2(
-        Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n",
-            (Sys_GetRealTime() - startTime) / 1000.0f) );
+    while(Stack_Height(stack)) { Stack_Pop(stack); }
+    Stack_Delete(stack);
+
+    Uri_Delete(uri);
+
+    VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
-uint R_CreateSkinTex(const Uri* skin, boolean isShinySkin)
+texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
 {
-    assert(skin);
-    {
+    skinname_t* skin;
     texture_t* tex;
-    skinname_t* st;
     char name[9];
     Uri* uri;
-    int id;
 
-    if(Str_IsEmpty(Uri_Path(skin)))
-        return 0;
+    if(!filePath || Str_IsEmpty(Uri_Path(filePath))) return 0;
 
     // Have we already created one for this?
-    id = R_GetSkinNumForName(skin);
-    if(id) return id;
+    tex = R_FindModelSkinForFilePath(filePath);
+    if(tex) return tex;
 
-    if(M_NumDigits(numSkinNames + 1) > 8)
+    if(M_NumDigits(Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1) > 8)
     {
 #if _DEBUG
-Con_Message("R_GetSkinTex: Too many model skins!\n");
+        Con_Message("Warning, failed creating SkinName (max:%i).\n", DDMAXINT);
 #endif
-        return 0;
+        return NULL;
     }
 
     /**
      * A new skin name.
      */
 
+    skin = (skinname_t*)malloc(sizeof *skin);
+    if(!skin)
+        Con_Error("R_CreateSkinTex: Failed on allocation of %lu bytes for new SkinName.", (unsigned long) sizeof *skin);
+
     // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
-    tex = Textures_Create(uri, numSkinNames);
-
-    skinNames = (skinname_t*)realloc(skinNames, sizeof *skinNames * ++numSkinNames);
-    if(!skinNames)
-        Con_Error("R_CreateSkinTex: Failed on (re)allocation of %lu bytes enlarging SkinName list.", (unsigned long) sizeof *skinNames * (numSkinNames-1));
-    st = skinNames + (numSkinNames - 1);
-
-    st->path = Uri_NewCopy(skin);
-    st->id = Texture_Id(tex);
-
-    if(verbose)
+    tex = Textures_Create(uri, TXF_CUSTOM, (void*)skin);
+    if(!tex)
     {
-        ddstring_t* searchPath = Uri_ToString(skin);
-        Con_Message("SkinTex: \"%s\" -> %li\n", F_PrettyPath(Str_Text(searchPath)), (long) (1 + (st - skinNames)));
-        Str_Delete(searchPath);
+        Con_Message("Warning, failed creating new Texture for SkinName %s.\n", name);
+        Uri_Delete(uri);
+        free(skin);
+        return NULL;
     }
+
+    skin->path = Uri_NewCopy(filePath);
+
     Uri_Delete(uri);
-    return 1 + (st - skinNames); // 1-based index.
-    }
+    return tex;
 }
 
 static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const char* modelfn)
 {
-    assert(foundPath && skin && skin[0]);
-    {
     boolean found = false;
     ddstring_t searchPath;
+    assert(foundPath && skin && skin[0]);
+
     Str_Init(&searchPath);
 
     // Try the "first choice" directory first.
@@ -2372,77 +2529,53 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
 
     Str_Free(&searchPath);
     return found;
-    }
 }
 
-/**
- * Registers a new skin name.
- */
-uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
+texture_t* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
 {
+    texture_t* tex = NULL;
     if(skin && skin[0])
     {
-        uint result = 0;
         ddstring_t buf;
         if(!foundPath)
             Str_Init(&buf);
+
         if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
         {
             Uri* uri = Uri_NewWithPath2(foundPath ? Str_Text(foundPath) : Str_Text(&buf), RC_NULL);
-            result = R_CreateSkinTex(uri, isShinySkin);
+            tex = R_CreateSkinTex(uri, isShinySkin);
             Uri_Delete(uri);
         }
+
         if(!foundPath)
             Str_Free(&buf);
-        return result;
     }
-    return 0;
+    return tex;
 }
 
-const skinname_t* R_GetSkinNameByIndex(uint id)
+static int findModelSkinForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(!id || id > numSkinNames)
-        return NULL;
+    const Uri* filePath = (Uri*)paramaters;
+    skinname_t* skin = (skinname_t*)Texture_UserData(tex);
+    assert(tex && filePath);
 
-    return &skinNames[id-1];
-}
-
-uint R_GetSkinNumForName(const Uri* path)
-{
-    uint i;
-    for(i = 0; i < numSkinNames; ++i)
-        if(Uri_Equality(skinNames[i].path, path))
-            return i + 1; // 1-based index.
-    return 0;
-}
-
-void R_DestroySkins(void)
-{
-    if(0 == numSkinNames)
-        return;
-
-    R_ReleaseGLTexturesForSkins();
-
-    { uint i;
-    for(i = 0; i < numSkinNames; ++i)
-        Uri_Delete(skinNames[i].path);
-    }
-    M_Free(skinNames);
-    skinNames = NULL;
-    numSkinNames = 0;
-}
-
-void R_ReleaseGLTexturesForSkins(void)
-{
-    uint i;
-    for(i = 0; i < numSkinNames; ++i)
+    if(skin && skin->path && Uri_Equality(skin->path, filePath))
     {
-        skinname_t* sn = skinNames + i;
-        texture_t* tex = Textures_ToTexture(sn->id);
-        if(tex == NULL) continue;
-
-        GL_ReleaseGLTexturesForTexture(tex);
+        return (int)Textures_Id(tex);
     }
+    return 0; // Continue iteration.
+}
+
+texture_t* R_FindModelSkinForFilePath(const Uri* filePath)
+{
+    int result;
+    if(!filePath || Str_IsEmpty(Uri_Path(filePath))) return NULL;
+
+    result = Textures_Iterate2(TN_MODELSKINS, findModelSkinForFilePathWorker, (void*)filePath);
+    if(!result)
+        result = Textures_Iterate2(TN_MODELREFLECTIONSKINS, findModelSkinForFilePathWorker, (void*)filePath);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
 void R_UpdateData(void)
@@ -2680,7 +2813,7 @@ void R_InitAnimGroup(ded_group_t* def)
     }
 }
 
-detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
+texture_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 {
     texture_t* tex;
     detailtex_t* dTex;
@@ -2688,10 +2821,10 @@ detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     Uri* uri;
 
     // Have we already created one for this?
-    dTex = R_FindDetailTextureForName(def->detailTex, def->isExternal);
-    if(dTex) return dTex;
+    tex = R_FindDetailTextureForFilePath(def->detailTex, def->isExternal);
+    if(tex) return tex;
 
-    if(M_NumDigits(detailTexturesCount + 1) > 8)
+    if(M_NumDigits(Textures_Count(TN_DETAILS)+1) > 8)
     {
         Con_Message("Warning: failed to create new detail texture (max:%i).\n", DDMAXINT);
         return NULL;
@@ -2700,72 +2833,62 @@ detailtex_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     /**
      * A new detail texture.
      */
-
-    // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, detailTexturesCount + 1);
-    uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_DETAILS_NAME);
-    tex = Textures_Create(uri, detailTexturesCount);
-
     dTex = (detailtex_t*)malloc(sizeof *dTex);
     if(!dTex)
         Con_Error("R_CreateDetailTextureFromDef: Failed on allocation of %lu bytes for new DetailTex.", (unsigned long) sizeof *dTex);
-    dTex->id = Texture_Id(tex);
-    dTex->isExternal = def->isExternal;
-    dTex->filePath = def->detailTex;
 
-    // Add it to the list.
-    detailTextures = (detailtex_t**)realloc(detailTextures, sizeof *detailTextures * ++detailTexturesCount);
-    if(!detailTextures)
-        Con_Error("R_CreateDetailTextureFromDef: Failed on (re)allocation of %lu bytes enlarging DetailTex list.", (unsigned long) sizeof *detailTextures * (detailTexturesCount-1));
-    detailTextures[detailTexturesCount-1] = dTex;
+    // Create a texture for it.
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_DETAILS)+1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_DETAILS_NAME);
+    tex = Textures_Create(uri, TXF_CUSTOM, (void*)dTex);
+    if(!tex)
+    {
+        Con_Message("Warning, failed creating new Texture for DetailTexture %s.\n", name);
+        Uri_Delete(uri);
+        free(dTex);
+        return NULL;
+    }
+
+    dTex->isExternal = def->isExternal;
+    dTex->path = def->detailTex;
 
     Uri_Delete(uri);
-    return dTex;
+    return tex;
 }
 
-detailtex_t* R_FindDetailTextureForName(const Uri* filePath, boolean isExternal)
+typedef struct {
+    const Uri* path;
+    boolean isExternal;
+} finddetailtextureforfilepathworker_params_t;
+
+static int findDetailTextureForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(!filePath)
-        return 0;
-    { int i;
-    for(i = 0; i < detailTexturesCount; ++i)
+    finddetailtextureforfilepathworker_params_t* p = (finddetailtextureforfilepathworker_params_t*)paramaters;
+    detailtex_t* dTex = (detailtex_t*)Texture_UserData(tex);
+    assert(tex && p);
+
+    if(dTex->path && dTex->isExternal == p->isExternal && Uri_Equality(dTex->path, p->path))
     {
-        detailtex_t* dTex = detailTextures[i];
-        if(dTex->isExternal == isExternal && Uri_Equality(dTex->filePath, filePath))
-            return dTex;
-    }}
-    return 0;
+        return (int)Textures_Id(tex);
+    }
+    return 0; // Continue iteration.
 }
 
-detailtex_t* R_DetailTextureByIndex(int idx)
+texture_t* R_FindDetailTextureForFilePath(const Uri* filePath, boolean isExternal)
 {
-    if(idx >= 0 && idx < detailTexturesCount)
-        return detailTextures[idx];
-    Con_Error("R_DetailTextureByIndex: Failed to locate by index #%i.", idx);
-    return NULL;
+    finddetailtextureforfilepathworker_params_t p;
+    int result;
+    if(!filePath) return NULL;
+
+    p.path = filePath;
+    p.isExternal = isExternal;
+    result = Textures_Iterate2(TN_DETAILS, findDetailTextureForFilePathWorker, (void*)&p);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
-int R_DetailTextureCount(void)
-{
-    return detailTexturesCount;
-}
-
-void R_DestroyDetailTextures(void)
-{
-    { int i;
-    for(i = 0; i < detailTexturesCount; ++i)
-    {
-        M_Free(detailTextures[i]);
-    }}
-
-    if(detailTextures)
-        M_Free(detailTextures);
-    detailTextures = NULL;
-    detailTexturesCount = 0;
-}
-
-lightmap_t* R_CreateLightMap(const Uri* filePath)
+texture_t* R_CreateLightMap(const Uri* filePath)
 {
     texture_t* tex;
     lightmap_t* lmap;
@@ -2773,80 +2896,69 @@ lightmap_t* R_CreateLightMap(const Uri* filePath)
     Uri* uri;
 
     if(!filePath || Str_IsEmpty(Uri_Path(filePath)) || !Str_CompareIgnoreCase(Uri_Path(filePath), "-"))
-        return 0; // Not a lightmap
+        return NULL;
 
     // Have we already created one for this?
-    lmap = R_GetLightMap(filePath);
-    if(lmap) return lmap;
+    tex = R_FindLightMapForFilePath(filePath);
+    if(tex) return tex;
 
-    if(M_NumDigits(lightmapTexturesCount + 1) > 8)
+    if(M_NumDigits(Textures_Count(TN_LIGHTMAPS)+1) > 8)
     {
-        Con_Message("Warning: Failed to create new lightmap (max:%i).\n", DDMAXINT);
-        return 0;
+        Con_Message("Warning, failed creating new LightMap (max:%i).\n", DDMAXINT);
+        return NULL;
     }
 
     /**
      * A new lightmap.
      */
 
-    // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, lightmapTexturesCount + 1);
-    uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
-    tex = Textures_Create(uri, lightmapTexturesCount);
-
     lmap = (lightmap_t*)malloc(sizeof *lmap);
     if(!lmap)
         Con_Error("R_CreateLightMap: Failed on allocation of %lu bytes for new LightMap.", (unsigned long) sizeof *lmap);
-    lmap->id = Texture_Id(tex);
+
+    // Create a texture for it.
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_LIGHTMAPS)+1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
+    tex = Textures_Create(uri, TXF_CUSTOM, (void*)lmap);
+    if(!tex)
+    {
+        Con_Message("Warning, failed creating new Texture for LightMap %s.\n", name);
+        Uri_Delete(uri);
+        free(lmap);
+        return NULL;
+    }
+
     lmap->external = filePath;
 
-    // Add it to the list.
-    lightmapTextures = (lightmap_t**)realloc(lightmapTextures, sizeof *lightmapTextures * ++lightmapTexturesCount);
-    if(!lightmapTextures)
-        Con_Error("R_CreateLightMap: Failed on (re)allocation of %lu bytes enlarging LightMap list.", (unsigned long) sizeof *lightmapTextures * (lightmapTexturesCount-1));
-    lightmapTextures[lightmapTexturesCount-1] = lmap;
-
     Uri_Delete(uri);
-    return lmap;
+    return tex;
 }
 
-lightmap_t* R_GetLightMap(const Uri* uri)
+static int findLightMapTextureForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
+    const Uri* filePath = (Uri*)paramaters;
+    lightmap_t* lmap = (lightmap_t*)Texture_UserData(tex);
+    assert(tex && filePath);
+
+    if(lmap && lmap->external && Uri_Equality(lmap->external, filePath))
     {
-        int i;
-        for(i = 0; i < lightmapTexturesCount; ++i)
-        {
-            lightmap_t* lmap = lightmapTextures[i];
-
-            if(!lmap->external) continue;
-
-            if(Uri_Equality(lmap->external, uri))
-                return lmap;
-        }
+        return (int)Textures_Id(tex);
     }
-    return 0;
+    return 0; // Continue iteration.
 }
 
-/**
- * This is called at final shutdown.
- */
-void R_DestroyLightMaps(void)
+texture_t* R_FindLightMapForFilePath(const Uri* filePath)
 {
-    { int i;
-    for(i = 0; i < lightmapTexturesCount; ++i)
-    {
-        M_Free(lightmapTextures[i]);
-    }}
+    int result;
+    if(!filePath || !Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return NULL;
 
-    if(lightmapTextures)
-        M_Free(lightmapTextures);
-    lightmapTextures = NULL;
-    lightmapTexturesCount = 0;
+    result = Textures_Iterate2(TN_LIGHTMAPS, findLightMapTextureForFilePathWorker, (void*)filePath);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
-flaretex_t* R_CreateFlareTexture(const Uri* filePath)
+texture_t* R_CreateFlareTexture(const Uri* filePath)
 {
     texture_t* tex;
     flaretex_t* fTex;
@@ -2854,85 +2966,74 @@ flaretex_t* R_CreateFlareTexture(const Uri* filePath)
     Uri* uri;
 
     if(!filePath || Str_IsEmpty(Uri_Path(filePath)) || !Str_CompareIgnoreCase(Uri_Path(filePath), "-"))
-        return 0; // Not a flare texture.
+        return NULL;
 
     // Perhaps a "built-in" flare texture id?
     // Try to convert the id to a system flare tex constant idx
     if(Str_At(Uri_Path(filePath), 0) >= '0' && Str_At(Uri_Path(filePath), 0) <= '4' && !Str_At(Uri_Path(filePath), 1))
-        return 0; // Don't create a flaretex for this
+        return NULL;
 
     // Have we already created one for this?
-    fTex = R_GetFlareTexture(filePath);
-    if(fTex) return fTex;
+    tex = R_FindFlareTextureForFilePath(filePath);
+    if(tex) return tex;
 
-    if(M_NumDigits(flareTexturesCount + 1) > 8)
+    if(M_NumDigits(Textures_Count(TN_FLAREMAPS)+1) > 8)
     {
-        Con_Message("Warning: Failed to create new flare texture (max:%i).\n", DDMAXINT);
-        return 0;
+        Con_Message("Warning, failed creating new FlareTex (max:%i).\n", DDMAXINT);
+        return NULL;
     }
 
     /**
      * A new flare texture.
      */
-    // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, flareTexturesCount + 1);
-    uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
-    tex = Textures_Create(uri, flareTexturesCount);
 
     fTex = (flaretex_t*)malloc(sizeof *fTex);
     if(!fTex)
         Con_Error("R_CreateFlareTexture: Failed on allocation of %lu bytes for new FlareTex.", (unsigned long) sizeof *fTex);
 
-    fTex->external = filePath;
-    fTex->id = Texture_Id(tex);
+    // Create a texture for it.
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_FLAREMAPS)+1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
+    tex = Textures_Create(uri, TXF_CUSTOM, (void*)fTex);
+    if(!tex)
+    {
+        Con_Message("Warning, failed creating new Texture for FlareTex %s.\n", name);
+        Uri_Delete(uri);
+        free(fTex);
+        return NULL;
+    }
 
-    // Add it to the list.
-    flareTextures = (flaretex_t**)realloc(flareTextures, sizeof  *flareTextures * ++flareTexturesCount);
-    if(!flareTextures)
-        Con_Error("R_CreateFlareTexture: Failed on (re)allocation of %lu bytes enlarging FlareTex list.", (unsigned long) sizeof *flareTextures * (flareTexturesCount-1));
-    flareTextures[flareTexturesCount-1] = fTex;
+    fTex->external = filePath;
 
     Uri_Delete(uri);
-    return fTex;
+    return tex;
 }
 
-flaretex_t* R_GetFlareTexture(const Uri* uri)
+static int findFlareTextureForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
+    const Uri* filePath = (Uri*)paramaters;
+    flaretex_t* fTex = (flaretex_t*)Texture_UserData(tex);
+    assert(tex && filePath);
+
+    if(fTex && fTex->external && Uri_Equality(fTex->external, filePath))
     {
-        int i;
-        for(i = 0; i < flareTexturesCount; ++i)
-        {
-            flaretex_t* fTex = flareTextures[i];
-
-            if(!fTex->external) continue;
-
-            if(Uri_Equality(fTex->external, uri))
-                return fTex;
-        }
+        return (int)Textures_Id(tex);
     }
-    return 0;
+    return 0; // Continue iteration.
 }
 
-/**
- * This is called at final shutdown.
- */
-void R_DestroyFlareTextures(void)
+texture_t* R_FindFlareTextureForFilePath(const Uri* filePath)
 {
-    { int i;
-    for(i = 0; i < flareTexturesCount; ++i)
-    {
-        M_Free(flareTextures[i]);
-    }}
+    int result;
+    if(!filePath || !Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return NULL;
 
-    if(flareTextures)
-        M_Free(flareTextures);
-    flareTextures = NULL;
-    flareTexturesCount = 0;
+    result = Textures_Iterate2(TN_FLAREMAPS, findFlareTextureForFilePathWorker, (void*)filePath);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
-shinytex_t* R_CreateShinyTexture(const Uri* filePath)
+texture_t* R_CreateShinyTexture(const Uri* filePath)
 {
     texture_t* tex;
     shinytex_t* sTex;
@@ -2940,77 +3041,66 @@ shinytex_t* R_CreateShinyTexture(const Uri* filePath)
     Uri* uri;
 
     // Have we already created one for this?
-    sTex = R_FindShinyTextureForName(filePath);
-    if(sTex) return sTex;
+    tex = R_FindReflectionTextureForFilePath(filePath);
+    if(tex) return tex;
 
-    if(M_NumDigits(shinyTexturesCount + 1) > 8)
+    if(M_NumDigits(Textures_Count(TN_REFLECTIONS)+1) > 8)
     {
-        Con_Message("Warning: Failed to create new shiny texture (max:%i).\n", DDMAXINT);
-        return 0;
+        Con_Message("Warning, failed creating new ShinyTex (max:%i).\n", DDMAXINT);
+        return NULL;
     }
 
     /**
      * A new shiny texture.
      */
 
-    // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, shinyTexturesCount + 1);
-    uri = Uri_NewWithPath2(name, RC_NULL);
-    Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
-    tex = Textures_Create(uri, shinyTexturesCount);
-
     sTex = (shinytex_t*)malloc(sizeof *sTex);
     if(!sTex)
         Con_Error("R_CreateShinyTexture: Failed on allocation of %lu bytes for new ShinyTex.", (unsigned long) sizeof *sTex);
-    sTex->id = Texture_Id(tex);
+
+    // Create a texture for it.
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_REFLECTIONS)+1);
+    uri = Uri_NewWithPath2(name, RC_NULL);
+    Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
+    tex = Textures_Create(uri, TXF_CUSTOM, (void*)sTex);
+    if(!tex)
+    {
+        Con_Message("Warning, failed creating new Texture for ShinyTex %s.\n", name);
+        Uri_Delete(uri);
+        free(sTex);
+        return NULL;
+    }
+
     sTex->external = filePath;
 
-    // Add it to the list.
-    shinyTextures = (shinytex_t**)realloc(shinyTextures, sizeof *shinyTextures * ++shinyTexturesCount);
-    if(!shinyTextures)
-        Con_Error("R_CreateShinyTextures: Failed on (re)allocation of %lu bytes enlarging ShinyTex list.", (unsigned long) sizeof *shinyTextures * (shinyTexturesCount-1));
-    shinyTextures[shinyTexturesCount-1] = sTex;
-
     Uri_Delete(uri);
-    return sTex;
+    return tex;
 }
 
-shinytex_t* R_FindShinyTextureForName(const Uri* uri)
+static int findReflectionTextureForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(uri && !Str_IsEmpty(Uri_Path(uri)))
+    const Uri* filePath = (Uri*)paramaters;
+    shinytex_t* rTex = (shinytex_t*)Texture_UserData(tex);
+    assert(tex && filePath);
+
+    if(rTex && rTex->external && Uri_Equality(rTex->external, filePath))
     {
-        int i;
-        for(i = 0; i < shinyTexturesCount; ++i)
-        {
-            shinytex_t* sTex = shinyTextures[i];
-
-            if(!sTex->external) continue;
-
-            if(Uri_Equality(sTex->external, uri))
-                return sTex;
-        }
+        return (int)Textures_Id(tex);
     }
-    return 0;
+    return 0; // Continue iteration.
 }
 
-/**
- * This is called at final shutdown.
- */
-void R_DestroyShinyTextures(void)
+texture_t* R_FindReflectionTextureForFilePath(const Uri* filePath)
 {
-    { int i;
-    for(i = 0; i < shinyTexturesCount; ++i)
-    {
-        M_Free(shinyTextures[i]);
-    }}
+    int result;
+    if(!filePath || !Str_IsEmpty(Uri_Path(filePath))) return NULL;
 
-    if(shinyTextures)
-        M_Free(shinyTextures);
-    shinyTextures = NULL;
-    shinyTexturesCount = 0;
+    result = Textures_Iterate2(TN_REFLECTIONS, findReflectionTextureForFilePathWorker, (void*)filePath);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
-masktex_t* R_CreateMaskTexture(const Uri* filePath, int width, int height)
+texture_t* R_CreateMaskTexture(const Uri* filePath, int width, int height)
 {
     texture_t* tex;
     masktex_t* mTex;
@@ -3018,82 +3108,65 @@ masktex_t* R_CreateMaskTexture(const Uri* filePath, int width, int height)
     Uri* uri;
 
     // Have we already created one for this?
-    mTex = R_FindMaskTextureForName(filePath);
-    if(mTex) return mTex;
+    tex = R_FindMaskTextureForFilePath(filePath);
+    if(tex) return tex;
 
-    if(M_NumDigits(maskTexturesCount + 1) > 8)
+    if(M_NumDigits(Textures_Count(TN_MASKS)+1) > 8)
     {
         Con_Message("Warning, failed to create mask image (max:%i).\n", DDMAXINT);
-        return 0;
+        return NULL;
     }
 
     /**
      * A new shiny texture.
      */
 
+    mTex = (masktex_t*)malloc(sizeof *mTex);
+    if(!mTex)
+        Con_Error("R_CreateMaskTexture: Failed on allocation of %lu bytes for new MaskTex.", (unsigned long) sizeof *mTex);
+
     // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, maskTexturesCount + 1);
+    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_MASKS)+1);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_MASKS_NAME);
-    tex = Textures_CreateWithDimensions(uri, maskTexturesCount, width, height);
+    tex = Textures_CreateWithDimensions(uri, TXF_CUSTOM, width, height, (void*)mTex);
     if(!tex)
     {
         ddstring_t* path = Uri_ToString(filePath);
         Con_Message("Warning, failed creating Texture for mask image: %s\n", F_PrettyPath(Str_Text(path)));
         Str_Delete(path);
         Uri_Delete(uri);
-        return 0;
+        free(mTex);
+        return NULL;
     }
 
-    mTex = (masktex_t*)malloc(sizeof *mTex);
-    if(!mTex)
-        Con_Error("R_CreateMaskTexture: Failed on allocation of %lu bytes for new MaskTex.", (unsigned long) sizeof *mTex);
-    mTex->id = Texture_Id(tex);
     mTex->external = filePath;
 
-    // Add it to the list.
-    maskTextures = (masktex_t**)realloc(maskTextures, sizeof *maskTextures * ++maskTexturesCount);
-    if(!maskTextures)
-        Con_Error("R_CreateMaskTexture: Failed on (re)allocation of %lu bytes enlarging MaskTex list.", (unsigned long) sizeof *maskTextures * (maskTexturesCount-1));
-    maskTextures[maskTexturesCount-1] = mTex;
-
     Uri_Delete(uri);
-    return mTex;
+    return tex;
 }
 
-masktex_t* R_FindMaskTextureForName(const Uri* uri)
+static int findMaskTextureForFilePathWorker(texture_t* tex, void* paramaters)
 {
-    if(uri && !Str_IsEmpty(Uri_Path(uri)))
+    const Uri* filePath = (Uri*)paramaters;
+    masktex_t* mTex = (masktex_t*)Texture_UserData(tex);
+    assert(tex && filePath);
+
+    if(mTex && mTex->external && Uri_Equality(mTex->external, filePath))
     {
-        int i;
-        for(i = 0; i < maskTexturesCount; ++i)
-        {
-            masktex_t* mTex = maskTextures[i];
-
-            if(!mTex->external) continue;
-
-            if(Uri_Equality(mTex->external, uri))
-                return mTex;
-        }
+        return (int)Textures_Id(tex);
     }
-    return 0;
+    return 0; // Continue iteration.
 }
 
-/**
- * This is called at final shutdown.
- */
-void R_DestroyMaskTextures(void)
+texture_t* R_FindMaskTextureForFilePath(const Uri* filePath)
 {
-    { int i;
-    for(i = 0; i < maskTexturesCount; ++i)
-    {
-        M_Free(maskTextures[i]);
-    }}
+    int result;
+    if(!filePath || !Str_IsEmpty(Uri_Path(filePath))) return NULL;
 
-    if(maskTextures)
-        M_Free(maskTextures);
-    maskTextures = NULL;
-    maskTexturesCount = 0;
+    result = Textures_Iterate2(TN_MASKS, findMaskTextureForFilePathWorker, (void*)filePath);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
 }
 
 boolean R_DrawVLightVector(const vlight_t* light, void* context)
@@ -3123,4 +3196,10 @@ float RColor_AverageColorMulAlpha(rcolor_t* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3 * c->alpha;
+}
+
+void R_DestroyTextureLUTs(void)
+{
+    R_DestroyFlatOriginalIndexMap();
+    R_DestroyPatchCompositeOriginalIndexMap();
 }

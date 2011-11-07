@@ -341,7 +341,12 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
-    sprTex = R_SpriteTextureByIndex(Texture_TypeIndex(MSU(ms, MTU_PRIMARY).tex.texture));
+#if _DEBUG
+    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+        Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
+#endif
+
+    sprTex = (spritetex_t*)Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
     assert(sprTex);
     texSpec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
     assert(spec);

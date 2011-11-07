@@ -52,8 +52,8 @@ typedef struct mapinfo_s {
     uint            nextMap;
     short           cdTrack;
     char            name[32];
-    materialnum_t   sky1Material;
-    materialnum_t   sky2Material;
+    materialid_t    sky1Material;
+    materialid_t    sky2Material;
     float           sky1ScrollDelta;
     float           sky2ScrollDelta;
     boolean         doubleSky;
@@ -443,25 +443,25 @@ uint P_GetMapNextMap(uint map)
 }
 
 /**
- * Retrieve the sky1 material num of the given map.
+ * Retrieve the sky1 material of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
  * @return              The sky1 material num of the map.
  */
-materialnum_t P_GetMapSky1Material(uint map)
+materialid_t P_GetMapSky1Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky1Material;
 }
 
 /**
- * Retrieve the sky2 material num of the given map.
+ * Retrieve the sky2 material of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
  * @return              The sky2 material num of the map.
  */
-materialnum_t P_GetMapSky2Material(uint map)
+materialid_t P_GetMapSky2Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky2Material;
 }

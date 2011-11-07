@@ -23,31 +23,25 @@
  */
 
 /**
- * Texture Management
+ * GL-Texture Management
  */
 
-#ifndef LIBDENG_TEXTURE_MANAGER_H
-#define LIBDENG_TEXTURE_MANAGER_H
+#ifndef LIBDENG_GLTEXTURE_MANAGER_H
+#define LIBDENG_GLTEXTURE_MANAGER_H
 
 #include "dfile.h"
-#include "r_data.h"
-#include "r_model.h"
-#include "gl_model.h"
-#include "gl_defer.h"
+#include "r_data.h" /// \todo should not be included here.
+
+#include "texture.h"
 #include "texturevariantspecification.h"
 
 struct image_s;
 struct texturecontent_s;
-struct texture_s;
 struct texturevariant_s;
-struct texturevariantspecification_s;
 
 #define TEXQ_BEST               8
 #define MINTEXWIDTH             8
 #define MINTEXHEIGHT            8
-
-/// Components within a Texture path hierarchy are delimited by this character.
-#define TEXTUREDIRECTORY_DELIMITER       '/'
 
 extern int ratioLimit;
 extern int mipmapping, filterUI, texQuality, filterSprites;
@@ -108,12 +102,6 @@ void GL_ReleaseSystemTextures(void);
  * DD_SetupLevel.
  */
 void GL_ReleaseTexturesForRawImages(void);
-
-void GL_DestroyTextures(void);
-
-void GL_DestroyRuntimeTextures(void);
-
-void GL_DestroySystemTextures(void);
 
 /**
  * Called when changing the value of any cvar affecting texture quality which
@@ -204,28 +192,29 @@ byte GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
  *     2 = found and prepared an external resource.
  */
 byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
-byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
-    const char* optionalSuffix, boolean silent);
+byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath, const char* optionalSuffix,
+    boolean silent);
 
 byte GL_LoadFlatLump(struct image_s* image, DFile* file);
 
-byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass,
-    int tmap, int border, patchtex_t* patchTex);
-byte GL_LoadPatchLumpAsSprite(struct image_s* image, DFile* file, int tclass,
-    int tmap, int border, spritetex_t* spriteTex);
+byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass, int tmap,
+    int border, texture_t* tex);
+
+byte GL_LoadPatchLumpAsSprite(struct image_s* image, DFile* file, int tclass, int tmap,
+    int border, texture_t* tex);
 
 byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 
-byte GL_LoadPatchComposite(struct image_s* image, const struct texture_s* tex);
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, const struct texture_s* tex, boolean zeroMask);
+byte GL_LoadPatchComposite(struct image_s* image, texture_t* tex);
+
+byte GL_LoadPatchCompositeAsSky(struct image_s* image, texture_t* tex, boolean zeroMask);
 
 /**
- * Set mode to 2 to include an alpha channel. Set to 3 to make the
- * actual pixel colors all white.
+ * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
+ * colors all white.
  */
 DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
-    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT,
-    int flags);
+    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
 
 /**
  * Prepare a texture used in the lighting system. 'which' must be one
@@ -258,28 +247,27 @@ DGLuint GL_GetLightMapTexture(const Uri* path);
 DGLuint GL_GetFlareTexture(const Uri* path, int oldIdx);
 
 /**
- * Determine the optimal size for a texture. Usually the dimensions are
- * scaled upwards to the next power of two.
+ * Determine the optimal size for a texture. Usually the dimensions are scaled
+ * upwards to the next power of two.
  *
  * @param noStretch  If @c true, the stretching can be skipped.
- * @param isMipMapped  If @c true, we will require mipmaps (this has an
- *      effect on the optimal size).
+ * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
+ *     on the optimal size).
  */
-boolean GL_OptimalTextureSize(int width, int height, boolean noStretch,
-    boolean isMipMapped, int* optWidth, int* optHeight);
+boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+    int* optWidth, int* optHeight);
 
 /**
- * Compare the given TextureVariantSpecifications and determine whether
- * they can be considered equal (dependent on current engine state and
- * the available features of the GL implementation).
+ * Compare the given TextureVariantSpecifications and determine whether they can
+ * be considered equal (dependent on current engine state and the available features
+ * of the GL implementation).
  */
 int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
     const texturevariantspecification_t* b);
 
 /**
- * Prepare a TextureVariantSpecification according to usage context.
- * If incomplete context information is supplied, suitable defaults are
- * chosen in their place.
+ * Prepare a TextureVariantSpecification according to usage context. If incomplete
+ * context information is supplied, suitable defaults are chosen in their place.
  *
  * @param tc  Usage context.
  * @param flags  @see textureVariantSpecificationFlags
@@ -287,8 +275,7 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
  * @param tClass  Color palette translation class.
  * @param tMap  Color palette translation map.
  *
- * @return  Ptr to a rationalized and valid TextureVariantSpecification
- *      or @c NULL if out of memory.
+ * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     texturevariantusagecontext_t tc, int flags, byte border, int tClass,
@@ -296,25 +283,26 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha);
 
 /**
- * Prepare a TextureVariantSpecification according to usage context.
- * If incomplete context information is supplied, suitable defaults are
- * chosen in their place.
+ * Prepare a TextureVariantSpecification according to usage context. If incomplete
+ * context information is supplied, suitable defaults are chosen in their place.
  *
- * @return  Ptr to a rationalized and valid TextureVariantSpecification
- *      or @c NULL if out of memory.
+ * @return  A rationalized and valid TextureVariantSpecification or @c NULL if out of memory.
  */
 texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast);
 
 /**
- * Output a human readable representation of TextureVariantSpecification
- * to console output.
+ * Output a human readable representation of TextureVariantSpecification to console.
  *
  * @param spec  Specification to echo.
  */
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
 
-void GL_ReleaseGLTexturesForTexture(struct texture_s* tex);
+/**
+ * \note Can also be used as an iterator callback.
+ */
+int GL_ReleaseGLTexturesForTexture2(texture_t* tex, void* paramaters);
+int GL_ReleaseGLTexturesForTexture(texture_t* tex); /*paramaters=NULL*/
 
 /// Result of a request to prepare a TextureVariant
 typedef enum {
@@ -340,50 +328,17 @@ typedef enum {
  * @param returnOutcome  If not @c NULL detailed result information for this
  *      process is written back here.
  *
- * @return  GL-name of the prepared variant if successful else @c 0
+ * @return  GL-name of the prepared texture if successful else @c 0
  */
-DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
+DGLuint GL_PrepareTexture2(texture_t* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+DGLuint GL_PrepareTexture(texture_t* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
  * \todo Should not need to be public.
  */
-const struct texturevariant_s* GL_PrepareTextureVariant2(struct texture_s* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTextureVariant(struct texture_s* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
-
-/// @return  Number of unique Textures in the collection.
-uint Textures_Count(void);
-
-/// @return  Texture associated with unique identifier @a textureNum else @c NULL.
-struct texture_s* Textures_ToTexture(textureid_t textureNum);
-
-/// @return  Unique identifier associated with @a material else @c 0.
-textureid_t Textures_ToTextureNum(struct texture_s* texture);
-
-/**
- * Search the Textures collection for a Texture associated with @a uri.
- * @return  Found Texture else @c NULL.
- */
-struct texture_s* Textures_TextureForUri2(const Uri* uri, boolean quiet);
-struct texture_s* Textures_TextureForUri(const Uri* uri); /* quiet=false */
-
-/// Same as Textures::TextureForUri except @a uri is a C-string.
-struct texture_s* Textures_TextureForUriCString2(const char* uri, boolean quiet);
-struct texture_s* Textures_TextureForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
-
-/// @return  Unique name/path-to @a Texture. Must be destroyed with Uri_Delete().
-Uri* Textures_ComposeUri(struct texture_s* texture);
-
-struct texture_s* Textures_TextureForTypeIndex(int index, texturenamespaceid_t texNamespace);
-
-uint Textures_TypeIndexForUri2(const Uri* uri, boolean quiet);
-uint Textures_TypeIndexForUri(const Uri* uri); /* quiet=false */
-
-texturenamespaceid_t Textures_NamespaceId(const struct texture_s* tex);
-
-struct texture_s* Textures_CreateWithDimensions(const Uri* uri, uint typeIndex, int width, int height);
-struct texture_s* Textures_Create(const Uri* uri, uint typeIndex); /* width=0, height=0*/
+const struct texturevariant_s* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+const struct texturevariant_s* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
 
 /**
  * Change the GL minification filter for all prepared TextureVariants.
@@ -391,6 +346,7 @@ struct texture_s* Textures_Create(const Uri* uri, uint typeIndex); /* width=0, h
 void GL_SetAllTexturesMinFilter(int minFilter);
 
 void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace);
+
 void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId);
 
-#endif /* LIBDENG_TEXTURE_MANAGER_H */
+#endif /* LIBDENG_GLTEXTURE_MANAGER_H */

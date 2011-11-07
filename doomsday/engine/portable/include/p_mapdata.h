@@ -72,8 +72,6 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef int textureid_t; /// \todo Does not belong here.
-
 typedef struct fvertex_s {
     float           pos[2];
 } fvertex_t;
