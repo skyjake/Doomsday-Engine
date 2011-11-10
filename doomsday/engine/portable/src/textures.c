@@ -359,6 +359,8 @@ void Textures_Init(void)
 {
     int i;
 
+    VERBOSE( Con_Message("Initializing Textures collection...\n") )
+
     textureIdMap = NULL;
     textureIdMapSize = 0;
 
