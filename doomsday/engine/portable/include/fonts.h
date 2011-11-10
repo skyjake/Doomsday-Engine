@@ -38,6 +38,9 @@
 
 #include "def_data.h"
 #include "font.h"
+#include "bitmapfont.h"
+
+struct fontbind_s;
 
 enum fontnamespaceid_t; // Defined in dd_share.h
 
@@ -97,7 +100,7 @@ font_t* Fonts_ToFont(fontid_t fontId);
 fontid_t Fonts_Id(font_t* font);
 
 /// @return  Unique identifier of the namespace this Font is in.
-fontnamespaceid_t Fonts_Namespace(font_t* font);
+fontnamespaceid_t Fonts_Namespace(struct fontbind_s* font);
 
 /// @return  Symbolic name/path-to this Font. Must be destroyed with Str_Delete().
 ddstring_t* Fonts_ComposePath(font_t* font);

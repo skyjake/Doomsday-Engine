@@ -2252,12 +2252,7 @@ texturenamespaceid_t DD_ParseTextureNamespace(const char* str)
 /// \note Part of the Doomsday public API.
 fontnamespaceid_t DD_ParseFontNamespace(const char* str)
 {
-    if(!str || 0 == strlen(str)) return FN_ANY;
-
-    if(!stricmp(str, FN_GAME_NAME))     return FN_GAME;
-    if(!stricmp(str, FN_SYSTEM_NAME))   return FN_SYSTEM;
-
-    return FONTNAMESPACE_COUNT; // Unknown.
+    return Fonts_ParseNamespace(str);
 }
 
 struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace)
