@@ -732,6 +732,7 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     static float minLevel = 0, maxLevel = 0;
 
     int off, secY, maxY = 0, minY = 0, p;
+    subsector_t* ssec;
     sector_t* sector;
     source_t* src;
     char buf[80];
@@ -741,7 +742,10 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     else
         src = SBE_GetNearest();
 
-    sector = R_PointInSubsector(src->pos[VX], src->pos[VY])->sector;
+    ssec = R_PointInSubsector(src->pos[VX], src->pos[VY]);
+    if(!ssec) return;
+
+    sector = ssec->sector;
 
     if(lastSector != sector)
     {
