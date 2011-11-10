@@ -32,7 +32,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
+#include "de_graphics.h"
 
 #include "def_data.h"
 #include "gl_main.h"

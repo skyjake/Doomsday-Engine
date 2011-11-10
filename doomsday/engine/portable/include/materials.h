@@ -25,7 +25,6 @@
 #ifndef LIBDENG_MATERIALS_H
 #define LIBDENG_MATERIALS_H
 
-#include "gl_texmanager.h"
 #include "def_data.h"
 #include "material.h"
 
