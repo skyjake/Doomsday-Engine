@@ -188,11 +188,15 @@ static variantcachequeue_t* variantCacheQueue;
  */
 static blockset_t* materialsBlockSet;
 static materiallist_t* materials;
+static uint materialCount;
 
-static materialid_t bindingsCount;
-static materialid_t bindingsMax;
-static materialbind_t** bindings;
+static uint bindingCount = 0;
 
+/// LUT which translates materialid_t to materialbind_t*. Index with materialid_t-1
+static uint bindingIdMapSize = 0;
+static materialbind_t** bindingIdMap = NULL;
+
+// Material namespaces contain mappings between names and MaterialBind instances.
 static PathDirectory* namespaces[MATERIALNAMESPACE_COUNT];
 
 void Materials_Register(void)
@@ -425,8 +429,8 @@ static materialvariant_t* chooseVariant(material_t* mat,
 
 static materialbind_t* bindById(uint bindId)
 {
-    if(0 == bindId || bindId > bindingsCount) return 0;
-    return bindings[bindId-1];
+    if(0 == bindId || bindId > bindingCount) return 0;
+    return bindingIdMap[bindId-1];
 }
 
 static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
@@ -481,12 +485,12 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
     if(!mb)
     {
         // Acquire a new unique identifier for this binding.
-        const materialid_t bindId = ++bindingsCount;
+        const uint bindId = ++bindingCount;
 
         mb = (materialbind_t*) malloc(sizeof *mb);
         if(!mb)
         {
-            Con_Error("Materials::newMaterialUriBinding: Failed on allocation of %lu bytes for new MaterialBind.",
+            Con_Error("Materials::newMaterialBind: Failed on allocation of %lu bytes for new MaterialBind.",
                 (unsigned long) sizeof *mb);
             exit(1); // Unreachable.
         }
@@ -505,16 +509,15 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
         }
 
         // Add the new binding to the bindings index/map.
-        if(bindingsCount > bindingsMax)
+        if(bindingCount > bindingIdMapSize)
         {
             // Allocate more memory.
-            bindingsMax += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
-            bindings = (materialbind_t**) realloc(bindings, sizeof *bindings * bindingsMax);
-            if(!bindings)
-                Con_Error("Materials:newMaterialUriBinding: Failed on (re)allocation of %lu bytes for MaterialBind map.",
-                    (unsigned long) sizeof *bindings * bindingsMax);
+            bindingIdMapSize += MATERIALS_BINDINGMAP_BLOCK_ALLOC;
+            bindingIdMap = (materialbind_t**) realloc(bindingIdMap, sizeof *bindingIdMap * bindingIdMapSize);
+            if(!bindingIdMap)
+                Con_Error("Materials::newMaterialBind: Failed on (re)allocation of %lu bytes enlarging MaterialBind map.", (unsigned long) sizeof *bindingIdMap * bindingIdMapSize);
         }
-        bindings[bindingsCount-1] = mb; /* 1-based index */
+        bindingIdMap[bindingCount-1] = mb; /* 1-based index */
     }
 
     // (Re)configure the binding.
@@ -528,6 +531,7 @@ static material_t* allocMaterial(void)
 {
     material_t* mat = BlockSet_Allocate(materialsBlockSet);
     Material_Initialize(mat);
+    materialCount++;
     return mat;
 }
 
@@ -560,9 +564,12 @@ void Materials_Init(void)
 
     materialsBlockSet = BlockSet_New(sizeof(material_t), MATERIALS_BLOCK_ALLOC);
     materials = NULL;
+    materialCount = 0;
 
-    bindings = NULL;
-    bindingsCount = bindingsMax = 0;
+    bindingCount = 0;
+
+    bindingIdMap = NULL;
+    bindingIdMapSize = 0;
 
     for(i = 0; i < MATERIALNAMESPACE_COUNT; ++i)
     {
@@ -590,6 +597,7 @@ static void destroyMaterials(void)
     }
     BlockSet_Delete(materialsBlockSet);
     materialsBlockSet = NULL;
+    materialCount = 0;
 }
 
 static int clearBinding(PathDirectoryNode* node, void* paramaters)
@@ -616,12 +624,12 @@ static void destroyBindings(void)
     }
 
     // Clear the binding index/map.
-    if(bindings)
+    if(bindingIdMap)
     {
-        free(bindings);
-        bindings = NULL;
+        free(bindingIdMap), bindingIdMap = NULL;
+        bindingIdMapSize = 0;
     }
-    bindingsCount = bindingsMax = 0;
+    bindingCount = 0;
 }
 
 void Materials_Shutdown(void)
@@ -711,6 +719,7 @@ void Materials_ClearDefinitionLinks(void)
 
 void Materials_Rebuild(material_t* mat, ded_material_t* def)
 {
+    uint i;
     if(!initedOk || !mat || !def) return;
 
     /// \todo We should be able to rebuild the variants.
@@ -726,14 +735,13 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     Material_SetShinyMaskTexture(mat, NULL);
 
     // Update bindings.
-    { materialid_t i;
-    for(i = 0; i < bindingsCount; ++i)
+    for(i = 0; i < bindingCount; ++i)
     {
-        materialbind_t* mb = bindings[i];
-        if(MaterialBind_Material(mb) != mat) continue;
+        materialbind_t* mb = bindingIdMap[i];
+        if(!mb || MaterialBind_Material(mb) != mat) continue;
 
         updateMaterialBindInfo(mb, false /*do not create, only update if present*/);
-    }}
+    }
 }
 
 void Materials_PurgeCacheQueue(void)
@@ -1467,7 +1475,7 @@ const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 
 uint Materials_Size(void)
 {
-    return bindingsCount;
+    return materialCount;
 }
 
 uint Materials_Count(materialnamespaceid_t namespaceId)
