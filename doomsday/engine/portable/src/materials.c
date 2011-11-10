@@ -752,49 +752,6 @@ void Materials_ProcessCacheQueue(void)
     }
 }
 
-static int releaseGLTexturesForMaterialWorker(materialvariant_t* variant, void* paramaters)
-{
-    int i, layerCount = Material_LayerCount(MaterialVariant_GeneralCase(variant));
-    for(i = 0; i < layerCount; ++i)
-    {
-        const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
-        texture_t* tex = Textures_ToTexture(ml->texId);
-        if(!tex) continue;
-
-        GL_ReleaseGLTexturesForTexture(tex);
-    }
-    return 0; // Continue iteration.
-}
-
-static int releaseGLTexturesForMaterial(PathDirectoryNode* node, void* paramaters)
-{
-    materialbind_t* mb = PathDirectoryNode_UserData(node);
-    material_t* mat = MaterialBind_Material(mb);
-    if(mat)
-    {
-        Material_IterateVariants(mat, releaseGLTexturesForMaterialWorker, NULL);
-    }
-    return 0; // Continue iteration.
-}
-
-void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId)
-{
-    PathDirectory* matDirectory;
-
-    if(namespaceId == MN_ANY)
-    {   // Delete the lot.
-        GL_ReleaseGLTexturesByNamespace(TN_ANY);
-        return;
-    }
-
-    if(!VALID_MATERIALNAMESPACEID(namespaceId))
-        Con_Error("Materials_ReleaseGLTextures: Internal error, "
-                  "invalid materialgroup '%i'.", (int) namespaceId);
-
-    matDirectory = getDirectoryForNamespaceId(namespaceId);
-    PathDirectory_Iterate(matDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, releaseGLTexturesForMaterial);
-}
-
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
 {
     return Materials_NamespaceName(materialNamespaceIdForTextureNamespaceId(texNamespace));

@@ -103,7 +103,7 @@ Uri* Textures_ComposeUri(texture_t* texture);
  * @return  Found Texture else @c NULL.
  */
 texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet);
-texture_t* Textures_TextureForUri(const Uri* uri); /* quiet=false */
+texture_t* Textures_TextureForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
 /// Same as Textures::TextureForUri except @a uri is a C-string.
 texture_t* Textures_TextureForUriCString2(const char* uri, boolean quiet);

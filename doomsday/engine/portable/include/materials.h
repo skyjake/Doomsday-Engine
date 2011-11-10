@@ -155,14 +155,6 @@ void Materials_ClearAnimGroups(void);
 const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t namespaceId);
 
 /**
- * Delete all GL texture instances linked to Materials.
- *
- * @param mnamespace @c MN_ANY = delete everything, ELSE
- *      Only delete those currently in use by Materials in @a namespaceId.
- */
-void Materials_ReleaseGLTextures(materialnamespaceid_t namespaceId);
-
-/**
  * Prepare a MaterialVariantSpecification according to a usage context. If
  * incomplete context information is supplied, suitable default values will
  * be chosen in their place.
