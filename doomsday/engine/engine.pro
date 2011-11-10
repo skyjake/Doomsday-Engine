@@ -187,6 +187,7 @@ DENG_HEADERS = \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
     portable/include/material.h \
+    portable/include/materials.h \
     portable/include/materialvariant.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
@@ -217,7 +218,6 @@ DENG_HEADERS = \
     portable/include/p_mapdata.h \
     portable/include/p_maptypes.h \
     portable/include/p_maputil.h \
-    portable/include/p_materialmanager.h \
     portable/include/p_object.h \
     portable/include/p_objlink.h \
     portable/include/p_particle.h \
@@ -436,6 +436,7 @@ SOURCES += \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
+    portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
@@ -466,7 +467,6 @@ SOURCES += \
     portable/src/p_intercept.c \
     portable/src/p_linedef.c \
     portable/src/p_maputil.c \
-    portable/src/p_materialmanager.c \
     portable/src/p_mobj.c \
     portable/src/p_objlink.c \
     portable/src/p_particle.c \

@@ -1,4 +1,4 @@
-/**\file p_materialmanager.h
+/**\file materials.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html

@@ -29,7 +29,7 @@
 #ifndef LIBDENG_REFRESH
 #define LIBDENG_REFRESH
 
-#include "p_materialmanager.h"
+#include "materials.h"
 #include "textures.h"
 #include "r_data.h"
 #include "r_draw.h"

@@ -36,7 +36,7 @@
 
 #include "def_data.h"
 #include "gl_main.h"
-#include "p_materialmanager.h"
+#include "materials.h"
 
 // Helper Routines -------------------------------------------------------
 
