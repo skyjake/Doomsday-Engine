@@ -760,8 +760,7 @@ void GL_UseFog(int yes)
  */
 void GL_TotalReset(void)
 {
-    if(isDedicated)
-        return;
+    if(isDedicated) return;
 
     // Update the secondary title and the game status.
     Rend_ConsoleUpdateTitle();
@@ -769,9 +768,6 @@ void GL_TotalReset(void)
     // Release all texture memory.
     GL_ResetTextureManager();
     GL_ReleaseReservedNames();
-
-    Fonts_ReleaseRuntimeGLResources();
-    Fonts_ReleaseSystemGLResources();
 
 #if _DEBUG
     Z_CheckHeap();
@@ -994,7 +990,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(NULL != rawTex)
     {
-        DGLuint tex = GL_PrepareRawTex(rawTex);
+        DGLuint tex = GL_PrepareRawTexture(rawTex);
         GL_BindTexture(tex, (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);

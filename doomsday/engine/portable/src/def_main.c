@@ -1045,11 +1045,11 @@ void Def_Read(void)
         font_t* font = Fonts_FontForUri2(def->uri, true/*quiet please*/);
         if(!font)
         {   // A new Font.
-            Fonts_CreateBitmapCompositeFromDef(def);
+            Fonts_CreateFromDef(def);
             continue;
         }
         // Update existing.
-        Fonts_RebuildBitmapComposite(font, def);
+        Fonts_Rebuild(font, def);
     }
 
     // Sprite names.

@@ -87,7 +87,7 @@ static timespan_t busyTime;
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
-static fontnum_t busyFont = 0;
+static fontid_t busyFont = 0;
 static int busyFontHgt; // Height of the font.
 static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
@@ -285,10 +285,10 @@ static void Con_BusyPrepareResources(void)
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(theWindow->width > 640)? 0 : 1;
-        font_t* font = Fonts_LoadExternal(fonts[fontIdx].name, fonts[fontIdx].path);
+        font_t* font = Fonts_CreateFromFile(fonts[fontIdx].name, fonts[fontIdx].path);
         if(NULL != font)
         {
-            busyFont = Fonts_ToFontNum(font);
+            busyFont = Fonts_Id(font);
             FR_SetFont(busyFont);
             FR_LoadDefaultAttrib();
             busyFontHgt = FR_SingleLineHeight("Busy");

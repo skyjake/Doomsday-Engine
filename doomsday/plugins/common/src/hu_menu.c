@@ -384,7 +384,7 @@ mn_page_t MainMenu = {
 #else
     {  97, 64 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawMainPage,
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
     //0, 0,
@@ -411,7 +411,7 @@ mn_page_t GameTypeMenu = {
 #else
     { 104, 65 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawGameTypePage, NULL,
     &MainMenu,
     //0, 2
@@ -424,7 +424,7 @@ mn_object_t* PlayerClassMenuObjects;
 mndata_button_t* PlayerClassMenuButtons;
 
 mn_page_t PlayerClassMenu = {
-    0, { 66, 66 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    0, { 66, 66 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawPlayerClassPage, NULL,
     &GameTypeMenu,
     //0, 0
@@ -442,7 +442,7 @@ mn_page_t EpisodeMenu = {
 # else
     { 80, 50 },
 # endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawEpisodePage, NULL,
     &GameTypeMenu,
     //0, 0
@@ -477,7 +477,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 120, 44 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 120, 44 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &PlayerClassMenu,
     //0, 5
@@ -494,7 +494,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 38, 30 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 38, 30 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &EpisodeMenu,
     //0, 5
@@ -509,7 +509,7 @@ static mn_object_t SkillMenuObjects[] = {
 };
 static mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 48, 63 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 48, 63 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &GameTypeMenu,
     //0, 4
@@ -526,7 +526,7 @@ static mn_object_t SkillMenuObjects[] = {
 
 mn_page_t SkillMenu = {
     SkillMenuObjects,
-    { 48, 63 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 48, 63 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSkillPage, NULL,
     &EpisodeMenu,
     //0, 5
@@ -545,7 +545,7 @@ static mn_object_t FilesMenuObjects[] = {
 
 mn_page_t FilesMenu = {
     FilesMenuObjects,
-    { 110, 60 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 110, 60 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     NULL, NULL,
     &MainMenu,
     //0, 2
@@ -586,7 +586,7 @@ mn_page_t LoadMenu = {
 #else
     { 70, 30 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawLoadGamePage, NULL,
     &MainMenu,
     //0, NUMSAVESLOTS
@@ -613,7 +613,7 @@ mn_page_t SaveMenu = {
 #else
     { 64, 10 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSaveGamePage, NULL,
     &MainMenu,
     //0, 1+NUMSAVESLOTS
@@ -657,7 +657,7 @@ mn_page_t OptionsMenu = {
 #else
     { 110, 63 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawOptionsPage, NULL,
     &MainMenu,
     //0,
@@ -694,7 +694,7 @@ mn_page_t SoundMenu = {
 #elif __JDOOM__ || __JDOOM64__
     { 97, 40 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawSoundPage, NULL,
     &OptionsMenu,
     //0, 5
@@ -995,7 +995,7 @@ mn_page_t HudMenu = {
 #else
     { 97, 28 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawHUDPage, NULL,
     &OptionsMenu,
 #if __JHEXEN__
@@ -1050,7 +1050,7 @@ static mn_object_t InventoryMenuObjects[] = {
 
 mn_page_t InventoryMenu = {
     InventoryMenuObjects,
-    { 78, 48 }, { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { 78, 48 }, { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawInventoryPage, NULL,
     &OptionsMenu,
     //0, 12, { 12, 48 }
@@ -1164,7 +1164,7 @@ mn_page_t WeaponMenu = {
 #elif __JHEXEN__
     { 78, 38 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawWeaponsPage, NULL,
     &OptionsMenu,
     //0, 12, { 12, 38 }
@@ -1267,7 +1267,7 @@ mn_page_t AutomapMenu = {
 #else
     { 70, 40 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawAutomapPage, NULL,
     &OptionsMenu,
 #if __JHERETIC__ || __JHEXEN__
@@ -1403,7 +1403,7 @@ mn_page_t GameplayMenu = {
 #else
     { 30, 40 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawGameplayPage, NULL,
     &OptionsMenu,
 #if __JHEXEN__
@@ -1433,7 +1433,7 @@ mn_page_t MultiplayerMenu = {
 #else
     { 97, 65 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawMultiplayerPage, NULL,
     &GameTypeMenu,
     //0, 2
@@ -1510,7 +1510,7 @@ mn_page_t PlayerSetupMenu = {
 #else
     { 70, 54 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawPlayerSetupPage, NULL,
     &MultiplayerMenu,
 #if __JHEXEN__
@@ -1562,7 +1562,7 @@ static mn_page_t ColorWidgetMenu = {
 #else
     { 98, 60 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     NULL, Hu_MenuColorWidgetCmdResponder,
     &OptionsMenu,
     //0, 8

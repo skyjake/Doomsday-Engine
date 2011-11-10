@@ -655,7 +655,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         avgHeight += cf->_chars[i].h;
 
         if(!(novideo || isDedicated) && cf->_chars[i].tex == 0)
-            cf->_chars[i].tex = GL_PreparePatch(R_PatchTextureByIndex(patch));
+            cf->_chars[i].tex = GL_PreparePatchTexture(R_PatchTextureByIndex(patch));
     }}
 
     font->_noCharWidth  = avgWidth  / numPatches; 

@@ -1032,7 +1032,7 @@ typedef enum {
     MN_INVALID /// Special value used to signify an invalid namespace identifier.
 } materialnamespaceid_t;
 
-#define MATERIALNAMESPACE_COUNT  (MATERIALNAMESPACE_LAST + 1 - MATERIALNAMESPACE_FIRST)
+#define MATERIALNAMESPACE_COUNT  (MATERIALNAMESPACE_LAST - MATERIALNAMESPACE_FIRST + 1)
 
 /// @c true= val can be interpreted as a valid material namespace identifier.
 #define VALID_MATERIALNAMESPACEID(val) ((val) >= MATERIALNAMESPACE_FIRST && (val) <= MATERIALNAMESPACE_LAST)
@@ -1100,12 +1100,14 @@ typedef enum {
     FONTNAMESPACE_FIRST = 3000,
     FN_SYSTEM = FONTNAMESPACE_FIRST,
     FN_GAME,
-    FONTNAMESPACE_LAST = FN_GAME
+    FONTNAMESPACE_LAST = FN_GAME,
+    FN_INVALID /// Special value used to signify an invalid namespace identifier.
 } fontnamespaceid_t;
 
-#define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST + 1 - FONTNAMESPACE_FIRST)
+#define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST - FONTNAMESPACE_FIRST + 1)
 
-#define VALID_FONTNAMESPACEID(id)   ((id) >= FONTNAMESPACE_FIRST && (id) <= FONTNAMESPACE_LAST)
+/// @c true= val can be interpreted as a valid texture namespace identifier.
+#define VALID_FONTNAMESPACEID(val)  ((val) >= FONTNAMESPACE_FIRST && (val) <= FONTNAMESPACE_LAST)
 
 /// Patch Info
 typedef struct {

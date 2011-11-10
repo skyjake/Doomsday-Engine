@@ -1073,7 +1073,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     Demo_StopPlayback();
 
     GL_PurgeDeferredTasks();
-    GL_ClearTextureMemory();
+    GL_ResetTextureManager();
     GL_SetFilter(false);
 
     // If a game is presently loaded; unload it.
@@ -1118,7 +1118,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_DestroyColorPalettes();
 
         Textures_ClearRuntime();
-        Fonts_ClearRuntimeFonts();
+        Fonts_ClearRuntime();
 
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
@@ -1464,7 +1464,7 @@ int DD_Main(void)
     Sys_Init();
     F_Init();
 
-    Fonts_Initialize();
+    Fonts_Init();
     FR_Init();
 
     // Enter busy mode until startup complete.

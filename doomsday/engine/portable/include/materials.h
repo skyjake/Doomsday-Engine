@@ -101,7 +101,7 @@ Uri* Materials_ComposeUri(material_t* material);
  * @param material  Material to be updated.
  * @param def  Material definition to update using.
  */
-void Materials_Rebuild(material_t* material, struct ded_material_s* def);
+void Materials_Rebuild(material_t* material, ded_material_t* def);
 
 /// @return  @c true if one or more light decorations are defined for this material.
 boolean Materials_HasDecorations(material_t* material);

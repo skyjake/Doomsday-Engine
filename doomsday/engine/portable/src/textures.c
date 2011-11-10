@@ -252,7 +252,7 @@ static int destroyTexture(PathDirectoryNode* node, void* paramaters)
     texture_t* tex = (texture_t*)PathDirectoryNode_DetachUserData(node);
     if(tex)
     {
-        GL_ReleaseGLTexturesForTexture(tex);
+        GL_ReleaseGLTexturesByTexture(tex);
         unlinkTextureFromIdMap(tex);
 
         switch(Textures_Namespace(tex))

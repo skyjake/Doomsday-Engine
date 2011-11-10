@@ -94,7 +94,7 @@ mn_page_t ControlsMenu = {
 #elif __JHEXEN__
     { 32, 21 },
 #endif
-    { (fontnum_t)GF_FONTA, (fontnum_t)GF_FONTB }, { 0, 1, 2 },
+    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
     Hu_MenuDrawControlsPage, NULL,
     &OptionsMenu,
 #if __JDOOM__ || __JDOOM64__

@@ -1546,7 +1546,7 @@ void R_ProjectSprite(mobj_t* mo)
         {
             if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
             {
-                vis->data.flare.tex = GL_GetFlareTexture(def->flare, -1);
+                vis->data.flare.tex = GL_PrepareFlareTexture(def->flare, -1);
             }
             else
             {

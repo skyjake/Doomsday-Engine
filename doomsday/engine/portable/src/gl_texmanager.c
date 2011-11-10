@@ -29,8 +29,6 @@
  * This file needs to be split into smaller portions.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -80,9 +78,12 @@ D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
 
-static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
-
 void GL_DoResetDetailTextures(void);
+void GL_DoTexReset(void);
+void GL_DoUpdateTexGamma(void);
+void GL_DoUpdateTexParams(void);
+
+static int hashDetailVariantSpecification(const detailvariantspecification_t* spec);
 
 static void calcGammaTable(void);
 
@@ -1167,7 +1168,7 @@ void GL_InitTextureManager(void)
 void GL_ResetTextureManager(void)
 {
     if(!initedOk) return;
-    GL_ClearTextureMemory();
+    GL_ReleaseTextures();
     GL_PruneTextureVariantSpecifications();
 }
 
@@ -1335,6 +1336,10 @@ void GL_ReleaseSystemTextures(void)
     int i;
     if(!initedOk) return;
 
+    // The rendering lists contain persistent references to texture names.
+    // Which, obviously, can't persist any longer...
+    RL_DeleteLists();
+
     for(i = 0; i < NUM_LIGHTING_TEXTURES; ++i)
     {
         glDeleteTextures(1, (const GLuint*) &lightingTextures[i].tex);
@@ -1347,7 +1352,8 @@ void GL_ReleaseSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    GL_ReleaseGLTexturesByNamespace(TN_SYSTEM);
+    GL_ReleaseTexturesByNamespace(TN_SYSTEM);
+
     UI_ReleaseTextures();
     Rend_ParticleReleaseSystemTextures();
     Fonts_ReleaseSystemGLTextures();
@@ -1362,28 +1368,29 @@ void GL_ReleaseRuntimeTextures(void)
     RL_DeleteLists();
 
     // texture-wrapped GL textures; textures, flats, sprites...
-    GL_ReleaseGLTexturesByNamespace(TN_FLATS);
-    GL_ReleaseGLTexturesByNamespace(TN_TEXTURES);
-    GL_ReleaseGLTexturesByNamespace(TN_PATCHES);
-    GL_ReleaseGLTexturesByNamespace(TN_SPRITES);
-    GL_ReleaseGLTexturesByNamespace(TN_DETAILS);
-    GL_ReleaseGLTexturesByNamespace(TN_REFLECTIONS);
-    GL_ReleaseGLTexturesByNamespace(TN_MASKS);
-    GL_ReleaseGLTexturesByNamespace(TN_MODELSKINS);
-    GL_ReleaseGLTexturesByNamespace(TN_MODELREFLECTIONSKINS);
-    GL_ReleaseGLTexturesByNamespace(TN_LIGHTMAPS);
-    GL_ReleaseGLTexturesByNamespace(TN_FLAREMAPS);
+    GL_ReleaseTexturesByNamespace(TN_FLATS);
+    GL_ReleaseTexturesByNamespace(TN_TEXTURES);
+    GL_ReleaseTexturesByNamespace(TN_PATCHES);
+    GL_ReleaseTexturesByNamespace(TN_SPRITES);
+    GL_ReleaseTexturesByNamespace(TN_DETAILS);
+    GL_ReleaseTexturesByNamespace(TN_REFLECTIONS);
+    GL_ReleaseTexturesByNamespace(TN_MASKS);
+    GL_ReleaseTexturesByNamespace(TN_MODELSKINS);
+    GL_ReleaseTexturesByNamespace(TN_MODELREFLECTIONSKINS);
+    GL_ReleaseTexturesByNamespace(TN_LIGHTMAPS);
+    GL_ReleaseTexturesByNamespace(TN_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
-    R_ReleaseGLTexturesForSkies();
+    Rend_SkyReleaseTextures();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
 }
 
-void GL_ClearTextureMemory(void)
+void GL_ReleaseTextures(void)
 {
     if(!initedOk) return;
     GL_ReleaseRuntimeTextures();
+    GL_ReleaseSystemTextures();
 }
 
 void GL_PruneTextureVariantSpecifications(void)
@@ -1648,7 +1655,7 @@ static GLint ChooseTextureFormat(dgltexformat_t format, boolean allowCompression
     }
 }
 
-boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
     int width, int height, float grayFactor)
 {
     int i, w, h, numpels = width * height, numLevels, pixelSize;
@@ -1658,7 +1665,7 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
     assert(pixels);
 
     if(!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
-        Con_Error("GL_TexImageGrayMipmap: Unsupported load format %i.", (int) loadFormat);
+        Con_Error("GL_UploadTextureGrayMipmap: Unsupported load format %i.", (int) loadFormat);
 
     pixelSize = (loadFormat == GL_LUMINANCE? 1 : 3);
 
@@ -1720,7 +1727,7 @@ boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixel
     return true;
 }
 
-boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     int width,  int height, int genMipmaps)
 {
     const int packRowLength = 0, packAlignment = 1, packSkipRows = 0, packSkipPixels = 0;
@@ -1730,7 +1737,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
 
     if(!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
-         Con_Error("GL_TexImage: Unsupported load format %i.", (int) loadFormat);
+         Con_Error("GL_UploadTexture: Unsupported load format %i.", (int) loadFormat);
 
     // Can't operate on null texture.
     if(width < 1 || height < 1)
@@ -1772,7 +1779,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
 
         bpp = BytesPerPixel(loadFormat);
         if(bpp == 0)
-            Con_Error("GL_TexImage: Unknown GL format %i.\n", (int) loadFormat);
+            Con_Error("GL_UploadTexture: Unknown GL format %i.\n", (int) loadFormat);
 
         GL_OptimalTextureSize(width, height, false, true, &w, &h);
 
@@ -1784,7 +1791,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
                 w, h, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment, packSkipRows,
                 packSkipPixels);
             if(NULL == image)
-                Con_Error("GL_TexImage: Unknown error resizing mipmap level #0.");
+                Con_Error("GL_UploadTexture: Unknown error resizing mipmap level #0.");
         }
         else
         {
@@ -1807,7 +1814,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
                 neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
                 packSkipRows, packSkipPixels);
             if(!newimage)
-                Con_Error("GL_TexImage: Unknown error resizing mipmap level #%i.", mipLevel);
+                Con_Error("GL_UploadTexture: Unknown error resizing mipmap level #%i.", mipLevel);
 
             if(image != pixels)
                 free(image);
@@ -2068,7 +2075,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 
         glFormat = ChooseTextureFormat(dglFormat, allowCompression);
 
-        if(!GL_TexImage(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+        if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 generateMipmaps ? true : false))
         {
             Con_Error("GL_UploadTextureContent: TexImage failed (%u:%ix%i fmt%i).",
@@ -2090,7 +2097,7 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 
         glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
 
-        if(!GL_TexImageGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
+        if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 content->grayMipmap * reciprocal255))
         {
             Con_Error("GL_UploadTextureContent: TexImageGrayMipmap failed (%u:%ix%i fmt%i).",
@@ -2763,7 +2770,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
     return raw->tex;
 }
 
-DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
+DGLuint GL_PrepareRawTexture(rawtex_t* rawTex)
 {
     if(rawTex)
     {
@@ -2776,7 +2783,7 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
     return 0;
 }
 
-DGLuint GL_GetLightMapTexture(const Uri* filePath)
+DGLuint GL_PrepareLightMap(const Uri* filePath)
 {
     if(filePath)
     {
@@ -2796,7 +2803,7 @@ DGLuint GL_GetLightMapTexture(const Uri* filePath)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
+DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
 {
     if(uri)
     {
@@ -2826,7 +2833,7 @@ DGLuint GL_GetFlareTexture(const Uri* uri, int oldIdx)
     return 0; // Use the automatic selection logic.
 }
 
-DGLuint GL_PreparePatch(patchtex_t* patchTex)
+DGLuint GL_PreparePatchTexture(patchtex_t* patchTex)
 {
     if(!novideo && patchTex)
     {
@@ -2948,12 +2955,6 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex)
     }
 }
 
-void GL_UpdateTexParams(int mipmode)
-{
-    mipmapping = mipmode;
-    GL_SetTextureParams(glmode[mipmode], true, false);
-}
-
 void GL_DoUpdateTexParams(void)
 {
     GL_SetTextureParams(glmode[mipmapping], true, true);
@@ -2981,7 +2982,7 @@ void GL_TexReset(void)
 {
     boolean useBusyMode = !Con_IsBusy();
 
-    GL_ClearTextureMemory();
+    GL_ReleaseTextures();
     Con_Printf("All DGL textures deleted.\n");
 
     if(useBusyMode)
@@ -3013,7 +3014,7 @@ void GL_DoTexReset(void)
 
 void GL_DoResetDetailTextures(void)
 {
-    GL_ReleaseGLTexturesByNamespace(TN_DETAILS);
+    GL_ReleaseTexturesByNamespace(TN_DETAILS);
 }
 
 void GL_ReleaseTexturesForRawImages(void)
@@ -3347,7 +3348,7 @@ DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* 
     return GL_PrepareTexture2(tex, spec, NULL);
 }
 
-int GL_ReleaseGLTexturesForTexture2(texture_t* tex, void* paramaters)
+int GL_ReleaseGLTexturesByTexture2(texture_t* tex, void* paramaters)
 {
     int i;
     assert(tex);
@@ -3361,14 +3362,14 @@ int GL_ReleaseGLTexturesForTexture2(texture_t* tex, void* paramaters)
     return 0; // Continue iteration.
 }
 
-int GL_ReleaseGLTexturesForTexture(texture_t* tex)
+int GL_ReleaseGLTexturesByTexture(texture_t* tex)
 {
-    return GL_ReleaseGLTexturesForTexture2(tex, NULL);
+    return GL_ReleaseGLTexturesByTexture2(tex, NULL);
 }
 
-void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace)
+void GL_ReleaseTexturesByNamespace(texturenamespaceid_t texNamespace)
 {
-    Textures_Iterate(texNamespace, GL_ReleaseGLTexturesForTexture2);
+    Textures_Iterate(texNamespace, GL_ReleaseGLTexturesByTexture2);
 }
 
 static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramaters)
@@ -3379,12 +3380,12 @@ static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramater
 
     if(cp && cp->paletteId == paletteId)
     {
-        GL_ReleaseGLTexturesForTexture(tex);
+        GL_ReleaseGLTexturesByTexture(tex);
     }
     return 0; // Continue iteration.
 }
 
-void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId)
+void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
     colorpaletteid_t localPaletteId = paletteId;
     Textures_Iterate2(TN_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
@@ -3502,6 +3503,14 @@ D_CMD(ResetTextures)
 
 D_CMD(MipMap)
 {
-    GL_UpdateTexParams(strtol(argv[1], NULL, 0));
+    int newMipMode = strtol(argv[1], NULL, 0);
+    if(newMipMode < 0 || newMipMode > 5)
+    {
+        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0...5].\n");
+        return false;
+    }
+
+    mipmapping = newMipMode;
+    GL_SetTextureParams(glmode[mipmapping], true, false);
     return true;
 }

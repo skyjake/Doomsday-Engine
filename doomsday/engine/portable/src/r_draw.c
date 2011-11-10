@@ -166,7 +166,7 @@ void R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets)
 {
     assert(p);
 
-    glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
@@ -197,7 +197,7 @@ void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, D
     texture_t* tex = Textures_ToTexture(p->texId);
     if(!tex) return;
 
-    glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(p));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));

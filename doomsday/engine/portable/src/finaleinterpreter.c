@@ -1971,7 +1971,7 @@ DEFFC(PredefinedFont)
 {
     const char* fontPath = OP_CSTRING(1);
     Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
-    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    fontid_t fontNum = Fonts_IndexForUri(uri);
     Uri_Delete(uri);
     if(fontNum)
     {
@@ -2049,7 +2049,7 @@ DEFFC(Font)
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     const char* fontPath = OP_CSTRING(1);
     Uri* uri = Uri_SetUri3(Uri_New(), fontPath, RC_NULL);
-    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    fontid_t fontNum = Fonts_IndexForUri(uri);
     Uri_Delete(uri);
     if(fontNum)
     {

@@ -43,7 +43,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontnum_t fontNum);
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t fontNum);
 void P_DestroyText(fidata_text_t* text);
 
 fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name);
@@ -397,7 +397,7 @@ void P_DestroyPic(fidata_pic_t* pic)
     FIObject_Destructor((fi_object_t*)pic);
 }
 
-fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontnum_t fontNum)
+fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t fontNum)
 {
 #define LEADING             (11.f/7-1)
 
@@ -761,14 +761,14 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
     AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
 }
 
-void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontnum_t fontNum)
+void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontid_t fontNum)
 {
     if(!p) Con_Error("FIPage_SetPredefinedFont: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
     p->_preFont[idx] = fontNum;
 }
 
-fontnum_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
+fontid_t FIPage_PredefinedFont(fi_page_t* p, uint idx)
 {
     if(!p) Con_Error("FIPage_PredefinedFont: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) Con_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
@@ -983,7 +983,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             rawtex_t* rawTex = R_GetRawTex(f->texRef.lumpNum);
             if(rawTex)
             {
-                glTexName = GL_PrepareRawTex(rawTex);
+                glTexName = GL_PrepareRawTexture(rawTex);
                 V3_Set(offset, 0, 0, 0);
                 V3_Set(dimensions, rawTex->width, rawTex->height, 0);
             }
@@ -1021,7 +1021,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             if(patch)
             {
                 texture_t* tex = Textures_ToTexture(patch->texId);
-                glTexName = (renderTextures==1? GL_PreparePatch(patch) : 0);
+                glTexName = (renderTextures==1? GL_PreparePatchTexture(patch) : 0);
                 V3_Set(offset, patch->offX, patch->offY, 0);
                 V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);
             }
@@ -1388,7 +1388,7 @@ void FIData_TextCopy(fi_object_t* obj, const char* str)
     }
 }
 
-void FIData_TextSetFont(fi_object_t* obj, fontnum_t fontNum)
+void FIData_TextSetFont(fi_object_t* obj, fontid_t fontNum)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetFont: Not a FI_TEXT.");

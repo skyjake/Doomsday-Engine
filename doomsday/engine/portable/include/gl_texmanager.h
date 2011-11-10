@@ -23,7 +23,13 @@
  */
 
 /**
- * GL-Texture Management
+ * GL-Texture Management.
+ *
+ * 'Runtime' textures are not loaded until precached or actually needed.
+ * They may be cleared, in which case they will be reloaded when needed.
+ *
+ * 'System' textures are loaded at startup and remain in memory all the
+ * time. After clearing they must be manually reloaded.
  */
 
 #ifndef LIBDENG_GLTEXTURE_MANAGER_H
@@ -66,68 +72,75 @@ void GL_EarlyInitTextureManager(void);
 
 void GL_InitTextureManager(void);
 
+void GL_ShutdownTextureManager(void);
+
 /**
  * Call this if a full cleanup of the textures is required (engine update).
  */
 void GL_ResetTextureManager(void);
 
-void GL_ShutdownTextureManager(void);
-
 void GL_TexReset(void);
 
 /**
- * Prepares all the system textures (dlight, ptcgens).
+ * Determine the optimal size for a texture. Usually the dimensions are scaled
+ * upwards to the next power of two.
+ *
+ * @param noStretch  If @c true, the stretching can be skipped.
+ * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
+ *     on the optimal size).
  */
-void GL_LoadSystemTextures(void);
-
-void GL_ClearTextureMemory(void);
-
-void GL_PruneTextureVariantSpecifications(void);
+boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
+    int* optWidth, int* optHeight);
 
 /**
- * Runtime textures are not loaded until precached or actually needed.
- * They may be cleared, in which case they will be reloaded when needed.
+ * Change the GL minification filter for all prepared textures.
  */
-void GL_ReleaseRuntimeTextures(void);
+void GL_SetAllTexturesMinFilter(int minFilter);
 
-/**
- * System textures are loaded at startup and remain in memory all the time.
- * After clearing they must be manually reloaded.
- */
-void GL_ReleaseSystemTextures(void);
-
-/**
- * To save texture memory, delete all raw image textures. Raw images are
- * used as interlude backgrounds, title screens, etc. Called from
- * DD_SetupLevel.
- */
-void GL_ReleaseTexturesForRawImages(void);
-
-/**
- * Called when changing the value of any cvar affecting texture quality which
- * in turn calls GL_TexReset. Added to remove the need for reseting manually.
- */
-void GL_DoTexReset(void);
-
-/**
- * Called when changing the value of the texture gamma cvar.
- */
-void GL_DoUpdateTexGamma(void);
-
-/**
- * Called when changing the value of any cvar affecting texture quality which
- * can be actioned by simply changing texture paramaters i.e. does not require
- * flushing GL textures).
- */
-void GL_DoUpdateTexParams(void);
-
-void GL_UpdateTexParams(int mipmode);
+void GL_UpdateTexParams(int mipMode);
 
 /**
  * Updates the textures, flats and sprites (gameTex) or the user
  * interface textures (patches and raw screens).
  */
 void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
+
+/// Release all textures in all namespaces.
+void GL_ReleaseTextures(void);
+
+/// Release all textures flagged 'runtime'.
+void GL_ReleaseRuntimeTextures(void);
+
+/// Release all textures flagged 'system'.
+void GL_ReleaseSystemTextures(void);
+
+/**
+ * Release all textures in the identified namespace(s).
+ *
+ * @param namespaceId  Unique identifier of the namespace to process or @c TN_ANY
+ *     to release all textures in any namespace.
+ */
+void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
+
+/**
+ * Release all textures associated with the specified @a texture.
+ * \note Can also be used as an iterator callback.
+ */
+int GL_ReleaseGLTexturesByTexture2(texture_t* texture, void* paramaters);
+int GL_ReleaseGLTexturesByTexture(texture_t* texture); /*paramaters=NULL*/
+
+/// Release all textures associated with the identified colorpalette @a paletteId.
+void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
+
+/// Release all textures used with 'Raw Images'.
+void GL_ReleaseTexturesForRawImages(void);
+
+void GL_PruneTextureVariantSpecifications(void);
+
+/**
+ * Prepares all the system textures (dlight, ptcgens).
+ */
+void GL_LoadSystemTextures(void);
 
 /**
  * @param glFormat  Identifier of the desired GL texture format.
@@ -140,7 +153,7 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex);
  *
  * @return  @c true iff successful.
  */
-boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     int width, int height, int genMipmaps);
 
 /**
@@ -153,7 +166,7 @@ boolean GL_TexImage(int glFormat, int loadFormat, const uint8_t* pixels,
  *
  * @return  @c true iff successful.
  */
-boolean GL_TexImageGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
+boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* pixels,
     int width, int height, float grayFactor);
 
 /**
@@ -169,31 +182,22 @@ DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
     boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter,
     int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags);
 
-DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags);
-DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
-    const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
-    int anisoFilter, int wrapS, int wrapT);
-
 uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
 uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
 
 /**
+ * Image loading routines:
  * @return  The outcome:
  *     0 = not prepared
  *     1 = found and prepared a lump resource.
  *     2 = found and prepared an external resource.
  */
+
 byte GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
 
-/**
- * @return  The outcome:
- *     0 = not prepared
- *     2 = found and prepared an external resource.
- */
 byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
 byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath, const char* optionalSuffix,
-    boolean silent);
+    boolean quiet);
 
 byte GL_LoadFlatLump(struct image_s* image, DFile* file);
 
@@ -208,54 +212,6 @@ byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 byte GL_LoadPatchComposite(struct image_s* image, texture_t* tex);
 
 byte GL_LoadPatchCompositeAsSky(struct image_s* image, texture_t* tex, boolean zeroMask);
-
-/**
- * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
- * colors all white.
- */
-DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
-    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
-
-/**
- * Prepare a texture used in the lighting system. 'which' must be one
- * of the LST_* constants.
- */
-DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-
-DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
-
-/**
- * Returns the OpenGL name of the texture.
- */
-DGLuint GL_PreparePatch(patchtex_t* patch);
-
-/**
- * Returns the OpenGL name of the texture.
- */
-DGLuint GL_PrepareRawTex(rawtex_t* rawTex);
-
-DGLuint GL_GetLightMapTexture(const Uri* path);
-
-/**
- * Attempt to locate and prepare a flare texture.
- * Somewhat more complicated than it needs to be due to the fact there
- * are two different selection methods.
- *
- * @param name  Name of a flare texture or "0" to "4".
- * @param oldIdx  Old method of flare texture selection, by id.
- */
-DGLuint GL_GetFlareTexture(const Uri* path, int oldIdx);
-
-/**
- * Determine the optimal size for a texture. Usually the dimensions are scaled
- * upwards to the next power of two.
- *
- * @param noStretch  If @c true, the stretching can be skipped.
- * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
- *     on the optimal size).
- */
-boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
-    int* optWidth, int* optHeight);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
@@ -298,12 +254,6 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
  */
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* spec);
 
-/**
- * \note Can also be used as an iterator callback.
- */
-int GL_ReleaseGLTexturesForTexture2(texture_t* tex, void* paramaters);
-int GL_ReleaseGLTexturesForTexture(texture_t* tex); /*paramaters=NULL*/
-
 /// Result of a request to prepare a TextureVariant
 typedef enum {
     PTR_NOTFOUND = 0,       /// Failed. No suitable variant could be found/prepared.
@@ -341,12 +291,37 @@ const struct texturevariant_s* GL_PrepareTextureVariant2(texture_t* tex, texture
 const struct texturevariant_s* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
 
 /**
- * Change the GL minification filter for all prepared TextureVariants.
+ * Here follows miscellaneous routines currently awaiting refactoring into the
+ * revised texture management APIs.
  */
-void GL_SetAllTexturesMinFilter(int minFilter);
 
-void GL_ReleaseGLTexturesByNamespace(texturenamespaceid_t texNamespace);
+/**
+ * Set mode to 2 to include an alpha channel. Set to 3 to make the actual pixel
+ * colors all white.
+ */
+DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
+    int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT, int flags);
 
-void GL_ReleaseGLTexturesByColorPalette(colorpaletteid_t paletteId);
+DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
+DGLuint GL_PrepareLightMap(const Uri* path);
+DGLuint GL_PrepareLSTexture(lightingtexid_t which);
+DGLuint GL_PreparePatchTexture(patchtex_t* patch);
+DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
+
+/**
+ * Attempt to locate and prepare a flare texture.
+ * Somewhat more complicated than it needs to be due to the fact there
+ * are two different selection methods.
+ *
+ * @param name  Name of a flare texture or "0" to "4".
+ * @param oldIdx  Old method of flare texture selection, by id.
+ */
+DGLuint GL_PrepareFlareTexture(const Uri* path, int oldIdx);
+
+DGLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+    const uint8_t* pixels, int flags);
+DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
+    const uint8_t* pixels, int flags, int grayMipmap, int minFilter, int magFilter,
+    int anisoFilter, int wrapS, int wrapT);
 
 #endif /* LIBDENG_GLTEXTURE_MANAGER_H */

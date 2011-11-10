@@ -102,7 +102,7 @@ typedef struct fogeffectdata_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-fontnum_t fonts[NUM_GAME_FONTS];
+fontid_t fonts[NUM_GAME_FONTS];
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.

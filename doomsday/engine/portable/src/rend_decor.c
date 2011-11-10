@@ -261,9 +261,9 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
-    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
-    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
+    LUM_OMNI(l)->tex = GL_PrepareLightMap(def->sides);
+    LUM_OMNI(l)->ceilTex = GL_PrepareLightMap(def->up);
+    LUM_OMNI(l)->floorTex = GL_PrepareLightMap(def->down);
 
     // These are the same rules as in DL_MobjRadius().
     LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
@@ -367,7 +367,7 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
         const ded_decorlight_t* def = src->def;
         if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
         {
-            src->flareTex = GL_GetFlareTexture(def->flare, def->flareTexture);
+            src->flareTex = GL_PrepareFlareTexture(def->flare, def->flareTexture);
         }
     }
 }

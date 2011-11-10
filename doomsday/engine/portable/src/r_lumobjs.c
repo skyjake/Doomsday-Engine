@@ -864,9 +864,9 @@ static void addLuminous(mobj_t* mo)
 
     if(def)
     {
-        LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
-        LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
-        LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
+        LUM_OMNI(l)->tex = GL_PrepareLightMap(def->sides);
+        LUM_OMNI(l)->ceilTex = GL_PrepareLightMap(def->up);
+        LUM_OMNI(l)->floorTex = GL_PrepareLightMap(def->down);
     }
     else
     {

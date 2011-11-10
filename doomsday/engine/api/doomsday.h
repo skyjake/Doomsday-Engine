@@ -375,7 +375,7 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* material, int 
 //
 //------------------------------------------------------------------------
 
-fontnum_t Fonts_IndexForUri(const Uri* uri);
+fontid_t Fonts_IndexForUri(const Uri* uri);
 
 //------------------------------------------------------------------------
 //

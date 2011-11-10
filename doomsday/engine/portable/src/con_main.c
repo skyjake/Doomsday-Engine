@@ -170,7 +170,7 @@ static int exBuffSize;
 static execbuff_t* curExec;
 
 // The console font.
-static fontnum_t consoleFont;
+static fontid_t consoleFont;
 static int consoleFontTracking;
 static float consoleFontLeading;
 static float consoleFontScale[2];
@@ -487,14 +487,14 @@ uint Con_CommandLineCursorPosition(void)
     return cmdCursor;
 }
 
-fontnum_t Con_Font(void)
+fontid_t Con_Font(void)
 {
     if(!ConsoleInited)
         Con_Error("Con_Font: Console is not yet initialised.");
     return consoleFont;
 }
 
-void Con_SetFont(fontnum_t font)
+void Con_SetFont(fontid_t font)
 {
     if(!ConsoleInited)
         Con_Error("Con_SetFont: Console is not yet initialised.");
@@ -2522,7 +2522,7 @@ D_CMD(Font)
     if(!stricmp(argv[1], "default"))
     {
         Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), RC_NULL);
-        fontnum_t newFont = Fonts_IndexForUri(uri);
+        fontid_t newFont = Fonts_IndexForUri(uri);
         Uri_Delete(uri);
         if(newFont)
         {
@@ -2537,7 +2537,7 @@ D_CMD(Font)
     if(!stricmp(argv[1], "name") && argc == 3)
     {
         Uri* uri = Uri_SetUri3(Uri_New(), argv[2], RC_NULL);
-        fontnum_t newFont = Fonts_IndexForUri(uri);
+        fontid_t newFont = Fonts_IndexForUri(uri);
         Uri_Delete(uri);
         if(newFont)
         {

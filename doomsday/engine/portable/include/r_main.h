@@ -67,7 +67,7 @@ extern int      frameCount;
 extern int      extraLight;
 extern float    extraLightDelta;
 extern int      rendInfoTris;
-extern fontnum_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+extern fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 extern fixed_t  fineTangent[FINEANGLES / 2];
 

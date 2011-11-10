@@ -390,7 +390,7 @@ void R_SkyTicker(void)
     }
 }
 
-void R_ReleaseGLTexturesForSkies(void)
+void Rend_SkyReleaseTextures(void)
 {
     if(novideo || isDedicated)
         return;

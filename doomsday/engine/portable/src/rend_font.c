@@ -75,7 +75,7 @@ static fr_state_attributes_t defaultAttribs = {
 };
 
 typedef struct {
-    fontnum_t fontNum;
+    fontid_t fontNum;
     int attribStackDepth;
     fr_state_attributes_t attribStack[FR_MAX_ATTRIB_STACK_DEPTH];
 } fr_state_t;
@@ -83,7 +83,7 @@ static fr_state_t fr;
 fr_state_t* frState = &fr;
 
 typedef struct {
-    fontnum_t fontNum;
+    fontid_t fontNum;
     float scaleX, scaleY;
     float offX, offY;
     float angle;
@@ -187,7 +187,7 @@ void FR_ResetTypeinTimer(void)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_SetFont(fontnum_t num)
+void FR_SetFont(fontid_t num)
 {
     errorIfNotInited("FR_SetFont");
     if(!Fonts_ToFont(num))
@@ -202,7 +202,7 @@ void FR_SetNoFont(void)
 }
 
 /// \note Member of the Doomsday public API.
-fontnum_t FR_Font(void)
+fontid_t FR_Font(void)
 {
     errorIfNotInited("FR_Font");
     return fr.fontNum;
@@ -1071,7 +1071,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
                 if(font)
                 {
                     (*strPtr) += strlen(*strPtr);
-                    state->fontNum = Fonts_ToFontNum(font);
+                    state->fontNum = Fonts_Id(font);
                     continue;
                 }
 
@@ -1147,7 +1147,7 @@ static void freeTextBuffer(void)
 /// \note Member of the Doomsday public API.
 void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origTextFlags)
 {
-    fontnum_t origFont = FR_Font();
+    fontid_t origFont = FR_Font();
     float cx, cy, extraScale;
     drawtextstate_t state;
     const char* fragment;
@@ -1190,7 +1190,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
         {
             if(*str == '{') // Paramaters included?
             {
-                fontnum_t lastFont = state.fontNum;
+                fontid_t lastFont = state.fontNum;
                 int lastTracking = state.tracking;
                 float lastLeading = state.leading;
                 float lastShadowStrength = state.shadowStrength;

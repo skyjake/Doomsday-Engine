@@ -115,6 +115,7 @@ typedef uint32_t        angle_t;
 typedef uint32_t        ident_t;
 typedef int32_t         gameid_t;
 
+typedef uint32_t        fontid_t;
 typedef uint32_t        patchid_t;
 typedef uint32_t        materialid_t;
 typedef int32_t         spritenum_t;
@@ -142,12 +143,6 @@ typedef int32_t         int_from_pointer_t;
 #define FILENAME_T_MAXLEN 256
 #define FILENAME_T_LASTINDEX 255
 typedef char            filename_t[FILENAME_T_MAXLEN];
-
-/**
- * Unique identifier allocated by this subsystem and associated to each
- * known font. Used as a logical public reference/handle to a font.
- */
-typedef uint32_t        fontnum_t;
 
 typedef void (*con_textfilter_t) (char* text);
 

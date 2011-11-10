@@ -23,6 +23,9 @@
  */
 
 /**
+ * Fonts collection.
+ * @ingroup refresh
+ *
  * Runtime fonts are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.
  *
@@ -30,34 +33,108 @@
  * After clearing they must be manually reloaded.
  */
 
-#ifndef LIBDENG_FONTS_H
-#define LIBDENG_FONTS_H
+#ifndef LIBDENG_REFRESH_FONTS_H
+#define LIBDENG_REFRESH_FONTS_H
 
+#include "def_data.h"
 #include "font.h"
-#include "uri.h"
 
-struct ded_compositefont_s;
+enum fontnamespaceid_t; // Defined in dd_share.h
 
-// Substrings in Font names are delimited by this character.
-#define FONTDIRECTORY_DELIMITER '/'
+/// Components within a Font path hierarchy are delimited by this character.
+#define FONTS_PATH_DELIMITER        '/'
 
 /// Register the console commands, variables, etc..., of this module.
 void Fonts_Register(void);
 
 /// Initialize this module.
-void Fonts_Initialize(void);
+void Fonts_Init(void);
 
 /// Shutdown this module.
 void Fonts_Shutdown(void);
 
-void Fonts_Clear(void);
-
-void Fonts_ClearRuntimeFonts(void);
-
-void Fonts_ClearSystemFonts(void);
-
 /// To be called during a definition database reset to clear all links to defs.
 void Fonts_ClearDefinitionLinks(void);
+
+/**
+ * Try to interpret a known font namespace identifier from @a str. If found to match
+ * a known namespace name, return the associated identifier. If the reference @a str is
+ * not valid (i.e., equal to NULL or is a zero-length string) then the special identifier
+ * @c FN_ANY is returned. Otherwise @c FN_INVALID.
+ */
+fontnamespaceid_t Fonts_ParseNamespace(const char* str);
+
+/// @return  Name associated with the identified @a namespaceId else a zero-length string.
+const ddstring_t* Fonts_NamespaceName(fontnamespaceid_t namespaceId);
+
+/// @return  Total number of unique Fonts in the collection.
+uint Fonts_Size(void);
+
+/// @return  Number of unique Fonts in the identified @a namespaceId.
+uint Fonts_Count(fontnamespaceid_t namespaceId);
+
+/// Clear all Fonts in all namespaces (and release any acquired GL-textures).
+void Fonts_Clear(void);
+
+/// Clear all Fonts flagged 'runtime' (and release any acquired GL-textures).
+void Fonts_ClearRuntime(void);
+
+/// Clear all Fonts flagged 'system' (and release any acquired GL-textures).
+void Fonts_ClearSystem(void);
+
+/**
+ * Clear all fonts in the identified namespace(s) (and release any acquired GL-textures).
+ *
+ * @param namespaceId  Unique identifier of the namespace to process or @c FN_ANY
+ *     to clear all fonts in any namespace.
+ */
+void Fonts_ClearByNamespace(fontnamespaceid_t namespaceId);
+
+/// @return  Font associated with unique identifier @a fontId else @c NULL.
+font_t* Fonts_ToFont(fontid_t fontId);
+
+/// @return  Unique name associated with the specified Font.
+fontid_t Fonts_Id(font_t* font);
+
+/// @return  Unique identifier of the namespace this Font is in.
+fontnamespaceid_t Fonts_Namespace(font_t* font);
+
+/// @return  Symbolic name/path-to this Font. Must be destroyed with Str_Delete().
+ddstring_t* Fonts_ComposePath(font_t* font);
+
+/// @return  Unique name/path-to @a Font. Must be destroyed with Uri_Delete().
+Uri* Fonts_ComposeUri(font_t* font);
+
+/**
+ * Update the Font according to the supplied definition.
+ * To be called after an engine update/reset.
+ *
+ * @param font  Font to be updated.
+ * @param def  font definition to update using.
+ */
+void Fonts_Rebuild(font_t* font, ded_compositefont_t* def);
+
+/**
+ * Search the collection for a Font associated with @a uri.
+ * @return  Found Font else @c NULL.
+ */
+font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet);
+font_t* Fonts_FontForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+
+/// Same as Fonts::FontForUri except @a uri is a C-string.
+font_t* Fonts_FontForUriCString2(const char* uri, boolean quiet);
+font_t* Fonts_FontForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+
+/// Load an external font from a local file.
+font_t* Fonts_CreateFromFile(const char* name, const char* filePath);
+
+/// Create a bitmap composite font from @a def.
+font_t* Fonts_CreateFromDef(ded_compositefont_t* def);
+
+/**
+ * Here follows miscellaneous routines currently awaiting refactoring into the
+ * revised resource and texture management APIs.
+ */
 
 /**
  * To be called during engine/gl-subsystem reset to release all resources
@@ -69,58 +146,12 @@ void Fonts_ReleaseRuntimeGLResources(void);
 void Fonts_ReleaseSystemGLResources(void);
 void Fonts_ReleaseGLResourcesByNamespace(fontnamespaceid_t namespaceId);
 
-/**
- * To be called during a texture/font-renderer reset to release all texture
- * memory acquired from the GL subsystem for fonts.
- * \note Called automatically by this subsystem prior to module shutdown.
- */
 void Fonts_ReleaseRuntimeGLTextures(void);
 void Fonts_ReleaseSystemGLTextures(void);
 void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId);
 
-/// @return  Number of known font bindings in all namespaces.
-uint Fonts_Count(void);
-
 /// @return  List of collected font names.
 ddstring_t** Fonts_CollectNames(int* count);
-
-/**
- * Font reference/handle translators:
- */
-
-/// @return  Font associated with the specified unique name else @c NULL.
-font_t* Fonts_ToFont(fontnum_t num);
-
-/// @return  Unique name associated with the specified Font.
-fontnum_t Fonts_ToFontNum(font_t* font);
-
-/// @return  Font associated with @a uri else @c NULL.
-font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet);
-font_t* Fonts_FontForUri(const Uri* uri);
-
-/**
- * \deprecated Only exists because font_t* is not a public reference.
- * @return  Unique identifier associated with the found font else @c 0
- */
-fontnum_t Fonts_IndexForUri(const Uri* uri);
-
-/// @return  New Uri composed for the specified font (release with Uri_Delete).
-Uri* Fonts_ComposeUri(font_t* font);
-
-/// Load an external font from a local file.
-font_t* Fonts_LoadExternal(const char* name, const char* filepath);
-
-/// Create a bitmap composite font from @a def.
-font_t* Fonts_CreateBitmapCompositeFromDef(struct ded_compositefont_s* def);
-
-/**
- * Update the Font according to the supplied definition.
- * To be called after an engine update/reset.
- *
- * @param font  Font to be updated.
- * @param def  font definition to update using.
- */
-void Fonts_RebuildBitmapComposite(font_t* font, struct ded_compositefont_s* def);
 
 int Fonts_Ascent(font_t* font);
 int Fonts_Descent(font_t* font);
@@ -133,4 +164,10 @@ void Fonts_CharDimensions(font_t* font, int* width, int* height, unsigned char c
 int Fonts_CharHeight(font_t* font, unsigned char ch);
 int Fonts_CharWidth(font_t* font, unsigned char ch);
 
-#endif /* LIBDENG_FONTS_H */
+/**
+ * \deprecated Only exists because font_t* is not a public reference.
+ * @return  Unique identifier associated with the found font else @c 0
+ */
+fontid_t Fonts_IndexForUri(const Uri* uri);
+
+#endif /* LIBDENG_REFRESH_FONTS_H */

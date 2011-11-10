@@ -811,12 +811,12 @@ void R_LoadVectorGraphics(void)
  * @param name  Name of the font to lookup.
  * @return  Unique id of the found font.
  */
-fontnum_t R_MustFindFontForName(const char* name)
+fontid_t R_MustFindFontForName(const char* name)
 {
     Uri* uri = Uri_NewWithPath2(name, RC_NULL);
-    fontnum_t fontNum = Fonts_IndexForUri(uri);
+    fontid_t fontId = Fonts_IndexForUri(uri);
     Uri_Delete(uri);
-    if(fontNum) return fontNum;
+    if(fontId) return fontId;
     Con_Error("Failed loading font \"%s\".", name);
     exit(1); // Unreachable.
 }

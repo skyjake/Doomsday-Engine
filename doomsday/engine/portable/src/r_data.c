@@ -383,7 +383,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
         bind = &colorPaletteBinds[id-1];
         palette = R_GetColorPaletteByIndex(bind->idx);
         ColorPalette_ReplaceColorTable(palette, compOrder, compSize, colorData, colorCount);
-        GL_ReleaseGLTexturesByColorPalette(id);
+        GL_ReleaseTexturesByColorPalette(id);
     }
     else
     {   // A new palette.
@@ -1286,7 +1286,7 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     patchId = R_RegisterPatch(name);
     if(patchId)
     {
-        GL_PreparePatch(getPatchTex(patchId));
+        GL_PreparePatchTexture(getPatchTex(patchId));
         if(info)
         {
             R_GetPatchInfo(patchId, info);
@@ -2438,7 +2438,7 @@ void R_InitSpriteTextures(void)
 
             // Sprite offsets may have changed so release any currently loaded
             // GL-textures for this, so the offsets will be updated.
-            GL_ReleaseGLTexturesForTexture(tex);
+            GL_ReleaseGLTexturesByTexture(tex);
 
             /// \fixme Update any Materials (and thus Surfaces) which reference this.
         }

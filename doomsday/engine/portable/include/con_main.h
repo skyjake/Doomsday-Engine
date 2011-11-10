@@ -201,9 +201,9 @@ struct cbuffer_s* Con_HistoryBuffer(void);
 
 uint Con_HistoryOffset(void);
 
-fontnum_t Con_Font(void);
+fontid_t Con_Font(void);
 
-void Con_SetFont(fontnum_t font);
+void Con_SetFont(fontid_t font);
 
 con_textfilter_t Con_PrintFilter(void);
 

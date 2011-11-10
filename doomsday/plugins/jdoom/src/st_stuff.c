@@ -988,7 +988,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1021,7 +1021,7 @@ void SBarReadyAmmo_UpdateDimensions(uiwidget_t* obj)
         return;
 
     dd_snprintf(buf, 20, "%i", ammo->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -1082,7 +1082,7 @@ void Ammo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1107,7 +1107,7 @@ void Ammo_UpdateDimensions(uiwidget_t* obj)
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     obj->dimensions.width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
     obj->dimensions.height = FR_CharHeight('0') * cfg.statusbarScale;
 }
@@ -1166,7 +1166,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1191,7 +1191,7 @@ void MaxAmmo_UpdateDimensions(uiwidget_t* obj)
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     obj->dimensions.width  = (FR_CharWidth('0') * 3) * cfg.statusbarScale;
     obj->dimensions.height = FR_CharHeight('0') * cfg.statusbarScale;
 }
@@ -1242,7 +1242,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
@@ -1277,7 +1277,7 @@ void SBarHealth_UpdateDimensions(uiwidget_t* obj)
         return;
 
     dd_snprintf(buf, 20, "%i", hlth->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     obj->dimensions.width  = (FR_TextWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
     obj->dimensions.height = MAX_OF(FR_TextHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
     }
@@ -1328,7 +1328,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
@@ -1363,7 +1363,7 @@ void SBarArmor_UpdateDimensions(uiwidget_t* obj)
         return;
 
     dd_snprintf(buf, 20, "%i", armor->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     obj->dimensions.width  = (FR_TextWidth(buf) + FR_CharWidth('%')) * cfg.statusbarScale;
     obj->dimensions.height = MAX_OF(FR_TextHeight(buf), FR_CharHeight('%')) * cfg.statusbarScale;
     }
@@ -1420,7 +1420,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
     FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
@@ -1455,7 +1455,7 @@ void SBarFrags_UpdateDimensions(uiwidget_t* obj)
         return;
 
     dd_snprintf(buf, 20, "%i", frags->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
@@ -1915,7 +1915,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
@@ -1945,7 +1945,7 @@ void Frags_UpdateDimensions(uiwidget_t* obj)
         return;
 
     sprintf(buf, "FRAGS:%i", frags->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
@@ -1975,7 +1975,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2003,7 +2003,7 @@ void Health_UpdateDimensions(uiwidget_t* obj)
         return;
 
     sprintf(buf, "%i%%", hlth->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
@@ -2080,7 +2080,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2110,7 +2110,7 @@ void ReadyAmmo_UpdateDimensions(uiwidget_t* obj)
         return;
 
     sprintf(buf, "%i", ammo->value);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
@@ -2288,7 +2288,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
@@ -2319,7 +2319,7 @@ void Armor_UpdateDimensions(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i%%", armor->value);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
@@ -2591,7 +2591,7 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2634,7 +2634,7 @@ void Kills_UpdateDimensions(uiwidget_t* obj)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;
@@ -2690,7 +2690,7 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2733,7 +2733,7 @@ void Items_UpdateDimensions(uiwidget_t* obj)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;
@@ -2777,7 +2777,7 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2832,7 +2832,7 @@ void Secrets_UpdateDimensions(uiwidget_t* obj)
         strcat(buf, tmp);
     }
 
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, buf);
     obj->dimensions.width  *= cfg.hudCheatCounterScale;
     obj->dimensions.height *= cfg.hudCheatCounterScale;
@@ -2858,7 +2858,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, textAlpha);
-    FR_SetFont(obj->fontNum);
+    FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
     WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
@@ -2871,22 +2871,20 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 
 void MapName_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_MAPNAME);
-    {
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
     const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
     const float scale = .75f;
     patchinfo_t info;
+    assert(obj && obj->type == GUI_MAPNAME);
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(NULL == text && 0 == patch)
-        return;
+    if(!text && 0 == patch) return;
 
-    if(NULL != text)
+    if(text)
     {
-        FR_SetFont(obj->fontNum);
+        FR_SetFont(obj->font);
         FR_TextDimensions(&obj->dimensions.width, &obj->dimensions.height, text);
         obj->dimensions.width  *= scale;
         obj->dimensions.height *= scale;
@@ -2896,7 +2894,6 @@ void MapName_UpdateDimensions(uiwidget_t* obj)
     R_GetPatchInfo(patch, &info);
     obj->dimensions.width  = info.width  * scale;
     obj->dimensions.height = info.height * scale;
-    }
 }
 
 typedef struct {

@@ -90,7 +90,7 @@ float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
 
-fontnum_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -164,7 +164,7 @@ const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
     }
 }
 
-static fontnum_t loadSystemFont(const char* name)
+static fontid_t loadSystemFont(const char* name)
 {
     assert(name);
     {
@@ -179,7 +179,7 @@ static fontnum_t loadSystemFont(const char* name)
 
     filepath = Uri_Resolved(path);
     Uri_Delete(path);
-    font = Fonts_LoadExternal(Str_Text(&searchPath), Str_Text(filepath));
+    font = Fonts_CreateFromFile(Str_Text(&searchPath), Str_Text(filepath));
     Str_Free(&searchPath);
     if(filepath)
         Str_Delete(filepath);
@@ -189,7 +189,7 @@ static fontnum_t loadSystemFont(const char* name)
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
         return 0;
     }
-    return Fonts_ToFontNum(font);
+    return Fonts_Id(font);
     }
 }
 
