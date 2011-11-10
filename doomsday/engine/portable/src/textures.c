@@ -101,22 +101,22 @@ static textureid_t findIdForTexture(const texture_t* tex)
     return 0; // Not linked.
 }
 
-static texturenamespaceid_t namespaceIdForTexture(const texture_t* tex)
+static texturenamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
 {
-    PathDirectoryNode* node = Texture_DirectoryNode(tex);
     return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
 }
 
-static ddstring_t* composePathForTexture(const texture_t* tex)
+/// @return  Newly composed path for @a node. Must be released with Str_Delete()
+static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
-    PathDirectoryNode* node = Texture_DirectoryNode(tex);
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, TEXTURES_PATH_DELIMITER);
+    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
 
-static Uri* composeUriForTexture(const texture_t* tex)
+/// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
+static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 {
-    const ddstring_t* namespaceName = Textures_NamespaceName(namespaceIdForTexture(tex));
-    ddstring_t* path = composePathForTexture(tex);
+    const ddstring_t* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
+    ddstring_t* path = composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
     Str_Delete(path);
@@ -649,7 +649,7 @@ texturenamespaceid_t Textures_Namespace(texture_t* tex)
 #endif
         return TN_INVALID;
     }
-    return namespaceIdForTexture(tex);
+    return namespaceIdForDirectoryNode(Texture_DirectoryNode(tex));
 }
 
 ddstring_t* Textures_ComposePath(texture_t* tex)
@@ -661,7 +661,7 @@ ddstring_t* Textures_ComposePath(texture_t* tex)
 #endif
         return Str_New();
     }
-    return composePathForTexture(tex);
+    return composePathForDirectoryNode(Texture_DirectoryNode(tex), TEXTURES_PATH_DELIMITER);
 }
 
 Uri* Textures_ComposeUri(texture_t* tex)
@@ -673,7 +673,7 @@ Uri* Textures_ComposeUri(texture_t* tex)
 #endif
         return Uri_New();
     }
-    return composeUriForTexture(tex);
+    return composeUriForDirectoryNode(Texture_DirectoryNode(tex));
 }
 
 typedef struct {
@@ -775,27 +775,27 @@ static void printTextureOverview(texture_t* tex, boolean printNamespace)
  * so is not hugely important right now.
  */
 typedef struct {
+    char delimiter;
     const char* like;
     int idx;
-    texture_t** storage;
-} collecttextureworker_paramaters_t;
+    PathDirectoryNode** storage;
+} collectdirectorynodeworker_paramaters_t;
 
-static int collectTextureWorker(const PathDirectoryNode* node, void* paramaters)
+static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
 {
-    texture_t* tex = (texture_t*)PathDirectoryNode_UserData(node);
-    collecttextureworker_paramaters_t* p = (collecttextureworker_paramaters_t*)paramaters;
+    collectdirectorynodeworker_paramaters_t* p = (collectdirectorynodeworker_paramaters_t*)paramaters;
 
     if(p->like && p->like[0])
     {
-        Uri* uri = Textures_ComposeUri(tex);
-        int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
-        Uri_Delete(uri);
+        ddstring_t* path = composePathForDirectoryNode(node, p->delimiter);
+        int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
+        Str_Delete(path);
         if(delta) return 0; // Continue iteration.
     }
 
     if(p->storage)
     {
-        p->storage[p->idx++] = tex;
+        p->storage[p->idx++] = node;
     }
     else
     {
@@ -805,10 +805,10 @@ static int collectTextureWorker(const PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
-static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char* like,
-    int* count, texture_t** storage)
+static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceId,
+    const char* like, int* count, PathDirectoryNode** storage)
 {
-    collecttextureworker_paramaters_t p;
+    collectdirectorynodeworker_paramaters_t p;
     texturenamespaceid_t fromId, toId, iterId;
 
     if(VALID_TEXTURENAMESPACEID(namespaceId))
@@ -823,14 +823,15 @@ static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char*
         toId   = TEXTURENAMESPACE_LAST;
     }
 
-    p.idx = 0;
+    p.delimiter = TEXTURES_PATH_DELIMITER;
     p.like = like;
+    p.idx = 0;
     p.storage = storage;
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
         PathDirectory* texDirectory = getDirectoryForNamespaceId(iterId);
-        PathDirectory_Iterate2_Const(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-            PATHDIRECTORY_NOHASH, collectTextureWorker, (void*)&p);
+        PathDirectory_Iterate2(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
+            PATHDIRECTORY_NOHASH, collectDirectoryNodeWorker, (void*)&p);
     }
 
     if(storage)
@@ -843,23 +844,22 @@ static texture_t** collectTextures(texturenamespaceid_t namespaceId, const char*
     if(p.idx == 0)
     {
         if(count) *count = 0;
-        return 0;
+        return NULL;
     }
 
-    storage = (texture_t**)malloc(sizeof *storage * (p.idx+1));
+    storage = (PathDirectoryNode**)malloc(sizeof *storage * (p.idx+1));
     if(!storage)
-        Con_Error("collectTextures: Failed on allocation of %lu bytes for new collection.",
-            (unsigned long) (sizeof* storage * (p.idx+1)));
-    return collectTextures(namespaceId, like, count, storage);
+        Con_Error("Textures::collectDirectoryNodes: Failed on allocation of %lu bytes for new collection.", (unsigned long) (sizeof* storage * (p.idx+1)));
+    return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
-static int compareTextureByPath(const void* tA, const void* tB)
+static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    Uri* a = Textures_ComposeUri(*(texture_t**)tA);
-    Uri* b = Textures_ComposeUri(*(texture_t**)tB);
-    int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
-    Uri_Delete(b);
-    Uri_Delete(a);
+    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER);
+    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER);
+    int delta = stricmp(Str_Text(a), Str_Text(b));
+    Str_Delete(b);
+    Str_Delete(a);
     return delta;
 }
 
@@ -877,9 +877,10 @@ static int compareTextureByPath(const void* tA, const void* tB)
  */
 static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like, int flags)
 {
-    int numFoundDigits, numUidDigits, idx, count = 0;
-    texture_t** iter, **foundTextures = collectTextures(namespaceId, like, &count, NULL);
     const boolean printNamespace = !(flags & PTF_TRANSFORM_PATH_NO_NAMESPACE);
+    int numFoundDigits, numUidDigits, idx, count = 0;
+    PathDirectoryNode **foundTextures = collectDirectoryNodes(namespaceId, like, &count, NULL);
+    PathDirectoryNode** iter;
 
     if(!foundTextures) return 0;
 
@@ -901,12 +902,13 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundTextures, (size_t)count, sizeof *foundTextures, compareTextureByPath);
+    qsort(foundTextures, (size_t)count, sizeof *foundTextures, composeAndCompareDirectoryNodePaths);
 
     idx = 0;
     for(iter = foundTextures; *iter; ++iter)
     {
-        texture_t* tex = *iter;
+        const PathDirectoryNode* node = *iter;
+        texture_t* tex = (texture_t*) PathDirectoryNode_UserData(node);
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printTextureOverview(tex, printNamespace);
     }

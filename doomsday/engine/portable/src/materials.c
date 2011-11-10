@@ -232,22 +232,22 @@ static materialnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
     exit(1); // Unreachable.
 }
 
-static materialnamespaceid_t namespaceIdForMaterialBind(const materialbind_t* mb)
+static materialnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
 {
-    PathDirectoryNode* node = MaterialBind_DirectoryNode(mb);
     return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
 }
 
-static ddstring_t* composePathForMaterialBind(const materialbind_t* mb)
+/// @return  Newly composed path for @a node. Must be released with Str_Delete()
+static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
-    PathDirectoryNode* node = MaterialBind_DirectoryNode(mb);
-    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, MATERIALS_PATH_DELIMITER);
+    return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
 
-static Uri* composeUriForMaterialBind(const materialbind_t* mb)
+/// @return  Newly composed Uri for @a node. Must be released with Uri_Delete()
+static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 {
-    const ddstring_t* namespaceName = Materials_NamespaceName(namespaceIdForMaterialBind(mb));
-    ddstring_t* path = composePathForMaterialBind(mb);
+    const ddstring_t* namespaceName = Materials_NamespaceName(namespaceIdForDirectoryNode(node));
+    ddstring_t* path = composePathForDirectoryNode(node, MATERIALS_PATH_DELIMITER);
     Uri* uri = Uri_NewWithPath2(Str_Text(path), RC_NULL);
     Uri_SetScheme(uri, Str_Text(namespaceName));
     Str_Delete(path);
@@ -665,7 +665,14 @@ const ddstring_t* Materials_NamespaceName(materialnamespaceid_t id)
 
 materialnamespaceid_t Materials_Namespace(materialbind_t* mb)
 {
-    return namespaceIdForMaterialBind(mb);
+    if(!mb)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials::Namespace: Attempted with invalid reference [%p], returning invalid id.\n", (void*)mb);
+#endif
+        return MN_INVALID;
+    }
+    return namespaceIdForDirectoryNode(MaterialBind_DirectoryNode(mb));
 }
 
 static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* paramaters)
@@ -927,6 +934,27 @@ material_t* Materials_MaterialForUriCString(const char* path)
     return Materials_MaterialForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
+ddstring_t* Materials_ComposePath(material_t* mat)
+{
+    materialbind_t* mb;
+    if(!mat)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials::ComposePath: Attempted with invalid reference [%p], returning null-object.\n", (void*)mat);
+#endif
+        return Str_New();
+    }
+    mb = Materials_PrimaryBind(mat);
+    if(!mb)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials::ComposePath: Attempted with non-bound material [%p], returning null-object.\n", (void*)mat);
+#endif
+        return Str_New();
+    }
+    return composePathForDirectoryNode(MaterialBind_DirectoryNode(mb), MATERIALS_PATH_DELIMITER);
+}
+
 /// \note Part of the Doomsday public API.
 Uri* Materials_ComposeUri(material_t* mat)
 {
@@ -946,16 +974,15 @@ Uri* Materials_ComposeUri(material_t* mat)
 #endif
         return Uri_New();
     }
-    return composeUriForMaterialBind(mb);
+    return composeUriForDirectoryNode(MaterialBind_DirectoryNode(mb));
 }
 
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
-    assert(def);
-    {
     const Uri* uri = def->uri;
     const texture_t* tex;
     material_t* mat;
+    assert(def);
 
     if(!initedOk) return NULL;
 
@@ -1012,28 +1039,28 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     newMaterialBind(uri, mat);
 
     return mat;
-    }
 }
 
 static void pushVariantCacheQueue(material_t* mat, const materialvariantspecification_t* spec, boolean smooth)
 {
+    variantcachequeue_node_t* node;
     assert(initedOk && mat && spec);
-    {
-    variantcachequeue_node_t* node = (variantcachequeue_node_t*) malloc(sizeof(*node));
+
+    node = (variantcachequeue_node_t*) malloc(sizeof *node);
     if(!node)
-        Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for "
-            "new VariantCacheQueueNode.", (unsigned long) sizeof(*node));
+        Con_Error("Materials::pushVariantCacheQueue: Failed on allocation of %lu bytes for new VariantCacheQueueNode.", (unsigned long) sizeof *node);
+
     node->mat = mat;
     node->spec = spec;
     node->smooth = smooth;
     node->next = variantCacheQueue;
     variantCacheQueue = node;
-    }
 }
 
 void Materials_Precache2(material_t* mat, const materialvariantspecification_t* spec,
     boolean smooth, boolean cacheGroup)
 {
+    variantcachequeue_node_t* node;
     assert(mat && spec);
 
     errorIfNotInited("Materials::Precache");
@@ -1043,25 +1070,22 @@ void Materials_Precache2(material_t* mat, const materialvariantspecification_t* 
         return;
 
     // Already in the queue?
-    { variantcachequeue_node_t* node;
     for(node = variantCacheQueue; node; node = node->next)
-        if(mat == node->mat && spec == node->spec)
-            return;
+    {
+        if(mat == node->mat && spec == node->spec) return;
     }
 
     pushVariantCacheQueue(mat, spec, smooth);
 
     if(cacheGroup && Material_IsGroupAnimated(mat))
     {   // Material belongs in one or more animgroups; precache the group.
-        int i;
+        int i, k;
         for(i = 0; i < numgroups; ++i)
         {
             if(!isInAnimGroup(&groups[i], mat)) continue;
 
-            { int k;
             for(k = 0; k < groups[i].count; ++k)
                 Materials_Precache2(groups[i].frames[k].mat, spec, smooth, false);
-            }
         }
     }
 }
@@ -1138,11 +1162,11 @@ static void setTexUnit(materialsnapshot_t* ss, byte unit, const texturevariant_t
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
     float tOffset, float alpha)
 {
+    material_textureunit_t* tu;
     assert(ss);
-    {
-    material_textureunit_t* tu = &MSU(ss, unit);
 
-    if(NULL != tex)
+    tu = &MSU(ss, unit);
+    if(tex)
     {
         tu->tex.texture = TextureVariant_GeneralCase(tex);
         tu->tex.spec = TextureVariant_Spec(tex);
@@ -1162,21 +1186,20 @@ static void setTexUnit(materialsnapshot_t* ss, byte unit, const texturevariant_t
     tu->alpha = MINMAX_OF(0, alpha, 1);
     V2_Set(tu->scale, sScale, tScale);
     V2_Set(tu->offset, sOffset, tOffset);
-    }
 }
 
 void Materials_InitSnapshot(materialsnapshot_t* ms)
 {
+    int i;
     assert(ms);
 
     memset(ms, 0, sizeof(materialsnapshot_t));
     ms->width = ms->height = 0;
 
-    { int i;
     for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
     {
         setTexUnit(ms, i, NULL, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
-    }}
+    }
 
     V3_Set(ms->topColor, 1, 1, 1);
     V3_Set(ms->color, 1, 1, 1);
@@ -1189,9 +1212,9 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
 
 const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, boolean updateSnapshot)
 {
-    struct materialtextureunit_s {
+    static struct materialtextureunit_s {
         const texturevariant_t* tex;
-    } static texUnits[NUM_MATERIAL_TEXTURE_UNITS];
+    } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     materialsnapshot_t* snapshot;
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
@@ -1587,27 +1610,27 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
  * so is not hugely important right now.
  */
 typedef struct {
+    char delimiter;
     const char* like;
     int idx;
-    materialbind_t** storage;
-} collectmaterialworker_paramaters_t;
+    PathDirectoryNode** storage;
+} collectdirectorynodeworker_paramaters_t;
 
-static int collectMaterialWorker(const PathDirectoryNode* node, void* paramaters)
+static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
 {
-    materialbind_t* mb = (materialbind_t*)PathDirectoryNode_UserData(node);
-    collectmaterialworker_paramaters_t* p = (collectmaterialworker_paramaters_t*)paramaters;
+    collectdirectorynodeworker_paramaters_t* p = (collectdirectorynodeworker_paramaters_t*)paramaters;
 
     if(p->like && p->like[0])
     {
-        Uri* uri = composeUriForMaterialBind(mb);
-        int delta = strnicmp(Str_Text(Uri_Path(uri)), p->like, strlen(p->like));
-        Uri_Delete(uri);
+        ddstring_t* path = composePathForDirectoryNode(node, p->delimiter);
+        int delta = strnicmp(Str_Text(path), p->like, strlen(p->like));
+        Str_Delete(path);
         if(delta) return 0; // Continue iteration.
     }
 
     if(p->storage)
     {
-        p->storage[p->idx++] = mb;
+        p->storage[p->idx++] = node;
     }
     else
     {
@@ -1617,10 +1640,10 @@ static int collectMaterialWorker(const PathDirectoryNode* node, void* paramaters
     return 0; // Continue iteration.
 }
 
-static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
-    const char* like, int* count, materialbind_t** storage)
+static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespaceId,
+    const char* like, int* count, PathDirectoryNode** storage)
 {
-    collectmaterialworker_paramaters_t p;
+    collectdirectorynodeworker_paramaters_t p;
     materialnamespaceid_t fromId, toId, iterId;
 
     if(VALID_MATERIALNAMESPACEID(namespaceId))
@@ -1635,14 +1658,15 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
         toId   = MATERIALNAMESPACE_LAST;
     }
 
-    p.idx = 0;
+    p.delimiter = MATERIALS_PATH_DELIMITER;
     p.like = like;
+    p.idx = 0;
     p.storage = storage;
     for(iterId  = fromId; iterId <= toId; ++iterId)
     {
         PathDirectory* matDirectory = getDirectoryForNamespaceId(iterId);
-        PathDirectory_Iterate2_Const(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
-            PATHDIRECTORY_NOHASH, collectMaterialWorker, (void*)&p);
+        PathDirectory_Iterate2(matDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, NULL,
+            PATHDIRECTORY_NOHASH, collectDirectoryNodeWorker, (void*)&p);
     }
 
     if(storage)
@@ -1655,23 +1679,22 @@ static materialbind_t** collectMaterials(materialnamespaceid_t namespaceId,
     if(p.idx == 0)
     {
         if(count) *count = 0;
-        return 0;
+        return NULL;
     }
 
-    storage = (materialbind_t**)malloc(sizeof *storage * (p.idx+1));
+    storage = (PathDirectoryNode**)malloc(sizeof *storage * (p.idx+1));
     if(!storage)
-        Con_Error("collectMaterials: Failed on allocation of %lu bytes for new collection.",
-            (unsigned long) (sizeof* storage * (p.idx+1)));
-    return collectMaterials(namespaceId, like, count, storage);
+        Con_Error("Materials::collectDirectoryNodes: Failed on allocation of %lu bytes for new PathDirectoryNode collection.", (unsigned long) (sizeof* storage * (p.idx+1)));
+    return collectDirectoryNodes(namespaceId, like, count, storage);
 }
 
-static int compareMaterialBindByPath(const void* mbA, const void* mbB)
+static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    Uri* a = composeUriForMaterialBind(*(const materialbind_t**)mbA);
-    Uri* b = composeUriForMaterialBind(*(const materialbind_t**)mbB);
-    int delta = stricmp(Str_Text(Uri_Path(a)), Str_Text(Uri_Path(b)));
-    Uri_Delete(b);
-    Uri_Delete(a);
+    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER);
+    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER);
+    int delta = stricmp(Str_Text(a), Str_Text(b));
+    Str_Delete(b);
+    Str_Delete(a);
     return delta;
 }
 
@@ -1679,8 +1702,8 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     boolean printNamespace)
 {
     int numFoundDigits, numUidDigits, idx, count = 0;
-    materialbind_t** foundMaterials = collectMaterials(namespaceId, like, &count, NULL);
-    materialbind_t* const* ptr;
+    PathDirectoryNode** foundMaterials = collectDirectoryNodes(namespaceId, like, &count, NULL);
+    PathDirectoryNode** iter;
 
     if(!foundMaterials) return 0;
 
@@ -1701,13 +1724,13 @@ static size_t printMaterials2(materialnamespaceid_t namespaceId, const char* lik
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundMaterials, (size_t)count, sizeof *foundMaterials, compareMaterialBindByPath);
+    qsort(foundMaterials, (size_t)count, sizeof *foundMaterials, composeAndCompareDirectoryNodePaths);
 
     idx = 0;
-    for(ptr = foundMaterials; *ptr; ++ptr)
+    for(iter = foundMaterials; *iter; ++iter)
     {
-        const materialbind_t* mb = *ptr;
-        material_t* mat = MaterialBind_Material(mb);
+        const PathDirectoryNode* node = *iter;
+        material_t* mat = MaterialBind_Material((materialbind_t*)PathDirectoryNode_UserData(node));
         Con_Printf(" %*i: ", numFoundDigits, idx++);
         printMaterialOverview(mat, printNamespace);
     }
@@ -2045,7 +2068,7 @@ void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
     if(mb->_info)
     {
 #if _DEBUG
-        Uri* uri = composeUriForMaterialBind(mb);
+        Uri* uri = Materials_ComposeUri(mb->_material);
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
         Str_Delete(path);
@@ -2152,8 +2175,7 @@ D_CMD(ListMaterials)
 
     printMaterials(namespaceId, like);
 
-    if(uri != NULL)
-        Uri_Delete(uri);
+    if(uri) Uri_Delete(uri);
     return true;
 }
 
