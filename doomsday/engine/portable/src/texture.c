@@ -30,7 +30,6 @@
 
 #include "gl_texmanager.h"
 #include "texturevariant.h"
-#include "pathdirectory.h"
 
 #include "texture.h"
 
@@ -39,29 +38,26 @@ typedef struct texture_variantlist_node_s {
     texturevariant_t* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_New(PathDirectoryNode* directoryNode, int flags, void* userData)
+texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
 {
-    texture_t* tex;
-    assert(directoryNode);
-
-    tex = (texture_t*)malloc(sizeof *tex);
+    texture_t* tex = (texture_t*)malloc(sizeof *tex);
     if(!tex)
         Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
 
     tex->_flags = flags;
     tex->_width = tex->_height = 0;
     tex->_variants = NULL;
-    tex->_directoryNode = directoryNode;
+    tex->_primaryBind = bindId;
     tex->_userData = userData;
     memset(tex->_analyses, 0, sizeof(tex->_analyses));
 
     return tex;
 }
 
-texture_t* Texture_NewWithDimensions(PathDirectoryNode* directoryNode, int flags,
+texture_t* Texture_NewWithDimensions(int flags, textureid_t bindId,
     int width, int height, void* userData)
 {
-    texture_t* tex = Texture_New(directoryNode, flags, userData);
+    texture_t* tex = Texture_New(flags, bindId, userData);
     Texture_SetDimensions(tex, width, height);
     return tex;
 }
@@ -77,7 +73,7 @@ static void destroyVariants(texture_t* tex)
         DGLuint glName = TextureVariant_GLName(variant);
         if(glName)
         {
-            Uri* uri = Textures_ComposeUri(tex);
+            Uri* uri = Textures_ComposeUri(Textures_Id(tex));
             ddstring_t* path = Uri_ToString(uri);
             Con_Printf("Warning:Texture::Destruct: GLName (%i) still set for "
                 "a variant of \"%s\" (id:%i). Perhaps it wasn't released?\n",
@@ -109,6 +105,18 @@ void Texture_Delete(texture_t* tex)
     destroyVariants(tex);
     destroyAnalyses(tex);
     free(tex);
+}
+
+textureid_t Texture_PrimaryBind(const texture_t* tex)
+{
+    assert(tex);
+    return tex->_primaryBind;
+}
+
+void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId)
+{
+    assert(tex);
+    tex->_primaryBind = bindId;
 }
 
 void Texture_AttachUserData(texture_t* tex, void* userData)
@@ -173,12 +181,6 @@ boolean Texture_IsCustom(const texture_t* tex)
     return (tex->_flags & TXF_CUSTOM) != 0;
 }
 
-boolean Texture_IsNull(const texture_t* tex)
-{
-    assert(tex);
-    return (Texture_Width(tex) == 0 && Texture_Height(tex) == 0);
-}
-
 int Texture_Flags(const texture_t* tex)
 {
     assert(tex);
@@ -189,6 +191,7 @@ void Texture_SetFlags(texture_t* tex, int flags)
 {
     assert(tex);
     tex->_flags = flags;
+    /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Width(const texture_t* tex)
@@ -201,6 +204,7 @@ void Texture_SetWidth(texture_t* tex, int width)
 {
     assert(tex);
     tex->_width = width;
+    /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Height(const texture_t* tex)
@@ -213,6 +217,7 @@ void Texture_SetHeight(texture_t* tex, int height)
 {
     assert(tex);
     tex->_height = height;
+    /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 void Texture_Dimensions(const texture_t* tex, int* width, int* height)
@@ -226,12 +231,7 @@ void Texture_SetDimensions(texture_t* tex, int width, int height)
     assert(tex);
     tex->_width  = width;
     tex->_height = height;
-}
-
-PathDirectoryNode* Texture_DirectoryNode(const texture_t* tex)
-{
-    assert(tex);
-    return tex->_directoryNode;
+    /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_IterateVariants(texture_t* tex,
@@ -266,7 +266,7 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
     if(tex->_analyses[analysis])
     {
-        Uri* uri = Textures_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning, image analysis #%i already present for \"%s\", will replace.\n",
             (int) analysis, Str_Text(path));

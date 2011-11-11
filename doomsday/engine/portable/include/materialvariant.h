@@ -24,7 +24,7 @@
 #ifndef LIBDENG_MATERIALVARIANT_H
 #define LIBDENG_MATERIALVARIANT_H
 
-#include "textures.h"
+#include "texture.h"
 
 struct texturevariantspecification_s;
 
@@ -110,7 +110,7 @@ typedef struct materialsnapshot_s {
 
 typedef struct materialvariant_layer_s {
     int stage; // -1 => layer not in use.
-    textureid_t texId;
+    texture_t* texture;
     float texOrigin[2]; /// Origin of the texture in material-space.
     float glow;
     short tics;

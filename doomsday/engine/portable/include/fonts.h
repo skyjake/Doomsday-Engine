@@ -26,10 +26,10 @@
  * Fonts collection.
  * @ingroup refresh
  *
- * Runtime fonts are not loaded until precached or actually needed.
+ * 'Runtime' fonts are not loaded until precached or actually needed.
  * They may be cleared, in which case they will be reloaded when needed.
  *
- * System fonts are loaded at startup and remain in memory all the time.
+ * 'System' fonts are loaded at startup and remain in memory all the time.
  * After clearing they must be manually reloaded.
  */
 
@@ -39,10 +39,12 @@
 #include "def_data.h"
 #include "font.h"
 #include "bitmapfont.h"
-
-struct fontbind_s;
+#include "dd_string.h"
+#include "uri.h"
 
 enum fontnamespaceid_t; // Defined in dd_share.h
+
+struct fontbind_s;
 
 /// Components within a Font path hierarchy are delimited by this character.
 #define FONTS_PATH_DELIMITER        '/'
@@ -91,7 +93,7 @@ void Fonts_ClearSystem(void);
  * @param namespaceId  Unique identifier of the namespace to process or @c FN_ANY
  *     to clear all fonts in any namespace.
  */
-void Fonts_ClearByNamespace(fontnamespaceid_t namespaceId);
+void Fonts_ClearNamespace(fontnamespaceid_t namespaceId);
 
 /// @return  Font associated with unique identifier @a fontId else @c NULL.
 font_t* Fonts_ToFont(fontid_t fontId);
@@ -100,7 +102,7 @@ font_t* Fonts_ToFont(fontid_t fontId);
 fontid_t Fonts_Id(font_t* font);
 
 /// @return  Unique identifier of the namespace this Font is in.
-fontnamespaceid_t Fonts_Namespace(struct fontbind_s* font);
+fontnamespaceid_t Fonts_Namespace(struct fontbind_s* bind);
 
 /// @return  Symbolic name/path-to this Font. Must be destroyed with Str_Delete().
 ddstring_t* Fonts_ComposePath(font_t* font);

@@ -36,15 +36,28 @@
 
 #include "textures.h"
 
+typedef struct {
+    /// Node in the owning PathDirectory.
+    PathDirectoryNode* directoryNode;
+
+    /// Path to the data resource which contains/wraps the loadable texture data.
+    Uri* resourcePath;
+
+    /// The bound texture (if any).
+    texture_t* texture;
+} texturebind_t;
+
 D_CMD(ListTextures);
 D_CMD(InspectTexture);
 #if _DEBUG
 D_CMD(PrintTextureStats);
 #endif
 
-/// LUT which translates textureid_t to texture_t*. Index with textureid_t-1
+static Uri* emptyUri;
+
+/// LUT which translates textureid_t to texturebind_t*. Index with textureid_t-1
 static uint textureIdMapSize;
-static texture_t** textureIdMap;
+static texturebind_t** textureIdMap;
 
 // Texture namespaces contain mappings between names and Texture instances.
 static PathDirectory* namespaces[TEXTURENAMESPACE_COUNT];
@@ -81,33 +94,34 @@ static texturenamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
 
 static __inline boolean validTextureId(textureid_t id)
 {
-    return (id > 0 && id <= textureIdMapSize);
+    return (id != NOTEXTUREID && id <= textureIdMapSize);
 }
 
-static __inline texture_t* getTextureForId(textureid_t id)
+static texturebind_t* getTextureBindForId(textureid_t id)
 {
-    assert(validTextureId(id));
+    if(!validTextureId(id)) return NULL;
     return textureIdMap[id-1/*1-based index*/];
 }
 
-static textureid_t findIdForTexture(const texture_t* tex)
+static textureid_t findIdForTextureBind(const texturebind_t* bind)
 {
     uint i;
+    /// \optimize (Low priority) do not use a linear search.
     for(i = 0; i < textureIdMapSize; ++i)
     {
-        if(textureIdMap[i] == tex)
+        if(textureIdMap[i] == bind)
             return (textureid_t)(i+1); // 1-based index.
     }
-    return 0; // Not linked.
+    return NOTEXTUREID; // Not linked.
 }
 
-static texturenamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
+static __inline texturenamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
 {
     return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static __inline ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
@@ -123,22 +137,11 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-static void unlinkTextureFromIdMap(const texture_t* tex)
+static void unlinkTextureBindFromIdMap(const texturebind_t* bind)
 {
-    if(!textureIdMapSize) return;
-
-    if(tex != textureIdMap[textureIdMapSize-1])
-    {
-        textureid_t id = findIdForTexture(tex);
-        if(!id) return; // Not linked.
-
-        id -= 1; // 1-based index
-        memmove(textureIdMap + id, textureIdMap + id + 1, sizeof *textureIdMap * (textureIdMapSize - 1 - id));
-    }
-
-    textureIdMap = (texture_t**) realloc(textureIdMap, sizeof *textureIdMap * --textureIdMapSize);
-    if(!textureIdMap && textureIdMapSize)
-        Con_Error("Textures::unlinkTextureFromIdMap: Failed on reallocation of %lu bytes when resizing list.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
+    textureid_t id = findIdForTextureBind(bind);
+    if(!id) return; // Not linked.
+    textureIdMap[id - 1/*1-based index*/] = NULL;
 }
 
 /**
@@ -194,31 +197,25 @@ static boolean validateTextureUri(const Uri* uri, int flags)
  * Given a directory and path, search the Textures collection for a match.
  *
  * @param directory  Namespace-specific PathDirectory to search in.
- * @param path  Path of the texture to search for.
- * @return  Found Texture else @c 0
+ * @param path  Path of the TextureBind to search for.
+ * @return  Found DirectoryNode else @c NULL
  */
-static texture_t* findTextureForPath(PathDirectory* texDirectory, const char* path)
+static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* texDirectory, const char* path)
 {
-    PathDirectoryNode* node = PathDirectory_Find(texDirectory,
-        PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTURES_PATH_DELIMITER);
-    if(node)
-    {
-        return (texture_t*)PathDirectoryNode_UserData(node);
-    }
-    return NULL; // Not found.
+    return PathDirectory_Find(texDirectory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, TEXTURES_PATH_DELIMITER);
 }
 
 /// \assume @a uri has already been validated and is well-formed.
-static texture_t* findTextureForUri(const Uri* uri)
+static PathDirectoryNode* findTextureBindForPath(const Uri* uri)
 {
     texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     const char* path = Str_Text(Uri_Path(uri));
-    texture_t* tex = NULL;
+    PathDirectoryNode* node = NULL;
 
     if(namespaceId != TN_ANY)
     {
         // Caller wants a texture in a specific namespace.
-        tex = findTextureForPath(getDirectoryForNamespaceId(namespaceId), path);
+        node = findDirectoryNodeForPath(getDirectoryForNamespaceId(namespaceId), path);
     }
     else
     {
@@ -241,117 +238,100 @@ static texture_t* findTextureForUri(const Uri* uri)
         int n = 0;
         do
         {
-            tex = findTextureForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!tex && order[++n] != MN_ANY);
+            node = findDirectoryNodeForPath(getDirectoryForNamespaceId(order[n]), path);
+        } while(!node && order[++n] != MN_ANY);
     }
-    return tex;
+    return node;
 }
 
-static int destroyTexture(PathDirectoryNode* node, void* paramaters)
+static void destroyTexture(texture_t* tex)
 {
-    texture_t* tex = (texture_t*)PathDirectoryNode_DetachUserData(node);
-    if(tex)
-    {
-        GL_ReleaseGLTexturesByTexture(tex);
-        unlinkTextureFromIdMap(tex);
+    assert(tex);
 
-        switch(Textures_Namespace(tex))
-        {
-        case TN_SYSTEM: {
-            systex_t* sTex = (systex_t*)Texture_DetachUserData(tex);
-            if(sTex)
-            {
-                Uri_Delete(sTex->external);
-                free(sTex);
-            }
-            break;
-          }
-        case TN_FLATS: {
-            flat_t* flat = (flat_t*)Texture_DetachUserData(tex);
-            if(flat) free(flat);
-            break;
-          }
-        case TN_TEXTURES: {
-            patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_DetachUserData(tex);
-            if(pcTex)
-            {
-                Str_Free(&pcTex->name);
-                if(pcTex->patches) free(pcTex->patches);
-                free(pcTex);
-            }
-            break;
-          }
-        case TN_SPRITES: {
-            spritetex_t* sprTex = (spritetex_t*)Texture_DetachUserData(tex);
-            if(sprTex) free(sprTex);
-            break;
-          }
-        case TN_PATCHES: {
-            patchtex_t* pTex = (patchtex_t*)Texture_DetachUserData(tex);
-            if(pTex) free(pTex);
-            break;
-          }
-        case TN_DETAILS: {
-            detailtex_t* dTex = (detailtex_t*)Texture_DetachUserData(tex);
-            if(dTex)
-            {
-                //if(dTex->path) Uri_Delete(dTex->path);
-                free(dTex);
-            }
-            break;
-          }
-        case TN_REFLECTIONS: {
-            shinytex_t* sTex = (shinytex_t*)Texture_DetachUserData(tex);
-            if(sTex)
-            {
-                //if(sTex->external) Uri_Delete(sTex->external);
-                free(sTex);
-            }
-            break;
-          }
-        case TN_MASKS: {
-            masktex_t* mTex = (masktex_t*)Texture_DetachUserData(tex);
-            if(mTex)
-            {
-                //if(mTex->external) Uri_Delete(mTex->external);
-                free(mTex);
-            }
-            break;
-          }
-        case TN_MODELSKINS: // fall-through
-        case TN_MODELREFLECTIONSKINS: {
-            skinname_t* skin = (skinname_t*)Texture_DetachUserData(tex);
-            if(skin)
-            {
-                Uri_Delete(skin->path);
-                free(skin);
-            }
-            break;
-          }
-        case TN_LIGHTMAPS: {
-            lightmap_t* lmap = (lightmap_t*)Texture_DetachUserData(tex);
-            if(lmap)
-            {
-                //if(lmap->external) Uri_Delete(lmap->external);
-                free(lmap);
-            }
-            break;
-          }
-        case TN_FLAREMAPS: {
-            flaretex_t* fTex = (flaretex_t*)Texture_DetachUserData(tex);
-            if(fTex)
-            {
-                //if(fTex->external) Uri_Delete(fTex->external);
-                free(fTex);
-            }
-            break;
-          }
-        default:
-            Con_Error("Textures::destroyTexture: Internal error, invalid namespace id %i.", (int)Textures_Namespace(tex));
-            exit(1); // Unreachable.
-        }
-        Texture_Delete(tex);
+    GL_ReleaseGLTexturesByTexture(tex);
+    switch(Textures_Namespace(Textures_Id(tex)))
+    {
+    case TN_SYSTEM:
+    case TN_DETAILS:
+    case TN_REFLECTIONS:
+    case TN_MASKS:
+    case TN_MODELSKINS:
+    case TN_MODELREFLECTIONSKINS:
+    case TN_LIGHTMAPS:
+    case TN_FLAREMAPS: break;
+
+    case TN_FLATS: {
+        flat_t* flat = (flat_t*)Texture_DetachUserData(tex);
+        if(flat) free(flat);
+        break;
     }
+    case TN_TEXTURES: {
+        patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_DetachUserData(tex);
+        if(pcTex)
+        {
+            Str_Free(&pcTex->name);
+            if(pcTex->patches) free(pcTex->patches);
+            free(pcTex);
+        }
+        break;
+    }
+    case TN_SPRITES: {
+        spritetex_t* sprTex = (spritetex_t*)Texture_DetachUserData(tex);
+        if(sprTex) free(sprTex);
+        break;
+    }
+    case TN_PATCHES: {
+        patchtex_t* pTex = (patchtex_t*)Texture_DetachUserData(tex);
+        if(pTex) free(pTex);
+        break;
+    }
+    default:
+        Con_Error("Textures::destroyTextureBind: Internal error, invalid namespace id %i.", (int)Textures_Namespace(Textures_Id(tex)));
+        exit(1); // Unreachable.
+    }
+    Texture_Delete(tex);
+}
+
+static int destroyBoundTexture(PathDirectoryNode* node, void* paramaters)
+{
+    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
+    if(bind && bind->texture)
+    {
+        destroyTexture(bind->texture), bind->texture = NULL;
+    }
+    return 0; // Continue iteration.
+}
+
+static int destroyBind(PathDirectoryNode* node, void* paramaters)
+{
+    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_DetachUserData(node);
+    if(bind)
+    {
+        if(bind->texture)
+        {
+#if _DEBUG
+            Uri* uri = composeUriForDirectoryNode(node);
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Warning:Textures::destroyBind: Binding for \"%s\" still has Texture data!\n", Str_Text(path));
+            Str_Delete(path);
+            Uri_Delete(uri);
+#endif
+            destroyTexture(bind->texture);
+        }
+        if(bind->resourcePath)
+        {
+            Uri_Delete(bind->resourcePath);
+        }
+        unlinkTextureBindFromIdMap(bind);
+        free(bind);
+    }
+    return 0; // Continue iteration.
+}
+
+static int destroyTextureAndBind(PathDirectoryNode* node, void* paramaters)
+{
+    destroyBoundTexture(node, paramaters);
+    destroyBind(node, paramaters);
     return 0; // Continue iteration.
 }
 
@@ -360,6 +340,8 @@ void Textures_Init(void)
     int i;
 
     VERBOSE( Con_Message("Initializing Textures collection...\n") )
+
+    emptyUri = Uri_New();
 
     textureIdMap = NULL;
     textureIdMapSize = 0;
@@ -378,15 +360,18 @@ void Textures_Shutdown(void)
 
     for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
     {
+        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyBind);
         PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
     }
 
-    // Clear the texture index/map.
+    // Clear the texturebind index/map.
     if(textureIdMap)
     {
         free(textureIdMap), textureIdMap = NULL;
     }
     textureIdMapSize = 0;
+
+    Uri_Delete(emptyUri), emptyUri = NULL;
 }
 
 texturenamespaceid_t Textures_ParseNamespace(const char* str)
@@ -449,25 +434,25 @@ void Textures_Clear(void)
 {
     if(!Textures_Size()) return;
 
-    Textures_ClearRuntime();
-    Textures_ClearSystem();
+    Textures_ClearNamespace(TN_ANY);
+    GL_PruneTextureVariantSpecifications();
 }
 
 void Textures_ClearRuntime(void)
 {
     if(!Textures_Size()) return;
 
-    Textures_ClearByNamespace(TN_FLATS);
-    Textures_ClearByNamespace(TN_TEXTURES);
-    Textures_ClearByNamespace(TN_PATCHES);
-    Textures_ClearByNamespace(TN_SPRITES);
-    Textures_ClearByNamespace(TN_DETAILS);
-    Textures_ClearByNamespace(TN_REFLECTIONS);
-    Textures_ClearByNamespace(TN_MASKS);
-    Textures_ClearByNamespace(TN_MODELSKINS);
-    Textures_ClearByNamespace(TN_MODELREFLECTIONSKINS);
-    Textures_ClearByNamespace(TN_LIGHTMAPS);
-    Textures_ClearByNamespace(TN_FLAREMAPS);
+    Textures_ClearNamespace(TN_FLATS);
+    Textures_ClearNamespace(TN_TEXTURES);
+    Textures_ClearNamespace(TN_PATCHES);
+    Textures_ClearNamespace(TN_SPRITES);
+    Textures_ClearNamespace(TN_DETAILS);
+    Textures_ClearNamespace(TN_REFLECTIONS);
+    Textures_ClearNamespace(TN_MASKS);
+    Textures_ClearNamespace(TN_MODELSKINS);
+    Textures_ClearNamespace(TN_MODELREFLECTIONSKINS);
+    Textures_ClearNamespace(TN_LIGHTMAPS);
+    Textures_ClearNamespace(TN_FLAREMAPS);
 
     GL_PruneTextureVariantSpecifications();
 }
@@ -476,11 +461,11 @@ void Textures_ClearSystem(void)
 {
     if(!Textures_Size()) return;
 
-    Textures_ClearByNamespace(TN_SYSTEM);
+    Textures_ClearNamespace(TN_SYSTEM);
     GL_PruneTextureVariantSpecifications();
 }
 
-void Textures_ClearByNamespace(texturenamespaceid_t texNamespace)
+void Textures_ClearNamespace(texturenamespaceid_t texNamespace)
 {
     texturenamespaceid_t from, to, iter;
     if(!Textures_Size()) return;
@@ -496,37 +481,47 @@ void Textures_ClearByNamespace(texturenamespaceid_t texNamespace)
     }
     else
     {
-        Con_Error("Textures_ClearByNamespace: Invalid texture namespace %i.", (int) texNamespace);
+        Con_Error("Textures_ClearNamespace: Invalid texture namespace %i.", (int) texNamespace);
         exit(1); // Unreachable.
     }
 
     for(iter = from; iter <= to; ++iter)
     {
         PathDirectory* texDirectory = getDirectoryForNamespaceId(iter);
-        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTexture);
+        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTextureAndBind);
         PathDirectory_Clear(texDirectory);
     }
 }
 
+void Textures_Release(texture_t* tex)
+{
+    /// Stub.
+    GL_ReleaseGLTexturesByTexture(tex);
+    /// \fixme Update any Materials (and thus Surfaces) which reference this.
+}
+
 texture_t* Textures_ToTexture(textureid_t id)
 {
+    texturebind_t* bind;
     if(!validTextureId(id))
     {
 #if _DEBUG
-        if(id != 0)
+        if(id != NOTEXTUREID)
         {
-            Con_Message("Warning:Textures_ToTexture: Failed to locate texture for id #%i, returning NULL.\n", id);
+            Con_Message("Warning:Textures::ToTexture: Failed to locate texture for id #%i, returning NULL.\n", id);
         }
 #endif
         return NULL;
     }
-    return getTextureForId(id);
+    bind = getTextureBindForId(id);
+    if(!bind) return NULL;
+    return bind->texture;
 }
 
-texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet)
+textureid_t Textures_TextureForUri2(const Uri* uri, boolean quiet)
 {
-    texture_t* tex;
-    if(!uri || !Textures_Size()) return NULL;
+    PathDirectoryNode* node;
+    if(!uri || !Textures_Size()) return NOTEXTUREID;
 
     if(!validateTextureUri2(uri, VTUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
@@ -535,12 +530,24 @@ texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet)
         Con_Message("Warning:Textures::TextureForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
-        return NULL;
+        return NOTEXTUREID;
     }
 
     // Perform the search.
-    tex = findTextureForUri(uri);
-    if(tex) return tex;
+    node = findTextureBindForPath(uri);
+    if(node)
+    {
+        texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
+        assert(bind);
+        // If we have bound a texture - it can provide the id.
+        if(bind->texture)
+        {
+            textureid_t id = Texture_PrimaryBind(bind->texture);
+            if(id != NOTEXTUREID) return id;
+        }
+        // Oh well, look it up then.
+        return findIdForTextureBind(bind);
+    }
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
@@ -549,36 +556,38 @@ texture_t* Textures_TextureForUri2(const Uri* uri, boolean quiet)
         Con_Message("Textures::TextureForUri: \"%s\" not found!\n", Str_Text(path));
         Str_Delete(path);
     }
-    return NULL;
+    return NOTEXTUREID;
 }
 
-texture_t* Textures_TextureForUri(const Uri* uri)
+textureid_t Textures_TextureForUri(const Uri* uri)
 {
     return Textures_TextureForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-texture_t* Textures_TextureForUriCString2(const char* path, boolean quiet)
+textureid_t Textures_TextureForUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        texture_t* tex = Textures_TextureForUri2(uri, quiet);
+        textureid_t id = Textures_TextureForUri2(uri, quiet);
         Uri_Delete(uri);
-        return tex;
+        return id;
     }
-    return NULL;
+    return NOTEXTUREID;
 }
 
-texture_t* Textures_TextureForUriCString(const char* path)
+textureid_t Textures_TextureForUriCString(const char* path)
 {
     return Textures_TextureForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-texture_t* Textures_CreateWithDimensions(const Uri* uri, int flags, int width, int height, void* userData)
+textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
 {
     PathDirectory* texDirectory;
     PathDirectoryNode* node;
-    texture_t* tex;
+    texturebind_t* bind;
+    textureid_t id;
+    boolean releaseTexture = false;
     assert(uri);
 
     // We require a properly formed uri.
@@ -587,20 +596,91 @@ texture_t* Textures_CreateWithDimensions(const Uri* uri, int flags, int width, i
         ddstring_t* uriStr = Uri_ToString(uri);
         Con_Message("Warning, failed to create Texture \"%s\", ignoring.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
+        return NOTEXTUREID;
+    }
+
+    // Have we already created a binding for this?
+    node = findTextureBindForPath(uri);
+    if(node)
+    {
+        bind = (texturebind_t*)PathDirectoryNode_UserData(node);
+        id = findIdForTextureBind(bind);
+    }
+    else
+    {
+        // A new binding.
+        bind = (texturebind_t*)malloc(sizeof *bind);
+        if(!bind)
+            Con_Error("Textures::CreateWithDimensions: Failed on allocation of %lu bytes for new TextureBind.", (unsigned long) sizeof *bind);
+        bind->texture = NULL;
+        bind->resourcePath = NULL;
+
+        texDirectory = getDirectoryForNamespaceId(Textures_ParseNamespace(Str_Text(Uri_Scheme(uri))));
+        node = PathDirectory_Insert(texDirectory, Str_Text(Uri_Path(uri)), TEXTURES_PATH_DELIMITER);
+
+        PathDirectoryNode_AttachUserData(node, bind);
+        bind->directoryNode = node;
+
+        id = textureIdMapSize + 1; // 1-based identfier
+
+        // Link it into the id map.
+        textureIdMap = (texturebind_t**) realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
+        if(!textureIdMap)
+            Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
+        textureIdMap[id - 1] = bind;
+    }
+
+    // (Re)configure this binding.
+    if(resourcePath)
+    {
+        if(!bind->resourcePath)
+        {
+            bind->resourcePath = Uri_NewCopy(resourcePath);
+            releaseTexture = true;
+        }
+        else if(!Uri_Equality(bind->resourcePath, resourcePath))
+        {
+            Uri_Copy(bind->resourcePath, resourcePath);
+            releaseTexture = true;
+        }
+    }
+    else if(bind->resourcePath)
+    {
+        Uri_Delete(bind->resourcePath);
+        bind->resourcePath = NULL;
+        releaseTexture = true;
+    }
+
+    if(releaseTexture && bind->texture)
+    {
+        // The mapped resource is being replaced, so release any existing Texture.
+        Textures_Release(bind->texture);
+    }
+
+    return id;
+}
+
+texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, int height, void* userData)
+{
+    texturebind_t* bind = getTextureBindForId(id);
+    if(!bind)
+    {
+        Con_Message("Warning, failed to create Texture #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 
-    // Have we already created a texture for this?
-    tex = findTextureForUri(uri);
-    if(tex)
+    if(bind->texture)
     {
         /// \todo Do not update textures here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
+        texture_t* tex = bind->texture;
 #if _DEBUG
+        Uri* uri = Textures_ComposeUri(id);
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning:Textures::CreateWithDimensions: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
         Str_Delete(path);
+        Uri_Delete(uri);
 #endif
         Texture_SetFlags(tex, flags);
         Texture_SetDimensions(tex, width, height);
@@ -610,24 +690,19 @@ texture_t* Textures_CreateWithDimensions(const Uri* uri, int flags, int width, i
     }
 
     // A new texture.
-    texDirectory = getDirectoryForNamespaceId(Textures_ParseNamespace(Str_Text(Uri_Scheme(uri))));
-    node = PathDirectory_Insert(texDirectory, Str_Text(Uri_Path(uri)), TEXTURES_PATH_DELIMITER);
-
-    tex = Texture_NewWithDimensions(node, flags, width, height, userData);
-    PathDirectoryNode_AttachUserData(node, tex);
-
-    // Link the new texture into the id map.
-    textureIdMap = (texture_t**) realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
-    if(!textureIdMap)
-        Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
-    textureIdMap[textureIdMapSize - 1] = tex;
-
-    return tex;
+    return bind->texture = Texture_NewWithDimensions(flags, id, width, height, userData);
 }
 
-texture_t* Textures_Create(const Uri* uri, int flags, void* userData)
+texture_t* Textures_Create(textureid_t id, int flags, void* userData)
 {
-    return Textures_CreateWithDimensions(uri, flags, 0, 0, userData);
+    return Textures_CreateWithDimensions(id, flags, 0, 0, userData);
+}
+
+const Uri* Textures_ResourcePath(textureid_t id)
+{
+    texturebind_t* bind = getTextureBindForId(id);
+    if(!bind) return emptyUri;
+    return bind->resourcePath;
 }
 
 textureid_t Textures_Id(texture_t* tex)
@@ -637,76 +712,84 @@ textureid_t Textures_Id(texture_t* tex)
 #if _DEBUG
         Con_Message("Warning:Textures::Id: Attempted with invalid reference [%p], returning invalid id.\n", (void*)tex);
 #endif
-        return 0;
+        return NOTEXTUREID;
     }
-    return findIdForTexture(tex);
+    return Texture_PrimaryBind(tex);
 }
 
-texturenamespaceid_t Textures_Namespace(texture_t* tex)
+texturenamespaceid_t Textures_Namespace(textureid_t id)
 {
-    if(!tex)
+    texturebind_t* bind = getTextureBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::Namespace: Attempted with invalid reference [%p], returning invalid id.\n", (void*)tex);
+        Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
-        return TN_INVALID;
+        return TN_ANY;
     }
-    return namespaceIdForDirectoryNode(Texture_DirectoryNode(tex));
+    return namespaceIdForDirectoryNode(bind->directoryNode);
 }
 
-ddstring_t* Textures_ComposePath(texture_t* tex)
+ddstring_t* Textures_ComposePath(textureid_t id)
 {
-    if(!tex)
+    texturebind_t* bind = getTextureBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::ComposePath: Attempted with invalid reference [%p], returning null-object.\n", (void*)tex);
+        Con_Message("Warning:Textures::ComposePath: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
         return Str_New();
     }
-    return composePathForDirectoryNode(Texture_DirectoryNode(tex), TEXTURES_PATH_DELIMITER);
+    return composePathForDirectoryNode(bind->directoryNode, TEXTURES_PATH_DELIMITER);
 }
 
-Uri* Textures_ComposeUri(texture_t* tex)
+Uri* Textures_ComposeUri(textureid_t id)
 {
-    if(!tex)
+    texturebind_t* bind = getTextureBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::ComposeUri: Attempted with invalid reference [%p], returning null-object.\n", (void*)tex);
+        Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
         return Uri_New();
     }
-    return composeUriForDirectoryNode(Texture_DirectoryNode(tex));
+    return composeUriForDirectoryNode(bind->directoryNode);
 }
 
 typedef struct {
-    int (*callback)(texture_t* tex, void* paramaters);
+    int (*definedCallback)(texture_t* tex, void* paramaters);
+    int (*declaredCallback)(textureid_t id, void* paramaters);
     void* paramaters;
-} texturesiterateworker_params_t;
+} iterateworker_params_t;
 
-static int texturesIterateWorker(PathDirectoryNode* node, void* paramaters)
+static int iterateWorker(PathDirectoryNode* node, void* paramaters)
 {
-    texturesiterateworker_params_t* p = (texturesiterateworker_params_t*)paramaters;
-    texture_t* tex = (texture_t*)PathDirectoryNode_UserData(node);
+    iterateworker_params_t* p = (iterateworker_params_t*)paramaters;
+    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
     assert(node && p);
-    if(tex)
+    if(p->definedCallback)
     {
-        return p->callback(tex, p->paramaters);
+        if(bind->texture)
+        {
+            return p->definedCallback(bind->texture, p->paramaters);
+        }
+    }
+    else
+    {
+        return p->declaredCallback(findIdForTextureBind(bind), p->paramaters);
     }
     return 0; // Continue iteration.
 }
 
-int Textures_Iterate2(texturenamespaceid_t texNamespace,
-    int (*callback)(texture_t* tex, void* paramaters), void* paramaters)
+static int iterate(texturenamespaceid_t namespaceId, iterateworker_params_t* paramaters)
 {
     texturenamespaceid_t from, to, iter;
-    texturesiterateworker_params_t p;
     int result = 0;
+    assert(paramaters);
 
-    if(!callback) return result;
-
-    if(VALID_TEXTURENAMESPACEID(texNamespace))
+    if(VALID_TEXTURENAMESPACEID(namespaceId))
     {
-        from = to = texNamespace;
+        from = to = namespaceId;
     }
     else
     {
@@ -714,40 +797,59 @@ int Textures_Iterate2(texturenamespaceid_t texNamespace,
         to   = TEXTURENAMESPACE_LAST;
     }
 
-    p.callback = callback;
-    p.paramaters = paramaters;
     for(iter = from; iter <= to; ++iter)
     {
         PathDirectory* texDirectory = getDirectoryForNamespaceId(iter);
-        result = PathDirectory_Iterate2(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, texturesIterateWorker, (void*)&p);
+        result = PathDirectory_Iterate2(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, iterateWorker, paramaters);
         if(result) break;
     }
-
     return result;
 }
 
-int Textures_Iterate(texturenamespaceid_t texNamespace, int (*callback)(texture_t* tex, void* paramaters))
+int Textures_Iterate2(texturenamespaceid_t namespaceId,
+    int (*callback)(texture_t* tex, void* paramaters), void* paramaters)
 {
-    return Textures_Iterate2(texNamespace, callback, NULL);
+    iterateworker_params_t p;
+    if(!callback) return 0;
+    p.definedCallback = callback;
+    p.declaredCallback = NULL;
+    p.paramaters = paramaters;
+    return iterate(namespaceId, &p);
+}
+
+int Textures_Iterate(texturenamespaceid_t namespaceId,
+    int (*callback)(texture_t* tex, void* paramaters))
+{
+    return Textures_Iterate2(namespaceId, callback, NULL);
+}
+
+int Textures_IterateDeclared2(texturenamespaceid_t namespaceId,
+    int (*callback)(textureid_t textureId, void* paramaters), void* paramaters)
+{
+    iterateworker_params_t p;
+    if(!callback) return 0;
+    p.declaredCallback = callback;
+    p.definedCallback = NULL;
+    p.paramaters = paramaters;
+    return iterate(namespaceId, &p);
+}
+
+int Textures_IterateDeclared(texturenamespaceid_t namespaceId,
+    int (*callback)(textureid_t textureId, void* paramaters))
+{
+    return Textures_IterateDeclared2(namespaceId, callback, NULL);
 }
 
 static void printTextureInfo(texture_t* tex)
 {
-    Uri* uri = Textures_ComposeUri(tex);
+    Uri* uri = Textures_ComposeUri(Textures_Id(tex));
     ddstring_t* path = Uri_ToString(uri);
     //int variantIdx = 0;
 
-    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s",
+    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s\nDimensions: %d x %d\n",
         F_PrettyPath(Str_Text(path)), (void*) tex, (uint) Textures_Id(tex),
-        Texture_IsCustom(tex)? "addon" : "game");
-    if(!Texture_IsNull(tex))
-    {
-        Con_Printf("\nDimensions: %d x %d\n", Texture_Width(tex), Texture_Height(tex));
-    }
-    else
-    {
-        Con_Printf(" (not yet loaded)\n");
-    }
+        Texture_IsCustom(tex)? "addon" : "game",
+        Texture_Width(tex), Texture_Height(tex));
 
     //Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
 
@@ -755,15 +857,16 @@ static void printTextureInfo(texture_t* tex)
     Uri_Delete(uri);
 }
 
-static void printTextureOverview(texture_t* tex, boolean printNamespace)
+static void printTextureOverview(texturebind_t* bind, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
-    Uri* uri = Textures_ComposeUri(tex);
+    Uri* uri = bind->texture? Textures_ComposeUri(findIdForTextureBind(bind)) : Uri_New();
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
-    Con_FPrintf(Texture_IsNull(tex)? CPF_LIGHT : CPF_WHITE,
+    Con_FPrintf(!bind->texture? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, (unsigned int) Textures_Id(tex), Texture_IsCustom(tex)? "addon" : "game");
+        numUidDigits, (unsigned int) findIdForTextureBind(bind),
+        !bind->texture? "unknown" : Texture_IsCustom(bind->texture)? "addon" : "game");
 
     Uri_Delete(uri);
     if(printNamespace)
@@ -779,7 +882,7 @@ static void printTextureOverview(texture_t* tex, boolean printNamespace)
 typedef struct {
     char delimiter;
     const char* like;
-    int idx;
+    uint idx;
     PathDirectoryNode** storage;
 } collectdirectorynodeworker_paramaters_t;
 
@@ -808,7 +911,7 @@ static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
 }
 
 static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceId,
-    const char* like, int* count, PathDirectoryNode** storage)
+    const char* like, uint* count, PathDirectoryNode** storage)
 {
     collectdirectorynodeworker_paramaters_t p;
     texturenamespaceid_t fromId, toId, iterId;
@@ -838,7 +941,7 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
 
     if(storage)
     {
-        storage[p.idx] = 0; // Terminate.
+        storage[p.idx] = NULL; // Terminate.
         if(count) *count = p.idx;
         return storage;
     }
@@ -880,9 +983,10 @@ static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* no
 static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like, int flags)
 {
     const boolean printNamespace = !(flags & PTF_TRANSFORM_PATH_NO_NAMESPACE);
-    int numFoundDigits, numUidDigits, idx, count = 0;
+    uint idx, count = 0;
     PathDirectoryNode **foundTextures = collectDirectoryNodes(namespaceId, like, &count, NULL);
     PathDirectoryNode** iter;
+    int numFoundDigits, numUidDigits;
 
     if(!foundTextures) return 0;
 
@@ -896,8 +1000,8 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     Con_FPrintf(CPF_YELLOW, ":\n");
 
     // Print the result index key.
-    numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(count));
-    numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
+    numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
+    numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Textures_Size()));
     Con_Printf(" %*s: %-*s %*s origin\n", numFoundDigits, "idx",
         printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
         numUidDigits, "uid");
@@ -910,9 +1014,9 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     for(iter = foundTextures; *iter; ++iter)
     {
         const PathDirectoryNode* node = *iter;
-        texture_t* tex = (texture_t*) PathDirectoryNode_UserData(node);
-        Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printTextureOverview(tex, printNamespace);
+        texturebind_t* bind = (texturebind_t*) PathDirectoryNode_UserData(node);
+        Con_Printf(" %*u: ", numFoundDigits, idx++);
+        printTextureOverview(bind, printNamespace);
     }
 
     free(foundTextures);
@@ -1034,7 +1138,7 @@ D_CMD(InspectTexture)
         }
     }
 
-    tex = Textures_TextureForUri(search);
+    tex = Textures_ToTexture(Textures_TextureForUri(search));
     if(tex)
     {
         printTextureInfo(tex);

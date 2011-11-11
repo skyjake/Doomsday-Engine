@@ -1831,13 +1831,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 }
                 else if(ISLABEL("Lump"))
                 {
-                    READURI(&dtl->detailTex, 0)
-                    dtl->isExternal = false;
+                    READURI(&dtl->detailTex, "Lumps")
                 }
                 else if(ISLABEL("File"))
                 {
                     READURI(&dtl->detailTex, 0)
-                    dtl->isExternal = true;
                 }
                 else
                 RV_FLT("Scale", dtl->scale)

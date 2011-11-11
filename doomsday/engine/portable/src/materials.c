@@ -988,7 +988,7 @@ Uri* Materials_ComposeUri(material_t* mat)
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     const Uri* uri = def->uri;
-    const texture_t* tex;
+    textureid_t texId;
     material_t* mat;
     assert(def);
 
@@ -1016,14 +1016,14 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 
     // Ensure the primary layer has a valid texture reference.
-    tex = NULL;
+    texId = NOTEXTUREID;
     if(def->layers[0].stageCount.num > 0)
     {
         const ded_material_layer_t* l = &def->layers[0];
         if(l->stages[0].texture) // Not unused.
         {
-            tex = Textures_TextureForUri2(l->stages[0].texture, true/*quiet please*/);
-            if(!tex)
+            texId = Textures_TextureForUri2(l->stages[0].texture, true/*quiet please*/);
+            if(texId == NOTEXTUREID)
             {
                 ddstring_t* materialPath = Uri_ToString(def->uri);
                 ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
@@ -1034,12 +1034,12 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             }
         }
     }
-    if(!tex) return NULL;
+    if(texId == NOTEXTUREID) return NULL;
 
     // A new Material.
     mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
-    mat->_isCustom = Texture_IsCustom(tex);
+    mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
     mat->_def    = def;
     mat->_width  = MAX_OF(0, def->width);
     mat->_height = MAX_OF(0, def->height);
@@ -1126,19 +1126,19 @@ void Materials_Ticker(timespan_t time)
 static texture_t* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
     assert(def);
-    return R_FindDetailTextureForFilePath(def->detailTex, def->isExternal);
+    return R_FindDetailTextureForResourcePath(def->detailTex);
 }
 
 static texture_t* findShinyTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
-    return R_FindReflectionTextureForFilePath(def->shinyMap);
+    return R_FindReflectionTextureForResourcePath(def->shinyMap);
 }
 
 static texture_t* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
-    return R_FindMaskTextureForFilePath(def->maskMap);
+    return R_FindMaskTextureForResourcePath(def->maskMap);
 }
 
 static void updateMaterialTextureLinks(materialbind_t* mb)
@@ -1235,13 +1235,12 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
     for(i = 0; i < layerCount; ++i)
     {
         const materialvariant_layer_t* ml = MaterialVariant_Layer(variant, i);
-        texture_t* tex = Textures_ToTexture(ml->texId);
         preparetextureresult_t result;
 
-        if(!tex) continue;
+        if(!ml->texture) continue;
 
         // Pick the instance matching the specified context.
-        texUnits[i].tex = GL_PrepareTextureVariant2(tex, spec->primarySpec, &result);
+        texUnits[i].tex = GL_PrepareTextureVariant2(ml->texture, spec->primarySpec, &result);
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
@@ -1258,7 +1257,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Material_SetDimensions(mat, Texture_Width(tex), Texture_Height(tex));
+                Material_SetDimensions(mat, Texture_Width(ml->texture), Texture_Height(ml->texture));
             }
         }
     }
@@ -1341,7 +1340,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
         int magMode = glmode[texMagMode];
         float sScale, tScale;
 
-        if(TN_SPRITES == Textures_Namespace(TextureVariant_GeneralCase(tex)))
+        if(TN_SPRITES == Textures_Namespace(Textures_Id(TextureVariant_GeneralCase(tex))))
             magMode = filterSprites? GL_LINEAR : GL_NEAREST;
         sScale = 1.f / snapshot->width;
         tScale = 1.f / snapshot->height;
@@ -1551,12 +1550,12 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     for(i = 0; i < layers; ++i)
     {
         const materialvariant_layer_t* l = MaterialVariant_Layer(variant, i);
-        Uri* uri = Textures_ComposeUri(Textures_ToTexture(l->texId));
+        Uri* uri = Textures_ComposeUri(Textures_Id(l->texture));
         ddstring_t* path = Uri_ToString(uri);
 
         Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%i)"
             "\n      Offset: %.2f x %.2f Glow:%.2f\n",
-            i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), l->texId,
+            i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), Textures_Id(l->texture),
             l->texOrigin[0], l->texOrigin[1], l->glow);
 
         Uri_Delete(uri);

@@ -53,7 +53,7 @@ materialvariant_t* MaterialVariant_New(material_t* generalCase,
         mat->_layers[i].stage = 0;
         mat->_layers[i].tics = def->layers[i].stages[0].tics;
         mat->_layers[i].glow = def->layers[i].stages[0].glow;
-        mat->_layers[i].texId  = Textures_Id(Textures_TextureForUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
+        mat->_layers[i].texture = Textures_ToTexture(Textures_TextureForUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
         mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
         mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
     }

@@ -769,7 +769,7 @@ static void addLuminous(mobj_t* mo)
     autoLightColor[CB] = pl->color[CB];
 
 #if _DEBUG
-    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 

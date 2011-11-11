@@ -50,35 +50,6 @@
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct systex_s {
-    Uri* external;
-} systex_t;
-
-typedef struct detailtex_s {
-    boolean isExternal;
-    const Uri* path;
-} detailtex_t;
-
-typedef struct lightmap_s {
-    const Uri* external;
-} lightmap_t;
-
-typedef struct flaretex_s {
-    const Uri* external;
-} flaretex_t;
-
-typedef struct shinytex_s {
-    const Uri* external;
-} shinytex_t;
-
-typedef struct masktex_s {
-    const Uri* external;
-} masktex_t;
-
-typedef struct skinname_s {
-    Uri* path;
-} skinname_t;
-
 typedef enum {
     TU_PRIMARY = 0,
     TU_PRIMARY_DETAIL,
@@ -160,13 +131,11 @@ typedef struct {
 } patchcompositetex_t;
 
 typedef struct flat_s {
-    lumpnum_t lumpNum;
     /// Index of this resource according to the logic of the original game's indexing algorithm.
     int origIndex;
 } flat_t;
 
 typedef struct {
-    lumpnum_t lumpNum;
     /// Offset to texture origin in logical pixels.
     short offX, offY;
 } spritetex_t;
@@ -175,9 +144,7 @@ typedef struct {
 #define PF_MONOCHROME         0x1
 #define PF_UPSCALE_AND_SHARPEN 0x2
 
-// A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
-    lumpnum_t lumpNum;
     textureid_t texId; /// Name of the associated Texture.
     short flags;
     /// Offset to texture origin in logical pixels.
@@ -390,7 +357,7 @@ void R_PrecacheForMap(void);
 void R_PrecacheMobjNum(int mobjtypeNum);
 
 struct texture_s* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin);
-struct texture_s* R_FindModelSkinForFilePath(const Uri* filePath);
+struct texture_s* R_FindModelSkinForResourcePath(const Uri* resourcePath);
 
 boolean R_DrawVLightVector(const vlight_t* light, void* context);
 
@@ -405,27 +372,19 @@ void R_InitAnimGroup(ded_group_t* def);
  * @return  DetailTexture inferred from the definition or @c NULL if invalid.
  */
 struct texture_s* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def);
+struct texture_s* R_FindDetailTextureForResourcePath(const Uri* resourcePath);
 
-/**
- * Lookup a detail Texture by it's unique path/name.
- *
- * @param path  Path/name reference to the potential candidate.
- * @param isExternal  @c true= @a path is an "external" path, else a WAD lump name.
- * @return  Texture associated to this path if found else @c NULL.
- */
-struct texture_s* R_FindDetailTextureForFilePath(const Uri* path, boolean isExternal);
+struct texture_s* R_CreateLightMap(const Uri* resourcePath);
+struct texture_s* R_FindLightMapForResourcePath(const Uri* resourcePath);
 
-struct texture_s* R_CreateLightMap(const Uri* filePath);
-struct texture_s* R_FindLightMapForFilePath(const Uri* filePath);
+struct texture_s* R_CreateFlareTexture(const Uri* resourcePath);
+struct texture_s* R_FindFlareTextureForResourcePath(const Uri* resourcePath);
 
-struct texture_s* R_CreateFlareTexture(const Uri* filePath);
-struct texture_s* R_FindFlareTextureForFilePath(const Uri* filePath);
+struct texture_s* R_CreateReflectionTexture(const Uri* resourcePath);
+struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath);
 
-struct texture_s* R_CreateShinyTexture(const Uri* filePath);
-struct texture_s* R_FindReflectionTextureForFilePath(const Uri* filePath);
-
-struct texture_s* R_CreateMaskTexture(const Uri* filePath, int logicalWidth, int logicalHeight);
-struct texture_s* R_FindMaskTextureForFilePath(const Uri* filePath);
+struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, int logicalWidth, int logicalHeight);
+struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
 
 patchid_t R_PrecachePatch(const char* name, patchinfo_t* info);
 

@@ -25,7 +25,7 @@
 #ifndef LIBDENG_GL_TEXTURE_H
 #define LIBDENG_GL_TEXTURE_H
 
-#include "pathdirectory.h"
+#include "textures.h"
 
 struct texturevariant_s;
 
@@ -61,8 +61,8 @@ typedef struct texture_s {
     /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
     int _width, _height;
 
-    /// Pointer to this texture's node in the owning PathDirectory.
-    PathDirectoryNode* _directoryNode;
+    /// Unique identifier of the primary binding in the owning collection.
+    textureid_t _primaryBind;
 
     /// List of variants (e.g., color translations).
     struct texture_variantlist_node_s* _variants;
@@ -78,19 +78,23 @@ typedef struct texture_s {
 /**
  * Construct a new Texture.
  *
- * @param directoryNode  Node in the owning PathDirectory to associate with the
- *    resultant texture.
  * @param flags  @see textureFlags
+ * @param bindId  Unique identifier of the primary binding in the owning collection.
+ *    Can be @c 0 in which case there is no binding for the resultant texture.
  * @param width  Logical width of the texture. Can be zero in which case it will be
  *    inherited from the actual pixel width of the texture at load time.
  * @param height  Logical height of the texture. Can be zero in which case it will be
  *    inherited from the actual pixel height of the texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-texture_t* Texture_NewWithDimensions(PathDirectoryNode* directoryNode, int flags, int width, int height, void* userData);
-texture_t* Texture_New(PathDirectoryNode* directoryNode, int flags, void* userData);
+texture_t* Texture_NewWithDimensions(int flags, textureid_t bindId, int width, int height, void* userData);
+texture_t* Texture_New(int flags, textureid_t bindId, void* userData);
 
 void Texture_Delete(texture_t* tex);
+
+textureid_t Texture_PrimaryBind(const texture_t* tex);
+
+void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId);
 
 /**
  * Attach new user data. If data is already present it will be replaced.
@@ -156,9 +160,6 @@ void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis);
 /// @return  @c true iff the data associated with @a tex does not originate from the current game.
 boolean Texture_IsCustom(const texture_t* tex);
 
-/// @return  @c true iff the texture has not yet been loaded.
-boolean Texture_IsNull(const texture_t* tex);
-
 /// @return  @see textureFlags
 int Texture_Flags(const texture_t* tex);
 
@@ -195,8 +196,5 @@ int Texture_Height(const texture_t* tex);
  * @param height  Height in logical pixels.
  */
 void Texture_SetHeight(texture_t* tex, int height);
-
-/// @return  PathDirectory node associated with this.
-PathDirectoryNode* Texture_DirectoryNode(const texture_t* texture);
 
 #endif /* LIBDENG_GL_TEXTURE_H */

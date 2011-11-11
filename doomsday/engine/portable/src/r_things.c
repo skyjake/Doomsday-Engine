@@ -323,18 +323,16 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
     return rec;
 }
 
-static int buildSpriteRotationsWorker(texture_t* tex, void* paramaters)
+static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
 {
-    spritetex_t* sprTex = (spritetex_t*)Texture_UserData(tex);
     spriterecord_frame_t* frame;
     ddstring_t* path;
     spriterecord_t* rec;
     boolean link;
     Uri* uri;
-    assert(sprTex);
 
     // Have we already encountered this name?
-    path = Textures_ComposePath(tex);
+    path = Textures_ComposePath(texId);
     rec = findSpriteRecordForName(path);
     if(!rec)
     {
@@ -421,7 +419,7 @@ static void buildSpriteRotations(void)
     spriteRecordBlockSet = BlockSet_New(sizeof(spriterecord_t), 64),
     spriteRecordFrameBlockSet = BlockSet_New(sizeof(spriterecord_frame_t), 256);
 
-    Textures_Iterate(TN_SPRITES, buildSpriteRotationsWorker);
+    Textures_IterateDeclared(TN_SPRITES, buildSpriteRotationsWorker);
 
     VERBOSE2( Con_Message("buildSpriteRotations: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
@@ -627,7 +625,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     ms = Materials_Prepare(mat, spec, false);
 
 #if _DEBUG
-    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
@@ -961,7 +959,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     ms = Materials_Prepare(mat, spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
         Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
@@ -1216,7 +1214,7 @@ void R_ProjectSprite(mobj_t* mo)
     ms = Materials_Prepare(mat, spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
         Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 

@@ -655,63 +655,6 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static const Uri* searchPath(texture_t* tex)
-{
-    assert(tex);
-    switch(Textures_Namespace(tex))
-    {
-    case TN_SYSTEM: {
-        systex_t* sysTex = (systex_t*)Texture_UserData(tex);
-        assert(sysTex);
-        return sysTex->external;
-      }
-    /*case TN_FLATS:
-        tmpResult = GL_LoadFlat(&image, texInst->tex, context);
-        break;
-    case TN_TEXTURES:
-        tmpResult = GL_LoadDoomTexture(&image, texInst->tex, context);
-        break;
-    case TN_PATCHES:
-        tmpResult = GL_LoadDoomPatch(&image, texInst->tex, context);
-        break;
-    case TN_SPRITES:
-        tmpResult = GL_LoadSprite(&image, texInst->tex, context);
-        break;
-    case TN_DETAILS:
-        tmpResult = GL_LoadDetailTexture(&image, texInst->tex, context);
-        break;*/
-    case TN_REFLECTIONS: {
-        shinytex_t* sTex = (shinytex_t*)Texture_UserData(tex);
-        assert(sTex);
-        return sTex->external;
-      }
-    case TN_MASKS: {
-        masktex_t* mTex = (masktex_t*)Texture_UserData(tex);
-        assert(mTex);
-        return mTex->external;
-      }
-    case TN_MODELSKINS:
-    case TN_MODELREFLECTIONSKINS: {
-        skinname_t* sn = (skinname_t*)Texture_UserData(tex);
-        assert(sn);
-        return sn->path;
-      }
-    case TN_LIGHTMAPS: {
-        lightmap_t* lmap = (lightmap_t*)Texture_UserData(tex);
-        assert(lmap);
-        return lmap->external;
-      }
-    case TN_FLAREMAPS: {
-        flaretex_t* fTex = (flaretex_t*)Texture_UserData(tex);
-        assert(fTex);
-        return fTex->external;
-      }
-    default:
-        Con_Error("Texture::SearchPath: Unknown namespace %i.", (int) Textures_Namespace(tex));
-        exit(1); // Unreachable.
-    }
-}
-
 static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t* baseSpec,
     image_t* image)
 {
@@ -720,17 +663,14 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
     assert(tex && baseSpec && image);
 
     spec = TS_GENERAL(baseSpec);
-    switch(Textures_Namespace(tex))
+    switch(Textures_Namespace(Textures_Id(tex)))
     {
-    case TN_FLATS: {
-        const flat_t* flat = (flat_t*)Texture_UserData(tex);
-        assert(flat);
-
+    case TN_FLATS:
         // Attempt to load an external replacement for this flat?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(tex);
+            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
             ddstring_t searchPath;
 
             // First try the flats namespace then the old-fashioned "flat-name"
@@ -740,26 +680,34 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
                 FLATS_RESOURCE_NAMESPACE_NAME":%s;"
                 TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", Str_Text(path), Str_Text(path));
 
-            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
             Str_Free(&searchPath);
             Str_Delete(path);
         }
         if(0 == loadResult)
         {
-            if(flat->lumpNum >= 0)
+            const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
+            lumpnum_t lumpNum = -1;
+            if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                DFile* file = F_OpenLump(flat->lumpNum);
+                lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+            }
+            else if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "LumpDir"))
+            {
+                lumpNum = strtol(Str_Text(Uri_Path(resourcePath)), NULL, 0);
+            }
+
+            if(F_IsValidLumpNum(lumpNum))
+            {
+                DFile* file = F_OpenLump(lumpNum);
                 loadResult = GL_LoadFlatLump(image, file);
                 F_Delete(file);
             }
         }
         break;
-      }
-    case TN_PATCHES: {
-        patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
-        int tclass = 0, tmap = 0;
-        assert(pTex);
 
+    case TN_PATCHES: {
+        int tclass = 0, tmap = 0;
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             assert(spec->translated);
@@ -771,32 +719,34 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
         {
             const ddstring_t suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(tex);
+            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
             ddstring_t searchPath;
 
             Str_Init(&searchPath);
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(path));
 
-            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
             Str_Free(&searchPath);
             Str_Delete(path);
         }
         if(0 == loadResult)
         {
-            if(pTex->lumpNum >= 0)
+            const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
+            if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                DFile* file = F_OpenLump(pTex->lumpNum);
-                loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
-                F_Delete(file);
+                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+                if(F_IsValidLumpNum(lumpNum))
+                {
+                    DFile* file = F_OpenLump(lumpNum);
+                    loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
+                    F_Delete(file);
+                }
             }
         }
         break;
       }
     case TN_SPRITES: {
-        spritetex_t* sprTex = (spritetex_t*)Texture_UserData(tex);
         int tclass = 0, tmap = 0;
-        assert(sprTex);
-
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)
         {
             assert(spec->translated);
@@ -808,7 +758,7 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
         if(!noHighResPatches)
         {
             ddstring_t searchPath, suffix = { "-ck" };
-            ddstring_t* path = Textures_ComposePath(tex);
+            ddstring_t* path = Textures_ComposePath(Textures_Id(tex));
 
             // Prefer psprite or translated versions if available.
             Str_Init(&searchPath);
@@ -823,34 +773,37 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
             }
             Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s", Str_Text(path));
 
-            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(&searchPath), Str_Text(&suffix), true/*quiet please*/);
             Str_Free(&searchPath);
             Str_Delete(path);
         }
         if(0 == loadResult)
         {
-            if(sprTex->lumpNum >= 0)
+            const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
+            if(!Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
             {
-                DFile* file = F_OpenLump(sprTex->lumpNum);
-                loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, tex);
-                F_Delete(file);
+                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
+                if(F_IsValidLumpNum(lumpNum))
+                {
+                    DFile* file = F_OpenLump(lumpNum);
+                    loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, tex);
+                    F_Delete(file);
+                }
             }
         }
         break;
       }
     case TN_DETAILS: {
-        const detailtex_t* dTex = (detailtex_t*)Texture_UserData(tex);
-        assert(dTex);
-
-        if(dTex->isExternal)
+        const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
+        if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
-            ddstring_t* searchPath = Uri_ComposePath(dTex->path);
-            loadResult = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, false);
+            ddstring_t* searchPath = Uri_ComposePath(resourcePath);
+            loadResult = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, true/*quiet please*/);
             Str_Delete(searchPath);
         }
         else
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(dTex->path)), true);
+            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(resourcePath)), true/*quiet please*/);
             if(lumpNum >= 0)
             {
                 DFile* file = F_OpenLump(lumpNum);
@@ -867,14 +820,14 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
     case TN_FLAREMAPS:
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
-        ddstring_t* path = Uri_ComposePath(searchPath(tex));
-        loadResult = GL_LoadExtTextureEX(image, Str_Text(path), NULL, false);
+        const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
+        ddstring_t* path = Uri_ComposePath(resourcePath);
+        loadResult = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
         Str_Delete(path);
         break;
       }
     default:
-        Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.",
-                  (int) Textures_Namespace(tex));
+        Con_Error("Textures::loadSourceImage: Unknown texture namespace %i.", (int) Textures_Namespace(Textures_Id(tex)));
         return 0; // Unreachable.
     }
     return loadResult;
@@ -1098,7 +1051,7 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     EqualizeLuma(image->pixels, image->width, image->height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
-        Uri* uri = Textures_ComposeUri(TextureVariant_GeneralCase(tex));
+        Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Equalized TextureVariant \"%s\" (balance: %g, high amp: %g, low amp: %g).\n", Str_Text(path), baMul, hiMul, loMul);
         Str_Delete(path);
@@ -2554,7 +2507,7 @@ byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(tex) != TN_TEXTURES)
+    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchComposite: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserData(tex);
@@ -2599,7 +2552,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask
     assert(image && tex);
 
 #if _DEBUG
-    if(Textures_Namespace(tex) != TN_TEXTURES)
+    if(Textures_Namespace(Textures_Id(tex)) != TN_TEXTURES)
         Con_Error("GL_LoadPatchCompositeAsSky: Internal error, texture [%p id:%i] is not a PatchCompositeTex!", (void*)tex, Textures_Id(tex));
 #endif
     texDef = (patchcompositetex_t*)Texture_UserData(tex);
@@ -2790,7 +2743,7 @@ DGLuint GL_PrepareLightMap(const Uri* filePath)
         texture_t* tex;
         if(!Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return 0;
 
-        tex = R_FindLightMapForFilePath(filePath);
+        tex = R_FindLightMapForResourcePath(filePath);
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -2816,7 +2769,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
         if(Str_At(path, 0) >= '1' && Str_At(path, 0) <= '4' && !Str_At(path, 1))
             return GL_PrepareSysFlareTexture(Str_At(path, 0) - '1');
 
-        tex = R_FindFlareTextureForFilePath(uri);
+        tex = R_FindFlareTextureForResourcePath(uri);
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -3173,7 +3126,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     assert(initedOk && spec);
 
     // Load the source image data.
-    if(TN_TEXTURES == Textures_Namespace(tex))
+    if(TN_TEXTURES == Textures_Namespace(Textures_Id(tex)))
     {
         // Try to load a replacement version of this texture?
         if(!noHighResTex && (loadExtAlways || highResWithPWAD || !Texture_IsCustom(tex)))
@@ -3221,7 +3174,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(0 == Texture_Width(tex) || 0 == Texture_Height(tex))
     {
 #if _DEBUG
-        Uri* uri = Textures_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
             Str_Text(path), image.width, image.height) );
@@ -3262,7 +3215,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 
 #ifdef _DEBUG
     VERBOSE(
-        Uri* uri = Textures_ComposeUri(tex);
+        Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
         Con_Printf("Prepared TextureVariant (name:\"%s\" glName:%u)%s\n",
             Str_Text(path), (unsigned int) TextureVariant_GLName(variant),

@@ -812,7 +812,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(MSU(ms, MTU_PRIMARY).tex.texture) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
         Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 

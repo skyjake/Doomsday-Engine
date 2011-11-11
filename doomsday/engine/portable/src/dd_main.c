@@ -2264,7 +2264,7 @@ struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespac
 
     if(!tex) return NULL;
 
-    texPath = Textures_ComposePath(tex);
+    texPath = Textures_ComposePath(Textures_Id(tex));
     uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
     Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
     mat = Materials_MaterialForUri2(uri, true/*quiet please*/);
