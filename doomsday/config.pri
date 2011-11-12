@@ -10,7 +10,7 @@
 # - deng_nativesdk          (Mac OS X) Use the current OS's SDK
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_openal             Build the OpenAL sound driver
-# - deng_packres            Package the Doomsday resources
+# - deng_nopackres          Do not package the Doomsday resources
 # - deng_rangecheck         Parameter range checking/value assertions
 # - deng_snowberry          Include Snowberry in installation
 # - deng_snowleopard        (Mac OS X) Use 10.6 SDK
