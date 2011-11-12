@@ -79,12 +79,15 @@ typedef struct texture_s {
  * Construct a new Texture.
  *
  * @param flags  @see textureFlags
- * @param bindId  Unique identifier of the primary binding in the owning collection.
- *    Can be @c 0 in which case there is no binding for the resultant texture.
- * @param width  Logical width of the texture. Can be zero in which case it will be
- *    inherited from the actual pixel width of the texture at load time.
- * @param height  Logical height of the texture. Can be zero in which case it will be
- *    inherited from the actual pixel height of the texture at load time.
+ * @param bindId  Unique identifier of the primary binding in the owning
+ *    collection. Can be @c NOTEXTUREID in which case there is no binding
+ *    for the resultant texture.
+ * @param width  Logical width of the texture. Can be zero in which case
+ *    it will be inherited from the actual pixel width of the texture at
+ *    load time.
+ * @param height  Logical height of the texture. Can be zero in which case
+ *    it will be inherited from the actual pixel height of the texture at
+ *    load time.
  * @param userData  User data to associate with the resultant texture.
  */
 texture_t* Texture_NewWithDimensions(int flags, textureid_t bindId, int width, int height, void* userData);

@@ -140,7 +140,7 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
 static void unlinkTextureBindFromIdMap(const texturebind_t* bind)
 {
     textureid_t id = findIdForTextureBind(bind);
-    if(!id) return; // Not linked.
+    if(!validTextureId(id)) return; // Not linked.
     textureIdMap[id - 1/*1-based index*/] = NULL;
 }
 
@@ -543,7 +543,7 @@ textureid_t Textures_TextureForUri2(const Uri* uri, boolean quiet)
         if(bind->texture)
         {
             textureid_t id = Texture_PrimaryBind(bind->texture);
-            if(id != NOTEXTUREID) return id;
+            if(validTextureId(id)) return id;
         }
         // Oh well, look it up then.
         return findIdForTextureBind(bind);
@@ -654,6 +654,7 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
     if(releaseTexture && bind->texture)
     {
         // The mapped resource is being replaced, so release any existing Texture.
+        /// \todo Only release if this Texture is bound to only this binding.
         Textures_Release(bind->texture);
     }
 
