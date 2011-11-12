@@ -421,9 +421,12 @@ boolean P_LoadMap(const char* uriCString)
 
         if(!isDedicated)
             R_InitRendVerticesPool();
+
+        Uri_Delete(uri);
         return true;
     }
 
+    Uri_Delete(uri);
     return false;
 }
 
