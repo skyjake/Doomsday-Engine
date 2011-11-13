@@ -1,7 +1,13 @@
 # The Doomsday Engine Project
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
-
+#
+# Do not modify this file. Custom CONFIG options can be specified on the 
+# qmake command line or in config_user.pri.
+#
+# NOTE: The PREFIX option should always be specified on the qmake command
+#       line, as it is checked before config_user.pri is read.
+#
 # CONFIG options for Doomsday:
 # - deng_aptunstable        Include the unstable apt repository
 # - deng_nofixedasm         Disable assembler fixed-point math
