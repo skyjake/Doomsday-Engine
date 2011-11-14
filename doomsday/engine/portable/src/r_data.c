@@ -1126,6 +1126,7 @@ static patchid_t getPatchId(texture_t* tex)
 
 static textureid_t findPatchTextureIdByName(const char* name)
 {
+    textureid_t texId;
     Uri* uri;
     assert(name && name[0]);
 
@@ -1166,7 +1167,7 @@ patchid_t R_DeclarePatch(const char* name)
     }
 
     // Already defined as a patch?
-    texId = findPatchTextureByName(name);
+    texId = findPatchTextureIdByName(name);
     if(texId)
     {
         /// \todo We should not need to have defined a texture to return a patchid.
