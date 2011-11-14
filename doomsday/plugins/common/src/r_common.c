@@ -187,7 +187,7 @@ void R_ResizeViewWindow(int flags)
     if(maximized != oldMaximized)
     {
         oldMaximized = maximized;
-        flags |= RWF_FORCE;
+        flags |= RWF_FORCE|RWF_NO_LERP;
     }
 
     if(!(flags & RWF_FORCE))
