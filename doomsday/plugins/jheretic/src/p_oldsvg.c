@@ -404,8 +404,8 @@ void P_v13_UnArchiveWorld(void)
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   DD_MaterialForOriginalTextureIndex(*get++, TN_FLATS));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_FLATS));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_FLATS)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_FLATS)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
         /*xsec->tag = **/get++; // needed?
@@ -443,9 +443,9 @@ void P_v13_UnArchiveWorld(void)
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(*get++, TN_TEXTURES)));
         }
     }
     save_p = (byte*) get;
@@ -581,7 +581,7 @@ static int SV_ReadFloor(floor_t *floor)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    floortype_e     type;           // was 32bit int
+    floortype_e type;           // was 32bit int
     boolean     crush;
     sector_t    *sector;
     int         direction;
@@ -605,11 +605,7 @@ typedef struct {
 
     floor->state = (int) SV_v13_ReadLong();
     floor->newSpecial = SV_v13_ReadLong();
-    { Uri* uri = Uri_NewWithPath2(W_LumpName(SV_v13_ReadShort()), RC_NULL);
-    Uri_SetScheme(uri, MN_FLATS_NAME);
-    floor->material = Materials_MaterialForUri(uri);
-    Uri_Delete(uri);
-    }
+    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(SV_v13_ReadShort(), TN_FLATS));
     floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
     floor->speed = FIX2FLT(SV_v13_ReadLong());
 

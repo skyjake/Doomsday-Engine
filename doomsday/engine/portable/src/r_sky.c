@@ -104,7 +104,7 @@ static void configureDefaultSky(void)
         skylayer_t* slayer = &skyLayers[i];
 
         slayer->flags = (i == 0? SLF_ENABLED : 0);
-        slayer->material = Materials_MaterialForUriCString(MN_TEXTURES_NAME":SKY1");
+        slayer->material = Materials_ToMaterial(Materials_MaterialForUriCString(MN_TEXTURES_NAME":SKY1"));
         slayer->offset = 0;
         // Default the fadeout to black.
         slayer->fadeout.use = (i == 0);
@@ -270,7 +270,7 @@ void R_SetupSky(ded_sky_t* sky)
             R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
             if(def->material)
             {
-                material_t* mat = Materials_MaterialForUri2(def->material, true/*quiet please*/);
+                material_t* mat = Materials_ToMaterial(Materials_MaterialForUri2(def->material, true/*quiet please*/));
                 if(mat)
                 {
                     R_SkyLayerSetMaterial(i, mat);

@@ -32,6 +32,7 @@
 #include "dd_types.h"
 #include "gameinfo.h"
 #include "sys_direc.h"
+#include "textures.h"
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
@@ -86,7 +87,10 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
 fontnamespaceid_t DD_ParseFontNamespace(const char* str);
 
-struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
+/// @return  Symbolic name of the material namespace associated with @a namespaceId.
+const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t namespaceId);
+
+materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t namespaceId);
 
 const char* value_Str(int val);
 

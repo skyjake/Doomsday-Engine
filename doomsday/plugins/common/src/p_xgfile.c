@@ -384,8 +384,8 @@ void XG_ReadXGLump(lumpnum_t lumpNum)
             li->actChain = ReadShort();
             li->deactChain = ReadShort();
             li->wallSection = ReadByte();
-            li->actMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
-            li->deactMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
+            li->actMaterial = DD_MaterialForOriginalTextureIndex(ReadShort(), TN_TEXTURES);
+            li->deactMaterial = DD_MaterialForOriginalTextureIndex(ReadShort(), TN_TEXTURES);
             ReadString(&li->actMsg);
             ReadString(&li->deactMsg);
             li->materialMoveAngle = ReadFloat();

@@ -228,7 +228,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            m->id = P_ToIndex(DD_MaterialForOriginalTextureIndex(idx, (isFlat? TN_FLATS : TN_TEXTURES)));
+            m->id = DD_MaterialForOriginalTextureIndex(idx, (isFlat? TN_FLATS : TN_TEXTURES));
         }
         else
         {
@@ -242,19 +242,19 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
             {
                 // All we need do is make this a null-reference as the engine will
                 // determine the best course of action.
-                m->id = 0;
+                m->id = NOMATERIALID;
             }
             else
             {
                 // First try the prefered namespace, then any.
                 Uri* uri = Uri_NewWithPath2(m->name, RC_NULL);
                 Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-                m->id = P_ToIndex(Materials_MaterialForUri(uri));
+                m->id = Materials_MaterialForUri(uri);
 
-                if(m->id == 0)
+                if(m->id == NOMATERIALID)
                 {
                     Uri_SetScheme(uri, "");
-                    m->id = P_ToIndex(Materials_MaterialForUri(uri));
+                    m->id = Materials_MaterialForUri(uri);
                 }
                 Uri_Delete(uri);
             }

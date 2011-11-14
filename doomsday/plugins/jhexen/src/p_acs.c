@@ -1294,9 +1294,9 @@ static int CmdChangeFloor(void)
     Uri* uri;
     int tag;
 
-    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
-    Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = Materials_MaterialForUri(uri);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
     Uri_Delete(uri);
 
     tag = Pop();
@@ -1324,9 +1324,9 @@ static int CmdChangeFloorDirect(void)
     int tag;
 
     tag = LONG(*PCodePtr++);
-    uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
-    Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = Materials_MaterialForUri(uri);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, GetACString(LONG(*PCodePtr++)));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
     Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1351,9 +1351,9 @@ static int CmdChangeCeiling(void)
     Uri* uri;
     int tag;
 
-    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
-    Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = Materials_MaterialForUri(uri);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
     Uri_Delete(uri);
     tag = Pop();
 
@@ -1380,9 +1380,9 @@ static int CmdChangeCeilingDirect(void)
     int tag;
 
     tag = LONG(*PCodePtr++);
-    uri = Uri_NewWithPath2(GetACString(LONG(*PCodePtr++)), RC_NULL);
-    Uri_SetScheme(uri, MN_FLATS_NAME);
-    mat = Materials_MaterialForUri(uri);
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, GetACString(LONG(*PCodePtr++)));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
     Uri_Delete(uri);
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1728,9 +1728,9 @@ static int CmdSetLineTexture(void)
     iterlist_t* list;
     Uri* uri;
 
-    uri = Uri_NewWithPath2(GetACString(Pop()), RC_NULL);
-    Uri_SetScheme(uri, MN_TEXTURES_NAME);
-    mat = Materials_MaterialForUri(uri);
+    uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
+    Uri_SetPath(uri, GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
     Uri_Delete(uri);
 
     position = Pop();

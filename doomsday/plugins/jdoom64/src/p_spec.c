@@ -193,7 +193,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
             int n;
             for(n = startFrame; n <= endFrame; ++n)
             {
-                material_t* frame = DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS));
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }
@@ -203,7 +203,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
             int n;
             for(n = endFrame; n >= startFrame; n--)
             {
-                material_t* frame = DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS);
+                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS));
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }

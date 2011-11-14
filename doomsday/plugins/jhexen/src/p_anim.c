@@ -83,7 +83,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 
                 if(!ignore)
                 {
-                    material_t* frame = DD_MaterialForOriginalTextureIndex(texNumBase + picNum - 1, isTexture? TN_TEXTURES : TN_FLATS);
+                    material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(texNumBase + picNum - 1, isTexture? TN_TEXTURES : TN_FLATS));
                     if(frame != 0)
                         Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }

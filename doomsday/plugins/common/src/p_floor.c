@@ -459,7 +459,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
          * present, the height is taken from the very first texture.
          */
         if(!mat)
-            mat = DD_MaterialForOriginalTextureIndex(0, TN_TEXTURES);
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(0, TN_TEXTURES));
 
         if(mat)
         {
@@ -475,7 +475,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
-            mat = DD_MaterialForOriginalTextureIndex(0, TN_TEXTURES);
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(0, TN_TEXTURES));
 
         if(mat)
         {

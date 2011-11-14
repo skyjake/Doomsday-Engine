@@ -132,7 +132,7 @@ typedef struct material_s {
     struct ded_material_s* _def;
     struct material_variantlist_node_s* _variants;
     material_env_class_t _envClass;    // Environmental sound class.
-    uint                _bindId;       // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
+    materialid_t        _primaryBind;  // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
     int                 _width;        // Logical dimensions in world-space units.
     int                 _height;
     short               _flags;        // @see materialFlags

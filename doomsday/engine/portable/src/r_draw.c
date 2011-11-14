@@ -244,7 +244,7 @@ void R_DrawViewBorder(void)
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    mat = Materials_MaterialForUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/);
+    mat = Materials_ToMaterial(Materials_MaterialForUri2(borderGraphicsNames[BG_BACKGROUND], true/*quiet please*/));
     if(mat)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(

@@ -93,7 +93,7 @@ static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t s
 static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* mArc,
     material_t* mat)
 {
-    Uri* uri = Materials_ComposeUri(mat);
+    Uri* uri = Materials_ComposeUri(P_ToIndex(mat));
     // Insert a new element in the index.
     insertSerialId(mArc, mArc->count+1, uri, mat);
     Uri_Delete(uri);
@@ -133,17 +133,15 @@ static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
 static material_t* materialForSerialId(const materialarchive_t* mArc,
     materialarchive_serialid_t serialId, int group)
 {
-    assert(serialId <= mArc->count+1);
-    {
     materialarchive_record_t* rec;
+    assert(serialId <= mArc->count+1);
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
     {
-        if(rec->material == 0)
-            rec->material = Materials_MaterialForUri(rec->uri);
+        if(!rec->material)
+            rec->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(rec->uri));
         return rec->material;
     }
-    return 0;
-    }
+    return NULL;
 }
 
 /**

@@ -987,6 +987,9 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
+/// Special value used to signify an invalid material id.
+#define NOMATERIALID            0
+
 /**
  * @defgroup materialFlags  Material Flags
  * @{

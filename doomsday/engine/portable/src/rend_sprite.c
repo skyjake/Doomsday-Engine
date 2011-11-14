@@ -429,7 +429,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        material_t* mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
+        material_t* mat = Materials_ToMaterial(Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray"));
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
@@ -940,7 +940,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         mat = params->mat;
     else if(renderTextures == 2)
         // For lighting debug, render all solid surfaces using the gray texture.
-        mat = Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray");
+        mat = Materials_ToMaterial(Materials_MaterialForUriCString(MN_SYSTEM_NAME":gray"));
 
     if(mat)
     {

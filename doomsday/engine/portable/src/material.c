@@ -200,16 +200,16 @@ void Material_SetPrepared(material_t* mat, byte state)
     mat->_prepared = state;
 }
 
-uint Material_PrimaryBindId(const material_t* mat)
+materialid_t Material_PrimaryBind(const material_t* mat)
 {
     assert(mat);
-    return mat->_bindId;
+    return mat->_primaryBind;
 }
 
-void Material_SetPrimaryBindId(material_t* mat, uint bindId)
+void Material_SetPrimaryBind(material_t* mat, materialid_t bindId)
 {
     assert(mat);
-    mat->_bindId = bindId;
+    mat->_primaryBind = bindId;
 }
 
 material_env_class_t Material_EnvironmentClass(const material_t* mat)

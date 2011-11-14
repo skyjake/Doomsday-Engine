@@ -2359,13 +2359,20 @@ static void SV_ReadSector(sector_t* sec)
 
 #if !__JHEXEN__
     if(hdr.version == 1)
-    {   // Flat numbers are the original flat lump indices - (lump) "F_START".
-        floorMaterial   = DD_MaterialForOriginalTextureIndex(SV_ReadShort(), TN_FLATS);
-        ceilingMaterial = DD_MaterialForOriginalTextureIndex(SV_ReadShort(), TN_FLATS);
+    {
+        // The flat numbers are absolute lump indices.
+        Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+        Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+        floorMaterial = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+
+        Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+        ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        Uri_Delete(uri);
     }
     else if(hdr.version >= 4)
 #endif
-    {   // The flat numbers are actually archive numbers.
+    {
+        // The flat numbers are actually archive numbers.
         floorMaterial   = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
     }
@@ -3088,9 +3095,10 @@ static int SV_ReadFloor(floor_t* floor)
         }
         else
         {
-            Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
-            Uri_SetScheme(uri, MN_FLATS_NAME);
-            floor->material = Materials_MaterialForUri(uri);
+            // Flat number is an absolute lump index.
+            Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+            Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+            floor->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
             Uri_Delete(uri);
         }
 
@@ -3137,9 +3145,10 @@ static int SV_ReadFloor(floor_t* floor)
 #endif
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
-        { Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadShort()), RC_NULL);
-        Uri_SetScheme(uri, MN_FLATS_NAME);
-        floor->material = Materials_MaterialForUri(uri);
+        // Flat number is an absolute lump index.
+        { Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+        Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
+        floor->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
         Uri_Delete(uri);
         }
 

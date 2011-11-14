@@ -235,13 +235,13 @@ void printDebugInfo(player_t* plr)
     sub = plr->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
 
-    uri = Materials_ComposeUri(P_GetPtrp(sub, DMU_FLOOR_MATERIAL));
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_FLOOR_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  FloorZ:%g Material:%s\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT), Str_Text(path));
     Str_Delete(path);
     Uri_Delete(uri);
 
-    uri = Materials_ComposeUri(P_GetPtrp(sub, DMU_CEILING_MATERIAL));
+    uri = Materials_ComposeUri(P_GetIntp(sub, DMU_CEILING_MATERIAL));
     path = Uri_ToString(uri);
     Con_Message("  CeilingZ:%g Material:%s\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT), Str_Text(path));
     Str_Delete(path);

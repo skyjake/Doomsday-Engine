@@ -143,7 +143,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
-struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
+materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -353,9 +353,9 @@ boolean P_LoadMap(const char* uri);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
 // Play: Materials.
-struct material_s* Materials_MaterialForUri(const Uri* uri);
-struct material_s* Materials_MaterialForUriCString(const char* path);
-Uri* Materials_ComposeUri(struct material_s* material);
+materialid_t Materials_MaterialForUri(const Uri* uri);
+materialid_t Materials_MaterialForUriCString(const char* path);
+Uri* Materials_ComposeUri(materialid_t materialId);
 
 int Materials_CreateAnimGroup(int flags);
 void Materials_AddAnimGroupFrame(int groupNum, struct material_s* material, int tics, int randomTics);

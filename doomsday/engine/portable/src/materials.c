@@ -258,20 +258,6 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-static materialnamespaceid_t materialNamespaceIdForTextureNamespaceId(texturenamespaceid_t id)
-{
-    static const materialnamespaceid_t namespaceIds[TEXTURENAMESPACE_COUNT] = {
-        /* TN_SYSTEM */    MN_SYSTEM,
-        /* TN_FLATS */     MN_FLATS,
-        /* TN_TEXTURES */  MN_TEXTURES,
-        /* TN_SPRITES */   MN_SPRITES,
-        /* TN_PATCHES */   MN_ANY // No materials for these yet.
-    };
-    if(VALID_TEXTURENAMESPACEID(id))
-        return namespaceIds[id-TEXTURENAMESPACE_FIRST];
-    return MATERIALNAMESPACE_COUNT; // Unknown.
-}
-
 static animgroup_t* getAnimGroup(int number)
 {
     if(--number < 0 || number >= numgroups) return NULL;
@@ -427,10 +413,10 @@ static materialvariant_t* chooseVariant(material_t* mat,
     }
 }
 
-static materialbind_t* bindById(uint bindId)
+static materialbind_t* getMaterialBindForId(materialid_t id)
 {
-    if(0 == bindId || bindId > bindingCount) return 0;
-    return bindingIdMap[bindId-1];
+    if(0 == id || id > bindingCount) return NULL;
+    return bindingIdMap[id-1];
 }
 
 static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
@@ -485,7 +471,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
     if(!mb)
     {
         // Acquire a new unique identifier for this binding.
-        const uint bindId = ++bindingCount;
+        const materialid_t bindId = ++bindingCount;
 
         mb = (materialbind_t*) malloc(sizeof *mb);
         if(!mb)
@@ -505,7 +491,7 @@ static boolean newMaterialBind(const Uri* uri, material_t* material)
         mb->_id = bindId;
         if(material)
         {
-            Material_SetPrimaryBindId(material, bindId);
+            Material_SetPrimaryBind(material, bindId);
         }
 
         // Add the new binding to the bindings index/map.
@@ -671,16 +657,17 @@ const ddstring_t* Materials_NamespaceName(materialnamespaceid_t id)
     return namespaces + 0;
 }
 
-materialnamespaceid_t Materials_Namespace(materialbind_t* mb)
+materialnamespaceid_t Materials_Namespace(materialid_t id)
 {
-    if(!mb)
+    materialbind_t* bind = getMaterialBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Materials::Namespace: Attempted with invalid reference [%p], returning invalid id.\n", (void*)mb);
+        Con_Message("Warning:Materials::Namespace: Attempted with unbound materialId #%u, returning 'any' namespace.\n", id);
 #endif
-        return MN_INVALID;
+        return MN_ANY;
     }
-    return namespaceIdForDirectoryNode(MaterialBind_DirectoryNode(mb));
+    return namespaceIdForDirectoryNode(MaterialBind_DirectoryNode(bind));
 }
 
 static int clearBindingDefinitionLinks(const PathDirectoryNode* node, void* paramaters)
@@ -767,33 +754,22 @@ void Materials_ProcessCacheQueue(void)
     }
 }
 
-const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
-{
-    return Materials_NamespaceName(materialNamespaceIdForTextureNamespaceId(texNamespace));
-}
-
-material_t* Materials_ToMaterial(materialid_t num)
+material_t* Materials_ToMaterial(materialid_t id)
 {
     materialbind_t* mb;
     if(!initedOk) return NULL;
-    mb = bindById((uint)num);
+    mb = getMaterialBindForId(id);
     if(!mb) return NULL;
     return MaterialBind_Material(mb);
 }
 
 materialid_t Materials_Id(material_t* mat)
 {
-    materialbind_t* mb;
-    if(!initedOk) return 0;
-    if(!mat) return 0;
-    mb = bindById(Material_PrimaryBindId(mat));
-    if(!mb) return 0;
-    return MaterialBind_Id(mb);
-}
-
-materialbind_t* Materials_PrimaryBind(material_t* mat)
-{
-    return bindById(Material_PrimaryBindId(mat));
+    materialbind_t* bind;
+    if(!initedOk || !mat) return NOMATERIALID;
+    bind = getMaterialBindForId(Material_PrimaryBind(mat));
+    if(!bind) return NOMATERIALID;
+    return MaterialBind_Id(bind);
 }
 
 /**
@@ -850,7 +826,7 @@ static boolean validateMaterialUri(const Uri* uri, int flags)
  *
  * @param directory  Namespace-specific PathDirectory to search in.
  * @param path  Path of the material to search for.
- * @return  Found Material else @c 0
+ * @return  Found Material else @c NULL
  */
 static material_t* findMaterialForPath(PathDirectory* matDirectory, const char* path)
 {
@@ -890,10 +866,10 @@ static material_t* findMaterialForUri(const Uri* uri)
     return mat;
 }
 
-material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
+materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet)
 {
     material_t* mat;
-    if(!initedOk || !uri) return NULL;
+    if(!initedOk || !uri) return NOMATERIALID;
     if(!validateMaterialUri2(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
 #if _DEBUG
@@ -901,12 +877,12 @@ material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
         Con_Message("Warning:Materials::MaterialForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
-        return NULL;
+        return NOMATERIALID;
     }
 
     // Perform the search.
     mat = findMaterialForUri(uri);
-    if(mat) return mat;
+    if(mat) return Materials_Id(mat);
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
@@ -915,74 +891,58 @@ material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet)
         Con_Message("Materials::MaterialForUri: \"%s\" not found!\n", Str_Text(path));
         Str_Delete(path);
     }
-    return NULL;
+    return NOMATERIALID;
 }
 
 /// \note Part of the Doomsday public API.
-material_t* Materials_MaterialForUri(const Uri* uri)
+materialid_t Materials_MaterialForUri(const Uri* uri)
 {
     return Materials_MaterialForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-material_t* Materials_MaterialForUriCString2(const char* path, boolean quiet)
+materialid_t Materials_MaterialForUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        material_t* mat = Materials_MaterialForUri2(uri, quiet);
+        materialid_t matId = Materials_MaterialForUri2(uri, quiet);
         Uri_Delete(uri);
-        return mat;
+        return matId;
     }
-    return NULL;
+    return NOMATERIALID;
 }
 
 /// \note Part of the Doomsday public API.
-material_t* Materials_MaterialForUriCString(const char* path)
+materialid_t Materials_MaterialForUriCString(const char* path)
 {
     return Materials_MaterialForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-ddstring_t* Materials_ComposePath(material_t* mat)
+ddstring_t* Materials_ComposePath(materialid_t id)
 {
-    materialbind_t* mb;
-    if(!mat)
+    materialbind_t* bind = getMaterialBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Materials::ComposePath: Attempted with invalid reference [%p], returning null-object.\n", (void*)mat);
+        Con_Message("Warning:Materials::ComposePath: Attempted with unbound materialId #%u, returning null-object.\n", id);
 #endif
         return Str_New();
     }
-    mb = Materials_PrimaryBind(mat);
-    if(!mb)
-    {
-#if _DEBUG
-        Con_Message("Warning:Materials::ComposePath: Attempted with non-bound material [%p], returning null-object.\n", (void*)mat);
-#endif
-        return Str_New();
-    }
-    return composePathForDirectoryNode(MaterialBind_DirectoryNode(mb), MATERIALS_PATH_DELIMITER);
+    return composePathForDirectoryNode(MaterialBind_DirectoryNode(bind), MATERIALS_PATH_DELIMITER);
 }
 
 /// \note Part of the Doomsday public API.
-Uri* Materials_ComposeUri(material_t* mat)
+Uri* Materials_ComposeUri(materialid_t id)
 {
-    materialbind_t* mb;
-    if(!mat)
+    materialbind_t* bind = getMaterialBindForId(id);
+    if(!bind)
     {
 #if _DEBUG
-        Con_Message("Warning:Materials::ComposeUri: Attempted with invalid index (num==0), returning null-object.\n");
+        Con_Message("Warning:Materials::ComposeUri: Attempted with unbound materialId #%u, returning null-object.\n", id);
 #endif
         return Uri_New();
     }
-    mb = Materials_PrimaryBind(mat);
-    if(!mb)
-    {
-#if _DEBUG
-        Con_Message("Warning:Materials::ComposeUri: Attempted with non-bound material [%p], returning null-object.\n", (void*)mat);
-#endif
-        return Uri_New();
-    }
-    return composeUriForDirectoryNode(MaterialBind_DirectoryNode(mb));
+    return composeUriForDirectoryNode(MaterialBind_DirectoryNode(bind));
 }
 
 material_t* Materials_CreateFromDef(ded_material_t* def)
@@ -1244,14 +1204,14 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
 
         if(0 == i && (PTR_UPLOADED_ORIGINAL == result || PTR_UPLOADED_EXTERNAL == result))
         {
-            materialbind_t* mb = Materials_PrimaryBind(mat);
+            materialbind_t* bind = getMaterialBindForId(Material_PrimaryBind(mat));
 
             // Primary texture was (re)prepared.
             Material_SetPrepared(mat, result == PTR_UPLOADED_ORIGINAL? 1 : 2);
 
-            if(mb)
+            if(bind)
             {
-                updateMaterialTextureLinks(mb);
+                updateMaterialTextureLinks(bind);
             }
 
             // Are we inheriting the logical dimensions from the texture?
@@ -1450,26 +1410,26 @@ const materialsnapshot_t* Materials_Prepare(material_t* mat, const materialvaria
 
 const ded_decor_t* Materials_DecorationDef(material_t* mat)
 {
-    if(!mat) return 0;
+    if(!mat) return NULL;
     if(!Material_Prepared(mat))
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false);
     }
-    return MaterialBind_DecorationDef(Materials_PrimaryBind(mat));
+    return MaterialBind_DecorationDef(getMaterialBindForId(Material_PrimaryBind(mat)));
 }
 
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
-    if(!mat) return 0;
+    if(!mat) return NULL;
     if(!Material_Prepared(mat))
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         Materials_Prepare(mat, spec, false);
     }
-    return MaterialBind_PtcGenDef(Materials_PrimaryBind(mat));
+    return MaterialBind_PtcGenDef(getMaterialBindForId(Material_PrimaryBind(mat)));
 }
 
 uint Materials_Size(void)
@@ -1532,9 +1492,9 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
     {
         materialvariant_t* cur = MaterialVariant_TranslationCurrent(variant);
         float inter = MaterialVariant_TranslationPoint(variant);
-        Uri* curUri = Materials_ComposeUri(MaterialVariant_GeneralCase(cur));
+        Uri* curUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(cur)));
         ddstring_t* curPath = Uri_ToString(curUri);
-        Uri* nextUri = Materials_ComposeUri(MaterialVariant_GeneralCase(next));
+        Uri* nextUri = Materials_ComposeUri(Materials_Id(MaterialVariant_GeneralCase(next)));
         ddstring_t* nextPath = Uri_ToString(nextUri);
 
         Con_Printf("  Translation: Current:\"%s\" Next:\"%s\" Inter:%f\n",
@@ -1553,7 +1513,7 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
         Uri* uri = Textures_ComposeUri(Textures_Id(l->texture));
         ddstring_t* path = Uri_ToString(uri);
 
-        Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%i)"
+        Con_Printf("  #%i: Stage:%i Tics:%i Texture:(\"%s\" uid:%u)"
             "\n      Offset: %.2f x %.2f Glow:%.2f\n",
             i, l->stage, (int)l->tics, F_PrettyPath(Str_Text(path)), Textures_Id(l->texture),
             l->texOrigin[0], l->texOrigin[1], l->glow);
@@ -1569,14 +1529,14 @@ static int printVariantInfo(materialvariant_t* variant, void* paramaters)
 
 static void printMaterialInfo(material_t* mat)
 {
-    Uri* uri = Materials_ComposeUri(mat);
+    Uri* uri = Materials_ComposeUri(Materials_Id(mat));
     ddstring_t* path = Uri_ToString(uri);
     int variantIdx = 0;
 
     Con_Printf("Material \"%s\" [%p] uid:%u origin:%s"
         "\nDimensions: %d x %d Layers:%i InGroup:%s Drawable:%s EnvClass:%s"
         "\nDecorated:%s Detailed:%s Glowing:%s Shiny:%s%s SkyMasked:%s\n",
-        F_PrettyPath(Str_Text(path)), (void*) mat, (uint) Materials_Id(mat),
+        F_PrettyPath(Str_Text(path)), (void*) mat, Materials_Id(mat),
         !Material_IsCustom(mat)     ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"),
         Material_Width(mat), Material_Height(mat), Material_LayerCount(mat),
         Material_IsGroupAnimated(mat)? "yes" : "no",
@@ -1598,11 +1558,11 @@ static void printMaterialInfo(material_t* mat)
 static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
-    Uri* uri = Materials_ComposeUri(mat);
+    Uri* uri = Materials_ComposeUri(Materials_Id(mat));
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, (unsigned int) Materials_Id(mat),
+        numUidDigits, Materials_Id(mat),
         !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
@@ -2075,7 +2035,7 @@ void MaterialBind_AttachInfo(materialbind_t* mb, materialbindinfo_t* info)
     if(mb->_info)
     {
 #if _DEBUG
-        Uri* uri = Materials_ComposeUri(mb->_material);
+        Uri* uri = Materials_ComposeUri(mb->_id);
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning:MaterialBind::AttachInfo: Info already present for \"%s\", replacing.", Str_Text(path));
         Str_Delete(path);
@@ -2202,7 +2162,7 @@ D_CMD(InspectMaterial)
         }
     }
 
-    mat = Materials_MaterialForUri(search);
+    mat = Materials_ToMaterial(Materials_MaterialForUri(search));
     if(mat)
     {
         printMaterialInfo(mat);

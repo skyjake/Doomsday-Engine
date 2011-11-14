@@ -31,7 +31,6 @@
 struct texturevariantspecification_s;
 struct materialvariant_s;
 struct materialsnapshot_s;
-struct materialbind_s;
 
 enum materialnamespaceid_t; // Defined in dd_share.h
 
@@ -79,20 +78,20 @@ uint Materials_Size(void);
 /// @return  Number of unique Materials in the identified @a namespaceId.
 uint Materials_Count(materialnamespaceid_t namespaceId);
 
-/// @return  Material associated with unique identifier @a materialId else @c NULL.
-material_t* Materials_ToMaterial(materialid_t materialId);
-
 /// @return  Unique identifier associated with @a material else @c 0.
 materialid_t Materials_Id(material_t* material);
 
-/// @return  Unique identifier of the namespace within which this material resides.
-materialnamespaceid_t Materials_Namespace(struct materialbind_s* materialBind);
+/// @return  Material associated with unique identifier @a materialId else @c NULL.
+material_t* Materials_ToMaterial(materialid_t materialId);
 
-/// @return  Symbolic name/path-to this Material. Must be destroyed with Str_Delete().
-ddstring_t* Materials_ComposePath(material_t* material);
+/// @return  Unique identifier of the namespace this material is in.
+materialnamespaceid_t Materials_Namespace(materialid_t materialId);
 
-/// @return  Unique name/path-to @a Material. Must be destroyed with Uri_Delete().
-Uri* Materials_ComposeUri(material_t* material);
+/// @return  Symbolic name/path-to this material. Must be destroyed with Str_Delete().
+ddstring_t* Materials_ComposePath(materialid_t materialId);
+
+/// @return  Unique name/path-to this material. Must be destroyed with Uri_Delete().
+Uri* Materials_ComposeUri(materialid_t materialId);
 
 /**
  * Update @a material according to the supplied definition @a def.
@@ -106,9 +105,6 @@ void Materials_Rebuild(material_t* material, ded_material_t* def);
 /// @return  @c true if one or more light decorations are defined for this material.
 boolean Materials_HasDecorations(material_t* material);
 
-/// @return  Primary MaterialBind associated with @a material else @c NULL.
-struct materialbind_s* Materials_PrimaryBind(material_t* material);
-
 /// @return  Decoration defintion associated with @a material else @c NULL.
 const ded_decor_t*  Materials_DecorationDef(material_t* material);
 
@@ -120,14 +116,14 @@ boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
 
 /**
  * Search the Materials collection for a material associated with @a uri.
- * @return  Found material else @c NULL.
+ * @return  Found material else @c NOMATERIALID.
  */
-material_t* Materials_MaterialForUri2(const Uri* uri, boolean quiet);
-material_t* Materials_MaterialForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet);
+materialid_t Materials_MaterialForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
 /// Same as Materials::MaterialForUri except @a uri is a C-string.
-material_t* Materials_MaterialForUriCString2(const char* uri, boolean quiet);
-material_t* Materials_MaterialForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+materialid_t Materials_MaterialForUriCString2(const char* uri, boolean quiet);
+materialid_t Materials_MaterialForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * Create a new Material unless an existing Material is found at the path
@@ -149,9 +145,6 @@ void Materials_ResetAnimGroups(void);
 
 /// To be called to destroy all animation groups when they are no longer needed.
 void Materials_ClearAnimGroups(void);
-
-/// @return  Symbolic name of the material namespace associated with @a namespaceId.
-const ddstring_t* Materials_NamespaceNameForTextureNamespace(texturenamespaceid_t namespaceId);
 
 /**
  * Prepare a MaterialVariantSpecification according to a usage context. If

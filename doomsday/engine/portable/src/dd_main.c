@@ -2255,22 +2255,38 @@ fontnamespaceid_t DD_ParseFontNamespace(const char* str)
     return Fonts_ParseNamespace(str);
 }
 
-struct material_s* DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace)
+const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t texNamespace)
+{
+    static const materialnamespaceid_t namespaceIds[TEXTURENAMESPACE_COUNT] = {
+        /* TN_SYSTEM */    MN_SYSTEM,
+        /* TN_FLATS */     MN_FLATS,
+        /* TN_TEXTURES */  MN_TEXTURES,
+        /* TN_SPRITES */   MN_SPRITES,
+        /* TN_PATCHES */   MN_ANY // No materials for these yet.
+    };
+    materialnamespaceid_t namespaceId;
+    if(VALID_TEXTURENAMESPACEID(texNamespace))
+        namespaceId = namespaceIds[texNamespace-TEXTURENAMESPACE_FIRST];
+    namespaceId = MN_INVALID; // Unknown.
+    return Materials_NamespaceName(namespaceId);
+}
+
+materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace)
 {
     texture_t* tex = R_TextureForOriginalIndex(index, texNamespace);
     ddstring_t* texPath;
-    material_t* mat;
+    materialid_t matId;
     Uri* uri;
 
-    if(!tex) return NULL;
+    if(!tex) return NOMATERIALID;
 
     texPath = Textures_ComposePath(Textures_Id(tex));
     uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(Materials_NamespaceNameForTextureNamespace(texNamespace)));
-    mat = Materials_MaterialForUri2(uri, true/*quiet please*/);
+    Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespace)));
+    matId = Materials_MaterialForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     Str_Delete(texPath);
-    return mat;
+    return matId;
 }
 
 /**

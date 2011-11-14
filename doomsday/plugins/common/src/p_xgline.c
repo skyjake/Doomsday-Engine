@@ -2131,10 +2131,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
             S_StartSound(info->actSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->actMaterial)
+        if(info->wallSection && info->actMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->actMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->actMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->actLineType)
@@ -2149,10 +2148,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
             S_StartSound(info->deactSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->deactMaterial)
+        if(info->wallSection && info->deactMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->deactMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->deactMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to.
         if(info->deactLineType)

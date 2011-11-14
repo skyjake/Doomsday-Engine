@@ -265,9 +265,10 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     }
     else
     {
-        Uri* uri = Uri_NewWithPath2(W_LumpName(SV_ReadLong()), RC_NULL);
-        Uri_SetScheme(uri, MN_FLATS_NAME);
-        mov->setMaterial = Materials_MaterialForUri(uri);
+        // Flat number is an absolute lump index.
+        Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+        Uri_SetPath(uri, W_LumpName(SV_ReadLong()));
+        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
         Uri_Delete(uri);
     }
 
