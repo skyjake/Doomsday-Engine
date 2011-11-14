@@ -1284,26 +1284,27 @@ void WI_Ticker(void)
 static void loadData(void)
 {
     char name[9];
+    int i;
 
     if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && wbs->episode > 2))
     {
-        pBackground = R_PrecachePatch("INTERPIC", NULL);
+        pBackground = R_DeclarePatch("INTERPIC");
     }
     else
     {
         sprintf(name, "WIMAP%u", wbs->episode);
-        pBackground = R_PrecachePatch(name, NULL);
+        pBackground = R_DeclarePatch(name);
     }
 
     if((gameModeBits & GM_ANY_DOOM) && wbs->episode < 3)
     {
         const wianimdef_t* def;
         wianimstate_t* state;
-        int j, i;
+        int j;
 
-        pYouAreHereRight = R_PrecachePatch("WIURH0", 0);
-        pYouAreHereLeft  = R_PrecachePatch("WIURH1", 0);
-        pSplat = R_PrecachePatch("WISPLAT", 0);
+        pYouAreHereRight = R_DeclarePatch("WIURH0");
+        pYouAreHereLeft  = R_DeclarePatch("WIURH1");
+        pSplat = R_DeclarePatch("WISPLAT");
 
         animStates = (wianimstate_t*)Z_Realloc(animStates,
             sizeof(*animStates) * animCounts[wbs->episode], PU_GAMESTATIC);
@@ -1312,42 +1313,41 @@ static void loadData(void)
                 (unsigned long) (sizeof(*animStates) * animCounts[wbs->episode]));
         memset(animStates, 0, sizeof(*animStates) * animCounts[wbs->episode]);
 
-        for(j = 0; j < animCounts[wbs->episode]; ++j)
+        for(i = 0; i < animCounts[wbs->episode]; ++i)
         {
-            def = &animDefs[wbs->episode][j];
-            state = &animStates[j];
-            for(i = 0; i < def->numFrames; ++i)
+            def = &animDefs[wbs->episode][i];
+            state = &animStates[i];
+            for(j = 0; j < def->numFrames; ++j)
             {
-                state->patches[i] = R_PrecachePatch(def->patchNames[i], NULL);
+                state->patches[j] = R_DeclarePatch(def->patchNames[j]);
             }
         }
     }
 
-    pFinished   = R_PrecachePatch("WIF", NULL);
-    pEntering   = R_PrecachePatch("WIENTER", NULL);
-    pKills      = R_PrecachePatch("WIOSTK", NULL);
-    pSecret     = R_PrecachePatch("WIOSTS", NULL);
-    pSecretSP   = R_PrecachePatch("WISCRT2", NULL);
-    pItems      = R_PrecachePatch("WIOSTI", NULL);
-    pFrags      = R_PrecachePatch("WIFRGS", NULL);
-    pTime       = R_PrecachePatch("WITIME", NULL);
-    pSucks      = R_PrecachePatch("WISUCKS", NULL);
-    pPar        = R_PrecachePatch("WIPAR", NULL);
-    pKillers    = R_PrecachePatch("WIKILRS", NULL);
-    pVictims    = R_PrecachePatch("WIVCTMS", NULL);
-    pTotal      = R_PrecachePatch("WIMSTT", NULL);
-    pFaceAlive  = R_PrecachePatch("STFST01", NULL);
-    pFaceDead   = R_PrecachePatch("STFDEAD0", NULL);
+    pFinished   = R_DeclarePatch("WIF");
+    pEntering   = R_DeclarePatch("WIENTER");
+    pKills      = R_DeclarePatch("WIOSTK");
+    pSecret     = R_DeclarePatch("WIOSTS");
+    pSecretSP   = R_DeclarePatch("WISCRT2");
+    pItems      = R_DeclarePatch("WIOSTI");
+    pFrags      = R_DeclarePatch("WIFRGS");
+    pTime       = R_DeclarePatch("WITIME");
+    pSucks      = R_DeclarePatch("WISUCKS");
+    pPar        = R_DeclarePatch("WIPAR");
+    pKillers    = R_DeclarePatch("WIKILRS");
+    pVictims    = R_DeclarePatch("WIVCTMS");
+    pTotal      = R_DeclarePatch("WIMSTT");
+    pFaceAlive  = R_DeclarePatch("STFST01");
+    pFaceDead   = R_DeclarePatch("STFDEAD0");
 
-    { int i;
     for(i = 0; i < NUMTEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
-        pTeamBackgrounds[i] = R_PrecachePatch(name, NULL);
+        pTeamBackgrounds[i] = R_DeclarePatch(name);
 
         sprintf(name, "WIBP%d", i + 1);
-        pTeamIcons[i] = R_PrecachePatch(name, NULL);
-    }}
+        pTeamIcons[i] = R_DeclarePatch(name);
+    }
 }
 
 void WI_Drawer(void)

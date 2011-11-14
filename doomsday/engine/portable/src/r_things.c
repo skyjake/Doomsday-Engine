@@ -353,7 +353,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     frame = rec->frames;
     if(rec->frames)
     {
-        while(!(frame->frame[0]    == Str_At(path, 4) - 'A' + 1 &&
+        while(!(frame->frame[0]    == Str_At(path, 4) - 'a' + 1 &&
                 frame->rotation[0] == Str_At(path, 5) - '0') &&
               (frame = frame->next)) {}
     }
@@ -370,11 +370,11 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     frame->mat = Materials_MaterialForUri(uri);
     Uri_Delete(uri);
 
-    frame->frame[0]    = Str_At(path, 4) - 'A' + 1;
+    frame->frame[0]    = Str_At(path, 4) - 'a' + 1;
     frame->rotation[0] = Str_At(path, 5) - '0';
     if(Str_At(path, 6))
     {
-        frame->frame[1]    = Str_At(path, 6) - 'A' + 1;
+        frame->frame[1]    = Str_At(path, 6) - 'a' + 1;
         frame->rotation[1] = Str_At(path, 7) - '0';
     }
     else

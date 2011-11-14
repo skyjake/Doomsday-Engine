@@ -31,11 +31,8 @@ void GL_DrawPatch3(patchid_t id, int posX, int posY, int alignFlags, int patchFl
     float x = (float) posX, y = (float) posY, w, h;
     patchinfo_t info;
 
-    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
-        return;
-
-    if(!R_GetPatchInfo(id, &info))
-        return;
+    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
+    if(!R_GetPatchInfo(id, &info)) return;
 
     DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 

@@ -334,7 +334,7 @@ void P_InitInventory(void)
         data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        data->patchId = R_PrecachePatch(def->patch, NULL);
+        data->patchId = R_DeclarePatch(def->patch);
     }
 
     memset(inventories, 0, sizeof(inventories));

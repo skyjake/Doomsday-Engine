@@ -305,7 +305,7 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
 DGLuint GL_PrepareLightMap(const Uri* path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PreparePatchTexture(patchtex_t* patch);
+DGLuint GL_PreparePatchTexture(texture_t* tex);
 DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
 
 /**

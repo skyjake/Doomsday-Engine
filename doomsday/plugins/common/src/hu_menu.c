@@ -1733,44 +1733,44 @@ void Hu_MenuLoadResources(void)
     char buffer[9];
 
 #if __JDOOM__ || __JDOOM64__
-    pMainTitle = R_PrecachePatch("M_DOOM", NULL);
+    pMainTitle = R_DeclarePatch("M_DOOM");
 #elif __JHERETIC__ || __JHEXEN__
-    pMainTitle = R_PrecachePatch("M_HTIC", NULL);
+    pMainTitle = R_DeclarePatch("M_HTIC");
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    pNewGame  = R_PrecachePatch("M_NEWG", NULL);
-    pSkill    = R_PrecachePatch("M_SKILL", NULL);
-    pEpisode  = R_PrecachePatch("M_EPISOD", NULL);
-    pNGame    = R_PrecachePatch("M_NGAME", NULL);
-    pOptions  = R_PrecachePatch("M_OPTION", NULL);
-    pLoadGame = R_PrecachePatch("M_LOADG", NULL);
-    pSaveGame = R_PrecachePatch("M_SAVEG", NULL);
-    pReadThis = R_PrecachePatch("M_RDTHIS", NULL);
-    pQuitGame = R_PrecachePatch("M_QUITG", NULL);
-    pOptionsTitle = R_PrecachePatch("M_OPTTTL", NULL);
+    pNewGame  = R_DeclarePatch("M_NEWG");
+    pSkill    = R_DeclarePatch("M_SKILL");
+    pEpisode  = R_DeclarePatch("M_EPISOD");
+    pNGame    = R_DeclarePatch("M_NGAME");
+    pOptions  = R_DeclarePatch("M_OPTION");
+    pLoadGame = R_DeclarePatch("M_LOADG");
+    pSaveGame = R_DeclarePatch("M_SAVEG");
+    pReadThis = R_DeclarePatch("M_RDTHIS");
+    pQuitGame = R_DeclarePatch("M_QUITG");
+    pOptionsTitle = R_DeclarePatch("M_OPTTTL");
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    pSkillModeNames[SM_BABY]      = R_PrecachePatch("M_JKILL", NULL);
-    pSkillModeNames[SM_EASY]      = R_PrecachePatch("M_ROUGH", NULL);
-    pSkillModeNames[SM_MEDIUM]    = R_PrecachePatch("M_HURT", NULL);
-    pSkillModeNames[SM_HARD]      = R_PrecachePatch("M_ULTRA", NULL);
+    pSkillModeNames[SM_BABY]      = R_DeclarePatch("M_JKILL");
+    pSkillModeNames[SM_EASY]      = R_DeclarePatch("M_ROUGH");
+    pSkillModeNames[SM_MEDIUM]    = R_DeclarePatch("M_HURT");
+    pSkillModeNames[SM_HARD]      = R_DeclarePatch("M_ULTRA");
 #  if __JDOOM__
-    pSkillModeNames[SM_NIGHTMARE] = R_PrecachePatch("M_NMARE", NULL);
+    pSkillModeNames[SM_NIGHTMARE] = R_DeclarePatch("M_NMARE");
 #  endif
 #endif
 
 #if __JDOOM__
     if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM|GM_DOOM_ULTIMATE))
     {
-        pEpisodeNames[0] = R_PrecachePatch("M_EPI1", NULL);
-        pEpisodeNames[1] = R_PrecachePatch("M_EPI2", NULL);
-        pEpisodeNames[2] = R_PrecachePatch("M_EPI3", NULL);
+        pEpisodeNames[0] = R_DeclarePatch("M_EPI1");
+        pEpisodeNames[1] = R_DeclarePatch("M_EPI2");
+        pEpisodeNames[2] = R_DeclarePatch("M_EPI3");
     }
     if(gameModeBits & GM_DOOM_ULTIMATE)
     {
-        pEpisodeNames[3] = R_PrecachePatch("M_EPI4", NULL);
+        pEpisodeNames[3] = R_DeclarePatch("M_EPI4");
     }
 #endif
 
@@ -1779,7 +1779,7 @@ void Hu_MenuLoadResources(void)
     for(i = 0; i < 18; ++i)
     {
         dd_snprintf(buffer, 9, "M_SKL%02d", i);
-        pRotatingSkull[i] = R_PrecachePatch(buffer, NULL);
+        pRotatingSkull[i] = R_DeclarePatch(buffer);
     }}
 #endif
 
@@ -1788,12 +1788,12 @@ void Hu_MenuLoadResources(void)
     for(i = 0; i < 7; ++i)
     {
         dd_snprintf(buffer, 9, "FBUL%c0", 'A'+i);
-        pBullWithFire[i] = R_PrecachePatch(buffer, NULL);
+        pBullWithFire[i] = R_DeclarePatch(buffer);
     }}
 
-    pPlayerClassBG[0] = R_PrecachePatch("M_FBOX", NULL);
-    pPlayerClassBG[1] = R_PrecachePatch("M_CBOX", NULL);
-    pPlayerClassBG[2] = R_PrecachePatch("M_MBOX", NULL);
+    pPlayerClassBG[0] = R_DeclarePatch("M_FBOX");
+    pPlayerClassBG[1] = R_DeclarePatch("M_CBOX");
+    pPlayerClassBG[2] = R_DeclarePatch("M_MBOX");
 #endif
 
     { int i;
@@ -1804,7 +1804,7 @@ void Hu_MenuLoadResources(void)
 #else
         dd_snprintf(buffer, 9, "M_SLCTR%d", i+1);
 #endif
-        pCursors[i] = R_PrecachePatch(buffer, NULL);
+        pCursors[i] = R_DeclarePatch(buffer);
     }}
 }
 

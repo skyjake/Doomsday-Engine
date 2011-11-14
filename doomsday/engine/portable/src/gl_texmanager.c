@@ -2786,18 +2786,26 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
     return 0; // Use the automatic selection logic.
 }
 
-DGLuint GL_PreparePatchTexture(patchtex_t* patchTex)
+DGLuint GL_PreparePatchTexture(texture_t* tex)
 {
-    if(!novideo && patchTex)
+    texturevariantspecification_t* texSpec;
+    patchtex_t* pTex;
+    if(novideo || !tex) return 0;
+    if(Textures_Namespace(Textures_Id(tex)) != TN_PATCHES)
     {
-        texturevariantspecification_t* texSpec =
-            GL_TextureVariantSpecificationForContext(TC_UI,
-                0 | ((patchTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
-                  | ((patchTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-                0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-        return GL_PrepareTexture(Textures_ToTexture(patchTex->texId), texSpec);
+#if _DEBUG
+        Con_Message("Warning:GL_PreparePatchTexture: Attempted to prepare non-patch [%p].\n", (void*)tex);
+#endif
+        return 0;
     }
-    return 0;
+    pTex = (patchtex_t*)Texture_UserData(tex);
+    assert(pTex);
+
+    texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
+            0 | ((pTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
+              | ((pTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
+            0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+    return GL_PrepareTexture(tex, texSpec);
 }
 
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,

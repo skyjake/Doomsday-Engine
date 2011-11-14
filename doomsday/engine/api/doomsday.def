@@ -397,18 +397,20 @@ EXPORTS
 
     R_PrecacheMobjNum           @427 NONAME
     R_PrecacheSkinsForState     @240 NONAME
-    R_PrecachePatch             @335 NONAME
 
     R_RenderPlayerView          @90 NONAME
     R_ViewWindowDimensions      @91 NONAME
     R_SetViewWindowDimensions   @92 NONAME
     R_ViewportDimensions        @430 NONAME
     R_SetViewPortPlayer         @65 NONAME
-
     R_SetBorderGfx              @93 NONAME
+
     R_GetSpriteInfo             @94 NONAME
+
+    R_DeclarePatch              @335 NONAME
     R_GetPatchInfo              @237 NONAME
     R_ComposePatchUri           @247 NONAME
+
     R_OriginalIndexForTexture   @438 NONAME
     R_OriginalIndexForTexture2  @501 NONAME
 

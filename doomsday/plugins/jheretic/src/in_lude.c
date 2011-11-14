@@ -109,11 +109,11 @@ static int secretPercent[NUMTEAMS];
 static int playerTeam[MAXPLAYERS];
 static teaminfo_t teamInfo[NUMTEAMS];
 
-static patchinfo_t dpInterPic;
-static patchinfo_t dpBeenThere;
-static patchinfo_t dpGoingThere;
-static patchinfo_t dpFaceAlive[NUMTEAMS];
-static patchinfo_t dpFaceDead[NUMTEAMS];
+static patchid_t dpInterPic;
+static patchid_t dpBeenThere;
+static patchid_t dpGoingThere;
+static patchid_t dpFaceAlive[NUMTEAMS];
+static patchid_t dpFaceDead[NUMTEAMS];
 
 static fixed_t dSlideX[NUMTEAMS];
 static fixed_t dSlideY[NUMTEAMS];
@@ -403,17 +403,17 @@ void IN_LoadPics(void)
     int i;
 
     if(wbs->episode < 3)
-        R_PrecachePatch(wbs->episode == 0? "MAPE1" : wbs->episode == 1? "MAPE2" : "MAPE3", &dpInterPic);
+        dpInterPic = R_DeclarePatch(wbs->episode == 0? "MAPE1" : wbs->episode == 1? "MAPE2" : "MAPE3");
 
-    R_PrecachePatch("IN_X", &dpBeenThere);
-    R_PrecachePatch("IN_YAH", &dpGoingThere);
+    dpBeenThere = R_DeclarePatch("IN_X");
+    dpGoingThere = R_DeclarePatch("IN_YAH");
 
     for(i = 0; i < NUMTEAMS; ++i)
     {
         dd_snprintf(buf, 9, "FACEA%i", i);
-        R_PrecachePatch(buf, &dpFaceAlive[i]);
+        dpFaceAlive[i] = R_DeclarePatch(buf);
         dd_snprintf(buf, 9, "FACEB%i", i);
-        R_PrecachePatch(buf, &dpFaceDead[i]);
+        dpFaceDead[i] = R_DeclarePatch(buf);
     }
 }
 
@@ -607,7 +607,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic.id, 0, 0);
+            GL_DrawPatch(dpInterPic, 0, 0);
 
             DGL_Disable(DGL_TEXTURE_2D);
 
@@ -621,7 +621,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic.id, 0, 0);
+            GL_DrawPatch(dpInterPic, 0, 0);
             IN_DrawYAH();
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -634,7 +634,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic.id, 0, 0);
+            GL_DrawPatch(dpInterPic, 0, 0);
 
             DGL_Disable(DGL_TEXTURE_2D);
         }
@@ -679,12 +679,12 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
     }
     else
@@ -693,17 +693,17 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
+            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
         }
     }
 
@@ -726,17 +726,17 @@ void IN_DrawYAH(void)
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+        GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+        GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
+        GL_DrawPatch(dpGoingThere, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
     }
 }
 
@@ -912,10 +912,10 @@ void IN_DrawCoopStats(void)
             char buf[20];
 
             DGL_Color4f(0, 0, 0, .4f);
-            GL_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
+            GL_DrawPatch(dpFaceAlive[i], 27, ypos+2);
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatch(dpFaceAlive[i].id, 25, ypos);
+            GL_DrawPatch(dpFaceAlive[i], 25, ypos);
 
 
             if(interTime < 40)
@@ -984,8 +984,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                M_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
-                M_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
+                M_DrawShadowedPatch(dpFaceAlive[i], 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
+                M_DrawShadowedPatch(dpFaceDead[i], ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
             }
         }
 
@@ -1017,14 +1017,14 @@ void IN_DrawDMStats(void)
 
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                M_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
-                M_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18);
+                M_DrawShadowedPatch(dpFaceAlive[i], 40, ypos);
+                M_DrawShadowedPatch(dpFaceDead[i], xpos, 18);
             }
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                GL_DrawPatch(dpFaceAlive[i].id, 40, ypos);
-                GL_DrawPatch(dpFaceDead[i].id, xpos, 18);
+                GL_DrawPatch(dpFaceAlive[i], 40, ypos);
+                GL_DrawPatch(dpFaceDead[i], xpos, 18);
             }
 
             FR_SetFont(FID(GF_FONTB));

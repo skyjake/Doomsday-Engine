@@ -954,31 +954,31 @@ void WI_Ticker(void)
 static void loadData(void)
 {
     char name[9];
+    int i;
 
-    pBackground = R_PrecachePatch("INTERPIC", NULL);
-    pFinished   = R_PrecachePatch("WIF", NULL);
-    pEntering   = R_PrecachePatch("WIENTER", NULL);
-    pKills      = R_PrecachePatch("WIOSTK", NULL);
-    pSecret     = R_PrecachePatch("WIOSTS", NULL);
-    pSecretSP   = R_PrecachePatch("WISCRT2", NULL);
-    pItems      = R_PrecachePatch("WIOSTI", NULL);
-    pFrags      = R_PrecachePatch("WIFRGS", NULL);
-    pTime       = R_PrecachePatch("WITIME", NULL);
-    pSucks      = R_PrecachePatch("WISUCKS", NULL);
-    pPar        = R_PrecachePatch("WIPAR", NULL);
-    pKillers    = R_PrecachePatch("WIKILRS", NULL);
-    pVictims    = R_PrecachePatch("WIVCTMS", NULL);
-    pTotal      = R_PrecachePatch("WIMSTT", NULL);
+    pBackground = R_DeclarePatch("INTERPIC");
+    pFinished   = R_DeclarePatch("WIF");
+    pEntering   = R_DeclarePatch("WIENTER");
+    pKills      = R_DeclarePatch("WIOSTK");
+    pSecret     = R_DeclarePatch("WIOSTS");
+    pSecretSP   = R_DeclarePatch("WISCRT2");
+    pItems      = R_DeclarePatch("WIOSTI");
+    pFrags      = R_DeclarePatch("WIFRGS");
+    pTime       = R_DeclarePatch("WITIME");
+    pSucks      = R_DeclarePatch("WISUCKS");
+    pPar        = R_DeclarePatch("WIPAR");
+    pKillers    = R_DeclarePatch("WIKILRS");
+    pVictims    = R_DeclarePatch("WIVCTMS");
+    pTotal      = R_DeclarePatch("WIMSTT");
 
-    { int i;
     for(i = 0; i < NUMTEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
-        pTeamBackgrounds[i] = R_PrecachePatch(name, NULL);
+        pTeamBackgrounds[i] = R_DeclarePatch(name);
 
         sprintf(name, "WIBP%d", i + 1);
-        pTeamIcons[i] = R_PrecachePatch(name, NULL);
-    }}
+        pTeamIcons[i] = R_DeclarePatch(name);
+    }
 }
 
 void WI_Drawer(void)

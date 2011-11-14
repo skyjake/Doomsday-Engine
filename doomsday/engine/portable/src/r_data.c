@@ -120,9 +120,9 @@ static int patchCompositeOrigIndexBase = 0;
 static uint patchCompositeOrigIndexMapSize = 0;
 static texture_t** patchCompositeOrigIndexMap = NULL;
 
-// LUT which translates patchid_t to patchtex_t*. Index with patchid_t-1
+// LUT which translates patchid_t to texture_t*. Index with patchid_t-1
 static uint patchTextureIdMapSize = 0;
-static patchtex_t** patchTextureIdMap = NULL;
+static texture_t** patchTextureIdMap = NULL;
 
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
@@ -1104,29 +1104,28 @@ void R_InitSystemTextures(void)
     Uri_Delete(uri);
 }
 
-static patchtex_t* getPatchTex(patchid_t id)
+static texture_t* getPatchTex(patchid_t id)
 {
     if(id == 0 || id > patchTextureIdMapSize) return NULL;
     return patchTextureIdMap[id-1];
 }
 
-static patchid_t getPatchId(patchtex_t* ptex)
+static patchid_t getPatchId(texture_t* tex)
 {
     uint i;
-    assert(ptex);
+    assert(tex);
 
     for(i = 0; i < patchTextureIdMapSize; ++i)
     {
-        if(patchTextureIdMap[i] == ptex)
+        if(patchTextureIdMap[i] == tex)
             return i+1; // 1-based index.
     }
-    Con_Error("getPatchId: Failed to locate id for ptex [%p].", (void*)ptex);
+    Con_Error("getPatchId: Failed to locate id for texture [%p].", (void*)tex);
     exit(1); // Unreachable.
 }
 
-static patchtex_t* findPatchTextureByName(const char* name)
+static textureid_t findPatchTextureIdByName(const char* name)
 {
-    textureid_t texId;
     Uri* uri;
     assert(name && name[0]);
 
@@ -1134,19 +1133,19 @@ static patchtex_t* findPatchTextureByName(const char* name)
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     texId = Textures_TextureForUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
-    if(texId == NOTEXTUREID) return NULL;
-    return (patchtex_t*)Texture_UserData(Textures_ToTexture(texId));
+    return texId;
 }
 
-patchtex_t* R_PatchTextureByIndex(patchid_t id)
+texture_t* R_PatchTextureById(patchid_t id)
 {
-    patchtex_t* patchTex = getPatchTex(id);
-    if(!patchTex)
-        Con_Error("R_PatchTextureByIndex: Unknown patch %i.", id);
-    return patchTex;
+    texture_t* tex = getPatchTex(id);
+    if(!tex)
+        Con_Error("R_PatchByIndex: Unknown patch %i.", id);
+    return tex;
 }
 
-patchid_t R_RegisterPatch(const char* name)
+/// \note Part of the Doomsday public API.
+patchid_t R_DeclarePatch(const char* name)
 {
     const doompatch_header_t* patch;
     abstractfile_t* fsObject;
@@ -1158,16 +1157,29 @@ patchid_t R_RegisterPatch(const char* name)
     texture_t* tex;
     patchtex_t* p;
 
-    if(!name || !name[0]) return 0;
+    if(!name || !name[0])
+    {
+#if _DEBUG
+        Con_Message("Warning:R_DeclarePatch: Invalid 'name' argument, ignoring.\n");
+#endif
+        return 0;
+    }
 
     // Already defined as a patch?
-    p = findPatchTextureByName(name);
-    if(p) return getPatchId(p);
+    texId = findPatchTextureByName(name);
+    if(texId)
+    {
+        /// \todo We should not need to have defined a texture to return a patchid.
+        /// We should instead define Materials from patches and return it's id.
+        return getPatchId(Textures_ToTexture(texId));
+    }
 
     lumpNum = F_CheckLumpNumForName2(name, true);
     if(lumpNum < 0)
     {
-        Con_Message("Warning:R_RegisterPatch: Failed to locate lump for patch '%s'.\n", name);
+#if _DEBUG
+        Con_Message("Warning:R_DeclarePatch: Failed to locate lump for patch '%s'.\n", name);
+#endif
         return 0;
     }
 
@@ -1187,7 +1199,7 @@ patchid_t R_RegisterPatch(const char* name)
     // Generate a new patch.
     p = (patchtex_t*)malloc(sizeof *p);
     if(!p)
-        Con_Error("R_RegisterPatch: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *p);
+        Con_Error("R_DeclarePatch: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *p);
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
     p->flags = 0;
@@ -1220,10 +1232,10 @@ patchid_t R_RegisterPatch(const char* name)
         }
 
         // Add it to the patch id map.
-        patchTextureIdMap = (patchtex_t**)realloc(patchTextureIdMap, sizeof *patchTextureIdMap * ++patchTextureIdMapSize);
+        patchTextureIdMap = (texture_t**)realloc(patchTextureIdMap, sizeof *patchTextureIdMap * ++patchTextureIdMapSize);
         if(!patchTextureIdMap)
-            Con_Error("R_RegisterPatch: Failed on (re)allocation of %lu bytes enlarging PatchTex id map.", (unsigned long) sizeof *patchTextureIdMap * patchTextureIdMapSize);
-        patchTextureIdMap[patchTextureIdMapSize-1] = p;
+            Con_Error("R_DeclarePatch: Failed on (re)allocation of %lu bytes enlarging PatchTex id map.", (unsigned long) sizeof *patchTextureIdMap * patchTextureIdMapSize);
+        patchTextureIdMap[patchTextureIdMapSize-1] = tex;
 
         patchId = patchTextureIdMapSize; // 1-based index.
     }
@@ -1235,37 +1247,39 @@ patchid_t R_RegisterPatch(const char* name)
         Texture_SetDimensions(tex, SHORT(patch->width), SHORT(patch->height));
         Texture_AttachUserData(tex, (void*)p);
 
-        patchId = getPatchId(oldPatch);
+        patchId = getPatchId(tex);
         free(oldPatch);
 
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
-    p->texId = Textures_Id(tex);
 
     return patchId;
 }
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
-    const patchtex_t* patch;
+    texture_t* tex;
     if(!info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
     memset(info, 0, sizeof(*info));
-    patch = getPatchTex(id);
-    if(patch)
+    tex = getPatchTex(id);
+    if(tex)
     {
-        texture_t* tex = Textures_ToTexture(patch->texId);
+        const patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
         assert(tex);
+
+        // Ensure we have up to date information about this patch.
+        GL_PreparePatchTexture(tex);
 
         info->id = id;
         info->width = Texture_Width(tex);
         info->height = Texture_Height(tex);
         info->isCustom = Texture_IsCustom(tex);
-        info->offset = patch->offX;
-        info->topOffset = patch->offY;
+        info->offset = pTex->offX;
+        info->topOffset = pTex->offY;
         /// \kludge:
-        info->extraOffset[0] = info->extraOffset[1] = (patch->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
     }
     if(id != 0)
@@ -1278,40 +1292,13 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 /// \note Part of the Doomsday public API.
 Uri* R_ComposePatchUri(patchid_t id)
 {
-    const patchtex_t* patch = getPatchTex(id);
-    if(patch) return Textures_ComposeUri(patch->texId);
+    texture_t* tex = getPatchTex(id);
+    if(tex) return Textures_ComposeUri(Textures_Id(tex));
     if(id != 0)
     {
         VERBOSE( Con_Message("Warning:R_ComposePatchUri: Invalid Patch id #%u.\n", (uint)id) )
     }
     return NULL;
-}
-
-patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
-{
-    patchid_t patchId;
-
-    if(info)
-    {
-        memset(info, 0, sizeof(patchinfo_t));
-    }
-
-    if(!name || !name[0])
-    {
-        Con_Message("Warning:R_PrecachePatch: Invalid 'name' argument, ignoring.\n");
-        return 0;
-    }
-
-    patchId = R_RegisterPatch(name);
-    if(patchId)
-    {
-        GL_PreparePatchTexture(getPatchTex(patchId));
-        if(info)
-        {
-            R_GetPatchInfo(patchId, info);
-        }
-    }
-    return patchId;
 }
 
 rawtex_t** R_CollectRawTexs(int* count)

@@ -1468,44 +1468,48 @@ DEFFC(Patch)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(3);
-    patchid_t patch;
+    patchid_t patchId;
 
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     FIData_PicClearAnimation(obj);
 
-    if((patch = R_PrecachePatch(name, NULL)) != 0)
+    patchId = R_DeclarePatch(name);
+    if(patchId != 0)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, -1, &patch, 0, 0);
+        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void*)&patchId, 0, 0);
     }
     else
+    {
         Con_Message("FIC_Patch: Warning, missing Patch '%s'.\n", name);
+    }
 }
 
 DEFFC(SetPatch)
 {
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
-    patchid_t patch;
+    fidata_pic_frame_t* f;
+    patchid_t patchId;
 
-    if((patch = R_PrecachePatch(name, NULL)) != 0)
+    patchId = R_DeclarePatch(name);
+    if(patchId == 0)
     {
-        if(!((fidata_pic_t*)obj)->numFrames)
-        {
-            FIData_PicAppendFrame(obj, PFT_PATCH, -1, &patch, 0, false);
-            return;
-        }
-
-        // Convert the first frame.
-        {
-        fidata_pic_frame_t* f = ((fidata_pic_t*)obj)->frames[0];
-        f->type = PFT_PATCH;
-        f->texRef.patch = patch;
-        f->tics = -1;
-        f->sound = 0;
-        }
-    }
-    else
         Con_Message("FIC_SetPatch: Warning, missing Patch '%s'.\n", name);
+        return;
+    }
+
+    if(!((fidata_pic_t*)obj)->numFrames)
+    {
+        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void*)&patchId, 0, false);
+        return;
+    }
+
+    // Convert the first frame.
+    f = ((fidata_pic_t*)obj)->frames[0];
+    f->type = PFT_PATCH;
+    f->texRef.patch = patchId;
+    f->tics = -1;
+    f->sound = 0;
 }
 
 DEFFC(ClearAnim)
@@ -1521,15 +1525,17 @@ DEFFC(Anim)
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    patchid_t patch;
+    patchid_t patchId;
 
-    if((patch = R_PrecachePatch(name, NULL)))
+    patchId = R_DeclarePatch(name);
+    if(patchId == 0)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, tics, &patch, 0, false);
-        ((fidata_pic_t*)obj)->animComplete = false;
-    }
-    else
         Con_Message("FIC_Anim: Warning, Patch '%s' not found.\n", name);
+        return;
+    }
+
+    FIData_PicAppendFrame(obj, PFT_PATCH, tics, (void*)&patchId, 0, false);
+    ((fidata_pic_t*)obj)->animComplete = false;
 }
 
 DEFFC(AnimImage)

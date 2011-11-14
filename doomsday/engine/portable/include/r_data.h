@@ -145,7 +145,6 @@ typedef struct {
 #define PF_UPSCALE_AND_SHARPEN 0x2
 
 typedef struct patchtex_s {
-    textureid_t texId; /// Name of the associated Texture.
     short flags;
     /// Offset to texture origin in logical pixels.
     short offX, offY;
@@ -386,18 +385,8 @@ struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath
 struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, int logicalWidth, int logicalHeight);
 struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
 
-patchid_t R_PrecachePatch(const char* name, patchinfo_t* info);
-
-/**
- * Get a patchtex_t data structure for a patch specified with a WAD lump
- * number. Allocates a new patchtex_t if it hasn't been loaded yet.
- */
-patchid_t R_RegisterPatch(const char* name);
-
-/**
- * Returns a patchtex_t* for the given lump, if one already exists.
- */
-patchtex_t* R_PatchTextureByIndex(patchid_t id);
+patchid_t R_DeclarePatch(const char* name);
+texture_t* R_PatchTextureById(patchid_t id);
 
 /**
  * Retrieve extended info for the patch associated with @a id.

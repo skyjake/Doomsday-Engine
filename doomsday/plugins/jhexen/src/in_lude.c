@@ -105,8 +105,8 @@ static signed int totalFrags[MAXPLAYERS];
 
 static int hubCount;
 
-static patchinfo_t dpTallyTop;
-static patchinfo_t dpTallyLeft;
+static patchid_t dpTallyTop;
+static patchid_t dpTallyLeft;
 
 // CODE --------------------------------------------------------------------
 
@@ -242,8 +242,8 @@ static void loadPics(void)
 {
     if(gameType != SINGLE)
     {
-        R_PrecachePatch("TALLYTOP", &dpTallyTop);
-        R_PrecachePatch("TALLYLFT", &dpTallyLeft);
+        dpTallyTop = R_DeclarePatch("TALLYTOP");
+        dpTallyLeft = R_DeclarePatch("TALLYLFT");
     }
 }
 
@@ -388,8 +388,8 @@ static void drawDeathTally(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
-    GL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
+    GL_DrawPatch(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
+    GL_DrawPatch(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {

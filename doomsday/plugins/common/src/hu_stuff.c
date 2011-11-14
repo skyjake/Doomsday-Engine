@@ -167,7 +167,7 @@ const char shiftXForm[] = {
 static scoreboardstate_t scoreStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
-static patchinfo_t borderPatches[8];
+static patchid_t borderPatches[8];
 static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
@@ -215,12 +215,12 @@ void Hu_LoadData(void)
 
     // Load the border patches
     for(i = 1; i < 9; ++i)
-        R_PrecachePatch(borderGraphics[i], &borderPatches[i-1]);
+        borderPatches[i-1] = R_DeclarePatch(borderGraphics[i]);
 
 #if __JDOOM__ || __JDOOM64__
-    m_pause = R_PrecachePatch("M_PAUSE", NULL);
+    m_pause = R_DeclarePatch("M_PAUSE");
 #elif __JHERETIC__ || __JHEXEN__
-    m_pause = R_PrecachePatch("PAUSED", NULL);
+    m_pause = R_DeclarePatch("PAUSED");
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -232,7 +232,7 @@ void Hu_LoadData(void)
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
-            pMapNames[i] = R_PrecachePatch(name, NULL);
+            pMapNames[i] = R_DeclarePatch(name);
         }
     }
 # else
@@ -243,7 +243,7 @@ void Hu_LoadData(void)
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            pMapNames[i] = R_PrecachePatch(name, NULL);
+            pMapNames[i] = R_DeclarePatch(name);
         }
     }
     else
@@ -259,7 +259,7 @@ void Hu_LoadData(void)
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (i * 10) + j);
-                pMapNames[(i* 9) + j] = R_PrecachePatch(name, NULL);
+                pMapNames[(i* 9) + j] = R_DeclarePatch(name);
             }
         }
     }
@@ -267,12 +267,12 @@ void Hu_LoadData(void)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    pInvItemBox = R_PrecachePatch("ARTIBOX", NULL);
-    pInvSelectBox = R_PrecachePatch("SELECTBO", NULL);
-    pInvPageLeft[0] = R_PrecachePatch("INVGEML1", NULL);
-    pInvPageLeft[1] = R_PrecachePatch("INVGEML2", NULL);
-    pInvPageRight[0] = R_PrecachePatch("INVGEMR1", NULL);
-    pInvPageRight[1] = R_PrecachePatch("INVGEMR2", NULL);
+    pInvItemBox = R_DeclarePatch("ARTIBOX");
+    pInvSelectBox = R_DeclarePatch("SELECTBO");
+    pInvPageLeft[0] = R_DeclarePatch("INVGEML1");
+    pInvPageLeft[1] = R_DeclarePatch("INVGEML2");
+    pInvPageRight[0] = R_DeclarePatch("INVGEMR1");
+    pInvPageRight[1] = R_DeclarePatch("INVGEMR2");
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -1220,39 +1220,39 @@ void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
 void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
     int border, float red, float green, float blue, float alpha)
 {
-    patchinfo_t* t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
+    patchinfo_t t, b, l, r, tl, tr, br, bl;
     int up = -1;
 
     switch(border)
     {
     case BORDERUP:
-        t = &borderPatches[2];
-        b = &borderPatches[0];
-        l = &borderPatches[1];
-        r = &borderPatches[3];
-        tl = &borderPatches[6];
-        tr = &borderPatches[7];
-        br = &borderPatches[4];
-        bl = &borderPatches[5];
+        if(!R_GetPatchInfo(borderPatches[2], &t)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[0], &b)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[1], &l)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[3], &r)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[6], &tl)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[7], &tr)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[4], &br)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[5], &bl)) border = 0;
 
         up = -1;
         break;
 
     case BORDERDOWN:
-        t = &borderPatches[0];
-        b = &borderPatches[2];
-        l = &borderPatches[3];
-        r = &borderPatches[1];
-        tl = &borderPatches[4];
-        tr = &borderPatches[5];
-        br = &borderPatches[6];
-        bl = &borderPatches[7];
+        if(!R_GetPatchInfo(borderPatches[0], &t)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[2], &b)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[3], &l)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[1], &r)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[4], &tl)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[5], &tr)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[6], &br)) border = 0;
+        if(!R_GetPatchInfo(borderPatches[7], &bl)) border = 0;
 
         up = 1;
         break;
 
     default:
-        break;
+        Con_Error("M_DrawBackgroundBox: Invalid border type %i.", (int)border);
     }
 
     DGL_Color4f(red, green, blue, alpha);
@@ -1266,30 +1266,30 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
     if(border)
     {
         // Top
-        DGL_SetPatch(t->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y - t->height, w, t->height, up * t->width, up * t->height);
+        DGL_SetPatch(t.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y - t.height, w, t.height, up * t.width, up * t.height);
         // Bottom
-        DGL_SetPatch(b->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y + h, w, b->height, up * b->width, up * b->height);
+        DGL_SetPatch(b.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y + h, w, b.height, up * b.width, up * b.height);
         // Left
-        DGL_SetPatch(l->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x - l->width, y, l->width, h, up * l->width, up * l->height);
+        DGL_SetPatch(l.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x - l.width, y, l.width, h, up * l.width, up * l.height);
         // Right
-        DGL_SetPatch(r->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + w, y, r->width, h, up * r->width, up * r->height);
+        DGL_SetPatch(r.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x + w, y, r.width, h, up * r.width, up * r.height);
 
         // Top Left
-        DGL_SetPatch(tl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - tl->width, y - tl->height, tl->width, tl->height);
+        DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x - tl.width, y - tl.height, tl.width, tl.height);
         // Top Right
-        DGL_SetPatch(tr->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height);
+        DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x + w, y - tr.height, tr.width, tr.height);
         // Bottom Right
-        DGL_SetPatch(br->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y + h, br->width, br->height);
+        DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x + w, y + h, br.width, br.height);
         // Bottom Left
-        DGL_SetPatch(bl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height);
+        DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(x - bl.width, y + h, bl.width, bl.height);
     }
 }
 

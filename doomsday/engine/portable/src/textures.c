@@ -23,6 +23,7 @@
  */
 
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -609,6 +610,18 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
     else
     {
         // A new binding.
+        ddstring_t path;
+        int i, pathLen;
+
+        // Ensure the path is lowercase.
+        pathLen = Str_Length(Uri_Path(uri));
+        Str_Init(&path);
+        Str_Reserve(&path, pathLen);
+        for(i = 0; i < pathLen; ++i)
+        {
+            Str_AppendChar(&path, tolower(Str_At(Uri_Path(uri), i)));
+        }
+
         bind = (texturebind_t*)malloc(sizeof *bind);
         if(!bind)
             Con_Error("Textures::CreateWithDimensions: Failed on allocation of %lu bytes for new TextureBind.", (unsigned long) sizeof *bind);
@@ -616,7 +629,7 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
         bind->resourcePath = NULL;
 
         texDirectory = getDirectoryForNamespaceId(Textures_ParseNamespace(Str_Text(Uri_Scheme(uri))));
-        node = PathDirectory_Insert(texDirectory, Str_Text(Uri_Path(uri)), TEXTURES_PATH_DELIMITER);
+        node = PathDirectory_Insert(texDirectory, Str_Text(&path), TEXTURES_PATH_DELIMITER);
 
         PathDirectoryNode_AttachUserData(node, bind);
         bind->directoryNode = node;
@@ -628,6 +641,8 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
         if(!textureIdMap)
             Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
         textureIdMap[id - 1] = bind;
+
+        Str_Free(&path);
     }
 
     // (Re)configure this binding.

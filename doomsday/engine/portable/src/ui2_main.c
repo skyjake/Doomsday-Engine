@@ -1017,12 +1017,14 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_PATCH: {
-            patchtex_t* patch = R_PatchTextureByIndex(f->texRef.patch);
-            if(patch)
+            texture_t* tex = R_PatchTextureById(f->texRef.patch);
+            if(tex)
             {
-                texture_t* tex = Textures_ToTexture(patch->texId);
-                glTexName = (renderTextures==1? GL_PreparePatchTexture(patch) : 0);
-                V3_Set(offset, patch->offX, patch->offY, 0);
+                patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+                assert(pTex);
+
+                glTexName = (renderTextures==1? GL_PreparePatchTexture(tex) : 0);
+                V3_Set(offset, pTex->offX, pTex->offY, 0);
                 V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);
             }
             break;

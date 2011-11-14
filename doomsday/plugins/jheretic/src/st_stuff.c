@@ -183,21 +183,21 @@ int ST_ChatResponder(int player, event_t* ev);
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static patchinfo_t pStatusbar;
-static patchinfo_t pStatusbarTopLeft;
-static patchinfo_t pStatusbarTopRight;
-static patchinfo_t pChain;
-static patchinfo_t pStatBar;
-static patchinfo_t pLifeBar;
-static patchinfo_t pInvBar;
-static patchinfo_t pLifeGems[4];
-static patchinfo_t pAmmoIcons[11];
-static patchinfo_t pInvItemFlash[5];
-static patchinfo_t pSpinTome[16];
-static patchinfo_t pSpinFly[16];
-static patchinfo_t pKeys[NUM_KEY_TYPES];
-static patchinfo_t pGodLeft;
-static patchinfo_t pGodRight;
+static patchid_t pStatusbar;
+static patchid_t pStatusbarTopLeft;
+static patchid_t pStatusbarTopRight;
+static patchid_t pChain;
+static patchid_t pStatBar;
+static patchid_t pLifeBar;
+static patchid_t pInvBar;
+static patchid_t pLifeGems[4];
+static patchid_t pAmmoIcons[11];
+static patchid_t pInvItemFlash[5];
+static patchid_t pSpinTome[16];
+static patchid_t pSpinFly[16];
+static patchid_t pKeys[NUM_KEY_TYPES];
+static patchid_t pGodLeft;
+static patchid_t pGodRight;
 
 // CODE --------------------------------------------------------------------
 
@@ -345,20 +345,21 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     int fullscreen = fullscreenMode();
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    patchinfo_t pChainInfo, pGemInfo;
 
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
-
-    chainY = -9 + chain->wiggle;
-
-    healthPos = MINMAX_OF(0, chain->healthMarker / 100.f, 1);
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pChain, &pChainInfo)) return;
 
     if(!IS_NETGAME)
         gemNum = 2; // Always use the red gem in single player.
     else
         gemNum = cfg.playerColor[obj->player];
+
+    if(!R_GetPatchInfo(pLifeGems[gemNum], &pGemInfo)) return;
+
+    chainY = -9 + chain->wiggle;
+    healthPos = MINMAX_OF(0, chain->healthMarker / 100.f, 1);
     gemglow = healthPos;
 
     // Draw the chain.
@@ -366,7 +367,7 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     y = ORIGINY+chainY;
     w = ST_WIDTH - 21 - 28;
     h = 8;
-    cw = (float) w / pChain.width;
+    cw = (float) w / pChainInfo.width;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -374,16 +375,16 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, chainYOffset, 0);
 
-    DGL_SetPatch(pChain.id, DGL_REPEAT, DGL_CLAMP);
+    DGL_SetPatch(pChain, DGL_REPEAT, DGL_CLAMP);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    gemXOffset = (w - pLifeGems[gemNum].width) * healthPos;
+    gemXOffset = (w - pGemInfo.width) * healthPos;
 
     if(gemXOffset > 0)
     {   // Left chain section.
-        float cw = gemXOffset / pChain.width;
+        float cw = gemXOffset / pChainInfo.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 1 - cw, 0);
@@ -400,13 +401,13 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_End();
     }
 
-    if(gemXOffset + pLifeGems[gemNum].width < w)
+    if(gemXOffset + pGemInfo.width < w)
     {   // Right chain section.
-        float cw = (w - gemXOffset - pLifeGems[gemNum].width) / pChain.width;
+        float cw = (w - gemXOffset - pGemInfo.width) / pChainInfo.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(x + gemXOffset + pLifeGems[gemNum].width, y);
+            DGL_Vertex2f(x + gemXOffset + pGemInfo.width, y);
 
             DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x + w, y);
@@ -415,13 +416,13 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             DGL_Vertex2f(x + w, y + h);
 
             DGL_TexCoord2f(0, 0, 1);
-            DGL_Vertex2f(x + gemXOffset + pLifeGems[gemNum].width, y + h);
+            DGL_Vertex2f(x + gemXOffset + pGemInfo.width, y + h);
         DGL_End();
     }
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(pLifeGems[gemNum].id, x + gemXOffset, chainY);
+    GL_DrawPatch(pGemInfo.id, x + gemXOffset, chainY);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -498,28 +499,28 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        GL_DrawPatch(pStatusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
 
         // Faces.
-        GL_DrawPatch(pStatusbar.id, ORIGINX, ORIGINY);
+        GL_DrawPatch(pStatusbar, ORIGINX, ORIGINY);
 
         if(P_GetPlayerCheats(&players[obj->player]) & CF_GODMODE)
         {
-            GL_DrawPatch(pGodLeft.id, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatch(pGodRight.id, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatch(pGodLeft, ORIGINX+16, ORIGINY+9);
+            GL_DrawPatch(pGodRight, ORIGINX+287, ORIGINY+9);
         }
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
             if(deathmatch)
-                GL_DrawPatch(pStatBar.id, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatch(pStatBar, ORIGINX+34, ORIGINY+2);
             else
-                GL_DrawPatch(pLifeBar.id, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatch(pLifeBar, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            GL_DrawPatch(pInvBar.id, ORIGINX+34, ORIGINY+2);
+            GL_DrawPatch(pInvBar, ORIGINX+34, ORIGINY+2);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -531,10 +532,10 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        GL_DrawPatch(pStatusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        GL_DrawPatch(pStatusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
 
-        DGL_SetPatch(pStatusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         // Top border.
         DGL_DrawCutRectTiled(ORIGINX+34, ORIGINY, 248, 2, 320, 42, 34, 0, ORIGINX, ORIGINY, 0, 0);
@@ -549,8 +550,8 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            GL_DrawPatch(pGodLeft.id, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatch(pGodRight.id, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatch(pGodLeft, ORIGINX+16, ORIGINY+9);
+            GL_DrawPatch(pGodRight, ORIGINX+287, ORIGINY+9);
         }
         else
         {
@@ -561,13 +562,13 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         if(!Hu_InventoryIsOpen(obj->player))
         {
             if(deathmatch)
-                GL_DrawPatch(pStatBar.id, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatch(pStatBar, ORIGINX+34, ORIGINY+2);
             else
-                GL_DrawPatch(pLifeBar.id, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatch(pLifeBar, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            GL_DrawPatch(pInvBar.id, ORIGINX+34, ORIGINY+2);
+            GL_DrawPatch(pInvBar, ORIGINX+34, ORIGINY+2);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -1081,7 +1082,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
         return;
-    kslt->patchId = plr->keys[kslt->keytypeA] ? pKeys[kslt->keytypeA].id : 0;
+    kslt->patchId = plr->keys[kslt->keytypeA] ? pKeys[kslt->keytypeA] : 0;
     }
 }
 
@@ -1283,7 +1284,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     {
         if(!weaponInfo[plr->readyWeapon][plr->class_].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
-        icon->patchId = pAmmoIcons[ammoType].id;
+        icon->patchId = pAmmoIcons[ammoType];
         break;
     }
     }
@@ -1371,7 +1372,7 @@ void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
         --item->flashCounter;
     if(item->flashCounter > 0)
     {
-        item->patchId = pInvItemFlash[item->flashCounter % 5].id;
+        item->patchId = pInvItemFlash[item->flashCounter % 5];
     }
     else
     {
@@ -1561,7 +1562,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
                 flht->hitCenterFrame = true;
             }
         }
-        flht->patchId = pSpinFly[frame].id;
+        flht->patchId = pSpinFly[frame];
     }
     }
 }
@@ -1650,7 +1651,7 @@ void Tome_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(cfg.tomeCounter > 0 || ticsRemain > BLINKTHRESHOLD || !(ticsRemain & 16))
     {
         int frame = (mapTime / 3) & 15;
-        tome->patchId = pSpinTome[frame].id;
+        tome->patchId = pSpinTome[frame];
     }
 
     if(cfg.tomeCounter > 0 && ticsRemain < cfg.tomeCounter * TICSPERSEC)
@@ -2087,18 +2088,14 @@ void Armor_UpdateDimensions(uiwidget_t* obj)
 
 void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 {
-    assert(NULL != obj);
-    {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    patchinfo_t pInfo;
     int x = 0; 
 
-    if(!cfg.hudShown[HUD_KEYS])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(!cfg.hudShown[HUD_KEYS]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2109,33 +2106,34 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[0].id, x, -pKeys[0].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch3(pKeys[0], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        x += pKeys[0].width + 1;
+        if(R_GetPatchInfo(pKeys[0], &pInfo))
+            x += pInfo.width + 1;
     }
 
     if(keys->keyBoxes[KT_GREEN])
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[1].id, x, -pKeys[1].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch3(pKeys[1], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        x += pKeys[1].width + 1;
+        if(R_GetPatchInfo(pKeys[1], &pInfo))
+            x += pInfo.width + 1;
     }
 
     if(keys->keyBoxes[KT_BLUE])
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[2].id, x, -pKeys[2].height, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch3(pKeys[2], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
 }
 
 void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2156,52 +2154,47 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
 void Keys_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
-    int x = 0, numVisible = 0; 
+    int x = 0, numVisible = 0;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(!cfg.hudShown[HUD_KEYS])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(!cfg.hudShown[HUD_KEYS]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    if(keys->keyBoxes[KT_YELLOW])
+    if(keys->keyBoxes[KT_YELLOW] && R_GetPatchInfo(pKeys[0], &pInfo))
     {
-        x += pKeys[0].width + 1;
-        obj->dimensions.width += pKeys[0].width;
-        if(pKeys[0].height > obj->dimensions.height)
-            obj->dimensions.height = pKeys[0].height;
+        x += pInfo.width + 1;
+        obj->dimensions.width += pInfo.width;
+        if(pInfo.height > obj->dimensions.height)
+            obj->dimensions.height = pInfo.height;
         ++numVisible;
     }
 
-    if(keys->keyBoxes[KT_GREEN])
+    if(keys->keyBoxes[KT_GREEN] && R_GetPatchInfo(pKeys[1], &pInfo))
     {
-        x += pKeys[1].width + 1;
-        obj->dimensions.width += pKeys[1].width;
-        if(pKeys[1].height > obj->dimensions.height)
-            obj->dimensions.height = pKeys[1].height;
+        x += pInfo.width + 1;
+        obj->dimensions.width += pInfo.width;
+        if(pInfo.height > obj->dimensions.height)
+            obj->dimensions.height = pInfo.height;
         ++numVisible;
     }
 
-    if(keys->keyBoxes[KT_BLUE])
+    if(keys->keyBoxes[KT_BLUE] && R_GetPatchInfo(pKeys[2], &pInfo))
     {
-        x += pKeys[2].width;
-        obj->dimensions.width += pKeys[1].width;
-        if(pKeys[2].height > obj->dimensions.height)
-            obj->dimensions.height = pKeys[2].height;
+        x += pInfo.width;
+        obj->dimensions.width += pInfo.width;
+        if(pInfo.height > obj->dimensions.height)
+            obj->dimensions.height = pInfo.height;
         ++numVisible;
     }
     obj->dimensions.width += (numVisible-1) * 1;
 
     obj->dimensions.width  *= cfg.hudScale;
     obj->dimensions.height *= cfg.hudScale;
-    }
 }
 
 void Frags_Drawer(uiwidget_t* obj, int x, int y)
@@ -2915,30 +2908,30 @@ void ST_loadGraphics(void)
     char nameBuf[9];
     int i;
 
-    R_PrecachePatch("BARBACK", &pStatusbar);
-    R_PrecachePatch("INVBAR", &pInvBar);
-    R_PrecachePatch("CHAIN", &pChain);
+    pStatusbar = R_DeclarePatch("BARBACK");
+    pInvBar = R_DeclarePatch("INVBAR");
+    pChain = R_DeclarePatch("CHAIN");
 
-    R_PrecachePatch("STATBAR", &pStatBar);
-    R_PrecachePatch("LIFEBAR", &pLifeBar);
+    pStatBar = R_DeclarePatch("STATBAR");
+    pLifeBar = R_DeclarePatch("LIFEBAR");
 
     // Order of lifeGems changed to match player color index.
-    R_PrecachePatch("LIFEGEM1", &pLifeGems[0]);
-    R_PrecachePatch("LIFEGEM3", &pLifeGems[1]);
-    R_PrecachePatch("LIFEGEM2", &pLifeGems[2]);
-    R_PrecachePatch("LIFEGEM0", &pLifeGems[3]);
+    pLifeGems[0] = R_DeclarePatch("LIFEGEM1");
+    pLifeGems[1] = R_DeclarePatch("LIFEGEM3");
+    pLifeGems[2] = R_DeclarePatch("LIFEGEM2");
+    pLifeGems[3] = R_DeclarePatch("LIFEGEM0");
 
-    R_PrecachePatch("GOD1", &pGodLeft);
-    R_PrecachePatch("GOD2", &pGodRight);
-    R_PrecachePatch("LTFCTOP", &pStatusbarTopLeft);
-    R_PrecachePatch("RTFCTOP", &pStatusbarTopRight);
+    pGodLeft = R_DeclarePatch("GOD1");
+    pGodRight = R_DeclarePatch("GOD2");
+    pStatusbarTopLeft = R_DeclarePatch("LTFCTOP");
+    pStatusbarTopRight = R_DeclarePatch("RTFCTOP");
     for(i = 0; i < 16; ++i)
     {
         sprintf(nameBuf, "SPINBK%d", i);
-        R_PrecachePatch(nameBuf, &pSpinTome[i]);
+        pSpinTome[i] = R_DeclarePatch(nameBuf);
 
         sprintf(nameBuf, "SPFLY%d", i);
-        R_PrecachePatch(nameBuf, &pSpinFly[i]);
+        pSpinFly[i] = R_DeclarePatch(nameBuf);
     }
 
     // Inventory item flash anim.
@@ -2953,7 +2946,7 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < 5; ++i)
     {
-        R_PrecachePatch(invItemFlashAnim[i], &pInvItemFlash[i]);
+        pInvItemFlash[i] = R_DeclarePatch(invItemFlashAnim[i]);
     }
     }
 
@@ -2970,14 +2963,14 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        R_PrecachePatch(ammoPic[i], &pAmmoIcons[i]);
+        pAmmoIcons[i] = R_DeclarePatch(ammoPic[i]);
     }
     }
 
     // Key cards.
-    R_PrecachePatch("YKEYICON", &pKeys[0]);
-    R_PrecachePatch("GKEYICON", &pKeys[1]);
-    R_PrecachePatch("BKEYICON", &pKeys[2]);
+    pKeys[0] = R_DeclarePatch("YKEYICON");
+    pKeys[1] = R_DeclarePatch("GKEYICON");
+    pKeys[2] = R_DeclarePatch("BKEYICON");
 }
 
 void ST_loadData(void)

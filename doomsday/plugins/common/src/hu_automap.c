@@ -201,7 +201,7 @@ void UIAutomap_LoadResources(void)
 #  else
         sprintf(patchName, "fonta%d", 16+i);
 #  endif
-        pPointMarkers[i] = R_PrecachePatch(patchName, NULL);
+        pPointMarkers[i] = R_DeclarePatch(patchName);
     }}
 #endif
 

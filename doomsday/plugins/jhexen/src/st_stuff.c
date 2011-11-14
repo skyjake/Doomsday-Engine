@@ -190,30 +190,30 @@ void unhideHUD(void);
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static patchinfo_t pStatusBar;
-static patchinfo_t pStatusBarTop;
-static patchinfo_t pKills;
-static patchinfo_t pStatBar;
-static patchinfo_t pKeyBar;
-static patchinfo_t pKeySlot[NUM_KEY_TYPES];
-static patchinfo_t pArmorSlot[NUMARMOR];
-static patchinfo_t pManaAVials[2];
-static patchinfo_t pManaBVials[2];
-static patchinfo_t pManaAIcons[2];
-static patchinfo_t pManaBIcons[2];
-static patchinfo_t pInventoryBar;
-static patchinfo_t pWeaponSlot[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pWeaponFull[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
-static patchinfo_t pWeaponPiece1[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pWeaponPiece2[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pWeaponPiece3[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pChain[3]; // [Fighter, Cleric, Mage]
-static patchinfo_t pInvItemFlash[5];
-static patchinfo_t pSpinFly[16];
-static patchinfo_t pSpinMinotaur[16];
-static patchinfo_t pSpinSpeed[16];
-static patchinfo_t pSpinDefense[16];
+static patchid_t pStatusBar;
+static patchid_t pStatusBarTop;
+static patchid_t pKills;
+static patchid_t pStatBar;
+static patchid_t pKeyBar;
+static patchid_t pKeySlot[NUM_KEY_TYPES];
+static patchid_t pArmorSlot[NUMARMOR];
+static patchid_t pManaAVials[2];
+static patchid_t pManaBVials[2];
+static patchid_t pManaAIcons[2];
+static patchid_t pManaBIcons[2];
+static patchid_t pInventoryBar;
+static patchid_t pWeaponSlot[3]; // [Fighter, Cleric, Mage]
+static patchid_t pWeaponFull[3]; // [Fighter, Cleric, Mage]
+static patchid_t pLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
+static patchid_t pWeaponPiece1[3]; // [Fighter, Cleric, Mage]
+static patchid_t pWeaponPiece2[3]; // [Fighter, Cleric, Mage]
+static patchid_t pWeaponPiece3[3]; // [Fighter, Cleric, Mage]
+static patchid_t pChain[3]; // [Fighter, Cleric, Mage]
+static patchid_t pInvItemFlash[5];
+static patchid_t pSpinFly[16];
+static patchid_t pSpinMinotaur[16];
+static patchid_t pSpinSpeed[16];
+static patchid_t pSpinDefense[16];
 
 // CODE --------------------------------------------------------------------
 
@@ -314,7 +314,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
                 flht->hitCenterFrame = true;
             }
         }
-        flht->patchId = pSpinFly[frame].id;
+        flht->patchId = pSpinFly[frame];
     }
     }
 }
@@ -382,7 +382,7 @@ void Boots_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(0 != plr->powers[PT_SPEED] && 
        (plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16)))
     {
-        boots->patchId = pSpinSpeed[(mapTime / 3) & 15].id;
+        boots->patchId = pSpinSpeed[(mapTime / 3) & 15];
     }
     }
 }
@@ -450,7 +450,7 @@ void Defense_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
     {
-        dfns->patchId = pSpinDefense[(mapTime / 3) & 15].id;
+        dfns->patchId = pSpinDefense[(mapTime / 3) & 15];
     }
     }
 }
@@ -518,7 +518,7 @@ void Servant_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
     {
-        svnt->patchId = pSpinMinotaur[(mapTime / 3) & 15].id;
+        svnt->patchId = pSpinMinotaur[(mapTime / 3) & 15];
     }
     }
 }
@@ -614,26 +614,26 @@ void SBarWeaponPieces_Drawer(uiwidget_t* obj, int x, int y)
     if(wpn->pieces == 7)
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(pWeaponFull[pClass].id, ORIGINX+190, ORIGINY);
+        GL_DrawPatch(pWeaponFull[pClass], ORIGINX+190, ORIGINY);
     }
     else
     {
         if(wpn->pieces & WPIECE1)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece1[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
+            GL_DrawPatch(pWeaponPiece1[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
         }
 
         if(wpn->pieces & WPIECE2)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece2[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
+            GL_DrawPatch(pWeaponPiece2[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
         }
 
         if(wpn->pieces & WPIECE3)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
+            GL_DrawPatch(pWeaponPiece3[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
         }
     }
 
@@ -716,16 +716,13 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     int chainYOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
+    patchinfo_t pChainInfo, pGemInfo;
 
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[obj->player];
-
-    healthPos = MINMAX_OF(0, chain->healthMarker / 100.f, 100);
 
     if(!IS_NETGAME)
     {
@@ -744,6 +741,10 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         }
     }
 
+    if(!R_GetPatchInfo(pChain[pClass], &pChainInfo)) return;
+    if(!R_GetPatchInfo(pLifeGem[pClass][pColor], &pGemInfo)) return;
+
+    healthPos = MINMAX_OF(0, chain->healthMarker / 100.f, 100);
     gemglow = healthPos;
 
     // Draw the chain.
@@ -758,16 +759,16 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, chainYOffset, 0);
 
-    DGL_SetPatch(pChain[pClass].id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(pChainInfo.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    gemXOffset = 7 + ROUND((w - 14) * healthPos) - pLifeGem[pClass][pColor].width/2;
+    gemXOffset = 7 + ROUND((w - 14) * healthPos) - pGemInfo.width/2;
 
     if(gemXOffset > 0)
     {   // Left chain section.
-        float cw = (float)(pChain[pClass].width - gemXOffset) / pChain[pClass].width;
+        float cw = (float)(pChainInfo.width - gemXOffset) / pChainInfo.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, cw, 0);
@@ -784,13 +785,13 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_End();
     }
 
-    if(gemXOffset + pLifeGem[pClass][pColor].width < w)
+    if(gemXOffset + pGemInfo.width < w)
     {   // Right chain section.
-        float cw = (w - (float)gemXOffset - pLifeGem[pClass][pColor].width) / pChain[pClass].width;
+        float cw = (w - (float)gemXOffset - pGemInfo.width) / pChainInfo.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(x + gemXOffset + pLifeGem[pClass][pColor].width, y);
+            DGL_Vertex2f(x + gemXOffset + pGemInfo.width, y);
 
             DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x + w, y);
@@ -799,7 +800,7 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             DGL_Vertex2f(x + w, y + h);
 
             DGL_TexCoord2f(0, 0, 1);
-            DGL_Vertex2f(x + gemXOffset + pLifeGem[pClass][pColor].width, y + h);
+            DGL_Vertex2f(x + gemXOffset + pGemInfo.width, y + h);
         DGL_End();
     }
 
@@ -809,19 +810,19 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     int vWidth;
     float s1 = 0, s2 = 1;
 
-    vWidth = pLifeGem[pClass][pColor].width;
-    if(gemXOffset + pLifeGem[pClass][pColor].width > w)
+    vWidth = pGemInfo.width;
+    if(gemXOffset + pGemInfo.width > w)
     {
-        vWidth -= gemXOffset + pLifeGem[pClass][pColor].width - w;
-        s2 = (float)vWidth / pLifeGem[pClass][pColor].width;
+        vWidth -= gemXOffset + pGemInfo.width - w;
+        s2 = (float)vWidth / pGemInfo.width;
     }
     if(gemXOffset < 0)
     {
         vWidth -= -gemXOffset;
-        s1 = (float)(-gemXOffset) / pLifeGem[pClass][pColor].width;
+        s1 = (float)(-gemXOffset) / pGemInfo.width;
     }
 
-    DGL_SetPatch(pLifeGem[pClass][pColor].id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(pGemInfo.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, s1, 0);
         DGL_Vertex2f(vX, y);
@@ -906,7 +907,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBar.id, ORIGINX, ORIGINY-28);
+        GL_DrawPatch(pStatusBar, ORIGINX, ORIGINY-28);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -923,30 +924,30 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBarTop.id, ORIGINX, ORIGINY-28);
+        GL_DrawPatch(pStatusBarTop, ORIGINX, ORIGINY-28);
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
             // Main interface
             if(!ST_AutomapIsActive(obj->player))
             {
-                GL_DrawPatch(pStatBar.id, ORIGINX+38, ORIGINY);
+                GL_DrawPatch(pStatBar, ORIGINX+38, ORIGINY);
 
                 if(deathmatch)
                 {
-                    GL_DrawPatch(pKills.id, ORIGINX+38, ORIGINY);
+                    GL_DrawPatch(pKills, ORIGINX+38, ORIGINY);
                 }
 
-                GL_DrawPatch(pWeaponSlot[pClass].id, ORIGINX+190, ORIGINY);
+                GL_DrawPatch(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
             }
             else
             {
-                GL_DrawPatch(pKeyBar.id, ORIGINX+38, ORIGINY);
+                GL_DrawPatch(pKeyBar, ORIGINX+38, ORIGINY);
             }
         }
         else
         {
-            GL_DrawPatch(pInventoryBar.id, ORIGINX+38, ORIGINY);
+            GL_DrawPatch(pInventoryBar, ORIGINX+38, ORIGINY);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -956,7 +957,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_SetPatch(pStatusBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(pStatusBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         DGL_Begin(DGL_QUADS);
 
@@ -1031,20 +1032,24 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             // Main interface
             if(!ST_AutomapIsActive(obj->player))
             {
-                x = ORIGINX + (deathmatch ? 68 : 38);
-                y = ORIGINY;
-                w = deathmatch?214:244;
-                h = 31;
-                DGL_SetPatch(pStatBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-                DGL_DrawCutRectTiled(x, y, w, h, pStatBar.width, pStatBar.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
+                patchinfo_t pStatBarInfo;
+                if(R_GetPatchInfo(pStatBar, &pStatBarInfo))
+                {
+                    x = ORIGINX + (deathmatch ? 68 : 38);
+                    y = ORIGINY;
+                    w = deathmatch?214:244;
+                    h = 31;
+                    DGL_SetPatch(pStatBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+                    DGL_DrawCutRectTiled(x, y, w, h, pStatBarInfo.width, pStatBarInfo.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
+                }
 
-                GL_DrawPatch(pWeaponSlot[pClass].id, ORIGINX+190, ORIGINY);
+                GL_DrawPatch(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
                 if(deathmatch)
-                    GL_DrawPatch(pKills.id, ORIGINX+38, ORIGINY);
+                    GL_DrawPatch(pKills, ORIGINX+38, ORIGINY);
             }
             else
             {
-                GL_DrawPatch(pKeyBar.id, ORIGINX+38, ORIGINY);
+                GL_DrawPatch(pKeyBar, ORIGINX+38, ORIGINY);
             }
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -1052,7 +1057,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         else
         {   // INVBAR
             
-            DGL_SetPatch(pInventoryBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+            DGL_SetPatch(pInventoryBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
             DGL_Enable(DGL_TEXTURE_2D);
 
             x = ORIGINX+38;
@@ -1176,20 +1181,15 @@ void SBarKeys_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT*hud->showBar)
 
-    assert(NULL != obj);
-    {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     hudstate_t* hud = &hudStates[obj->player];
     int i, numDrawn;
     int fullscreen = fullscreenMode();
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
-    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1199,65 +1199,55 @@ void SBarKeys_Drawer(uiwidget_t* obj, int x, int y)
     numDrawn = 0;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        const patchinfo_t* patch;
+        patchid_t patch;
 
-        if(!keys->keyBoxes[i])
-            continue;
+        if(!keys->keyBoxes[i]) continue;
 
-        patch = &pKeySlot[i];
-
+        patch = pKeySlot[i];
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
+        GL_DrawPatch(patch, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
         ++numDrawn;
-        if(numDrawn == 5)
-            break;
+        if(numDrawn == 5) break;
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
+
 #undef ORIGINY
 #undef ORIGINX
 }
 
 void SBarKeys_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     int i, numVisible;
+    patchinfo_t pInfo;
+    patchid_t patch;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     numVisible = 0;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        const patchinfo_t* patch;
+        if(!keys->keyBoxes[i]) continue;
+        patch = pKeySlot[i];
+        if(!R_GetPatchInfo(patch, &pInfo)) continue;
 
-        if(!keys->keyBoxes[i])
-            continue;
-
-        patch = &pKeySlot[i];
-
-        obj->dimensions.width += patch->width;
-        if(patch->height > obj->dimensions.height)
-            obj->dimensions.height = patch->height;
+        obj->dimensions.width += pInfo.width;
+        if(pInfo.height > obj->dimensions.height)
+            obj->dimensions.height = pInfo.height;
 
         ++numVisible;
-        if(numVisible == 5)
-            break;
+        if(numVisible == 5) break;
     }
 
     if(0 != numVisible)
@@ -1265,7 +1255,6 @@ void SBarKeys_UpdateDimensions(uiwidget_t* obj)
 
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
-    }
 }
 
 void ArmorIcons_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1311,13 +1300,12 @@ void SBarArmorIcons_Drawer(uiwidget_t* obj, int x, int y)
 
     for(i = 0; i < NUMARMOR; ++i)
     {
-        const patchinfo_t* patch;
+        patchid_t patch;
         float alpha;
 
-        if(!icons->types[i].value)
-            continue;
+        if(!icons->types[i].value) continue;
 
-        patch = &pArmorSlot[i];
+        patch = pArmorSlot[i];
         if(icons->types[i].value <= (PCLASS_INFO(pClass)->armorIncrement[i] >> 2))
             alpha = .3f;
         else if(icons->types[i].value <= (PCLASS_INFO(pClass)->armorIncrement[i] >> 1))
@@ -1327,7 +1315,7 @@ void SBarArmorIcons_Drawer(uiwidget_t* obj, int x, int y)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha * alpha);
-        GL_DrawPatch(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2);
+        GL_DrawPatch(patch, ORIGINX + 150 + 31 * i, ORIGINY + 2);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -1340,32 +1328,26 @@ void SBarArmorIcons_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarArmorIcons_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_armoricons_t* icons = (guidata_armoricons_t*)obj->typedata;
     int i, numVisible;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || !ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     numVisible = 0;
     for(i = 0; i < NUMARMOR; ++i)
     {
-        const patchinfo_t* patch;
-        if(!icons->types[i].value)
-            continue;
+        if(!icons->types[i].value) continue;
+        if(!R_GetPatchInfo(pArmorSlot[i], &pInfo)) continue;
 
-        patch = &pArmorSlot[i];
-        obj->dimensions.width += patch->width;
-        if(patch->height > obj->dimensions.height)
-            obj->dimensions.height = patch->height;
+        obj->dimensions.width += pInfo.width;
+        if(pInfo.height > obj->dimensions.height)
+            obj->dimensions.height = pInfo.height;
 
         ++numVisible;
     }
@@ -1375,7 +1357,6 @@ void SBarArmorIcons_UpdateDimensions(uiwidget_t* obj)
 
     obj->dimensions.width  *= cfg.statusbarScale;
     obj->dimensions.height *= cfg.statusbarScale;
-    }
 }
 
 void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1868,7 +1849,7 @@ void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
         --item->flashCounter;
     if(item->flashCounter > 0)
     {
-        item->patchId = pInvItemFlash[item->flashCounter % 5].id;
+        item->patchId = pInvItemFlash[item->flashCounter % 5];
     }
     else
     {
@@ -2047,8 +2028,6 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
-        patchid_t patchId = pManaAIcons[icon->iconIdx].id;
-
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2057,7 +2036,7 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(patchId, X, Y);
+        GL_DrawPatch(pManaAIcons[icon->iconIdx], X, Y);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2072,23 +2051,19 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarBlueManaIcon_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_bluemanaicon_t* icon = (guidata_bluemanaicon_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaAIcons[icon->iconIdx%2], &pInfo)) return;
 
-    obj->dimensions.width  = pManaAIcons[icon->iconIdx%2].width  * cfg.statusbarScale;
-    obj->dimensions.height = pManaAIcons[icon->iconIdx%2].height * cfg.statusbarScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.statusbarScale;
+    obj->dimensions.height = pInfo.height * cfg.statusbarScale;
 }
 
 void GreenManaIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2154,8 +2129,6 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
-        patchid_t patchId = pManaBIcons[icon->iconIdx].id;
-
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2164,7 +2137,7 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(patchId, X, Y);
+        GL_DrawPatch(pManaBIcons[icon->iconIdx], X, Y);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2179,23 +2152,19 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarGreenManaIcon_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_greenmanaicon_t* icon = (guidata_greenmanaicon_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaBIcons[icon->iconIdx%2], &pInfo)) return;
 
-    obj->dimensions.width  = pManaBIcons[icon->iconIdx%2].width  * cfg.statusbarScale;
-    obj->dimensions.height = pManaBIcons[icon->iconIdx%2].height * cfg.statusbarScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.statusbarScale;
+    obj->dimensions.height = pInfo.height * cfg.statusbarScale;
 }
 
 void BlueManaVial_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2259,10 +2228,9 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
     if(vial->iconIdx >= 0)
     {
-        patchid_t patchId = pManaAVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(patchId, X, Y);
+        GL_DrawPatch(pManaAVials[vial->iconIdx], X, Y);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2281,23 +2249,19 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarBlueManaVial_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_bluemanavial_t* vial = (guidata_bluemanavial_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaAVials[vial->iconIdx%2], &pInfo)) return;
 
-    obj->dimensions.width  = pManaAVials[vial->iconIdx%2].width  * cfg.statusbarScale;
-    obj->dimensions.height = pManaAVials[vial->iconIdx%2].height * cfg.statusbarScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.statusbarScale;
+    obj->dimensions.height = pInfo.height * cfg.statusbarScale;
 }
 
 void GreenManaVial_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2361,10 +2325,9 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
     if(vial->iconIdx >= 0)
     {
-        patchid_t patchId = pManaBVials[vial->iconIdx].id;
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(patchId, X, Y);
+        GL_DrawPatch(pManaBVials[vial->iconIdx], X, Y);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2383,23 +2346,19 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarGreenManaVial_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_greenmanavial_t* vial = (guidata_greenmanavial_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player))
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(Hu_InventoryIsOpen(obj->player) || ST_AutomapIsActive(obj->player)) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaBVials[vial->iconIdx%2], &pInfo)) return;
 
-    obj->dimensions.width  = pManaBVials[vial->iconIdx%2].width  * cfg.statusbarScale;
-    obj->dimensions.height = pManaBVials[vial->iconIdx%2].height * cfg.statusbarScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.statusbarScale;
+    obj->dimensions.height = pInfo.height * cfg.statusbarScale;
 }
 
 /**
@@ -2516,7 +2475,6 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
-        patchid_t patchId = pManaAIcons[icon->iconIdx].id;
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2524,7 +2482,7 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(patchId, 0, 0);
+        GL_DrawPatch(pManaAIcons[icon->iconIdx], 0, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2535,24 +2493,20 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
 void BlueManaIcon_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_bluemanaicon_t* icon = (guidata_bluemanaicon_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(!cfg.hudShown[HUD_MANA])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(!cfg.hudShown[HUD_MANA]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaAIcons[icon->iconIdx%2], &pInfo)) return;
 
     FR_SetFont(FID(GF_STATUS));
-    obj->dimensions.width  = pManaAIcons[icon->iconIdx%2].width  * cfg.hudScale;
-    obj->dimensions.height = pManaAIcons[icon->iconIdx%2].height * cfg.hudScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.hudScale;
+    obj->dimensions.height = pInfo.height * cfg.hudScale;
 }
 
 void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
@@ -2641,8 +2595,6 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
     if(icon->iconIdx >= 0)
     {
-        patchid_t patchId = pManaBIcons[icon->iconIdx].id;
-
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(x, y, 0);
@@ -2650,7 +2602,7 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(patchId, 0, 0);
+        GL_DrawPatch(pManaBIcons[icon->iconIdx], 0, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2661,23 +2613,19 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
 
 void GreenManaIcon_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
     guidata_greenmanaicon_t* icon = (guidata_greenmanaicon_t*)obj->typedata;
+    patchinfo_t pInfo;
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(!cfg.hudShown[HUD_MANA])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(!cfg.hudShown[HUD_MANA]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pManaBIcons[icon->iconIdx%2], &pInfo)) return;
 
-    obj->dimensions.width  = pManaBIcons[icon->iconIdx%2].width  * cfg.hudScale;
-    obj->dimensions.height = pManaBIcons[icon->iconIdx%2].height * cfg.hudScale;
-    }
+    obj->dimensions.width  = pInfo.width  * cfg.hudScale;
+    obj->dimensions.height = pInfo.height * cfg.hudScale;
 }
 
 void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
@@ -3222,89 +3170,89 @@ void ST_loadGraphics(void)
     char namebuf[9];
     int i;
 
-    R_PrecachePatch("H2BAR", &pStatusBar);
-    R_PrecachePatch("H2TOP", &pStatusBarTop);
-    R_PrecachePatch("INVBAR", &pInventoryBar);
-    R_PrecachePatch("STATBAR", &pStatBar);
-    R_PrecachePatch("KEYBAR", &pKeyBar);
+    pStatusBar = R_DeclarePatch("H2BAR");
+    pStatusBarTop = R_DeclarePatch("H2TOP");
+    pInventoryBar = R_DeclarePatch("INVBAR");
+    pStatBar = R_DeclarePatch("STATBAR");
+    pKeyBar = R_DeclarePatch("KEYBAR");
 
-    R_PrecachePatch("MANAVL1D", &pManaAVials[0]);
-    R_PrecachePatch("MANAVL2D", &pManaBVials[0]);
-    R_PrecachePatch("MANAVL1", &pManaAVials[1]);
-    R_PrecachePatch("MANAVL2", &pManaBVials[1]);
+    pManaAVials[0] = R_DeclarePatch("MANAVL1D");
+    pManaBVials[0] = R_DeclarePatch("MANAVL2D");
+    pManaAVials[1] = R_DeclarePatch("MANAVL1");
+    pManaBVials[1] = R_DeclarePatch("MANAVL2");
 
-    R_PrecachePatch("MANADIM1", &pManaAIcons[0]);
-    R_PrecachePatch("MANADIM2", &pManaBIcons[0]);
-    R_PrecachePatch("MANABRT1", &pManaAIcons[1]);
-    R_PrecachePatch("MANABRT2", &pManaBIcons[1]);
+    pManaAIcons[0] = R_DeclarePatch("MANADIM1");
+    pManaBIcons[0] = R_DeclarePatch("MANADIM2");
+    pManaAIcons[1] = R_DeclarePatch("MANABRT1");
+    pManaBIcons[1] = R_DeclarePatch("MANABRT2");
 
-    R_PrecachePatch("KILLS", &pKills);
+    pKills = R_DeclarePatch("KILLS");
 
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         sprintf(namebuf, "KEYSLOT%X", i + 1);
-        R_PrecachePatch(namebuf, &pKeySlot[i]);
+        pKeySlot[i] = R_DeclarePatch(namebuf);
     }
 
     for(i = 0; i < NUMARMOR; ++i)
     {
         sprintf(namebuf, "ARMSLOT%d", i + 1);
-        R_PrecachePatch(namebuf, &pArmorSlot[i]);
+        pArmorSlot[i] = R_DeclarePatch(namebuf);
     }
 
     for(i = 0; i < 16; ++i)
     {
         sprintf(namebuf, "SPFLY%d", i);
-        R_PrecachePatch(namebuf, &pSpinFly[i]);
+        pSpinFly[i] = R_DeclarePatch(namebuf);
 
         sprintf(namebuf, "SPMINO%d", i);
-        R_PrecachePatch(namebuf, &pSpinMinotaur[i]);
+        pSpinMinotaur[i] = R_DeclarePatch(namebuf);
 
         sprintf(namebuf, "SPBOOT%d", i);
-        R_PrecachePatch(namebuf, &pSpinSpeed[i]);
+        pSpinSpeed[i] = R_DeclarePatch(namebuf);
 
         sprintf(namebuf, "SPSHLD%d", i);
-        R_PrecachePatch(namebuf, &pSpinDefense[i]);
+        pSpinDefense[i] = R_DeclarePatch(namebuf);
     }
 
     // Fighter:
-    R_PrecachePatch("WPIECEF1", &pWeaponPiece1[PCLASS_FIGHTER]);
-    R_PrecachePatch("WPIECEF2", &pWeaponPiece2[PCLASS_FIGHTER]);
-    R_PrecachePatch("WPIECEF3", &pWeaponPiece3[PCLASS_FIGHTER]);
-    R_PrecachePatch("CHAIN", &pChain[PCLASS_FIGHTER]);
-    R_PrecachePatch("WPSLOT0", &pWeaponSlot[PCLASS_FIGHTER]);
-    R_PrecachePatch("WPFULL0", &pWeaponFull[PCLASS_FIGHTER]);
-    R_PrecachePatch("LIFEGEM", &pLifeGem[PCLASS_FIGHTER][0]);
+    pWeaponPiece1[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF1");
+    pWeaponPiece2[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF2");
+    pWeaponPiece3[PCLASS_FIGHTER] = R_DeclarePatch("WPIECEF3");
+    pChain[PCLASS_FIGHTER] = R_DeclarePatch("CHAIN");
+    pWeaponSlot[PCLASS_FIGHTER] = R_DeclarePatch("WPSLOT0");
+    pWeaponFull[PCLASS_FIGHTER] = R_DeclarePatch("WPFULL0");
+    pLifeGem[PCLASS_FIGHTER][0] = R_DeclarePatch("LIFEGEM");
     for(i = 1; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMF%d", i + 1);
-        R_PrecachePatch(namebuf, &pLifeGem[PCLASS_FIGHTER][i]);
+        pLifeGem[PCLASS_FIGHTER][i] = R_DeclarePatch(namebuf);
     }
 
     // Cleric:
-    R_PrecachePatch("WPIECEC1", &pWeaponPiece1[PCLASS_CLERIC]);
-    R_PrecachePatch("WPIECEC2", &pWeaponPiece2[PCLASS_CLERIC]);
-    R_PrecachePatch("WPIECEC3", &pWeaponPiece3[PCLASS_CLERIC]);
-    R_PrecachePatch("CHAIN2", &pChain[PCLASS_CLERIC]);
-    R_PrecachePatch("WPSLOT1", &pWeaponSlot[PCLASS_CLERIC]);
-    R_PrecachePatch("WPFULL1", &pWeaponFull[PCLASS_CLERIC]);
+    pWeaponPiece1[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC1");
+    pWeaponPiece2[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC2");
+    pWeaponPiece3[PCLASS_CLERIC] = R_DeclarePatch("WPIECEC3");
+    pChain[PCLASS_CLERIC] = R_DeclarePatch("CHAIN2");
+    pWeaponSlot[PCLASS_CLERIC] = R_DeclarePatch("WPSLOT1");
+    pWeaponFull[PCLASS_CLERIC] = R_DeclarePatch("WPFULL1");
     for(i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMC%d", i + 1);
-        R_PrecachePatch(namebuf, &pLifeGem[PCLASS_CLERIC][i]);
+        pLifeGem[PCLASS_CLERIC][i] = R_DeclarePatch(namebuf);
     }
 
     // Mage:
-    R_PrecachePatch("WPIECEM1", &pWeaponPiece1[PCLASS_MAGE]);
-    R_PrecachePatch("WPIECEM2", &pWeaponPiece2[PCLASS_MAGE]);
-    R_PrecachePatch("WPIECEM3", &pWeaponPiece3[PCLASS_MAGE]);
-    R_PrecachePatch("CHAIN3", &pChain[PCLASS_MAGE]);
-    R_PrecachePatch("WPSLOT2", &pWeaponSlot[PCLASS_MAGE]);
-    R_PrecachePatch("WPFULL2", &pWeaponFull[PCLASS_MAGE]);
+    pWeaponPiece1[PCLASS_MAGE] = R_DeclarePatch("WPIECEM1");
+    pWeaponPiece2[PCLASS_MAGE] = R_DeclarePatch("WPIECEM2");
+    pWeaponPiece3[PCLASS_MAGE] = R_DeclarePatch("WPIECEM3");
+    pChain[PCLASS_MAGE] = R_DeclarePatch("CHAIN3");
+    pWeaponSlot[PCLASS_MAGE] = R_DeclarePatch("WPSLOT2");
+    pWeaponFull[PCLASS_MAGE] = R_DeclarePatch("WPFULL2");
     for(i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMM%d", i + 1);
-        R_PrecachePatch(namebuf, &pLifeGem[PCLASS_MAGE][i]);
+        pLifeGem[PCLASS_MAGE][i] = R_DeclarePatch(namebuf);
     }
 
     // Inventory item flash anim.
@@ -3319,7 +3267,7 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < 5; ++i)
     {
-        R_PrecachePatch(invItemFlashAnim[i], &pInvItemFlash[i]);
+        pInvItemFlash[i] = R_DeclarePatch(invItemFlashAnim[i]);
     }
     }
 }

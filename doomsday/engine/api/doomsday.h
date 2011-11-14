@@ -389,7 +389,6 @@ int DD_GetFrameRate(void);
 void R_SetupMap(int mode, int flags);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
-patchid_t R_PrecachePatch(const char* name, patchinfo_t* info);
 void R_PrecacheSkinsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
@@ -406,6 +405,8 @@ scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availH
 scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 
 boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
+
+patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
 

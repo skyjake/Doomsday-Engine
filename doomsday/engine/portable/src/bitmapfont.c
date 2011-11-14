@@ -655,7 +655,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         avgHeight += cf->_chars[i].h;
 
         if(!(novideo || isDedicated) && cf->_chars[i].tex == 0)
-            cf->_chars[i].tex = GL_PreparePatchTexture(R_PatchTextureByIndex(patch));
+            cf->_chars[i].tex = GL_PreparePatchTexture(R_PatchTextureById(patch));
     }}
 
     font->_noCharWidth  = avgWidth  / numPatches; 
@@ -784,7 +784,7 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char
         cf->_chars[ch].dlist = 0;
     }
 
-    cf->_chars[ch].patch = R_RegisterPatch(patchName);
+    cf->_chars[ch].patch = R_DeclarePatch(patchName);
     { patchinfo_t info;
     R_GetPatchInfo(cf->_chars[ch].patch, &info);
     cf->_chars[ch].x = info.offset    + info.extraOffset[0] + font->_marginWidth;

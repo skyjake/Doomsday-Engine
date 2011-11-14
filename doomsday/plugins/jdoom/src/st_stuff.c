@@ -236,22 +236,22 @@ int ST_ChatResponder(int player, event_t* ev);
 static hudstate_t hudStates[MAXPLAYERS];
 
 // Main bar left.
-static patchinfo_t pStatusbar;
+static patchid_t pStatusbar;
 
 // 3 key-cards, 3 skulls.
-static patchinfo_t pKeys[NUM_KEY_TYPES];
+static patchid_t pKeys[NUM_KEY_TYPES];
 
 // Face status patches.
-static patchinfo_t pFaces[ST_NUMFACES];
+static patchid_t pFaces[ST_NUMFACES];
 
 // Face background.
-static patchinfo_t pFaceBackground[4];
+static patchid_t pFaceBackground[4];
 
  // Main bar right.
-static patchinfo_t pArmsBackground;
+static patchid_t pArmsBackground;
 
 // Weapon ownership patches.
-static patchinfo_t pArms[6][2];
+static patchid_t pArms[6][2];
 
 // CODE --------------------------------------------------------------------
 
@@ -334,26 +334,34 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     assert(NULL != obj);
     {
     const hudstate_t* hud = &hudStates[obj->player];
-    float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
-    float armsBGX = ST_ARMSBGX + pArmsBackground.offset;
+    float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT, armsBGX;
     int fullscreen = fullscreenMode();
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
+    patchinfo_t fbgInfo, armsInfo;
+    boolean haveArms = false;
     float cw, cw2, ch;
 
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(xOffset, yOffset, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
 
-    DGL_SetPatch(pStatusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
+
+    if(!deathmatch)
+    {
+        haveArms = R_GetPatchInfo(pArmsBackground, &armsInfo);
+        if(haveArms)
+        {
+            armsBGX = ST_ARMSBGX + armsInfo.offset;
+        }
+    }
 
     if(!(iconAlpha < 1))
     {
@@ -374,8 +382,8 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         // Alpha blended status bar, we'll need to cut it up into smaller bits...
         DGL_Begin(DGL_QUADS);
 
-        // Up to faceback if deathmatch, else ST_ARMS.
-        w = !deathmatch ? armsBGX : ST_FX;
+        // Up to faceback or ST_ARMS.
+        w = haveArms? armsBGX : ST_FX;
         h = HEIGHT;
         cw = w / WIDTH;
 
@@ -391,12 +399,12 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         if(IS_NETGAME)
         {
             // Fill in any gap left before the faceback due to small ARMS.
-            if(armsBGX + pArmsBackground.width < ST_FX)
+            if(haveArms && armsBGX + armsInfo.width < ST_FX)
             {
-                int sectionWidth = armsBGX + pArmsBackground.width;
+                int sectionWidth = armsBGX + armsInfo.width;
                 x = ORIGINX + sectionWidth;
                 y = ORIGINY;
-                w = ST_FX - armsBGX - pArmsBackground.width;
+                w = ST_FX - armsBGX - armsInfo.width;
                 h = HEIGHT;
                 cw = (float)sectionWidth / WIDTH;
                 cw2 = (sectionWidth + w) / WIDTH;
@@ -457,10 +465,10 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             cw = (float)sectionWidth / WIDTH;
             }
         }
-        else
+        else if(haveArms)
         {
             // Including area behind the face status indicator.
-            int sectionWidth = armsBGX + pArmsBackground.width;
+            int sectionWidth = armsBGX + armsInfo.width;
             x = ORIGINX + sectionWidth;
             y = ORIGINY;
             w = WIDTH - sectionWidth;
@@ -480,14 +488,15 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_End();
     }
 
-    if(!deathmatch)
-    {   // Draw the ARMS background.
-        DGL_SetPatch(pArmsBackground.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    if(haveArms)
+    {
+        // Draw the ARMS background.
+        DGL_SetPatch(armsInfo.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = ORIGINX + armsBGX;
-        y = ORIGINY + pArmsBackground.topOffset;
-        w = pArmsBackground.width;
-        h = pArmsBackground.height;
+        y = ORIGINY + armsInfo.topOffset;
+        w = armsInfo.width;
+        h = armsInfo.height;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
@@ -502,19 +511,17 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     }
 
     // Faceback?
-    if(IS_NETGAME)
+    if(IS_NETGAME && R_GetPatchInfo(pFaceBackground[cfg.playerColor[obj->player%MAXPLAYERS]%4], &fbgInfo))
     {
-        const patchinfo_t* patch = &pFaceBackground[cfg.playerColor[obj->player%MAXPLAYERS]%4];
-
-        DGL_SetPatch(patch->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(fbgInfo.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = ORIGINX + (ST_FX - ST_X);
         y = ORIGINY + (HEIGHT - 30);
         w = WIDTH - ST_FX - 141 - 2;
         h = HEIGHT - 3;
-        cw = 1.f / patch->width;
-        cw2 = ((float)patch->width - 1) / patch->width;
-        ch = ((float)patch->height - 1) / patch->height;
+        cw = 1.f / fbgInfo.width;
+        cw2 = ((float)fbgInfo.width - 1) / fbgInfo.width;
+        ch = ((float)fbgInfo.height - 1) / fbgInfo.height;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, cw, 0);
@@ -1482,7 +1489,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
 
     if(face->faceIndex >= 0)
     {
-        patchid_t patchId = pFaces[face->faceIndex].id;
+        patchid_t patchId = pFaces[face->faceIndex];
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -1505,23 +1512,20 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
 
 void SBarFace_UpdateDimensions(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    {
-    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
-    const patchinfo_t* facePatch;
+    const guidata_face_t* face;
+    patchinfo_t info;
+    assert(obj);
 
+    face = (guidata_face_t*)obj->typedata;
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    if(!R_GetPatchInfo(pFaces[face->faceIndex%ST_NUMFACES], &info)) return;
 
-    facePatch = &pFaces[face->faceIndex%ST_NUMFACES];
-    obj->dimensions.width  = facePatch->width  * cfg.statusbarScale;
-    obj->dimensions.height = facePatch->height * cfg.statusbarScale;
-    }
+    obj->dimensions.width  = info.width  * cfg.statusbarScale;
+    obj->dimensions.height = info.height * cfg.statusbarScale;
 }
 
 void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1534,7 +1538,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
     if(plr->keys[kslt->keytypeA] || plr->keys[kslt->keytypeB])
     {
-        kslt->patchId = pKeys[plr->keys[kslt->keytypeB]? kslt->keytypeB : kslt->keytypeA].id;
+        kslt->patchId = pKeys[plr->keys[kslt->keytypeB]? kslt->keytypeB : kslt->keytypeA];
     }
     else
     {
@@ -1542,7 +1546,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
     if(!cfg.hudKeysCombine && plr->keys[kslt->keytypeA] && plr->keys[kslt->keytypeB])
     {
-        kslt->patchId2 = pKeys[kslt->keytypeA].id;
+        kslt->patchId2 = pKeys[kslt->keytypeA];
     }
     else
     {
@@ -1661,14 +1665,11 @@ int countOwnedWeaponsInSlot(weapontype_t type, void* context)
 
 void WeaponSlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(NULL != obj);
-    {
     guidata_weaponslot_t* wpn = (guidata_weaponslot_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     boolean used = false;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
-        return;
+    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
 
     if(cfg.fixStatusbarOwnedWeapons)
     {   // Does the player own any weapon bound to this slot?
@@ -1682,8 +1683,7 @@ void WeaponSlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     {   // Does the player own the originally hardwired weapon to this slot?
         used = plr->weapons[wpn->slot].owned;
     }
-    wpn->patchId = pArms[wpn->slot-1][used?1:0].id;
-    }
+    wpn->patchId = pArms[wpn->slot-1][used?1:0];
 }
 
 void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
@@ -2207,19 +2207,18 @@ void ReadyAmmoIcon_UpdateDimensions(uiwidget_t* obj)
 void Face_Drawer(uiwidget_t* obj, int x, int y)
 {
 #define EXTRA_SCALE         .7f
-    assert(NULL != obj);
-    {
-    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
-    const patchinfo_t* facePatch = &pFaces[face->faceIndex];
-    const patchinfo_t* bgPatch = &pFaceBackground[cfg.playerColor[obj->player]];
-    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
-    if(!cfg.hudShown[HUD_FACE])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    patchinfo_t bgInfo;
+    int alignFlags = 0;
+    patchid_t pFace;
+
+    if(!cfg.hudShown[HUD_FACE]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    pFace = pFaces[face->faceIndex%ST_NUMFACES];
+    if(!pFace) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2227,38 +2226,53 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
-    x = -(bgPatch->width/2);
     DGL_Color4f(1, 1, 1, iconAlpha);
-    if(IS_NETGAME)
-        GL_DrawPatch(bgPatch->id, x, -bgPatch->height + 1);
-    GL_DrawPatch(facePatch->id, x, -bgPatch->height);
+    if(R_GetPatchInfo(pFaceBackground[cfg.playerColor[obj->player]], &bgInfo))
+    {
+        x = -(bgInfo.width/2);
+        if(IS_NETGAME)
+        {
+            GL_DrawPatch(bgInfo.id, x, -bgInfo.height + 1);
+        }
+        y = -bgInfo.height;
+    }
+    else
+    {
+        // Not likely but possible.
+        alignFlags = ALIGN_BOTTOM;
+    }
+    GL_DrawPatch2(pFace, x, y, alignFlags);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
+
 #undef EXTRA_SCALE
 }
 
 void Face_UpdateDimensions(uiwidget_t* obj)
 {
 #define EXTRA_SCALE         .7f
-    assert(NULL != obj);
-    {
-    const patchinfo_t* bgPatch = &pFaceBackground[cfg.playerColor[obj->player]];
+
+    const guidata_face_t* face = (guidata_face_t*)obj->typedata;
+    patchinfo_t info;
+    patchid_t pFace;
+    assert(obj);
 
     obj->dimensions.width  = 0;
     obj->dimensions.height = 0;
 
-    if(!cfg.hudShown[HUD_FACE])
-        return;
-    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0)
-        return;
-    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK))
-        return;
+    if(!cfg.hudShown[HUD_FACE]) return;
+    if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
+    if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
+    pFace = pFaces[face->faceIndex%ST_NUMFACES];
+    if(!pFace) return;
 
-    obj->dimensions.width  = bgPatch->width  * EXTRA_SCALE * cfg.hudScale;
-    obj->dimensions.height = bgPatch->height * EXTRA_SCALE * cfg.hudScale;
+    if(R_GetPatchInfo(pFaceBackground[cfg.playerColor[obj->player]], &info) ||
+       R_GetPatchInfo(pFace, &info))
+    {
+        obj->dimensions.width  = info.width  * EXTRA_SCALE * cfg.hudScale;
+        obj->dimensions.height = info.height * EXTRA_SCALE * cfg.hudScale;
     }
 #undef EXTRA_SCALE
 }
@@ -3043,33 +3057,33 @@ void ST_loadGraphics(void)
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         sprintf(nameBuf, "STKEYS%d", i);
-        R_PrecachePatch(nameBuf, &pKeys[i]);
+        pKeys[i] = R_DeclarePatch(nameBuf);
     }
 
     // Arms background.
-    R_PrecachePatch("STARMS", &pArmsBackground);
+    pArmsBackground = R_DeclarePatch("STARMS");
 
     // Arms ownership icons:
     for(i = 0; i < 6; ++i)
     {
         // gray
         sprintf(nameBuf, "STGNUM%d", i + 2);
-        R_PrecachePatch(nameBuf, &pArms[i][0]);
+        pArms[i][0] = R_DeclarePatch(nameBuf);
 
         // yellow
         sprintf(nameBuf, "STYSNUM%d", i + 2);
-        R_PrecachePatch(nameBuf, &pArms[i][1]);
+        pArms[i][1] = R_DeclarePatch(nameBuf);
     }
 
     // Face backgrounds for different color players.
     for(i = 0; i < 4; ++i)
     {
         sprintf(nameBuf, "STFB%d", i);
-        R_PrecachePatch(nameBuf, &pFaceBackground[i]);
+        pFaceBackground[i] = R_DeclarePatch(nameBuf);
     }
 
     // Status bar background bits.
-    R_PrecachePatch("STBAR", &pStatusbar);
+    pStatusbar = R_DeclarePatch("STBAR");
 
     // Face states:
     faceNum = 0;
@@ -3078,21 +3092,21 @@ void ST_loadGraphics(void)
         for(j = 0; j < ST_NUMSTRAIGHTFACES; ++j)
         {
             sprintf(nameBuf, "STFST%d%d", i, j);
-            R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+            pFaces[faceNum++] = R_DeclarePatch(nameBuf);
         }
         sprintf(nameBuf, "STFTR%d0", i); // Turn right.
-        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+        pFaces[faceNum++] = R_DeclarePatch(nameBuf);
         sprintf(nameBuf, "STFTL%d0", i); // Turn left.
-        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+        pFaces[faceNum++] = R_DeclarePatch(nameBuf);
         sprintf(nameBuf, "STFOUCH%d", i); // Ouch.
-        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+        pFaces[faceNum++] = R_DeclarePatch(nameBuf);
         sprintf(nameBuf, "STFEVL%d", i); // Evil grin.
-        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+        pFaces[faceNum++] = R_DeclarePatch(nameBuf);
         sprintf(nameBuf, "STFKILL%d", i); // Pissed off.
-        R_PrecachePatch(nameBuf, &pFaces[faceNum++]);
+        pFaces[faceNum++] = R_DeclarePatch(nameBuf);
     }
-    R_PrecachePatch("STFGOD0", &pFaces[faceNum++]);
-    R_PrecachePatch("STFDEAD0", &pFaces[faceNum++]);
+    pFaces[faceNum++] = R_DeclarePatch("STFGOD0");
+    pFaces[faceNum++] = R_DeclarePatch("STFDEAD0");
 }
 
 void ST_loadData(void)

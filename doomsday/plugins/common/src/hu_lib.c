@@ -529,25 +529,25 @@ void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags)
 
 static void MNSlider_LoadResources(void)
 {
-    pSliderLeft   = R_PrecachePatch(MNDATA_SLIDER_PATCH_LEFT,   NULL);
-    pSliderRight  = R_PrecachePatch(MNDATA_SLIDER_PATCH_RIGHT,  NULL);
-    pSliderMiddle = R_PrecachePatch(MNDATA_SLIDER_PATCH_MIDDLE, NULL);
-    pSliderHandle = R_PrecachePatch(MNDATA_SLIDER_PATCH_HANDLE, NULL);
+    pSliderLeft   = R_DeclarePatch(MNDATA_SLIDER_PATCH_LEFT);
+    pSliderRight  = R_DeclarePatch(MNDATA_SLIDER_PATCH_RIGHT);
+    pSliderMiddle = R_DeclarePatch(MNDATA_SLIDER_PATCH_MIDDLE);
+    pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
 }
 
 static void MNEdit_LoadResources(void)
 {
 #if defined(MNDATA_EDIT_BACKGROUND_PATCH_LEFT)
-    pEditLeft   = R_PrecachePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT, NULL);
+    pEditLeft   = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT);
 #else
     pEditLeft   = 0;
 #endif
 #if defined(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT)
-    pEditRight  = R_PrecachePatch(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT, NULL);
+    pEditRight  = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT);
 #else
     pEditRight  = 0;
 #endif
-    pEditMiddle = R_PrecachePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE, NULL);
+    pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
 int MN_CountObjects(mn_object_t* list)
