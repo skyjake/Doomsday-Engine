@@ -88,9 +88,10 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 fontnamespaceid_t DD_ParseFontNamespace(const char* str);
 
 /// @return  Symbolic name of the material namespace associated with @a namespaceId.
-const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t namespaceId);
+const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid_t texNamespaceId);
 
-materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t namespaceId);
+/// @return  Unique identifier of the material associated with the identified @a uniqueId texture.
+materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
 
 const char* value_Str(int val);
 

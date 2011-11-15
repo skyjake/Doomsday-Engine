@@ -1117,8 +1117,8 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_ShutdownVectorGraphics();
         R_DestroyColorPalettes();
 
-        Textures_ClearRuntime();
         Fonts_ClearRuntime();
+        Textures_ClearRuntime();
 
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
@@ -2271,18 +2271,18 @@ const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid
     return Materials_NamespaceName(namespaceId);
 }
 
-materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace)
+materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId)
 {
-    texture_t* tex = R_TextureForOriginalIndex(index, texNamespace);
+    textureid_t texId = Textures_TextureForUniqueId(texNamespaceId, uniqueId);
     ddstring_t* texPath;
     materialid_t matId;
     Uri* uri;
 
-    if(!tex) return NOMATERIALID;
+    if(texId == NOTEXTUREID) return NOMATERIALID;
 
-    texPath = Textures_ComposePath(Textures_Id(tex));
+    texPath = Textures_ComposePath(texId);
     uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
-    Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespace)));
+    Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
     matId = Materials_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     Str_Delete(texPath);

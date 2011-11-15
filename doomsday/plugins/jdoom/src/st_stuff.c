@@ -345,15 +345,6 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(xOffset, yOffset, 0);
-    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
-
-    DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, iconAlpha);
-
     if(!deathmatch)
     {
         haveArms = R_GetPatchInfo(pArmsBackground, &armsInfo);
@@ -362,6 +353,15 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             armsBGX = ST_ARMSBGX + armsInfo.offset;
         }
     }
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(xOffset, yOffset, 0);
+    DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
+
+    DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, iconAlpha);
 
     if(!(iconAlpha < 1))
     {

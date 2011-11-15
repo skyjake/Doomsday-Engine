@@ -541,7 +541,6 @@ void R_Update(void)
  */
 void R_Shutdown(void)
 {
-    R_DestroyTextureLUTs();
     R_ShutdownSprites();
     R_ShutdownModels();
     R_ShutdownVectorGraphics();

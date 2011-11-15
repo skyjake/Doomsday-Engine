@@ -824,9 +824,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
         patchid_t patch = BitmapCompositeFont_CharPatch(font, ch);
 
-        if(patch != 0)
+        if(patch)
         {
-            GL_BindTexture(cf->_chars[ch].tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+            glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch))));
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }

@@ -143,7 +143,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 
-materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t texNamespace);
+materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -410,8 +410,8 @@ patchid_t R_DeclarePatch(const char* name);
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 Uri* R_ComposePatchUri(patchid_t id);
 
-int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet);
-int R_OriginalIndexForTexture(const Uri* uri); /*quiet=false*/
+int R_TextureUniqueId2(const Uri* uri, boolean quiet);
+int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
 
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name);

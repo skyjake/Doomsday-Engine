@@ -80,7 +80,6 @@ typedef struct {
     int w, h; /// Dimensions.
     DGLuint dlist;
     patchid_t patch;
-    DGLuint tex;
 } bitmapcompositefont_char_t;
 
 typedef struct bitmapcompositefont_s {

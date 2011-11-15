@@ -224,11 +224,11 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         m = malloc(sizeof(*m));
         if(map->format == MF_DOOM64)
         {
-            int idx = *((int*) name);
+            int uniqueId = *((int*) name);
 
-            sprintf(m->name, "UNK%05i", idx);
+            sprintf(m->name, "UNK%05i", uniqueId);
             m->name[8] = '\0';
-            m->id = DD_MaterialForOriginalTextureIndex(idx, (isFlat? TN_FLATS : TN_TEXTURES));
+            m->id = DD_MaterialForTextureUniqueId((isFlat? TN_FLATS : TN_TEXTURES), uniqueId);
         }
         else
         {

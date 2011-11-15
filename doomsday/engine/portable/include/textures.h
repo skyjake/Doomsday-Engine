@@ -43,7 +43,7 @@
 #ifndef LIBDENG_REFRESH_TEXTURES_H
 #define LIBDENG_REFRESH_TEXTURES_H
 
-/// Unique identifier associated with each named texture.
+/// Unique identifier associated with each texture name in the collection.
 typedef uint textureid_t;
 
 /// Special value used to signify an invalid texture id.
@@ -102,26 +102,37 @@ void Textures_ClearSystem(void);
  */
 void Textures_ClearNamespace(texturenamespaceid_t namespaceId);
 
-/// @return  Unique identifier associated with @a texture else @c NOTEXTUREID.
+/// @return  Unique identifier of the primary name for @a texture else @c NOTEXTUREID.
 textureid_t Textures_Id(struct texture_s* texture);
 
 /// @return  Texture associated with unique identifier @a textureId else @c NULL.
 struct texture_s* Textures_ToTexture(textureid_t textureId);
 
+/// @return  Texture associated with the namespace-unique identifier @a index else @c NOTEXTUREID.
+textureid_t Textures_TextureForUniqueId(texturenamespaceid_t namespaceId, int uniqueId);
+
+/// @return  Namespace-unique identfier associated with the identified @a textureId.
+int Textures_UniqueId(textureid_t textureId);
+
 /// @return  Declared path to this data resource else a "null" Uri (no scheme or path).
 const Uri* Textures_ResourcePath(textureid_t textureId);
 
-/// @return  Unique identifier of the namespace this texture is in.
+/// @return  Unique identifier of the namespace this name is in.
 texturenamespaceid_t Textures_Namespace(textureid_t textureId);
 
-/// @return  Symbolic name/path-to this texture. Must be destroyed with Str_Delete().
+/// @return  Symbolic name/path-to this texture as a string. Must be destroyed with Str_Delete().
 ddstring_t* Textures_ComposePath(textureid_t textureId);
 
-/// @return  Unique name/path-to this texture. Must be destroyed with Uri_Delete().
+/// @return  URI to this texture. Must be destroyed with Uri_Delete().
 Uri* Textures_ComposeUri(textureid_t textureId);
+
+/// @return  Unique URN to this texture. Must be destroyed with Uri_Delete().
+Uri* Textures_ComposeUrn(textureid_t textureId);
 
 /**
  * Search the Textures collection for a texture associated with @a uri.
+ *
+ * @param uri  Either a path or a URN.
  * @return  Unique identifier of the found texture else @c NOTEXTUREID.
  */
 textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet);
@@ -139,11 +150,12 @@ textureid_t Textures_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)
  * acquired for it).
  *
  * @param uri  Uri representing a path to the texture in the virtual hierarchy.
+ * @param uniqueId  Namespace-unique identifier to associate with the texture.
  * @param resourcepath  The path to the underlying data resource.
  * @return  Unique identifier for this texture unless @a uri is invalid,
  *     in which case @c NOTEXTUREID is returned.
  */
-textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath);
+textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePath);
 
 /**
  * Create/update a Texture instance in the collection.

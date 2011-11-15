@@ -116,10 +116,9 @@ typedef uint32_t        ident_t;
 typedef int32_t         gameid_t;
 
 typedef uint32_t        fontid_t;
-typedef uint32_t        patchid_t;
 typedef uint32_t        materialid_t;
+typedef int             patchid_t;
 typedef int32_t         spritenum_t;
-
 typedef uint16_t        nodeindex_t;
 typedef uint16_t        thid_t;
 typedef double          timespan_t;

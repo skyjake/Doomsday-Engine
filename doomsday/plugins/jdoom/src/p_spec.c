@@ -165,8 +165,8 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         Uri_SetPath(startPath, animDefs[i].startname);
         Uri_SetPath(endPath, animDefs[i].endname);
         
-        startFrame = R_OriginalIndexForTexture2(startPath, !isCustom);
-        endFrame   = R_OriginalIndexForTexture2(endPath, !isCustom);
+        startFrame = R_TextureUniqueId2(startPath, !isCustom);
+        endFrame   = R_TextureUniqueId2(endPath, !isCustom);
         if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
@@ -206,7 +206,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
             int n;
             for(n = startFrame; n <= endFrame; ++n)
             {
-                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS));
+                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(isTexture? TN_TEXTURES : TN_FLATS, n));
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }
@@ -216,7 +216,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
             int n;
             for(n = endFrame; n >= startFrame; n--)
             {
-                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForOriginalTextureIndex(n, isTexture? TN_TEXTURES : TN_FLATS));
+                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(isTexture? TN_TEXTURES : TN_FLATS, n));
                 if(frame != 0)
                     Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
             }

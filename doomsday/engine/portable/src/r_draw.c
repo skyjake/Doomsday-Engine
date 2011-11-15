@@ -259,10 +259,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatchTiled(R_PatchTextureById(borderPatches[BG_TOP]), vd->window.x, vd->window.y - border, vd->window.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_PatchTextureById(borderPatches[BG_BOTTOM]), vd->window.x, vd->window.y + vd->window.height , vd->window.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        R_DrawPatchTiled(R_PatchTextureById(borderPatches[BG_LEFT]), vd->window.x - border, vd->window.y, border, vd->window.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        R_DrawPatchTiled(R_PatchTextureById(borderPatches[BG_RIGHT]), vd->window.x + vd->window.width, vd->window.y, border, vd->window.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_TOP])), vd->window.x, vd->window.y - border, vd->window.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_BOTTOM])), vd->window.x, vd->window.y + vd->window.height , vd->window.width, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_LEFT])), vd->window.x - border, vd->window.y, border, vd->window.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_RIGHT])), vd->window.x + vd->window.width, vd->window.y, border, vd->window.height, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -270,10 +270,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        R_DrawPatch3(R_PatchTextureById(borderPatches[BG_TOPLEFT]), vd->window.x - border, vd->window.y - border, border, border, false);
-        R_DrawPatch3(R_PatchTextureById(borderPatches[BG_TOPRIGHT]), vd->window.x + vd->window.width, vd->window.y - border, border, border, false);
-        R_DrawPatch3(R_PatchTextureById(borderPatches[BG_BOTTOMRIGHT]), vd->window.x + vd->window.width, vd->window.y + vd->window.height, border, border, false);
-        R_DrawPatch3(R_PatchTextureById(borderPatches[BG_BOTTOMLEFT]), vd->window.x - border, vd->window.y + vd->window.height, border, border, false);
+        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_TOPLEFT])), vd->window.x - border, vd->window.y - border, border, border, false);
+        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_TOPRIGHT])), vd->window.x + vd->window.width, vd->window.y - border, border, border, false);
+        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_BOTTOMRIGHT])), vd->window.x + vd->window.width, vd->window.y + vd->window.height, border, border, false);
+        R_DrawPatch3(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, borderPatches[BG_BOTTOMLEFT])), vd->window.x - border, vd->window.y + vd->window.height, border, border, false);
     }
 
     glDisable(GL_TEXTURE_2D);

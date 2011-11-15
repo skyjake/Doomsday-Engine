@@ -75,8 +75,8 @@ typedef struct texturevariantspecificationlist_node_s {
 typedef texturevariantspecificationlist_node_t variantspecificationlist_t;
 
 D_CMD(LowRes);
-D_CMD(ResetTextures);
 D_CMD(MipMap);
+D_CMD(TexReset);
 
 void GL_DoResetDetailTextures(void);
 void GL_DoTexReset(void);
@@ -161,7 +161,7 @@ void GL_TexRegister(void)
 
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("texreset", "", TexReset, CMDF_NO_DEDICATED);
 
     Textures_Register();
 }
@@ -1310,6 +1310,8 @@ void GL_ReleaseSystemTextures(void)
     UI_ReleaseTextures();
     Rend_ParticleReleaseSystemTextures();
     Fonts_ReleaseSystemGLTextures();
+
+    GL_PruneTextureVariantSpecifications();
 }
 
 void GL_ReleaseRuntimeTextures(void)
@@ -1337,6 +1339,8 @@ void GL_ReleaseRuntimeTextures(void)
     Rend_SkyReleaseTextures();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeGLTextures();
+
+    GL_PruneTextureVariantSpecifications();
 }
 
 void GL_ReleaseTextures(void)
@@ -2921,15 +2925,13 @@ void GL_DoUpdateTexParams(void)
     GL_SetTextureParams(glmode[mipmapping], true, true);
 }
 
-static int doTexReset(void* parm)
+static int reloadTextures(void* parameters)
 {
-    boolean usingBusyMode = *((boolean*) parm);
+    boolean usingBusyMode = *((boolean*) parameters);
 
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
-
-    GL_PruneTextureVariantSpecifications();
 
     if(usingBusyMode)
     {
@@ -2949,11 +2951,11 @@ void GL_TexReset(void)
     if(useBusyMode)
     {
         Con_InitProgress(200);
-        Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...", doTexReset, &useBusyMode);
+        Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...", reloadTextures, &useBusyMode);
     }
     else
     {
-        doTexReset(&useBusyMode);
+        reloadTextures(&useBusyMode);
     }
 }
 
@@ -3447,7 +3449,7 @@ D_CMD(LowRes)
     return true;
 }
 
-D_CMD(ResetTextures)
+D_CMD(TexReset)
 {
     if(argc == 2 && !stricmp(argv[1], "raw"))
     {

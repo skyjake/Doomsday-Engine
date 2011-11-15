@@ -108,22 +108,6 @@ colorpaletteid_t defaultColorPalette = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// LUT which translates flat "original indices" to their associated Texture* (if any).
-// Index with origIndex - flatOrigIndexBase
-static int flatOrigIndexBase = 0;
-static uint flatOrigIndexMapSize = 0;
-static texture_t** flatOrigIndexMap = NULL;
-
-// LUT which translates patchcomposite "original indices" to their associated Texture* (if any).
-// Index with origIndex - patchCompositeOrigIndexBase
-static int patchCompositeOrigIndexBase = 0;
-static uint patchCompositeOrigIndexMapSize = 0;
-static texture_t** patchCompositeOrigIndexMap = NULL;
-
-// LUT which translates patchid_t to texture_t*. Index with patchid_t-1
-static uint patchTextureIdMapSize = 0;
-static texture_t** patchTextureIdMap = NULL;
-
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
 static unsigned int numrendpolys = 0;
@@ -970,83 +954,13 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 #undef COPYVCOLOR
 }
 
-int R_GetTextureOriginalIndex(textureid_t id)
-{
-    switch(Textures_Namespace(id))
-    {
-    case TN_FLATS: {
-        texture_t* tex = Textures_ToTexture(id);
-        if(tex)
-        {
-            flat_t* flat = (flat_t*)Texture_UserData(tex);
-            assert(flat);
-            return flat->origIndex;
-        }
-        return -1;
-      }
-    case TN_TEXTURES: {
-        texture_t* tex = Textures_ToTexture(id);
-        if(tex)
-        {
-            patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
-            assert(pcTex);
-            return pcTex->origIndex;
-        }
-        return -1;
-      }
-    default:
-        Con_Error("R_GetTextureOriginalIndex: Textures in namespace '%s' do not have an 'original index'.", Str_Text(Textures_NamespaceName(Textures_Namespace(id))));
-        exit(1); // Unreachable.
-    }
-}
-
-texture_t* R_TextureForOriginalIndex(int index, texturenamespaceid_t texNamespace)
-{
-    if(VALID_TEXTURENAMESPACEID(texNamespace))
-    {
-        switch(texNamespace)
-        {
-        case TN_FLATS:
-            if(index >= flatOrigIndexBase && (unsigned)(index - flatOrigIndexBase) <= flatOrigIndexMapSize)
-            {
-                return flatOrigIndexMap[index - flatOrigIndexBase];
-            }
-            break;
-        case TN_TEXTURES:
-            if(index >= patchCompositeOrigIndexBase &&
-               (unsigned)(index - patchCompositeOrigIndexBase) <= patchCompositeOrigIndexMapSize)
-            {
-                return patchCompositeOrigIndexMap[index - patchCompositeOrigIndexBase];
-            }
-            break;
-        default:
-            Con_Message("Warning, textures in namespace '%s' do not have an 'original index', returning null-object.\n", Str_Text(Textures_NamespaceName(texNamespace)));
-            break;
-        }
-    }
-    return NULL; // Not found.
-}
-
 /// \note Part of the Doomsday public API.
-int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet)
+int R_TextureUniqueId2(const Uri* uri, boolean quiet)
 {
     textureid_t texId = Textures_ResolveUri2(uri, quiet);
     if(texId != NOTEXTUREID)
     {
-        switch(Textures_Namespace(texId))
-        {
-        case TN_FLATS:
-        case TN_TEXTURES:
-            return R_GetTextureOriginalIndex(texId);
-        default:
-            if(!quiet)
-            {
-                ddstring_t* path = Uri_ToString(uri);
-                Con_Message("Warning texture \"%s\" does not have an 'original index', returning 0.\n", Str_Text(path));
-                Str_Delete(path);
-            }
-            return -1;
-        }
+        return Textures_UniqueId(texId);
     }
     if(!quiet)
     {
@@ -1058,9 +972,9 @@ int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet)
 }
 
 /// \note Part of the Doomsday public API.
-int R_OriginalIndexForTexture(const Uri* uri)
+int R_TextureUniqueId(const Uri* uri)
 {
-    return R_OriginalIndexForTexture2(uri, false);
+    return R_TextureUniqueId2(uri, false);
 }
 
 void R_InitSystemTextures(void)
@@ -1088,7 +1002,7 @@ void R_InitSystemTextures(void)
         Uri_SetPath(uri, defs[i].texPath);
         Uri_SetUri2(resourcePath, defs[i].resourcePath);
 
-        texId = Textures_Declare(uri, resourcePath);
+        texId = Textures_Declare(uri, i+1/*1-based index*/, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
 
         // Have we defined this yet?
@@ -1104,26 +1018,6 @@ void R_InitSystemTextures(void)
     Uri_Delete(uri);
 }
 
-static texture_t* getPatchTex(patchid_t id)
-{
-    if(id == 0 || id > patchTextureIdMapSize) return NULL;
-    return patchTextureIdMap[id-1];
-}
-
-static patchid_t getPatchId(texture_t* tex)
-{
-    uint i;
-    assert(tex);
-
-    for(i = 0; i < patchTextureIdMapSize; ++i)
-    {
-        if(patchTextureIdMap[i] == tex)
-            return i+1; // 1-based index.
-    }
-    Con_Error("getPatchId: Failed to locate id for texture [%p].", (void*)tex);
-    exit(1); // Unreachable.
-}
-
 static textureid_t findPatchTextureIdByName(const char* name)
 {
     textureid_t texId;
@@ -1137,14 +1031,6 @@ static textureid_t findPatchTextureIdByName(const char* name)
     return texId;
 }
 
-texture_t* R_PatchTextureById(patchid_t id)
-{
-    texture_t* tex = getPatchTex(id);
-    if(!tex)
-        Con_Error("R_PatchByIndex: Unknown patch %i.", id);
-    return tex;
-}
-
 /// \note Part of the Doomsday public API.
 patchid_t R_DeclarePatch(const char* name)
 {
@@ -1154,8 +1040,8 @@ patchid_t R_DeclarePatch(const char* name)
     int lumpIdx, flags;
     lumpnum_t lumpNum;
     textureid_t texId;
-    patchid_t patchId;
     texture_t* tex;
+    int uniqueId;
     patchtex_t* p;
 
     if(!name || !name[0])
@@ -1170,9 +1056,8 @@ patchid_t R_DeclarePatch(const char* name)
     texId = findPatchTextureIdByName(name);
     if(texId)
     {
-        /// \todo We should not need to have defined a texture to return a patchid.
-        /// We should instead define Materials from patches and return it's id.
-        return getPatchId(Textures_ToTexture(texId));
+        /// \todo We should instead define Materials from patches and return the material id.
+        return (patchid_t)Textures_UniqueId(texId);
     }
 
     lumpNum = F_CheckLumpNumForName2(name, true);
@@ -1192,7 +1077,8 @@ patchid_t R_DeclarePatch(const char* name)
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
     Uri_SetPath(resourcePath, name);
 
-    texId = Textures_Declare(uri, resourcePath);
+    uniqueId = Textures_Count(TN_PATCHES)+1; // 1-based index.
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(resourcePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return 0; // Invalid uri?
@@ -1231,14 +1117,6 @@ patchid_t R_DeclarePatch(const char* name)
             free(p);
             return 0;
         }
-
-        // Add it to the patch id map.
-        patchTextureIdMap = (texture_t**)realloc(patchTextureIdMap, sizeof *patchTextureIdMap * ++patchTextureIdMapSize);
-        if(!patchTextureIdMap)
-            Con_Error("R_DeclarePatch: Failed on (re)allocation of %lu bytes enlarging PatchTex id map.", (unsigned long) sizeof *patchTextureIdMap * patchTextureIdMapSize);
-        patchTextureIdMap[patchTextureIdMapSize-1] = tex;
-
-        patchId = patchTextureIdMapSize; // 1-based index.
     }
     else
     {
@@ -1248,13 +1126,12 @@ patchid_t R_DeclarePatch(const char* name)
         Texture_SetDimensions(tex, SHORT(patch->width), SHORT(patch->height));
         Texture_AttachUserData(tex, (void*)p);
 
-        patchId = getPatchId(tex);
         free(oldPatch);
 
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
 
-    return patchId;
+    return uniqueId;
 }
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
@@ -1264,7 +1141,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
     memset(info, 0, sizeof(*info));
-    tex = getPatchTex(id);
+    tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(tex)
     {
         const patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
@@ -1283,23 +1160,14 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
     }
-    if(id != 0)
-    {
-        VERBOSE( Con_Message("Warning:R_GetPatchInfo Invalid Patch id #%u.\n", (uint)id) )
-    }
+    VERBOSE( Con_Message("Warning:R_GetPatchInfo Invalid Patch id #%i.\n", id) )
     return false;
 }
 
 /// \note Part of the Doomsday public API.
 Uri* R_ComposePatchUri(patchid_t id)
 {
-    texture_t* tex = getPatchTex(id);
-    if(tex) return Textures_ComposeUri(Textures_Id(tex));
-    if(id != 0)
-    {
-        VERBOSE( Con_Message("Warning:R_ComposePatchUri: Invalid Patch id #%u.\n", (uint)id) )
-    }
-    return NULL;
+    return Textures_ComposeUri(Textures_TextureForUniqueId(TN_PATCHES, id));
 }
 
 rawtex_t** R_CollectRawTexs(int* count)
@@ -2061,7 +1929,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
 
         Uri_SetPath(uri, Str_Text(&pcTex->name));
 
-        texId = Textures_Declare(uri, NULL);
+        texId = Textures_Declare(uri, pcTex->origIndex, NULL);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
 
         if(pcTex->flags & TXDF_CUSTOM) flags |= TXF_CUSTOM;
@@ -2091,72 +1959,6 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
     Uri_Delete(uri);
 }
 
-typedef struct {
-    int minIdx, maxIdx;
-} findpatchcompositeoriginalindexbounds_params_t;
-
-static int findPatchCompositeOriginalIndexBounds(texture_t* tex, void* paramaters)
-{
-    patchcompositetex_t* pcTex= (patchcompositetex_t*)Texture_UserData(tex);
-    findpatchcompositeoriginalindexbounds_params_t* p = (findpatchcompositeoriginalindexbounds_params_t*)paramaters;
-    if(pcTex)
-    {
-        if(pcTex->origIndex < p->minIdx) p->minIdx = pcTex->origIndex;
-        if(pcTex->origIndex > p->maxIdx) p->maxIdx = pcTex->origIndex;
-    }
-    return 0; // Continue iteration.
-}
-
-/// \assume patchCompositeOrigIndexMap has been initialized and is large enough!
-static int insertPatchCompositeInOriginalIndexMap(texture_t* tex, void* paramaters)
-{
-    patchcompositetex_t* pcTex = (patchcompositetex_t*)Texture_UserData(tex);
-    if(pcTex)
-    {
-        patchCompositeOrigIndexMap[pcTex->origIndex - patchCompositeOrigIndexBase] = tex;
-    }
-    return 0; // Continue iteration.
-}
-
-void R_RebuildPatchCompositeOriginalIndexMap(void)
-{
-    findpatchcompositeoriginalindexbounds_params_t p;
-
-    // Determine the size of the LUT.
-    p.minIdx = DDMAXINT;
-    p.maxIdx = DDMININT;
-    Textures_Iterate2(TN_TEXTURES, findPatchCompositeOriginalIndexBounds, (void*)&p);
-
-    if(p.minIdx > p.maxIdx)
-    {
-        // None found.
-        patchCompositeOrigIndexBase = 0;
-        patchCompositeOrigIndexMapSize = 0;
-    }
-    else
-    {
-        patchCompositeOrigIndexBase = p.minIdx;
-        patchCompositeOrigIndexMapSize = p.maxIdx - p.minIdx + 1;
-    }
-
-    // Construct and (re)populate the LUT.
-    patchCompositeOrigIndexMap = (texture_t**)realloc(patchCompositeOrigIndexMap, sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
-    if(!patchCompositeOrigIndexMap && patchCompositeOrigIndexMapSize)
-        Con_Error("R_RebuildPatchCompositeOriginalIndexMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
-    if(!patchCompositeOrigIndexMapSize) return;
-
-    memset(patchCompositeOrigIndexMap, 0, sizeof *patchCompositeOrigIndexMap * patchCompositeOrigIndexMapSize);
-    Textures_Iterate(TN_TEXTURES, insertPatchCompositeInOriginalIndexMap);
-}
-
-void R_DestroyPatchCompositeOriginalIndexMap(void)
-{
-    if(!patchCompositeOrigIndexMap) return;
-    free(patchCompositeOrigIndexMap), patchCompositeOrigIndexMap = NULL;
-    patchCompositeOrigIndexMapSize = 0;
-    patchCompositeOrigIndexBase = 0;
-}
-
 void R_InitPatchComposites(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
@@ -2173,92 +1975,20 @@ void R_InitPatchComposites(void)
         free(defs);
     }
 
-    R_RebuildPatchCompositeOriginalIndexMap();
-
     VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-typedef struct {
-    int minIdx, maxIdx;
-} findflatoriginalindexbounds_params_t;
-
-static int findFlatOriginalIndexBounds(texture_t* tex, void* paramaters)
-{
-    flat_t* flat = (flat_t*)Texture_UserData(tex);
-    findflatoriginalindexbounds_params_t* p = (findflatoriginalindexbounds_params_t*)paramaters;
-    if(flat)
-    {
-        if(flat->origIndex < p->minIdx) p->minIdx = flat->origIndex;
-        if(flat->origIndex > p->maxIdx) p->maxIdx = flat->origIndex;
-    }
-    return 0; // Continue iteration.
-}
-
-/// \assume flatOrigIndexMap has been initialized and is large enough!
-static int insertFlatInOriginalIndexMap(texture_t* tex, void* paramaters)
-{
-    flat_t* flat = (flat_t*)Texture_UserData(tex);
-    if(flat)
-    {
-        flatOrigIndexMap[flat->origIndex - flatOrigIndexBase] = tex;
-    }
-    return 0; // Continue iteration.
-}
-
-void R_RebuildFlatOriginalIndexMap(void)
-{
-    findflatoriginalindexbounds_params_t p;
-
-    // Determine the size of the LUT.
-    p.minIdx = DDMAXINT;
-    p.maxIdx = DDMININT;
-    Textures_Iterate2(TN_FLATS, findFlatOriginalIndexBounds, (void*)&p);
-
-    if(p.minIdx > p.maxIdx)
-    {
-        // None found.
-        flatOrigIndexBase = 0;
-        flatOrigIndexMapSize = 0;
-    }
-    else
-    {
-        flatOrigIndexBase = p.minIdx;
-        flatOrigIndexMapSize = p.maxIdx - p.minIdx + 1;
-    }
-
-    // Construct and (re)populate the LUT.
-    flatOrigIndexMap = (texture_t**)realloc(flatOrigIndexMap, sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
-    if(!flatOrigIndexMap && flatOrigIndexMapSize)
-        Con_Error("R_RebuildFlatOriginalIndexMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
-    if(!flatOrigIndexMapSize) return;
-
-    memset(flatOrigIndexMap, 0, sizeof *flatOrigIndexMap * flatOrigIndexMapSize);
-    Textures_Iterate(TN_FLATS, insertFlatInOriginalIndexMap);
-}
-
-void R_DestroyFlatOriginalIndexMap(void)
-{
-    if(!flatOrigIndexMap) return;
-    free(flatOrigIndexMap), flatOrigIndexMap = NULL;
-    flatOrigIndexMapSize = 0;
-    flatOrigIndexBase = 0;
-}
-
-static boolean createFlatForLump(lumpnum_t lumpNum, flat_t** rFlat)
+static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
 {
     const lumpinfo_t* info = F_FindInfoForLumpNum(lumpNum);
-    boolean isNewFlat = false;
     Uri* uri, *resourcePath;
     textureid_t texId;
     texture_t* tex;
-    flat_t* flat;
     char name[9];
     int flags;
 
-    if(rFlat) *rFlat = NULL;
-
     // We can only perform some basic filtering of lumps at this time.
-    if(!info || info->size == 0) return false;
+    if(!info || info->size == 0) return NULL;
 
     // Compose the resource name.
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
@@ -2273,12 +2003,12 @@ static boolean createFlatForLump(lumpnum_t lumpNum, flat_t** rFlat)
     resourcePath = Uri_NewWithPath2("LumpDir:", RC_NULL);
     Uri_SetPath(resourcePath, name);
 
-    texId = Textures_Declare(uri, resourcePath);
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(resourcePath);
     if(texId == NOTEXTUREID)
     {
         Uri_Delete(uri);
-        return false; // Invalid uri?
+        return NULL; // Invalid uri?
     }
 
     // Have we already encountered this name?
@@ -2288,37 +2018,26 @@ static boolean createFlatForLump(lumpnum_t lumpNum, flat_t** rFlat)
         flags = 0;
         if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
         Texture_SetFlags(tex, flags);
-
-        flat = (flat_t*)Texture_UserData(tex);
     }
     else
     {
         // A new flat.
-        flat = (flat_t*)malloc(sizeof *flat);
-        if(!flat)
-            Con_Error("R_InitFlatTextures: Failed on allocation of %lu bytes for new Flat.", (unsigned long) sizeof *flat);
-        isNewFlat = true;
-
         flags = 0;
         if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
 
-        tex = Textures_Create(texId, flags, (void*)flat);
+        tex = Textures_Create(texId, flags, NULL);
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(uri);
             Con_Message("Warning, failed creating Texture for new flat %s.\n", Str_Text(path));
             Str_Delete(path);
-            free(flat);
             Uri_Delete(uri);
-            return false;
+            return NULL;
         }
     }
     Uri_Delete(uri);
 
-    // (Re)configure this flat.
-    if(rFlat) *rFlat = flat;
-
-    return isNewFlat;
+    return tex;
 }
 
 void R_InitFlatTextures(void)
@@ -2335,7 +2054,7 @@ void R_InitFlatTextures(void)
     {
         int i, numLumps, origIndexBase = 0;
         ddstack_t* stack;
-        flat_t* flat;
+        texture_t* tex;
         lumpnum_t n;
 
         // First add all flats between all flat marker lumps exclusive of the
@@ -2369,9 +2088,8 @@ void R_InitFlatTextures(void)
             if(!Stack_Height(stack)) continue;
             if(i >= origRangeFrom && i <= origRangeTo) continue;
 
-            createFlatForLump(i, &flat);
-            if(!flat) continue;
-            flat->origIndex = origIndexBase++;
+            tex = createFlatForLump(i, origIndexBase);
+            if(tex) origIndexBase++;
         }
 
         while(Stack_Height(stack)) { Stack_Pop(stack); }
@@ -2381,13 +2099,9 @@ void R_InitFlatTextures(void)
         origRangeFrom += 1; // Skip over marker lump.
         for(n = origRangeFrom; n < origRangeTo; ++n)
         {
-            createFlatForLump(n, &flat);
-            if(!flat) continue;
-            flat->origIndex = (int) (n - origRangeFrom);
+            createFlatForLump(n, (int)(n - origRangeFrom));
         }
     }
-
-    R_RebuildFlatOriginalIndexMap();
 
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
@@ -2406,8 +2120,8 @@ static boolean validSpriteName(const char* name)
 void R_InitSpriteTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+    int i, numLumps, uniqueId = 1/*1-based index*/;
     Uri* uri, *resourcePath;
-    int i, numLumps;
     ddstack_t* stack;
 
     VERBOSE( Con_Message("Initializing Sprite textures...\n") )
@@ -2453,8 +2167,9 @@ void R_InitSpriteTextures(void)
         // Compose the data resource path.
         Uri_SetPath(resourcePath, info->name);
 
-        texId = Textures_Declare(uri, resourcePath);
+        texId = Textures_Declare(uri, uniqueId, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
+        uniqueId++;
 
         // Have we already encountered this name?
         tex = Textures_ToTexture(texId);
@@ -2503,15 +2218,24 @@ texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     if(!filePath || Str_IsEmpty(Uri_Path(filePath))) return 0;
 
     // Have we already created one for this?
-    tex = R_FindModelSkinForResourcePath(filePath);
+    if(!isShinySkin)
+    {
+        tex = R_FindModelSkinForResourcePath(filePath);
+    }
+    else
+    {
+        tex = R_FindModelReflectionSkinForResourcePath(filePath);
+    }
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1) > 8)
+    uniqueId = Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
 #if _DEBUG
         Con_Message("Warning, failed creating SkinName (max:%i).\n", DDMAXINT);
@@ -2519,11 +2243,11 @@ texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(isShinySkin? TN_MODELREFLECTIONSKINS : TN_MODELSKINS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, (isShinySkin? TN_MODELREFLECTIONSKINS_NAME : TN_MODELSKINS_NAME));
 
-    texId = Textures_Declare(uri, filePath);
+    texId = Textures_Declare(uri, uniqueId, filePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -2606,10 +2330,16 @@ texture_t* R_FindModelSkinForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
-
     result = Textures_IterateDeclared2(TN_MODELSKINS, findModelSkinForResourcePathWorker, (void*)path);
-    if(!result)
-        result = Textures_IterateDeclared2(TN_MODELREFLECTIONSKINS, findModelSkinForResourcePathWorker, (void*)path);
+    if(!result) return NULL;
+    return Textures_ToTexture((textureid_t)result);
+}
+
+texture_t* R_FindModelReflectionSkinForResourcePath(const Uri* path)
+{
+    int result;
+    if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
+    result = Textures_IterateDeclared2(TN_MODELREFLECTIONSKINS, findModelSkinForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
 }
@@ -2854,23 +2584,25 @@ texture_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     // Have we already created one for this?
     tex = R_FindDetailTextureForResourcePath(def->detailTex);
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(TN_DETAILS)+1) > 8)
+    uniqueId = Textures_Count(TN_DETAILS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning: failed to create new detail texture (max:%i).\n", DDMAXINT);
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_DETAILS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_DETAILS_NAME);
 
-    texId = Textures_Declare(uri, def->detailTex);
+    texId = Textures_Declare(uri, uniqueId, def->detailTex);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -2908,6 +2640,7 @@ texture_t* R_CreateLightMap(const Uri* resourcePath)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     if(!resourcePath || Str_IsEmpty(Uri_Path(resourcePath)) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
@@ -2917,17 +2650,18 @@ texture_t* R_CreateLightMap(const Uri* resourcePath)
     tex = R_FindLightMapForResourcePath(resourcePath);
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(TN_LIGHTMAPS)+1) > 8)
+    uniqueId = Textures_Count(TN_LIGHTMAPS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning, failed creating new LightMap (max:%i).\n", DDMAXINT);
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_LIGHTMAPS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_LIGHTMAPS_NAME);
 
-    texId = Textures_Declare(uri, resourcePath);
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -2970,6 +2704,7 @@ texture_t* R_CreateFlareTexture(const Uri* resourcePath)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     if(!resourcePath || Str_IsEmpty(Uri_Path(resourcePath)) || !Str_CompareIgnoreCase(Uri_Path(resourcePath), "-"))
@@ -2984,18 +2719,19 @@ texture_t* R_CreateFlareTexture(const Uri* resourcePath)
     tex = R_FindFlareTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(TN_FLAREMAPS)+1) > 8)
+    uniqueId = Textures_Count(TN_FLAREMAPS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning, failed creating new FlareTex (max:%i).\n", DDMAXINT);
         return NULL;
     }
 
     // Create a texture for it.
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_FLAREMAPS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_FLAREMAPS_NAME);
 
-    texId = Textures_Declare(uri, resourcePath);
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -3037,23 +2773,25 @@ texture_t* R_CreateReflectionTexture(const Uri* resourcePath)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     // Have we already created one for this?
     tex = R_FindReflectionTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(TN_REFLECTIONS)+1) > 8)
+    uniqueId = Textures_Count(TN_REFLECTIONS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning, failed creating new ShinyTex (max:%i).\n", DDMAXINT);
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_REFLECTIONS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_REFLECTIONS_NAME);
 
-    texId = Textures_Declare(uri, resourcePath);
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -3097,23 +2835,25 @@ texture_t* R_CreateMaskTexture(const Uri* resourcePath, int width, int height)
     textureid_t texId;
     texture_t* tex;
     char name[9];
+    int uniqueId;
     Uri* uri;
 
     // Have we already created one for this?
     tex = R_FindMaskTextureForResourcePath(resourcePath);
     if(tex) return tex;
 
-    if(M_NumDigits(Textures_Count(TN_MASKS)+1) > 8)
+    uniqueId = Textures_Count(TN_MASKS)+1;
+    if(M_NumDigits(uniqueId) > 8)
     {
         Con_Message("Warning, failed to create mask image (max:%i).\n", DDMAXINT);
         return NULL;
     }
 
-    dd_snprintf(name, 9, "%-*i", 8, Textures_Count(TN_MASKS)+1);
+    dd_snprintf(name, 9, "%-*i", 8, uniqueId);
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_MASKS_NAME);
 
-    texId = Textures_Declare(uri, resourcePath);
+    texId = Textures_Declare(uri, uniqueId, resourcePath);
     Uri_Delete(uri);
     if(texId == NOTEXTUREID) return NULL; // Invalid uri?
 
@@ -3185,10 +2925,4 @@ float RColor_AverageColorMulAlpha(rcolor_t* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3 * c->alpha;
-}
-
-void R_DestroyTextureLUTs(void)
-{
-    R_DestroyFlatOriginalIndexMap();
-    R_DestroyPatchCompositeOriginalIndexMap();
 }

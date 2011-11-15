@@ -20,7 +20,7 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialForOriginalTextureIndex  @234 NONAME
+    DD_MaterialForTextureUniqueId @234 NONAME
     DD_ParseTextureNamespace    @502 NONAME
     DD_ParseMaterialNamespace   @503 NONAME
 
@@ -411,8 +411,8 @@ EXPORTS
     R_GetPatchInfo              @237 NONAME
     R_ComposePatchUri           @247 NONAME
 
-    R_OriginalIndexForTexture   @438 NONAME
-    R_OriginalIndexForTexture2  @501 NONAME
+    R_TextureUniqueId           @438 NONAME
+    R_TextureUniqueId2          @501 NONAME
 
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME

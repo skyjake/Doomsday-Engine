@@ -39,10 +39,9 @@
 
 void Font_Init(font_t* font, fonttype_t type)
 {
-    assert(NULL != font && VALID_FONTTYPE(type));
+    assert(font && VALID_FONTTYPE(type));
 
     font->_type = type;
-
     font->_marginWidth  = 0;
     font->_marginHeight = 0;
     font->_leading = 0;
@@ -56,49 +55,49 @@ void Font_Init(font_t* font, fonttype_t type)
 
 boolean Font_IsPrepared(font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return !font->_isDirty;
 }
 
 fonttype_t Font_Type(const font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_type;
 }
 
 int Font_Flags(const font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_flags;
 }
 
 uint Font_BindId(const font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_bindId;
 }
 
 void Font_SetBindId(font_t* font, uint bindId)
 {
-    assert(NULL != font);
+    assert(font);
     font->_bindId = bindId;
 }
 
 int Font_Ascent(font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_ascent;
 }
 
 int Font_Descent(font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_descent;
 }
 
 int Font_Leading(font_t* font)
 {
-    assert(NULL != font);
+    assert(font);
     return font->_leading;
 }
 
@@ -108,7 +107,7 @@ static void drawCharacter(unsigned char ch, font_t* font)
 
     switch(Font_Type(font))
     {
-    case FT_BITMAP:  {
+    case FT_BITMAP: {
         bitmapfont_t* bf = (bitmapfont_t*)font;
 
         s[0] = bf->_chars[ch].x;
@@ -121,7 +120,7 @@ static void drawCharacter(unsigned char ch, font_t* font)
         h = t[1] - t[0];
         break;
       }
-    case FT_BITMAPCOMPOSITE:  {
+    case FT_BITMAPCOMPOSITE: {
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
 
         if(ch != 0)
@@ -176,31 +175,24 @@ static void drawCharacter(unsigned char ch, font_t* font)
 
 static byte inByte(DFile* file)
 {
-    assert(file);
-    {
     byte b;
     DFile_Read(file, (uint8_t*)&b, sizeof(b));
     return b;
-    }
 }
 
 static unsigned short inShort(DFile* file)
 {
-    assert(file);
-    {
     unsigned short s;
     DFile_Read(file, (uint8_t*)&s, sizeof(s));
     return USHORT(s);
-    }
 }
 
 static void* readFormat0(font_t* font, DFile* file)
 {
-    assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
-    {
     int i, c, bitmapFormat, numPels, avgWidth, avgHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
     uint32_t* image;
+    assert(font && font->_type == FT_BITMAP && file);
 
     font->_flags |= FF_COLORIZE;
     font->_flags &= ~FF_SHADOWED;
@@ -210,8 +202,7 @@ static void* readFormat0(font_t* font, DFile* file)
     bf->_texWidth  = inShort(file);
     bf->_texHeight = inShort(file);
     glyphCount = inShort(file);
-    VERBOSE2( Con_Printf("readFormat: Dimensions %i x %i, with %i chars.\n",
-                         bf->_texWidth, bf->_texHeight, glyphCount) );
+    VERBOSE2( Con_Printf("readFormat: Dimensions %i x %i, with %i chars.\n", bf->_texWidth, bf->_texHeight, glyphCount) )
 
     avgWidth = avgHeight = 0;
     for(i = 0; i < glyphCount; ++i)
@@ -251,25 +242,24 @@ static void* readFormat0(font_t* font, DFile* file)
 
         for(bit = 7; bit >= 0; bit--, ++c)
         {
-            if(c >= numPels)
-                break;
+            if(c >= numPels) break;
             if(mask & (1 << bit))
+            {
                 image[c] = ~0;
+            }
         }
     }
 
     return image;
-    }
 }
 
 static void* readFormat2(font_t* font, DFile* file)
 {
-    assert(font != NULL && font->_type == FT_BITMAP && NULL != file);
-    {
     int i, numPels, dataHeight, avgWidth, avgHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
     byte bitmapFormat = 0;
     uint32_t* image, *ptr;
+    assert(font && font->_type == FT_BITMAP && file);
 
     bitmapFormat = inByte(file);
     if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
@@ -340,20 +330,18 @@ static void* readFormat2(font_t* font, DFile* file)
         {
             byte luminance = inByte(file);
             byte alpha = inByte(file);
-            *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) |
-                      (alpha << 24));
+            *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
         }
     }
 
     return image;
-    }
 }
 
 font_t* BitmapFont_New(void)
 {
-    bitmapfont_t* bf = (bitmapfont_t*)malloc(sizeof(*bf));
-    if(NULL == bf)
-        Con_Error("BitmapFont::Construct: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*bf));
+    bitmapfont_t* bf = (bitmapfont_t*)malloc(sizeof *bf);
+    if(!bf)
+        Con_Error("BitmapFont::Construct: Failed on allocation of %lu bytes.", (unsigned long) sizeof *bf);
 
     bf->_tex = 0;
     bf->_texWidth = 0;
@@ -373,36 +361,30 @@ void BitmapFont_Delete(font_t* font)
 
 int BitmapFont_CharWidth(font_t* font, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
     if(bf->_chars[ch].w == 0) return font->_noCharWidth;
     return bf->_chars[ch].w - font->_marginWidth * 2;
-    }
 }
 
 int BitmapFont_CharHeight(font_t* font, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
     BitmapFont_Prepare(font);
     if(bf->_chars[ch].h == 0) return font->_noCharHeight;
     return bf->_chars[ch].h - font->_marginHeight * 2;
-    }
 }
 
 void BitmapFont_Prepare(font_t* font)
 {
-    assert(font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     DFile* file;
     void* image = 0;
     int version;
+    assert(font && font->_type == FT_BITMAP);
 
-    if(bf->_tex)
-        return; // Already prepared.
+    if(bf->_tex) return; // Already prepared.
 
     file = F_Open(Str_Text(&bf->_filePath), "rb");
     if(file)
@@ -420,8 +402,7 @@ void BitmapFont_Prepare(font_t* font)
         case 2: image = readFormat2(font, file); break;
         default: break;
         }
-        if(!image)
-            return;
+        if(!image) return;
 
         // Upload the texture.
         if(!novideo && !isDedicated)
@@ -441,15 +422,17 @@ void BitmapFont_Prepare(font_t* font)
             if(!Con_IsBusy()) // Cannot do this while in busy mode.
             {
                 GLuint base = glGenLists(MAX_CHARS);
+                uint i;
+
                 glListBase(base);
-                { uint i;
+
                 for(i = 0; i < MAX_CHARS; ++i)
                 {
                     glNewList(base+i, GL_COMPILE);
                     drawCharacter((unsigned char)i, font);
                     glEndList();
                     bf->_chars[i].dlist = base+i;
-                }}
+                }
 
                 // All preparation complete.
                 font->_isDirty = false;
@@ -459,22 +442,18 @@ void BitmapFont_Prepare(font_t* font)
         free(image);
         F_Delete(file);
     }
-    }
 }
 
 void BitmapFont_DeleteGLDisplayLists(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     int i;
+    assert(font && font->_type == FT_BITMAP);
 
-    if(novideo || isDedicated)
-        return;
+    if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy())
-        return;
+    if(Con_IsBusy()) return;
 
     for(i = 0; i < 256; ++i)
     {
@@ -483,33 +462,27 @@ void BitmapFont_DeleteGLDisplayLists(font_t* font)
             GL_DeleteLists(ch->dlist, 1);
         ch->dlist = 0;
     }
-    }
 }
 
 void BitmapFont_DeleteGLTexture(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
 
-    if(novideo || isDedicated)
-        return;
+    if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy())
-        return;
+    if(Con_IsBusy()) return;
     if(bf->_tex)
         glDeleteTextures(1, (const GLuint*) &bf->_tex);
     bf->_tex = 0;
-    }
 }
 
 void BitmapFont_SetFilePath(font_t* font, const char* filePath)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
- 
+    assert(font && font->_type == FT_BITMAP);
+
     if(!filePath || !filePath[0])
     {
         Str_Free(&bf->_filePath);
@@ -528,59 +501,49 @@ void BitmapFont_SetFilePath(font_t* font, const char* filePath)
     }
     Str_Set(&bf->_filePath, filePath);
     font->_isDirty = true;
-    }
 }
 
 DGLuint BitmapFont_GLTextureName(const font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
     return bf->_tex;
-    }
 }
 
 int BitmapFont_TextureWidth(const font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
     return bf->_texWidth;
-    }
 }
 
 int BitmapFont_TextureHeight(const font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
     return bf->_texHeight;
-    }
 }
 
 void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
     int* t0, int* t1, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAP);
-    {
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    if(!s0 && !s1 && !t0 && !t1)
-        return;
+    assert(font && font->_type == FT_BITMAP);
+    if(!s0 && !s1 && !t0 && !t1) return;
     BitmapFont_Prepare(font);
     if(s0) *s0 = bf->_chars[ch].x;
     if(s0) *s1 = bf->_chars[ch].x + bf->_chars[ch].w;
     if(t0) *t0 = bf->_chars[ch].y;
     if(t1) *t1 = bf->_chars[ch].y + bf->_chars[ch].h;
-    }
 }
 
 font_t* BitmapCompositeFont_New(void)
 {
-    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)malloc(sizeof(*cf));
+    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)malloc(sizeof *cf);
     font_t* font = (font_t*)cf;
 
-    if(NULL == cf)
-        Con_Error("BitmapCompositeFont::Construct: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*cf));
+    if(!cf)
+        Con_Error("BitmapCompositeFont::Construct: Failed on allocation of %lu bytes.", (unsigned long) sizeof *cf);
 
     cf->_def = 0;
     memset(cf->_chars, 0, sizeof(cf->_chars));
@@ -600,33 +563,28 @@ void BitmapCompositeFont_Delete(font_t* font)
 
 int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].w == 0) return font->_noCharWidth;
     return cf->_chars[ch].w - font->_marginWidth * 2 - 2;
-    }
 }
 
 int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].h == 0) return font->_noCharHeight;
     return cf->_chars[ch].h - font->_marginHeight * 2 - 2;
-    }
 }
 
 void BitmapCompositeFont_Prepare(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     int avgWidth, avgHeight, numPatches;
+    uint i;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
-    if(!font->_isDirty)
-        return;
+    if(!font->_isDirty) return;
 
     BitmapCompositeFont_DeleteGLDisplayLists(font);
     BitmapCompositeFont_DeleteGLTextures(font);
@@ -634,14 +592,12 @@ void BitmapCompositeFont_Prepare(font_t* font)
     avgWidth = avgHeight = 0;
     numPatches = 0;
 
-    { uint i;
     for(i = 0; i < MAX_CHARS; ++i)
     {
         patchid_t patch = cf->_chars[i].patch;
         patchinfo_t info;
 
-        if(0 == patch)
-            continue;
+        if(0 == patch) continue;
 
         ++numPatches;
 
@@ -654,9 +610,9 @@ void BitmapCompositeFont_Prepare(font_t* font)
         avgWidth  += cf->_chars[i].w;
         avgHeight += cf->_chars[i].h;
 
-        if(!(novideo || isDedicated) && cf->_chars[i].tex == 0)
-            cf->_chars[i].tex = GL_PreparePatchTexture(R_PatchTextureById(patch));
-    }}
+        if(!(novideo || isDedicated))
+            GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch)));
+    }
 
     font->_noCharWidth  = avgWidth  / numPatches; 
     font->_noCharHeight = avgHeight / numPatches; 
@@ -664,9 +620,8 @@ void BitmapCompositeFont_Prepare(font_t* font)
     if(!(novideo || isDedicated || Con_IsBusy())) // Cannot do this while in busy mode.
     {
         GLuint base = glGenLists(numPatches);
-        glListBase(base);
 
-        { uint i;
+        glListBase(base);
         for(i = 0; i < MAX_CHARS; ++i)
         {
             if(0 != cf->_chars[i].patch)
@@ -680,94 +635,79 @@ void BitmapCompositeFont_Prepare(font_t* font)
             {
                 cf->_chars[i].dlist = 0;
             }
-        }}
+        }
 
         font->_isDirty = false;
-    }
     }
 }
 
 void BitmapCompositeFont_DeleteGLDisplayLists(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     int i;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
-    if(novideo || isDedicated)
-        return;
+    if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy())
-        return;
+    if(Con_IsBusy()) return;
 
     for(i = 0; i < 256; ++i)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        if(ch->dlist)
-            GL_DeleteLists(ch->dlist, 1);
+        if(!ch->dlist) continue;
+        GL_DeleteLists(ch->dlist, 1);
         ch->dlist = 0;
-    }
     }
 }
 
 void BitmapCompositeFont_DeleteGLTextures(font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     int i;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
-    if(novideo || isDedicated)
-        return;
+    if(novideo || isDedicated) return;
 
     font->_isDirty = true;
-    if(Con_IsBusy())
-        return;
+    if(Con_IsBusy()) return;
 
     for(i = 0; i < 256; ++i)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        if(ch->tex)
-            glDeleteTextures(1, (const GLuint*) &ch->tex);
-        ch->tex = 0;
-    }
+        texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, ch->patch));
+        if(!tex) continue;
+        GL_ReleaseGLTexturesByTexture(tex);
     }
 }
 
 struct ded_compositefont_s* BitmapCompositeFont_Definition(const font_t* font)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
     return cf->_def;
-    }
 }
 
 void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s* def)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
     cf->_def = def;
-    }
 }
 
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
     BitmapCompositeFont_Prepare(font);
     return cf->_chars[ch].patch;
-    }
 }
 
 void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    patchinfo_t info;
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
     // Load the patches in monochrome mode. (2 = weighted average).
     monochrome = 2;
@@ -775,42 +715,32 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char
 
     if(!novideo && !isDedicated && !Con_IsBusy())
     {
-        if(cf->_chars[ch].tex)
-            glDeleteTextures(1, (const GLuint*)&cf->_chars[ch].tex);
-        cf->_chars[ch].tex = 0;
-
         if(cf->_chars[ch].dlist)
             glDeleteLists((GLuint)cf->_chars[ch].dlist, 1);
         cf->_chars[ch].dlist = 0;
     }
 
     cf->_chars[ch].patch = R_DeclarePatch(patchName);
-    { patchinfo_t info;
+
     R_GetPatchInfo(cf->_chars[ch].patch, &info);
     cf->_chars[ch].x = info.offset    + info.extraOffset[0] + font->_marginWidth;
     cf->_chars[ch].y = info.topOffset + info.extraOffset[1] + font->_marginHeight;
     cf->_chars[ch].w = info.width  + 2;
     cf->_chars[ch].h = info.height + 2;
-    }
 
     font->_isDirty = true;
 
     upscaleAndSharpenPatches = false;
     monochrome = 0;
-    }
 }
 
 void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,
     int* t0, int* t1, unsigned char ch)
 {
-    assert(NULL != font && font->_type == FT_BITMAPCOMPOSITE);
-    {
-    if(!s0 && !s1 && !t0 && !t1)
-        return;
+    if(!s0 && !s1 && !t0 && !t1) return;
     BitmapCompositeFont_Prepare(font);
     if(s0) *s0 = 0;
     if(s0) *s1 = 1;
     if(t0) *t0 = 0;
     if(t1) *t1 = 1;
-    }
 }
