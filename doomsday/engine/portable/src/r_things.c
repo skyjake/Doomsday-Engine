@@ -367,7 +367,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
 
     uri = Uri_NewWithPath2(MN_SPRITES_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(path));
-    frame->mat = Materials_ToMaterial(Materials_MaterialForUri(uri));
+    frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
     frame->frame[0]    = Str_At(path, 4) - 'a' + 1;

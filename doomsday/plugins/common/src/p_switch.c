@@ -179,10 +179,10 @@ void P_InitSwitchList(void)
             break;
 
         Uri_SetPath(uri, switchInfo[i].name1);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
         Uri_SetPath(uri, switchInfo[i].name2);
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
     Uri_Delete(uri);
 
@@ -260,10 +260,10 @@ void P_InitSwitchList(void)
             if(!SHORT(sList[i].episode)) break;
 
             Uri_SetPath(uri, sList[i].name1);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             Uri_SetPath(uri, sList[i].name2);
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             if(verbose > (lumpNum > 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);

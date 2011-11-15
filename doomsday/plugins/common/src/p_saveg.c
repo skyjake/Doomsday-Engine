@@ -2363,10 +2363,10 @@ static void SV_ReadSector(sector_t* sec)
         // The flat numbers are absolute lump indices.
         Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
-        floorMaterial = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        floorMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
         Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
-        ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
     }
     else if(hdr.version >= 4)
@@ -3098,7 +3098,7 @@ static int SV_ReadFloor(floor_t* floor)
             // Flat number is an absolute lump index.
             Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
             Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
-            floor->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+            floor->material = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             Uri_Delete(uri);
         }
 
@@ -3148,7 +3148,7 @@ static int SV_ReadFloor(floor_t* floor)
         // Flat number is an absolute lump index.
         { Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
         Uri_SetPath(uri, W_LumpName(SV_ReadShort()));
-        floor->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(uri));
+        floor->material = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
         }
 

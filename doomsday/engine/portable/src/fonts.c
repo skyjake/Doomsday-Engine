@@ -255,7 +255,7 @@ static font_t* findFontForUri(const Uri* uri)
     return font;
 }
 
-font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet)
+font_t* Fonts_ResolveUri2(const Uri* uri, boolean quiet)
 {
     font_t* font;
     if(!inited || !uri) return NULL;
@@ -263,7 +263,7 @@ font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::FontForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NULL;
@@ -277,24 +277,24 @@ font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet)
     if(!quiet)
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Fonts::FontForUri: \"%s\" not found!\n", Str_Text(path));
+        Con_Message("Fonts::ResolveUri: \"%s\" not found!\n", Str_Text(path));
         Str_Delete(path);
     }
     return NULL;
 }
 
 /// \note Part of the Doomsday public API.
-font_t* Fonts_FontForUri(const Uri* uri)
+font_t* Fonts_ResolveUri(const Uri* uri)
 {
-    return Fonts_FontForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
+    return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-font_t* Fonts_FontForUriCString2(const char* path, boolean quiet)
+font_t* Fonts_ResolveUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        font_t* font = Fonts_FontForUri2(uri, quiet);
+        font_t* font = Fonts_ResolveUri2(uri, quiet);
         Uri_Delete(uri);
         return font;
     }
@@ -302,15 +302,15 @@ font_t* Fonts_FontForUriCString2(const char* path, boolean quiet)
 }
 
 /// \note Part of the Doomsday public API.
-font_t* Fonts_FontForUriCString(const char* path)
+font_t* Fonts_ResolveUriCString(const char* path)
 {
-    return Fonts_FontForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+    return Fonts_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 /// \note Part of the Doomsday public API.
 fontid_t Fonts_IndexForUri(const Uri* uri)
 {
-    return Fonts_Id(Fonts_FontForUri(uri));
+    return Fonts_Id(Fonts_ResolveUri(uri));
 }
 
 ddstring_t* Fonts_ComposePath(font_t* font)

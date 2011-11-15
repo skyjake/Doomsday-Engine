@@ -353,8 +353,8 @@ boolean P_LoadMap(const char* uri);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
 // Play: Materials.
-materialid_t Materials_MaterialForUri(const Uri* uri);
-materialid_t Materials_MaterialForUriCString(const char* path);
+materialid_t Materials_ResolveUri(const Uri* uri);
+materialid_t Materials_ResolveUriCString(const char* path);
 Uri* Materials_ComposeUri(materialid_t materialId);
 
 int Materials_CreateAnimGroup(int flags);

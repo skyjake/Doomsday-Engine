@@ -204,7 +204,7 @@ void P_InitTerrainTypes(void)
         uint idx = findTerrainTypeNumForName(defs[i].ttName);
         if(!idx) continue;
 
-        mat = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUriCString(defs[i].materialUri));
+        mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(defs[i].materialUri));
         if(!mat) continue;
 
         VERBOSE( Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n", defs[i].materialUri, defs[i].ttName) )

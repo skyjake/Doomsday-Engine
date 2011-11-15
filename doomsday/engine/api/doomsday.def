@@ -375,8 +375,8 @@ EXPORTS
 
 ; Materials.
     Materials_ComposeUri        @494 NONAME
-    Materials_MaterialForUri    @495 NONAME
-    Materials_MaterialForUriCString @496 NONAME
+    Materials_ResolveUri        @495 NONAME
+    Materials_ResolveUriCString @496 NONAME
     Materials_CreateAnimGroup   @241 NONAME
     Materials_AddAnimGroupFrame @242 NONAME
 

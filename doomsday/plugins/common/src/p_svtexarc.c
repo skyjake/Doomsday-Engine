@@ -138,7 +138,7 @@ static material_t* materialForSerialId(const materialarchive_t* mArc,
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
     {
         if(!rec->material)
-            rec->material = P_ToPtr(DMU_MATERIAL, Materials_MaterialForUri(rec->uri));
+            rec->material = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(rec->uri));
         return rec->material;
     }
     return NULL;

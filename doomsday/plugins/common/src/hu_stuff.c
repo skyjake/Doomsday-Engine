@@ -1259,7 +1259,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
     if(background)
     {
-        DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_MaterialForUriCString(borderGraphics[0])));
+        DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

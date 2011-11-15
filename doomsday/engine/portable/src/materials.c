@@ -866,7 +866,7 @@ static material_t* findMaterialForUri(const Uri* uri)
     return mat;
 }
 
-materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet)
+materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
 {
     material_t* mat;
     if(!initedOk || !uri) return NOMATERIALID;
@@ -874,7 +874,7 @@ materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Materials::MaterialForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Materials::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOMATERIALID;
@@ -888,24 +888,24 @@ materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet)
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Materials::MaterialForUri: \"%s\" not found!\n", Str_Text(path));
+        Con_Message("Materials::ResolveUri: \"%s\" not found!\n", Str_Text(path));
         Str_Delete(path);
     }
     return NOMATERIALID;
 }
 
 /// \note Part of the Doomsday public API.
-materialid_t Materials_MaterialForUri(const Uri* uri)
+materialid_t Materials_ResolveUri(const Uri* uri)
 {
-    return Materials_MaterialForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
+    return Materials_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-materialid_t Materials_MaterialForUriCString2(const char* path, boolean quiet)
+materialid_t Materials_ResolveUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        materialid_t matId = Materials_MaterialForUri2(uri, quiet);
+        materialid_t matId = Materials_ResolveUri2(uri, quiet);
         Uri_Delete(uri);
         return matId;
     }
@@ -913,9 +913,9 @@ materialid_t Materials_MaterialForUriCString2(const char* path, boolean quiet)
 }
 
 /// \note Part of the Doomsday public API.
-materialid_t Materials_MaterialForUriCString(const char* path)
+materialid_t Materials_ResolveUriCString(const char* path)
 {
-    return Materials_MaterialForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+    return Materials_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 ddstring_t* Materials_ComposePath(materialid_t id)
@@ -982,7 +982,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
         const ded_material_layer_t* l = &def->layers[0];
         if(l->stages[0].texture) // Not unused.
         {
-            texId = Textures_TextureForUri2(l->stages[0].texture, true/*quiet please*/);
+            texId = Textures_ResolveUri2(l->stages[0].texture, true/*quiet please*/);
             if(texId == NOTEXTUREID)
             {
                 ddstring_t* materialPath = Uri_ToString(def->uri);
@@ -1938,7 +1938,7 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         /*{ ded_material_t* def = Material_Definition(mat);
         if(def && def->layers[0].stageCount.num > 1)
         {
-            if(Textures_TextureForUri(def->layers[0].stages[0].texture))
+            if(Textures_ResolveUri(def->layers[0].stages[0].texture))
                 continue; // Animated elsewhere.
         }}*/
 
@@ -2162,7 +2162,7 @@ D_CMD(InspectMaterial)
         }
     }
 
-    mat = Materials_ToMaterial(Materials_MaterialForUri(search));
+    mat = Materials_ToMaterial(Materials_ResolveUri(search));
     if(mat)
     {
         printMaterialInfo(mat);

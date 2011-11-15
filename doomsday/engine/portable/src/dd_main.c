@@ -2283,7 +2283,7 @@ materialid_t DD_MaterialForOriginalTextureIndex(int index, texturenamespaceid_t 
     texPath = Textures_ComposePath(Textures_Id(tex));
     uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
     Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespace)));
-    matId = Materials_MaterialForUri2(uri, true/*quiet please*/);
+    matId = Materials_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     Str_Delete(texPath);
     return matId;

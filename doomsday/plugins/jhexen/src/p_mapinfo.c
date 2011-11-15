@@ -169,7 +169,7 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material = Materials_MaterialForUriCString(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
+    defMapInfo.sky1Material = Materials_ResolveUriCString(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
@@ -260,7 +260,7 @@ void P_InitMapInfo(void)
 
                 uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
                 Uri_SetPath(uri, sc_String);
-                info->sky1Material = Materials_MaterialForUri(uri);
+                info->sky1Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);
 
                 SC_MustGetNumber();
@@ -274,7 +274,7 @@ void P_InitMapInfo(void)
 
                 uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
                 Uri_SetPath(uri, sc_String);
-                info->sky2Material = Materials_MaterialForUri(uri);
+                info->sky2Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);
 
                 SC_MustGetNumber();

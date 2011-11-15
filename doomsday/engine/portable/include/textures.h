@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +43,7 @@
 #ifndef LIBDENG_REFRESH_TEXTURES_H
 #define LIBDENG_REFRESH_TEXTURES_H
 
-/// Unique identifier associated with each declared texture.
+/// Unique identifier associated with each named texture.
 typedef uint textureid_t;
 
 /// Special value used to signify an invalid texture id.
@@ -125,12 +124,12 @@ Uri* Textures_ComposeUri(textureid_t textureId);
  * Search the Textures collection for a texture associated with @a uri.
  * @return  Unique identifier of the found texture else @c NOTEXTUREID.
  */
-textureid_t Textures_TextureForUri2(const Uri* uri, boolean quiet);
-textureid_t Textures_TextureForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet);
+textureid_t Textures_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
-/// Same as Textures::TextureForUri except @a uri is a C-string.
-textureid_t Textures_TextureForUriCString2(const char* uri, boolean quiet);
-textureid_t Textures_TextureForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+/// Same as Textures::ResolveUri except @a uri is a C-string.
+textureid_t Textures_ResolveUriCString2(const char* uri, boolean quiet);
+textureid_t Textures_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * Declare a texture in the collection. If a texture with the specified
@@ -139,7 +138,7 @@ textureid_t Textures_TextureForUriCString(const char* uri); /*quiet=!(verbose >=
  * texture, any associated Texture instance is released (and any GL-textures
  * acquired for it).
  *
- * @param uri  Uri representing the texture in the virtual hierarchy.
+ * @param uri  Uri representing a path to the texture in the virtual hierarchy.
  * @param resourcepath  The path to the underlying data resource.
  * @return  Unique identifier for this texture unless @a uri is invalid,
  *     in which case @c NOTEXTUREID is returned.

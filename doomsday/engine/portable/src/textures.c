@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,16 +36,16 @@
 
 #include "textures.h"
 
+/**
+ * TextureRecord. Stores metadata for a unique Texture in the collection.
+ */
 typedef struct {
-    /// Node in the owning PathDirectory.
-    PathDirectoryNode* directoryNode;
-
     /// Path to the data resource which contains/wraps the loadable texture data.
     Uri* resourcePath;
 
-    /// The bound texture (if any).
+    /// The defined texture instance (if any).
     texture_t* texture;
-} texturebind_t;
+} texturerecord_t;
 
 D_CMD(ListTextures);
 D_CMD(InspectTexture);
@@ -56,9 +55,9 @@ D_CMD(PrintTextureStats);
 
 static Uri* emptyUri;
 
-/// LUT which translates textureid_t to texturebind_t*. Index with textureid_t-1
+/// LUT which translates textureid_t to PathDirectoryNode*. Index with textureid_t-1
 static uint textureIdMapSize;
-static texturebind_t** textureIdMap;
+static PathDirectoryNode** textureIdMap;
 
 // Texture namespaces contain mappings between names and Texture instances.
 static PathDirectory* namespaces[TEXTURENAMESPACE_COUNT];
@@ -98,19 +97,19 @@ static __inline boolean validTextureId(textureid_t id)
     return (id != NOTEXTUREID && id <= textureIdMapSize);
 }
 
-static texturebind_t* getTextureBindForId(textureid_t id)
+static PathDirectoryNode* getDirectoryNodeForBindId(textureid_t id)
 {
     if(!validTextureId(id)) return NULL;
     return textureIdMap[id-1/*1-based index*/];
 }
 
-static textureid_t findIdForTextureBind(const texturebind_t* bind)
+static textureid_t findBindIdForDirectoryNode(const PathDirectoryNode* node)
 {
     uint i;
     /// \optimize (Low priority) do not use a linear search.
     for(i = 0; i < textureIdMapSize; ++i)
     {
-        if(textureIdMap[i] == bind)
+        if(textureIdMap[i] == node)
             return (textureid_t)(i+1); // 1-based index.
     }
     return NOTEXTUREID; // Not linked.
@@ -138,9 +137,9 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-static void unlinkTextureBindFromIdMap(const texturebind_t* bind)
+static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
 {
-    textureid_t id = findIdForTextureBind(bind);
+    textureid_t id = findBindIdForDirectoryNode(node);
     if(!validTextureId(id)) return; // Not linked.
     textureIdMap[id - 1/*1-based index*/] = NULL;
 }
@@ -149,7 +148,7 @@ static void unlinkTextureBindFromIdMap(const texturebind_t* bind)
  * @defgroup validateTextureUriFlags  Validate Texture Uri Flags
  * @{
  */
-#define VTUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
+#define VTUF_ALLOW_NAMESPACE_ANY 0x1 /// The namespace of the uri may be of zero-length; signifying "any namespace".
 /**@}*/
 
 /**
@@ -198,7 +197,7 @@ static boolean validateTextureUri(const Uri* uri, int flags)
  * Given a directory and path, search the Textures collection for a match.
  *
  * @param directory  Namespace-specific PathDirectory to search in.
- * @param path  Path of the TextureBind to search for.
+ * @param path  Path of the texture to search for.
  * @return  Found DirectoryNode else @c NULL
  */
 static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* texDirectory, const char* path)
@@ -207,7 +206,7 @@ static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* texDirectory, 
 }
 
 /// \assume @a uri has already been validated and is well-formed.
-static PathDirectoryNode* findTextureBindForPath(const Uri* uri)
+static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
 {
     texturenamespaceid_t namespaceId = Textures_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     const char* path = Str_Text(Uri_Path(uri));
@@ -287,7 +286,7 @@ static void destroyTexture(texture_t* tex)
         break;
     }
     default:
-        Con_Error("Textures::destroyTextureBind: Internal error, invalid namespace id %i.", (int)Textures_Namespace(Textures_Id(tex)));
+        Con_Error("Textures::destroyTexture: Internal error, invalid namespace id %i.", (int)Textures_Namespace(Textures_Id(tex)));
         exit(1); // Unreachable.
     }
     Texture_Delete(tex);
@@ -295,44 +294,44 @@ static void destroyTexture(texture_t* tex)
 
 static int destroyBoundTexture(PathDirectoryNode* node, void* paramaters)
 {
-    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
-    if(bind && bind->texture)
+    texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_UserData(node);
+    if(record && record->texture)
     {
-        destroyTexture(bind->texture), bind->texture = NULL;
+        destroyTexture(record->texture), record->texture = NULL;
     }
     return 0; // Continue iteration.
 }
 
-static int destroyBind(PathDirectoryNode* node, void* paramaters)
+static int destroyRecord(PathDirectoryNode* node, void* paramaters)
 {
-    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_DetachUserData(node);
-    if(bind)
+    texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_DetachUserData(node);
+    if(record)
     {
-        if(bind->texture)
+        if(record->texture)
         {
 #if _DEBUG
             Uri* uri = composeUriForDirectoryNode(node);
             ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning:Textures::destroyBind: Binding for \"%s\" still has Texture data!\n", Str_Text(path));
+            Con_Message("Warning:Textures::destroyRecord: Record for \"%s\" still has Texture data!\n", Str_Text(path));
             Str_Delete(path);
             Uri_Delete(uri);
 #endif
-            destroyTexture(bind->texture);
+            destroyTexture(record->texture);
         }
-        if(bind->resourcePath)
+        if(record->resourcePath)
         {
-            Uri_Delete(bind->resourcePath);
+            Uri_Delete(record->resourcePath);
         }
-        unlinkTextureBindFromIdMap(bind);
-        free(bind);
+        unlinkDirectoryNodeFromBindIdMap(node);
+        free(record);
     }
     return 0; // Continue iteration.
 }
 
-static int destroyTextureAndBind(PathDirectoryNode* node, void* paramaters)
+static int destroyTextureAndRecord(PathDirectoryNode* node, void* paramaters)
 {
     destroyBoundTexture(node, paramaters);
-    destroyBind(node, paramaters);
+    destroyRecord(node, paramaters);
     return 0; // Continue iteration.
 }
 
@@ -361,11 +360,11 @@ void Textures_Shutdown(void)
 
     for(i = 0; i < TEXTURENAMESPACE_COUNT; ++i)
     {
-        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyBind);
+        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyRecord);
         PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
     }
 
-    // Clear the texturebind index/map.
+    // Clear the bindId to PathDirectoryNode LUT.
     if(textureIdMap)
     {
         free(textureIdMap), textureIdMap = NULL;
@@ -489,7 +488,7 @@ void Textures_ClearNamespace(texturenamespaceid_t texNamespace)
     for(iter = from; iter <= to; ++iter)
     {
         PathDirectory* texDirectory = getDirectoryForNamespaceId(iter);
-        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTextureAndBind);
+        PathDirectory_Iterate(texDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyTextureAndRecord);
         PathDirectory_Clear(texDirectory);
     }
 }
@@ -503,7 +502,7 @@ void Textures_Release(texture_t* tex)
 
 texture_t* Textures_ToTexture(textureid_t id)
 {
-    texturebind_t* bind;
+    PathDirectoryNode* node;
     if(!validTextureId(id))
     {
 #if _DEBUG
@@ -514,12 +513,12 @@ texture_t* Textures_ToTexture(textureid_t id)
 #endif
         return NULL;
     }
-    bind = getTextureBindForId(id);
-    if(!bind) return NULL;
-    return bind->texture;
+    node = getDirectoryNodeForBindId(id);
+    if(!node) return NULL;
+    return ((texturerecord_t*)PathDirectoryNode_UserData(node))->texture;
 }
 
-textureid_t Textures_TextureForUri2(const Uri* uri, boolean quiet)
+textureid_t Textures_ResolveUri2(const Uri* uri, boolean quiet)
 {
     PathDirectoryNode* node;
     if(!uri || !Textures_Size()) return NOTEXTUREID;
@@ -528,65 +527,65 @@ textureid_t Textures_TextureForUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Textures::TextureForUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning:Textures::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOTEXTUREID;
     }
 
     // Perform the search.
-    node = findTextureBindForPath(uri);
+    node = findDirectoryNodeForUri(uri);
     if(node)
     {
-        texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
-        assert(bind);
         // If we have bound a texture - it can provide the id.
-        if(bind->texture)
+        texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_UserData(node);
+        assert(record);
+        if(record->texture)
         {
-            textureid_t id = Texture_PrimaryBind(bind->texture);
+            textureid_t id = Texture_PrimaryBind(record->texture);
             if(validTextureId(id)) return id;
         }
         // Oh well, look it up then.
-        return findIdForTextureBind(bind);
+        return findBindIdForDirectoryNode(node);
     }
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Textures::TextureForUri: \"%s\" not found!\n", Str_Text(path));
+        Con_Message("Textures::ResolveUri: \"%s\" not found!\n", Str_Text(path));
         Str_Delete(path);
     }
     return NOTEXTUREID;
 }
 
-textureid_t Textures_TextureForUri(const Uri* uri)
+textureid_t Textures_ResolveUri(const Uri* uri)
 {
-    return Textures_TextureForUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
+    return Textures_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
-textureid_t Textures_TextureForUriCString2(const char* path, boolean quiet)
+textureid_t Textures_ResolveUriCString2(const char* path, boolean quiet)
 {
     if(path && path[0])
     {
         Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        textureid_t id = Textures_TextureForUri2(uri, quiet);
+        textureid_t id = Textures_ResolveUri2(uri, quiet);
         Uri_Delete(uri);
         return id;
     }
     return NOTEXTUREID;
 }
 
-textureid_t Textures_TextureForUriCString(const char* path)
+textureid_t Textures_ResolveUriCString(const char* path)
 {
-    return Textures_TextureForUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+    return Textures_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
 }
 
 textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
 {
     PathDirectory* texDirectory;
     PathDirectoryNode* node;
-    texturebind_t* bind;
+    texturerecord_t* record;
     textureid_t id;
     boolean releaseTexture = false;
     assert(uri);
@@ -601,11 +600,12 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
     }
 
     // Have we already created a binding for this?
-    node = findTextureBindForPath(uri);
+    node = findDirectoryNodeForUri(uri);
     if(node)
     {
-        bind = (texturebind_t*)PathDirectoryNode_UserData(node);
-        id = findIdForTextureBind(bind);
+        record = (texturerecord_t*)PathDirectoryNode_UserData(node);
+        assert(record);
+        id = findBindIdForDirectoryNode(node);
     }
     else
     {
@@ -622,25 +622,23 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
             Str_AppendChar(&path, tolower(Str_At(Uri_Path(uri), i)));
         }
 
-        bind = (texturebind_t*)malloc(sizeof *bind);
-        if(!bind)
-            Con_Error("Textures::CreateWithDimensions: Failed on allocation of %lu bytes for new TextureBind.", (unsigned long) sizeof *bind);
-        bind->texture = NULL;
-        bind->resourcePath = NULL;
+        record = (texturerecord_t*)malloc(sizeof *record);
+        if(!record)
+            Con_Error("Textures::CreateWithDimensions: Failed on allocation of %lu bytes for new TextureRecord.", (unsigned long) sizeof *record);
+        record->texture = NULL;
+        record->resourcePath = NULL;
 
         texDirectory = getDirectoryForNamespaceId(Textures_ParseNamespace(Str_Text(Uri_Scheme(uri))));
         node = PathDirectory_Insert(texDirectory, Str_Text(&path), TEXTURES_PATH_DELIMITER);
 
-        PathDirectoryNode_AttachUserData(node, bind);
-        bind->directoryNode = node;
+        PathDirectoryNode_AttachUserData(node, record);
 
         id = textureIdMapSize + 1; // 1-based identfier
-
         // Link it into the id map.
-        textureIdMap = (texturebind_t**) realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
+        textureIdMap = (PathDirectoryNode**) realloc(textureIdMap, sizeof *textureIdMap * ++textureIdMapSize);
         if(!textureIdMap)
-            Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging Textures list.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
-        textureIdMap[id - 1] = bind;
+            Con_Error("Textures::CreateWithDimensions: Failed on (re)allocation of %lu bytes enlarging bindId to PathDirectoryNode LUT.", (unsigned long) sizeof *textureIdMap * textureIdMapSize);
+        textureIdMap[id - 1] = node;
 
         Str_Free(&path);
     }
@@ -648,29 +646,29 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
     // (Re)configure this binding.
     if(resourcePath)
     {
-        if(!bind->resourcePath)
+        if(!record->resourcePath)
         {
-            bind->resourcePath = Uri_NewCopy(resourcePath);
+            record->resourcePath = Uri_NewCopy(resourcePath);
             releaseTexture = true;
         }
-        else if(!Uri_Equality(bind->resourcePath, resourcePath))
+        else if(!Uri_Equality(record->resourcePath, resourcePath))
         {
-            Uri_Copy(bind->resourcePath, resourcePath);
+            Uri_Copy(record->resourcePath, resourcePath);
             releaseTexture = true;
         }
     }
-    else if(bind->resourcePath)
+    else if(record->resourcePath)
     {
-        Uri_Delete(bind->resourcePath);
-        bind->resourcePath = NULL;
+        Uri_Delete(record->resourcePath);
+        record->resourcePath = NULL;
         releaseTexture = true;
     }
 
-    if(releaseTexture && bind->texture)
+    if(releaseTexture && record->texture)
     {
         // The mapped resource is being replaced, so release any existing Texture.
         /// \todo Only release if this Texture is bound to only this binding.
-        Textures_Release(bind->texture);
+        Textures_Release(record->texture);
     }
 
     return id;
@@ -678,19 +676,22 @@ textureid_t Textures_Declare(const Uri* uri, const Uri* resourcePath)
 
 texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, int height, void* userData)
 {
-    texturebind_t* bind = getTextureBindForId(id);
-    if(!bind)
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    texturerecord_t* record;
+    if(!node)
     {
         Con_Message("Warning, failed to create Texture #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 
-    if(bind->texture)
+    record = (texturerecord_t*)PathDirectoryNode_UserData(node);
+    assert(record);
+    if(record->texture)
     {
         /// \todo Do not update textures here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
-        texture_t* tex = bind->texture;
+        texture_t* tex = record->texture;
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
         ddstring_t* path = Uri_ToString(uri);
@@ -706,7 +707,7 @@ texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, i
     }
 
     // A new texture.
-    return bind->texture = Texture_NewWithDimensions(flags, id, width, height, userData);
+    return record->texture = Texture_NewWithDimensions(flags, id, width, height, userData);
 }
 
 texture_t* Textures_Create(textureid_t id, int flags, void* userData)
@@ -716,9 +717,9 @@ texture_t* Textures_Create(textureid_t id, int flags, void* userData)
 
 const Uri* Textures_ResourcePath(textureid_t id)
 {
-    texturebind_t* bind = getTextureBindForId(id);
-    if(!bind) return emptyUri;
-    return bind->resourcePath;
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node) return emptyUri;
+    return ((texturerecord_t*)PathDirectoryNode_UserData(node))->resourcePath;
 }
 
 textureid_t Textures_Id(texture_t* tex)
@@ -735,41 +736,41 @@ textureid_t Textures_Id(texture_t* tex)
 
 texturenamespaceid_t Textures_Namespace(textureid_t id)
 {
-    texturebind_t* bind = getTextureBindForId(id);
-    if(!bind)
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
     {
 #if _DEBUG
         Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
         return TN_ANY;
     }
-    return namespaceIdForDirectoryNode(bind->directoryNode);
+    return namespaceIdForDirectoryNode(node);
 }
 
 ddstring_t* Textures_ComposePath(textureid_t id)
 {
-    texturebind_t* bind = getTextureBindForId(id);
-    if(!bind)
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
     {
 #if _DEBUG
         Con_Message("Warning:Textures::ComposePath: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
         return Str_New();
     }
-    return composePathForDirectoryNode(bind->directoryNode, TEXTURES_PATH_DELIMITER);
+    return composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
 }
 
 Uri* Textures_ComposeUri(textureid_t id)
 {
-    texturebind_t* bind = getTextureBindForId(id);
-    if(!bind)
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
     {
 #if _DEBUG
         Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
 #endif
         return Uri_New();
     }
-    return composeUriForDirectoryNode(bind->directoryNode);
+    return composeUriForDirectoryNode(node);
 }
 
 typedef struct {
@@ -781,18 +782,29 @@ typedef struct {
 static int iterateWorker(PathDirectoryNode* node, void* paramaters)
 {
     iterateworker_params_t* p = (iterateworker_params_t*)paramaters;
-    texturebind_t* bind = (texturebind_t*)PathDirectoryNode_UserData(node);
-    assert(node && p);
+    texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_UserData(node);
+    assert(node && p && record);
     if(p->definedCallback)
     {
-        if(bind->texture)
+        if(record->texture)
         {
-            return p->definedCallback(bind->texture, p->paramaters);
+            return p->definedCallback(record->texture, p->paramaters);
         }
     }
     else
     {
-        return p->declaredCallback(findIdForTextureBind(bind), p->paramaters);
+        textureid_t texId = NOTEXTUREID;
+
+        // If we have bound a texture it can provide the id.
+        if(record->texture)
+            texId = Texture_PrimaryBind(record->texture);
+        // Otherwise look it up.
+        if(!validTextureId(texId))
+            texId = findBindIdForDirectoryNode(node);
+        // Sanity check.
+        assert(validTextureId(texId));
+
+        return p->declaredCallback(texId, p->paramaters);
     }
     return 0; // Continue iteration.
 }
@@ -873,16 +885,17 @@ static void printTextureInfo(texture_t* tex)
     Uri_Delete(uri);
 }
 
-static void printTextureOverview(texturebind_t* bind, boolean printNamespace)
+static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace)
 {
+    texturerecord_t* record = (texturerecord_t*) PathDirectoryNode_UserData(node);
+    textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
-    Uri* uri = bind->texture? Textures_ComposeUri(findIdForTextureBind(bind)) : Uri_New();
+    Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
 
-    Con_FPrintf(!bind->texture? CPF_LIGHT : CPF_WHITE,
+    Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, (unsigned int) findIdForTextureBind(bind),
-        !bind->texture? "unknown" : Texture_IsCustom(bind->texture)? "addon" : "game");
+        numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game");
 
     Uri_Delete(uri);
     if(printNamespace)
@@ -1029,10 +1042,9 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     idx = 0;
     for(iter = foundTextures; *iter; ++iter)
     {
-        const PathDirectoryNode* node = *iter;
-        texturebind_t* bind = (texturebind_t*) PathDirectoryNode_UserData(node);
+        PathDirectoryNode* node = *iter;
         Con_Printf(" %*u: ", numFoundDigits, idx++);
-        printTextureOverview(bind, printNamespace);
+        printTextureOverview(node, printNamespace);
     }
 
     free(foundTextures);
@@ -1154,7 +1166,7 @@ D_CMD(InspectTexture)
         }
     }
 
-    tex = Textures_ToTexture(Textures_TextureForUri(search));
+    tex = Textures_ToTexture(Textures_ResolveUri(search));
     if(tex)
     {
         printTextureInfo(tex);

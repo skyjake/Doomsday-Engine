@@ -249,12 +249,12 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
                 // First try the prefered namespace, then any.
                 Uri* uri = Uri_NewWithPath2(m->name, RC_NULL);
                 Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-                m->id = Materials_MaterialForUri(uri);
+                m->id = Materials_ResolveUri(uri);
 
                 if(m->id == NOMATERIALID)
                 {
                     Uri_SetScheme(uri, "");
-                    m->id = Materials_MaterialForUri(uri);
+                    m->id = Materials_ResolveUri(uri);
                 }
                 Uri_Delete(uri);
             }

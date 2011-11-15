@@ -1030,7 +1030,7 @@ texture_t* R_TextureForOriginalIndex(int index, texturenamespaceid_t texNamespac
 /// \note Part of the Doomsday public API.
 int R_OriginalIndexForTexture2(const Uri* uri, boolean quiet)
 {
-    textureid_t texId = Textures_TextureForUri2(uri, quiet);
+    textureid_t texId = Textures_ResolveUri2(uri, quiet);
     if(texId != NOTEXTUREID)
     {
         switch(Textures_Namespace(texId))
@@ -1132,7 +1132,7 @@ static textureid_t findPatchTextureIdByName(const char* name)
 
     uri = Uri_NewWithPath2(name, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
-    texId = Textures_TextureForUri2(uri, true/*quiet please*/);
+    texId = Textures_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
     return texId;
 }
@@ -2836,7 +2836,7 @@ void R_InitAnimGroup(ded_group_t* def)
 
         if(!gm->material) continue;
 
-        mat = Materials_ToMaterial(Materials_MaterialForUri2(gm->material, true/*quiet please*/));
+        mat = Materials_ToMaterial(Materials_ResolveUri2(gm->material, true/*quiet please*/));
         if(!mat) continue;
 
         // Only create a group when the first texture is found.

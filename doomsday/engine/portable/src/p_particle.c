@@ -1618,7 +1618,7 @@ void P_UpdateParticleGens(void)
             else if(gen->plane && def->material)
             {
                 material_t* mat = gen->plane->PS_material;
-                material_t* defMat = Materials_ToMaterial(Materials_MaterialForUri2(def->material, true/*quiet please*/));
+                material_t* defMat = Materials_ToMaterial(Materials_ResolveUri2(def->material, true/*quiet please*/));
 
                 if(def->flags & PGF_FLOOR_SPAWN)
                     mat = gen->plane->sector->SP_plane(PLN_FLOOR)->PS_material;

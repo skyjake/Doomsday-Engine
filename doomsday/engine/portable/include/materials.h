@@ -118,12 +118,12 @@ boolean Materials_IsMaterialInAnimGroup(material_t* material, int animGroupNum);
  * Search the Materials collection for a material associated with @a uri.
  * @return  Found material else @c NOMATERIALID.
  */
-materialid_t Materials_MaterialForUri2(const Uri* uri, boolean quiet);
-materialid_t Materials_MaterialForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet);
+materialid_t Materials_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
-/// Same as Materials::MaterialForUri except @a uri is a C-string.
-materialid_t Materials_MaterialForUriCString2(const char* uri, boolean quiet);
-materialid_t Materials_MaterialForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+/// Same as Materials::ResolveUri except @a uri is a C-string.
+materialid_t Materials_ResolveUriCString2(const char* uri, boolean quiet);
+materialid_t Materials_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
 
 /**
  * Create a new Material unless an existing Material is found at the path

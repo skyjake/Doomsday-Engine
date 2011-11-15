@@ -53,7 +53,7 @@ materialvariant_t* MaterialVariant_New(material_t* generalCase,
         mat->_layers[i].stage = 0;
         mat->_layers[i].tics = def->layers[i].stages[0].tics;
         mat->_layers[i].glow = def->layers[i].stages[0].glow;
-        mat->_layers[i].texture = Textures_ToTexture(Textures_TextureForUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
+        mat->_layers[i].texture = Textures_ToTexture(Textures_ResolveUri2(def->layers[i].stages[0].texture, true/*quiet please*/));
         mat->_layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
         mat->_layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
     }
@@ -118,7 +118,7 @@ void MaterialVariant_Ticker(materialvariant_t* mat, timespan_t time)
         }
 
         /*{const texture_t* glTex;
-        if((glTex = Textures_TextureForUri(lsDef->texture)))
+        if((glTex = Textures_ResolveUri(lsDef->texture)))
         {
             layer->tex = Texture_Id(glTex);
             MaterialVariant_SetTranslationPoint(mat, inter);

@@ -1213,7 +1213,7 @@ DEFFC(BGFlat)
 {
     ddstring_t path; Str_Init(&path);
     Str_Appendf(&path, MN_FLATS_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_MaterialForUriCString(Str_Text(&path))));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_ResolveUriCString(Str_Text(&path))));
     Str_Free(&path);
 }
 
@@ -1221,7 +1221,7 @@ DEFFC(BGTexture)
 {
     ddstring_t path; Str_Init(&path);
     Str_Appendf(&path, MN_TEXTURES_NAME":%s", OP_CSTRING(0));
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_MaterialForUriCString(Str_Text(&path))));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_ResolveUriCString(Str_Text(&path))));
     Str_Free(&path);
 }
 

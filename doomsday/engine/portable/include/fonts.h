@@ -123,12 +123,12 @@ void Fonts_Rebuild(font_t* font, ded_compositefont_t* def);
  * Search the collection for a Font associated with @a uri.
  * @return  Found Font else @c NULL.
  */
-font_t* Fonts_FontForUri2(const Uri* uri, boolean quiet);
-font_t* Fonts_FontForUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
+font_t* Fonts_ResolveUri2(const Uri* uri, boolean quiet);
+font_t* Fonts_ResolveUri(const Uri* uri); /*quiet=!(verbose >= 1)*/
 
-/// Same as Fonts::FontForUri except @a uri is a C-string.
-font_t* Fonts_FontForUriCString2(const char* uri, boolean quiet);
-font_t* Fonts_FontForUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
+/// Same as Fonts::ResolveUri except @a uri is a C-string.
+font_t* Fonts_ResolveUriCString2(const char* uri, boolean quiet);
+font_t* Fonts_ResolveUriCString(const char* uri); /*quiet=!(verbose >= 1)*/
 
 /// Load an external font from a local file.
 font_t* Fonts_CreateFromFile(const char* name, const char* filePath);

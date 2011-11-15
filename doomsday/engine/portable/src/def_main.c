@@ -484,7 +484,7 @@ ded_decor_t* Def_GetDecoration(materialid_t matId, boolean hasExternal, boolean 
         if(!def->material) continue;
 
         // Is this suitable?
-        defMatId = Materials_MaterialForUri2(def->material, true/*quiet please*/);
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
         if(matId == defMatId && R_IsAllowedDecoration(def, hasExternal, isCustom))
             return def;
     }
@@ -502,7 +502,7 @@ ded_reflection_t* Def_GetReflection(materialid_t matId, boolean hasExternal, boo
         if(!def->material) continue;
 
         // Is this suitable?
-        defMatId = Materials_MaterialForUri2(def->material, true/*quiet please*/);
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
         if(matId == defMatId && R_IsAllowedReflection(def, hasExternal, isCustom))
             return def;
     }
@@ -517,7 +517,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
     {
         if(def->material1)
         {
-            materialid_t defMatId = Materials_MaterialForUri2(def->material1, true/*quiet please*/);
+            materialid_t defMatId = Materials_ResolveUri2(def->material1, true/*quiet please*/);
             // Is this suitable?
             if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
@@ -525,7 +525,7 @@ ded_detailtexture_t* Def_GetDetailTex(materialid_t matId, boolean hasExternal, b
 
         if(def->material2)
         {
-            materialid_t defMatId = Materials_MaterialForUri2(def->material2, true/*quiet please*/);
+            materialid_t defMatId = Materials_ResolveUri2(def->material2, true/*quiet please*/);
             // Is this suitable?
             if(matId == defMatId && R_IsAllowedDetailTex(def, hasExternal, isCustom))
                 return def;
@@ -543,7 +543,7 @@ ded_ptcgen_t* Def_GetGenerator(materialid_t matId, boolean hasExternal, boolean 
         materialid_t defMatId;
 
         if(!def->material) continue;
-        defMatId = Materials_MaterialForUri2(def->material, true/*quiet please*/);
+        defMatId = Materials_ResolveUri2(def->material, true/*quiet please*/);
         if(defMatId == NOMATERIALID) continue;
 
         // Is this suitable?
@@ -1063,7 +1063,7 @@ void Def_Read(void)
     for(i = 0; i < defs.count.compositeFonts.num; ++i)
     {
         ded_compositefont_t* def = defs.compositeFonts + i;
-        font_t* font = Fonts_FontForUri2(def->uri, true/*quiet please*/);
+        font_t* font = Fonts_ResolveUri2(def->uri, true/*quiet please*/);
         if(!font)
         {   // A new Font.
             Fonts_CreateFromDef(def);
@@ -1160,7 +1160,7 @@ void Def_Read(void)
     for(i = 0; i < defs.count.materials.num; ++i)
     {
         ded_material_t* def = &defs.materials[i];
-        material_t* mat = Materials_ToMaterial(Materials_MaterialForUri2(def->uri, true/*quiet please*/));
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUri2(def->uri, true/*quiet please*/));
         if(!mat)
         {
             // A new Material.
@@ -1534,8 +1534,8 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
 
-    l->actMaterial = Materials_MaterialForUri2(def->actMaterial, true/*quiet please*/);
-    l->deactMaterial = Materials_MaterialForUri2(def->deactMaterial, true/*quiet please*/);
+    l->actMaterial = Materials_ResolveUri2(def->actMaterial, true/*quiet please*/);
+    l->deactMaterial = Materials_ResolveUri2(def->deactMaterial, true/*quiet please*/);
 
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1565,7 +1565,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] = Materials_MaterialForUriCString2(def->iparmStr[k], true/*quiet please*/);
+                    l->iparm[k] = Materials_ResolveUriCString2(def->iparmStr[k], true/*quiet please*/);
             }
         }
         else if(a & MAP_MUS)
