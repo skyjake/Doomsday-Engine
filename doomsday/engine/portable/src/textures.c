@@ -276,7 +276,8 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
         uid = strchr(Str_Text(Uri_Path(uri)), ':');
         if(uid)
         {
-            textureid_t texId = Textures_TextureForUniqueId(strtol(uid +1/*skip namespace delimiter*/, 0, 0), namespaceId);
+            textureid_t texId = Textures_TextureForUniqueId(namespaceId,
+                strtol(uid +1/*skip namespace delimiter*/, 0, 0));
             if(texId != NOTEXTUREID)
             {
                 return getDirectoryNodeForBindId(texId);
