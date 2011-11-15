@@ -843,36 +843,8 @@ typedef struct {
 
 static int DD_ChangeGameWorker(void* paramaters)
 {
-    assert(paramaters);
-    {
     ddchangegameworker_paramaters_t* p = (ddchangegameworker_paramaters_t*)paramaters;
-    uint startTime;
-
-    /**
-     * Parse the game's main config file.
-     * If a custom top-level config is specified; let it override.
-     */
-    { const ddstring_t* configFileName = 0;
-    ddstring_t tmp;
-    if(ArgCheckWith("-config", 1))
-    {
-        Str_Init(&tmp); Str_Set(&tmp, ArgNext());
-        F_FixSlashes(&tmp, &tmp);
-        configFileName = &tmp;
-    }
-    else
-    {
-        configFileName = GameInfo_MainConfig(p->info);
-    }
-
-    Con_Message("Parsing primary config: \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
-    Con_ParseCommands(Str_Text(configFileName), true);
-    if(configFileName == &tmp)
-        Str_Free(&tmp);
-    }
-
-    if(p->initiatedBusyMode)
-        Con_SetProgress(10);
+    assert(p);
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
@@ -880,16 +852,13 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_ResetAllResourceNamespaces();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(30);
+        Con_SetProgress(10);
 
     /**
      * Open all the files, load headers, count lumps, etc, etc...
      * \note duplicate processing of the same file is automatically guarded against by
      * the virtual file system layer.
-     */
-    startTime = Sys_GetRealTime();
-
-    /**
+     *
      * Phase 1: Add game-resource files.
      * \fixme dj: First ZIPs then WADs (they may contain WAD files).
      */
@@ -945,14 +914,45 @@ static int DD_ChangeGameWorker(void* paramaters)
     if(p->initiatedBusyMode)
         Con_SetProgress(60);
 
-    /// Re-initialize the resource locator as there are now new resources to be found
-    /// on existing search paths (probably that is).
+    // Re-initialize the resource locator as there are now new resources to be found
+    // on existing search paths (probably that is).
     F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
     Cl_InitTranslations();
 
+    // Texture resources are located now, prior to initializing the game.
+    R_InitPatchComposites();
+    R_InitFlatTextures();
+    R_InitSpriteTextures();
+
     Con_SetProgress(100);
-    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+
+    // Now that resources have been located we can begin to initialize the game.
+    if(!DD_IsNullGameInfo(p->info) && gx.PreInit)
+        gx.PreInit();
+
+    /**
+     * Parse the game's main config file.
+     * If a custom top-level config is specified; let it override.
+     */
+    { const ddstring_t* configFileName = 0;
+    ddstring_t tmp;
+    if(ArgCheckWith("-config", 1))
+    {
+        Str_Init(&tmp); Str_Set(&tmp, ArgNext());
+        F_FixSlashes(&tmp, &tmp);
+        configFileName = &tmp;
+    }
+    else
+    {
+        configFileName = GameInfo_MainConfig(p->info);
+    }
+
+    Con_Message("Parsing primary config: \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
+    Con_ParseCommands(Str_Text(configFileName), true);
+    if(configFileName == &tmp)
+        Str_Free(&tmp);
+    }
 
     if(!isDedicated && !DD_IsNullGameInfo(p->info))
     {
@@ -962,10 +962,6 @@ static int DD_ChangeGameWorker(void* paramaters)
         // Read bindings for this game and merge with the working set.
         Con_ParseCommands(Str_Text(GameInfo_BindingConfig(p->info)), false);
     }
-
-    R_InitPatchComposites();
-    R_InitFlatTextures();
-    R_InitSpriteTextures();
 
     if(p->initiatedBusyMode)
         Con_SetProgress(120);
@@ -1039,7 +1035,6 @@ static int DD_ChangeGameWorker(void* paramaters)
         Con_BusyWorkerEnd();
     }
     return 0;
-    }
 }
 
 /**
@@ -1047,10 +1042,9 @@ static int DD_ChangeGameWorker(void* paramaters)
  */
 boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 {
-    assert(info);
-    {
     boolean isReload = false;
     char buf[256];
+    assert(info);
 
     // Ignore attempts to re-load the current game?
     if(DD_GameInfo() == info)
@@ -1186,9 +1180,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     P_InitGameMapObjDefs();
     DAM_Init();
 
-    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.PreInit)
-        gx.PreInit();
-
     /**
      * The bulk of this we can do in busy mode unless we are already busy
      * (which can happen if a fatal error occurs during game load and we must
@@ -1217,7 +1208,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
      */
     DD_ClearEvents();
     return true;
-    }
 }
 
 boolean DD_ChangeGame(gameinfo_t* info)
@@ -1851,8 +1841,12 @@ void DD_UpdateEngineState(void)
 {
     boolean hadFog;
 
-    // Update refresh.
     Con_Message("Updating engine state...\n");
+
+    // Stop playing sounds and music.
+    GL_SetFilter(false);
+    Demo_StopPlayback();
+    S_Reset();
 
     //F_ResetFileIds();
 
@@ -1862,13 +1856,12 @@ void DD_UpdateEngineState(void)
     /// Re-initialize the resource locator as there may now be new resources to be found.
     F_ResetAllResourceNamespaces();
 
+    R_InitPatchComposites();
+    R_InitFlatTextures();
+    R_InitSpriteTextures();
+
     if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
         gx.UpdateState(DD_PRE);
-
-    // Stop playing sounds and music.
-    GL_SetFilter(false);
-    Demo_StopPlayback();
-    S_Reset();
 
     hadFog = usingFog;
     GL_TotalReset();
