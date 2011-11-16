@@ -491,6 +491,7 @@ void G_CommonPreInit(void)
     G_RegisterBindClasses();
     G_RegisterPlayerControls();
     P_RegisterMapObjs();
+    P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();    // Main command list.

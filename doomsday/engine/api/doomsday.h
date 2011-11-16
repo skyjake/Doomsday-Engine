@@ -357,9 +357,6 @@ materialid_t Materials_ResolveUri(const Uri* uri);
 materialid_t Materials_ResolveUriCString(const char* path);
 Uri* Materials_ComposeUri(materialid_t materialId);
 
-int Materials_CreateAnimGroup(int flags);
-void Materials_AddAnimGroupFrame(int groupNum, struct material_s* material, int tics, int randomTics);
-
     // Play: Thinkers.
     void            DD_InitThinkers(void);
     void            DD_RunThinkers(void);
@@ -412,6 +409,9 @@ Uri* R_ComposePatchUri(patchid_t id);
 
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /*quiet=false*/
+
+int R_CreateAnimGroup(int flags);
+void R_AddAnimGroupFrame(int groupNum, const Uri* texture, int tics, int randomTics);
 
 colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const uint8_t* colorData, int colorCount);
 colorpaletteid_t R_GetColorPaletteNumForName(const char* name);

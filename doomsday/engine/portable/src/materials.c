@@ -135,24 +135,24 @@ ded_reflection_t* MaterialBind_ReflectionDef(const materialbind_t* mb);
 
 static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate);
 
-typedef struct animframe_s {
-    material_t*     mat;
-    ushort          tics;
-    ushort          random;
-} animframe_t;
+typedef struct materialanim_frame_s {
+    material_t* material;
+    ushort tics;
+    ushort random;
+} materialanim_frame_t;
 
-typedef struct animgroup_s {
-    int             id;
-    int             flags;
-    int             index;
-    int             maxTimer;
-    int             timer;
-    int             count;
-    animframe_t*    frames;
-} animgroup_t;
+typedef struct materialanim_s {
+    int id;
+    int flags;
+    int index;
+    int maxTimer;
+    int timer;
+    int count;
+    materialanim_frame_t* frames;
+} materialanim_t;
 
 static int numgroups;
-static animgroup_t* groups;
+static materialanim_t* groups;
 
 D_CMD(InspectMaterial);
 D_CMD(ListMaterials);
@@ -258,13 +258,13 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-static animgroup_t* getAnimGroup(int number)
+static materialanim_t* getAnimGroup(int number)
 {
     if(--number < 0 || number >= numgroups) return NULL;
     return &groups[number];
 }
 
-static boolean isInAnimGroup(const animgroup_t* group, const material_t* mat)
+static boolean isInAnimGroup(const materialanim_t* group, const material_t* mat)
 {
     int i;
     assert(group);
@@ -272,7 +272,7 @@ static boolean isInAnimGroup(const animgroup_t* group, const material_t* mat)
     if(!mat) return false;
     for(i = 0; i < group->count; ++i)
     {
-        if(group->frames[i].mat == mat)
+        if(group->frames[i].material == mat)
             return true;
     }
     return false;
@@ -1053,7 +1053,7 @@ void Materials_Precache2(material_t* mat, const materialvariantspecification_t* 
             if(!isInAnimGroup(&groups[i], mat)) continue;
 
             for(k = 0; k < groups[i].count; ++k)
-                Materials_Precache2(groups[i].frames[k].mat, spec, smooth, false);
+                Materials_Precache2(groups[i].frames[k].material, spec, smooth, false);
         }
     }
 }
@@ -1740,7 +1740,7 @@ static void printMaterials(materialnamespaceid_t namespaceId, const char* like)
 
 boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
 {
-    animgroup_t* group = getAnimGroup(groupNum);
+    materialanim_t* group = getAnimGroup(groupNum);
     if(!group) return false;
     return isInAnimGroup(group, mat);
 }
@@ -1756,7 +1756,7 @@ boolean Materials_HasDecorations(material_t* mat)
         int g, i, numGroups = Materials_AnimGroupCount();
         for(g = 0; g < numGroups; ++g)
         {
-            animgroup_t* group = &groups[g];
+            materialanim_t* group = &groups[g];
 
             // Precache groups don't apply.
             if(Materials_IsPrecacheAnimGroup(g)) continue;
@@ -1767,7 +1767,7 @@ boolean Materials_HasDecorations(material_t* mat)
             // material is considered to be decorated also.
             for(i = 0; i < group->count; ++i)
             {
-                if(Materials_DecorationDef(group->frames[i].mat)) return true;
+                if(Materials_DecorationDef(group->frames[i].material)) return true;
             }
         }
     }
@@ -1779,13 +1779,12 @@ int Materials_AnimGroupCount(void)
     return numgroups;
 }
 
-/// \note Part of the Doomsday public API.
 int Materials_CreateAnimGroup(int flags)
 {
-    animgroup_t* group;
+    materialanim_t* group;
 
     // Allocating one by one is inefficient, but it doesn't really matter.
-    groups = Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_APPSTATIC);
+    groups = Z_Realloc(groups, sizeof(materialanim_t) * (numgroups + 1), PU_APPSTATIC);
 
     // Init the new group.
     group = &groups[numgroups];
@@ -1805,7 +1804,7 @@ void Materials_ClearAnimGroups(void)
 
     for(i = 0; i < numgroups; ++i)
     {
-        animgroup_t* group = &groups[i];
+        materialanim_t* group = &groups[i];
         Z_Free(group->frames);
     }
 
@@ -1814,11 +1813,10 @@ void Materials_ClearAnimGroups(void)
     numgroups = 0;
 }
 
-/// \note Part of the Doomsday public API.
 void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics, int randomTics)
 {
-    animgroup_t* group = getAnimGroup(groupNum);
-    animframe_t* frame;
+    materialanim_t* group = getAnimGroup(groupNum);
+    materialanim_frame_t* frame;
 
     if(!group)
         Con_Error("Materials::AddAnimGroupFrame: Unknown anim group '%i', ignoring.\n", groupNum);
@@ -1835,18 +1833,18 @@ void Materials_AddAnimGroupFrame(int groupNum, struct material_s* mat, int tics,
     Material_SetGroupAnimated(mat, true);
 
     // Allocate a new animframe.
-    group->frames = Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count, PU_APPSTATIC);
+    group->frames = Z_Realloc(group->frames, sizeof(materialanim_frame_t) * ++group->count, PU_APPSTATIC);
 
     frame = &group->frames[group->count - 1];
 
-    frame->mat = mat;
+    frame->material = mat;
     frame->tics = tics;
     frame->random = randomTics;
 }
 
 boolean Materials_IsPrecacheAnimGroup(int groupNum)
 {
-    animgroup_t* group = getAnimGroup(groupNum);
+    materialanim_t* group = getAnimGroup(groupNum);
     if(!group) return false;
     return ((group->flags & AGF_PRECACHE) != 0);
 }
@@ -1889,7 +1887,7 @@ static int setVariantTranslationPointWorker(materialvariant_t* variant, void* pa
     return 0; // Continue iteration.
 }
 
-void Materials_AnimateAnimGroup(animgroup_t* group)
+void Materials_AnimateAnimGroup(materialanim_t* group)
 {
     int i;
 
@@ -1913,11 +1911,11 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         // Update translations.
         for(i = 0; i < group->count; ++i)
         {
-            material_t* real = group->frames[i].mat;
+            material_t* real = group->frames[i].material;
             setmaterialtranslationworker_paramaters_t params;
 
-            params.current = group->frames[(group->index + i    ) % group->count].mat;
-            params.next    = group->frames[(group->index + i + 1) % group->count].mat;
+            params.current = group->frames[(group->index + i    ) % group->count].material;
+            params.next    = group->frames[(group->index + i + 1) % group->count].material;
             Material_IterateVariants(real, setVariantTranslationWorker, &params);
 
             // Surfaces using this material may need to be updated.
@@ -1932,7 +1930,7 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
     // Update the interpolation point of animated group members.
     for(i = 0; i < group->count; ++i)
     {
-        material_t* mat = group->frames[i].mat;
+        material_t* mat = group->frames[i].material;
         float interp;
 
         /*{ ded_material_t* def = Material_Definition(mat);
@@ -1976,7 +1974,7 @@ static int resetVariantGroupAnimWorker(materialvariant_t* mat, void* paramaters)
 void Materials_ResetAnimGroups(void)
 {
     materiallist_node_t* node;
-    animgroup_t* group;
+    materialanim_t* group;
     int i;
 
     for(node = materials; node; node = node->next)

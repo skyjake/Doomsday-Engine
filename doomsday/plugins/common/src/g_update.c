@@ -142,6 +142,8 @@ void G_UpdateState(int step)
     {
     case DD_PRE:
         G_MangleState();
+        // Redefine the texture animations.
+        P_InitPicAnims();
         break;
 
     case DD_POST:

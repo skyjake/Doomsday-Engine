@@ -130,17 +130,21 @@ static animdef_t animsShared[] = {
  */
 static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
+    boolean lastIsTexture = false; // Shut up compiler!
+    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
     Uri* startPath = Uri_New();
     Uri* endPath = Uri_New();
-    boolean lastIsTexture;
+    ddstring_t framePath;
     int i;
+
+    Str_Init(&framePath);
 
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
         boolean isTexture = animDefs[i].istexture != 0;
         int groupNum, ticsPerFrame, numFrames;
-        int startFrame, endFrame;
+        int startFrame, endFrame, n;
 
         if(i == 0 || isTexture != lastIsTexture)
         {
@@ -156,8 +160,6 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
-        ticsPerFrame = LONG(animDefs[i].speed);
-
         if(numFrames < 2)
         {
             Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
@@ -173,6 +175,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
          * go. (DOOM only required the start/end texture/flat
          * numbers and would animate all textures/flats inbetween).
          */
+        ticsPerFrame = LONG(animDefs[i].speed);
 
         if(verbose > (isCustom? 1 : 2))
         {
@@ -185,33 +188,23 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         }
 
         // Find an animation group for this.
-        groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
+        groupNum = R_CreateAnimGroup(AGF_SMOOTH);
 
-        // Add all frames from start to end to the group.
-        if(endFrame > startFrame)
+        // Add all frames to the group.
+        for(n = startFrame; n <= endFrame; ++n)
         {
-            int n;
-            for(n = startFrame; n <= endFrame; ++n)
-            {
-                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(isTexture? TN_TEXTURES : TN_FLATS, n));
-                if(frame != 0)
-                    Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-            }
-        }
-        else
-        {
-            int n;
-            for(n = endFrame; n >= startFrame; n--)
-            {
-                material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(isTexture? TN_TEXTURES : TN_FLATS, n));
-                if(frame != 0)
-                    Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
-            }
+            Str_Clear(&framePath);
+            Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, n);
+            Uri_SetPath(frameUrn, Str_Text(&framePath));
+
+            R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);
         }
     }
 
+    Str_Free(&framePath);
     Uri_Delete(startPath);
     Uri_Delete(endPath);
+    Uri_Delete(frameUrn);
 }
 
 void P_InitPicAnims(void)

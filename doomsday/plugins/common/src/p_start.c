@@ -197,7 +197,6 @@ void P_Update(void)
     P_InitMapInfo();
 #endif
     P_InitSwitchList();
-    P_InitPicAnims();
     P_InitTerrainTypes();
 
     maxHealth = 100;

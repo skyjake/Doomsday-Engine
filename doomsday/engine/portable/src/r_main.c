@@ -457,10 +457,6 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    R_InitPatchComposites();
-    R_InitFlatTextures();
-    R_InitSpriteTextures();
-
     // Reset file IDs so previously seen files can be processed again.
     F_ResetFileIds();
     // Re-read definitions.
@@ -541,6 +537,7 @@ void R_Update(void)
  */
 void R_Shutdown(void)
 {
+    R_ClearAnimGroups();
     R_ShutdownSprites();
     R_ShutdownModels();
     R_ShutdownVectorGraphics();

@@ -48,7 +48,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
         ignore = false;
 
     if(!ignore)
-        groupNumber = Materials_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
+        groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
 
     done = false;
     do
@@ -83,9 +83,17 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
 
                 if(!ignore)
                 {
-                    material_t* frame = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(isTexture? TN_TEXTURES : TN_FLATS, texNumBase + picNum - 1));
-                    if(frame != 0)
-                        Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
+                    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+                    ddstring_t framePath;
+
+                    Str_Init(&framePath);
+                    Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, texNumBase + picNum - 1);
+                    Uri_SetPath(frameUrn, Str_Text(&framePath));
+
+                    R_AddAnimGroupFrame(groupNumber, frameUrn, min, (max > 0? max - min : 0));
+
+                    Str_Free(&framePath);
+                    Uri_Delete(frameUrn);
                 }
             }
             else

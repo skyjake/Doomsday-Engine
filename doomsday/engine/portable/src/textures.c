@@ -951,7 +951,10 @@ texturenamespaceid_t Textures_Namespace(textureid_t id)
     if(!node)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        if(id != NOTEXTUREID)
+        {
+            Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        }
 #endif
         return TN_ANY;
     }
@@ -977,7 +980,10 @@ Uri* Textures_ComposeUri(textureid_t id)
     if(!node)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        if(id != NOTEXTUREID)
+        {
+            Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        }
 #endif
         return Uri_New();
     }
@@ -994,7 +1000,10 @@ Uri* Textures_ComposeUrn(textureid_t id)
     if(!node)
     {
 #if _DEBUG
-        Con_Message("Warning:Textures::ComposeUrn: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        if(id != NOTEXTUREID)
+        {
+            Con_Message("Warning:Textures::ComposeUrn: Attempted with unbound textureId #%u, returning null-object.\n", id);
+        }
 #endif
         return uri;
     }
