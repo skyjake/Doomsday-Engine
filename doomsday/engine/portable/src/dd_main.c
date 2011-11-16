@@ -2377,7 +2377,7 @@ D_CMD(Load)
         Str_Set(&searchPath, argv[arg]);
         Str_Strip(&searchPath);
 
-        if(F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath) != 0 &&
+        if(F_FindResource3(RC_PACKAGE, Str_Text(&searchPath), &foundPath, RLF_MATCH_EXTENSION) != 0 &&
            F_AddFile(Str_Text(&foundPath), 0, false))
             didLoadResource = true;
     }

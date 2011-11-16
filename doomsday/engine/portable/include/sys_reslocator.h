@@ -29,7 +29,7 @@
 #ifndef LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 #define LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 
-#include "dd_string.h"
+#include "dd_types.h"
 
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
@@ -86,6 +86,19 @@ typedef enum {
  * @see ResourceNamespace
  */
 typedef uint resourcenamespaceid_t;
+
+/**
+ * @defgroup resourceLocationFlags  Resource Location Flags
+ *
+ * Flags used with the F_FindResource family of functions which dictate the
+ * the logic used for resource location.
+ * @{
+ */
+#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have too.
+
+/// Default flags.
+#define RLF_DEFAULT             0
+/**@}*/
 
 /**
  * \post Initial/default search paths registered, namespaces initialized and
@@ -151,7 +164,8 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
  *                      Can be @c NULL, changing this routine to only check that
  *                      resource exists is readable.
  *
- * @return  Non-zero iff a resource was found.
+ * @return  The index+1 of the path in the list of search paths for this resource
+ *     if found, else @c 0
  */
 uint F_FindResourceForRecord(struct resourcerecord_s* rec, ddstring_t* foundPath);
 
@@ -160,7 +174,7 @@ uint F_FindResourceForRecord(struct resourcerecord_s* rec, ddstring_t* foundPath
  *
  * @param rclass        Class of resource being searched for (if known).
  *
- * @param searchPath    Path/name of the resource being searched for. Note that
+ * @param searchPaths   Paths/names of the resource being searched for. Note that
  *                      the resource class (@a rclass) specified significantly
  *                      alters search behavior. This allows text replacements of
  *                      symbolic escape sequences in the path, allowing access to
@@ -170,23 +184,23 @@ uint F_FindResourceForRecord(struct resourcerecord_s* rec, ddstring_t* foundPath
  *                      Can be @c NULL, changing this routine to only check that
  *                      resource exists is readable.
  *
+ * @param flags         @see resourceLocationFlags
+ *
  * @param optionalSuffix  If not @c NULL, append this suffix to search paths and
  *                      look for matches. If not found or not specified then search
  *                      for matches without a suffix.
  *
- * @return  @c Non-zero iff a resource was found.
+ * @return  The index+1 of the path in @a searchPaths if found, else @c 0
  */
-uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath,
-    ddstring_t* foundPath, const ddstring_t* optionalSuffix);
-uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
-    ddstring_t* foundPath);
-uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath);
+uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix);
+uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
+uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
+uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPaths); /*foundPath=NULL*/
 
-uint F_FindResource3(resourceclass_t rclass, const char* searchPath,
-    ddstring_t* foundPath, const char* optionalSuffix);
-uint F_FindResource2(resourceclass_t rclass, const char* searchPath,
-    ddstring_t* foundPath);
-uint F_FindResource(resourceclass_t rclass, const char* searchPath);
+uint F_FindResource4(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath, int flags, const char* optionalSuffix);
+uint F_FindResource3(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath, int flags); /*optionalSuffix=NULL*/
+uint F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath); /*flags=RLF_DEFAULT*/
+uint F_FindResource(resourceclass_t rclass, const char* searchPaths); /*foundPath=NULL*/
 
 /**
  * @return  Default class associated with resources of type @a type.

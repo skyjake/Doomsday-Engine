@@ -2076,7 +2076,7 @@ byte GL_LoadExtTextureEX(image_t* image, const char* searchPath, const char* opt
     assert(image && searchPath);
 
     Str_Init(&foundPath);
-    if(!F_FindResource3(RC_GRAPHIC, searchPath, &foundPath, optionalSuffix))
+    if(!F_FindResource4(RC_GRAPHIC, searchPath, &foundPath, RLF_DEFAULT, optionalSuffix))
     {
         Str_Free(&foundPath);
         if(!silent) Con_Message("GL_LoadExtTextureEX: Warning, failed to locate \"%s\"\n", searchPath);

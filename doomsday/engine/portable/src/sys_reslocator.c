@@ -381,63 +381,76 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSea
     return false;
 }
 
-static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchPath,
+/**
+ * @param flags  @see resourceLocationFlags
+ */
+static boolean tryFindResource(int flags, resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
 {
-    boolean found = false;
+    const resourcetype_t* typeIter;
+    ddstring_t path2, tmp;
+    boolean found;
     const char* ptr;
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
 
-    // Has an extension been specified?
+    // If an extension was specified, first look for resources of the same type.
     ptr = F_FindFileExtension(Str_Text(searchPath));
-    if(ptr && *ptr != '*') // Try this first.
-        found = tryFindResource2(rclass, searchPath, foundPath, rnamespaceInfo);
-
-    if(!found)
+    if(ptr && *ptr != '*')
     {
-        ddstring_t path2;
-        Str_Init(&path2);
-
-        // Create a copy of the searchPath minus file extension.
-        if(ptr)
-        {
-            Str_PartAppend(&path2, Str_Text(searchPath), 0, ptr - Str_Text(searchPath));
-        }
-        else
-        {
-            Str_Copy(&path2, searchPath);
-            Str_AppendChar(&path2, '.');
-        }
-
-        if(VALID_RESOURCE_CLASS(rclass) && searchTypeOrder[rclass][0] != RT_NONE)
-        {
-            const resourcetype_t* type = searchTypeOrder[rclass];
-            ddstring_t tmp;
-            Str_Init(&tmp);
-            do
-            {
-                const resourcetypeinfo_t* typeInfo = getInfoForResourceType(*type);
-                if(typeInfo->knownFileNameExtensions[0])
-                {
-                    char* const* ext = typeInfo->knownFileNameExtensions;
-                    do
-                    {
-                        Str_Clear(&tmp);
-                        Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
-                        found = tryFindResource2(rclass, &tmp, foundPath, rnamespaceInfo);
-                    } while(!found && *(++ext));
-                }
-            } while(!found && *(++type) != RT_NONE);
-            Str_Free(&tmp);
-        }
-        Str_Free(&path2);
+        if(tryFindResource2(rclass, searchPath, foundPath, rnamespaceInfo))
+            return true;
+        // If we are looking for a particular resource type, get out of here.
+        if(flags & RLF_MATCH_EXTENSION) return false;
     }
 
+    if(!(VALID_RESOURCE_CLASS(rclass) && searchTypeOrder[rclass][0] != RT_NONE)) return false;
+
+    /**
+     * Lets try some different name patterns (i.e., resource types) known to us.
+     */
+
+    // Create a copy of the searchPath minus file extension.
+    Str_Init(&path2);
+    Str_Reserve(&path2, Str_Length(searchPath)+1/*period*/);
+    if(ptr)
+    {
+        Str_PartAppend(&path2, Str_Text(searchPath), 0, ptr - Str_Text(searchPath));
+    }
+    else
+    {
+        Str_Copy(&path2, searchPath);
+        Str_AppendChar(&path2, '.');
+    }
+
+    Str_Init(&tmp);
+    Str_Reserve(&tmp, Str_Length(&path2) +5/*max expected extension length*/);
+    found = false;
+    typeIter = searchTypeOrder[rclass];
+    do
+    {
+        const resourcetypeinfo_t* typeInfo = getInfoForResourceType(*typeIter);
+        if(typeInfo->knownFileNameExtensions[0])
+        {
+            char* const* ext = typeInfo->knownFileNameExtensions;
+            do
+            {
+                Str_Clear(&tmp);
+                Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
+                found = tryFindResource2(rclass, &tmp, foundPath, rnamespaceInfo);
+            } while(!found && *(++ext));
+        }
+    } while(!found && *(++typeIter) != RT_NONE);
+
+    Str_Free(&tmp);
+    Str_Free(&path2);
     return found;
 }
 
+/**
+ * @param flags  @see resourceLocationFlags
+ */
 static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPath,
-    const ddstring_t* optionalSuffix, ddstring_t* foundPath, resourcenamespaceinfo_t* rnamespaceInfo)
+    ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix, resourcenamespaceinfo_t* rnamespaceInfo)
 {
     boolean found = false;
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
@@ -468,19 +481,22 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
             Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
         }
 
-        found = tryFindResource(rclass, &fn, foundPath, rnamespaceInfo);
+        found = tryFindResource(flags, rclass, &fn, foundPath, rnamespaceInfo);
         Str_Free(&fn);
     }
 
     // Try without a suffix.
     if(!found)
-        found = tryFindResource(rclass, searchPath, foundPath, rnamespaceInfo);
+        found = tryFindResource(flags, rclass, searchPath, foundPath, rnamespaceInfo);
 
     return found;
 }
 
+/**
+ * @param flags  @see resourceLocationFlags
+ */
 static int findResource(resourceclass_t rclass, const Uri* const* list,
-    const ddstring_t* optionalSuffix, ddstring_t* foundPath)
+    ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix)
 {
     uint result = 0, n = 1;
     const Uri* const* ptr;
@@ -491,41 +507,41 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
         const Uri* searchPath = *ptr;
         ddstring_t* resolvedPath;
 
-        resolvedPath = Uri_Resolved(searchPath);
         // Ignore incomplete paths.
+        resolvedPath = Uri_Resolved(searchPath);
         if(!resolvedPath || Str_IsEmpty(resolvedPath)) continue;
 
         // If this is an absolute path, locate using it.
         if(F_IsAbsolute(resolvedPath))
         {
-            if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, 0))
+            if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, NULL/*no namespace*/))
                 result = n;
         }
         else
-        {   // Probably a relative path.
-            // Has a namespace identifier been included?
+        {
+            // Probably a relative path. Has a namespace identifier been included?
             if(!Str_IsEmpty(Uri_Scheme(searchPath)))
             {
                 resourcenamespaceid_t rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)));
                 if(rni)
                 {
                     resourcenamespaceinfo_t* rnamespaceInfo = getNamespaceInfoForId(rni);
-                    if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, rnamespaceInfo))
+                    if(findResource2(rclass, resolvedPath, foundPath, flags, optionalSuffix, rnamespaceInfo))
                         result = n;
                 }
+#if _DEBUG
                 else
                 {
                     ddstring_t* rawPath = Uri_ToString(searchPath);
-                    Con_Message("tryLocateResource: Unknown rnamespace in searchPath \"%s\", "
-                                "using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
+                    Con_Message("Warning:findResource: Unknown namespace in searchPath \"%s\", using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
                     Str_Delete(rawPath);
                 }
+#endif
             }
         }
         Str_Delete(resolvedPath);
 
-        if(result != 0)
-            break;
+        if(result) break;
     }
     return result;
 }
@@ -1072,19 +1088,18 @@ void F_PrintStringList(const ddstring_t** strings, size_t stringsCount)
 }
 #endif
 
-uint F_FindResource4(resourceclass_t rclass, const Uri** searchPaths,
-    ddstring_t* foundPath, const ddstring_t* optionalSuffix)
+uint F_FindResource5(resourceclass_t rclass, const Uri** searchPaths,
+    ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix)
 {
     errorIfNotInited("F_FindResource4");
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
-    if(!searchPaths)
-        return 0;
-    return findResource(rclass, searchPaths, optionalSuffix, foundPath);
+    if(!searchPaths) return 0;
+    return findResource(rclass, searchPaths, foundPath, flags, optionalSuffix);
 }
 
-uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
-    ddstring_t* foundPath, const ddstring_t* optionalSuffix)
+uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths,
+    ddstring_t* foundPath, int flags, const ddstring_t* optionalSuffix)
 {
     Uri** list;
     int result = 0;
@@ -1104,29 +1119,34 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
     list = F_CreateUriListStr(rclass, searchPaths);
     if(!list) return 0;
 
-    result = findResource(rclass, (const Uri**)list, optionalSuffix, foundPath);
+    result = findResource(rclass, (const Uri**)list, foundPath, flags, optionalSuffix);
     F_DestroyUriList(list);
     return result;
 }
 
 uint F_FindResourceForRecord(resourcerecord_t* rec, ddstring_t* foundPath)
 {
-    return findResource(ResourceRecord_ResourceClass(rec), ResourceRecord_SearchPaths(rec), 0, foundPath);
+    return findResource(ResourceRecord_ResourceClass(rec), ResourceRecord_SearchPaths(rec), foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
 }
 
-uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
-    ddstring_t* foundPath)
+uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
+    ddstring_t* foundPath, int flags)
 {
-    return F_FindResourceStr3(rclass, searchPath, foundPath, 0);
+    return F_FindResourceStr4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
+}
+
+uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath, ddstring_t* foundPath)
+{
+    return F_FindResourceStr3(rclass, searchPath, foundPath, RLF_DEFAULT);
 }
 
 uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath)
 {
-    return F_FindResourceStr2(rclass, searchPath, 0);
+    return F_FindResourceStr2(rclass, searchPath, NULL/*no found path*/);
 }
 
-uint F_FindResource3(resourceclass_t rclass, const char* _searchPaths,
-    ddstring_t* foundPath, const char* _optionalSuffix)
+uint F_FindResource4(resourceclass_t rclass, const char* _searchPaths,
+    ddstring_t* foundPath, int flags, const char* _optionalSuffix)
 {
     ddstring_t searchPaths, optionalSuffix;
     boolean hasOptionalSuffix = false;
@@ -1137,21 +1157,26 @@ uint F_FindResource3(resourceclass_t rclass, const char* _searchPaths,
         Str_Init(&optionalSuffix); Str_Set(&optionalSuffix, _optionalSuffix);
         hasOptionalSuffix = true;
     }
-    result = F_FindResourceStr3(rclass, &searchPaths, foundPath, hasOptionalSuffix? &optionalSuffix : 0);
+    result = F_FindResourceStr4(rclass, &searchPaths, foundPath, flags, hasOptionalSuffix? &optionalSuffix : NULL);
     if(hasOptionalSuffix)
         Str_Free(&optionalSuffix);
     Str_Free(&searchPaths);
     return result;
 }
 
+uint F_FindResource3(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath, int flags)
+{
+    return F_FindResource4(rclass, searchPaths, foundPath, flags, NULL/*no optional suffix*/);
+}
+
 uint F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath)
 {
-    return F_FindResource3(rclass, searchPaths, foundPath, 0);
+    return F_FindResource3(rclass, searchPaths, foundPath, RLF_DEFAULT);
 }
 
 uint F_FindResource(resourceclass_t rclass, const char* searchPaths)
 {
-    return F_FindResource2(rclass, searchPaths, 0);
+    return F_FindResource2(rclass, searchPaths, NULL/*no found path*/);
 }
 
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
