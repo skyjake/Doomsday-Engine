@@ -105,7 +105,7 @@ int lt_dlforeachfile(const char* searchPath,
 
     while((entry = readdir(dir)))
     {
-        if(entry->d_type == DT_DIR) continue;
+        if(entry->d_type != DT_REG) continue;
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
