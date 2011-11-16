@@ -9,6 +9,7 @@
 #       line, as it is checked before config_user.pri is read.
 #
 # CONFIG options for Doomsday:
+# - deng_32bitonly          Only do a 32-bit build (no 64-bit)
 # - deng_aptunstable        Include the unstable apt repository
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_openal             Build the OpenAL sound driver
@@ -154,10 +155,18 @@ deng_nofixedasm {
 macx {
     # Select OS version.
     deng_snowleopard {
-        echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        CONFIG += x86 x86_64
+        deng_32bitonly {
+            echo("Using Mac OS 10.6 SDK (32-bit Intel).")
+            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+            CONFIG += x86
+            CONFIG -= x86_64
+        } else {
+            echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
+            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+            CONFIG += x86 x86_64
+        }
     }
     else {
         echo("Using Mac OS 10.4 SDK (32-bit Intel + PowerPC).")
