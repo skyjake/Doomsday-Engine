@@ -99,18 +99,16 @@ typedef struct {
 static int loadPlugin(const char* pluginPath, lt_ptr data)
 {
     loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
-#ifndef MACOSX
-    filename_t  name;
-#endif
     lt_dlhandle plugin, *handle;
     void (*initializer)(void);
+    filename_t name;
 
     // What is the actual file name?
 #ifndef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, NULL);
     if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
        (!params->loadingGames && !strncmp(name, "libdp", 5)) &&
-       !strncmp(name + strlen(name) - 3, ".so", 3))
+       !strncmp(pluginPath + strlen(pluginPath) - 3, ".so", 3))
 #endif
 #ifdef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, NULL);
