@@ -126,11 +126,11 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
 #ifdef MACOSX
-    strncat(bundleName, "/", FILENAME_T_MAXLEN);
-    strncat(bundleName, libraryName, FILENAME_T_MAXLEN);
-    strncat(bundleName, "/", FILENAME_T_MAXLEN);
+    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+    strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
+    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
 #endif
-    strncat(bundleName, libraryName, FILENAME_T_MAXLEN);
+    strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     // Get rid of the ".bundle" in the end.
