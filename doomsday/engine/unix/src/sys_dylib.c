@@ -127,10 +127,10 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
 #ifdef MACOSX
     strncat(bundleName, "/", FILENAME_T_MAXLEN);
-    strncat(bundleName, baseFileName, FILENAME_T_MAXLEN);
+    strncat(bundleName, libraryName, FILENAME_T_MAXLEN);
     strncat(bundleName, "/", FILENAME_T_MAXLEN);
 #endif
-    strncat(bundleName, baseFileName, FILENAME_T_MAXLEN);
+    strncat(bundleName, libraryName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     // Get rid of the ".bundle" in the end.
@@ -138,7 +138,7 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
         *ptr = 0;
 #endif
     handle = dlopen(bundlePath, RTLD_NOW);
-    if(NULL == handle)
+    if(!handle)
     {
         printf("lt_dlopenext: Error opening \"%s\" (%s).\n", bundlePath, dlerror());
     }
