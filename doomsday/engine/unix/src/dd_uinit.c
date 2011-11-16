@@ -105,11 +105,17 @@ static int loadPlugin(const char* pluginPath, lt_ptr data)
     lt_dlhandle plugin, *handle;
     void (*initializer)(void);
 
-#ifndef MACOSX
     // What is the actual file name?
+#ifndef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, NULL);
     if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
-       (!params->loadingGames && !strncmp(name, "libdp", 5)))
+       (!params->loadingGames && !strncmp(name, "libdp", 5)) &&
+       !strncmp(name + strlen(name) - 3, ".so", 3))
+#endif
+#ifdef MACOSX
+    _splitpath(pluginPath, NULL, NULL, name, NULL);
+    if((params->loadingGames  && !strncmp(name, "j", 1)) ||
+       (!params->loadingGames && !strncmp(name, "dp", 2)))
 #endif
     {
         // Try loading this one as a Doomsday plugin.

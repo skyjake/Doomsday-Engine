@@ -85,32 +85,28 @@ static void getBundlePath(char* path, size_t len)
 int lt_dlforeachfile(const char* searchPath,
     int (*func) (const char* fileName, lt_ptr data), lt_ptr data)
 {
-    struct dirent* entry = 0;
-    DIR* dir = 0;
+    struct dirent* entry = NULL;
     filename_t bundlePath;
+    DIR* dir = NULL;
 
-    // This is the default location where bundles are.
-    getBundlePath(bundlePath, FILENAME_T_MAXLEN);
-
-    if(NULL == searchPath)
+    if(!searchPath)
+    {
+        // This is the default location where bundles are.
+        getBundlePath(bundlePath, FILENAME_T_MAXLEN);
         searchPath = bundlePath;
+    }
 
     dir = opendir(searchPath);
-    while(NULL != (entry = readdir(dir)))
+    if(!dir)
     {
-#ifndef MACOSX
-        if(entry->d_type != DT_DIR &&
-           !strncmp(entry->d_name, "libdp", 5) &&
-           !strncmp(entry->d_name + strlen(entry->d_name) - 3, ".so", 3))
-#endif
-#ifdef MACOSX
-        if(entry->d_type == DT_DIR &&
-           !strncmp(entry->d_name, "dp", 2))
-#endif
-        {
-            if(func(entry->d_name, data))
-                break;
-        }
+        printf("lt_dlforeachfile: Error opening \"%s\" (%s).\n", searchPath, dlerror());
+        return 0;
+    }
+
+    while((entry = readdir(dir)))
+    {
+        if(entry->d_type == DT_DIR) continue;
+        if(func(entry->d_name, data)) break;
     }
     closedir(dir);
     return 0;
