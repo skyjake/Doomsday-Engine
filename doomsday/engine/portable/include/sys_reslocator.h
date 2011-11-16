@@ -91,10 +91,10 @@ typedef uint resourcenamespaceid_t;
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
  * Flags used with the F_FindResource family of functions which dictate the
- * the logic used for resource location.
+ * logic used during resource location.
  * @{
  */
-#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have too.
+#define RLF_MATCH_EXTENSION     0x1 /// If an extension is specified in the search term the found file should have it too.
 
 /// Default flags.
 #define RLF_DEFAULT             0
