@@ -1060,18 +1060,18 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         else
         {
             // Perhaps a font name?
-            font_t* font;
+            fontid_t fontId;
             if(!strnicmp((*strPtr), "font", 4))
             {
                 Uri* uri;
                 (*strPtr) += 4;
                 uri = Uri_NewWithPath2(*strPtr, RC_NULL);
-                font = Fonts_ResolveUri2(uri, true/*quiet please*/);
+                fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
                 Uri_Delete(uri);
-                if(font)
+                if(fontId != NOFONTID)
                 {
                     (*strPtr) += strlen(*strPtr);
-                    state->fontNum = Fonts_Id(font);
+                    state->fontNum = fontId;
                     continue;
                 }
 

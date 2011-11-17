@@ -47,7 +47,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
-#include "materialvariant.h"
+#include "font.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -166,31 +166,32 @@ const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 
 static fontid_t loadSystemFont(const char* name)
 {
-    assert(name);
-    {
-    ddstring_t searchPath, *filepath;
+    ddstring_t resourcePath;
     font_t* font;
-    Uri* path;
+    Uri* uri;
+    assert(name && name[0]);
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
-    path = Uri_NewWithPath2(Str_Text(&searchPath), RC_NULL);
-    Str_Clear(&searchPath);
-    Str_Appendf(&searchPath, FN_SYSTEM_NAME":%s", name);
+    // Compose the resource name.
+    uri = Uri_NewWithPath2(FN_SYSTEM_NAME":", RC_NULL);
+    Uri_SetPath(uri, name);
 
-    filepath = Uri_Resolved(path);
-    Uri_Delete(path);
-    font = Fonts_CreateFromFile(Str_Text(&searchPath), Str_Text(filepath));
-    Str_Free(&searchPath);
-    if(filepath)
-        Str_Delete(filepath);
+    // Compose the resource data path.
+    // \todo This is currently rather awkward due
+    Str_Init(&resourcePath);
+    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    F_TranslatePath(&resourcePath, &resourcePath);
 
-    if(font == NULL)
+    font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
+    Str_Free(&resourcePath);
+    Uri_Delete(uri);
+
+    if(!font)
     {
         Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
-        return 0;
+        exit(1); // Unreachable.
     }
+
     return Fonts_Id(font);
-    }
 }
 
 void R_LoadSystemFonts(void)
@@ -542,6 +543,7 @@ void R_Shutdown(void)
     R_ShutdownModels();
     R_ShutdownVectorGraphics();
     R_ShutdownViewWindow();
+    Fonts_Shutdown();
 }
 
 void R_Ticker(timespan_t time)

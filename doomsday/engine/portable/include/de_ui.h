@@ -29,7 +29,6 @@
 #ifndef LIBDENG_USER_INTERFACE_H
 #define LIBDENG_USER_INTERFACE_H
 
-#include "fonts.h"
 #include "ui_main.h"
 #include "ui_mpi.h"
 #include "ui_panel.h"

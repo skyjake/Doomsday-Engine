@@ -1309,7 +1309,7 @@ void GL_ReleaseSystemTextures(void)
 
     UI_ReleaseTextures();
     Rend_ParticleReleaseSystemTextures();
-    Fonts_ReleaseSystemGLTextures();
+    Fonts_ReleaseSystemTextures();
 
     GL_PruneTextureVariantSpecifications();
 }
@@ -1338,7 +1338,7 @@ void GL_ReleaseRuntimeTextures(void)
 
     Rend_SkyReleaseTextures();
     Rend_ParticleReleaseExtraTextures();
-    Fonts_ReleaseRuntimeGLTextures();
+    Fonts_ReleaseRuntimeTextures();
 
     GL_PruneTextureVariantSpecifications();
 }

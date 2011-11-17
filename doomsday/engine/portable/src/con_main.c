@@ -2522,7 +2522,7 @@ D_CMD(Font)
     if(!stricmp(argv[1], "default"))
     {
         Uri* uri = Uri_NewWithPath2(R_ChooseFixedFont(), RC_NULL);
-        fontid_t newFont = Fonts_IndexForUri(uri);
+        fontid_t newFont = Fonts_ResolveUri(uri);
         Uri_Delete(uri);
         if(newFont)
         {
@@ -2537,11 +2537,11 @@ D_CMD(Font)
     if(!stricmp(argv[1], "name") && argc == 3)
     {
         Uri* uri = Uri_SetUri3(Uri_New(), argv[2], RC_NULL);
-        fontid_t newFont = Fonts_IndexForUri(uri);
+        fontid_t newFont = Fonts_ResolveUri2(uri, true/*quiet please*/);
         Uri_Delete(uri);
         if(newFont)
         {
-            Uri* uri = Fonts_ComposeUri(Fonts_ToFont(newFont));
+            Uri* uri = Fonts_ComposeUri(newFont);
             Con_SetFont(newFont);
             if(!Str_CompareIgnoreCase(Uri_Scheme(uri), FN_GAME_NAME))
             {

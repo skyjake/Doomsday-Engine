@@ -48,6 +48,7 @@
 #include "image.h"
 #include "texturecontent.h"
 #include "cbuffer.h"
+#include "font.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -285,8 +286,10 @@ static void Con_BusyPrepareResources(void)
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
         int fontIdx = !(theWindow->width > 640)? 0 : 1;
-        font_t* font = Fonts_CreateFromFile(fonts[fontIdx].name, fonts[fontIdx].path);
-        if(NULL != font)
+        Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
+        font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
+        Uri_Delete(uri);
+        if(font)
         {
             busyFont = Fonts_Id(font);
             FR_SetFont(busyFont);

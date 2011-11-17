@@ -37,7 +37,7 @@
 
 #include "bitmapfont.h"
 
-void Font_Init(font_t* font, fonttype_t type)
+void Font_Init(font_t* font, fonttype_t type, fontid_t bindId)
 {
     assert(font && VALID_FONTTYPE(type));
 
@@ -49,14 +49,8 @@ void Font_Init(font_t* font, fonttype_t type)
     font->_descent = 0;
     font->_noCharWidth  = 0;
     font->_noCharHeight = 0;
-    font->_bindId = 0;
+    font->_primaryBind = bindId;
     font->_isDirty = true;
-}
-
-boolean Font_IsPrepared(font_t* font)
-{
-    assert(font);
-    return !font->_isDirty;
 }
 
 fonttype_t Font_Type(const font_t* font)
@@ -65,22 +59,28 @@ fonttype_t Font_Type(const font_t* font)
     return font->_type;
 }
 
+fontid_t Font_PrimaryBind(const font_t* font)
+{
+    assert(font);
+    return font->_primaryBind;
+}
+
+void Font_SetPrimaryBind(font_t* font, fontid_t bindId)
+{
+    assert(font);
+    font->_primaryBind = bindId;
+}
+
+boolean Font_IsPrepared(font_t* font)
+{
+    assert(font);
+    return !font->_isDirty;
+}
+
 int Font_Flags(const font_t* font)
 {
     assert(font);
     return font->_flags;
-}
-
-uint Font_BindId(const font_t* font)
-{
-    assert(font);
-    return font->_bindId;
-}
-
-void Font_SetBindId(font_t* font, uint bindId)
-{
-    assert(font);
-    font->_bindId = bindId;
 }
 
 int Font_Ascent(font_t* font)
@@ -226,7 +226,7 @@ static void* readFormat0(font_t* font, DFile* file)
     if(bitmapFormat > 0)
     {
         char buf[256];
-        Uri* uri = Fonts_ComposeUri(font);
+        Uri* uri = Fonts_ComposeUri(Fonts_Id(font));
         ddstring_t* uriStr = Uri_ToString(uri);
         Uri_Delete(uri);
         dd_snprintf(buf, 256, "%s", Str_Text(uriStr));
@@ -337,7 +337,7 @@ static void* readFormat2(font_t* font, DFile* file)
     return image;
 }
 
-font_t* BitmapFont_New(void)
+font_t* BitmapFont_New(fontid_t bindId)
 {
     bitmapfont_t* bf = (bitmapfont_t*)malloc(sizeof *bf);
     if(!bf)
@@ -348,7 +348,7 @@ font_t* BitmapFont_New(void)
     bf->_texHeight = 0;
     Str_Init(&bf->_filePath);
     memset(bf->_chars, 0, sizeof(bf->_chars));
-    Font_Init((font_t*)bf, FT_BITMAP);
+    Font_Init((font_t*)bf, FT_BITMAP, bindId);
     return (font_t*)bf;
 }
 
@@ -408,7 +408,7 @@ void BitmapFont_Prepare(font_t* font)
         if(!novideo && !isDedicated)
         {
             VERBOSE2(
-                Uri* uri = Fonts_ComposeUri(font);
+                Uri* uri = Fonts_ComposeUri(Fonts_Id(font));
                 ddstring_t* path = Uri_ToString(uri);
                 Con_Printf("Uploading GL texture for font \"%s\"...\n", Str_Text(path));
                 Str_Delete(path);
@@ -537,7 +537,7 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
     if(t1) *t1 = bf->_chars[ch].y + bf->_chars[ch].h;
 }
 
-font_t* BitmapCompositeFont_New(void)
+font_t* BitmapCompositeFont_New(fontid_t bindId)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)malloc(sizeof *cf);
     font_t* font = (font_t*)cf;
@@ -548,7 +548,7 @@ font_t* BitmapCompositeFont_New(void)
     cf->_def = 0;
     memset(cf->_chars, 0, sizeof(cf->_chars));
 
-    Font_Init(font, FT_BITMAPCOMPOSITE);
+    Font_Init(font, FT_BITMAPCOMPOSITE, bindId);
     font->_flags |= FF_COLORIZE;
 
     return font;

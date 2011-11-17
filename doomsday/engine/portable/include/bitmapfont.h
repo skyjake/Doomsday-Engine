@@ -51,7 +51,7 @@ typedef struct bitmapfont_s {
     bitmapfont_char_t _chars[MAX_CHARS];
 } bitmapfont_t;
 
-font_t* BitmapFont_New(void);
+font_t* BitmapFont_New(fontid_t bindId);
 void BitmapFont_Delete(font_t* font);
 
 void BitmapFont_Prepare(font_t* font);
@@ -93,7 +93,7 @@ typedef struct bitmapcompositefont_s {
     bitmapcompositefont_char_t _chars[MAX_CHARS];
 } bitmapcompositefont_t;
 
-font_t* BitmapCompositeFont_New(void);
+font_t* BitmapCompositeFont_New(fontid_t bindId);
 void BitmapCompositeFont_Delete(font_t* font);
 
 void BitmapCompositeFont_Prepare(font_t* font);

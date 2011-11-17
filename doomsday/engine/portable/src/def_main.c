@@ -1095,15 +1095,7 @@ void Def_Read(void)
     // Composite fonts.
     for(i = 0; i < defs.count.compositeFonts.num; ++i)
     {
-        ded_compositefont_t* def = defs.compositeFonts + i;
-        font_t* font = Fonts_ResolveUri2(def->uri, true/*quiet please*/);
-        if(!font)
-        {   // A new Font.
-            Fonts_CreateFromDef(def);
-            continue;
-        }
-        // Update existing.
-        Fonts_Rebuild(font, def);
+        R_CreateFontFromDef(defs.compositeFonts + i);
     }
 
     // Sprite names.

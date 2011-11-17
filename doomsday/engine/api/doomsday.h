@@ -372,7 +372,7 @@ Uri* Materials_ComposeUri(materialid_t materialId);
 //
 //------------------------------------------------------------------------
 
-fontid_t Fonts_IndexForUri(const Uri* uri);
+fontid_t Fonts_ResolveUri(const Uri* uri);
 
 //------------------------------------------------------------------------
 //

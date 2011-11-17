@@ -578,7 +578,7 @@ EXPORTS
     FR_CharHeight               @531 NONAME
 
 ; Fonts.
-    Fonts_IndexForUri           @532 NONAME
+    Fonts_ResolveUri           @532 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

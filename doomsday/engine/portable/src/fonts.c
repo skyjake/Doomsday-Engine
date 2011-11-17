@@ -23,6 +23,8 @@
  */
 
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -34,68 +36,52 @@
 #include "gl_texmanager.h"
 #include "pathdirectory.h"
 
+#include "font.h"
+#include "bitmapfont.h"
 #include "fonts.h"
 
-/// Number of elements to block-allocate in the font index to fontbind map.
-#define FONTS_BINDINGMAP_BLOCK_ALLOC (32)
-
-typedef struct fontlist_node_s {
-    struct fontlist_node_s* next;
-    font_t* font;
-} fontlist_node_t;
-typedef fontlist_node_t fontlist_t;
-
-typedef struct fontbind_s {
-    /// Pointer to this binding's node in the directory.
-    PathDirectoryNode* _directoryNode;
-
-    /// Bound font.
-    font_t* _font;
-
-    /// Unique identifier for this binding.
-    fontid_t _id;
-} fontbind_t;
-
-/// @return  Unique identifier associated with this.
-fontid_t FontBind_Id(const fontbind_t* fb);
-
-/// @return  Font associated with this else @c NULL
-font_t* FontBind_Font(const fontbind_t* fb);
-
-/// @return  PathDirectory node associated with this.
-PathDirectoryNode* FontBind_DirectoryNode(const fontbind_t* fb);
-
-static int inited = false;
-
 /**
- * The following data structures and variables are intrinsically linked and
- * are inter-dependant. The scheme used is somewhat complicated due to the
- * required traits of the fonts themselves and in of the system itself:
- *
- * 1) Pointers to Fonts are eternal, they are always valid and continue
- *    to reference the same logical font data even after engine reset.
- * 2) Public font identifiers (fontid_t) are similarly eternal.
- *    Note that they are used to index the font name bindings array.
- * 3) Dynamic creation/update of fonts.
- * 4) Font name bindings are semi-independant from the fonts. There
- *    may be multiple name bindings for a given font (aliases).
- *    The only requirement is that their symbolic names must be unique among
- *    those in the same namespace.
- * 5) Super-fast look up by public font identifier.
- * 6) Fast look up by font name (a hashing scheme is used).
+ * FontRecord. Stores metadata for a unique Font in the collection.
  */
-static fontlist_t* fonts;
-static fontid_t bindingsCount;
-static fontid_t bindingsMax;
-static fontbind_t** bindings;
+typedef struct {
+    /// Namespace-unique identifier chosen by the owner of the collection.
+    int uniqueId;
 
-// Font namespaces contain mappings between names and Font instances.
-static PathDirectory* namespaces[FONTNAMESPACE_COUNT];
+    /// Path to the data resource which contains/wraps the loadable font data.
+    //Uri* resourcePath;
+
+    /// The defined font instance (if any).
+    font_t* font;
+} fontrecord_t;
+
+typedef struct {
+    /// PathDirectory containing mappings between names and unique font records.
+    PathDirectory* directory;
+
+    /// LUT which translates namespace-unique-ids to their associated fontid_t (if any).
+    /// Index with uniqueId - uniqueIdBase.
+    int uniqueIdBase;
+    boolean uniqueIdMapDirty;
+    uint uniqueIdMapSize;
+    fontid_t* uniqueIdMap;
+} fontnamespace_t;
 
 D_CMD(ListFonts);
 #if _DEBUG
 D_CMD(PrintFontStats);
 #endif
+
+static int iterateDirectory(fontnamespaceid_t namespaceId,
+    int (*callback)(PathDirectoryNode* node, void* paramaters), void* paramaters);
+
+static Uri* emptyUri;
+
+// LUT which translates fontid_t to PathDirectoryNode*. Index with fontid_t-1
+static uint fontIdMapSize;
+static PathDirectoryNode** fontIdMap;
+
+// Font namespace set.
+static fontnamespace_t namespaces[FONTNAMESPACE_COUNT];
 
 void Fonts_Register(void)
 {
@@ -105,18 +91,10 @@ void Fonts_Register(void)
 #endif
 }
 
-static void errorIfNotInited(const char* callerName)
-{
-    if(inited) return;
-    Con_Error("%s: fonts module is not presently initialized.", callerName);
-    // Unreachable. Prevents static analysers from getting rather confused, poor things.
-    exit(1);
-}
-
 static __inline PathDirectory* getDirectoryForNamespaceId(fontnamespaceid_t id)
 {
     assert(VALID_FONTNAMESPACEID(id));
-    return namespaces[id-FONTNAMESPACE_FIRST];
+    return namespaces[id-FONTNAMESPACE_FIRST].directory;
 }
 
 static fontnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
@@ -126,20 +104,44 @@ static fontnamespaceid_t namespaceIdForDirectory(PathDirectory* pd)
 
     for(id = FONTNAMESPACE_FIRST; id <= FONTNAMESPACE_LAST; ++id)
     {
-        if(namespaces[id-FONTNAMESPACE_FIRST] == pd) return id;
+        if(namespaces[id-FONTNAMESPACE_FIRST].directory == pd) return id;
     }
-    // Should never happen.
+    // Only reachable if attempting to find the id for a Font that is not
+    // in the collection, or the collection has not yet been initialized.
     Con_Error("Fonts::namespaceIdForDirectory: Failed to determine id for directory %p.", (void*)pd);
     exit(1); // Unreachable.
 }
 
-static fontnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
+static __inline boolean validFontId(fontid_t id)
+{
+    return (id != NOFONTID && id <= fontIdMapSize);
+}
+
+static PathDirectoryNode* getDirectoryNodeForBindId(fontid_t id)
+{
+    if(!validFontId(id)) return NULL;
+    return fontIdMap[id-1/*1-based index*/];
+}
+
+static fontid_t findBindIdForDirectoryNode(const PathDirectoryNode* node)
+{
+    uint i;
+    /// \optimize (Low priority) do not use a linear search.
+    for(i = 0; i < fontIdMapSize; ++i)
+    {
+        if(fontIdMap[i] == node)
+            return (fontid_t)(i+1); // 1-based index.
+    }
+    return NOFONTID; // Not linked.
+}
+
+static __inline fontnamespaceid_t namespaceIdForDirectoryNode(const PathDirectoryNode* node)
 {
     return namespaceIdForDirectory(PathDirectoryNode_Directory(node));
 }
 
 /// @return  Newly composed path for @a node. Must be released with Str_Delete()
-static ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
+static __inline ddstring_t* composePathForDirectoryNode(const PathDirectoryNode* node, char delimiter)
 {
     return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
 }
@@ -155,17 +157,43 @@ static Uri* composeUriForDirectoryNode(const PathDirectoryNode* node)
     return uri;
 }
 
-static fontbind_t* bindById(uint bindId)
+/// \assume fontIdMap has been initialized and is large enough!
+static void unlinkDirectoryNodeFromBindIdMap(const PathDirectoryNode* node)
 {
-    if(0 == bindId || bindId > bindingsCount) return 0;
-    return bindings[bindId-1];
+    fontid_t id = findBindIdForDirectoryNode(node);
+    if(!validFontId(id)) return; // Not linked.
+    fontIdMap[id - 1/*1-based index*/] = NULL;
+}
+
+/// \assume uniqueIdMap has been initialized and is large enough!
+static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
+{
+    const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    const fontnamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    fontnamespace_t* fn = &namespaces[namespaceId-FONTNAMESPACE_FIRST];
+    fn->uniqueIdMap[record->uniqueId - fn->uniqueIdBase] = findBindIdForDirectoryNode(node);
+    return 0; // Continue iteration.
+}
+
+/// \assume uniqueIdMap is large enough if initialized!
+static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
+{
+    const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    const fontnamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+    fontnamespace_t* fn = &namespaces[namespaceId-FONTNAMESPACE_FIRST];
+    if(fn->uniqueIdMap)
+    {
+        fn->uniqueIdMap[record->uniqueId - fn->uniqueIdBase] = NOFONTID;
+    }
+    return 0; // Continue iteration.
 }
 
 /**
  * @defgroup validateFontUriFlags  Validate Font Uri Flags
  * @{
  */
-#define VFUF_ALLOW_NAMESPACE_ANY 0x1 /// The Scheme component of the uri may be of zero-length; signifying "any namespace".
+#define VFUF_ALLOW_NAMESPACE_ANY 0x1 /// The namespace of the uri may be of zero-length; signifying "any namespace".
+#define VFUF_NO_URN             0x2 /// Do not accept a URN.
 /**@}*/
 
 /**
@@ -177,6 +205,7 @@ static fontbind_t* bindById(uint bindId)
 static boolean validateFontUri2(const Uri* uri, int flags, boolean quiet)
 {
     fontnamespaceid_t namespaceId;
+    const ddstring_t* namespaceString;
 
     if(!uri || Str_IsEmpty(Uri_Path(uri)))
     {
@@ -189,14 +218,25 @@ static boolean validateFontUri2(const Uri* uri, int flags, boolean quiet)
         return false;
     }
 
-    namespaceId = DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri)));
+    // If this is a URN we extract the namespace from the path.
+    if(!Str_CompareIgnoreCase(Uri_Scheme(uri), "urn"))
+    {
+        if(flags & VFUF_NO_URN) return false;
+        namespaceString = Uri_Path(uri);
+    }
+    else
+    {
+        namespaceString = Uri_Scheme(uri);
+    }
+
+    namespaceId = Fonts_ParseNamespace(Str_Text(namespaceString));
     if(!((flags & VFUF_ALLOW_NAMESPACE_ANY) && namespaceId == FN_ANY) &&
        !VALID_FONTNAMESPACEID(namespaceId))
     {
         if(!quiet)
         {
             ddstring_t* uriStr = Uri_ToString(uri);
-            Con_Message("Unknown namespace '%s' in Font uri \"%s\".\n", Str_Text(Uri_Scheme(uri)), Str_Text(uriStr));
+            Con_Message("Unknown namespace in Font uri \"%s\".\n", Str_Text(uriStr));
             Str_Delete(uriStr);
         }
         return false;
@@ -211,33 +251,49 @@ static boolean validateFontUri(const Uri* uri, int flags)
 }
 
 /**
- * Given a directory and path, search the Materials collection for a match.
+ * Given a directory and path, search the Fonts collection for a match.
  *
  * @param directory  Namespace-specific PathDirectory to search in.
  * @param path  Path of the font to search for.
- * @return  Found Font else @c 0
+ * @return  Found DirectoryNode else @c NULL
  */
-static font_t* findFontForPath(PathDirectory* fontDirectory, const char* path)
+static PathDirectoryNode* findDirectoryNodeForPath(PathDirectory* directory, const char* path)
 {
-    PathDirectoryNode* node = PathDirectory_Find(fontDirectory,
-        PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
-    if(node)
-    {
-        return FontBind_Font((fontbind_t*) PathDirectoryNode_UserData(node));
-    }
-    return NULL; // Not found.
+    return PathDirectory_Find(directory, PCF_NO_BRANCH|PCF_MATCH_FULL, path, FONTS_PATH_DELIMITER);
 }
 
 /// \assume @a uri has already been validated and is well-formed.
-static font_t* findFontForUri(const Uri* uri)
+static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
 {
-    fontnamespaceid_t namespaceId = DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri)));
-    const char* path = Str_Text(Uri_Path(uri));
-    font_t* font = NULL;
+    fontnamespaceid_t namespaceId;
+    PathDirectoryNode* node = NULL;
+    const char* path;
+
+    if(!Str_CompareIgnoreCase(Uri_Scheme(uri), "urn"))
+    {
+        // This is a URN of the form; urn:namespacename:uniqueid
+        char* uid;
+        namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Path(uri)));
+        uid = strchr(Str_Text(Uri_Path(uri)), ':');
+        if(uid)
+        {
+            fontid_t id = Fonts_FontForUniqueId(namespaceId,
+                strtol(uid +1/*skip namespace delimiter*/, 0, 0));
+            if(id != NOFONTID)
+            {
+                return getDirectoryNodeForBindId(id);
+            }
+        }
+        return NULL;
+    }
+
+    // This is a URI.
+    namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+    path = Str_Text(Uri_Path(uri));
     if(namespaceId != FN_ANY)
     {
         // Caller wants a font in a specific namespace.
-        font = findFontForPath(getDirectoryForNamespaceId(namespaceId), path);
+        node = findDirectoryNodeForPath(getDirectoryForNamespaceId(namespaceId), path);
     }
     else
     {
@@ -249,308 +305,154 @@ static font_t* findFontForUri(const Uri* uri)
         int n = 0;
         do
         {
-            font = findFontForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!font && order[++n] != FN_ANY);
+            node = findDirectoryNodeForPath(getDirectoryForNamespaceId(order[n]), path);
+        } while(!node && order[++n] != FN_ANY);
     }
-    return font;
-}
-
-font_t* Fonts_ResolveUri2(const Uri* uri, boolean quiet)
-{
-    font_t* font;
-    if(!inited || !uri) return NULL;
-    if(!validateFontUri2(uri, VFUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
-    {
-#if _DEBUG
-        ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
-        Str_Delete(uriStr);
-#endif
-        return NULL;
-    }
-
-    // Perform the search.
-    font = findFontForUri(uri);
-    if(font) return font;
-
-    // Not found.
-    if(!quiet)
-    {
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Fonts::ResolveUri: \"%s\" not found!\n", Str_Text(path));
-        Str_Delete(path);
-    }
-    return NULL;
-}
-
-/// \note Part of the Doomsday public API.
-font_t* Fonts_ResolveUri(const Uri* uri)
-{
-    return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-font_t* Fonts_ResolveUriCString2(const char* path, boolean quiet)
-{
-    if(path && path[0])
-    {
-        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
-        font_t* font = Fonts_ResolveUri2(uri, quiet);
-        Uri_Delete(uri);
-        return font;
-    }
-    return NULL;
-}
-
-/// \note Part of the Doomsday public API.
-font_t* Fonts_ResolveUriCString(const char* path)
-{
-    return Fonts_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
-}
-
-/// \note Part of the Doomsday public API.
-fontid_t Fonts_IndexForUri(const Uri* uri)
-{
-    return Fonts_Id(Fonts_ResolveUri(uri));
-}
-
-ddstring_t* Fonts_ComposePath(font_t* font)
-{
-    fontbind_t* fb;
-    if(!font)
-    {
-#if _DEBUG
-        Con_Message("Warning:Fonts::ComposePath: Attempted with invalid reference [%p], returning null-object.\n", (void*)font);
-#endif
-        return Str_New();
-    }
-    fb = bindById(Font_BindId(font));
-    if(!fb)
-    {
-#if _DEBUG
-        Con_Message("Warning:Fonts::ComposePath: Attempted with non-bound font [%p], returning null-object.\n", (void*)font);
-#endif
-        return Str_New();
-    }
-    return composePathForDirectoryNode(FontBind_DirectoryNode(fb), FONTS_PATH_DELIMITER);
-}
-
-Uri* Fonts_ComposeUri(font_t* font)
-{
-    fontbind_t* fb;
-    if(!font)
-    {
-#if _DEBUG
-        Con_Message("Warning:Fonts::ComposeUri: Attempted with invalid index (num==0), returning null-object.\n");
-#endif
-        return Uri_New();
-    }
-    fb = bindById(Font_BindId(font));
-    if(!fb)
-    {
-#if _DEBUG
-        Con_Message("Warning:Fonts::ComposeUri: Attempted with non-bound font [%p], returning null-object.\n", (void*)font);
-#endif
-        return Uri_New();
-    }
-    return composeUriForDirectoryNode(FontBind_DirectoryNode(fb));
-}
-
-static boolean newFontBind(const Uri* uri, font_t* font)
-{
-    PathDirectory* fontDirectory = getDirectoryForNamespaceId(DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri))));
-    PathDirectoryNode* node;
-    fontbind_t* fb;
-
-    node = PathDirectory_Insert(fontDirectory, Str_Text(Uri_Path(uri)), FONTS_PATH_DELIMITER);
-
-    // Is this a new binding?
-    fb = (fontbind_t*) PathDirectoryNode_UserData(node);
-    if(!fb)
-    {
-        // Acquire a new unique identifier for this binding.
-        const fontid_t bindId = ++bindingsCount;
-
-        fb = (fontbind_t*) malloc(sizeof *fb);
-        if(!fb)
-        {
-            Con_Error("Fontss::newFontUriBinding: Failed on allocation of %lu bytes for new FontBind.",
-                (unsigned long) sizeof *fb);
-            exit(1); // Unreachable.
-        }
-
-        // Init the new binding.
-        fb->_font = NULL;
-
-        fb->_directoryNode = node;
-        PathDirectoryNode_AttachUserData(node, fb);
-
-        fb->_id = bindId;
-        if(font)
-        {
-            Font_SetBindId(font, bindId);
-        }
-
-        // Add the new binding to the bindings index/map.
-        if(bindingsCount > bindingsMax)
-        {
-            // Allocate more memory.
-            bindingsMax += FONTS_BINDINGMAP_BLOCK_ALLOC;
-            bindings = (fontbind_t**) realloc(bindings, sizeof *bindings * bindingsMax);
-            if(!bindings)
-                Con_Error("Fontss:newFontUriBinding: Failed on (re)allocation of %lu bytes for FontBind map.",
-                    (unsigned long) sizeof *bindings * bindingsMax);
-        }
-        bindings[bindingsCount-1] = fb; /* 1-based index */
-    }
-
-    // (Re)configure the binding.
-    fb->_font = font;
-
-    return true;
-}
-
-static font_t* constructFont(fonttype_t type)
-{
-    switch(type)
-    {
-    case FT_BITMAP:             return BitmapFont_New();
-    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_New();
-    default:
-        Con_Error("Fonts::ConstructFont: Unknown font type %i.", (int)type);
-        exit(1); // Unreachable.
-    }
-}
-
-/**
- * Link the font into the global list of fonts.
- * \assume font is NOT already present in the global list.
- */
-static font_t* linkFontToGlobalList(font_t* font)
-{
-    fontlist_node_t* node = malloc(sizeof *node);
-    if(!node)
-        Con_Error("Fonts::LinkFontToGlobalList: Failed on allocation of %lu bytes for new FontList::Node.", (unsigned long) sizeof *node);
-
-    node->font = font;
-    node->next = fonts;
-    fonts = node;
-    return font;
-}
-
-static __inline font_t* getFontByIndex(fontid_t num)
-{
-    if(num < bindingsCount)
-        return FontBind_Font(bindings[num]);
-    Con_Error("Fonts::GetFontByIndex: Invalid index #%u.", (unsigned int) num);
-    return NULL; // Unreachable.
+    return node;
 }
 
 static void destroyFont(font_t* font)
 {
+    assert(font);
     switch(Font_Type(font))
     {
     case FT_BITMAP:             BitmapFont_Delete(font); return;
     case FT_BITMAPCOMPOSITE:    BitmapCompositeFont_Delete(font); return;
     default:
-        Con_Error("Fonts::DestroyFont: Invalid font type %i.", (int) Font_Type(font));
+        Con_Error("Fonts::destroyFont: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.
     }
 }
 
-static void destroyFonts(void)
+static int destroyBoundFont(PathDirectoryNode* node, void* paramaters)
 {
-    assert(inited);
-    while(fonts)
+    fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    if(record && record->font)
     {
-        fontlist_node_t* next = fonts->next;
-        destroyFont(fonts->font);
-        free(fonts);
-        fonts = next;
+        destroyFont(record->font), record->font = NULL;
     }
-}
-
-static int clearBinding(PathDirectoryNode* node, void* paramaters)
-{
-    fontbind_t* fb = PathDirectoryNode_DetachUserData(node);
-    free(fb);
     return 0; // Continue iteration.
 }
 
-static void destroyBindings(void)
+static int destroyRecord(PathDirectoryNode* node, void* paramaters)
 {
-    int i;
-    assert(inited);
-
-    for(i = 0; i < FONTNAMESPACE_COUNT; ++i)
+    fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    if(record)
     {
-        PathDirectory_Iterate(namespaces[i], PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, clearBinding);
-        PathDirectory_Delete(namespaces[i]), namespaces[i] = NULL;
+        if(record->font)
+        {
+#if _DEBUG
+            Uri* uri = composeUriForDirectoryNode(node);
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Warning:Fonts::destroyRecord: Record for \"%s\" still has Font data!\n", Str_Text(path));
+            Str_Delete(path);
+            Uri_Delete(uri);
+#endif
+            destroyFont(record->font);
+        }
+
+        /*if(record->resourcePath)
+        {
+            Uri_Delete(record->resourcePath);
+        }*/
+
+        unlinkDirectoryNodeFromBindIdMap(node);
+        unlinkRecordInUniqueIdMap(node, NULL/*no paramaters*/);
+
+        PathDirectoryNode_DetachUserData(node);
+        free(record);
     }
-
-    // Clear the binding index/map.
-    if(bindings)
-    {
-        free(bindings);
-        bindings = NULL;
-    }
-    bindingsCount = bindingsMax = 0;
+    return 0; // Continue iteration.
 }
 
-fontid_t FontBind_Id(const fontbind_t* fb)
+static int destroyFontAndRecord(PathDirectoryNode* node, void* paramaters)
 {
-    assert(fb);
-    return fb->_id;
-}
-
-font_t* FontBind_Font(const fontbind_t* fb)
-{
-    assert(fb);
-    return fb->_font;
-}
-
-PathDirectoryNode* FontBind_DirectoryNode(const fontbind_t* fb)
-{
-    assert(fb);
-    return fb->_directoryNode;
+    destroyBoundFont(node, paramaters);
+    destroyRecord(node, paramaters);
+    return 0; // Continue iteration.
 }
 
 void Fonts_Init(void)
 {
-    if(inited) return; // Already been here.
+    int i;
 
     VERBOSE( Con_Message("Initializing Fonts collection...\n") )
 
-    fonts = NULL;
+    emptyUri = Uri_New();
 
-    bindings = NULL;
-    bindingsCount = bindingsMax = 0;
-    { int i;
+    fontIdMap = NULL;
+    fontIdMapSize = 0;
+
     for(i = 0; i < FONTNAMESPACE_COUNT; ++i)
     {
-        namespaces[i] = PathDirectory_New();
-    }}
-
-    inited = true;
+        fontnamespace_t* fn = &namespaces[i];
+        fn->directory = PathDirectory_New();
+        fn->uniqueIdBase = 0;
+        fn->uniqueIdMapSize = 0;
+        fn->uniqueIdMap = NULL;
+        fn->uniqueIdMapDirty = false;
+    }
 }
 
 void Fonts_Shutdown(void)
 {
-    if(!inited) return;
+    int i;
 
-    Fonts_ReleaseRuntimeGLResources();
-    Fonts_ReleaseSystemGLResources();
+    Fonts_Clear();
 
-    destroyBindings();
-    destroyFonts();
-    inited = false;
+    for(i = 0; i < FONTNAMESPACE_COUNT; ++i)
+    {
+        fontnamespace_t* fn = &namespaces[i];
+
+        PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyRecord);
+        PathDirectory_Delete(fn->directory);
+        namespaces[i].directory = NULL;
+
+        if(!fn->uniqueIdMap) continue;
+        free(fn->uniqueIdMap), fn->uniqueIdMap = NULL;
+        fn->uniqueIdBase = 0;
+        fn->uniqueIdMapSize = 0;
+        fn->uniqueIdMapDirty = false;
+    }
+
+    // Clear the bindId to PathDirectoryNode LUT.
+    if(fontIdMap)
+    {
+        free(fontIdMap), fontIdMap = NULL;
+    }
+    fontIdMapSize = 0;
+
+    Uri_Delete(emptyUri), emptyUri = NULL;
 }
 
 fontnamespaceid_t Fonts_ParseNamespace(const char* str)
 {
-    if(!str || 0 == strlen(str)) return FN_ANY;
+    static const struct namespace_s {
+        const char* name;
+        size_t nameLen;
+        fontnamespaceid_t id;
+    } namespaces[FONTNAMESPACE_COUNT+1] = {
+        // Ordered according to a best guess of occurance frequency.
+        { FN_GAME_NAME, sizeof(FN_GAME_NAME)-1, FN_GAME },
+        { FN_SYSTEM_NAME, sizeof(FN_SYSTEM_NAME)-1, FN_SYSTEM },
+        { NULL }
+    };
+    const char* end;
+    size_t len, n;
 
-    if(!stricmp(str, FN_GAME_NAME))     return FN_GAME;
-    if(!stricmp(str, FN_SYSTEM_NAME))   return FN_SYSTEM;
+    // Special case: zero-length string means "any namespace".
+    if(!str || 0 == (len = strlen(str))) return FN_ANY;
+
+    // Stop comparing characters at the first occurance of ':'
+    end = strchr(str, ':');
+    if(end) len = end - str;
+
+    for(n = 0; namespaces[n].name; ++n)
+    {
+        if(len < namespaces[n].nameLen) continue;
+        if(strnicmp(str, namespaces[n].name, len)) continue;
+        return namespaces[n].id;
+    }
 
     return FN_INVALID; // Unknown.
 }
@@ -567,226 +469,94 @@ const ddstring_t* Fonts_NamespaceName(fontnamespaceid_t id)
     return namespaces + 0;
 }
 
-fontnamespaceid_t Fonts_Namespace(fontbind_t* fb)
-{
-    if(!fb)
-    {
-#if _DEBUG
-        Con_Message("Warning:Fonts::Namespace: Attempted with invalid reference [%p], returning invalid id.\n", (void*)fb);
-#endif
-        return FN_INVALID;
-    }
-    return namespaceIdForDirectory(PathDirectoryNode_Directory(FontBind_DirectoryNode(fb)));
-}
-
-void Fonts_ClearRuntime(void)
-{
-    errorIfNotInited("Fonts::ClearRuntimeFonts");
-    Fonts_ReleaseRuntimeGLResources();
-    //destroyFonts(FN_GAME);
-#pragma message("!!!Fonts::ClearRuntimeFonts not yet implemented!!!")
-}
-
-void Fonts_ClearSystem(void)
-{
-    errorIfNotInited("Fonts::ClearSystemFonts");
-    Fonts_ReleaseSystemGLResources();
-#pragma message("!!!Fonts::ClearSystemFonts not yet implemented!!!")
-}
-
-void Fonts_Clear(void)
-{
-    Fonts_ClearRuntime();
-    Fonts_ClearSystem();
-}
-
-void Fonts_ClearDefinitionLinks(void)
-{
-    fontlist_node_t* node;
-    errorIfNotInited("Fonts::ClearDefinitionLinks");
-
-    for(node = fonts; node; node = node->next)
-    {
-        font_t* font = node->font;
-        if(Font_Type(font) == FT_BITMAPCOMPOSITE)
-        {
-            BitmapCompositeFont_SetDefinition(font, NULL);
-        }
-    }
-}
-
 uint Fonts_Size(void)
 {
-    return bindingsCount;
+    return fontIdMapSize;
 }
 
 uint Fonts_Count(fontnamespaceid_t namespaceId)
 {
-    PathDirectory* fontDirectory;
+    PathDirectory* directory;
     if(!VALID_FONTNAMESPACEID(namespaceId) || !Fonts_Size()) return 0;
-    fontDirectory = getDirectoryForNamespaceId(namespaceId);
-    if(!fontDirectory) return 0;
-    return PathDirectory_Size(fontDirectory);
+    directory = getDirectoryForNamespaceId(namespaceId);
+    if(!directory) return 0;
+    return PathDirectory_Size(directory);
 }
 
-void Fonts_Rebuild(font_t* font, ded_compositefont_t* def)
+void Fonts_Clear(void)
 {
-    int i;
-    assert(font);
-    errorIfNotInited("Fonts::RebuildBitmapComposite");
+    if(!Fonts_Size()) return;
 
-    if(Font_Type(font) != FT_BITMAPCOMPOSITE)
+    Fonts_ClearNamespace(FN_ANY);
+    GL_PruneTextureVariantSpecifications();
+}
+
+void Fonts_ClearRuntime(void)
+{
+    if(!Fonts_Size()) return;
+
+    Fonts_ClearNamespace(FN_GAME);
+    GL_PruneTextureVariantSpecifications();
+}
+
+void Fonts_ClearSystem(void)
+{
+    if(!Textures_Size()) return;
+
+    Fonts_ClearNamespace(FN_SYSTEM);
+    GL_PruneTextureVariantSpecifications();
+}
+
+void Fonts_ClearNamespace(fontnamespaceid_t namespaceId)
+{
+    fontnamespaceid_t from, to, iter;
+    if(!Fonts_Size()) return;
+
+    if(namespaceId == FN_ANY)
     {
-        Con_Error("Fonts::RebuildBitmapComposite: Font is of invalid type %i.", (int) Font_Type(font));
+        from = FONTNAMESPACE_FIRST;
+        to   = FONTNAMESPACE_LAST;
+    }
+    else if(VALID_FONTNAMESPACEID(namespaceId))
+    {
+        from = to = namespaceId;
+    }
+    else
+    {
+        Con_Error("Fonts::ClearNamespace: Invalid font namespace %i.", (int) namespaceId);
         exit(1); // Unreachable.
     }
 
-    BitmapCompositeFont_SetDefinition(font, def);
-    if(!def) return;
-
-    for(i = 0; i < def->charMapCount.num; ++i)
+    for(iter = from; iter <= to; ++iter)
     {
-        ddstring_t* path;
-        if(!def->charMap[i].path) continue;
-
-        path = Uri_Resolved(def->charMap[i].path);
-        if(path)
-        {
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
-            Str_Delete(path);
-        }
+        fontnamespace_t* fn = &namespaces[iter - FONTNAMESPACE_FIRST];
+        PathDirectory_Iterate(fn->directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, destroyFontAndRecord);
+        PathDirectory_Clear(fn->directory);
+        fn->uniqueIdMapDirty = true;
     }
 }
 
-font_t* Fonts_ToFont(fontid_t num)
+void Fonts_Release(font_t* font)
 {
-    fontbind_t* fb;
-    errorIfNotInited("Fonts::ToFont");
-    fb = bindById((uint)num);
-    if(!fb) return NULL;
-    return FontBind_Font(fb);
-}
-
-fontid_t Fonts_Id(font_t* font)
-{
-    fontbind_t* fb;
-    errorIfNotInited("Fonts::ToFontNum");
-    if(!font) return 0;
-    fb = bindById(Font_BindId(font));
-    if(!fb) return 0;
-    return FontBind_Id(fb);
-}
-
-font_t* Fonts_CreateFromDef(ded_compositefont_t* def)
-{
-    font_t* font;
-    Uri* uri;
-    int i;
-    assert(def);
-    errorIfNotInited("Fonts::CreateFromDef");
-
-    // We require a properly formed uri.
-    uri = def->uri;
-    if(!validateFontUri2(uri, 0, (verbose >= 1)))
+    /// Stub.
+    switch(Font_Type(font))
     {
-        ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Font \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
-        Str_Delete(uriStr);
-        return NULL;
+    case FT_BITMAP:
+        BitmapFont_DeleteGLTexture(font);
+        BitmapFont_DeleteGLDisplayLists(font);
+        break;
+    case FT_BITMAPCOMPOSITE:
+        BitmapCompositeFont_DeleteGLTextures(font);
+        BitmapCompositeFont_DeleteGLDisplayLists(font);
+        break;
+    default:
+        Con_Error("Fonts::Release: Invalid font type %i.", (int) Font_Type(font));
+        exit(1); // Unreachable.
     }
-
-    // Have we already created a font for this?
-    font = findFontForUri(uri);
-    if(font)
-    {
-#if _DEBUG
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::CreateBitmapCompositeFromDef: A Font with the uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
-#endif
-        return font;
-    }
-
-    // A new Font.
-    font = linkFontToGlobalList(constructFont(FT_BITMAPCOMPOSITE));
-    BitmapCompositeFont_SetDefinition(font, def);
-
-    for(i = 0; i < def->charMapCount.num; ++i)
-    {
-        ddstring_t* path;
-        if(!def->charMap[i].path) continue;
-
-        path = Uri_Resolved(def->charMap[i].path);
-        if(path)
-        {
-            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
-            Str_Delete(path);
-        }
-    }
-    newFontBind(uri, font);
-
-    // Lets try and prepare it right away.
-    BitmapCompositeFont_Prepare(font);
-
-    VERBOSE(
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("New font \"%s\".\n", Str_Text(path));
-        Str_Delete(path);
-    )
-
-    return font;
-}
-
-/**
- * Creates a new font record for a file and attempts to prepare it.
- */
-static font_t* loadExternalFont(const Uri* uri, const char* filePath)
-{
-    font_t* font;
-    if(!inited) return NULL;
-
-    // We require a properly formed uri.
-    if(!validateFontUri2(uri, 0, (verbose >= 1)))
-    {
-        ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Material \"%s\" from file \"%s\", ignoring.\n", Str_Text(uriStr), filePath);
-        Str_Delete(uriStr);
-        return NULL;
-    }
-
-    // Have we already created a font for this?
-    font = findFontForUri(uri);
-    if(font)
-    {
-#if _DEBUG
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning:Fonts::loadExternalFont: A Font with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
-        Str_Delete(path);
-#endif
-        return font;
-    }
-
-    // A new Font.
-    font = linkFontToGlobalList(constructFont(FT_BITMAP));
-    BitmapFont_SetFilePath(font, filePath);
-    newFontBind(uri, font);
-
-    // Lets try and prepare it right away.
-    BitmapFont_Prepare(font);
-
-    VERBOSE(
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("New font \"%s\".\n", Str_Text(path));
-        Str_Delete(path);
-    )
-
-    return font;
 }
 
 static void Fonts_Prepare(font_t* font)
 {
-    errorIfNotInited("Fonts::Prepare");
-
     switch(Font_Type(font))
     {
     case FT_BITMAP:             BitmapFont_Prepare(font); break;
@@ -795,133 +565,6 @@ static void Fonts_Prepare(font_t* font)
         Con_Error("Fonts::Prepare: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.
     }
-}
-
-font_t* Fonts_CreateFromFile(const char* name, const char* searchPath)
-{
-    Uri* uri = Uri_NewWithPath2(name, RC_NULL);
-    font_t* font = NULL;
-    assert(name && searchPath && searchPath[0]);
-    errorIfNotInited("Fonts::LoadExternal");
-
-    if(0 == F_Access(searchPath))
-    {   
-        Uri_Delete(uri);
-        return font; // Error.
-    }
-
-    VERBOSE2(
-        ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Preparing bitmap font \"%s\" as \"%s\"...\n", F_PrettyPath(searchPath), Str_Text(path));
-        Str_Delete(path)
-    )
-
-    font = loadExternalFont(uri, searchPath);
-    if(!font)
-    {
-        Con_Message("Warning: Unknown format for %s\n", searchPath);
-        Uri_Delete(uri);
-        return 0; // Error.
-    }
-    Uri_Delete(uri);
-
-    return font;
-}
-
-void Fonts_ReleaseGLTexturesByNamespace(fontnamespaceid_t namespaceId)
-{
-    fontlist_node_t* node;
-    errorIfNotInited("Fonts::ReleaseGLTexturesByNamespace");
-
-    if(namespaceId != FN_ANY && !VALID_FONTNAMESPACEID(namespaceId))
-        Con_Error("Fonts::ReleaseGLTexturesByNamespace: Invalid namespace %i.", (int) namespaceId);
-
-    if(novideo || isDedicated) return;
-
-    for(node = fonts; node; node = node->next)
-    {
-        font_t* font = node->font;
-        
-        if(!(namespaceId == FN_ANY || !Font_BindId(font)))
-        {
-            fontbind_t* fb = bindById(Font_BindId(font));
-            if(fb && Fonts_Namespace(fb) != namespaceId) continue;
-        }
-
-        switch(Font_Type(font))
-        {
-        case FT_BITMAP:
-            BitmapFont_DeleteGLTexture(node->font);
-            break;
-        case FT_BITMAPCOMPOSITE:
-            BitmapCompositeFont_DeleteGLTextures(node->font);
-            break;
-        default:
-            Con_Error("Fonts::ReleaseGLTexturesByNamespace: Invalid font type %i.", (int) Font_Type(font));
-            exit(1); // Unreachable.
-        }
-    }
-}
-
-void Fonts_ReleaseRuntimeGLTextures(void)
-{
-    errorIfNotInited("Fonts::ReleaseRuntimeGLTextures");
-    Fonts_ReleaseGLTexturesByNamespace(FN_GAME);
-}
-
-void Fonts_ReleaseSystemGLTextures(void)
-{
-    errorIfNotInited("Fonts::ReleaseSystemGLTextures");
-    Fonts_ReleaseGLTexturesByNamespace(FN_SYSTEM);
-}
-
-void Fonts_ReleaseGLResourcesByNamespace(fontnamespaceid_t namespaceId)
-{
-    fontlist_node_t* node;
-    errorIfNotInited("Fonts::ReleaseGLResourcesByNamespace");
-
-    if(namespaceId != FN_ANY && !VALID_FONTNAMESPACEID(namespaceId))
-        Con_Error("Fonts::ReleaseGLResourcesByNamespace: Invalid namespace %i.", (int) namespaceId);
-
-    if(novideo || isDedicated) return;
-
-    for(node = fonts; node; node = node->next)
-    {
-        font_t* font = node->font;
-        
-        if(!(namespaceId == FN_ANY || !Font_BindId(font)))
-        {
-            fontbind_t* fb = bindById(Font_BindId(font));
-            if(fb && Fonts_Namespace(fb) != namespaceId) continue;
-        }
-
-        switch(Font_Type(font))
-        {
-        case FT_BITMAP:
-            BitmapFont_DeleteGLTexture(node->font);
-            BitmapFont_DeleteGLDisplayLists(node->font);
-            break;
-        case FT_BITMAPCOMPOSITE:
-            BitmapCompositeFont_DeleteGLTextures(node->font);
-            BitmapCompositeFont_DeleteGLDisplayLists(node->font);
-            break;
-        default:
-            Con_Error("Fonts::ReleaseGLResourcesByNamespace: Invalid font type %i.", (int) Font_Type(font));
-            exit(1); // Unreachable.
-        }
-    }
-}
-
-void Fonts_ReleaseRuntimeGLResources(void)
-{
-    errorIfNotInited("Fonts::ReleaseRuntimeTextures");
-    Fonts_ReleaseGLTexturesByNamespace(FN_GAME);
-}
-
-void Fonts_ReleaseSystemGLResources(void)
-{
-    errorIfNotInited("Fonts::ReleaseSystemTextures");
-    Fonts_ReleaseGLTexturesByNamespace(FN_SYSTEM);
 }
 
 int Fonts_Ascent(font_t* font)
@@ -944,7 +587,6 @@ int Fonts_Leading(font_t* font)
 
 int Fonts_CharWidth(font_t* font, unsigned char ch)
 {
-    assert(NULL != font);
     Fonts_Prepare(font);
     switch(Font_Type(font))
     {
@@ -958,7 +600,6 @@ int Fonts_CharWidth(font_t* font, unsigned char ch)
 
 int Fonts_CharHeight(font_t* font, unsigned char ch)
 {
-    assert(NULL != font);
     Fonts_Prepare(font);
     switch(Font_Type(font))
     {
@@ -972,26 +613,667 @@ int Fonts_CharHeight(font_t* font, unsigned char ch)
 
 void Fonts_CharDimensions(font_t* font, int* width, int* height, unsigned char ch)
 {
-    assert(NULL != font);
-    if(!width && !height)
-        return;
+    if(!width && !height) return;
     if(width)  *width  = Fonts_CharWidth(font, ch);
     if(height) *height = Fonts_CharHeight(font, ch);
 }
 
-static void printFontOverview(const fontbind_t* fb, boolean printNamespace)
+font_t* Fonts_ToFont(fontid_t id)
 {
-    int numDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Size()));
-    font_t* font = FontBind_Font(fb);
-    Uri* uri = Fonts_ComposeUri(font);
+    PathDirectoryNode* node;
+    if(!validFontId(id))
+    {
+#if _DEBUG
+        if(id != NOFONTID)
+        {
+            Con_Message("Warning:Fonts::ToFont: Failed to locate font for id #%i, returning NULL.\n", id);
+        }
+#endif
+        return NULL;
+    }
+    node = getDirectoryNodeForBindId(id);
+    if(!node) return NULL;
+    return ((fontrecord_t*)PathDirectoryNode_UserData(node))->font;
+}
+
+typedef struct {
+    int minId, maxId;
+} finduniqueidbounds_params_t;
+
+static int findUniqueIdBounds(PathDirectoryNode* node, void* paramaters)
+{
+    const fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    finduniqueidbounds_params_t* p = (finduniqueidbounds_params_t*)paramaters;
+    if(record->uniqueId < p->minId) p->minId = record->uniqueId;
+    if(record->uniqueId > p->maxId) p->maxId = record->uniqueId;
+    return 0; // Continue iteration.
+}
+
+static void rebuildUniqueIdMap(fontnamespaceid_t namespaceId)
+{
+    fontnamespace_t* fn = &namespaces[namespaceId - FONTNAMESPACE_FIRST];
+    fontnamespaceid_t localNamespaceId = namespaceId;
+    finduniqueidbounds_params_t p;
+    assert(VALID_FONTNAMESPACEID(namespaceId));
+
+    if(!fn->uniqueIdMapDirty) return;
+
+    // Determine the size of the LUT.
+    p.minId = DDMAXINT;
+    p.maxId = DDMININT;
+    iterateDirectory(namespaceId, findUniqueIdBounds, (void*)&p);
+
+    if(p.minId > p.maxId)
+    {
+        // None found.
+        fn->uniqueIdBase = 0;
+        fn->uniqueIdMapSize = 0;
+    }
+    else
+    {
+        fn->uniqueIdBase = p.minId;
+        fn->uniqueIdMapSize = p.maxId - p.minId + 1;
+    }
+
+    // Construct and (re)populate the LUT.
+    fn->uniqueIdMap = (fontid_t*)realloc(fn->uniqueIdMap, sizeof *fn->uniqueIdMap * fn->uniqueIdMapSize);
+    if(!fn->uniqueIdMap && fn->uniqueIdMapSize)
+        Con_Error("Fonts::rebuildUniqueIdMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *fn->uniqueIdMap * fn->uniqueIdMapSize);
+
+    if(fn->uniqueIdMapSize)
+    {
+        memset(fn->uniqueIdMap, NOFONTID, sizeof *fn->uniqueIdMap * fn->uniqueIdMapSize);
+        iterateDirectory(namespaceId, linkRecordInUniqueIdMap, (void*)&localNamespaceId);
+    }
+    fn->uniqueIdMapDirty = false;
+}
+
+fontid_t Fonts_FontForUniqueId(fontnamespaceid_t namespaceId, int uniqueId)
+{
+    if(VALID_FONTNAMESPACEID(namespaceId))
+    {
+        fontnamespace_t* fn = &namespaces[namespaceId - FONTNAMESPACE_FIRST];
+
+        rebuildUniqueIdMap(namespaceId);
+        if(fn->uniqueIdMap && uniqueId >= fn->uniqueIdBase &&
+           (unsigned)(uniqueId - fn->uniqueIdBase) <= fn->uniqueIdMapSize)
+        {
+            return fn->uniqueIdMap[uniqueId - fn->uniqueIdBase];
+        }
+    }
+    return NOFONTID; // Not found.
+}
+
+fontid_t Fonts_ResolveUri2(const Uri* uri, boolean quiet)
+{
+    PathDirectoryNode* node;
+    if(!uri || !Fonts_Size()) return NOFONTID;
+
+    if(!validateFontUri2(uri, VFUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
+    {
+#if _DEBUG
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning:Fonts::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Str_Delete(uriStr);
+#endif
+        return NOFONTID;
+    }
+
+    // Perform the search.
+    node = findDirectoryNodeForUri(uri);
+    if(node)
+    {
+        // If we have bound a font - it can provide the id.
+        fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+        assert(record);
+        if(record->font)
+        {
+            fontid_t id = Font_PrimaryBind(record->font);
+            if(validFontId(id)) return id;
+        }
+        // Oh well, look it up then.
+        return findBindIdForDirectoryNode(node);
+    }
+
+    // Not found.
+    if(!quiet)
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Fonts::ResolveUri: \"%s\" not found!\n", Str_Text(path));
+        Str_Delete(path);
+    }
+    return NOFONTID;
+}
+
+/// \note Part of the Doomsday public API.
+fontid_t Fonts_ResolveUri(const Uri* uri)
+{
+    return Fonts_ResolveUri2(uri, !(verbose >= 1)/*log warnings if verbose*/);
+}
+
+fontid_t Fonts_ResolveUriCString2(const char* path, boolean quiet)
+{
+    if(path && path[0])
+    {
+        Uri* uri = Uri_NewWithPath2(path, RC_NULL);
+        fontid_t id = Fonts_ResolveUri2(uri, quiet);
+        Uri_Delete(uri);
+        return id;
+    }
+    return NOFONTID;
+}
+
+fontid_t Fonts_ResolveUriCString(const char* path)
+{
+    return Fonts_ResolveUriCString2(path, !(verbose >= 1)/*log warnings if verbose*/);
+}
+
+fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
+{
+    PathDirectoryNode* node;
+    fontrecord_t* record;
+    fontid_t id;
+    boolean releaseFont = false;
+    assert(uri);
+
+    // We require a properly formed uri (but not a urn - this is a path).
+    if(!validateFontUri2(uri, VFUF_NO_URN, (verbose >= 1)))
+    {
+        ddstring_t* uriStr = Uri_ToString(uri);
+        Con_Message("Warning, failed to create Font \"%s\", ignoring.\n", Str_Text(uriStr));
+        Str_Delete(uriStr);
+        return NOFONTID;
+    }
+
+    // Have we already created a binding for this?
+    node = findDirectoryNodeForUri(uri);
+    if(node)
+    {
+        record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+        assert(record);
+        id = findBindIdForDirectoryNode(node);
+    }
+    else
+    {
+        // A new binding.
+        fontnamespaceid_t namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+        fontnamespace_t* fn = &namespaces[namespaceId - FONTNAMESPACE_FIRST];
+        ddstring_t path;
+        int i, pathLen;
+
+        // Ensure the path is lowercase.
+        pathLen = Str_Length(Uri_Path(uri));
+        Str_Init(&path);
+        Str_Reserve(&path, pathLen);
+        for(i = 0; i < pathLen; ++i)
+        {
+            Str_AppendChar(&path, tolower(Str_At(Uri_Path(uri), i)));
+        }
+
+        record = (fontrecord_t*)malloc(sizeof *record);
+        if(!record)
+            Con_Error("Fonts::Declare: Failed on allocation of %lu bytes for new FontRecord.", (unsigned long) sizeof *record);
+        record->font = NULL;
+        //record->resourcePath = NULL;
+        record->uniqueId = uniqueId;
+
+        node = PathDirectory_Insert(fn->directory, Str_Text(&path), FONTS_PATH_DELIMITER);
+        PathDirectoryNode_AttachUserData(node, record);
+
+        // We'll need to rebuild the unique id map too.
+        fn->uniqueIdMapDirty = true;
+
+        id = fontIdMapSize + 1; // 1-based identfier
+        // Link it into the id map.
+        fontIdMap = (PathDirectoryNode**) realloc(fontIdMap, sizeof *fontIdMap * ++fontIdMapSize);
+        if(!fontIdMap)
+            Con_Error("Fonts::Declare: Failed on (re)allocation of %lu bytes enlarging bindId to PathDirectoryNode LUT.", (unsigned long) sizeof *fontIdMap * fontIdMapSize);
+        fontIdMap[id - 1] = node;
+
+        Str_Free(&path);
+    }
+
+    /**
+     * (Re)configure this binding.
+     */
+
+    // We don't care whether these identfiers are truely unique. Our only
+    // responsibility is to release fonts when they change.
+    if(record->uniqueId != uniqueId)
+    {
+        fontnamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
+        fontnamespace_t* fn = &namespaces[namespaceId - FONTNAMESPACE_FIRST];
+
+        record->uniqueId = uniqueId;
+        releaseFont = true;
+
+        // We'll need to rebuild the id map too.
+        fn->uniqueIdMapDirty = true;
+    }
+
+    /*if(resourcePath)
+    {
+        if(!record->resourcePath)
+        {
+            record->resourcePath = Uri_NewCopy(resourcePath);
+            releaseFont = true;
+        }
+        else if(!Uri_Equality(record->resourcePath, resourcePath))
+        {
+            Uri_Copy(record->resourcePath, resourcePath);
+            releaseFont = true;
+        }
+    }
+    else if(record->resourcePath)
+    {
+        Uri_Delete(record->resourcePath);
+        record->resourcePath = NULL;
+        releaseFont = true;
+    }*/
+
+    if(releaseFont && record->font)
+    {
+        // The mapped resource is being replaced, so release any existing Font.
+        /// \todo Only release if this Font is bound to only this binding.
+        Fonts_Release(record->font);
+    }
+
+    return id;
+}
+
+static font_t* createFont(fonttype_t type, fontid_t bindId)
+{
+    switch(type)
+    {
+    case FT_BITMAP:             return BitmapFont_New(bindId);
+    case FT_BITMAPCOMPOSITE:    return BitmapCompositeFont_New(bindId);
+    default:
+        Con_Error("Fonts::ConstructFont: Unknown font type %i.", (int)type);
+        exit(1); // Unreachable.
+    }
+}
+
+static font_t* createFontFromDef(fontid_t bindId, ded_compositefont_t* def)
+{
+    font_t* font = createFont(FT_BITMAPCOMPOSITE, bindId);
+    int i;
+    assert(def);
+    BitmapCompositeFont_SetDefinition(font, def);
+
+    for(i = 0; i < def->charMapCount.num; ++i)
+    {
+        ddstring_t* path;
+        if(!def->charMap[i].path) continue;
+
+        path = Uri_Resolved(def->charMap[i].path);
+        if(path)
+        {
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
+            Str_Delete(path);
+        }
+    }
+
+    // Lets try to prepare it right away.
+    BitmapCompositeFont_Prepare(font);
+    return font;
+}
+
+static font_t* createFontFromFile(fontid_t bindId, const char* resourcePath)
+{
+    font_t* font = createFont(FT_BITMAP, bindId);
+    assert(resourcePath);
+    BitmapFont_SetFilePath(font, resourcePath);
+
+    // Lets try and prepare it right away.
+    BitmapFont_Prepare(font);
+    return font;
+}
+
+void Fonts_RebuildFromDef(font_t* font, ded_compositefont_t* def)
+{
+    int i;
+
+    if(Font_Type(font) != FT_BITMAPCOMPOSITE)
+    {
+        Con_Error("Fonts::RebuildFromDef: Font is of invalid type %i.", (int) Font_Type(font));
+        exit(1); // Unreachable.
+    }
+
+    BitmapCompositeFont_SetDefinition(font, def);
+    if(!def) return;
+
+    for(i = 0; i < def->charMapCount.num; ++i)
+    {
+        ddstring_t* path;
+        if(!def->charMap[i].path) continue;
+
+        path = Uri_Resolved(def->charMap[i].path);
+        if(path)
+        {
+            BitmapCompositeFont_CharSetPatch(font, def->charMap[i].ch, Str_Text(path));
+            Str_Delete(path);
+        }
+    }
+}
+
+font_t* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    fontrecord_t* record;
+    if(!node)
+    {
+        Con_Message("Warning, failed to create Font #%u (invalid id), ignoring.\n", id);
+        return NULL;
+    }
+
+    if(!def)
+    {
+        Con_Message("Warning, failed to create Font #%u (def=NULL), ignoring.\n", id);
+        return NULL;
+    }
+
+    record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    assert(record);
+    if(record->font)
+    {
+        /// \todo Do not update fonts here (not enough knowledge). We should instead
+        /// return an invalid reference/signal and force the caller to implement the
+        /// necessary update logic.
+        font_t* font = record->font;
+#if _DEBUG
+        Uri* uri = Fonts_ComposeUri(id);
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning:Fonts::CreateFromDef: A Font with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+#endif
+        Fonts_RebuildFromDef(font, def);
+        return font;
+    }
+
+    // A new font.
+    record->font = createFontFromDef(id, def);
+    if(record->font && verbose >= 1)
+    {
+        Uri* uri = Fonts_ComposeUri(id);
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("New font \"%s\"\n", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+    }
+
+    return record->font;
+}
+
+void Fonts_RebuildFromFile(font_t* font, const char* resourcePath)
+{
+    if(Font_Type(font) != FT_BITMAP)
+    {
+        Con_Error("Fonts::RebuildFromFile: Font is of invalid type %i.", (int) Font_Type(font));
+        exit(1); // Unreachable.
+    }
+    BitmapFont_SetFilePath(font, resourcePath);
+}
+
+font_t* Fonts_CreateFromFile(fontid_t id, const char* resourcePath)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    fontrecord_t* record;
+    if(!node)
+    {
+        Con_Message("Warning, failed to create Font #%u (invalid id), ignoring.\n", id);
+        return NULL;
+    }
+
+    if(!resourcePath || !resourcePath[0])
+    {
+        Con_Message("Warning, failed to create Font #%u (resourcePath=NULL), ignoring.\n", id);
+        return NULL;
+    }
+
+    record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    assert(record);
+    if(record->font)
+    {
+        /// \todo Do not update fonts here (not enough knowledge). We should instead
+        /// return an invalid reference/signal and force the caller to implement the
+        /// necessary update logic.
+        font_t* font = record->font;
+#if _DEBUG
+        Uri* uri = Fonts_ComposeUri(id);
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning:Fonts::CreateFromFile: A Font with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+#endif
+        Fonts_RebuildFromFile(font, resourcePath);
+        return font;
+    }
+
+    // A new font.
+    record->font = createFontFromFile(id, resourcePath);
+    if(record->font && verbose >= 1)
+    {
+        Uri* uri = Fonts_ComposeUri(id);
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("New font \"%s\"\n", Str_Text(path));
+        Str_Delete(path);
+        Uri_Delete(uri);
+    }
+
+    return record->font;
+}
+
+int Fonts_UniqueId(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
+        Con_Error("Fonts::UniqueId: Passed invalid fontId #%u.", id);
+    return ((fontrecord_t*)PathDirectoryNode_UserData(node))->uniqueId;
+}
+
+/*const Uri* Fonts_ResourcePath(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node) return emptyUri;
+    return ((fontrecord_t*)PathDirectoryNode_UserData(node))->resourcePath;
+}*/
+
+fontid_t Fonts_Id(font_t* font)
+{
+    if(!font)
+    {
+#if _DEBUG
+        Con_Message("Warning:Fonts::Id: Attempted with invalid reference [%p], returning invalid id.\n", (void*)font);
+#endif
+        return NOFONTID;
+    }
+    return Font_PrimaryBind(font);
+}
+
+fontnamespaceid_t Fonts_Namespace(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
+    {
+#if _DEBUG
+        if(id != NOFONTID)
+        {
+            Con_Message("Warning:Fonts::Namespace: Attempted with unbound fontId #%u, returning null-object.\n", id);
+        }
+#endif
+        return FN_ANY;
+    }
+    return namespaceIdForDirectoryNode(node);
+}
+
+ddstring_t* Fonts_ComposePath(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
+    {
+#if _DEBUG
+        Con_Message("Warning:Fonts::ComposePath: Attempted with unbound fontId #%u, returning null-object.\n", id);
+#endif
+        return Str_New();
+    }
+    return composePathForDirectoryNode(node, FONTS_PATH_DELIMITER);
+}
+
+Uri* Fonts_ComposeUri(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    if(!node)
+    {
+#if _DEBUG
+        if(id != NOFONTID)
+        {
+            Con_Message("Warning:Fonts::ComposeUri: Attempted with unbound fontId #%u, returning null-object.\n", id);
+        }
+#endif
+        return Uri_New();
+    }
+    return composeUriForDirectoryNode(node);
+}
+
+Uri* Fonts_ComposeUrn(fontid_t id)
+{
+    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    const ddstring_t* namespaceName;
+    const fontrecord_t* record;
+    Uri* uri = Uri_New();
+    ddstring_t path;
+    if(!node)
+    {
+#if _DEBUG
+        if(id != NOFONTID)
+        {
+            Con_Message("Warning:Fonts::ComposeUrn: Attempted with unbound fontId #%u, returning null-object.\n", id);
+        }
+#endif
+        return uri;
+    }
+    record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    assert(record);
+    namespaceName = Fonts_NamespaceName(namespaceIdForDirectoryNode(node));
+    Str_Init(&path);
+    Str_Reserve(&path, Str_Length(namespaceName) +1/*delimiter*/ +M_NumDigits(DDMAXINT));
+    Str_Appendf(&path, "%s:%i", Str_Text(namespaceName), record->uniqueId);
+    Uri_SetScheme(uri, "urn");
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+    return uri;
+}
+
+typedef struct {
+    int (*definedCallback)(font_t* font, void* paramaters);
+    int (*declaredCallback)(fontid_t id, void* paramaters);
+    void* paramaters;
+} iteratedirectoryworker_params_t;
+
+static int iterateDirectoryWorker(PathDirectoryNode* node, void* paramaters)
+{
+    iteratedirectoryworker_params_t* p = (iteratedirectoryworker_params_t*)paramaters;
+    fontrecord_t* record = (fontrecord_t*)PathDirectoryNode_UserData(node);
+    assert(node && p && record);
+    if(p->definedCallback)
+    {
+        if(record->font)
+        {
+            return p->definedCallback(record->font, p->paramaters);
+        }
+    }
+    else
+    {
+        fontid_t id = NOFONTID;
+
+        // If we have bound a font it can provide the id.
+        if(record->font)
+            id = Font_PrimaryBind(record->font);
+        // Otherwise look it up.
+        if(!validFontId(id))
+            id = findBindIdForDirectoryNode(node);
+        // Sanity check.
+        assert(validFontId(id));
+
+        return p->declaredCallback(id, p->paramaters);
+    }
+    return 0; // Continue iteration.
+}
+
+static int iterateDirectory(fontnamespaceid_t namespaceId,
+    int (*callback)(PathDirectoryNode* node, void* paramaters), void* paramaters)
+{
+    fontnamespaceid_t from, to, iter;
+    int result = 0;
+
+    if(VALID_FONTNAMESPACEID(namespaceId))
+    {
+        from = to = namespaceId;
+    }
+    else
+    {
+        from = FONTNAMESPACE_FIRST;
+        to   = FONTNAMESPACE_LAST;
+    }
+
+    for(iter = from; iter <= to; ++iter)
+    {
+        PathDirectory* directory = getDirectoryForNamespaceId(iter);
+        result = PathDirectory_Iterate2(directory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, callback, paramaters);
+        if(result) break;
+    }
+    return result;
+}
+
+int Fonts_Iterate2(fontnamespaceid_t namespaceId,
+    int (*callback)(font_t* font, void* paramaters), void* paramaters)
+{
+    iteratedirectoryworker_params_t p;
+    if(!callback) return 0;
+    p.definedCallback = callback;
+    p.declaredCallback = NULL;
+    p.paramaters = paramaters;
+    return iterateDirectory(namespaceId, iterateDirectoryWorker, &p);
+}
+
+int Fonts_Iterate(fontnamespaceid_t namespaceId,
+    int (*callback)(font_t* font, void* paramaters))
+{
+    return Fonts_Iterate2(namespaceId, callback, NULL/*no paramaters*/);
+}
+
+int Fonts_IterateDeclared2(fontnamespaceid_t namespaceId,
+    int (*callback)(fontid_t fontId, void* paramaters), void* paramaters)
+{
+    iteratedirectoryworker_params_t p;
+    if(!callback) return 0;
+    p.declaredCallback = callback;
+    p.definedCallback = NULL;
+    p.paramaters = paramaters;
+    return iterateDirectory(namespaceId, iterateDirectoryWorker, &p);
+}
+
+int Fonts_IterateDeclared(fontnamespaceid_t namespaceId,
+    int (*callback)(fontid_t fontId, void* paramaters))
+{
+    return Fonts_IterateDeclared2(namespaceId, callback, NULL/*no paramaters*/);
+}
+
+static void printFontOverview(PathDirectoryNode* node, boolean printNamespace)
+{
+    fontrecord_t* record = (fontrecord_t*) PathDirectoryNode_UserData(node);
+    fontid_t fontId = findBindIdForDirectoryNode(node);
+    int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Size()));
+    Uri* uri = record->font? Fonts_ComposeUri(fontId) : Uri_New();
     const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    font_t* font = record->font;
 
-    Con_Printf("%-*s %*u %s",
-        printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numDigits, (unsigned int) Fonts_Id(font),
-        Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
+    Con_FPrintf(!font? CPF_LIGHT : CPF_WHITE,
+        "%-*s %*u %s", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        numUidDigits, fontId, !font? "unknown" : Font_Type(font) == FT_BITMAP? "bitmap" : "bitmap_composite");
 
-    if(Font_IsPrepared(font))
+    if(font && Font_IsPrepared(font))
     {
         Con_Printf(" (ascent:%i, descent:%i, leading:%i", Fonts_Ascent(font), Fonts_Descent(font), Fonts_Leading(font));
         if(Font_Type(font) == FT_BITMAP && BitmapFont_GLTextureName(font))
@@ -1048,7 +1330,7 @@ static int collectDirectoryNodeWorker(PathDirectoryNode* node, void* paramaters)
 }
 
 static PathDirectoryNode** collectDirectoryNodes(fontnamespaceid_t namespaceId,
-    const char* like, int* count, PathDirectoryNode** storage)
+    const char* like, uint* count, PathDirectoryNode** storage)
 {
     collectdirectorynodeworker_params_t p;
     fontnamespaceid_t fromId, toId, iterId;
@@ -1078,7 +1360,7 @@ static PathDirectoryNode** collectDirectoryNodes(fontnamespaceid_t namespaceId,
 
     if(storage)
     {
-        storage[p.idx] = 0; // Terminate.
+        storage[p.idx] = NULL; // Terminate.
         if(count) *count = p.idx;
         return storage;
     }
@@ -1105,12 +1387,25 @@ static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* no
     return delta;
 }
 
-static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like,
-    boolean printNamespace)
+/**
+ * @defgroup printFontFlags  Print Font Flags
+ * @{
+ */
+#define PFF_TRANSFORM_PATH_NO_NAMESPACE 0x1 /// Do not print the namespace.
+/**@}*/
+
+#define DEFAULT_PRINTFONTFLAGS          0
+
+/**
+ * @param flags  @see printFontFlags
+ */
+static size_t printFonts3(fontnamespaceid_t namespaceId, const char* like, int flags)
 {
-    int numFoundDigits, numUidDigits, idx, count = 0;
+    const boolean printNamespace = !(flags & PFF_TRANSFORM_PATH_NO_NAMESPACE);
+    uint idx, count = 0;
     PathDirectoryNode** foundFonts = collectDirectoryNodes(namespaceId, like, &count, NULL);
     PathDirectoryNode** iter;
+    int numFoundDigits, numUidDigits;
 
     if(!foundFonts) return 0;
 
@@ -1124,10 +1419,11 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like,
     Con_FPrintf(CPF_YELLOW, ":\n");
 
     // Print the result index key.
-    numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits(count));
-    numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Fonts_Size()));
+    numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
+    numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Fonts_Size()));
     Con_Printf(" %*s: %-*s %*s type", numFoundDigits, "idx",
-        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path", numUidDigits, "uid");
+        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
+        numUidDigits, "uid");
 
     // Fonts may be prepared only if GL is inited thus if we can't prepare, we can't list property values.
     if(GL_IsInited())
@@ -1138,34 +1434,33 @@ static size_t printFonts2(fontnamespaceid_t namespaceId, const char* like,
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundFonts, count, sizeof *foundFonts, composeAndCompareDirectoryNodePaths);
+    qsort(foundFonts, (size_t)count, sizeof *foundFonts, composeAndCompareDirectoryNodePaths);
 
     idx = 0;
     for(iter = foundFonts; *iter; ++iter)
     {
-        const PathDirectoryNode* node = *iter;
-        fontbind_t* fb = (fontbind_t*)PathDirectoryNode_UserData(node);
-        Con_Printf(" %*i: ", numFoundDigits, idx++);
-        printFontOverview(fb, printNamespace);
+        PathDirectoryNode* node = *iter;
+        Con_Printf(" %*u: ", numFoundDigits, idx++);
+        printFontOverview(node, printNamespace);
     }
 
     free(foundFonts);
     return count;
 }
 
-static void printFonts(fontnamespaceid_t namespaceId, const char* like)
+static void printFonts2(fontnamespaceid_t namespaceId, const char* like, int flags)
 {
     size_t printTotal = 0;
     // Do we care which namespace?
     if(namespaceId == FN_ANY && like && like[0])
     {
-        printTotal = printFonts2(namespaceId, like, true);
+        printTotal = printFonts3(namespaceId, like, flags & ~PFF_TRANSFORM_PATH_NO_NAMESPACE);
         Con_PrintRuler();
     }
     // Only one namespace to print?
     else if(VALID_FONTNAMESPACEID(namespaceId))
     {
-        printTotal = printFonts2(namespaceId, like, false);
+        printTotal = printFonts3(namespaceId, like, flags | PFF_TRANSFORM_PATH_NO_NAMESPACE);
         Con_PrintRuler();
     }
     else
@@ -1174,7 +1469,7 @@ static void printFonts(fontnamespaceid_t namespaceId, const char* like)
         int i;
         for(i = FONTNAMESPACE_FIRST; i <= FONTNAMESPACE_LAST; ++i)
         {
-            size_t printed = printFonts2((fontnamespaceid_t)i, like, false);
+            size_t printed = printFonts3((fontnamespaceid_t)i, like, flags | PFF_TRANSFORM_PATH_NO_NAMESPACE);
             if(printed != 0)
             {
                 printTotal += printed;
@@ -1185,12 +1480,70 @@ static void printFonts(fontnamespaceid_t namespaceId, const char* like)
     Con_Printf("Found %lu %s.\n", (unsigned long) printTotal, printTotal == 1? "Font" : "Fonts");
 }
 
+static void printFonts(fontnamespaceid_t namespaceId, const char* like)
+{
+    printFonts2(namespaceId, like, DEFAULT_PRINTFONTFLAGS);
+}
+
+static int clearDefinitionLinks(font_t* font, void* paramaters)
+{
+    if(Font_Type(font) == FT_BITMAPCOMPOSITE)
+    {
+        BitmapCompositeFont_SetDefinition(font, NULL);
+    }
+    return 0; // Continue iteration.
+}
+
+void Fonts_ClearDefinitionLinks(void)
+{
+    if(!Fonts_Size()) return;
+    Fonts_Iterate(FN_ANY, clearDefinitionLinks);
+}
+
+static int releaseFontTextures(font_t* font, void* paramaters)
+{
+    switch(Font_Type(font))
+    {
+    case FT_BITMAP:
+        BitmapFont_DeleteGLTexture(font);
+        break;
+    case FT_BITMAPCOMPOSITE:
+        BitmapCompositeFont_DeleteGLTextures(font);
+        break;
+    default:
+        Con_Error("Fonts::ReleaseFontTextures: Invalid font type %i.", (int) Font_Type(font));
+        exit(1); // Unreachable.
+    }
+    return 0; // Continue iteration.
+}
+
+void Fonts_ReleaseTexturesByNamespace(fontnamespaceid_t namespaceId)
+{
+    if(novideo || isDedicated) return;
+    if(!Fonts_Size()) return;
+    Fonts_Iterate(namespaceId, releaseFontTextures);
+}
+
+void Fonts_ReleaseTextures(void)
+{
+    Fonts_ReleaseTexturesByNamespace(FN_ANY);
+}
+
+void Fonts_ReleaseRuntimeTextures(void)
+{
+    Fonts_ReleaseTexturesByNamespace(FN_GAME);
+}
+
+void Fonts_ReleaseSystemTextures(void)
+{
+    Fonts_ReleaseTexturesByNamespace(FN_SYSTEM);
+}
+
 ddstring_t** Fonts_CollectNames(int* rCount)
 {
-    int count = 0;
+    uint count = 0;
     PathDirectoryNode** foundFonts;
     ddstring_t** list = NULL;
-    errorIfNotInited("Fonts::CollectNames");
 
     foundFonts = collectDirectoryNodes(FN_ANY, NULL, &count, 0);
     if(foundFonts)
@@ -1207,8 +1560,7 @@ ddstring_t** Fonts_CollectNames(int* rCount)
         idx = 0;
         for(iter = foundFonts; *iter; ++iter)
         {
-            fontbind_t* fb = (fontbind_t*)PathDirectoryNode_UserData(*iter);
-            list[idx++] = Fonts_ComposePath(FontBind_Font(fb));
+            list[idx++] = composePathForDirectoryNode(*iter, FONTS_PATH_DELIMITER);
         }
         list[idx] = NULL; // Terminate.
     }
@@ -1236,7 +1588,7 @@ D_CMD(ListFonts)
         Uri_SetScheme(uri, argv[1]);
         Uri_SetPath(uri, argv[2]);
 
-        namespaceId = DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri)));
+        namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
         if(!VALID_FONTNAMESPACEID(namespaceId))
         {
             Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
@@ -1251,7 +1603,7 @@ D_CMD(ListFonts)
         uri = Uri_NewWithPath2(argv[1], RC_NULL);
         if(!Str_IsEmpty(Uri_Scheme(uri)))
         {
-            namespaceId = DD_ParseFontNamespace(Str_Text(Uri_Scheme(uri)));
+            namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {
                 Con_Printf("Invalid namespace \"%s\".\n", Str_Text(Uri_Scheme(uri)));
@@ -1264,7 +1616,7 @@ D_CMD(ListFonts)
         }
         else
         {
-            namespaceId = DD_ParseFontNamespace(Str_Text(Uri_Path(uri)));
+            namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Path(uri)));
 
             if(!VALID_FONTNAMESPACEID(namespaceId))
             {
@@ -1284,6 +1636,13 @@ D_CMD(ListFonts)
 D_CMD(PrintFontStats)
 {
     fontnamespaceid_t namespaceId;
+
+    if(!Fonts_Size())
+    {
+        Con_Message("There are currently no fonts defined/loaded.\n");
+        return true;
+    }
+
     Con_FPrintf(CPF_YELLOW, "Font Statistics:\n");
     for(namespaceId = FONTNAMESPACE_FIRST; namespaceId <= FONTNAMESPACE_LAST; ++namespaceId)
     {

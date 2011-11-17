@@ -35,6 +35,9 @@
 #include "m_nodepile.h"
 #include "def_data.h"
 
+struct texture_s;
+struct font_s;
+
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
@@ -465,5 +468,8 @@ void R_AddAnimGroupFrame(int animGroupNum, const Uri* texture, int tics, int ran
 
 /// @return  @c true iff @a texture is linked to the identified @a animGroupNum.
 boolean R_IsTextureInAnimGroup(const Uri* texture, int animGroupNum);
+
+struct font_s* R_CreateFontFromFile(const Uri* uri, const char* resourcePath);
+struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);
 
 #endif /* LIBDENG_REFRESH_DATA_H */

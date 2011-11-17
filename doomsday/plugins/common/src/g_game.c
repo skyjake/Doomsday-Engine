@@ -815,7 +815,7 @@ void R_LoadVectorGraphics(void)
 fontid_t R_MustFindFontForName(const char* name)
 {
     Uri* uri = Uri_NewWithPath2(name, RC_NULL);
-    fontid_t fontId = Fonts_IndexForUri(uri);
+    fontid_t fontId = Fonts_ResolveUri(uri);
     Uri_Delete(uri);
     if(fontId) return fontId;
     Con_Error("Failed loading font \"%s\".", name);

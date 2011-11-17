@@ -246,7 +246,6 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
-    Fonts_Shutdown();
     Materials_Shutdown();
     Def_Destroy();
     F_ShutdownResourceLocator();

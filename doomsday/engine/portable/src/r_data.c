@@ -42,9 +42,8 @@
 #include "de_audio.h" // For texture, environmental audio properties.
 
 #include "colorpalette.h"
-#include "m_stack.h"
 #include "texture.h"
-#include "materialvariant.h"
+#include "font.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2988,6 +2987,102 @@ boolean R_IsTextureInAnimGroup(const Uri* texture, int groupNum)
     animgroup_t* group = getAnimGroup(groupNum);
     if(!group) return false;
     return isInAnimGroup(group, Textures_ResolveUri2(texture, true/*quiet please*/));
+}
+
+font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
+{
+    fontnamespaceid_t namespaceId;
+    fontid_t fontId;
+    int uniqueId;
+    font_t* font;
+
+    if(!uri || !resourcePath || !resourcePath[0] || !F_Access(resourcePath))
+    {
+#if _DEBUG
+        Con_Message("Warning:R_CreateFontFromFile: Invalid Uri or ResourcePath reference, ignoring.\n");
+#endif
+        return NULL;
+    }
+
+    namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(uri)));
+    if(!VALID_FONTNAMESPACEID(namespaceId))
+    {
+        ddstring_t* path = Uri_ToString(uri);
+        Con_Message("Warning, invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
+        Str_Delete(path);
+        return NULL;
+    }
+
+    uniqueId = Fonts_Count(namespaceId)+1; // 1-based index.
+    fontId = Fonts_Declare(uri, uniqueId/*, resourcePath*/);
+    if(fontId == NOFONTID) return NULL; // Invalid uri?
+
+    // Have we already encountered this name?
+    font = Fonts_ToFont(fontId);
+    if(font)
+    {
+        Fonts_RebuildFromFile(font, resourcePath);
+    }
+    else
+    {
+        // A new font.
+        font = Fonts_CreateFromFile(fontId, resourcePath);
+        if(!font)
+        {
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Warning, failed defining new Font for %s.\n", Str_Text(path));
+            Str_Delete(path);
+        }
+    }
+    return font;
+}
+
+font_t* R_CreateFontFromDef(ded_compositefont_t* def)
+{
+    fontnamespaceid_t namespaceId;
+    fontid_t fontId;
+    int uniqueId;
+    font_t* font;
+
+    if(!def || !def->uri)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_CreateFontFromDef: Invalid Definition or Uri reference, ignoring.\n");
+#endif
+        return NULL;
+    }
+
+    namespaceId = Fonts_ParseNamespace(Str_Text(Uri_Scheme(def->uri)));
+    if(!VALID_FONTNAMESPACEID(namespaceId))
+    {
+        ddstring_t* path = Uri_ToString(def->uri);
+        Con_Message("Warning, invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
+        Str_Delete(path);
+        return NULL;
+    }
+
+    uniqueId = Fonts_Count(namespaceId)+1; // 1-based index.
+    fontId = Fonts_Declare(def->uri, uniqueId);
+    if(fontId == NOFONTID) return NULL; // Invalid uri?
+
+    // Have we already encountered this name?
+    font = Fonts_ToFont(fontId);
+    if(font)
+    {
+        Fonts_RebuildFromDef(font, def);
+    }
+    else
+    {
+        // A new font.
+        font = Fonts_CreateFromDef(fontId, def);
+        if(!font)
+        {
+            ddstring_t* path = Uri_ToString(def->uri);
+            Con_Message("Warning, failed defining new Font for %s.\n", Str_Text(path));
+            Str_Delete(path);
+        }
+    }
+    return font;
 }
 
 boolean R_DrawVLightVector(const vlight_t* light, void* context)

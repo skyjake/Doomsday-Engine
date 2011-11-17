@@ -36,6 +36,7 @@
 #include "math.h"
 #include "materialvariant.h"
 #include "cbuffer.h"
+#include "font.h"
 
 #include "rend_console.h"
 

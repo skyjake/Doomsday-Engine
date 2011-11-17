@@ -59,8 +59,8 @@ typedef struct font_s {
     /// @see fontFlags.
     int _flags;
 
-    /// Unique identifier of the FontBind associated with this or @c NULL if not bound.
-    uint _bindId;
+    /// Unique identifier of the primary binding in the owning collection.
+    fontid_t _primaryBind;
 
     /// Font metrics.
     int _leading;
@@ -75,16 +75,23 @@ typedef struct font_s {
     int _marginWidth, _marginHeight;
 } font_t;
 
-void Font_Init(font_t* font, fonttype_t type);
+void Font_Init(font_t* font, fonttype_t type, fontid_t bindId);
 
 fonttype_t Font_Type(const font_t* font);
+
+fontid_t Font_PrimaryBind(const font_t* font);
+
+void Font_SetPrimaryBind(font_t* font, fontid_t bindId);
+
 /// @return  @see fontFlags
 int Font_Flags(const font_t* font);
-uint Font_BindId(const font_t* font);
-void Font_SetBindId(font_t* font, uint bindId);
+
 int Font_Ascent(font_t* font);
+
 int Font_Descent(font_t* font);
+
 int Font_Leading(font_t* font);
+
 boolean Font_IsPrepared(font_t* font);
 
 #endif /* LIBDENG_FONT_H */
