@@ -172,7 +172,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     assert(app && pluginPath && pluginPath[0]);
 
 #if _DEBUG
-    VERBOSE( Con_Printf("Attempting to load \"%s\" as Doomsday plugin...\n", pluginPath) )
+    Con_Printf("Attempting to load \"%s\" as a plugin...\n", pluginPath);
 #endif
 
     plugin = LoadLibrary(WIN_STRING(pluginPath));
