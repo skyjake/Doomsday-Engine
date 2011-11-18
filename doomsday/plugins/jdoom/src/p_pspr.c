@@ -145,7 +145,7 @@ void P_BringUpWeapon(player_t *player)
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
 #ifdef _DEBUG
-    Con_Message("P_BringUpWeapon: player %i, pending weapon was %i, weapon pspr to %i\n",
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
                 (int)(player - players), wminfonum, wminfo->states[WSN_UP]);
 #endif
     P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);

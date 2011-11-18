@@ -430,8 +430,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                   x, y, z, angle);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: player %i spawned at (%f,%f,%f) floorz=%f\n",
-                plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
+    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] floorz:%g\n",
+        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
 #endif
 
     p = &players[plrNum];
@@ -472,7 +472,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #endif
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player %i spawning with translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with translation %i.\n",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
@@ -508,13 +508,15 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE(Con_Message("P_SpawnPlayer: Player %i is a camera.\n", plrNum));
+        VERBOSE( Con_Message("Player #%i spawned as a camera.\n", plrNum) )
 
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->viewHeight = 0;
     }
     else
+    {
         p->viewHeight = (float) cfg.plrViewHeight;
+    }
     p->viewHeightDelta = 0;
 
     p->viewZ = p->plr->mo->pos[VZ] + p->viewHeight;

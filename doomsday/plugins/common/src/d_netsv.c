@@ -909,8 +909,8 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
 
     if(!IS_SERVER) return;
 
-    Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
-                plrNum, x, y, z, angle);
+    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x\n",
+        plrNum, x, y, z, angle);
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
@@ -919,7 +919,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     Writer_WriteUInt32(writer, angle);
 
     Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
-                   Writer_Data(writer), Writer_Size(writer));
+        Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
