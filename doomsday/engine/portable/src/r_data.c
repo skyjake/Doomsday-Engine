@@ -2049,8 +2049,8 @@ void R_InitFlatTextures(void)
 
     VERBOSE( Con_Message("Initializing Flat textures...\n") )
 
-    origRangeFrom = W_CheckLumpNumForName("F_START");
-    origRangeTo   = W_CheckLumpNumForName("F_END");
+    origRangeFrom = W_CheckLumpNumForName2("F_START", true/*quiet please*/);
+    origRangeTo   = W_CheckLumpNumForName2("F_END", true/*quiet please*/);
 
     if(origRangeFrom >= 0 && origRangeTo >= 0)
     {
