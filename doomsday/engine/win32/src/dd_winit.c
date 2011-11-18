@@ -169,11 +169,12 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
 {
     HINSTANCE plugin, *handle;
     void (*initializer)(void);
+    filename_t name;
     assert(app && pluginPath && pluginPath[0]);
 
-#if _DEBUG
+/*#if _DEBUG
     Con_Printf("Attempting to load \"%s\" as a plugin...\n", pluginPath);
-#endif
+#endif*/
 
     plugin = LoadLibrary(WIN_STRING(pluginPath));
     if(!plugin)
@@ -187,7 +188,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     {
         // Clearly not a Doomsday plugin.
 #if _DEBUG
-        Con_Printf("  Plugin does not export entrypoint DP_Initialize, ignoring.\n");
+        Con_Printf("loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
 #endif
         FreeLibrary(plugin);
         return 0; // Continue iteration.
@@ -197,14 +198,15 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     if(!handle)
     {
 #if _DEBUG
-        Con_Printf("  Failed acquiring new handle, ignoring.\n");
+        Con_Printf("loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
 #endif
         FreeLibrary(plugin);
         return 0; // Continue iteration.
     }
 
     // This seems to be a Doomsday plugin.
-    VERBOSE( Con_Printf("Initializing plugin \"%s\"...\n", pluginPath) )
+    _splitpath(pluginPath, NULL, NULL, name, NULL);
+    Con_Printf("  %s\n", name);
 
     *handle = plugin;
     initializer();
@@ -234,8 +236,9 @@ static BOOL loadAllPlugins(application_t* app)
     long hFile;
     assert(app);
 
-    Str_Init(&absolutePath);
+    Con_Printf("Initializing plugins...\n");
 
+    Str_Init(&absolutePath);
     Str_Init(&searchPattern);
     Str_Appendf(&searchPattern, "%sj*.dll", ddBinPath);
     if(-1L != (hFile = _findfirst(Str_Text(&searchPattern), &fd)))

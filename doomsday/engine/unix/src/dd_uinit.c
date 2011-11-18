@@ -91,11 +91,12 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
 {
     lt_dlhandle plugin, *handle;
     void (*initializer)(void);
+    filename_t name;
     assert(app && pluginPath && pluginPath[0]);
 
-#if _DEBUG
+/*#if _DEBUG
     Con_Printf("Attempting to load \"%s\" as a plugin...\n", pluginPath);
-#endif
+#endif*/
 
     plugin = lt_dlopenext(pluginPath);
     if(!plugin)
@@ -109,7 +110,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     {
         // Clearly not a Doomsday plugin.
 #if _DEBUG
-        Con_Printf("  Plugin does not export entrypoint DP_Initialize, ignoring.\n");
+        Con_Printf("loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
 #endif
         lt_dlclose(plugin);
         return 0; // Continue iteration.
@@ -119,14 +120,15 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     if(!handle)
     {
 #if _DEBUG
-        Con_Printf("  Failed acquiring new handle, ignoring.\n");
+        Con_Printf("loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
 #endif
         lt_dlclose(plugin);
         return 0; // Continue iteration.
     }
 
     // This seems to be a Doomsday plugin.
-    VERBOSE( Con_Printf("Initializing plugin \"%s\"...\n", pluginPath) )
+    _splitpath(pluginPath, NULL, NULL, name, NULL);
+    Con_Printf("  %s\n", name);
 
     *handle = plugin;
     initializer();
@@ -179,6 +181,8 @@ static boolean unloadPlugin(lt_dlhandle* handle)
 static boolean loadAllPlugins(application_t* app)
 {
     assert(app);
+
+    Con_Printf("Initializing plugins...\n");
 
     // Try to load all libraries that begin with libj.
     { loadpluginparamaters_t params;
