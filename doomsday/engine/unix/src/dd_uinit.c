@@ -148,8 +148,7 @@ static int loadPluginWorker(const char* pluginPath, lt_ptr data)
 #ifndef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, NULL);
     if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
-       (!params->loadingGames && !strncmp(name, "libdp", 5)) &&
-       !strncmp(pluginPath + strlen(pluginPath) - 3, ".so", 3))
+       (!params->loadingGames && !strncmp(name, "libdp", 5)))
 #endif
 #ifdef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, NULL);
