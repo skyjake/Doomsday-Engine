@@ -208,7 +208,7 @@ void DD_ConsoleInit(void)
         }
         else
         {
-            Con_Message("Executable: " DOOMSDAY_VERSION_FULLTEXT ".\n");
+            Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
 
             // Print the used command line.
             if(verbose)
