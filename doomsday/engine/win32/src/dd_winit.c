@@ -154,55 +154,74 @@ static const char* getLastWINAPIErrorMessage(void)
 
 static HINSTANCE* findFirstUnusedPluginHandle(application_t* app)
 {
+    int i;
     assert(app);
-    { size_t i;
+
     for(i = 0; i < MAX_PLUGS; ++i)
     {
         if(!app->hInstPlug[i])
             return &app->hInstPlug[i];
-    }}
+    }
     return 0;
 }
 
-/**
- * Atempts to load the specified plugin.
- *
- * @return              @c true, if the plugin was loaded succesfully.
- */
-static BOOL loadPlugin(const char* absolutePath)
+static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
 {
-    assert(absolutePath && absolutePath[0]);
-    {
-    void (*initializer)(void);
     HINSTANCE plugin, *handle;
+    void (*initializer)(void);
+    assert(app && pluginPath && pluginPath[0]);
 
-    if(0 != (plugin = LoadLibrary(WIN_STRING(absolutePath))) &&
-       0 != (initializer = (void*)GetProcAddress(plugin, _T("DP_Initialize"))) &&
-       0 != (handle = findFirstUnusedPluginHandle(&app)))
+#if _DEBUG
+    VERBOSE( Con_Printf("Attempting to load \"%s\" as Doomsday plugin...\n", pluginPath) )
+#endif
+
+    plugin = LoadLibrary(WIN_STRING(pluginPath));
+    if(!plugin)
     {
-        // This seems to be a Doomsday plugin.
-        *handle = plugin;
-        initializer();
-        return TRUE;
+        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, getLastWINAPIErrorMessage());
+        return 0; // Continue iteration.
     }
 
-    Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", absolutePath, getLastWINAPIErrorMessage());
-    if(plugin)
+    initializer = (void*)GetProcAddress(plugin, _T("DP_Initialize"));
+    if(!initializer)
+    {
+        // Clearly not a Doomsday plugin.
+#if _DEBUG
+        Con_Printf("  Plugin does not export entrypoint DP_Initialize, ignoring.\n");
+#endif
         FreeLibrary(plugin);
-    return FALSE;
+        return 0; // Continue iteration.
     }
+
+    handle = findFirstUnusedPluginHandle(app);
+    if(!handle)
+    {
+#if _DEBUG
+        Con_Printf("  Failed acquiring new handle, ignoring.\n");
+#endif
+        FreeLibrary(plugin);
+        return 0; // Continue iteration.
+    }
+
+    // This seems to be a Doomsday plugin.
+    VERBOSE( Con_Printf("Initializing plugin \"%s\"...\n", pluginPath) )
+
+    *handle = plugin;
+    initializer();
+
+    return 0; // Continue iteration.
 }
 
 static BOOL unloadPlugin(HINSTANCE* handle)
 {
+    BOOL result;
     assert(handle);
-    {
-    BOOL result = FreeLibrary(*handle);
+
+    result = FreeLibrary(*handle);
     *handle = 0;
     if(!result)
         Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", getLastWINAPIErrorMessage());
     return result;
-    }
 }
 
 /**
@@ -210,11 +229,10 @@ static BOOL unloadPlugin(HINSTANCE* handle)
  */
 static BOOL loadAllPlugins(application_t* app)
 {
-    assert(app);
-    {
     ddstring_t searchPattern, absolutePath;
     struct _finddata_t fd;
     long hFile;
+    assert(app);
 
     Str_Init(&absolutePath);
 
@@ -226,7 +244,7 @@ static BOOL loadAllPlugins(application_t* app)
         {
             Str_Clear(&absolutePath);
             Str_Appendf(&absolutePath, "%s%s", ddBinPath, fd.name);
-            loadPlugin(Str_Text(&absolutePath));
+            loadPlugin(app, Str_Text(&absolutePath), NULL/*no paramaters*/);
         } while(!_findnext(hFile, &fd));
     }
 
@@ -238,24 +256,24 @@ static BOOL loadAllPlugins(application_t* app)
         {
             Str_Clear(&absolutePath);
             Str_Appendf(&absolutePath, "%s%s", ddBinPath, fd.name);
-            loadPlugin(Str_Text(&absolutePath));
+            loadPlugin(app, Str_Text(&absolutePath), NULL/*no paramaters*/);
         } while(!_findnext(hFile, &fd));
     }
 
     Str_Free(&searchPattern);
     Str_Free(&absolutePath);
     return TRUE;
-    }
 }
 
 static BOOL unloadAllPlugins(application_t* app)
 {
+    int i;
     assert(app);
-    { size_t i;
+
     for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
     {
         unloadPlugin(&app->hInstPlug[i]);
-    }}
+    }
     return TRUE;
 }
 
@@ -278,9 +296,8 @@ static BOOL initDGL(void)
 
 static BOOL initApplication(application_t* app)
 {
-    assert(app);
-    {
     WNDCLASSEX wcex;
+    assert(app);
 
     if(GetClassInfoEx(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
@@ -300,7 +317,6 @@ static BOOL initApplication(application_t* app)
 
     // Register our window class.
     return RegisterClassEx(&wcex);
-    }   
 }
 
 static void determineGlobalPaths(application_t* app)

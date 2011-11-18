@@ -76,14 +76,62 @@ application_t app;
 
 static lt_dlhandle* findFirstUnusedPluginHandle(application_t* app)
 {
+    int i;
     assert(app);
-    { size_t i;
+
     for(i = 0; i < MAX_PLUGS; ++i)
     {
         if(!app->hInstPlug[i])
             return &app->hInstPlug[i];
-    }}
+    }
     return 0;
+}
+
+static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
+{
+    lt_dlhandle plugin, *handle;
+    void (*initializer)(void);
+    assert(app && pluginPath && pluginPath[0]);
+
+#if _DEBUG
+    VERBOSE( Con_Printf("Attempting to load \"%s\" as Doomsday plugin...\n", pluginPath) )
+#endif
+
+    plugin = lt_dlopenext(pluginPath);
+    if(!plugin)
+    {
+        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, lt_dlerror());
+        return 0; // Continue iteration.
+    }
+
+    initializer = lt_dlsym(plugin, "DP_Initialize");
+    if(!initializer)
+    {
+        // Clearly not a Doomsday plugin.
+#if _DEBUG
+        Con_Printf("  Plugin does not export entrypoint DP_Initialize, ignoring.\n");
+#endif
+        lt_dlclose(plugin);
+        return 0; // Continue iteration.
+    }
+
+    handle = findFirstUnusedPluginHandle(app);
+    if(!handle)
+    {
+#if _DEBUG
+        Con_Printf("  Failed acquiring new handle, ignoring.\n");
+#endif
+        lt_dlclose(plugin);
+        return 0; // Continue iteration.
+    }
+
+    // This seems to be a Doomsday plugin.
+    VERBOSE( Con_Printf("Initializing plugin \"%s\"...\n", pluginPath) )
+
+    *handle = plugin;
+    initializer();
+
+    return 0; // Continue iteration.
 }
 
 typedef struct {
@@ -91,16 +139,9 @@ typedef struct {
     application_t* app;
 } loadpluginparamaters_t;
 
-/**
- * Atempts to load the specified plugin.
- *
- * @return  @c true, if the plugin was loaded succesfully.
- */
-static int loadPlugin(const char* pluginPath, lt_ptr data)
+static int loadPluginWorker(const char* pluginPath, lt_ptr data)
 {
     loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
-    lt_dlhandle plugin, *handle;
-    void (*initializer)(void);
     filename_t name;
 
     // What is the actual file name?
@@ -116,35 +157,21 @@ static int loadPlugin(const char* pluginPath, lt_ptr data)
        (!params->loadingGames && !strncmp(name, "dp", 2)))
 #endif
     {
-        // Try loading this one as a Doomsday plugin.
-        if(0 != (plugin = lt_dlopenext(pluginPath)) &&
-           0 != (initializer = lt_dlsym(plugin, "DP_Initialize")) &&
-           0 != (handle = findFirstUnusedPluginHandle(params->app)))
-        {
-            // This seems to be a Doomsday plugin.
-            *handle = plugin;
-            initializer();
-        }
-        else
-        {
-            Con_Printf("loadPlugin: Error loading \"%s\" (%s)!\n", pluginPath, lt_dlerror());
-            if(plugin)
-                lt_dlclose(plugin);
-        }
+        loadPlugin(params->app, pluginPath, NULL/*no paramaters*/);
     }
     return 0; // Continue search.
 }
 
 static boolean unloadPlugin(lt_dlhandle* handle)
 {
+    int result;
     assert(handle);
-    {
-    int result = lt_dlclose(*handle);
+
+    result = lt_dlclose(*handle);
     *handle = 0;
     if(result != 0)
         Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", lt_dlerror());
     return result;
-    }
 }
 
 /**
@@ -158,26 +185,27 @@ static boolean loadAllPlugins(application_t* app)
     { loadpluginparamaters_t params;
     params.app = app;
     params.loadingGames = true;
-    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) &params);
+    lt_dlforeachfile(NULL, loadPluginWorker, (lt_ptr) &params);
     }
 
     // Try to load all libraries that begin with libdp.
     { loadpluginparamaters_t params;
     params.app = app;
     params.loadingGames = false;
-    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) &params);
+    lt_dlforeachfile(NULL, loadPluginWorker, (lt_ptr) &params);
     }
     return true;
 }
 
 static boolean unloadAllPlugins(application_t* app)
 {
+    int i;
     assert(app);
-    { size_t i;
+
     for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
     {
         unloadPlugin(&app->hInstPlug[i]);
-    }}
+    }
     return true;
 }
 
@@ -205,7 +233,7 @@ static int initDGL(void)
 
 static void determineGlobalPaths(application_t* app)
 {
-    assert(NULL != app);
+    assert(app);
 
 #ifndef MACOSX
     if(getenv("HOME"))
@@ -278,11 +306,11 @@ static void determineGlobalPaths(application_t* app)
 static char* buildCommandLineString(int argc, char** argv)
 {
     char* cmdLine;
-    int length = 0;
+    int i, length = 0;
 
     // Assemble a command line string.
-    { int i;
     for(i = 0; i < argc; ++i)
+    {
         length += strlen(argv[i]) + 1;
     }
 
@@ -290,14 +318,13 @@ static char* buildCommandLineString(int argc, char** argv)
     cmdLine = M_Malloc(length);
 
     length = 0;
-    { int i;
     for(i = 0; i < argc; ++i)
     {
         strcpy(cmdLine + length, argv[i]);
         if(i < argc - 1)
             strcat(cmdLine, " ");
         length += strlen(argv[i]) + 1;
-    }}
+    }
     return cmdLine;
 }
 
@@ -323,10 +350,9 @@ int main(int argc, char** argv)
     else*/
     {
         // Prepare the command line arguments.
-        { char* cmdLine = buildCommandLineString(argc, argv);
+        char* cmdLine = buildCommandLineString(argc, argv);
         DD_InitCommandLine(cmdLine);
         M_Free(cmdLine);
-        }
 
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
