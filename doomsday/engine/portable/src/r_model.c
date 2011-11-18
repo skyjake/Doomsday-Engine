@@ -211,8 +211,7 @@ static void* AllocAndLoad(DFile* file, int offset, int len)
 
 static void R_MissingModel(const char* fn)
 {
-    //if(verbose)
-    Con_Printf("Warning, failed to locate model \"%s\".\n", fn);
+    Con_Printf("Warning: Failed locating model \"%s\", ignoring.\n", fn);
 }
 
 static void R_LoadModelMD2(DFile* file, model_t* mdl)

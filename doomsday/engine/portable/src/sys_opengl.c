@@ -371,8 +371,7 @@ static void createDummyWindow(application_t* app)
             // (unless we release the context and acquire another).
             if(!SetPixelFormat(hDC, pixForm, &pfd))
             {
-                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
-                                    "format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed setting pixel format.");
             }
         }
 
@@ -381,15 +380,13 @@ static void createDummyWindow(application_t* app)
         {
             if(!(hGLRC = wglCreateContext(hDC)))
             {
-                Sys_CriticalMessage("createContext: Creation of rendering context "
-                                    "failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed creating render context.");
                 ok = false;
             }
             // Make the context current.
             else if(!wglMakeCurrent(hDC, hGLRC))
             {
-                Sys_CriticalMessage("createContext: Couldn't make the rendering "
-                                    "context current.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed making render context current.");
                 ok = false;
             }
         }

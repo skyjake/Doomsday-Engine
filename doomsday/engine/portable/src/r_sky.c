@@ -278,7 +278,7 @@ void R_SetupSky(ded_sky_t* sky)
                 else
                 {
                     ddstring_t* path = Uri_ToString(def->material);
-                    Con_Message("Warning, unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
+                    Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
                     Str_Delete(path);
                 }
             }

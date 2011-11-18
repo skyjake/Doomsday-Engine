@@ -176,7 +176,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         numFrames = endFrame - startFrame + 1;
         if(numFrames < 2)
         {
-            Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
+            Con_Message("Warning:loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.\n", animDefs[i].startname, animDefs[i].endname, i);
             continue;
         }
 

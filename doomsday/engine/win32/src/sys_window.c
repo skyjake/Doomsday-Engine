@@ -693,7 +693,7 @@ static ddwindow_t *createGLWindow(application_t *app, uint parentIDX,
             // (unless we release the context and acquire another).
             if(!SetPixelFormat(hDC, pixForm, &pfd))
             {
-                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed setting pixel format.");
                 ok = false;
             }
         }

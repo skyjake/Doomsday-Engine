@@ -958,7 +958,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     if(!validateMaterialUri2(uri, 0, (verbose >= 1)))
     {
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
+        Con_Message("Warning: Failed creating Material \"%s\" from definition %p, ignoring.\n", Str_Text(uriStr), (void*)def);
         Str_Delete(uriStr);
         return NULL;
     }
@@ -987,8 +987,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
             {
                 ddstring_t* materialPath = Uri_ToString(def->uri);
                 ddstring_t* texturePath = Uri_ToString(l->stages[0].texture);
-                VERBOSE( Con_Message("Warning, unknown texture '%s' in Material '%s' (layer %i stage %i).\n",
-                         Str_Text(texturePath), Str_Text(materialPath), 0, 0) );
+                Con_Message("Warning: Unknown texture \"%s\" in Material \"%s\" (layer %i stage %i).\n", Str_Text(texturePath), Str_Text(materialPath), 0, 0);
                 Str_Delete(materialPath);
                 Str_Delete(texturePath);
             }

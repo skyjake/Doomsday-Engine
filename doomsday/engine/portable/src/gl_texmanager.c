@@ -2430,7 +2430,7 @@ static byte loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int
 
         if(!result)
         {
-            Con_Message("Warning, lump %s does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File(file)))));
+            Con_Message("Warning: Lump \"%s\" does not appear to be a valid Patch.\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File(file)))));
             return result;
         }
     }

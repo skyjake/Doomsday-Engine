@@ -705,9 +705,8 @@ static void spawnMapObjects(void)
         }
         else
         {
-            Con_Message("spawnMapThing: Warning, unknown thing num %i "
-                        "at [%g, %g, %g].\n", spot->doomEdNum,
-                        spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+            Con_Message("Warning: Unknown DoomEdNum %i at [%g, %g, %g].\n", spot->doomEdNum,
+                spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
         }
     }
 

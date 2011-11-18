@@ -189,8 +189,7 @@ boolean S_Init(void)
     {
         audiodriver_e drvid = S_ChooseAudioDriver();
         if(!(ok = S_InitDriver(drvid)))
-            Con_Message("Warning, failed initializing audio driver \"%s\".\n",
-                        S_GetDriverName(drvid));
+            Con_Message("Warning: Failed initializing audio driver \"%s\", Audio subsystem disabled.\n", S_GetDriverName(drvid));
     }
 
     if(!ok)

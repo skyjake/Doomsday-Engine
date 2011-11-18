@@ -780,7 +780,7 @@ fontid_t Fonts_Declare(const Uri* uri, int uniqueId)//, const Uri* resourcePath)
     if(!validateFontUri2(uri, VFUF_NO_URN, (verbose >= 1)))
     {
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Font \"%s\", ignoring.\n", Str_Text(uriStr));
+        Con_Message("Warning: Failed creating Font \"%s\", ignoring.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
         return NOFONTID;
     }
@@ -962,13 +962,13 @@ font_t* Fonts_CreateFromDef(fontid_t id, ded_compositefont_t* def)
     fontrecord_t* record;
     if(!node)
     {
-        Con_Message("Warning, failed to create Font #%u (invalid id), ignoring.\n", id);
+        Con_Message("Warning: Failed creating Font #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 
     if(!def)
     {
-        Con_Message("Warning, failed to create Font #%u (def=NULL), ignoring.\n", id);
+        Con_Message("Warning: Failed creating Font #%u (def=NULL), ignoring.\n", id);
         return NULL;
     }
 
@@ -1021,13 +1021,13 @@ font_t* Fonts_CreateFromFile(fontid_t id, const char* resourcePath)
     fontrecord_t* record;
     if(!node)
     {
-        Con_Message("Warning, failed to create Font #%u (invalid id), ignoring.\n", id);
+        Con_Message("Warning: Failed creating Font #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 
     if(!resourcePath || !resourcePath[0])
     {
-        Con_Message("Warning, failed to create Font #%u (resourcePath=NULL), ignoring.\n", id);
+        Con_Message("Warning: Failed creating Font #%u (resourcePath=NULL), ignoring.\n", id);
         return NULL;
     }
 

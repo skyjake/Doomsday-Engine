@@ -776,7 +776,7 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     if(!validateTextureUri2(uri, VTUF_NO_URN, (verbose >= 1)))
     {
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning, failed to create Texture \"%s\", ignoring.\n", Str_Text(uriStr));
+        Con_Message("Warning: Failed declaring texture \"%s\" (invalid Uri), ignoring.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
         return NOTEXTUREID;
     }
@@ -883,7 +883,7 @@ texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, i
     texturerecord_t* record;
     if(!node)
     {
-        Con_Message("Warning, failed to create Texture #%u (invalid id), ignoring.\n", id);
+        Con_Message("Warning: Failed defining Texture #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 

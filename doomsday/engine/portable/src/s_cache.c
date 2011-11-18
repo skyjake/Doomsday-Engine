@@ -692,8 +692,7 @@ sfxsample_t* Sfx_Cache(int id)
     info = S_GetSoundInfo(id, NULL, NULL);
     if(!info)
     {
-        Con_Message("Sfx_Cache: Warning, missing sound info for ID %i.\n",
-                    id);
+        Con_Message("Warning: Missing SoundInfo for Id %i, ignoring.\n", id);
         return NULL;
     }
 

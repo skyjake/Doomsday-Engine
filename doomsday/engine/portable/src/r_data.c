@@ -967,7 +967,7 @@ int R_TextureUniqueId2(const Uri* uri, boolean quiet)
     if(!quiet)
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning, unknown texture: %s\n", Str_Text(path));
+        Con_Message("Warning: Unknown Texture \"%s\"\n", Str_Text(path));
         Str_Delete(path);
     }
     return -1;
@@ -1012,7 +1012,7 @@ void R_InitSystemTextures(void)
         if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
         {
             ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning, failed defining Texture for System texture %s.\n", Str_Text(path));
+            Con_Message("Warning: Failed defining Texture for System texture \"%s\"\n", Str_Text(path));
             Str_Delete(path);
         }
     }
@@ -1115,7 +1115,7 @@ patchid_t R_DeclarePatch(const char* name)
 
         if(!tex)
         {
-            Con_Message("Warning, failed defining Texture for Patch texture %s.\n", name);
+            Con_Message("Warning: Failed defining Texture for Patch texture \"%s\"\n", name);
             free(p);
             return 0;
         }
@@ -1424,7 +1424,7 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("Warning, bad offset %lu for definition %i in lump \"%s\".\n", (unsigned long) offset, i, F_LumpName(lumpNum));
+            Con_Message("Warning: Invalid offset %lu for definition %i in lump \"%s\", ignoring.\n", (unsigned long) offset, i, F_LumpName(lumpNum));
             continue;
         }
 
@@ -1445,7 +1445,7 @@ typedef struct {
 
                     if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("Warning, invalid Patch %i in texture definition '%s'.\n", (int) patchNum, mtexture->name);
+                        Con_Message("Warning: Invalid Patch %i in texture definition \"%s\", ignoring.\n", (int) patchNum, mtexture->name);
                         continue;
                     }
                     pinfo = patchInfo + patchNum;
@@ -1456,13 +1456,13 @@ typedef struct {
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
-                            Con_Message("Warning, failed to locate Patch '%s'.\n", *(patchNames + patchNum));
+                            Con_Message("Warning: Failed to locate Patch \"%s\", ignoring.\n", *(patchNames + patchNum));
                         }
                     }
 
                     if(-1 == pinfo->lumpNum)
                     {
-                        Con_Message("Warning, missing Patch %i in texture definition '%s'.\n", (int) j, mtexture->name);
+                        Con_Message("Warning: Missing Patch %i in texture definition \"%s\", ignoring.\n", (int) j, mtexture->name);
                         continue;
                     }
                     ++n;
@@ -1470,7 +1470,7 @@ typedef struct {
             }
             else
             {
-                Con_Message("Warning, invalid patchcount %i in texture definition '%s'.\n", (int) patchCount, mtexture->name);
+                Con_Message("Warning: Invalid patch count %i in texture definition \"%s\", ignoring.\n", (int) patchCount, mtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1492,7 +1492,7 @@ typedef struct {
 
                     if(patchNum < 0 || patchNum >= numPatchNames)
                     {
-                        Con_Message("Warning, invalid Patch %i in texture definition '%s'.\n", (int) patchNum, smtexture->name);
+                        Con_Message("Warning: Invalid Patch #%i in texture definition \"%s\", ignoring.\n", (int) patchNum, smtexture->name);
                         continue;
                     }
                     pinfo = patchInfo + patchNum;
@@ -1503,13 +1503,13 @@ typedef struct {
                         pinfo->flags.processed = true;
                         if(-1 == pinfo->lumpNum)
                         {
-                            Con_Message("Warning, failed to locate Patch '%s'.\n", *(patchNames + patchNum));
+                            Con_Message("Warning: Failed locating Patch \"%s\", ignoring.\n", *(patchNames + patchNum));
                         }
                     }
 
                     if(-1 == pinfo->lumpNum)
                     {
-                        Con_Message("Warning, missing patch %i in texture definition '%s'.\n", (int) j, smtexture->name);
+                        Con_Message("Warning: Missing patch #%i in texture definition \"%s\", ignoring.\n", (int) j, smtexture->name);
                         continue;
                     }
                     ++n;
@@ -1517,7 +1517,7 @@ typedef struct {
             }
             else
             {
-                Con_Message("Warning, invalid patchcount %i in texture definition '%s'.\n", (int) patchCount, smtexture->name);
+                Con_Message("Warning: Invalid patch count %i in texture definition \"%s\", ignoring.\n", (int) patchCount, smtexture->name);
             }
 
             texDefNumPatches[i] = n;
@@ -1951,7 +1951,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
         }
         else if(!Textures_CreateWithDimensions(texId, flags, pcTex->width, pcTex->height, (void*)pcTex))
         {
-            Con_Message("Warning, failed creating Texture for new patch composite %s.\n", Str_Text(&pcTex->name));
+            Con_Message("Warning: Failed defining Texture for new patch composite '%s', ignoring.\n", Str_Text(&pcTex->name));
             Str_Free(&pcTex->name);
             if(pcTex->patches) free(pcTex->patches);
             free(pcTex);
@@ -2031,7 +2031,7 @@ static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning, failed creating Texture for new flat %s.\n", Str_Text(path));
+            Con_Message("Warning: Failed defining Texture for new flat '%s', ignoring.\n", Str_Text(path));
             Str_Delete(path);
             Uri_Delete(uri);
             return NULL;
@@ -2198,7 +2198,7 @@ void R_InitSpriteTextures(void)
             if(!tex)
             {
                 ddstring_t* path = Uri_ComposePath(uri);
-                Con_Message("Warning, failed defining Texture for sprite texture %s (#%i).\n", Str_Text(path), (lumpnum_t)i);
+                Con_Message("Warning: Failed defining Texture for sprite texture \"%s\" (#%i), ignoring.\n", Str_Text(path), (lumpnum_t)i);
                 Str_Delete(path);
                 free(sprTex);
                 continue;
@@ -2240,7 +2240,7 @@ texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
     if(M_NumDigits(uniqueId) > 8)
     {
 #if _DEBUG
-        Con_Message("Warning, failed creating SkinName (max:%i).\n", DDMAXINT);
+        Con_Message("Warning: Failed creating SkinName (max:%i), ignoring.\n", DDMAXINT);
 #endif
         return NULL;
     }
@@ -2260,7 +2260,7 @@ texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
         tex = Textures_Create(texId, TXF_CUSTOM, NULL);
         if(!tex)
         {
-            Con_Message("Warning, failed defining Texture for ModelSkin %s.\n", name);
+            Con_Message("Warning: Failed defining Texture for ModelSkin '%s', ignoring.\n", name);
             return NULL;
         }
     }
@@ -2585,7 +2585,7 @@ texture_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
     tex = Textures_ToTexture(texId);
     if(!tex && !Textures_Create(texId, TXF_CUSTOM, NULL))
     {
-        Con_Message("Warning, failed creating new Texture for DetailTexture %s.\n", name);
+        Con_Message("Warning: Failed defining Texture for DetailTexture '%s', ignoring.\n", name);
         return NULL;
     }
 
@@ -2629,7 +2629,7 @@ texture_t* R_CreateLightMap(const Uri* resourcePath)
     uniqueId = Textures_Count(TN_LIGHTMAPS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
-        Con_Message("Warning, failed creating new LightMap (max:%i).\n", DDMAXINT);
+        Con_Message("Warning: Failed declaring new LightMap (max:%i), ignoring.\n", DDMAXINT);
         return NULL;
     }
 
@@ -2648,7 +2648,7 @@ texture_t* R_CreateLightMap(const Uri* resourcePath)
         tex = Textures_Create(texId, TXF_CUSTOM, NULL);
         if(!tex)
         {
-            Con_Message("Warning, failed defining Texture for LightMap %s.\n", name);
+            Con_Message("Warning: Failed defining Texture for LightMap '%s', ignoring.\n", name);
             return NULL;
         }
     }
@@ -2698,7 +2698,7 @@ texture_t* R_CreateFlareTexture(const Uri* resourcePath)
     uniqueId = Textures_Count(TN_FLAREMAPS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
-        Con_Message("Warning, failed creating new FlareTex (max:%i).\n", DDMAXINT);
+        Con_Message("Warning: Failed declaring new FlareTex (max:%i), ignoring.\n", DDMAXINT);
         return NULL;
     }
 
@@ -2717,7 +2717,7 @@ texture_t* R_CreateFlareTexture(const Uri* resourcePath)
         tex = Textures_Create(texId, TXF_CUSTOM, NULL);
         if(!tex)
         {
-            Con_Message("Warning, failed defining Texture for flare texture %s.\n", name);
+            Con_Message("Warning: Failed defining Texture for flare texture '%s', ignoring.\n", name);
             return NULL;
         }
     }
@@ -2759,7 +2759,7 @@ texture_t* R_CreateReflectionTexture(const Uri* resourcePath)
     uniqueId = Textures_Count(TN_REFLECTIONS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
-        Con_Message("Warning, failed creating new ShinyTex (max:%i).\n", DDMAXINT);
+        Con_Message("Warning: Failed declaring new ShinyTex (max:%i), ignoring.\n", DDMAXINT);
         return NULL;
     }
 
@@ -2778,7 +2778,7 @@ texture_t* R_CreateReflectionTexture(const Uri* resourcePath)
         tex = Textures_Create(texId, TXF_CUSTOM, NULL);
         if(!tex)
         {
-            Con_Message("Warning, failed defining Texture for shiny texture %s.\n", name);
+            Con_Message("Warning: Failed defining Texture for shiny texture '%s', ignoring.\n", name);
             return NULL;
         }
     }
@@ -2821,7 +2821,7 @@ texture_t* R_CreateMaskTexture(const Uri* resourcePath, int width, int height)
     uniqueId = Textures_Count(TN_MASKS)+1;
     if(M_NumDigits(uniqueId) > 8)
     {
-        Con_Message("Warning, failed to create mask image (max:%i).\n", DDMAXINT);
+        Con_Message("Warning: Failed declaring Mask texture (max:%i), ignoring.\n", DDMAXINT);
         return NULL;
     }
 
@@ -2845,7 +2845,7 @@ texture_t* R_CreateMaskTexture(const Uri* resourcePath, int width, int height)
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(resourcePath);
-            Con_Message("Warning, failed creating Texture for mask image: %s\n", F_PrettyPath(Str_Text(path)));
+            Con_Message("Warning: Failed defining Texture for mask texture \"%s\"\n", F_PrettyPath(Str_Text(path)));
             Str_Delete(path);
             return NULL;
         }
@@ -3008,7 +3008,7 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning, invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
+        Con_Message("Warning: Invalid font namespace in Font Uri \"%s\", ignoring.\n", Str_Text(path));
         Str_Delete(path);
         return NULL;
     }
@@ -3030,7 +3030,7 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
         if(!font)
         {
             ddstring_t* path = Uri_ToString(uri);
-            Con_Message("Warning, failed defining new Font for %s.\n", Str_Text(path));
+            Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
             Str_Delete(path);
         }
     }
@@ -3056,7 +3056,7 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
     if(!VALID_FONTNAMESPACEID(namespaceId))
     {
         ddstring_t* path = Uri_ToString(def->uri);
-        Con_Message("Warning, invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
+        Con_Message("Warning: Invalid font namespace in Font Definition Uri \"%s\", ignoring.\n", Str_Text(path));
         Str_Delete(path);
         return NULL;
     }
@@ -3078,7 +3078,7 @@ font_t* R_CreateFontFromDef(ded_compositefont_t* def)
         if(!font)
         {
             ddstring_t* path = Uri_ToString(def->uri);
-            Con_Message("Warning, failed defining new Font for %s.\n", Str_Text(path));
+            Con_Message("Warning: Failed defining new Font for \"%s\", ignoring.\n", Str_Text(path));
             Str_Delete(path);
         }
     }

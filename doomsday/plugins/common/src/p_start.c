@@ -347,19 +347,19 @@ uint P_GetNumPlayerStarts(boolean deathmatch)
  */
 void P_DealPlayerStarts(uint entryPoint)
 {
-    int                 i;
+    int i;
 
     if(!numPlayerStarts)
     {
-        Con_Message("P_DealPlayerStarts: Warning, no player starts!\n");
+        Con_Message("Warning: Zero player starts found, players will spawn as cameras.\n");
         return;
     }
 
     // First assign one start per player, only accepting perfect matches.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        int                 k, spotNumber;
-        player_t*           pl = &players[i];
+        int k, spotNumber;
+        player_t* pl = &players[i];
 
         if(!pl->plr->inGame)
             continue;

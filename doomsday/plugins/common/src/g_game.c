@@ -1106,7 +1106,7 @@ void G_StartHelp(void)
         G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
         return;
     }
-    Con_Message("G_GetFinaleScript: Warning, script \"help\" not defined.\n");    
+    Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
 }
 
 int G_EndGameResponse(msgresponse_t response, void* context)

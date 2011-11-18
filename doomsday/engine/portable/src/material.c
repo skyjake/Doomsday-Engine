@@ -326,48 +326,45 @@ void Material_SetShinyMaskTexture(material_t* mat, texture_t* tex)
 
 materialvariant_t* Material_AddVariant(material_t* mat, materialvariant_t* variant)
 {
-    assert(mat);
-    {
     material_variantlist_node_t* node;
+    assert(mat);
 
-    if(NULL == variant)
+    if(!variant)
     {
 #if _DEBUG
-        Con_Error("Material::AddVariant: Warning, argument variant==NULL, ignoring.");
+        Con_Error("Material::AddVariant: Argument variant==NULL, ignoring.");
 #endif
         return variant;
     }
 
-    if(NULL == (node = (material_variantlist_node_t*) malloc(sizeof(*node))))
-        Con_Error("Material::AddVariant: Failed on allocation of %lu bytes for new node.",
-                  (unsigned long) sizeof(*node));
+    node = (material_variantlist_node_t*) malloc(sizeof *node);
+    if(!node)
+        Con_Error("Material::AddVariant: Failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
 
     node->variant = variant;
     node->next = mat->_variants;
     mat->_variants = node;
     return variant;
-    }
 }
 
 int Material_IterateVariants(material_t* mat,
     int (*callback)(materialvariant_t* variant, void* paramaters), void* paramaters)
 {
-    assert(mat);
-    {
     int result = 0;
+    assert(mat);
+
     if(callback)
     {
         material_variantlist_node_t* node = mat->_variants;
         while(node)
         {
             material_variantlist_node_t* next = node->next;
-            if(0 != (result = callback(node->variant, paramaters)))
-                break;
+            result = callback(node->variant, paramaters);
+            if(result) break;
             node = next;
         }
     }
     return result;
-    }
 }
 
 void Material_DestroyVariants(material_t* mat)

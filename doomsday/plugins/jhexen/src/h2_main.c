@@ -404,9 +404,13 @@ void X_PostInit(void)
     {
         playerclass_t pClass = (playerclass_t)atoi(Argv(p + 1));
         if(!VALID_PLAYER_CLASS(pClass))
-            Con_Message("Warning, ignoring invalid player class id=%d specified with -class\n", (int)pClass);
+        {
+            Con_Message("Warning: Invalid player class id=%d specified with -class, ignoring.\n", (int)pClass);
+        }
         else if(!PCLASS_INFO(pClass)->userSelectable)
-            Con_Message("Warning, ignoring non-user-selectable player class id=%d specified with -class.\n", (int)pClass);
+        {
+            Con_Message("Warning: Non-user-selectable player class id=%d specified with -class, ignoring.\n", (int)pClass);
+        }
         else
         {
             startPlayerClass = pClass;

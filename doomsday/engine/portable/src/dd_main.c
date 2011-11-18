@@ -948,7 +948,7 @@ static int DD_ChangeGameWorker(void* paramaters)
         configFileName = GameInfo_MainConfig(p->info);
     }
 
-    Con_Message("Parsing primary config: \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
+    Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
     Con_ParseCommands(Str_Text(configFileName), true);
     if(configFileName == &tmp)
         Str_Free(&tmp);

@@ -264,15 +264,17 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
     void* data)
 {
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
+#if _DEBUG
     if(tex->_analyses[analysis])
     {
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning, image analysis #%i already present for \"%s\", will replace.\n",
+        Con_Message("Warning: Image analysis #%i already present for \"%s\", will replace.\n",
             (int) analysis, Str_Text(path));
         Str_Delete(path);
         Uri_Delete(uri);
     }
+#endif
     tex->_analyses[analysis] = data;
 }
 

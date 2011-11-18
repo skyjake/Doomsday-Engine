@@ -668,7 +668,7 @@ void PO_InitForMap(void)
         }
         else
         {
-            Con_Message("PO_InitForMap: Warning, missing mapspot for poly %i.", i);
+            Con_Message("Warning: Missing spawn spot for PolyObj #%i, ignoring.", i);
         }
     }
 }
