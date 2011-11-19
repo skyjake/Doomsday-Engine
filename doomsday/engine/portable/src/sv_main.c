@@ -441,9 +441,7 @@ void Sv_HandlePacket(void)
             Sv_Handshake(from, true);
 
             // Note the time when the player entered.
-            sender->enterTime = SECONDS_TO_TICKS(gameTime);
-            //sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
-            //sender->lagStress = 0;
+            sender->enterTime = Sys_GetRealSeconds();
         }
         else if(ddpl->inGame)
         {

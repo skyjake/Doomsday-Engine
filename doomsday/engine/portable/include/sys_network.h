@@ -72,7 +72,6 @@ extern          "C" {
     void            N_ShutdownService(void);
     boolean         N_IsAvailable(void);
     boolean         N_UsingInternet(void);
-    void            N_PrintInfo(void);
     boolean         N_LookForHosts(const char *address, int port);
     void            N_Listen(void);
     void            N_ListenUnjoinedNodes(void);
@@ -98,6 +97,8 @@ extern          "C" {
 
     int             N_GetHostCount(void);
     boolean         N_GetHostInfo(int index, struct serverinfo_s *info);
+
+    void            N_PrintNetworkStatus(void);
 
 #ifdef __cplusplus
 }
