@@ -771,8 +771,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     plr = &ddPlayers[plrNum];
 
     // Print a little something in the console.
-    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n",
-                cl->name, plrNum);
+    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.\n",
+                cl->name, plrNum, Sys_GetRealSeconds() - cl->enterTime);
 
     wasInGame = plr->shared.inGame;
     plr->shared.inGame = false;
