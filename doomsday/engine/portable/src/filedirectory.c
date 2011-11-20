@@ -52,7 +52,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
     int result = 0; // Continue adding.
     assert(filePath && VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
 
-    if(PT_LEAF == nodeType && !Str_IsEmpty(filePath))
+    if(!Str_IsEmpty(filePath))
     {
         PathDirectoryNode* node;
         filedirectory_nodeinfo_t* info;
@@ -63,7 +63,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
         F_RemoveBasePath(&relPath, filePath);
 
         node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), FILEDIRECTORY_DELIMITER);
-        assert(PT_LEAF == PathDirectoryNode_Type(node));
+        //assert(PT_LEAF == PathDirectoryNode_Type(node));
 
         // Has this already been processed?
         info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
@@ -78,9 +78,45 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
             PathDirectoryNode_AttachUserData(node, info);
         }
 
-        if(p->callback)
-            result = p->callback(node, p->paramaters);
+        if(info->processed)
+        {
+            // Does caller want to process it again?
+            if(p->callback)
+            {
+                if(PT_BRANCH == PathDirectoryNode_Type(node))
+                {
+                    result = PathDirectory_Iterate2(p->fileDirectory->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_NOHASH, p->callback, p->paramaters);
+                }
+                else
+                {
+                    result = p->callback(node, p->paramaters);
+                }
+            }
+        }
+        else
+        {
+            if(PT_BRANCH == PathDirectoryNode_Type(node))
+            {
+                ddstring_t searchPattern;
 
+                // Compose the search pattern. Resolve relative to the base path
+                // if not already absolute. We're interested in *everything*.
+                Str_Init(&searchPattern);
+                Str_Appendf(&searchPattern, "%s*", Str_Text(filePath));
+                //F_PrependBasePath(&searchPattern, &searchPattern);
+
+                // Process this search.
+                F_AllResourcePaths2(Str_Text(&searchPattern), addPathWorker, (void*)p);
+                Str_Free(&searchPattern);
+            }
+            else
+            {
+                if(p->callback)
+                    p->callback(node, p->paramaters);
+            }
+
+            info->processed = true;
+        }
         Str_Free(&relPath);
     }
     return result;
