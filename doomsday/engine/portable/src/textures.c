@@ -1137,15 +1137,17 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
-    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    ddstring_t* name = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    ddstring_t* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
-        numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game");
+        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(name)),
+        numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
+        F_PrettyPath(Str_Text(resourcePath)));
 
     Uri_Delete(uri);
-    if(printNamespace)
-        Str_Delete((ddstring_t*)path);
+    if(printNamespace) Str_Delete(name);
+    Str_Delete(resourcePath);
 }
 
 /**
@@ -1277,8 +1279,8 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     // Print the result index key.
     numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
     numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Textures_Size()));
-    Con_Printf(" %*s: %-*s %*s origin\n", numFoundDigits, "idx",
-        printNamespace? 22 : 14, printNamespace? "namespace:path" : "path",
+    Con_Printf(" %*s: %-*s %*s origin path\n", numFoundDigits, "idx",
+        printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
         numUidDigits, "uid");
     Con_PrintRuler();
 
