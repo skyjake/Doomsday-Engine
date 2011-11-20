@@ -2605,7 +2605,7 @@ static int findDetailTextureForResourcePathWorker(textureid_t texId, void* param
 texture_t* R_FindDetailTextureForResourcePath(const Uri* path)
 {
     int result;
-    if(!path) return NULL;
+    if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
     result = Textures_IterateDeclared2(TN_DETAILS, findDetailTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
     return Textures_ToTexture((textureid_t)result);
@@ -2668,7 +2668,7 @@ static int findLightMapTextureForResourcePathWorker(textureid_t texId, void* par
 texture_t* R_FindLightMapForResourcePath(const Uri* path)
 {
     int result;
-    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
+    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
 
     result = Textures_IterateDeclared2(TN_LIGHTMAPS, findLightMapTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
@@ -2737,7 +2737,7 @@ static int findFlareTextureForResourcePathWorker(textureid_t texId, void* parama
 texture_t* R_FindFlareTextureForResourcePath(const Uri* path)
 {
     int result;
-    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
+    if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
 
     result = Textures_IterateDeclared2(TN_FLAREMAPS, findFlareTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
@@ -2799,7 +2799,7 @@ static int findReflectionTextureForResourcePathWorker(textureid_t texId, void* p
 texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
 {
     int result;
-    if(!path || !Str_IsEmpty(Uri_Path(path))) return NULL;
+    if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
 
     result = Textures_IterateDeclared2(TN_REFLECTIONS, findReflectionTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
@@ -2867,7 +2867,7 @@ static int findMaskTextureForResourcePathWorker(textureid_t texId, void* paramat
 texture_t* R_FindMaskTextureForResourcePath(const Uri* path)
 {
     int result;
-    if(!path || !Str_IsEmpty(Uri_Path(path))) return NULL;
+    if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
 
     result = Textures_IterateDeclared2(TN_MASKS, findMaskTextureForResourcePathWorker, (void*)path);
     if(!result) return NULL;
