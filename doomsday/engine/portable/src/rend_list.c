@@ -1041,7 +1041,7 @@ void RL_Rtu_SetScale(uint idx, float s, float t)
     Rtu_SetScale(rtuState + idx, s, t);
 }
 
-void RL_Rtu_SetScalev(uint idx, float st[2])
+void RL_Rtu_SetScalev(uint idx, float const st[2])
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetScalev");
     copyMappedRtuToState(idx);
@@ -1055,7 +1055,7 @@ void RL_Rtu_Scale(uint idx, float scalar)
     Rtu_Scale(rtuState + idx, scalar);
 }
 
-void RL_Rtu_ScaleST(uint idx, float st[2])
+void RL_Rtu_ScaleST(uint idx, float const st[2])
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_ScaleST");
     copyMappedRtuToState(idx);
@@ -1069,7 +1069,7 @@ void RL_Rtu_SetOffset(uint idx, float x, float y)
     Rtu_SetOffset(rtuState + idx, x, y);
 }
 
-void RL_Rtu_SetOffsetv(uint idx, float xy[2])
+void RL_Rtu_SetOffsetv(uint idx, float const xy[2])
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetOffsetv");
     copyMappedRtuToState(idx);
@@ -1083,7 +1083,7 @@ void RL_Rtu_TranslateOffset(uint idx, float x, float y)
     Rtu_TranslateOffset(rtuState + idx, x, y);
 }
 
-void RL_Rtu_TranslateOffsetv(uint idx, float xy[2])
+void RL_Rtu_TranslateOffsetv(uint idx, float const xy[2])
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_TranslateOffsetv");
     copyMappedRtuToState(idx);
@@ -1137,16 +1137,13 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
     const rcolor_t* reflectionColors, const rtexcoord_t* reflectionCoords,
     const rtexcoord_t* reflectionMaskCoords)
 {
-    const rtexmapunit_t* rtuShiny;
-
     prepareTextureUnitMap();
     writePoly(primType, choosePolyType(flags), flags, numElements,
         vertices, colors, primaryCoords, interCoords, modTex, modColor, modCoords);
 
     // We are currently limited to two texture units, therefore shiny effects
     // must be drawn in a separate pass using a new primitive.
-    rtuShiny = rtuMap[RTU_REFLECTION]? rtuMap[RTU_REFLECTION] : &rtuDefault;
-    if(!rtuShiny->tex) return;
+    if(!rtuMap[RTU_REFLECTION]->tex) return;
 
     prepareTextureUnitMapForShinyPoly();
     writePoly(primType, PT_SHINY, flags & ~RPF_HAS_DYNLIGHTS, numElements,

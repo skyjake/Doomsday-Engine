@@ -96,13 +96,12 @@ void RL_DeleteLists(void);
 void RL_LoadDefaultRtus(void);
 
 /**
- * Map the texture unit write state for the identified @a idx unit
- * to @a rtu. This creates a reference to @a rtu which MUST contine
- * to remain accessible until the mapping is subsequently cleared
- * or changed (explicitly by call to RL_MapRtu/RL_LoadDefaultRtus,
- * or, implicitly by customizing the unit configuration through one
- * of the RL_RTU* family of functions (at which point a copy will
- * be performed).
+ * Map the texture unit write state for the identified @a idx unit to
+ * @a rtu. This creates a reference to @a rtu which MUST continue to
+ * remain accessible until the mapping is subsequently cleared or
+ * changed (explicitly by call to RL_MapRtu/RL_LoadDefaultRtus, or,
+ * implicitly by customizing the unit configuration through one of the
+ * RL_RTU* family of functions (at which point a copy will be performed).
  */
 void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
 
@@ -117,19 +116,19 @@ void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu);
 
 /// Change the scale property of the identified @a idx texture unit.
 void RL_Rtu_SetScale(uint idx, float s, float t);
-void RL_Rtu_SetScalev(uint idx, float st[2]);
+void RL_Rtu_SetScalev(uint idx, float const st[2]);
 
-/// Scale the offset and scale properties of the identified @a idx
+/// Scale the offset and scale properties of the identified @a idx texture unit.
 void RL_Rtu_Scale(uint idx, float scalar);
-void RL_Rtu_ScaleST(uint idx, float st[2]);
+void RL_Rtu_ScaleST(uint idx, float const st[2]);
 
 /// Change the offset property of the identified @a idx texture unit.
 void RL_Rtu_SetOffset(uint idx, float s, float t);
-void RL_Rtu_SetOffsetv(uint idx, float st[2]);
+void RL_Rtu_SetOffsetv(uint idx, float const st[2]);
 
 /// Translate the offset property of the identified @a idx texture unit.
 void RL_Rtu_TranslateOffset(uint idx, float s, float t);
-void RL_Rtu_TranslateOffsetv(uint idx, float st[2]);
+void RL_Rtu_TranslateOffsetv(uint idx, float const st[2]);
 
 /// Change the texture assigned to the identified @idx texture unit.
 void RL_Rtu_SetTexture(uint idx, DGLuint glName);

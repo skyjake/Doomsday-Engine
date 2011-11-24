@@ -1472,21 +1472,18 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     RL_MapRtu(RTU_REFLECTION, shinyRTU);
     RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
 
+    /// \todo Avoid modifying the RTU write state for the purposes of primitive
+    /// specific translations by implementing these as arguments to the RL_Add*
+    /// family of functions.
     if(primaryRTU)
     {
-        rtexmapunit_t rtu;
-        memcpy(&rtu, primaryRTU, sizeof rtu);
-        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
-        if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
-        RL_CopyRtu(RTU_PRIMARY, &rtu);
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY, p->texOffset);
+        if(p->texScale) RL_Rtu_ScaleST(RTU_PRIMARY, p->texScale);
     }
 
     if(primaryDetailRTU)
     {
-        rtexmapunit_t rtu;
-        memcpy(&rtu, primaryDetailRTU, sizeof rtu);
-        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
-        RL_CopyRtu(RTU_PRIMARY_DETAIL, &rtu);
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY_DETAIL, p->texOffset);
     }
 
     if(interRTU)
@@ -1509,17 +1506,10 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         }
     }
 
-    if(shinyRTU)
+    if(shinyMaskRTU)
     {
-        RL_CopyRtu(RTU_REFLECTION, shinyRTU);
-        if(shinyMaskRTU)
-        {
-            rtexmapunit_t rtu;
-            memcpy(&rtu, shinyMaskRTU, sizeof rtu);
-            if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
-            if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
-            RL_CopyRtu(RTU_REFLECTION_MASK, &rtu);
-        }
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_REFLECTION_MASK, p->texOffset);
+        if(p->texScale) RL_Rtu_ScaleST(RTU_REFLECTION_MASK, p->texScale);
     }
 
     // Write multiple polys depending on rend params.
