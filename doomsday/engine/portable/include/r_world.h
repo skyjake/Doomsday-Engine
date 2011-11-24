@@ -48,7 +48,6 @@ typedef struct skyfix_s {
 
 extern byte rendSkyLight; // cvar
 extern byte rendSkyLightAuto; // cvar
-extern byte rendSkyLightBalance; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
@@ -67,7 +66,11 @@ void            R_PolygonizeMap(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
 
-const float*    R_GetSectorLightColor(const sector_t* sector);
+/**
+ * Sector light color may be affected by the sky light color.
+ */
+const float* R_GetSectorLightColor(const sector_t* sector);
+
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
 float           R_ExtraLightDelta(void);
 float           R_CheckSectorLight(float lightlevel, float min, float max);

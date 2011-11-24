@@ -716,9 +716,6 @@ desc = 1=Use sky light color in sky sectors.
 [rend-light-sky-auto]
 desc = 1=Enable automatic calculation of the sky light color.
 
-[rend-light-sky-balance]
-desc = 1=Use color balancing on non-skylit sectors (so the skylight won't appear too bright).
-
 [rend-glow]
 desc = Glow strength factor (default: 1).
 

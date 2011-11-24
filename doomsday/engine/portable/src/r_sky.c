@@ -64,7 +64,6 @@ skylayer_t skyLayers[MAXSKYLAYERS];
 skymodel_t skyModels[NUM_SKY_MODELS];
 boolean skyModelsInited = false;
 
-float skyLightBalance = 1;
 int skyDetail = 6, skySimple = false;
 int skyColumns, skyRows = 3;
 float skyDist = 1600;
@@ -96,7 +95,6 @@ static void configureDefaultSky(void)
     // Configure the defaults.
     skyLightColorDefined = false;
     skyLightColor[CR] = skyLightColor[CG] = skyLightColor[CB] = 1.0f;
-    skyLightBalance = 1;
     skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
 
     { int i;
@@ -231,13 +229,6 @@ static void prepareSkySphere(void)
     {
         skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
     }
-
-    // Calculate a balancing factor so the light won't appear too bright.
-    { const float* color = R_SkyAmbientColor();
-    if(color[CR] > 0 || color[CG] > 0 || color[CB] > 0)
-    {
-        skyLightBalance = 0 + (color[CR]*2 + color[CG]*3 + color[CB]*2) / 7;
-    }}
 
     // When the sky light color changes we must update the lightgrid.
     LG_MarkAllForUpdate();

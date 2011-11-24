@@ -158,7 +158,6 @@ void Rend_Register(void)
     C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
     C_VAR_BYTE2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, LG_MarkAllForUpdate);
-    C_VAR_BYTE2("rend-light-sky-balance", &rendSkyLightBalance, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
 

@@ -70,7 +70,6 @@ byte rendLightWallAngleSmooth = true;
 
 byte rendSkyLight = true;
 byte rendSkyLightAuto = true;
-byte rendSkyLightBalance = true;
 
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
@@ -1850,33 +1849,13 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
-/**
- * Sector light color may be affected by the sky light color.
- */
 const float* R_GetSectorLightColor(const sector_t* sector)
 {
     assert(sector);
+    if(rendSkyLight && R_SectorContainsSkySurfaces(sector))
     {
-    static float balancedRGB[3];
-
-    if(rendSkyLight)
-    {
-        if(R_SectorContainsSkySurfaces(sector))
-        {
-            return R_SkyAmbientColor();
-        }
-        // else A non-skylight sector (i.e., everything else!)
-
-        // Balancing - darken this sector so the skylight won't appear too bright.
-        if(rendSkyLightBalance && skyLightBalance < 1)
-        {
-            balancedRGB[0] = sector->rgb[0] * skyLightBalance;
-            balancedRGB[1] = sector->rgb[1] * skyLightBalance;
-            balancedRGB[2] = sector->rgb[2] * skyLightBalance;
-            return balancedRGB;
-        }
+        return R_SkyAmbientColor();
     }
+    // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.
-    }
 }
-

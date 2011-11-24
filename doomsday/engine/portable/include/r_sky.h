@@ -79,7 +79,6 @@ extern int firstSkyLayer, activeSkyLayers;
 
 extern boolean skyModelsInited;
 extern skymodel_t skyModels[NUM_SKY_MODELS];
-extern float skyLightBalance;
 extern int skyDetail, skySimple;
 extern int skyColumns, skyRows;
 extern float skyDist;
