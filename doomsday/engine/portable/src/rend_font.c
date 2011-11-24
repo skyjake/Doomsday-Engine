@@ -826,7 +826,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
         if(patch)
         {
-            glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch))));
+            GL_BindTexture(GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch))), filterUI? GL_LINEAR : GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }

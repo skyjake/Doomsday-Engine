@@ -59,12 +59,13 @@ void Material_Initialize(material_t* mat)
 
 void Material_Ticker(material_t* mat, timespan_t time)
 {
+    material_variantlist_node_t* node;
     assert(mat);
-    {material_variantlist_node_t* node;
+
     for(node = mat->_variants; node; node = node->next)
     {
         MaterialVariant_Ticker(node->variant, time);
-    }}
+    }
 }
 
 ded_material_t* Material_Definition(const material_t* mat)

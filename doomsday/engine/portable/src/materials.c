@@ -1125,34 +1125,21 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ss, byte unit, const texturevariant_t* tex,
+static void setTexUnit(materialsnapshot_t* ms, byte unit, const texturevariant_t* texture,
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
-    float tOffset, float alpha)
+    float tOffset, float opacity)
 {
-    material_textureunit_t* tu;
-    assert(ss);
+    rtexmapunit_t* tu;
+    assert(ms && unit < NUM_MATERIAL_TEXTURE_UNITS);
 
-    tu = &MSU(ss, unit);
-    if(tex)
-    {
-        tu->tex.texture = TextureVariant_GeneralCase(tex);
-        tu->tex.spec = TextureVariant_Spec(tex);
-        tu->tex.glName = TextureVariant_GLName(tex);
-        TextureVariant_Coords(tex, &tu->tex.s, &tu->tex.t);
-    }
-    else
-    {
-        tu->tex.texture = NULL;
-        tu->tex.spec = NULL;
-        tu->tex.glName = 0;
-        tu->tex.s = tu->tex.t = 0;
-    }
-
-    tu->magMode = magMode;
+    ms->textures[unit] = texture;
+    tu = &ms->units[unit];
+    tu->tex = (texture? TextureVariant_GLName(texture) : 0);
     tu->blendMode = blendMode;
-    tu->alpha = MINMAX_OF(0, alpha, 1);
+    tu->magMode = magMode;
     V2_Set(tu->scale, sScale, tScale);
     V2_Set(tu->offset, sOffset, tOffset);
+    tu->opacity = MINMAX_OF(0, opacity, 1);
 }
 
 void Materials_InitSnapshot(materialsnapshot_t* ms)
@@ -1160,34 +1147,36 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     int i;
     assert(ms);
 
-    memset(ms, 0, sizeof(materialsnapshot_t));
-    ms->width = ms->height = 0;
-
-    for(i = 0; i < MATERIALVARIANT_MAXLAYERS; ++i)
+    for(i = 0; i < NUM_MATERIAL_TEXTURE_UNITS; ++i)
     {
-        setTexUnit(ms, i, NULL, BM_NORMAL, GL_LINEAR, 1, 1, 0, 0, 0);
+        Rtu_Init(&ms->units[i]);
+        ms->textures[i] = NULL;
     }
+
+    ms->width = ms->height = 0;
+    ms->glowing = 0;
+    ms->isOpaque = true;
 
     V3_Set(ms->topColor, 1, 1, 1);
     V3_Set(ms->color, 1, 1, 1);
     V3_Set(ms->colorAmplified, 1, 1, 1);
     V3_Set(ms->shinyMinColor, 0, 0, 0);
-
-    ms->glowing = 0;
-    ms->isOpaque = true;
 }
 
-const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, boolean updateSnapshot)
+/// @return  Same as @a snapshot for caller convenience.
+const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
+    materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
         const texturevariant_t* tex;
     } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
-    materialsnapshot_t* snapshot;
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     int i, layerCount;
+    texture_t* tex;
+    assert(snapshot);
 
-    memset(texUnits, 0, sizeof(texUnits));
+    memset(texUnits, 0, sizeof texUnits);
 
     // Ensure all resources needed to visualize this Material's layers have been prepared.
     layerCount = Material_LayerCount(mat);
@@ -1222,63 +1211,34 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
     }
 
     // Do we need to prepare a DetailTexture?
-    if(r_detail)
+    tex = Material_DetailTexture(mat);
+    if(tex)
     {
-        texture_t* tex = Material_DetailTexture(mat);
-        if(tex)
-        {
-            const float contrast = Material_DetailStrength(mat) * detailFactor;
-            texturevariantspecification_t* texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
-            texUnits[MTU_DETAIL].tex = GL_PrepareTextureVariant(tex, texSpec);
-        }
+        const float contrast = Material_DetailStrength(mat) * detailFactor;
+        texturevariantspecification_t* texSpec = GL_DetailTextureVariantSpecificationForContext(contrast);
+        texUnits[MTU_DETAIL].tex = GL_PrepareTextureVariant(tex, texSpec);
     }
 
     // Do we need to prepare a shiny texture (and possibly a mask)?
-    if(useShinySurfaces)
+    tex = Material_ShinyTexture(mat);
+    if(tex)
     {
-        texture_t* tex = Material_ShinyTexture(mat);
-        if(tex)
+        texturevariantspecification_t* texSpec =
+            GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
+                TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
+                false, false, false, false);
+
+        texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
+
+        // We are only interested in a mask if we have a shiny texture.
+        if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
         {
-            texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MAPSURFACE_REFLECTION,
-                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1,
-                    false, false, false, false);
-
-            texUnits[MTU_REFLECTION].tex = GL_PrepareTextureVariant(tex, texSpec);
-
-            // We are only interested in a mask if we have a shiny texture.
-            if(texUnits[MTU_REFLECTION].tex && (tex = Material_ShinyMaskTexture(mat)))
-            {
-                texSpec = GL_TextureVariantSpecificationForContext(
-                              TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                              -1, -1, -1, true, false, false, false);
-                texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
-            }
+            texSpec = GL_TextureVariantSpecificationForContext(
+                TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                -1, -1, -1, true, false, false, false);
+            texUnits[MTU_REFLECTION_MASK].tex = GL_PrepareTextureVariant(tex, texSpec);
         }
     }
-
-    // Acquire the snapshot we will be updating.
-    snapshot = MaterialVariant_Snapshot(variant);
-    if(!snapshot)
-    {
-        // Time to allocate the snapshot.
-        snapshot = (materialsnapshot_t*)malloc(sizeof *snapshot);
-        if(!snapshot)
-            Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
-        snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
-        Materials_InitSnapshot(snapshot);
-
-        // Update the snapshot right away.
-        updateSnapshot = true;
-    }
-    else if(MaterialVariant_SnapshotPrepareFrame(variant) != frameCount)
-    {
-        // Time to update the snapshot.
-        updateSnapshot = true;
-    }
-
-    // If we aren't updating a snapshot; get out of here.
-    if(!updateSnapshot) return snapshot;
 
     MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
 
@@ -1388,6 +1348,35 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
     }
 
     return snapshot;
+}
+
+const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, boolean updateSnapshot)
+{
+    // Acquire the snapshot we are interested in.
+    materialsnapshot_t* snapshot = MaterialVariant_Snapshot(variant);
+    if(!snapshot)
+    {
+        // Time to allocate the snapshot.
+        snapshot = (materialsnapshot_t*)malloc(sizeof *snapshot);
+        if(!snapshot)
+            Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
+        snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
+        Materials_InitSnapshot(snapshot);
+
+        // Update the snapshot right away.
+        updateSnapshot = true;
+    }
+    else if(MaterialVariant_SnapshotPrepareFrame(variant) != frameCount)
+    {
+        // Time to update the snapshot.
+        updateSnapshot = true;
+    }
+
+    // If we aren't updating a snapshot; get out of here.
+    if(!updateSnapshot) return snapshot;
+
+    // We have work to do...
+    return updateMaterialSnapshot(variant, snapshot);
 }
 
 const materialsnapshot_t* Materials_PrepareVariant(materialvariant_t* variant)

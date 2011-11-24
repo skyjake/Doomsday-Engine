@@ -63,9 +63,11 @@ extern int shadowMaxDistance;
 
 extern int useShinySurfaces;
 
-void            Rend_Register(void);
-void            Rend_Init(void);
-void            Rend_Reset(void);
+void Rend_Register(void);
+
+void Rend_Init(void);
+void Rend_Shutdown(void);
+void Rend_Reset(void);
 
 void            Rend_RenderMap(void);
 void            Rend_ModelViewMatrix(boolean use_angles);

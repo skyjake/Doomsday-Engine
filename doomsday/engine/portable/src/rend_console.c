@@ -533,7 +533,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive());
 
-        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 
         bgX = (int) (ms->width  * consoleBackgroundZoom);
         bgY = (int) (ms->height * consoleBackgroundZoom);

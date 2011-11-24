@@ -739,8 +739,7 @@ extern boolean usingFog;
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
             R_UnloadVectorGraphics();
-            Rend_ParticleReleaseExtraTextures();
-            GL_ReleaseSystemTextures();
+            GL_ReleaseTextures();
         }
 
         if(createContext(window->width, window->height, window->normal.bpp,

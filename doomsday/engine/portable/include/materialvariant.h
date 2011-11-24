@@ -24,26 +24,10 @@
 #ifndef LIBDENG_MATERIALVARIANT_H
 #define LIBDENG_MATERIALVARIANT_H
 
-#include "texture.h"
+#include "r_data.h"
 
+struct texturevariant_s;
 struct texturevariantspecification_s;
-
-/// Material (Usage) Context identifiers.
-typedef enum {
-    MC_UNKNOWN = -1,
-    MATERIALCONTEXT_FIRST = 0,
-    MC_UI = MATERIALCONTEXT_FIRST,
-    MC_MAPSURFACE,
-    MC_SPRITE,
-    MC_MODELSKIN,
-    MC_PSPRITE,
-    MC_SKYSPHERE,
-    MATERIALCONTEXT_LAST = MC_SKYSPHERE
-} materialcontext_t;
-
-#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
-
-#define VALID_MATERIALCONTEXT(mc) ((mc) >= MATERIALCONTEXT_FIRST && (mc) <= MATERIALCONTEXT_LAST)
 
 typedef struct materialvariantspecification_s {
     materialcontext_t context;
@@ -61,34 +45,15 @@ enum {
     NUM_MATERIAL_TEXTURE_UNITS
 };
 
-typedef struct material_textureunit_s {
-    struct material_textureunit_texture {
-        texture_t* texture;
-        const struct texturevariantspecification_s* spec;
-        DGLuint glName;
-        float s, t;
-    } tex;
-
-    int magMode;
-
-    /// Currently used only with reflection.
-    blendmode_t blendMode;
-
-    /// Material-space scale multiplier.
-    vec2_t scale;
-
-    /// Material-space origin translation.
-    vec2_t offset;
-
-    float alpha;
-} material_textureunit_t;
-
 typedef struct materialsnapshot_s {
-    /// "Virtual" texturing units.
-    material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
+    /// @c true= this material is entirely opaque.
+    boolean isOpaque;
 
     /// Dimensions in logical world units.
     int width, height;
+
+    /// Glow strength multiplier.
+    float glowing;
 
     /// Average colors (for lighting).
     vec3_t color;
@@ -100,17 +65,24 @@ typedef struct materialsnapshot_s {
     /// Minimum sector light color for shiny texturing.
     vec3_t shinyMinColor;
 
-    /// Glow strength multiplier.
-    float glowing;
+    /// Textures used on each texture unit.
+    const struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
 
-    boolean isOpaque;
+    /// Texture unit configuration.
+    rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 } materialsnapshot_t;
 
-#define MSU(ms, u) ((ms)->units[u])
+// Helper macros for accessing MaterialSnapshot data elements.
+#define MST(ms, u)             ((ms)->textures[u])
+#define MSU(ms, u)             ((ms)->units[u])
+
+#define MSU_texture(ms, u)     (MST(ms, u)? TextureVariant_GeneralCase(MST(ms, u)) : NULL)
+#define MSU_gltexture(ms, u)   (MST(ms, u)? TextureVariant_GLName(MST(ms, u)) : 0)
+#define MSU_texturespec(ms, u) (MST(ms, u)? TextureVariant_Spec(MST(ms, u)) : NULL)
 
 typedef struct materialvariant_layer_s {
     int stage; // -1 => layer not in use.
-    texture_t* texture;
+    struct texture_s* texture;
     float texOrigin[2]; /// Origin of the texture in material-space.
     float glow;
     short tics;

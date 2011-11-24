@@ -49,6 +49,7 @@
 
 #include "colorpalette.h"
 #include "texturecontent.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
@@ -969,7 +970,7 @@ void GL_SetMaterialUI(material_t* mat)
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
@@ -982,16 +983,15 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 {
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
-    if(NULL != rawTex)
+    if(rawTex)
     {
-        DGLuint tex = GL_PrepareRawTexture(rawTex);
-        GL_BindTexture(tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }

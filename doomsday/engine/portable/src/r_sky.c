@@ -37,6 +37,7 @@
 #include "m_vector.h"
 #include "rend_sky.h"
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -169,9 +170,8 @@ static void prepareSkySphere(void)
             0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false);
         ms = Materials_Prepare(slayer->material, spec, false);
 
-        slayer->tex = MSU(ms, MTU_PRIMARY).tex.glName;
-        Texture_Dimensions(MSU(ms, MTU_PRIMARY).tex.texture,
-            &slayer->texWidth, &slayer->texHeight);
+        slayer->tex = MSU_gltexture(ms, MTU_PRIMARY);
+        Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &slayer->texWidth, &slayer->texHeight);
         slayer->texMagMode = MSU(ms, MTU_PRIMARY).magMode;
 
         slayer->fadeout.rgb[CR] = ms->topColor[CR];
@@ -392,16 +392,15 @@ void R_SkyTicker(void)
 
 void Rend_SkyReleaseTextures(void)
 {
-    if(novideo || isDedicated)
-        return;
-    { int i;
+    int i;
+    if(novideo || isDedicated) return;
+
     for(i = 0; i < MAXSKYLAYERS; ++i)
     {
         skylayer_t* slayer = &skyLayers[i];
-        if(slayer->tex)
-            glDeleteTextures(1, &slayer->tex);
+        glDeleteTextures(1, (GLuint*)&slayer->tex);
         slayer->tex = 0;
-    }}
+    }
 }
 
 const float* R_SkyAmbientColor(void)

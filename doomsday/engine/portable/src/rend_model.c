@@ -45,8 +45,9 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "net_main.h"           // for gametic
+#include "net_main.h" // for gametic
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -762,7 +763,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-            skinTexture = MSU(ms, MTU_PRIMARY).tex.glName;
+            skinTexture = MSU_gltexture(ms, MTU_PRIMARY);
         }
         else
         {

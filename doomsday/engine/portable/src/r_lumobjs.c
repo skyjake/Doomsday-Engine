@@ -36,6 +36,7 @@
 
 #include "sys_opengl.h"
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 BEGIN_PROF_TIMERS()
@@ -353,16 +354,17 @@ static void newLightProjection(uint* listIdx, int flags, DGLuint texture,
  */
 static void calcLightColor(float outRGB[3], const float color[3], float light)
 {
+    int i;
+
     light = MINMAX_OF(0, light, 1) * dynlightFactor;
     // In fog additive blending is used; the normal fog color is way too bright.
     if(usingFog) light *= dynlightFogBright;
 
     // Multiply light with (ambient) color.
-    { int i;
     for(i = 0; i < 3; ++i)
     {
         outRGB[i] = light * color[i];
-    }}
+    }
 }
 
 typedef struct {
@@ -749,8 +751,7 @@ static void addLuminous(mobj_t* mo)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-    pl = (const pointlight_analysis_t*) Texture_Analysis(
-        MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
+    pl = (const pointlight_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
     if(!pl) return; // Not good...
 
     size = pl->brightMul;
@@ -769,11 +770,11 @@ static void addLuminous(mobj_t* mo)
     autoLightColor[CB] = pl->color[CB];
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
 
     center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;

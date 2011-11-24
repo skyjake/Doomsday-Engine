@@ -43,6 +43,7 @@
 
 #include "colorpalette.h"
 #include "texture.h"
+#include "materialvariant.h"
 #include "font.h"
 
 // MACROS ------------------------------------------------------------------
@@ -821,6 +822,74 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 #endif
 }
 
+void Rtu_Init(rtexmapunit_t* rtu)
+{
+    assert(rtu);
+    rtu->tex = 0;
+    rtu->magMode = GL_LINEAR;
+    rtu->blendMode = BM_NORMAL;
+    rtu->opacity = 1;
+    rtu->scale[0] = rtu->scale[1] = 1;
+    rtu->offset[0] = rtu->offset[1] = 0;
+}
+
+void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)
+{
+    assert(rtu);
+    rtu->scale[0] = s;
+    rtu->scale[1] = t;
+}
+
+void Rtu_SetScalev(rtexmapunit_t* rtu, float const st[2])
+{
+    assert(st);
+    Rtu_SetScale(rtu, st[0], st[0]);
+}
+
+void Rtu_Scale(rtexmapunit_t* rtu, float scalar)
+{
+    assert(rtu);
+    rtu->scale[0] *= scalar;
+    rtu->scale[1] *= scalar;
+    rtu->offset[0] *= scalar;
+    rtu->offset[1] *= scalar;
+}
+
+void Rtu_ScaleST(rtexmapunit_t* rtu, float const scalarST[2])
+{
+    assert(rtu);
+    rtu->scale[0] *= scalarST[0];
+    rtu->scale[1] *= scalarST[1];
+    rtu->offset[0] *= scalarST[0];
+    rtu->offset[1] *= scalarST[1];
+}
+
+void Rtu_SetOffset(rtexmapunit_t* rtu, float s, float t)
+{
+    assert(rtu);
+    rtu->offset[0] = s;
+    rtu->offset[1] = t;
+}
+
+void Rtu_SetOffsetv(rtexmapunit_t* rtu, float const st[2])
+{
+    assert(st);
+    Rtu_SetOffset(rtu, st[0], st[1]);
+}
+
+void Rtu_TranslateOffset(rtexmapunit_t* rtu, float s, float t)
+{
+    assert(rtu);
+    rtu->offset[0] += s;
+    rtu->offset[1] += t;
+}
+
+void Rtu_TranslateOffsetv(rtexmapunit_t* rtu, float const st[2])
+{
+    assert(st);
+    Rtu_TranslateOffset(rtu, st[0], st[1]);
+}
+
 void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs)
 {
 #define COPYVERT(d, s)  (d)->pos[VX] = (s)->pos[VX]; \
@@ -1142,7 +1211,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
     if(!info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
-    memset(info, 0, sizeof(*info));
+    memset(info, 0, sizeof *info);
     tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(tex)
     {
@@ -1162,7 +1231,12 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
     }
-    VERBOSE( Con_Message("Warning:R_GetPatchInfo Invalid Patch id #%i.\n", id) )
+    if(id != 0)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_GetPatchInfo: Invalid Patch id #%i.\n", id);
+#endif
+    }
     return false;
 }
 

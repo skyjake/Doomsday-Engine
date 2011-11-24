@@ -33,7 +33,6 @@ typedef struct {
     rvertex_t vertices[4];
     rcolor_t colors[4];
     rtexcoord_t texCoords[4];
-    rtexmapunit_t texUnits[NUM_TEXMAP_UNITS];
 } shadowprim_t;
 
 /// \optimize This global shadow primitive is used to avoid repeated local
@@ -73,7 +72,8 @@ static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float a
     rs->vertices[3].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
     rs->colors[3].alpha = alpha;
 
-    RL_AddPoly(PT_FAN, RPT_SHADOW, rs->vertices, rs->texCoords, NULL, NULL, rs->colors, 4, 0, 0, NULL, rs->texUnits);
+    RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW, 4,
+        rs->vertices, rs->colors, rs->texCoords, NULL);
 }
 
 static void processMobjShadow(mobj_t* mo)
@@ -144,11 +144,6 @@ static void initShadowPrimitive(void)
 {
 #define SETCOLOR_BLACK(c) ((c).rgba[CR] = (c).rgba[CG] = (c).rgba[CB] = 0)
 
-    memset(rs->texUnits, 0, sizeof(rs->texUnits));
-    rs->texUnits[TU_PRIMARY].tex = GL_PrepareLSTexture(LST_DYNAMIC);
-    rs->texUnits[TU_PRIMARY].magMode = GL_LINEAR;
-    rs->texUnits[TU_PRIMARY].blend = 1;
-
     rs->texCoords[0].st[0] = 0;
     rs->texCoords[0].st[1] = 1;
     SETCOLOR_BLACK(rs->colors[0]);
@@ -177,7 +172,11 @@ void Rend_RenderMobjShadows(void)
     // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
     return;
 
-    // Initialize the invariant parts of our global shadow primitive now.
+    // Configure the render list primitive writer's texture unit state now.
+    RL_LoadDefaultRtus();
+    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+
+    // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
 
     // Process all sectors:
@@ -202,26 +201,15 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
 {
     static const float black[3] = { 0, 0, 0 };
     rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
-    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
     rvertex_t* rvertices;
     rtexcoord_t* rtexcoords;
     rcolor_t* rcolors;
     uint i, c;
 
-    memset(rTU, 0, sizeof(rTU));
-
     // Allocate enough for the divisions too.
     rvertices = R_AllocRendVertices(p->realNumVertices);
     rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
     rcolors = R_AllocRendColors(p->realNumVertices);
-
-    rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(LST_DYNAMIC);
-    rTU[TU_PRIMARY].magMode = GL_LINEAR;
-    rTU[TU_PRIMARY].blend = 1;
-
-    rTU[TU_PRIMARY_DETAIL].tex = 0;
-    rTU[TU_INTER].tex = 0;
-    rTU[TU_INTER_DETAIL].tex = 0;
 
     for(i = 0; i < p->numVertices; ++i)
     {
@@ -293,23 +281,16 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
 
     if(p->isWall && p->divs)
     {
-        RL_AddPoly(PT_FAN, RPT_SHADOW,
-                   rvertices + 3 + p->divs[0].num,
-                   rtexcoords + 3 + p->divs[0].num, NULL, NULL,
-                   rcolors + 3 + p->divs[0].num,
-                   3 + p->divs[1].num, 0,
-                   0, NULL, rTU);
-        RL_AddPoly(PT_FAN, RPT_SHADOW,
-                   rvertices, rtexcoords, NULL, NULL,
-                   rcolors, 3 + p->divs[0].num, 0,
-                   0, NULL, rTU);
+        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            3 + p->divs[1].num, rvertices + 3 + p->divs[0].num,
+            rcolors + 3 + p->divs[0].num, rtexcoords + 3 + p->divs[0].num, NULL);
+        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            3 + p->divs[0].num, rvertices, rcolors, rtexcoords, NULL);
     }
     else
     {
-        RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHADOW,
-                   rvertices, rtexcoords, NULL, NULL,
-                   rcolors, p->numVertices, 0,
-                   0, NULL, rTU);
+        RL_AddPolyWithCoords(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            p->numVertices, rvertices, rcolors, rtexcoords, NULL);
     }
 
     R_FreeRendVertices(rvertices);
@@ -321,5 +302,10 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
 
 void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* p)
 {
+    // Configure the render list primitive writer's texture unit state now.
+    RL_LoadDefaultRtus();
+    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+
+    // Write shadows to the render lists.
     R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void*)p);
 }

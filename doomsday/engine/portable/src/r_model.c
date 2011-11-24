@@ -48,6 +48,7 @@
 
 #include "def_main.h"
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -811,11 +812,11 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     ms = Materials_Prepare(spr->spriteFrames[frame].mats[0], spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
 
     off = sprTex->offY - ms->height;

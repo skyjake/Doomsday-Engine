@@ -99,7 +99,6 @@ typedef struct rendspriteparams_s {
     // Material:
     material_t*     mat;
     int             tMap, tClass;
-    float           matOffset[2];
     boolean         matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:

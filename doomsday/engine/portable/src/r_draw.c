@@ -36,6 +36,7 @@
 
 #include "sys_opengl.h"
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -169,10 +170,9 @@ void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets
         return;
     }
 
-    glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(tex));
+    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
 
     if(useOffsets)
     {
@@ -200,10 +200,9 @@ void R_DrawPatchTiled(texture_t* tex, int x, int y, int w, int h, DGLint wrapS, 
 {
     if(!tex) return;
 
-    glBindTexture(GL_TEXTURE_2D, GL_PreparePatchTexture(tex));
+    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
 
     GL_DrawRectTiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
@@ -251,7 +250,7 @@ void R_DrawViewBorder(void)
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectTiled(0, 0, port->dimensions.width, port->dimensions.height, ms->width, ms->height, 0, 0,
                             vd->window.x - border, vd->window.y - border,
                             vd->window.width + 2 * border, vd->window.height + 2 * border);

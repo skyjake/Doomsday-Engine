@@ -40,6 +40,7 @@
 #include "de_ui.h"
 
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -342,13 +343,13 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*)Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
-    texSpec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
+    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(spec);
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -texSpec->border;
@@ -356,9 +357,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     params->width = ms->width + texSpec->border*2;
     params->height = ms->height + texSpec->border*2;
 
-    // Calculate texture coordinates.
-    params->texOffset[0] = MSU(ms, MTU_PRIMARY).tex.s;
-    params->texOffset[1] = MSU(ms, MTU_PRIMARY).tex.t;
+    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &params->texOffset[0], &params->texOffset[1]);
 
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
@@ -434,7 +433,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -583,13 +582,19 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
-        GL_BindTexture(renderTextures ? params->modTex : 0, GL_LINEAR);
+        glBindTexture(GL_TEXTURE_2D, renderTextures ? params->modTex : 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        if(GL_state.features.texFilterAniso)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, params->modColor);
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        GL_BindTexture(renderTextures ? params->tex : 0, params->magMode);
+        glBindTexture(GL_TEXTURE_2D, renderTextures ? params->tex : 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params->magMode);
+        if(GL_state.features.texFilterAniso)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
 
         withDyn = true;
     }
@@ -598,7 +603,10 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
 
-        GL_BindTexture(renderTextures? params->tex : 0, params->magMode);
+        glBindTexture(GL_TEXTURE_2D, renderTextures? params->tex : 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params->magMode);
+        if(GL_state.features.texFilterAniso)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
         normal = 0;
     }
 
@@ -934,6 +942,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     float spriteCenter[3];
     float surfaceNormal[3];
     material_t* mat = NULL;
+    float s = 1, t = 1; // bottom right coords.
     int i;
 
     if(renderTextures == 1)
@@ -951,7 +960,8 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
             1, -2, -1, true, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
         glEnable(GL_TEXTURE_2D);
     }
     else
@@ -1071,8 +1081,8 @@ glEnd();
     }
 
     {
-    dgl_vertex_t     vs[4], *v = vs;
-    dgl_texcoord_t   tcs[4], *tc = tcs;
+    dgl_vertex_t vs[4], *v = vs;
+    dgl_texcoord_t tcs[4], *tc = tcs;
 
     //  1---2
     //  |   |  Vertex layout.
@@ -1094,14 +1104,14 @@ glEnd();
     v[3].xyz[1] = v4[VZ];
     v[3].xyz[2] = v4[VY];
 
-    tc[0].st[0] = params->matOffset[0] *  (params->matFlip[0]? 1:0);
-    tc[0].st[1] = params->matOffset[1] * (!params->matFlip[1]? 1:0);
-    tc[1].st[0] = params->matOffset[0] *  (params->matFlip[0]? 1:0);
-    tc[1].st[1] = params->matOffset[1] *  (params->matFlip[1]? 1:0);
-    tc[2].st[0] = params->matOffset[0] * (!params->matFlip[0]? 1:0);
-    tc[2].st[1] = params->matOffset[1] *  (params->matFlip[1]? 1:0);
-    tc[3].st[0] = params->matOffset[0] * (!params->matFlip[0]? 1:0);
-    tc[3].st[1] = params->matOffset[1] * (!params->matFlip[1]? 1:0);
+    tc[0].st[0] = s *  (params->matFlip[0]? 1:0);
+    tc[0].st[1] = t * (!params->matFlip[1]? 1:0);
+    tc[1].st[0] = s *  (params->matFlip[0]? 1:0);
+    tc[1].st[1] = t *  (params->matFlip[1]? 1:0);
+    tc[2].st[0] = s * (!params->matFlip[0]? 1:0);
+    tc[2].st[1] = t *  (params->matFlip[1]? 1:0);
+    tc[3].st[0] = s * (!params->matFlip[0]? 1:0);
+    tc[3].st[1] = t * (!params->matFlip[1]? 1:0);
 
     renderQuad(v, quadColors, tc);
     }

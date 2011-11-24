@@ -29,6 +29,7 @@
 #ifndef LIBDENG_REFRESH_DATA_H
 #define LIBDENG_REFRESH_DATA_H
 
+#include "dd_types.h"
 #include "gl_main.h"
 #include "dd_def.h"
 #include "p_think.h"
@@ -53,13 +54,68 @@ struct font_s;
 #define DTLF_PWAD           0x2 // Can use if from PWAD.
 #define DTLF_EXTERNAL       0x4 // Can use if from external resource.
 
+/**
+ * Texture unit state. POD.
+ *
+ * A simple Record data structure for storing properties used for
+ * configuring a GL texture unit during render.
+ */
+typedef struct rtexmapuint_s {
+    /// Texture used on this layer (if any).
+    DGLuint tex;
+
+    /// GL texture magnification filter.
+    int magMode;
+
+    /// Currently used only with reflection.
+    blendmode_t blendMode;
+
+    /// Opacity of this layer [0...1].
+    float opacity;
+
+    /// Texture-space scale multiplier.
+    vec2_t scale;
+
+    /// Texture-space origin translation (unscaled).
+    vec2_t offset;
+} rtexmapunit_t;
+
+/// Manipulators, for convenience.
+void Rtu_Init(rtexmapunit_t* rtu);
+
+/// Change the scale property.
+void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t);
+void Rtu_SetScalev(rtexmapunit_t* rtu, float const st[2]);
+
+/**
+ * Multiply the offset and scale properties by @a scalar.
+ * \note @a scalar is applied to both scale and offset properties
+ * however the offset remains independent from scale (i.e., it is
+ * still considered "unscaled").
+ */
+void Rtu_Scale(rtexmapunit_t* rtu, float scalar);
+void Rtu_ScaleST(rtexmapunit_t* rtu, float const scalarST[2]);
+
+/// Change the offset property.
+void Rtu_SetOffset(rtexmapunit_t* rtu, float s, float t);
+void Rtu_SetOffsetv(rtexmapunit_t* rtu, float const st[2]);
+
+/// Translate the offset property.
+void Rtu_TranslateOffset(rtexmapunit_t* rtu, float s, float t);
+void Rtu_TranslateOffsetv(rtexmapunit_t* rtu, float const st[2]);
+
+/**
+ * Logical texture unit indices.
+ */
 typedef enum {
-    TU_PRIMARY = 0,
-    TU_PRIMARY_DETAIL,
-    TU_INTER,
-    TU_INTER_DETAIL,
+    RTU_PRIMARY = 0,
+    RTU_PRIMARY_DETAIL,
+    RTU_INTER,
+    RTU_INTER_DETAIL,
+    RTU_REFLECTION,
+    RTU_REFLECTION_MASK,
     NUM_TEXMAP_UNITS
-} gltexunit_t;
+} rtexmapunitid_t;
 
 typedef struct glcommand_vertex_s {
     float           s, t;
@@ -226,14 +282,13 @@ void            R_FreeRendColors(rcolor_t* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
-void            R_DivVerts(rvertex_t* dst, const rvertex_t* src,
-                           const walldiv_t* divs);
-void            R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
-                                const walldiv_t* divs, float bL, float tL,
-                                float bR, float tR);
-void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
-                               const walldiv_t* divs, float bL, float tL,
-                               float bR, float tR);
+void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs);
+
+void R_DivVertColors(rcolor_t* dst, const rcolor_t* src, const walldiv_t* divs,
+    float bL, float tL, float bR, float tR);
+
+void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* divs,
+    float bL, float tL, float bR, float tR);
 
 void R_InitTranslationTables(void);
 void R_UpdateTranslationTables(void);

@@ -24,6 +24,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
 
@@ -37,22 +38,12 @@ int RIT_RenderLightProjectionIterator(const dynlight_t* dyn, void* paramaters)
         rvertex_t* rvertices;
         rtexcoord_t* rtexcoords;
         rcolor_t* rcolors;
-        rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
         uint i, c;
-
-        memset(rTU, 0, sizeof(rTU));
 
         // Allocate enough for the divisions too.
         rvertices = R_AllocRendVertices(p->realNumVertices);
         rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
         rcolors = R_AllocRendColors(p->realNumVertices);
-
-        rTU[TU_PRIMARY].tex = dyn->texture;
-        rTU[TU_PRIMARY].magMode = GL_LINEAR;
-
-        rTU[TU_PRIMARY_DETAIL].tex = 0;
-        rTU[TU_INTER].tex = 0;
-        rTU[TU_INTER_DETAIL].tex = 0;
 
         for(i = 0; i < p->numVertices; ++i)
         {
@@ -120,25 +111,21 @@ int RIT_RenderLightProjectionIterator(const dynlight_t* dyn, void* paramaters)
             memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
         }
 
+        RL_LoadDefaultRtus();
+        RL_Rtu_SetTexture(RTU_PRIMARY, dyn->texture);
+
         if(p->isWall && p->divs)
         {
-            RL_AddPoly(PT_FAN, RPT_LIGHT,
-                       rvertices + 3 + p->divs[0].num,
-                       rtexcoords + 3 + p->divs[0].num, NULL, NULL,
-                       rcolors + 3 + p->divs[0].num,
-                       3 + p->divs[1].num, 0,
-                       0, NULL, rTU);
-            RL_AddPoly(PT_FAN, RPT_LIGHT,
-                       rvertices, rtexcoords, NULL, NULL,
-                       rcolors, 3 + p->divs[0].num, 0,
-                       0, NULL, rTU);
+            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_LIGHT,
+                3 + p->divs[1].num, rvertices + 3 + p->divs[0].num,
+                rcolors + 3 + p->divs[0].num, rtexcoords + 3 + p->divs[0].num, NULL);
+            RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_LIGHT,
+                3 + p->divs[0].num, rvertices, rcolors, rtexcoords, NULL);
         }
         else
         {
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_LIGHT,
-                       rvertices, rtexcoords, NULL, NULL,
-                       rcolors, p->numVertices, 0,
-                       0, NULL, rTU);
+            RL_AddPolyWithCoords(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_LIGHT,
+                p->numVertices, rvertices, rcolors, rtexcoords, NULL);
         }
 
         R_FreeRendVertices(rvertices);

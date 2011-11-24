@@ -55,6 +55,7 @@
 #include "blockset.h"
 #include "m_stack.h"
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -625,13 +626,13 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     ms = Materials_Prepare(mat, spec, false);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
-    texSpec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
+    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
 
     info->numFrames = sprDef->numFrames;
@@ -641,8 +642,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->topOffset = sprTex->offY + texSpec->border;
     info->width  = ms->width  + texSpec->border*2;
     info->height = ms->height + texSpec->border*2;
-    info->texCoord[0] = MSU(ms, MTU_PRIMARY).tex.s;
-    info->texCoord[1] = MSU(ms, MTU_PRIMARY).tex.t;
+    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
 
     return true;
 }
@@ -959,13 +959,13 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     ms = Materials_Prepare(mat, spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
-    texSpec = TS_GENERAL(MSU(ms, MTU_PRIMARY).tex.spec);
+    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
 
     params->width  = ms->width  + texSpec->border*2;
@@ -987,8 +987,6 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->mat = mat;
     params->tMap = tMap;
     params->tClass = tClass;
-    params->matOffset[0] = MSU(ms, MTU_PRIMARY).tex.s;
-    params->matOffset[1] = MSU(ms, MTU_PRIMARY).tex.t;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -1214,11 +1212,11 @@ void R_ProjectSprite(mobj_t* mo)
     ms = Materials_Prepare(mat, spec, true);
 
 #if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU(ms, MTU_PRIMARY).tex.texture)) != TN_SPRITES)
+    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU(ms, MTU_PRIMARY).tex.texture);
+    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
 
     // Align to the view plane?
@@ -1498,8 +1496,8 @@ void R_ProjectSprite(mobj_t* mo)
             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1,-2, -1, true, true, true, false);
         ms = Materials_Prepare(mat, spec, true);
 
-        pl = (const pointlight_analysis_t*) Texture_Analysis(
-            MSU(ms, MTU_PRIMARY).tex.texture, TA_SPRITE_AUTOLIGHT);
+        pl = (const pointlight_analysis_t*)
+            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
         if(!pl) return; // Not good...
 
         lum = LO_GetLuminous(mo->lumIdx);

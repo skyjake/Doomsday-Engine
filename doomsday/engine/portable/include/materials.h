@@ -34,6 +34,24 @@ struct materialsnapshot_s;
 
 enum materialnamespaceid_t; // Defined in dd_share.h
 
+/// Material (Usage) Context identifiers.
+typedef enum {
+    MC_UNKNOWN = -1,
+    MATERIALCONTEXT_FIRST = 0,
+    MC_UI = MATERIALCONTEXT_FIRST,
+    MC_MAPSURFACE,
+    MC_SPRITE,
+    MC_MODELSKIN,
+    MC_PSPRITE,
+    MC_SKYSPHERE,
+    MATERIALCONTEXT_LAST = MC_SKYSPHERE
+} materialcontext_t;
+
+#define MATERIALCONTEXT_COUNT (MATERIALCONTEXT_LAST + 1 - MATERIALCONTEXT_FIRST )
+
+/// @c true= val can be interpreted as a valid material context identifier.
+#define VALID_MATERIALCONTEXT(val) ((val) >= MATERIALCONTEXT_FIRST && (val) <= MATERIALCONTEXT_LAST)
+
 /// Components within a Material path hierarchy are delimited by this character.
 #define MATERIALS_PATH_DELIMITER      '/'
 

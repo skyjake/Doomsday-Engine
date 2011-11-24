@@ -33,6 +33,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -531,17 +532,19 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(p->_bg.material, spec, true);
 
-        tex = ms->units[MTU_PRIMARY].tex.glName;
+        tex = MSU_gltexture(ms, MTU_PRIMARY);
     }
     else
     {
-        tex = p->_bg.tex;
-        if(tex)
-        {   // Make sure the current texture will be tiled.
-            glBindTexture(GL_TEXTURE_2D, tex);
+        DGLuint glName = p->_bg.tex;
+        if(glName)
+        {
+            // Make sure the current texture will be tiled.
+            glBindTexture(GL_TEXTURE_2D, glName);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         }
+        tex = p->_bg.tex;
     }
     V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
     V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
@@ -990,7 +993,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_XIMAGE:
-            glTexName = (DGLuint)f->texRef.tex;
+            glTexName = f->texRef.tex;
             V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, 1, 1, 0);
             break;
@@ -1001,31 +1004,31 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                     MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+                DGLuint tex = MSU_gltexture(ms, MTU_PRIMARY);
 
-                if(ms->units[MTU_PRIMARY].tex.glName)
+                if(tex)
                 {
-                    const texturevariantspecification_t* spec = MSU(ms, MTU_PRIMARY).tex.spec;
+                    const texturevariantspecification_t* spec = MSU_texturespec(ms, MTU_PRIMARY);
 
                     /// \todo Utilize *all* properties of the Material.
-                    glTexName = MSU(ms, MTU_PRIMARY).tex.glName;
                     V3_Set(offset, -MSU(ms, MTU_PRIMARY).offset[0], -MSU(ms, MTU_PRIMARY).offset[1], 0);
                     V3_Set(dimensions, ms->width  + TS_GENERAL(spec)->border*2,
                                        ms->height + TS_GENERAL(spec)->border*2, 0);
-                    V2_Set(texScale, MSU(ms, MTU_PRIMARY).tex.s, MSU(ms, MTU_PRIMARY).tex.t);
+                    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
                 }
             }
             break;
           }
         case PFT_PATCH: {
-            texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
-            if(tex)
+            texture_t* texture = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
+            if(texture)
             {
-                patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
+                patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);
                 assert(pTex);
 
-                glTexName = (renderTextures==1? GL_PreparePatchTexture(tex) : 0);
+                glTexName = (renderTextures==1? GL_PreparePatchTexture(texture) : 0);
                 V3_Set(offset, pTex->offX, pTex->offY, 0);
-                V3_Set(dimensions, Texture_Width(tex), Texture_Height(tex), 0);
+                V3_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
             }
             break;
           }

@@ -465,12 +465,10 @@ void R_Update(void)
 
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
-    R_UpdateTranslationTables();
-    Cl_InitTranslations();
-
     R_InitModels(); // Defs might've changed.
 
-    Rend_ParticleLoadExtraTextures();
+    R_UpdateTranslationTables();
+    Cl_InitTranslations();
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
@@ -544,6 +542,7 @@ void R_Shutdown(void)
     R_ShutdownVectorGraphics();
     R_ShutdownViewWindow();
     Fonts_Shutdown();
+    Rend_Shutdown();
 }
 
 void R_Ticker(timespan_t time)

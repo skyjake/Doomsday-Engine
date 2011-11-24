@@ -40,11 +40,12 @@
 #include "de_refresh.h"
 #include "de_play.h"
 #include "de_graphics.h"
-
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_system.h"
+
 #include "net_main.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -221,8 +222,13 @@ float Rend_PointDist3D(const float c[3])
 
 void Rend_Init(void)
 {
-    C_Init(); // Clipper.
-    RL_Init(); // Rendering lists.
+    C_Init();
+    RL_Init();
+}
+
+void Rend_Shutdown(void)
+{
+    RL_Shutdown();
 }
 
 /// World/map renderer reset.
@@ -857,10 +863,9 @@ int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
  */
 void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                         const rcolor_t* rcolors, float wallLength,
-                        float texWidth, float texHeight,
+                        DGLuint tex, int magMode, float texWidth, float texHeight,
                         const float texOffset[2], blendmode_t blendMode,
-                        uint lightListIdx, float glow, boolean masked,
-                        const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
+                        uint lightListIdx, float glow, boolean masked)
 {
     vissprite_t*        vis = R_NewVisSprite();
     int                 i, c;
@@ -875,8 +880,8 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     vis->center[VY] = midpoint[VY];
     vis->center[VZ] = midpoint[VZ];
     vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = rTU[TU_PRIMARY].tex;
-    vis->data.wall.magMode = rTU[TU_PRIMARY].magMode;
+    vis->data.wall.tex = tex;
+    vis->data.wall.magMode = magMode;
     vis->data.wall.masked = masked;
     for(i = 0; i < 4; ++i)
     {
@@ -1092,154 +1097,9 @@ static float getSnapshots(const materialsnapshot_t** msA, const materialsnapshot
     }
 }
 
-static void setupRTU(rtexmapunit_t main[NUM_TEXMAP_UNITS], rtexmapunit_t reflection[NUM_TEXMAP_UNITS],
-    const materialsnapshot_t* msA, float inter, const materialsnapshot_t* msB)
-{
-    RTU(main, TU_PRIMARY).tex       = MSU(msA, MTU_PRIMARY).tex.glName;
-    RTU(main, TU_PRIMARY).magMode   = MSU(msA, MTU_PRIMARY).magMode;
-    RTU(main, TU_PRIMARY).scale[0]  = MSU(msA, MTU_PRIMARY).scale[0];
-    RTU(main, TU_PRIMARY).scale[1]  = MSU(msA, MTU_PRIMARY).scale[1];
-    RTU(main, TU_PRIMARY).offset[0] = MSU(msA, MTU_PRIMARY).offset[0] * RTU(main, TU_PRIMARY).scale[0];
-    RTU(main, TU_PRIMARY).offset[1] = MSU(msA, MTU_PRIMARY).offset[1] * RTU(main, TU_PRIMARY).scale[1];
-    RTU(main, TU_PRIMARY).blendMode = MSU(msA, MTU_PRIMARY).blendMode;
-    RTU(main, TU_PRIMARY).blend     = MSU(msA, MTU_PRIMARY).alpha;
-
-    if(0 != MSU(msA, MTU_DETAIL).tex.glName)
-    {
-        RTU(main, TU_PRIMARY_DETAIL).tex       = MSU(msA, MTU_DETAIL).tex.glName;
-        RTU(main, TU_PRIMARY_DETAIL).magMode   = MSU(msA, MTU_DETAIL).magMode;
-        RTU(main, TU_PRIMARY_DETAIL).scale[0]  = MSU(msA, MTU_DETAIL).scale[0];
-        RTU(main, TU_PRIMARY_DETAIL).scale[1]  = MSU(msA, MTU_DETAIL).scale[1];
-        RTU(main, TU_PRIMARY_DETAIL).offset[0] = MSU(msA, MTU_DETAIL).offset[0] * RTU(main, TU_PRIMARY_DETAIL).scale[0];
-        RTU(main, TU_PRIMARY_DETAIL).offset[1] = MSU(msA, MTU_DETAIL).offset[1] * RTU(main, TU_PRIMARY_DETAIL).scale[1];
-        RTU(main, TU_PRIMARY_DETAIL).blendMode = MSU(msA, MTU_DETAIL).blendMode;
-        RTU(main, TU_PRIMARY_DETAIL).blend     = MSU(msA, MTU_DETAIL).alpha;
-    }
-
-    if(msB && 0 != MSU(msB, MTU_PRIMARY).tex.glName)
-    {
-        RTU(main, TU_INTER).tex       = MSU(msB, MTU_PRIMARY).tex.glName;
-        RTU(main, TU_INTER).magMode   = MSU(msB, MTU_PRIMARY).magMode;
-        RTU(main, TU_INTER).scale[0]  = MSU(msB, MTU_PRIMARY).scale[0];
-        RTU(main, TU_INTER).scale[1]  = MSU(msB, MTU_PRIMARY).scale[1];
-        RTU(main, TU_INTER).offset[0] = MSU(msB, MTU_PRIMARY).offset[0] * RTU(main, TU_INTER).scale[0];
-        RTU(main, TU_INTER).offset[1] = MSU(msB, MTU_PRIMARY).offset[1] * RTU(main, TU_INTER).scale[1];
-        RTU(main, TU_INTER).blendMode = MSU(msB, MTU_PRIMARY).blendMode;
-        RTU(main, TU_INTER).blend     = MSU(msB, MTU_PRIMARY).alpha;
-
-        // Blend between the primary and inter textures.
-        RTU(main, TU_INTER).blend = inter;
-    }
-
-    if(msB && 0 != MSU(msB, MTU_DETAIL).tex.glName)
-    {
-        RTU(main, TU_INTER_DETAIL).tex       = MSU(msB, MTU_DETAIL).tex.glName;
-        RTU(main, TU_INTER_DETAIL).magMode   = MSU(msB, MTU_DETAIL).magMode;
-        RTU(main, TU_INTER_DETAIL).scale[0]  = MSU(msB, MTU_DETAIL).scale[0];
-        RTU(main, TU_INTER_DETAIL).scale[1]  = MSU(msB, MTU_DETAIL).scale[1];
-        RTU(main, TU_INTER_DETAIL).offset[0] = MSU(msB, MTU_DETAIL).offset[0] * RTU(main, TU_INTER_DETAIL).scale[0];
-        RTU(main, TU_INTER_DETAIL).offset[1] = MSU(msB, MTU_DETAIL).offset[1] * RTU(main, TU_INTER_DETAIL).scale[1];
-        RTU(main, TU_INTER_DETAIL).blendMode = MSU(msB, MTU_DETAIL).blendMode;
-        RTU(main, TU_INTER_DETAIL).blend     = MSU(msB, MTU_DETAIL).alpha;
-
-        // Blend between the primary and inter detail textures.
-        RTU(main, TU_INTER_DETAIL).blend     = inter;
-    }
-
-    if(0 != MSU(msA, MTU_REFLECTION).tex.glName)
-    {
-        RTU(reflection, TU_PRIMARY).tex       = MSU(msA, MTU_REFLECTION).tex.glName;
-        RTU(reflection, TU_PRIMARY).magMode   = MSU(msA, MTU_REFLECTION).magMode;
-        RTU(reflection, TU_PRIMARY).scale[0]  = MSU(msA, MTU_REFLECTION).scale[0];
-        RTU(reflection, TU_PRIMARY).scale[1]  = MSU(msA, MTU_REFLECTION).scale[1];
-        RTU(reflection, TU_PRIMARY).offset[0] = MSU(msA, MTU_REFLECTION).offset[0] * RTU(reflection, TU_PRIMARY).scale[0];
-        RTU(reflection, TU_PRIMARY).offset[1] = MSU(msA, MTU_REFLECTION).offset[1] * RTU(reflection, TU_PRIMARY).scale[1];
-        RTU(reflection, TU_PRIMARY).blendMode = MSU(msA, MTU_REFLECTION).blendMode;
-        RTU(reflection, TU_PRIMARY).blend     = MSU(msA, MTU_REFLECTION).alpha;
-
-        if(0 != MSU(msA, MTU_REFLECTION_MASK).tex.glName)
-        {
-            RTU(reflection, TU_INTER).tex       = MSU(msA, MTU_REFLECTION_MASK).tex.glName;
-            RTU(reflection, TU_INTER).magMode   = MSU(msA, MTU_REFLECTION_MASK).magMode;
-            RTU(reflection, TU_INTER).scale[0]  = MSU(msA, MTU_REFLECTION_MASK).scale[0];
-            RTU(reflection, TU_INTER).scale[1]  = MSU(msA, MTU_REFLECTION_MASK).scale[1];
-            RTU(reflection, TU_INTER).offset[0] = MSU(msA, MTU_REFLECTION_MASK).offset[0] * RTU(reflection, TU_INTER).scale[0];
-            RTU(reflection, TU_INTER).offset[1] = MSU(msA, MTU_REFLECTION_MASK).offset[1] * RTU(reflection, TU_INTER).scale[1];
-            RTU(reflection, TU_INTER).blendMode = MSU(msA, MTU_REFLECTION_MASK).blendMode;
-            RTU(reflection, TU_INTER).blend     = MSU(msA, MTU_REFLECTION_MASK).alpha;
-        }
-    }
-}
-
-/**
- * Apply primitive-specific manipulations.
- */
-static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                      rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
-                      boolean isWall, const float texOffset[2],
-                      const float texScale[2],
-                      const materialsnapshot_t* msA,
-                      const materialsnapshot_t* msB)
-{
-    if(texScale)
-    {
-        rTU[TU_PRIMARY].scale[0] *= texScale[0];
-        rTU[TU_PRIMARY].scale[1] *= texScale[1];
-    }
-    if(texOffset)
-    {
-        rTU[TU_PRIMARY].offset[0] += texOffset[0] / msA->width;
-        rTU[TU_PRIMARY].offset[1] += (isWall? texOffset[1] : -texOffset[1]) / msA->height;
-    }
-
-    if(0 != MSU(msA, MTU_DETAIL).tex.glName && texOffset)
-    {
-        rTU[TU_PRIMARY_DETAIL].offset[0] += texOffset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
-        rTU[TU_PRIMARY_DETAIL].offset[1] += (isWall? texOffset[1] : -texOffset[1])
-            * rTU[TU_PRIMARY_DETAIL].scale[1];
-    }
-
-    if(msB && 0 != MSU(msB, MTU_PRIMARY).tex.glName)
-    {
-        if(texScale)
-        {
-            rTU[TU_INTER].scale[0] *= texScale[0];
-            rTU[TU_INTER].scale[1] *= texScale[1];
-        }
-        if(texOffset)
-        {
-            rTU[TU_INTER].offset[0] += texOffset[0] / msB->width;
-            rTU[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) / msB->height;
-        }
-    }
-
-    if(msB && 0 != MSU(msB, MTU_DETAIL).tex.glName && texOffset)
-    {
-        rTU[TU_INTER_DETAIL].offset[0] +=
-            texOffset[0] * rTU[TU_INTER_DETAIL].scale[0];
-        rTU[TU_INTER_DETAIL].offset[1] += (isWall? texOffset[1] : -texOffset[1])
-            * rTU[TU_INTER_DETAIL].scale[1];
-    }
-
-    if(0 != MSU(msA, MTU_REFLECTION).tex.glName)
-    {
-        if(texScale)
-        {
-            rTUs[TU_INTER].scale[0] *= texScale[0];
-            rTUs[TU_INTER].scale[1] *= texScale[1];
-        }
-        if(texOffset)
-        {
-            rTUs[TU_INTER].offset[0] += texOffset[0] / msA->width;
-            rTUs[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) /
-                msA->height;
-        }
-    }
-}
-
 typedef struct {
     boolean         isWall;
-    rendpolytype_t  type;
+    int             flags; /// @see rendpolyFlags
     blendmode_t     blendMode;
     pvec3_t         texTL, texBR;
     const float*    texOffset, *texScale;
@@ -1272,47 +1132,39 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                                const materialsnapshot_t* msA, float inter,
                                const materialsnapshot_t* msB)
 {
-    rcolor_t*           rcolors;
-    rtexcoord_t*        rtexcoords = NULL, *rtexcoords2 = NULL,
-                       *rtexcoords5 = NULL;
-    uint                realNumVertices =
-        p->isWall && divs? 3 + divs[0].num + 3 + divs[1].num : numVertices;
-    rcolor_t*           shinyColors = NULL;
-    rtexcoord_t*        shinyTexCoords = NULL;
-    boolean             useLights = false, useShadows = false;
-    uint                numLights = 0;
-    DGLuint             modTex = 0;
-    float               modTexTC[2][2];
-    float               modColor[3];
-    float               glowing = p->glowing;
-    boolean             drawAsVisSprite = false;
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
+    boolean useLights = false, useShadows = false, hasDynlights = false;
+    rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
+    uint realNumVertices = p->isWall && divs? 3 + divs[0].num + 3 + divs[1].num : numVertices;
+    rcolor_t* rcolors;
+    rcolor_t* shinyColors = NULL;
+    rtexcoord_t* shinyTexCoords = NULL;
+    float modTexTC[2][2] = {{ 0, 0 }, { 0, 0 }};
+    rcolor_t modColor = { 0, 0, 0, 0 };
+    DGLuint modTex = 0;
+    float glowing = p->glowing;
+    boolean drawAsVisSprite = false;
 
-    if(!p->forceOpaque && p->type != RPT_SKY_MASK &&
+    // Map RTU configuration from prepared MaterialSnapshot(s).
+    const rtexmapunit_t* primaryRTU       = (!(p->flags & RPF_SKYMASK))? &MSU(msA, MTU_PRIMARY) : NULL;
+    const rtexmapunit_t* primaryDetailRTU = (r_detail && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_DETAIL).tex)? &MSU(msA, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* interRTU         = (!(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_PRIMARY).tex)? &MSU(msB, MTU_PRIMARY) : NULL;
+    const rtexmapunit_t* interDetailRTU   = (r_detail && !(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_DETAIL).tex)? &MSU(msB, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* shinyRTU         = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex)? &MSU(msA, MTU_REFLECTION) : NULL;
+    const rtexmapunit_t* shinyMaskRTU     = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex && MSU(msA, MTU_REFLECTION_MASK).tex)? &MSU(msA, MTU_REFLECTION_MASK) : NULL;
+
+    if(!p->forceOpaque && !(p->flags & RPF_SKYMASK) &&
        (!msA->isOpaque || p->alpha < 1 || p->blendMode > 0))
         drawAsVisSprite = true;
 
-    memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
-    memset(rTUs, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
-
-    if(p->type != RPT_SKY_MASK)
-    {
-        setupRTU(rTU, rTUs, msA, inter, msB);
-        setupRTU2(rTU, rTUs, p->isWall, p->texOffset, p->texScale, msA, msB);
-    }
-
-    memset(modTexTC, 0, sizeof(modTexTC));
-    memset(modColor, 0, sizeof(modColor));
-
     rcolors = R_AllocRendColors(realNumVertices);
-    rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    if(rTU[TU_INTER].tex)
-        rtexcoords2 = R_AllocRendTexCoords(realNumVertices);
+    primaryCoords = R_AllocRendTexCoords(realNumVertices);
+    if(interRTU)
+        interCoords = R_AllocRendTexCoords(realNumVertices);
 
-    if(p->type != RPT_SKY_MASK)
+    if(!(p->flags & RPF_SKYMASK))
     {
         // ShinySurface?
-        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(shinyRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1337,18 +1189,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                 LO_IterateProjections2(p->lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
-                rtexcoords5 = R_AllocRendTexCoords(realNumVertices);
+                modCoords = R_AllocRendTexCoords(realNumVertices);
 
                 modTex = dyn->texture;
-                modColor[CR] = dyn->color.rgb[CR];
-                modColor[CG] = dyn->color.rgb[CG];
-                modColor[CB] = dyn->color.rgb[CB];
+                modColor.red   = dyn->color.red;
+                modColor.green = dyn->color.green;
+                modColor.blue  = dyn->color.blue;
                 modTexTC[0][0] = dyn->s[0];
                 modTexTC[0][1] = dyn->s[1];
                 modTexTC[1][0] = dyn->t[0];
                 modTexTC[1][1] = dyn->t[1];
-
-                numLights = 1;
             }
         }
     }
@@ -1356,19 +1206,19 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(rtexcoords, rvertices, *p->segLength, p->texTL);
+        quadTexCoords(primaryCoords, rvertices, *p->segLength, p->texTL);
 
         // Blend texture coordinates.
-        if(rTU[TU_INTER].tex && !drawAsVisSprite)
-            quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texTL);
+        if(interRTU && !drawAsVisSprite)
+            quadTexCoords(interCoords, rvertices, *p->segLength, p->texTL);
 
         // Shiny texture coordinates.
-        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(shinyRTU && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], *p->segLength);
 
         // First light texture coordinates.
-        if(numLights > 0 && RL_IsMTexLights())
-            quadLightCoords(rtexcoords5, modTexTC[0], modTexTC[1]);
+        if(modTex && RL_IsMTexLights())
+            quadLightCoords(modCoords, modTexTC[0], modTexTC[1]);
     }
     else
     {
@@ -1384,33 +1234,33 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             xyz[VZ] = vtx->pos[VZ] - p->texTL[VZ];
 
             // Primary texture coordinates.
-            if(rTU[TU_PRIMARY].tex)
+            if(primaryRTU)
             {
-                rtexcoord_t* tc = &rtexcoords[i];
+                rtexcoord_t* tc = &primaryCoords[i];
 
                 tc->st[0] =  xyz[VX];
                 tc->st[1] = -xyz[VY];
             }
 
             // Blend primary texture coordinates.
-            if(rTU[TU_INTER].tex)
+            if(interRTU)
             {
-                rtexcoord_t*        tc = &rtexcoords2[i];
+                rtexcoord_t* tc = &interCoords[i];
 
                 tc->st[0] =  xyz[VX];
                 tc->st[1] = -xyz[VY];
             }
 
             // Shiny texture coordinates.
-            if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
+            if(shinyRTU)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx->pos);
             }
 
             // First light texture coordinates.
-            if(numLights > 0 && RL_IsMTexLights())
+            if(modTex && RL_IsMTexLights())
             {
-                rtexcoord_t* tc = &rtexcoords5[i];
+                rtexcoord_t* tc = &modCoords[i];
                 float width, height;
 
                 width  = p->texBR[VX] - p->texTL[VX];
@@ -1423,7 +1273,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
 
     // Light this polygon.
-    if(p->type != RPT_SKY_MASK)
+    if(!(p->flags & RPF_SKYMASK))
     {
         if(levelFullBright || !(glowing < 1))
         {   // Uniform colour. Apply to all vertices.
@@ -1507,7 +1357,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(shinyRTU && !drawAsVisSprite)
         {
             uint i;
 
@@ -1517,7 +1367,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                 shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
                 shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
                 shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
-                shinyColors[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
+                shinyColors[i].rgba[CA] = shinyRTU->opacity;
             }
         }
 
@@ -1562,14 +1412,15 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * are masked polys). Otherwise there will be artifacts.
          */
         Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
-                           msA->width, msA->height, p->texOffset,
+                           primaryRTU->tex, primaryRTU->magMode, msA->width, msA->height,
+                           p->texOffset,
                            p->blendMode, p->lightListIdx, glowing,
-                           !msA->isOpaque, rTU);
-        R_FreeRendTexCoords(rtexcoords);
-        if(rtexcoords2)
-            R_FreeRendTexCoords(rtexcoords2);
-        if(rtexcoords5)
-            R_FreeRendTexCoords(rtexcoords5);
+                           !msA->isOpaque);
+        R_FreeRendTexCoords(primaryCoords);
+        if(interCoords)
+            R_FreeRendTexCoords(interCoords);
+        if(modCoords)
+            R_FreeRendTexCoords(modCoords);
         if(shinyTexCoords)
             R_FreeRendTexCoords(shinyTexCoords);
         R_FreeRendColors(rcolors);
@@ -1579,7 +1430,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
-    if(p->type != RPT_SKY_MASK && useLights)
+    if(!(p->flags & RPF_SKYMASK) && useLights)
     {
         // Render all lights projected onto this surface.
         renderlightprojectionparams_t params;
@@ -1593,10 +1444,10 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         params.texTL = p->texTL;
         params.texBR = p->texBR;
 
-        numLights += Rend_RenderLightProjections(p->lightListIdx, &params);
+        hasDynlights = (0 != Rend_RenderLightProjections(p->lightListIdx, &params));
     }
 
-    if(p->type != RPT_SKY_MASK && useShadows)
+    if(!(p->flags & RPF_SKYMASK) && useShadows)
     {
         // Render all shadows projected onto this surface.
         rendershadowprojectionparams_t params;
@@ -1610,6 +1461,65 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         params.divs = divs;
 
         Rend_RenderShadowProjections(p->shadowListIdx, &params);
+    }
+
+    // Map RTU state from the prepared texture units in the MaterialSnapshot(s).
+    RL_LoadDefaultRtus();
+    RL_MapRtu(RTU_PRIMARY, primaryRTU);
+    RL_MapRtu(RTU_PRIMARY_DETAIL, primaryDetailRTU);
+    RL_MapRtu(RTU_INTER, interRTU);
+    RL_MapRtu(RTU_INTER_DETAIL, interDetailRTU);
+    RL_MapRtu(RTU_REFLECTION, shinyRTU);
+    RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
+
+    if(primaryRTU)
+    {
+        rtexmapunit_t rtu;
+        memcpy(&rtu, primaryRTU, sizeof rtu);
+        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+        if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
+        RL_CopyRtu(RTU_PRIMARY, &rtu);
+    }
+
+    if(primaryDetailRTU)
+    {
+        rtexmapunit_t rtu;
+        memcpy(&rtu, primaryDetailRTU, sizeof rtu);
+        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+        RL_CopyRtu(RTU_PRIMARY_DETAIL, &rtu);
+    }
+
+    if(interRTU)
+    {
+        rtexmapunit_t rtu;
+        memcpy(&rtu, interRTU, sizeof rtu);
+        // Blend between the primary and inter textures.
+        rtu.opacity = inter;
+        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+        if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
+        RL_CopyRtu(RTU_INTER, &rtu);
+
+        if(interDetailRTU)
+        {
+            memcpy(&rtu, interDetailRTU, sizeof rtu);
+            // Blend between the primary and inter textures.
+            rtu.opacity = inter;
+            if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+            RL_CopyRtu(RTU_INTER_DETAIL, &rtu);
+        }
+    }
+
+    if(shinyRTU)
+    {
+        RL_CopyRtu(RTU_REFLECTION, shinyRTU);
+        if(shinyMaskRTU)
+        {
+            rtexmapunit_t rtu;
+            memcpy(&rtu, shinyMaskRTU, sizeof rtu);
+            if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+            if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
+            RL_CopyRtu(RTU_REFLECTION_MASK, &rtu);
+        }
     }
 
     // Write multiple polys depending on rend params.
@@ -1627,7 +1537,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          */
 
         memcpy(origVerts, rvertices, sizeof(rvertex_t) * 4);
-        memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+        memcpy(origTexCoords, primaryCoords, sizeof(rtexcoord_t) * 4);
         memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
 
         bL = origVerts[0].pos[VZ];
@@ -1636,28 +1546,28 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         tR = origVerts[3].pos[VZ];
 
         R_DivVerts(rvertices, origVerts, divs);
-        R_DivTexCoords(rtexcoords, origTexCoords, divs, bL, tL, bR, tR);
+        R_DivTexCoords(primaryCoords, origTexCoords, divs, bL, tL, bR, tR);
         R_DivVertColors(rcolors, origColors, divs, bL, tL, bR, tR);
 
-        if(rtexcoords2)
+        if(interCoords)
         {
-            rtexcoord_t         origTexCoords2[4];
+            rtexcoord_t origTexCoords2[4];
 
-            memcpy(origTexCoords2, rtexcoords2, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(rtexcoords2, origTexCoords2, divs, bL, tL, bR, tR);
+            memcpy(origTexCoords2, interCoords, sizeof(rtexcoord_t) * 4);
+            R_DivTexCoords(interCoords, origTexCoords2, divs, bL, tL, bR, tR);
         }
 
-        if(rtexcoords5)
+        if(modCoords)
         {
-            rtexcoord_t         origTexCoords5[4];
+            rtexcoord_t origTexCoords5[4];
 
-            memcpy(origTexCoords5, rtexcoords5, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(rtexcoords5, origTexCoords5, divs, bL, tL, bR, tR);
+            memcpy(origTexCoords5, modCoords, sizeof(rtexcoord_t) * 4);
+            R_DivTexCoords(modCoords, origTexCoords5, divs, bL, tL, bR, tR);
         }
 
         if(shinyTexCoords)
         {
-            rtexcoord_t         origShinyTexCoords[4];
+            rtexcoord_t origShinyTexCoords[4];
 
             memcpy(origShinyTexCoords, shinyTexCoords, sizeof(rtexcoord_t) * 4);
             R_DivTexCoords(shinyTexCoords, origShinyTexCoords, divs, bL, tL, bR, tR);
@@ -1665,52 +1575,38 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         if(shinyColors)
         {
-            rcolor_t            origShinyColors[4];
+            rcolor_t origShinyColors[4];
             memcpy(origShinyColors, shinyColors, sizeof(rcolor_t) * 4);
             R_DivVertColors(shinyColors, origShinyColors, divs, bL, tL, bR, tR);
         }
 
-        RL_AddPoly(PT_FAN, p->type, rvertices + 3 + divs[0].num,
-                   rtexcoords + 3 + divs[0].num,
-                   rtexcoords2? rtexcoords2 + 3 + divs[0].num : NULL,
-                   rtexcoords5? rtexcoords5 + 3 + divs[0].num : NULL,
-                   rcolors + 3 + divs[0].num, 3 + divs[1].num,
-                   numLights, modTex, modColor, rTU);
-        RL_AddPoly(PT_FAN, p->type, rvertices, rtexcoords, rtexcoords2,
+        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            3 + divs[1].num, rvertices + 3 + divs[0].num, rcolors + 3 + divs[0].num,
+            primaryCoords + 3 + divs[0].num, interCoords? interCoords + 3 + divs[0].num : NULL,
+            modTex, &modColor, modCoords? modCoords + 3 + divs[0].num : NULL,
+            shinyColors + 3 + divs[0].num, shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
+            shinyMaskRTU? primaryCoords + 3 + divs[0].num : NULL);
 
-                   rtexcoords5, rcolors, 3 + divs[0].num,
-                   numLights, modTex, modColor, rTU);
-        if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
-        {
-            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
-                       shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
-                       rTUs[TU_INTER].tex? rtexcoords + 3 + divs[0].num : NULL,
-                       NULL,
-                       shinyColors + 3 + divs[0].num,
-                       3 + divs[1].num, 0, 0, NULL, rTUs);
-            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rTUs[TU_INTER].tex? rtexcoords : NULL,
-                       NULL, shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
-        }
+        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            3 + divs[0].num, rvertices, rcolors,
+            primaryCoords, interCoords,
+            modTex, &modColor, modCoords,
+            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
     }
     else
     {
-        RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->type, rvertices,
-                   rtexcoords, rtexcoords2, rtexcoords5, rcolors,
-
-                   numVertices, numLights, modTex, modColor, rTU);
-        if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
-                       rvertices, shinyTexCoords,
-                       rTUs[TU_INTER].tex? rtexcoords : NULL,
-                       NULL, shinyColors, numVertices, 0, 0, NULL, rTUs);
+        RL_AddPolyWithCoordsModulationReflection(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            numVertices, rvertices, rcolors,
+            primaryCoords, interCoords,
+            modTex, &modColor, modCoords,
+            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
     }
 
-    R_FreeRendTexCoords(rtexcoords);
-    if(rtexcoords2)
-        R_FreeRendTexCoords(rtexcoords2);
-    if(rtexcoords5)
-        R_FreeRendTexCoords(rtexcoords5);
+    R_FreeRendTexCoords(primaryCoords);
+    if(interCoords)
+        R_FreeRendTexCoords(interCoords);
+    if(modCoords)
+        R_FreeRendTexCoords(modCoords);
     if(shinyTexCoords)
         R_FreeRendTexCoords(shinyTexCoords);
     R_FreeRendColors(rcolors);
@@ -1751,7 +1647,7 @@ static boolean doRenderSeg(seg_t* seg,
     // Init the params.
     memset(&params, 0, sizeof(params));
 
-    params.type = (skyMask? RPT_SKY_MASK : RPT_NORMAL);
+    params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     params.isWall = true;
     params.segLength = &seg->length;
     params.forceOpaque = (alpha < 0? true : false);
@@ -1802,7 +1698,7 @@ static boolean doRenderSeg(seg_t* seg,
     if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
     {   // Drawn poly was opaque.
         // Render Fakeradio polys for this seg?
-        if(params.type != RPT_SKY_MASK && addFakeRadio)
+        if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
         {
             rendsegradio_params_t radioParams;
             float ll;
@@ -1883,6 +1779,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
 
     memset(&params, 0, sizeof(params));
 
+    params.flags = RPF_DEFAULT;
     params.isWall = false;
     params.mapObject = ssec;
     params.elmIdx = elmIdx;
@@ -1903,7 +1800,6 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
         {
-            params.type = RPT_NORMAL;
             params.blendMode = BM_NORMAL;
             params.glowing = 1;
             params.forceOpaque = true;
@@ -1911,12 +1807,11 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
         }
         else
         {   // We'll mask this.
-            params.type = RPT_SKY_MASK;
+            params.flags |= RPF_SKYMASK;
         }
     }
     else
     {
-        params.type = RPT_NORMAL;
         mat = inMat;
 
         if(type != PLN_MID)
@@ -1938,7 +1833,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
     rvertices = R_AllocRendVertices(numVertices);
     Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0) ^ flipSurfaceNormal);
 
-    if(params.type != RPT_SKY_MASK)
+    if(!(params.flags & RPF_SKYMASK))
     {
         // Smooth Texture Animation?
         if(smoothTexAnim)
@@ -2124,7 +2019,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         walldiv_t           divs[2];
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
-        rendpolytype_t      type = RPT_NORMAL;
+        int                 rpFlags = RPF_DEFAULT;
         boolean             isTwoSided = (seg->lineDef &&
             seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
@@ -2152,7 +2047,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             }
             else
             {   // We'll mask this.
-                type = RPT_SKY_MASK;
+                rpFlags |= RPF_SKYMASK;
             }
         }
         else
@@ -2204,7 +2099,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
         }
 
-        if(type != RPT_SKY_MASK)
+        if(!(rpFlags & RPF_SKYMASK))
         {
             // Smooth Texture Animation?
             if(smoothTexAnim)
@@ -2758,132 +2653,136 @@ static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
     return true;
 }
 
-void lightGeometry(rendpolytype_t type, size_t count, rvertex_t* rvertices, rcolor_t* rcolors,
-    rcolor_t* rcolorsShiny, rtexmapunit_t* rTU, rtexmapunit_t* rTUs, const materialsnapshot_t* msA,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+void lightGeometry(int rpFlags, size_t count, rvertex_t* rvertices, rcolor_t* rcolors,
+    rcolor_t* rcolorsShiny, const rtexmapunit_t* shinyRTU, const materialsnapshot_t* msA,
     const float* surfaceNormal, const float* surfaceColor, float surfaceAlpha, const float* surfaceColor2,
     const float* ambientLightColor, float ambientLightLevel, float lightLevelDeltaLeft, float lightLevelDeltaRight, float lightLevelDeltaBottom, float lightLevelDeltaTop,
     biassurface_t* bsuf, void* mapObject, uint elmIdx, float glowing, boolean isWall, boolean drawAsVisSprite)
 {
     assert(rvertices && rcolors && ambientLightColor);
-    {
+    if(!rcolors || (rpFlags & RPF_SKYMASK)) return;
+
     // Light this polygon.
-    if(rcolors && type != RPT_SKY_MASK)
-    {
-        if(levelFullBright || !(glowing < 1))
-        {   // Uniform colour. Apply to all vertices.
-            Rend_VertexColorsGlow(rcolors, count, ambientLightLevel + (levelFullBright? 1 : glowing));
+    if(levelFullBright || !(glowing < 1))
+    {   // Uniform colour. Apply to all vertices.
+        Rend_VertexColorsGlow(rcolors, count, ambientLightLevel + (levelFullBright? 1 : glowing));
+    }
+    else
+    {   // Non-uniform color.
+        if(useBias && bsuf)
+        {   // Do BIAS lighting for this poly.
+            SB_RendPoly(rcolors, bsuf, rvertices, count, surfaceNormal, ambientLightLevel, mapObject, elmIdx, isWall);
+            if(glowing > 0)
+            {
+                size_t i;
+                for(i = 0; i < count; ++i)
+                {
+                    rcolors[i].rgba[CR] = MINMAX_OF(0, rcolors[i].rgba[CR] + glowing, 1);
+                    rcolors[i].rgba[CG] = MINMAX_OF(0, rcolors[i].rgba[CG] + glowing, 1);
+                    rcolors[i].rgba[CB] = MINMAX_OF(0, rcolors[i].rgba[CB] + glowing, 1);
+                }
+            }
         }
         else
-        {   // Non-uniform color.
-            if(useBias && bsuf)
-            {   // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, bsuf, rvertices, count, surfaceNormal, ambientLightLevel, mapObject, elmIdx, isWall);
-                if(glowing > 0)
+        {
+            float llB = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + glowing, 1);
+            float llT = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + glowing, 1);
+            float llL = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaLeft   + glowing, 1);
+            float llR = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaRight  + glowing, 1);
+
+            // Calculate the color for each vertex, blended with plane color?
+            if(surfaceColor && (surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1))
+            {
+                float vColor[4];
+
+                // Blend sector light+color+surfacecolor
+                vColor[CR] = surfaceColor[CR] * ambientLightColor[CR];
+                vColor[CG] = surfaceColor[CG] * ambientLightColor[CG];
+                vColor[CB] = surfaceColor[CB] * ambientLightColor[CB];
+                vColor[CA] = 1;
+
+                if(!(isWall && (llL != llR || llB != llT)))
                 {
-                    size_t i;
-                    for(i = 0; i < count; ++i)
-                    {
-                        rcolors[i].rgba[CR] = MINMAX_OF(0, rcolors[i].rgba[CR] + glowing, 1);
-                        rcolors[i].rgba[CG] = MINMAX_OF(0, rcolors[i].rgba[CG] + glowing, 1);
-                        rcolors[i].rgba[CB] = MINMAX_OF(0, rcolors[i].rgba[CB] + glowing, 1);
-                    }
+                    lightVertices(count, rcolors, rvertices, llL, vColor);
+                }
+                else
+                {
+                    float lightLevels[4];
+                    lightLevels[0] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaLeft  + glowing, 1);
+                    lightLevels[1] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaLeft  + glowing, 1);
+                    lightLevels[2] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaRight + glowing, 1);
+                    lightLevels[3] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaRight + glowing, 1);
+                    lightVertex(&rcolors[0], &rvertices[0], lightLevels[0], vColor);
+                    lightVertex(&rcolors[1], &rvertices[1], lightLevels[1], vColor);
+                    lightVertex(&rcolors[2], &rvertices[2], lightLevels[2], vColor);
+                    lightVertex(&rcolors[3], &rvertices[3], lightLevels[3], vColor);
                 }
             }
             else
-            {
-                float llB = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + glowing, 1);
-                float llT = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + glowing, 1);
-                float llL = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaLeft   + glowing, 1);
-                float llR = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaRight  + glowing, 1);
-
-                // Calculate the color for each vertex, blended with plane color?
-                if(surfaceColor && (surfaceColor[0] < 1 || surfaceColor[1] < 1 || surfaceColor[2] < 1))
+            {   // Use sector light+color only.
+                if(!(isWall && (llL != llR || llB != llT)))
                 {
-                    float vColor[4];
-
-                    // Blend sector light+color+surfacecolor
-                    vColor[CR] = surfaceColor[CR] * ambientLightColor[CR];
-                    vColor[CG] = surfaceColor[CG] * ambientLightColor[CG];
-                    vColor[CB] = surfaceColor[CB] * ambientLightColor[CB];
-                    vColor[CA] = 1;
-
-                    if(!(isWall && (llL != llR || llB != llT)))
-                    {
-                        lightVertices(count, rcolors, rvertices, llL, vColor);
-                    }
-                    else
-                    {
-                        float lightLevels[4];
-                        lightLevels[0] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaLeft  + glowing, 1);
-                        lightLevels[1] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaLeft  + glowing, 1);
-                        lightLevels[2] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaRight + glowing, 1);
-                        lightLevels[3] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaRight + glowing, 1);
-                        lightVertex(&rcolors[0], &rvertices[0], lightLevels[0], vColor);
-                        lightVertex(&rcolors[1], &rvertices[1], lightLevels[1], vColor);
-                        lightVertex(&rcolors[2], &rvertices[2], lightLevels[2], vColor);
-                        lightVertex(&rcolors[3], &rvertices[3], lightLevels[3], vColor);
-                    }
+                    lightVertices(count, rcolors, rvertices, llL, ambientLightColor);
                 }
                 else
-                {   // Use sector light+color only.
-                    if(!(isWall && (llL != llR || llB != llT)))
-                    {
-                        lightVertices(count, rcolors, rvertices, llL, ambientLightColor);
-                    }
-                    else
-                    {
-                        float lightLevels[4];
-                        lightLevels[0] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaLeft  + glowing, 1);
-                        lightLevels[1] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaLeft  + glowing, 1);
-                        lightLevels[2] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaRight + glowing, 1);
-                        lightLevels[3] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaRight + glowing, 1);
-                        lightVertex(&rcolors[0], &rvertices[0], lightLevels[0], ambientLightColor);
-                        lightVertex(&rcolors[1], &rvertices[1], lightLevels[1], ambientLightColor);
-                        lightVertex(&rcolors[2], &rvertices[2], lightLevels[2], ambientLightColor);
-                        lightVertex(&rcolors[3], &rvertices[3], lightLevels[3], ambientLightColor);
-                    }
-                }
-
-                // Bottom color (if different from top)?
-                if(isWall && surfaceColor2)
                 {
-                    float vColor[4];
-
-                    // Blend sector light+color+surfacecolor
-                    vColor[CR] = surfaceColor2[CR] * ambientLightColor[CR];
-                    vColor[CG] = surfaceColor2[CG] * ambientLightColor[CG];
-                    vColor[CB] = surfaceColor2[CB] * ambientLightColor[CB];
-                    vColor[CA] = 1;
-
-                    lightVertex(&rcolors[0], &rvertices[0], llL * llB, vColor);
-                    lightVertex(&rcolors[2], &rvertices[2], llR * llB, vColor);
+                    float lightLevels[4];
+                    lightLevels[0] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaLeft  + glowing, 1);
+                    lightLevels[1] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaLeft  + glowing, 1);
+                    lightLevels[2] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaBottom + lightLevelDeltaRight + glowing, 1);
+                    lightLevels[3] = MINMAX_OF(0, ambientLightLevel + lightLevelDeltaTop    + lightLevelDeltaRight + glowing, 1);
+                    lightVertex(&rcolors[0], &rvertices[0], lightLevels[0], ambientLightColor);
+                    lightVertex(&rcolors[1], &rvertices[1], lightLevels[1], ambientLightColor);
+                    lightVertex(&rcolors[2], &rvertices[2], lightLevels[2], ambientLightColor);
+                    lightVertex(&rcolors[3], &rvertices[3], lightLevels[3], ambientLightColor);
                 }
             }
 
-            Rend_VertexColorsApplyTorchLight(rcolors, rvertices, count);
-        }
-
-        if(useShinySurfaces && rcolorsShiny && rTUs && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
-        {
-            // Strength of the shine.
-            size_t i;
-            for(i = 0; i < count; ++i)
+            // Bottom color (if different from top)?
+            if(isWall && surfaceColor2)
             {
-                rcolorsShiny[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
-                rcolorsShiny[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
-                rcolorsShiny[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
-                rcolorsShiny[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
+                float vColor[4];
+
+                // Blend sector light+color+surfacecolor
+                vColor[CR] = surfaceColor2[CR] * ambientLightColor[CR];
+                vColor[CG] = surfaceColor2[CG] * ambientLightColor[CG];
+                vColor[CB] = surfaceColor2[CB] * ambientLightColor[CB];
+                vColor[CA] = 1;
+
+                lightVertex(&rcolors[0], &rvertices[0], llL * llB, vColor);
+                lightVertex(&rcolors[2], &rvertices[2], llR * llB, vColor);
             }
         }
 
-        // Apply uniform alpha.
-        Rend_VertexColorsAlpha(rcolors, count, surfaceAlpha);
+        Rend_VertexColorsApplyTorchLight(rcolors, rvertices, count);
     }
+
+    if(shinyRTU && rcolorsShiny && !drawAsVisSprite)
+    {
+        // Strength of the shine.
+        size_t i;
+        for(i = 0; i < count; ++i)
+        {
+            rcolorsShiny[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
+            rcolorsShiny[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
+            rcolorsShiny[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
+            rcolorsShiny[i].rgba[CA] = shinyRTU->opacity;
+        }
     }
+
+    // Apply uniform alpha.
+    Rend_VertexColorsAlpha(rcolors, count, surfaceAlpha);
 }
 
-static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex_t* rvertices,
-    rtexcoord_t* rtexcoords, rcolor_t* rcolors, rcolor_t* rcolorsShiny, rtexmapunit_t* rTU, rtexmapunit_t* rTUs,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static void prepareSkyMaskSurface(int rpFlags, size_t count, rvertex_t* rvertices,
+    rtexcoord_t* rtexcoords, rcolor_t* rcolors, rcolor_t* rcolorsShiny,
+    const rtexmapunit_t** primaryRTU, const rtexmapunit_t** primaryDetailRTU,
     const float* surfaceNormal, const float* surfaceColor, float surfaceAlpha, const float* surfaceColor2,
     const float* ambientLightColor, float lightLevel, float lightLevelDeltaLeft, float lightLevelDeltaRight,
     float lightLevelDeltaBottom, float lightLevelDeltaTop,
@@ -2893,18 +2792,15 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+    const rtexmapunit_t* shinyRTU;
 
     // In devRendSkyMode mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
 
-    rTU[TU_PRIMARY].tex       = MSU(ms, MTU_PRIMARY).tex.glName;
-    rTU[TU_PRIMARY].magMode   = MSU(ms, MTU_PRIMARY).magMode;
-    rTU[TU_PRIMARY].scale[0]  = MSU(ms, MTU_PRIMARY).scale[0];
-    rTU[TU_PRIMARY].scale[1]  = MSU(ms, MTU_PRIMARY).scale[1];
-    rTU[TU_PRIMARY].offset[0] = MSU(ms, MTU_PRIMARY).offset[0] * rTU[TU_PRIMARY].scale[0];
-    rTU[TU_PRIMARY].offset[1] = MSU(ms, MTU_PRIMARY).offset[1] * rTU[TU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].blend     = MSU(ms, MTU_PRIMARY).alpha;
-    rTU[TU_PRIMARY].blendMode = MSU(ms, MTU_PRIMARY).blendMode;
+    // Map RTU configuration from prepared MaterialSnapshot(s).
+    *primaryRTU       = &MSU(ms, MTU_PRIMARY);
+    *primaryDetailRTU = (MSU(ms, MTU_DETAIL).tex)? &MSU(ms, MTU_DETAIL) : NULL;
+    shinyRTU          = (MSU(ms, MTU_REFLECTION).tex)? &MSU(ms, MTU_REFLECTION) : NULL;
 
     if(rtexcoords)
     {
@@ -2918,14 +2814,17 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
 
     if(rcolors)
     {
-        lightGeometry(polyType, count, rvertices, rcolors, rcolorsShiny, rTU, rTUs, ms,
+        lightGeometry(rpFlags, count, rvertices, rcolors, rcolorsShiny, shinyRTU, ms,
                       surfaceNormal, surfaceColor, surfaceAlpha, surfaceColor2, ambientLightColor,
                       lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop,
                       bsuf, mapObject, elmIdx, glowing, isWall, drawAsVisSprite);
     }
 }
 
-static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexcoord_t* rtexcoords)
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static int buildSkymaskQuad(int rpFlags, rvertex_t* rvertices, rtexcoord_t* rtexcoords)
 {
     V3_Set(rvertices[0].pos, 0, 0, 0);
     V3_Set(rvertices[1].pos, 0, 0, 0);
@@ -2947,128 +2846,164 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     return 4;
 }
 
-/*static __inline*/ void translateGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryAxis(int rpFlags, byte axis, float delta,
     rvertex_t* rvertices, rtexcoord_t* rtexcoord, rcolor_t* rcolor, rcolor_t* shinyColor)
 {
     rvertices[0].pos[axis] += delta;
 }
 
-/*static __inline*/ void translateGeometryX(rendpolytype_t polyType, vec3_t* deltas,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryX(int rpFlags, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        translateGeometryAxis(polyType, VX, deltas[i][VX], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        translateGeometryAxis(rpFlags, VX, deltas[i][VX], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void translateGeometryY(rendpolytype_t polyType, vec3_t* deltas,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryY(int rpFlags, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        translateGeometryAxis(polyType, VY, deltas[i][VY], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        translateGeometryAxis(rpFlags, VY, deltas[i][VY], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void translateGeometryZ(rendpolytype_t polyType, vec3_t* deltas,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryZ(int rpFlags, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        translateGeometryAxis(polyType, VZ, deltas[i][VZ], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        translateGeometryAxis(rpFlags, VZ, deltas[i][VZ], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void translateGeometryXY(rendpolytype_t polyType, vec3_t* deltas,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryXY(int rpFlags, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
-    translateGeometryX(polyType, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
-    translateGeometryY(polyType, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
+    translateGeometryX(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
+    translateGeometryY(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
 }
 
-/*static __inline*/ void translateGeometryXYZ(rendpolytype_t polyType, vec3_t* deltas,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void translateGeometryXYZ(int rpFlags, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
-    translateGeometryXY(polyType, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
-    translateGeometryZ (polyType, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
+    translateGeometryXY(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
+    translateGeometryZ (rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
 }
 
-/*static __inline*/ void setGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryAxis(int rpFlags, byte axis, float delta,
     rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors, rcolor_t* rcolorsShiny)
 {
     rvertices[0].pos[axis] = 0;
-    translateGeometryAxis(polyType, axis, delta, rvertices, rtexcoords, rcolors, rcolorsShiny);
+    translateGeometryAxis(rpFlags, axis, delta, rvertices, rtexcoords, rcolors, rcolorsShiny);
 }
 
-/*static __inline*/ void setGeometryX(rendpolytype_t polyType, vec3_t* destPoints,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryX(int rpFlags, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        setGeometryAxis(polyType, VX, destPoints[i][VX], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryAxis(rpFlags, VX, destPoints[i][VX], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void setGeometryY(rendpolytype_t polyType, vec3_t* destPoints,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryY(int rpFlags, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        setGeometryAxis(polyType, VY, destPoints[i][VY], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryAxis(rpFlags, VY, destPoints[i][VY], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void setGeometryZ(rendpolytype_t polyType, vec3_t* destPoints,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryZ(int rpFlags, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        setGeometryAxis(polyType, VZ, destPoints[i][VZ], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryAxis(rpFlags, VZ, destPoints[i][VZ], rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void setGeometryXY(rendpolytype_t polyType, vec3_t* destPoints,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryXY(int rpFlags, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        setGeometryX(polyType, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
-        setGeometryY(polyType, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryX(rpFlags, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryY(rpFlags, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
-/*static __inline*/ void setGeometryXYZ(rendpolytype_t polyType, vec3_t* destPoints,
+/**
+ * @param rpFlags  @see rendpolyFlags
+ */
+static __inline void setGeometryXYZ(int rpFlags, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors,
     rcolor_t* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
     {
-        setGeometryX(polyType, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
-        setGeometryY(polyType, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
-        setGeometryZ(polyType, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryX(rpFlags, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryY(rpFlags, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
+        setGeometryZ(rpFlags, &destPoints[i], 1, rvertices+i, rtexcoords? rtexcoords+i : 0, rcolors? rcolors+i : 0, rcolorsShiny? rcolorsShiny+i : 0);
     }
 }
 
 #if 0
-/*static __inline*/ float calculateZBiasInter(float factor, float _height, float _skyHeight)
+static __inline float calculateZBiasInter(float factor, float _height, float _skyHeight)
 {
     // Influenced by the source bias.
     if(_skyHeight != 0)
@@ -3081,7 +3016,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     return 0;
 }
 
-/*static __inline*/ float getZBiasHeightDelta(plane_t* ffloor, plane_t* fceil, float bias, float height)
+static __inline float getZBiasHeightDelta(plane_t* ffloor, plane_t* fceil, float bias, float height)
 {
     assert(ffloor && fceil);
     {
@@ -3099,7 +3034,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static __inline*/ float calculateZBiasDimming(float diffZ, float bias)
+static __inline float calculateZBiasDimming(float diffZ, float bias)
 {
     float dimming = 0;
     if(diffZ && bias)
@@ -3116,7 +3051,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
 }
 #endif
 
-/*static __inline*/ void getSurfaceLightLevelDeltas(seg_t* seg, plane_t* ffloor, plane_t* fceil,
+static __inline void getSurfaceLightLevelDeltas(seg_t* seg, plane_t* ffloor, plane_t* fceil,
     plane_t* bfloor, plane_t* bceil, float bottom, float top, float skyFloor, float skyCeil,
     float* deltaL, float* deltaR, float* deltaB, float* deltaT)
 {
@@ -3138,7 +3073,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
 #undef ZBIAS_FACTOR
 }
 
-/*static __inline*/ void setGeometryDeltasZ(size_t count, vec3_t* deltas, float height)
+static __inline void setGeometryDeltasZ(size_t count, vec3_t* deltas, float height)
 {
     assert(count != 0 && deltas);
     { size_t i;
@@ -3148,7 +3083,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }}
 }
 
-/*static __inline*/ void translateGeometryDeltasZ(size_t count, vec3_t* edgeDeltas,
+static __inline void translateGeometryDeltasZ(size_t count, vec3_t* edgeDeltas,
     float* deltasZ, rvertex_t* rvertices)
 {
     assert(count != 0 && edgeDeltas && deltasZ && rvertices);
@@ -3159,7 +3094,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }}
 }
 
-/*static __inline*/ void getSurfaceNormal(float* normal, linedef_t* lineDef, byte side)
+static __inline void getSurfaceNormal(float* normal, linedef_t* lineDef, byte side)
 {
     assert(normal && lineDef && lineDef->L_side(side));
     { sidedef_t* sideDef = lineDef->L_side(side);
@@ -3171,7 +3106,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
     float* bottom, float* top)
@@ -3199,7 +3134,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop2(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop2(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
     float* bottom, float* top)
@@ -3227,7 +3162,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop3(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop3(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil,
     seg_t* seg, sector_t* frontsec , sector_t* backsec,
     float* bottom, float* top)
@@ -3278,7 +3213,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop4(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop4(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
     float* bottom, float* top)
@@ -3329,7 +3264,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop5(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop5(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil, boolean bottomHasMaterialFix,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
     float* bottom, float* top, boolean* addSolidViewSeg)
@@ -3353,7 +3288,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
-/*static*/ void getSkymaskBottomTop6(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+static void getSkymaskBottomTop6(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
     float skyFloor, float skyCeil, boolean topHasMaterialFix,
     seg_t* seg, sector_t* frontsec, sector_t* backsec,
     float* bottom, float* top, boolean* addSolidViewSeg)
@@ -3387,7 +3322,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     return ((P_IsInVoid(viewPlayer) && !(R_IsSkySurface(&fceil-> surface) && bceil && R_IsSkySurface(&bceil-> surface)))? fceil-> visHeight : (skyFix[PLN_CEILING].height > DDMINFLOAT? skyFix[PLN_CEILING].height : 0));
 }
 
-/*static*/ void getSkymaskBottomOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+static void getSkymaskBottomOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
     plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil,
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
 {
@@ -3408,16 +3343,17 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     }
 }
 
-/*static*/ void drawSSectSkyFixBottom(rendpolytype_t polyType, subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals)
+static void drawSSectSkyFixBottom(subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals, boolean addToSkyMask)
 {
-    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    const int rpFlags = RPF_DEFAULT | (addToSkyMask? RPF_SKYMASK : 0);
+    const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
     rcolor_t rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 
-    numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
+    numVerts = buildSkymaskQuad(rpFlags, rvertices, (!addToSkyMask? rtexcoords : 0));
 
     segPtr = ssec->segs;
     while(*segPtr)
@@ -3448,7 +3384,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         V3_Set(edgeDeltasXY[2], to->  V_pos[VX], to->  V_pos[VY], 0);
         V3_Set(edgeDeltasXY[3], to->  V_pos[VX], to->  V_pos[VY], 0);
 
-        setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
+        setGeometryXY(rpFlags, edgeDeltasXY, numVerts, rvertices,
+            (!addToSkyMask? rtexcoords : NULL),
+            (!addToSkyMask? rcolors : NULL),
+            (!addToSkyMask? rcolorsShiny : NULL));
 
         ffloor = frontsec->SP_plane(PLN_FLOOR);
         fceil  = frontsec->SP_plane(PLN_CEILING);
@@ -3471,18 +3410,33 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             float ambientLightLevel = frontsec->lightLevel;
 
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
 
-            memset(rTU, 0, sizeof(rTU));
-            setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?ffloor->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
-            RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
+            setGeometryZ(rpFlags, edgeDeltasZ, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL));
+
+            prepareSkyMaskSurface(rpFlags, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL),
+                &primaryRTU, &primaryDetailRTU,
+                surfaceNormal, 0, 1, 0, ambientLightColor,
+                ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?ffloor->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
+
+            RL_LoadDefaultRtus();
+            RL_CopyRtu(RTU_PRIMARY, primaryRTU);
+            RL_CopyRtu(RTU_PRIMARY_DETAIL, primaryDetailRTU);
+
+            RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rpFlags,
+                numVerts, rvertices, rcolors, rtexcoords, NULL);
         }
         segPtr++;
     }
 }
 
-/*static*/ void getSkymaskTopOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+static void getSkymaskTopOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
     plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil,
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
 {
@@ -3503,16 +3457,17 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     }
 }
 
-/*static*/ void drawSSectSkyFixTop(rendpolytype_t polyType, subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals)
+static void drawSSectSkyFixTop(subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals, boolean addToSkyMask)
 {
-    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    const int rpFlags = RPF_DEFAULT | (addToSkyMask? RPF_SKYMASK : 0);
+    const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
     rcolor_t rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 
-    numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
+    numVerts = buildSkymaskQuad(rpFlags, rvertices, (!addToSkyMask? rtexcoords : 0));
 
     segPtr = ssec->segs;
     while(*segPtr)
@@ -3543,7 +3498,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         V3_Set(edgeDeltasXY[2], to->  V_pos[VX], to->  V_pos[VY], 0);
         V3_Set(edgeDeltasXY[3], to->  V_pos[VX], to->  V_pos[VY], 0);
 
-        setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
+        setGeometryXY(rpFlags, edgeDeltasXY, numVerts, rvertices,
+            (!addToSkyMask? rtexcoords : NULL),
+            (!addToSkyMask? rcolors : NULL),
+            (!addToSkyMask? rcolorsShiny : NULL));
 
         ffloor = frontsec->SP_plane(PLN_FLOOR);
         fceil  = frontsec->SP_plane(PLN_CEILING);
@@ -3566,18 +3524,33 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             float ambientLightLevel = frontsec->lightLevel;
 
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
 
-            memset(rTU, 0, sizeof(rTU));
-            setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
-            RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
+            setGeometryZ(rpFlags, edgeDeltasZ, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL));
+
+            prepareSkyMaskSurface(rpFlags, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL),
+                &primaryRTU, &primaryDetailRTU,
+                surfaceNormal, 0, 1, 0, ambientLightColor,
+                ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
+
+            RL_LoadDefaultRtus();
+            RL_CopyRtu(RTU_PRIMARY, primaryRTU);
+            RL_CopyRtu(RTU_PRIMARY_DETAIL, primaryDetailRTU);
+
+            RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rpFlags,
+                numVerts, rvertices, rcolors, rtexcoords, NULL);
         }
         segPtr++;
     }
 }
 
-/*static*/ void getSkymaskClosedOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+static void getSkymaskClosedOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
     plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil, boolean topHasMaterialFix,
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
 {
@@ -3604,7 +3577,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 /**
  * danij: Still needed?
  */
-/*static*/ void getSkymaskClosedOffsets2(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+static void getSkymaskClosedOffsets2(seg_t* seg, sector_t* frontsec, sector_t* backsec,
     plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil,
     boolean bottomHasMaterialFix,
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
@@ -3629,16 +3602,17 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     }
 }
 
-/*static*/ void drawSSectSkyFixClosed(rendpolytype_t polyType, subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals)
+static void drawSSectSkyFixClosed(subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals, boolean addToSkyMask)
 {
-    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    const int rpFlags = RPF_DEFAULT | (addToSkyMask? RPF_SKYMASK : 0);
+    const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
     rcolor_t rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 
-    numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
+    numVerts = buildSkymaskQuad(rpFlags, rvertices, !addToSkyMask? rtexcoords : NULL);
 
     segPtr = ssec->segs;
     while(*segPtr)
@@ -3670,7 +3644,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         V3_Set(edgeDeltasXY[2], to->  V_pos[VX], to->  V_pos[VY], 0);
         V3_Set(edgeDeltasXY[3], to->  V_pos[VX], to->  V_pos[VY], 0);
 
-        setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
+        setGeometryXY(rpFlags, edgeDeltasXY, numVerts, rvertices,
+            (!addToSkyMask? rtexcoords : NULL),
+            (!addToSkyMask? rcolors : NULL),
+            (!addToSkyMask? rcolorsShiny : NULL));
 
         ffloor = frontsec->SP_plane(PLN_FLOOR);
         fceil  = frontsec->SP_plane(PLN_CEILING);
@@ -3693,12 +3670,27 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
 
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
 
-            memset(rTU, 0, sizeof(rTU));
-            setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-            prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
-            RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
+            setGeometryZ(rpFlags, edgeDeltasZ, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL));
+
+            prepareSkyMaskSurface(rpFlags, numVerts, rvertices,
+                (!addToSkyMask? rtexcoords : NULL),
+                (!addToSkyMask? rcolors : NULL),
+                (!addToSkyMask? rcolorsShiny : NULL),
+                &primaryRTU, &primaryDetailRTU,
+                surfaceNormal, 0, 1, 0, ambientLightColor,
+                ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?fceil->PS_material:Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray")), false);
+
+            RL_LoadDefaultRtus();
+            RL_CopyRtu(RTU_PRIMARY, primaryRTU);
+            RL_CopyRtu(RTU_PRIMARY_DETAIL, primaryDetailRTU);
+
+            RL_AddPolyWithCoords(PT_TRIANGLE_STRIP, rpFlags,
+                numVerts, rvertices, rcolors, rtexcoords, NULL);
         }
 
         if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
@@ -3712,11 +3704,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
 static void Rend_SSectSkyFixes(subsector_t* ssec)
 {
+    const boolean clipBackFacing  = (devRendSkyMode == 1);
+    const boolean flipSurfaceNormals = false;
+    const boolean addToSkyMask = (devRendSkyMode == 0);
     assert(ssec && ssec->sector && (devRendSkyMode == 2 || R_SectorContainsSkySurfaces(ssec->sector)));
-    {
-    rendpolytype_t polyType = (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK);
-    boolean clipBackFacing  = (devRendSkyMode == 2? false : polyType == RPT_NORMAL);
-    boolean flipSurfaceNormals = false;
 
     /// Setup GL state for skymask geometry construction.
     /**
@@ -3724,15 +3715,14 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         glDisable(GL_CULL_FACE);
      */
 
-    drawSSectSkyFixBottom(polyType, ssec, clipBackFacing, flipSurfaceNormals);
-    drawSSectSkyFixTop   (polyType, ssec, clipBackFacing, flipSurfaceNormals);
-    drawSSectSkyFixClosed(polyType, ssec, clipBackFacing, flipSurfaceNormals);
+    drawSSectSkyFixBottom(ssec, clipBackFacing, flipSurfaceNormals, addToSkyMask);
+    drawSSectSkyFixTop   (ssec, clipBackFacing, flipSurfaceNormals, addToSkyMask);
+    drawSSectSkyFixClosed(ssec, clipBackFacing, flipSurfaceNormals, addToSkyMask);
 
     /// Restore original GL state.
     /*
      glEnable(GL_CULL_FACE);
      */
-    }
 }
 
 /**
@@ -3989,6 +3979,9 @@ static void Rend_RenderSubsector(uint ssecidx)
         // Add the additional offset to align with the worldwide grid.
         texOffset[VX] += ssec->worldGridOffset[VX];
         texOffset[VY] += ssec->worldGridOffset[VY];
+
+        // Inverted.
+        texOffset[VY] = -texOffset[VY];
 
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -4965,7 +4958,7 @@ static void Rend_RenderBoundingBoxes(void)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-    GL_BindTexture(MSU(ms, MTU_PRIMARY).tex.glName, MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

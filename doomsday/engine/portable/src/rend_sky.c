@@ -42,6 +42,7 @@
 #include "de_play.h"
 
 #include "texture.h"
+#include "texturevariant.h"
 #include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
@@ -278,8 +279,8 @@ void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
                 1, 1, 0, false, true, false, false);
             ms = Materials_Prepare(mat, spec, true);
 
-            tex     = MSU(ms, MTU_PRIMARY).tex.glName;
-            Texture_Dimensions(MSU(ms, MTU_PRIMARY).tex.texture, &skyTexWidth, &skyTexHeight);
+            tex     = MSU_gltexture(ms, MTU_PRIMARY);
+            Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &skyTexWidth, &skyTexHeight);
             magMode = MSU(ms, MTU_PRIMARY).magMode;
         }
 

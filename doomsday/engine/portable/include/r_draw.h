@@ -29,6 +29,8 @@
 #ifndef LIBDENG_REFRESH_DRAW_H
 #define LIBDENG_REFRESH_DRAW_H
 
+#include "texture.h"
+
 void R_InitViewWindow(void);
 void R_ShutdownViewWindow(void);
 
