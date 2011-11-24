@@ -2254,12 +2254,20 @@ const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid
         /* TN_FLATS */     MN_FLATS,
         /* TN_TEXTURES */  MN_TEXTURES,
         /* TN_SPRITES */   MN_SPRITES,
-        /* TN_PATCHES */   MN_ANY // No materials for these yet.
+        /* TN_PATCHES */   MN_ANY, // No materials for these yet.
+
+        // -- No Materials for these --
+        /* TN_DETAILS */   MN_INVALID,
+        /* TN_REFLECTIONS */ MN_INVALID,
+        /* TN_MASKS */      MN_INVALID,
+        /* TN_MODELSKINS */ MN_INVALID,
+        /* TN_MODELREFLECTIONSKINS */ MN_INVALID,
+        /* TN_LIGHTMAPS */ MN_INVALID,
+        /* TN_FLAREMAPS */ MN_INVALID
     };
-    materialnamespaceid_t namespaceId;
+    materialnamespaceid_t namespaceId = MN_INVALID; // Unknown.
     if(VALID_TEXTURENAMESPACEID(texNamespace))
         namespaceId = namespaceIds[texNamespace-TEXTURENAMESPACE_FIRST];
-    namespaceId = MN_INVALID; // Unknown.
     return Materials_NamespaceName(namespaceId);
 }
 
