@@ -1088,8 +1088,6 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
 
 void GL_EarlyInitTextureManager(void)
 {
-    VERBOSE( Con_Message("Initializing Textures collection...\n") )
-
     GL_InitSmartFilterHQ2x();
     calcGammaTable();
 
@@ -1101,7 +1099,11 @@ void GL_EarlyInitTextureManager(void)
 
 void GL_InitTextureManager(void)
 {
-    if(initedOk) return; // Already been here.
+    if(initedOk)
+    {
+        GL_LoadSystemTextures();
+        return; // Already been here.
+    }
 
     // Disable the use of 'high resolution' textures and/or patches?
     noHighResTex = ArgExists("-nohightex");
@@ -1123,6 +1125,7 @@ void GL_ResetTextureManager(void)
     if(!initedOk) return;
     GL_ReleaseTextures();
     GL_PruneTextureVariantSpecifications();
+    GL_LoadSystemTextures();
 }
 
 int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* a,
@@ -1250,8 +1253,6 @@ void GL_ShutdownTextureManager(void)
     if(!initedOk) return;
 
     destroyVariantSpecifications();
-    Textures_Shutdown();
-
     initedOk = false;
 }
 
@@ -1265,7 +1266,7 @@ static void calcGammaTable(void)
 
 void GL_LoadSystemTextures(void)
 {
-    if(isDedicated || !initedOk) return;
+    if(novideo || !initedOk) return;
 
     UI_LoadTextures();
 
@@ -1287,7 +1288,9 @@ void GL_LoadSystemTextures(void)
 void GL_ReleaseSystemTextures(void)
 {
     int i;
-    if(!initedOk) return;
+    if(novideo || !initedOk) return;
+
+    VERBOSE( Con_Message("Releasing System textures...\n") )
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -1316,7 +1319,9 @@ void GL_ReleaseSystemTextures(void)
 
 void GL_ReleaseRuntimeTextures(void)
 {
-    if(!initedOk) return;
+    if(novideo || !initedOk) return;
+
+    VERBOSE( Con_Message("Releasing Runtime textures...\n") )
 
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
@@ -1796,35 +1801,8 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
     return true;
 }
 
-DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
-    dgltexformat_t format, boolean flagGenerateMipmaps, boolean flagNoStretch,
-    boolean flagNoSmartFilter, int minFilter, int magFilter, int anisoFilter,
-    int wrapS, int wrapT, int otherFlags)
-{
-    texturecontent_t c;
-
-    GL_InitTextureContent(&c);
-    c.name = GL_GetReservedTextureName();
-    c.pixels = pixels;
-    c.format = format;
-    c.width = width;
-    c.height = height;
-    c.flags = otherFlags;
-    if(flagGenerateMipmaps) c.flags |= TXCF_MIPMAP;
-    if(flagNoStretch) c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-    if(flagNoSmartFilter) c.flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
-    c.minFilter = minFilter;
-    c.magFilter = magFilter;
-    c.anisoFilter = anisoFilter;
-    c.wrap[0] = wrapS;
-    c.wrap[1] = wrapT;
-
-    uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
-    return c.name;
-}
-
 /// \important Texture parameters will NOT be set here!
-DGLuint GL_UploadTextureContent(const texturecontent_t* content)
+void GL_UploadTextureContent(const texturecontent_t* content)
 {
     assert(content);
     {
@@ -2064,8 +2042,6 @@ DGLuint GL_UploadTextureContent(const texturecontent_t* content)
 
     if(loadPixels != content->pixels)
         free((uint8_t*)loadPixels);
-
-    return content->name;
     }
 }
 
@@ -2681,15 +2657,10 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     return result;
 }
 
-DGLuint GL_PrepareRawTex2(rawtex_t* raw)
+DGLuint GL_PrepareRawTexture(rawtex_t* raw)
 {
-    if(!raw) return 0; // Wha?
-
-    if(raw->lumpNum < 0 || raw->lumpNum >= F_LumpCount())
-    {
-        GL_BindTexture(0, 0);
-        return 0;
-    }
+    if(!raw) return 0;
+    if(raw->lumpNum < 0 || raw->lumpNum >= F_LumpCount()) return 0;
 
     if(!raw->tex)
     {
@@ -2701,21 +2672,20 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 
         if(2 == (result = GL_LoadRawTex(&image, raw)))
         {   // Loaded an external raw texture.
-            raw->tex = GL_UploadTextureWithParams(image.pixels, image.width, image.height,
-                image.pixelSize == 4? DGL_RGBA : DGL_RGB, false, false, false,
-                GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST),
-                0 /*no anisotropy*/,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+            raw->tex = GL_NewTextureWithParams2(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
+                image.width, image.height, image.pixels, 0, 0,
+                GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST), 0 /*no anisotropy*/,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
         else
         {
-            raw->tex = GL_UploadTextureWithParams(image.pixels, image.width, image.height,
+            raw->tex = GL_NewTextureWithParams2(
                 (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 :
                           image.pixelSize == 4? DGL_RGBA :
                           image.pixelSize == 3? DGL_RGB : DGL_COLOR_INDEX_8,
-                false, false, false, GL_NEAREST,
-                (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
+                image.width, image.height, image.pixels, 0, 0,
+                GL_NEAREST, (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         }
 
@@ -2725,19 +2695,6 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
     }
 
     return raw->tex;
-}
-
-DGLuint GL_PrepareRawTexture(rawtex_t* rawTex)
-{
-    if(rawTex)
-    {
-        if(!rawTex->tex)
-        {   // The rawtex isn't yet bound with OpenGL.
-            rawTex->tex = GL_PrepareRawTex2(rawTex);
-        }
-        return rawTex->tex;
-    }
-    return 0;
 }
 
 DGLuint GL_PrepareLightMap(const Uri* filePath)
@@ -3432,12 +3389,12 @@ DGLuint GL_NewTextureWithParams2(dgltexformat_t format, int width, int height,
     c.height = height;
     c.pixels = pixels;
     c.flags = flags;
-    c.magFilter = magFilter;
+    c.grayMipmap = grayMipmap;
     c.minFilter = minFilter;
+    c.magFilter = magFilter;
     c.anisoFilter = anisoFilter;
     c.wrap[0] = wrapS;
     c.wrap[1] = wrapT;
-    c.grayMipmap = grayMipmap;
 
     uploadContentUnmanaged(chooseContentUploadMethod(&c), &c);
     return c.name;

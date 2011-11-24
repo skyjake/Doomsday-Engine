@@ -124,6 +124,8 @@ void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
 
 /**
  * Release all textures associated with the specified @a texture.
+ * @param texture  Logical Texture. Can be @c NULL, in which case this is a null-op.
+ *
  * \note Can also be used as an iterator callback.
  */
 int GL_ReleaseGLTexturesByTexture2(texture_t* texture, void* paramaters);
@@ -172,15 +174,8 @@ boolean GL_UploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8_t* 
 /**
  * \note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
- *
- * @return  Name of the resultant GL texture object.
  */
-DGLuint GL_UploadTextureContent(const struct texturecontent_s* content);
-
-DGLuint GL_UploadTextureWithParams(const uint8_t* pixels, int width, int height,
-    dgltexformat_t texFormat, boolean flagGenerateMipmaps,
-    boolean flagNoStretch, boolean flagNoSmartFilter, int minFilter,
-    int magFilter, int anisoFilter, int wrapS, int wrapT, int otherFlags);
+void GL_UploadTextureContent(const struct texturecontent_s* content);
 
 uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
 uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);

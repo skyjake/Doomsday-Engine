@@ -974,7 +974,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
 
-    UI_LoadTextures();
     Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
@@ -1628,7 +1627,6 @@ int DD_Main(void)
 
         R_InitSprites();
         R_InitModels();
-        Rend_ParticleLoadExtraTextures();
         Cl_InitTranslations();
 
         Def_PostInit();

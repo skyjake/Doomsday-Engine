@@ -337,9 +337,9 @@ void Con_AcquireScreenshotTexture(void)
     frame = malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_UploadTextureWithParams(frame, theWindow->width, theWindow->height,
-        DGL_RGB, false, false, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION);
+    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, theWindow->width, theWindow->height,
+        frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     GL_state.maxTexSize = oldMaxTexSize;
     free(frame);
 

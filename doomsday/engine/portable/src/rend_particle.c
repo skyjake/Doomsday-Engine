@@ -177,7 +177,6 @@ void Rend_ParticleLoadSystemTextures(void)
     // Load the default "zeroth" texture - a modification of the dynlight texture (a blurred point).
     pointTex = GL_PrepareExtTexture("Zeroth", LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
     if(pointTex == 0)
     {
         Con_Error("Rend_ParticleLoadSystemTextures: \"Zeroth\" not found.\n");
@@ -186,18 +185,16 @@ void Rend_ParticleLoadSystemTextures(void)
 
 void Rend_ParticleLoadExtraTextures(void)
 {
+    int i;
     boolean reported = false;
 
     if(novideo) return;
 
-    // Clear the texture names array.
-    memset(ptctexname, 0, sizeof(ptctexname));
+    Rend_ParticleReleaseExtraTextures();
+    if(DD_IsNullGameInfo(DD_GameInfo())) return;
 
-    if(DD_IsNullGameInfo(DD_GameInfo()))
-        return;
-
-    { int i;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
+    {
         if(!loadParticleTexture(i, reported))
             reported = true;
     }
@@ -206,7 +203,6 @@ void Rend_ParticleLoadExtraTextures(void)
 void Rend_ParticleReleaseSystemTextures(void)
 {
     if(novideo) return;
-
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
@@ -214,7 +210,6 @@ void Rend_ParticleReleaseSystemTextures(void)
 void Rend_ParticleReleaseExtraTextures(void)
 {
     if(novideo) return;
-
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
@@ -224,9 +219,7 @@ void Rend_ParticleReleaseExtraTextures(void)
  */
 void Rend_ParticleInitForNewFrame(void)
 {
-    if(!useParticles)
-        return;
-
+    if(!useParticles) return;
     // Clear all visibility flags.
     memset(visiblePtcGens, 0, MAX_ACTIVE_PTCGENS);
 }
@@ -237,9 +230,7 @@ void Rend_ParticleInitForNewFrame(void)
  */
 void Rend_ParticleMarkInSectorVisible(sector_t* sector)
 {
-    if(!useParticles)
-        return;
-
+    if(!useParticles) return;
     P_IterateSectorLinkedPtcGens(sector, markPtcGenVisible, NULL);
 }
 
@@ -248,11 +239,8 @@ void Rend_ParticleMarkInSectorVisible(sector_t* sector)
  */
 static int C_DECL comparePOrder(const void* pt1, const void* pt2)
 {
-    if(((porder_t *) pt1)->distance > ((porder_t *) pt2)->distance)
-        return -1;
-    else if(((porder_t *) pt1)->distance < ((porder_t *) pt2)->distance)
-        return 1;
-
+    if(((porder_t *) pt1)->distance > ((porder_t *) pt2)->distance) return -1;
+    else if(((porder_t *) pt1)->distance < ((porder_t *) pt2)->distance) return 1;
     // Highly unlikely (but possible)...
     return 0;
 }

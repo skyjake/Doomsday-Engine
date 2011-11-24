@@ -507,7 +507,6 @@ void GL_InitRefresh(void)
 {
     if(novideo) return;
     GL_InitTextureManager();
-    GL_LoadSystemTextures();
 
     // Register/create Texture objects for the system textures.
     R_InitSystemTextures();
@@ -518,8 +517,10 @@ void GL_InitRefresh(void)
  */
 void GL_ShutdownRefresh(void)
 {
-    GL_ShutdownTextureManager();
+    Textures_Shutdown();
     R_DestroyColorPalettes();
+
+    GL_ShutdownTextureManager();
 }
 
 /**
