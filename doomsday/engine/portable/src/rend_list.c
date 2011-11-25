@@ -299,25 +299,26 @@ void RL_Register(void)
     C_VAR_INT("rend-light-blend", &dynlightBlend, 0, 0, 2);
 }
 
-static void rlBind(DGLuint tex, int magMode)
+static void rlBind(DGLuint glName, int magMode)
 {
 #ifdef _DEBUG
     GLenum error;
 #endif
 
-    if(!renderTextures)
-        tex = 0;
+    if(!renderTextures) glName = 0;
 
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-
-    if(GL_state.features.texFilterAniso)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+    glBindTexture(GL_TEXTURE_2D, glName);
+    if(glName != 0)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+        if(GL_state.features.texFilterAniso)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+    }
 
 #if _DEBUG
-error = glGetError();
-if(error != GL_NO_ERROR)
-    Con_Error("OpenGL error: %i\n", error);
+    error = glGetError();
+    if(error != GL_NO_ERROR)
+        Con_Error("OpenGL error: %i\n", error);
 #endif
 }
 
@@ -1388,6 +1389,11 @@ if(numTexUnits < 2)
             color[0] = color[1] = color[2] = 0;
             color[3] = TU(list, TU_INTER)->opacity;
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
+        }
+        else if(!TU(list, TU_PRIMARY)->tex)
+        {
+            // Opaque texture-less surface.
+            return 0;
         }
         else
         {
