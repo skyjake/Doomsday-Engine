@@ -24,6 +24,8 @@
 #ifndef __COMMON_GAME_INCLUDES__
 #define __COMMON_GAME_INCLUDES__
 
+#define WEAPONBOTTOM            (128)   // from p_pspr.c
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
