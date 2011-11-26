@@ -108,35 +108,35 @@ void P_InitSky(uint map)
     doubleSky = P_GetMapDoubleSky(map);
 
     // First disable all sky layers.
-    Rend_SkyParams(DD_SKY, DD_DISABLE, NULL);
+    R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
     // Sky2 is layer zero and Sky1 is layer one.
     fval = 0;
-    Rend_SkyParams(0, DD_OFFSET, &fval);
-    Rend_SkyParams(1, DD_OFFSET, &fval);
+    R_SkyParams(0, DD_OFFSET, &fval);
+    R_SkyParams(1, DD_OFFSET, &fval);
     if(doubleSky && sky2Material)
     {
-        Rend_SkyParams(0, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &sky2Material);
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, &sky2Material);
 
-        Rend_SkyParams(1, DD_ENABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
         ival = DD_YES;
-        Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &sky1Material);
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, &sky1Material);
     }
     else
     {
-        Rend_SkyParams(0, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &sky1Material);
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, &sky1Material);
 
-        Rend_SkyParams(1, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_DISABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &sky2Material);
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, &sky2Material);
     }
 }
 
@@ -1007,8 +1007,8 @@ void P_AnimateSurfaces(void)
     // Update sky column offsets
     sky1ColumnOffset += sky1ScrollDelta;
     sky2ColumnOffset += sky2ScrollDelta;
-    Rend_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-    Rend_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
+    R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
+    R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
 
     if(mapHasLightning)
     {
@@ -1088,8 +1088,8 @@ static void P_LightningFlash(void)
                 }
             }
 
-            Rend_SkyParams(1, DD_DISABLE, NULL);
-            Rend_SkyParams(0, DD_ENABLE, NULL);
+            R_SkyParams(1, DD_DISABLE, NULL);
+            R_SkyParams(0, DD_ENABLE, NULL);
         }
 
         return;
@@ -1142,8 +1142,8 @@ static void P_LightningFlash(void)
         mobj_t*             crashOrigin = NULL;
 
         // Set the alternate (lightning) sky.
-        Rend_SkyParams(0, DD_DISABLE, NULL);
-        Rend_SkyParams(1, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.

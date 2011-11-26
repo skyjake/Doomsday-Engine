@@ -431,7 +431,7 @@ struct subsector_s* R_PointInSubsector(float x, float y);
 //
 //------------------------------------------------------------------------
 
-    void            Rend_SkyParams(int layer, int param, void* data);
+    void            R_SkyParams(int layer, int param, void* data);
 
 //------------------------------------------------------------------------
 //

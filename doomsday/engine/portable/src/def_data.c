@@ -36,10 +36,10 @@
 #include "de_console.h"
 #include "de_misc.h"
 #include "de_graphics.h"
+#include "de_refresh.h"
 
 #include "def_data.h"
 #include "gl_main.h"
-#include "materials.h"
 
 // Helper Routines -------------------------------------------------------
 
@@ -499,12 +499,16 @@ void DED_RemoveModel(ded_t *ded, int index)
 
 int DED_AddSky(ded_t* ded, char* id)
 {
-    int                 i;
-    ded_sky_t*          sky = DED_NewEntry((void **) &ded->skies,
-                                   &ded->count.skies, sizeof(ded_sky_t));
+    ded_sky_t* sky = DED_NewEntry((void **) &ded->skies, &ded->count.skies, sizeof(ded_sky_t));
+    int i;
 
     strcpy(sky->id, id);
-    sky->height = .666667f;
+    sky->height = DEFAULT_SKY_HEIGHT;
+    for(i = 0; i < NUM_SKY_LAYERS; ++i)
+    {
+        sky->layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
+        sky->layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
+    }
     for(i = 0; i < NUM_SKY_MODELS; ++i)
     {
         sky->models[i].frameInterval = 1;
@@ -639,7 +643,12 @@ int DED_AddMapInfo(ded_t* ded, char* uri)
     inf->fogStart = DEFAULT_FOG_START;
     inf->fogEnd = DEFAULT_FOG_END;
 
-    inf->sky.height = .666667f;
+    inf->sky.height = DEFAULT_SKY_HEIGHT;
+    for(i = 0; i < NUM_SKY_LAYERS; ++i)
+    {
+        inf->sky.layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
+        inf->sky.layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
+    }
     for(i = 0; i < NUM_SKY_MODELS; ++i)
     {
         inf->sky.models[i].frameInterval = 1;

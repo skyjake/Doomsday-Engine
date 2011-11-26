@@ -494,7 +494,7 @@ EXPORTS
     DGL_DrawRawScreen           @126 NONAME
 
 ; Renderer.
-    Rend_SkyParams              @105 NONAME
+    R_SkyParams              @105 NONAME
     GL_UseFog                   @104 NONAME
 
 ; InFine.

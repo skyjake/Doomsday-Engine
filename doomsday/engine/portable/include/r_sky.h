@@ -30,33 +30,15 @@
 #define LIBDENG_REFRESH_SKY_H
 
 #include "r_model.h"
-#include "m_vector.h"
 
-typedef struct {
-    float rgb[3];
-    short set, use; /// Is this set? Should it be used?
-    float limit; /// .3 by default.
-} fadeout_t;
+#define MAX_SKY_LAYERS                   ( 2 )
+#define MAX_SKY_MODELS                   ( 32 )
 
-// Sky layer flags.
-#define SLF_ENABLED         0x1 // Layer enabled.
-#define SLF_MASKED          0x2 // Mask the layer texture.
-
-#define MAXSKYLAYERS        2
-
-#define VALID_SKY_LAYERID(val) ((val) > 0 && (val) <= MAXSKYLAYERS)
-
-typedef struct {
-    int flags;
-    material_t* material;
-    float offset;
-    fadeout_t fadeout;
-
-    // Following is configured during layer preparation.
-    DGLuint tex;
-    int texWidth, texHeight;
-    int texMagMode;
-} skylayer_t;
+#define DEFAULT_SKY_HEIGHT               ( .666667f )
+#define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_MATERIAL      ( MN_TEXTURES_NAME":SKY1" )
+#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 
 typedef struct skymodel_s {
     ded_skymodel_t* def;
@@ -67,30 +49,11 @@ typedef struct skymodel_s {
     float yaw;
 } skymodel_t;
 
-typedef struct {
-    DGLuint tex;
-    int texWidth, texHeight;
-    int texMagMode;
-    float offset;
-} rendskysphereparams_t;
-
 extern boolean alwaysDrawSphere;
-extern int firstSkyLayer, activeSkyLayers;
-
 extern boolean skyModelsInited;
-extern skymodel_t skyModels[NUM_SKY_MODELS];
-extern int skyDetail, skySimple;
-extern int skyColumns, skyRows;
-extern float skyDist;
+extern skymodel_t skyModels[MAX_SKY_MODELS];
 
-/**
- * Register cvars and ccmds for the sky renderer.
- */
-void R_SkyRegister(void);
-
-/**
- * Initialize the sky sphere renderer.
- */
+/// Initialize this module.
 void R_SkyInit(void);
 
 /**
@@ -104,35 +67,39 @@ void R_SkyPrecache(void);
 void R_SkyTicker(void);
 
 /**
- * Configure the sky based on the specified definition if not @c NULL, otherwise,
- * setup using suitable defaults.
+ * Configure the sky based on the specified definition if not @c NULL,
+ * otherwise, setup using suitable defaults.
  */
 void R_SetupSky(ded_sky_t* sky);
 
-/**
- * Mark all skies as requiring a full update. Called during engine/renderer reset.
- */
-void Rend_SkyReleaseTextures(void);
+/// @return  Unique identifier of the first active sky layer.
+int R_SkyFirstActiveLayer(void);
 
-void R_SetupSkyModels(ded_sky_t* sky);
-void R_SetupSkySphereParamsForSkyLayer(rendskysphereparams_t* params, int layer);
-
-/**
- * @return  The current blended ambient sky color.
- */
+/// @return  Current ambient sky color.
 const float* R_SkyAmbientColor(void);
 
-/**
- * @return  The current sky fadeout (taken from the first active sky layer).
- */
-const fadeout_t* R_SkyFadeout(void);
+float R_SkyHorizonOffset(void);
 
-void R_SkyLayerEnable(int layer, boolean yes);
-void R_SkyLayerMasked(int layer, boolean yes);
-boolean R_SkyLayerIsEnabled(int layer);
-boolean R_SkyLayerIsMasked(int layer);
-void R_SkyLayerSetMaterial(int layer, struct material_s* material);
-void R_SkyLayerSetFadeoutLimit(int layer, float limit);
-void R_SkyLayerSetOffset(int layer, float offset);
+float R_SkyHeight(void);
+
+boolean R_SkyLayerActive(int layerId);
+
+float R_SkyLayerFadeoutLimit(int layerId);
+
+boolean R_SkyLayerMasked(int layerId);
+
+material_t* R_SkyLayerMaterial(int layerId);
+
+float R_SkyLayerOffset(int layerId);
+
+void R_SkyLayerSetActive(int layerId, boolean yes);
+
+void R_SkyLayerSetMasked(int layerId, boolean yes);
+
+void R_SkyLayerSetFadeoutLimit(int layerId, float limit);
+
+void R_SkyLayerSetMaterial(int layerId, material_t* material);
+
+void R_SkyLayerSetOffset(int layerId, float offset);
 
 #endif /* LIBDENG_REFRESH_SKY_H */

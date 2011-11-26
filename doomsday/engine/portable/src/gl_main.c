@@ -547,7 +547,7 @@ void GL_Shutdown(void)
     }
     GL_ShutdownDeferredTask();
     FR_Shutdown();
-    Rend_DestroySkySphere();
+    Rend_SkyShutdown();
     Rend_Reset();
     GL_ShutdownRefresh();
 
@@ -998,12 +998,16 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     }
 }
 
-void GL_BindTexture(DGLuint texname, int magMode)
+void GL_BindTexture(DGLuint glName, int magMode)
 {
-    if(Con_IsBusy())
+    if(Con_IsBusy()) return;
+    if(glName == 0)
+    {
+        GL_SetNoTexture();
         return;
+    }
 
-    glBindTexture(GL_TEXTURE_2D, texname);
+    glBindTexture(GL_TEXTURE_2D, glName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.features.texFilterAniso)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));

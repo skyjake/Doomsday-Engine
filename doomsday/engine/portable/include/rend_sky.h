@@ -23,19 +23,26 @@
  */
 
 /**
- * Sky Sphere and 3D Models
+ * Sky Sphere and 3D Models.
+ *
+ * This version supports only two sky layers.
+ * (More would be a waste of resources?)
  */
 
 #ifndef LIBDENG_RENDER_SKY_H
 #define LIBDENG_RENDER_SKY_H
 
-#include "r_sky.h"
+/// Register the console commands, variables, etc..., of this module.
+void Rend_SkyRegister(void);
 
-extern int skyDetail;
+/// Initialize this module.
+void Rend_SkyInit(void);
 
-void Rend_CreateSkySphere(int quarterDivs, int rows);
-void Rend_DestroySkySphere(void);
-void Rend_SkyParams(int layer, int param, void* data);
+/// Shutdown this module.
+void Rend_SkyShutdown(void);
+
+void R_SkyParams(int layer, int param, void* data);
+
 void Rend_RenderSky(void);
 
 #endif /* LIBDENG_RENDER_SKY_H */

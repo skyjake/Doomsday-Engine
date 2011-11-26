@@ -1341,7 +1341,6 @@ void GL_ReleaseRuntimeTextures(void)
     GL_ReleaseTexturesByNamespace(TN_FLAREMAPS);
     GL_ReleaseTexturesForRawImages();
 
-    Rend_SkyReleaseTextures();
     Rend_ParticleReleaseExtraTextures();
     Fonts_ReleaseRuntimeTextures();
 

@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Sky Management.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h"
@@ -40,113 +34,83 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
+/**
+ * @defgroup skyLayerFlags  Sky Layer Flags
+ * @{
+ */
+#define SLF_ACTIVE              0x1 /// Layer is active and will be rendered.
+#define SLF_MASKED              0x2 /// Mask this layer's texture.
+/**@}*/
 
-// TYPES -------------------------------------------------------------------
+typedef struct {
+    int flags;
+    material_t* material;
+    float offset;
+    float fadeoutLimit;
+} skylayer_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+#define VALID_SKY_LAYERID(val) ((val) > 0 && (val) <= MAX_SKY_LAYERS)
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+static void R_SetupSkyModels(ded_sky_t* def);
 
-D_CMD(SkyDetail);
+boolean alwaysDrawSphere;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+skylayer_t skyLayers[MAX_SKY_LAYERS];
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+skymodel_t skyModels[MAX_SKY_MODELS];
+boolean skyModelsInited;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+static int firstSkyLayer;
+static int activeSkyLayers;
 
-boolean alwaysDrawSphere = false;
-int firstSkyLayer = 0, activeSkyLayers = 0;
+// The texture offset to be applied to the texture coordinates in SkyVertex().
+static float height;
+static float horizonOffset;
 
-skylayer_t skyLayers[MAXSKYLAYERS];
+static boolean needUpdateSkyLightColor;
+static float skyAmbientColor[3];
 
-skymodel_t skyModels[NUM_SKY_MODELS];
-boolean skyModelsInited = false;
+static boolean skyLightColorDefined;
+static float skyLightColor[3];
 
-int skyDetail = 6, skySimple = false;
-int skyColumns, skyRows = 3;
-float skyDist = 1600;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static float skyAmbientColor[] = { 1.0f, 1.0f, 1.0f };
-
-static boolean skyLightColorDefined = false;
-static float skyLightColor[] = { 1.0f, 1.0f, 1.0f };
-
-// CODE --------------------------------------------------------------------
-
-void R_SkyRegister(void)
+static __inline skylayer_t* skyLayerById(int id)
 {
-    // Cvars
-    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
-    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("rend-sky-simple", &skySimple, 0, 0, 2);
-
-    // Ccmds
-    C_CMD_FLAGS("skydetail", "i", SkyDetail, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("skyrows", "i", SkyDetail, CMDF_NO_DEDICATED);
+    if(!VALID_SKY_LAYERID(id)) return NULL;
+    return skyLayers + (id-1);
 }
 
 static void configureDefaultSky(void)
 {
-    // Configure the defaults.
+    int i;
+
+    needUpdateSkyLightColor = true;
     skyLightColorDefined = false;
     skyLightColor[CR] = skyLightColor[CG] = skyLightColor[CB] = 1.0f;
     skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
 
-    { int i;
-    for(i = 0; i < MAXSKYLAYERS; ++i)
+    for(i = 0; i < MAX_SKY_LAYERS; ++i)
     {
-        skylayer_t* slayer = &skyLayers[i];
-
-        slayer->flags = (i == 0? SLF_ENABLED : 0);
-        slayer->material = Materials_ToMaterial(Materials_ResolveUriCString(MN_TEXTURES_NAME":SKY1"));
-        slayer->offset = 0;
-        // Default the fadeout to black.
-        slayer->fadeout.use = (i == 0);
-        slayer->fadeout.limit = .3f;
-        slayer->fadeout.rgb[CR] = slayer->fadeout.rgb[CG] = slayer->fadeout.rgb[CB] = 0;
-
-        slayer->tex = 0;
-        slayer->texWidth = slayer->texHeight = 0;
-        slayer->texMagMode = 0;
-    }}
-
-    { float fval = .666667f;
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
+        skylayer_t* layer = &skyLayers[i];
+        layer->flags = (i == 0? SLF_ACTIVE : 0);
+        layer->material = Materials_ToMaterial(Materials_ResolveUriCString(DEFAULT_SKY_SPHERE_MATERIAL));
+        layer->offset = DEFAULT_SKY_SPHERE_XOFFSET;
+        layer->fadeoutLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
     }
-    { int ival = 0;
-    Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
-    }
+
+    height = DEFAULT_SKY_HEIGHT;
+    horizonOffset = DEFAULT_SKY_HORIZON_OFFSET;
 }
 
-static void prepareSkySphere(void)
+static void calculateSkyLightColor(void)
 {
-    boolean mustPrepare = false;
     float avgMaterialColor[3];
-    int avgCount = 0;
-
-    // First, lets check whether we need to do anything.
-    { int i;
+    rcolor_t capColor = { 0, 0, 0, 0 };
     skylayer_t* slayer;
-    for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
-    {
-        if(!(slayer->flags & SLF_ENABLED))
-            continue;
-        if(slayer->tex != 0) // Already prepared this layer.
-            continue;
-        mustPrepare = true;
-        break;
-    }}
+    int i, avgCount;
 
-    if(!mustPrepare)
-        return; // We're done.
+    if(!needUpdateSkyLightColor) return;
 
     /**
-     * Looks like we have work to do.
      * \todo Re-implement the automatic sky light color calculation by
      * rendering the sky to a low-quality cubemap and use that to obtain
      * the lighting characteristics.
@@ -154,34 +118,29 @@ static void prepareSkySphere(void)
     avgMaterialColor[CR] = avgMaterialColor[CG] = avgMaterialColor[CB] = 0;
     avgCount = 0;
 
-    { int i;
-    skylayer_t* slayer;
-    for(i = firstSkyLayer, slayer = &skyLayers[firstSkyLayer]; i < MAXSKYLAYERS; ++i, slayer++)
+    for(i = 0, slayer = &skyLayers[firstSkyLayer]; i < MAX_SKY_LAYERS; ++i, slayer++)
     {
         const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
 
-        if(!(slayer->flags & SLF_ENABLED) || !slayer->material) continue;
+        if(!(slayer->flags & SLF_ACTIVE) || !slayer->material) continue;
 
+        /**
+         * \note Ensure that this specification matches that used when
+         * preparing the sky for render (see ./engine/portable/src/rend_sky.c
+         * configureRenderHemisphereStateForLayer) else an unnecessary GL
+         * texture will be uploaded as a consequence of this call.
+         */
         spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
             TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
-            0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, 0, false, true, false, false);
+            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
         ms = Materials_Prepare(slayer->material, spec, false);
 
-        slayer->tex = MSU_gltexture(ms, MTU_PRIMARY);
-        Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &slayer->texWidth, &slayer->texHeight);
-        slayer->texMagMode = MSU(ms, MTU_PRIMARY).magMode;
-
-        slayer->fadeout.rgb[CR] = ms->topColor[CR];
-        slayer->fadeout.rgb[CG] = ms->topColor[CG];
-        slayer->fadeout.rgb[CB] = ms->topColor[CB];
-
-        // Is the fadeout in use?
-        if(slayer->fadeout.rgb[CR] <= slayer->fadeout.limit ||
-           slayer->fadeout.rgb[CG] <= slayer->fadeout.limit ||
-           slayer->fadeout.rgb[CB] <= slayer->fadeout.limit)
+        if(i == firstSkyLayer)
         {
-            slayer->fadeout.use = true;
+            capColor.red   = ms->topColor[CR];
+            capColor.green = ms->topColor[CG];
+            capColor.blue  = ms->topColor[CB];
         }
 
         if(!(skyModelsInited && !alwaysDrawSphere))
@@ -191,7 +150,7 @@ static void prepareSkySphere(void)
             avgMaterialColor[CB] += ms->colorAmplified[CB];
             ++avgCount;
         }
-    }}
+    }
 
     if(avgCount != 0)
     {
@@ -199,22 +158,15 @@ static void prepareSkySphere(void)
         skyAmbientColor[CG] = avgMaterialColor[CG];
         skyAmbientColor[CB] = avgMaterialColor[CB];
         
-        // The cap covers a large amount of the sky sphere, so factor it in too.
-        if(skyLayers[firstSkyLayer].fadeout.use)
-        {
-            const fadeout_t* fadeout = &skyLayers[firstSkyLayer].fadeout;
-            skyAmbientColor[CR] += fadeout->rgb[CR];
-            skyAmbientColor[CG] += fadeout->rgb[CG];
-            skyAmbientColor[CB] += fadeout->rgb[CB];
-            ++avgCount;
-        }
+        // The caps cover a large amount of the sky sphere, so factor it in too.
+        skyAmbientColor[CR] += 2 * capColor.red;
+        skyAmbientColor[CG] += 2 * capColor.green;
+        skyAmbientColor[CB] += 2 * capColor.blue;
+        avgCount += 2;
 
-        if(avgCount != 1)
-        {
-            skyAmbientColor[CR] /= avgCount;
-            skyAmbientColor[CG] /= avgCount;
-            skyAmbientColor[CB] /= avgCount;
-        }
+        skyAmbientColor[CR] /= avgCount;
+        skyAmbientColor[CG] /= avgCount;
+        skyAmbientColor[CB] /= avgCount;
 
         /**
          * Our automatically-calculated sky light color should not
@@ -229,6 +181,7 @@ static void prepareSkySphere(void)
     {
         skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
     }
+    needUpdateSkyLightColor = false;
 
     // When the sky light color changes we must update the lightgrid.
     LG_MarkAllForUpdate();
@@ -237,67 +190,69 @@ static void prepareSkySphere(void)
 void R_SkyInit(void)
 {
     firstSkyLayer = 0;
-    // Calculate sky vertices.
-    Rend_CreateSkySphere(skyDetail, skyRows);
+    activeSkyLayers = 0;
+    skyModelsInited = false;
+    alwaysDrawSphere = false;
+    needUpdateSkyLightColor = true;
 }
 
-void R_SetupSky(ded_sky_t* sky)
+void R_SetupSky(ded_sky_t* def)
 {
+    int i;
+
     configureDefaultSky();
+    if(!def) return; // Go with the defaults.
 
-    if(!sky)
-        return; // Go with the defaults.
+    height  = def->height;
+    horizonOffset = def->horizonOffset;
 
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, &sky->height);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, &sky->horizonOffset);
-    { int i;
-    for(i = 1; i <= MAXSKYLAYERS; ++i)
+    for(i = 1; i <= MAX_SKY_LAYERS; ++i)
     {
-        ded_skylayer_t* def = &sky->layers[i-1];
+        ded_skylayer_t* sl = &def->layers[i-1];
 
-        if(def->flags & SLF_ENABLED)
+        if(!(sl->flags & SLF_ACTIVE))
         {
-            R_SkyLayerEnable(i, true);
-            R_SkyLayerMasked(i, (def->flags & SLF_MASKED) != 0);
-            if(def->material)
+            R_SkyLayerSetActive(i, false);
+            continue;
+        }
+
+        R_SkyLayerSetActive(i, true);
+        R_SkyLayerSetMasked(i, (sl->flags & SLF_MASKED) != 0);
+        if(sl->material)
+        {
+            material_t* mat = Materials_ToMaterial(
+                Materials_ResolveUri2(sl->material, true/*quiet please*/));
+            if(mat)
             {
-                material_t* mat = Materials_ToMaterial(Materials_ResolveUri2(def->material, true/*quiet please*/));
-                if(mat)
-                {
-                    R_SkyLayerSetMaterial(i, mat);
-                }
-                else
-                {
-                    ddstring_t* path = Uri_ToString(def->material);
-                    Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
-                    Str_Delete(path);
-                }
+                R_SkyLayerSetMaterial(i, mat);
             }
-            R_SkyLayerSetOffset(i, def->offset);
-            R_SkyLayerSetFadeoutLimit(i, def->colorLimit);
+            else
+            {
+                ddstring_t* path = Uri_ToString(sl->material);
+                Con_Message("Warning: Unknown material \"%s\" in sky def %i, using default.\n", Str_Text(path), i);
+                Str_Delete(path);
+            }
         }
-        else
-        {
-            R_SkyLayerEnable(i, false);
-        }
-    }}
+        R_SkyLayerSetOffset(i, sl->offset);
+        R_SkyLayerSetFadeoutLimit(i, sl->colorLimit);
+    }
 
-    if(sky->color[CR] > 0 || sky->color[CG] > 0 || sky->color[CB] > 0)
+    if(def->color[CR] > 0 || def->color[CG] > 0 || def->color[CB] > 0)
     {
         skyLightColorDefined = true;
-        skyLightColor[CR] = sky->color[CR];
-        skyLightColor[CG] = sky->color[CG];
-        skyLightColor[CB] = sky->color[CB];
+        skyLightColor[CR] = def->color[CR];
+        skyLightColor[CG] = def->color[CG];
+        skyLightColor[CB] = def->color[CB];
     }
 
     // Any sky models to setup? Models will override the normal sphere by default.
-    R_SetupSkyModels(sky);
+    R_SetupSkyModels(def);
 }
 
 /**
  * The sky models are set up using the data in the definition.
  */
-void R_SetupSkyModels(ded_sky_t* def)
+static void R_SetupSkyModels(ded_sky_t* def)
 {
     ded_skymodel_t* modef;
     skymodel_t* sm;
@@ -312,12 +267,12 @@ void R_SetupSkyModels(ded_sky_t* def)
     // The normal sphere is used if no models will be set up.
     skyModelsInited = false;
 
-    for(i = 0, modef = def->models, sm = skyModels; i < NUM_SKY_MODELS;
+    for(i = 0, modef = def->models, sm = skyModels; i < MAX_SKY_MODELS;
         ++i, modef++, sm++)
     {
         // Is the model ID set?
-        if((sm->model = R_CheckIDModelFor(modef->id)) == NULL)
-            continue;
+        sm->model = R_CheckIDModelFor(modef->id);
+        if(!sm->model) continue;
 
         // There is a model here.
         skyModelsInited = true;
@@ -334,16 +289,16 @@ void R_SetupSkyModels(ded_sky_t* def)
  */
 void R_SkyPrecache(void)
 {
-    prepareSkySphere();
+    needUpdateSkyLightColor = true;
+    calculateSkyLightColor();
 
     if(skyModelsInited)
     {
         int i;
         skymodel_t* sky;
-        for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
+        for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
         {
-            if(!sky->def)
-                continue;
+            if(!sky->def) continue;
             R_PrecacheModelSkins(sky->model);
         }
     }
@@ -357,13 +312,11 @@ void R_SkyTicker(void)
     skymodel_t* sky;
     int i;
 
-    if(clientPaused || !skyModelsInited)
-        return;
+    if(clientPaused || !skyModelsInited) return;
 
-    for(i = 0, sky = skyModels; i < NUM_SKY_MODELS; ++i, sky++)
+    for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
     {
-        if(!sky->def)
-            continue;
+        if(!sky->def) continue;
 
         // Rotate the model.
         sky->yaw += sky->def->yawSpeed / TICSPERSEC;
@@ -381,137 +334,262 @@ void R_SkyTicker(void)
     }
 }
 
-void Rend_SkyReleaseTextures(void)
+int R_SkyFirstActiveLayer(void)
 {
-    int i;
-    if(novideo || isDedicated) return;
-
-    for(i = 0; i < MAXSKYLAYERS; ++i)
-    {
-        skylayer_t* slayer = &skyLayers[i];
-        glDeleteTextures(1, (GLuint*)&slayer->tex);
-        slayer->tex = 0;
-    }
+    return firstSkyLayer+1; //1-based index.
 }
 
 const float* R_SkyAmbientColor(void)
 {
     static const float white[3] = { 1.0f, 1.0f, 1.0f };
-    if(skyLightColorDefined)
-        return skyLightColor;
+    if(skyLightColorDefined) return skyLightColor;
     if(rendSkyLightAuto)
+    {
+        calculateSkyLightColor();
         return skyAmbientColor;
+    }
     return white;
 }
 
-const fadeout_t* R_SkyFadeout(void)
+float R_SkyHorizonOffset(void)
 {
-    // The current fadeout is the first layer's fadeout.
-    return &skyLayers[firstSkyLayer].fadeout;
+    return horizonOffset;
 }
 
-void R_SkyLayerEnable(int layer, boolean enable)
+float R_SkyHeight(void)
 {
-    skylayer_t* slayer;
-    if(!VALID_SKY_LAYERID(layer))
-        return;
-    slayer = &skyLayers[layer-1];
-    if(enable)
+    return height;
+}
+
+void R_SkyLayerSetActive(int id, boolean active)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
     {
-        slayer->flags |= SLF_ENABLED;
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerSetActive: Invalid layer id #%i, ignoring.\n", id);
+#endif
         return;
     }
-    slayer->flags &= ~SLF_ENABLED;
+
+    if(active) layer->flags |= SLF_ACTIVE;
+    else       layer->flags &= ~SLF_ACTIVE;
+
+    needUpdateSkyLightColor = true;
 }
 
-boolean R_SkyLayerIsEnabled(int layer)
+boolean R_SkyLayerActive(int id)
 {
-    if(VALID_SKY_LAYERID(layer))
-        return (skyLayers[layer-1].flags & SLF_ENABLED) != 0;
-    return false;
-}
-
-void R_SkyLayerMasked(int layer, boolean masked)
-{
-    skylayer_t* slayer;
-    if(!VALID_SKY_LAYERID(layer))
-        return;
-    slayer = &skyLayers[layer-1];
-    if(masked)
-        slayer->flags |= SLF_MASKED;
-    else
-        slayer->flags &= ~SLF_MASKED;
-    // Invalidate the loaded texture, if necessary.
-    if(slayer->material && masked != (slayer->flags & SLF_MASKED))
-        slayer->tex = 0;
-}
-
-boolean R_SkyLayerIsMasked(int layer)
-{
-    if(VALID_SKY_LAYERID(layer))
-        return (skyLayers[layer-1].flags & SLF_MASKED) != 0;
-    return false;
-}
-
-void R_SkyLayerSetMaterial(int layer, material_t* mat)
-{
-    skylayer_t* slayer;
-    if(!VALID_SKY_LAYERID(layer)) return;
-    slayer = &skyLayers[layer-1];
-    if(slayer->material == mat) return;
-    slayer->material = mat;
-    slayer->tex = 0; // Invalidate the currently prepared layer (if any).
-}
-
-void R_SkyLayerSetFadeoutLimit(int layer, float limit)
-{
-    skylayer_t* slayer;
-    if(!VALID_SKY_LAYERID(layer))
-        return;
-    slayer = &skyLayers[layer-1];
-    if(slayer->fadeout.limit == limit)
-        return;
-    slayer->fadeout.limit = limit;
-    slayer->tex = 0; // Invalidate the currently prepared layer (if any).
-}
-
-void R_SkyLayerSetOffset(int layer, float offset)
-{
-    if(VALID_SKY_LAYERID(layer))
-        skyLayers[layer-1].offset = offset;
-}
-
-void R_SetupSkySphereParamsForSkyLayer(rendskysphereparams_t* params, int layer)
-{
-    assert(params);
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
     {
-    skylayer_t* slayer;
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerActive: Invalid layer id #%i, returning false.\n", id);
+#endif
+        return false;
+    }
+    return !!(layer->flags & SLF_ACTIVE);
+}
 
-    if(!VALID_SKY_LAYERID(layer))
-        Con_Error("R_SetupSkySphereParamsForSkyLayer: Invalid layer %i.", layer);
+void R_SkyLayerSetMasked(int id, boolean masked)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerSetMasked: Invalid layer id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    if(masked) layer->flags |= SLF_MASKED;
+    else       layer->flags &= ~SLF_MASKED;
 
-    prepareSkySphere();
+    needUpdateSkyLightColor = true;
+}
 
-    memset(params, 0, sizeof(*params));
+boolean R_SkyLayerMasked(int id)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerMasked: Invalid layer id #%i, returning false.\n", id);
+#endif
+        return false;
+    }
+    return !!(layer->flags & SLF_MASKED);
+}
 
-    slayer = &skyLayers[layer-1];
-    params->offset = slayer->offset;
-    params->tex = slayer->tex;
-    params->texWidth = slayer->texWidth;
-    params->texHeight = slayer->texHeight;
-    params->texMagMode = slayer->texMagMode;
+material_t* R_SkyLayerMaterial(int id)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerMaterial: Invalid layer id #%i, returning NULL.\n", id);
+#endif
+        return NULL;
+    }
+    return layer->material;
+}
+
+void R_SkyLayerSetMaterial(int id, material_t* mat)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerSetMaterial: Invalid layer id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    if(layer->material == mat) return;
+
+    layer->material = mat;
+    needUpdateSkyLightColor = true;
+}
+
+float R_SkyLayerFadeoutLimit(int id)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerFadeoutLimit: Invalid layer id #%i, returning default.\n", id);
+#endif
+        return DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
+    }
+    return layer->fadeoutLimit;
+}
+
+void R_SkyLayerSetFadeoutLimit(int id, float limit)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerSetFadeoutLimit: Invalid layer id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    if(layer->fadeoutLimit == limit) return;
+
+    layer->fadeoutLimit = limit;
+    needUpdateSkyLightColor = true;
+}
+
+float R_SkyLayerOffset(int id)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerOffset: Invalid layer id #%i, returning default.\n", id);
+#endif
+        return DEFAULT_SKY_SPHERE_XOFFSET;
+    }
+    return layer->offset;
+}
+
+void R_SkyLayerSetOffset(int id, float offset)
+{
+    skylayer_t* layer = skyLayerById(id);
+    if(!layer)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_SkyLayerOffset: Invalid layer id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    if(layer->offset == offset) return;
+    layer->offset = offset;
+}
+
+static void chooseFirstLayer(void)
+{
+    int i;
+    // -1 denotes 'no active layers'.
+    firstSkyLayer = -1;
+    activeSkyLayers = 0;
+
+    for(i = 1; i <= MAX_SKY_LAYERS; ++i)
+    {
+        if(!R_SkyLayerActive(i)) continue;
+
+        ++activeSkyLayers;
+        if(firstSkyLayer == -1)
+        {
+            firstSkyLayer = i-1;
+        }
     }
 }
 
-D_CMD(SkyDetail)
+static void internalSkyParams(int layer, int param, void* data)
 {
-    if(!stricmp(argv[0], "skydetail"))
+    switch(param)
     {
-        Rend_CreateSkySphere(strtol(argv[1], NULL, 0), skyRows);
+    case DD_ENABLE:
+        R_SkyLayerSetActive(layer, true);
+        chooseFirstLayer();
+        break;
+
+    case DD_DISABLE:
+        R_SkyLayerSetActive(layer, false);
+        chooseFirstLayer();
+        break;
+
+    case DD_MASK:
+        R_SkyLayerSetMasked(layer, *((int*)data) == DD_YES);
+        break;
+
+    case DD_MATERIAL: {
+        materialid_t materialId = *((materialid_t*) data);
+        R_SkyLayerSetMaterial(layer, Materials_ToMaterial(materialId));
+        break;
+      }
+    case DD_OFFSET:
+        R_SkyLayerSetOffset(layer, *((float*) data));
+        break;
+
+    case DD_COLOR_LIMIT:
+        R_SkyLayerSetFadeoutLimit(layer, *((float*) data));
+        break;
+
+    default:
+        Con_Error("R_SkyParams: Bad parameter (%d).\n", param);
+        break;
     }
-    else if(!stricmp(argv[0], "skyrows"))
+}
+
+void R_SkyParams(int layer, int param, void* data)
+{
+    if(layer == DD_SKY) // The whole sky?
     {
-        Rend_CreateSkySphere(skyDetail, strtol(argv[1], NULL, 0));
+        switch(param)
+        {
+        case DD_HEIGHT:
+            height = *((float*) data);
+            break;
+
+        case DD_HORIZON: // Horizon offset angle
+            horizonOffset = *((float*) data);
+            break;
+
+        default: { // Operate on all layers.
+            int i;
+            for(i = 1; i <= MAX_SKY_LAYERS; ++i)
+            {
+                internalSkyParams(i, param, data);
+            }
+            break;
+          }
+        }
+        return;
     }
-    return true;
+
+    // A specific layer?
+    if(layer >= 0 && layer < MAX_SKY_LAYERS)
+    {
+        internalSkyParams(layer+1, param, data);
+    }
 }

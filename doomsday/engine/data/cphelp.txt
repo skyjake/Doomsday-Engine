@@ -512,14 +512,6 @@ inf = Params: settics (tics)\nFor example, 'settics 15'.
 [setvidramp]
 desc = Update display's hardware gamma ramp.
 
-[skydetail]
-desc = Set the number of sky sphere quadrant subdivisions.
-inf = Params: skydetail (num)\nFor example, 'skydetail 4'.
-
-[skyrows]
-desc = Set the number of sky sphere rows.
-inf = Params: skyrows (num)\nFor example, 'skyrows 8'.
-
 [stopdemo]
 desc = Stop currently playing demo.
 

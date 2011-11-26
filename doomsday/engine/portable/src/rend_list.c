@@ -226,7 +226,6 @@ typedef struct listhash_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern byte devRendSkyAlways;
-extern int skySimple;
 extern boolean usingFog;
 
 extern byte freezeRLs;
