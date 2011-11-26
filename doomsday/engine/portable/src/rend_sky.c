@@ -159,7 +159,7 @@ static void renderSkyModels(void)
 }
 
 // Look up the precalculated vertex.
-static __inline skyvertex_t* hemisphereVertex(int r, int c)
+static __inline skyvertex_t* skyVertex(int r, int c)
 {
     return skyVerts + (r*skyColumns + c%skyColumns);
 }
@@ -175,7 +175,7 @@ static void renderHemisphereCap(void)
     glBegin(GL_TRIANGLE_FAN);
     for(c = 0; c < skyColumns; ++c)
     {
-        glVertex3fv((const GLfloat*)hemisphereVertex(0, c)->pos);
+        glVertex3fv((const GLfloat*)skyVertex(0, c)->pos);
     }
     glEnd();
 
@@ -185,61 +185,50 @@ static void renderHemisphereCap(void)
     // We must fill the background for the top row since it'll be
     // partially translucent.
     glBegin(GL_TRIANGLE_STRIP);
-    glVertex3fv((const GLfloat*)hemisphereVertex(0, 0)->pos);
+    glVertex3fv((const GLfloat*)skyVertex(0, 0)->pos);
     for(c = 0; c < skyColumns; ++c)
     {
         // One step down.
-        glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
+        glVertex3fv((const GLfloat*)skyVertex(1, c)->pos);
         // And one step right.
-        glVertex3fv((const GLfloat*)hemisphereVertex(0, c + 1)->pos);
+        glVertex3fv((const GLfloat*)skyVertex(0, c + 1)->pos);
     }
-    glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
+    glVertex3fv((const GLfloat*)skyVertex(1, c)->pos);
     glEnd();
-}
-
-static void skyVertex(int r, int c)
-{
-    const skyvertex_t* svtx = hemisphereVertex(r, c);
-
-    // And the texture coordinates.
-    glTexCoord2f(c / (float) skyColumns, r / (float) skyRows);
-
-    // Also the color.
-    if(rs.fadeout)
-    {
-        if(r == 0)
-            glColor4f(1, 1, 1, 0);
-        else
-            glColor3f(1, 1, 1);
-    }
-    else
-    {
-        if(r == 0)
-            glColor3f(0, 0, 0);
-        else
-            glColor3f(1, 1, 1);
-    }
-
-    glVertex3fv((const GLfloat*)svtx->pos);
 }
 
 static void renderHemisphere(void)
 {
+#define WRITESKYVERTEX(r_, c_) { \
+    svtx = skyVertex(r_, c_); \
+    glTexCoord2f((c_) / (float) skyColumns, (r_) / (float) skyRows); \
+    if(rs.fadeout) \
+    { \
+        if((r_) == 0) glColor4f(1, 1, 1, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    else \
+    { \
+        if((r_) == 0) glColor3f(0, 0, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    glVertex3fv((const GLfloat*)svtx->pos); \
+}
+
+    const skyvertex_t* svtx;
     int r, c;
-    glEnable(GL_TEXTURE_2D);
     for(r = 0; r < skyRows; ++r)
     {
         glBegin(GL_TRIANGLE_STRIP);
-        skyVertex(r, 0);
-        skyVertex(r + 1, 0);
+        WRITESKYVERTEX(r, 0);
+        WRITESKYVERTEX(r + 1, 0);
         for(c = 1; c <= skyColumns; ++c)
         {
-            skyVertex(r, c);
-            skyVertex(r + 1, c);
+            WRITESKYVERTEX(r, c);
+            WRITESKYVERTEX(r + 1, c);
         }
         glEnd();
     }
-    glDisable(GL_TEXTURE_2D);
 }
 
 typedef enum {
@@ -314,6 +303,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     if(rs.texWidth == 0 || rs.texHeight == 0)
     {
         // Disable texturing.
+        rs.texWidth = 0;
         tex = 0;
     }
 
@@ -354,16 +344,24 @@ static void renderSkyHemisphere(int flags)
                 configureRenderHemisphereStateForLayer(i, HC_NONE);
             }
 
-            glMatrixMode(GL_TEXTURE);
-            glPushMatrix();
-            glLoadIdentity();
-            glScalef(1024.f / rs.texWidth, yflip? -1.0f : 1.0f, 1.0f);
-            glTranslatef(rs.texOffset / rs.texWidth, yflip? -1.0f : 0.0f, 0.0f);
+            if(rs.texWidth != 0)
+            {
+                glEnable(GL_TEXTURE_2D);
+                glMatrixMode(GL_TEXTURE);
+                glPushMatrix();
+                glLoadIdentity();
+                glScalef(1024.f / rs.texWidth, yflip? -1.0f : 1.0f, 1.0f);
+                glTranslatef(rs.texOffset / rs.texWidth, yflip? -1.0f : 0.0f, 0.0f);
+            }
 
             renderHemisphere();
 
-            glMatrixMode(GL_TEXTURE);
-            glPopMatrix();
+            if(rs.texWidth != 0)
+            {
+                glMatrixMode(GL_TEXTURE);
+                glPopMatrix();
+                glDisable(GL_TEXTURE_2D);
+            }
         }
     }
 
@@ -461,7 +459,7 @@ static void constructSphere(void)
     for(r = 0; r < skyRows + 1; ++r)
         for(c = 0; c < skyColumns; ++c)
         {
-            skyvertex_t* svtx = hemisphereVertex(r, c);
+            skyvertex_t* svtx = skyVertex(r, c);
 
             topAngle = ((c / (float) skyColumns) *2) * PI;
             sideAngle = horizonOffset + maxSideAngle * (skyRows - r) / (float) skyRows;
