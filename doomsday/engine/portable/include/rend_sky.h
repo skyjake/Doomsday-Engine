@@ -41,8 +41,7 @@ void Rend_SkyInit(void);
 /// Shutdown this module.
 void Rend_SkyShutdown(void);
 
-void R_SkyParams(int layer, int param, void* data);
-
+/// Render the current sky.
 void Rend_RenderSky(void);
 
 #endif /* LIBDENG_RENDER_SKY_H */

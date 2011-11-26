@@ -72,34 +72,65 @@ void R_SkyTicker(void);
  */
 void R_SetupSky(ded_sky_t* sky);
 
-/// @return  Unique identifier of the first active sky layer.
+/// @return  Unique identifier of the current Sky's first active layer.
 int R_SkyFirstActiveLayer(void);
 
 /// @return  Current ambient sky color.
 const float* R_SkyAmbientColor(void);
 
+/// @return  Horizon offset for the current Sky.
 float R_SkyHorizonOffset(void);
 
+/// @return  Height of the current Sky as a factor [0...1] where @c 1 covers the entire view.
 float R_SkyHeight(void);
 
+/// @return  @c true if the identified @a layerId of the current Sky is active.
 boolean R_SkyLayerActive(int layerId);
 
+/// @return  Fadeout limit for the identified @a layerId of the current Sky.
 float R_SkyLayerFadeoutLimit(int layerId);
 
+/// @return  @c true if the identified @a layerId for the current Sky is masked.
 boolean R_SkyLayerMasked(int layerId);
 
+/// @return  Material assigned to the identified @a layerId of the current Sky.
 material_t* R_SkyLayerMaterial(int layerId);
 
+/// @return  Horizontal offset for the identified @a layerId of the current Sky.
 float R_SkyLayerOffset(int layerId);
 
+/**
+ * Change the 'active' state for the identified @a layerId of the current Sky.
+ * \post Sky light color is marked for update (deferred).
+ */
 void R_SkyLayerSetActive(int layerId, boolean yes);
 
+/**
+ * Change the 'masked' state for the identified @a layerId of the current Sky.
+ * \post Sky light color and layer Material are marked for update (deferred).
+ */
 void R_SkyLayerSetMasked(int layerId, boolean yes);
 
+/**
+ * Change the fadeout limit for the identified @a layerId of the current Sky.
+ * \post Sky light color is marked for update (deferred).
+ */
 void R_SkyLayerSetFadeoutLimit(int layerId, float limit);
 
+/**
+ * Change the Material assigned to the identified @a layerId of the current Sky.
+ * \post Sky light color and layer Material are marked for update (deferred).
+ */
 void R_SkyLayerSetMaterial(int layerId, material_t* material);
 
+/**
+ * Change the horizontal offset for the identified @a layerId of the current Sky.
+ */
 void R_SkyLayerSetOffset(int layerId, float offset);
+
+/**
+ * Alternative interface for manipulating Sky (layer) properties by name/id.
+ */
+void R_SkyParams(int layer, int param, void* data);
 
 #endif /* LIBDENG_REFRESH_SKY_H */
