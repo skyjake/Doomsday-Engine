@@ -328,9 +328,10 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         {
             const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
                     Texture_Analysis(MSU_texture(ms, MTU_PRIMARY),
-                        (setupCap == HC_TOP? TA_SKY_LINE_TOP_COLOR : TA_SKY_LINE_BOTTOM_COLOR));
+                        (setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
             const float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
-            assert(avgLineColor);
+            if(!avgLineColor)
+                Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
             skyCapColor.red   = avgLineColor->color[CR];
             skyCapColor.green = avgLineColor->color[CG];

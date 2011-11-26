@@ -1156,9 +1156,6 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     ms->width = ms->height = 0;
     ms->glowing = 0;
     ms->isOpaque = true;
-
-    V3_Set(ms->color, 1, 1, 1);
-    V3_Set(ms->colorAmplified, 1, 1, 1);
     V3_Set(ms->shinyMinColor, 0, 0, 0);
 }
 
@@ -1319,20 +1316,6 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         snapshot->shinyMinColor[CR] = minColor[CR];
         snapshot->shinyMinColor[CG] = minColor[CG];
         snapshot->shinyMinColor[CB] = minColor[CB];
-    }
-
-    if((MC_MAPSURFACE == spec->context || MC_SKYSPHERE == spec->context) && texUnits[MTU_PRIMARY].tex)
-    {
-        const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
-        const ambientlight_analysis_t* ambientLight = (const ambientlight_analysis_t*)
-            Texture_Analysis(TextureVariant_GeneralCase(tex), TA_MAP_AMBIENTLIGHT);
-        assert(ambientLight);
-        snapshot->color[CR] = ambientLight->color[CR];
-        snapshot->color[CG] = ambientLight->color[CG];
-        snapshot->color[CB] = ambientLight->color[CB];
-        snapshot->colorAmplified[CR] = ambientLight->colorAmplified[CR];
-        snapshot->colorAmplified[CG] = ambientLight->colorAmplified[CG];
-        snapshot->colorAmplified[CB] = ambientLight->colorAmplified[CB];
     }
 
     return snapshot;

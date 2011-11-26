@@ -3019,20 +3019,18 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
                 R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, pl->color, &pl->brightMul);
     }
 
-    // Average color for plane glow and/or sky light color?
-    if(TST_GENERAL == spec->type &&
-       (TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context ||
-        TC_SKYSPHERE_DIFFUSE  == TS_GENERAL(spec)->context))
+    // Average color for sky ambient color?
+    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        ambientlight_analysis_t* al = (ambientlight_analysis_t*) Texture_Analysis(tex, TA_MAP_AMBIENTLIGHT);
-        boolean firstInit = (!al);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_COLOR);
+        boolean firstInit = (!ac);
 
         if(firstInit)
         {
-            al = (ambientlight_analysis_t*) malloc(sizeof *al);
-            if(!al)
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AmbientLightAnalysis.", (unsigned long) sizeof *al);
-            Texture_AttachAnalysis(tex, TA_MAP_AMBIENTLIGHT, al);
+            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            if(!ac)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
+            Texture_AttachAnalysis(tex, TA_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3040,30 +3038,58 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageColor(image->pixels, image->width, image->height,
-                    image->pixelSize, al->color);
+                    image->pixelSize, ac->color);
             }
             else
             {
                 FindAverageColorIdx(image->pixels, image->width, image->height,
-                    R_ToColorPalette(image->paletteId), false, al->color);
+                    R_ToColorPalette(image->paletteId), false, ac->color);
             }
-            memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
-            R_AmplifyColor(al->colorAmplified);
+        }
+    }
+
+    // Amplified average color for plane glow?
+    if(TST_GENERAL == spec->type && TC_MAPSURFACE_DIFFUSE == TS_GENERAL(spec)->context)
+    {
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_COLOR_AMPLIFIED);
+        boolean firstInit = (!ac);
+
+        if(firstInit)
+        {
+            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            if(!ac)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
+            Texture_AttachAnalysis(tex, TA_COLOR_AMPLIFIED, ac);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image->paletteId)
+            {
+                FindAverageColor(image->pixels, image->width, image->height,
+                    image->pixelSize, ac->color);
+            }
+            else
+            {
+                FindAverageColorIdx(image->pixels, image->width, image->height,
+                    R_ToColorPalette(image->paletteId), false, ac->color);
+            }
+            R_AmplifyColor(ac->color);
         }
     }
 
     // Average top line color for sky sphere fadeout?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_LINE_TOP_COLOR);
-        boolean firstInit = (!sf);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_LINE_TOP_COLOR);
+        boolean firstInit = (!ac);
 
         if(firstInit)
         {
-            sf = (averagecolor_analysis_t*) malloc(sizeof *sf);
-            if(!sf)
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *sf);
-            Texture_AttachAnalysis(tex, TA_SKY_LINE_TOP_COLOR, sf);
+            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            if(!ac)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
+            Texture_AttachAnalysis(tex, TA_LINE_TOP_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3071,12 +3097,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageLineColor(image->pixels, image->width, image->height,
-                    image->pixelSize, 0, sf->color);
+                    image->pixelSize, 0, ac->color);
             }
             else
             {
                 FindAverageLineColorIdx(image->pixels, image->width, image->height,
-                    0, R_ToColorPalette(image->paletteId), false, sf->color);
+                    0, R_ToColorPalette(image->paletteId), false, ac->color);
             }
         }
     }
@@ -3084,15 +3110,15 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     // Average bottom line color for sky sphere fadeout?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_LINE_BOTTOM_COLOR);
-        boolean firstInit = (!sf);
+        averagecolor_analysis_t* ac = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_LINE_BOTTOM_COLOR);
+        boolean firstInit = (!ac);
 
         if(firstInit)
         {
-            sf = (averagecolor_analysis_t*) malloc(sizeof *sf);
-            if(!sf)
-                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *sf);
-            Texture_AttachAnalysis(tex, TA_SKY_LINE_BOTTOM_COLOR, sf);
+            ac = (averagecolor_analysis_t*) malloc(sizeof *ac);
+            if(!ac)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *ac);
+            Texture_AttachAnalysis(tex, TA_LINE_BOTTOM_COLOR, ac);
         }
 
         if(firstInit || forceUpdate)
@@ -3100,12 +3126,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageLineColor(image->pixels, image->width, image->height,
-                    image->pixelSize, image->height-1, sf->color);
+                    image->pixelSize, image->height-1, ac->color);
             }
             else
             {
                 FindAverageLineColorIdx(image->pixels, image->width, image->height,
-                    image->height-1, R_ToColorPalette(image->paletteId), false, sf->color);
+                    image->height-1, R_ToColorPalette(image->paletteId), false, ac->color);
             }
         }
     }

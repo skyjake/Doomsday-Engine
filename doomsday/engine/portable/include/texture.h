@@ -33,9 +33,10 @@ typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
     TA_COLORPALETTE = TEXTURE_ANALYSIS_FIRST,
     TA_SPRITE_AUTOLIGHT,
-    TA_MAP_AMBIENTLIGHT,
-    TA_SKY_LINE_TOP_COLOR,
-    TA_SKY_LINE_BOTTOM_COLOR,
+    TA_COLOR,                  // Average.
+    TA_COLOR_AMPLIFIED,        // Average amplified (max component ==1).
+    TA_LINE_TOP_COLOR,         // Average.
+    TA_LINE_BOTTOM_COLOR,      // Average.
     TEXTURE_ANALYSIS_COUNT
 } texture_analysisid_t;
 

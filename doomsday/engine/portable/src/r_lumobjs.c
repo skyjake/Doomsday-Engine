@@ -751,8 +751,10 @@ static void addLuminous(mobj_t* mo)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-    pl = (const pointlight_analysis_t*) Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
-    if(!pl) return; // Not good...
+    pl = (const pointlight_analysis_t*)
+        Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
+    if(!pl)
+        Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
     size = pl->brightMul;
     yOffset = ms->height * pl->originY;
@@ -956,23 +958,6 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
 END_PROF( PROF_LUMOBJ_FRAME_SORT );
 }
 
-static void setGlowLightProps(lumobj_t* l, surface_t* surface)
-{
-    assert(l && surface);
-    {
-    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-    const materialsnapshot_t* ms = Materials_Prepare(surface->material, spec, true);
-
-    V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
-    V3_Copy(LUM_PLANE(l)->color, ms->colorAmplified);
-    LUM_PLANE(l)->intensity = ms->glowing;
-    LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
-    l->maxDistance = 0;
-    l->decorSource = 0;
-    }
-}
-
 /**
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
@@ -986,10 +971,12 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
     case DMU_PLANE: {
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
-        linkobjtossecparams_t params;
+        const averagecolor_analysis_t* avgColorAmplified;
         const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
+        linkobjtossecparams_t params;
         lumobj_t* lum;
+        uint i;
 
         // Only produce a light for sectors with open space.
         /// \todo Do not add surfaces from sectors with zero subsectors to the glowing list.
@@ -1000,23 +987,32 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         spec = Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
             GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         ms = Materials_Prepare(suf->material, spec, true);
-        if(!(ms->glowing > .0001f))
-            return true; // Continue iteration.
+        if(!(ms->glowing > .001f)) return true; // Continue iteration.
+
+        avgColorAmplified = (const averagecolor_analysis_t*)
+            Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_COLOR_AMPLIFIED);
+        if(!avgColorAmplified)
+            Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         // \note Plane lights do not spread so simply link to all subsectors of this sector.
         lum = createLuminous(LT_PLANE, sec->ssectors[0]);
         V3_Set(lum->pos, pln->soundOrg.pos[VX], pln->soundOrg.pos[VY], pln->visHeight);
-        setGlowLightProps(lum, suf);
+
+        V3_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
+        V3_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color);
+        LUM_PLANE(lum)->intensity = ms->glowing;
+        LUM_PLANE(lum)->tex = GL_PrepareLSTexture(LST_GRADIENT);
+        lum->maxDistance = 0;
+        lum->decorSource = 0;
 
         params.obj = lum;
         params.type = OT_LUMOBJ;
         RIT_LinkObjToSubsector(sec->ssectors[0], (void*)&params);
-        { uint i;
         for(i = 1; i < sec->ssectorCount; ++i)
         {
             linkLumObjToSSec(lum, sec->ssectors[i]);
             RIT_LinkObjToSubsector(sec->ssectors[i], (void*)&params);
-        }}
+        }
         break;
       }
     case DMU_SIDEDEF:
@@ -1024,7 +1020,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 
     default:
         Con_Error("createGlowLightForSurface: Internal error, unknown type %s.",
-                  DMU_Str(DMU_GetType(suf->owner)));
+            DMU_Str(DMU_GetType(suf->owner)));
     }
     return true;
 }

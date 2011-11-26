@@ -1498,7 +1498,8 @@ void R_ProjectSprite(mobj_t* mo)
 
         pl = (const pointlight_analysis_t*)
             Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SPRITE_AUTOLIGHT);
-        if(!pl) return; // Not good...
+        if(!pl)
+            Con_Error("R_ProjectSprite: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         lum = LO_GetLuminous(mo->lumIdx);
         def = (mo->state? stateLights[mo->state - states] : 0);

@@ -55,10 +55,6 @@ typedef struct materialsnapshot_s {
     /// Glow strength multiplier.
     float glowing;
 
-    /// Average colors (for lighting).
-    vec3_t color;
-    vec3_t colorAmplified;
-
     /// Minimum sector light color for shiny texturing.
     vec3_t shinyMinColor;
 
