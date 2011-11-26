@@ -3055,7 +3055,7 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     // Average top line color for sky sphere fadeout?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {
-        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_SPHEREFADEOUT);
+        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_LINE_TOP_COLOR);
         boolean firstInit = (!sf);
 
         if(firstInit)
@@ -3063,7 +3063,7 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             sf = (averagecolor_analysis_t*) malloc(sizeof *sf);
             if(!sf)
                 Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *sf);
-            Texture_AttachAnalysis(tex, TA_SKY_SPHEREFADEOUT, sf);
+            Texture_AttachAnalysis(tex, TA_SKY_LINE_TOP_COLOR, sf);
         }
 
         if(firstInit || forceUpdate)
@@ -3077,6 +3077,35 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             {
                 FindAverageLineColorIdx(image->pixels, image->width, image->height,
                     0, R_ToColorPalette(image->paletteId), false, sf->color);
+            }
+        }
+    }
+
+    // Average bottom line color for sky sphere fadeout?
+    if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
+    {
+        averagecolor_analysis_t* sf = (averagecolor_analysis_t*) Texture_Analysis(tex, TA_SKY_LINE_BOTTOM_COLOR);
+        boolean firstInit = (!sf);
+
+        if(firstInit)
+        {
+            sf = (averagecolor_analysis_t*) malloc(sizeof *sf);
+            if(!sf)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageColorAnalysis.", (unsigned long) sizeof *sf);
+            Texture_AttachAnalysis(tex, TA_SKY_LINE_BOTTOM_COLOR, sf);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image->paletteId)
+            {
+                FindAverageLineColor(image->pixels, image->width, image->height,
+                    image->pixelSize, image->height-1, sf->color);
+            }
+            else
+            {
+                FindAverageLineColorIdx(image->pixels, image->width, image->height,
+                    image->height-1, R_ToColorPalette(image->paletteId), false, sf->color);
             }
         }
     }

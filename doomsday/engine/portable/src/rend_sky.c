@@ -278,7 +278,13 @@ static void renderHemisphere(void)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void configureRenderHemisphereStateForLayer(int layer, boolean setupCap)
+typedef enum {
+    HC_NONE = 0,
+    HC_TOP,
+    HC_BOTTOM
+} hemispherecap_t;
+
+static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t setupCap)
 {
     int magMode;
     DGLuint tex;
@@ -288,7 +294,7 @@ static void configureRenderHemisphereStateForLayer(int layer, boolean setupCap)
         tex = 0;
         magMode = GL_LINEAR;
         skyTexWidth  = skyTexHeight = 1;
-        if(setupCap)
+        if(setupCap != HC_NONE)
             skyFadeout = false;
     }
     else
@@ -318,16 +324,17 @@ static void configureRenderHemisphereStateForLayer(int layer, boolean setupCap)
         magMode = MSU(ms, MTU_PRIMARY).magMode;
         Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &skyTexWidth, &skyTexHeight);
 
-        if(setupCap)
+        if(setupCap != HC_NONE)
         {
-            const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SKY_SPHEREFADEOUT);
+            const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(MSU_texture(ms, MTU_PRIMARY),
+                        (setupCap == HC_TOP? TA_SKY_LINE_TOP_COLOR : TA_SKY_LINE_BOTTOM_COLOR));
             const float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
-            assert(avgTopColor);
+            assert(avgLineColor);
 
-            skyCapColor.red   = avgTopColor->color[CR];
-            skyCapColor.green = avgTopColor->color[CG];
-            skyCapColor.blue  = avgTopColor->color[CB];
+            skyCapColor.red   = avgLineColor->color[CR];
+            skyCapColor.green = avgLineColor->color[CG];
+            skyCapColor.blue  = avgLineColor->color[CB];
 
             // Is the colored fadeout in use?
             skyFadeout = (skyCapColor.red   >= fadeoutLimit ||
@@ -337,7 +344,7 @@ static void configureRenderHemisphereStateForLayer(int layer, boolean setupCap)
     }
 
     skyTexOffset = R_SkyLayerOffset(layer);
-    if(setupCap && !skyFadeout)
+    if(setupCap != HC_NONE && !skyFadeout)
     {
         // Default color is black.
         skyCapColor.red = skyCapColor.green = skyCapColor.blue = 0;
@@ -359,6 +366,7 @@ static void renderSkyHemisphere(int flags)
 {
     int firstSkyLayer = R_SkyFirstActiveLayer();
     const boolean yflip = !!(flags & SKYHEMI_LOWER);
+    hemispherecap_t cap = !!(flags & SKYHEMI_LOWER)? HC_BOTTOM : HC_TOP;
 
     if(yflip)
     {
@@ -369,7 +377,7 @@ static void renderSkyHemisphere(int flags)
     }
 
     // First render the cap and the background for fadeouts, if needed.
-    configureRenderHemisphereStateForLayer(firstSkyLayer, true/*setup cap*/);
+    configureRenderHemisphereStateForLayer(firstSkyLayer, cap);
     renderHemisphereCap();
 
     if(!(flags & SKYHEMI_JUST_CAP))
@@ -383,7 +391,7 @@ static void renderSkyHemisphere(int flags)
             if(!R_SkyLayerActive(i)) continue;
             if(i != firstSkyLayer)
             {
-                configureRenderHemisphereStateForLayer(i, false/*do not setup cap*/);
+                configureRenderHemisphereStateForLayer(i, HC_NONE);
             }
 
             popTextureMatrix = false;

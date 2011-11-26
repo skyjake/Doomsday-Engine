@@ -101,7 +101,8 @@ static void configureDefaultSky(void)
 static void calculateSkyLightColor(void)
 {
     float avgMaterialColor[3];
-    rcolor_t capColor = { 0, 0, 0, 0 };
+    rcolor_t topCapColor = { 0, 0, 0, 0 };
+    rcolor_t bottomCapColor = { 0, 0, 0, 0 };
     skylayer_t* slayer;
     int i, avgCount;
 
@@ -136,12 +137,19 @@ static void calculateSkyLightColor(void)
         if(i == firstSkyLayer && MSU_texture(ms, MTU_PRIMARY))
         {
             const texture_t* tex = MSU_texture(ms, MTU_PRIMARY);
-            const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(tex, TA_SKY_SPHEREFADEOUT);
-            assert(avgTopColor);
-            capColor.red   = avgTopColor->color[CR];
-            capColor.green = avgTopColor->color[CG];
-            capColor.blue  = avgTopColor->color[CB];
+            const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(tex, TA_SKY_LINE_TOP_COLOR);
+            assert(avgLineColor);
+            topCapColor.red   = avgLineColor->color[CR];
+            topCapColor.green = avgLineColor->color[CG];
+            topCapColor.blue  = avgLineColor->color[CB];
+
+            avgLineColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(tex, TA_SKY_LINE_BOTTOM_COLOR);
+            assert(avgLineColor);
+            bottomCapColor.red   = avgLineColor->color[CR];
+            bottomCapColor.green = avgLineColor->color[CG];
+            bottomCapColor.blue  = avgLineColor->color[CB];
         }
 
         if(!(skyModelsInited && !alwaysDrawSphere))
@@ -160,10 +168,15 @@ static void calculateSkyLightColor(void)
         skyAmbientColor[CB] = avgMaterialColor[CB];
         
         // The caps cover a large amount of the sky sphere, so factor it in too.
-        skyAmbientColor[CR] += 2 * capColor.red;
-        skyAmbientColor[CG] += 2 * capColor.green;
-        skyAmbientColor[CB] += 2 * capColor.blue;
-        avgCount += 2;
+        skyAmbientColor[CR] += topCapColor.red;
+        skyAmbientColor[CG] += topCapColor.green;
+        skyAmbientColor[CB] += topCapColor.blue;
+        ++avgCount;
+
+        skyAmbientColor[CR] += bottomCapColor.red;
+        skyAmbientColor[CG] += bottomCapColor.green;
+        skyAmbientColor[CB] += bottomCapColor.blue;
+        ++avgCount;
 
         skyAmbientColor[CR] /= avgCount;
         skyAmbientColor[CG] /= avgCount;
