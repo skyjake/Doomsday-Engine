@@ -3048,7 +3048,7 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
                     R_ToColorPalette(image->paletteId), false, al->color);
             }
             memcpy(al->colorAmplified, al->color, sizeof(al->colorAmplified));
-            amplify(al->colorAmplified);
+            R_AmplifyColor(al->colorAmplified);
         }
     }
 

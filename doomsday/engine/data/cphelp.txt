@@ -703,7 +703,7 @@ desc = Brightness of light decorations.
 desc = Reduce brightness if surface/view angle too steep.
 
 [rend-light-sky]
-desc = 1=Use sky light color in sky sectors.
+desc = Sky light color blending factor for sky sectors (off: 0, default: .2).
 
 [rend-light-sky-auto]
 desc = 1=Enable automatic calculation of the sky light color.

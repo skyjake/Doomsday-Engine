@@ -46,7 +46,7 @@ typedef struct skyfix_s {
     float           height;
 } skyfix_t;
 
-extern byte rendSkyLight; // cvar
+extern float rendSkyLight; // cvar
 extern byte rendSkyLightAuto; // cvar
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
@@ -72,8 +72,19 @@ void            R_SetupFogDefaults(void);
 const float* R_GetSectorLightColor(const sector_t* sector);
 
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
-float           R_ExtraLightDelta(void);
-float           R_CheckSectorLight(float lightlevel, float min, float max);
+
+/**
+ * The DOOM lighting model applies a light level delta to everything when
+ * e.g. the player shoots.
+ *
+ * @return  Calculated delta.
+ */
+float R_ExtraLightDelta(void);
+
+/**
+ * @return  @c > 0 if @a lightlevel passes the min max limit condition.
+ */
+float R_CheckSectorLight(float lightlevel, float min, float max);
 
 /**
  * Will the specified surface be added to the sky mask?

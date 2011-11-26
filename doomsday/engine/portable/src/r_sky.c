@@ -29,7 +29,6 @@
 
 #include "cl_def.h"
 #include "m_vector.h"
-#include "rend_sky.h"
 #include "texture.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
@@ -64,11 +63,9 @@ static int firstSkyLayer, activeSkyLayers;
 static float horizonOffset;
 static float height;
 
-static boolean needUpdateSkyLightColor;
-static float skyAmbientColor[3];
-
-static boolean skyLightColorDefined;
-static float skyLightColor[3];
+static boolean skyAmbientColorDefined; /// @c true= pre-defined in a MapInfo def.
+static boolean needUpdateSkyAmbientColor; /// @c true= update if not pre-defined.
+static rcolor_t skyAmbientColor;
 
 static __inline skylayer_t* skyLayerById(int id)
 {
@@ -80,10 +77,9 @@ static void configureDefaultSky(void)
 {
     int i;
 
-    needUpdateSkyLightColor = true;
-    skyLightColorDefined = false;
-    skyLightColor[CR] = skyLightColor[CG] = skyLightColor[CB] = 1.0f;
-    skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
+    skyAmbientColorDefined = false;
+    needUpdateSkyAmbientColor = true;
+    V3_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
 
     for(i = 0; i < MAX_SKY_LAYERS; ++i)
     {
@@ -98,24 +94,25 @@ static void configureDefaultSky(void)
     horizonOffset = DEFAULT_SKY_HORIZON_OFFSET;
 }
 
-static void calculateSkyLightColor(void)
+static void calculateSkyAmbientColor(void)
 {
-    float avgMaterialColor[3];
-    rcolor_t topCapColor = { 0, 0, 0, 0 };
+    rcolor_t avgMaterialColor = { 0, 0, 0, 0 };
     rcolor_t bottomCapColor = { 0, 0, 0, 0 };
+    rcolor_t topCapColor = { 0, 0, 0, 0 };
     skylayer_t* slayer;
     int i, avgCount;
 
-    if(!needUpdateSkyLightColor) return;
+    if(!needUpdateSkyAmbientColor) return;
+    needUpdateSkyAmbientColor = false;
+
+    V3_Set(skyAmbientColor.rgb, 1.0f, 1.0f, 1.0f);
+    if(skyModelsInited && !alwaysDrawSphere) return;
 
     /**
-     * \todo Re-implement the automatic sky light color calculation by
-     * rendering the sky to a low-quality cubemap and use that to obtain
-     * the lighting characteristics.
+     * \todo Re-implement me by rendering the sky to a low-quality cubemap
+     * and use that to obtain the lighting characteristics.
      */
-    avgMaterialColor[CR] = avgMaterialColor[CG] = avgMaterialColor[CB] = 0;
     avgCount = 0;
-
     for(i = 0, slayer = &skyLayers[firstSkyLayer]; i < MAX_SKY_LAYERS; ++i, slayer++)
     {
         const materialvariantspecification_t* spec;
@@ -126,79 +123,42 @@ static void calculateSkyLightColor(void)
         /**
          * \note Ensure that this specification matches that used when
          * preparing the sky for render (see ./engine/portable/src/rend_sky.c
-         * configureRenderHemisphereStateForLayer) else an unnecessary GL
-         * texture will be uploaded as a consequence of this call.
+         * configureRenderHemisphereStateForLayer) else an unnecessary
+         * GL texture will be uploaded as a consequence of this call.
          */
         spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
             TSF_NO_COMPRESSION | ((slayer->flags & SLF_MASKED)? TSF_ZEROMASK : 0),
             0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
         ms = Materials_Prepare(slayer->material, spec, false);
 
-        if(i == firstSkyLayer && MSU_texture(ms, MTU_PRIMARY))
+        if(MSU_texture(ms, MTU_PRIMARY))
         {
-            const texture_t* tex = MSU_texture(ms, MTU_PRIMARY);
-            const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(tex, TA_SKY_LINE_TOP_COLOR);
-            assert(avgLineColor);
-            topCapColor.red   = avgLineColor->color[CR];
-            topCapColor.green = avgLineColor->color[CG];
-            topCapColor.blue  = avgLineColor->color[CB];
+            if(i == firstSkyLayer)
+            {
+                const texture_t* tex = MSU_texture(ms, MTU_PRIMARY);
+                const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
+                        Texture_Analysis(tex, TA_SKY_LINE_TOP_COLOR);
+                V3_Copy(topCapColor.rgb, avgLineColor->color);
 
-            avgLineColor = (const averagecolor_analysis_t*)
-                    Texture_Analysis(tex, TA_SKY_LINE_BOTTOM_COLOR);
-            assert(avgLineColor);
-            bottomCapColor.red   = avgLineColor->color[CR];
-            bottomCapColor.green = avgLineColor->color[CG];
-            bottomCapColor.blue  = avgLineColor->color[CB];
-        }
+                avgLineColor = (const averagecolor_analysis_t*)
+                        Texture_Analysis(tex, TA_SKY_LINE_BOTTOM_COLOR);
+                V3_Copy(bottomCapColor.rgb, avgLineColor->color);
+            }
 
-        if(!(skyModelsInited && !alwaysDrawSphere))
-        {
-            avgMaterialColor[CR] += ms->colorAmplified[CR];
-            avgMaterialColor[CG] += ms->colorAmplified[CG];
-            avgMaterialColor[CB] += ms->colorAmplified[CB];
+            V3_Sum(avgMaterialColor.rgb, avgMaterialColor.rgb, ms->color);
             ++avgCount;
         }
     }
 
     if(avgCount != 0)
     {
-        skyAmbientColor[CR] = avgMaterialColor[CR];
-        skyAmbientColor[CG] = avgMaterialColor[CG];
-        skyAmbientColor[CB] = avgMaterialColor[CB];
-        
         // The caps cover a large amount of the sky sphere, so factor it in too.
-        skyAmbientColor[CR] += topCapColor.red;
-        skyAmbientColor[CG] += topCapColor.green;
-        skyAmbientColor[CB] += topCapColor.blue;
-        ++avgCount;
-
-        skyAmbientColor[CR] += bottomCapColor.red;
-        skyAmbientColor[CG] += bottomCapColor.green;
-        skyAmbientColor[CB] += bottomCapColor.blue;
-        ++avgCount;
-
-        skyAmbientColor[CR] /= avgCount;
-        skyAmbientColor[CG] /= avgCount;
-        skyAmbientColor[CB] /= avgCount;
-
-        /**
-         * Our automatically-calculated sky light color should not
-         * be too prominent, lets be subtle.
-         * \fixme Should be done in R_GetSectorLightColor (with cvar).
-         */
-        skyAmbientColor[CR] = 1.0f - (1.0f - avgMaterialColor[CR]) * .33f;
-        skyAmbientColor[CG] = 1.0f - (1.0f - avgMaterialColor[CG]) * .33f;
-        skyAmbientColor[CB] = 1.0f - (1.0f - avgMaterialColor[CB]) * .33f;
+        vec3_t capSum;
+        V3_Sum(capSum, topCapColor.rgb, bottomCapColor.rgb);
+        V3_Sum(skyAmbientColor.rgb, avgMaterialColor.rgb, capSum);
+        avgCount += 2; // Each cap is another unit.
+        V3_Scale(skyAmbientColor.rgb, 1.f / avgCount);
     }
-    else
-    {
-        skyAmbientColor[CR] = skyAmbientColor[CG] = skyAmbientColor[CB] = 1.0f;
-    }
-    needUpdateSkyLightColor = false;
-
-    // When the sky light color changes we must update the lightgrid.
-    LG_MarkAllForUpdate();
 }
 
 void R_SkyInit(void)
@@ -207,7 +167,7 @@ void R_SkyInit(void)
     activeSkyLayers = 0;
     skyModelsInited = false;
     alwaysDrawSphere = false;
-    needUpdateSkyLightColor = true;
+    needUpdateSkyAmbientColor = true;
 }
 
 void R_SetupSky(ded_sky_t* def)
@@ -253,10 +213,8 @@ void R_SetupSky(ded_sky_t* def)
 
     if(def->color[CR] > 0 || def->color[CG] > 0 || def->color[CB] > 0)
     {
-        skyLightColorDefined = true;
-        skyLightColor[CR] = def->color[CR];
-        skyLightColor[CG] = def->color[CG];
-        skyLightColor[CB] = def->color[CB];
+        skyAmbientColorDefined = true;
+        V3_Set(skyAmbientColor.rgb, def->color[CR], def->color[CG], def->color[CB]);
     }
 
     // Any sky models to setup? Models will override the normal sphere by default.
@@ -303,8 +261,8 @@ static void R_SetupSkyModels(ded_sky_t* def)
  */
 void R_SkyPrecache(void)
 {
-    needUpdateSkyLightColor = true;
-    calculateSkyLightColor();
+    needUpdateSkyAmbientColor = true;
+    calculateSkyAmbientColor();
 
     if(skyModelsInited)
     {
@@ -353,16 +311,18 @@ int R_SkyFirstActiveLayer(void)
     return firstSkyLayer+1; //1-based index.
 }
 
-const float* R_SkyAmbientColor(void)
+const rcolor_t* R_SkyAmbientColor(void)
 {
-    static const float white[3] = { 1.0f, 1.0f, 1.0f };
-    if(skyLightColorDefined) return skyLightColor;
-    if(rendSkyLightAuto)
+    static const rcolor_t white = { 1.0f, 1.0f, 1.0f, 0 };
+    if(skyAmbientColorDefined || rendSkyLightAuto)
     {
-        calculateSkyLightColor();
-        return skyAmbientColor;
+        if(!skyAmbientColorDefined)
+        {
+            calculateSkyAmbientColor();
+        }
+        return &skyAmbientColor;
     }
-    return white;
+    return &white;
 }
 
 float R_SkyHorizonOffset(void)
@@ -389,7 +349,7 @@ void R_SkyLayerSetActive(int id, boolean active)
     if(active) layer->flags |= SLF_ACTIVE;
     else       layer->flags &= ~SLF_ACTIVE;
 
-    needUpdateSkyLightColor = true;
+    needUpdateSkyAmbientColor = true;
 }
 
 boolean R_SkyLayerActive(int id)
@@ -418,7 +378,7 @@ void R_SkyLayerSetMasked(int id, boolean masked)
     if(masked) layer->flags |= SLF_MASKED;
     else       layer->flags &= ~SLF_MASKED;
 
-    needUpdateSkyLightColor = true;
+    needUpdateSkyAmbientColor = true;
 }
 
 boolean R_SkyLayerMasked(int id)
@@ -460,7 +420,7 @@ void R_SkyLayerSetMaterial(int id, material_t* mat)
     if(layer->material == mat) return;
 
     layer->material = mat;
-    needUpdateSkyLightColor = true;
+    needUpdateSkyAmbientColor = true;
 }
 
 float R_SkyLayerFadeoutLimit(int id)
@@ -489,7 +449,7 @@ void R_SkyLayerSetFadeoutLimit(int id, float limit)
     if(layer->fadeoutLimit == limit) return;
 
     layer->fadeoutLimit = limit;
-    needUpdateSkyLightColor = true;
+    needUpdateSkyAmbientColor = true;
 }
 
 float R_SkyLayerOffset(int id)

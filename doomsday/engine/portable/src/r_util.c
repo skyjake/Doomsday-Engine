@@ -414,6 +414,24 @@ boolean R_IsPointInSector2(const float x, const float y,
     return R_IsPointInSubsector(x, y, ssec);
 }
 
+void R_AmplifyColor(float rgb[3])
+{
+    float max = 0;
+    int i;
+
+    for(i = 0; i < 3; ++i)
+    {
+        if(rgb[i] > max)
+            max = rgb[i];
+    }
+    if(!max || max == 1) return;
+
+    for(i = 0; i < 3; ++i)
+    {
+        rgb[i] = rgb[i] / max;
+    }
+}
+
 void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 {
     int                 i;

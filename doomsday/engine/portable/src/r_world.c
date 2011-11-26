@@ -68,7 +68,7 @@
 float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
 
-byte rendSkyLight = true;
+float rendSkyLight = .2f; // Intensity factor.
 byte rendSkyLightAuto = true;
 
 boolean firstFrameAfterLoad;
@@ -1822,39 +1822,44 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-/**
- * The DOOM lighting model applies a light level delta to everything when
- * e.g. the player shoots.
- *
- * @return              Calculated delta.
- */
 float R_ExtraLightDelta(void)
 {
     return extraLightDelta;
 }
 
-/**
- * @return              @c > 0, if the sector lightlevel passes the
- *                      limit condition.
- */
 float R_CheckSectorLight(float lightlevel, float min, float max)
 {
     // Has a limit been set?
-    if(min == max)
-        return 1;
-
-    // Apply adaptation
+    if(min == max) return 1;
     Rend_ApplyLightAdaptation(&lightlevel);
-
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
 const float* R_GetSectorLightColor(const sector_t* sector)
 {
-    assert(sector);
-    if(rendSkyLight && R_SectorContainsSkySurfaces(sector))
+    static vec3_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static float oldRendSkyLight = -1;
+    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
-        return R_SkyAmbientColor();
+        const rcolor_t* ambientColor = R_SkyAmbientColor();
+        if(rendSkyLight != oldRendSkyLight ||
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
+        {
+            vec3_t white = { 1, 1, 1 };
+            V3_Copy(skyLightColor, ambientColor->rgb);
+            R_AmplifyColor(skyLightColor);
+
+            // Apply the intensity factor cvar.
+            V3_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
+
+            // When the sky light color changes we must update the lightgrid.
+            LG_MarkAllForUpdate();
+            V3_Copy(oldSkyAmbientColor, ambientColor->rgb);
+        }
+        oldRendSkyLight = rendSkyLight;
+        return skyLightColor;
     }
     // A non-skylight sector (i.e., everything else!)
     return sector->rgb; // The sector's ambient light color.

@@ -1290,30 +1290,10 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
                  lowCnt? "(low-intensity avg)" : "(white light)"));
 #endif*/
 
-    // AmplifyLuma color.
-    amplify(color);
+    R_AmplifyColor(color);
 
     // How about the size of the light source?
     *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
-    }
-}
-
-void amplify(float rgb[3])
-{
-    float max = 0;
-    int i;
-
-    for(i = 0; i < 3; ++i)
-        if(rgb[i] > max)
-            max = rgb[i];
-
-    if(!max || max == 1)
-        return;
-
-    if(max)
-    {
-        for(i = 0; i < 3; ++i)
-            rgb[i] = rgb[i] / max;
     }
 }
 

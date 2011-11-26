@@ -167,12 +167,6 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
     struct colorpalette_s* palette, float* brightX, float* brightY, float color[3],
     float* lumSize);
 
-/**
- * The given RGB color is scaled uniformly so that the highest component
- * becomes one.
- */
-void amplify(float rgb[3]);
-
 // Console commands.
 D_CMD(UpdateGammaRamp);
 

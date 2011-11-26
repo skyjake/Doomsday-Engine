@@ -47,8 +47,14 @@ boolean         R_IsPointInSubsector(const float x, const float y,
                                      const subsector_t* ssec);
 sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
 
-void            R_ScaleAmbientRGB(float* out, const float* in, float mul);
-void            R_HSVToRGB(float* rgb, float h, float s, float v);
+/**
+ * Scale @a color uniformly so that the highest component becomes one.
+ */
+void R_AmplifyColor(float color[3]);
+
+void R_ScaleAmbientRGB(float* out, const float* in, float mul);
+
+void R_HSVToRGB(float* rgb, float h, float s, float v);
 
 /**
  * Generate texcoords on the surface centered on point.
