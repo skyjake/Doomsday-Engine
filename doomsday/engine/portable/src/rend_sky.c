@@ -51,7 +51,6 @@ typedef struct {
 
 int skyDetail = 6, skyColumns = 4*6, skyRows = 3;
 float skyDist = 1600;
-byte skySimple = false;
 
 static void constructSphere(void);
 static void destroySphere(void);
@@ -79,7 +78,6 @@ void Rend_SkyRegister(void)
     C_VAR_INT2("rend-sky-detail", &skyDetail, 0, 3, 7, updateSphere);
     C_VAR_INT2("rend-sky-rows", &skyRows, 0, 1, 8, updateSphere);
     C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_BYTE("rend-sky-simple", &skySimple, 0, 0, 1);
 }
 
 void Rend_SkyInit(void)
@@ -184,32 +182,17 @@ static void renderHemisphereCap(void)
 
     // We must fill the background for the top row since it'll be
     // partially translucent.
-    if(!skySimple)
+    glBegin(GL_TRIANGLE_STRIP);
+    glVertex3fv((const GLfloat*)hemisphereVertex(0, 0)->pos);
+    for(c = 0; c < skyColumns; ++c)
     {
-        glBegin(GL_TRIANGLE_STRIP);
-        glVertex3fv((const GLfloat*)hemisphereVertex(0, 0)->pos);
-        for(c = 0; c < skyColumns; ++c)
-        {
-            // One step down.
-            glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
-            // And one step right.
-            glVertex3fv((const GLfloat*)hemisphereVertex(0, c + 1)->pos);
-        }
+        // One step down.
         glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
-        glEnd();
+        // And one step right.
+        glVertex3fv((const GLfloat*)hemisphereVertex(0, c + 1)->pos);
     }
-    else
-    {
-        glBegin(GL_QUADS);
-        for(c = 0; c < skyColumns; ++c)
-        {
-            glVertex3fv((const GLfloat*)hemisphereVertex(0, c)->pos);
-            glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
-            glVertex3fv((const GLfloat*)hemisphereVertex(1, c + 1)->pos);
-            glVertex3fv((const GLfloat*)hemisphereVertex(0, c + 1)->pos);
-        }
-        glEnd();
-    }
+    glVertex3fv((const GLfloat*)hemisphereVertex(1, c)->pos);
+    glEnd();
 }
 
 static void skyVertex(int r, int c)
@@ -240,40 +223,19 @@ static void skyVertex(int r, int c)
 
 static void renderHemisphere(void)
 {
-    // The total number of triangles per hemisphere can be calculated
-    // as follows: rows * columns * 2 + 2 (for the top cap).
+    int r, c;
     glEnable(GL_TEXTURE_2D);
-    if(!skySimple)
+    for(r = 0; r < skyRows; ++r)
     {
-        int r, c;
-        for(r = 0; r < skyRows; ++r)
+        glBegin(GL_TRIANGLE_STRIP);
+        skyVertex(r, 0);
+        skyVertex(r + 1, 0);
+        for(c = 1; c <= skyColumns; ++c)
         {
-            glBegin(GL_TRIANGLE_STRIP);
-            skyVertex(r, 0);
-            skyVertex(r + 1, 0);
-            for(c = 1; c <= skyColumns; ++c)
-            {
-                skyVertex(r, c);
-                skyVertex(r + 1, c);
-            }
-            glEnd();
+            skyVertex(r, c);
+            skyVertex(r + 1, c);
         }
-    }
-    else
-    {
-        int r, c;
-        for(r = 0; r < skyRows; ++r)
-        {
-            glBegin(GL_QUADS);
-            for(c = 0; c < skyColumns; ++c)
-            {
-                skyVertex(r, c);
-                skyVertex(r + 1, c);
-                skyVertex(r + 1, c + 1);
-                skyVertex(r, c + 1);
-            }
-            glEnd();
-        }
+        glEnd();
     }
     glDisable(GL_TEXTURE_2D);
 }
@@ -478,6 +440,12 @@ static void destroySphere(void)
  * There must be at least 4 columns. The preferable number is 4n, where
  * n is 1, 2, 3... There should be at least two rows because the first
  * one is always faded.
+ *
+ * The total number of triangles per hemisphere can be calculated thus:
+ *
+ * Sum: rows * columns * 2 + (hemisphere)
+ *      rows * 2 + (fadeout)
+ *      rows - 2 (cap)
  */
 static void constructSphere(void)
 {
@@ -496,7 +464,7 @@ static void constructSphere(void)
     numSkyVerts = skyColumns * (skyRows + 1);
     skyVerts = (skyvertex_t*)realloc(skyVerts, sizeof *skyVerts * numSkyVerts);
     if(!skyVerts)
-        Con_Error(__FILE__":constructSphere: Failed (re)allocation of %lu bytes for sphere verts.", (unsigned long) sizeof *skyVerts * numSkyVerts);
+        Con_Error("constructSphere: Failed (re)allocation of %lu bytes for SkyVertex list.", (unsigned long) sizeof *skyVerts * numSkyVerts);
 
     // Calculate the vertices.
     for(r = 0; r < skyRows + 1; ++r)

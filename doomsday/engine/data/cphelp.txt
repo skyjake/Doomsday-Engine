@@ -798,9 +798,6 @@ desc = Number of sky sphere rows.
 [rend-sky-distance]
 desc = Sky sphere radius.
 
-[rend-sky-simple]
-desc = Sky rendering mode: 0=normal, 1=quads.
-
 [rend-sprite-align]
 desc = 1=Always align sprites with the view plane. 2=Align to camera, unless slant > r_maxSpriteAngle.
 
