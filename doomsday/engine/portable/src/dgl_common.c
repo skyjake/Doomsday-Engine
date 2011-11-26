@@ -416,6 +416,7 @@ void GL_SetVSync(boolean on)
 void GL_SetMultisample(boolean on)
 {
 #if WIN32
+    if(!GL_state_ext.wglMultisampleARB) return;
     if(on)
         glEnable(GL_MULTISAMPLE_ARB);
     else

@@ -171,6 +171,8 @@ static void printDGLConfiguration(void)
     Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
     if(GL_state_ext.wglMultisampleARB)
         Con_Message(" (%i)\n", GL_state.multisampleFormat);
+    else
+        Con_Message("\n");
 #endif
 }
 
@@ -202,7 +204,8 @@ static void testMultisampling(HDC hDC)
                                     &pixelFormat, &numFormats);
 
     if(valid && numFormats >= 1)
-    {   // This will do nicely.
+    {
+        // This will do nicely.
         GL_state_ext.wglMultisampleARB = 1;
         GL_state.multisampleFormat = pixelFormat;
     }
@@ -369,9 +372,12 @@ boolean Sys_PreInitGL(void)
     memset(&GL_state_texture, 0, sizeof(GL_state_texture));
 
 #ifdef WIN32
-    // We want to be able to use multisampling if available so lets create a
-    // dummy window and see what pixel formats we have.
-    createDummyWindow(&app);
+    if(!ArgCheck("-noaa"))
+    {
+        // We want to be able to use multisampling if available so lets create a
+        // dummy window and see what pixel formats we have.
+        createDummyWindow(&app);
+    }
 #endif
 
     GL_state_texture.dumpTextures =
@@ -593,13 +599,11 @@ void Sys_InitWGLExtensions(void)
         GETPROC(wglSwapIntervalEXT);
     }
 
-    if(query("WGL_ARB_multisample", NULL))
+    if(!ArgCheck("-noaa") && query("WGL_ARB_multisample", NULL))
     {
         GETPROC(wglChoosePixelFormatARB);
         if(wglChoosePixelFormatARB)
-        {
             GL_state_ext.wglMultisampleARB = 1;
-        }
     }
 }
 #endif
