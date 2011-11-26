@@ -47,10 +47,15 @@ typedef struct {
     float pos[3];
 } skyvertex_t;
 
-#define SKYVTX_IDX(c, r)    ( (r)*skyColumns + (c)%skyColumns )
+typedef struct {
+    boolean fadeout;
+    int texWidth, texHeight;
+    float texOffset;
+    rcolor_t capColor;
+} renderhemispherestate_t;
 
 int skyDetail = 6, skyColumns = 4*6, skyRows = 3;
-float skyDist = 1600;
+float skyDistance = 1600;
 
 static void constructSphere(void);
 static void destroySphere(void);
@@ -68,16 +73,13 @@ static int numSkyVerts;
 static boolean needRebuildHemisphere = true;
 
 // Sphere render state paramaters. Global for performance reasons.
-static float skyTexOffset;
-static int skyTexWidth, skyTexHeight;
-static rcolor_t skyCapColor;
-static boolean skyFadeout;
+static renderhemispherestate_t rs;
 
 void Rend_SkyRegister(void)
 {
     C_VAR_INT2("rend-sky-detail", &skyDetail, 0, 3, 7, updateSphere);
     C_VAR_INT2("rend-sky-rows", &skyRows, 0, 1, 8, updateSphere);
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
+    C_VAR_FLOAT("rend-sky-distance", &skyDistance, CVF_NO_MAX, 1, 0);
 }
 
 void Rend_SkyInit(void)
@@ -157,9 +159,9 @@ static void renderSkyModels(void)
 }
 
 // Look up the precalculated vertex.
-static __inline const skyvertex_t* hemisphereVertex(int r, int c)
+static __inline skyvertex_t* hemisphereVertex(int r, int c)
 {
-    return skyVerts + SKYVTX_IDX(c, r);
+    return skyVerts + (r*skyColumns + c%skyColumns);
 }
 
 static void renderHemisphereCap(void)
@@ -167,7 +169,7 @@ static void renderHemisphereCap(void)
     int c;
 
     // Use the appropriate color.
-    glColor3fv(skyCapColor.rgb);
+    glColor3fv(rs.capColor.rgb);
 
     // Draw the cap.
     glBegin(GL_TRIANGLE_FAN);
@@ -178,7 +180,7 @@ static void renderHemisphereCap(void)
     glEnd();
 
     // Are we doing a colored fadeout?
-    if(!skyFadeout) return;
+    if(!rs.fadeout) return;
 
     // We must fill the background for the top row since it'll be
     // partially translucent.
@@ -200,10 +202,10 @@ static void skyVertex(int r, int c)
     const skyvertex_t* svtx = hemisphereVertex(r, c);
 
     // And the texture coordinates.
-    glTexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns, r / (float) skyRows);
+    glTexCoord2f(c / (float) skyColumns, r / (float) skyRows);
 
     // Also the color.
-    if(skyFadeout)
+    if(rs.fadeout)
     {
         if(r == 0)
             glColor4f(1, 1, 1, 0);
@@ -255,9 +257,9 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     {
         tex = 0;
         magMode = GL_LINEAR;
-        skyTexWidth  = skyTexHeight = 1;
+        rs.texWidth  = rs.texHeight = 1;
         if(setupCap != HC_NONE)
-            skyFadeout = false;
+            rs.fadeout = false;
     }
     else
     {
@@ -284,7 +286,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         tex     = MSU_gltexture(ms, MTU_PRIMARY);
         magMode = MSU(ms, MTU_PRIMARY).magMode;
-        Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &skyTexWidth, &skyTexHeight);
+        Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &rs.texWidth, &rs.texHeight);
 
         if(setupCap != HC_NONE)
         {
@@ -295,21 +297,21 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
             if(!avgLineColor)
                 Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
-            V3_Copy(skyCapColor.rgb, avgLineColor->color.rgb);
+            V3_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?
-            skyFadeout = (skyCapColor.red   >= fadeoutLimit ||
-                          skyCapColor.green >= fadeoutLimit ||
-                          skyCapColor.blue  >= fadeoutLimit);
+            rs.fadeout = (rs.capColor.red   >= fadeoutLimit ||
+                          rs.capColor.green >= fadeoutLimit ||
+                          rs.capColor.blue  >= fadeoutLimit);
         }
     }
 
-    skyTexOffset = R_SkyLayerOffset(layer);
-    if(setupCap != HC_NONE && !skyFadeout)
+    rs.texOffset = R_SkyLayerOffset(layer);
+    if(setupCap != HC_NONE && !rs.fadeout)
     {
         // Default color is black.
-        V3_Set(skyCapColor.rgb, 0, 0, 0);
+        V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
-    if(skyTexWidth == 0 || skyTexHeight == 0)
+    if(rs.texWidth == 0 || rs.texHeight == 0)
     {
         // Disable texturing.
         tex = 0;
@@ -342,8 +344,6 @@ static void renderSkyHemisphere(int flags)
 
     if(!(flags & SKYHEMI_JUST_CAP))
     {
-        // Now render the textured layers.
-        boolean popTextureMatrix;
         int i;
 
         for(i = firstSkyLayer; i <= MAX_SKY_LAYERS; ++i)
@@ -354,24 +354,16 @@ static void renderSkyHemisphere(int flags)
                 configureRenderHemisphereStateForLayer(i, HC_NONE);
             }
 
-            popTextureMatrix = false;
-            if(yflip || skyTexOffset != 0)
-            {
-                glMatrixMode(GL_TEXTURE);
-                glPushMatrix();
-                glLoadIdentity();
-                if(yflip) glScalef(1.0f, -1.0f, 1.0f);
-                glTranslatef(skyTexOffset / skyTexWidth, yflip? -1.0f : 0.0f, 0.0f);
-                popTextureMatrix = true;
-            }
+            glMatrixMode(GL_TEXTURE);
+            glPushMatrix();
+            glLoadIdentity();
+            glScalef(1024.f / rs.texWidth, yflip? -1.0f : 1.0f, 1.0f);
+            glTranslatef(rs.texOffset / rs.texWidth, yflip? -1.0f : 0.0f, 0.0f);
 
             renderHemisphere();
 
-            if(popTextureMatrix)
-            {
-                glMatrixMode(GL_TEXTURE);
-                glPopMatrix();
-            }
+            glMatrixMode(GL_TEXTURE);
+            glPopMatrix();
         }
     }
 
@@ -403,7 +395,7 @@ void Rend_RenderSky(void)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glTranslatef(vx, vy, vz);
-        glScalef(skyDist, skyDist, skyDist);
+        glScalef(skyDistance, skyDistance, skyDistance);
 
         // Always draw both hemispheres.
         renderSkyHemisphere(SKYHEMI_LOWER);
@@ -412,7 +404,7 @@ void Rend_RenderSky(void)
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        // Enable the disabled things.
+        // Restore assumed default GL state.
         glEnable(GL_CULL_FACE);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -453,7 +445,6 @@ static void constructSphere(void)
     const float horizonOffset = (float) PI / 2 * R_SkyHorizonOffset();
     const float scale = 1;
     float realRadius, topAngle, sideAngle;
-    skyvertex_t* svtx;
     int c, r;
 
     if(skyDetail < 1) skyDetail = 1;
@@ -470,7 +461,8 @@ static void constructSphere(void)
     for(r = 0; r < skyRows + 1; ++r)
         for(c = 0; c < skyColumns; ++c)
         {
-            svtx = skyVerts + SKYVTX_IDX(c, r);
+            skyvertex_t* svtx = hemisphereVertex(r, c);
+
             topAngle = ((c / (float) skyColumns) *2) * PI;
             sideAngle = horizonOffset + maxSideAngle * (skyRows - r) / (float) skyRows;
             realRadius = scale * cos(sideAngle);
