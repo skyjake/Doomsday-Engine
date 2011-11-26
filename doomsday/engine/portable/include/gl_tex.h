@@ -29,17 +29,19 @@
 #ifndef LIBDENG_IMAGE_MANIPULATION_H
 #define LIBDENG_IMAGE_MANIPULATION_H
 
+#include "r_data.h"
+
 typedef struct colorpalette_analysis_s {
     colorpaletteid_t paletteId;
 } colorpalette_analysis_t;
 
 typedef struct pointlight_analysis_s {
     float originX, originY, brightMul;
-    float color[3];
+    rcolor_t color;
 } pointlight_analysis_t;
 
 typedef struct averagecolor_analysis_s {
-    float color[3];
+    rcolor_t color;
 } averagecolor_analysis_t;
 
 /**
@@ -117,7 +119,7 @@ void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
  * @param color  Determined average color written here.
  */
 void FindAverageColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, float color[3]);
+    int pixelSize, rcolor_t* color);
 
 /**
  * @param pixels  Index-color image to evaluate.
@@ -128,7 +130,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    const struct colorpalette_s* palette, boolean hasAlpha, float color[3]);
+    const struct colorpalette_s* palette, boolean hasAlpha, rcolor_t* color);
 
 /**
  * @param pixels  RGB(a) image to evaluate.
@@ -137,7 +139,7 @@ void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, int line, float color[3]);
+    int pixelSize, int line, rcolor_t* color);
 
 /**
  * @param pixels  Index-color image to evaluate.
@@ -148,7 +150,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, const struct colorpalette_s* palette, boolean hasAlpha, float color[3]);
+    int line, const struct colorpalette_s* palette, boolean hasAlpha, rcolor_t* color);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.

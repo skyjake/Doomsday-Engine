@@ -716,7 +716,6 @@ static void addLuminous(mobj_t* mo)
     spriteframe_t* sprFrame;
     spritetex_t* sprTex;
     material_t* mat;
-    float autoLightColor[3];
     const materialsnapshot_t* ms;
     const materialvariantspecification_t* spec;
     const pointlight_analysis_t* pl;
@@ -767,10 +766,6 @@ static void addLuminous(mobj_t* mo)
             yOffset = def->offset[VY];
     }
 
-    autoLightColor[CR] = pl->color[CR];
-    autoLightColor[CG] = pl->color[CG];
-    autoLightColor[CB] = pl->color[CB];
-
 #if _DEBUG
     if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
@@ -814,9 +809,10 @@ static void addLuminous(mobj_t* mo)
             rgb[i] = def->color[i];
     }
     else
-    {   // Use the auto-calculated color.
+    {
+        // Use the auto-calculated color.
         for(i = 0; i < 3; ++i)
-            rgb[i] = autoLightColor[i];
+            rgb[i] = pl->color.rgb[i];
     }
 
     // This'll allow a halo to be rendered. If the light is hidden from
@@ -999,7 +995,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         V3_Set(lum->pos, pln->soundOrg.pos[VX], pln->soundOrg.pos[VY], pln->visHeight);
 
         V3_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
-        V3_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color);
+        V3_Copy(LUM_PLANE(lum)->color, avgColorAmplified->color.rgb);
         LUM_PLANE(lum)->intensity = ms->glowing;
         LUM_PLANE(lum)->tex = GL_PrepareLSTexture(LST_GRADIENT);
         lum->maxDistance = 0;

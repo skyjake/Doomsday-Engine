@@ -1127,10 +1127,8 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
 }
 
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
-    colorpalette_t* palette, float* brightX, float* brightY, float color[3], float* lumSize)
+    colorpalette_t* palette, float* brightX, float* brightY, rcolor_t* color, float* lumSize)
 {
-    assert(buffer && brightX && brightY && color && lumSize);
-    {
     const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
     int i, k, x, y, c, cnt = 0, posCnt = 0;
     const uint8_t* src, *alphaSrc = NULL;
@@ -1138,6 +1136,7 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
     float average[3], lowAvg[3];
     uint8_t rgb[3];
     int region[4];
+    assert(buffer && brightX && brightY && color && lumSize);
 
     if(pixelSize == 1 && palette == NULL)
     {
@@ -1260,20 +1259,20 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
         {
             // Doesn't the thing have any pixels??? Use white light.
             for(c = 0; c < 3; ++c)
-                color[c] = 1;
+                color->rgb[c] = 1;
         }
         else
         {
             // Low-intensity color average.
             for(c = 0; c < 3; ++c)
-                color[c] = lowAvg[c] / lowCnt;
+                color->rgb[c] = lowAvg[c] / lowCnt;
         }
     }
     else
     {
         // High-intensity color average.
         for(c = 0; c < 3; ++c)
-            color[c] = average[c] / avgCnt;
+            color->rgb[c] = average[c] / avgCnt;
     }
 
 /*#ifdef _DEBUG
@@ -1285,16 +1284,15 @@ void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSiz
                 region[0], region[1], region[2], region[3],
                 (*brightX), (*brightY),
                 (posCnt? "(average)" : "(center)"),
-                color[0], color[1], color[2],
+                color->red, color->green, color->blue,
                 (avgCnt? "(hi-intensity avg)" :
                  lowCnt? "(low-intensity avg)" : "(white light)"));
 #endif*/
 
-    R_AmplifyColor(color);
+    R_AmplifyColor(color->rgb);
 
     // How about the size of the light source?
     *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
-    }
 }
 
 /**

@@ -145,16 +145,16 @@ static void calculateSkyAmbientColor(void)
                     Texture_Analysis(tex, TA_LINE_TOP_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_TOP_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
-                V3_Copy(topCapColor.rgb, avgLineColor->color);
+                V3_Copy(topCapColor.rgb, avgLineColor->color.rgb);
 
                 avgLineColor = (const averagecolor_analysis_t*)
                     Texture_Analysis(tex, TA_LINE_BOTTOM_COLOR);
                 if(!avgLineColor)
                     Con_Error("calculateSkyAmbientColor: Texture id:%u has no TA_LINE_BOTTOM_COLOR analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
-                V3_Copy(bottomCapColor.rgb, avgLineColor->color);
+                V3_Copy(bottomCapColor.rgb, avgLineColor->color.rgb);
             }
 
-            V3_Sum(avgMaterialColor.rgb, avgMaterialColor.rgb, avgColor->color);
+            V3_Sum(avgMaterialColor.rgb, avgMaterialColor.rgb, avgColor->color.rgb);
             ++avgCount;
         }
     }

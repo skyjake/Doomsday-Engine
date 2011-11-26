@@ -3016,7 +3016,7 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
 
         if(firstInit || forceUpdate)
             GL_CalcLuminance(image->pixels, image->width, image->height, image->pixelSize,
-                R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, pl->color, &pl->brightMul);
+                R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
     }
 
     // Average color for sky ambient color?
@@ -3038,12 +3038,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageColor(image->pixels, image->width, image->height,
-                    image->pixelSize, ac->color);
+                    image->pixelSize, &ac->color);
             }
             else
             {
                 FindAverageColorIdx(image->pixels, image->width, image->height,
-                    R_ToColorPalette(image->paletteId), false, ac->color);
+                    R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
     }
@@ -3067,14 +3067,14 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageColor(image->pixels, image->width, image->height,
-                    image->pixelSize, ac->color);
+                    image->pixelSize, &ac->color);
             }
             else
             {
                 FindAverageColorIdx(image->pixels, image->width, image->height,
-                    R_ToColorPalette(image->paletteId), false, ac->color);
+                    R_ToColorPalette(image->paletteId), false, &ac->color);
             }
-            R_AmplifyColor(ac->color);
+            R_AmplifyColor(ac->color.rgb);
         }
     }
 
@@ -3097,12 +3097,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageLineColor(image->pixels, image->width, image->height,
-                    image->pixelSize, 0, ac->color);
+                    image->pixelSize, 0, &ac->color);
             }
             else
             {
                 FindAverageLineColorIdx(image->pixels, image->width, image->height,
-                    0, R_ToColorPalette(image->paletteId), false, ac->color);
+                    0, R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
     }
@@ -3126,12 +3126,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
             if(0 == image->paletteId)
             {
                 FindAverageLineColor(image->pixels, image->width, image->height,
-                    image->pixelSize, image->height-1, ac->color);
+                    image->pixelSize, image->height-1, &ac->color);
             }
             else
             {
                 FindAverageLineColorIdx(image->pixels, image->width, image->height,
-                    image->height-1, R_ToColorPalette(image->paletteId), false, ac->color);
+                    image->height-1, R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
     }

@@ -34,6 +34,7 @@
 struct colorpalette_s;
 struct material_s;
 struct colorpalette_s;
+struct rcolor_s;
 
 #define MAX_TEX_UNITS           2 // More won't be used.
 
@@ -164,8 +165,8 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
-    struct colorpalette_s* palette, float* brightX, float* brightY, float color[3],
-    float* lumSize);
+    struct colorpalette_s* palette, float* brightX, float* brightY,
+    struct rcolor_s* color, float* lumSize);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

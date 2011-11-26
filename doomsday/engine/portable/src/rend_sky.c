@@ -333,10 +333,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
             if(!avgLineColor)
                 Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
 
-            skyCapColor.red   = avgLineColor->color[CR];
-            skyCapColor.green = avgLineColor->color[CG];
-            skyCapColor.blue  = avgLineColor->color[CB];
-
+            V3_Copy(skyCapColor.rgb, avgLineColor->color.rgb);
             // Is the colored fadeout in use?
             skyFadeout = (skyCapColor.red   >= fadeoutLimit ||
                           skyCapColor.green >= fadeoutLimit ||
@@ -348,7 +345,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     if(setupCap != HC_NONE && !skyFadeout)
     {
         // Default color is black.
-        skyCapColor.red = skyCapColor.green = skyCapColor.blue = 0;
+        V3_Set(skyCapColor.rgb, 0, 0, 0);
     }
     if(skyTexWidth == 0 || skyTexHeight == 0)
     {

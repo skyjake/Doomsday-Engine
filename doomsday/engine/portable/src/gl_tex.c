@@ -869,27 +869,25 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, colorpalette_t* palette,
 }
 
 void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
-    const colorpalette_t* palette, boolean hasAlpha, float col[3])
+    const colorpalette_t* palette, boolean hasAlpha, rcolor_t* color)
 {
-    assert(data && col);
-    {
-    long count, numpels, avg[3] = { 0, 0, 0 };
+    long i, count, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* start, *alphaStart;
     DGLubyte rgbUBV[3];
+    assert(data && color);
 
     if(w <= 0 || h <= 0)
     {
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     if(line >= h)
     {
 #if _DEBUG
-        Con_Error("FindAverageLineColorIdx: Attempted to average outside valid area "
-                  "(height=%i line=%i).", h, line);
+        Con_Error("FindAverageLineColorIdx: Attempted to average outside valid area (height=%i line=%i).", h, line);
 #endif
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
@@ -897,7 +895,6 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
     start = data + w * line;
     alphaStart = data + numpels + w * line;
     count = 0;
-    { long i;
     for(i = 0; i < w; ++i)
     {
         if(!hasAlpha || alphaStart[i])
@@ -908,115 +905,105 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
             avg[CB] += rgbUBV[CB];
             ++count;
         }
-    }}
-    // All transparent? Sorry...
-    if(!count)
-        return;
-
-    col[CR] = avg[CR] / count * reciprocal255;
-    col[CG] = avg[CG] / count * reciprocal255;
-    col[CB] = avg[CB] / count * reciprocal255;
     }
+
+    // All transparent? Sorry...
+    if(!count) return;
+
+    V3_Set(color->rgb, avg[CR] / count * reciprocal255,
+                       avg[CG] / count * reciprocal255,
+                       avg[CB] / count * reciprocal255);
 }
 
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, int line, float col[3])
+    int pixelSize, int line, rcolor_t* color)
 {
-    assert(pixels && col);
-    {
     long avg[3] = { 0, 0, 0 };
     const uint8_t* src;
+    int i;
+    assert(pixels && color);
 
     if(width <= 0 || height <= 0)
     {
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     if(line >= height)
     {
 #if _DEBUG
-        Con_Error("FindAverageLineColor: Attempted to average outside valid area "
-                  "(height=%i line=%i).", height, line);
+        Con_Error("FindAverageLineColor: Attempted to average outside valid area (height=%i line=%i).", height, line);
 #endif
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     src = pixels + pixelSize * width * line;
-    { int i;
     for(i = 0; i < width; ++i, src += pixelSize)
     {
         avg[CR] += src[CR];
         avg[CG] += src[CG];
         avg[CB] += src[CB];
-    }}
-
-    col[CR] = avg[CR] / width * reciprocal255;
-    col[CG] = avg[CG] / width * reciprocal255;
-    col[CB] = avg[CB] / width * reciprocal255;
     }
+
+    V3_Set(color->rgb, avg[CR] / width * reciprocal255,
+                       avg[CG] / width * reciprocal255,
+                       avg[CB] / width * reciprocal255);
 }
 
 void FindAverageColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, float col[3])
+    int pixelSize, rcolor_t* color)
 {
-    assert(pixels && col);
-    {
-    long numpels, avg[3] = { 0, 0, 0 };
+    long i, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* src;
+    assert(pixels && color);
 
     if(width <= 0 || height <= 0)
     {
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     if(pixelSize != 3 && pixelSize != 4)
     {
 #if _DEBUG
-        Con_Error("FindAverageColor: Attempted on non-rgb(a) image "
-                  "(pixelSize=%i).", pixelSize);
+        Con_Error("FindAverageColor: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
 #endif
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     numpels = width * height;
     src = pixels;
-    { long i;
     for(i = 0; i < numpels; ++i, src += pixelSize)
     {
         avg[CR] += src[CR];
         avg[CG] += src[CG];
         avg[CB] += src[CB];
-    }}
-
-    col[CR] = avg[CR] / numpels * reciprocal255;
-    col[CG] = avg[CG] / numpels * reciprocal255;
-    col[CB] = avg[CB] / numpels * reciprocal255;
     }
+
+    V3_Set(color->rgb, avg[CR] / numpels * reciprocal255,
+                       avg[CG] / numpels * reciprocal255,
+                       avg[CB] / numpels * reciprocal255);
 }
 
 void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t* palette,
-    boolean hasAlpha, float col[3])
+    boolean hasAlpha, rcolor_t* color)
 {
-    assert(data && col);
-    {
-    long numpels, count, avg[3] = { 0, 0, 0 };
+    long i, numpels, count, avg[3] = { 0, 0, 0 };
     const uint8_t* alphaStart;
     DGLubyte rgb[3];
+    assert(data && color);
 
     if(w <= 0 || h <= 0)
     {
-        col[CR] = col[CG] = col[CB] = 0;
+        V3_Set(color->rgb, 0, 0, 0);
         return;
     }
 
     numpels = w * h;
     alphaStart = data + numpels;
     count = 0;
-    { long i;
     for(i = 0; i < numpels; ++i)
     {
         if(!hasAlpha || alphaStart[i])
@@ -1027,15 +1014,14 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t
             avg[CB] += rgb[CB];
             ++count;
         }
-    }}
-    // All transparent? Sorry...
-    if(0 == count)
-        return;
-
-    col[CR] = avg[CR] / count * reciprocal255;
-    col[CG] = avg[CG] / count * reciprocal255;
-    col[CB] = avg[CB] / count * reciprocal255;
     }
+
+    // All transparent? Sorry...
+    if(0 == count) return;
+
+    V3_Set(color->rgb, avg[CR] / count * reciprocal255,
+                       avg[CG] / count * reciprocal255,
+                       avg[CB] / count * reciprocal255);
 }
 
 void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
