@@ -1296,8 +1296,7 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
-    int                 i;
-    boolean             success = true;
+    boolean success = true;
 
     if(argc == 1) // No args?
     {

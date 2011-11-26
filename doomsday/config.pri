@@ -136,6 +136,9 @@ macx {
 
     DEFINES += MACOSX
 
+    # Print include directories and other info.
+    #QMAKE_CFLAGS += -Wp,-v
+
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
 }
 
