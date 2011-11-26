@@ -60,12 +60,9 @@ skylayer_t skyLayers[MAX_SKY_LAYERS];
 skymodel_t skyModels[MAX_SKY_MODELS];
 boolean skyModelsInited;
 
-static int firstSkyLayer;
-static int activeSkyLayers;
-
-// The texture offset to be applied to the texture coordinates in SkyVertex().
-static float height;
+static int firstSkyLayer, activeSkyLayers;
 static float horizonOffset;
+static float height;
 
 static boolean needUpdateSkyLightColor;
 static float skyAmbientColor[3];
