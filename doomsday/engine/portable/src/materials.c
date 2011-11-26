@@ -1157,7 +1157,6 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
     ms->glowing = 0;
     ms->isOpaque = true;
 
-    V3_Set(ms->topColor, 1, 1, 1);
     V3_Set(ms->color, 1, 1, 1);
     V3_Set(ms->colorAmplified, 1, 1, 1);
     V3_Set(ms->shinyMinColor, 0, 0, 0);
@@ -1320,17 +1319,6 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         snapshot->shinyMinColor[CR] = minColor[CR];
         snapshot->shinyMinColor[CG] = minColor[CG];
         snapshot->shinyMinColor[CB] = minColor[CB];
-    }
-
-    if(MC_SKYSPHERE == spec->context && texUnits[MTU_PRIMARY].tex)
-    {
-        const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
-        const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
-            Texture_Analysis(TextureVariant_GeneralCase(tex), TA_SKY_SPHEREFADEOUT);
-        assert(avgTopColor);
-        snapshot->topColor[CR] = avgTopColor->color[CR];
-        snapshot->topColor[CG] = avgTopColor->color[CG];
-        snapshot->topColor[CB] = avgTopColor->color[CB];
     }
 
     if((MC_MAPSURFACE == spec->context || MC_SKYSPHERE == spec->context) && texUnits[MTU_PRIMARY].tex)

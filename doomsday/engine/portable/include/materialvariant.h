@@ -59,9 +59,6 @@ typedef struct materialsnapshot_s {
     vec3_t color;
     vec3_t colorAmplified;
 
-    /// Average top line color (for sky fadeout).
-    vec3_t topColor;
-
     /// Minimum sector light color for shiny texturing.
     vec3_t shinyMinColor;
 

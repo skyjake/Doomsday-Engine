@@ -26,6 +26,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_graphics.h"
 #include "de_render.h"
 
 #include "texture.h"
@@ -319,11 +320,14 @@ static void configureRenderHemisphereStateForLayer(int layer, boolean setupCap)
 
         if(setupCap)
         {
-            float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
+            const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(MSU_texture(ms, MTU_PRIMARY), TA_SKY_SPHEREFADEOUT);
+            const float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
+            assert(avgTopColor);
 
-            skyCapColor.red   = ms->topColor[CR];
-            skyCapColor.green = ms->topColor[CG];
-            skyCapColor.blue  = ms->topColor[CB];
+            skyCapColor.red   = avgTopColor->color[CR];
+            skyCapColor.green = avgTopColor->color[CG];
+            skyCapColor.blue  = avgTopColor->color[CB];
 
             // Is the colored fadeout in use?
             skyFadeout = (skyCapColor.red   >= fadeoutLimit ||

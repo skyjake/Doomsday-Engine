@@ -133,11 +133,15 @@ static void calculateSkyLightColor(void)
             0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
         ms = Materials_Prepare(slayer->material, spec, false);
 
-        if(i == firstSkyLayer)
+        if(i == firstSkyLayer && MSU_texture(ms, MTU_PRIMARY))
         {
-            capColor.red   = ms->topColor[CR];
-            capColor.green = ms->topColor[CG];
-            capColor.blue  = ms->topColor[CB];
+            const texture_t* tex = MSU_texture(ms, MTU_PRIMARY);
+            const averagecolor_analysis_t* avgTopColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(tex, TA_SKY_SPHEREFADEOUT);
+            assert(avgTopColor);
+            capColor.red   = avgTopColor->color[CR];
+            capColor.green = avgTopColor->color[CG];
+            capColor.blue  = avgTopColor->color[CB];
         }
 
         if(!(skyModelsInited && !alwaysDrawSphere))
