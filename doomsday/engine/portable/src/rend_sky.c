@@ -201,7 +201,8 @@ static void renderHemisphere(void)
 {
 #define WRITESKYVERTEX(r_, c_) { \
     svtx = skyVertex(r_, c_); \
-    glTexCoord2f((c_) / (float) skyColumns, (r_) / (float) skyRows); \
+    if(rs.texWidth != 0) \
+       glTexCoord2f((c_) / (float) skyColumns, (r_) / (float) skyRows); \
     if(rs.fadeout) \
     { \
         if((r_) == 0) glColor4f(1, 1, 1, 0); \
@@ -239,18 +240,15 @@ typedef enum {
 
 static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t setupCap)
 {
-    int magMode;
-    DGLuint tex;
+    int magMode = GL_LINEAR;
+    DGLuint tex = 0;
 
-    if(renderTextures == 0)
-    {
-        tex = 0;
-        magMode = GL_LINEAR;
-        rs.texWidth  = rs.texHeight = 1;
-        if(setupCap != HC_NONE)
-            rs.fadeout = false;
-    }
-    else
+    // Default state is no texture and no fadeout.
+    rs.texWidth = rs.texHeight = 0;
+    if(setupCap != HC_NONE)
+        rs.fadeout = false;
+
+    if(renderTextures != 0)
     {
         const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
@@ -276,6 +274,12 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         tex     = MSU_gltexture(ms, MTU_PRIMARY);
         magMode = MSU(ms, MTU_PRIMARY).magMode;
         Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &rs.texWidth, &rs.texHeight);
+        if(rs.texWidth == 0 || rs.texHeight == 0)
+        {
+            // Disable texturing.
+            rs.texWidth = rs.texHeight = 0;
+            tex = 0;
+        }
 
         if(setupCap != HC_NONE)
         {
@@ -294,21 +298,11 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         }
     }
 
-    rs.texOffset = R_SkyLayerOffset(layer);
     if(setupCap != HC_NONE && !rs.fadeout)
     {
         // Default color is black.
         V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
-    if(rs.texWidth == 0 || rs.texHeight == 0)
-    {
-        // Disable texturing.
-        rs.texWidth = 0;
-        tex = 0;
-    }
-
-    // Rebuild the hemisphere model if necessary.
-    rebuildHemisphere();
 
     GL_BindTexture(tex, magMode);
 }
@@ -319,6 +313,9 @@ static void renderSkyHemisphere(int flags)
     int firstSkyLayer = R_SkyFirstActiveLayer();
     const boolean yflip = !!(flags & SKYHEMI_LOWER);
     hemispherecap_t cap = !!(flags & SKYHEMI_LOWER)? HC_BOTTOM : HC_TOP;
+
+    // Rebuild the hemisphere model if necessary.
+    rebuildHemisphere();
 
     if(yflip)
     {
