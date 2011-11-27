@@ -62,7 +62,7 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
         Str_Init(&relPath);
         F_RemoveBasePath(&relPath, filePath);
 
-        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), FILEDIRECTORY_DELIMITER);
+        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), '/');
         //assert(PT_LEAF == PathDirectoryNode_Type(node));
 
         // Has this already been processed?
@@ -140,7 +140,7 @@ static FileDirectory* addPaths(FileDirectory* fd, const ddstring_t* const* paths
 
         if(Str_IsEmpty(searchPath)) continue;
 
-        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), FILEDIRECTORY_DELIMITER);
+        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), '/');
 
         // Has this already been processed?
         info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
@@ -222,8 +222,8 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
 
         // Let's try to make it a relative path.
         F_RemoveBasePath(searchPath, searchPath);
-        if(Str_RAt(searchPath, 0) != FILEDIRECTORY_DELIMITER)
-            Str_AppendChar(searchPath, FILEDIRECTORY_DELIMITER);
+        if(Str_RAt(searchPath, 0) != '/')
+            Str_AppendChar(searchPath, '/');
 
         addPaths(fd, (const ddstring_t**)&searchPath, 1, callback, paramaters);
         Str_Delete(searchPath);
@@ -401,16 +401,16 @@ int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_
 }
 
 boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
-    const char* _searchPath, ddstring_t* foundName)
+    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath, char foundDelimiter)
 {
     const PathDirectoryNode* foundNode;
     ddstring_t searchPath;
     int flags;
     assert(fd);
 
-    if(foundName)
+    if(foundPath)
     {
-        Str_Clear(foundName);
+        Str_Clear(foundPath);
     }
 
     if(!_searchPath || !_searchPath[0]) return false;
@@ -421,13 +421,13 @@ boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
 
     // Perform the search.
     flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
-    foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), FILEDIRECTORY_DELIMITER);
+    foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), searchDelimiter);
     Str_Free(&searchPath);
 
     // Does caller want to know the full path?
-    if(foundName && foundNode)
+    if(foundPath && foundNode)
     {
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode, foundName, NULL, FILEDIRECTORY_DELIMITER);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode, foundPath, NULL, foundDelimiter);
     }
 
     return !!foundNode;
@@ -446,7 +446,7 @@ void FileDirectory_Print(FileDirectory* fd)
     assert(fd);
 
     Con_Printf("FileDirectory [%p]:\n", (void*)fd);
-    fileList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, FILEDIRECTORY_DELIMITER, &numFiles);
+    fileList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, DIR_SEP_CHAR, &numFiles);
     if(fileList)
     {
         qsort(fileList, numFiles, sizeof *fileList, comparePaths);

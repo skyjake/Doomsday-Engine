@@ -307,12 +307,13 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
  *
  * @param name  Name of the resource being searched for.
  * @param searchPath  Relative or absolute path to the resource.
- * @param delimiter  Fragments of @a searchPath are delimited by this character.
+ * @param searchDelimiter  Fragments of @a searchPath are delimited by this character.
  * @param foundPath  If not @c NULL and a path is found, it is written back here.
+ * @param foundDelimiter  Delimiter to be used when composing @a foundPath.
  * @return  @c true= A resource was found.
  */
 static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const ddstring_t* name,
-    const ddstring_t* searchPath, char delimiter, ddstring_t* foundPath)
+    const ddstring_t* searchPath, char delimiter, ddstring_t* foundPath, char foundDelimiter)
 {
     boolean found = false;
     assert(rnInfo && name && searchPath);
@@ -338,7 +339,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
             if(foundPath)
             {
                 PathDirectoryNode* node = p.foundNode;
-                PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, delimiter);
+                PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, foundPath, NULL, foundDelimiter);
             }
         }
 
@@ -361,7 +362,7 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* rawSea
     if(rnamespaceInfo)
     {
         ddstring_t* name = rnamespaceInfo->composeName(&searchPath);
-        if(findResourceInNamespace(rnamespaceInfo, name, &searchPath, FILEDIRECTORY_DELIMITER, foundPath))
+        if(findResourceInNamespace(rnamespaceInfo, name, &searchPath, '/', foundPath, '/'))
         {
             Str_Free(&searchPath);
             Str_Delete(name);

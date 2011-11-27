@@ -30,8 +30,6 @@
 
 #include "pathdirectory.h"
 
-#define FILEDIRECTORY_DELIMITER         '/'
-
 /**
  * Callback function type for FileDirectory::Iterate
  *
@@ -114,12 +112,14 @@ void FileDirectory_AddPathList(FileDirectory* fd, const char* pathList); /*callb
  *
  * @param type  If a valid path type only consider nodes of this type.
  * @param searchPath  Relative or absolute path.
+ * @param searchDelimiter  Fragments of @a searchPath are delimited by this character.
  * @param foundPath  If not @c NULL, the full path of the node is written back here if found.
+ * @param foundDelimiter  Delimiter to be used when composing @a foundPath.
  *
  * @return  @c true, iff successful.
  */
 boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t type,
-    const char* searchPath, ddstring_t* foundPath);
+    const char* searchPath, char searchDelimiter, ddstring_t* foundPath, char foundDelimiter);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
