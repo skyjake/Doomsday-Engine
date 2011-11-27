@@ -179,7 +179,7 @@ static fontid_t loadSystemFont(const char* name)
     // \todo This is currently rather awkward due
     Str_Init(&resourcePath);
     Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
-    F_TranslatePath(&resourcePath, &resourcePath);
+    F_ExpandBasePath(&resourcePath, &resourcePath);
 
     font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
     Str_Free(&resourcePath);

@@ -503,10 +503,11 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
     return false;
 }
 
+/// \note Part of the Doomsday public API
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
 {
-    F_ToNativeSlashes(dst, src); // Will copy src to dst if not equal.
-    return F_ExpandBasePath(dst, dst);
+    F_ExpandBasePath(dst, src); // Will copy src to dst if not equal.
+    return F_ToNativeSlashes(dst, dst);
 }
 
 /// @return  @c true if @a path begins with a known directive.

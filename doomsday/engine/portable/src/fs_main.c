@@ -972,10 +972,9 @@ typedef struct {
 
 boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
 {
-    assert(hndl && paramaters);
-    {
     compositepathpredicateparamaters_t* p = (compositepathpredicateparamaters_t*)paramaters;
     abstractfile_t* file = DFile_File(hndl);
+    assert(p);
     if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
        ((p->includeIWAD  &&  AbstractFile_HasIWAD(file)) ||
         (p->includeOther && !AbstractFile_HasIWAD(file))))
@@ -985,12 +984,11 @@ boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
             return true; // Include this.
     }
     return false; // Not this.
-    }
 }
 
 void F_GetPWADFileNames(char* outBuf, size_t outBufSize, const char* delimiter)
 {
-    if(NULL == outBuf || 0 == outBufSize) return;
+    if(!outBuf || 0 == outBufSize) return;
     memset(outBuf, 0, outBufSize);
     if(inited)
     {
@@ -1024,14 +1022,13 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
 {
     ddstring_t wildPath, origWildPath;
     foundentry_t* found = NULL;
-    int count = 0, max = 0;
+    int i, count = 0, max = 0;
     finddata_t fd;
 
     Str_Init(&origWildPath);
     Str_Appendf(&origWildPath, "%s*", Str_Text(searchPath));
 
     Str_Init(&wildPath);
-    { int i;
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
         Str_Copy(&wildPath, &origWildPath);
@@ -1069,7 +1066,7 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
             } while(!myfindnext(&fd));
         }
         myfindend(&fd);
-    }}
+    }
 
     Str_Free(&origWildPath);
     Str_Free(&wildPath);
@@ -1081,27 +1078,28 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
     return NULL;
 }
 
-static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* searchPath,
+static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t* pattern,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters)
 {
-    assert(pattern && searchPath && !Str_IsEmpty(searchPath) && callback);
-    {
     int result = 0, count;
-    foundentry_t* foundPaths = collectLocalPaths(searchPath, &count);
+    foundentry_t* foundPaths;
 
-    if(NULL != foundPaths)
+    if(!callback || !searchDirectory || Str_IsEmpty(searchDirectory)) return 0;
+
+    foundPaths = collectLocalPaths(searchDirectory, &count);
+    if(foundPaths)
     {
         ddstring_t path, localPattern;
+        int i;
 
         // Sort all the foundPaths entries.
-        qsort(foundPaths, count, sizeof(foundentry_t), compareFoundEntryByPath);
+        qsort(foundPaths, count, sizeof *foundPaths, compareFoundEntryByPath);
 
         Str_Init(&localPattern);
-        Str_Appendf(&localPattern, "%s%s", Str_Text(searchPath), Str_Text(pattern));
+        Str_Appendf(&localPattern, "%s%s", Str_Text(searchDirectory), pattern? Str_Text(pattern) : "");
 
         Str_Init(&path);
-        {int i;
         for(i = 0; i < count; ++i)
         {
             // Is the caller's iteration still in progress?
@@ -1109,7 +1107,7 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
             {
                 // Compose the full path to the found file/directory.
                 Str_Clear(&path);
-                Str_Appendf(&path, "%s%s", Str_Text(searchPath), Str_Text(&foundPaths[i].path));
+                Str_Appendf(&path, "%s%s", Str_Text(searchDirectory), Str_Text(&foundPaths[i].path));
 
                 // Does this match the pattern?
                 if(F_MatchFileName(Str_Text(&path), Str_Text(&localPattern)))
@@ -1121,14 +1119,13 @@ static int iterateLocalPaths(const ddstring_t* pattern, const ddstring_t* search
 
             // We're done with this path.
             Str_Free(&foundPaths[i].path);
-        }}
+        }
         Str_Free(&path);
         Str_Free(&localPattern);
         free(foundPaths);
     }
 
     return result;
-    }
 }
 
 typedef struct {
@@ -1144,15 +1141,13 @@ typedef struct {
 
 static int findLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 {
-    assert(NULL != lumpInfo && NULL != paramaters);
-    {
     findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
+    assert(lumpInfo && p);
     if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
     {
         return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
     }
     return 0; // Continue search.
-    }
 }
 
 int F_AllResourcePaths2(const char* rawSearchPattern,
@@ -1179,10 +1174,8 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
     p.pattern = &searchPattern;
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
-    if(0 != result)
-    {   // Find didn't finish.
-        goto searchEnded;
-    }}
+    if(result) goto searchEnded;
+    }
 
     // Check the dir/WAD direcs.
     if(ldMappingsCount)
@@ -1191,11 +1184,10 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
         for(i = 0; i < ldMappingsCount; ++i)
         {
             ldmapping_t* rec = &ldMappings[i];
-            if(!F_MatchFileName(Str_Text(&rec->path), Str_Text(&searchPattern)))
-                continue;
+            if(!F_MatchFileName(Str_Text(&rec->path), Str_Text(&searchPattern))) continue;
+
             result = callback(&rec->path, PT_LEAF, paramaters);
-            if(0 != result)
-                goto searchEnded;
+            if(result) goto searchEnded;
         }
     }
 
@@ -1206,15 +1198,15 @@ int F_AllResourcePaths2(const char* rawSearchPattern,
      * the pattern be specified separately.
      */
 
-    // Extract just the name and/or extension.
-    Str_Init(&searchName);
-    F_FileNameAndExtension(&searchName, Str_Text(&searchPattern));
-
     // Extract the directory path.
     Str_Init(&searchDirectory);
     F_FileDir(&searchDirectory, &searchPattern);
 
-    result = iterateLocalPaths(&searchName, &searchDirectory, callback, paramaters);
+    // Extract just the name and/or extension.
+    Str_Init(&searchName);
+    F_FileNameAndExtension(&searchName, Str_Text(&searchPattern));
+
+    result = iterateLocalPaths(&searchDirectory, &searchName, callback, paramaters);
 
     Str_Free(&searchName);
     Str_Free(&searchDirectory);
