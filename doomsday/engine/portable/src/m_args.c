@@ -35,6 +35,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
@@ -168,8 +169,13 @@ int ArgParse(int mode, const char* cmdline)
         // Word has been extracted, examine it.
         if(isResponse) // Response file?
         {
+            ddstring_t nativePath;
+            Str_Init(&nativePath); Str_Set(&nativePath, word);
+            F_ToNativeSlashes(&nativePath, &nativePath);
+
             // Try to open it.
-            if((file = fopen(word, "rt")) != NULL)
+            file = fopen(Str_Text(&nativePath), "rt");
+            if(file)
             {
                 // How long is it?
                 if(fseek(file, 0, SEEK_END))
@@ -178,17 +184,17 @@ int ArgParse(int mode, const char* cmdline)
                 i = ftell(file);
                 rewind(file);
 
-                if((response = M_Calloc(i + 1)) == NULL)
-                    Con_Error("ArgParse: failed on alloc of %d bytes.",
-                              i + 1);
+                response = (char*)calloc(1, i + 1);
+                if(!response)
+                    Con_Error("ArgParse: failed on alloc of %d bytes.", i + 1);
 
                 fread(response, 1, i, file);
                 fclose(file);
-                count +=
-                    ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC,
-                             response);
-                M_Free(response);
+                count += ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC, response);
+                free(response);
             }
+
+            Str_Free(&nativePath);
         }
         else if(!strcmp(word, "--")) // End of arguments.
         {

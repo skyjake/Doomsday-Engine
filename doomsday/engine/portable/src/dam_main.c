@@ -404,7 +404,7 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
     ddstring_t mapFileName;
     ddstring_t* path;
 
-    if(NULL == sourcePath || !sourcePath[0]) return NULL;
+    if(!sourcePath || !sourcePath[0]) return NULL;
 
     gameIdentityKey = GameInfo_IdentityKey(DD_GameInfo());
     mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
@@ -415,7 +415,6 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
     path = Str_New();
     Str_Appendf(path, "%s%s/%s-%04X/", mapCacheDir, Str_Text(gameIdentityKey),
         Str_Text(&mapFileName), mapPathIdentifier);
-    F_FixSlashes(path, path);
     F_ExpandBasePath(path, path);
 
     Str_Free(&mapFileName);

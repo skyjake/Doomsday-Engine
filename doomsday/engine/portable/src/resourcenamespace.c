@@ -196,7 +196,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newU
     uint i, j;
     assert(rn && newUri && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
 
-    if(Str_IsEmpty(Uri_Path(newUri)) || !Str_CompareIgnoreCase(Uri_Path(newUri), DIR_SEP_STR))
+    if(Str_IsEmpty(Uri_Path(newUri)) || !Str_CompareIgnoreCase(Uri_Path(newUri), "/"))
         return false; // Not suitable.
 
     // Have we seen this path already (we don't want duplicates)?

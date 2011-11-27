@@ -137,7 +137,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
 
-        Str_Appendf(out, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+        Str_Appendf(out, "%sauto/", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
         Str_PartAppend(out, Str_Text(src), 1, Str_Length(src)-1);
 
         if(dest == src)
@@ -153,7 +153,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
 
-        Str_Appendf(out, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
+        Str_Appendf(out, "%sauto/", Str_Text(GameInfo_DataPath(DD_GameInfo())));
         Str_PartAppend(out, Str_Text(src), 1, Str_Length(src)-1);
 
         if(dest == src)
@@ -164,7 +164,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         return;
     }
 
-    if(strchr(Str_Text(src), DIR_SEP_CHAR) == NULL)
+    if(strchr(Str_Text(src), '/') == NULL)
     {   // No directory separators; i.e., a root file.
         resourcetype_t type = F_GuessResourceTypeByName(Str_Text(src));
         resourceclass_t rclass;
@@ -199,10 +199,10 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         switch(rclass)
         {
         case RC_PACKAGE: // Mapped to the Data directory.
-            Str_Appendf(&mapped, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(GameInfo_DataPath(DD_GameInfo())));
             break;
         case RC_DEFINITION: // Mapped to the Defs directory.
-            Str_Appendf(&mapped, "%sauto"DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
             break;
         default: /* Not mapped */ break;
         }
@@ -364,8 +364,7 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
                 continue;
             }
 
-            // Convert all slashes to the host OS's centralDirectory separator,
-            // for compatibility with the sys_filein routines.
+            // Convert all slashes to our internal separator.
             F_FixSlashes(&entryPath, &entryPath);
 
             // In some cases the path inside the file is mapped to another virtual location.

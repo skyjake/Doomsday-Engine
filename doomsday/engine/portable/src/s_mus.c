@@ -306,8 +306,7 @@ boolean Mus_IsMUSLump(lumpnum_t lumpNum)
  */
 int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 {
-    if(!musAvail || !iMusic)
-        return false;
+    if(!musAvail || !iMusic) return false;
 
     // All external music files are specified relative to the base path.
     if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
@@ -315,11 +314,10 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
         ddstring_t fullPath, *path;
 
         Str_Init(&fullPath);
-        F_FixSlashes(&fullPath, Uri_Path(def->path));
-        F_PrependBasePath(&fullPath, &fullPath);
+        F_PrependBasePath(&fullPath, Uri_Path(def->path));
         if(F_Access(Str_Text(&fullPath)))
         {
-            if(NULL != retPath)
+            if(retPath)
                 Str_Set(retPath, Str_Text(&fullPath));
             return true;
         }
@@ -334,7 +332,7 @@ int Mus_GetExt(ded_music_t* def, ddstring_t* retPath)
 }
 
 /**
- * @return:             The track number if successful else zero.
+ * @return  The track number if successful else zero.
  */
 int Mus_GetCD(ded_music_t* def)
 {
@@ -435,16 +433,14 @@ int Mus_Start(ded_music_t* def, boolean looped)
                 {   // Music interface does not offer buffer playback.
                     // Write to disk and play from there.
                     ddstring_t* fileName = composeBufferedMusicFilename(currentBufFile ^= 1, NULL);
-
-                    { FILE* outFile = fopen(Str_Text(fileName), "wb");
-                    if(NULL != outFile)
+                    FILE* outFile = fopen(Str_Text(fileName), "wb");
+                    if(outFile)
                     {
                         int result;
                         uint8_t* buf = (uint8_t*)malloc(len);
-                        if(NULL == buf)
+                        if(!buf)
                         {
-                            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for "
-                                "temporary song write buffer.\n", (unsigned long) len);
+                            Con_Message("Warning:Mus_Start: Failed on allocation of %lu bytes for temporary song write buffer.\n", (unsigned long) len);
                             Str_Delete(fileName);
                             return false;
                         }
@@ -460,10 +456,10 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         result = iMusic->PlayFile(Str_Text(fileName), looped);
                         Str_Delete(fileName);
                         return result;
-                    }}
+                    }
 
-                    Con_Message("Mus_Start: Failed opening \"%s\" for writing (%s).\n",
-                        Str_Text(fileName), strerror(errno));
+                    Con_Message("Warning:Mus_Start: Failed opening \"%s\" for writing (%s).\n",
+                        F_PrettyPath(Str_Text(fileName)), strerror(errno));
                     F_Delete(file);
                     Str_Delete(fileName);
                     return false;

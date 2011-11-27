@@ -30,8 +30,7 @@
 
 #include "pathdirectory.h"
 
-// Default path delimiter is the platform-specific directory separator.
-#define FILEDIRECTORY_DELIMITER         DIR_SEP_CHAR
+#define FILEDIRECTORY_DELIMITER         '/'
 
 /**
  * Callback function type for FileDirectory::Iterate

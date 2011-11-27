@@ -189,10 +189,15 @@ void DD_InitCommandLine(const char* cmdLine)
 void DD_ConsoleInit(void)
 {
     const char* outFileName = "doomsday.out";
+    ddstring_t nativePath;
+
+    DD_CheckArg("-out", &outFileName);
+    Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
+    F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    DD_CheckArg("-out", &outFileName);
-    outFile = fopen(outFileName, "w");
+    outFile = fopen(Str_Text(&nativePath), "w");
+    Str_Free(&nativePath);
     if(!outFile)
     {
         DD_ErrorBox(false, "Couldn't open message output file.");

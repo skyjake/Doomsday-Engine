@@ -61,10 +61,16 @@ uint F_LastModified(const char* path);
 boolean F_MakePath(const char* path);
 
 /**
- * Converts directory slashes to the correct type of slash.
+ * Converts directory slashes to our internal '/'.
  * @return  @c true iff the path was modified.
  */
 boolean F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
+
+/**
+ * Converts directory slashes to tha used by the host file system.
+ * @return  @c true iff the path was modified.
+ */
+boolean F_ToNativeSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
  * Convert the symbolic path into a real path.

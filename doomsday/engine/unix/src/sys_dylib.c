@@ -121,12 +121,12 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
 #endif
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
-    if(bundlePath + strlen(bundlePath)-1 != DIR_SEP_CHAR)
-        strncat(bundlePath, DIR_SEP_STR, FILENAME_T_MAXLEN);
+    if(bundlePath + strlen(bundlePath)-1 != '/')
+        strncat(bundlePath, "/", FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
-    strncat(bundlePath, DIR_SEP_STR, FILENAME_T_MAXLEN);
+    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
 #endif
 
     strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);

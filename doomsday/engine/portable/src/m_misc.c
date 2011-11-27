@@ -954,7 +954,7 @@ int M_ScreenShot(const char* name, int bits)
     ddstring_t fullName;
     FILE* file;
 
-    if(NULL == screen)
+    if(!screen)
     {
         Con_Message("Warning:M_ScreenShot: Failed acquiring frame buffer content.\n");
         return false;
@@ -962,13 +962,14 @@ int M_ScreenShot(const char* name, int bits)
 
     // Compose the final file name.
     Str_Init(&fullName); Str_Set(&fullName, name);
-    if(NULL == F_FindFileExtension(Str_Text(&fullName)))
+    if(!F_FindFileExtension(Str_Text(&fullName)))
         Str_Append(&fullName, ".tga");
+    F_ToNativeSlashes(&fullName, &fullName);
 
     file = fopen(Str_Text(&fullName), "wb");
-    if(NULL == file)
+    if(!file)
     {
-        Con_Message("Warning: M_Screenshot: Failed opening \"%s\" for write.\n", Str_Text(&fullName));
+        Con_Message("Warning: M_Screenshot: Failed opening \"%s\" for write.\n", F_PrettyPath(Str_Text(&fullName)));
         Str_Free(&fullName);
         return false;
     }

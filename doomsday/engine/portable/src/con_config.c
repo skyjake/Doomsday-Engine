@@ -155,11 +155,17 @@ static __inline void writeAliasesToFile(FILE* file)
 
 static boolean writeConsoleState(const char* fileName)
 {
-    if(!fileName || !fileName[0])
-        return false;
+    ddstring_t nativePath;
+    FILE* file;
+    if(!fileName || !fileName[0]) return false;
 
-    { FILE* file;
-    if((file = fopen(fileName, "wt")))
+    Str_Init(&nativePath);
+    Str_Set(&nativePath, fileName);
+    F_ToNativeSlashes(&nativePath, &nativePath);
+
+    file = fopen(Str_Text(&nativePath), "wt");
+    Str_Free(&nativePath);
+    if(file)
     {
         writeHeaderComment(file);
         fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
@@ -169,24 +175,31 @@ static boolean writeConsoleState(const char* fileName)
         writeAliasesToFile(file);
         fclose(file);
         return true;
-    }}
-    Con_Message("writeConsoleState: Can't open %s for writing.\n", fileName);
+    }
+    Con_Message("Warning:writeConsoleState: Failed opening \"%s\" for writing.\n", F_PrettyPath(fileName));
     return false;
 }
 
 static boolean writeBindingsState(const char* fileName)
 {
-    if(!fileName || !fileName[0])
-        return false;
-    { FILE* file;
-    if((file = fopen(fileName, "wt")))
+    ddstring_t nativePath;
+    FILE* file;
+    if(!fileName || !fileName[0]) return false;
+
+    Str_Init(&nativePath);
+    Str_Set(&nativePath, fileName);
+    F_ToNativeSlashes(&nativePath, &nativePath);
+
+    file = fopen(Str_Text(&nativePath), "wt");
+    Str_Free(&nativePath);
+    if(file)
     {
         writeHeaderComment(file);
         B_WriteToFile(file);
         fclose(file);
         return true;
-    }}
-    Con_Message("Con_WriteState: Can't open %s for writing.\n", fileName);
+    }
+    Con_Message("Warning:writeBindingsState: Failed opening \"%s\" for writing.\n", F_PrettyPath(fileName));
     return false;
 }
 

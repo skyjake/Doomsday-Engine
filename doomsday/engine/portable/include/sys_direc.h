@@ -78,7 +78,7 @@ void Dir_CleanPath(char* path, size_t len);
 
 /**
  * @return  Absolute path to the current working directory for the default drive.
- *      Always ends with a @c DIR_SEP_CHAR. Path must be released with free()
+ *      Always ends with a '/'. Path must be released with free()
  *      @c NULL if we are out of memory.
  */
 char* Dir_CurrentPath(void);
@@ -92,6 +92,11 @@ void Dir_FileName(char* name, const char* path, size_t len);
  * Convert directory separators in @a path to their system-specifc form.
  */
 void Dir_ToNativeSeparators(char* path, size_t len);
+
+/**
+ * Convert directory separators in @a path to our internal '/' form.
+ */
+void Dir_FixSeparators(char* path, size_t len);
 
 /// @return  @c true if @a path is absolute.
 int Dir_IsAbsolutePath(const char* path);

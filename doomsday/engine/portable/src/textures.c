@@ -1143,7 +1143,7 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
         "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(name)),
         numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
-        F_PrettyPath(Str_Text(resourcePath)));
+        resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
     Uri_Delete(uri);
     if(printNamespace) Str_Delete(name);

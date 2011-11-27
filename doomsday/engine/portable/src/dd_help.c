@@ -291,8 +291,7 @@ void DD_InitHelp(void)
 {
     float starttime;
 
-    if(helpInited)
-        return; // Already inited.
+    if(helpInited) return; // Already inited.
 
     VERBOSE( Con_Message("Initializing Help subsystem...\n") )
     starttime = (verbose >= 2? Sys_GetSeconds() : 0);
@@ -303,7 +302,6 @@ void DD_InitHelp(void)
     // Parse the control panel help file.
     { ddstring_t helpFileName; Str_Init(&helpFileName);
     Str_Set(&helpFileName, DD_BASEPATH_DATA"cphelp.txt");
-    F_FixSlashes(&helpFileName, &helpFileName);
     F_ExpandBasePath(&helpFileName, &helpFileName);
 
     DH_ReadStrings(Str_Text(&helpFileName));
@@ -329,7 +327,6 @@ void DD_ReadGameHelp(void)
 
     Str_Init(&helpFileName);
     Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
-    F_FixSlashes(&helpFileName, &helpFileName);
     F_ExpandBasePath(&helpFileName, &helpFileName);
     DH_ReadStrings(Str_Text(&helpFileName));
     Str_Free(&helpFileName);

@@ -143,7 +143,7 @@ static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
 static int findFileNodeIndexForPath(FileList* list, const char* path_)
 {
     int found = -1;
-    if(NULL != path_ && path_[0] && !FileList_Empty(list))
+    if(path_ && path_[0] && !FileList_Empty(list))
     {
         abstractfile_t* file;
         ddstring_t path;
@@ -717,7 +717,6 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
 
     // Make it a full path.
     Str_Init(&searchPath); Str_Set(&searchPath, path);
-    F_FixSlashes(&searchPath, &searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
     // We must have an absolute path, so prepend the current working directory if necessary.
     F_PrependWorkPath(&searchPath, &searchPath);
@@ -752,8 +751,6 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         // Prepare the temporary info descriptor.
         F_InitLumpInfo(&info);
         Str_Set(&info.path, Str_Text(foundPath));
-        Str_Strip(&info.path);
-        F_FixSlashes(&info.path, &info.path);
         info.lastModified = F_LastModified(Str_Text(foundPath));
 
         Str_Delete(foundPath);
@@ -904,6 +901,7 @@ boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* path)
 {
     char buf[LUMPNAME_T_LASTINDEX + 4/*.ext*/ + 1];
     const lumpinfo_t* info = F_LumpInfo(fsObject, lumpIdx);
+    ddstring_t nativePath;
     const char* fname;
     FILE* outFile;
 
@@ -920,10 +918,14 @@ boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* path)
         fname = buf;
     }
 
-    outFile = fopen(fname, "wb");
+    Str_Init(&nativePath); Str_Set(&nativePath, fname);
+    F_ToNativeSlashes(&nativePath, &nativePath);
+
+    outFile = fopen(Str_Text(&nativePath), "wb");
     if(!outFile)
     {
-        Con_Printf("Warning: Failed to open %s for writing (%s), aborting.\n", fname, strerror(errno));
+        Con_Printf("Warning: Failed to open \"%s\" for writing (error: %s), aborting.\n", F_PrettyPath(Str_Text(&nativePath)), strerror(errno));
+        Str_Free(&nativePath);
         return false;
     }
 
@@ -931,7 +933,8 @@ boolean F_DumpLump(abstractfile_t* fsObject, int lumpIdx, const char* path)
     fclose(outFile);
     F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
-    Con_Printf("%s dumped to %s.\n", info->name, fname);
+    Con_Printf("%s dumped to \"%s\"\n", F_PrettyPath(info->name), F_PrettyPath(Str_Text(&nativePath)));
+    Str_Free(&nativePath);
     return true;
 }
 
@@ -1057,8 +1060,9 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
                     }
                     Str_Init(&found[count].path);
                     Str_Set(&found[count].path, fd.name);
-                    if((fd.attrib & A_SUBDIR) && DIR_SEP_CHAR != Str_RAt(&found[count].path, 0))
-                        Str_AppendChar(&found[count].path, DIR_SEP_CHAR);
+                    F_FixSlashes(&found[count].path, &found[count].path);
+                    if((fd.attrib & A_SUBDIR) && '/' != Str_RAt(&found[count].path, 0))
+                        Str_AppendChar(&found[count].path, '/');
                     found[count].attrib = fd.attrib;
                     ++count;
                 }
@@ -1228,9 +1232,10 @@ int F_AllResourcePaths(const char* searchPath,
 
 static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath)
 {
-    ddstring_t* mapped;
+    ddstring_t* mapped, nativePath;
     char mode[8];
     FILE* file;
+    uint i;
 
     strcpy(mode, "r"); // Open for reading.
     if(strchr(mymode, 't'))
@@ -1238,31 +1243,37 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
     if(strchr(mymode, 'b'))
         strcat(mode, "b");
 
+    Str_Init(&nativePath); Str_Set(&nativePath, path);
+    F_ToNativeSlashes(&nativePath, &nativePath);
+
     // Try opening as a real file.
-    file = fopen(path, mode);
+    file = fopen(Str_Text(&nativePath), mode);
     if(file)
     {
         if(foundPath)
         {
-            *foundPath = Str_New();
-            Str_Set(*foundPath, path);
+            *foundPath = Str_Set(Str_New(), path);
         }
+        Str_Free(&nativePath);
         return file;
     }
 
     // Any applicable virtual directory mappings?
     if(vdMappingsCount == 0)
+    {
+        Str_Free(&nativePath);
         return NULL;
+    }
 
     mapped = Str_New();
-    { uint i;
     for(i = 0; i < vdMappingsCount; ++i)
     {
         Str_Set(mapped, path);
-        if(!applyVDMapping(mapped, &vdMappings[i]))
-            continue;
+        if(!applyVDMapping(mapped, &vdMappings[i])) continue;
         // The mapping was successful.
-        file = fopen(Str_Text(mapped), mode);
+
+        F_ToNativeSlashes(&nativePath, mapped);
+        file = fopen(Str_Text(&nativePath), mode);
         if(file)
         {
             VERBOSE( Con_Message("findRealFile: \"%s\" opened as %s.\n", F_PrettyPath(Str_Text(mapped)), path) )
@@ -1270,10 +1281,12 @@ static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** fou
                 *foundPath = mapped;
             else
                 Str_Delete(mapped);
+            Str_Free(&nativePath);
             return file;
         }
-    }}
+    }
     Str_Delete(mapped);
+    Str_Free(&nativePath);
     return NULL;
 }
 
@@ -1355,7 +1368,7 @@ static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     else
     {
         // Is there a prefix to be omitted in the name?
-        char* slash = strrchr(absolutePath, DIR_SEP_CHAR);
+        char* slash = strrchr(absolutePath, '/');
         int offset = 0;
         // The slash must not be too early in the string.
         if(slash && slash >= absolutePath + 2)
@@ -1517,7 +1530,6 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     F_InitLumpInfo(&info);
     Str_Set(&info.path, Str_Text(&searchPath));
     Str_Strip(&info.path);
-    F_FixSlashes(&info.path, &info.path);
     info.lastModified = F_LastModified(Str_Text(foundPath));
 
     Str_Free(&searchPath);
@@ -1750,6 +1762,7 @@ void F_AddLumpDirectoryMapping(const char* lumpName, const char* symbolicPath)
     { char* full;
     Str_Init(&fullPath);
     Str_Set(&fullPath, full = _fullpath(0, Str_Text(&path), 0)); free(full);
+    F_FixSlashes(&fullPath, &fullPath);
     }
     Str_Free(&path);
 
@@ -1793,10 +1806,9 @@ static __inline const char* skipSpace(const char* ptr)
 
 static boolean parseLDMapping(lumpname_t lumpName, ddstring_t* path, const char* buffer)
 {
-    assert(NULL != lumpName && NULL != path);
-    {
     const char* ptr = buffer, *end;
     size_t len;
+    assert(lumpName && NULL != path);
 
     // Find the start of the lump name.
     ptr = skipSpace(ptr);
@@ -1835,7 +1847,6 @@ static boolean parseLDMapping(lumpname_t lumpName, ddstring_t* path, const char*
     Str_StripRight(path);
     F_FixSlashes(path, path);
     return true;
-    }
 }
 
 /**
@@ -1845,12 +1856,11 @@ static boolean parseLDMapping(lumpname_t lumpName, ddstring_t* path, const char*
  */
 static boolean parseLDMappingList(const char* buffer)
 {
-    assert(buffer);
-    {
     boolean successful = false;
     lumpname_t lumpName;
     ddstring_t path, line;
     const char* ch;
+    assert(buffer);
 
     Str_Init(&line);
     Str_Init(&path);
@@ -1876,7 +1886,6 @@ static boolean parseLDMappingList(const char* buffer)
     Str_Free(&line);
     Str_Free(&path);
     return successful;
-    }
 }
 
 void F_InitLumpDirectoryMappings(void)
@@ -1985,8 +1994,8 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Init(&src), Str_Set(&src, source);
     Str_Strip(&src);
     F_FixSlashes(&src, &src);
-    if(DIR_SEP_CHAR != Str_RAt(&src, 0))
-        Str_AppendChar(&src, DIR_SEP_CHAR);
+    if(Str_RAt(&src, 0) != '/')
+        Str_AppendChar(&src, '/');
     F_ExpandBasePath(&src, &src);
     F_PrependWorkPath(&src, &src);
 
@@ -2017,22 +2026,21 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Set(&vdm->destination, destination);
     Str_Strip(&vdm->destination);
     F_FixSlashes(&vdm->destination, &vdm->destination);
-    if(DIR_SEP_CHAR != Str_RAt(&vdm->destination, 0))
-        Str_AppendChar(&vdm->destination, DIR_SEP_CHAR);
+    if(Str_RAt(&vdm->destination, 0) != '/')
+        Str_AppendChar(&vdm->destination, '/');
     F_ExpandBasePath(&vdm->destination, &vdm->destination);
     F_PrependWorkPath(&vdm->destination, &vdm->destination);
 
-    VERBOSE( Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", Str_Text(&vdm->source), Str_Text(&vdm->destination)) );
+    VERBOSE(Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", F_PrettyPath(Str_Text(&vdm->source)), F_PrettyPath(Str_Text(&vdm->destination))) );
 }
 
 void F_InitVirtualDirectoryMappings(void)
 {
-    int argC = Argc();
+    int i, argC = Argc();
 
     clearVDMappings();
 
     // Create virtual directory mappings by processing all -vdmap options.
-    { int i;
     for(i = 0; i < argC; ++i)
     {
         if(strnicmp("-vdmap", Argv(i), 6))
@@ -2043,7 +2051,7 @@ void F_InitVirtualDirectoryMappings(void)
             F_AddVirtualDirectoryMapping(Argv(i + 1), Argv(i + 2));
             i += 2;
         }
-    }}
+    }
 }
 
 static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
@@ -2060,13 +2068,11 @@ static int C_DECL compareFileByFilePath(const void* a_, const void* b_)
 int printResourcePath(const ddstring_t* fileNameStr, pathdirectorynode_type_t type,
     void* paramaters)
 {
-    assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
-    {
+    //assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
     const char* fileName = Str_Text(fileNameStr);
     boolean makePretty = F_IsRelativeToBasePath(fileName);
     Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
     return 0; // Continue the listing.
-    }
 }
 
 static void printVFDirectory(const ddstring_t* path)
@@ -2075,10 +2081,9 @@ static void printVFDirectory(const ddstring_t* path)
 
     Str_Init(&dir); Str_Set(&dir, Str_Text(path));
     Str_Strip(&dir);
-    F_FixSlashes(&dir, &dir);
     // Make sure it ends in a directory separator character.
-    if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(&dir, DIR_SEP_CHAR);
+    if(Str_RAt(&dir, 0) != '/')
+        Str_AppendChar(&dir, '/');
     if(!F_ExpandBasePath(&dir, &dir))
         F_PrependBasePath(&dir, &dir);
 

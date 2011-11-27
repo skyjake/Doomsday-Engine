@@ -55,8 +55,8 @@ static void resolvePathRelativeDirectives(char* path);
 
 directory_t* Dir_New(const char* path)
 {
-    directory_t* dir = (directory_t*) malloc(sizeof(*dir));
-    if(NULL == dir)
+    directory_t* dir = (directory_t*) malloc(sizeof *dir);
+    if(!dir)
         printf("Dir::Construct: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
     Dir_SetPath(dir, path);
     return dir;
@@ -64,12 +64,11 @@ directory_t* Dir_New(const char* path)
 
 directory_t* Dir_NewFromCWD(void)
 {
-    directory_t* dir = (directory_t*) malloc(sizeof(*dir));
+    directory_t* dir = (directory_t*) malloc(sizeof *dir);
     size_t lastIndex;
     char* cwd;
-    if(NULL == dir)
-        printf("Dir::ConstructFromWorkDir: Failed on allocation of %lu bytes for new Dir.\n",
-            (unsigned long) sizeof(*dir));
+    if(!dir)
+        printf("Dir::ConstructFromWorkDir: Failed on allocation of %lu bytes for new Dir.\n", (unsigned long) sizeof(*dir));
 
     cwd = Dir_CurrentPath();
     lastIndex = strlen(cwd);
@@ -85,11 +84,11 @@ directory_t* Dir_NewFromCWD(void)
 directory_t* Dir_ConstructFromPathDir(const char* path)
 {
     directory_t* dir;
-    if(NULL == path || !path[0])
+    if(!path || !path[0])
         return Dir_NewFromCWD();
 
-    dir = (directory_t*) malloc(sizeof(*dir));
-    if(NULL == dir)
+    dir = (directory_t*) malloc(sizeof *dir);
+    if(!dir)
         printf("Dir::ConstructFromFileDir: Failed on allocation of %lu bytes for new Dir.", (unsigned long) sizeof(*dir));
     setPathFromPathDir(dir, path);
     return dir;
@@ -117,22 +116,20 @@ const char* Dir_Path(directory_t* dir)
 
 void Dir_SetPath(directory_t* dir, const char* path)
 {
-    assert(NULL != dir);
-    {
     filename_t fileName;
+    assert(dir);
+
     setPathFromPathDir(dir, path);
     Dir_FileName(fileName, path, FILENAME_T_MAXLEN);
     strncat(dir->path, fileName, FILENAME_T_MAXLEN);
     // Ensure we've a well-formed path.
     Dir_CleanPath(dir->path, FILENAME_T_MAXLEN);
-    }
 }
 
 static void setPathFromPathDir(directory_t* dir, const char* path)
 {
-    assert(NULL != dir && NULL != path && path[0]);
-    {
     filename_t temp, transPath;
+    assert(dir && path && path[0]);
 
     resolveAppRelativeDirectives(transPath, path, FILENAME_T_MAXLEN);
     Dir_ToNativeSeparators(transPath, FILENAME_T_MAXLEN);
@@ -143,14 +140,14 @@ static void setPathFromPathDir(directory_t* dir, const char* path)
 #if defined(WIN32)
     dir->drive = toupper(dir->path[0]) - 'A' + 1;
 #endif
-    }
+    Dir_FixSeparators(dir->path, FILENAME_T_MAXLEN);
 }
 
 /// Class-Static Members:
 
 static void prependBasePath(char* newPath, const char* path, size_t maxLen)
 {
-    assert(NULL != newPath && NULL != path);
+    assert(newPath && path);
     // Cannot prepend to absolute paths.
     if(!Dir_IsAbsolutePath(path))
     {
@@ -164,9 +161,9 @@ static void prependBasePath(char* newPath, const char* path, size_t maxLen)
 
 static void resolveAppRelativeDirectives(char* translated, const char* path, size_t maxLen)
 {
-    assert(NULL != translated && NULL != path);
-    {
     filename_t buf;
+    assert(translated && path);
+
     if(path[0] == '>' || path[0] == '}')
     {
         path++;
@@ -180,18 +177,15 @@ static void resolveAppRelativeDirectives(char* translated, const char* path, siz
     {
         strncpy(translated, path, maxLen);
     }
-    }
 }
 
 #if defined(UNIX)
 static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
 {
-    assert(NULL != path);
-    {
     filename_t buf;
+    assert(path);
 
-    if(!path[0] || 0 == maxLen || path[0] != '~')
-        return;
+    if(!path[0] || 0 == maxLen || path[0] != '~') return;
 
     memset(buf, 0, sizeof(buf));
 
@@ -200,7 +194,7 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
         // Replace it with the HOME environment variable.
         strncpy(buf, getenv("HOME"), FILENAME_T_MAXLEN);
         if(LAST_CHAR(buf) != '/')
-            strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
+            strncat(buf, "/", FILENAME_T_MAXLEN);
 
         // Append the rest of the original path.
         strncat(buf, path + 2, FILENAME_T_MAXLEN);
@@ -215,11 +209,11 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
         userName[end - path - 1] = 0;
 
         pw = getpwnam(userName);
-        if(NULL != pw)
+        if(pw)
         {
             strncpy(buf, pw->pw_dir, FILENAME_T_MAXLEN);
-            if(LAST_CHAR(buf) != DIR_SEP_CHAR)
-                strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
+            if(LAST_CHAR(buf) != '/')
+                strncat(buf, "/", FILENAME_T_MAXLEN);
         }
 
         strncat(buf, path + 1, FILENAME_T_MAXLEN);
@@ -227,7 +221,6 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
 
     // Replace the original.
     strncpy(path, buf, maxLen - 1);
-    }
 }
 #endif
 
@@ -265,13 +258,13 @@ static void resolvePathRelativeDirectives(char* path)
 
 void Dir_CleanPath(char* path, size_t len)
 {
-    if(NULL == path || 0 == len) return;
+    if(!path || 0 == len) return;
 
     M_Strip(path, len);
-    Dir_ToNativeSeparators(path, len);
 #if defined(UNIX)
     resolveHomeRelativeDirectives(path, len);
 #endif
+    Dir_FixSeparators(path, len);
 }
 
 char* Dir_CurrentPath(void)
@@ -279,15 +272,19 @@ char* Dir_CurrentPath(void)
     char* path = _getcwd(NULL, 0);
     size_t len = strlen(path);
     // Why oh why does the OS not do this for us?
-    if(len != 0 && path[len - 1] != DIR_SEP_CHAR)
+    if(len != 0)
     {
-        path = (char*) realloc(path, len+2);
-        if(NULL == path)
+        if(path[len - 1] != '/')
         {
-            Sys_CriticalMessagef("Dir::WorkDir: Failed on reallocation of %lu bytes for out string.", (unsigned long) (len+2));
-            return NULL;
+            path = (char*) realloc(path, len+2);
+            if(!path)
+            {
+                Sys_CriticalMessagef("Dir::WorkDir: Failed on reallocation of %lu bytes for out string.", (unsigned long) (len+2));
+                return NULL;
+            }
+            strcat(path, "/");
         }
-        strcat(path, DIR_SEP_STR);
+        Dir_ToNativeSeparators(path, len);
     }
     return path;
 }
@@ -295,15 +292,15 @@ char* Dir_CurrentPath(void)
 void Dir_FileName(char* name, const char* path, size_t len)
 {
     char ext[100];
-    if(NULL == path || NULL == name || 0 == len) return;
+    if(!path || !name || 0 == len) return;
     _splitpath(path, 0, 0, name, ext);
     strncat(name, ext, len);
 }
 
 int Dir_IsAbsolutePath(const char* path)
 {
-    if(NULL == path || !path[0]) return 0;
-    if(path[0] == '\\' || path[0] == '/' || path[1] == ':')
+    if(!path || !path[0]) return 0;
+    if(path[0] == '/' || path[1] == ':')
         return true;
 #if defined(UNIX)
     if(path[0] == '~')
@@ -321,7 +318,7 @@ boolean Dir_mkpath(const char* path)
     filename_t full, buf;
     char* ptr, *endptr;
 
-    if(NULL == path || !path[0]) return false;
+    if(!path || !path[0]) return false;
 
     // Convert all backslashes to normal slashes.
     strncpy(full, path, FILENAME_T_MAXLEN);
@@ -361,30 +358,44 @@ boolean Dir_mkpath(const char* path)
 void Dir_MakeAbsolutePath(char* path, size_t len)
 {
     filename_t buf;
-    if(NULL == path || !path[0] || 0 == len) return;
+    if(!path || !path[0] || 0 == len) return;
 
 #if defined(UNIX)
     resolveHomeRelativeDirectives(path, len);
 #endif
     _fullpath(buf, path, FILENAME_T_MAXLEN);
     strncpy(path, buf, len);
+    Dir_FixSeparators(path, len);
 }
 
 void Dir_ToNativeSeparators(char* path, size_t len)
 {
-    if(NULL == path || !path[0] || 0 == len) return;
-    { size_t i;
+    size_t i;
+    if(!path || !path[0] || 0 == len) return;
+
     for(i = 0; i < len && path[i]; ++i)
     {
         if(path[i] == DIR_WRONG_SEP_CHAR)
             path[i] = DIR_SEP_CHAR;
-    }}
+    }
+}
+
+void Dir_FixSeparators(char* path, size_t len)
+{
+    size_t i;
+    if(!path || !path[0] || 0 == len) return;
+
+    for(i = 0; i < len && path[i]; ++i)
+    {
+        if(path[i] == '\\')
+            path[i] = '/';
+    }
 }
 
 boolean Dir_SetCurrent(const char* path)
 {
     boolean success = false;
-    if(NULL != path && path[0])
+    if(path && path[0])
     {
         success = !_chdir(path);
     }

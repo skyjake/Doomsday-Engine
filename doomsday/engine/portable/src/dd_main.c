@@ -200,9 +200,8 @@ static gameinfo_t* findGameInfoForCmdlineFlag(const char* cmdlineFlag)
 
 static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawPath)
 {
-    assert(list && listSize && rawPath && rawPath[0]);
-    {
     ddstring_t* newPath = Str_New();
+    assert(list && listSize && rawPath && rawPath[0]);
 
     Str_Set(newPath, rawPath);
     F_FixSlashes(newPath, newPath);
@@ -210,7 +209,6 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
 
     *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
     (*list)[(*listSize)-1] = newPath;
-    }
 }
 
 static void parseStartupFilePathsAndAddFiles(const char* pathString)
@@ -407,16 +405,16 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Str_Strip(&dataPath);
     F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(&dataPath, DIR_SEP_CHAR);
+    if(Str_RAt(&dataPath, 0) != '/')
+        Str_AppendChar(&dataPath, '/');
 
     Str_Init(&defsPath);
     Str_Set(&defsPath, _defsPath);
     Str_Strip(&defsPath);
     F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(&defsPath, DIR_SEP_CHAR);
+    if(Str_RAt(&defsPath, 0) != '/')
+        Str_AppendChar(&defsPath, '/');
 
     Str_Init(&cmdlineFlag);
     Str_Init(&cmdlineFlag2);
@@ -807,7 +805,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     for(i = 0; extensions[i]; ++i)
     {
         Str_Clear(&pattern);
-        Str_Appendf(&pattern, "%sauto"DIR_SEP_STR"*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
+        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
         F_AllResourcePaths2(Str_Text(&pattern), autoDataAdder, (void*)&data);
     }}
     Str_Free(&pattern);
@@ -1349,16 +1347,16 @@ int DD_EarlyInit(void)
     Str_Strip(&dataPath);
     F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(&dataPath, DIR_SEP_CHAR);
+    if(Str_RAt(&dataPath, 0) != '/')
+        Str_AppendChar(&dataPath, '/');
 
     Str_Init(&defsPath);
     Str_Set(&defsPath, DD_BASEPATH_DEFS);
     Str_Strip(&defsPath);
     F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(&defsPath, DIR_SEP_CHAR);
+    if(Str_RAt(&defsPath, 0) != '/')
+        Str_AppendChar(&defsPath, '/');
 
     currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0, 0, 0));
 
@@ -2336,6 +2334,7 @@ D_CMD(Load)
 {
     boolean didLoadGame = false, didLoadResource = false;
     ddstring_t foundPath, searchPath;
+    gameinfo_t* info;
     int arg = 1;
 
     Str_Init(&searchPath);
@@ -2346,9 +2345,10 @@ D_CMD(Load)
         Str_Free(&searchPath);
         return false;
     }
+    F_FixSlashes(&searchPath, &searchPath);
 
     // Ignore attempts to load directories.
-    if(Str_RAt(&searchPath, 0) == DIR_SEP_CHAR || Str_RAt(&searchPath, 0) == DIR_WRONG_SEP_CHAR)
+    if(Str_RAt(&searchPath, 0) == '/')
     {
         Con_Message("Directories cannot be \"loaded\" (only files and/or known games).\n");
         Str_Free(&searchPath);
@@ -2356,8 +2356,8 @@ D_CMD(Load)
     }
 
     // Are we loading a game?
-    { gameinfo_t* info = findGameInfoForIdentityKey(Str_Text(&searchPath));
-    if(NULL != info)
+    info = findGameInfoForIdentityKey(Str_Text(&searchPath));
+    if(info)
     {
         if(!allGameResourcesFound(info))
         {
@@ -2374,7 +2374,7 @@ D_CMD(Load)
         }
         didLoadGame = true;
         ++arg;
-    }}
+    }
 
     // Try the resource locator.
     Str_Init(&foundPath);
@@ -2420,9 +2420,10 @@ D_CMD(Unload)
         Str_Free(&searchPath);
         return false;
     }
+    F_FixSlashes(&searchPath, &searchPath);
 
     // Ignore attempts to unload directories.
-    if(Str_RAt(&searchPath, 0) == DIR_SEP_CHAR || Str_RAt(&searchPath, 0) == DIR_WRONG_SEP_CHAR)
+    if(Str_RAt(&searchPath, 0) == '/')
     {
         Con_Message("Directories cannot be \"unloaded\" (only files and/or known games).\n");
         Str_Free(&searchPath);

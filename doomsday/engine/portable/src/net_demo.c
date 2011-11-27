@@ -138,8 +138,8 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
     // Compose the real file name.
     Str_Init(&buf);
     Str_Appendf(&buf, "%s%s", demoPath, fileName);
-    F_FixSlashes(&buf, &buf);
     F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
     cl->demo = lzOpen(Str_Text(&buf), "wp");
@@ -331,8 +331,8 @@ boolean Demo_BeginPlayback(const char* fileName)
     {
         Str_Prepend(&buf, demoPath);
     }
-    F_FixSlashes(&buf, &buf);
     F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
     playdemo = lzOpen(Str_Text(&buf), "rp");

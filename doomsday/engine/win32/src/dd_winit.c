@@ -337,8 +337,8 @@ static void determineGlobalPaths(application_t* app)
 
     dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
     // Ensure it ends with a directory separator.
-    if(path[strlen(path)-1] != DIR_SEP_CHAR)
-        strncat(path, DIR_SEP_STR, FILENAME_T_MAXLEN);
+    if(path[strlen(path)-1] != '/')
+        strncat(path, "/", FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(path);
     temp = Dir_ConstructFromPathDir(path);
     strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
@@ -389,13 +389,13 @@ static void determineGlobalPaths(application_t* app)
     else if(ArgCheck("-stdbasedir"))
     {
         // The standard base directory is two levels upwards.
-        strncpy(ddBasePath, ".."DIR_SEP_STR".."DIR_SEP_STR, FILENAME_T_MAXLEN);
+        strncpy(ddBasePath, "../../", FILENAME_T_MAXLEN);
     }
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
     // Ensure it ends with a directory separator.
-    if(ddBasePath[strlen(ddBasePath)-1] != DIR_SEP_CHAR)
-        strncat(ddBasePath, DIR_SEP_STR, FILENAME_T_MAXLEN);
+    if(ddBasePath[strlen(ddBasePath)-1] != '/')
+        strncat(ddBasePath, "/", FILENAME_T_MAXLEN);
 }
 
 static BOOL createMainWindow(int lnCmdShow)

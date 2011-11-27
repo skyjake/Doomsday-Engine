@@ -44,7 +44,7 @@
 // for all views.
 
 typedef struct {
-    boolean         rotate; // If false use 0 for any position
+    byte            rotate; // 0= no rotations, 1= only front, 2= more...
     material_t*     mats[8]; // Material to use for view angles 0-7
     byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;

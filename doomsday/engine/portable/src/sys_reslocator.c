@@ -596,10 +596,9 @@ static void createPackagesResourceNamespace(void)
     { \
         char last = Str_RAt(path, 0); \
         ddstring_t* pathCopy = Str_New(); \
-        if(last != DIR_SEP_CHAR && last != DIR_WRONG_SEP_CHAR) \
-            Str_Appendf(doomWadDir, "%s"DIR_SEP_STR, Str_Text(path)); \
-        else \
-            Str_Copy(pathCopy, (path)); \
+        F_FixSlashes(pathCopy, path); \
+        if(Str_RAt(pathCopy, 0) != '/') \
+            Str_AppendChar(pathCopy, '/'); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -637,6 +636,7 @@ static void createPackagesResourceNamespace(void)
     {
         doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
         Str_Strip(doomWadDir);
+        F_FixSlashes(doomWadDir, doomWadDir);
         if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))
         {
             Str_Delete(doomWadDir);
@@ -644,9 +644,8 @@ static void createPackagesResourceNamespace(void)
         }
         else
         {
-            char last = Str_RAt(doomWadDir, 0);
-            if(last != DIR_SEP_CHAR && last != DIR_WRONG_SEP_CHAR)
-                Str_AppendChar(doomWadDir, DIR_SEP_CHAR);
+            if(Str_RAt(doomWadDir, 0) != '/')
+                Str_AppendChar(doomWadDir, '/');
         }
     }
 
@@ -1231,7 +1230,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
         if(info->flags & RNF_USE_VMAP)
         {
             int nameLen = Str_Length(&info->name), pathLen = Str_Length(path);
-            if(nameLen <= pathLen && Str_At(path, nameLen) == DIR_SEP_CHAR &&
+            if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
             {
                 Str_Prepend(path, Str_Text(GameInfo_DataPath(DD_GameInfo())));

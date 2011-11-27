@@ -391,26 +391,26 @@ static boolean SBE_Save(const char* name)
     FILE* file;
 
     Str_Init(&fileName);
-    if(NULL == name || !name[0])
+    if(!name || !name[0])
     {
         Str_Appendf(&fileName, "%s.ded", P_MapUri(map));
     }
     else
     {
         Str_Set(&fileName, name);
-        F_FixSlashes(&fileName, &fileName);
         F_ExpandBasePath(&fileName, &fileName);
         // Do we need to append an extension?
-        if(NULL == F_FindFileExtension(Str_Text(&fileName)))
+        if(!F_FindFileExtension(Str_Text(&fileName)))
         {
             Str_Append(&fileName, ".ded");
         }
     }
 
+    F_ToNativeSlashes(&fileName, &fileName);
     file = fopen(Str_Text(&fileName), "wt");
-    if(NULL == file)
+    if(!file)
     {
-        Con_Message("Warning failed to open \"%s\" for writing. Bias Lights not saved.\n", Str_Text(&fileName));
+        Con_Message("Warning failed to open \"%s\" for writing. Bias Lights not saved.\n", F_PrettyPath(Str_Text(&fileName)));
         Str_Free(&fileName);
         return false;
     }

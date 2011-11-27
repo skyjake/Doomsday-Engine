@@ -126,7 +126,7 @@ static ddstring_t* resolveUri(const Uri* uri)
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
             {
-                /// \note DataPath already has ending @c DIR_SEP_CHAR.
+                /// \note DataPath already has ending '/'.
                 gameinfo_t* info = DD_GameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
@@ -134,7 +134,7 @@ static ddstring_t* resolveUri(const Uri* uri)
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
             {
-                /// \note DefsPath already has ending @c DIR_SEP_CHAR.
+                /// \note DefsPath already has ending '/'.
                 gameinfo_t* info = DD_GameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
@@ -333,9 +333,6 @@ Uri* Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClas
     }
     Str_Set(&uri->_path, path);
     Str_Strip(&uri->_path);
-    // Convert all slashes to the host OS's directory separator,
-    // for compatibility with the sys_filein routines.
-    F_FixSlashes(&uri->_path, &uri->_path);
     parseScheme(uri, defaultResourceClass);
     return uri;
 }

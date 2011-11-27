@@ -80,14 +80,14 @@ void F_FileNameAndExtension(ddstring_t* dst, const char* src)
 int F_FileExists(const char* path)
 {
     int result = -1;
-    if(NULL != path && path[0])
+    if(path && path[0])
     {
         ddstring_t buf;
         // Normalize the path into one we can process.
         Str_Init(&buf); Str_Set(&buf, path);
         Str_Strip(&buf);
-        F_FixSlashes(&buf, &buf);
         F_ExpandBasePath(&buf, &buf);
+        F_ToNativeSlashes(&buf, &buf);
 
         result = !access(Str_Text(&buf), 4); // Read permission?
 
@@ -124,7 +124,7 @@ boolean F_MakePath(const char* path)
     // Convert all backslashes to normal slashes.
     Str_Init(&full); Str_Set(&full, path);
     Str_Strip(&full);
-    F_FixSlashes(&full, &full);
+    F_ToNativeSlashes(&full, &full);
 
     // Does this path already exist?
     if(0 == access(Str_Text(&full), 0))
@@ -164,13 +164,14 @@ boolean F_MakePath(const char* path)
 
 boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 {
-    assert(dstStr && srcStr);
-    {
     boolean result = false;
+    assert(dstStr && srcStr);
+
     if(!Str_IsEmpty(srcStr))
     {
         char* dst = Str_Text(dstStr);
         const char* src = Str_Text(srcStr);
+        size_t i;
 
         if(dstStr != srcStr)
         {
@@ -178,7 +179,42 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
             Str_Reserve(dstStr, Str_Length(srcStr));
         }
 
-        { size_t i;
+        for(i = 0; src[i]; ++i)
+        {
+            if(src[i] != '\\')
+            {
+                if(dstStr != srcStr)
+                    Str_AppendChar(dstStr, src[i]);
+                continue;
+            }
+
+            if(dstStr != srcStr)
+                Str_AppendChar(dstStr, '/');
+            else
+                dst[i] = '/';
+            result = true;
+        }
+    }
+    return result;
+}
+
+boolean F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
+{
+    boolean result = false;
+    assert(dstStr && srcStr);
+
+    if(!Str_IsEmpty(srcStr))
+    {
+        char* dst = Str_Text(dstStr);
+        const char* src = Str_Text(srcStr);
+        size_t i;
+
+        if(dstStr != srcStr)
+        {
+            Str_Clear(dstStr);
+            Str_Reserve(dstStr, Str_Length(srcStr));
+        }
+
         for(i = 0; src[i]; ++i)
         {
             if(src[i] != DIR_WRONG_SEP_CHAR)
@@ -193,10 +229,9 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
             else
                 dst[i] = DIR_SEP_CHAR;
             result = true;
-        }}
+        }
     }
     return result;
-    }
 }
 
 const char* F_FindFileExtension(const char* path)
@@ -205,13 +240,11 @@ const char* F_FindFileExtension(const char* path)
     {
         size_t len = strlen(path);
         const char* p = path + len - 1;
-        if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
+        if(p - path > 1 && *p != '/')
         {
             do
             {
-                if(*(p - 1) == DIR_SEP_CHAR ||
-                   *(p - 1) == DIR_WRONG_SEP_CHAR)
-                    break;
+                if(*(p - 1) == '/') break;
                 if(*p == '.')
                     return (unsigned) (p - path) < len - 1? p + 1 : NULL;
             } while(--p > path);
@@ -263,7 +296,7 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
     assert(dst && src);
 
     // Src path is base-relative?
-    if(Str_At(src, 0) == DIR_SEP_CHAR)
+    if(Str_At(src, 0) == '/')
     {
         boolean mustCopy = (dst == src);
         if(mustCopy)
@@ -332,8 +365,8 @@ boolean F_IsAbsolute(const ddstring_t* str)
 {
     if(!str)
         return false;
-
-    if(Str_At(str, 0) == '\\' || Str_At(str, 0) == '/' || Str_At(str, 1) == ':')
+    /// \todo Should not handle both separators - refactor callers.
+    if(Str_At(str, 0) == DIR_SEP_CHAR || Str_At(str, 0) == DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
         return true;
 #ifdef UNIX
     if(Str_At(str, 0) == '~')
@@ -414,14 +447,14 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 #ifdef UNIX
     else if(Str_At(src, 0) == '~')
     {
-        if(Str_At(src, 1) == DIR_SEP_CHAR && getenv("HOME"))
+        if(Str_At(src, 1) == '/' && getenv("HOME"))
         {   // Replace it with the HOME environment variable.
             ddstring_t buf;
             Str_Init(&buf);
 
-            Str_Set(&buf, getenv("HOME"));
-            if(Str_RAt(&buf, 0) != DIR_SEP_CHAR)
-                Str_AppendChar(&buf, DIR_SEP_CHAR);
+            F_FixSlashes(&buf, getenv("HOME"));
+            if(Str_RAt(&buf, 0) != '/')
+                Str_AppendChar(&buf, '/');
 
             // Append the rest of the original path.
             Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
@@ -445,9 +478,9 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
             Str_Init(&buf);
             if((pw = getpwnam(Str_Text(&userName))) != NULL)
             {
-                Str_Set(&buf, pw->pw_dir);
-                if(Str_RAt(&buf, 0) != DIR_SEP_CHAR)
-                    Str_AppendChar(&buf, DIR_SEP_CHAR);
+                F_FixSlashes(&buf, pw->pw_dir);
+                if(Str_RAt(&buf, 0) != '/')
+                    Str_AppendChar(&buf, '/');
                 result = true;
             }
 
@@ -472,7 +505,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
 {
-    F_FixSlashes(dst, src); // Will copy src to dst if not equal.
+    F_ToNativeSlashes(dst, src); // Will copy src to dst if not equal.
     return F_ExpandBasePath(dst, dst);
 }
 
@@ -495,11 +528,10 @@ const char* F_PrettyPath(const char* path)
 
     static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
     static uint index = 0;
-
     ddstring_t* buf = NULL;
     int len;
 
-    if(NULL == path || 0 == (len = (int)strlen(path)))
+    if(!path || 0 == (len = (int)strlen(path)))
         return path;
 
     // Hide relative directives like '}'
@@ -514,7 +546,7 @@ const char* F_PrettyPath(const char* path)
     // If within our the base directory cut out the base path.
     if(F_IsRelativeToBasePath(path))
     {
-        if(NULL == buf)
+        if(!buf)
         {
             buf = &buffers[index++ % NUM_BUFS];
             Str_Set(buf, path);
@@ -526,12 +558,17 @@ const char* F_PrettyPath(const char* path)
     // Swap directory separators with their system-specific version.
     if(strchr(path, DIR_WRONG_SEP_CHAR))
     {
-        if(NULL == buf)
+        int i;
+        if(!buf)
         {
             buf = &buffers[index++ % NUM_BUFS];
             Str_Set(buf, path);
         }
-        F_FixSlashes(buf, buf);
+        for(i = 0; i < len; ++i)
+        {
+            if(buf->str[i] == DIR_WRONG_SEP_CHAR)
+               buf->str[i] = DIR_SEP_CHAR;
+        }
         path = Str_Text(buf);
     }
 
