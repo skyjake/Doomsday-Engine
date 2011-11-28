@@ -186,15 +186,7 @@ static void initialize(void)
     }
     if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
         GL_state.features.vsync = false;
-
-    if(0 != (GL_state.extensions.wglMultisampleARB = query("WGL_ARB_multisample")))
-    {
-        GETPROC(wglChoosePixelFormatARB);
-    }
-    if(0 == GL_state.extensions.wglMultisampleARB || NULL == wglChoosePixelFormatARB)
-        GL_state.features.multisample = false;
 #else
-    GL_state.features.multisample = false;
     GL_state.features.vsync = false;
 #endif
 }
@@ -245,13 +237,10 @@ static void printGLUInfo(void)
 #ifdef WIN32
 static void testMultisampling(HDC hDC)
 {
-    int             pixelFormat;
-    int             valid;
-    uint            numFormats;
-    float           fAttributes[] = {0,0};
-
-    int iAttributes[] =
-    {
+    int pixelFormat, valid;
+    uint numFormats;
+    float fAttributes[] = {0,0};
+    int iAttributes[] = {
         WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
         WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
         WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
@@ -266,25 +255,21 @@ static void testMultisampling(HDC hDC)
     };
 
     // First, see if we can get a pixel format using four samples.
-    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
-                                    &pixelFormat, &numFormats);
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
 
     if(valid && numFormats >= 1)
     {   // This will do nicely.
         GL_state.multisampleFormat = pixelFormat;
+        GL_state.features.multisample = true;
     }
     else
     {   // Failed. Try a pixel format using two samples.
         iAttributes[19] = 2;
-        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
-                                        &pixelFormat, &numFormats);
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
         if(valid && numFormats >= 1)
         {
             GL_state.multisampleFormat = pixelFormat;
-        }
-        else
-        {   // Give up.
-            GL_state.features.multisample = false;
+            GL_state.features.multisample = true;
         }
     }
 }
@@ -394,12 +379,13 @@ static void createDummyWindow(application_t* app)
         if(ok)
         {
             PROC wglGetExtensionsStringARB;
-            const GLubyte* extensions;
+            const GLubyte* exts;
 
             GETPROC(wglGetExtensionsStringARB);
-            extensions = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
+            exts = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
 
-            if(Sys_GLQueryExtension("WGL_ARB_multisample", extensions))
+            GL_state.extensions.wglMultisampleARB = Sys_GLQueryExtension("WGL_ARB_multisample", exts);
+            if(GL_state.extensions.wglMultisampleARB)
             {
                 GETPROC(wglChoosePixelFormatARB);
                 if(wglChoosePixelFormatARB)
@@ -443,7 +429,7 @@ boolean Sys_GLPreInit(void)
 
     GL_state.features.blendSubtract = true;
     GL_state.features.genMipmap = true;
-    GL_state.features.multisample = true;
+    GL_state.features.multisample = false; // We'll test for availability...
     GL_state.features.texCompression = true;
     GL_state.features.texFilterAniso = true;
     GL_state.features.texNonPowTwo = true;
@@ -455,9 +441,13 @@ boolean Sys_GLPreInit(void)
     GL_state.currentUseFog = false;
 
 #ifdef WIN32
-    // We want to be able to use multisampling if available so lets create a
-    // dummy window and see what pixel formats are present.
+    // We prefer to use  multisampling if available so create a dummy window
+    // and see what pixel formats are present.
     createDummyWindow(&app);
+
+    // User disabled?
+    if(ArgCheck("-noaa"))
+        GL_state.features.multisample = false;
 #endif
 
     initedGL = true;

@@ -52,6 +52,7 @@ typedef struct {
 
 void            P_SetupPsprites(struct player_s* curplayer);
 void            P_MovePsprites(struct player_s* curplayer);
+void            P_BringUpWeapon(struct player_s *player);
 void            P_DropWeapon(struct player_s* player);
 void            P_SetPsprite(struct player_s* player, int position, statenum_t stnum);
 

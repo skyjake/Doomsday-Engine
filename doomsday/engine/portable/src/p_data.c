@@ -363,12 +363,11 @@ boolean P_LoadMap(const char* uriCString)
         // they're ready to begin receiving frames.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t* plr = &ddPlayers[i];
-
-            if(!(plr->shared.flags & DDPF_LOCAL) && clients[i].connected)
+            //player_t *plr = &ddPlayers[i];
+            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
             {
 #ifdef _DEBUG
-                Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
+                Con_Message("Client %i marked as 'not ready' to receive frames.\n", i);
 #endif
                 clients[i].ready = false;
             }

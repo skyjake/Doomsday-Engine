@@ -380,8 +380,7 @@ void GL_SetVSync(boolean on)
 
 void GL_SetMultisample(boolean on)
 {
-    if(!GL_state.features.multisample)
-        return;
+    if(!GL_state.features.multisample) return;
 #if WIN32
     if(on)
         glEnable(GL_MULTISAMPLE_ARB);

@@ -438,9 +438,7 @@ void Sv_HandlePacket(void)
             Sv_Handshake(from, true);
 
             // Note the time when the player entered.
-            sender->enterTime = SECONDS_TO_TICKS(gameTime);
-            //sender->runTime = SECONDS_TO_TICKS(gameTime) - 1;
-            //sender->lagStress = 0;
+            sender->enterTime = Sys_GetRealSeconds();
         }
         else if(ddpl->inGame)
         {
@@ -771,8 +769,8 @@ void Sv_PlayerLeaves(unsigned int nodeID)
     plr = &ddPlayers[plrNum];
 
     // Print a little something in the console.
-    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left.\n",
-                cl->name, plrNum);
+    Con_Message("Sv_PlayerLeaves: '%s' (console %i) has left, was connected for %f seconds.\n",
+                cl->name, plrNum, Sys_GetRealSeconds() - cl->enterTime);
 
     wasInGame = plr->shared.inGame;
     plr->shared.inGame = false;

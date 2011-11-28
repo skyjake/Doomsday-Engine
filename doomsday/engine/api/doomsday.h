@@ -314,6 +314,7 @@ boolean MPE_End(void);
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
+    void            P_Impulse(int playerNum, int control);
 
     // Play: Setup.
 

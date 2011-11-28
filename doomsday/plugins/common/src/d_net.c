@@ -503,6 +503,15 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         break;
     }
 
+    case GPT_MAYBE_CHANGE_WEAPON:
+    {
+        weapontype_t wt = (weapontype_t) Reader_ReadInt16(reader);
+        ammotype_t at = (ammotype_t) Reader_ReadInt16(reader);
+        boolean force = (Reader_ReadByte(reader) != 0);
+        P_MaybeChangeWeapon(&players[CONSOLEPLAYER], wt, at, force);
+        break;
+    }
+
     case GPT_CONSOLEPLAYER_STATE:
         NetCl_UpdatePlayerState(reader, CONSOLEPLAYER);
         break;

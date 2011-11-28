@@ -8,3 +8,5 @@ macx_release_build
 *.tar.gz
 *.deb
 *.changes
+server-runtime
+client-runtime

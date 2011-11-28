@@ -1236,8 +1236,6 @@ int Net_ConnectWorker(void *ptr)
         {
             if(N_GetHostInfo(0, &param->info))
             {   // Found something!
-                Net_PrintServerInfo(0, NULL);
-                Net_PrintServerInfo(0, &param->info);
                 Con_Execute(CMDS_CONSOLE, "net connect 0", false, false);
 
                 returnValue = true;
@@ -1309,8 +1307,7 @@ D_CMD(Connect)
  */
 D_CMD(Net)
 {
-    int                 i;
-    boolean             success = true;
+    boolean success = true;
 
     if(argc == 1) // No args?
     {
@@ -1378,28 +1375,9 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "info"))
         {
-            if(isServer)
-            {
-                Con_Printf("Clients:\n");
-                for(i = 0; i < DDMAXPLAYERS; ++i)
-                {
-                    client_t           *cl = &clients[i];
-                    player_t           *plr = &ddPlayers[i];
-
-                    if(cl->connected)
-                        Con_Printf("%2i: %10s node %2x, entered at %07i (ingame:%i, handshake:%i)\n",
-                                   i, cl->name, cl->nodeID, cl->enterTime,
-                                   plr->shared.inGame, cl->handshake);
-                }
-            }
-
-            Con_Printf("Network game: %s\n", netGame ? "yes" : "no");
-            Con_Printf("Server: %s\n", isServer ? "yes" : "no");
-            Con_Printf("Client: %s\n", isClient ? "yes" : "no");
-            Con_Printf("Console number: %i\n", consolePlayer);
-            Con_Printf("Local player #: %i\n", P_ConsoleToLocal(consolePlayer));
-
-            N_PrintInfo();
+            N_PrintNetworkStatus();
+            Con_Message("Network game: %s\n", netGame ? "yes" : "no");
+            Con_Message("This is console %i (local player %i).\n", consolePlayer, P_ConsoleToLocal(consolePlayer));
         }
         else if(!stricmp(argv[1], "disconnect"))
         {

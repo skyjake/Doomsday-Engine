@@ -395,11 +395,10 @@ void GL_SetGamma(void)
 
 static void printConfiguration(void)
 {
-    static const char* available[] = { "not available", "available" };
     static const char* enabled[] = { "disabled", "enabled" };
 
     Con_Printf("Render configuration:\n");
-    Con_Printf("  Multisampling: %s", available[GL_state.features.multisample? 1:0]);
+    Con_Printf("  Multisampling: %s", enabled[GL_state.features.multisample? 1:0]);
     if(GL_state.features.multisample)
         Con_Printf(" (sf:%i)\n", GL_state.multisampleFormat);
     else

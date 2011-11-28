@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jdoom64.h"
+#include "common.h"
 
 #include "d_net.h"
 #include "p_player.h"
@@ -54,7 +54,6 @@
 
 #define LOWERSPEED      6
 #define RAISESPEED      6
-#define WEAPONBOTTOM    128
 #define WEAPONTOP       32
 
 // TYPES -------------------------------------------------------------------
@@ -140,10 +139,10 @@ void P_BringUpWeapon(player_t *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
-
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
+
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);

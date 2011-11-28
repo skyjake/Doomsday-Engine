@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jheretic.h"
+#include "common.h"
 
 #include "d_net.h"
 #include "p_player.h"
@@ -580,11 +580,11 @@ void P_BringUpWeapon(player_t *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_,
-                         (player->powers[PT_WEAPONLEVEL2]? 1:0));
-
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
+
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_,
+                         (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
