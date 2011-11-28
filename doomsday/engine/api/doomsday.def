@@ -193,6 +193,7 @@ EXPORTS
     P_NewPlayerControl          @251 NONAME
     P_GetControlState           @252 NONAME
     P_GetImpulseControlState    @339 NONAME
+    P_Impulse                   @457 NONAME
 
 ; Play: Setup.
     P_LoadMap                   @254 NONAME

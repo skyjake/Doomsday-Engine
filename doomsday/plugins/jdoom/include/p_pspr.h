@@ -58,5 +58,6 @@ typedef struct {
 } pspdef_t;
 
 void            R_GetWeaponBob(int player, float* x, float* y);
+void            P_BringUpWeapon(struct player_s *player);
 
 #endif
