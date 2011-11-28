@@ -1602,7 +1602,7 @@ void NetSv_SaveGame(unsigned int game_id)
     // This will make the clients save their games.
     writer = D_NetWrite();
     Writer_WriteUInt32(writer, game_id);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_LoadGame(unsigned int game_id)
@@ -1614,7 +1614,7 @@ void NetSv_LoadGame(unsigned int game_id)
 
     writer = D_NetWrite();
     Writer_WriteUInt32(writer, game_id);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1629,7 +1629,7 @@ void NetSv_Paused(boolean isPaused)
 
     writer = D_NetWrite();
     Writer_WriteByte(writer, (isPaused != false));
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
@@ -1656,7 +1656,7 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
     writer = D_NetWrite();
     Writer_WriteUInt16(writer, strlen(msg));
     Writer_Write(writer, msg, strlen(msg));
-    Net_SendPacket(plrNum | DDSP_ORDERED,
+    Net_SendPacket(plrNum,
                    yellow ? GPT_YELLOW_MESSAGE : GPT_MESSAGE,
                    Writer_Data(writer), Writer_Size(writer));
 }
@@ -1669,6 +1669,26 @@ void NetSv_SendMessage(int plrNum, const char *msg)
 void NetSv_SendYellowMessage(int plrNum, const char *msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
+}
+
+void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
+{
+    Writer* writer;
+
+    if(IS_CLIENT) return;
+    if(plrNum < 0 || plrNum >= MAXPLAYERS)
+        return;
+
+#ifdef _DEBUG
+    Con_Message("NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i\n",
+                plrNum, weapon, ammo, force);
+#endif
+
+    writer = D_NetWrite();
+    Writer_WriteInt16(writer, weapon);
+    Writer_WriteInt16(writer, ammo);
+    Writer_WriteByte(writer, force != 0);
+    Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
 }
 
 void P_Telefrag(mobj_t *thing)

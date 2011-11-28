@@ -593,6 +593,7 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
  */
 void P_SpawnClient(int plrNum)
 {
+    player_t* p;
 #if __JHEXEN__
     playerclass_t pClass = cfg.playerClass[plrNum];
 #else
@@ -606,12 +607,20 @@ void P_SpawnClient(int plrNum)
     // The server will fix the player's position and angles soon after.
     spawnPlayer(plrNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
 
-    players[plrNum].viewHeight = cfg.plrViewHeight;
-    players[plrNum].viewHeightDelta = 0;
+    p = &players[plrNum];
+    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeightDelta = 0;
 
     // The mobj was just spawned onto invalid coordinates. The view cannot
     // be drawn until we receive the right coords.
-    players[plrNum].plr->flags |= DDPF_UNDEFINED_POS;
+    p->plr->flags |= DDPF_UNDEFINED_POS;
+
+    // The weapon of the player is not known. The weapon cannot be raised
+    // until we know it.
+    p->plr->flags |= DDPF_UNDEFINED_WEAPON;
+
+    // The weapon should be in the down state when spawning.
+    p->pSprites[0].pos[VY] = WEAPONBOTTOM;
 }
 
 /**
