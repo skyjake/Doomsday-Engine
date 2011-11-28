@@ -34,7 +34,7 @@
 
 #include <math.h>
 
-#include "jhexen.h"
+#include "common.h"
 
 #include "p_player.h"
 #include "p_map.h"
@@ -409,6 +409,9 @@ void P_BringUpWeapon(player_t *plr)
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
 
+    if(plr->pendingWeapon == WT_NOCHANGE)
+        plr->pendingWeapon = plr->readyWeapon;
+
     wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class_, 0);
 
     newState = wminfo->states[WSN_UP];
@@ -417,9 +420,6 @@ void P_BringUpWeapon(player_t *plr)
     {
         newState = S_FAXEUP_G;
     }
-
-    if(plr->pendingWeapon == WT_NOCHANGE)
-        plr->pendingWeapon = plr->readyWeapon;
 
     if(wminfo->raiseSound)
         S_StartSound(wminfo->raiseSound, plr->plr->mo);

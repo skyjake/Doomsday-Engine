@@ -173,8 +173,8 @@ typedef struct {
     // This is set when input is received from the client.
     //int             updateCount;
 
-    // Gametic when the client entered the game.
-    int             enterTime;
+    // Seconds when the client entered the game (Sys_GetRealSeconds()).
+    double          enterTime;
 
     // Client-reported time of the last processed ticcmd.
     // Older or as old tics than this are discarded.

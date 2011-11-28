@@ -354,6 +354,8 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
 
     if(flags & PSF2_STATE)
     {
+        int oldPlayerState = pl->playerState;
+
         b = Reader_ReadByte(msg);
         pl->playerState = b & 0xf;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -366,15 +368,25 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
                     pl->playerState == PST_DEAD? "PST_DEAD" : "PST_REBORN");
 #endif
 
-        // Set or clear the DEAD flag for this player.
-        if(pl->playerState == PST_LIVE)
-            pl->plr->flags &= ~DDPF_DEAD;
-        else
-            pl->plr->flags |= DDPF_DEAD;
-
-        //if(pl->playerState != oldstate)
+        // Player state changed?
+        if(oldPlayerState != pl->playerState)
         {
-            P_SetupPsprites(pl);
+            // Set or clear the DEAD flag for this player.
+            if(pl->playerState == PST_LIVE)
+            {
+                // Becoming alive again...
+                // After being reborn, the server will tell us the new weapon.
+                pl->plr->flags |= DDPF_UNDEFINED_WEAPON;
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.\n", pl - players);
+#endif
+
+                pl->plr->flags &= ~DDPF_DEAD;
+            }
+            else
+            {
+                pl->plr->flags |= DDPF_DEAD;
+            }
         }
 
         pl->cheats = Reader_ReadByte(msg);
@@ -619,21 +631,58 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 
     if(flags & PSF_PENDING_WEAPON || flags & PSF_READY_WEAPON)
     {
+        boolean wasUndefined = (pl->plr->flags & DDPF_UNDEFINED_WEAPON) != 0;
+
         b = Reader_ReadByte(msg);
         if(flags & PSF_PENDING_WEAPON)
         {
-            pl->pendingWeapon = b & 0xf;
-#if _DEBUG
-            Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i\n", pl->pendingWeapon);
+            if(!wasUndefined)
+            {
+                int weapon = b & 0xf;
+                P_Impulse(pl - players, CTL_WEAPON1 + weapon);
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.\n", weapon);
 #endif
+            }
+            else
+            {
+                pl->pendingWeapon = b & 0xf;
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: pendingweapon=%i\n", pl->pendingWeapon);
+#endif
+            }
+
+            pl->plr->flags &= ~DDPF_UNDEFINED_WEAPON;
         }
 
         if(flags & PSF_READY_WEAPON)
         {
-            pl->readyWeapon = b >> 4;
-#if _DEBUG
-            Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
+            if(wasUndefined)
+            {
+                pl->readyWeapon = b >> 4;
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: readyweapon=%i\n", pl->readyWeapon);
 #endif
+            }
+            else
+            {
+#ifdef _DEBUG
+                Con_Message("NetCl_UpdatePlayerState: Readyweapon already known (%i), not setting server's value %i.\n",
+                            pl->readyWeapon, b >> 4);
+#endif
+            }
+
+            pl->plr->flags &= ~DDPF_UNDEFINED_WEAPON;
+        }
+
+        if(!(pl->plr->flags & DDPF_UNDEFINED_WEAPON) && wasUndefined)
+        {
+#ifdef _DEBUG
+            Con_Message("NetCl_UpdatePlayerState: Weapon was undefined, bringing it up now.\n");
+#endif
+
+            // Bring it up now.
+            P_BringUpWeapon(pl);
         }
     }
 

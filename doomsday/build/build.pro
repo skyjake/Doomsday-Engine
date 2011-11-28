@@ -9,7 +9,9 @@ TEMPLATE = subdirs
 include(../config.pri)
 
 # Update the PK3 files.
-system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
+deng_packres {
+    system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
+}
 
 # Install the launcher.
 deng_snowberry {

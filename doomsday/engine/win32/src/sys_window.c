@@ -127,7 +127,11 @@ static void scrollLine(ddwindow_t *win)
     dest.X = 0;
     dest.Y = 0;
     fill.Attributes = TEXT_ATTRIB;
+#ifdef UNICODE
+    fill.Char.UnicodeChar = L' ';
+#else
     fill.Char.AsciiChar = ' ';
+#endif
 
     ScrollConsoleScreenBuffer(win->console.hcScreen, &src, NULL, dest, &fill);
 }
@@ -177,15 +181,18 @@ static void writeText(ddwindow_t *win, CHAR_INFO *line, int len)
     WriteConsoleOutput(win->console.hcScreen, line, linesize, from, &rect);
 }
 
-void Sys_ConPrint(uint idx, const char *text, int clflags)
+void Sys_ConPrint(uint idx, const char* text, int clflags)
 {
-    ddwindow_t     *win;
-    unsigned int    i;
-    int             linestart, bpos;
-    const char     *ptr = text;
-    char            ch;
-    size_t          len;
-    CHAR_INFO       line[LINELEN];
+    ddwindow_t* win;
+    unsigned int i;
+    int linestart, bpos;
+    const char* ptr = text;
+    CHAR_INFO line[LINELEN];
+    size_t len;
+    char ch;
+#ifdef UNICODE
+    wchar_t wch;
+#endif
 
     if(!winManagerInited || !text)
         return;
@@ -215,7 +222,12 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
         if(ch != '\n' && bpos < LINELEN)
         {
             line[bpos].Attributes = win->console.attrib;
+#ifdef UNICODE
+            mbtowc(&wch, &ch, MB_CUR_MAX);
+            line[bpos].Char.UnicodeChar = wch;
+#else
             line[bpos].Char.AsciiChar = ch;
+#endif
             bpos++;
         }
 
@@ -277,14 +289,16 @@ void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
     setConWindowCmdLine(win, text, cursorPos, flags);
 }
 
-static void setConWindowCmdLine(ddwindow_t *win, const char *text,
-                                uint cursorPos, int flags)
+static void setConWindowCmdLine(ddwindow_t* win, const char* text, uint cursorPos, int flags)
 {
-    CHAR_INFO       line[LINELEN], *ch;
-    uint            i;
-    COORD           linesize = {LINELEN, 1};
-    COORD           from = {0, 0};
-    SMALL_RECT      rect;
+    CHAR_INFO line[LINELEN], *ch;
+    COORD linesize = {LINELEN, 1};
+    COORD from = {0, 0};
+    SMALL_RECT rect;
+    uint i;
+#ifdef UNICODE
+    wchar_t wch;
+#endif
 
     // Do we need to change the look of the cursor?
     if((flags & CLF_CURSOR_LARGE) !=
@@ -299,15 +313,23 @@ static void setConWindowCmdLine(ddwindow_t *win, const char *text,
         win->console.cmdline.flags ^= CLF_CURSOR_LARGE;
     }
 
+#ifdef UNICODE
+    line[0].Char.UnicodeChar = L'>';
+#else
     line[0].Char.AsciiChar = '>';
+#endif
     line[0].Attributes = CMDLINE_ATTRIB;
     for(i = 0, ch = line + 1; i < LINELEN - 1; ++i, ch++)
     {
+#ifdef UNICODE
         if(i < strlen(text))
-            ch->Char.AsciiChar = text[i];
+            mbtowc(&wch, &text[i], MB_CUR_MAX);
         else
-            ch->Char.AsciiChar = ' ';
-
+            wch = L' ';
+        ch->Char.UnicodeChar = wch;
+#else
+        ch->Char.AsciiChar = (i < strlen(text)? text[i] : ' ');
+#endif
         // Gray color.
         ch->Attributes = CMDLINE_ATTRIB;
     }
