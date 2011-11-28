@@ -49,7 +49,7 @@ else:macx {
 
     LIBS += -framework SDL -framework SDL_mixer
 
-    !deng_snowleopard {
+    deng_32bitonly|!deng_snowleopard {
         # Also include SDL_net.
         INCLUDEPATH += $${SDL_FRAMEWORK_DIR}/SDL_net.framework/Headers
         LIBS += -framework SDL_net

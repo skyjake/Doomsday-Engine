@@ -12,9 +12,9 @@ DOOMSDAY_VERSION_REVISION = 0
 DOOMSDAY_RELEASE_TYPE = "Unstable"
 
 def parse_header_for_version(headerFile):
-    versionMajor = None
-    versionMinor = None
-    versionRevision = None
+    versionMajor = 0
+    versionMinor = 0
+    versionRevision = 0
     versionName = ""
     releaseType = ""
     
@@ -22,6 +22,7 @@ def parse_header_for_version(headerFile):
     for line in f.readlines():
         line = line.strip()
         if line[:7] != "#define": continue
+        if 'TEXTLONG' in line: continue
         baseAt = line.find("DOOMSDAY_VERSION_BASE")
         baseOff = 21
         if baseAt < 0:
@@ -45,11 +46,14 @@ def parse_header_for_version(headerFile):
             
     return (versionMajor, versionMinor, versionRevision, versionName, releaseType)
 
-def find_version():
-    print "Determining Doomsday version...",
+def find_version(quiet = False):
+    if not quiet: print "Determining Doomsday version...",
     
-    versionMajor, versionMinor, versionRevision, versionBase, versionName, releaseType = \
-        parse_header_for_version(os.path.join(DOOMSDAY_DIR, 'engine', 'portable', 'include', 'dd_version.h')
+    versionMajor, versionMinor, versionRevision, versionName, releaseType = \
+        parse_header_for_version(os.path.join(DOOMSDAY_DIR, 'engine', 'portable', 'include', 'dd_version.h'))
+    if not releaseType: releaseType = "Unstable"
+
+    versionBase = "%s.%s.%s" % (versionMajor, versionMinor, versionRevision)
 
     global DOOMSDAY_VERSION_FULL
     global DOOMSDAY_VERSION_FULL_PLAIN
@@ -67,19 +71,21 @@ def find_version():
     DOOMSDAY_VERSION_MINOR = versionMinor
     DOOMSDAY_VERSION_REVISION = versionRevision
 
-    print DOOMSDAY_VERSION_FULL + " (%s)" % releaseType
+    if not quiet: print DOOMSDAY_VERSION_FULL + " (%s)" % releaseType
 
-    
-# Invoked from qmake? Returns "version_base buildnum win32_version_with_buildnum"
-if __file__ == '__main__':
+        
+# Invoked from qmake? Returns "version_base buildnum releasetype win32_version_with_buildnum"
+if __name__ == '__main__':
     import sys
     import build_number
     headerName = sys.argv[1]
     buildNum = build_number.todays_build()
-    # Get the Voomsday version.
-    find_version()    
+
+    # Get the Doomsday version. We can use some of this information.
+    find_version(True)
     
-    major, minor, revision, base, name, type = parse_header_for_version(headerName)
-    if not type: type = DOOMSDAY_RELEASE_TYPE
+    major, minor, revision, name, reltype = parse_header_for_version(headerName)
+    if not reltype: reltype = DOOMSDAY_RELEASE_TYPE
     
-    
+    print "%s.%s.%s %s %s %s,%s,%s,%s" % (major, minor, revision, buildNum, reltype,
+                                          major, minor, revision, buildNum)

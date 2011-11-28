@@ -53,13 +53,16 @@ static boolean Writer_Check(const Writer* writer, size_t len)
         Con_Message("Writer_Check: Invalid Writer!\n");
         return false;
     }
-    if(writer->pos > writer->size - len)
+    if((int)writer->pos > (int)writer->size - (int)len)
     {
         // Dynamic buffers will expand.
-        if(writer->isDynamic)
+        if(writer->isDynamic && len)
         {
             Writer* modWriter = (Writer*) writer;
-            modWriter->size *= 2;
+            while((int)modWriter->size < (int)writer->pos + (int)len)
+            {
+                modWriter->size *= 2;
+            }
             if(writer->maxDynamicSize)
             {
                 modWriter->size = MIN_OF(writer->maxDynamicSize, writer->size);
@@ -67,7 +70,7 @@ static boolean Writer_Check(const Writer* writer, size_t len)
             modWriter->data = M_Realloc(writer->data, writer->size);
 
             // OK now?
-            if(writer->pos <= writer->size - len)
+            if((int)writer->pos <= (int)writer->size - (int)len)
                 return true;
         }
         Con_Error("Writer_Check: Position %lu[+%lu] out of bounds, size=%lu, dynamic=%i.\n",

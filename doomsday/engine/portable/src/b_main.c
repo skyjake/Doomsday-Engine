@@ -267,7 +267,7 @@ int B_NewIdentifier(void)
 
 const char* B_ParseContext(const char* desc, bcontext_t** bc)
 {
-    ddstring_t*         str = Str_New();
+    ddstring_t* str;
 
     *bc = 0;
     if(!strchr(desc, ':'))
@@ -276,6 +276,7 @@ const char* B_ParseContext(const char* desc, bcontext_t** bc)
         return desc;
     }
 
+    str = Str_New();
     desc = Str_CopyDelim(str, desc, ':');
     *bc = B_ContextByName(Str_Text(str));
     Str_Delete(str);

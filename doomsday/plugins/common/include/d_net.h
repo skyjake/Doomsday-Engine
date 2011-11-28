@@ -77,7 +77,8 @@ enum {
     GPT_PLAYER_SPAWN_POSITION,
     GPT_DAMAGE_REQUEST,                    // Client requests damage on a target.
     GPT_MOBJ_IMPULSE,              // Momenum to apply on a mobj.
-    GPT_FLOOR_HIT_REQUEST
+    GPT_FLOOR_HIT_REQUEST,
+    GPT_MAYBE_CHANGE_WEAPON         // Server suggests weapon change.
 };
 
 #if 0
@@ -194,6 +195,7 @@ enum {
 
 Writer*         D_NetWrite(void);
 Reader*         D_NetRead(const byte* buffer, size_t len);
+void            D_NetClearBuffer(void);
 
 // Networking.
 int             D_NetServerOpen(int before);

@@ -49,6 +49,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -922,6 +923,7 @@ boolean N_InitService(boolean inServerMode)
             Con_Message("N_InitService: %s\n", SDLNet_GetError());
             return false;
         }
+        memcpy(&netNodes[0].addr, &ip, sizeof(ip));
 
         // Allocate socket sets, which we'll use for listening to the
         // client sockets.
@@ -1798,14 +1800,63 @@ static int C_DECL N_JoinedListenerThread(void* param)
 /**
  * Called from "net info".
  */
-void N_PrintInfo(void)
+void N_PrintNetworkStatus(void)
 {
-    // \todo Print information about send queues, ports, etc.
+    int i, first;
 
-#ifdef TRANSMIT_RANDOMIZER
-    Con_Message("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
-               RANDOMIZER_MAX_DELAY, RANDOMIZER_DROP_PERCENT);
-#endif
-
+    if(isServer && !serverSock)
+    {
+        Con_Message("OFFLINE: Single-player mode.\n");
+    }
+    else if(isServer)
+    {
+        if(isDedicated) Con_Message("DEDICATED ");
+        Con_Message("SERVER: ");
+        if(serverSock)
+        {
+            char buf[80];
+            N_IPToString(buf, &netNodes[0].addr);
+            Con_Message("Open at %s.\n", buf);
+        }
+        else
+        {
+            Con_Message("No server socket open.\n");
+        }
+        first = true;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+        {
+            client_t *cl = &clients[i];
+            player_t *plr = &ddPlayers[i];
+            netnode_t* node = &netNodes[cl->nodeID];
+            if(cl->nodeID)
+            {
+                if(first)
+                {
+                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
+                    first = false;
+                }
+                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
+                            i, cl->name, cl->nodeID,
+                            node->hasJoined? '*' : ' ',
+                            cl->handshake? '*' : ' ',
+                            cl->ready? '*' : ' ',
+                            plr->shared.inGame? '*' : ' ',
+                            Sys_GetRealSeconds() - cl->enterTime);
+            }
+        }
+        if(first)
+        {
+            Con_Message("No clients connected.\n");
+        }
+    }
+    if(isClient)
+    {
+        char buf[80];
+        N_IPToString(buf, &netNodes[0].addr);
+        Con_Message("CLIENT: Connected to server at %s.\n", buf);
+    }
     N_PrintBufferInfo();
+
+    Con_Message("Configuration:\n");
+    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
 }

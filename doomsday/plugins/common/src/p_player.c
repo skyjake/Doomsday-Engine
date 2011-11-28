@@ -407,6 +407,13 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     weaponinfo_t       *winf;
     boolean             found;
 
+    if(IS_SERVER)
+    {
+        // This is done on clientside.
+        NetSv_MaybeChangeWeapon(player - players, weapon, ammo, force);
+        return WT_NOCHANGE;
+    }
+
 #ifdef _DEBUG
     Con_Message("P_MaybeChangeWeapon: plr %i, weapon %i, ammo %i, force %i\n",
                 (int)(player - players), weapon, ammo, force);
@@ -571,7 +578,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     if(returnval != WT_NOCHANGE)
     {
         player->pendingWeapon = returnval;
-        player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+        //player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
     }
 
     return returnval;
