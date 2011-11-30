@@ -21,17 +21,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "de_platform.h"
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h>
-
 #if defined(WIN32)
 #  include <direct.h>
 #  include <io.h>
 #  include <conio.h>
 #endif
+
+#include "de_platform.h"
+
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 
 #if defined(UNIX)
 #  include <unistd.h>

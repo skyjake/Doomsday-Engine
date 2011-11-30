@@ -636,7 +636,7 @@ void DD_ReadMouse(void)
 		static uint lastTime = 0;
 		uint nowTime = Sys_GetRealTime();
 		
-		if(nowTime - lastTime < 1000/mouseFreq)
+		if((int)(nowTime - lastTime) < 1000/mouseFreq)
 		{
 			// Don't ask yet.
 			memset(&mouse, 0, sizeof(mouse));

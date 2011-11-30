@@ -37,6 +37,15 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define mkdir   _mkdir
+#define open    _open
+#define close   _close
+#define read    _read
+#define write   _write
+#define access  _access
 
 #define INTEGER64 __int64
 

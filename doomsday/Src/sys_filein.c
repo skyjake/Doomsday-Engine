@@ -38,6 +38,10 @@
 
 #include "sys_findfile.h"
 
+#ifdef WIN32
+#  define strupr _strupr
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_LUMPDIRS	1024

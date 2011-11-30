@@ -38,6 +38,7 @@ extern          "C" {
 	 */
 
 #include <stdlib.h>
+#include <string.h>
 #include "dd_version.h"
 #include "dd_types.h"
 #include "p_think.h"
@@ -53,8 +54,8 @@ extern          "C" {
 
 	// The case-independent strcmps have different names.
 #ifdef WIN32
-#	define strcasecmp	stricmp
-#	define strncasecmp	strnicmp
+#	define strcasecmp	_stricmp
+#	define strncasecmp	_strnicmp
 #endif
 #ifdef UNIX
 #	define stricmp 		strcasecmp

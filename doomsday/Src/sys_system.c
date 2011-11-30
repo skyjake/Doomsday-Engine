@@ -11,6 +11,7 @@
 #  include <windows.h>
 #  include <process.h>
 #  include <signal.h>
+#  define spawnlp _spawnlp
 #endif
 
 #include <SDL.h>

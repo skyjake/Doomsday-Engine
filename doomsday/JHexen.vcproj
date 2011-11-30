@@ -1,23 +1,49 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="9,00"
 	Name="JHexen"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{060CA7D4-CEF4-4F36-8950-55A3E5C46C4C}"
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\./Bin/Debug"
 			IntermediateDirectory=".\./Obj/Debug/JHexen"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\./Bin/Debug/JHexen.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
@@ -25,525 +51,708 @@
 				PreprocessorDefinitions="__JHEXEN__;WIN32;_DEBUG;_WINDOWS;_USRDLL;JHEXEN_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Debug/JHexen/JHexen.pch"
 				AssemblerListingLocation=".\./Obj/Debug/JHexen/"
 				ObjectFile=".\./Obj/Debug/JHexen/"
 				ProgramDataBaseFileName=".\./Obj/Debug/JHexen/"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CallingConvention="2"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Debug/JHexen.dll"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\Src\jHexen\jhexen.def"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/JHexen.pdb"
-				ImportLibrary=".\./Bin/Debug/JHexen.lib"/>
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				ImportLibrary=".\./Bin/Debug/JHexen.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/JHexen.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\./Bin/Release"
 			IntermediateDirectory=".\./Obj/Release/JHexen"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\./Bin/Release/JHexen.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="Include,Include/JHexen,Include/Common"
 				PreprocessorDefinitions="__JHEXEN__;NORANGECHECKING;WIN32;NDEBUG;_WINDOWS;_USRDLL;JHEXEN_EXPORTS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/JHexen/JHexen.pch"
 				AssemblerListingLocation=".\./Obj/Release/JHexen/"
 				ObjectFile=".\./Obj/Release/JHexen/"
 				ProgramDataBaseFileName=".\./Obj/Release/JHexen/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				CallingConvention="2"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Release/JHexen.dll"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				ModuleDefinitionFile=".\Src\jHexen\jhexen.def"
 				ProgramDatabaseFile=".\./Bin/Release/JHexen.pdb"
-				ImportLibrary=".\./Bin/Release/JHexen.lib"/>
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				ImportLibrary=".\./Bin/Release/JHexen.lib"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/JHexen.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
 			<File
-				RelativePath=".\Src\jHexen\A_action.c">
+				RelativePath=".\Src\jHexen\A_action.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\AcFnLink.c">
+				RelativePath=".\Src\jHexen\AcFnLink.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Am_map.c">
+				RelativePath=".\Src\jHexen\Am_map.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Ct_chat.c">
+				RelativePath=".\Src\jHexen\Ct_chat.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\In_lude.c">
+				RelativePath=".\Src\Common\f_infine.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\JHexen.rc">
+				RelativePath=".\Src\Common\g_game.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Src\Common\hu_pspr.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Src\jHexen\In_lude.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Src\jHexen\jhexen.def"
+				>
+			</File>
+			<File
+				RelativePath=".\Src\jHexen\JHexen.rc"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="Src\jHexen;$(NoInherit)"/>
+						AdditionalIncludeDirectories="Src\jHexen;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="Src\jHexen;$(NoInherit)"/>
+						AdditionalIncludeDirectories="Src\jHexen;$(NoInherit)"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\M_misc.c">
+				RelativePath="Src\Common\m_fixed.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Po_man.c">
+				RelativePath=".\Src\jHexen\M_misc.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Sb_bar.c">
+				RelativePath=".\Src\jHexen\Po_man.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Sc_man.c">
+				RelativePath=".\Src\Common\r_common.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Sn_sonix.c">
+				RelativePath=".\Src\jHexen\s_sound.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Sv_save.c">
+				RelativePath=".\Src\jHexen\Sb_bar.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\Tables.c">
+				RelativePath=".\Src\jHexen\Sc_man.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\Common\f_infine.c">
+				RelativePath=".\Src\jHexen\Sn_sonix.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\Common\g_game.c">
+				RelativePath=".\Src\jHexen\Sv_save.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\Common\hu_pspr.c">
+				RelativePath=".\Src\jHexen\Tables.c"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\jHexen\jhexen.def">
-			</File>
-			<File
-				RelativePath="Src\Common\m_fixed.c">
-			</File>
-			<File
-				RelativePath=".\Src\Common\r_common.c">
-			</File>
-			<File
-				RelativePath=".\Src\jHexen\s_sound.c">
-			</File>
-			<File
-				RelativePath=".\Src\Common\x_hair.c">
+				RelativePath=".\Src\Common\x_hair.c"
+				>
 			</File>
 			<Filter
 				Name="Play"
-				Filter="c">
+				Filter="c"
+				>
 				<File
-					RelativePath=".\Src\jHexen\P_acs.c">
+					RelativePath=".\Src\jHexen\P_acs.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_anim.c">
+					RelativePath=".\Src\Common\p_actor.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_ceilng.c">
+					RelativePath=".\Src\jHexen\P_anim.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_doors.c">
+					RelativePath=".\Src\jHexen\P_ceilng.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_enemy.c">
+					RelativePath=".\Src\jHexen\P_doors.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_floor.c">
+					RelativePath=".\Src\jHexen\P_enemy.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_inter.c">
+					RelativePath=".\Src\jHexen\P_floor.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_lights.c">
+					RelativePath=".\Src\jHexen\P_inter.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_map.c">
+					RelativePath=".\Src\jHexen\P_lights.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_maputl.c">
+					RelativePath=".\Src\jHexen\P_map.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_mobj.c">
+					RelativePath=".\Src\jHexen\P_maputl.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_plats.c">
+					RelativePath=".\Src\jHexen\P_mobj.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_pspr.c">
+					RelativePath=".\Src\jHexen\P_plats.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_setup.c">
+					RelativePath=".\Src\jHexen\P_pspr.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_sight.c">
+					RelativePath=".\Src\jHexen\P_setup.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_spec.c">
+					RelativePath=".\Src\jHexen\P_sight.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_switch.c">
+					RelativePath=".\Src\jHexen\P_spec.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_telept.c">
+					RelativePath=".\Src\Common\p_start.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_things.c">
+					RelativePath=".\Src\Common\p_svtexarc.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\P_user.c">
+					RelativePath=".\Src\jHexen\P_switch.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_actor.c">
+					RelativePath=".\Src\jHexen\P_telept.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_start.c">
+					RelativePath=".\Src\jHexen\P_things.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_svtexarc.c">
+					RelativePath=".\Src\Common\p_tick.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_tick.c">
+					RelativePath=".\Src\jHexen\P_user.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_view.c">
+					RelativePath=".\Src\Common\p_view.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Base-level"
-				Filter="c">
+				Filter="c"
+				>
 				<File
-					RelativePath=".\Src\jHexen\H2_Actn.c">
+					RelativePath=".\Src\Common\g_dglinit.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\H2_main.c">
+					RelativePath=".\Src\Common\g_update.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\HConsole.c">
+					RelativePath=".\Src\jHexen\H2_Actn.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\jHexen\HRefresh.c">
+					RelativePath=".\Src\jHexen\H2_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\g_dglinit.c">
+					RelativePath=".\Src\jHexen\HConsole.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\g_update.c">
+					RelativePath=".\Src\jHexen\HRefresh.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Menu"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\jHexen\Mn_menu.c">
+					RelativePath=".\Src\Common\m_multi.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\m_multi.c">
+					RelativePath=".\Src\jHexen\Mn_menu.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Network"
-				Filter="c">
+				Filter="c"
+				>
 				<File
-					RelativePath=".\Src\Common\d_Net.c">
+					RelativePath=".\Src\Common\d_Net.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\d_NetCl.c">
+					RelativePath=".\Src\Common\d_NetCl.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\d_NetSv.c">
+					RelativePath=".\Src\Common\d_NetSv.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="XG"
-				Filter="c">
+				Filter="c"
+				>
 				<File
-					RelativePath=".\Src\Common\p_xgfile.c">
+					RelativePath=".\Src\Common\p_xgfile.c"
+					>
 					<FileConfiguration
 						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_xgline.c">
+					RelativePath=".\Src\Common\p_xgline.c"
+					>
 					<FileConfiguration
 						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_xgsave.c">
+					RelativePath=".\Src\Common\p_xgsave.c"
+					>
 					<FileConfiguration
 						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\Src\Common\p_xgsec.c">
+					RelativePath=".\Src\Common\p_xgsec.c"
+					>
 					<FileConfiguration
 						Name="Debug|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 					<FileConfiguration
 						Name="Release|Win32"
-						ExcludedFromBuild="TRUE">
+						ExcludedFromBuild="true"
+						>
 						<Tool
-							Name="VCCLCompilerTool"/>
+							Name="VCCLCompilerTool"
+						/>
 					</FileConfiguration>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl">
+			Filter="h;hpp;hxx;hm;inl"
+			>
 			<File
-				RelativePath=".\Include\JHexen\AcFnLink.h">
+				RelativePath=".\Include\JHexen\AcFnLink.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Am_data.h">
+				RelativePath=".\Include\JHexen\Am_data.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Am_map.h">
+				RelativePath=".\Include\JHexen\Am_map.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Ct_chat.h">
+				RelativePath=".\Include\JHexen\Ct_chat.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\H2_Actn.h">
+				RelativePath=".\Include\Common\f_infine.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\H2def.h">
+				RelativePath=".\Include\Common\g_common.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Info.h">
+				RelativePath=".\Include\JHexen\g_demo.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Mn_def.h">
+				RelativePath=".\Include\Common\g_update.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\R_local.h">
+				RelativePath=".\Include\JHexen\H2_Actn.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Settings.h">
+				RelativePath=".\Include\JHexen\H2def.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Sounds.h">
+				RelativePath=".\Include\Common\hu_pspr.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Soundst.h">
+				RelativePath=".\Include\JHexen\Info.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Textdefs.h">
+				RelativePath=".\Include\JHexen\m_bams.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\Xddefs.h">
+				RelativePath=".\Include\JHexen\Mn_def.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\f_infine.h">
+				RelativePath=".\Include\Common\r_common.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\g_common.h">
+				RelativePath=".\Include\JHexen\R_local.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\g_demo.h">
+				RelativePath=".\Include\JHexen\Settings.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\g_update.h">
+				RelativePath=".\Include\JHexen\Sounds.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\hu_pspr.h">
+				RelativePath=".\Include\JHexen\Soundst.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\JHexen\m_bams.h">
+				RelativePath=".\Include\JHexen\Textdefs.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\r_common.h">
+				RelativePath=".\Include\Common\x_hair.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\Common\x_hair.h">
+				RelativePath=".\Include\JHexen\Xddefs.h"
+				>
 			</File>
 			<Filter
 				Name="Network Hdrs"
-				Filter="h">
+				Filter="h"
+				>
 				<File
-					RelativePath=".\Include\Common\d_Net.h">
+					RelativePath=".\Include\Common\d_Net.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\d_NetCl.h">
+					RelativePath=".\Include\Common\d_NetCl.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\d_NetSv.h">
+					RelativePath=".\Include\Common\d_NetSv.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="XG Hdrs"
-				Filter="h">
+				Filter="h"
+				>
 				<File
-					RelativePath=".\Include\Common\p_xg.h">
+					RelativePath=".\Include\Common\p_xg.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_xgline.h">
+					RelativePath=".\Include\Common\p_xgline.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_xgsec.h">
+					RelativePath=".\Include\Common\p_xgsec.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\xgclass.h">
+					RelativePath=".\Include\Common\xgclass.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Doomsday Headers"
-				Filter=".h">
+				Filter=".h"
+				>
 				<File
-					RelativePath=".\Include\dd_api.h">
+					RelativePath=".\Include\dd_api.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_dfdat.h">
+					RelativePath=".\Include\dd_dfdat.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_share.h">
+					RelativePath=".\Include\dd_share.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Play Headers"
-				Filter=".h">
+				Filter=".h"
+				>
 				<File
-					RelativePath=".\Include\JHexen\P_local.h">
+					RelativePath=".\Include\Common\p_actor.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\JHexen\P_spec.h">
+					RelativePath=".\Include\JHexen\P_local.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_actor.h">
+					RelativePath=".\Include\Common\p_saveg.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_saveg.h">
+					RelativePath=".\Include\JHexen\P_spec.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_start.h">
+					RelativePath=".\Include\Common\p_start.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_svtexarc.h">
+					RelativePath=".\Include\Common\p_svtexarc.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\Common\p_view.h">
+					RelativePath=".\Include\Common\p_view.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 			<File
-				RelativePath=".\Data\JHexen\Hexen.ico">
+				RelativePath=".\Data\JHexen\Hexen.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\Data\JHexen\JHexen.ico">
+				RelativePath=".\Data\JHexen\JHexen.ico"
+				>
 			</File>
 		</Filter>
 	</Files>

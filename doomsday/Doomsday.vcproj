@@ -1,108 +1,179 @@
-<?xml version="1.0" encoding = "Windows-1252"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.00"
+	Version="9,00"
 	Name="Doomsday"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{65AA7CE4-1A37-454A-8D2B-F00C99DCEA9A}"
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\./Bin/Release"
 			IntermediateDirectory=".\./Obj/Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\./Bin/Release/Doomsday.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Gs "
 				Optimization="4"
 				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="TRUE"
+				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
+				OmitFramePointers="true"
 				AdditionalIncludeDirectories="./Include,./Include/jtNet2"
 				PreprocessorDefinitions="__DOOMSDAY__,WIN32_GAMMA,NORANGECHECKING,WIN32,NDEBUG,_WINDOWS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/Doomsday.pch"
 				AssemblerListingLocation=".\./Obj/Release/"
 				ObjectFile=".\./Obj/Release/"
 				ProgramDataBaseFileName=".\./Obj/Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="1"
 				CallingConvention="2"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="sdl_net.lib sdl.lib wsock32.lib libpng.lib libz.lib fmodvc.lib lzss.lib dinput.lib dsound.lib eaxguid.lib dxguid.lib winmm.lib odbc32.lib odbccp32.lib"
 				OutputFile=".\./Bin/Release/Doomsday.exe"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="./Bin/Release"
 				ModuleDefinitionFile=".\Src\Doomsday.def"
 				ProgramDatabaseFile=".\./Bin/Release/Doomsday.pdb"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/Doomsday.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="./Bin/Debug"
 			IntermediateDirectory="./Obj/Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\./Bin/Debug/Doomsday.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="./Include,./Include/jtNet2"
-				PreprocessorDefinitions="ZLIB_DLL,__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS,ZLIB_DLL,__DOOMSDAY__,WIN32_GAMMA,WIN32,_DEBUG,_WINDOWS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Debug/Doomsday.pch"
 				AssemblerListingLocation=".\./Obj/Debug/"
 				ObjectFile=".\./Obj/Debug/"
 				ProgramDataBaseFileName=".\./Obj/Debug/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CallingConvention="2"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
@@ -110,1005 +181,1287 @@
 				OutputFile="./Bin/Debug/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="2"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="./Bin/Debug"
 				ModuleDefinitionFile=".\Src\Doomsday.def"
-				GenerateDebugInformation="TRUE"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\./Bin/Debug/Doomsday.pdb"
-				SubSystem="2"/>
+				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Debug/Doomsday.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
+	<References>
+	</References>
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
 			<File
-				RelativePath=".\Src\Doomsday.def">
+				RelativePath=".\Src\Doomsday.def"
+				>
 			</File>
 			<File
-				RelativePath=".\Src\template.c">
+				RelativePath=".\Src\template.c"
+				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
+					ExcludedFromBuild="true"
+					>
 					<Tool
-						Name="VCCLCompilerTool"/>
+						Name="VCCLCompilerTool"
+					/>
 				</FileConfiguration>
 			</File>
 			<Filter
 				Name="Base"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\dd_dgl.c">
+					RelativePath=".\Src\dd_dgl.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_help.c">
+					RelativePath=".\Src\dd_help.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_input.c">
+					RelativePath=".\Src\dd_input.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_loop.c">
+					RelativePath=".\Src\dd_loop.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_main.c">
+					RelativePath=".\Src\dd_main.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\dd_pinit.c">
+					RelativePath="Src\dd_pinit.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_plugin.c">
+					RelativePath=".\Src\dd_plugin.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_wad.c">
+					RelativePath=".\Src\dd_wad.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_winit.c">
+					RelativePath=".\Src\dd_winit.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\dd_zip.c">
+					RelativePath=".\Src\dd_zip.c"
+					>
 					<FileConfiguration
-						Name="Debug|Win32">
+						Name="Debug|Win32"
+						>
 						<Tool
 							Name="VCCLCompilerTool"
-							CallingConvention="2"/>
+							CallingConvention="2"
+						/>
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\Src\dd_zone.c">
+					RelativePath=".\Src\dd_zone.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Console"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\con_action.c">
+					RelativePath=".\Src\con_action.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\con_bar.c">
+					RelativePath=".\Src\con_bar.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\con_bind.c">
+					RelativePath=".\Src\con_bind.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\con_config.c">
+					RelativePath=".\Src\con_config.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\con_main.c">
+					RelativePath="Src\con_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\con_start.c">
+					RelativePath=".\Src\con_start.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="System"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\sys_console.c">
+					RelativePath=".\Src\sys_console.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_direc.c">
+					RelativePath=".\Src\sys_direc.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_filein.c">
+					RelativePath=".\Src\sys_filein.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\sys_findfile.c">
+					RelativePath="Src\sys_findfile.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_input.c">
+					RelativePath=".\Src\sys_input.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_master.c">
+					RelativePath=".\Src\sys_master.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_mixer.c">
+					RelativePath=".\Src\sys_mixer.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\Unix\sys_network.c">
+					RelativePath="Src\Unix\sys_network.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_sock.c">
+					RelativePath=".\Src\sys_sock.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_stwin.c">
+					RelativePath=".\Src\sys_stwin.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_system.c">
+					RelativePath=".\Src\sys_system.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\sys_timer.c">
+					RelativePath=".\Src\sys_timer.c"
+					>
 				</File>
 				<Filter
 					Name="Audio Drivers"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Src\sys_musd_fmod.c">
+						RelativePath=".\Src\sys_musd_fmod.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sys_musd_win.c">
+						RelativePath=".\Src\sys_musd_win.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sys_sfxd_ds.c">
+						RelativePath=".\Src\sys_sfxd_ds.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sys_sfxd_dummy.c">
+						RelativePath=".\Src\sys_sfxd_dummy.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sys_sfxd_loader.c">
+						RelativePath=".\Src\sys_sfxd_loader.c"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Network"
-				Filter="">
+				>
 				<File
-					RelativePath="Src\net_buf.c">
+					RelativePath="Src\net_buf.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\net_demo.c">
+					RelativePath=".\Src\net_demo.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\net_event.c">
+					RelativePath="Src\net_event.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\net_main.c">
+					RelativePath=".\Src\net_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\net_msg.c">
+					RelativePath=".\Src\net_msg.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\net_ping.c">
+					RelativePath=".\Src\net_ping.c"
+					>
 				</File>
 				<Filter
 					Name="Client"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Src\cl_frame.c">
+						RelativePath=".\Src\cl_frame.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\cl_main.c">
+						RelativePath=".\Src\cl_main.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\cl_mobj.c">
+						RelativePath=".\Src\cl_mobj.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\cl_player.c">
+						RelativePath=".\Src\cl_player.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\cl_sound.c">
+						RelativePath=".\Src\cl_sound.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\cl_world.c">
+						RelativePath=".\Src\cl_world.c"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Server"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Src\sv_frame.c">
+						RelativePath=".\Src\sv_frame.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sv_main.c">
+						RelativePath=".\Src\sv_main.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sv_missile.c">
+						RelativePath=".\Src\sv_missile.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sv_pool.c">
+						RelativePath=".\Src\sv_pool.c"
+						>
 					</File>
 					<File
-						RelativePath=".\Src\sv_sound.c">
+						RelativePath=".\Src\sv_sound.c"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Play"
-				Filter="">
+				>
 				<File
-					RelativePath="Src\p_bmap.c">
+					RelativePath="Src\p_bmap.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_data.c">
+					RelativePath=".\Src\p_data.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_intercept.c">
+					RelativePath=".\Src\p_intercept.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_maputil.c">
+					RelativePath=".\Src\p_maputil.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_mobj.c">
+					RelativePath=".\Src\p_mobj.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_particle.c">
+					RelativePath=".\Src\p_particle.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_polyob.c">
+					RelativePath=".\Src\p_polyob.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_sight.c">
+					RelativePath=".\Src\p_sight.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_think.c">
+					RelativePath=".\Src\p_think.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\p_tick.c">
+					RelativePath=".\Src\p_tick.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Refresh"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\r_data.c">
+					RelativePath=".\Src\r_data.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_draw.c">
+					RelativePath=".\Src\r_draw.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_extres.c">
+					RelativePath=".\Src\r_extres.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_main.c">
+					RelativePath=".\Src\r_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_model.c">
+					RelativePath=".\Src\r_model.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\r_shadow.c">
+					RelativePath="Src\r_shadow.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_sky.c">
+					RelativePath=".\Src\r_sky.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_things.c">
+					RelativePath=".\Src\r_things.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_util.c">
+					RelativePath=".\Src\r_util.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\r_world.c">
+					RelativePath=".\Src\r_world.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Renderer"
-				Filter="">
+				>
 				<File
-					RelativePath="Src\rend_bias.c">
+					RelativePath="Src\rend_bias.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_clip.c">
+					RelativePath=".\Src\rend_clip.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_decor.c">
+					RelativePath=".\Src\rend_decor.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_dyn.c">
+					RelativePath=".\Src\rend_dyn.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\rend_fakeradio.c">
+					RelativePath="Src\rend_fakeradio.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_halo.c">
+					RelativePath=".\Src\rend_halo.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_list.c">
+					RelativePath=".\Src\rend_list.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_main.c">
+					RelativePath=".\Src\rend_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_model.c">
+					RelativePath=".\Src\rend_model.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_particle.c">
+					RelativePath=".\Src\rend_particle.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_shadow.c">
+					RelativePath=".\Src\rend_shadow.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_sky.c">
+					RelativePath=".\Src\rend_sky.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\rend_sprite.c">
+					RelativePath=".\Src\rend_sprite.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Graphics"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\gl_draw.c">
+					RelativePath=".\Src\gl_draw.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_font.c">
+					RelativePath=".\Src\gl_font.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\gl_hq2x.c">
+					RelativePath="Src\gl_hq2x.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_main.c">
+					RelativePath=".\Src\gl_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_pcx.c">
+					RelativePath=".\Src\gl_pcx.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_png.c">
+					RelativePath=".\Src\gl_png.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_tex.c">
+					RelativePath=".\Src\gl_tex.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\gl_tga.c">
+					RelativePath=".\Src\gl_tga.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Audio"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\s_cache.c">
+					RelativePath=".\Src\s_cache.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_environ.c">
+					RelativePath=".\Src\s_environ.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_logic.c">
+					RelativePath=".\Src\s_logic.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_main.c">
+					RelativePath=".\Src\s_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_mus.c">
+					RelativePath=".\Src\s_mus.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_sfx.c">
+					RelativePath=".\Src\s_sfx.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\s_wav.c">
+					RelativePath=".\Src\s_wav.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Miscellaneous"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\m_args.c">
+					RelativePath=".\Src\m_args.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_bams.c">
+					RelativePath=".\Src\m_bams.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_filehash.c">
+					RelativePath=".\Src\m_filehash.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\Common\m_fixed.c">
+					RelativePath=".\Src\Common\m_fixed.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_huffman.c">
+					RelativePath=".\Src\m_huffman.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_misc.c">
+					RelativePath=".\Src\m_misc.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_nodepile.c">
+					RelativePath=".\Src\m_nodepile.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\m_string.c">
+					RelativePath=".\Src\m_string.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\m_vector.c">
+					RelativePath="Src\m_vector.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Tables"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Src\tab_tables.c">
+					RelativePath=".\Src\tab_tables.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\tab_video.c">
+					RelativePath=".\Src\tab_video.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="UI"
-				Filter=".c">
+				Filter=".c"
+				>
 				<File
-					RelativePath=".\Src\ui_main.c">
+					RelativePath=".\Src\ui_main.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\ui_mpi.c">
+					RelativePath=".\Src\ui_mpi.c"
+					>
 				</File>
 				<File
-					RelativePath=".\Src\ui_panel.c">
+					RelativePath=".\Src\ui_panel.c"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Definitions"
-				Filter="">
+				>
 				<File
-					RelativePath="Src\def_data.c">
+					RelativePath="Src\def_data.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\def_main.c">
+					RelativePath="Src\def_main.c"
+					>
 				</File>
 				<File
-					RelativePath="Src\def_read.c">
+					RelativePath="Src\def_read.c"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl">
+			Filter="h;hpp;hxx;hm;inl"
+			>
 			<File
-				RelativePath=".\Include\LZSS.h">
+				RelativePath=".\Include\doomsday.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\doomsday.h">
+				RelativePath=".\Include\LZSS.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Include\template.h">
+				RelativePath=".\Include\template.h"
+				>
 			</File>
 			<Filter
 				Name="Base Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\dd_api.h">
+					RelativePath=".\Include\dd_api.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_def.h">
+					RelativePath=".\Include\dd_def.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_dgl.h">
+					RelativePath=".\Include\dd_dgl.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_help.h">
+					RelativePath=".\Include\dd_help.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_input.h">
+					RelativePath=".\Include\dd_input.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_loop.h">
+					RelativePath=".\Include\dd_loop.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_main.h">
+					RelativePath=".\Include\dd_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_plugin.h">
+					RelativePath=".\Include\dd_plugin.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_share.h">
+					RelativePath=".\Include\dd_share.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_types.h">
+					RelativePath=".\Include\dd_types.h"
+					>
 				</File>
 				<File
-					RelativePath="Include\dd_version.h">
+					RelativePath="Include\dd_version.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_wad.h">
+					RelativePath=".\Include\dd_wad.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_winit.h">
+					RelativePath=".\Include\dd_winit.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_zip.h">
+					RelativePath=".\Include\dd_zip.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dd_zone.h">
+					RelativePath=".\Include\dd_zone.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\de_base.h">
+					RelativePath=".\Include\de_base.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Console Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\con_action.h">
+					RelativePath=".\Include\con_action.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_bar.h">
+					RelativePath=".\Include\con_bar.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_bind.h">
+					RelativePath=".\Include\con_bind.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_config.h">
+					RelativePath=".\Include\con_config.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_console.h">
+					RelativePath=".\Include\con_console.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_decl.h">
+					RelativePath=".\Include\con_decl.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\con_start.h">
+					RelativePath=".\Include\con_start.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\de_console.h">
+					RelativePath=".\Include\de_console.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="System Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_system.h">
+					RelativePath=".\Include\de_system.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_console.h">
+					RelativePath=".\Include\sys_console.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_direc.h">
+					RelativePath=".\Include\sys_direc.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_file.h">
+					RelativePath=".\Include\sys_file.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_input.h">
+					RelativePath=".\Include\sys_input.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_master.h">
+					RelativePath=".\Include\sys_master.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_network.h">
+					RelativePath=".\Include\sys_network.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_sock.h">
+					RelativePath=".\Include\sys_sock.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_stwin.h">
+					RelativePath=".\Include\sys_stwin.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_system.h">
+					RelativePath=".\Include\sys_system.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\sys_timer.h">
+					RelativePath=".\Include\sys_timer.h"
+					>
 				</File>
 				<Filter
 					Name="Audio Driver Headers"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Include\sys_audio.h">
+						RelativePath=".\Include\sys_audio.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_musd.h">
+						RelativePath=".\Include\sys_musd.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_musd_fmod.h">
+						RelativePath=".\Include\sys_musd_fmod.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_musd_win.h">
+						RelativePath=".\Include\sys_musd_win.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_sfxd.h">
+						RelativePath=".\Include\sys_sfxd.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_sfxd_ds.h">
+						RelativePath=".\Include\sys_sfxd_ds.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_sfxd_dummy.h">
+						RelativePath=".\Include\sys_sfxd_dummy.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sys_sfxd_loader.h">
+						RelativePath=".\Include\sys_sfxd_loader.h"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Network Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_network.h">
+					RelativePath=".\Include\de_network.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\net_demo.h">
+					RelativePath=".\Include\net_demo.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\net_main.h">
+					RelativePath=".\Include\net_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\net_msg.h">
+					RelativePath=".\Include\net_msg.h"
+					>
 				</File>
 				<Filter
 					Name="Client Headers"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Include\cl_def.h">
+						RelativePath=".\Include\cl_def.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\cl_frame.h">
+						RelativePath=".\Include\cl_frame.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\cl_mobj.h">
+						RelativePath=".\Include\cl_mobj.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\cl_player.h">
+						RelativePath=".\Include\cl_player.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\cl_sound.h">
+						RelativePath=".\Include\cl_sound.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\cl_world.h">
+						RelativePath=".\Include\cl_world.h"
+						>
 					</File>
 				</Filter>
 				<Filter
 					Name="Server Headers"
-					Filter="">
+					>
 					<File
-						RelativePath=".\Include\sv_def.h">
+						RelativePath=".\Include\sv_def.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sv_frame.h">
+						RelativePath=".\Include\sv_frame.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sv_missile.h">
+						RelativePath=".\Include\sv_missile.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sv_pool.h">
+						RelativePath=".\Include\sv_pool.h"
+						>
 					</File>
 					<File
-						RelativePath=".\Include\sv_sound.h">
+						RelativePath=".\Include\sv_sound.h"
+						>
 					</File>
 				</Filter>
 			</Filter>
 			<Filter
 				Name="Play Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_play.h">
+					RelativePath=".\Include\de_play.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_data.h">
+					RelativePath=".\Include\p_data.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_intercept.h">
+					RelativePath=".\Include\p_intercept.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_maputil.h">
+					RelativePath=".\Include\p_maputil.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_mobj.h">
+					RelativePath=".\Include\p_mobj.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_particle.h">
+					RelativePath=".\Include\p_particle.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_polyob.h">
+					RelativePath=".\Include\p_polyob.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_sight.h">
+					RelativePath=".\Include\p_sight.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_think.h">
+					RelativePath=".\Include\p_think.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\p_tick.h">
+					RelativePath=".\Include\p_tick.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Refresh Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_refresh.h">
+					RelativePath=".\Include\de_refresh.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_data.h">
+					RelativePath=".\Include\r_data.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_draw.h">
+					RelativePath=".\Include\r_draw.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_extres.h">
+					RelativePath=".\Include\r_extres.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_main.h">
+					RelativePath=".\Include\r_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_model.h">
+					RelativePath=".\Include\r_model.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_sky.h">
+					RelativePath=".\Include\r_sky.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_things.h">
+					RelativePath=".\Include\r_things.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_util.h">
+					RelativePath=".\Include\r_util.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\r_world.h">
+					RelativePath=".\Include\r_world.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Renderer Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_render.h">
+					RelativePath=".\Include\de_render.h"
+					>
 				</File>
 				<File
-					RelativePath="Include\rend_bias.h">
+					RelativePath="Include\rend_bias.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_clip.h">
+					RelativePath=".\Include\rend_clip.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_decor.h">
+					RelativePath=".\Include\rend_decor.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_dyn.h">
+					RelativePath=".\Include\rend_dyn.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_halo.h">
+					RelativePath=".\Include\rend_halo.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_list.h">
+					RelativePath=".\Include\rend_list.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_main.h">
+					RelativePath=".\Include\rend_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_model.h">
+					RelativePath=".\Include\rend_model.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_particle.h">
+					RelativePath=".\Include\rend_particle.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_shadow.h">
+					RelativePath=".\Include\rend_shadow.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_sky.h">
+					RelativePath=".\Include\rend_sky.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\rend_sprite.h">
+					RelativePath=".\Include\rend_sprite.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Graphics Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_graphics.h">
+					RelativePath=".\Include\de_graphics.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\dglib.h">
+					RelativePath=".\Include\dglib.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_draw.h">
+					RelativePath=".\Include\gl_draw.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_font.h">
+					RelativePath=".\Include\gl_font.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_main.h">
+					RelativePath=".\Include\gl_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_model.h">
+					RelativePath=".\Include\gl_model.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_pcx.h">
+					RelativePath=".\Include\gl_pcx.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_png.h">
+					RelativePath=".\Include\gl_png.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_tex.h">
+					RelativePath=".\Include\gl_tex.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\gl_tga.h">
+					RelativePath=".\Include\gl_tga.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Audio Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_audio.h">
+					RelativePath=".\Include\de_audio.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_cache.h">
+					RelativePath=".\Include\s_cache.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_environ.h">
+					RelativePath=".\Include\s_environ.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_logic.h">
+					RelativePath=".\Include\s_logic.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_main.h">
+					RelativePath=".\Include\s_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_mus.h">
+					RelativePath=".\Include\s_mus.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_sfx.h">
+					RelativePath=".\Include\s_sfx.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\s_wav.h">
+					RelativePath=".\Include\s_wav.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Misc Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_misc.h">
+					RelativePath=".\Include\de_misc.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_args.h">
+					RelativePath=".\Include\m_args.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_bams.h">
+					RelativePath=".\Include\m_bams.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_filehash.h">
+					RelativePath=".\Include\m_filehash.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_huffman.h">
+					RelativePath=".\Include\m_huffman.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_misc.h">
+					RelativePath=".\Include\m_misc.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_nodepile.h">
+					RelativePath=".\Include\m_nodepile.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_profiler.h">
+					RelativePath=".\Include\m_profiler.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\m_string.h">
+					RelativePath=".\Include\m_string.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Table Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\tab_anorms.h">
+					RelativePath=".\Include\tab_anorms.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="UI Headers"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Include\de_ui.h">
+					RelativePath=".\Include\de_ui.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\ui_main.h">
+					RelativePath=".\Include\ui_main.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\ui_mpi.h">
+					RelativePath=".\Include\ui_mpi.h"
+					>
 				</File>
 				<File
-					RelativePath=".\Include\ui_panel.h">
+					RelativePath=".\Include\ui_panel.h"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="Definition Headers"
-				Filter="">
+				>
 				<File
-					RelativePath="Include\def_data.h">
+					RelativePath="Include\def_data.h"
+					>
 				</File>
 				<File
-					RelativePath="Include\def_main.h">
+					RelativePath="Include\def_main.h"
+					>
 				</File>
 				<File
-					RelativePath="Include\def_share.h">
+					RelativePath="Include\def_share.h"
+					>
 				</File>
 			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 			<File
-				RelativePath=".\Src\Doomsday.rc">
+				RelativePath=".\Src\Doomsday.rc"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="Src;$(NoInherit)"/>
+						AdditionalIncludeDirectories="Src;$(NoInherit)"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="Src;$(NoInherit)"/>
+						AdditionalIncludeDirectories="Src;$(NoInherit)"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Res\icon2.ico">
+				RelativePath=".\Res\icon2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\res\icon3.ico">
+				RelativePath=".\res\icon3.ico"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Documentation"
-			Filter="txt">
+			Filter="txt"
+			>
 			<File
-				RelativePath=".\Doc\CmdLine.txt">
+				RelativePath=".\Doc\CmdLine.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\DHistory.txt">
+				RelativePath=".\Doc\DHistory.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\Plan.txt">
+				RelativePath=".\Doc\Plan.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\Plan2.txt">
+				RelativePath=".\Doc\Plan2.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\Plan3.txt">
+				RelativePath=".\Doc\Plan3.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\Readme.txt">
+				RelativePath=".\Doc\Readme.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\Todo.txt">
+				RelativePath=".\Doc\Todo.txt"
+				>
 			</File>
 			<File
-				RelativePath=".\Doc\todo2.txt">
+				RelativePath=".\Doc\todo2.txt"
+				>
 			</File>
 			<Filter
 				Name="JDoom"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Doc\JDoom\JDoom.txt">
+					RelativePath=".\Doc\JDoom\history.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\Doc\JDoom\history.txt">
+					RelativePath=".\Doc\JDoom\JDoom.txt"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="JHeretic"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Doc\JHeretic\JHeretic.txt">
+					RelativePath=".\Doc\JHeretic\history.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\Doc\JHeretic\history.txt">
+					RelativePath=".\Doc\JHeretic\JHeretic.txt"
+					>
 				</File>
 			</Filter>
 			<Filter
 				Name="JHexen"
-				Filter="">
+				>
 				<File
-					RelativePath=".\Doc\JHexen\history.txt">
+					RelativePath=".\Doc\JHexen\history.txt"
+					>
 				</File>
 				<File
-					RelativePath=".\Doc\JHexen\jhexen.txt">
+					RelativePath=".\Doc\JHexen\jhexen.txt"
+					>
 				</File>
 			</Filter>
 		</Filter>

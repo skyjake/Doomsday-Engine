@@ -34,39 +34,40 @@ SET OBJ_DIR=Obj\Release
 REM -=- Requirements for Doomsday.exe -=-
 REM
 REM ---- Platform SDK:
-SET PLATFORM_INC=D:\VS.NET\Vc7\PlatformSDK\Include
-SET PLATFORM_LIB=D:\VS.NET\VC7\PlatformSDK\Lib
-SET LIBCI_LIB=D:\VS.NET\Vc7\Lib
+SET PLATFORM_INC=C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include
+SET PLATFORM_LIB=C:\Program Files\Microsoft SDKs\Windows\v6.0A\Lib
+SET LIBCI_LIB=C:\Program Files\Microsoft SDKs\Windows\v6.0A\Include
+SET MFC_INC=C:\Program Files\Microsoft Platform SDK\include\mfc
 REM ---- DirectX:
-SET DX_INC=D:\sdk\dx8\include
-SET DX_LIB=D:\sdk\dx8\lib
+SET DX_INC=C:\SDK\DirectX\include
+SET DX_LIB=C:\SDK\DirectX\lib
 REM ---- FMOD:
 SET FMOD_INC=D:\sdk\fmod\api\inc
 SET FMOD_LIB=D:\sdk\fmod\api\lib
 REM ---- Creative Labs EAX:
-SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
-SET EAX_LIB=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Libs
+SET EAX_INC=C:\SDK\Creative Labs\EAX 2.0 Extensions SDK\Include
+SET EAX_LIB=C:\SDK\Creative Labs\EAX 2.0 Extensions SDK\Libs
 REM ---- SDL:
-SET SDL_INC=D:\sdk\SDL-1.2.6\include
-SET SDL_LIB=D:\sdk\SDL-1.2.6\lib
+SET SDL_INC=C:\SDK\SDL-1.2.14\include
+SET SDL_LIB=C:\SDK\SDL-1.2.14\lib
 REM ---- SDL_net:
-SET SDLNET_INC=D:\sdk\SDL_net-1.2.5\include
-SET SDLNET_LIB=D:\sdk\SDL_net-1.2.5\lib
+SET SDLNET_INC=C:\SDK\SDL_net-1.2.7\include
+SET SDLNET_LIB=C:\SDK\SDL_net-1.2.7\lib
 
 REM -=- Requirements for drOpenGL.dll -=-
 REM
 REM ---- OpenGL (GL/gl.h, GL/glext.h, GL/glu.h):
-SET GL_INC=D:\VS.NET\Vc7\Include
+SET GL_INC=C:\SDK\OpenGL
 
 REM -=- Requirements for dsA3D.dll -=-
 REM
 REM ---- Aureal A3D:
-SET A3D_INC=D:\sdk\Aureal\A3D 3.0 SDK\sdk\inc
-SET A3D_LIB=D:\sdk\Aureal\A3D 3.0 SDK\sdk\lib
+SET A3D_INC=C:\SDK\Aureal\A3D 3.0 SDK\sdk\inc
+SET A3D_LIB=C:\SDK\Aureal\A3D 3.0 SDK\sdk\lib
 
 
 REM -- Compiler and linker options.
-SET DEFINES=/D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
+SET DEFINES=/D _CRT_SECURE_NO_WARNINGS /D "ZLIB_DLL" /D "WIN32_GAMMA" /D "NORANGECHECKING" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
 SET DLLDEFINES=/D "_USRDLL" /D "_WINDLL" %DEFINES%
 SET INCS=/I "%FMOD_INC%" /I "%EAX_INC%" /I "%SDL_INC%" /I "%SDLNET_INC%" /I "%DX_INC%" /I "%PLATFORM_INC%" /I "./Include"
 SET LIBS=/LIBPATH:"./Lib" /LIBPATH:"%DX_LIB%" /LIBPATH:"%EAX_LIB%" /LIBPATH:"%SDL_LIB%" /LIBPATH:"%SDLNET_LIB%" /LIBPATH:"%FMOD_LIB%" /LIBPATH:"%PLATFORM_LIB%" /LIBPATH:"./%BIN_DIR%"
@@ -103,9 +104,9 @@ GOTO Done
 REM *** Resources (dialogs for Doomsday and drD3D)
 REM Requires rc.exe and cvtres.exe from the Platform SDK.
 :Res
-rc Src\Doomsday.rc
+rc /I "%MFC_INC%" Src\Doomsday.rc
 cvtres /OUT:doomsday_res.obj /MACHINE:X86 Src\Doomsday.res
-rc Src\drD3D\drD3D.rc
+rc /I "%MFC_INC%" Src\drD3D\drD3D.rc
 IF NOT EXIST %OBJ_DIR%\drD3D md %OBJ_DIR%\drD3D
 cvtres /OUT:drD3D_res.obj /MACHINE:X86 Src\drD3D\drD3D.res
 GOTO Done

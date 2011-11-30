@@ -30,6 +30,10 @@
 #include "dd_api.h"
 
 #ifdef WIN32
+#   define stricmp		_stricmp
+#   define strnicmp		_strnicmp
+#   define strlwr       _strlwr
+#	define strupr       _strupr
 // Disable annoying MSVC warnings.
 // 4761: integral size mismatch in argument 
 // 4244: conversion from 'type1' to 'type2', possible loss of data
