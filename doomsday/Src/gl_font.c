@@ -312,7 +312,7 @@ int FR_PrepareFont(char *name)
 		{NULL, 0}
 	};
 #endif
-	char    buf[64];
+	char    buf[256];
 	DFILE  *file;
 	int     i, c, bit, mask, version, format, numPels;
 	jfrfont_t *font;

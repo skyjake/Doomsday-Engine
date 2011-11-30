@@ -43,6 +43,12 @@
 #include <doomsday.h>
 #include <def_data.h>
 
+#ifdef WIN32
+#  define stricmp _stricmp
+#  define strnicmp _strnicmp
+#  define strupr _strupr
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 #define OFF_STATE	0x01000000

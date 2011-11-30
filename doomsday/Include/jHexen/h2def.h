@@ -28,8 +28,12 @@
 
 #ifdef WIN32
 #pragma warning (disable:4761 4244)
-#define strcasecmp stricmp
-#define strncasecmp strnicmp
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#define stricmp _stricmp
+#define strnicmp _strnicmp
+#define strupr _strupr
+#define strlwr _strlwr
 #endif
 
 // Uncomment, to enable all timebomb stuff

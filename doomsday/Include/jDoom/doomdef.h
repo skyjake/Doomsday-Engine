@@ -23,12 +23,16 @@
 #ifndef __DOOMDEF__
 #define __DOOMDEF__
 
-#ifdef WIN32
-#pragma warning(disable:4244 4761)
-#endif
-
 #include <stdio.h>
 #include <string.h>
+
+#ifdef WIN32
+#pragma warning(disable:4244 4761)
+#define stricmp _stricmp
+#define strnicmp _strnicmp
+#define strupr _strupr
+#define strlwr _strlwr
+#endif
 
 #include "../doomsday.h"
 #include "../dd_api.h"

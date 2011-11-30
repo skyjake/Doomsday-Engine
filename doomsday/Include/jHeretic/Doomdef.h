@@ -11,6 +11,10 @@
 
 #ifdef WIN32
 #pragma warning (disable:4244 4761)
+#define stricmp _stricmp
+#define strnicmp _strnicmp
+#define strupr _strupr
+#define strlwr _strlwr
 #endif
 
 #include "../doomsday.h"

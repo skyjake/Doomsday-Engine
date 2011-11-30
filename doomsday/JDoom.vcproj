@@ -142,7 +142,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="./Include/JDoom,./Include/Common,./Include"
-				PreprocessorDefinitions="__JDOOM__;WIN32;_DEBUG;_WINDOWS;_USRDLL;JDOOM_EXPORTS"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS,__JDOOM__;WIN32;_DEBUG;_WINDOWS;_USRDLL;JDOOM_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"

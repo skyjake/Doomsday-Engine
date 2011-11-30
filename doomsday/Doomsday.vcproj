@@ -177,7 +177,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="sdl_net.lib sdl.lib wsock32.lib libz.lib libpngd.lib fmodvc.lib dsound.lib dinput.lib dxguid.lib lzss.lib winmm.lib odbc32.lib odbccp32.lib"
+				AdditionalDependencies="sdl_net.lib sdl.lib wsock32.lib zlib1.lib libpng15.lib dsound.lib dinput8.lib dxguid.lib lzss.lib winmm.lib odbc32.lib odbccp32.lib"
 				OutputFile="./Bin/Debug/Doomsday.exe"
 				Version="1.0"
 				LinkIncremental="2"
@@ -374,10 +374,6 @@
 				<Filter
 					Name="Audio Drivers"
 					>
-					<File
-						RelativePath=".\Src\sys_musd_fmod.c"
-						>
-					</File>
 					<File
 						RelativePath=".\Src\sys_musd_win.c"
 						>

@@ -1,0 +1,7 @@
+Bin
+Obj
+*.suo
+*.old
+*.user
+_UpgradeReport_Files
+*.XML

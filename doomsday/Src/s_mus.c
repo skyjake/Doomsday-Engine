@@ -106,6 +106,7 @@ boolean Mus_Init(void)
 		Con_Message("Mus_Init: Failed to initialize Win driver.\n");
 	}
 
+    /*
 	// Can we use FMOD?
 	if(!ArgExists("-nofmod") && musd_fmod.Init())
 	{
@@ -114,7 +115,7 @@ boolean Mus_Init(void)
 		iext = &musd_fmod_iext;
 		icd = &musd_fmod_icd;
 	}
-	else
+	else*/
 	{
 		// FMOD is either disabled or the init failed. 
 		// Must rely on Windows, then, without an Ext interface.
@@ -174,7 +175,7 @@ void Mus_Shutdown(void)
 
 	// Shut down the drivers. They shut down their interfaces automatically.
 #ifdef WIN32
-	musd_fmod.Shutdown();
+	//musd_fmod.Shutdown();
 	musd_win.Shutdown();
 #endif
 #ifdef UNIX
