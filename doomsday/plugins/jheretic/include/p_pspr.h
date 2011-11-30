@@ -34,6 +34,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+struct player_s;
+
 typedef enum {
     ps_weapon,
     ps_flash,
