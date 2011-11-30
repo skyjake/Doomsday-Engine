@@ -50,6 +50,7 @@ void            R_GetViewWindow(float* x, float* y, float* w, float* h);
 boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
 
+void            R_UpdateConsoleView(int player);
 void            R_PrecachePSprites(void);
 void            R_CachePatch(dpatch_t* dp, const char* name);
 

@@ -135,6 +135,9 @@ void P_DoTick(void)
     P_AnimateSurfaces();
 #endif
 
+    // Let the engine know where the viewplayer is now.
+    R_UpdateConsoleView(DISPLAYPLAYER);
+
     // For par times, among other things.
     mapTime++;
 }
