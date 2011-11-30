@@ -141,10 +141,10 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
         am->oldViewScale = 1;
         am->maxViewPositionDelta = 128;
         am->alpha = am->targetAlpha = am->oldAlpha = 0;
-        obj->dimensions.x = 0;
-        obj->dimensions.y = 0;
-        obj->dimensions.width  = winWidth;
-        obj->dimensions.height = winHeight;
+        obj->geometry.origin.x = 0;
+        obj->geometry.origin.y = 0;
+        obj->geometry.size.width  = winWidth;
+        obj->geometry.size.height = winHeight;
         break;
       }
     default: break;
@@ -153,14 +153,15 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
 }
 
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    int alignFlags, void (*updateDimensions) (uiwidget_t* obj),
+    float alpha, int alignFlags, void (*updateGeometry) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
     obj->font = fontId;
+    obj->alpha = alpha;
     obj->alignFlags = alignFlags;
-    obj->updateDimensions = updateDimensions;
+    obj->updateGeometry = updateGeometry;
     obj->drawer = drawer;
     obj->ticker = ticker;
     return obj;
@@ -206,7 +207,7 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id)
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id)
 {
     uiwidget_t* obj = GUI_FindObjectById(id);
-    if(NULL == obj)
+    if(!obj)
         Con_Error("GUI_MustFindObjectById: Failed to locate object with id %i.", (int) id);
     return obj;
 }
@@ -253,13 +254,13 @@ void GUI_ReleaseResources(void)
     UIAutomap_ReleaseResources();
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, fontId, 0, updateDimensions, drawer, ticker, typedata);
+    obj = createWidget(type, player, fontId, alpha, 0, updateGeometry, drawer, ticker, typedata);
     return obj->id;
 }
 
@@ -268,7 +269,7 @@ uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int pad
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
-    obj = createWidget(GUI_GROUP, player, 0, alignFlags, NULL, NULL, NULL, NULL);
+    obj = createWidget(GUI_GROUP, player, 0, 1, alignFlags, NULL, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
     grp->padding = padding;
@@ -329,12 +330,12 @@ boolean GUI_GameTicTriggerIsSharp(void)
     return sharpTic;
 }
 
-static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWidth, int* drawnHeight)
+static void drawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
 {
-    assert(NULL != obj);
-    if(NULL != obj->drawer && alpha > 0)
+    assert(obj && drawnSize);
+    if(obj->drawer && obj->alpha > 0)
     {
-        uiRS.pageAlpha = alpha;
+        uiRS.pageAlpha = obj->alpha;
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
@@ -344,83 +345,80 @@ static void drawWidget(uiwidget_t* obj, int x, int y, float alpha, int* drawnWid
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
     }
-    if(NULL != obj->updateDimensions)
+    if(obj->updateGeometry)
     {
-        obj->updateDimensions(obj);
+        obj->updateGeometry(obj);
     }
-    *drawnWidth  = obj->dimensions.width;
-    *drawnHeight = obj->dimensions.height;
+    drawnSize->width  = obj->geometry.size.width;
+    drawnSize->height = obj->geometry.size.height;
 }
 
-static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
-    int availHeight, float alpha, int* drawnWidth, int* drawnHeight)
+static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
 {
-    assert(NULL != obj && obj->type == GUI_GROUP && NULL != drawnWidth && NULL != drawnHeight);
-    {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
     int i, numDrawnWidgets = 0;
+    assert(obj && obj->type == GUI_GROUP && drawnSize);
 
-    if(!grp->widgetIdCount)
-        return;
+    if(!grp->widgetIdCount) return;
 
     if(obj->alignFlags & ALIGN_RIGHT)
-        x += availWidth;
+        x += UIWidget_MaximumWidth(obj);
     else if(!(obj->alignFlags & ALIGN_LEFT))
-        x += availWidth/2;
+        x += UIWidget_MaximumWidth(obj)/2;
 
     if(obj->alignFlags & ALIGN_BOTTOM)
-        y += availHeight;
+        y += UIWidget_MaximumHeight(obj);
     else if(!(obj->alignFlags & ALIGN_TOP))
-        y += availHeight/2;
+        y += UIWidget_MaximumHeight(obj)/2;
 
     for(i = 0; i < grp->widgetIdCount; ++i)
     {
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-        int width = 0, height = 0;
+        Size2i childSize = { 0, 0 };
 
-        GUI_DrawWidget(child, x, y, availWidth, availHeight, alpha, &width, &height);
+        GUI_DrawWidget(child, x, y, &childSize);
 
-        if(width > 0 || height > 0)
+        if(childSize.width > 0 || childSize.height > 0)
         {
             ++numDrawnWidgets;
 
             if(grp->flags & UWGF_RIGHTTOLEFT)
             {
                 if(!(grp->flags & UWGF_VERTICAL))
-                    x -= width  + grp->padding;
+                    x -= childSize.width  + grp->padding;
                 else
-                    y -= height + grp->padding;
+                    y -= childSize.height + grp->padding;
             }
             else if(grp->flags & UWGF_LEFTTORIGHT)
             {
                 if(!(grp->flags & UWGF_VERTICAL))
-                    x += width  + grp->padding;
+                    x += childSize.width  + grp->padding;
                 else
-                    y += height + grp->padding;
+                    y += childSize.height + grp->padding;
             }
 
             if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
             {
                 if(!(grp->flags & UWGF_VERTICAL))
                 {
-                    *drawnWidth  += width;
-                    if(height > *drawnHeight)
-                        *drawnHeight = height;
+                    drawnSize->width  += childSize.width;
+                    if(childSize.height > drawnSize->height)
+                        drawnSize->height = childSize.height;
                 }
                 else
                 {
-                    if(width  > *drawnWidth)
-                        *drawnWidth  = width;
-                    *drawnHeight += height;
+                    if(childSize.width  > drawnSize->width)
+                        drawnSize->width  = childSize.width;
+                    drawnSize->height += childSize.height;
                 }
             }
             else
             {
-                if(width  > *drawnWidth)
-                    *drawnWidth  = width;
+                if(childSize.width  > drawnSize->width)
+                    drawnSize->width  = childSize.width;
 
-                if(height > *drawnHeight)
-                    *drawnHeight = height;
+                if(childSize.height > drawnSize->height)
+                    drawnSize->height = childSize.height;
             }
         }
     }
@@ -428,53 +426,53 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, int availWidth,
     if(0 != numDrawnWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
     {
         if(!(grp->flags & UWGF_VERTICAL))
-            *drawnWidth  += (numDrawnWidgets-1) * grp->padding;
+            drawnSize->width  += (numDrawnWidgets-1) * grp->padding;
         else
-            *drawnHeight += (numDrawnWidgets-1) * grp->padding;
-    }
+            drawnSize->height += (numDrawnWidgets-1) * grp->padding;
     }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth,
-    int availHeight, float alpha, int* drawnWidth, int* drawnHeight)
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize_)
 {
-    assert(NULL != obj);
+    Size2i drawnSize = { 0, 0 };
+
+    if(drawnSize_)
     {
-    int width = 0, height = 0;
+        drawnSize_->width = 0;
+        drawnSize_->height = 0;
+    }
 
-    if(NULL != drawnWidth)  *drawnWidth = 0;
-    if(NULL != drawnHeight) *drawnHeight = 0;
-
-    if(availWidth == 0 || availHeight == 0 || alpha == 0)
-        return;
+    if(UIWidget_MaximumWidth(obj) == 0 || UIWidget_MaximumHeight(obj) == 0 ||
+       UIWidget_Alpha(obj) <= 0) return;
 
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
 
     // First we draw ourself.
-    drawWidget(obj, x, y, alpha, &width, &height);
+    drawWidget(obj, x, y, &drawnSize);
 
     if(obj->type == GUI_GROUP)
     {
         // Now our children.
-        int cWidth = 0, cHeight = 0;
-        drawChildWidgets(obj, x, y, availWidth, availHeight, alpha, &cWidth, &cHeight);
-        if(cWidth  > width)
-            width = cWidth;
-        if(cHeight > height)
-            height = cHeight;
+        Size2i childSize = { 0, 0 };
+        drawChildWidgets(obj, x, y, &childSize);
+
+        if(childSize.width  > drawnSize.width)  drawnSize.width = childSize.width;
+        if(childSize.height > drawnSize.height) drawnSize.height = childSize.height;
     }
 
-    if(NULL != drawnWidth)  *drawnWidth  = width;
-    if(NULL != drawnHeight) *drawnHeight = height;
+    if(drawnSize_)
+    {
+        drawnSize_->width  = drawnSize.width;
+        drawnSize_->height = drawnSize.height;
+    }
 
     FR_PopAttrib();
-    }
 }
 
 void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(NULL != obj);
+    assert(obj);
     switch(obj->type)
     {
     case GUI_GROUP: {
@@ -498,33 +496,124 @@ void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength)
 
 int UIWidget_Player(uiwidget_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->player;
 }
 
-void UIWidget_Origin(uiwidget_t* obj, int* x, int* y)
+const Point2i* UIWidget_Origin(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    if(NULL != x) *x = obj->dimensions.x;
-    if(NULL != y) *y = obj->dimensions.y;
+    assert(obj);
+    return &obj->geometry.origin;
 }
 
-const rectanglei_t* UIWidget_Dimensions(uiwidget_t* obj)
+const Rectanglei* UIWidget_Geometry(uiwidget_t* obj)
 {
-    assert(NULL != obj);
-    return &obj->dimensions;
+    assert(obj);
+    return &obj->geometry;
+}
+
+int UIWidget_MaximumHeight(uiwidget_t* obj)
+{
+    assert(obj);
+    return obj->maxSize.height;
+}
+
+const Size2i* UIWidget_MaximumSize(uiwidget_t* obj)
+{
+    assert(obj);
+    return &obj->maxSize;
+}
+
+int UIWidget_MaximumWidth(uiwidget_t* obj)
+{
+    assert(obj);
+    return obj->maxSize.width;
+}
+
+void UIWidget_SetMaximumHeight(uiwidget_t* obj, int height)
+{
+    assert(obj);
+    if(obj->maxSize.height == height) return;
+    obj->maxSize.height = height;
+
+    if(obj->type == GUI_GROUP)
+    {
+        guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+        int i;
+        for(i = 0; i < grp->widgetIdCount; ++i)
+        {
+            UIWidget_SetMaximumHeight(GUI_MustFindObjectById(grp->widgetIds[i]), height);
+        }
+    }
+}
+
+void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2i* size)
+{
+    assert(obj);
+    if(obj->maxSize.width == size->width &&
+       obj->maxSize.height == size->height) return;
+    obj->maxSize.width = size->width;
+    obj->maxSize.height = size->height;
+
+    if(obj->type == GUI_GROUP)
+    {
+        guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+        int i;
+        for(i = 0; i < grp->widgetIdCount; ++i)
+        {
+            UIWidget_SetMaximumSize(GUI_MustFindObjectById(grp->widgetIds[i]), size);
+        }
+    }
+}
+
+void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width)
+{
+    assert(obj);
+    if(obj->maxSize.width == width) return;
+    obj->maxSize.width = width;
+
+    if(obj->type == GUI_GROUP)
+    {
+        guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+        int i;
+        for(i = 0; i < grp->widgetIdCount; ++i)
+        {
+            UIWidget_SetMaximumWidth(GUI_MustFindObjectById(grp->widgetIds[i]), width);
+        }
+    }
 }
 
 int UIWidget_Alignment(uiwidget_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->alignFlags;
 }
 
 void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags)
 {
-    assert(NULL != obj);
+    assert(obj);
     obj->alignFlags = alignFlags;
+}
+
+float UIWidget_Alpha(uiwidget_t* obj)
+{
+    assert(obj);
+    return obj->alpha;
+}
+
+void UIWidget_SetAlpha(uiwidget_t* obj, float alpha)
+{
+    assert(obj);
+    obj->alpha = alpha;
+    if(obj->type == GUI_GROUP)
+    {
+        guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+        int i;
+        for(i = 0; i < grp->widgetIdCount; ++i)
+        {
+            UIWidget_SetAlpha(GUI_MustFindObjectById(grp->widgetIds[i]), alpha);
+        }
+    }
 }
 
 static void MNSlider_LoadResources(void)
@@ -560,7 +649,7 @@ int MN_CountObjects(mn_object_t* list)
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags)
 {
     mn_object_t* obj = MNPage_FindObject(page, group, flags);
-    if(NULL == obj)
+    if(!obj)
         Con_Error("MN_MustFindObjectOnPage: Failed to locate object in group #%i with flags %i on page %p.", group, flags, page);
     return obj;
 }
@@ -623,15 +712,15 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
         FR_PushAttrib();
         obj->drawer(obj, pos[VX], pos[VY]);
-        if(NULL != obj->updateDimensions)
+        if(obj->updateGeometry)
         {
-            obj->updateDimensions(obj, page);
+            obj->updateGeometry(obj, page);
         }
 
         /// \kludge
         if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
         {
-            int cursorY = pos[VY], cursorItemHeight = MNObject_Dimensions(obj)->height;
+            int cursorY = pos[VY], cursorItemHeight = MNObject_Geometry(obj)->size.height;
             if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
                MNList_SelectionIsVisible(obj))
             {
@@ -644,7 +733,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         }
         /// kludge end.
 
-        pos[VY] += MNObject_Dimensions(obj)->height * (1.08f); // Leading.
+        pos[VY] += MNObject_Geometry(obj)->size.height * (1.08f); // Leading.
 
         FR_PopAttrib();
     }
@@ -939,30 +1028,30 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->_type;
 }
 
 int MNObject_Flags(const mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->_flags;
 }
 
-const rectanglei_t* MNObject_Dimensions(const mn_object_t* obj)
+const Rectanglei* MNObject_Geometry(const mn_object_t* obj)
 {
-    assert(NULL != obj);
-    return &obj->_dimensions;
+    assert(obj);
+    return &obj->_geometry;
 }
 
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
 {
-    assert(NULL != obj);
+    assert(obj);
     switch(op)
     {
     case FO_CLEAR:  obj->_flags &= ~flags;  break;
     case FO_SET:    obj->_flags |= flags;   break;
-    case FO_TOGGLE:    obj->_flags ^= flags;   break;
+    case FO_TOGGLE: obj->_flags ^= flags;   break;
     default:
         Con_Error("MNObject::SetFlags: Unknown op %i\n", op);
         exit(1); // Unreachable.
@@ -972,13 +1061,13 @@ int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
 
 int MNObject_Shortcut(mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->_shortcut;
 }
 
 void MNObject_SetShortcut(mn_object_t* obj, int ddkey)
 {
-    assert(NULL != obj);
+    assert(obj);
     if(isalnum(ddkey))
     {
         obj->_shortcut = tolower(ddkey);
@@ -987,25 +1076,25 @@ void MNObject_SetShortcut(mn_object_t* obj, int ddkey)
 
 int MNObject_Font(mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->_pageFontIdx;
 }
 
 int MNObject_Color(mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     return obj->_pageColorIdx;
 }
 
 boolean MNObject_IsGroupMember(const mn_object_t* obj, int group)
 {
-    assert(NULL != obj);
+    assert(obj);
     return (obj->_group == group);
 }
 
 int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
-    assert(NULL != obj);
+    assert(obj);
     if(MCMD_SELECT == cmd && (obj->_flags & MNF_FOCUS) && !(obj->_flags & MNF_DISABLED))
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
@@ -1030,7 +1119,7 @@ int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
 
 static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id)
 {
-    assert(NULL != obj);
+    assert(obj);
     if(VALID_MNACTION(id))
     {
         return &obj->actions[id];
@@ -1106,9 +1195,9 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
     }
 }
 
-void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj && obj->_type == MN_TEXT);
+    assert(obj && obj->_type == MN_TEXT);
     {
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
     // @fixme What if patch replacement is disabled?
@@ -1116,12 +1205,12 @@ void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
     {
         patchinfo_t info;
         R_GetPatchInfo(*txt->patch, &info);
-        obj->_dimensions.width  = info.width;
-        obj->_dimensions.height = info.height;
+        obj->_geometry.size.width  = info.geometry.size.width;
+        obj->_geometry.size.height = info.geometry.size.height;
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, txt->text);
+    FR_TextSize(&obj->_geometry.size, txt->text);
     }
 }
 
@@ -1135,21 +1224,21 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
     if(R_GetPatchInfo(pEditLeft, &leftInfo))
     {
         DGL_SetPatch(pEditLeft, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x, y, leftInfo.width, leftInfo.height);
-        leftOffset = leftInfo.width;
+        DGL_DrawRect(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
+        leftOffset = leftInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditRight, &rightInfo))
     {
         DGL_SetPatch(pEditRight, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + width - rightInfo.width, y, rightInfo.width, rightInfo.height);
-        rightOffset = rightInfo.width;
+        DGL_DrawRect(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
+        rightOffset = rightInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
         DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.height, middleInfo.width, middleInfo.height);
+        DGL_DrawRectTiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
     }
 }
 
@@ -1385,12 +1474,12 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
     }
 }
 
-void MNEdit_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly.
-    assert(NULL != obj);
-    obj->_dimensions.width  = 170;
-    obj->_dimensions.height = 14;
+    assert(obj);
+    obj->_geometry.size.width  = 170;
+    obj->_geometry.size.height = 14;
 }
 
 void MNList_Drawer(mn_object_t* obj, int x, int y)
@@ -1649,43 +1738,43 @@ int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
+    assert(obj && obj->_type == MN_LIST);
     {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int i;
-    obj->_dimensions.width  = 0;
-    obj->_dimensions.height = 0;
+    obj->_geometry.size.width  = 0;
+    obj->_geometry.size.height = 0;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
-        int w, h;
-        FR_TextDimensions(&w, &h, item->text);
-        if(w > obj->_dimensions.width)
-            obj->_dimensions.width = w;
-        obj->_dimensions.height += h;
+        Size2i size;
+        FR_TextSize(&size, item->text);
+        if(size.width > obj->_geometry.size.width)
+            obj->_geometry.size.width = size.width;
+        obj->_geometry.size.height += size.height;
         if(i != list->count-1)
-            obj->_dimensions.height += h * MNDATA_LIST_LEADING;
+            obj->_geometry.size.height += size.height * MNDATA_LIST_LEADING;
     }
     }
 }
 
-void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNList_InlineUpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
+    assert(obj && obj->_type == MN_LIST);
     {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, item->text);
+    FR_TextSize(&obj->_geometry.size, item->text);
     }
 }
 
 void MNButton_Drawer(mn_object_t* obj, int x, int y)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     //int dis   = (obj->_flags & MNF_DISABLED) != 0;
@@ -1795,9 +1884,9 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     //int dis = (obj->_flags & MNF_DISABLED) != 0;
@@ -1815,25 +1904,25 @@ void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
             text = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
         }
 
-        if(NULL == text || text[0])
+        if(!text || text[0])
         {
             // Use the original patch.
             patchinfo_t info;
             R_GetPatchInfo(*btn->patch, &info);
-            obj->_dimensions.width  = info.width;
-            obj->_dimensions.height = info.height;
+            obj->_geometry.size.width  = info.geometry.size.width;
+            obj->_geometry.size.height = info.geometry.size.height;
             return;
         }
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, text);
+    FR_TextSize(&obj->_geometry.size, text);
     }
 }
 
 void MNColorBox_Drawer(mn_object_t* obj, int x, int y)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
+    assert(obj && obj->_type == MN_COLORBOX);
     {
     const mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
 
@@ -1883,13 +1972,13 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNColorBox_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
+    assert(obj && obj->_type == MN_COLORBOX);
     {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
-    obj->_dimensions.width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
-    obj->_dimensions.height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
+    obj->_geometry.size.width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
+    obj->_geometry.size.height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
     }
 }
 
@@ -2086,16 +2175,15 @@ void MNSlider_SetValue(mn_object_t* obj, int flags, float value)
 
 int MNSlider_ThumbPos(const mn_object_t* obj)
 {
-#define WIDTH           (middleInfo.width)
+#define WIDTH           (middleInfo.geometry.size.width)
 
-    assert(NULL != obj && obj->_type == MN_SLIDER);
+    assert(obj && obj->_type == MN_SLIDER);
     {
     mndata_slider_t* data = (mndata_slider_t*)obj->_typedata;
     float range = data->max - data->min, useVal;
     patchinfo_t middleInfo;
 
-    if(!R_GetPatchInfo(pSliderMiddle, &middleInfo))
-        return 0;
+    if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return 0;
 
     if(!range)
         range = 1; // Should never happen.
@@ -2108,23 +2196,20 @@ int MNSlider_ThumbPos(const mn_object_t* obj)
 
 void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 {
-#define WIDTH                   (middleInfo.width)
-#define HEIGHT                  (middleInfo.height)
+#define WIDTH                   (middleInfo.geometry.size.width)
+#define HEIGHT                  (middleInfo.geometry.size.height)
 
-    assert(NULL != obj && obj->_type == MN_SLIDER);
+    assert(obj && obj->_type == MN_SLIDER);
     {
     //const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     float x, y;//, range = sldr->max - sldr->min;
     patchinfo_t middleInfo, leftInfo;
 
-    if(!R_GetPatchInfo(pSliderMiddle, &middleInfo))
-        return;
-    if(!R_GetPatchInfo(pSliderLeft, &leftInfo))
-        return;
-    if(WIDTH <= 0 || HEIGHT <= 0)
-        return;
+    if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return;
+    if(!R_GetPatchInfo(pSliderLeft, &leftInfo)) return;
+    if(WIDTH <= 0 || HEIGHT <= 0) return;
 
-    x = inX + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_PADDING_X + MNDATA_SLIDER_OFFSET_X + leftInfo.width);
+    x = inX + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_PADDING_X + MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width);
     y = inY + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_PADDING_Y + MNDATA_SLIDER_OFFSET_Y);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2150,7 +2235,7 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
     GL_DrawPatch(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(0, middleInfo.topOffset, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
+    DGL_DrawRectTiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatch3(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
@@ -2309,24 +2394,24 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     }
 }
 
-void MNSlider_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     patchinfo_t info;
     int max;
     if(!R_GetPatchInfo(pSliderMiddle, &info))
         return;
-    obj->_dimensions.width = (int) (info.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
-    max = info.height;
+    obj->_geometry.size.width = (int) (info.geometry.size.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
+    max = info.geometry.size.height;
     if(R_GetPatchInfo(pSliderLeft, &info))
-        max = MAX_OF(max, info.height);
+        max = MAX_OF(max, info.geometry.size.height);
     if(R_GetPatchInfo(pSliderRight, &info))
-        max = MAX_OF(max, info.height);
-    obj->_dimensions.height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
+        max = MAX_OF(max, info.geometry.size.height);
+    obj->_geometry.size.height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
 }
 
 void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     const mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     const float value = MINMAX_OF(sldr->min, sldr->value, sldr->max);
@@ -2345,9 +2430,9 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     }
 }
 
-void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
     const fontid_t font = MNPage_PredefinedFont(page, obj->_pageFontIdx);
@@ -2357,13 +2442,13 @@ void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page)
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
     FR_SetFont(font);
-    FR_TextDimensions(&obj->_dimensions.width, &obj->_dimensions.height, str);
+    FR_TextSize(&obj->_geometry.size, str);
     }
 }
 
 static void findSpriteForMobjType(int mobjType, spritetype_e* sprite, int* frame)
 {
-    assert(mobjType >= MT_FIRST && mobjType < NUMMOBJTYPES && NULL != sprite && NULL != frame);
+    assert(mobjType >= MT_FIRST && mobjType < NUMMOBJTYPES && sprite && frame);
     {
     mobjinfo_t* info = &MOBJINFO[mobjType];
     int stateNum = info->states[SN_SPAWN];
@@ -2374,7 +2459,7 @@ static void findSpriteForMobjType(int mobjType, spritetype_e* sprite, int* frame
 
 void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType)
 {
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     mop->mobjType = mobjType;
@@ -2383,7 +2468,7 @@ void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType)
 
 void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass)
 {
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     mop->plrClass = plrClass;
@@ -2392,7 +2477,7 @@ void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass)
 
 void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass)
 {
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     mop->tClass = tClass;
@@ -2401,7 +2486,7 @@ void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass)
 
 void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
 {
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     mop->tMap = tMap;
@@ -2411,7 +2496,7 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
 /// \todo We can do better - the engine should be able to render this visual for us.
 void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
 {
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
     {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
     float x = inX, y = inY, w, h, s, t, scale;
@@ -2425,14 +2510,14 @@ void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
     if(!R_GetSpriteInfo(sprite, spriteFrame, &info))
         return;
 
-    w = info.width;
-    h = info.height;
+    w = info.geometry.size.width;
+    h = info.geometry.size.height;
     scale = (h > w? MNDATA_MOBJPREVIEW_HEIGHT / h : MNDATA_MOBJPREVIEW_WIDTH / w);
     w *= scale;
     h *= scale;
 
-    x += MNDATA_MOBJPREVIEW_WIDTH/2 - info.width/2 * scale;
-    y += MNDATA_MOBJPREVIEW_HEIGHT  - info.height  * scale;
+    x += MNDATA_MOBJPREVIEW_WIDTH/2 - info.geometry.size.width/2 * scale;
+    y += MNDATA_MOBJPREVIEW_HEIGHT  - info.geometry.size.height  * scale;
 
     tClass = mop->tClass;
     tMap = mop->tMap;
@@ -2469,10 +2554,10 @@ void MNMobjPreview_Drawer(mn_object_t* obj, int inX, int inY)
     }
 }
 
-void MNMobjPreview_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    assert(NULL != obj && obj->_type == MN_MOBJPREVIEW);
-    obj->_dimensions.width  = MNDATA_MOBJPREVIEW_WIDTH;
-    obj->_dimensions.height = MNDATA_MOBJPREVIEW_HEIGHT;
+    assert(obj && obj->_type == MN_MOBJPREVIEW);
+    obj->_geometry.size.width  = MNDATA_MOBJPREVIEW_WIDTH;
+    obj->_geometry.size.height = MNDATA_MOBJPREVIEW_HEIGHT;
 }

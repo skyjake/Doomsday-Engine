@@ -79,14 +79,14 @@ struct ded_material_s* Material_Definition(const material_t* mat);
 void Material_SetDefinition(material_t* mat, struct ded_material_s* def);
 
 /// Retrieve dimensions in logical world units.
-void Material_Dimensions(const material_t* mat, int* width, int* height);
+const Size2i* Material_Size(const material_t* mat);
 
 /**
  * Change dimensions.
  * @param width  New width in logical world units.
  * @param height  New height in logical world units.
  */
-void Material_SetDimensions(material_t* mat, int width, int height);
+void Material_SetSize(material_t* mat, const Size2i* size);
 
 /// @return  Logical width.
 int Material_Width(const material_t* mat);

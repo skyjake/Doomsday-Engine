@@ -257,7 +257,7 @@ void Con_ResizeHistoryBuffer(void)
         cw = (FR_TextWidth("AA") * consoleFontScale[0]) / 2;
         if(0 != cw)
         {
-            maxLength = MIN_OF(theWindow->width / cw - 2, 250);
+            maxLength = MIN_OF(theWindow->geometry.size.width / cw - 2, 250);
         }
     }
 

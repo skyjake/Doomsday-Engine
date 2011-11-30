@@ -149,7 +149,7 @@ static void rotate2D(float* x, float* y, float angle)
  */
 static void calcViewScaleFactors(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float dx, dy, dist, a, b;
@@ -160,11 +160,11 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     if(dist < 0)
         dist = -dist;
 
-    a = UIWidget_Dimensions(obj)->width  / dist;
-    b = UIWidget_Dimensions(obj)->height / dist;
+    a = UIWidget_Geometry(obj)->size.width  / dist;
+    b = UIWidget_Geometry(obj)->size.height / dist;
 
     am->minScaleMTOF = (a < b ? a : b);
-    am->maxScaleMTOF = UIWidget_Dimensions(obj)->height / am->minScale;
+    am->maxScaleMTOF = UIWidget_Geometry(obj)->size.height / am->minScale;
 
     am->updateViewScale = false;
     }
@@ -1094,20 +1094,19 @@ static void positionPointInView(uiwidget_t* obj, float point[2],
  */
 static void drawMarkedPoints(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
     uint i, pointCount = UIAutomap_PointCount(obj);
-    int scrwidth, scrheight;
+    Size2i portSize;
 
-    if(!pointCount)
-        return;
+    if(!pointCount) return;
 
-    R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &scrwidth, &scrheight);
-    stom = UIAutomap_FrameToMap(obj, (scrwidth >= scrheight? FIXYTOSCREENY(1) : FIXXTOSCREENX(1)));
+    R_ViewPortSize(UIWidget_Player(obj), &portSize);
+    stom = UIAutomap_FrameToMap(obj, (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1)));
 
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
     UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
@@ -1119,13 +1118,11 @@ static void drawMarkedPoints(uiwidget_t* obj)
         float point[2], w, h;
         patchinfo_t info;
 
-        if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL))
-            continue;
-        if(!R_GetPatchInfo(pPointMarkers[i], &info))
-            continue;
+        if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL)) continue;
+        if(!R_GetPatchInfo(pPointMarkers[i], &info)) continue;
 
-        w = info.width  * stom;
-        h = info.height * stom;
+        w = info.geometry.size.width  * stom;
+        h = info.geometry.size.height * stom;
 
         positionPointInView(obj, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
@@ -1151,12 +1148,13 @@ static void drawMarkedPoints(uiwidget_t* obj)
  */
 static void setupGLStateForMap(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
+    Point2i portOrigin;
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1199,17 +1197,17 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
 
-        DGL_Translatef(UIWidget_Dimensions(obj)->x, UIWidget_Dimensions(obj)->y, 0);
+        DGL_Translatef(UIWidget_Geometry(obj)->origin.x, UIWidget_Geometry(obj)->origin.y, 0);
 
         // Apply the parallax scrolling, map rotation and counteract the
         // aspect of the quad (sized to map window dimensions).
         DGL_Translatef(UIAutomap_MapToFrame(obj, plx) + .5f,
                        UIAutomap_MapToFrame(obj, ply) + .5f, 0);
         DGL_Rotatef(360-angle, 0, 0, 1);
-        DGL_Scalef(1, (float)UIWidget_Dimensions(obj)->height / UIWidget_Dimensions(obj)->width, 1);
+        DGL_Scalef(1, (float)UIWidget_Geometry(obj)->size.height / UIWidget_Geometry(obj)->size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_DrawRecti(UIWidget_Dimensions(obj));
+        DGL_DrawRecti(UIWidget_Geometry(obj));
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1221,7 +1219,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
-        DGL_DrawRecti(UIWidget_Dimensions(obj));
+        DGL_DrawRecti(UIWidget_Geometry(obj));
     }
 
 #if __JDOOM64__
@@ -1250,7 +1248,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
 
             iconAlpha = MINMAX_OF(.0f, alpha, .5f);
 
-            spacing = UIWidget_Dimensions(obj)->height / num;
+            spacing = UIWidget_Geometry(obj)->size.height / num;
             y = 0;
 
             for(i = 0; i < 3; ++i)
@@ -1261,10 +1259,10 @@ static void setupGLStateForMap(uiwidget_t* obj)
                     DGL_SetPSprite(sprInfo.material);
                     DGL_Enable(DGL_TEXTURE_2D);
 
-                    scale = UIWidget_Dimensions(obj)->height / (sprInfo.height * num);
-                    x = UIWidget_Dimensions(obj)->width - sprInfo.width * scale;
-                    w = sprInfo.width;
-                    h = sprInfo.height;
+                    scale = UIWidget_Geometry(obj)->size.height / (sprInfo.geometry.size.height * num);
+                    x = UIWidget_Geometry(obj)->size.width - sprInfo.geometry.size.width * scale;
+                    w = sprInfo.geometry.size.width;
+                    h = sprInfo.geometry.size.height;
 
                     DGL_Color4f(1, 1, 1, iconAlpha);
                     DGL_Begin(DGL_QUADS);
@@ -1292,12 +1290,12 @@ static void setupGLStateForMap(uiwidget_t* obj)
 #endif
 
     // Setup the scissor clipper.
-    {
-    int viewX, viewY;
-    R_ViewportDimensions(player, &viewX, &viewY, NULL, NULL);
-    DGL_Scissor(viewX+UIWidget_Dimensions(obj)->x+am->border, viewY+UIWidget_Dimensions(obj)->y+am->border, UIWidget_Dimensions(obj)->width-am->border*2, UIWidget_Dimensions(obj)->height-am->border*2);
+    R_ViewPortOrigin(player, &portOrigin);
+    DGL_Scissor(portOrigin.x + UIWidget_Geometry(obj)->origin.x + am->border,
+                portOrigin.y + UIWidget_Geometry(obj)->origin.y + am->border,
+                UIWidget_Geometry(obj)->size.width  - am->border*2,
+                UIWidget_Geometry(obj)->size.height - am->border*2);
     DGL_Enable(DGL_SCISSOR_TEST);
-    }
     }
 }
 
@@ -1420,7 +1418,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
     setupGLStateForMap(obj);
 
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(UIWidget_Dimensions(obj)->x + UIWidget_Dimensions(obj)->width / 2, UIWidget_Dimensions(obj)->y + UIWidget_Dimensions(obj)->height / 2, 0);
+    DGL_Translatef(UIWidget_Geometry(obj)->origin.x + UIWidget_Geometry(obj)->size.width / 2, UIWidget_Geometry(obj)->origin.y + UIWidget_Geometry(obj)->size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
@@ -1462,8 +1460,8 @@ DGL_End();
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / (UIWidget_Dimensions(obj)->width-am->border*2), 1.f / (UIWidget_Dimensions(obj)->height-am->border*2), 1);
-        DGL_Translatef(UIWidget_Dimensions(obj)->width / 2, UIWidget_Dimensions(obj)->height / 2, 0);
+        DGL_Scalef(1.f / (UIWidget_Geometry(obj)->size.width-am->border*2), 1.f / (UIWidget_Geometry(obj)->size.height-am->border*2), 1);
+        DGL_Translatef(UIWidget_Geometry(obj)->size.width / 2, UIWidget_Geometry(obj)->size.height / 2, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
         DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
@@ -1607,7 +1605,7 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
 
 void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const int player = UIWidget_Player(obj);
@@ -1619,8 +1617,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     P_GetControlState(player, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     P_GetControlState(player, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
 
-    if(G_GetGameState() != GS_MAP)
-        return;
+    if(G_GetGameState() != GS_MAP) return;
 
     // Move towards the target alpha level for the automap.
     am->alphaTimer += (cfg.automapOpenSeconds == 0? 1 : 1/cfg.automapOpenSeconds * ticLength);
@@ -1652,11 +1649,11 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(am->pan || NULL == mo)
     {
         float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
-        int scrwidth, scrheight;
+        Size2i portSize;
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        R_ViewportDimensions(player, NULL, NULL, &scrwidth, &scrheight); 
-        panUnitsPerTic = (UIAutomap_FrameToMap(obj, scrwidth >= scrheight? FIXYTOSCREENY(140):FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
+        R_ViewPortSize(player, &portSize);
+        panUnitsPerTic = (UIAutomap_FrameToMap(obj, portSize.width >= portSize.height? FIXYTOSCREENY(140):FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
 
@@ -1747,8 +1744,10 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->scaleFTOM = 1.0f / am->scaleMTOF;
 
     // Calculate border (viewport coordinate space).
-    { int scrwidth  = Get(DD_WINDOW_WIDTH), scrheight = Get(DD_WINDOW_HEIGHT);
-    am->border = 4 * (scrwidth >= scrheight? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
+    {
+    Size2i portSize;
+    R_ViewPortSize(player, &portSize);
+    am->border = 4 * (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
     }
 
     /**
@@ -1758,8 +1757,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     float viewPoint[2], rads, viewWidth, viewHeight;
 
     // Determine the dimensions of the view window in am coordinates.
-    viewWidth  = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->width  - (am->border*2));
-    viewHeight = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->height - (am->border*2));
+    viewWidth  = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.width  - (am->border*2));
+    viewHeight = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.height - (am->border*2));
     am->topLeft[0]     = am->bottomLeft[0] = -viewWidth/2;
     am->topLeft[1]     = am->topRight[1]   =  viewHeight/2;
     am->bottomRight[0] = am->topRight[0]   =  viewWidth/2;
@@ -1780,8 +1779,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->topRight[0]    += viewPoint[0]; am->topRight[1]    += viewPoint[1];
     }
 
-    width  = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->width);
-    height = UIAutomap_FrameToMap(obj, UIWidget_Dimensions(obj)->height);
+    width  = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.width);
+    height = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.height);
 
     // Calculate the in-view, AABB.
     {   // Rotation-aware.
@@ -1851,24 +1850,24 @@ float UIAutomap_FrameToMap(uiwidget_t* obj, float val)
     }
 }
 
-void UIAutomap_UpdateDimensions(uiwidget_t* obj)
+void UIAutomap_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    int newX, newY, newWidth, newHeight;
+    Rectanglei newGeom;
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
-    R_ViewWindowDimensions(UIWidget_Player(obj), &newX, &newY, &newWidth, &newHeight);
+    R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
 
-    if(newX != obj->dimensions.x || newY != obj->dimensions.y ||
-       newWidth != obj->dimensions.width || newHeight != obj->dimensions.height)
+    if(newGeom.origin.x != obj->geometry.origin.x ||
+       newGeom.origin.y != obj->geometry.origin.y ||
+       newGeom.size.width != obj->geometry.size.width ||
+       newGeom.size.height != obj->geometry.size.height)
     {
-        obj->dimensions.x = newX;
-        obj->dimensions.y = newY;
-        obj->dimensions.width  = newWidth;
-        obj->dimensions.height = newHeight;
+        memcpy(&obj->geometry, &newGeom, sizeof obj->geometry);
+
         // Now the screen dimensions have changed we have to update scaling
         // factors accordingly.
         am->updateViewScale = true;
@@ -1878,33 +1877,27 @@ void UIAutomap_UpdateDimensions(uiwidget_t* obj)
 
 void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj && obj->type == GUI_AUTOMAP);
     // Already at this target?
-    if(x == obj->dimensions.x && y == obj->dimensions.y)
-        return;
-    obj->dimensions.x = x;
-    obj->dimensions.y = y;
-    }
+    if(x == obj->geometry.origin.x && y == obj->geometry.origin.y) return;
+    obj->geometry.origin.x = x;
+    obj->geometry.origin.y = y;
 }
 
-void UIAutomap_SetDimensions(uiwidget_t* obj, int w, int h)
+void UIAutomap_SetSize(uiwidget_t* obj, int w, int h)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj && obj->type == GUI_AUTOMAP);
     // Already at this target?
-    if(w == obj->dimensions.width && h == obj->dimensions.height)
-        return;
-    obj->dimensions.width  = w;
-    obj->dimensions.height = h;
-    }
+    if(w == obj->geometry.size.width && h == obj->geometry.size.height) return;
+    obj->geometry.size.width  = w;
+    obj->geometry.size.height = h;
 }
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     if(x) *x = am->viewX;

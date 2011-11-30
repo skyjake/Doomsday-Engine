@@ -58,7 +58,7 @@ void            P_BlockmapUnlinkPolyobj(blockmap_t* bmap, polyobj_t* po);
 
 // Utility:
 void            P_GetBlockmapBounds(blockmap_t* bmap, pvec2_t min, pvec2_t max);
-void            P_GetBlockmapDimensions(blockmap_t* bmap, uint v[2]);
+void            P_GetBlockmapSize(blockmap_t* bmap, uint v[2]);
 boolean         P_ToBlockmapBlockIdx(blockmap_t* bmap, uint destBlock[2],
                                      const pvec2_t sourcePos);
 void            P_BoxToBlockmapBlocks(blockmap_t* bmap, uint blockBox[4],

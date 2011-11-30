@@ -355,10 +355,10 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        int viewW, viewH;
+        Size2i portSize;
         float scale;
-        R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
-        scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
+        R_ViewPortSize(UIWidget_Player(obj), &portSize);
+        scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
         yOffset = -lineHeight * scrollFactor * cfg.msgScale * scale;
@@ -439,7 +439,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     }
 }
 
-void UILog_UpdateDimensions(uiwidget_t* obj)
+void UILog_UpdateGeometry(uiwidget_t* obj)
 {
     assert(NULL != obj && obj->type == GUI_LOG);
     {
@@ -450,8 +450,8 @@ void UILog_UpdateDimensions(uiwidget_t* obj)
     float scrollFactor;
     guidata_log_message_t* msg;
 
-    obj->dimensions.width  = 0;
-    obj->dimensions.height = 0;
+    obj->geometry.size.width  = 0;
+    obj->geometry.size.height = 0;
 
     if(0 == pvisMsgCount) return;
 
@@ -494,10 +494,10 @@ void UILog_UpdateDimensions(uiwidget_t* obj)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        int viewW, viewH;
+        Size2i portSize;
         float scale;
-        R_ViewportDimensions(UIWidget_Player(obj), NULL, NULL, &viewW, &viewH);
-        scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
+        R_ViewPortSize(UIWidget_Player(obj), &portSize);
+        scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
     }
@@ -517,20 +517,20 @@ void UILog_UpdateDimensions(uiwidget_t* obj)
 
         ++drawnMsgCount;
 
-        FR_TextDimensions(&lineWidth, NULL, msg->text);
-        if(lineWidth > obj->dimensions.width)
+        lineWidth = FR_TextWidth(msg->text);
+        if(lineWidth > obj->geometry.size.width)
         {
-            obj->dimensions.width = lineWidth;
+            obj->geometry.size.width = lineWidth;
         }
     }
 
     if(0 != drawnMsgCount)
     {
-        obj->dimensions.height = /*first line*/ lineHeight * (1.f - scrollFactor) +
-                                /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
+        obj->geometry.size.height = /*first line*/ lineHeight * (1.f - scrollFactor) +
+                                   /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
     }
 
-    obj->dimensions.width  *= cfg.msgScale;
-    obj->dimensions.height *= cfg.msgScale;
+    obj->geometry.size.width  *= cfg.msgScale;
+    obj->geometry.size.height *= cfg.msgScale;
     }
 }

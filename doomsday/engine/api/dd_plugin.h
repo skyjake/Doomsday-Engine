@@ -71,8 +71,8 @@ typedef struct {
 
 // Paramaters for HOOK_VIEWPORT_RESHAPE
 typedef struct {
-    rectanglei_t dimensions; // New/Current dimensions.
-    rectanglei_t oldDimensions; // Previous dimensions.
+    Rectanglei geometry; // New/Current.
+    Rectanglei oldGeometry; // Previous.
 } ddhook_viewport_reshape_t;
 
 /**

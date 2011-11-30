@@ -35,6 +35,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -56,7 +57,7 @@ typedef struct bmapblock_s {
 typedef struct bmap_s {
     vec2_t          bBox[2];
     vec2_t          blockSize;
-    uint            dimensions[2]; // In blocks.
+    uint            size[2]; // In blocks.
     gridmap_t*      gridmap;
 } bmap_t;
 
@@ -78,12 +79,12 @@ float bmapDebugSize = 1.5f;
 // CODE --------------------------------------------------------------------
 
 void P_BoxToBlockmapBlocks(blockmap_t* blockmap, uint blockBox[4],
-                           const arvec2_t box)
+    const arvec2_t box)
 {
     if(blockmap)
     {
-        bmap_t*         bmap = (bmap_t*) blockmap;
-        vec2_t          m[2];
+        bmap_t* bmap = (bmap_t*) blockmap;
+        vec2_t m[2];
 
         m[0][VX] = MAX_OF(bmap->bBox[0][VX], box[0][VX]);
         m[1][VX] = MIN_OF(bmap->bBox[1][VX], box[1][VX]);
@@ -92,16 +93,16 @@ void P_BoxToBlockmapBlocks(blockmap_t* blockmap, uint blockBox[4],
 
         blockBox[BOXLEFT] =
             MINMAX_OF(0, (m[0][VX] - bmap->bBox[0][VX]) /
-                            bmap->blockSize[VX], bmap->dimensions[0]);
+                            bmap->blockSize[VX], bmap->size[0]);
         blockBox[BOXRIGHT] =
             MINMAX_OF(0, (m[1][VX] - bmap->bBox[0][VX]) /
-                            bmap->blockSize[VX], bmap->dimensions[0]);
+                            bmap->blockSize[VX], bmap->size[0]);
         blockBox[BOXBOTTOM] =
             MINMAX_OF(0, (m[0][VY] - bmap->bBox[0][VY]) /
-                            bmap->blockSize[VY], bmap->dimensions[1]);
+                            bmap->blockSize[VY], bmap->size[1]);
         blockBox[BOXTOP] =
             MINMAX_OF(0, (m[1][VY] - bmap->bBox[0][VY]) /
-                            bmap->blockSize[VY], bmap->dimensions[1]);
+                            bmap->blockSize[VY], bmap->size[1]);
     }
 }
 
@@ -159,20 +160,20 @@ blockmap_t* P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
 
     V2_Copy(bmap->bBox[0], min);
     V2_Copy(bmap->bBox[1], max);
-    bmap->dimensions[VX] = width;
-    bmap->dimensions[VY] = height;
+    bmap->size[VX] = width;
+    bmap->size[VY] = height;
 
     V2_Set(bmap->blockSize,
-           (bmap->bBox[1][VX] - bmap->bBox[0][VX]) / bmap->dimensions[VX],
-           (bmap->bBox[1][VY] - bmap->bBox[0][VY]) / bmap->dimensions[VY]);
+           (bmap->bBox[1][VX] - bmap->bBox[0][VX]) / bmap->size[VX],
+           (bmap->bBox[1][VY] - bmap->bBox[0][VY]) / bmap->size[VY]);
 
     bmap->gridmap =
-        M_GridmapCreate(bmap->dimensions[VX], bmap->dimensions[VY],
+        M_GridmapCreate(bmap->size[VX], bmap->size[VY],
                         sizeof(bmapblock_t), PU_MAPSTATIC);
 
     VERBOSE(Con_Message
-            ("P_BlockMapCreate: w=%i h=%i\n", bmap->dimensions[VX],
-             bmap->dimensions[VY]));
+            ("P_BlockMapCreate: w=%i h=%i\n", bmap->size[VX],
+             bmap->size[VY]));
 
     return (blockmap_t *) bmap;
 }
@@ -450,14 +451,14 @@ void P_GetBlockmapBounds(blockmap_t* blockmap, pvec2_t min, pvec2_t max)
     }
 }
 
-void P_GetBlockmapDimensions(blockmap_t* blockmap, uint v[2])
+void P_GetBlockmapSize(blockmap_t* blockmap, uint v[2])
 {
     if(blockmap)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
+        bmap_t* bmap = (bmap_t*) blockmap;
 
-        v[VX] = bmap->dimensions[VX];
-        v[VY] = bmap->dimensions[VY];
+        v[VX] = bmap->size[VX];
+        v[VY] = bmap->size[VY];
     }
 }
 
@@ -997,10 +998,10 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
         glEnd();
 
         {
-        float               length, dx, dy;
-        float               normal[2], unit[2];
-        float               scale = MAX_OF(bmapDebugSize, 1);
-        float               width = (theWindow->width / 16) / scale;
+        float length, dx, dy;
+        float normal[2], unit[2];
+        float scale = MAX_OF(bmapDebugSize, 1);
+        float width = (theWindow->geometry.size.width / 16) / scale;
 
         dx = end[VX] - start[VX];
         dy = end[VY] - start[VY];
@@ -1116,14 +1117,13 @@ void rendBlockMobjs(void* blockPtr, void* data, float r, float g, float b, float
     }
 }
 
-void rendBlockSubsectors(void* blockPtr, void* param,
-                         float r, float g, float b, float a)
+void rendBlockSubsectors(void* blockPtr, void* param, float r, float g, float b, float a)
 {
-    ssecmapblock_t*     block = blockPtr;
+    ssecmapblock_t* block = blockPtr;
 
     if(block->ssecs)
     {
-        sseciterparams_t    args;
+        sseciterparams_t args;
 
         args.box = NULL;
         args.localValidCount = validCount;
@@ -1136,77 +1136,89 @@ void rendBlockSubsectors(void* blockPtr, void* param,
     }
 }
 
-static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
-                        uint blockY, int lineCount, int moCount, int poCount)
+static void drawInfoBox(const Point2i* origin_, long blockIdx, uint blockX, uint blockY,
+    int lineCount, int moCount, int poCount)
 {
-    int                 w, h;
-    char                buf[160];
+    char buf[160];
+    Point2i origin;
+    Size2i size;
+    assert(origin_);
 
     sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
             blockIdx, blockX, blockY, lineCount, moCount, poCount);
+
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
-    x -= w / 2;
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    size.width  = FR_TextWidth(buf)  + 16;
+    size.height = FR_SingleLineHeight(buf) + 16;
+
+    origin.x = origin_->x;
+    origin.y = origin_->y;
+
+    origin.x -= size.width / 2;
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+
+    origin.x += 8;
+    origin.y += size.height / 2;
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx2(buf, x + 8, y + h / 2, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 }
 
 static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     float blockWidth, float blockHeight, uint width, uint height)
 {
-    int th, w, h, x, y;
+    Point2i origin;
+    Size2i size;
     char buf[80];
+    int th;
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
-    th = FR_TextHeight("a");
-    h = th * 4 + 16;
+    size.width = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
+    th = FR_SingleLineHeight("Info");
+    size.height = th * 4 + 16;
 
-    x = theWindow->width  - 10 - w;
-    y = theWindow->height - 10 - h;
+    origin.x = theWindow->geometry.size.width  - 10 - size.width;
+    origin.y = theWindow->geometry.size.height - 10 - size.height;
 
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
 
-    x += 8;
-    y += 8 + th/2;
+    origin.x += 8;
+    origin.y += 8 + th/2;
 
-    UI_TextOutEx2("Blockmap", x, y, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
-    sprintf(buf, "Dimensions:[%u,%u] #%li", width, height, width * (long) height);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    sprintf(buf, "Size:[%u,%u] #%li", width, height, width * (long) height);
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "Blksize:[%.2f,%.2f]", blockWidth, blockHeight);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)", minX, minY, maxX, maxY);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
 }
 
 static void drawBlockInfoBox(uint vBlock[2])
 {
-    int                 lineCount = -1, moCount = -1, poCount = -1;
-    long                blockIdx = -1;
-    bmap_t*             bmap = (bmap_t*) BlockMap;
-    bmapblock_t*        block;
+    int lineCount = -1, moCount = -1, poCount = -1;
+    long blockIdx = -1;
+    bmap_t* bmap = (bmap_t*) BlockMap;
+    bmapblock_t* block;
+    Point2i origin;
 
     block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
     if(block)
     {
-        blockIdx = vBlock[VY] * bmap->dimensions[VY] + vBlock[VX];
+        blockIdx = vBlock[VY] * bmap->size[VY] + vBlock[VX];
 
         // Count the number of lines linked to this block.
         lineCount = 0;
@@ -1247,8 +1259,9 @@ static void drawBlockInfoBox(uint vBlock[2])
         }
     }
 
-    drawInfoBox(theWindow->width / 2, 30,
-                blockIdx, vBlock[VX], vBlock[VY], lineCount, moCount, poCount);
+    origin.x = theWindow->geometry.size.width / 2;
+    origin.y = 30;
+    drawInfoBox(&origin, blockIdx, vBlock[VX], vBlock[VY], lineCount, moCount, poCount);
 }
 
 /**
@@ -1264,7 +1277,7 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     float scale, radius;
     void* block;
 
-    scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
+    scale = bmapDebugSize / MAX_OF(theWindow->geometry.size.height / 100, 1);
 
     if(followMobj)
     {   // Determine the mobj's block.
@@ -1287,9 +1300,10 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
-    glTranslatef((theWindow->width / 2), (theWindow->height / 2), 0);
+    glTranslatef((theWindow->geometry.size.width  / 2),
+                 (theWindow->geometry.size.height / 2), 0);
     glScalef(scale, -scale, 1);
 
     if(followMobj)
@@ -1301,14 +1315,14 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     }
     else
     {   // Offset to center the blockmap on the screen.
-        glTranslatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
-                     -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
+        glTranslatef(-(bmap->blockSize[VX] * bmap->size[VX] / 2),
+                     -(bmap->blockSize[VY] * bmap->size[VY] / 2), 0);
     }
 
     // Draw a background.
     V2_Set(start, 0, 0);
-    V2_Set(end, bmap->blockSize[VX] * bmap->dimensions[VX],
-                bmap->blockSize[VY] * bmap->dimensions[VY]);
+    V2_Set(end, bmap->blockSize[VX] * bmap->size[VX],
+                bmap->blockSize[VY] * bmap->size[VY]);
 
     glColor4f(.25f, .25f, .25f, .66f);
     glBegin(GL_QUADS);
@@ -1322,8 +1336,8 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
      * Draw the blocks.
      */
 
-    for(y = 0; y < bmap->dimensions[VY]; ++y)
-        for(x = 0; x < bmap->dimensions[VX]; ++x)
+    for(y = 0; y < bmap->size[VY]; ++y)
+        for(x = 0; x < bmap->size[VX]; ++x)
         {
             boolean             draw = false;
             bmapblock_t*        block =
@@ -1375,20 +1389,20 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
 
     // Vertical lines:
     glBegin(GL_LINES);
-    for(x = 1; x < bmap->dimensions[VX]; ++x)
+    for(x = 1; x < bmap->size[VX]; ++x)
     {
         glVertex2f(x * bmap->blockSize[VX],  0);
         glVertex2f(x * bmap->blockSize[VX],
-                   bmap->blockSize[VY] * bmap->dimensions[VY]);
+                   bmap->blockSize[VY] * bmap->size[VY]);
     }
     glEnd();
 
     // Horizontal lines
     glBegin(GL_LINES);
-    for(y = 1; y < bmap->dimensions[VY]; ++y)
+    for(y = 1; y < bmap->size[VY]; ++y)
     {
         glVertex2f(0, y * bmap->blockSize[VY]);
-        glVertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
+        glVertex2f(bmap->blockSize[VX] * bmap->size[VX],
                    y * bmap->blockSize[VY]);
     }
     glEnd();
@@ -1402,8 +1416,8 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // First, the blocks outside the viewPlayer's range.
-        for(y = 0; y < bmap->dimensions[VY]; ++y)
-            for(x = 0; x < bmap->dimensions[VX]; ++x)
+        for(y = 0; y < bmap->size[VY]; ++y)
+            for(x = 0; x < bmap->size[VX]; ++x)
             {
                 if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
                    y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
@@ -1464,8 +1478,8 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     }
     else
     {   // Just draw the lot.
-        for(y = 0; y < bmap->dimensions[VY]; ++y)
-            for(x = 0; x < bmap->dimensions[VX]; ++x)
+        for(y = 0; y < bmap->size[VY]; ++y)
+            for(x = 0; x < bmap->size[VX]; ++x)
             {
                 block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
                 if(block)
@@ -1480,8 +1494,8 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
      */
 
     V2_Set(start, -1, -1);
-    V2_Set(end, 1 + bmap->blockSize[VX] * bmap->dimensions[VX],
-           1 + bmap->blockSize[VY] * bmap->dimensions[VY]);
+    V2_Set(end, 1 + bmap->blockSize[VX] * bmap->size[VX],
+           1 + bmap->blockSize[VY] * bmap->size[VY]);
 
     glColor4f(1, .5f, .5f, 1);
 
@@ -1548,7 +1562,7 @@ void P_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -1562,7 +1576,7 @@ void P_BlockmapDebug(void)
     drawInfoBox2(bmap->bBox[0][VX], bmap->bBox[0][VY],
                  bmap->bBox[1][VX], bmap->bBox[1][VY],
                  bmap->blockSize[VX], bmap->blockSize[VY],
-                 bmap->dimensions[VX], bmap->dimensions[VY]);
+                 bmap->size[VX], bmap->size[VY]);
 
     glDisable(GL_TEXTURE_2D);
 

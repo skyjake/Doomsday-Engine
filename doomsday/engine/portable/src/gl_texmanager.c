@@ -851,7 +851,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     {
         if(0 != image->paletteId)
         {   // Paletted.
-            uint8_t* newPixels = GL_ConvertBuffer(image->pixels, image->width, image->height,
+            uint8_t* newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
                 ((image->flags & IMGF_IS_MASKED)? 2 : 1), R_ToColorPalette(image->paletteId), 3);
             free(image->pixels);
             image->pixels = newPixels;
@@ -861,7 +861,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
         }
 
         GL_ConvertToLuminance(image, false);
-        { long i, total = image->width * image->height;
+        { long i, total = image->size.width * image->size.height;
         for(i = 0; i < total; ++i)
         {
             image->pixels[total + i] = image->pixels[i];
@@ -872,16 +872,16 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     else if(0 != image->paletteId)
     {
         if(monochrome && !scaleSharp)
-            GL_DeSaturatePalettedImage(image->pixels, R_ToColorPalette(image->paletteId), image->width, image->height);
+            GL_DeSaturatePalettedImage(image->pixels, R_ToColorPalette(image->paletteId), image->size.width, image->size.height);
 
         if(scaleSharp)
         {
-            int scaleMethod = GL_ChooseSmartFilter(image->width, image->height, 0);
+            int scaleMethod = GL_ChooseSmartFilter(image->size.width, image->size.height, 0);
             boolean origMasked = (image->flags & IMGF_IS_MASKED) != 0;
             colorpaletteid_t origPaletteId = image->paletteId;
             uint8_t* newPixels;
 
-            newPixels = GL_ConvertBuffer(image->pixels, image->width, image->height,
+            newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
                 ((image->flags & IMGF_IS_MASKED)? 2 : 1), R_ToColorPalette(image->paletteId), 4);
             if(newPixels != image->pixels)
             {
@@ -893,30 +893,30 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
             }
 
             if(monochrome)
-                Desaturate(image->pixels, image->width, image->height, image->pixelSize);
+                Desaturate(image->pixels, image->size.width, image->size.height, image->pixelSize);
 
-            newPixels = GL_SmartFilter(scaleMethod, image->pixels, image->width, image->height,
-                0, &image->width, &image->height);
+            newPixels = GL_SmartFilter(scaleMethod, image->pixels, image->size.width, image->size.height,
+                0, &image->size.width, &image->size.height);
             if(newPixels != image->pixels)
             {
                 free(image->pixels);
                 image->pixels = newPixels;
             }
 
-            EnhanceContrast(image->pixels, image->width, image->height, image->pixelSize);
-            //SharpenPixels(image->pixels, image->width, image->height, image->pixelSize);
-            //BlackOutlines(image->pixels, image->width, image->height, image->pixelSize);
+            EnhanceContrast(image->pixels, image->size.width, image->size.height, image->pixelSize);
+            //SharpenPixels(image->pixels, image->size.width, image->size.height, image->pixelSize);
+            //BlackOutlines(image->pixels, image->size.width, image->size.height, image->pixelSize);
 
             // Back to paletted+alpha?
             if(monochrome)
             {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 GL_ConvertToLuminance(image, true);
-                AmplifyLuma(image->pixels, image->width, image->height, image->pixelSize == 2);
+                AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
             }
             else
             {   // Yes. Quantize down from RGA(+A) to Paletted(+A), replacing the old image->
-                newPixels = GL_ConvertBuffer(image->pixels, image->width, image->height,
+                newPixels = GL_ConvertBuffer(image->pixels, image->size.width, image->size.height,
                     (origMasked? 2 : 1), R_ToColorPalette(origPaletteId), 4);
                 if(newPixels != image->pixels)
                 {
@@ -934,18 +934,18 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
         }
 
         if(fillOutlines && 0 != image->paletteId && (image->flags & IMGF_IS_MASKED))
-            ColorOutlinesIdx(image->pixels, image->width, image->height);
+            ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
     }
     else if(image->pixelSize > 2)
     {
         if(monochrome)
         {
             GL_ConvertToLuminance(image, true);
-            AmplifyLuma(image->pixels, image->width, image->height, image->pixelSize == 2);
+            AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
         }
     }
 
-    if(noCompression || (image->width < 128 || image->height < 128))
+    if(noCompression || (image->size.width < 128 || image->size.height < 128))
         flags |= TXCF_NO_COMPRESSION;
 
     if(spec->gammaCorrection) flags |= TXCF_APPLY_GAMMACORRECTION;
@@ -1005,9 +1005,9 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     if((flags & TXCF_UPLOAD_ARG_NOSTRETCH) &&
        (!GL_state.features.texNonPowTwo || spec->mipmapped))
     {
-        int pw = M_CeilPow2(image->width), ph = M_CeilPow2(image->height);
-        s =  image->width / (float) pw;
-        t = image->height / (float) ph;
+        int pw = M_CeilPow2(image->size.width), ph = M_CeilPow2(image->size.height);
+        s =  image->size.width / (float) pw;
+        t = image->size.height / (float) ph;
     }
     else
     {
@@ -1020,8 +1020,8 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     GL_InitTextureContent(&c);
     c.name = TextureVariant_GLName(tex);
     c.format = dglFormat;
-    c.width = image->width;
-    c.height = image->height;
+    c.width = image->size.width;
+    c.height = image->size.height;
     c.pixels = image->pixels;
     c.paletteId = image->paletteId;
     c.flags = flags;
@@ -1048,7 +1048,7 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
         GL_ConvertToLuminance(image, false);
     }
 
-    EqualizeLuma(image->pixels, image->width, image->height, &baMul, &hiMul, &loMul);
+    EqualizeLuma(image->pixels, image->size.width, image->size.height, &baMul, &hiMul, &loMul);
     if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
     {
         Uri* uri = Textures_ComposeUri(Textures_Id(TextureVariant_GeneralCase(tex)));
@@ -1059,14 +1059,14 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     }
 
     // Disable compression?
-    if(image->width < 128 || image->height < 128)
+    if(image->size.width < 128 || image->size.height < 128)
         flags |= TXCF_NO_COMPRESSION;
 
     // Calculate prepared texture coordinates.
-    pw = M_CeilPow2(image->width);
-    ph = M_CeilPow2(image->height);
-    s =  image->width / (float) pw;
-    t = image->height / (float) ph;
+    pw = M_CeilPow2(image->size.width);
+    ph = M_CeilPow2(image->size.height);
+    s =  image->size.width / (float) pw;
+    t = image->size.height / (float) ph;
     TextureVariant_SetCoords(tex, s, t);
 
     GL_InitTextureContent(&c);
@@ -1074,8 +1074,8 @@ static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t
     c.format = DGL_LUMINANCE;
     c.flags = flags | TXCF_GRAY_MIPMAP | TXCF_UPLOAD_ARG_NOSMARTFILTER;
     c.grayMipmap = spec->contrast;
-    c.width = image->width;
-    c.height = image->height;
+    c.width = image->size.width;
+    c.height = image->size.height;
     c.pixels = image->pixels;
     c.anisoFilter = texAniso;
     c.magFilter = glmode[texMagMode];
@@ -1369,8 +1369,8 @@ void GL_PruneTextureVariantSpecifications(void)
 void GL_InitImage(image_t* img)
 {
     assert(img);
-    img->width = 0;
-    img->height = 0;
+    img->size.width = 0;
+    img->size.height = 0;
     img->pixelSize = 0;
     img->flags = 0;
     img->paletteId = 0;
@@ -1380,7 +1380,7 @@ void GL_InitImage(image_t* img)
 void GL_PrintImageMetadata(const image_t* image)
 {
     assert(image);
-    Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->width, image->height,
+    Con_Printf("dimensions:[%ix%i] flags:%i %s:%i\n", image->size.width, image->size.height,
         image->flags, 0 != image->paletteId? "colorpalette" : "pixelsize",
         0 != image->paletteId? image->paletteId : image->pixelSize);
 }
@@ -1389,7 +1389,7 @@ static boolean tryLoadPCX(image_t* img, DFile* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = PCX_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = PCX_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -1397,7 +1397,7 @@ static boolean tryLoadPNG(image_t* img, DFile* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = PNG_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = PNG_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -1405,7 +1405,7 @@ static boolean tryLoadTGA(image_t* img, DFile* file)
 {
     assert(img && file);
     GL_InitImage(img);
-    img->pixels = TGA_Load(file, &img->width, &img->height, &img->pixelSize);
+    img->pixels = TGA_Load(file, &img->size.width, &img->size.height, &img->pixelSize);
     return (0 != img->pixels);
 }
 
@@ -1469,12 +1469,12 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     if(!img->pixels) return NULL; // Not a recogniseable format.
 
     VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n",
-        F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->width, img->height) );
+        F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->size.width, img->size.height) );
 
     // How about some color-keying?
     if(isColorKeyed(Str_Text(AbstractFile_Path(DFile_File_Const(file)))))
     {
-        uint8_t* out = ApplyColorKeying(img->pixels, img->width, img->height, img->pixelSize);
+        uint8_t* out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
         if(out != img->pixels)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
@@ -2299,20 +2299,19 @@ byte GL_LoadDetailTextureLump(image_t* image, DFile* file)
         // How big is it?
         switch(fileLength)
         {
-        case 256 * 256: image->width = image->height = 256; break;
-        case 128 * 128: image->width = image->height = 128; break;
-        case  64 *  64: image->width = image->height =  64; break;
+        case 256 * 256: image->size.width = image->size.height = 256; break;
+        case 128 * 128: image->size.width = image->size.height = 128; break;
+        case  64 *  64: image->size.width = image->size.height =  64; break;
         default:
             Con_Error("GL_LoadDetailTextureLump: Must be 256x256, 128x128 or 64x64.\n");
             return 0; // Unreachable.
         }
 
         image->pixelSize = 1;
-        bufSize = (size_t)image->width * image->height;
+        bufSize = (size_t)image->size.width * image->size.height;
         image->pixels = (uint8_t*) malloc(bufSize);
-        if(NULL == image->pixels)
-            Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for "
-                "image pixel buffer.", (unsigned long) bufSize);
+        if(!image->pixels)
+            Con_Error("GL_LoadDetailTextureLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
         if(fileLength < bufSize)
             memset(image->pixels, 0, bufSize);
 
@@ -2342,16 +2341,15 @@ byte GL_LoadFlatLump(image_t* image, DFile* file)
         GL_InitImage(image);
 
         /// \fixme not all flats are 64x64!
-        image->width  = FLAT_WIDTH;
-        image->height = FLAT_HEIGHT;
+        image->size.width  = FLAT_WIDTH;
+        image->size.height = FLAT_HEIGHT;
         image->pixelSize = 1;
         image->paletteId = defaultColorPalette;
 
-        bufSize = MAX_OF(fileLength, (size_t)image->width * image->height);
+        bufSize = MAX_OF(fileLength, (size_t)image->size.width * image->size.height);
         image->pixels = (uint8_t*) malloc(bufSize);
-        if(NULL == image->pixels)
-            Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for "
-                "image pixel buffer.", (unsigned long) bufSize);
+        if(!image->pixels)
+            Con_Error("GL_LoadFlatLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) bufSize);
         if(fileLength < bufSize)
             memset(image->pixels, 0, bufSize);
 
@@ -2385,18 +2383,17 @@ static byte loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int
             if(validPatch((const uint8_t*)patch, fileLength))
             {
                 GL_InitImage(image);
-                image->width  = SHORT(patch->width)  + border*2;
-                image->height = SHORT(patch->height) + border*2;
+                image->size.width  = SHORT(patch->width)  + border*2;
+                image->size.height = SHORT(patch->height) + border*2;
                 image->pixelSize = 1;
                 image->paletteId = defaultColorPalette;
-                image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
-                if(NULL == image->pixels)
-                    Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for "
-                        "image pixel buffer.", (unsigned long) (2 * image->width * image->height));
+                image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
+                if(!image->pixels)
+                    Con_Error("GL_LoadPatchLump: Failed on allocation of %lu bytes for Image pixel buffer.", (unsigned long) (2 * image->size.width * image->size.height));
 
-                loadDoomPatch(image->pixels, image->width, image->height, patch,
+                loadDoomPatch(image->pixels, image->size.width, image->size.height, patch,
                     border, border, tclass, tmap, false);
-                if(palettedIsMasked(image->pixels, image->width, image->height))
+                if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
                     image->flags |= IMGF_IS_MASKED;
                 result = 1;
             }
@@ -2466,10 +2463,10 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
             ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
               image.pixelSize == 3 ? DGL_RGB :
               image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-            image.width, image.height, image.pixels,
+            image.size.width, image.size.height, image.pixels,
             ( otherFlags | (useMipmap? TXCF_MIPMAP : 0) |
               (useMipmap == DDMAXINT? TXCF_GRAY_MIPMAP : 0) |
-              (image.width < 128 && image.height < 128? TXCF_NO_COMPRESSION : 0) ),
+              (image.size.width < 128 && image.size.height < 128? TXCF_NO_COMPRESSION : 0) ),
             0, (useMipmap ? glmode[mipmapping] : GL_LINEAR),
             magFilter, texAniso, wrapS, wrapT);
 
@@ -2494,13 +2491,13 @@ byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
 
     GL_InitImage(image);
     image->pixelSize = 1;
-    image->width = texDef->width;
-    image->height = texDef->height;
+    image->size.width = texDef->size.width;
+    image->size.height = texDef->size.height;
     image->paletteId = defaultColorPalette;
 
-    image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+    image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
     if(!image->pixels)
-        Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new image pixel data.", (unsigned long) (2 * image->width * image->height));
+        Con_Error("GL_LoadPatchComposite: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
 
     for(i = 0; i < texDef->patchCount; ++i)
     {
@@ -2512,13 +2509,13 @@ byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
         if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
         {
             // Draw the patch in the buffer.
-            loadDoomPatch(image->pixels, image->width, image->height,
+            loadDoomPatch(image->pixels, image->size.width, image->size.height,
                 (const doompatch_header_t*)patch, patchDef->offX, patchDef->offY, 0, 0, false);
         }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
 
-    if(palettedIsMasked(image->pixels, image->width, image->height))
+    if(palettedIsMasked(image->pixels, image->size.width, image->size.height))
         image->flags |= IMGF_IS_MASKED;
 
     return 1;
@@ -2542,8 +2539,8 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask
      * data is 200. We'll adjust the real height of the texture up to
      * 200 pixels (remember Caldera?).
      */
-    width = texDef->width;
-    height = texDef->height;
+    width  = texDef->size.width;
+    height = texDef->size.height;
     if(texDef->patchCount == 1)
     {
         int lumpIdx;
@@ -2561,13 +2558,13 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask
 
     GL_InitImage(image);
     image->pixelSize = 1;
-    image->width = width;
-    image->height = height;
+    image->size.width  = width;
+    image->size.height = height;
     image->paletteId = defaultColorPalette;
 
-    image->pixels = (uint8_t*) calloc(1, 2 * image->width * image->height);
+    image->pixels = (uint8_t*) calloc(1, 2 * image->size.width * image->size.height);
     if(!image->pixels)
-        Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for new image pixel data.", (unsigned long) (2 * image->width * image->height));
+        Con_Error("GL_LoadPatchCompositeAsSky: Failed on allocation of %lu bytes for new Image pixel data.", (unsigned long) (2 * image->size.width * image->size.height));
 
     for(i = 0; i < texDef->patchCount; ++i)
     {
@@ -2587,7 +2584,7 @@ byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask
             {
                 offX = offY = 0;
             }
-            loadDoomPatch(image->pixels, image->width, image->height, patch, offX, offY, 0, 0, zeroMask);
+            loadDoomPatch(image->pixels, image->size.width, image->size.height, patch, offX, offY, 0, 0, zeroMask);
         }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
     }
@@ -2638,8 +2635,8 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 
                 // Load the raw image data.
                 DFile_Read(file, image->pixels, fileLength);
-                image->width = RAW_WIDTH;
-                image->height = (int) (fileLength / image->width);
+                image->size.width = RAW_WIDTH;
+                image->size.height = (int) (fileLength / image->size.width);
                 image->pixelSize = 1;
                 result = 1;
 
@@ -2672,7 +2669,7 @@ DGLuint GL_PrepareRawTexture(rawtex_t* raw)
         if(2 == (result = GL_LoadRawTex(&image, raw)))
         {   // Loaded an external raw texture.
             raw->tex = GL_NewTextureWithParams2(image.pixelSize == 4? DGL_RGBA : DGL_RGB,
-                image.width, image.height, image.pixels, 0, 0,
+                image.size.width, image.size.height, image.pixels, 0, 0,
                 GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
         }
@@ -2682,14 +2679,14 @@ DGLuint GL_PrepareRawTexture(rawtex_t* raw)
                 (image.flags & IMGF_IS_MASKED)? DGL_COLOR_INDEX_8_PLUS_A8 :
                           image.pixelSize == 4? DGL_RGBA :
                           image.pixelSize == 3? DGL_RGB : DGL_COLOR_INDEX_8,
-                image.width, image.height, image.pixels, 0, 0,
+                image.size.width, image.size.height, image.pixels, 0, 0,
                 GL_NEAREST, (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
         }
 
-        raw->width  = image.width;
-        raw->height = image.height;
+        raw->width  = image.size.width;
+        raw->height = image.size.height;
         GL_DestroyImage(&image);
     }
 
@@ -3015,7 +3012,7 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         }
 
         if(firstInit || forceUpdate)
-            GL_CalcLuminance(image->pixels, image->width, image->height, image->pixelSize,
+            GL_CalcLuminance(image->pixels, image->size.width, image->size.height, image->pixelSize,
                 R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
     }
 
@@ -3037,12 +3034,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         {
             if(0 == image->paletteId)
             {
-                FindAverageColor(image->pixels, image->width, image->height,
+                FindAverageColor(image->pixels, image->size.width, image->size.height,
                     image->pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image->pixels, image->width, image->height,
+                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
                     R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
@@ -3066,12 +3063,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         {
             if(0 == image->paletteId)
             {
-                FindAverageColor(image->pixels, image->width, image->height,
+                FindAverageColor(image->pixels, image->size.width, image->size.height,
                     image->pixelSize, &ac->color);
             }
             else
             {
-                FindAverageColorIdx(image->pixels, image->width, image->height,
+                FindAverageColorIdx(image->pixels, image->size.width, image->size.height,
                     R_ToColorPalette(image->paletteId), false, &ac->color);
             }
             R_AmplifyColor(ac->color.rgb);
@@ -3096,12 +3093,12 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         {
             if(0 == image->paletteId)
             {
-                FindAverageLineColor(image->pixels, image->width, image->height,
+                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
                     image->pixelSize, 0, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image->pixels, image->width, image->height,
+                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height,
                     0, R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
@@ -3125,13 +3122,13 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
         {
             if(0 == image->paletteId)
             {
-                FindAverageLineColor(image->pixels, image->width, image->height,
-                    image->pixelSize, image->height-1, &ac->color);
+                FindAverageLineColor(image->pixels, image->size.width, image->size.height,
+                    image->pixelSize, image->size.height-1, &ac->color);
             }
             else
             {
-                FindAverageLineColorIdx(image->pixels, image->width, image->height,
-                    image->height-1, R_ToColorPalette(image->paletteId), false, &ac->color);
+                FindAverageLineColorIdx(image->pixels, image->size.width, image->size.height,
+                    image->size.height-1, R_ToColorPalette(image->paletteId), false, &ac->color);
             }
         }
     }
@@ -3198,11 +3195,11 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
         VERBOSE2( Con_Message("Logical dimensions for \"%s\" taken from image pixels [%ix%i].\n",
-            Str_Text(path), image.width, image.height) );
+            Str_Text(path), image.size.width, image.size.height) );
         Str_Delete(path);
         Uri_Delete(uri);
 #endif
-        Texture_SetDimensions(tex, image.width, image.height);
+        Texture_SetSize(tex, &image.size);
     }
 
     performImageAnalyses(tex, &image, spec, true /*Always update*/);

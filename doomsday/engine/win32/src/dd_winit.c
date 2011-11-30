@@ -401,8 +401,11 @@ static void determineGlobalPaths(application_t* app)
 static BOOL createMainWindow(int lnCmdShow)
 {
     char buf[256];
+    Point2i origin = { 0, 0 };
+    Size2i size = { 640, 480 };
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
+    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0,
+        (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
     return windowIDX != 0;
 }
 

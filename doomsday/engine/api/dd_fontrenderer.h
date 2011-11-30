@@ -174,7 +174,7 @@ void FR_DrawText2(const char* text, int x, int y, int alignFlags);
 void FR_DrawText(const char* text, int x, int y);
 
 // Utility routines:
-void FR_TextDimensions(int* width, int* height, const char* text);
+void FR_TextSize(Size2i* size, const char* text);
 /// @return  Visible width of the text.
 int FR_TextWidth(const char* text);
 /// @return  Visible height of the text.
@@ -198,7 +198,7 @@ void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags);
 void FR_DrawChar(unsigned char ch, int x, int y);
 
 // Utility routines:
-void FR_CharDimensions(int* width, int* height, unsigned char ch);
+void FR_CharSize(Size2i* size, unsigned char ch);
 /// @return  Visible width of the character.
 int FR_CharWidth(unsigned char ch);
 /// @return  Visible height of the character.

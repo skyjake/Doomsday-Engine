@@ -356,7 +356,7 @@ void MPIUpdateServerInfo(ui_object_t *ob)
  */
 void MPIServerInfoDrawer(ui_object_t* ob)
 {
-    UI_DrawHelpBox(ob->x, ob->y, ob->w, ob->h, ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
+    UI_DrawHelpBox(&ob->geometry.origin, &ob->geometry.size, ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
 }
 
 void MPIToggleMasterItems(ui_object_t* ob)

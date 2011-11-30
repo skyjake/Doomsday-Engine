@@ -118,6 +118,7 @@ static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t 
 static boolean drawThinkerId(thinker_t* thinker, void* context)
 {
 #define MAX_THINKER_DIST  2048
+    const Point2i labelOrigin = { 2, 2 };
     float* eye = (float*) context;
     float pos[3], dist, alpha;
     char buf[80];
@@ -136,7 +137,7 @@ static boolean drawThinkerId(thinker_t* thinker, void* context)
 
     if(alpha > 0)
     {
-        float scale = dist / (theWindow->width / 2);
+        float scale = dist / (theWindow->geometry.size.width / 2);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -147,7 +148,7 @@ static boolean drawThinkerId(thinker_t* thinker, void* context)
         glScalef(-scale, -scale, 1);
 
         sprintf(buf, "%i", mo->thinker.id);
-        UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
+        UI_TextOutEx(buf, &labelOrigin, UI_Color(UIC_TITLE), alpha);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -354,8 +355,8 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -texSpec->border;
     params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -texSpec->border;
-    params->width = ms->width + texSpec->border*2;
-    params->height = ms->height + texSpec->border*2;
+    params->width  = ms->size.width  + texSpec->border*2;
+    params->height = ms->size.height + texSpec->border*2;
 
     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &params->texOffset[0], &params->texOffset[1]);
 

@@ -99,7 +99,7 @@ void Rend_ConsoleRegister(void)
 
 static float calcConsoleTitleBarHeight(void)
 {
-    int oldFont, border = theWindow->width / 120, height;
+    int oldFont, border = theWindow->geometry.size.width / 120, height;
     assert(inited);
 
     oldFont = FR_Font();
@@ -112,7 +112,7 @@ static float calcConsoleTitleBarHeight(void)
 static __inline int calcConsoleMinHeight(void)
 {
     assert(inited);
-    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->height * SCREENHEIGHT;
+    return fontSy * 1.5f + calcConsoleTitleBarHeight() / theWindow->geometry.size.height * SCREENHEIGHT;
 }
 
 void Rend_ConsoleInit(void)
@@ -166,7 +166,7 @@ boolean Rend_ConsoleResize(boolean force)
         FR_LoadDefaultAttrib();
         FR_SetTracking(Con_FontTracking());
 
-        gtosMulY = theWindow->height / 200.0f;
+        gtosMulY = theWindow->geometry.size.height / 200.0f;
         lineHeight = FR_SingleLineHeight("Con");
         Con_FontScale(&scale[0], &scale[1]);
 
@@ -262,12 +262,17 @@ static void calcAvgColor(int fl, float rgb[3])
 static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
 {
     int xoff = 3, yoff = lineHeight / 4, rh = MIN_OF(5, lineHeight / 2);
+    Point2i origin;
+    Size2i size;
     assert(inited);
 
-    UI_GradientEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
-                  rh / 3, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 2, alpha);
-    UI_DrawRectEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
-                  -rh / 3, false, UI_Color(UIC_BRD_HI), 0, 0, alpha / 3);
+    origin.x = x + xoff;
+    origin.y = y + yoff + (lineHeight - rh) / 2;
+    size.width  = lineWidth - 2 * xoff;
+    size.height = rh;
+
+    UI_GradientEx(&origin, &size,  rh / 3, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 2, alpha);
+    UI_DrawRectEx(&origin, &size, -rh / 3, false, UI_Color(UIC_BRD_HI), 0, 0, alpha / 3);
 }
 
 /**
@@ -443,10 +448,12 @@ void Rend_ConsoleTicker(timespan_t time)
     ConsoleBlink += step; // Cursor blink timer (0 = visible).
 }
 
-void Rend_ConsoleFPS(int x, int y)
+void Rend_ConsoleFPS(const Point2i* origin)
 {
-    int w, h;
+    Point2i topLeft, labelOrigin;
     char buf[160];
+    Size2i size;
+    assert(origin);
 
     if(isDedicated || !inited) return;
     if(!consoleShowFPS) return;
@@ -454,75 +461,93 @@ void Rend_ConsoleFPS(int x, int y)
     // Try to fulfill any pending resize.
     if(Rend_ConsoleResize(false/*no force*/)) return; // No FPS counter for you...
 
-    // If the ui is active draw the counter a bit further down
-    if(UI_IsActive())
-        y += 20;
-
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_SingleLineHeight(buf)  + 16;
+    size.width  = FR_TextWidth(buf) + 16;
+    size.height = FR_SingleLineHeight(buf)  + 16;
 
     glEnable(GL_TEXTURE_2D);
 
-    UI_GradientEx(x-w, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .8f);
-    UI_DrawRectEx(x-w, y, w, h, 6, false, UI_Color(UIC_BRD_HI), UI_Color(UIC_BG_MEDIUM), .2f, -1);
+    topLeft.x = origin->x - size.width;
+    topLeft.y = origin->y;
+    UI_GradientEx(&topLeft, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .8f);
+    UI_DrawRectEx(&topLeft, &size, 6, false, UI_Color(UIC_BRD_HI), UI_Color(UIC_BG_MEDIUM), .2f, -1);
+
+    labelOrigin.x = origin->x - 8;
+    labelOrigin.y = origin->y + size.height / 2;
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx2(buf, x - 8, y + h / 2, UI_Color(UIC_TITLE), 1, ALIGN_RIGHT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), 1, ALIGN_RIGHT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 }
 
 static void drawConsoleTitleBar(float alpha)
 {
-    int width = 0, height, border;
+    int border, barHeight;
+    Point2i origin;
+    Size2i size;
     assert(inited);
 
     if(alpha < .0001f) return;
 
-    border = theWindow->width / 120;
+    border = theWindow->geometry.size.width / 120;
+    barHeight = calcConsoleTitleBarHeight();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-
     glEnable(GL_TEXTURE_2D);
 
-    height = calcConsoleTitleBarHeight();
-    UI_Gradient(0, 0, theWindow->width, height, UI_Color(UIC_BG_MEDIUM),
-                UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
-    UI_Gradient(0, height, theWindow->width, border, UI_Color(UIC_SHADOW),
-                UI_Color(UIC_BG_DARK), .6f * alpha, 0);
-    UI_Gradient(0, height, theWindow->width, border*2, UI_Color(UIC_BG_DARK),
-                UI_Color(UIC_SHADOW), .2f * alpha, 0);
+    origin.x = 0;
+    origin.y = 0;
+    size.width  = theWindow->geometry.size.width;
+    size.height = barHeight;
+    UI_Gradient(&origin, &size, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
+
+    origin.x = 0;
+    origin.y = barHeight;
+    size.width  = theWindow->geometry.size.width;
+    size.height = border;
+    UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), .6f * alpha, 0);
+
+    origin.x = 0;
+    origin.y = barHeight;
+    size.width  = theWindow->geometry.size.width;
+    size.height = border*2;
+    UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_SHADOW), .2f * alpha, 0);
+
     FR_SetFont(fontVariable[FS_BOLD]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(consoleTitle, border, height / 2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    origin.x = border;
+    origin.y = barHeight / 2;
+    UI_TextOutEx2(consoleTitle, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     if(secondaryTitleText[0])
     {
-        width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
+        int width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
         FR_SetFont(fontVariable[FS_LIGHT]);
-        UI_TextOutEx2(secondaryTitleText, border + width, height / 2, UI_Color(UIC_TEXT), .33f * alpha,
-                      ALIGN_LEFT, DTF_ONLY_SHADOW);
+        origin.x = border + width;
+        origin.y = barHeight / 2;
+        UI_TextOutEx2(secondaryTitleText, &origin, UI_Color(UIC_TEXT), .33f * alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
     if(statusText[0])
     {
         FR_SetFont(fontVariable[FS_LIGHT]);
-        UI_TextOutEx2(statusText, theWindow->width - border, height / 2, UI_Color(UIC_TEXT), .75f * alpha,
-                      ALIGN_RIGHT, DTF_ONLY_SHADOW);
+        origin.x = theWindow->geometry.size.width - border;
+        origin.y = barHeight / 2;
+        UI_TextOutEx2(statusText, &origin, UI_Color(UIC_TEXT), .75f * alpha, ALIGN_RIGHT, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
-
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }
 
-static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
+static void drawConsoleBackground(const Point2i* origin, const Size2i* size, float closeFade)
 {
     int bgX = 0, bgY = 0;
     assert(inited);
@@ -535,8 +560,8 @@ static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
 
         GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 
-        bgX = (int) (ms->width  * consoleBackgroundZoom);
-        bgY = (int) (ms->height * consoleBackgroundZoom);
+        bgX = (int) (ms->size.width  * consoleBackgroundZoom);
+        bgY = (int) (ms->size.height * consoleBackgroundZoom);
 
         glEnable(GL_TEXTURE_2D);
         if(consoleBackgroundTurn != 0)
@@ -550,7 +575,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
     }
 
     glColor4f(consoleBackgroundLight, consoleBackgroundLight, consoleBackgroundLight, closeFade * consoleBackgroundAlpha);
-    GL_DrawRectTiled(x, y, w, h, bgX, bgY);
+    GL_DrawRectTiled(origin->x, origin->y, size->width, size->height, bgX, bgY);
 
     if(consoleBackgroundMaterial)
     {
@@ -571,7 +596,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float closeFade)
  */
 static void drawSideText(const char* text, int line, float alpha)
 {
-    float gtosMulY = theWindow->height / 200.0f, fontScaledY, y, scale[2];
+    float gtosMulY = theWindow->geometry.size.height / 200.0f, fontScaledY, y, scale[2];
     char buf[300];
     int ssw;
     assert(inited);
@@ -587,7 +612,7 @@ static void drawSideText(const char* text, int line, float alpha)
         con_textfilter_t printFilter = Con_PrintFilter();
 
         // Scaled screen width.
-        ssw = (int) (theWindow->width / scale[0]);
+        ssw = (int) (theWindow->geometry.size.width / scale[0]);
 
         if(printFilter)
         {
@@ -617,12 +642,14 @@ static void drawConsole(float consoleAlpha)
     CBuffer* buffer = Con_HistoryBuffer();
     uint cmdCursor = Con_CommandLineCursorPosition();
     char* cmdLine = Con_CommandLine();
-    float scale[2], y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
+    float scale[2], y, fontScaledY, gtosMulY = theWindow->geometry.size.height / 200.0f;
     char buff[LOCALBUFFSIZE];
     font_t* cfont;
     int lineHeight, textOffsetY;
     con_textfilter_t printFilter = Con_PrintFilter();
     uint reqLines, maxLineLength;
+    Point2i origin;
+    Size2i size;
     assert(inited);
 
     FR_SetFont(Con_Font());
@@ -636,18 +663,32 @@ static void drawConsole(float consoleAlpha)
     fontScaledY = lineHeight * Con_FontLeading() * scale[1];
     textOffsetY = PADDING + fontScaledY / 4;
 
-    drawConsoleBackground(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY),
-                          theWindow->width, -theWindow->height, consoleAlpha);
+    origin.x = XORIGIN;
+    origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
+    size.width  = theWindow->geometry.size.width;
+    size.height = -theWindow->geometry.size.height;
+    drawConsoleBackground(&origin, &size, consoleAlpha);
 
     // The border.
-    UI_Gradient(XORIGIN, YORIGIN + (int) ((ConsoleY - 10) * gtosMulY), theWindow->width,
-                10 * gtosMulY, UI_Color(UIC_BG_DARK), UI_Color(UIC_BRD_HI), 0,
+    origin.x = XORIGIN;
+    origin.y = YORIGIN + (int) ((ConsoleY - 10) * gtosMulY);
+    size.width  = theWindow->geometry.size.width;
+    size.height = 10 * gtosMulY;
+    UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_BRD_HI), 0,
                 consoleAlpha * consoleBackgroundAlpha * .06f);
-    UI_Gradient(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY), theWindow->width,
-                2, UI_Color(UIC_BG_LIGHT), UI_Color(UIC_BG_LIGHT),
+
+    origin.x = XORIGIN;
+    origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
+    size.width  = theWindow->geometry.size.width;
+    size.height = 2;
+    UI_Gradient(&origin, &size, UI_Color(UIC_BG_LIGHT), UI_Color(UIC_BG_LIGHT),
                 consoleAlpha * consoleBackgroundAlpha, -1);
-    UI_Gradient(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY), theWindow->width,
-                2 * gtosMulY, UI_Color(UIC_SHADOW), UI_Color(UIC_SHADOW),
+
+    origin.x = XORIGIN;
+    origin.y = YORIGIN + (int) (ConsoleY * gtosMulY);
+    size.width  = theWindow->geometry.size.width;
+    size.height = 2 * gtosMulY;
+    UI_Gradient(&origin, &size, UI_Color(UIC_SHADOW), UI_Color(UIC_SHADOW),
                 consoleAlpha * consoleBackgroundAlpha * .75f, 0);
 
     glMatrixMode(GL_MODELVIEW);
@@ -687,7 +728,7 @@ static void drawConsole(float consoleAlpha)
                 if(line->flags & CBLF_RULER)
                 {   // Draw a ruler here, and nothing else.
                     drawRuler(XORIGIN + PADDING, (YORIGIN + y) / scale[1],
-                               theWindow->width / scale[0] - PADDING*2, lineHeight,
+                               theWindow->geometry.size.width / scale[0] - PADDING*2, lineHeight,
                                consoleAlpha);
                 }
                 else
@@ -702,7 +743,7 @@ static void drawConsole(float consoleAlpha)
                     if(line->flags & CBLF_CENTER)
                     {
                         alignFlags |= ALIGN_TOP;
-                        xOffset = (theWindow->width / scale[0]) / 2;
+                        xOffset = (theWindow->geometry.size.width / scale[0]) / 2;
                     }
                     else
                     {
@@ -803,7 +844,7 @@ static void drawConsole(float consoleAlpha)
             yOffset += lineHeight * scale[1];
         }
 
-        // Dimensions of the current character.
+        // Size of the current character.
         width = FR_CharWidth(cmdLine[cmdCursor] == '\0'? ' ' : cmdLine[cmdCursor]);
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
@@ -838,7 +879,7 @@ void Rend_Console(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     if(consoleShow)
     {
@@ -847,7 +888,12 @@ void Rend_Console(void)
     }
 
     if(consoleShowFPS && !UI_IsActive())
-        Rend_ConsoleFPS(theWindow->width - 10, 10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0));
+    {
+        Point2i origin;
+        origin.x = theWindow->geometry.size.width - 10;
+        origin.y = 10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0);
+        Rend_ConsoleFPS(&origin);
+    }
 
     // Restore original matrix.
     glMatrixMode(GL_PROJECTION);

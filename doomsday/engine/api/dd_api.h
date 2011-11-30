@@ -89,8 +89,51 @@ typedef struct {
     // Refresh.
     void          (*BeginFrame) (void);
     void          (*EndFrame) (void);
-    void          (*G_Drawer) (int layer);
-    void          (*G_Drawer2) (void);
+
+    /**
+     * Draw the view port display of the identified console @a player.
+     * The engine will configure a orthographic GL projection in real pixel
+     * dimensions prior to calling this.
+     *
+     * Example subdivision of the game window into four view ports:
+     *
+     *     (0,0)-----------------------. X
+     *       | .--------. |            |
+     *       | | window | |            |
+     *       | '--------' |            |
+     *       |    port #0 |    port #1 |
+     *       |-------------------------|
+     *       |            |            |
+     *       |            |            |
+     *       |            |            |
+     *       |    port #2 |    port #3 |
+     *       '--------------------(xn-1, yn-1)
+     *       Y               Game Window
+     *
+     * @param port  Logical number of this view port.
+     * @param portGeometry  Geometry of the view port in real screen pixels.
+     * @param windowGeometry  Geometry of the view window within the port,
+     *     in real screen pixels.
+     *
+     * @param player  Console player number associated with the view port.
+     * @param layer  Logical layer identifier for the content to be drawn:
+     *
+     *     0: The bottom-most layer and the one which generally contains the
+     *        call to R_RenderPlayerView.
+     *
+     *     1: Displays to be drawn on top of view window (after bordering),
+     *        such as the player HUD.
+     */
+    void          (*DrawViewPort) (int port, const Rectanglei* portGeometry,
+                        const Rectanglei* windowGeometry, int player, int layer);
+
+    /**
+     * Draw over-viewport displays covering the whole game window. Typically
+     * graphical user interfaces such as game menus are done here.
+     *
+     * @param windowSize  Dimensions of the game window in real screen pixels.
+     */
+    void          (*DrawWindow) (const Size2i* windowSize);
 
     // Miscellaneous.
     void          (*MobjThinker) ();

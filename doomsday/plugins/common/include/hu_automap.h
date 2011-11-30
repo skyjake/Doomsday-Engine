@@ -151,7 +151,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y);
 boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast);
 void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength);
 
-void UIAutomap_UpdateDimensions(uiwidget_t* obj);
+void UIAutomap_UpdateGeometry(uiwidget_t* obj);
 
 boolean UIAutomap_Active(uiwidget_t* obj);
 boolean UIAutomap_Reveal(uiwidget_t* obj);
@@ -176,7 +176,7 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
 void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y);
-void UIAutomap_SetDimensions(uiwidget_t* obj, int w, int h);
+void UIAutomap_SetSize(uiwidget_t* obj, int w, int h);
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y);

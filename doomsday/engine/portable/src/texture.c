@@ -45,7 +45,7 @@ texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
         Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
 
     tex->_flags = flags;
-    tex->_width = tex->_height = 0;
+    tex->_size.width = tex->_size.height = 0;
     tex->_variants = NULL;
     tex->_primaryBind = bindId;
     tex->_userData = userData;
@@ -54,11 +54,11 @@ texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
     return tex;
 }
 
-texture_t* Texture_NewWithDimensions(int flags, textureid_t bindId,
-    int width, int height, void* userData)
+texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2i* size,
+    void* userData)
 {
     texture_t* tex = Texture_New(flags, bindId, userData);
-    Texture_SetDimensions(tex, width, height);
+    Texture_SetSize(tex, size);
     return tex;
 }
 
@@ -197,40 +197,40 @@ void Texture_SetFlags(texture_t* tex, int flags)
 int Texture_Width(const texture_t* tex)
 {
     assert(tex);
-    return tex->_width;
+    return tex->_size.width;
 }
 
 void Texture_SetWidth(texture_t* tex, int width)
 {
     assert(tex);
-    tex->_width = width;
+    tex->_size.width = width;
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Height(const texture_t* tex)
 {
     assert(tex);
-    return tex->_height;
+    return tex->_size.height;
 }
 
 void Texture_SetHeight(texture_t* tex, int height)
 {
     assert(tex);
-    tex->_height = height;
+    tex->_size.height = height;
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-void Texture_Dimensions(const texture_t* tex, int* width, int* height)
-{
-    if(width)   *width = Texture_Width(tex);
-    if(height) *height = Texture_Height(tex);
-}
-
-void Texture_SetDimensions(texture_t* tex, int width, int height)
+const Size2i* Texture_Size(const texture_t* tex)
 {
     assert(tex);
-    tex->_width  = width;
-    tex->_height = height;
+    return &tex->_size;
+}
+
+void Texture_SetSize(texture_t* tex, const Size2i* size)
+{
+    assert(tex && size);
+    tex->_size.width  = size->width;
+    tex->_size.height = size->height;
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 

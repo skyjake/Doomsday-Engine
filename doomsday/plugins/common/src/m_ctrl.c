@@ -356,7 +356,7 @@ void Hu_MenuInitControlsPage(void)
             obj->_pageFontIdx = MENU_FONT1;
             obj->_pageColorIdx = MENU_COLOR2; 
             obj->drawer = MNText_Drawer;
-            obj->updateDimensions = MNText_UpdateDimensions;
+            obj->updateGeometry = MNText_UpdateGeometry;
         }
         else 
         {
@@ -375,7 +375,7 @@ void Hu_MenuInitControlsPage(void)
             }
             labelObj->_typedata = txt;
             labelObj->drawer = MNText_Drawer;
-            labelObj->updateDimensions = MNText_UpdateDimensions;
+            labelObj->updateGeometry = MNText_UpdateGeometry;
             labelObj->_pageFontIdx = MENU_FONT1;
             labelObj->_pageColorIdx = MENU_COLOR1; 
 
@@ -383,7 +383,7 @@ void Hu_MenuInitControlsPage(void)
             bindingsObj->drawer = MNBindings_Drawer;
             bindingsObj->cmdResponder = MNBindings_CommandResponder;
             bindingsObj->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsObj->updateDimensions = MNBindings_UpdateDimensions;
+            bindingsObj->updateGeometry = MNBindings_UpdateGeometry;
             bindingsObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             bindingsObj->_typedata = binds;
@@ -589,7 +589,7 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
 
 void MNBindings_Drawer(mn_object_t* obj, int x, int y)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     bindingdrawerdata_t draw;
@@ -612,7 +612,7 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
 
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     switch(cmd)
@@ -649,12 +649,12 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     }
 }
 
-void MNBindings_UpdateDimensions(mn_object_t* obj, mn_page_t* page)
+void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    assert(NULL != obj);
-    obj->_dimensions.width  = 60;
-    obj->_dimensions.height = 10 * SMALL_SCALE;
+    assert(obj);
+    obj->_geometry.size.width  = 60;
+    obj->_geometry.size.height = 10 * SMALL_SCALE;
 }
 
 /**
@@ -709,7 +709,7 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
 
 const char* MNBindings_ControlName(mn_object_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
     return binds->text;
@@ -718,7 +718,7 @@ const char* MNBindings_ControlName(mn_object_t* obj)
 
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 {
-    assert(NULL != obj && NULL != ev);
+    assert(obj && ev);
     // We're interested in key or button down events.
     if((obj->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {

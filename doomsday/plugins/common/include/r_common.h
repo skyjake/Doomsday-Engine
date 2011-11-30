@@ -30,10 +30,10 @@
 #define LIBCOMMON_REFRESH_H
 
 // Translate between fixed screen dimensions to actual, current.
-#define FIXXTOSCREENX(x) (scrwidth * ((x) / (float) SCREENWIDTH))
-#define FIXYTOSCREENY(y) (scrheight * ((y) / (float) SCREENHEIGHT))
-#define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / scrwidth))
-#define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / scrheight))
+#define FIXXTOSCREENX(x) (portSize.width * ((x) / (float) SCREENWIDTH))
+#define FIXYTOSCREENY(y) (portSize.height * ((y) / (float) SCREENHEIGHT))
+#define SCREENXTOFIXX(x) ((float) SCREENWIDTH * ((x) / portSize.width))
+#define SCREENYTOFIXY(y) ((float) SCREENHEIGHT * ((y) / portSize.height))
 
 /**
  * @defgroup resizeViewWindowFlags  Resize ViewWindow Flags.

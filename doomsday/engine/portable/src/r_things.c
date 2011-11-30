@@ -638,10 +638,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->numFrames = sprDef->numFrames;
     info->material = mat;
     info->flip = sprFrame->flip[0];
-    info->offset    = sprTex->offX + -texSpec->border;
-    info->topOffset = sprTex->offY + texSpec->border;
-    info->width  = ms->width  + texSpec->border*2;
-    info->height = ms->height + texSpec->border*2;
+    info->geometry.origin.x = sprTex->offX + -texSpec->border;
+    info->geometry.origin.y = sprTex->offY + texSpec->border;
+    info->geometry.size.width  = ms->size.width  + texSpec->border*2;
+    info->geometry.size.height = ms->size.height + texSpec->border*2;
     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
 
     return true;
@@ -670,7 +670,7 @@ float R_VisualRadius(mobj_t* mo)
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(material, spec, true);
-        return ms->width / 2;
+        return ms->size.width / 2;
     }
 
     // Use the physical radius.
@@ -968,8 +968,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
 
-    params->width  = ms->width  + texSpec->border*2;
-    params->height = ms->height + texSpec->border*2;
+    params->width  = ms->size.width  + texSpec->border*2;
+    params->height = ms->size.height + texSpec->border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -1407,27 +1407,27 @@ void R_ProjectSprite(mobj_t* mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms->height < secCeil - secFloor)
+        if(ms->size.height < secCeil - secFloor)
         {   // Sprite fits in, adjustment possible?
             // Check top.
             if(fitTop && gzt > secCeil)
                 gzt = secCeil;
             // Check bottom.
             if(floorAdjust && fitBottom &&
-               gzt - ms->height < secFloor)
-                gzt = secFloor + ms->height;
+               gzt - ms->size.height < secFloor)
+                gzt = secFloor + ms->size.height;
         }
         // Adjust by the floor clip.
         gzt -= floorClip;
 
         getLightingParams(vis->center[VX], vis->center[VY],
-                          gzt - ms->height / 2.0f,
+                          gzt - ms->size.height / 2.0f,
                           mo->subsector, vis->distance, fullBright,
                           ambientColor, &vLightListIdx);
 
         setupSpriteParamsForVisSprite(&vis->data.sprite,
                                       vis->center[VX], vis->center[VY],
-                                      gzt - ms->height / 2.0f,
+                                      gzt - ms->size.height / 2.0f,
                                       vis->distance,
                                       visOff[VX], visOff[VY], visOff[VZ],
                                       secFloor, secCeil,
@@ -1514,7 +1514,7 @@ void R_ProjectSprite(mobj_t* mo)
         
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms->width * pl->originX - sprTex->offX;
+        xOffset = ms->size.width * pl->originX - sprTex->offX;
 
         // Does the mobj have an active light definition?
         if(def)

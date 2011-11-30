@@ -47,8 +47,8 @@ void Font_Init(font_t* font, fonttype_t type, fontid_t bindId)
     font->_leading = 0;
     font->_ascent = 0;
     font->_descent = 0;
-    font->_noCharWidth  = 0;
-    font->_noCharHeight = 0;
+    font->_noCharSize.width  = 0;
+    font->_noCharSize.height = 0;
     font->_primaryBind = bindId;
     font->_isDirty = true;
 }
@@ -110,10 +110,10 @@ static void drawCharacter(unsigned char ch, font_t* font)
     case FT_BITMAP: {
         bitmapfont_t* bf = (bitmapfont_t*)font;
 
-        s[0] = bf->_chars[ch].x;
-        s[1] = bf->_chars[ch].x + bf->_chars[ch].w;
-        t[0] = bf->_chars[ch].y;
-        t[1] = bf->_chars[ch].y + bf->_chars[ch].h;
+        s[0] = bf->_chars[ch].geometry.origin.x;
+        s[1] = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
+        t[0] = bf->_chars[ch].geometry.origin.y;
+        t[1] = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
 
         x = y = 0;
         w = s[1] - s[0];
@@ -125,8 +125,8 @@ static void drawCharacter(unsigned char ch, font_t* font)
 
         if(ch != 0)
         {
-            x = cf->_chars[ch].x;
-            y = cf->_chars[ch].y;
+            x = cf->_chars[ch].geometry.origin.x;
+            y = cf->_chars[ch].geometry.origin.y;
         }
         else
         {
@@ -189,8 +189,9 @@ static unsigned short inShort(DFile* file)
 
 static void* readFormat0(font_t* font, DFile* file)
 {
-    int i, c, bitmapFormat, numPels, avgWidth, avgHeight, glyphCount = 0;
+    int i, c, bitmapFormat, numPels, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
+    Size2i avgSize;
     uint32_t* image;
     assert(font && font->_type == FT_BITMAP && file);
 
@@ -199,27 +200,27 @@ static void* readFormat0(font_t* font, DFile* file)
     font->_marginWidth = font->_marginHeight = 0;
 
     // Load in the data.
-    bf->_texWidth  = inShort(file);
-    bf->_texHeight = inShort(file);
+    bf->_texSize.width  = inShort(file);
+    bf->_texSize.height = inShort(file);
     glyphCount = inShort(file);
-    VERBOSE2( Con_Printf("readFormat: Dimensions %i x %i, with %i chars.\n", bf->_texWidth, bf->_texHeight, glyphCount) )
+    VERBOSE2( Con_Printf("readFormat0: Size: %i x %i, with %i chars.\n", bf->_texSize.width, bf->_texSize.height, glyphCount) )
 
-    avgWidth = avgHeight = 0;
+    avgSize.width = avgSize.height = 0;
     for(i = 0; i < glyphCount; ++i)
     {
         bitmapfont_char_t* ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
 
-        ch->x = inShort(file);
-        ch->y = inShort(file);
-        ch->w = inByte(file);
-        ch->h = inByte(file);
+        ch->geometry.origin.x = inShort(file);
+        ch->geometry.origin.y = inShort(file);
+        ch->geometry.size.width  = inByte(file);
+        ch->geometry.size.height = inByte(file);
 
-        avgWidth  += ch->w;
-        avgHeight += ch->h;
+        avgSize.width  += ch->geometry.size.width;
+        avgSize.height += ch->geometry.size.height;
     }
 
-    font->_noCharWidth  = avgWidth  / glyphCount;
-    font->_noCharHeight = avgHeight / glyphCount;
+    font->_noCharSize.width  = avgSize.width  / glyphCount;
+    font->_noCharSize.height = avgSize.height / glyphCount;
 
     // The bitmap.
     bitmapFormat = inByte(file);
@@ -234,7 +235,7 @@ static void* readFormat0(font_t* font, DFile* file)
         Con_Error("readFormat: Font \"%s\" uses unknown bitmap bitmapFormat %i.\n", buf, bitmapFormat);
     }
 
-    numPels = bf->_texWidth * bf->_texHeight;
+    numPels = bf->_texSize.width * bf->_texSize.height;
     image = calloc(1, numPels * sizeof(int));
     for(c = i = 0; i < (numPels + 7) / 8; ++i)
     {
@@ -255,10 +256,11 @@ static void* readFormat0(font_t* font, DFile* file)
 
 static void* readFormat2(font_t* font, DFile* file)
 {
-    int i, numPels, dataHeight, avgWidth, avgHeight, glyphCount = 0;
+    int i, numPels, dataHeight, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
     byte bitmapFormat = 0;
     uint32_t* image, *ptr;
+    Size2i avgSize;
     assert(font && font->_type == FT_BITMAP && file);
 
     bitmapFormat = inByte(file);
@@ -270,9 +272,9 @@ static void* readFormat2(font_t* font, DFile* file)
     font->_flags |= FF_COLORIZE|FF_SHADOWED;
 
     // Load in the data.
-    bf->_texWidth = inShort(file);
+    bf->_texSize.width = inShort(file);
     dataHeight = inShort(file);
-    bf->_texHeight = M_CeilPow2(dataHeight);
+    bf->_texSize.height = M_CeilPow2(dataHeight);
     glyphCount = inShort(file);
     font->_marginWidth = font->_marginHeight = inShort(file);
 
@@ -281,7 +283,7 @@ static void* readFormat2(font_t* font, DFile* file)
     font->_ascent = inShort(file);
     font->_descent = inShort(file);
 
-    avgWidth = avgHeight = 0;
+    avgSize.width = avgSize.height = 0;
     for(i = 0; i < glyphCount; ++i)
     {
         ushort code = inShort(file);
@@ -292,22 +294,22 @@ static void* readFormat2(font_t* font, DFile* file)
 
         if(code < MAX_CHARS)
         {
-            bf->_chars[code].x = x;
-            bf->_chars[code].y = y;
-            bf->_chars[code].w = w;
-            bf->_chars[code].h = h;
+            bf->_chars[code].geometry.origin.x = x;
+            bf->_chars[code].geometry.origin.y = y;
+            bf->_chars[code].geometry.size.width  = w;
+            bf->_chars[code].geometry.size.height = h;
         }
 
 
-        avgWidth  += bf->_chars[code].w;
-        avgHeight += bf->_chars[code].h;
+        avgSize.width  += bf->_chars[code].geometry.size.width;
+        avgSize.height += bf->_chars[code].geometry.size.height;
     }
 
-    font->_noCharWidth  = avgWidth  / glyphCount;
-    font->_noCharHeight = avgHeight / glyphCount;
+    font->_noCharSize.width  = avgSize.width  / glyphCount;
+    font->_noCharSize.height = avgSize.height / glyphCount;
 
     // Read the bitmap.
-    numPels = bf->_texWidth * bf->_texHeight;
+    numPels = bf->_texSize.width * bf->_texSize.height;
     image = ptr = (uint32_t*)calloc(1, numPels * 4);
     if(!image)
         Con_Error("FR_ReadFormat2: Failed on allocation of %lu bytes for font bitmap buffer.\n", (unsigned long) (numPels*4));
@@ -344,8 +346,8 @@ font_t* BitmapFont_New(fontid_t bindId)
         Con_Error("BitmapFont::Construct: Failed on allocation of %lu bytes.", (unsigned long) sizeof *bf);
 
     bf->_tex = 0;
-    bf->_texWidth = 0;
-    bf->_texHeight = 0;
+    bf->_texSize.width = 0;
+    bf->_texSize.height = 0;
     Str_Init(&bf->_filePath);
     memset(bf->_chars, 0, sizeof(bf->_chars));
     Font_Init((font_t*)bf, FT_BITMAP, bindId);
@@ -363,8 +365,8 @@ int BitmapFont_CharWidth(font_t* font, unsigned char ch)
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
-    if(bf->_chars[ch].w == 0) return font->_noCharWidth;
-    return bf->_chars[ch].w - font->_marginWidth * 2;
+    if(bf->_chars[ch].geometry.size.width == 0) return font->_noCharSize.width;
+    return bf->_chars[ch].geometry.size.width - font->_marginWidth * 2;
 }
 
 int BitmapFont_CharHeight(font_t* font, unsigned char ch)
@@ -372,8 +374,8 @@ int BitmapFont_CharHeight(font_t* font, unsigned char ch)
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
     BitmapFont_Prepare(font);
-    if(bf->_chars[ch].h == 0) return font->_noCharHeight;
-    return bf->_chars[ch].h - font->_marginHeight * 2;
+    if(bf->_chars[ch].geometry.size.height == 0) return font->_noCharSize.height;
+    return bf->_chars[ch].geometry.size.height - font->_marginHeight * 2;
 }
 
 void BitmapFont_Prepare(font_t* font)
@@ -415,8 +417,8 @@ void BitmapFont_Prepare(font_t* font)
                 Uri_Delete(uri)
             )
 
-            bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texWidth,
-                bf->_texHeight, image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
+            bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texSize.width,
+                bf->_texSize.height, image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
             if(!Con_IsBusy()) // Cannot do this while in busy mode.
@@ -510,18 +512,25 @@ DGLuint BitmapFont_GLTextureName(const font_t* font)
     return bf->_tex;
 }
 
+const Size2i* BitmapFont_TextureSize(const font_t* font)
+{
+    bitmapfont_t* bf = (bitmapfont_t*)font;
+    assert(font && font->_type == FT_BITMAP);
+    return &bf->_texSize;
+}
+
 int BitmapFont_TextureWidth(const font_t* font)
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
-    return bf->_texWidth;
+    return bf->_texSize.width;
 }
 
 int BitmapFont_TextureHeight(const font_t* font)
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
-    return bf->_texHeight;
+    return bf->_texSize.height;
 }
 
 void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
@@ -531,10 +540,10 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
     assert(font && font->_type == FT_BITMAP);
     if(!s0 && !s1 && !t0 && !t1) return;
     BitmapFont_Prepare(font);
-    if(s0) *s0 = bf->_chars[ch].x;
-    if(s0) *s1 = bf->_chars[ch].x + bf->_chars[ch].w;
-    if(t0) *t0 = bf->_chars[ch].y;
-    if(t1) *t1 = bf->_chars[ch].y + bf->_chars[ch].h;
+    if(s0) *s0 = bf->_chars[ch].geometry.origin.x;
+    if(s0) *s1 = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
+    if(t0) *t0 = bf->_chars[ch].geometry.origin.y;
+    if(t1) *t1 = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
 }
 
 font_t* BitmapCompositeFont_New(fontid_t bindId)
@@ -565,22 +574,23 @@ int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
-    if(cf->_chars[ch].w == 0) return font->_noCharWidth;
-    return cf->_chars[ch].w - font->_marginWidth * 2 - 2;
+    if(cf->_chars[ch].geometry.size.width == 0) return font->_noCharSize.width;
+    return cf->_chars[ch].geometry.size.width - font->_marginWidth * 2 - 2;
 }
 
 int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
-    if(cf->_chars[ch].h == 0) return font->_noCharHeight;
-    return cf->_chars[ch].h - font->_marginHeight * 2 - 2;
+    if(cf->_chars[ch].geometry.size.height == 0) return font->_noCharSize.height;
+    return cf->_chars[ch].geometry.size.height - font->_marginHeight * 2 - 2;
 }
 
 void BitmapCompositeFont_Prepare(font_t* font)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-    int avgWidth, avgHeight, numPatches;
+    Size2i avgSize;
+    int numPatches;
     uint i;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
@@ -589,12 +599,13 @@ void BitmapCompositeFont_Prepare(font_t* font)
     BitmapCompositeFont_DeleteGLDisplayLists(font);
     BitmapCompositeFont_DeleteGLTextures(font);
 
-    avgWidth = avgHeight = 0;
+    avgSize.width = avgSize.height = 0;
     numPatches = 0;
 
     for(i = 0; i < MAX_CHARS; ++i)
     {
-        patchid_t patch = cf->_chars[i].patch;
+        bitmapcompositefont_char_t* ch = &cf->_chars[i];
+        patchid_t patch = ch->patch;
         patchinfo_t info;
 
         if(0 == patch) continue;
@@ -602,20 +613,22 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ++numPatches;
 
         R_GetPatchInfo(patch, &info);
-        cf->_chars[i].x = info.offset    + info.extraOffset[0] + font->_marginWidth;
-        cf->_chars[i].y = info.topOffset + info.extraOffset[1] + font->_marginHeight;
-        cf->_chars[i].w = info.width  + 2;
-        cf->_chars[i].h = info.height + 2;
+        memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
-        avgWidth  += cf->_chars[i].w;
-        avgHeight += cf->_chars[i].h;
+        ch->geometry.origin.x += info.extraOffset[0] + font->_marginWidth;
+        ch->geometry.origin.y += info.extraOffset[1] + font->_marginHeight;
+        ch->geometry.size.width  += 2;
+        ch->geometry.size.height += 2;
+
+        avgSize.width  += ch->geometry.size.width;
+        avgSize.height += ch->geometry.size.height;
 
         if(!(novideo || isDedicated))
             GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch)));
     }
 
-    font->_noCharWidth  = avgWidth  / numPatches; 
-    font->_noCharHeight = avgHeight / numPatches; 
+    font->_noCharSize.width  = avgSize.width  / numPatches;
+    font->_noCharSize.height = avgSize.height / numPatches;
 
     if(!(novideo || isDedicated || Con_IsBusy())) // Cannot do this while in busy mode.
     {
@@ -703,9 +716,10 @@ patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch)
     return cf->_chars[ch].patch;
 }
 
-void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName)
+void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char chr, const char* patchName)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    bitmapcompositefont_char_t* ch = &cf->_chars[chr];
     patchinfo_t info;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
@@ -715,18 +729,20 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char
 
     if(!novideo && !isDedicated && !Con_IsBusy())
     {
-        if(cf->_chars[ch].dlist)
-            glDeleteLists((GLuint)cf->_chars[ch].dlist, 1);
-        cf->_chars[ch].dlist = 0;
+        if(ch->dlist)
+            glDeleteLists((GLuint)ch->dlist, 1);
+        ch->dlist = 0;
     }
 
-    cf->_chars[ch].patch = R_DeclarePatch(patchName);
+    ch->patch = R_DeclarePatch(patchName);
 
-    R_GetPatchInfo(cf->_chars[ch].patch, &info);
-    cf->_chars[ch].x = info.offset    + info.extraOffset[0] + font->_marginWidth;
-    cf->_chars[ch].y = info.topOffset + info.extraOffset[1] + font->_marginHeight;
-    cf->_chars[ch].w = info.width  + 2;
-    cf->_chars[ch].h = info.height + 2;
+    R_GetPatchInfo(ch->patch, &info);
+    memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
+
+    ch->geometry.origin.x += info.extraOffset[0] + font->_marginWidth;
+    ch->geometry.origin.y += info.extraOffset[1] + font->_marginHeight;
+    ch->geometry.size.width  += 2;
+    ch->geometry.size.height += 2;
 
     font->_isDirty = true;
 

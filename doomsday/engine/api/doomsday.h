@@ -391,12 +391,31 @@ void R_PrecacheSkinsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 
-int R_ViewWindowDimensions(int player, int* x, int* y, int* w, int* h);
-void R_SetViewWindowDimensions(int player, int x, int y, int w, int h, boolean interpolate);
+/**
+ * Retrieve the geometry of the specified viewwindow by console player num.
+ */
+int R_ViewWindowGeometry(int player, Rectanglei* geometry);
+int R_ViewWindowOrigin(int player, Point2i* origin);
+int R_ViewWindowSize(int player, Size2i* size);
 
-int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h);
+void R_SetViewWindowGeometry(int player, const Rectanglei* geometry, boolean interpolate);
+
 void R_SetBorderGfx(const Uri* const* paths);
-void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+
+/**
+ * Retrieve the geometry of the specified viewport by console player num.
+ */
+int R_ViewPortGeometry(int player, Rectanglei* geometry);
+int R_ViewPortOrigin(int player, Point2i* origin);
+int R_ViewPortSize(int player, Size2i* size);
+
+/**
+ * Change the view player for the specified viewport by console player num.
+ *
+ * @param player  Console player number of whose viewport to change.
+ * @param viewPlayer  Player that will be viewed by @a player.
+ */
+void R_SetViewPortPlayer(int player, int viewPlayer);
 
 boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height, int availWidth, int availHeight, scalemode_t scaleMode);
 scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight, scalemode_t overrideMode, float stretchEpsilon);

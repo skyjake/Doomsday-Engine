@@ -49,8 +49,8 @@ typedef struct materialsnapshot_s {
     /// @c true= this material is entirely opaque.
     boolean isOpaque;
 
-    /// Dimensions in logical world units.
-    int width, height;
+    /// Size in world units.
+    Size2i size;
 
     /// Glow strength multiplier.
     float glowing;

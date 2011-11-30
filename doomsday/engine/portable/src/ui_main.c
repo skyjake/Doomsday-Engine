@@ -172,8 +172,8 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = theWindow->width / 2;
-    uiCY = theWindow->height / 2;
+    uiCX = theWindow->geometry.size.width / 2;
+    uiCY = theWindow->geometry.size.height / 2;
     uiMoved = false;
 }
 
@@ -278,7 +278,7 @@ void UI_LoadTextures(void)
                 ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
                   image.pixelSize == 3 ? DGL_RGB :
                   image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                image.width, image.height, image.pixels,
+                image.size.width, image.size.height, image.pixels,
                 TXCF_NO_COMPRESSION, 0, GL_LINEAR, GL_LINEAR,
                 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
@@ -381,12 +381,12 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
 int UI_AvailableWidth(void)
 {
-    return theWindow->width - UI_BORDER * 4;
+    return theWindow->geometry.size.width - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return theWindow->height - UI_BORDER * 4;
+    return theWindow->geometry.size.height - UI_BORDER * 4;
 }
 
 int UI_ScreenX(int relx)
@@ -421,10 +421,10 @@ void UI_SetPage(ui_page_t* page)
     for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
     {
         // Calculate real coordinates.
-        ob->x = UI_ScreenX(ob->relx);
-        ob->w = UI_ScreenW(ob->relw);
-        ob->y = UI_ScreenY(ob->rely);
-        ob->h = UI_ScreenH(ob->relh);
+        ob->geometry.origin.x = UI_ScreenX(ob->relx);
+        ob->geometry.origin.y = UI_ScreenY(ob->rely);
+        ob->geometry.size.width  = UI_ScreenW(ob->relw);
+        ob->geometry.size.height = UI_ScreenH(ob->relh);
 
         // Update objects on page
         if(ob->type == UI_EDIT)
@@ -454,7 +454,7 @@ void UI_SetPage(ui_page_t* page)
             // List box number of visible items.
             uidata_list_t* dat = ob->data;
 
-            dat->numvis = (ob->h - 2 * UI_BORDER) / listItemHeight(dat);
+            dat->numvis = (ob->geometry.size.height - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
             {
                 if(dat->selection < dat->first)
@@ -485,16 +485,16 @@ int UI_Responder(ddevent_t* ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= theWindow->width)
-                uiCX = theWindow->width - 1;
+            if(uiCX >= theWindow->geometry.size.width)
+                uiCX = theWindow->geometry.size.width - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= theWindow->height)
-                uiCY = theWindow->height - 1;
+            if(uiCY >= theWindow->geometry.size.height)
+                uiCY = theWindow->geometry.size.height - 1;
         }
     }
 
@@ -546,14 +546,13 @@ void UI_Ticker(timespan_t time)
 
 void UI_Drawer(void)
 {
-    if(!uiActive || !uiCurrentPage)
-        return;
+    if(!uiActive || !uiCurrentPage) return;
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
@@ -561,17 +560,23 @@ void UI_Drawer(void)
     // Draw mouse cursor?
     if(uiShowMouse)
     {
-        float width, height, scale;
+        Point2i origin;
+        Size2i size;
+        float scale;
 
-        if(theWindow->width >= theWindow->height)
-            scale = (theWindow->width  / UI_WIDTH)  * (theWindow->height / (float) theWindow->width);
+        if(theWindow->geometry.size.width >= theWindow->geometry.size.height)
+            scale = (theWindow->geometry.size.width  / UI_WIDTH)  *
+                    (theWindow->geometry.size.height / (float) theWindow->geometry.size.width);
         else
-            scale = (theWindow->height / UI_HEIGHT) * (theWindow->width  / (float) theWindow->height);
+            scale = (theWindow->geometry.size.height / UI_HEIGHT) *
+                    (theWindow->geometry.size.width  / (float) theWindow->geometry.size.height);
 
-        width = UICURSORWIDTH * scale * uiCursorWidthMul;
-        height = UICURSORHEIGHT * scale * uiCursorHeightMul;
+        origin.x = uiCX - 1;
+        origin.y = uiCY - 1;
+        size.width  = UICURSORWIDTH  * scale * uiCursorWidthMul;
+        size.height = UICURSORHEIGHT * scale * uiCursorHeightMul;
 
-        UI_DrawMouse(uiCX - 1, uiCY - 1, width, height);
+        UI_DrawMouse(&origin, &size);
     }
 
     // Restore the original matrices.
@@ -831,7 +836,10 @@ void UIPage_Drawer(ui_page_t* page)
 
     // Draw background?
     if(page->flags.showBackground)
-        UI_DrawDDBackground(0, 0, theWindow->width, theWindow->height, uiAlpha);
+    {
+        Point2i origin = { 0, 0 };
+        UI_DrawDDBackground(&origin, &theWindow->geometry.size, uiAlpha);
+    }
 
     // Draw each object, unless they're hidden.
     for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
@@ -865,13 +873,21 @@ void UIPage_Drawer(ui_page_t* page)
         if((ob->flags & UIF_FOCUS) &&
             (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
         {
+            Point2i focusOrigin;
+            Size2i focusSize;
+
             t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
             glEnable(GL_TEXTURE_2D);
-            UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
+            UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
+
             GL_BlendMode(BM_ADD);
             // Draw a focus rectangle.
-            UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER, &focuscol, 1);
+            focusOrigin.x = ob->geometry.origin.x - 1;
+            focusOrigin.y = ob->geometry.origin.y - 1;
+            focusSize.width  = ob->geometry.size.width  + 2;
+            focusSize.height = ob->geometry.size.height + 2;
+            UI_DrawRect(&focusOrigin, &focusSize, UI_BORDER, &focuscol, 1);
             GL_BlendMode(BM_NORMAL);
             glDisable(GL_TEXTURE_2D);
         }
@@ -885,30 +901,40 @@ void UIFrame_Drawer(ui_object_t* ob)
 {
     int b = UI_BORDER;
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BG_MEDIUM), 0, .6f, 0);
-    UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BRD_HI), 1);
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, b, UI_Color(UIC_BG_MEDIUM), 0, .6f, 0);
+    UI_DrawRect(&ob->geometry.origin, &ob->geometry.size, b, UI_Color(UIC_BRD_HI), 1);
     glDisable(GL_TEXTURE_2D);
 }
 
 void UIText_Drawer(ui_object_t* ob)
 {
+    Point2i origin;
+
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.x = ob->geometry.origin.x;
+    origin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+
+    UI_TextOutEx2(ob->text, &origin, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
 void UIText_BrightDrawer(ui_object_t* ob)
 {
+    Point2i origin;
+
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(ob->text, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.x = ob->geometry.origin.x;
+    origin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+
+    UI_TextOutEx2(ob->text, &origin, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -971,6 +997,7 @@ void UIButton_Drawer(ui_object_t* ob)
     int dis = (ob->flags & UIF_DISABLED) != 0;
     int act = (ob->flags & UIF_ACTIVE) != 0;
     int click = (ob->flags & UIF_CLICKED) != 0;
+    Point2i labelOrigin;
     boolean down = act || click;
     ui_color_t back;
     float t = ob->timer / 15.0f;
@@ -999,14 +1026,19 @@ void UIButton_Drawer(ui_object_t* ob)
 
     glEnable(GL_TEXTURE_2D);
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0, alpha, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BUTTON_BORDER, &back, 0, alpha, 0);
+    UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(&ob->geometry.origin, &ob->geometry.size, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+
     FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, UI_Color(UIC_TITLE), alpha, ((ob->flags & UIF_LEFT_ALIGN)? ALIGN_LEFT : 0), DTF_ONLY_SHADOW);
+    labelOrigin.x = ob->geometry.origin.x + down +
+        (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->geometry.size.width / 2);
+    labelOrigin.y = ob->geometry.origin.y + down + ob->geometry.size.height / 2;
+
+    UI_TextOutEx2(text, &labelOrigin, UI_Color(UIC_TITLE), alpha, ((ob->flags & UIF_LEFT_ALIGN)? ALIGN_LEFT : 0), DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1098,17 +1130,18 @@ void UIEdit_Drawer(ui_object_t* ob)
     ui_color_t back;
     float t = ob->timer / 8.0f;
     char buf[256];
-    uint curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
+    uint curx, i, maxw = ob->geometry.size.width - UI_BORDER * 4, firstInBuf = 0;
     float alpha = (dis ? .2f : .5f);
+    Point2i textOrigin;
 
     // Mix the background color.
     if(!act || t > 1)
         t = 1;
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, &back, 0, alpha, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, &back, 0, alpha, 0);
+    UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
     FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
@@ -1138,14 +1171,27 @@ void UIEdit_Drawer(ui_object_t* ob)
     {   // It fits!
         strcpy(buf, ob->text);
     }
-    UI_TextOutEx2(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), dis ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    textOrigin.x = ob->geometry.origin.x + UI_BORDER * 2;
+    textOrigin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+    UI_TextOutEx2(buf, &textOrigin, UI_Color(UIC_TEXT), dis ? .2f : 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
     if(act && ob->timer & 4)
     {
         // Draw cursor.
+        Point2i cursorOrigin;
+        Size2i cursorSize;
         // Determine position.
         for(curx = 0, i = firstInBuf; i < dat->cp; ++i)
+        {
             curx += FR_CharWidth(ob->text[i]);
-        UI_Gradient(ob->x + UI_BORDER * 2 + curx - 1, ob->y + ob->h / 2 - uiFontHgt / 2, 2, uiFontHgt, UI_Color(UIC_TEXT), 0, 1, 1);
+        }
+
+        cursorOrigin.x = ob->geometry.origin.x + UI_BORDER * 2 + curx - 1;
+        cursorOrigin.y = ob->geometry.origin.y + ob->geometry.size.height / 2 - uiFontHgt / 2;
+        cursorSize.width  = 2;
+        cursorSize.height = uiFontHgt;
+        UI_Gradient(&cursorOrigin, &cursorSize, UI_Color(UIC_TEXT), 0, 1, 1);
     }
     glDisable(GL_TEXTURE_2D);
 }
@@ -1165,10 +1211,12 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             {
                 // Calculate the new position.
                 buth = listButtonHeight(ob);
-                barh = ob->h - 2 * (UI_BORDER + buth);
+                barh = ob->geometry.size.height - 2 * (UI_BORDER + buth);
                 if(barh - buth)
                 {
-                    dat->first = ((uiCY - ob->y - UI_BORDER - (buth * 3) / 2) * (dat->count - dat->numvis) + (barh - buth) / 2) / (barh - buth);
+                    dat->first = ((uiCY - ob->geometry.origin.y - UI_BORDER - (buth * 3) / 2) *
+                                  (dat->count - dat->numvis) + (barh - buth) / 2)
+                               / (barh - buth);
                 }
                 else
                 {
@@ -1220,15 +1268,22 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
     }
     else if(IS_MOUSE_DOWN(ev))
     {
-        if(!UI_MouseInside(ob))
-            return false;
+        Point2i origin;
+        Size2i size;
+
+        if(!UI_MouseInside(ob)) return false;
         // Now we know we're going to eat this event.
         used = true;
+
         buth = listButtonHeight(ob);
         // Clicked in the item section?
-        if(dat->count > 0 && UI_MouseInsideBox(ob->x + UI_BORDER, ob->y + UI_BORDER, ob->w - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0), ob->h - 2 * UI_BORDER))
+        origin.x = ob->geometry.origin.x + UI_BORDER;
+        origin.y = ob->geometry.origin.y + UI_BORDER;
+        size.width  = ob->geometry.size.width  - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0);
+        size.height = ob->geometry.size.height - 2 * UI_BORDER;
+        if(dat->count > 0 && UI_MouseInsideBox(&origin, &size))
         {
-            dat->selection = dat->first + (uiCY - ob->y - UI_BORDER) / listItemHeight(dat);
+            dat->selection = dat->first + (uiCY - ob->geometry.origin.y - UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= dat->count)
                 dat->selection = dat->count - 1;
         }
@@ -1237,24 +1292,39 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             // No scrollbar.
             return true;
         }
+
         // Clicked the Up button?
-        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, ob->y + UI_BORDER, UI_BAR_WDH, buth))
+        origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
+        origin.y = ob->geometry.origin.y + UI_BORDER;
+        size.width  = UI_BAR_WDH;
+        size.height = buth;
+        if(UI_MouseInsideBox(&origin, &size))
         {
             // The Up button is now pressed.
             dat->button[0] = true;
             ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
+
         // Clicked the Down button?
-        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, ob->y + ob->h - UI_BORDER - buth, UI_BAR_WDH, buth))
+        origin.x = ob->geometry.origin.x + ob->geometry.size.width  - UI_BORDER - UI_BAR_WDH;
+        origin.y = ob->geometry.origin.y + ob->geometry.size.height - UI_BORDER - buth;
+        size.width  = UI_BAR_WDH;
+        size.height = buth;
+        if(UI_MouseInsideBox(&origin, &size))
         {
             // The Down button is now pressed.
             dat->button[2] = true;
             ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
+
         // Clicked the Thumb?
-        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, listThumbPos(ob), UI_BAR_WDH, buth))
+        origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
+        origin.y = listThumbPos(ob);
+        size.width  = UI_BAR_WDH;
+        size.height = buth;
+        if(UI_MouseInsideBox(&origin, &size))
         {
             dat->button[1] = true;
             // Capture input and start tracking mouse movement.
@@ -1262,8 +1332,7 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             ob->flags |= UIF_CLICKED;
             return true;
         }
-        else
-            return false;
+        return false;
     }
     else if(IS_MOUSE_UP(ev))
     {
@@ -1314,23 +1383,31 @@ void UIList_Drawer(ui_object_t* ob)
     uidata_list_t* dat = ob->data;
     uidata_listitem_t* items = dat->items;
     int dis = (ob->flags & UIF_DISABLED) != 0;
-    int i, c, x, y, ihgt, maxw = ob->w - 2 * UI_BORDER;
-    int maxh = ob->h - 2 * UI_BORDER, buth;
+    int i, c, x, y, ihgt, maxw = ob->geometry.size.width - 2 * UI_BORDER;
+    int maxh = ob->geometry.size.height - 2 * UI_BORDER;
     char buf[256], *ptr, *endptr, tmp[256];
     float alpha = dis ? .2f : 1;
+    Point2i origin;
+    Size2i size;
     int barw;
 
     // The background.
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
     // The borders.
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(&ob->geometry.origin, &ob->geometry.size, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, UI_Color(UIC_TEXT), alpha);
+
+    x = ob->geometry.origin.x;
+    y = ob->geometry.origin.y - UI_BORDER - uiFontHgt;
+
+    origin.x = x;
+    origin.y = y;
+    UI_TextOutEx(ob->text, &origin, UI_Color(UIC_TEXT), alpha);
     glDisable(GL_TEXTURE_2D);
 
     // Is a scroll bar necessary?
@@ -1339,39 +1416,59 @@ void UIList_Drawer(ui_object_t* ob)
     {
         barw = UI_BAR_WDH;
         maxw -= barw;
-        buth = listButtonHeight(ob);
-        x = ob->x + ob->w - UI_BORDER - barw;
-        y = ob->y + UI_BORDER;
+
+        origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - barw;
+        origin.y = ob->geometry.origin.y + UI_BORDER;
+        size.width  = barw;
+        size.height = maxh;
 
         glEnable(GL_TEXTURE_2D);
-        UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT), 0, alpha * .2f, alpha * .2f);
+        UI_GradientEx(&origin, &size, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT), 0, alpha * .2f, alpha * .2f);
         glDisable(GL_TEXTURE_2D);
 
-        // Up Button.
-        UI_DrawButton(x, y, barw, buth, UI_BAR_BUTTON_BORDER, !dat->first ? alpha * .2f : alpha, NULL, dat->button[0], dis, UIBA_UP);
-        // Thumb Button.
-        UI_DrawButton(x, listThumbPos(ob), barw, buth, UI_BAR_BUTTON_BORDER, alpha, NULL, dat->button[1], dis, UIBA_NONE);
+        // Buttons:
+        size.height = listButtonHeight(ob);
+        // Up.
+        UI_DrawButton(&origin, &size, UI_BAR_BUTTON_BORDER, !dat->first ? alpha * .2f : alpha, NULL, dat->button[0], dis, UIBA_UP);
+
         // Down Button.
-        UI_DrawButton(x, y + maxh - buth, barw, buth, UI_BAR_BUTTON_BORDER, dat->first + dat->numvis >= dat->count ? alpha * .2f : alpha, NULL, dat->button[2], dis, UIBA_DOWN);
+        origin.y += maxh - size.height;
+        UI_DrawButton(&origin, &size, UI_BAR_BUTTON_BORDER, dat->first + dat->numvis >= dat->count ? alpha * .2f : alpha, NULL, dat->button[2], dis, UIBA_DOWN);
+
+        // Thumb.
+        origin.y = listThumbPos(ob);
+        UI_DrawButton(&origin, &size, UI_BAR_BUTTON_BORDER, alpha, NULL, dat->button[1], dis, UIBA_NONE);
     }
-    x = ob->x + UI_BORDER;
-    y = ob->y + UI_BORDER;
+    x = ob->geometry.origin.x + UI_BORDER;
+    y = ob->geometry.origin.y + UI_BORDER;
+
     // Draw columns?
     glEnable(GL_TEXTURE_2D);
     for(c = 0; c < UI_MAX_COLUMNS; ++c)
     {
         if(!dat->column[c] || dat->column[c] > maxw - 2 * UI_BORDER)
             continue;
-        UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1, maxh, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
+
+        origin.x = x + UI_BORDER + dat->column[c] - 2;
+        origin.y = ob->geometry.origin.y + UI_BORDER;
+        size.width  = 1;
+        size.height = maxh;
+        UI_Gradient(&origin, &size, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
     }
+
     FR_SetFont(fontVariable[FS_LIGHT]);
     for(i = dat->first; i < dat->count && i < dat->first + dat->numvis; ++i, y += ihgt)
     {
         // The selection has a white background.
         if(i == dat->selection)
         {
-            UI_GradientEx(x, y, maxw, ihgt, UI_BAR_BORDER, UI_Color(UIC_TEXT), 0, alpha * .6f, alpha * .2f);
+            origin.x = x;
+            origin.y = y;
+            size.width  = maxw;
+            size.height = ihgt;
+            UI_GradientEx(&origin, &size, UI_BAR_BORDER, UI_Color(UIC_TEXT), 0, alpha * .6f, alpha * .2f);
         }
+
         // The text, clipped w/columns.
         ptr = items[i].text;
         for(c = 0; c < UI_MAX_COLUMNS; ++c)
@@ -1384,9 +1481,12 @@ void UIList_Drawer(ui_object_t* ob)
                 strcpy(tmp, ptr);
             memset(buf, 0, sizeof(buf));
             strCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
-            UI_TextOutEx2(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-            if(!endptr)
-                break;
+
+            origin.x = x + UI_BORDER + dat->column[c];
+            origin.y = y + ihgt / 2;
+            UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+            if(!endptr) break;
             ptr = endptr + 1;
         }
     }
@@ -1395,7 +1495,7 @@ void UIList_Drawer(ui_object_t* ob)
 
 int UISlider_ButtonWidth(ui_object_t* ob)
 {
-    int width = ob->h - UI_BAR_BORDER * 2;
+    int width = ob->geometry.size.height - UI_BAR_BORDER * 2;
     if(width < UI_BAR_BORDER * 3)
         width = UI_BAR_BORDER * 3;
     return width;
@@ -1419,7 +1519,8 @@ int UISlider_ThumbPos(ui_object_t* ob)
             useval = (int) (dat->value - .5f);
     }
     useval -= dat->min;
-    return ob->x + UI_BAR_BORDER + butw + useval / range * (ob->w - UI_BAR_BORDER * 2 - butw * 3);
+    return ob->geometry.origin.x + UI_BAR_BORDER + butw +
+           useval / range * (ob->geometry.size.width - UI_BAR_BORDER * 2 - butw * 3);
 }
 
 int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
@@ -1438,10 +1539,10 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
             {
                 // Calculate new value from the mouse position.
                 butw = UISlider_ButtonWidth(ob);
-                inw = ob->w - 2 * UI_BAR_BORDER - 3 * butw;
+                inw = ob->geometry.size.width - 2 * UI_BAR_BORDER - 3 * butw;
                 if(inw > 0)
                 {
-                    dat->value = dat->min + (dat->max - dat->min) * (uiCX - ob->x - UI_BAR_BORDER - (3 * butw) / 2) / (float) inw;
+                    dat->value = dat->min + (dat->max - dat->min) * (uiCX - ob->geometry.origin.x - UI_BAR_BORDER - (3 * butw) / 2) / (float) inw;
                 }
                 else
                 {
@@ -1506,26 +1607,41 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
     }
     else if(IS_MOUSE_DOWN(ev))
     {
-        if(!UI_MouseInside(ob))
-            return false;
+        Point2i origin;
+        Size2i size;
+
+        if(!UI_MouseInside(ob)) return false;
         used = true;
-        butw = UISlider_ButtonWidth(ob);
+
         // Where is the mouse cursor?
-        if(UI_MouseInsideBox(ob->x, ob->y, butw + UI_BAR_BORDER, ob->h))
+        butw = UISlider_ButtonWidth(ob);
+        size.width  = butw + UI_BAR_BORDER;
+        size.height = ob->geometry.size.height;
+        if(UI_MouseInsideBox(&ob->geometry.origin, &size))
         {
             // The Left button is now pressed.
             dat->button[0] = true;
             ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
-        if(UI_MouseInsideBox(ob->x + ob->w - butw - UI_BAR_BORDER, ob->y, butw + UI_BAR_BORDER, ob->h))
+
+        origin.x = ob->geometry.origin.x + ob->geometry.size.width - butw - UI_BAR_BORDER;
+        origin.y = ob->geometry.origin.y;
+        size.width  = butw + UI_BAR_BORDER;
+        size.height = ob->geometry.size.height;
+        if(UI_MouseInsideBox(&origin, &size))
         {
             // The Right button is now pressed.
             dat->button[2] = true;
             ob->timer = SCROLL_TIME; // Tickes does the scrolling.
             return true;
         }
-        if(UI_MouseInsideBox(UISlider_ThumbPos(ob), ob->y, butw, ob->h))
+
+        origin.x = UISlider_ThumbPos(ob);
+        origin.y = ob->geometry.origin.y;
+        size.width  = butw;
+        size.height = ob->geometry.size.height;
+        if(UI_MouseInsideBox(&origin, &size))
         {
             // Capture input and start tracking mouse movement.
             dat->button[1] = true;
@@ -1580,32 +1696,43 @@ void UISlider_Drawer(ui_object_t* ob)
 {
     uidata_slider_t* dat = ob->data;
     boolean dis = (ob->flags & UIF_DISABLED) != 0;
-    int inwidth = ob->w - UI_BAR_BORDER * 2;
-    int inheight = ob->h - UI_BAR_BORDER * 2;
+    int inwidth  = ob->geometry.size.width  - UI_BAR_BORDER * 2;
+    int inheight = ob->geometry.size.height - UI_BAR_BORDER * 2;
     int butw = UISlider_ButtonWidth(ob);
     int butbor = UI_BAR_BUTTON_BORDER;
     int x, y, thumbx;
     float alpha = dis ? .2f : 1;
+    Point2i origin;
+    Size2i size;
     char buf[80];
 
     // The background.
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BAR_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BAR_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
     // The borders.
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BAR_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(&ob->geometry.origin, &ob->geometry.size, -UI_BAR_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     glDisable(GL_TEXTURE_2D);
 
-    x = ob->x + UI_BAR_BORDER;
-    y = ob->y + UI_BAR_BORDER;
+    x = ob->geometry.origin.x + UI_BAR_BORDER;
+    y = ob->geometry.origin.y + UI_BAR_BORDER;
 
-    // The left button.
-    UI_DrawButton(x, y, butw, inheight, butbor, alpha * (dat->value == dat->min ? .2f : 1), NULL, dat->button[0], dis, UIBA_LEFT);
+    // Buttons:
+    origin.x = x;
+    origin.y = y;
+    size.width  = butw;
+    size.height = inheight;
 
-    // The right button.
-    UI_DrawButton(x + inwidth - butw, y, butw, inheight, butbor, alpha * (dat->value == dat->max ? .2f : 1), NULL, dat->button[2], dis, UIBA_RIGHT);
+    // Left.
+    UI_DrawButton(&origin, &size, butbor, alpha * (dat->value == dat->min ? .2f : 1), NULL, dat->button[0], dis, UIBA_LEFT);
 
-    // The thumb.
-    UI_DrawButton(thumbx = UISlider_ThumbPos(ob), y, butw, inheight, butbor, alpha, NULL, dat->button[1], dis, UIBA_NONE);
+    // Right.
+    origin.x = x + inwidth - butw;
+    UI_DrawButton(&origin, &size, butbor, alpha * (dat->value == dat->max ? .2f : 1), NULL, dat->button[2], dis, UIBA_RIGHT);
+
+    // Thumb.
+    thumbx = UISlider_ThumbPos(ob);
+    origin.x = thumbx;
+    UI_DrawButton(&origin, &size, butbor, alpha, NULL, dat->button[1], dis, UIBA_NONE);
 
     // The value.
     if(dat->floatmode)
@@ -1620,15 +1747,23 @@ void UISlider_Drawer(ui_object_t* ob)
         }
     }
     else
+    {
         sprintf(buf, "%i", (int) dat->value);
+    }
     if(dat->zerotext && dat->value == dat->min)
         strcpy(buf, dat->zerotext);
+
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    origin.x = x + (dat->value < (dat->min + dat->max) / 2 ?
+                        (inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf)) :
+                        (butw + UI_BAR_BORDER));
+    origin.y = y + inheight / 2;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
@@ -1679,7 +1814,7 @@ void UI_InitColumns(ui_object_t* ob)
             last = width[i];
     }
     // Calculate the offset for each column.
-    maxw = ob->w - 4 * UI_BORDER - (dat->count > dat->numvis ? UI_BAR_WDH : 0);
+    maxw = ob->geometry.size.width - 4 * UI_BORDER - (dat->count > dat->numvis ? UI_BAR_WDH : 0);
     sep = maxw - w;
     if(numcols > 1)
         sep /= numcols - 1;
@@ -1702,7 +1837,7 @@ static int listItemHeight(uidata_list_t* listdata)
 
 static int listButtonHeight(ui_object_t* ob)
 {
-    int barh = ob->h - 2 * UI_BORDER;
+    int barh = ob->geometry.size.height - 2 * UI_BORDER;
     int buth = UI_BAR_WDH;
     if(buth > barh / 3)
         buth = barh / 3;
@@ -1713,11 +1848,11 @@ static int listThumbPos(ui_object_t* ob)
 {
     uidata_list_t* dat = ob->data;
     int buth = listButtonHeight(ob);
-    int barh = ob->h - 2 * (UI_BORDER + buth);
+    int barh = ob->geometry.size.height - 2 * (UI_BORDER + buth);
 
     if(dat->count <= dat->numvis)
         return 0;
-    return ob->y + UI_BORDER + buth + ((barh - buth) * dat->first) / (dat->count - dat->numvis);
+    return ob->geometry.origin.y + UI_BORDER + buth + ((barh - buth) * dat->first) / (dat->count - dat->numvis);
 }
 
 int UI_ListFindItem(ui_object_t* ob, int dataValue)
@@ -1745,20 +1880,21 @@ static void strCpyLen(char* dest, const char* src, int maxWidth)
     }
 }
 
-int UI_MouseInsideBox(int x, int y, int w, int h)
+int UI_MouseInsideBox(const Point2i* origin, const Size2i* size)
 {
-    return (uiCX >= x && uiCX <= x + w && uiCY >= y && uiCY <= y + h);
+    assert(origin && size);
+    return (uiCX >= origin->x && uiCX <= origin->x + size->width &&
+            uiCY >= origin->y && uiCY <= origin->y + size->height);
 }
 
 int UI_MouseInside(ui_object_t* ob)
 {
-    return UI_MouseInsideBox(ob->x, ob->y, ob->w, ob->h);
+    return UI_MouseInsideBox(&ob->geometry.origin, &ob->geometry.size);
 }
 
 int UI_MouseResting(ui_page_t* page)
 {
-    if(!uiMoved)
-        return false;
+    if(!uiMoved) return false;
     return page->_timer - uiRestStart >= uiRestTime;
 }
 
@@ -1779,7 +1915,7 @@ void UI_SetColor(ui_color_t* color)
     glColor3f(color->red, color->green, color->blue);
 }
 
-void UI_Shade(int x, int y, int w, int h, int border, ui_color_t* main,
+void UI_Shade(const Point2i* origin, const Size2i* size, int border, ui_color_t* main,
     ui_color_t *secondary, float alpha, float bottomAlpha)
 {
     float s[2][2] = { {0, 1}, {1, 0} };
@@ -1788,6 +1924,7 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t* main,
     uint i, flip = 0;
     float* u, *v;
     float beta = 1;
+    assert(origin && size);
 
     alpha *= uiAlpha;
     bottomAlpha *= uiAlpha;
@@ -1817,33 +1954,33 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t* main,
 
         UI_SetColorA(color, alpha * beta);
         glTexCoord2f(u[0], v[0]);
-        glVertex2f(x + border, y + border);
+        glVertex2f(origin->x + border, origin->y + border);
         glTexCoord2f(u[1], v[0]);
-        glVertex2f(x + w - border, y + border);
+        glVertex2f(origin->x + size->width - border, origin->y + border);
         UI_SetColorA(color, bottomAlpha * beta);
         glTexCoord2f(u[1], v[1]);
-        glVertex2f(x + w - border, y + h - border);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         glTexCoord2f(u[0], v[1]);
-        glVertex2f(x + border, y + h - border);
+        glVertex2f(origin->x + border, origin->y + size->height - border);
     }
     glEnd();
 
     GL_BlendMode(BM_NORMAL);
 }
 
-void UI_Gradient(int x, int y, int w, int h, ui_color_t* top, ui_color_t* bottom,
-    float topAlpha, float bottomAlpha)
+void UI_Gradient(const Point2i* origin, const Size2i* size, ui_color_t* topColor,
+    ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
 {
-    UI_GradientEx(x, y, w, h, 0, top, bottom, topAlpha, bottomAlpha);
+    UI_GradientEx(origin, size, 0, topColor, bottomColor, topAlpha, bottomAlpha);
 }
 
-void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t* top,
-    ui_color_t* bottom, float topAlpha, float bottomAlpha)
+void UI_GradientEx(const Point2i* origin, const Size2i* size, int border, ui_color_t* topColor,
+    ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
 {
-    UI_DrawRectEx(x, y, w, h, border, true, top, bottom, topAlpha, bottomAlpha);
+    UI_DrawRectEx(origin, size, border, true, topColor, bottomColor, topAlpha, bottomAlpha);
 }
 
-void UI_HorizGradient(int x, int y, int w, int h, ui_color_t* left, ui_color_t* right,
+void UI_HorizGradient(const Point2i* origin, const Size2i* size, ui_color_t* left, ui_color_t* right,
     float leftAlpha, float rightAlpha)
 {
     leftAlpha  *= uiAlpha;
@@ -1853,61 +1990,65 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t* left, ui_color_t* 
     glBegin(GL_QUADS);
         UI_SetColorA(left, leftAlpha);
         glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        glVertex2f(origin->x, origin->y + size->height);
         glTexCoord2f(0, 0);
-        glVertex2f(x, y);
+        glVertex2f(origin->x, origin->y);
         UI_SetColorA(right ? right : left, rightAlpha);
         glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
+        glVertex2f(origin->x + size->width, origin->y);
         glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
+        glVertex2f(origin->x + size->width, origin->y + size->height);
     glEnd();
 }
 
-void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end,
-    float startAlpha, float endAlpha)
+void UI_Line(const Point2i* start, const Point2i* end, ui_color_t* startColor,
+    ui_color_t* endColor, float startAlpha, float endAlpha)
 {
     startAlpha *= uiAlpha;
     endAlpha   *= uiAlpha;
 
     glBegin(GL_LINES);
-        UI_SetColorA(start, startAlpha);
-        glVertex2f(x1, y1);
-        UI_SetColorA(end ? end : start, endAlpha);
-        glVertex2f(x2, y2);
+        UI_SetColorA(startColor, startAlpha);
+        glVertex2f(start->x, start->y);
+        UI_SetColorA(endColor ? endColor : startColor, endAlpha);
+        glVertex2f(end->x, end->y);
     glEnd();
 }
 
-void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha,
+void UI_TextOutEx2(const char* text, const Point2i* origin, ui_color_t* color, float alpha,
     int alignFlags, short textFlags)
 {
+    assert(origin);
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
-    FR_DrawText3(text, x, y, alignFlags, textFlags);
+    FR_DrawText3(text, origin->x, origin->y, alignFlags, textFlags);
 }
 
-void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha)
+void UI_TextOutEx(const char* text, const Point2i* origin, ui_color_t* color, float alpha)
 {
-    UI_TextOutEx2(text, x, y, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
+    UI_TextOutEx2(text, origin, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
-int UI_TextOutWrap(const char* text, int x, int y, int w, int h)
+int UI_TextOutWrap(const char* text, const Point2i* origin, const Size2i* size)
 {
-    return UI_TextOutWrapEx(text, x, y, w, h, UI_Color(UIC_TEXT), 1);
+    return UI_TextOutWrapEx(text, origin, size, UI_Color(UIC_TEXT), 1);
 }
 
-int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* color,
-    float alpha)
+int UI_TextOutWrapEx(const char* text, const Point2i* origin, const Size2i* size,
+    ui_color_t* color, float alpha)
 {
     char word[2048], *wp = word;
-    int len, tx = x, ty = y;
-    int linehgt = FR_SingleLineHeight("A");
+    int len, linehgt = FR_SingleLineHeight("A");
+    Point2i t;
     byte c;
+    assert(origin && size);
 
     alpha *= uiAlpha;
-
     FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
+
+    t.x = origin->x;
+    t.y = origin->y;
 
     for(;; text++)
     {
@@ -1920,35 +2061,35 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
             // Time to print the word.
             *wp = 0;
             len = FR_TextWidth(word);
-            if(tx + len > x + w) // Doesn't fit?
+            if(t.x + len > origin->x + size->width) // Doesn't fit?
             {
-                tx = x;
-                ty += linehgt;
+                t.x = origin->x;
+                t.y += linehgt;
             }
             // Can't print any more? (always print the 1st line)
-            if(ty + linehgt > y + h && ty != y)
-                return ty;
-            FR_DrawText(word, tx, ty);
-            tx += len;
+            if(t.y + linehgt > origin->y + size->height && t.y != origin->y)
+                return t.y;
+            FR_DrawText(word, t.x, t.y);
+            t.x += len;
             wp = word;
             // React to delimiter.
             switch (c)
             {
             case 0:
-                return ty; // All of the text has been printed.
+                return t.y; // All of the text has been printed.
 
             case ' ':
-                tx += FR_TextWidth(" ");
+                t.x += FR_TextWidth(" ");
                 break;
 
             case '\n':
-                tx = x;
-                ty += linehgt;
+                t.x = origin->x;
+                t.y += linehgt;
                 break;
 
             case '\b': // Break.
-                tx = x;
-                ty += 3 * linehgt / 2;
+                t.x = origin->x;
+                t.y += 3 * linehgt / 2;
                 break;
 
             default:
@@ -1963,26 +2104,26 @@ int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* c
     }
 }
 
-void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled, ui_color_t* top,
-    ui_color_t* bottom, float alpha, float bottomAlpha)
+void UI_DrawRectEx(const Point2i* origin, const Size2i* size, int border, boolean filled,
+    ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
 {
     float s[2] = { 0, 1 }, t[2] = { 0, 1 };
+    assert(origin && size);
 
     alpha *= uiAlpha;
     bottomAlpha *= uiAlpha;
-    if(alpha <= 0 && bottomAlpha <= 0)
-        return;
+    if(alpha <= 0 && bottomAlpha <= 0) return;
 
-    if(brd < 0)
+    if(border < 0)
     {
-        brd = -brd;
+        border = -border;
         s[0] = t[0] = 1;
         s[1] = t[1] = 0;
     }
     if(bottomAlpha < 0)
         bottomAlpha = alpha;
-    if(!bottom)
-        bottom = top;
+    if(!bottomColor)
+        bottomColor = topColor;
 
     // The fill comes first, if there's one.
     if(filled)
@@ -1990,117 +2131,120 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled, ui_color
         glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_FILL]);
         glBegin(GL_QUADS);
         glTexCoord2f(0.5f, 0.5f);
-        UI_SetColorA(top, alpha);
-        glVertex2f(x + brd, y + brd);
-        glVertex2f(x + w - brd, y + brd);
-        UI_SetColorA(bottom, bottomAlpha);
-        glVertex2f(x + w - brd, y + h - brd);
-        glVertex2f(x + brd, y + h - brd);
+        UI_SetColorA(topColor, alpha);
+        glVertex2f(origin->x + border, origin->y + border);
+        glVertex2f(origin->x + size->width - border, origin->y + border);
+        UI_SetColorA(bottomColor, bottomAlpha);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
+        glVertex2f(origin->x + border, origin->y + size->height - border);
     }
     else
     {
         glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_CORNER]);
         glBegin(GL_QUADS);
     }
-    if(!filled || brd > 0)
+    if(!filled || border > 0)
     {
         // Top Left.
-        UI_SetColorA(top, alpha);
+        UI_SetColorA(topColor, alpha);
         glTexCoord2f(s[0], t[0]);
-        glVertex2f(x, y);
+        glVertex2f(origin->x, origin->y);
         glTexCoord2f(0.5f, t[0]);
-        glVertex2f(x + brd, y);
+        glVertex2f(origin->x + border, origin->y);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + brd);
+        glVertex2f(origin->x + border, origin->y + border);
         glTexCoord2f(s[0], 0.5f);
-        glVertex2f(x, y + brd);
+        glVertex2f(origin->x, origin->y + border);
         // Top.
         glTexCoord2f(0.5f, t[0]);
-        glVertex2f(x + brd, y);
+        glVertex2f(origin->x + border, origin->y);
         glTexCoord2f(0.5f, t[0]);
-        glVertex2f(x + w - brd, y);
+        glVertex2f(origin->x + size->width - border, origin->y);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + brd);
+        glVertex2f(origin->x + size->width - border, origin->y + border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + brd);
+        glVertex2f(origin->x + border, origin->y + border);
         // Top Right.
         glTexCoord2f(0.5f, t[0]);
-        glVertex2f(x + w - brd, y);
+        glVertex2f(origin->x + size->width - border, origin->y);
         glTexCoord2f(s[1], t[0]);
-        glVertex2f(x + w, y);
+        glVertex2f(origin->x + size->width, origin->y);
         glTexCoord2f(s[1], 0.5f);
-        glVertex2f(x + w, y + brd);
+        glVertex2f(origin->x + size->width, origin->y + border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + brd);
+        glVertex2f(origin->x + size->width - border, origin->y + border);
         // Right.
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + brd);
+        glVertex2f(origin->x + size->width - border, origin->y + border);
         glTexCoord2f(s[1], 0.5f);
-        glVertex2f(x + w, y + brd);
-        UI_SetColorA(bottom, bottomAlpha);
+        glVertex2f(origin->x + size->width, origin->y + border);
+        UI_SetColorA(bottomColor, bottomAlpha);
         glTexCoord2f(s[1], 0.5f);
-        glVertex2f(x + w, y + h - brd);
+        glVertex2f(origin->x + size->width, origin->y + size->height - border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + h - brd);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         // Bottom Right.
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + h - brd);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         glTexCoord2f(s[1], 0.5f);
-        glVertex2f(x + w, y + h - brd);
+        glVertex2f(origin->x + size->width, origin->y + size->height - border);
         glTexCoord2f(s[1], t[1]);
-        glVertex2f(x + w, y + h);
+        glVertex2f(origin->x + size->width, origin->y + size->height);
         glTexCoord2f(0.5f, t[1]);
-        glVertex2f(x + w - brd, y + h);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height);
         // Bottom.
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + h - brd);
+        glVertex2f(origin->x + border, origin->y + size->height - border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + w - brd, y + h - brd);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         glTexCoord2f(0.5f, t[1]);
-        glVertex2f(x + w - brd, y + h);
+        glVertex2f(origin->x + size->width - border, origin->y + size->height);
         glTexCoord2f(0.5f, t[1]);
-        glVertex2f(x + brd, y + h);
+        glVertex2f(origin->x + border, origin->y + size->height);
         // Bottom Left.
         glTexCoord2f(s[0], 0.5f);
-        glVertex2f(x, y + h - brd);
+        glVertex2f(origin->x, origin->y + size->height - border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + h - brd);
+        glVertex2f(origin->x + border, origin->y + size->height - border);
         glTexCoord2f(0.5f, t[1]);
-        glVertex2f(x + brd, y + h);
+        glVertex2f(origin->x + border, origin->y + size->height);
         glTexCoord2f(s[0], t[1]);
-        glVertex2f(x, y + h);
+        glVertex2f(origin->x, origin->y + size->height);
         // Left.
-        UI_SetColorA(top, alpha);
+        UI_SetColorA(topColor, alpha);
         glTexCoord2f(s[0], 0.5f);
-        glVertex2f(x, y + brd);
+        glVertex2f(origin->x, origin->y + border);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + brd);
-        UI_SetColorA(bottom, bottomAlpha);
+        glVertex2f(origin->x + border, origin->y + border);
+        UI_SetColorA(bottomColor, bottomAlpha);
         glTexCoord2f(0.5f, 0.5f);
-        glVertex2f(x + brd, y + h - brd);
+        glVertex2f(origin->x + border, origin->y + size->height - border);
         glTexCoord2f(s[0], 0.5f);
-        glVertex2f(x, y + h - brd);
+        glVertex2f(origin->x, origin->y + size->height - border);
     }
     glEnd();
 }
 
-void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t* color, float alpha)
+void UI_DrawRect(const Point2i* origin, const Size2i* size, int border, ui_color_t* color, float alpha)
 {
-    UI_DrawRectEx(x, y, w, h, brd, false, color, NULL, alpha, alpha);
+    UI_DrawRectEx(origin, size, border, false, color, NULL, alpha, alpha);
 }
 
-void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
+void UI_DrawTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med,
     ui_color_t* low, float alpha)
 {
     float xrad = radius * .866f; // cos(60)
     float yrad = radius / 2; // sin(60)
+    int x, y;
+    assert(origin);
 
     alpha *= uiAlpha;
     if(alpha <= 0) return;
 
     glBegin(GL_TRIANGLES);
 
-    y += radius / 4;
+    x = origin->x;
+    y = origin->y + radius / 4;
 
     // Upper left triangle.
     UI_SetColorA(radius > 0 ? hi : med, alpha);
@@ -2127,15 +2271,19 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
     glEnd();
 }
 
-void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
+void UI_DrawHorizTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med,
     ui_color_t* low, float alpha)
 {
     float yrad = radius * .866f; // cos(60)
     float xrad = radius / 2; // sin(60)
+    int x, y;
+    assert(origin);
 
     alpha *= uiAlpha;
-    if(alpha <= 0)
-        return;
+    if(alpha <= 0) return;
+
+    x = origin->x;
+    y = origin->y;
 
     glBegin(GL_TRIANGLES);
 
@@ -2174,13 +2322,15 @@ void UI_DefaultButtonBackground(ui_color_t* col, boolean down)
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
-void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
+void UI_DrawButton(const Point2i* origin, const Size2i* size, int border, float alpha,
     ui_color_t* background, boolean down, boolean disabled, int arrow)
 {
-    int inside = MIN_OF(w - brd * 2, h - brd * 2);
-    int boff = down ? 2 : 0;
+    int inside, boff = down ? 2 : 0;
     ui_color_t back;
+    Point2i arrowPoint;
+    assert(origin && size);
 
+    inside = MIN_OF(size->width - border * 2, size->height - border * 2);
     if(!background)
     {
         // Calculate the default button color.
@@ -2189,21 +2339,25 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
     }
 
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(x, y, w, h, brd, background, 0, disabled ? .2f : 1, 0);
-    UI_Shade(x, y, w, h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_GradientEx(origin, size, border, background, 0, disabled ? .2f : 1, 0);
+    UI_Shade(origin, size, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(origin, size, border * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     glDisable(GL_TEXTURE_2D);
 
     switch(arrow)
     {
     case UIBA_UP:
     case UIBA_DOWN:
-        UI_DrawTriangle(x + w / 2 + boff, y + h / 2 + boff, inside / 2.75f * (arrow == UIBA_DOWN ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
+        arrowPoint.x = origin->x + size->width  / 2 + boff;
+        arrowPoint.y = origin->y + size->height / 2 + boff;
+        UI_DrawTriangle(&arrowPoint, inside / 2.75f * (arrow == UIBA_DOWN ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
         break;
 
     case UIBA_LEFT:
     case UIBA_RIGHT:
-        UI_DrawHorizTriangle(x + w / 2 + boff, y + h / 2 + boff, inside / 2.75f * (arrow == UIBA_RIGHT ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
+        arrowPoint.x = origin->x + size->width  / 2 + boff;
+        arrowPoint.y = origin->y + size->height / 2 + boff;
+        UI_DrawHorizTriangle(&arrowPoint, inside / 2.75f * (arrow == UIBA_RIGHT ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
         break;
 
     default:
@@ -2211,55 +2365,75 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
     }
 }
 
-void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text)
+void UI_DrawHelpBox(const Point2i* origin, const Size2i* size, float alpha, char* text)
 {
     int bor = UI_BUTTON_BORDER;
+    assert(origin && size);
 
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha / 4, alpha / 2);
-    UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_GradientEx(origin, size, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha / 4, alpha / 2);
+    UI_DrawRectEx(origin, size, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
     if(text)
     {
+        Point2i textOrigin;
+        Size2i textSize;
+
         bor = 2 * UI_BORDER / 3;
+        textOrigin.x = origin->x + 2 * bor;
+        textOrigin.y = origin->y + 2 * bor;
+        textSize.width  = size->width  - 4 * bor;
+        textSize.height = size->height - 4 * bor;
+
         FR_SetFont(fontVariable[FS_LIGHT]);
         FR_LoadDefaultAttrib();
-        UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
+        UI_TextOutWrapEx(text, &textOrigin, &textSize, UI_Color(UIC_TEXT), alpha);
     }
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawMouse(int x, int y, int w, int h)
+void UI_DrawMouse(const Point2i* origin, const Size2i* size)
 {
+    assert(origin && size);
+
     glColor3f(1, 1, 1);
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_MOUSE]);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(x, y);
+        glVertex2f(origin->x, origin->y);
         glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
+        glVertex2f(origin->x + size->width, origin->y);
         glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
+        glVertex2f(origin->x + size->width, origin->y + size->height);
         glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        glVertex2f(origin->x, origin->y + size->height);
     glEnd();
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawLogo(int x, int y, int w, int h)
+void UI_DrawLogo(const Point2i* origin, const Size2i* size)
 {
+    Rectanglei rect;
+    assert(origin && size);
+    rect.origin.x = origin->x;
+    rect.origin.y = origin->y;
+    rect.size.width  = size->width;
+    rect.size.height = size->height;
+
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
     glEnable(GL_TEXTURE_2D);
-    GL_DrawRectColor(x, y, w, h, 1, 1, 1, uiAlpha);
+    glColor4f(1, 1, 1, uiAlpha);
+    GL_DrawRecti(&rect);
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
+void UI_DrawDDBackground(const Point2i* origin, const Size2i* size, float alpha)
 {
     float mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
     ui_color_t* dark = UI_Color(UIC_BG_DARK);
     ui_color_t* light = UI_Color(UIC_BG_LIGHT);
+    assert(origin && size);
 
     // Background gradient picture.
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_BACKGROUND]);
@@ -2279,16 +2453,16 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
         // Top color.
         glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
         glTexCoord2f(0, 0);
-        glVertex2f(x, y);
+        glVertex2f(origin->x, origin->y);
         glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
+        glVertex2f(origin->x + size->width, origin->y);
 
         // Bottom color.
         glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
         glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
+        glVertex2f(origin->x + size->width, origin->y + size->height);
         glTexCoord2f(0, 1);
-        glVertex2f(0, y + h);
+        glVertex2f(0, origin->y + size->height);
     glEnd();
 
     glEnable(GL_BLEND);

@@ -877,10 +877,16 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     return id;
 }
 
-texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, int height, void* userData)
+texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2i* size,
+    void* userData)
 {
     PathDirectoryNode* node = getDirectoryNodeForBindId(id);
     texturerecord_t* record;
+    if(!size)
+    {
+        Con_Message("Warning: Failed defining Texture #%u (invalid size), ignoring.\n", id);
+        return NULL;
+    }
     if(!node)
     {
         Con_Message("Warning: Failed defining Texture #%u (invalid id), ignoring.\n", id);
@@ -898,24 +904,25 @@ texture_t* Textures_CreateWithDimensions(textureid_t id, int flags, int width, i
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Warning:Textures::CreateWithDimensions: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
+        Con_Message("Warning:Textures::CreateWithSize: A Texture with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
         Str_Delete(path);
         Uri_Delete(uri);
 #endif
         Texture_SetFlags(tex, flags);
-        Texture_SetDimensions(tex, width, height);
+        Texture_SetSize(tex, size);
         Texture_AttachUserData(tex, userData);
         /// \fixme Materials and Surfaces should be notified of this!
         return tex;
     }
 
     // A new texture.
-    return record->texture = Texture_NewWithDimensions(flags, id, width, height, userData);
+    return record->texture = Texture_NewWithSize(flags, id, size, userData);
 }
 
 texture_t* Textures_Create(textureid_t id, int flags, void* userData)
 {
-    return Textures_CreateWithDimensions(id, flags, 0, 0, userData);
+    Size2i size = { 0, 0 };
+    return Textures_CreateWithSize(id, flags, &size, userData);
 }
 
 int Textures_UniqueId(textureid_t id)
@@ -1120,7 +1127,7 @@ static void printTextureInfo(texture_t* tex)
     ddstring_t* path = Uri_ToString(uri);
     //int variantIdx = 0;
 
-    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s\nDimensions: %d x %d\n",
+    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s\nSize: %d x %d\n",
         F_PrettyPath(Str_Text(path)), (void*) tex, (uint) Textures_Id(tex),
         Texture_IsCustom(tex)? "addon" : "game",
         Texture_Width(tex), Texture_Height(tex));

@@ -492,7 +492,7 @@ void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, floa
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
-void DGL_DrawRectd(const rectangled_t* rect)
+void DGL_DrawRectd(const Rectangled* rect)
 {
     if(NULL == rect)
     {
@@ -502,7 +502,7 @@ void DGL_DrawRectd(const rectangled_t* rect)
     GL_DrawRectd(rect);
 }
 
-void DGL_DrawRecti(const rectanglei_t* rect)
+void DGL_DrawRecti(const Rectanglei* rect)
 {
     if(NULL == rect)
     {

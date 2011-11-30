@@ -819,11 +819,11 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
     assert(sprTex);
 
-    off = sprTex->offY - ms->height;
+    off = sprTex->offY - ms->size.height;
     if(off < 0)
         off = 0;
 
-    R_ScaleModel(mf, ms->height, off);
+    R_ScaleModel(mf, ms->size.height, off);
 }
 
 float R_GetModelVisualRadius(modeldef_t* mf)

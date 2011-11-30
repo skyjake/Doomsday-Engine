@@ -142,19 +142,12 @@ static void rendPlayerView(int player)
     }
 }
 
-static void rendHUD(int player, int viewW, int viewH)
+static void rendHUD(int player, const Rectanglei* portGeometry)
 {
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    if(G_GetGameState() != GS_MAP)
-        return;
-
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-        return;
-
-    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-        return; // The engine advises not to draw any HUD displays.
+    if(player < 0 || player >= MAXPLAYERS) return;
+    if(G_GetGameState() != GS_MAP) return;
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
+    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
 
     ST_Drawer(player);
     HU_DrawScoreBoard(player);
@@ -165,55 +158,44 @@ static void rendHUD(int player, int viewW, int viewH)
         int needWidth;
         float scale;
 
-        if(viewW >= viewH)
+        if(portGeometry->size.width >= portGeometry->size.height)
         {
-            needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
-            scale = (float)viewH/SCREENHEIGHT;
+            needWidth = (float)portGeometry->size.height/SCREENHEIGHT * SCREENWIDTH;
+            scale = (float)portGeometry->size.height/SCREENHEIGHT;
         }
         else
         {
-            needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
-            scale = (float)viewW/SCREENWIDTH;
+            needWidth = (float)portGeometry->size.width/SCREENWIDTH * SCREENWIDTH;
+            scale = (float)portGeometry->size.width/SCREENWIDTH;
         }
-        if(needWidth > viewW)
-            scale *= (float)viewW/needWidth;
+        if(needWidth > portGeometry->size.width)
+            scale *= (float)portGeometry->size.width/needWidth;
 
         scale *= (1+cfg.hudScale)/2;
         // Make the title 3/4 smaller.
         scale *= .75f;
 
-        Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
+        Hu_DrawMapTitle(portGeometry->size.width/2, (float)portGeometry->size.height/SCREENHEIGHT * 6, scale);
     }
 }
 
-/**
- * Draws the in-viewport display.
- *
- * @param layer         @c 0 = bottom layer (before the viewport border).
- *                      @c 1 = top layer (after the viewport border).
- */
-void G_Display(int layer)
+void X_DrawViewPort(int port, const Rectanglei* portGeometry,
+    const Rectanglei* windowGeometry, int player, int layer)
 {
-    const int player = DISPLAYPLAYER;
     player_t* plr = players + player;
 
     if(layer != 0)
     {
-        rectanglei_t vp;
-        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
-        rendHUD(player, vp.width, vp.height);
+        rendHUD(player, portGeometry);
         return;
     }   
 
     switch(G_GetGameState())
     {
-    case GS_MAP: {
-        rectanglei_t vw;
-        R_ViewWindowDimensions(player, &vw.x, &vw.y, &vw.width, &vw.height);
-        if(!ST_AutomapWindowObscures(player, vw.x, vw.y, vw.width, vw.height))
+    case GS_MAP:
+        if(!ST_AutomapObscures2(player, windowGeometry))
         {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-                return;
+            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
 
             rendPlayerView(player);
 
@@ -222,19 +204,17 @@ void G_Display(int layer)
                 X_Drawer(player);
         }
         break;
-      }
-    case GS_STARTUP: {
-        rectanglei_t vp;
-        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
-        DGL_DrawRectColor(0, 0, vp.width, vp.height, 0, 0, 0, 1);
+
+    case GS_STARTUP:
+        DGL_DrawRectColor(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
         break;
-      }
+
     default:
         break;
     }
 }
 
-void G_Display2(void)
+void X_DrawWindow(const Size2i* windowSize)
 {
     if(G_GetGameState() == GS_INTERMISSION)
     {

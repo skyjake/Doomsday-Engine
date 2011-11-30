@@ -50,9 +50,8 @@ typedef struct image_s {
     /// Indentifier of the color palette used/assumed or @c 0 if none (1-based).
     colorpaletteid_t paletteId;
 
-    /// Dimensions of the image in pixels.
-    int width;
-    int height;
+    /// Size of the image in pixels.
+    Size2i size;
 
     /// Bytes per pixel in the data buffer.
     int pixelSize;

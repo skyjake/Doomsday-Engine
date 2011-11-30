@@ -395,20 +395,19 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void UIChat_UpdateDimensions(uiwidget_t* obj)
+void UIChat_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_CHAT);
+    assert(obj && obj->type == GUI_CHAT);
     {
     const char* text = UIChat_Text(obj);
-    obj->dimensions.width  = 0;
-    obj->dimensions.height = 0;
+    obj->geometry.size.width  = 0;
+    obj->geometry.size.height = 0;
 
-    if(!UIChat_IsActive(obj))
-        return;
+    if(!UIChat_IsActive(obj)) return;
 
     FR_SetFont(obj->font);
-    obj->dimensions.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
-    obj->dimensions.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
+    obj->geometry.size.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
+    obj->geometry.size.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
     }
 }
 

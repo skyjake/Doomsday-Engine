@@ -471,13 +471,13 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignore
 
                 // Could the mid texture fill enough of this gap for us
                 // to consider it completely closed?
-                if(ms->height >= (openTop[0] - openBottom[0]) &&
-                   ms->height >= (openTop[1] - openBottom[1]))
+                if(ms->size.height >= (openTop[0] - openBottom[0]) &&
+                   ms->size.height >= (openTop[1] - openBottom[1]))
                 {
                     // Possibly. Check the placement of the mid texture.
                     if(Rend_MidMaterialPos
                        (&matBottom[0], &matBottom[1], &matTop[0], &matTop[1],
-                        NULL, side->SW_middlevisoffset[VY], ms->height,
+                        NULL, side->SW_middlevisoffset[VY], ms->size.height,
                         0 != (line->flags & DDLF_DONTPEGBOTTOM),
                         !(R_IsSkySurface(&front->SP_ceilsurface) &&
                           R_IsSkySurface(&back->SP_ceilsurface)),
@@ -1412,7 +1412,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * are masked polys). Otherwise there will be artifacts.
          */
         Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
-                           primaryRTU->tex, primaryRTU->magMode, msA->width, msA->height,
+                           primaryRTU->tex, primaryRTU->magMode, msA->size.width, msA->size.height,
                            p->texOffset,
                            p->blendMode, p->lightListIdx, glowing,
                            !msA->isOpaque);
@@ -4280,6 +4280,7 @@ static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
 
 static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alpha)
 {
+    const Point2i origin = { 2, 2 };
     char buf[80];
 
     FR_SetFont(fontFixed);
@@ -4298,7 +4299,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
     glEnable(GL_TEXTURE_2D);
 
-    UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), alpha);
 
     glDisable(GL_TEXTURE_2D);
 
@@ -4347,7 +4348,7 @@ static boolean drawVertex1(linedef_t* li, void* context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->width / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->geometry.size.width / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
@@ -4445,13 +4446,11 @@ void Rend_Vertexes(void)
 
         for(i = 0; i < numVertexes; ++i)
         {
-            vertex_t*           vtx = &vertexes[i];
-            float               pos[3], dist;
+            vertex_t* vtx = &vertexes[i];
+            float pos[3], dist;
 
-            if(!vtx->lineOwners)
-                continue; // Not a linedef vertex.
-            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
-                continue; // A polyobj linedef vertex.
+            if(!vtx->lineOwners) continue; // Not a linedef vertex.
+            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ) continue; // A polyobj linedef vertex.
 
             pos[VX] = vtx->V_pos[VX];
             pos[VY] = vtx->V_pos[VY];
@@ -4462,10 +4461,10 @@ void Rend_Vertexes(void)
 
             if(dist < MAX_VERTEX_POINT_DIST)
             {
-                float               alpha, scale;
+                float alpha, scale;
 
                 alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                scale = dist / (theWindow->width / 2);
+                scale = dist / (theWindow->geometry.size.width / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -4694,7 +4693,7 @@ void R_DrawLightRange(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -4888,7 +4887,7 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
     eye[VY] = vz;
     eye[VZ] = vy;
 
-    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
+    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->geometry.size.width/2))/4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -4968,7 +4967,7 @@ static void Rend_RenderBoundingBoxes(void)
         pos[VY] = po->box[0][1]+length;
         pos[VZ] = sec->SP_floorheight;
 
-        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
+        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->geometry.size.width/2))/4);
         if(alpha < .25f)
             alpha = .25f; // Don't make them totally invisible.
 

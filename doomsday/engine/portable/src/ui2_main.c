@@ -1012,8 +1012,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
                     /// \todo Utilize *all* properties of the Material.
                     V3_Set(offset, -MSU(ms, MTU_PRIMARY).offset[0], -MSU(ms, MTU_PRIMARY).offset[1], 0);
-                    V3_Set(dimensions, ms->width  + TS_GENERAL(spec)->border*2,
-                                       ms->height + TS_GENERAL(spec)->border*2, 0);
+                    V3_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
+                                       ms->size.height + TS_GENERAL(spec)->border*2, 0);
                     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
                 }
             }

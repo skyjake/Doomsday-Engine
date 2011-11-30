@@ -133,9 +133,9 @@ void R_Register(void)
 
 const char* R_ChooseFixedFont(void)
 {
-    if(theWindow->width < 300)
+    if(theWindow->geometry.size.width < 300)
         return "console11";
-    if(theWindow->width > 768)
+    if(theWindow->geometry.size.width > 768)
         return "console18";
     return "console14";
 }
@@ -197,9 +197,9 @@ static fontid_t loadSystemFont(const char* name)
 void R_LoadSystemFonts(void)
 {
     fontFixed = loadSystemFont(R_ChooseFixedFont());
-    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->width, theWindow->height));
-    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->width, theWindow->height));
-    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->width, theWindow->height));
+    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height));
+    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->geometry.size.width, theWindow->geometry.size.height));
+    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->geometry.size.width, theWindow->geometry.size.height));
 
     Con_SetFont(fontFixed);
 }
@@ -215,10 +215,10 @@ void R_SetupDefaultViewWindow(int player)
     if(p != -1)
     {
         viewdata_t* vd = &viewData[p];
-        vd->window.x = vd->windowOld.x = vd->windowTarget.x = 0;
-        vd->window.y = vd->windowOld.y = vd->windowTarget.y = 0;
-        vd->window.width  = vd->windowOld.width  = vd->windowTarget.width  = theWindow->width;
-        vd->window.height = vd->windowOld.height = vd->windowTarget.height = theWindow->height;
+        vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
+        vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
+        vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
+        vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
         vd->windowInter = 1;
     }
 }
@@ -239,72 +239,101 @@ void R_ViewWindowTicker(int player, timespan_t ticLength)
         }
         else
         {
-            const float x = LERP(vd->windowOld.x, vd->windowTarget.x, vd->windowInter);
-            const float y = LERP(vd->windowOld.y, vd->windowTarget.y, vd->windowInter);
-            const float w = LERP(vd->windowOld.width,  vd->windowTarget.width,  vd->windowInter);
-            const float h = LERP(vd->windowOld.height, vd->windowTarget.height, vd->windowInter);
-            vd->window.x = ROUND(x);
-            vd->window.y = ROUND(y);
-            vd->window.width  = ROUND(w);
-            vd->window.height = ROUND(h);
+            const float x = LERP(vd->windowOld.origin.x, vd->windowTarget.origin.x, vd->windowInter);
+            const float y = LERP(vd->windowOld.origin.y, vd->windowTarget.origin.y, vd->windowInter);
+            const float w = LERP(vd->windowOld.size.width,  vd->windowTarget.size.width,  vd->windowInter);
+            const float h = LERP(vd->windowOld.size.height, vd->windowTarget.size.height, vd->windowInter);
+            vd->window.origin.x = ROUND(x);
+            vd->window.origin.y = ROUND(y);
+            vd->window.size.width  = ROUND(w);
+            vd->window.size.height = ROUND(h);
         }
     }
 
 #undef LERP
 }
 
-int R_ViewWindowDimensions(int player, int* x, int* y, int* w, int* h)
+/// \note Part of the Doomsday public API.
+int R_ViewWindowGeometry(int player, Rectanglei* geometry)
 {
-    int p = P_ConsoleToLocal(player);
-    if(p != -1)
-    {
-        const viewdata_t* vd = &viewData[p];
-        if(x) *x = vd->window.x;
-        if(y) *y = vd->window.y;
-        if(w) *w = vd->window.width;
-        if(h) *h = vd->window.height;
-        return true;
-    }
-    return false;
+    const viewdata_t* vd;
+    int p;
+    if(!geometry) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+
+    vd = &viewData[p];
+    memcpy(geometry, &vd->window, sizeof *geometry);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewWindowOrigin(int player, Point2i* origin)
+{
+    const viewdata_t* vd;
+    int p;
+    if(!origin) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+
+    vd = &viewData[p];
+    memcpy(origin, &vd->window.origin, sizeof *origin);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewWindowSize(int player, Size2i* size)
+{
+    const viewdata_t* vd;
+    int p;
+    if(!size) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+
+    vd = &viewData[p];
+    memcpy(size, &vd->window.size, sizeof *size);
+    return true;
 }
 
 /**
  * \note Do not change values used during refresh here because we might be
  * partway through rendering a frame. Changes should take effect on next
  * refresh only.
+ *
+ * \note Part of the Doomsday public API.
  */
-void R_SetViewWindowDimensions(int player, int x, int y, int w, int h,
-    boolean interpolate)
+void R_SetViewWindowGeometry(int player, const Rectanglei* geometry, boolean interpolate)
 {
     int p = P_ConsoleToLocal(player);
     if(p != -1)
     {
         const viewport_t* vp = &viewports[p];
         viewdata_t* vd = &viewData[p];
+        Rectanglei newGeom;
 
         // Clamp to valid range.
-        x = MINMAX_OF(0, x, vp->dimensions.width);
-        y = MINMAX_OF(0, y, vp->dimensions.height);
-        w = abs(w);
-        h = abs(h);
-        if(x + w > vp->dimensions.width)
-            w = vp->dimensions.width  - x;
-        if(y + h > vp->dimensions.height)
-            h = vp->dimensions.height - y;
+        newGeom.origin.x = MINMAX_OF(0, geometry->origin.x, vp->geometry.size.width);
+        newGeom.origin.y = MINMAX_OF(0, geometry->origin.y, vp->geometry.size.height);
+        newGeom.size.width  = abs(geometry->size.width);
+        newGeom.size.height = abs(geometry->size.height);
+        if(newGeom.origin.x + newGeom.size.width > vp->geometry.size.width)
+            newGeom.size.width = vp->geometry.size.width - newGeom.origin.x;
+        if(newGeom.origin.y + newGeom.size.height > vp->geometry.size.height)
+            newGeom.size.height = vp->geometry.size.height - newGeom.origin.y;
 
         // Already at this target?
-        if(vd->window.x == x && vd->window.y == y && vd->window.width == w && vd->window.height == h)
+        if(vd->window.origin.x    == newGeom.origin.x &&
+           vd->window.origin.y    == newGeom.origin.y &&
+           vd->window.size.width  == newGeom.size.width &&
+           vd->window.size.height == newGeom.size.height)
             return;
 
         // Record the new target.
-        vd->windowTarget.x = x;
-        vd->windowTarget.y = y;
-        vd->windowTarget.width  = w;
-        vd->windowTarget.height = h;
+        memcpy(&vd->windowTarget, &newGeom, sizeof vd->windowTarget);
 
         // Restart or advance the interpolation timer?
         // If dimensions have not yet been set - do not interpolate.
-        if(interpolate && !(vd->window.width == 0 && vd->window.height == 0))
+        if(interpolate && !(vd->window.size.width == 0 && vd->window.size.height == 0))
         {
             vd->windowInter = 0;
             memcpy(&vd->windowOld, &vd->window, sizeof(vd->windowOld));
@@ -317,30 +346,49 @@ void R_SetViewWindowDimensions(int player, int x, int y, int w, int h,
     }
 }
 
-/**
- * Retrieve the dimensions of the specified viewport by console player num.
- */
-int R_ViewportDimensions(int player, int* x, int* y, int* w, int* h)
+/// \note Part of the Doomsday public API.
+int R_ViewPortGeometry(int player, Rectanglei* geometry)
 {
-    int p = P_ConsoleToLocal(player);
-    if(p != -1)
-    {
-        const rectanglei_t* dims = &viewports[p].dimensions;
-        if(x) *x = dims->x;
-        if(y) *y = dims->y;
-        if(w) *w = dims->width;
-        if(h) *h = dims->height;
-        return true;
-    }
-    return false;
+    viewport_t* vp;
+    int p;
+    if(!geometry) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewports[p];
+
+    memcpy(geometry, &vp->geometry, sizeof *geometry);
+    return true;
 }
 
-/**
- * Sets the view player for a console.
- *
- * @param consoleNum  Player whose view to set.
- * @param viewPlayer  Player that will be viewed by player @a consoleNum.
- */
+/// \note Part of the Doomsday public API.
+int R_ViewPortOrigin(int player, Point2i* origin)
+{
+    viewport_t* vp;
+    int p;
+    if(!origin) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewports[p];
+
+    memcpy(origin, &vp->geometry.origin, sizeof *origin);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewPortSize(int player, Size2i* size)
+{
+    viewport_t* vp;
+    int p;
+    if(!size) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewports[p];
+
+    memcpy(size, &vp->geometry.size, sizeof *size);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
 {
     int p = P_ConsoleToLocal(consoleNum);
@@ -354,35 +402,35 @@ void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */
-void R_UpdateViewPortDimensions(viewport_t* port, int col, int row)
+void R_UpdateViewPortGeometry(viewport_t* port, int col, int row)
 {
-    assert(NULL != port);
+    assert(port);
     {
-    rectanglei_t* dims = &port->dimensions;
-    const int x = col * theWindow->width  / gridCols;
-    const int y = row * theWindow->height / gridRows;
-    const int width  = (col+1) * theWindow->width  / gridCols - x;
-    const int height = (row+1) * theWindow->height / gridRows - y;
+    Rectanglei* rect = &port->geometry;
+    const int x = col * theWindow->geometry.size.width  / gridCols;
+    const int y = row * theWindow->geometry.size.height / gridRows;
+    const int width  = (col+1) * theWindow->geometry.size.width  / gridCols - x;
+    const int height = (row+1) * theWindow->geometry.size.height / gridRows - y;
     ddhook_viewport_reshape_t p;
     boolean doReshape = false;
 
-    if(dims->x == x && dims->y == y && dims->width == width && dims->height == height)
+    if(rect->origin.x == x && rect->origin.y == y && rect->size.width == width && rect->size.height == height)
         return;
 
     if(port->console != -1 && Plug_CheckForHook(HOOK_VIEWPORT_RESHAPE))
     {
-        memcpy(&p.oldDimensions, dims, sizeof(p.oldDimensions));
+        memcpy(&p.oldGeometry, rect, sizeof(p.oldGeometry));
         doReshape = true;
     }
 
-    dims->x = x;
-    dims->y = y;
-    dims->width  = width;
-    dims->height = height;
+    rect->origin.x = x;
+    rect->origin.y = y;
+    rect->size.width  = width;
+    rect->size.height = height;
 
     if(doReshape)
     {
-        memcpy(&p.dimensions, dims, sizeof(p.dimensions));
+        memcpy(&p.geometry, rect, sizeof(p.geometry));
         DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
     }
     }
@@ -428,7 +476,7 @@ boolean R_SetViewGrid(int numCols, int numRows)
                 vp->console = -1;
             }
 
-            R_UpdateViewPortDimensions(vp, x, y);
+            R_UpdateViewPortGeometry(vp, x, y);
             ++p;
         }
     }
@@ -992,15 +1040,18 @@ void R_RenderPlayerViewBorder(void)
  */
 void R_UseViewPort(viewport_t* vp)
 {
-    if(NULL == vp)
+    if(!vp)
     {
         currentViewport = NULL;
-        glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
+        glViewport(0, FLIP(0 + theWindow->geometry.size.height - 1),
+            theWindow->geometry.size.width, theWindow->geometry.size.height);
     }
     else
     {
         currentViewport = vp;
-        glViewport(vp->dimensions.x, FLIP(vp->dimensions.y + vp->dimensions.height - 1), vp->dimensions.width, vp->dimensions.height);
+        glViewport(vp->geometry.origin.x,
+            FLIP(vp->geometry.origin.y + vp->geometry.size.height - 1),
+            vp->geometry.size.width, vp->geometry.size.height);
     }
 }
 
@@ -1014,7 +1065,9 @@ const viewport_t* R_CurrentViewPort(void)
  */
 void R_RenderBlankView(void)
 {
-    UI_DrawDDBackground(0, 0, 320, 200, 1);
+    Point2i origin = { 0, 0 };
+    Size2i size = { 320, 200 };
+    UI_DrawDDBackground(&origin, &size, 1);
 }
 
 /**
@@ -1053,7 +1106,7 @@ void R_RenderPlayerView(int num)
     vd->sharp.angle = viewAngle; /* $unifiedangles */
     vd->sharp.pitch = viewPitch;
 
-    if(vd->window.width == 0 || vd->window.height == 0)
+    if(vd->window.size.width == 0 || vd->window.size.height == 0)
         return; // Too early? Game has not configured the view window?
 
     // Setup for rendering the frame.
@@ -1190,6 +1243,7 @@ void R_RenderViewPorts(void)
         for(x = 0; x < gridCols; x++, ++p)
         {
             viewport_t* vp = &viewports[p];
+            viewdata_t* vd = &viewData[p];
 
             displayPlayer = vp->console;
             R_UseViewPort(vp);
@@ -1205,21 +1259,16 @@ void R_RenderViewPorts(void)
             glLoadIdentity();
 
             /**
-             * Use an orthographic projection in native screenspace. Then
-             * translate and scale the projection to produce an aspect
-             * corrected coordinate space at 4:3.
+             * Use an orthographic projection in real pixel dimensions.
              */
-            glOrtho(0, vp->dimensions.width, vp->dimensions.height, 0, -1, 1);
+            glOrtho(0, vp->geometry.size.width, vp->geometry.size.height, 0, -1, 1);
 
-            // Draw in-window game graphics (layer 0).
-            gx.G_Drawer(0);
+            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
             restoreDefaultGLState();
 
-            // Draw the view border.
             R_RenderPlayerViewBorder();
 
-            // Draw in-window game graphics (layer 1).
-            gx.G_Drawer(1);
+            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
             restoreDefaultGLState();
 
             glMatrixMode(GL_PROJECTION);

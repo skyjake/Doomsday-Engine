@@ -32,14 +32,14 @@
 
 extern float quitDarkenOpacity;
 
-void            D_Display(int layer);
-void            D_Display2(void);
+void D_DrawViewPort(int port, const Rectanglei* portGeometry, const Rectanglei* windowGeometry, int player, int layer);
+void D_DrawWindow(const Size2i* windowSize);
 
-void            R_DrawSpecialFilter(int pnum);
-void            R_DrawMapTitle(void);
+void R_DrawSpecialFilter(int pnum);
+void R_DrawMapTitle(void);
 
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
+void P_SetDoomsdayFlags(mobj_t* mo);
+void R_SetAllDoomsdayFlags(void);
+boolean R_GetFilterColor(float rgba[4], int filter);
 
 #endif /* JDOOM64_REFRESH_H */

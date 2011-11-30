@@ -643,14 +643,14 @@ void CP_Register(void)
     C_CMD_FLAGS("panel", NULL, OpenPanel, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
 }
 
-void CP_ClosePanel(ui_object_t *ob)
+void CP_ClosePanel(ui_object_t* ob)
 {
     UI_End();
 }
 
-void CP_ChooseGroup(ui_object_t *ob)
+void CP_ChooseGroup(ui_object_t* ob)
 {
-    int         i;
+    int i;
 
     memset(panel_buttons, 0, sizeof(panel_buttons));
     UI_FlagGroup(ob_panel, 1, UIF_ACTIVE, UIFG_CLEAR);
@@ -661,17 +661,19 @@ void CP_ChooseGroup(ui_object_t *ob)
         UI_FlagGroup(ob_panel, 2 + i, UIF_HIDDEN, !panel_buttons[i]);
 }
 
-void CP_DrawLogo(ui_object_t *ob)
+void CP_DrawLogo(ui_object_t* ob)
 {
-    UI_DrawLogo(ob->x, ob->y, ob->w, ob->h);
+    UI_DrawLogo(&ob->geometry.origin, &ob->geometry.size);
 }
 
-void CP_DrawBorder(ui_object_t *ob)
+void CP_DrawBorder(ui_object_t* ob)
 {
-    int         b = UI_BORDER;
-    ui_object_t *it;
-    void       *help_ptr;
-    boolean     shown;
+    int b = UI_BORDER;
+    ui_object_t* it;
+    void* help_ptr;
+    Point2i origin;
+    Size2i size;
+    boolean shown;
 
     UIFrame_Drawer(ob);
 
@@ -684,13 +686,18 @@ void CP_DrawBorder(ui_object_t *ob)
         {
             if(it->flags & UIF_HIDDEN || it->group < 2 || it->type != UI_TEXT)
                 continue;
+
             // Try to find help for this.
-            if((help_ptr = DH_Find(it->text)))
+            help_ptr = DH_Find(it->text);
+            if(help_ptr)
             {
                 shown = (panel_help == help_ptr && panel_help_active);
-                UI_HorizGradient(ob->x + b, it->y + it->h / 2 - UI_FontHeight() / 2,
-                                 2 * UI_FontHeight(), UI_FontHeight(),
-                                 UI_Color(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
+
+                origin.x = ob->geometry.origin.x + b;
+                origin.y = it->geometry.origin.y + it->geometry.size.height / 2 - UI_FontHeight() / 2;
+                size.width  = 2 * UI_FontHeight();
+                size.height = UI_FontHeight();
+                UI_HorizGradient(&origin, &size, UI_Color(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
             }
         }
         glDisable(GL_TEXTURE_2D);
@@ -808,48 +815,58 @@ int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
     return false;
 }
 
-void CP_KeyGrabDrawer(ui_object_t *ob)
+void CP_KeyGrabDrawer(ui_object_t* ob)
 {
-    boolean     sel = (ob->flags & UIF_FOCUS) != 0;
-    float       alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
-    char        buf[80];
-    byte        key = Con_GetByte(ob->text);
-    const char *name;
+    boolean sel = (ob->flags & UIF_FOCUS) != 0;
+    float alpha = (ob->flags & UIF_DISABLED ? .2f : 1);
+    char buf[80];
+    byte key = Con_GetByte(ob->text);
+    const char* name;
+    Point2i labelOrigin;
 
     glEnable(GL_TEXTURE_2D);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
-                  1, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI),
-             UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (sel ? -1 : 1),
-                  false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    if((name = B_ShortNameForKey((int) key)) != NULL)
+    UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER,
+        UI_Color(UIC_SHADOW), 0, 1, 0);
+    UI_Shade(&ob->geometry.origin, &ob->geometry.size, UI_BORDER,
+        UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER * (sel ? -1 : 1), false,
+        UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+
+    name = B_ShortNameForKey((int) key);
+    if(name)
         sprintf(buf, "%s", name);
     else if(key > 32 && key < 128)
         sprintf(buf, "%c", (char) key);
     else
         sprintf(buf, "%i", key);
+
     FR_SetFont(fontVariable[FS_LIGHT]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, UI_Color(UIC_TEXT), alpha, 0, DTF_ONLY_SHADOW);
+
+    labelOrigin.x = ob->geometry.origin.x + ob->geometry.size.width  / 2;
+    labelOrigin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+
+    UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), alpha, 0, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
-void CP_QuickFOV(ui_object_t *ob)
+void CP_QuickFOV(ui_object_t* ob)
 {
     Con_SetFloat2("rend-camera-fov", sld_fov.value = atoi(ob->text), SVF_WRITE_OVERRIDE);
 }
 
-void CP_VideoModeInfo(ui_object_t *ob)
+void CP_VideoModeInfo(ui_object_t* ob)
 {
-    char        buf[80];
+    Point2i textOrigin;
+    char buf[80];
+    assert(ob);
 
     if(!strcmp(ob->text, "default"))
     {
         sprintf(buf, "%i x %i x %i (%s)", defResX, defResY, defBPP,
-                defFullscreen? "fullscreen":"windowed");
+            defFullscreen? "fullscreen":"windowed");
     }
     else
     {
@@ -857,9 +874,9 @@ void CP_VideoModeInfo(ui_object_t *ob)
         if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
             return;
 
-        sprintf(buf, "%i x %i x %i (%s)", theWindow->width,
-                theWindow->height, theWindow->normal.bpp,
-                (fullscreen? "fullscreen" : "windowed"));
+        sprintf(buf, "%i x %i x %i (%s)", theWindow->geometry.size.width,
+            theWindow->geometry.size.height, theWindow->normal.bpp,
+            (fullscreen? "fullscreen" : "windowed"));
     }
 
     glEnable(GL_TEXTURE_2D);
@@ -867,17 +884,20 @@ void CP_VideoModeInfo(ui_object_t *ob)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(buf, ob->x, ob->y + ob->h / 2, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    textOrigin.x = ob->geometry.origin.x;
+    textOrigin.y = ob->geometry.origin.y + ob->geometry.size.height / 2;
+
+    UI_TextOutEx2(buf, &textOrigin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     glDisable(GL_TEXTURE_2D);
 }
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
 {
-    boolean     cFullscreen;
-    ui_object_t *ob;
+    boolean cFullscreen;
+    ui_object_t* ob;
 
-    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen))
-        return;
+    if(!Sys_GetWindowFullscreen(windowIDX, &cFullscreen)) return;
 
     ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_SET_RES);
 
@@ -885,7 +905,7 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == theWindow->width && h == theWindow->height &&
+    if(w == theWindow->geometry.size.width && h == theWindow->geometry.size.height &&
        bpp == theWindow->normal.bpp &&
        fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
@@ -893,11 +913,10 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
         ob->flags &= ~UIF_DISABLED;
 }
 
-void CP_ResolutionList(ui_object_t *ob)
+void CP_ResolutionList(ui_object_t* ob)
 {
-    uidata_list_t *list = ob->data;
-    int         seldata =
-                ((uidata_listitem_t *) list->items)[list->selection].data;
+    uidata_list_t* list = ob->data;
+    int seldata = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     sprintf(panel_res_x, "%i", seldata & 0xffff);
     sprintf(panel_res_y, "%i", seldata >> 16);
@@ -908,27 +927,24 @@ void CP_ResolutionList(ui_object_t *ob)
     CP_VidModeChanged(ob);
 }
 
-void CP_SetDefaultVidMode(ui_object_t *ob)
+void CP_SetDefaultVidMode(ui_object_t* ob)
 {
-    int         x = atoi(panel_res_x), y = atoi(panel_res_y);
+    int x = atoi(panel_res_x), y = atoi(panel_res_y);
+    if(!x || !y) return;
 
-    if(!x || !y)
-        return;
     defResX = x;
     defResY = y;
     defBPP = (panel_bpp? 32 : 16);
     defFullscreen = panel_fullscreen;
 }
 
-void CP_SetVidMode(ui_object_t *ob)
+void CP_SetVidMode(ui_object_t* ob)
 {
-    int         x = atoi(panel_res_x), y = atoi(panel_res_y);
-    int         bpp = (panel_bpp? 32 : 16);
+    int x = atoi(panel_res_x), y = atoi(panel_res_y);
+    int bpp = (panel_bpp? 32 : 16);
 
-    if(!x || !y)
-        return;
-    if(x < SCREENWIDTH || y < SCREENHEIGHT)
-        return;
+    if(!x || !y) return;
+    if(x < SCREENWIDTH || y < SCREENHEIGHT) return;
 
     ob->flags |= UIF_DISABLED;
 
@@ -947,9 +963,10 @@ void CP_VidModeChanged(ui_object_t *ob)
  * Returns the object, if any, the mouse is currently hovering on. The
  * check is based on the coordinates of the Text object.
  */
-ui_object_t *CP_FindHover(void)
+ui_object_t* CP_FindHover(void)
 {
-    ui_object_t *ob;
+    ui_object_t* ob;
+    Size2i size;
 
     for(ob = ob_panel; ob->type; ob++)
     {
@@ -958,7 +975,9 @@ ui_object_t *CP_FindHover(void)
             continue;
 
         // Extend the detection area to the right edge of the screen.
-        if(UI_MouseInsideBox(ob->x, ob->y, UI_ScreenW(1000), ob->h))
+        size.width  = UI_ScreenW(1000);
+        size.height = ob->geometry.size.height;
+        if(UI_MouseInsideBox(&ob->geometry.origin, &size))
             return ob;
     }
     return NULL;
@@ -1030,26 +1049,40 @@ void CP_Ticker(ui_page_t* page)
         panel_help_offset = 0;
 }
 
-int CP_LabelText(char *label, char *text, int x, int y, int w, int h, float alpha)
+int CP_LabelText(char* label, char* text, const Point2i* origin_, const Size2i* size_, float alpha)
 {
     ui_color_t* color = UI_Color(UIC_TEXT);
+    Point2i origin;
+    Size2i size;
     int ind;
+    assert(origin_ && size_);
+
+    origin.x = origin_->x;
+    origin.y = origin_->y;
+    size.width  = size_->width;
+    size.height = size_->height;
 
     FR_SetFont(fontVariable[FS_NORMAL]);
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetColorAndAlpha(color->red, color->green, color->blue, .5f * alpha * UI_Alpha());
 
-    FR_DrawText(label, x, y);
+    FR_DrawText(label, origin.x, origin.y);
+
     ind = FR_TextWidth(label);
-    return UI_TextOutWrapEx(text, x + ind, y, w - ind, h, color, alpha);
+    origin.x += ind;
+    size.width -= ind;
+
+    return UI_TextOutWrapEx(text, &origin, &size, color, alpha);
 }
 
-void CP_Drawer(ui_page_t *page)
+void CP_Drawer(ui_page_t* page)
 {
-    float       alpha = panel_help_offset / (float) HELP_OFFSET;
-    int         x, y, w, h, bor, lineHeight, verticalSpacing;
-    char       *str;
+    float alpha = panel_help_offset / (float) HELP_OFFSET;
+    int bor, lineHeight, verticalSpacing;
+    Point2i origin, end;
+    Size2i size;
+    char* str;
 
     // First call the regular drawer.
     UIPage_Drawer(page);
@@ -1060,9 +1093,10 @@ void CP_Drawer(ui_page_t *page)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(DENGPROJECT_HOMEURL,
-                  UI_ScreenW(1000) - UI_BORDER,
-                  UI_ScreenY(25), UI_Color(UIC_TEXT), 0.2f, ALIGN_RIGHT, DTF_ONLY_SHADOW);
+
+    origin.x = UI_ScreenW(1000) - UI_BORDER;
+    origin.y = UI_ScreenY(25);
+    UI_TextOutEx2(DENGPROJECT_HOMEURL, &origin, UI_Color(UIC_TEXT), 0.2f, ALIGN_RIGHT, DTF_ONLY_SHADOW);
 
     // Is the help box visible?
     if(panel_help_offset <= 0 || !panel_help_source)
@@ -1073,40 +1107,54 @@ void CP_Drawer(ui_page_t *page)
 
     // Help box placement.
     bor = 2 * UI_BORDER / 3;
-    x = -UI_BORDER;
-    y = UI_ScreenY(0);
-    w = HELP_OFFSET;
-    h = UI_ScreenH(920);
-    UI_GradientEx(x, y, w, h, UI_BORDER, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha,
-                  alpha);
-    UI_DrawRectEx(x, y, w, h, UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
-    x += UI_BORDER + 2 * bor;
-    y += UI_BORDER;
-    w -= UI_BORDER + 4 * bor;
-    h -= 4 * bor;
+
+    origin.x = -UI_BORDER;
+    origin.y = UI_ScreenY(0);
+    size.width  = HELP_OFFSET;
+    size.height = UI_ScreenH(920);
+
+    UI_GradientEx(&origin, &size, UI_BORDER, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha, alpha);
+    UI_DrawRectEx(&origin, &size, UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+
+    origin.x += UI_BORDER + 2 * bor;
+    origin.y += UI_BORDER;
+    size.width  -= UI_BORDER + 4 * bor;
+    size.height -= 4 * bor;
 
     // The title (with shadow).
     FR_SetFont(fontVariable[FS_BOLD]);
     lineHeight = FR_SingleLineHeight("Help");
     verticalSpacing = lineHeight / 4;
-    y = UI_TextOutWrapEx(panel_help_source->text, x, y, w, h, UI_Color(UIC_TITLE), alpha)
-        + lineHeight + 3;
-    UI_Line(x, y, x + w, y, UI_Color(UIC_TEXT), 0, alpha * .5f, 0);
-    y += verticalSpacing;
+    origin.y = UI_TextOutWrapEx(panel_help_source->text, &origin, &size, UI_Color(UIC_TITLE), alpha);
+    origin.y += lineHeight + 3;
+
+    end.x = origin.x + size.width;
+    end.y = origin.y;
+    UI_Line(&origin, &end, UI_Color(UIC_TEXT), 0, alpha * .5f, 0);
+    origin.y += verticalSpacing;
 
     // Cvar?
-    if((str = DH_GetString(panel_help, HST_CONSOLE_VARIABLE)))
-        y = CP_LabelText("CVar: ", str, x, y, w, h, alpha) + lineHeight + verticalSpacing;
+    str = DH_GetString(panel_help, HST_CONSOLE_VARIABLE);
+    if(str)
+    {
+        origin.y = CP_LabelText("CVar: ", str, &origin, &size, alpha);
+        origin.y += lineHeight + verticalSpacing;
+    }
 
     // Default?
-    if((str = DH_GetString(panel_help, HST_DEFAULT_VALUE)))
-        y = CP_LabelText("Default: ", str, x, y, w, h, alpha) + lineHeight + verticalSpacing;
+    str = DH_GetString(panel_help, HST_DEFAULT_VALUE);
+    if(str)
+    {
+        origin.y = CP_LabelText("Default: ", str, &origin, &size, alpha);
+        origin.y += lineHeight + verticalSpacing;
+    }
 
     // Information.
-    if((str = DH_GetString(panel_help, HST_DESCRIPTION)))
+    str = DH_GetString(panel_help, HST_DESCRIPTION);
+    if(str)
     {
         FR_SetFont(fontVariable[FS_LIGHT]);
-        UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
+        UI_TextOutWrapEx(str, &origin, &size, UI_Color(UIC_TEXT), alpha);
     }
     glDisable(GL_TEXTURE_2D);
 }
@@ -1232,7 +1280,8 @@ D_CMD(OpenPanel)
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
         list = ob->data;
-        list->selection = UI_ListFindItem(ob, RES(theWindow->width, theWindow->height));
+        list->selection = UI_ListFindItem(ob,
+            RES(theWindow->geometry.size.width, theWindow->geometry.size.height));
         if(list->selection == -1)
         {
             // Then use a reasonable default.

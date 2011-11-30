@@ -400,14 +400,14 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     switch(hotspot)
     {
     case HOT_BRIGHT:
-        y -= info.height * scale;
+        y -= info.geometry.size.height * scale;
 
     case HOT_TRIGHT:
-        x -= info.width * scale;
+        x -= info.geometry.size.width * scale;
         break;
 
     case HOT_BLEFT:
-        y -= info.height * scale;
+        y -= info.geometry.size.height * scale;
         break;
     default:
         break;
@@ -422,19 +422,19 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         DGL_Vertex2f(x, y);
 
         DGL_TexCoord2f(0, !flip * info.texCoord[0], 0);
-        DGL_Vertex2f(x + info.width * scale, y);
+        DGL_Vertex2f(x + info.geometry.size.width * scale, y);
 
         DGL_TexCoord2f(0, !flip * info.texCoord[0], info.texCoord[1]);
-        DGL_Vertex2f(x + info.width * scale, y + info.height * scale);
+        DGL_Vertex2f(x + info.geometry.size.width * scale, y + info.geometry.size.height * scale);
 
         DGL_TexCoord2f(0, flip * info.texCoord[0], info.texCoord[1]);
-        DGL_Vertex2f(x, y + info.height * scale);
+        DGL_Vertex2f(x, y + info.geometry.size.height * scale);
     DGL_End();
 
     DGL_Disable(DGL_TEXTURE_2D);
 
-    if(drawnWidth)  *drawnWidth  = info.width  * scale;
-    if(drawnHeight) *drawnHeight = info.height * scale;
+    if(drawnWidth)  *drawnWidth  = info.geometry.size.width  * scale;
+    if(drawnHeight) *drawnHeight = info.geometry.size.height * scale;
 }
 
 void ST_doFullscreenStuff(int player)
@@ -615,15 +615,14 @@ Draw_EndZoom();
 
 void MapName_Drawer(uiwidget_t* obj, int x, int y)
 {
-    assert(NULL != obj && obj->type == GUI_MAPNAME);
+    assert(obj && obj->type == GUI_MAPNAME);
     {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
     const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
 
-    if(NULL == text && 0 == patch)
-        return;
+    if(!text && 0 == patch) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -643,41 +642,38 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     }
 }
 
-void MapName_Dimensions(uiwidget_t* obj, int* width, int* height)
+void MapName_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_MAPNAME);
-    {
     const patchid_t patch = P_FindMapTitlePatch(gameEpisode, gameMap);
     const char* text = Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patch, P_GetMapNiceName());
     const float scale = .75f;
     patchinfo_t info;
+    assert(obj && obj->type == GUI_MAPNAME);
 
-    if(NULL != width)  *width  = 0;
-    if(NULL != height) *height = 0;
+    obj->geometry.size.width  = 0;
+    obj->geometry.size.height = 0;
 
-    if(NULL == text && 0 == patch)
-        return;
+    if(!text && 0 == patch) return;
 
-    if(NULL != text)
+    if(text)
     {
         FR_SetFont(obj->font);
-        FR_TextDimensions(width, height, text);
-        if(NULL != width)  *width  = *width  * scale;
-        if(NULL != height) *height = *height * scale;
-        return;    
+        FR_TextSize(&obj->geometry.size, text);
+        obj->geometry.size.width  *= scale;
+        obj->geometry.size.height *= scale;
+        return;
     }
 
     R_GetPatchInfo(patch, &info);
-    if(NULL != width)  *width  = info.width  * scale;
-    if(NULL != height) *height = info.height * scale;
-    }
+    obj->geometry.size.width  = info.geometry.size.width  * scale;
+    obj->geometry.size.height = info.geometry.size.height * scale;
 }
 
 typedef struct {
     guiwidgettype_t type;
     int group;
     gamefontid_t fontIdx;
-    void (*updateDimensions) (uiwidget_t* obj);
+    void (*updateGeometry) (uiwidget_t* obj);
     void (*drawer) (uiwidget_t* obj, int x, int y);
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
     void* typedata;
@@ -765,7 +761,7 @@ static void findMapBounds(float* lowX, float* hiX, float* lowY, float* hiY)
 
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     int flags;
@@ -785,7 +781,7 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 
 static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
-    assert(NULL != obj);
+    assert(obj);
     {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     float lowX, hiX, lowY, hiY;
@@ -879,7 +875,7 @@ void ST_Start(int player)
     UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
     UIAutomap_SetOrigin(obj, 0, 0);
-    UIAutomap_SetDimensions(obj, winWidth, winHeight);
+    UIAutomap_SetSize(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
@@ -917,7 +913,7 @@ void ST_BuildWidgets(int player)
         hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->groupFlags, def->alignFlags, def->padding);
     }
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTB), UIAutomap_UpdateDimensions, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
@@ -1003,7 +999,7 @@ boolean ST_ChatIsActive(int player)
 void ST_LogPost(int player, byte flags, const char* msg)
 {
     uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
 
     UILog_Post(obj, flags, msg);
 }
@@ -1011,14 +1007,14 @@ void ST_LogPost(int player, byte flags, const char* msg)
 void ST_LogRefresh(int player)
 {
     uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UILog_Refresh(obj);
 }
 
 void ST_LogEmpty(int player)
 {
     uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UILog_Empty(obj);
 }
 
@@ -1056,21 +1052,21 @@ void ST_LogUpdateAlignment(void)
 void ST_AutomapOpen(int player, boolean yes, boolean fast)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UIAutomap_Open(obj, yes, fast);
 }
 
 boolean ST_AutomapIsActive(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return false;
+    if(!obj) return false;
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region)
+boolean ST_AutomapObscures2(int player, const Rectanglei* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return false;
+    if(!obj) return false;
     if(UIAutomap_Active(obj))
     {
         if(cfg.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
@@ -1084,13 +1080,13 @@ boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region)
                 // We'll have to compare the dimensions.
                 const int scrwidth  = Get(DD_WINDOW_WIDTH);
                 const int scrheight = Get(DD_WINDOW_HEIGHT);
-                const rectanglei_t* dims = UIWidget_Dimensions(obj);
-                float fx = FIXXTOSCREENX(region->x);
-                float fy = FIXYTOSCREENY(region->y);
-                float fw = FIXXTOSCREENX(region->width);
-                float fh = FIXYTOSCREENY(region->height);
+                const Rectanglei* rect = UIWidget_Geometry(obj);
+                float fx = FIXXTOSCREENX(region->origin.x);
+                float fy = FIXYTOSCREENY(region->origin.y);
+                float fw = FIXXTOSCREENX(region->size.width);
+                float fh = FIXYTOSCREENY(region->size.height);
 
-                if(dims->x >= fx && dims->y >= fy && dims->width >= fw && dims->height >= fh)
+                if(dims->origin.x >= fx && dims->origin.y >= fy && dims->size.width >= fw && dims->size.height >= fh)
                     return true;
             }*/
         }
@@ -1098,20 +1094,20 @@ boolean ST_AutomapWindowObscures2(int player, const rectanglei_t* region)
     return false;
 }
 
-boolean ST_AutomapWindowObscures(int player, int x, int y, int width, int height)
+boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
-    rectanglei_t rect;
-    rect.x = x;
-    rect.y = y;
-    rect.width  = width;
-    rect.height = height;
-    return ST_AutomapWindowObscures2(player, &rect);
+    Rectanglei rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = width;
+    rect.size.height = height;
+    return ST_AutomapObscures2(player, &rect);
 }
 
 void ST_AutomapClearPoints(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UIAutomap_ClearPoints(obj);
 }
 
@@ -1123,10 +1119,9 @@ int ST_AutomapAddPoint(int player, float x, float y, float z)
     static char buffer[20];
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     int newPoint;
-    if(NULL == obj) return - 1;
+    if(!obj) return - 1;
 
-    if(UIAutomap_PointCount(obj) == MAX_MAP_POINTS)
-        return -1;
+    if(UIAutomap_PointCount(obj) == MAX_MAP_POINTS) return -1;
 
     newPoint = UIAutomap_AddPoint(obj, x, y, z);
     sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newPoint);
@@ -1138,14 +1133,14 @@ int ST_AutomapAddPoint(int player, float x, float y, float z)
 boolean ST_AutomapPointOrigin(int player, int point, float* x, float* y, float* z)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return false;
+    if(!obj) return false;
     return UIAutomap_PointOrigin(obj, point, x, y, z);
 }
 
 void ST_ToggleAutomapMaxZoom(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
     {
         Con_Printf("Maximum zoom %s in automap.\n", UIAutomap_ZoomMax(obj)? "ON":"OFF");
@@ -1155,21 +1150,21 @@ void ST_ToggleAutomapMaxZoom(int player)
 float ST_AutomapOpacity(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return 0;
+    if(!obj) return 0;
     return UIAutomap_Opacity(obj);
 }
 
 void ST_SetAutomapCameraRotation(int player, boolean on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UIAutomap_SetCameraRotation(obj, on);
 }
 
 void ST_ToggleAutomapPanMode(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     if(UIAutomap_SetPanMode(obj, !UIAutomap_PanMode(obj)))
     {
         P_SetMessage(&players[player], (UIAutomap_PanMode(obj)? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), true);
@@ -1188,28 +1183,28 @@ void ST_CycleAutomapCheatLevel(int player)
 void ST_SetAutomapCheatLevel(int player, int level)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     setAutomapCheatLevel(obj, level);
 }
 
 void ST_RevealAutomap(int player, boolean on)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UIAutomap_SetReveal(obj, on);
 }
 
 boolean ST_AutomapHasReveal(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return false;
+    if(!obj) return false;
     return UIAutomap_Reveal(obj);
 }
 
 void ST_RebuildAutomap(int player)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(NULL == obj) return;
+    if(!obj) return;
     UIAutomap_Rebuild(obj);
 }
 
@@ -1241,7 +1236,7 @@ D_CMD(ChatOpen)
     }
 
     obj = ST_UIChatForPlayer(player);
-    if(NULL == obj)
+    if(!obj)
     {
         return false;
     }
@@ -1308,7 +1303,7 @@ D_CMD(ChatSendMacro)
     }
 
     obj = ST_UIChatForPlayer(player);
-    if(NULL == obj)
+    if(!obj)
     {
         return false;
     }

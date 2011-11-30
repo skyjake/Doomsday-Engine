@@ -1179,7 +1179,10 @@ patchid_t R_DeclarePatch(const char* name)
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
-        tex = Textures_CreateWithDimensions(texId, flags, SHORT(patch->width), SHORT(patch->height), (void*)p);
+        Size2i size;
+        size.width  = SHORT(patch->width);
+        size.height = SHORT(patch->height);
+        tex = Textures_CreateWithSize(texId, flags, &size, (void*)p);
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         if(!tex)
@@ -1192,9 +1195,13 @@ patchid_t R_DeclarePatch(const char* name)
     else
     {
         patchtex_t* oldPatch = Texture_DetachUserData(tex);
+        Size2i size;
+
+        size.width  = SHORT(patch->width);
+        size.height = SHORT(patch->height);
 
         Texture_SetFlags(tex, flags);
-        Texture_SetDimensions(tex, SHORT(patch->width), SHORT(patch->height));
+        Texture_SetSize(tex, &size);
         Texture_AttachUserData(tex, (void*)p);
 
         free(oldPatch);
@@ -1222,11 +1229,11 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         GL_PreparePatchTexture(tex);
 
         info->id = id;
-        info->width = Texture_Width(tex);
-        info->height = Texture_Height(tex);
         info->isCustom = Texture_IsCustom(tex);
-        info->offset = pTex->offX;
-        info->topOffset = pTex->offY;
+        info->geometry.size.width = Texture_Width(tex);
+        info->geometry.size.height = Texture_Height(tex);
+        info->geometry.origin.x = pTex->offX;
+        info->geometry.origin.y = pTex->offY;
         /// \kludge:
         info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
@@ -1643,8 +1650,8 @@ typedef struct {
                 texDef->origIndex = (*origIndexBase) + i;
                 Str_Init(&texDef->name);
                 Str_PartAppend(&texDef->name, (const char*) mtexture->name, 0, 8);
-                texDef->width = SHORT(mtexture->width);
-                texDef->height = SHORT(mtexture->height);
+                texDef->size.width = SHORT(mtexture->width);
+                texDef->size.height = SHORT(mtexture->height);
 
                 texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
                 if(!texDef->patches)
@@ -1681,8 +1688,8 @@ typedef struct {
                 texDef->origIndex = (*origIndexBase) + i;
                 Str_Init(&texDef->name);
                 Str_PartAppend(&texDef->name, (const char*) smtexture->name, 0, 8);
-                texDef->width = SHORT(smtexture->width);
-                texDef->height = SHORT(smtexture->height);
+                texDef->size.width = SHORT(smtexture->width);
+                texDef->size.height = SHORT(smtexture->height);
 
                 texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
                 if(!texDef->patches)
@@ -1906,9 +1913,9 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
                     {
                         hasReplacement = true; // Uses a non-IWAD patch.
                     }
-                    else if(custom->height     == orig->height &&
-                            custom->width      == orig->width  &&
-                            custom->patchCount == orig->patchCount)
+                    else if(custom->size.height == orig->size.height &&
+                            custom->size.width  == orig->size.width  &&
+                            custom->patchCount  == orig->patchCount)
                     {
                         // Check the patches.
                         short k = 0;
@@ -2016,14 +2023,14 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
             patchcompositetex_t* oldPcTex = Texture_DetachUserData(tex);
 
             Texture_SetFlags(tex, flags);
-            Texture_SetDimensions(tex, pcTex->width, pcTex->height);
+            Texture_SetSize(tex, &pcTex->size);
             Texture_AttachUserData(tex, (void*)pcTex);
 
             Str_Free(&oldPcTex->name);
             if(oldPcTex->patches) free(oldPcTex->patches);
             free(oldPcTex);
         }
-        else if(!Textures_CreateWithDimensions(texId, flags, pcTex->width, pcTex->height, (void*)pcTex))
+        else if(!Textures_CreateWithSize(texId, flags, &pcTex->size, (void*)pcTex))
         {
             Con_Message("Warning: Failed defining Texture for new patch composite '%s', ignoring.\n", Str_Text(&pcTex->name));
             Str_Free(&pcTex->name);
@@ -2880,7 +2887,7 @@ texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateMaskTexture(const Uri* resourcePath, int width, int height)
+texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2i* size)
 {
     textureid_t texId;
     texture_t* tex;
@@ -2910,12 +2917,12 @@ texture_t* R_CreateMaskTexture(const Uri* resourcePath, int width, int height)
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        Texture_SetDimensions(tex, width, height);
+        Texture_SetSize(tex, size);
     }
     else
     {
         // Create a texture for it.
-        tex = Textures_CreateWithDimensions(texId, TXF_CUSTOM, width, height, NULL);
+        tex = Textures_CreateWithSize(texId, TXF_CUSTOM, size, NULL);
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(resourcePath);

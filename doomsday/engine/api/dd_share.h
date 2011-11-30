@@ -1116,10 +1116,7 @@ typedef enum {
 typedef struct {
     patchid_t id;
     boolean isCustom; // @c true if the patch does not originate from the current game.
-    short offset;
-    short topOffset;
-    short width;
-    short height;
+    Rectanglei geometry;
     // Temporary until the big DGL drawing rewrite.
     short extraOffset[2]; // Only used with upscaled and sharpened patches.
 } patchinfo_t;
@@ -1128,10 +1125,7 @@ typedef struct {
 typedef struct {
     struct material_s* material;
     int flip;
-    int offset;
-    int topOffset;
-    int width;
-    int height;
+    Rectanglei geometry;
     float texCoord[2]; // Prepared texture coordinates.
     int numFrames; // Number of frames the sprite has.
 } spriteinfo_t;

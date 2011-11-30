@@ -615,10 +615,10 @@ void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewda
 
     memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->dimensions.x + viewData->window.x;
-    viewpy = port->dimensions.y + viewData->window.y;
-    viewpw = MIN_OF(port->dimensions.width, viewData->window.width);
-    viewph = MIN_OF(port->dimensions.height, viewData->window.height);
+    viewpx = port->geometry.origin.x + viewData->window.origin.x;
+    viewpy = port->geometry.origin.y + viewData->window.origin.y;
+    viewpw = MIN_OF(port->geometry.size.width, viewData->window.size.width);
+    viewph = MIN_OF(port->geometry.size.height, viewData->window.size.height);
     glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
@@ -630,8 +630,8 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
     switch(step)
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
-        int height = (float)(port->dimensions.width * viewData->window.height / viewData->window.width) / port->dimensions.height * SCREENHEIGHT;
-        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->dimensions.width, port->dimensions.height, weaponScaleMode);
+        int height = (float)(port->geometry.size.width * viewData->window.size.height / viewData->window.size.width) / port->geometry.size.height * SCREENHEIGHT;
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->geometry.size.width, port->geometry.size.height, weaponScaleMode);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -648,19 +648,19 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
              * corrected coordinate space at 4:3, aligned vertically to
              * the bottom and centered horizontally in the window.
              */
-            glOrtho(0, port->dimensions.width, port->dimensions.height, 0, -1, 1);
-            glTranslatef(port->dimensions.width/2, port->dimensions.height, 0);
+            glOrtho(0, port->geometry.size.width, port->geometry.size.height, 0, -1, 1);
+            glTranslatef(port->geometry.size.width/2, port->geometry.size.height, 0);
 
-            if(port->dimensions.width >= port->dimensions.height)
-                glScalef((float)port->dimensions.height/SCREENHEIGHT, (float)port->dimensions.height/SCREENHEIGHT, 1);
+            if(port->geometry.size.width >= port->geometry.size.height)
+                glScalef((float)port->geometry.size.height/SCREENHEIGHT, (float)port->geometry.size.height/SCREENHEIGHT, 1);
             else
-                glScalef((float)port->dimensions.width/SCREENWIDTH, (float)port->dimensions.width/SCREENWIDTH, 1);
+                glScalef((float)port->geometry.size.width/SCREENWIDTH, (float)port->geometry.size.width/SCREENWIDTH, 1);
 
             // Special case: viewport height is greater than width.
             // Apply an additional scaling factor to prevent player sprites looking too small.
-            if(port->dimensions.height > port->dimensions.width)
+            if(port->geometry.size.height > port->geometry.size.width)
             {
-                float extraScale = (((float)port->dimensions.height*2)/port->dimensions.width) / 2;
+                float extraScale = (((float)port->geometry.size.height*2)/port->geometry.size.width) / 2;
                 glScalef(extraScale, extraScale, 1);
             }
 
@@ -677,8 +677,8 @@ void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewD
         break;
       }
     case 2: // After Restore Step 2 we're back in 2D rendering mode.
-        glViewport(currentView.dimensions.x, FLIP(currentView.dimensions.y + currentView.dimensions.height - 1),
-                   currentView.dimensions.width, currentView.dimensions.height);
+        glViewport(currentView.geometry.origin.x, FLIP(currentView.geometry.origin.y + currentView.geometry.size.height - 1),
+                   currentView.geometry.size.width, currentView.geometry.size.height);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
@@ -821,13 +821,12 @@ unsigned char* GL_GrabScreen(void)
 
     if(!isDedicated && !novideo)
     {
-        const int width = theWindow->width;
-        const int height = theWindow->height;
+        const int width  = theWindow->geometry.size.width;
+        const int height = theWindow->geometry.size.height;
 
         buffer = (unsigned char*) malloc(width * height * 3);
-        if(NULL == buffer)
-            Con_Error("GL_GrabScreen: Failed on allocation of %lu bytes for "
-                "frame buffer content copy.", (unsigned long) (width * height * 3));
+        if(!buffer)
+            Con_Error("GL_GrabScreen: Failed on allocation of %lu bytes for frame buffer content copy.", (unsigned long) (width * height * 3));
 
         if(!GL_Grab(0, 0, width, height, DGL_RGB, (void*) buffer))
         {

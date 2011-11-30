@@ -1188,8 +1188,8 @@ void DD_ReadMouse(timespan_t ticLength)
     if(uiMouseMode)
     {
         // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->height / 600.0f);
+        xpos *= MAX_OF(1, theWindow->geometry.size.width / 800.0f);
+        ypos *= MAX_OF(1, theWindow->geometry.size.height / 600.0f);
     }
     else
     {

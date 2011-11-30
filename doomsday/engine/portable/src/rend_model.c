@@ -611,7 +611,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         float   lodFactor;
 
-        lodFactor = rend_model_lod * theWindow->width / 640.0f / (fieldOfView / 90.0f);
+        lodFactor = rend_model_lod * theWindow->geometry.size.width / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 

@@ -30,10 +30,10 @@
 
 extern float quitDarkenOpacity;
 
-void            G_Display(int layer);
-void            G_Display2(void);
+void X_DrawViewPort(int port, const Rectanglei* portGeometry, const Rectanglei* windowGeometry, int player, int layer);
+void X_DrawWindow(const Size2i* windowSize);
 
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
+void R_SetAllDoomsdayFlags(void);
+boolean R_GetFilterColor(float rgba[4], int filter);
 
 #endif /* JHEXEN_REFRESH_H */

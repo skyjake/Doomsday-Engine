@@ -182,13 +182,55 @@ typedef struct {
     float           color[4];
 } dgl_fc3vertex_t;
 
+typedef struct point2i_s {
+    union {
+        struct {
+            int x;
+            int y;
+        };
+        int xy[2];
+    };
+} Point2i;
+
+typedef struct size2i_s {
+    union {
+        struct {
+            int width;
+            int height;
+        };
+        int widthHeight[2];
+    };
+} Size2i;
+
 typedef struct rectanglei_s {
-    int x, y, width, height;
-} rectanglei_t;
+    Point2i origin;
+    Size2i size;
+} Rectanglei;
+
+typedef struct point2d_s {
+    union {
+        struct {
+            double x;
+            double y;
+        };
+        double xy[2];
+    };
+} Point2d;
+
+typedef struct size2d_s {
+    union {
+        struct {
+            double width;
+            double height;
+        };
+        double widthHeight[2];
+    };
+} Size2d;
 
 typedef struct rectangled_s {
-    double x, y, width, height;
-} rectangled_t;
+    Point2d origin;
+    Size2d size;
+} Rectangled;
 
 int             DGL_Enable(int cap);
 void            DGL_Disable(int cap);
@@ -252,8 +294,8 @@ void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 
 void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
-void            DGL_DrawRectd(const rectangled_t* rect);
-void            DGL_DrawRecti(const rectanglei_t* rect);
+void            DGL_DrawRectd(const Rectangled* rect);
+void            DGL_DrawRecti(const Rectanglei* rect);
 void            DGL_DrawRect(float x, float y, float w, float h);
 void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
 void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);

@@ -1488,9 +1488,13 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
+        Size2i size;
 
         R_CreateReflectionTexture(ref->shinyMap);
-        R_CreateMaskTexture(ref->maskMap, ref->maskWidth, ref->maskHeight);
+
+        size.width  = ref->maskWidth;
+        size.height = ref->maskHeight;
+        R_CreateMaskTexture(ref->maskMap, &size);
     }
 
     // Animation groups.

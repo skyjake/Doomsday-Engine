@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     boolean fadeout;
-    int texWidth, texHeight;
+    Size2i texSize;
     float texOffset;
     rcolor_t capColor;
 } renderhemispherestate_t;
@@ -201,7 +201,7 @@ static void renderHemisphere(void)
 {
 #define WRITESKYVERTEX(r_, c_) { \
     svtx = skyVertex(r_, c_); \
-    if(rs.texWidth != 0) \
+    if(rs.texSize.width != 0) \
        glTexCoord2f((c_) / (float) skyColumns, (r_) / (float) skyRows); \
     if(rs.fadeout) \
     { \
@@ -244,7 +244,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     DGLuint tex = 0;
 
     // Default state is no texture and no fadeout.
-    rs.texWidth = rs.texHeight = 0;
+    rs.texSize.width = rs.texSize.height = 0;
     if(setupCap != HC_NONE)
         rs.fadeout = false;
 
@@ -273,11 +273,12 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
 
         tex     = MSU_gltexture(ms, MTU_PRIMARY);
         magMode = MSU(ms, MTU_PRIMARY).magMode;
-        Texture_Dimensions(MSU_texture(ms, MTU_PRIMARY), &rs.texWidth, &rs.texHeight);
-        if(rs.texWidth == 0 || rs.texHeight == 0)
+        rs.texSize.width = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
+        rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
+        if(rs.texSize.width == 0 || rs.texSize.height == 0)
         {
             // Disable texturing.
-            rs.texWidth = rs.texHeight = 0;
+            rs.texSize.width = rs.texSize.height = 0;
             tex = 0;
         }
 
@@ -341,19 +342,19 @@ static void renderSkyHemisphere(int flags)
                 configureRenderHemisphereStateForLayer(i, HC_NONE);
             }
 
-            if(rs.texWidth != 0)
+            if(rs.texSize.width != 0)
             {
                 glEnable(GL_TEXTURE_2D);
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                glScalef(1024.f / rs.texWidth, yflip? -1.0f : 1.0f, 1.0f);
-                glTranslatef(rs.texOffset / rs.texWidth, yflip? -1.0f : 0.0f, 0.0f);
+                glScalef(1024.f / rs.texSize.width, yflip? -1.0f : 1.0f, 1.0f);
+                glTranslatef(rs.texOffset / rs.texSize.width, yflip? -1.0f : 0.0f, 0.0f);
             }
 
             renderHemisphere();
 
-            if(rs.texWidth != 0)
+            if(rs.texSize.width != 0)
             {
                 glMatrixMode(GL_TEXTURE);
                 glPopMatrix();

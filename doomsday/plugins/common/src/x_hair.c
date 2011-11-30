@@ -90,9 +90,9 @@ void X_Drawer(int player)
 #define XHAIR_LINE_WIDTH    1.f
 
     int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS), centerX, centerY;
-    int winX, winY, winW, winH;
     float alpha, scale, oldLineWidth;
     player_t* plr = &players[player];
+    Rectanglei win;
 
     // Is there a crosshair to draw?
     if(xhair == 0) return;
@@ -112,10 +112,10 @@ void X_Drawer(int player)
     if(!(alpha > 0))
         return;
 
-    R_ViewWindowDimensions(player, &winX, &winY, &winW, &winH);
-    centerX = winX + (winW / 2);
-    centerY = winY + (winH / 2);
-    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * winH * ((float)80/SCREENHEIGHT);
+    R_ViewWindowGeometry(player, &win);
+    centerX = win.origin.x + (win.size.width / 2);
+    centerY = win.origin.y + (win.size.height / 2);
+    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
     DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);

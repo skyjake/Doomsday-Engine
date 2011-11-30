@@ -756,7 +756,7 @@ static void addLuminous(mobj_t* mo)
         Con_Error("addLuminous: Texture id:%u has no TA_SPRITE_AUTOLIGHT analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
     size = pl->brightMul;
-    yOffset = ms->height * pl->originY;
+    yOffset = ms->size.height * pl->originY;
     // Does the mobj have an active light definition?
     if(def)
     {
@@ -777,7 +777,7 @@ static void addLuminous(mobj_t* mo)
     center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->pos[VZ] + sprTex->offY - (float) ms->height - mo->subsector->sector->SP_floorheight;
+    mul = mo->pos[VZ] + sprTex->offY - (float) ms->size.height - mo->subsector->sector->SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.

@@ -165,8 +165,8 @@ typedef struct mn_object_s {
     /// Index of the predefined page color to use when drawing this.
     int _pageColorIdx;
 
-    /// Calculate dimensions for this when visible on the specified page.
-    void (*updateDimensions) (struct mn_object_s* obj, struct mn_page_s* page);
+    /// Calculate geometry for this when visible on the specified page.
+    void (*updateGeometry) (struct mn_object_s* obj, struct mn_page_s* page);
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
@@ -193,15 +193,15 @@ typedef struct mn_object_s {
     void* data1;
     int data2;
 
-    /// Current object dimensions and origin.
-    rectanglei_t _dimensions;
+    /// Current geometry.
+    Rectanglei _geometry;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
 
 int MNObject_Flags(const mn_object_t* obj);
 
-const rectanglei_t* MNObject_Dimensions(const mn_object_t* obj);
+const Rectanglei* MNObject_Geometry(const mn_object_t* obj);
 
 /// @return  Flags value post operation for caller convenience.
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
@@ -345,7 +345,7 @@ typedef struct mndata_text_s {
 } mndata_text_t;
 
 void MNText_Drawer(mn_object_t* obj, int x, int y);
-void MNText_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
  * Buttons.
@@ -361,7 +361,7 @@ typedef struct mndata_button_s {
 
 void MNButton_Drawer(mn_object_t* obj, int x, int y);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNButton_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
  * Edit field.
@@ -399,7 +399,7 @@ typedef struct mndata_edit_s {
 void MNEdit_Drawer(mn_object_t* obj, int x, int y);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNEdit_Responder(mn_object_t* obj, event_t* ev);
-void MNEdit_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
@@ -448,8 +448,8 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y);
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
 
-void MNList_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
-void MNList_InlineUpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNList_InlineUpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* obj);
@@ -505,7 +505,7 @@ typedef struct mndata_colorbox_s {
 
 void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNColorBox_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /// @return  @c true if this colorbox is operating in RGBA mode.
 boolean MNColorBox_RGBAMode(mn_object_t* obj);
@@ -606,8 +606,8 @@ typedef struct mndata_slider_s {
 void MNSlider_Drawer(mn_object_t* obj, int x, int y);
 void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNSlider_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
-void MNSlider_TextualValueUpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page);
 int MNSlider_ThumbPos(const mn_object_t* obj);
 
 /// @return  Current value represented by the slider.
@@ -646,7 +646,7 @@ void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
 void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap);
 
 void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
-void MNMobjPreview_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 // Menu render state:
 typedef struct mn_rendstate_s {
@@ -735,15 +735,35 @@ typedef enum {
 typedef int uiwidgetid_t;
 
 typedef struct uiwidget_s {
-    int alignFlags; /// @see alignmentFlags
-    uiwidgetid_t id;
+    /// Type of this widget.
     guiwidgettype_t type;
-    rectanglei_t dimensions;
-    int player; /// \todo refactor away.
+
+    /// Unique identifier associated with this widget.
+    uiwidgetid_t id;
+
+    /// @see alignmentFlags
+    int alignFlags;
+
+    /// Maximum size of this widget in pixels.
+    Size2i maxSize;
+
+    /// Geometry of this widget in pixels.
+    Rectanglei geometry;
+
+    /// Local player number associated with this widget.
+    /// \todo refactor away.
+    int player;
+
+    /// Current font used for text child objects of this widget.
     fontid_t font;
-    void (*updateDimensions) (struct uiwidget_s* obj);
+
+    /// Current opacity value for this widget. Used during render.
+    float alpha;
+
+    void (*updateGeometry) (struct uiwidget_s* obj);
     void (*drawer) (struct uiwidget_s* obj, int x, int y);
     void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
+
     void* typedata;
 } uiwidget_t;
 
@@ -751,24 +771,40 @@ typedef struct uiwidget_s {
 boolean GUI_RunGameTicTrigger(timespan_t ticLength);
 boolean GUI_GameTicTriggerIsSharp(void);
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, int availWidth, int availHeight,
-    float alpha, int* drawnWidth, int* drawnHeight);
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize);
 
 /// @return  @see alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
+
+float UIWidget_Alpha(uiwidget_t* obj);
+
+const Rectanglei* UIWidget_Geometry(uiwidget_t* obj);
+
+int UIWidget_MaximumHeight(uiwidget_t* obj);
+
+const Size2i* UIWidget_MaximumSize(uiwidget_t* obj);
+
+int UIWidget_MaximumWidth(uiwidget_t* obj);
+
+const Point2i* UIWidget_Origin(uiwidget_t* obj);
+
+/// @return  Local player number of the owner of this widget.
+int UIWidget_Player(uiwidget_t* obj);
+
+void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
+
+void UIWidget_SetAlpha(uiwidget_t* obj, float alpha);
 
 /**
  * @param alignFlags  @see alignmentFlags
  */
 void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags);
 
-void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
+void UIWidget_SetMaximumHeight(uiwidget_t* obj, int height);
 
-/// @return  Local player number of the owner of this widget.
-int UIWidget_Player(uiwidget_t* obj);
+void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2i* size);
 
-void UIWidget_Origin(uiwidget_t* obj, int* x, int* y);
-const rectanglei_t* UIWidget_Dimensions(uiwidget_t* obj);
+void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
 
 /**
  * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
@@ -964,8 +1000,8 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 /// Identical to GUI_FindObjectById except results in a fatal error if not found.
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    void (*updateDimensions) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
 uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding);

@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 592 <--
+; Highest ordinal is currently: --> 596 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -398,11 +398,18 @@ EXPORTS
     R_PrecacheSkinsForState     @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
-    R_ViewWindowDimensions      @91 NONAME
-    R_SetViewWindowDimensions   @92 NONAME
-    R_ViewportDimensions        @430 NONAME
-    R_SetViewPortPlayer         @65 NONAME
+
+    R_ViewWindowGeometry        @91 NONAME
+    R_ViewWindowOrigin          @593 NONAME
+    R_ViewWindowSize            @594 NONAME
+    R_SetViewWindowGeometry     @92 NONAME
     R_SetBorderGfx              @93 NONAME
+
+    R_ViewPortGeometry          @430 NONAME
+    R_ViewPortOrigin            @595 NONAME
+    R_ViewPortSize              @596 NONAME
+
+    R_SetViewPortPlayer         @65 NONAME
 
     R_GetSpriteInfo             @94 NONAME
 
@@ -562,7 +569,7 @@ EXPORTS
     FR_CaseScale                @518 NONAME
     FR_SetCaseScale             @519 NONAME
 
-    FR_TextDimensions           @520 NONAME
+    FR_TextSize           @520 NONAME
     FR_TextWidth                @521 NONAME
     FR_TextHeight               @522 NONAME
 
@@ -574,7 +581,7 @@ EXPORTS
     FR_DrawChar2                @527 NONAME
     FR_DrawChar3                @528 NONAME
 
-    FR_CharDimensions           @529 NONAME
+    FR_CharSize           @529 NONAME
     FR_CharWidth                @530 NONAME
     FR_CharHeight               @531 NONAME
 

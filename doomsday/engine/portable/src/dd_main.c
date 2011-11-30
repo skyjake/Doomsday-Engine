@@ -476,7 +476,7 @@ void DD_StartTitle(void)
 
     Str_Init(&setupCmds);
     // Configure the predefined fonts.
-    { const char* font = R_ChooseVariableFont(FS_NORMAL, theWindow->width, theWindow->height);
+    { const char* font = R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height);
     int i;
     for(i = 1; i <= FIPAGE_NUM_PREDEFINED_FONTS; ++i)
         Str_Appendf(&setupCmds, "prefont %i "FN_SYSTEM_NAME":%s\n", i, font);
@@ -1937,10 +1937,10 @@ int DD_GetInteger(int ddvalue)
     switch(ddvalue)
     {
     case DD_WINDOW_WIDTH:
-        return theWindow->width;
+        return theWindow->geometry.size.width;
 
     case DD_WINDOW_HEIGHT:
-        return theWindow->height;
+        return theWindow->geometry.size.height;
 
     case DD_DYNLIGHT_TEXTURE:
         return (int) GL_PrepareLSTexture(LST_DYNAMIC);

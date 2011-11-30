@@ -114,7 +114,8 @@ typedef struct ui_object_s {
     void* data; /// Pointer to extra data.
     int data2; /// Extra numerical data.
     int timer;
-    int x, y, w, h; /// Position and dimensions, auto-inited.
+    /// Position and dimensions, auto-inited.
+    Rectanglei geometry;
 } ui_object_t;
 
 /**
@@ -295,7 +296,7 @@ int UI_ScreenW(int relw);
 int UI_ScreenH(int relh);
 
 void UI_InitColumns(ui_object_t* ob);
-int UI_MouseInsideBox(int x, int y, int w, int h);
+int UI_MouseInsideBox(const Point2i* origin, const Size2i* size);
 
 /// @return  @c true, if the mouse is inside the object.
 int UI_MouseInside(ui_object_t* ob);
@@ -304,60 +305,56 @@ int UI_MouseInside(ui_object_t* ob);
 int UI_MouseResting(ui_page_t* page);
 
 int UI_ListFindItem(ui_object_t* ob, int data_value);
-void UI_DrawLogo(int x, int y, int w, int h);
+void UI_DrawLogo(const Point2i* origin, const Size2i* size);
 
 /**
  * Background with the "The Doomsday Engine" text superimposed.
  *
- * @param x  X coordinate (left) to draw the background.
- * @param y  Y coordinate (top) to draw the background.
- * @param w  Width (from left) to draw the background.
- * @param h  Height (from top) to draw the background.
+ * @param origin  Screen-space coordinate origin (top left).
+ * @param size  Screen-space dimensions of the cursor in pixels.
  * @param alpha  Alpha level to use when drawing the background.
  */
-void UI_DrawDDBackground(float x, float y, float w, float h,float alpha);
+void UI_DrawDDBackground(const Point2i* origin, const Size2i* size,float alpha);
 
 /**
- * Draw the mouse cursor at the given x, y co-ordinates.
+ * Draw the mouse cursor at the given co-ordinates.
  *
- * @param x  X screen-space coordinate.
- * @param y  Y screen-space coordinate.
- * @param w  Width of the cursor in pixels.
- * @param h  Height of the cursor in pixels.
+ * @param origin  Screen-space coordinate origin (top left).
+ * @param size  Screen-space dimensions of the cursor in pixels.
  */
-void UI_DrawMouse(int x, int y, int w, int h);
+void UI_DrawMouse(const Point2i* origin, const Size2i* size);
 void UI_DrawTitle(ui_page_t* page);
 void UI_DrawTitleEx(char* text, int height, float alpha);
 void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount);
 void UI_SetColorA(ui_color_t* color, float alpha);
 void UI_SetColor(ui_color_t* color);
-void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end, float startAlpha, float endAlpha);
-void UI_Shade(int x, int y, int w, int h, int border, ui_color_t* main, ui_color_t* secondary, float alpha, float bottom_alpha);
-void UI_Gradient(int x, int y, int w, int h, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_HorizGradient(int x, int y, int w, int h, ui_color_t* left, ui_color_t* right, float leftAlpha, float rightAlpha);
-void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t* color, float alpha);
-void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
-void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t* low, float alpha);
+void UI_Line(const Point2i* start, const Point2i* end, ui_color_t* startColor, ui_color_t* endColor, float startAlpha, float endAlpha);
+void UI_Shade(const Point2i* origin, const Size2i* size, int border, ui_color_t* main, ui_color_t* secondary, float alpha, float bottom_alpha);
+void UI_Gradient(const Point2i* origin, const Size2i* size, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+void UI_GradientEx(const Point2i* origin, const Size2i* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+void UI_HorizGradient(const Point2i* origin, const Size2i* size, ui_color_t* left, ui_color_t* right, float leftAlpha, float rightAlpha);
+void UI_DrawRect(const Point2i* origin, const Size2i* size, int brd, ui_color_t* color, float alpha);
+void UI_DrawRectEx(const Point2i* origin, const Size2i* size, int brd, boolean filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
+void UI_DrawTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t* low, float alpha);
 
 /**
  * A horizontal triangle, pointing left or right. Positive radius
  * means left.
  */
-void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t *low, float alpha);
+void UI_DrawHorizTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t *low, float alpha);
 
-void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
+void UI_DrawButton(const Point2i* origin, const Size2i* size, int border, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
 
 /// Draw shadowed text.
-void UI_TextOutEx(const char* text, int x, int y, ui_color_t* color, float alpha);
-void UI_TextOutEx2(const char* text, int x, int y, ui_color_t* color, float alpha, int alignFlags, short textFlags);
-int UI_TextOutWrap(const char* text, int x, int y, int w, int h);
+void UI_TextOutEx(const char* text, const Point2i* origin, ui_color_t* color, float alpha);
+void UI_TextOutEx2(const char* text, const Point2i* origin, ui_color_t* color, float alpha, int alignFlags, short textFlags);
+int UI_TextOutWrap(const char* text, const Point2i* origin, const Size2i* size);
 
 /**
  * Draw line-wrapped text inside a box. Returns the Y coordinate of the
  * last word.
  */
-int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* color, float alpha);
-void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text);
+int UI_TextOutWrapEx(const char* text, const Point2i* origin, const Size2i* size, ui_color_t* color, float alpha);
+void UI_DrawHelpBox(const Point2i* origin, const Size2i* size, float alpha, char* text);
 
 #endif /* LIBDENG_UI_MAIN_H */

@@ -231,7 +231,7 @@ int Fonts_Leading(struct font_s* font);
 /**
  * Query the visible dimensions of a character in this font.
  */
-void Fonts_CharDimensions(struct font_s* font, int* width, int* height, unsigned char ch);
+void Fonts_CharSize(struct font_s* font, Size2i* size, unsigned char ch);
 int Fonts_CharHeight(struct font_s* font, unsigned char ch);
 int Fonts_CharWidth(struct font_s* font, unsigned char ch);
 

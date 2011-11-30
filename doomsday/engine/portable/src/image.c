@@ -31,7 +31,7 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
     assert(image);
     {
-    long p, numPels = image->width * image->height;
+    long p, numPels = image->size.width * image->size.height;
     uint8_t* alphaChannel = NULL;
     uint8_t* ptr = image->pixels;
 
@@ -49,10 +49,11 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 
     // Do we need to relocate the alpha data?
     if(retainAlpha && image->pixelSize == 4)
-    {   // Yes. Take a copy.
-        if(NULL == (alphaChannel = malloc(numPels)))
-            Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for "
-                "pixel alpha relocation buffer.", (unsigned long) numPels);
+    {
+        // Yes. Take a copy.
+        alphaChannel = malloc(numPels);
+        if(!alphaChannel)
+            Con_Error("GL_ConvertToLuminance: Failed on allocation of %lu bytes for pixel alpha relocation buffer.", (unsigned long) numPels);
         ptr = image->pixels;
         for(p = 0; p < numPels; ++p, ptr += image->pixelSize)
             alphaChannel[p] = ptr[3];
@@ -82,15 +83,17 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 
 void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
 {
+    long p, total;
     assert(image);
     GL_ConvertToLuminance(image, true);
-    { long p, total = image->width * image->height;
+
+    total = image->size.width * image->size.height;
     for(p = 0; p < total; ++p)
     {
         image->pixels[total + p] = image->pixels[p];
         if(makeWhite)
             image->pixels[p] = 255;
-    }}
+    }
     image->pixelSize = 2;
 }
 
@@ -112,7 +115,7 @@ boolean GL_ImageHasAlpha(const image_t* image)
 
     if(image->pixelSize == 4)
     {
-        long i, numpels = image->width * image->height;
+        long i, numpels = image->size.width * image->size.height;
         const uint8_t* in = image->pixels;
         boolean hasAlpha = false;
         for(i = 0; i < numpels; ++i, in += 4)

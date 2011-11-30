@@ -61,33 +61,33 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
-void GL_DrawRectd(const rectangled_t* rect)
+void GL_DrawRectd(const Rectangled* rect)
 {
-    assert(NULL != rect);
+    assert(rect);
     glBegin(GL_QUADS);
         glTexCoord2d(0, 0);
-        glVertex2d(rect->x, rect->y);
+        glVertex2d(rect->origin.x, rect->origin.y);
         glTexCoord2d(1, 0);
-        glVertex2d(rect->x + rect->width, rect->y);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
         glTexCoord2d(1, 1);
-        glVertex2d(rect->x + rect->width, rect->y + rect->height);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
         glTexCoord2d(0, 1);
-        glVertex2d(rect->x, rect->y + rect->height);
+        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
     glEnd();
 }
 
-void GL_DrawRecti(const rectanglei_t* rect)
+void GL_DrawRecti(const Rectanglei* rect)
 {
-    assert(NULL != rect);
+    assert(rect);
     glBegin(GL_QUADS);
         glTexCoord2i(0, 0);
-        glVertex2i(rect->x, rect->y);
+        glVertex2i(rect->origin.x, rect->origin.y);
         glTexCoord2i(1, 0);
-        glVertex2i(rect->x + rect->width, rect->y);
+        glVertex2i(rect->origin.x + rect->size.width, rect->origin.y);
         glTexCoord2i(1, 1);
-        glVertex2i(rect->x + rect->width, rect->y + rect->height);
+        glVertex2i(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
         glTexCoord2i(0, 1);
-        glVertex2i(rect->x, rect->y + rect->height);
+        glVertex2i(rect->origin.x, rect->origin.y + rect->size.height);
     glEnd();
 }
 
@@ -288,10 +288,10 @@ void GL_DrawFilter(void)
     assert(NULL != vd);
     glColor4fv(filterColor);
     glBegin(GL_QUADS);
-        glVertex2f(vd->window.x, vd->window.y);
-        glVertex2f(vd->window.x + vd->window.width, vd->window.y);
-        glVertex2f(vd->window.x + vd->window.width, vd->window.y + vd->window.height);
-        glVertex2f(vd->window.x, vd->window.y + vd->window.height);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y + vd->window.size.height);
     glEnd();
 }
 
@@ -300,8 +300,7 @@ void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
     int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
     float stretchEpsilon)
 {
-    if(bp == NULL)
-        Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
+    if(!bp) Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
 
     bp->flags  = flags;
     bp->width  = width;

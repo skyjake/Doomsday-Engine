@@ -646,31 +646,33 @@ D_CMD(BLEditor)
     return false;
 }
 
-static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t* c)
+static void SBE_DrawBox(const Point2i* origin, const Size2i* size, ui_color_t* c)
 {
-    UI_GradientEx(x, y, w, h, 6,
+    UI_GradientEx(origin, size, 6,
                   c ? c : UI_Color(UIC_BG_MEDIUM),
                   c ? c : UI_Color(UIC_BG_LIGHT),
                   .2f, .4f);
-    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_Color(UIC_BRD_HI),
+    UI_DrawRectEx(origin, size, 6, false, c ? c : UI_Color(UIC_BRD_HI),
                   NULL, .4f, -1);
 }
 
 static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 {
-    int w, h, th, x, y;
     ui_color_t color;
+    Point2i origin;
+    Size2i size;
     char buf[80];
     float eye[3];
+    int th;
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
-    w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    th = FR_TextHeight("Info");
-    h = 16 + th * 6;
+    size.width = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    th = FR_SingleLineHeight("Info");
+    size.height = 16 + th * 6;
 
-    x = theWindow->width  - 10 - w - rightX;
-    y = theWindow->height - 10 - h;
+    origin.x = theWindow->geometry.size.width  - 10 - size.width - rightX;
+    origin.y = theWindow->geometry.size.height - 10 - size.height;
 
     eye[0] = vx;
     eye[1] = vz;
@@ -680,9 +682,11 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     color.green = s->color[CG];
     color.blue  = s->color[CB];
 
-    SBE_DrawBox(x, y, w, h, &color);
-    x += 8;
-    y += 8 + th/2;
+    glEnable(GL_TEXTURE_2D);
+
+    SBE_DrawBox(&origin, &size, &color);
+    origin.x += 8;
+    origin.y += 8 + th/2;
 
     // - index #
     // - locked status
@@ -694,48 +698,51 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
     FR_SetFont(fontFixed);
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx2(title, x, y, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(title, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "# %03i %s", SB_ToIndex(s), (s->flags & BLF_LOCKED ? "(lock)" : ""));
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
             (int) (255.0f * s->sectorLevel[0]),
             (int) (255.0f * s->sectorLevel[1]));
 
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "R:%.3f G:%.3f B:%.3f", s->color[0], s->color[1], s->color[2]);
-    UI_TextOutEx2(buf, x, y, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
-    y += th;
-}
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
+    glDisable(GL_TEXTURE_2D);
+}
 
 /*
  * Editor HUD
  */
 
-static void SBE_DrawLevelGauge(int x, int y, int height)
+static void SBE_DrawLevelGauge(const Point2i* origin, int height)
 {
     static sector_t* lastSector = NULL;
     static float minLevel = 0, maxLevel = 0;
 
-    int off, secY, maxY = 0, minY = 0, p;
+    int off, secY, p, minY = 0, maxY = 0;
+    Point2i labelOrigin;
     subsector_t* ssec;
     sector_t* sector;
     source_t* src;
     char buf[80];
+    assert(origin);
 
     if(SBE_GetGrabbed())
         src = SBE_GetGrabbed();
@@ -766,49 +773,57 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
-    glVertex2f(x + off, y);
-    glVertex2f(x + off, y + height);
+    glVertex2f(origin->x + off, origin->y);
+    glVertex2f(origin->x + off, origin->y + height);
     // Normal lightlevel.
-    secY = y + height * (1.0f - sector->lightLevel);
-    glVertex2f(x + off - 4, secY);
-    glVertex2f(x + off, secY);
+    secY = origin->y + height * (1.0f - sector->lightLevel);
+    glVertex2f(origin->x + off - 4, secY);
+    glVertex2f(origin->x + off, secY);
     if(maxLevel != minLevel)
     {
         // Max lightlevel.
-        maxY = y + height * (1.0f - maxLevel);
-        glVertex2f(x + off + 4, maxY);
-        glVertex2f(x + off, maxY);
+        maxY = origin->y + height * (1.0f - maxLevel);
+        glVertex2f(origin->x + off + 4, maxY);
+        glVertex2f(origin->x + off, maxY);
+
         // Min lightlevel.
-        minY = y + height * (1.0f - minLevel);
-        glVertex2f(x + off + 4, minY);
-        glVertex2f(x + off, minY);
+        minY = origin->y + height * (1.0f - minLevel);
+        glVertex2f(origin->x + off + 4, minY);
+        glVertex2f(origin->x + off, minY);
     }
     // Current min/max bias sector level.
     if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
     {
         glColor3f(1, 0, 0);
-        p = y + height * (1.0f - src->sectorLevel[0]);
-        glVertex2f(x + off + 2, p);
-        glVertex2f(x + off - 2, p);
+        p = origin->y + height * (1.0f - src->sectorLevel[0]);
+        glVertex2f(origin->x + off + 2, p);
+        glVertex2f(origin->x + off - 2, p);
 
         glColor3f(0, 1, 0);
-        p = y + height * (1.0f - src->sectorLevel[1]);
-        glVertex2f(x + off + 2, p);
-        glVertex2f(x + off - 2, p);
+        p = origin->y + height * (1.0f - src->sectorLevel[1]);
+        glVertex2f(origin->x + off + 2, p);
+        glVertex2f(origin->x + off - 2, p);
     }
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The number values.
+    labelOrigin.x = origin->x;
+    labelOrigin.y = secY;
     sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
-    UI_TextOutEx2(buf, x, secY, UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
     if(maxLevel != minLevel)
     {
+        labelOrigin.x = origin->x + 2*off;
+        labelOrigin.y = maxY;
         sprintf(buf, "%03i", (short) (255.0f * maxLevel));
-        UI_TextOutEx2(buf, x + 2*off, maxY, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
+        UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
+
+        labelOrigin.x = origin->x + 2*off;
+        labelOrigin.y = minY;
         sprintf(buf, "%03i", (short) (255.0f * minLevel));
-        UI_TextOutEx2(buf, x + 2*off, minY, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
+        UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -816,20 +831,21 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
 
 void SBE_DrawHUD(void)
 {
-    int                 w, h, y;
-    char                buf[80];
-    float               alpha = .8f;
-    gamemap_t          *map = P_GetCurrentMap();
-    source_t           *s;
+    float alpha = .8f;
+    Point2i origin;
+    Size2i size;
+    char buf[80];
+    gamemap_t* map = P_GetCurrentMap();
+    source_t* s;
+    int top;
 
-    if(!editActive || editHidden)
-        return;
+    if(!editActive || editHidden) return;
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -839,14 +855,24 @@ void SBE_DrawHUD(void)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
-    y = theWindow->height - 10 - h;
-    SBE_DrawBox(10, y, w, h, 0);
-    UI_TextOutEx2(buf, 18, y + h / 2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    size.width  = FR_TextWidth(buf) + 16;
+    size.height = FR_SingleLineHeight(buf) + 16;
+    top = theWindow->geometry.size.height - 10 - size.height;
+
+    origin.x = 10;
+    origin.y = top;
+    SBE_DrawBox(&origin, &size, 0);
+
+    origin.x += 8;
+    origin.y += size.height / 2;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     // The map ID.
-    UI_TextOutEx2(P_GetUniqueMapId(map), 18, y - h/2, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y = top - size.height / 2;
+    UI_TextOutEx2(P_GetUniqueMapId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
 
     // Stats for nearest & grabbed:
     if(numSources)
@@ -865,10 +891,10 @@ void SBE_DrawHUD(void)
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
-        SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
+        origin.x = 20;
+        origin.y = theWindow->geometry.size.height/2 - 255/2;
+        SBE_DrawLevelGauge(&origin, 255);
     }
-
-    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -903,18 +929,18 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
     glEnd();
 }
 
-static void SBE_DrawIndex(source_t *src)
+static void SBE_DrawIndex(source_t* src)
 {
-    char                buf[80];
-    float               eye[3], scale;
+    const Point2i origin = { 2, 2 };
+    float eye[3], scale;
+    char buf[80];
 
-    if(!editShowIndices)
-        return;
+    if(!editShowIndices) return;
 
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (theWindow->width / 2);
+    scale = M_Distance(src->pos, eye) / (theWindow->geometry.size.width / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -932,7 +958,7 @@ static void SBE_DrawIndex(source_t *src)
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-    UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -941,10 +967,9 @@ static void SBE_DrawIndex(source_t *src)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void SBE_DrawSource(source_t *src)
+static void SBE_DrawSource(source_t* src)
 {
-    float               col[4], d;
-    float               eye[3];
+    float col[4], d, eye[3];
 
     eye[0] = vx;
     eye[1] = vz;

@@ -56,6 +56,8 @@ void Rend_ConsoleCursorResetBlink(void);
 void Rend_ConsoleUpdateTitle(void);
 
 void Rend_Console(void);
-void Rend_ConsoleFPS(int x, int y);
+
+/// @param origin  Origin of the display (top right) in screen-space coordinates.
+void Rend_ConsoleFPS(const Point2i* origin);
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */

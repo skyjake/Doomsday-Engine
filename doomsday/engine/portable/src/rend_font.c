@@ -104,7 +104,7 @@ static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(font_t* font);
 static int lineHeight(font_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
-static void drawFlash(int x, int y, int w, int h, int bright);
+static void drawFlash(const Point2i* origin, const Size2i* size, int bright);
 
 static int inited = false;
 
@@ -434,10 +434,10 @@ void FR_SetCaseScale(boolean value)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_CharDimensions(int* width, int* height, unsigned char ch)
+void FR_CharSize(Size2i* size, unsigned char ch)
 {
-    errorIfNotInited("FR_CharDimensions");
-    Fonts_CharDimensions(Fonts_ToFont(fr.fontNum), width, height, ch);
+    errorIfNotInited("FR_CharSize");
+    Fonts_CharSize(Fonts_ToFont(fr.fontNum), size, ch);
 }
 
 /// \note Member of the Doomsday public API.
@@ -538,10 +538,10 @@ static int textFragmentHeight(const char* fragment)
     }
 }
 
-static void textFragmentDimensions(int* width, int* height, const char* fragment)
+static void textFragmentSize(int* width, int* height, const char* fragment)
 {
-    if(NULL != width)  *width  = textFragmentWidth(fragment);
-    if(NULL != height) *height = textFragmentHeight(fragment);
+    if(width)  *width  = textFragmentWidth(fragment);
+    if(height) *height = textFragmentHeight(fragment);
 }
 
 static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
@@ -708,14 +708,26 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     if(!noGlitter && glitter > 0)
                     {
                         // Do something flashy.
+                        Point2i origin;
+                        Size2i size;
+                        origin.x = cx;
+                        origin.y = cy + yoff;
+                        size.width  = w;
+                        size.height = h;
                         glColor4f(flashColor[CR], flashColor[CG], flashColor[CB], glitter * glitterMul);
-                        drawFlash(cx, cy + yoff, w, h, true);
+                        drawFlash(&origin, &size, true);
                     }
                 }
                 else if(!noShadow)
                 {
+                    Point2i origin;
+                    Size2i size;
+                    origin.x = cx;
+                    origin.y = cy + yoff;
+                    size.width  = w;
+                    size.height = h;
                     glColor4f(1, 1, 1, shadow * shadowMul);
-                    drawFlash(cx, cy + yoff, w, h, false);
+                    drawFlash(&origin, &size, false);
                 }
             }
 
@@ -845,8 +857,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
             BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
          
-            x = cf->_chars[ch].x;
-            y = cf->_chars[ch].y;
+            x = cf->_chars[ch].geometry.origin.x;
+            y = cf->_chars[ch].geometry.origin.y;
             w = BitmapCompositeFont_CharWidth(font, ch);
             h = BitmapCompositeFont_CharHeight(font, ch);
             if(patch != 0)
@@ -887,16 +899,18 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     glTranslatef(-x, -y, 0);
 }
 
-static void drawFlash(int x, int y, int w, int h, int bright)
+static void drawFlash(const Point2i* origin, const Size2i* size, int bright)
 {
-    float fsize = 4.f + bright, fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
+    float fsize = 4.f + bright;
+    float fw = fsize * size->width  / 2.0f;
+    float fh = fsize * size->height / 2.0f;
+    int x, y, w, h;
 
     // Don't draw anything for very small letters.
-    if(h <= 4)
-        return;
+    if(size->height <= 4) return;
 
-    x += (int) (w / 2.0f - fw / 2);
-    y += (int) (h / 2.0f - fh / 2);
+    x = origin->x + (int) (size->width  / 2.0f - fw / 2);
+    y = origin->y + (int) (size->height / 2.0f - fh / 2);
     w = (int) fw;
     h = (int) fh;
 
@@ -1353,10 +1367,11 @@ void FR_DrawText(const char* text, int x, int y)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_TextDimensions(int* width, int* height, const char* text)
+void FR_TextSize(Size2i* size, const char* text)
 {
-    if(NULL != width)  *width  = FR_TextWidth(text);
-    if(NULL != height) *height = FR_TextHeight(text);
+    if(!size) return;
+    size->width  = FR_TextWidth(text);
+    size->height = FR_TextHeight(text);
 }
 
 /// \note Member of the Doomsday public API.

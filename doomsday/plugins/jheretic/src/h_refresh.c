@@ -75,24 +75,28 @@ float quitDarkenOpacity = 0;
 /**
  * Draws a special filter over the screen.
  */
-static void rendSpecialFilter(int pnum, int x, int y, int w, int h)
+static void rendSpecialFilter(int player, const Rectanglei* region)
 {
-    player_t* player = &players[pnum];
+    player_t* plr = players + player;
+    const struct filter_s {
+        float colorRGB[3];
+        int blendArg1, blendArg2;
+    } filters[] = {
+        { { 0.0f, 0.0f,  0.6f }, DGL_DST_COLOR, DGL_SRC_COLOR },
+        { { 0.5f, 0.35f, 0.1f }, DGL_SRC_COLOR, DGL_SRC_COLOR }
+    };
 
-    if(player->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
-       !(player->powers[PT_INVULNERABILITY] & 8))
+    if(plr->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
+       !(plr->powers[PT_INVULNERABILITY] & 8))
         return;
 
-    if(cfg.ringFilter == 1)
-    {
-        DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
-        DGL_DrawRectColor(x, y, w, h, .5f, .35f, .1f, cfg.filterStrength);
-    }
-    else
-    {
-        DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
-        DGL_DrawRectColor(x, y, w, h, 0, 0, .6f, cfg.filterStrength);
-    }
+    DGL_BlendFunc(filters[cfg.ringFilter == 1].blendArg1,
+        filters[cfg.ringFilter == 1].blendArg2);
+    DGL_DrawRectColor(region->origin.x, region->origin.y,
+        region->size.width, region->size.height,
+        filters[cfg.ringFilter == 1].colorRGB[CR],
+        filters[cfg.ringFilter == 1].colorRGB[CG],
+        filters[cfg.ringFilter == 1].colorRGB[CB], cfg.filterStrength);
 
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
@@ -171,19 +175,12 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-static void rendHUD(int player, int viewW, int viewH)
+static void rendHUD(int player, const Rectanglei* portGeometry)
 {
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    if(G_GetGameState() != GS_MAP)
-        return;
-
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-        return;
-
-    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-        return; // The engine advises not to draw any HUD displays.
+    if(player < 0 || player >= MAXPLAYERS) return;
+    if(G_GetGameState() != GS_MAP) return;
+    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
+    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
 
     ST_Drawer(player);
     HU_DrawScoreBoard(player);
@@ -194,77 +191,64 @@ static void rendHUD(int player, int viewW, int viewH)
         int needWidth;
         float scale;
 
-        if(viewW >= viewH)
+        if(portGeometry->size.width >= portGeometry->size.height)
         {
-            needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
-            scale = (float)viewH/SCREENHEIGHT;
+            needWidth = (float)portGeometry->size.height/SCREENHEIGHT * SCREENWIDTH;
+            scale = (float)portGeometry->size.height/SCREENHEIGHT;
         }
         else
         {
-            needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
-            scale = (float)viewW/SCREENWIDTH;
+            needWidth = (float)portGeometry->size.width/SCREENWIDTH * SCREENWIDTH;
+            scale = (float)portGeometry->size.width/SCREENWIDTH;
         }
-        if(needWidth > viewW)
-            scale *= (float)viewW/needWidth;
+        if(needWidth > portGeometry->size.width)
+            scale *= (float)portGeometry->size.width/needWidth;
 
         scale *= (1+cfg.hudScale)/2;
         // Make the title 3/4 smaller.
         scale *= .75f;
 
-        Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
+        Hu_DrawMapTitle(portGeometry->size.width/2, (float)portGeometry->size.height/SCREENHEIGHT * 6, scale);
     }
 }
 
-/**
- * Draws the in-viewport display.
- *
- * @param layer         @c 0 = bottom layer (before the viewport border).
- *                      @c 1 = top layer (after the viewport border).
- */
-void H_Display(int layer)
+void H_DrawViewPort(int port, const Rectanglei* portGeometry,
+    const Rectanglei* windowGeometry, int player, int layer)
 {
-    const int player = DISPLAYPLAYER;
     player_t* plr = players + player;
 
     if(layer != 0)
     {
-        rectanglei_t vp;
-        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
-        rendHUD(player, vp.width, vp.height);
+        rendHUD(player, portGeometry);
         return;
     }   
 
     switch(G_GetGameState())
     {
-    case GS_MAP: {
-        rectanglei_t vw;
-        R_ViewWindowDimensions(player, &vw.x, &vw.y, &vw.width, &vw.height);
-        if(!ST_AutomapWindowObscures(player, vw.x, vw.y, vw.width, vw.height))
+    case GS_MAP:
+        if(!ST_AutomapObscures2(player, windowGeometry))
         {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-                return;
+            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
 
             rendPlayerView(player);
-            rendSpecialFilter(player, vw.x, vw.y, vw.width, vw.height);
+            rendSpecialFilter(player, windowGeometry);
 
             // Crosshair.
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
                 X_Drawer(player);
         }
         break;
-      }
-    case GS_STARTUP: {
-        rectanglei_t vp;
-        R_ViewportDimensions(player, &vp.x, &vp.y, &vp.width, &vp.height);
-        DGL_DrawRectColor(0, 0, vp.width, vp.height, 0, 0, 0, 1);
+
+    case GS_STARTUP:
+        DGL_DrawRectColor(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
         break;
-      }
+
     default:
         break;
     }
 }
 
-void H_Display2(void)
+void H_DrawWindow(const Size2i* windowSize)
 {
     if(G_GetGameState() == GS_INTERMISSION)
     {

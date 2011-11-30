@@ -60,8 +60,8 @@ typedef struct texture_s {
     /// @see textureFlags
     int _flags;
 
-    /// Dimensions in logical pixels (not necessarily the same as pixel dimensions).
-    int _width, _height;
+    /// Size in logical pixels (not necessarily the same as pixel dimensions).
+    Size2i _size;
 
     /// Unique identifier of the primary binding in the owning collection.
     textureid_t _primaryBind;
@@ -84,15 +84,12 @@ typedef struct texture_s {
  * @param bindId  Unique identifier of the primary binding in the owning
  *    collection. Can be @c NOTEXTUREID in which case there is no binding
  *    for the resultant texture.
- * @param width  Logical width of the texture. Can be zero in which case
- *    it will be inherited from the actual pixel width of the texture at
- *    load time.
- * @param height  Logical height of the texture. Can be zero in which case
- *    it will be inherited from the actual pixel height of the texture at
- *    load time.
+ * @param size Logical size of the texture. Components can be zero in which
+ *    case their value will be inherited from the actual pixel size of the
+ *    texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-texture_t* Texture_NewWithDimensions(int flags, textureid_t bindId, int width, int height, void* userData);
+texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2i* size, void* userData);
 texture_t* Texture_New(int flags, textureid_t bindId, void* userData);
 
 void Texture_Delete(texture_t* tex);
@@ -175,14 +172,13 @@ int Texture_Flags(const texture_t* tex);
 void Texture_SetFlags(texture_t* tex, int flags);
 
 /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-void Texture_Dimensions(const texture_t* tex, int* width, int* height);
+const Size2i* Texture_Size(const texture_t* tex);
 
 /**
- * Change logical dimensions.
- * @param width  Logical width.
- * @param height  Logical height.
+ * Change logical pixel dimensions.
+ * @param size  New size.
  */
-void Texture_SetDimensions(texture_t* tex, int width, int height);
+void Texture_SetSize(texture_t* tex, const Size2i* size);
 
 /// @return  Logical width (not necessarily the same as pixel width).
 int Texture_Width(const texture_t* tex);

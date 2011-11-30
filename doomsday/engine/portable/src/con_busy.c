@@ -262,13 +262,13 @@ static void Con_BusyPrepareResources(void)
         // been loaded yet when engine startup is done.
         if(GL_LoadImage(&image, "}data/graphics/loading1.png"))
         {
-            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
+            texLoading[0] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
         }
 
         if(GL_LoadImage(&image, "}data/graphics/loading2.png"))
         {
-            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.width, image.height, image.pixels, TXCF_NEVER_DEFER);
+            texLoading[1] = GL_NewTextureWithParams(DGL_RGBA, image.size.width, image.size.height, image.pixels, TXCF_NEVER_DEFER);
             GL_DestroyImage(&image);
         }
     }
@@ -285,7 +285,7 @@ static void Con_BusyPrepareResources(void)
             { FN_SYSTEM_NAME":normal12", "}data/fonts/normal12.dfn" },
             { FN_SYSTEM_NAME":normal18", "}data/fonts/normal18.dfn" }
         };
-        int fontIdx = !(theWindow->width > 640)? 0 : 1;
+        int fontIdx = !(theWindow->geometry.size.width > 640)? 0 : 1;
         Uri* uri = Uri_NewWithPath2(fonts[fontIdx].name, RC_NULL);
         font_t* font = R_CreateFontFromFile(uri, fonts[fontIdx].path);
         Uri_Delete(uri);
@@ -334,10 +334,10 @@ void Con_AcquireScreenshotTexture(void)
     startTime = Sys_GetRealSeconds();
 #endif
 
-    frame = malloc(theWindow->width * theWindow->height * 3);
-    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
+    frame = malloc(theWindow->geometry.size.width * theWindow->geometry.size.height * 3);
+    GL_Grab(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height, DGL_RGB, frame);
     GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
-    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, theWindow->width, theWindow->height,
+    texScreenshot = GL_NewTextureWithParams2(DGL_RGB, theWindow->geometry.size.width, theWindow->geometry.size.height,
         frame, TXCF_NEVER_DEFER|TXCF_NO_COMPRESSION|TXCF_UPLOAD_ARG_NOSMARTFILTER, 0, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     GL_state.maxTexSize = oldMaxTexSize;
@@ -369,7 +369,7 @@ static void Con_BusyLoop(void)
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+        glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
     }
 
     Sys_Lock(busy_Mutex);
@@ -607,18 +607,18 @@ void Con_BusyDrawConsoleOutput(void)
     // Dark gradient as background.
     glBegin(GL_QUADS);
     glColor4ub(0, 0, 0, 0);
-    y = theWindow->height - (LINE_COUNT + 3) * busyFontHgt;
+    y = theWindow->geometry.size.height - (LINE_COUNT + 3) * busyFontHgt;
     glVertex2f(0, y);
-    glVertex2f(theWindow->width, y);
+    glVertex2f(theWindow->geometry.size.width, y);
     glColor4ub(0, 0, 0, 128);
-    glVertex2f(theWindow->width, theWindow->height);
-    glVertex2f(0, theWindow->height);
+    glVertex2f(theWindow->geometry.size.width, theWindow->geometry.size.height);
+    glVertex2f(0, theWindow->geometry.size.height);
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The text lines.
-    topY = y = theWindow->height - busyFontHgt * (2 * LINE_COUNT + .5f);
+    topY = y = theWindow->geometry.size.height - busyFontHgt * (2 * LINE_COUNT + .5f);
     if(newCount > 0 ||
        (nowTime >= scrollStartTime && nowTime < scrollEndTime && scrollEndTime > scrollStartTime))
     {
@@ -646,7 +646,7 @@ void Con_BusyDrawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawText3(line->text, theWindow->width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawText3(line->text, theWindow->geometry.size.width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -659,9 +659,9 @@ void Con_BusyDrawConsoleOutput(void)
  */
 static void Con_BusyDrawer(void)
 {
-    float               pos = 0;
+    float pos = 0;
 
-    Con_DrawScreenshotBackground(0, 0, theWindow->width, theWindow->height);
+    Con_DrawScreenshotBackground(0, 0, theWindow->geometry.size.width, theWindow->geometry.size.height);
 
     // Indefinite activity?
     if((busyMode & BUSYF_ACTIVITY) || (busyMode & BUSYF_PROGRESS_BAR))
@@ -671,7 +671,9 @@ static void Con_BusyDrawer(void)
         else // The progress is animated elsewhere.
             pos = Con_GetProgress();
 
-        Con_BusyDrawIndicator(theWindow->width/2, theWindow->height/2, theWindow->height/12, pos);
+        Con_BusyDrawIndicator(theWindow->geometry.size.width/2,
+                              theWindow->geometry.size.height/2,
+                              theWindow->geometry.size.height/12, pos);
     }
 
     // Output from the console?

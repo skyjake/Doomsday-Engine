@@ -53,6 +53,6 @@ const char* MNBindings_ControlName(mn_object_t* obj);
 void MNBindings_Drawer(mn_object_t* obj, int x, int y);
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
-void MNBindings_UpdateDimensions(mn_object_t* obj, mn_page_t* page);
+void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 #endif /* LIBCOMMON_MENU_CONTROLS */

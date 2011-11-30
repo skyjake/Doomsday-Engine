@@ -153,7 +153,7 @@ static byte loadParticleTexture(uint particleTex, boolean silent)
         ptctexname[particleTex] = GL_NewTextureWithParams(
             image.pixelSize == 4 ? DGL_RGBA :
             image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-            image.width, image.height, image.pixels,
+            image.size.width, image.size.height, image.pixels,
             TXCF_NO_COMPRESSION);
 
         // Free the buffer.
@@ -882,7 +882,8 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
 
         if(alpha > 0)
         {
-            float scale = dist / (theWindow->width / 2);
+            const Point2i labelOrigin = { 2, 2 };
+            float scale = dist / (theWindow->geometry.size.width / 2);
             char buf[80];
 
             sprintf(buf, "%i", P_PtcGenToIndex(gen));
@@ -900,7 +901,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
             FR_LoadDefaultAttrib();
             FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
             FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-            UI_TextOutEx(buf, 2, 2, UI_Color(UIC_TITLE), alpha);
+            UI_TextOutEx(buf, &labelOrigin, UI_Color(UIC_TITLE), alpha);
             glDisable(GL_TEXTURE_2D);
 
             glMatrixMode(GL_MODELVIEW);

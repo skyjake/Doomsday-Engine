@@ -33,11 +33,11 @@
 
 extern float quitDarkenOpacity;
 
-void            H_Display(int layer);
-void            H_Display2(void);
+void H_DrawViewPort(int port, const Rectanglei* portGeometry, const Rectanglei* windowGeometry, int player, int layer);
+void H_DrawWindow(const Size2i* windowSize);
 
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
+void P_SetDoomsdayFlags(mobj_t* mo);
+void R_SetAllDoomsdayFlags(void);
+boolean R_GetFilterColor(float rgba[4], int filter);
 
 #endif /* JHERETIC_REFRESH_H */

@@ -31,7 +31,7 @@
 
 typedef struct viewport_s {
     int console;
-    rectanglei_t dimensions;
+    Rectanglei geometry;
 } viewport_t;
 
 typedef struct viewer_s {
@@ -46,7 +46,7 @@ typedef struct viewdata_s {
     viewer_t lastSharp[2]; // For smoothing.
     float frontVec[3], upVec[3], sideVec[3];
     float viewCos, viewSin;
-    rectanglei_t window, windowTarget, windowOld;
+    Rectanglei window, windowTarget, windowOld;
     float windowInter;
 } viewdata_t;
 
@@ -94,9 +94,6 @@ void            R_NewSharpWorld(void);
 
 boolean R_SetViewGrid(int numCols, int numRows);
 
-int R_ViewWindowDimensions(int player, int* x, int* y, int* width, int* height);
-void R_SetViewWindowDimensions(int player, int x, int y, int width, int height, boolean interpolate);
-
 void R_SetupDefaultViewWindow(int player);
 
 void R_LoadSystemFonts(void);
@@ -104,10 +101,20 @@ void R_LoadSystemFonts(void);
 const char* R_ChooseFixedFont(void);
 const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 
+int R_ViewWindowGeometry(int player, Rectanglei* geometry);
+int R_ViewWindowOrigin(int player, Point2i* origin);
+int R_ViewWindowSize(int player, Size2i* size);
+
+void R_SetViewWindowGeometry(int player, const Rectanglei* geometry, boolean interpolate);
+
 /**
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int player, timespan_t ticLength);
+
+int R_ViewPortGeometry(int player, Rectanglei* geometry);
+int R_ViewPortOrigin(int player, Point2i* origin);
+int R_ViewPortSize(int player, Size2i* size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 

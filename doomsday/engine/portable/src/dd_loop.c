@@ -229,9 +229,9 @@ void DD_DrawAndBlit(void)
         {
             UI2_Drawer();
 
-            // Draw any over/outside view window game graphics (e.g. fullscreen menus and other displays).
-            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.G_Drawer2)
-                gx.G_Drawer2();
+            // Draw any full window game graphics.
+            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.DrawWindow)
+                gx.DrawWindow(&theWindow->geometry.size);
         }
     }
 

@@ -37,22 +37,22 @@ void GL_DrawPatch3(patchid_t id, int posX, int posY, int alignFlags, int patchFl
     DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= info.width;
+        x -= info.geometry.size.width;
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= info.width /2;
+        x -= info.geometry.size.width /2;
 
     if(alignFlags & ALIGN_BOTTOM)
-        y -= info.height;
+        y -= info.geometry.size.height;
     else if(!(alignFlags & ALIGN_TOP))
-        y -= info.height/2;
+        y -= info.geometry.size.height/2;
 
-    w = (float) info.width;
-    h = (float) info.height;
+    w = (float) info.geometry.size.width;
+    h = (float) info.geometry.size.height;
 
     if(!(patchFlags & DPF_NO_OFFSETX))
-        x += (float) info.offset;
+        x += (float) info.geometry.origin.x;
     if(!(patchFlags & DPF_NO_OFFSETY))
-        y += (float) info.topOffset;
+        y += (float) info.geometry.origin.y;
 
     if(info.extraOffset[0])
     {

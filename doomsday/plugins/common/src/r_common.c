@@ -112,12 +112,11 @@ static boolean maximizedViewWindow(int player)
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
-static void resizeViewWindow(int player, const rectanglei_t* newDimensions,
-    const rectanglei_t* oldDimensions, boolean interpolate)
+static void resizeViewWindow(int player, const Rectanglei* newGeometry,
+    const Rectanglei* oldGeometry, boolean interpolate)
 {
-    assert(newDimensions != NULL);
-    {
-    rectanglei_t dims;
+    Rectanglei geom;
+    assert(newGeometry);
 
     if(player < 0 || player >= MAXPLAYERS)
     {
@@ -125,54 +124,53 @@ static void resizeViewWindow(int player, const rectanglei_t* newDimensions,
         exit(1); // Unreachable.
     }
 
-    memcpy(&dims, newDimensions, sizeof(dims));
-    dims.x = dims.y = 0;
+    memcpy(&geom, newGeometry, sizeof(geom));
+    geom.origin.x = geom.origin.y = 0;
 
     // Override @c cfg.screenBlocks and force a maximized window?
     if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
     {
-        const float xScale = (float)dims.width  / SCREENWIDTH;
-        const float yScale = (float)dims.height / SCREENHEIGHT;
+        const float xScale = (float)geom.size.width  / SCREENWIDTH;
+        const float yScale = (float)geom.size.height / SCREENHEIGHT;
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
         float fscale = cfg.statusbarScale;
         int statusBarHeight, needWidth;
 
         needWidth = yScale * ST_WIDTH;
-        if(needWidth > dims.width)
-            fscale *= (float)dims.width/needWidth;
+        if(needWidth > geom.size.width)
+            fscale *= (float)geom.size.width/needWidth;
         statusBarHeight = floor(ST_HEIGHT * fscale);
 #endif
 
         if(cfg.screenBlocks != 10)
         {
-            dims.width = cfg.screenBlocks * SCREENWIDTH/10;
-            dims.x = SCREENWIDTH/2 - dims.width/2;
+            geom.size.width = cfg.screenBlocks * SCREENWIDTH/10;
+            geom.origin.x = SCREENWIDTH/2 - geom.size.width/2;
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            dims.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-            dims.y = (SCREENHEIGHT - statusBarHeight - dims.height) / 2;
+            geom.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
+            geom.origin.y = (SCREENHEIGHT - statusBarHeight - geom.size.height) / 2;
 #else
-            dims.height = cfg.screenBlocks * SCREENHEIGHT/10;
-            dims.y = (SCREENHEIGHT - dims.height) / 2;
+            geom.size.height = cfg.screenBlocks * SCREENHEIGHT/10;
+            geom.origin.y = (SCREENHEIGHT - geom.size.height) / 2;
 #endif
         }
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
         else
         {
-            dims.x = 0;
-            dims.y = 0;
-            dims.width  = SCREENWIDTH;
-            dims.height = SCREENHEIGHT - statusBarHeight;
+            geom.origin.x = 0;
+            geom.origin.y = 0;
+            geom.size.width  = SCREENWIDTH;
+            geom.size.height = SCREENHEIGHT - statusBarHeight;
         }
 #endif
         // Scale from fixed to viewport coordinates.
-        dims.x = ROUND(dims.x * xScale);
-        dims.y = ROUND(dims.y * yScale);
-        dims.width  = ROUND(dims.width  * xScale);
-        dims.height = ROUND(dims.height * yScale);
+        geom.origin.x = ROUND(geom.origin.x * xScale);
+        geom.origin.y = ROUND(geom.origin.y * yScale);
+        geom.size.width  = ROUND(geom.size.width  * xScale);
+        geom.size.height = ROUND(geom.size.height * yScale);
     }
 
-    R_SetViewWindowDimensions(player, dims.x, dims.y, dims.width, dims.height, interpolate);
-    }
+    R_SetViewWindowGeometry(player, &geom, interpolate);
 }
 
 void R_ResizeViewWindow(int flags)
@@ -180,7 +178,7 @@ void R_ResizeViewWindow(int flags)
     static boolean oldMaximized;
     int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
     boolean maximized;
-    rectanglei_t dims;
+    Rectanglei port;
 
     // Override @c cfg.screenBlocks and force a maximized window?
     maximized = maximizedViewWindow(DISPLAYPLAYER);
@@ -223,30 +221,30 @@ void R_ResizeViewWindow(int flags)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        if(!R_ViewportDimensions(i, &dims.x, &dims.y, &dims.width, &dims.height))
+        if(!R_ViewPortGeometry(i, &port))
         {
             // Player is not local or does not have a viewport.
             continue;
         }
-        resizeViewWindow(i, &dims, &dims, (flags & RWF_NO_LERP)==0);
+        resizeViewWindow(i, &port, &port, (flags & RWF_NO_LERP)==0);
     }
 }
 
 int R_UpdateViewport(int hookType, int param, void* data)
 {
     const ddhook_viewport_reshape_t* p = (ddhook_viewport_reshape_t*)data;
-    resizeViewWindow(param, &p->dimensions, &p->oldDimensions, false);
+    resizeViewWindow(param, &p->geometry, &p->oldGeometry, false);
     return true;
 }
 
 #ifndef __JHEXEN__
 void R_GetGammaMessageStrings(void)
 {
-    int                 i;
-
-    // Init some strings.
+    int i;
     for(i = 0; i < 5; ++i)
+    {
         strcpy(gammamsg[i], GET_TXT(TXT_GAMMALVL0 + i));
+    }
 }
 #endif
 
