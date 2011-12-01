@@ -104,7 +104,7 @@ static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(font_t* font);
 static int lineHeight(font_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
-static void drawFlash(const Point2Rawi* origin, const Size2Rawi* size, int bright);
+static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright);
 
 static int inited = false;
 
@@ -434,7 +434,7 @@ void FR_SetCaseScale(boolean value)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_CharSize(Size2i* size, unsigned char ch)
+void FR_CharSize(Size2Raw* size, unsigned char ch)
 {
     errorIfNotInited("FR_CharSize");
     Fonts_CharSize(Fonts_ToFont(fr.fontNum), size, ch);
@@ -708,8 +708,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     if(!noGlitter && glitter > 0)
                     {
                         // Do something flashy.
-                        Point2Rawi origin;
-                        Size2Rawi size;
+                        Point2Raw origin;
+                        Size2Raw size;
                         origin.x = cx;
                         origin.y = cy + yoff;
                         size.width  = w;
@@ -720,8 +720,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                 }
                 else if(!noShadow)
                 {
-                    Point2Rawi origin;
-                    Size2Rawi size;
+                    Point2Raw origin;
+                    Size2Raw size;
                     origin.x = cx;
                     origin.y = cy + yoff;
                     size.width  = w;
@@ -899,7 +899,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     glTranslatef(-x, -y, 0);
 }
 
-static void drawFlash(const Point2Rawi* origin, const Size2Rawi* size, int bright)
+static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
 {
     float fsize = 4.f + bright;
     float fw = fsize * size->width  / 2.0f;
@@ -1367,7 +1367,7 @@ void FR_DrawText(const char* text, int x, int y)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_TextSize(Size2Rawi* size, const char* text)
+void FR_TextSize(Size2Raw* size, const char* text)
 {
     if(!size) return;
     size->width  = FR_TextWidth(text);

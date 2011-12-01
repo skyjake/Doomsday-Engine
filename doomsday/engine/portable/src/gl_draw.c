@@ -76,7 +76,7 @@ void GL_DrawRectd(const RectRawf* rect)
     glEnd();
 }
 
-void GL_DrawRecti(const RectRawi* rect)
+void GL_DrawRecti(const RectRaw* rect)
 {
     assert(rect);
     glBegin(GL_QUADS);

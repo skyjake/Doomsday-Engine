@@ -133,7 +133,7 @@ typedef struct material_s {
     struct material_variantlist_node_s* _variants;
     material_env_class_t _envClass;    // Environmental sound class.
     materialid_t        _primaryBind;  // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
-    Size2i*             _size;         // Logical dimensions in world-space units.
+    Size2*             _size;         // Logical dimensions in world-space units.
     short               _flags;        // @see materialFlags
     boolean             _inAnimGroup;  // @c true if belongs to some animgroup.
     boolean             _isCustom;

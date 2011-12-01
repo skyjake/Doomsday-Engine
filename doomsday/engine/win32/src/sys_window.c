@@ -571,7 +571,7 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
 }
 
 static ddwindow_t* createGLWindow(application_t* app, uint parentIdx,
-    const Point2Rawi* origin, const Size2Rawi* size, int bpp, int flags,
+    const Point2Raw* origin, const Size2Raw* size, int bpp, int flags,
     const char* title)
 {
     ddwindow_t* win, *pWin = NULL;
@@ -719,7 +719,7 @@ static ddwindow_t* createGLWindow(application_t* app, uint parentIdx,
 }
 
 static ddwindow_t* createConsoleWindow(application_t* app, uint parentIdx,
-    const Point2Rawi* origin, const Size2Rawi* size, int bpp, int flags,
+    const Point2Raw* origin, const Size2Raw* size, int bpp, int flags,
     const char* title)
 {
     ddwindow_t* win, *pWin = NULL;
@@ -800,8 +800,8 @@ static ddwindow_t* createConsoleWindow(application_t* app, uint parentIdx,
     return win;
 }
 
-uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Rawi* origin,
-    const Size2Rawi* size, int bpp, int flags, ddwindowtype_t type, const char* title,
+uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
     void* userData)
 {
     ddwindow_t* win = NULL;
@@ -971,7 +971,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
                            int newWidth, int newHeight, int newBPP,
                            int wFlags, int uFlags)
 {
-    RectRawi geometry;
+    RectRaw geometry;
     int bpp, flags;
     HWND hWnd;
     boolean newGLContext = false;
@@ -1337,21 +1337,21 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     return false;
 }
 
-const RectRawi* Sys_GetWindowGeometry(uint idx)
+const RectRaw* Sys_GetWindowGeometry(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;
     return &window->geometry;
 }
 
-const Point2Rawi* Sys_GetWindowOrigin(uint idx)
+const Point2Raw* Sys_GetWindowOrigin(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;
     return &window->geometry.origin;
 }
 
-const Size2Rawi* Sys_GetWindowSize(uint idx)
+const Size2Raw* Sys_GetWindowSize(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;

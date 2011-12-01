@@ -254,7 +254,7 @@ void R_ViewWindowTicker(int player, timespan_t ticLength)
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewWindowGeometry(int player, RectRawi* geometry)
+int R_ViewWindowGeometry(int player, RectRaw* geometry)
 {
     const viewdata_t* vd;
     int p;
@@ -268,7 +268,7 @@ int R_ViewWindowGeometry(int player, RectRawi* geometry)
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewWindowOrigin(int player, Point2Rawi* origin)
+int R_ViewWindowOrigin(int player, Point2Raw* origin)
 {
     const viewdata_t* vd;
     int p;
@@ -282,7 +282,7 @@ int R_ViewWindowOrigin(int player, Point2Rawi* origin)
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewWindowSize(int player, Size2Rawi* size)
+int R_ViewWindowSize(int player, Size2Raw* size)
 {
     const viewdata_t* vd;
     int p;
@@ -302,14 +302,14 @@ int R_ViewWindowSize(int player, Size2Rawi* size)
  *
  * \note Part of the Doomsday public API.
  */
-void R_SetViewWindowGeometry(int player, const RectRawi* geometry, boolean interpolate)
+void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate)
 {
     int p = P_ConsoleToLocal(player);
     if(p != -1)
     {
         const viewport_t* vp = &viewports[p];
         viewdata_t* vd = &viewData[p];
-        RectRawi newGeom;
+        RectRaw newGeom;
 
         // Clamp to valid range.
         newGeom.origin.x = MINMAX_OF(0, geometry->origin.x, vp->geometry.size.width);
@@ -347,7 +347,7 @@ void R_SetViewWindowGeometry(int player, const RectRawi* geometry, boolean inter
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewPortGeometry(int player, RectRawi* geometry)
+int R_ViewPortGeometry(int player, RectRaw* geometry)
 {
     viewport_t* vp;
     int p;
@@ -361,7 +361,7 @@ int R_ViewPortGeometry(int player, RectRawi* geometry)
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewPortOrigin(int player, Point2Rawi* origin)
+int R_ViewPortOrigin(int player, Point2Raw* origin)
 {
     viewport_t* vp;
     int p;
@@ -375,7 +375,7 @@ int R_ViewPortOrigin(int player, Point2Rawi* origin)
 }
 
 /// \note Part of the Doomsday public API.
-int R_ViewPortSize(int player, Size2Rawi* size)
+int R_ViewPortSize(int player, Size2Raw* size)
 {
     viewport_t* vp;
     int p;
@@ -406,7 +406,7 @@ void R_UpdateViewPortGeometry(viewport_t* port, int col, int row)
 {
     assert(port);
     {
-    RectRawi* rect = &port->geometry;
+    RectRaw* rect = &port->geometry;
     const int x = col * theWindow->geometry.size.width  / gridCols;
     const int y = row * theWindow->geometry.size.height / gridRows;
     const int width  = (col+1) * theWindow->geometry.size.width  / gridCols - x;
@@ -1065,8 +1065,8 @@ const viewport_t* R_CurrentViewPort(void)
  */
 void R_RenderBlankView(void)
 {
-    Point2Rawi origin = { 0, 0 };
-    Size2Rawi size = { 320, 200 };
+    Point2Raw origin = { 0, 0 };
+    Size2Raw size = { 320, 200 };
     UI_DrawDDBackground(&origin, &size, 1);
 }
 

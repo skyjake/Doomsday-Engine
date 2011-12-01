@@ -26,10 +26,10 @@
 
 #include "size.h"
 
-struct size2i_s {
+struct size2_s {
     /// Use a "raw" size natively so that we can return immutable references
     /// to this directly (no dynamic allocation).
-    Size2Rawi raw;
+    Size2Raw raw;
 };
 
 struct size2f_s {
@@ -38,92 +38,92 @@ struct size2f_s {
     Size2Rawf raw;
 };
 
-Size2i* Size2i_New(void)
+Size2* Size2_New(void)
 {
-    Size2i* s = calloc(1, sizeof *s);
+    Size2* s = calloc(1, sizeof *s);
     return s;
 }
 
-Size2i* Size2i_NewWithDimensions(int width, int height)
+Size2* Size2_NewWithDimensions(int width, int height)
 {
-    Size2i* s = Size2i_New();
-    Size2i_SetWidthHeight(s, width, height);
+    Size2* s = Size2_New();
+    Size2_SetWidthHeight(s, width, height);
     return s;
 }
 
-Size2i* Size2i_NewFromRaw(const Size2Rawi* rawSize)
+Size2* Size2_NewFromRaw(const Size2Raw* rawSize)
 {
     assert(rawSize);
-    return Size2i_NewWithDimensions(rawSize->width, rawSize->height);
+    return Size2_NewWithDimensions(rawSize->width, rawSize->height);
 }
 
-void Size2i_Delete(Size2i* s)
+void Size2_Delete(Size2* s)
 {
     assert(s);
     free(s);
 }
 
-boolean Size2i_IsNull(const Size2i* s)
+boolean Size2_IsNull(const Size2* s)
 {
     assert(s);
     return s->raw.width == 0 && s->raw.height == 0;
 }
 
-const Size2Rawi* Size2i_ToRaw(const Size2i* s)
+const Size2Raw* Size2_ToRaw(const Size2* s)
 {
     assert(s);
     return &s->raw;
 }
 
-int Size2i_Width(const Size2i* s)
+int Size2_Width(const Size2* s)
 {
     assert(s);
     return s->raw.width;
 }
 
-int Size2i_Height(const Size2i* s)
+int Size2_Height(const Size2* s)
 {
     assert(s);
     return s->raw.height;
 }
 
-void Size2i_SetWidth(Size2i* s, int width)
+void Size2_SetWidth(Size2* s, int width)
 {
     assert(s);
     s->raw.width = width;
 }
 
-void Size2i_SetHeight(Size2i* s, int height)
+void Size2_SetHeight(Size2* s, int height)
 {
     assert(s);
     s->raw.height = height;
 }
 
-const int* Size2i_WidthHeight(const Size2i* s)
+const int* Size2_WidthHeight(const Size2* s)
 {
     assert(s);
     return s->raw.widthHeight;
 }
 
-void Size2i_SetWidthHeight(Size2i* s, int width, int height)
+void Size2_SetWidthHeight(Size2* s, int width, int height)
 {
     assert(s);
     s->raw.width = width;
     s->raw.height = height;
 }
 
-void Size2i_Sum(Size2i* s, const Size2i* other)
+void Size2_Sum(Size2* s, const Size2* other)
 {
     assert(s && other);
-    s->raw.width  += Size2i_Width(other);
-    s->raw.height += Size2i_Height(other);
+    s->raw.width  += Size2_Width(other);
+    s->raw.height += Size2_Height(other);
 }
 
-boolean Size2i_Equality(const Size2i* s, const Size2i* other)
+boolean Size2_Equality(const Size2* s, const Size2* other)
 {
     assert(s && other);
-    return s == other || (s->raw.width  == Size2i_Width(other) &&
-                          s->raw.height == Size2i_Height(other));
+    return s == other || (s->raw.width  == Size2_Width(other) &&
+                          s->raw.height == Size2_Height(other));
 }
 
 Size2f* Size2f_New(void)

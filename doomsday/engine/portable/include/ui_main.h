@@ -117,7 +117,7 @@ typedef struct ui_object_s {
     int data2; /// Extra numerical data.
     int timer;
     /// Position and dimensions, auto-inited.
-    RectRawi geometry;
+    RectRaw geometry;
 } ui_object_t;
 
 /**
@@ -298,7 +298,7 @@ int UI_ScreenW(int relw);
 int UI_ScreenH(int relh);
 
 void UI_InitColumns(ui_object_t* ob);
-int UI_MouseInsideBox(const Point2Rawi* origin, const Size2Rawi* size);
+int UI_MouseInsideBox(const Point2Raw* origin, const Size2Raw* size);
 
 /// @return  @c true, if the mouse is inside the object.
 int UI_MouseInside(ui_object_t* ob);
@@ -307,7 +307,7 @@ int UI_MouseInside(ui_object_t* ob);
 int UI_MouseResting(ui_page_t* page);
 
 int UI_ListFindItem(ui_object_t* ob, int data_value);
-void UI_DrawLogo(const Point2Rawi* origin, const Size2Rawi* size);
+void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size);
 
 /**
  * Background with the "The Doomsday Engine" text superimposed.
@@ -316,7 +316,7 @@ void UI_DrawLogo(const Point2Rawi* origin, const Size2Rawi* size);
  * @param size  Screen-space dimensions of the cursor in pixels.
  * @param alpha  Alpha level to use when drawing the background.
  */
-void UI_DrawDDBackground(const Point2Rawi* origin, const Size2Rawi* size, float alpha);
+void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float alpha);
 
 /**
  * Draw the mouse cursor at the given co-ordinates.
@@ -324,39 +324,39 @@ void UI_DrawDDBackground(const Point2Rawi* origin, const Size2Rawi* size, float 
  * @param origin  Screen-space coordinate origin (top left).
  * @param size  Screen-space dimensions of the cursor in pixels.
  */
-void UI_DrawMouse(const Point2Rawi* origin, const Size2Rawi* size);
+void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size);
 void UI_DrawTitle(ui_page_t* page);
 void UI_DrawTitleEx(char* text, int height, float alpha);
 void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount);
 void UI_SetColorA(ui_color_t* color, float alpha);
 void UI_SetColor(ui_color_t* color);
-void UI_Line(const Point2Rawi* start, const Point2Rawi* end, ui_color_t* startColor, ui_color_t* endColor, float startAlpha, float endAlpha);
-void UI_Shade(const Point2Rawi* origin, const Size2Rawi* size, int border, ui_color_t* main, ui_color_t* secondary, float alpha, float bottom_alpha);
-void UI_Gradient(const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_GradientEx(const Point2Rawi* origin, const Size2Rawi* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
-void UI_HorizGradient(const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* left, ui_color_t* right, float leftAlpha, float rightAlpha);
-void UI_DrawRect(const Point2Rawi* origin, const Size2Rawi* size, int brd, ui_color_t* color, float alpha);
-void UI_DrawRectEx(const Point2Rawi* origin, const Size2Rawi* size, int brd, boolean filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
-void UI_DrawTriangle(const Point2Rawi* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t* low, float alpha);
+void UI_Line(const Point2Raw* start, const Point2Raw* end, ui_color_t* startColor, ui_color_t* endColor, float startAlpha, float endAlpha);
+void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* main, ui_color_t* secondary, float alpha, float bottom_alpha);
+void UI_Gradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+void UI_GradientEx(const Point2Raw* origin, const Size2Raw* size, int border, ui_color_t* top, ui_color_t* bottom, float topAlpha, float bottomAlpha);
+void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t* left, ui_color_t* right, float leftAlpha, float rightAlpha);
+void UI_DrawRect(const Point2Raw* origin, const Size2Raw* size, int brd, ui_color_t* color, float alpha);
+void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int brd, boolean filled, ui_color_t* top, ui_color_t* bottom, float alpha, float bottomAlpha);
+void UI_DrawTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t* low, float alpha);
 
 /**
  * A horizontal triangle, pointing left or right. Positive radius
  * means left.
  */
-void UI_DrawHorizTriangle(const Point2Rawi* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t *low, float alpha);
+void UI_DrawHorizTriangle(const Point2Raw* origin, int radius, ui_color_t* hi, ui_color_t* med, ui_color_t *low, float alpha);
 
-void UI_DrawButton(const Point2Rawi* origin, const Size2Rawi* size, int border, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
+void UI_DrawButton(const Point2Raw* origin, const Size2Raw* size, int border, float alpha, ui_color_t* background, boolean down, boolean disabled, int arrow);
 
 /// Draw shadowed text.
-void UI_TextOutEx(const char* text, const Point2Rawi* origin, ui_color_t* color, float alpha);
-void UI_TextOutEx2(const char* text, const Point2Rawi* origin, ui_color_t* color, float alpha, int alignFlags, short textFlags);
-int UI_TextOutWrap(const char* text, const Point2Rawi* origin, const Size2Rawi* size);
+void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha);
+void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha, int alignFlags, short textFlags);
+int UI_TextOutWrap(const char* text, const Point2Raw* origin, const Size2Raw* size);
 
 /**
  * Draw line-wrapped text inside a box. Returns the Y coordinate of the
  * last word.
  */
-int UI_TextOutWrapEx(const char* text, const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* color, float alpha);
-void UI_DrawHelpBox(const Point2Rawi* origin, const Size2Rawi* size, float alpha, char* text);
+int UI_TextOutWrapEx(const char* text, const Point2Raw* origin, const Size2Raw* size, ui_color_t* color, float alpha);
+void UI_DrawHelpBox(const Point2Raw* origin, const Size2Raw* size, float alpha, char* text);
 
 #endif /* LIBDENG_UI_MAIN_H */

@@ -46,21 +46,21 @@ EXPORTS
     AnimatorVector4_Think       @460 NONAME
 
     ; 2D plane Point.
-    Point2i_New                 @597 NONAME
-    Point2i_NewWithCoords       @598 NONAME
-    Point2i_NewFromRaw          @599 NONAME
-    Point2i_Delete              @600 NONAME
-    Point2i_IsNull              @601 NONAME
-    Point2i_ToRaw               @602 NONAME
-    Point2i_X                   @603 NONAME
-    Point2i_Y                   @604 NONAME
-    Point2i_SetX                @605 NONAME
-    Point2i_SetY                @606 NONAME
-    Point2i_XY                  @607 NONAME
-    Point2i_SetXY               @608 NONAME
-    Point2i_Translate           @609 NONAME
-    Point2i_Sum                 @610 NONAME
-    Point2i_Equality            @611 NONAME
+    Point2_New                  @597 NONAME
+    Point2_NewWithCoords        @598 NONAME
+    Point2_NewFromRaw           @599 NONAME
+    Point2_Delete               @600 NONAME
+    Point2_IsNull               @601 NONAME
+    Point2_ToRaw                @602 NONAME
+    Point2_X                    @603 NONAME
+    Point2_Y                    @604 NONAME
+    Point2_SetX                 @605 NONAME
+    Point2_SetY                 @606 NONAME
+    Point2_XY                   @607 NONAME
+    Point2_SetXY                @608 NONAME
+    Point2_Translate            @609 NONAME
+    Point2_Sum                  @610 NONAME
+    Point2_Equality             @611 NONAME
 
     Point2f_New                 @612 NONAME
     Point2f_NewWithCoords       @613 NONAME
@@ -79,20 +79,20 @@ EXPORTS
     Point2f_Equality            @626 NONAME
 
     ; 2D Size.
-    Size2i_New                  @627 NONAME
-    Size2i_NewWithDimensions    @628 NONAME
-    Size2i_NewFromRaw           @629 NONAME
-    Size2i_Delete               @630 NONAME
-    Size2i_IsNull               @631 NONAME
-    Size2i_ToRaw                @632 NONAME
-    Size2i_Width                @633 NONAME
-    Size2i_Height               @634 NONAME
-    Size2i_SetWidth             @635 NONAME
-    Size2i_SetHeight            @636 NONAME
-    Size2i_WidthHeight          @637 NONAME
-    Size2i_SetWidthHeight       @638 NONAME
-    Size2i_Sum                  @639 NONAME
-    Size2i_Equality             @640 NONAME
+    Size2_New                   @627 NONAME
+    Size2_NewWithDimensions     @628 NONAME
+    Size2_NewFromRaw            @629 NONAME
+    Size2_Delete                @630 NONAME
+    Size2_IsNull                @631 NONAME
+    Size2_ToRaw                 @632 NONAME
+    Size2_Width                 @633 NONAME
+    Size2_Height                @634 NONAME
+    Size2_SetWidth              @635 NONAME
+    Size2_SetHeight             @636 NONAME
+    Size2_WidthHeight           @637 NONAME
+    Size2_SetWidthHeight        @638 NONAME
+    Size2_Sum                   @639 NONAME
+    Size2_Equality              @640 NONAME
 
     Size2f_New                  @641 NONAME
     Size2f_NewWithDimensions    @642 NONAME
@@ -110,23 +110,23 @@ EXPORTS
     Size2f_Equality             @654 NONAME
 
     ; Rectangle.
-    Recti_New                   @655 NONAME
-    Recti_NewWithOriginSize     @656 NONAME
-    Recti_NewWithOriginSize2    @657 NONAME
-    Recti_NewFromRaw            @658 NONAME
-    Recti_Delete                @659 NONAME
-    Recti_IsNull                @660 NONAME
-    Recti_Width                 @661 NONAME
-    Recti_Height                @662 NONAME
-    Recti_SetWidth              @663 NONAME
-    Recti_SetHeight             @664 NONAME
-    Recti_Origin                @665 NONAME
-    Recti_SetOrigin             @666 NONAME
-    Recti_SetOrigin2            @667 NONAME
-    Recti_Size                  @668 NONAME
-    Recti_SetSize               @669 NONAME
-    Recti_SetSize2              @670 NONAME
-    Recti_Equality              @671 NONAME
+    Rect_New                    @655 NONAME
+    Rect_NewWithOriginSize      @656 NONAME
+    Rect_NewWithOriginSize2     @657 NONAME
+    Rect_NewFromRaw             @658 NONAME
+    Rect_Delete                 @659 NONAME
+    Rect_IsNull                 @660 NONAME
+    Rect_Width                  @661 NONAME
+    Rect_Height                 @662 NONAME
+    Rect_SetWidth               @663 NONAME
+    Rect_SetHeight              @664 NONAME
+    Rect_Origin                 @665 NONAME
+    Rect_SetOrigin              @666 NONAME
+    Rect_SetOrigin2             @667 NONAME
+    Rect_Size                   @668 NONAME
+    Rect_SetSize                @669 NONAME
+    Rect_SetSize2               @670 NONAME
+    Rect_Equality               @671 NONAME
 
     Rectf_New                   @672 NONAME
     Rectf_NewWithOriginSize     @673 NONAME
@@ -593,8 +593,8 @@ EXPORTS
     DGL_Vertices3ftv            @382 NONAME
     DGL_Vertices3fctv           @383 NONAME
     DGL_DrawLine                @127 NONAME
-    DGL_DrawRect                @133 NONAME
-    DGL_DrawRecti               @511 NONAME
+    DGL_DrawRect                @511 NONAME
+    DGL_DrawRect2               @133 NONAME
     DGL_DrawRectf               @512 NONAME
     DGL_DrawRectColor           @128 NONAME
     DGL_DrawRectTiled           @129 NONAME

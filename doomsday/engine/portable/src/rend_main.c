@@ -4280,7 +4280,7 @@ static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
 
 static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alpha)
 {
-    const Point2Rawi origin = { 2, 2 };
+    const Point2Raw origin = { 2, 2 };
     char buf[80];
 
     FR_SetFont(fontFixed);

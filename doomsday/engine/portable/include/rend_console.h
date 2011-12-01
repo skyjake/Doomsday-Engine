@@ -60,6 +60,6 @@ void Rend_ConsoleUpdateTitle(void);
 void Rend_Console(void);
 
 /// @param origin  Origin of the display (top right) in screen-space coordinates.
-void Rend_ConsoleFPS(const Point2Rawi* origin);
+void Rend_ConsoleFPS(const Point2Raw* origin);
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */

@@ -23,48 +23,48 @@ extern "C" {
 #include "size.h"
 
 /**
- * RectRawi. Rectangle Raw (i)integer. Is intended as a handy POD
+ * RectRaw. Rectangle Raw (i)integer. Is intended as a handy POD
  * structure for easy manipulation of rectangles using integer precison.
  */
-typedef struct RectRawi_s {
-    Point2Rawi origin;
-    Size2Rawi size;
-} RectRawi;
+typedef struct RectRaw_s {
+    Point2Raw origin;
+    Size2Raw size;
+} RectRaw;
 
 /**
- * Recti. Class for manipulating rectangles using integer precision.
+ * Rect. Class for manipulating rectangles using integer precision.
  */
-struct recti_s; // The Recti instance (opaque).
-typedef struct recti_s Recti;
+struct rect_s; // The Rect instance (opaque).
+typedef struct rect_s Rect;
 
-Recti* Recti_New(void);
-Recti* Recti_NewWithOriginSize(const Point2i* origin, const Size2i* size);
-Recti* Recti_NewWithOriginSize2(int x, int y, int width, int height);
-Recti* Recti_NewFromRaw(const RectRawi* rawRect);
+Rect* Rect_New(void);
+Rect* Rect_NewWithOriginSize(const Point2* origin, const Size2* size);
+Rect* Rect_NewWithOriginSize2(int x, int y, int width, int height);
+Rect* Rect_NewFromRaw(const RectRaw* rawRect);
 
-void Recti_Delete(Recti* rect);
+void Rect_Delete(Rect* rect);
 
-boolean Recti_IsNull(const Recti* rect);
+boolean Rect_IsNull(const Rect* rect);
 
-int Recti_Width(const Recti* rect);
+int Rect_Width(const Rect* rect);
 
-int Recti_Height(const Recti* rect);
+int Rect_Height(const Rect* rect);
 
-void Recti_SetWidth(Recti* rect, int width);
+void Rect_SetWidth(Rect* rect, int width);
 
-void Recti_SetHeight(Recti* rect, int height);
+void Rect_SetHeight(Rect* rect, int height);
 
-const Point2i* Recti_Origin(const Recti* rect);
+const Point2* Rect_Origin(const Rect* rect);
 
-void Recti_SetOrigin(Recti* r, const Point2i* origin);
-void Recti_SetOrigin2(Recti* r, int x, int y);
+void Rect_SetOrigin(Rect* r, const Point2* origin);
+void Rect_SetOrigin2(Rect* r, int x, int y);
 
-const Size2i* Recti_Size(const Recti* rect);
+const Size2* Rect_Size(const Rect* rect);
 
-void Recti_SetSize(Recti* rect, const Size2i* size);
-void Recti_SetSize2(Recti* rect, int width, int height);
+void Rect_SetSize(Rect* rect, const Size2* size);
+void Rect_SetSize2(Rect* rect, int width, int height);
 
-boolean Recti_Equality(const Recti* rect, const Recti* other);
+boolean Rect_Equality(const Rect* rect, const Rect* other);
 
 /**
  * RectRawf. Rectangle Raw (f)loating point. Is intended as a handy

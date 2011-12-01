@@ -28,9 +28,9 @@
 #include "size.h"
 #include "rect.h"
 
-struct recti_s {
-    Point2i* origin;
-    Size2i* size;
+struct rect_s {
+    Point2* origin;
+    Size2* size;
 };
 
 struct rectf_s {
@@ -38,116 +38,116 @@ struct rectf_s {
     Size2f* size;
 };
 
-Recti* Recti_New(void)
+Rect* Rect_New(void)
 {
-    Recti* r = malloc(sizeof *r);
-    r->origin = Point2i_New();
-    r->size = Size2i_New();
+    Rect* r = malloc(sizeof *r);
+    r->origin = Point2_New();
+    r->size = Size2_New();
     return r;
 }
 
-Recti* Recti_NewWithOriginSize(const Point2i* origin, const Size2i* size)
+Rect* Rect_NewWithOriginSize(const Point2* origin, const Size2* size)
 {
-    Recti* r = Recti_New();
-    Recti_SetOrigin(r, origin);
-    Recti_SetSize(r, size);
+    Rect* r = Rect_New();
+    Rect_SetOrigin(r, origin);
+    Rect_SetSize(r, size);
     return r;
 }
 
-Recti* Recti_NewWithOriginSize2(int x, int y, int width, int height)
+Rect* Rect_NewWithOriginSize2(int x, int y, int width, int height)
 {
-    Recti* r = Recti_New();
-    Recti_SetOrigin2(r, x, y);
-    Recti_SetSize2(r, width, height);
+    Rect* r = Rect_New();
+    Rect_SetOrigin2(r, x, y);
+    Rect_SetSize2(r, width, height);
     return r;
 }
 
-Recti* Recti_NewFromRaw(const RectRawi* rawRect)
+Rect* Rect_NewFromRaw(const RectRaw* rawRect)
 {
     assert(rawRect);
-    return Recti_NewWithOriginSize2(rawRect->origin.x, rawRect->origin.y,
+    return Rect_NewWithOriginSize2(rawRect->origin.x, rawRect->origin.y,
                                     rawRect->size.width, rawRect->size.height);
 }
 
-void Recti_Delete(Recti* r)
+void Rect_Delete(Rect* r)
 {
     assert(r);
-    Point2i_Delete(r->origin);
-    Size2i_Delete(r->size);
+    Point2_Delete(r->origin);
+    Size2_Delete(r->size);
     free(r);
 }
 
-boolean Recti_IsNull(const Recti* r)
+boolean Rect_IsNull(const Rect* r)
 {
     assert(r);
-    return Size2i_IsNull(r->size);
+    return Size2_IsNull(r->size);
 }
 
-int Recti_Width(const Recti* r)
+int Rect_Width(const Rect* r)
 {
     assert(r);
-    return Size2i_Width(r->size);
+    return Size2_Width(r->size);
 }
 
-int Recti_Height(const Recti* r)
+int Rect_Height(const Rect* r)
 {
     assert(r);
-    return Size2i_Height(r->size);
+    return Size2_Height(r->size);
 }
 
-void Recti_SetWidth(Recti* r, int width)
+void Rect_SetWidth(Rect* r, int width)
 {
     assert(r);
-    Size2i_SetWidth(r->size, width);
+    Size2_SetWidth(r->size, width);
 }
 
-void Recti_SetHeight(Recti* r, int height)
+void Rect_SetHeight(Rect* r, int height)
 {
     assert(r);
-    Size2i_SetHeight(r->size, height);
+    Size2_SetHeight(r->size, height);
 }
 
-const Point2i* Recti_Origin(const Recti* r)
+const Point2* Rect_Origin(const Rect* r)
 {
     assert(r);
     return r->origin;
 }
 
-void Recti_SetOrigin(Recti* r, const Point2i* origin)
+void Rect_SetOrigin(Rect* r, const Point2* origin)
 {
     assert(r);
-    Point2i_SetXY(r->origin, Point2i_X(origin), Point2i_Y(origin));
+    Point2_SetXY(r->origin, Point2_X(origin), Point2_Y(origin));
 }
 
-void Recti_SetOrigin2(Recti* r, int x, int y)
+void Rect_SetOrigin2(Rect* r, int x, int y)
 {
     assert(r);
-    Point2i_SetXY(r->origin, x, y);
+    Point2_SetXY(r->origin, x, y);
 }
 
-const Size2i* Recti_Size(const Recti* r)
+const Size2* Rect_Size(const Rect* r)
 {
     assert(r);
     return r->size;
 }
 
-void Recti_SetSize(Recti* r, const Size2i* size)
+void Rect_SetSize(Rect* r, const Size2* size)
 {
     assert(r);
-    Size2i_SetWidthHeight(r->size, Size2i_Width(size), Size2i_Height(size));
+    Size2_SetWidthHeight(r->size, Size2_Width(size), Size2_Height(size));
 }
 
-void Recti_SetSize2(Recti* r, int width, int height)
+void Rect_SetSize2(Rect* r, int width, int height)
 {
     assert(r);
-    Size2i_SetWidthHeight(r->size, width, height);
+    Size2_SetWidthHeight(r->size, width, height);
 }
 
-boolean Recti_Equality(const Recti* r, const Recti* other)
+boolean Rect_Equality(const Rect* r, const Rect* other)
 {
     assert(r && other);
-    return r == other || Point2i_Equality(r->origin, Recti_Origin(other)) &&
-                         Size2i_Equality(r->size, Recti_Size(other));
+    return r == other || Point2_Equality(r->origin, Rect_Origin(other)) &&
+                         Size2_Equality(r->size, Rect_Size(other));
 }
 
 Rectf* Rectf_New(void)

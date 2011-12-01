@@ -611,10 +611,11 @@ int Fonts_CharHeight(font_t* font, unsigned char ch)
     }
 }
 
-void Fonts_CharSize(font_t* font, Size2i* size, unsigned char ch)
+void Fonts_CharSize(font_t* font, Size2Raw* size, unsigned char ch)
 {
     if(!size) return;
-    Size2i_SetWidthHeight(size, Fonts_CharWidth(font, ch), Fonts_CharHeight(font, ch));
+    size->width  = Fonts_CharWidth(font, ch);
+    size->height = Fonts_CharHeight(font, ch);
 }
 
 font_t* Fonts_ToFont(fontid_t id)

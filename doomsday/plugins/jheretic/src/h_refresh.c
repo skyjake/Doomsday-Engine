@@ -75,7 +75,7 @@ float quitDarkenOpacity = 0;
 /**
  * Draws a special filter over the screen.
  */
-static void rendSpecialFilter(int player, const RectRawi* region)
+static void rendSpecialFilter(int player, const RectRaw* region)
 {
     player_t* plr = players + player;
     const struct filter_s {
@@ -175,7 +175,7 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-static void rendHUD(int player, const RectRawi* portGeometry)
+static void rendHUD(int player, const RectRaw* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
     if(G_GetGameState() != GS_MAP) return;
@@ -212,8 +212,8 @@ static void rendHUD(int player, const RectRawi* portGeometry)
     }
 }
 
-void H_DrawViewPort(int port, const RectRawi* portGeometry,
-    const RectRawi* windowGeometry, int player, int layer)
+void H_DrawViewPort(int port, const RectRaw* portGeometry,
+    const RectRaw* windowGeometry, int player, int layer)
 {
     player_t* plr = players + player;
 
@@ -248,7 +248,7 @@ void H_DrawViewPort(int port, const RectRawi* portGeometry,
     }
 }
 
-void H_DrawWindow(const Size2Rawi* windowSize)
+void H_DrawWindow(const Size2Raw* windowSize)
 {
     if(G_GetGameState() == GS_INTERMISSION)
     {

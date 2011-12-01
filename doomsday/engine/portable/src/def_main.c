@@ -1488,7 +1488,7 @@ void Def_PostInit(void)
     for(i = 0; i < defs.count.reflections.num; ++i)
     {
         ded_reflection_t* ref = &defs.reflections[i];
-        Size2Rawi size;
+        Size2Raw size;
 
         R_CreateReflectionTexture(ref->shinyMap);
 

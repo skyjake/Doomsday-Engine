@@ -3566,7 +3566,7 @@ boolean ST_AutomapIsActive(int player)
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapObscures2(int player, const RectRawi* region)
+boolean ST_AutomapObscures2(int player, const RectRaw* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -3583,7 +3583,7 @@ boolean ST_AutomapObscures2(int player, const RectRawi* region)
                 // We'll have to compare the dimensions.
                 const int scrwidth  = Get(DD_WINDOW_WIDTH);
                 const int scrheight = Get(DD_WINDOW_HEIGHT);
-                const Recti* rect = UIWidget_Geometry(obj);
+                const Rect* rect = UIWidget_Geometry(obj);
                 float fx = FIXXTOSCREENX(region->origin.x);
                 float fy = FIXYTOSCREENY(region->origin.y);
                 float fw = FIXXTOSCREENX(region->size.width);
@@ -3599,7 +3599,7 @@ boolean ST_AutomapObscures2(int player, const RectRawi* region)
 
 boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
-    RectRawi rect;
+    RectRaw rect;
     rect.origin.x = x;
     rect.origin.y = y;
     rect.size.width  = width;
@@ -3899,7 +3899,7 @@ void ST_Drawer(int player)
     hudstate_t* hud;
     player_t* plr;
     uiwidget_t* obj;
-    Size2Rawi size;
+    Size2Raw size;
 
     if(player < 0 || player >= MAXPLAYERS) return;
     plr = &players[player];
@@ -3921,7 +3921,7 @@ void ST_Drawer(int player)
     {
         int x, y, width, height;
         float alpha, scale;
-        Size2Rawi portSize;
+        Size2Raw portSize;
 
         R_ViewPortSize(player, &portSize);
 
@@ -3946,7 +3946,7 @@ void ST_Drawer(int player)
 #define PADDING 2 // In fixed 320x200 units.
 
         int posX, posY, availWidth, availHeight;
-        Size2Rawi drawnSize = { 0, 0 };
+        Size2Raw drawnSize = { 0, 0 };
 
         if(hud->statusbarActive)
         {
@@ -4028,7 +4028,7 @@ void ST_Drawer(int player)
         GUI_DrawWidget(obj, x, y, &drawnSize);
         if(!hud->statusbarActive)
         {
-            Size2Rawi tlDrawnSize;
+            Size2Raw tlDrawnSize;
 
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]);
             UIWidget_SetAlpha(obj, alpha);

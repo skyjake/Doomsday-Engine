@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
     boolean fadeout;
-    Size2Rawi texSize;
+    Size2Raw texSize;
     float texOffset;
     rcolord_t capColor;
 } renderhemispherestate_t;

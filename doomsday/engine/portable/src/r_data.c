@@ -1179,7 +1179,7 @@ patchid_t R_DeclarePatch(const char* name)
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
-        Size2Rawi size;
+        Size2Raw size;
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         tex = Textures_CreateWithSize(texId, flags, &size, (void*)p);
@@ -1195,7 +1195,7 @@ patchid_t R_DeclarePatch(const char* name)
     else
     {
         patchtex_t* oldPatch = Texture_DetachUserData(tex);
-        Size2Rawi size;
+        Size2Raw size;
 
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
@@ -2887,7 +2887,7 @@ texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2Rawi* size)
+texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
 {
     textureid_t texId;
     texture_t* tex;

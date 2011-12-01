@@ -492,6 +492,16 @@ void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, floa
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
+void DGL_DrawRect(const RectRaw* rect)
+{
+    if(!rect)
+    {
+        Con_Error("DGL_DrawRect: Invalid value for argument 'rect'.");
+        exit(1); // Unreachable.
+    }
+    GL_DrawRecti(rect);
+}
+
 void DGL_DrawRectf(const RectRawf* rect)
 {
     if(!rect)
@@ -502,17 +512,7 @@ void DGL_DrawRectf(const RectRawf* rect)
     GL_DrawRectd(rect);
 }
 
-void DGL_DrawRecti(const RectRawi* rect)
-{
-    if(!rect)
-    {
-        Con_Error("DGL_DrawRecti: Invalid value for argument 'rect'.");
-        exit(1); // Unreachable.
-    }
-    GL_DrawRecti(rect);
-}
-
-void DGL_DrawRect(float x, float y, float w, float h)
+void DGL_DrawRect2(float x, float y, float w, float h)
 {
     GL_DrawRect(x, y, w, h);
 }

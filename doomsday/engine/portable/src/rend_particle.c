@@ -882,7 +882,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
 
         if(alpha > 0)
         {
-            const Point2Rawi labelOrigin = { 2, 2 };
+            const Point2Raw labelOrigin = { 2, 2 };
             float scale = dist / (theWindow->geometry.size.width / 2);
             char buf[80];
 

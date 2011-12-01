@@ -26,10 +26,10 @@
 
 #include "point.h"
 
-struct point2i_s {
+struct point2_s {
     /// Use a "raw" point natively so that we can return immutable references
     /// to this directly (no dynamic allocation).
-    Point2Rawi raw;
+    Point2Raw raw;
 };
 
 struct point2f_s {
@@ -38,98 +38,98 @@ struct point2f_s {
     Point2Rawf raw;
 };
 
-Point2i* Point2i_New(void)
+Point2* Point2_New(void)
 {
-    Point2i* p = calloc(1, sizeof *p);
+    Point2* p = calloc(1, sizeof *p);
     return p;
 }
 
-Point2i* Point2i_NewWithCoords(int x, int y)
+Point2* Point2_NewWithCoords(int x, int y)
 {
-    Point2i* p = Point2i_New();
-    Point2i_SetXY(p, x, y);
+    Point2* p = Point2_New();
+    Point2_SetXY(p, x, y);
     return p;
 }
 
-Point2i* Point2i_NewFromRaw(const Point2Rawi* rawPoint)
+Point2* Point2_NewFromRaw(const Point2Raw* rawPoint)
 {
     assert(rawPoint);
-    return Point2i_NewWithCoords(rawPoint->x, rawPoint->y);
+    return Point2_NewWithCoords(rawPoint->x, rawPoint->y);
 }
 
-void Point2i_Delete(Point2i* p)
+void Point2_Delete(Point2* p)
 {
     assert(p);
     free(p);
 }
 
-boolean Point2i_IsNull(const Point2i* p)
+boolean Point2_IsNull(const Point2* p)
 {
     assert(p);
     return p->raw.x == 0 && p->raw.y == 0;
 }
 
-const Point2Rawi* Point2i_ToRaw(const Point2i* p)
+const Point2Raw* Point2_ToRaw(const Point2* p)
 {
     assert(p);
     return &p->raw;
 }
 
-int Point2i_X(const Point2i* p)
+int Point2_X(const Point2* p)
 {
     assert(p);
     return p->raw.x;
 }
 
-int Point2i_Y(const Point2i* p)
+int Point2_Y(const Point2* p)
 {
     assert(p);
     return p->raw.y;
 }
 
-void Point2i_SetX(Point2i* p, int x)
+void Point2_SetX(Point2* p, int x)
 {
     assert(p);
     p->raw.x = x;
 }
 
-void Point2i_SetY(Point2i* p, int y)
+void Point2_SetY(Point2* p, int y)
 {
     assert(p);
     p->raw.y = y;
 }
 
-const int* Point2i_XY(const Point2i* p)
+const int* Point2_XY(const Point2* p)
 {
     assert(p);
     return p->raw.xy;
 }
 
-void Point2i_SetXY(Point2i* p, int x, int y)
+void Point2_SetXY(Point2* p, int x, int y)
 {
     assert(p);
     p->raw.x = x;
     p->raw.y = y;
 }
 
-void Point2i_Translate(Point2i* p, int x, int y)
+void Point2_Translate(Point2* p, int x, int y)
 {
     assert(p);
     p->raw.x += x;
     p->raw.y += y;
 }
 
-void Point2i_Sum(Point2i* p, const Point2i* other)
+void Point2_Sum(Point2* p, const Point2* other)
 {
     assert(p && other);
-    p->raw.x += Point2i_X(other);
-    p->raw.y += Point2i_Y(other);
+    p->raw.x += Point2_X(other);
+    p->raw.y += Point2_Y(other);
 }
 
-boolean Point2i_Equality(const Point2i* p, const Point2i* other)
+boolean Point2_Equality(const Point2* p, const Point2* other)
 {
     assert(p && other);
-    return p == other || p->raw.x == Point2i_X(other) && p->raw.y == Point2i_Y(other);
+    return p == other || p->raw.x == Point2_X(other) && p->raw.y == Point2_Y(other);
 }
 
 Point2f* Point2f_New(void)
@@ -205,7 +205,7 @@ void Point2f_SetXY(Point2f* p, double x, double y)
     p->raw.y = y;
 }
 
-void Point2f_Translate(Point2i* p, double x, double y)
+void Point2f_Translate(Point2* p, double x, double y)
 {
     assert(p);
     p->raw.x += x;

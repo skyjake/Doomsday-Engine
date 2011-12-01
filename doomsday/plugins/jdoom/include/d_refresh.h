@@ -32,8 +32,8 @@
 
 extern float quitDarkenOpacity;
 
-void D_DrawViewPort(int port, const RectRawi* portGeometry, const RectRawi* windowGeometry, int player, int layer);
-void D_DrawWindow(const Size2Rawi* windowSize);
+void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
+void D_DrawWindow(const Size2Raw* windowSize);
 
 void P_SetDoomsdayFlags(mobj_t* mo);
 void R_SetAllDoomsdayFlags(void);

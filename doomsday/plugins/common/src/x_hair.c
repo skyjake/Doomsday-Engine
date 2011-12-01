@@ -92,7 +92,7 @@ void X_Drawer(int player)
     int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS), centerX, centerY;
     float alpha, scale, oldLineWidth;
     player_t* plr = &players[player];
-    RectRawi win;
+    RectRaw win;
 
     // Is there a crosshair to draw?
     if(xhair == 0) return;

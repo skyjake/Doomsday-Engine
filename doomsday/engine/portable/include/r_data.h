@@ -183,7 +183,7 @@ typedef struct {
 typedef struct {
     ddstring_t name;
     /// Size of the texture in logical pixels.
-    Size2Rawi size;
+    Size2Raw size;
     short flags;
     /// Index of this resource according to the logic of the original game's indexing algorithm.
     int origIndex;
@@ -337,7 +337,7 @@ struct texture_s* R_FindFlareTextureForResourcePath(const Uri* resourcePath);
 struct texture_s* R_CreateReflectionTexture(const Uri* resourcePath);
 struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath);
 
-struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2Rawi* size);
+struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size);
 struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
 
 void R_InitRawTexs(void);

@@ -55,14 +55,14 @@ void Material_Initialize(material_t* mat)
     memset(mat, 0, sizeof *mat);
     mat->header.type = DMU_MATERIAL;
     mat->_envClass = MEC_UNKNOWN;
-    mat->_size = Size2i_New();
+    mat->_size = Size2_New();
 }
 
 void Material_Destroy(material_t* mat)
 {
     assert(mat);
     Material_DestroyVariants(mat);
-    Size2i_Delete(mat->_size);
+    Size2_Delete(mat->_size);
     mat->_size = NULL;
 }
 
@@ -89,45 +89,45 @@ void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
     mat->_def = def;
 }
 
-const Size2i* Material_Size(const material_t* mat)
+const Size2* Material_Size(const material_t* mat)
 {
     assert(mat);
     return mat->_size;
 }
 
-void Material_SetSize(material_t* mat, const Size2i* size)
+void Material_SetSize(material_t* mat, const Size2* size)
 {
     assert(mat && size);
-    if(Size2i_Equality(mat->_size, size)) return;
-    Size2i_SetWidthHeight(mat->_size, Size2i_Width(size), Size2i_Height(size));
+    if(Size2_Equality(mat->_size, size)) return;
+    Size2_SetWidthHeight(mat->_size, Size2_Width(size), Size2_Height(size));
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Width(const material_t* mat)
 {
     assert(mat);
-    return Size2i_Width(mat->_size);
+    return Size2_Width(mat->_size);
 }
 
 void Material_SetWidth(material_t* mat, int width)
 {
     assert(mat);
-    if(Size2i_Width(mat->_size) == width) return;
-    Size2i_SetWidth(mat->_size, width);
+    if(Size2_Width(mat->_size) == width) return;
+    Size2_SetWidth(mat->_size, width);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Height(const material_t* mat)
 {
     assert(mat);
-    return Size2i_Height(mat->_size);
+    return Size2_Height(mat->_size);
 }
 
 void Material_SetHeight(material_t* mat, int height)
 {
     assert(mat);
-    if(Size2i_Height(mat->_size) == height) return;
-    Size2i_SetHeight(mat->_size, height);
+    if(Size2_Height(mat->_size) == height) return;
+    Size2_SetHeight(mat->_size, height);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 

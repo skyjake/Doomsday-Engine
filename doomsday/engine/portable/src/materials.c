@@ -1001,7 +1001,7 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat->_flags = def->flags;
     mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
     mat->_def = def;
-    Size2i_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
+    Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(uri);
     newMaterialBind(uri, mat);
 

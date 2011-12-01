@@ -646,7 +646,7 @@ D_CMD(BLEditor)
     return false;
 }
 
-static void SBE_DrawBox(const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* c)
+static void SBE_DrawBox(const Point2Raw* origin, const Size2Raw* size, ui_color_t* c)
 {
     UI_GradientEx(origin, size, 6,
                   c ? c : UI_Color(UIC_BG_MEDIUM),
@@ -659,8 +659,8 @@ static void SBE_DrawBox(const Point2Rawi* origin, const Size2Rawi* size, ui_colo
 static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 {
     ui_color_t color;
-    Point2Rawi origin;
-    Size2Rawi size;
+    Point2Raw origin;
+    Size2Raw size;
     char buf[80];
     float eye[3];
     int th;
@@ -731,13 +731,13 @@ static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
  * Editor HUD
  */
 
-static void SBE_DrawLevelGauge(const Point2Rawi* origin, int height)
+static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
 {
     static sector_t* lastSector = NULL;
     static float minLevel = 0, maxLevel = 0;
 
     int off, secY, p, minY = 0, maxY = 0;
-    Point2Rawi labelOrigin;
+    Point2Raw labelOrigin;
     subsector_t* ssec;
     sector_t* sector;
     source_t* src;
@@ -832,8 +832,8 @@ static void SBE_DrawLevelGauge(const Point2Rawi* origin, int height)
 void SBE_DrawHUD(void)
 {
     float alpha = .8f;
-    Point2Rawi origin;
-    Size2Rawi size;
+    Point2Raw origin;
+    Size2Raw size;
     char buf[80];
     gamemap_t* map = P_GetCurrentMap();
     source_t* s;
@@ -931,7 +931,7 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
 
 static void SBE_DrawIndex(source_t* src)
 {
-    const Point2Rawi origin = { 2, 2 };
+    const Point2Raw origin = { 2, 2 };
     float eye[3], scale;
     char buf[80];
 

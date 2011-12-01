@@ -113,7 +113,7 @@ float ST_AutomapOpacity(int player);
  *
  * @return  @true= there is no point even partially visible.
  */
-boolean ST_AutomapObscures2(int player, const RectRawi* region);
+boolean ST_AutomapObscures2(int player, const RectRaw* region);
 boolean ST_AutomapObscures(int player, int x, int y, int width, int height);
 
 int ST_AutomapAddPoint(int player, float x, float y, float z);

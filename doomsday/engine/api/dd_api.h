@@ -124,8 +124,8 @@ typedef struct {
      *     1: Displays to be drawn on top of view window (after bordering),
      *        such as the player HUD.
      */
-    void          (*DrawViewPort) (int port, const RectRawi* portGeometry,
-                        const RectRawi* windowGeometry, int player, int layer);
+    void          (*DrawViewPort) (int port, const RectRaw* portGeometry,
+                        const RectRaw* windowGeometry, int player, int layer);
 
     /**
      * Draw over-viewport displays covering the whole game window. Typically
@@ -133,7 +133,7 @@ typedef struct {
      *
      * @param windowSize  Dimensions of the game window in real screen pixels.
      */
-    void          (*DrawWindow) (const Size2Rawi* windowSize);
+    void          (*DrawWindow) (const Size2Raw* windowSize);
 
     // Miscellaneous.
     void          (*MobjThinker) ();

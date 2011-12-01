@@ -191,7 +191,7 @@ static void* readFormat0(font_t* font, DFile* file)
 {
     int i, c, bitmapFormat, numPels, glyphCount = 0;
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    Size2Rawi avgSize;
+    Size2Raw avgSize;
     uint32_t* image;
     assert(font && font->_type == FT_BITMAP && file);
 
@@ -260,7 +260,7 @@ static void* readFormat2(font_t* font, DFile* file)
     bitmapfont_t* bf = (bitmapfont_t*)font;
     byte bitmapFormat = 0;
     uint32_t* image, *ptr;
-    Size2Rawi avgSize;
+    Size2Raw avgSize;
     assert(font && font->_type == FT_BITMAP && file);
 
     bitmapFormat = inByte(file);
@@ -512,7 +512,7 @@ DGLuint BitmapFont_GLTextureName(const font_t* font)
     return bf->_tex;
 }
 
-const Size2Rawi* BitmapFont_TextureSize(const font_t* font)
+const Size2Raw* BitmapFont_TextureSize(const font_t* font)
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
@@ -589,7 +589,7 @@ int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
 void BitmapCompositeFont_Prepare(font_t* font)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-    Size2Rawi avgSize;
+    Size2Raw avgSize;
     int numPatches;
     uint i;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);

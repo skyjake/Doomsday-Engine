@@ -333,8 +333,8 @@ static char* buildCommandLineString(int argc, char** argv)
 
 static int createMainWindow(void)
 {
-    Point2Rawi origin = { 0, 0 };
-    Size2Rawi size = { 640, 480 };
+    Point2Raw origin = { 0, 0 };
+    Size2Raw size = { 640, 480 };
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
     windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0, isDedicated, buf, 0);

@@ -20,10 +20,10 @@ extern "C" {
 #endif
 
 /**
- * Size2Rawi. Size 2 Raw (i)integer. Is intended as a handy POD structure
+ * Size2Raw. Size 2 Raw (integer). Is intended as a handy POD structure
  * for easy manipulation of two dimensional sizes with integer precison.
  */
-typedef struct Size2Rawi_s {
+typedef struct Size2Raw_s {
     union {
         struct {
             int width;
@@ -31,36 +31,36 @@ typedef struct Size2Rawi_s {
         };
         int widthHeight[2];
     };
-} Size2Rawi;
+} Size2Raw;
 
 /**
- * Size2i. Class for manipulating two dimensional sizes using integer
+ * Size2. Class for manipulating two dimensional sizes using integer
  * precision.
  */
-struct size2i_s; // The Size2i instance (opaque).
-typedef struct size2i_s Size2i;
+struct size2_s; // The Size2 instance (opaque).
+typedef struct size2_s Size2;
 
-Size2i* Size2i_New(void);
-Size2i* Size2i_NewWithDimensions(int width, int height);
-Size2i* Size2i_NewFromRaw(const Size2Rawi* rawSize);
-void Size2i_Delete(Size2i* size);
+Size2* Size2_New(void);
+Size2* Size2_NewWithDimensions(int width, int height);
+Size2* Size2_NewFromRaw(const Size2Raw* rawSize);
+void Size2_Delete(Size2* size);
 
-boolean Size2i_IsNull(const Size2i* size);
+boolean Size2_IsNull(const Size2* size);
 
-const Size2Rawi* Size2i_ToRaw(const Size2i* size);
+const Size2Raw* Size2_ToRaw(const Size2* size);
 
-int Size2i_Width(const Size2i* size);
-int Size2i_Height(const Size2i* size);
+int Size2_Width(const Size2* size);
+int Size2_Height(const Size2* size);
 
-void Size2i_SetWidth(Size2i* size, int width);
-void Size2i_SetHeight(Size2i* size, int height);
+void Size2_SetWidth(Size2* size, int width);
+void Size2_SetHeight(Size2* size, int height);
 
-const int* Size2i_WidthHeight(const Size2i* size);
-void Size2i_SetWidthHeight(Size2i* size, int width, int height);
+const int* Size2_WidthHeight(const Size2* size);
+void Size2_SetWidthHeight(Size2* size, int width, int height);
 
-void Size2i_Sum(Size2i* size, const Size2i* other);
+void Size2_Sum(Size2* size, const Size2* other);
 
-boolean Size2i_Equality(const Size2i* point, const Size2i* other);
+boolean Size2_Equality(const Size2* point, const Size2* other);
 
 /**
  * Size2Rawf. Size 2 Raw (f)loating point. Is intended as a handy POD

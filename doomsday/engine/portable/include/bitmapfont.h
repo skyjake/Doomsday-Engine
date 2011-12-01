@@ -29,7 +29,7 @@
 
 // Data for a character.
 typedef struct {
-    RectRawi geometry;
+    RectRaw geometry;
     DGLuint dlist;
 } bitmapfont_char_t;
 
@@ -44,7 +44,7 @@ typedef struct bitmapfont_s {
     DGLuint _tex;
 
     /// Size of the texture in pixels.
-    Size2Rawi _texSize;
+    Size2Raw _texSize;
 
     /// Character map.
     bitmapfont_char_t _chars[MAX_CHARS];
@@ -59,7 +59,7 @@ void BitmapFont_SetFilePath(font_t* font, const char* filePath);
 
 /// @return  GL-texture name.
 DGLuint BitmapFont_GLTextureName(const font_t* font);
-const Size2Rawi* BitmapFont_TextureSize(const font_t* font);
+const Size2Raw* BitmapFont_TextureSize(const font_t* font);
 int BitmapFont_TextureHeight(const font_t* font);
 int BitmapFont_TextureWidth(const font_t* font);
 
@@ -76,7 +76,7 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, uns
 
 // Data for a character.
 typedef struct {
-    RectRawi geometry;
+    RectRaw geometry;
     DGLuint dlist;
     patchid_t patch;
 } bitmapcompositefont_char_t;

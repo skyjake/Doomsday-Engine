@@ -62,7 +62,7 @@ typedef struct texture_s {
     int _flags;
 
     /// Size in logical pixels (not necessarily the same as pixel dimensions).
-    Size2i* _size;
+    Size2* _size;
 
     /// Unique identifier of the primary binding in the owning collection.
     textureid_t _primaryBind;
@@ -90,7 +90,7 @@ typedef struct texture_s {
  *    texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Rawi* size, void* userData);
+texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size, void* userData);
 texture_t* Texture_New(int flags, textureid_t bindId, void* userData);
 
 void Texture_Delete(texture_t* tex);
@@ -173,13 +173,13 @@ int Texture_Flags(const texture_t* tex);
 void Texture_SetFlags(texture_t* tex, int flags);
 
 /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-const Size2i* Texture_Size(const texture_t* tex);
+const Size2* Texture_Size(const texture_t* tex);
 
 /**
  * Change logical pixel dimensions.
  * @param size  New size.
  */
-void Texture_SetSize(texture_t* tex, const Size2Rawi* size);
+void Texture_SetSize(texture_t* tex, const Size2Raw* size);
 
 /// @return  Logical width (not necessarily the same as pixel width).
 int Texture_Width(const texture_t* tex);

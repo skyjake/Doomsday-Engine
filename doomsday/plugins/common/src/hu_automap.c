@@ -1101,7 +1101,7 @@ static void drawMarkedPoints(uiwidget_t* obj)
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
     uint i, pointCount = UIAutomap_PointCount(obj);
-    Size2Rawi portSize;
+    Size2Raw portSize;
 
     if(!pointCount) return;
 
@@ -1154,7 +1154,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
-    Point2Rawi portOrigin;
+    Point2Raw portOrigin;
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1207,7 +1207,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_Scalef(1, (float)UIWidget_Geometry(obj)->size.height / UIWidget_Geometry(obj)->size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_DrawRecti(UIWidget_Geometry(obj));
+        DGL_DrawRect(UIWidget_Geometry(obj));
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1219,7 +1219,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
-        DGL_DrawRecti(UIWidget_Geometry(obj));
+        DGL_DrawRect(UIWidget_Geometry(obj));
     }
 
 #if __JDOOM64__
@@ -1649,7 +1649,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(am->pan || NULL == mo)
     {
         float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
-        Size2Rawi portSize;
+        Size2Raw portSize;
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
         R_ViewPortSize(player, &portSize);
@@ -1745,7 +1745,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
     // Calculate border (viewport coordinate space).
     {
-    Size2Rawi portSize;
+    Size2Raw portSize;
     R_ViewPortSize(player, &portSize);
     am->border = 4 * (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
     }
@@ -1855,7 +1855,7 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    RectRawi newGeom;
+    RectRaw newGeom;
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.

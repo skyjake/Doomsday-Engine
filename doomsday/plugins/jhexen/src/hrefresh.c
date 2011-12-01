@@ -142,7 +142,7 @@ static void rendPlayerView(int player)
     }
 }
 
-static void rendHUD(int player, const RectRawi* portGeometry)
+static void rendHUD(int player, const RectRaw* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
     if(G_GetGameState() != GS_MAP) return;
@@ -179,8 +179,8 @@ static void rendHUD(int player, const RectRawi* portGeometry)
     }
 }
 
-void X_DrawViewPort(int port, const RectRawi* portGeometry,
-    const RectRawi* windowGeometry, int player, int layer)
+void X_DrawViewPort(int port, const RectRaw* portGeometry,
+    const RectRaw* windowGeometry, int player, int layer)
 {
     player_t* plr = players + player;
 
@@ -214,7 +214,7 @@ void X_DrawViewPort(int port, const RectRawi* portGeometry,
     }
 }
 
-void X_DrawWindow(const Size2Rawi* windowSize)
+void X_DrawWindow(const Size2Raw* windowSize)
 {
     if(G_GetGameState() == GS_INTERMISSION)
     {
