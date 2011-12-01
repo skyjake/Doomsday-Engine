@@ -131,11 +131,13 @@ boolean Mus_Init(void)
         iMusic = NULL;
         iCD  = NULL;
     }
+#ifndef DENG_DISABLE_SDLMIXER
     else if(audioDriver == &audiod_sdlmixer)
     {
         iMusic = (audiointerface_music_t*) &audiod_sdlmixer_music;
         iCD  = NULL;
     }
+#endif
     else
     {
         iMusic = (audiodExternalIMusic.gen.Init ? &audiodExternalIMusic : 0);

@@ -1060,10 +1060,12 @@ boolean Sfx_Init(void)
     {
         iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
     }
+#ifndef DENG_DISABLE_SDLMIXER
     else if(audioDriver == &audiod_sdlmixer)
     {
         iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
     }
+#endif
     else
     {
         iSFX = (audiodExternalISFX.gen.Init ?

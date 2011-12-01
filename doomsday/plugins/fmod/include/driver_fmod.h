@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,26 +21,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * sys_audiod.h: Audio Driver.
- */
+#ifndef __DSFMOD_DRIVER_H__
+#define __DSFMOD_DRIVER_H__
 
-#ifndef __DOOMSDAY_AUDIO_DRIVER_H__
-#define __DOOMSDAY_AUDIO_DRIVER_H__
-
-typedef enum {
-    AUDIOD_DUMMY,
-    AUDIOD_SDL_MIXER,
-    AUDIOD_OPENAL,
-    AUDIOD_FMOD,
-    AUDIOD_DSOUND,  // Win32 only
-    AUDIOD_WINMM    // Win32 only
-} audiodriver_e;
-
-typedef struct audiodriver_s {
-    int             (*Init) (void);
-    void            (*Shutdown) (void);
-    void            (*Event) (int type);
-} audiodriver_t;
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+    
+#ifdef __cplusplus
+}
+#endif
+
+#include "fmod_sfx.h"
+#include "fmod_music.h"
+#include "fmod_cd.h"
+
+#endif /* end of include guard: __DSFMOD_DRIVER_H__ */

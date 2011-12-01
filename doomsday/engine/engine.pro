@@ -249,7 +249,6 @@ DENG_HEADERS = \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
     portable/include/sys_audiod_loader.h \
-    portable/include/sys_audiod_sdlmixer.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_file.h \
@@ -468,7 +467,6 @@ SOURCES += \
     portable/src/sv_pool.c \
     portable/src/sv_sound.c \
     portable/src/sys_audiod_dummy.c \
-    portable/src/sys_audiod_sdlmixer.c \
     portable/src/sys_direc.c \
     portable/src/sys_filein.c \
     portable/src/sys_master.c \
@@ -489,6 +487,11 @@ unix {
 
 win32 {
     SOURCES += $$DENG_WIN32_SOURCES
+}
+
+!deng_nosdlmixer {
+    HEADERS += portable/include/sys_audiod_sdlmixer.h
+    SOURCES += portable/src/sys_audiod_sdlmixer.c
 }
 
 # Use the fixed-point math from libcommon.

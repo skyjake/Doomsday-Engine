@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +22,29 @@
  */
 
 /**
- * sys_audiod.h: Audio Driver.
+ * version.h: Version numbering, naming etc.
  */
 
-#ifndef __DOOMSDAY_AUDIO_DRIVER_H__
-#define __DOOMSDAY_AUDIO_DRIVER_H__
+#ifndef __DSFMOD_VERSION_H__
+#define __DSFMOD_VERSION_H__
 
-typedef enum {
-    AUDIOD_DUMMY,
-    AUDIOD_SDL_MIXER,
-    AUDIOD_OPENAL,
-    AUDIOD_FMOD,
-    AUDIOD_DSOUND,  // Win32 only
-    AUDIOD_WINMM    // Win32 only
-} audiodriver_e;
+#ifndef DSFMOD_VER_ID
+#  ifdef _DEBUG
+#    define DSFMOD_VER_ID "+D Doomsday"
+#  else
+#    define DSFMOD_VER_ID "Doomsday"
+#  endif
+#endif
 
-typedef struct audiodriver_s {
-    int             (*Init) (void);
-    void            (*Shutdown) (void);
-    void            (*Event) (int type);
-} audiodriver_t;
+// Used to derive filepaths.
+#define PLUGIN_NAME         "dsfmod"
+
+// Presented to the user in dialogs, messages etc.
+#define PLUGIN_NICENAME     "FMOD Ex Audio Driver"
+#define PLUGIN_DETAILS      "Doomsday plugin for audio playback via Firelight Technologies' FMOD Ex "
+
+#define PLUGIN_VERSION_TEXT "1.0.0"
+#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSFMOD_VER_ID ")"
+#define PLUGIN_VERSION_NUMBER 1,0,0,0 // For WIN32 version info.
 
 #endif
