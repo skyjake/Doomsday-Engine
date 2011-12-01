@@ -1068,7 +1068,7 @@ boolean Sfx_Init(void)
 #endif
     else
     {
-        iSFX = (audiodExternalISFX.gen.Init ?
+        iSFX = (audiodExternalISFX.gen.Init?
             (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 

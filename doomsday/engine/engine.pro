@@ -515,7 +515,11 @@ startupgfx.files = \
 macx {
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    QMAKE_POST_LINK = "rm -rf $${OUT_PWD}/doomsday.app/Contents/Frameworks && mkdir $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/"
+    doPostLink("rm -rf \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
+    doPostLink("mkdir \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_net.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
 
     RES_PATH = Contents/Resources
     res.files = \

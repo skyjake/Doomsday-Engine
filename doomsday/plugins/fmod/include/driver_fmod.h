@@ -24,12 +24,29 @@
 #ifndef __DSFMOD_DRIVER_H__
 #define __DSFMOD_DRIVER_H__
 
+#include <fmod.h>
+#include <fmod.hpp>
+#include <fmod_errors.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
     
+int     DS_Init(void);
+void    DS_Shutdown(void);
+void    DS_Event(int type);
+
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef _DEBUG
+#  define ERRCHECK(result) \
+    if(result != FMOD_OK) { \
+        printf("FMOD error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
+    }
+#else
+#  define ERRCHECK(result)
 #endif
 
 #include "fmod_sfx.h"

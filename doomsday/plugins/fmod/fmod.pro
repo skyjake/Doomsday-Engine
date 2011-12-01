@@ -33,3 +33,9 @@ win32 {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
+
+macx {
+    doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" dsFMOD.bundle/")
+    doPostLink("install_name_tool -id @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/libfmodex.dylib")
+    doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/dsfmod")
+}

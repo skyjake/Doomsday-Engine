@@ -22,7 +22,64 @@
  */
 
 #include "driver_fmod.h"
+#include "sys_audiod_sfx.h"
+#include <stdio.h>
+#include <fmod.h>
+#include <fmod_errors.h>
+#include <fmod.hpp>
 
-// DS_Init
-// DS_Shutdown
-// DS_Event
+FMOD::System* system = 0;
+
+/**
+ * Initialize the FMOD Ex sound driver.
+ */
+int DS_Init(void)
+{
+    if(system)
+    {
+        return true; // Already initialized.
+    }
+
+    // Create the FMOD audio system.
+    FMOD_RESULT result;
+    if((result = FMOD::System_Create(&system)) != FMOD_OK)
+    {
+        printf("DS_Init: FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        system = 0;
+        return false;
+    }
+
+    // Initialize FMOD.
+    if((result = system->init(50, FMOD_INIT_NORMAL, 0)) != FMOD_OK)
+    {
+        printf("DS_Init: FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
+        system->release();
+        system = 0;
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Shut everything down.
+ */
+void DS_Shutdown(void)
+{
+    system->release();
+    system = 0;
+}
+
+/**
+ * The Event function is called to tell the driver about certain critical
+ * events like the beginning and end of an update cycle.
+ */
+void DS_Event(int type)
+{
+    if(!system) return;
+
+    if(type == SFXEV_END)
+    {
+        // End of frame, do an update.
+        system->update();
+    }
+}

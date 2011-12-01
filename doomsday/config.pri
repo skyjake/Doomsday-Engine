@@ -39,7 +39,7 @@ DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
 include(versions.pri)
 
-# Build Options --------------------------------------------------------------
+# Macros ---------------------------------------------------------------------
 
 defineTest(echo) {
     !win32 {
@@ -50,6 +50,17 @@ defineTest(echo) {
         system(echo $$1)
     }
 }
+
+defineTest(doPostLink) {
+    isEmpty(QMAKE_POST_LINK) {
+        QMAKE_POST_LINK = $$1
+    } else {
+        QMAKE_POST_LINK = $$QMAKE_POST_LINK && $$1
+    }
+    export(QMAKE_POST_LINK)
+}
+
+# Build Options --------------------------------------------------------------
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {

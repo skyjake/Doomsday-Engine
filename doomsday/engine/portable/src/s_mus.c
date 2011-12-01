@@ -125,28 +125,33 @@ boolean Mus_Init(void)
     if(isDedicated || ArgExists("-nomusic"))
         return true;
 
+    iMusic = NULL;
+    iCD = NULL;
+
     // Use the external music playback facilities, if available.
     if(audioDriver == &audiod_dummy)
     {
-        iMusic = NULL;
-        iCD  = NULL;
+        // Nothing to do.
     }
 #ifndef DENG_DISABLE_SDLMIXER
     else if(audioDriver == &audiod_sdlmixer)
     {
         iMusic = (audiointerface_music_t*) &audiod_sdlmixer_music;
-        iCD  = NULL;
     }
 #endif
     else
     {
-        iMusic = (audiodExternalIMusic.gen.Init ? &audiodExternalIMusic : 0);
-        iCD  = (audiodExternalICD.gen.Init  ? &audiodExternalICD  : 0);
+        // Use the external interface.
+        iMusic = (audiodExternalIMusic.gen.Init? &audiodExternalIMusic : 0);
+        iCD =    (audiodExternalICD.gen.Init?    &audiodExternalICD    : 0);
     }
 
 #ifdef MACOSX
-    // On the Mac, just use QuickTime for the music and be done with it.
-    iMusic = &audiodQuickTimeMusic;
+    if(!iMusic)
+    {
+        // On the Mac, use QuickTime as the fallback for music.
+        iMusic = &audiodQuickTimeMusic;
+    }
 #endif
 
     // Initialize the chosen interfaces.
@@ -154,9 +159,7 @@ boolean Mus_Init(void)
     {
         if(*interfaces[i].ip && !(*interfaces[i].ip)->Init())
         {
-            Con_Message("Mus_Init: Failed to initialize %s interface.\n",
-                        interfaces[i].name);
-
+            Con_Message("Mus_Init: Failed to initialize %s interface.\n", interfaces[i].name);
             *interfaces[i].ip = NULL;
         }
     }

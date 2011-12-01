@@ -120,6 +120,12 @@ boolean S_InitDriver(audiodriver_e drvid)
         break;
 #endif
 
+    case AUDIOD_FMOD:
+        Con_Printf("FMOD Ex\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
+            return false;
+        break;
+
     case AUDIOD_OPENAL:
         Con_Printf("OpenAL\n");
         if(!(audioDriver = Sys_LoadAudioDriver("openal")))
@@ -165,6 +171,10 @@ boolean S_Init(void)
     if(isDedicated || ArgExists("-dummy"))
     {
         ok = S_InitDriver(AUDIOD_DUMMY);
+    }
+    else if(ArgExists("-fmod"))
+    {
+        ok = S_InitDriver(AUDIOD_FMOD);
     }
     else if(ArgExists("-oal"))
     {
