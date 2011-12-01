@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 686 <--
+; Highest ordinal is currently: --> 688 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -81,68 +81,70 @@ EXPORTS
     ; 2D Size.
     Size2i_New                  @627 NONAME
     Size2i_NewWithDimensions    @628 NONAME
-    Size2i_Delete               @629 NONAME
-    Size2i_IsNull               @630 NONAME
-    Size2i_ToRaw                @631 NONAME
-    Size2i_Width                @632 NONAME
-    Size2i_Height               @633 NONAME
-    Size2i_SetWidth             @634 NONAME
-    Size2i_SetHeight            @635 NONAME
-    Size2i_WidthHeight          @636 NONAME
-    Size2i_SetWidthHeight       @637 NONAME
-    Size2i_Sum                  @638 NONAME
-    Size2i_Equality             @639 NONAME
+    Size2i_NewFromRaw           @629 NONAME
+    Size2i_Delete               @630 NONAME
+    Size2i_IsNull               @631 NONAME
+    Size2i_ToRaw                @632 NONAME
+    Size2i_Width                @633 NONAME
+    Size2i_Height               @634 NONAME
+    Size2i_SetWidth             @635 NONAME
+    Size2i_SetHeight            @636 NONAME
+    Size2i_WidthHeight          @637 NONAME
+    Size2i_SetWidthHeight       @638 NONAME
+    Size2i_Sum                  @639 NONAME
+    Size2i_Equality             @640 NONAME
 
-    Size2f_New                  @640 NONAME
-    Size2f_NewWithDimensions    @641 NONAME
-    Size2f_Delete               @642 NONAME
-    Size2f_IsNull               @643 NONAME
-    Size2f_ToRaw                @644 NONAME
-    Size2f_Width                @645 NONAME
-    Size2f_Height               @646 NONAME
-    Size2f_SetWidth             @647 NONAME
-    Size2f_SetHeight            @648 NONAME
-    Size2f_WidthHeight          @649 NONAME
-    Size2f_SetWidthHeight       @650 NONAME
-    Size2f_Sum                  @651 NONAME
-    Size2f_Equality             @652 NONAME
+    Size2f_New                  @641 NONAME
+    Size2f_NewWithDimensions    @642 NONAME
+    Size2f_NewFromRaw           @643 NONAME
+    Size2f_Delete               @644 NONAME
+    Size2f_IsNull               @645 NONAME
+    Size2f_ToRaw                @646 NONAME
+    Size2f_Width                @647 NONAME
+    Size2f_Height               @648 NONAME
+    Size2f_SetWidth             @649 NONAME
+    Size2f_SetHeight            @650 NONAME
+    Size2f_WidthHeight          @651 NONAME
+    Size2f_SetWidthHeight       @652 NONAME
+    Size2f_Sum                  @653 NONAME
+    Size2f_Equality             @654 NONAME
 
     ; Rectangle.
-    Recti_New                   @653 NONAME
-    Recti_NewWithOriginSize     @654 NONAME
-    Recti_NewWithOriginSize2    @655 NONAME
-    Recti_NewFromRaw            @656 NONAME
-    Recti_Delete                @657 NONAME
-    Recti_IsNull                @658 NONAME
-    Recti_Width                 @659 NONAME
-    Recti_Height                @660 NONAME
-    Recti_SetWidth              @661 NONAME
-    Recti_SetHeight             @662 NONAME
-    Recti_Origin                @663 NONAME
-    Recti_SetOrigin             @664 NONAME
-    Recti_SetOrigin2            @665 NONAME
-    Recti_Size                  @666 NONAME
-    Recti_SetSize               @667 NONAME
-    Recti_SetSize2              @668 NONAME
-    Recti_Equality              @669 NONAME
+    Recti_New                   @655 NONAME
+    Recti_NewWithOriginSize     @656 NONAME
+    Recti_NewWithOriginSize2    @657 NONAME
+    Recti_NewFromRaw            @658 NONAME
+    Recti_Delete                @659 NONAME
+    Recti_IsNull                @660 NONAME
+    Recti_Width                 @661 NONAME
+    Recti_Height                @662 NONAME
+    Recti_SetWidth              @663 NONAME
+    Recti_SetHeight             @664 NONAME
+    Recti_Origin                @665 NONAME
+    Recti_SetOrigin             @666 NONAME
+    Recti_SetOrigin2            @667 NONAME
+    Recti_Size                  @668 NONAME
+    Recti_SetSize               @669 NONAME
+    Recti_SetSize2              @670 NONAME
+    Recti_Equality              @671 NONAME
 
-    Rectf_New                   @670 NONAME
-    Rectf_NewWithOriginSize     @671 NONAME
-    Rectf_NewWithOriginSize2    @672 NONAME
-    Rectf_NewFromRaw            @673 NONAME
-    Rectf_Delete                @674 NONAME
-    Rectf_IsNull                @675 NONAME
-    Rectf_Width                 @676 NONAME
-    Rectf_Height                @677 NONAME
-    Rectf_SetWidth              @678 NONAME
-    Rectf_SetHeight             @679 NONAME
-    Rectf_Origin                @680 NONAME
-    Rectf_SetOrigin             @681 NONAME
-    Rectf_SetOrigin2            @682 NONAME
-    Rectf_Size                  @683 NONAME
-    Rectf_SetSize               @684 NONAME
-    Rectf_SetSize2              @685 NONAME
-    Rectf_Equality              @686 NONAME
+    Rectf_New                   @672 NONAME
+    Rectf_NewWithOriginSize     @673 NONAME
+    Rectf_NewWithOriginSize2    @674 NONAME
+    Rectf_NewFromRaw            @675 NONAME
+    Rectf_Delete                @676 NONAME
+    Rectf_IsNull                @677 NONAME
+    Rectf_Width                 @678 NONAME
+    Rectf_Height                @679 NONAME
+    Rectf_SetWidth              @680 NONAME
+    Rectf_SetHeight             @681 NONAME
+    Rectf_Origin                @682 NONAME
+    Rectf_SetOrigin             @683 NONAME
+    Rectf_SetOrigin2            @684 NONAME
+    Rectf_Size                  @685 NONAME
+    Rectf_SetSize               @686 NONAME
+    Rectf_SetSize2              @687 NONAME
+    Rectf_Equality              @688 NONAME
 
     ; String.
     Str_New                     @461 NONAME
@@ -593,7 +595,7 @@ EXPORTS
     DGL_DrawLine                @127 NONAME
     DGL_DrawRect                @133 NONAME
     DGL_DrawRecti               @511 NONAME
-    DGL_DrawRectd               @512 NONAME
+    DGL_DrawRectf               @512 NONAME
     DGL_DrawRectColor           @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
