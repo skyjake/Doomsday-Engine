@@ -1280,16 +1280,16 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
         // Top Left
         DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
+        DGL_DrawRect2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
         // Top Right
         DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
+        DGL_DrawRect2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
         // Bottom Right
         DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
+        DGL_DrawRect2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
         // Bottom Left
         DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
+        DGL_DrawRect2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
     }
 }
 
