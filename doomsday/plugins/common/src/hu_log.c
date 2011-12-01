@@ -355,7 +355,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        Size2i portSize;
+        Size2Rawi portSize;
         float scale;
         R_ViewPortSize(UIWidget_Player(obj), &portSize);
         scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;
@@ -494,7 +494,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        Size2i portSize;
+        Size2Rawi portSize;
         float scale;
         R_ViewPortSize(UIWidget_Player(obj), &portSize);
         scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;

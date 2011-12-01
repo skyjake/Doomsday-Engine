@@ -133,10 +133,11 @@ typedef struct rvertex_s {
 } rvertex_t;
 
 /**
- * RColor4f. RColor4f is intended as a handy POD structure for easy manipulation
- * of four piece red+green+blue+alpha value sets.
+ * RColor4f. (R)aw Color (f)loating point. Is intended as a handy POD
+ * structure for easy manipulation of four component, floating point
+ * color plus alpha value sets.
  */
-typedef struct rcolor_s {
+typedef struct rcolord_s {
     union {
         // Straight RGBA vector representation.
         float rgba[4];
@@ -153,10 +154,10 @@ typedef struct rcolor_s {
             float _alpha;
         };
     };
-} rcolor_t;
+} rcolord_t;
 
-float RColor_AverageColor(rcolor_t* color);
-float RColor_AverageColorMulAlpha(rcolor_t* color);
+float RColor_AverageColor(rcolord_t* color);
+float RColor_AverageColorMulAlpha(rcolord_t* color);
 
 typedef struct rtexcoord_s {
     float           st[2];
@@ -182,7 +183,7 @@ typedef struct {
 typedef struct {
     ddstring_t name;
     /// Size of the texture in logical pixels.
-    Size2i size;
+    Size2Rawi size;
     short flags;
     /// Index of this resource according to the logic of the original game's indexing algorithm.
     int origIndex;
@@ -276,16 +277,16 @@ extern byte* translationTables;
 void            R_UpdateData(void);
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
-rcolor_t*       R_AllocRendColors(uint num);
+rcolord_t*       R_AllocRendColors(uint num);
 rtexcoord_t*    R_AllocRendTexCoords(uint num);
 void            R_FreeRendVertices(rvertex_t* rvertices);
-void            R_FreeRendColors(rcolor_t* rcolors);
+void            R_FreeRendColors(rcolord_t* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
 void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs);
 
-void R_DivVertColors(rcolor_t* dst, const rcolor_t* src, const walldiv_t* divs,
+void R_DivVertColors(rcolord_t* dst, const rcolord_t* src, const walldiv_t* divs,
     float bL, float tL, float bR, float tR);
 
 void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* divs,
@@ -336,7 +337,7 @@ struct texture_s* R_FindFlareTextureForResourcePath(const Uri* resourcePath);
 struct texture_s* R_CreateReflectionTexture(const Uri* resourcePath);
 struct texture_s* R_FindReflectionTextureForResourcePath(const Uri* resourcePath);
 
-struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2i* size);
+struct texture_s* R_CreateMaskTexture(const Uri* resourcePath, const Size2Rawi* size);
 struct texture_s* R_FindMaskTextureForResourcePath(const Uri* resourcePath);
 
 void R_InitRawTexs(void);

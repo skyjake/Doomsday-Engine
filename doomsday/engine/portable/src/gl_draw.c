@@ -61,7 +61,7 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
-void GL_DrawRectd(const Rectangled* rect)
+void GL_DrawRectd(const RectRawf* rect)
 {
     assert(rect);
     glBegin(GL_QUADS);
@@ -76,7 +76,7 @@ void GL_DrawRectd(const Rectangled* rect)
     glEnd();
 }
 
-void GL_DrawRecti(const Rectanglei* rect)
+void GL_DrawRecti(const RectRawi* rect)
 {
     assert(rect);
     glBegin(GL_QUADS);

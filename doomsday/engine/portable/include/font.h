@@ -67,7 +67,7 @@ typedef struct font_s {
     int _ascent;
     int _descent;
 
-    Size2i _noCharSize;
+    Size2Rawi _noCharSize;
 
     /// dj: Do fonts have margins? Is this a pixel border in the composited
     /// character map texture (perhaps per-glyph)?

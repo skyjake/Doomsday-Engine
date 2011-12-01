@@ -45,7 +45,7 @@ texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
         Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
 
     tex->_flags = flags;
-    tex->_size.width = tex->_size.height = 0;
+    tex->_size = Size2i_New();
     tex->_variants = NULL;
     tex->_primaryBind = bindId;
     tex->_userData = userData;
@@ -54,7 +54,7 @@ texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
     return tex;
 }
 
-texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2i* size,
+texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Rawi* size,
     void* userData)
 {
     texture_t* tex = Texture_New(flags, bindId, userData);
@@ -104,6 +104,7 @@ void Texture_Delete(texture_t* tex)
     assert(tex);
     destroyVariants(tex);
     destroyAnalyses(tex);
+    Size2i_Delete(tex->_size);
     free(tex);
 }
 
@@ -197,40 +198,39 @@ void Texture_SetFlags(texture_t* tex, int flags)
 int Texture_Width(const texture_t* tex)
 {
     assert(tex);
-    return tex->_size.width;
+    return Size2i_Width(tex->_size);
 }
 
 void Texture_SetWidth(texture_t* tex, int width)
 {
     assert(tex);
-    tex->_size.width = width;
+    Size2i_SetWidth(tex->_size, width);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 int Texture_Height(const texture_t* tex)
 {
     assert(tex);
-    return tex->_size.height;
+    return Size2i_Height(tex->_size);
 }
 
 void Texture_SetHeight(texture_t* tex, int height)
 {
     assert(tex);
-    tex->_size.height = height;
+    Size2i_SetHeight(tex->_size, height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
 const Size2i* Texture_Size(const texture_t* tex)
 {
     assert(tex);
-    return &tex->_size;
+    return tex->_size;
 }
 
-void Texture_SetSize(texture_t* tex, const Size2i* size)
+void Texture_SetSize(texture_t* tex, const Size2Rawi* size)
 {
     assert(tex && size);
-    tex->_size.width  = size->width;
-    tex->_size.height = size->height;
+    Size2i_SetWidthHeight(tex->_size, size->width, size->height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 

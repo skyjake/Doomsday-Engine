@@ -29,6 +29,8 @@
 #ifndef LIBDENG_CONSOLE_RENDER_H
 #define LIBDENG_CONSOLE_RENDER_H
 
+#include "point.h"
+
 extern byte consoleShowFPS;
 
 void Rend_ConsoleRegister(void);
@@ -58,6 +60,6 @@ void Rend_ConsoleUpdateTitle(void);
 void Rend_Console(void);
 
 /// @param origin  Origin of the display (top right) in screen-space coordinates.
-void Rend_ConsoleFPS(const Point2i* origin);
+void Rend_ConsoleFPS(const Point2Rawi* origin);
 
 #endif /* LIBDENG_CONSOLE_RENDER_H */

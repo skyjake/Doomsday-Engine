@@ -32,8 +32,8 @@
 
 extern float quitDarkenOpacity;
 
-void D_DrawViewPort(int port, const Rectanglei* portGeometry, const Rectanglei* windowGeometry, int player, int layer);
-void D_DrawWindow(const Size2i* windowSize);
+void D_DrawViewPort(int port, const RectRawi* portGeometry, const RectRawi* windowGeometry, int player, int layer);
+void D_DrawWindow(const Size2Rawi* windowSize);
 
 void R_DrawSpecialFilter(int pnum);
 void R_DrawMapTitle(void);

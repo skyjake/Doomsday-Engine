@@ -904,10 +904,10 @@ void FIData_PicThink(fi_object_t* obj)
  */
 static size_t buildGeometry(const float dimensions[3], DGLuint tex,
     boolean flipTextureS, const float rgba[4], const float rgba2[4],
-    rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
+    rvertex_t** verts, rcolord_t** colors, rtexcoord_t** coords)
 {
     static rvertex_t rvertices[4];
-    static rcolor_t rcolors[4];
+    static rcolord_t rcolors[4];
     static rtexcoord_t rcoords[4];
 
     V3_Set(rvertices[0].pos, 0, 0, 0);
@@ -935,7 +935,7 @@ static size_t buildGeometry(const float dimensions[3], DGLuint tex,
 }
 
 static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
-    const rcolor_t* colors, const rtexcoord_t* coords)
+    const rcolord_t* colors, const rtexcoord_t* coords)
 {
     glBindTexture(GL_TEXTURE_2D, tex);
     if(tex)
@@ -970,7 +970,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     DGLuint glTexName = 0;
     size_t numVerts;
     rvertex_t* rvertices;
-    rcolor_t* rcolors;
+    rcolord_t* rcolors;
     rtexcoord_t* rcoords;
 
     if(p->numFrames)

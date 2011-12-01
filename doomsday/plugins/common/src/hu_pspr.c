@@ -88,7 +88,7 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
  */
 float HU_PSpriteYOffset(player_t* pl)
 {
-    Size2i winSize, portSize;
+    Size2Rawi winSize, portSize;
     float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
 
     R_ViewWindowSize(pl - players, &winSize);

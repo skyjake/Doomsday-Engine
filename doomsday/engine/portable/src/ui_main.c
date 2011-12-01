@@ -560,8 +560,8 @@ void UI_Drawer(void)
     // Draw mouse cursor?
     if(uiShowMouse)
     {
-        Point2i origin;
-        Size2i size;
+        Point2Rawi origin;
+        Size2Rawi size;
         float scale;
 
         if(theWindow->geometry.size.width >= theWindow->geometry.size.height)
@@ -837,7 +837,7 @@ void UIPage_Drawer(ui_page_t* page)
     // Draw background?
     if(page->flags.showBackground)
     {
-        Point2i origin = { 0, 0 };
+        Point2Rawi origin = { 0, 0 };
         UI_DrawDDBackground(&origin, &theWindow->geometry.size, uiAlpha);
     }
 
@@ -873,8 +873,8 @@ void UIPage_Drawer(ui_page_t* page)
         if((ob->flags & UIF_FOCUS) &&
             (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
         {
-            Point2i focusOrigin;
-            Size2i focusSize;
+            Point2Rawi focusOrigin;
+            Size2Rawi focusSize;
 
             t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
@@ -908,7 +908,7 @@ void UIFrame_Drawer(ui_object_t* ob)
 
 void UIText_Drawer(ui_object_t* ob)
 {
-    Point2i origin;
+    Point2Rawi origin;
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_NORMAL]);
@@ -924,7 +924,7 @@ void UIText_Drawer(ui_object_t* ob)
 
 void UIText_BrightDrawer(ui_object_t* ob)
 {
-    Point2i origin;
+    Point2Rawi origin;
 
     glEnable(GL_TEXTURE_2D);
     FR_SetFont(fontVariable[FS_NORMAL]);
@@ -997,7 +997,7 @@ void UIButton_Drawer(ui_object_t* ob)
     int dis = (ob->flags & UIF_DISABLED) != 0;
     int act = (ob->flags & UIF_ACTIVE) != 0;
     int click = (ob->flags & UIF_CLICKED) != 0;
-    Point2i labelOrigin;
+    Point2Rawi labelOrigin;
     boolean down = act || click;
     ui_color_t back;
     float t = ob->timer / 15.0f;
@@ -1132,7 +1132,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     char buf[256];
     uint curx, i, maxw = ob->geometry.size.width - UI_BORDER * 4, firstInBuf = 0;
     float alpha = (dis ? .2f : .5f);
-    Point2i textOrigin;
+    Point2Rawi textOrigin;
 
     // Mix the background color.
     if(!act || t > 1)
@@ -1179,8 +1179,8 @@ void UIEdit_Drawer(ui_object_t* ob)
     if(act && ob->timer & 4)
     {
         // Draw cursor.
-        Point2i cursorOrigin;
-        Size2i cursorSize;
+        Point2Rawi cursorOrigin;
+        Size2Rawi cursorSize;
         // Determine position.
         for(curx = 0, i = firstInBuf; i < dat->cp; ++i)
         {
@@ -1268,8 +1268,8 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
     }
     else if(IS_MOUSE_DOWN(ev))
     {
-        Point2i origin;
-        Size2i size;
+        Point2Rawi origin;
+        Size2Rawi size;
 
         if(!UI_MouseInside(ob)) return false;
         // Now we know we're going to eat this event.
@@ -1387,8 +1387,8 @@ void UIList_Drawer(ui_object_t* ob)
     int maxh = ob->geometry.size.height - 2 * UI_BORDER;
     char buf[256], *ptr, *endptr, tmp[256];
     float alpha = dis ? .2f : 1;
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     int barw;
 
     // The background.
@@ -1607,8 +1607,8 @@ int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
     }
     else if(IS_MOUSE_DOWN(ev))
     {
-        Point2i origin;
-        Size2i size;
+        Point2Rawi origin;
+        Size2Rawi size;
 
         if(!UI_MouseInside(ob)) return false;
         used = true;
@@ -1702,8 +1702,8 @@ void UISlider_Drawer(ui_object_t* ob)
     int butbor = UI_BAR_BUTTON_BORDER;
     int x, y, thumbx;
     float alpha = dis ? .2f : 1;
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     char buf[80];
 
     // The background.
@@ -1880,7 +1880,7 @@ static void strCpyLen(char* dest, const char* src, int maxWidth)
     }
 }
 
-int UI_MouseInsideBox(const Point2i* origin, const Size2i* size)
+int UI_MouseInsideBox(const Point2Rawi* origin, const Size2Rawi* size)
 {
     assert(origin && size);
     return (uiCX >= origin->x && uiCX <= origin->x + size->width &&
@@ -1915,7 +1915,7 @@ void UI_SetColor(ui_color_t* color)
     glColor3f(color->red, color->green, color->blue);
 }
 
-void UI_Shade(const Point2i* origin, const Size2i* size, int border, ui_color_t* main,
+void UI_Shade(const Point2Rawi* origin, const Size2Rawi* size, int border, ui_color_t* main,
     ui_color_t *secondary, float alpha, float bottomAlpha)
 {
     float s[2][2] = { {0, 1}, {1, 0} };
@@ -1968,19 +1968,19 @@ void UI_Shade(const Point2i* origin, const Size2i* size, int border, ui_color_t*
     GL_BlendMode(BM_NORMAL);
 }
 
-void UI_Gradient(const Point2i* origin, const Size2i* size, ui_color_t* topColor,
+void UI_Gradient(const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* topColor,
     ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
 {
     UI_GradientEx(origin, size, 0, topColor, bottomColor, topAlpha, bottomAlpha);
 }
 
-void UI_GradientEx(const Point2i* origin, const Size2i* size, int border, ui_color_t* topColor,
+void UI_GradientEx(const Point2Rawi* origin, const Size2Rawi* size, int border, ui_color_t* topColor,
     ui_color_t* bottomColor, float topAlpha, float bottomAlpha)
 {
     UI_DrawRectEx(origin, size, border, true, topColor, bottomColor, topAlpha, bottomAlpha);
 }
 
-void UI_HorizGradient(const Point2i* origin, const Size2i* size, ui_color_t* left, ui_color_t* right,
+void UI_HorizGradient(const Point2Rawi* origin, const Size2Rawi* size, ui_color_t* left, ui_color_t* right,
     float leftAlpha, float rightAlpha)
 {
     leftAlpha  *= uiAlpha;
@@ -2001,7 +2001,7 @@ void UI_HorizGradient(const Point2i* origin, const Size2i* size, ui_color_t* lef
     glEnd();
 }
 
-void UI_Line(const Point2i* start, const Point2i* end, ui_color_t* startColor,
+void UI_Line(const Point2Rawi* start, const Point2Rawi* end, ui_color_t* startColor,
     ui_color_t* endColor, float startAlpha, float endAlpha)
 {
     startAlpha *= uiAlpha;
@@ -2015,7 +2015,7 @@ void UI_Line(const Point2i* start, const Point2i* end, ui_color_t* startColor,
     glEnd();
 }
 
-void UI_TextOutEx2(const char* text, const Point2i* origin, ui_color_t* color, float alpha,
+void UI_TextOutEx2(const char* text, const Point2Rawi* origin, ui_color_t* color, float alpha,
     int alignFlags, short textFlags)
 {
     assert(origin);
@@ -2025,22 +2025,22 @@ void UI_TextOutEx2(const char* text, const Point2i* origin, ui_color_t* color, f
     FR_DrawText3(text, origin->x, origin->y, alignFlags, textFlags);
 }
 
-void UI_TextOutEx(const char* text, const Point2i* origin, ui_color_t* color, float alpha)
+void UI_TextOutEx(const char* text, const Point2Rawi* origin, ui_color_t* color, float alpha)
 {
     UI_TextOutEx2(text, origin, color, alpha, DEFAULT_ALIGNFLAGS, DEFAULT_DRAWFLAGS);
 }
 
-int UI_TextOutWrap(const char* text, const Point2i* origin, const Size2i* size)
+int UI_TextOutWrap(const char* text, const Point2Rawi* origin, const Size2Rawi* size)
 {
     return UI_TextOutWrapEx(text, origin, size, UI_Color(UIC_TEXT), 1);
 }
 
-int UI_TextOutWrapEx(const char* text, const Point2i* origin, const Size2i* size,
+int UI_TextOutWrapEx(const char* text, const Point2Rawi* origin, const Size2Rawi* size,
     ui_color_t* color, float alpha)
 {
     char word[2048], *wp = word;
     int len, linehgt = FR_SingleLineHeight("A");
-    Point2i t;
+    Point2Rawi t;
     byte c;
     assert(origin && size);
 
@@ -2104,7 +2104,7 @@ int UI_TextOutWrapEx(const char* text, const Point2i* origin, const Size2i* size
     }
 }
 
-void UI_DrawRectEx(const Point2i* origin, const Size2i* size, int border, boolean filled,
+void UI_DrawRectEx(const Point2Rawi* origin, const Size2Rawi* size, int border, boolean filled,
     ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
 {
     float s[2] = { 0, 1 }, t[2] = { 0, 1 };
@@ -2225,12 +2225,12 @@ void UI_DrawRectEx(const Point2i* origin, const Size2i* size, int border, boolea
     glEnd();
 }
 
-void UI_DrawRect(const Point2i* origin, const Size2i* size, int border, ui_color_t* color, float alpha)
+void UI_DrawRect(const Point2Rawi* origin, const Size2Rawi* size, int border, ui_color_t* color, float alpha)
 {
     UI_DrawRectEx(origin, size, border, false, color, NULL, alpha, alpha);
 }
 
-void UI_DrawTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med,
+void UI_DrawTriangle(const Point2Rawi* origin, int radius, ui_color_t* hi, ui_color_t* med,
     ui_color_t* low, float alpha)
 {
     float xrad = radius * .866f; // cos(60)
@@ -2271,7 +2271,7 @@ void UI_DrawTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color
     glEnd();
 }
 
-void UI_DrawHorizTriangle(const Point2i* origin, int radius, ui_color_t* hi, ui_color_t* med,
+void UI_DrawHorizTriangle(const Point2Rawi* origin, int radius, ui_color_t* hi, ui_color_t* med,
     ui_color_t* low, float alpha)
 {
     float yrad = radius * .866f; // cos(60)
@@ -2322,12 +2322,12 @@ void UI_DefaultButtonBackground(ui_color_t* col, boolean down)
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
-void UI_DrawButton(const Point2i* origin, const Size2i* size, int border, float alpha,
+void UI_DrawButton(const Point2Rawi* origin, const Size2Rawi* size, int border, float alpha,
     ui_color_t* background, boolean down, boolean disabled, int arrow)
 {
     int inside, boff = down ? 2 : 0;
     ui_color_t back;
-    Point2i arrowPoint;
+    Point2Rawi arrowPoint;
     assert(origin && size);
 
     inside = MIN_OF(size->width - border * 2, size->height - border * 2);
@@ -2365,7 +2365,7 @@ void UI_DrawButton(const Point2i* origin, const Size2i* size, int border, float 
     }
 }
 
-void UI_DrawHelpBox(const Point2i* origin, const Size2i* size, float alpha, char* text)
+void UI_DrawHelpBox(const Point2Rawi* origin, const Size2Rawi* size, float alpha, char* text)
 {
     int bor = UI_BUTTON_BORDER;
     assert(origin && size);
@@ -2376,8 +2376,8 @@ void UI_DrawHelpBox(const Point2i* origin, const Size2i* size, float alpha, char
 
     if(text)
     {
-        Point2i textOrigin;
-        Size2i textSize;
+        Point2Rawi textOrigin;
+        Size2Rawi textSize;
 
         bor = 2 * UI_BORDER / 3;
         textOrigin.x = origin->x + 2 * bor;
@@ -2392,7 +2392,7 @@ void UI_DrawHelpBox(const Point2i* origin, const Size2i* size, float alpha, char
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawMouse(const Point2i* origin, const Size2i* size)
+void UI_DrawMouse(const Point2Rawi* origin, const Size2Rawi* size)
 {
     assert(origin && size);
 
@@ -2412,9 +2412,9 @@ void UI_DrawMouse(const Point2i* origin, const Size2i* size)
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawLogo(const Point2i* origin, const Size2i* size)
+void UI_DrawLogo(const Point2Rawi* origin, const Size2Rawi* size)
 {
-    Rectanglei rect;
+    RectRawi rect;
     assert(origin && size);
     rect.origin.x = origin->x;
     rect.origin.y = origin->y;
@@ -2428,7 +2428,7 @@ void UI_DrawLogo(const Point2i* origin, const Size2i* size)
     glDisable(GL_TEXTURE_2D);
 }
 
-void UI_DrawDDBackground(const Point2i* origin, const Size2i* size, float alpha)
+void UI_DrawDDBackground(const Point2Rawi* origin, const Size2Rawi* size, float alpha)
 {
     float mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
     ui_color_t* dark = UI_Color(UIC_BG_DARK);

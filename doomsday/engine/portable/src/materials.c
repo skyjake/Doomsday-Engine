@@ -577,7 +577,7 @@ static void destroyMaterials(void)
     while(materials)
     {
         materiallist_node_t* next = materials->next;
-        Material_DestroyVariants(materials->mat);
+        Material_Destroy(materials->mat);
         free(materials);
         materials = next;
     }
@@ -1000,9 +1000,8 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat = linkMaterialToGlobalList(allocMaterial());
     mat->_flags = def->flags;
     mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
-    mat->_def    = def;
-    mat->_size.width  = MAX_OF(0, def->width);
-    mat->_size.height = MAX_OF(0, def->height);
+    mat->_def = def;
+    Size2i_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(uri);
     newMaterialBind(uri, mat);
 

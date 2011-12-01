@@ -92,7 +92,10 @@ DENG_API_HEADERS = \
     api/dengproject.h \
     api/dfile.h \
     api/doomsday.h \
+    api/point.h \
     api/reader.h \
+    api/rect.h \
+    api/size.h \
     api/smoother.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
@@ -482,6 +485,7 @@ SOURCES += \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
     portable/src/p_vertex.c \
+    portable/src/point.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
     portable/src/r_fakeradio.c \
@@ -495,6 +499,7 @@ SOURCES += \
     portable/src/r_util.c \
     portable/src/r_world.c \
     portable/src/reader.c \
+    portable/src/rect.c \
     portable/src/rend_bias.c \
     portable/src/rend_clip.c \
     portable/src/rend_console.c \
@@ -521,6 +526,7 @@ SOURCES += \
     portable/src/s_mus.c \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
+    portable/src/size.c \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \

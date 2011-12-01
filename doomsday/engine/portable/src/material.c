@@ -52,9 +52,18 @@ static void destroyVariants(material_t* mat)
 void Material_Initialize(material_t* mat)
 {
     assert(mat);
-    memset(mat, 0, sizeof(material_t));
+    memset(mat, 0, sizeof *mat);
     mat->header.type = DMU_MATERIAL;
     mat->_envClass = MEC_UNKNOWN;
+    mat->_size = Size2i_New();
+}
+
+void Material_Destroy(material_t* mat)
+{
+    assert(mat);
+    Material_DestroyVariants(mat);
+    Size2i_Delete(mat->_size);
+    mat->_size = NULL;
 }
 
 void Material_Ticker(material_t* mat, timespan_t time)
@@ -83,44 +92,42 @@ void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
 const Size2i* Material_Size(const material_t* mat)
 {
     assert(mat);
-    return &mat->_size;
+    return mat->_size;
 }
 
 void Material_SetSize(material_t* mat, const Size2i* size)
 {
     assert(mat && size);
-    if(size->width  == mat->_size.width &&
-       size->height == mat->_size.height) return;
-    mat->_size.width  = size->width;
-    mat->_size.height = size->height;
+    if(Size2i_Equality(mat->_size, size)) return;
+    Size2i_SetWidthHeight(mat->_size, Size2i_Width(size), Size2i_Height(size));
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Width(const material_t* mat)
 {
     assert(mat);
-    return mat->_size.width;
+    return Size2i_Width(mat->_size);
 }
 
 void Material_SetWidth(material_t* mat, int width)
 {
     assert(mat);
-    if(width == mat->_size.width) return;
-    mat->_size.width = width;
+    if(Size2i_Width(mat->_size) == width) return;
+    Size2i_SetWidth(mat->_size, width);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 
 int Material_Height(const material_t* mat)
 {
     assert(mat);
-    return mat->_size.height;
+    return Size2i_Height(mat->_size);
 }
 
 void Material_SetHeight(material_t* mat, int height)
 {
     assert(mat);
-    if(height == mat->_size.height) return;
-    mat->_size.height = height;
+    if(Size2i_Height(mat->_size) == height) return;
+    Size2i_SetHeight(mat->_size, height);
     R_UpdateMapSurfacesOnMaterialChange(mat);
 }
 

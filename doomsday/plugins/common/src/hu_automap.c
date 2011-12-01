@@ -1101,7 +1101,7 @@ static void drawMarkedPoints(uiwidget_t* obj)
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
     uint i, pointCount = UIAutomap_PointCount(obj);
-    Size2i portSize;
+    Size2Rawi portSize;
 
     if(!pointCount) return;
 
@@ -1154,7 +1154,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
-    Point2i portOrigin;
+    Point2Rawi portOrigin;
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1649,7 +1649,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(am->pan || NULL == mo)
     {
         float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
-        Size2i portSize;
+        Size2Rawi portSize;
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
         R_ViewPortSize(player, &portSize);
@@ -1745,7 +1745,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
     // Calculate border (viewport coordinate space).
     {
-    Size2i portSize;
+    Size2Rawi portSize;
     R_ViewPortSize(player, &portSize);
     am->border = 4 * (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
     }
@@ -1855,7 +1855,7 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    Rectanglei newGeom;
+    RectRawi newGeom;
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.

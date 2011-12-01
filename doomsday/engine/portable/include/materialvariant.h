@@ -50,7 +50,7 @@ typedef struct materialsnapshot_s {
     boolean isOpaque;
 
     /// Size in world units.
-    Size2i size;
+    Size2Rawi size;
 
     /// Glow strength multiplier.
     float glowing;

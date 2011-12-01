@@ -95,7 +95,7 @@ void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
 /**
  * Set the vertex colors in the rendpoly.
  */
-static void setRendpolyColor(rcolor_t* rcolors, uint num, const float shadowRGB[3], float darkness)
+static void setRendpolyColor(rcolord_t* rcolors, uint num, const float shadowRGB[3], float darkness)
 {
     uint i;
     darkness = MINMAX_OF(0, darkness, 1);
@@ -960,7 +960,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
     const rendershadowseg_params_t* p, const float shadowRGB[3], float shadowDark)
 {
     float texOrigin[2][3];
-    rcolor_t* rcolors;
+    rcolord_t* rcolors;
     rtexcoord_t* rtexcoords;
     uint realNumVertices = 4;
 
@@ -998,7 +998,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
             float bL, tL, bR, tR;
             rvertex_t* rvertices;
             rtexcoord_t origTexCoords[4];
-            rcolor_t origColors[4];
+            rcolord_t origColors[4];
 
             /**
              * Need to swap indices around into fans set the position
@@ -1009,7 +1009,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
             rvertices = R_AllocRendVertices(realNumVertices);
 
             memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-            memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
+            memcpy(origColors, rcolors, sizeof(rcolord_t) * 4);
 
             bL = origVertices[0].pos[VZ];
             tL = origVertices[1].pos[VZ];
@@ -1233,7 +1233,7 @@ static void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
     static const uint ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
     rvertex_t rvertices[4];
-    rcolor_t rcolors[4];
+    rcolord_t rcolors[4];
     vec2_t outerAlpha;
     const uint* idx;
     uint i, winding; // Winding: 0 = left, 1 = right

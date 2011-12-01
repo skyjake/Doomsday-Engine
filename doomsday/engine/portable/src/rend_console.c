@@ -262,8 +262,8 @@ static void calcAvgColor(int fl, float rgb[3])
 static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
 {
     int xoff = 3, yoff = lineHeight / 4, rh = MIN_OF(5, lineHeight / 2);
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     assert(inited);
 
     origin.x = x + xoff;
@@ -448,11 +448,11 @@ void Rend_ConsoleTicker(timespan_t time)
     ConsoleBlink += step; // Cursor blink timer (0 = visible).
 }
 
-void Rend_ConsoleFPS(const Point2i* origin)
+void Rend_ConsoleFPS(const Point2Rawi* origin)
 {
-    Point2i topLeft, labelOrigin;
+    Point2Rawi topLeft, labelOrigin;
     char buf[160];
-    Size2i size;
+    Size2Rawi size;
     assert(origin);
 
     if(isDedicated || !inited) return;
@@ -487,8 +487,8 @@ void Rend_ConsoleFPS(const Point2i* origin)
 static void drawConsoleTitleBar(float alpha)
 {
     int border, barHeight;
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     assert(inited);
 
     if(alpha < .0001f) return;
@@ -547,7 +547,7 @@ static void drawConsoleTitleBar(float alpha)
     glPopMatrix();
 }
 
-static void drawConsoleBackground(const Point2i* origin, const Size2i* size, float closeFade)
+static void drawConsoleBackground(const Point2Rawi* origin, const Size2Rawi* size, float closeFade)
 {
     int bgX = 0, bgY = 0;
     assert(inited);
@@ -648,8 +648,8 @@ static void drawConsole(float consoleAlpha)
     int lineHeight, textOffsetY;
     con_textfilter_t printFilter = Con_PrintFilter();
     uint reqLines, maxLineLength;
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     assert(inited);
 
     FR_SetFont(Con_Font());
@@ -889,7 +889,7 @@ void Rend_Console(void)
 
     if(consoleShowFPS && !UI_IsActive())
     {
-        Point2i origin;
+        Point2Rawi origin;
         origin.x = theWindow->geometry.size.width - 10;
         origin.y = 10 + (ConsoleY > 0? ROUND(consoleAlpha * calcConsoleTitleBarHeight()) : 0);
         Rend_ConsoleFPS(&origin);

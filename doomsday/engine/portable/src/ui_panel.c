@@ -671,8 +671,8 @@ void CP_DrawBorder(ui_object_t* ob)
     int b = UI_BORDER;
     ui_object_t* it;
     void* help_ptr;
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     boolean shown;
 
     UIFrame_Drawer(ob);
@@ -822,7 +822,7 @@ void CP_KeyGrabDrawer(ui_object_t* ob)
     char buf[80];
     byte key = Con_GetByte(ob->text);
     const char* name;
-    Point2i labelOrigin;
+    Point2Rawi labelOrigin;
 
     glEnable(GL_TEXTURE_2D);
     UI_GradientEx(&ob->geometry.origin, &ob->geometry.size, UI_BORDER,
@@ -859,7 +859,7 @@ void CP_QuickFOV(ui_object_t* ob)
 
 void CP_VideoModeInfo(ui_object_t* ob)
 {
-    Point2i textOrigin;
+    Point2Rawi textOrigin;
     char buf[80];
     assert(ob);
 
@@ -966,7 +966,7 @@ void CP_VidModeChanged(ui_object_t *ob)
 ui_object_t* CP_FindHover(void)
 {
     ui_object_t* ob;
-    Size2i size;
+    Size2Rawi size;
 
     for(ob = ob_panel; ob->type; ob++)
     {
@@ -1049,11 +1049,11 @@ void CP_Ticker(ui_page_t* page)
         panel_help_offset = 0;
 }
 
-int CP_LabelText(char* label, char* text, const Point2i* origin_, const Size2i* size_, float alpha)
+int CP_LabelText(char* label, char* text, const Point2Rawi* origin_, const Size2Rawi* size_, float alpha)
 {
     ui_color_t* color = UI_Color(UIC_TEXT);
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     int ind;
     assert(origin_ && size_);
 
@@ -1080,8 +1080,8 @@ void CP_Drawer(ui_page_t* page)
 {
     float alpha = panel_help_offset / (float) HELP_OFFSET;
     int bor, lineHeight, verticalSpacing;
-    Point2i origin, end;
-    Size2i size;
+    Point2Rawi origin, end;
+    Size2Rawi size;
     char* str;
 
     // First call the regular drawer.

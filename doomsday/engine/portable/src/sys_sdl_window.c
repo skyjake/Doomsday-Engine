@@ -435,7 +435,7 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t* createDDWindow(application_t* app, const Size2i* size,
+static ddwindow_t* createDDWindow(application_t* app, const Size2Rawi* size,
     int bpp, int flags, ddwindowtype_t type, const char* title)
 {
     // SDL only supports one window.
@@ -524,8 +524,8 @@ static ddwindow_t* createDDWindow(application_t* app, const Size2i* size,
     return &mainWindow;
 }
 
-uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2i* origin,
-    const Size2i* size, int bpp, int flags, ddwindowtype_t type, const char* title,
+uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Rawi* origin,
+    const Size2Rawi* size, int bpp, int flags, ddwindowtype_t type, const char* title,
     void* userData)
 {
     ddwindow_t* win;
@@ -866,7 +866,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     return false;
 }
 
-const Rectanglei* Sys_GetWindowGeometry(uint idx)
+const RectRawi* Sys_GetWindowGeometry(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;
@@ -875,7 +875,7 @@ const Rectanglei* Sys_GetWindowGeometry(uint idx)
     return &window->geometry;
 }
 
-const Point2i* Sys_GetWindowOrigin(uint idx)
+const Point2Rawi* Sys_GetWindowOrigin(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;
@@ -884,7 +884,7 @@ const Point2i* Sys_GetWindowOrigin(uint idx)
     return &window->geometry.origin;
 }
 
-const Size2i* Sys_GetWindowSize(uint idx)
+const Size2Rawi* Sys_GetWindowSize(uint idx)
 {
     ddwindow_t* window = getWindow(idx - 1);
     if(!window) return NULL;

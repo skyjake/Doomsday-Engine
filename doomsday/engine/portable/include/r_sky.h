@@ -76,7 +76,7 @@ void R_SetupSky(ded_sky_t* sky);
 int R_SkyFirstActiveLayer(void);
 
 /// @return  Current ambient sky color.
-const rcolor_t* R_SkyAmbientColor(void);
+const rcolord_t* R_SkyAmbientColor(void);
 
 /// @return  Horizon offset for the current Sky.
 float R_SkyHorizonOffset(void);

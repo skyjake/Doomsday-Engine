@@ -330,7 +330,7 @@ boolean GUI_GameTicTriggerIsSharp(void)
     return sharpTic;
 }
 
-static void drawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
+static void drawWidget(uiwidget_t* obj, int x, int y, Size2Rawi* drawnSize)
 {
     assert(obj && drawnSize);
     if(obj->drawer && obj->alpha > 0)
@@ -353,7 +353,7 @@ static void drawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
     drawnSize->height = obj->geometry.size.height;
 }
 
-static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
+static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2Rawi* drawnSize)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
     int i, numDrawnWidgets = 0;
@@ -374,7 +374,7 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
     for(i = 0; i < grp->widgetIdCount; ++i)
     {
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-        Size2i childSize = { 0, 0 };
+        Size2Rawi childSize = { 0, 0 };
 
         GUI_DrawWidget(child, x, y, &childSize);
 
@@ -432,9 +432,9 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2i* drawnSize)
     }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize_)
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Rawi* drawnSize_)
 {
-    Size2i drawnSize = { 0, 0 };
+    Size2Rawi drawnSize = { 0, 0 };
 
     if(drawnSize_)
     {
@@ -454,7 +454,7 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize_)
     if(obj->type == GUI_GROUP)
     {
         // Now our children.
-        Size2i childSize = { 0, 0 };
+        Size2Rawi childSize = { 0, 0 };
         drawChildWidgets(obj, x, y, &childSize);
 
         if(childSize.width  > drawnSize.width)  drawnSize.width = childSize.width;
@@ -500,13 +500,13 @@ int UIWidget_Player(uiwidget_t* obj)
     return obj->player;
 }
 
-const Point2i* UIWidget_Origin(uiwidget_t* obj)
+const Point2Rawi* UIWidget_Origin(uiwidget_t* obj)
 {
     assert(obj);
     return &obj->geometry.origin;
 }
 
-const Rectanglei* UIWidget_Geometry(uiwidget_t* obj)
+const RectRawi* UIWidget_Geometry(uiwidget_t* obj)
 {
     assert(obj);
     return &obj->geometry;
@@ -518,7 +518,7 @@ int UIWidget_MaximumHeight(uiwidget_t* obj)
     return obj->maxSize.height;
 }
 
-const Size2i* UIWidget_MaximumSize(uiwidget_t* obj)
+const Size2Rawi* UIWidget_MaximumSize(uiwidget_t* obj)
 {
     assert(obj);
     return &obj->maxSize;
@@ -547,7 +547,7 @@ void UIWidget_SetMaximumHeight(uiwidget_t* obj, int height)
     }
 }
 
-void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2i* size)
+void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Rawi* size)
 {
     assert(obj);
     if(obj->maxSize.width == size->width &&
@@ -1038,7 +1038,7 @@ int MNObject_Flags(const mn_object_t* obj)
     return obj->_flags;
 }
 
-const Rectanglei* MNObject_Geometry(const mn_object_t* obj)
+const RectRawi* MNObject_Geometry(const mn_object_t* obj)
 {
     assert(obj);
     return &obj->_geometry;
@@ -1750,7 +1750,7 @@ void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
-        Size2i size;
+        Size2Rawi size;
         FR_TextSize(&size, item->text);
         if(size.width > obj->_geometry.size.width)
             obj->_geometry.size.width = size.width;

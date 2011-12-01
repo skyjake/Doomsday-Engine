@@ -492,9 +492,9 @@ void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, floa
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
 }
 
-void DGL_DrawRectd(const Rectangled* rect)
+void DGL_DrawRectd(const RectRawf* rect)
 {
-    if(NULL == rect)
+    if(!rect)
     {
         Con_Error("DGL_DrawRectd: Invalid value for argument 'rect'.");
         exit(1); // Unreachable.
@@ -502,9 +502,9 @@ void DGL_DrawRectd(const Rectangled* rect)
     GL_DrawRectd(rect);
 }
 
-void DGL_DrawRecti(const Rectanglei* rect)
+void DGL_DrawRecti(const RectRawi* rect)
 {
-    if(NULL == rect)
+    if(!rect)
     {
         Con_Error("DGL_DrawRecti: Invalid value for argument 'rect'.");
         exit(1); // Unreachable.

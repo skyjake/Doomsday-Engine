@@ -36,6 +36,8 @@ struct materialvariant_s;
  */
 void Material_Initialize(material_t* mat);
 
+void Material_Destroy(material_t* mat);
+
 /**
  * Process a system tick event.
  */

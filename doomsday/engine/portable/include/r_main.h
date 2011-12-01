@@ -29,9 +29,11 @@
 #ifndef LIBDENG_REFRESH_MAIN_H
 #define LIBDENG_REFRESH_MAIN_H
 
+#include "rect.h"
+
 typedef struct viewport_s {
     int console;
-    Rectanglei geometry;
+    RectRawi geometry;
 } viewport_t;
 
 typedef struct viewer_s {
@@ -46,7 +48,7 @@ typedef struct viewdata_s {
     viewer_t lastSharp[2]; // For smoothing.
     float frontVec[3], upVec[3], sideVec[3];
     float viewCos, viewSin;
-    Rectanglei window, windowTarget, windowOld;
+    RectRawi window, windowTarget, windowOld;
     float windowInter;
 } viewdata_t;
 
@@ -101,20 +103,20 @@ void R_LoadSystemFonts(void);
 const char* R_ChooseFixedFont(void);
 const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 
-int R_ViewWindowGeometry(int player, Rectanglei* geometry);
-int R_ViewWindowOrigin(int player, Point2i* origin);
-int R_ViewWindowSize(int player, Size2i* size);
+int R_ViewWindowGeometry(int player, RectRawi* geometry);
+int R_ViewWindowOrigin(int player, Point2Rawi* origin);
+int R_ViewWindowSize(int player, Size2Rawi* size);
 
-void R_SetViewWindowGeometry(int player, const Rectanglei* geometry, boolean interpolate);
+void R_SetViewWindowGeometry(int player, const RectRawi* geometry, boolean interpolate);
 
 /**
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int player, timespan_t ticLength);
 
-int R_ViewPortGeometry(int player, Rectanglei* geometry);
-int R_ViewPortOrigin(int player, Point2i* origin);
-int R_ViewPortSize(int player, Size2i* size);
+int R_ViewPortGeometry(int player, RectRawi* geometry);
+int R_ViewPortOrigin(int player, Point2Rawi* origin);
+int R_ViewPortSize(int player, Size2Rawi* size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 

@@ -70,7 +70,7 @@ float quitDarkenOpacity = 0;
  * Draws a special filter over the screen (e.g. the inversing filter used
  * when in god mode).
  */
-static void rendSpecialFilter(int player, const Rectanglei* region)
+static void rendSpecialFilter(int player, const RectRawi* region)
 {
     player_t* plr = players + player;
     const int filter = plr->powers[PT_INVULNERABILITY];
@@ -186,7 +186,7 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-static void rendHUD(int player, const Rectanglei* portGeometry)
+static void rendHUD(int player, const RectRawi* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
     if(G_GetGameState() != GS_MAP) return;
@@ -223,8 +223,8 @@ static void rendHUD(int player, const Rectanglei* portGeometry)
     }
 }
 
-void D_DrawViewPort(int port, const Rectanglei* portGeometry,
-    const Rectanglei* windowGeometry, int player, int layer)
+void D_DrawViewPort(int port, const RectRawi* portGeometry,
+    const RectRawi* windowGeometry, int player, int layer)
 {
     player_t* plr = players + player;
 
@@ -259,7 +259,7 @@ void D_DrawViewPort(int port, const Rectanglei* portGeometry,
     }
 }
 
-void D_DrawWindow(const Size2i* windowSize)
+void D_DrawWindow(const Size2Rawi* windowSize)
 {
     if(G_GetGameState() == GS_INTERMISSION)
     {

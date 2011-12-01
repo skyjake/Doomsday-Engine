@@ -65,7 +65,7 @@ typedef struct {
     ddwindowtype_t  type;
     boolean         inited;
     /// \note SDL cannot move windows; thus origin is ignored.
-    Rectanglei    geometry;
+    RectRawi        geometry;
     int             flags;
 #if defined(WIN32)
     HWND            hWnd; // Needed for input (among other things).
@@ -149,8 +149,8 @@ boolean Sys_GetDesktopBPP(int* bpp);
  * @return              If @c 0, window creation was unsuccessful,
  *                      ELSE 1-based index identifier of the new window.
  */
-uint Sys_CreateWindow(application_t* app, uint parentIDX, const Point2i* origin,
-    const Size2i* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
+uint Sys_CreateWindow(application_t* app, uint parentIDX, const Point2Rawi* origin,
+    const Size2Rawi* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
 boolean Sys_DestroyWindow(uint idx);
 
 void Sys_UpdateWindow(uint idx);
@@ -162,9 +162,9 @@ void Sys_UpdateWindow(uint idx);
  * @param idx  Unique identifier (1-based) to the window.
  * @return  Geometry of the window else @c NULL if @a idx is not valid.
  */
-const Rectanglei* Sys_GetWindowGeometry(uint idx);
-const Point2i* Sys_GetWindowOrigin(uint idx);
-const Size2i* Sys_GetWindowSize(uint idx);
+const RectRawi* Sys_GetWindowGeometry(uint idx);
+const Point2Rawi* Sys_GetWindowOrigin(uint idx);
+const Size2Rawi* Sys_GetWindowSize(uint idx);
 
 boolean Sys_GetWindowBPP(uint idx, int* bpp);
 boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen);

@@ -70,7 +70,10 @@ struct font_s;
 #include "dd_share.h"
 #include "dd_plugin.h"
 #include "dfile.h"
+#include "point.h"
 #include "reader.h"
+#include "rect.h"
+#include "size.h"
 #include "smoother.h"
 #include "stringpool.h"
 #include "writer.h"
@@ -394,20 +397,20 @@ void R_RenderPlayerView(int num);
 /**
  * Retrieve the geometry of the specified viewwindow by console player num.
  */
-int R_ViewWindowGeometry(int player, Rectanglei* geometry);
-int R_ViewWindowOrigin(int player, Point2i* origin);
-int R_ViewWindowSize(int player, Size2i* size);
+int R_ViewWindowGeometry(int player, RectRawi* geometry);
+int R_ViewWindowOrigin(int player, Point2Rawi* origin);
+int R_ViewWindowSize(int player, Size2Rawi* size);
 
-void R_SetViewWindowGeometry(int player, const Rectanglei* geometry, boolean interpolate);
+void R_SetViewWindowGeometry(int player, const RectRawi* geometry, boolean interpolate);
 
 void R_SetBorderGfx(const Uri* const* paths);
 
 /**
  * Retrieve the geometry of the specified viewport by console player num.
  */
-int R_ViewPortGeometry(int player, Rectanglei* geometry);
-int R_ViewPortOrigin(int player, Point2i* origin);
-int R_ViewPortSize(int player, Size2i* size);
+int R_ViewPortGeometry(int player, RectRawi* geometry);
+int R_ViewPortOrigin(int player, Point2Rawi* origin);
+int R_ViewPortSize(int player, Size2Rawi* size);
 
 /**
  * Change the view player for the specified viewport by console player num.

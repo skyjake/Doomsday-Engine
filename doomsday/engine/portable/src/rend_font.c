@@ -104,7 +104,7 @@ static __inline fr_state_attributes_t* currentAttribs(void);
 static int topToAscent(font_t* font);
 static int lineHeight(font_t* font, unsigned char ch);
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font, int alignFlags, short textFlags);
-static void drawFlash(const Point2i* origin, const Size2i* size, int bright);
+static void drawFlash(const Point2Rawi* origin, const Size2Rawi* size, int bright);
 
 static int inited = false;
 
@@ -708,8 +708,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     if(!noGlitter && glitter > 0)
                     {
                         // Do something flashy.
-                        Point2i origin;
-                        Size2i size;
+                        Point2Rawi origin;
+                        Size2Rawi size;
                         origin.x = cx;
                         origin.y = cy + yoff;
                         size.width  = w;
@@ -720,8 +720,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                 }
                 else if(!noShadow)
                 {
-                    Point2i origin;
-                    Size2i size;
+                    Point2Rawi origin;
+                    Size2Rawi size;
                     origin.x = cx;
                     origin.y = cy + yoff;
                     size.width  = w;
@@ -899,7 +899,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     glTranslatef(-x, -y, 0);
 }
 
-static void drawFlash(const Point2i* origin, const Size2i* size, int bright)
+static void drawFlash(const Point2Rawi* origin, const Size2Rawi* size, int bright)
 {
     float fsize = 4.f + bright;
     float fw = fsize * size->width  / 2.0f;
@@ -1367,7 +1367,7 @@ void FR_DrawText(const char* text, int x, int y)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_TextSize(Size2i* size, const char* text)
+void FR_TextSize(Size2Rawi* size, const char* text)
 {
     if(!size) return;
     size->width  = FR_TextWidth(text);

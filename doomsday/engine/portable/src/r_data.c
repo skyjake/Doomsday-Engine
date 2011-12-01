@@ -506,7 +506,7 @@ void R_InfoRendVerticesPool(void)
 void R_InitRendVerticesPool(void)
 {
     rvertex_t*          rvertices;
-    rcolor_t*           rcolors;
+    rcolord_t*           rcolors;
     rtexcoord_t*        rtexcoords;
 
     numrendpolys = maxrendpolys = 0;
@@ -597,14 +597,14 @@ rvertex_t* R_AllocRendVertices(uint num)
 }
 
 /**
- * Retrieves a batch of rcolor_t.
+ * Retrieves a batch of rcolord_t.
  * Possibly allocates new if necessary.
  *
  * @param num           The number of verts required.
  *
- * @return              Ptr to array of rcolor_t
+ * @return              Ptr to array of rcolord_t
  */
-rcolor_t* R_AllocRendColors(uint num)
+rcolord_t* R_AllocRendColors(uint num)
 {
     unsigned int        idx;
     boolean             found = false;
@@ -618,7 +618,7 @@ rcolor_t* R_AllocRendColors(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (rcolor_t*) rendPolys[idx]->data;
+            return (rcolord_t*) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -665,9 +665,9 @@ rcolor_t* R_AllocRendColors(uint num)
     rendPolys[idx]->type = RPT_COLOR;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
-        Z_Malloc(sizeof(rcolor_t) * num, PU_MAP, 0);
+        Z_Malloc(sizeof(rcolord_t) * num, PU_MAP, 0);
 
-    return (rcolor_t*) rendPolys[idx]->data;
+    return (rcolord_t*) rendPolys[idx]->data;
 }
 
 /**
@@ -774,9 +774,9 @@ void R_FreeRendVertices(rvertex_t* rvertices)
  * Doesn't actually free anything. Instead, mark them as unused ready for
  * the next time a batch of rendvertex_t is needed.
  *
- * @param vertices      Ptr to array of rcolor_t to mark unused.
+ * @param vertices      Ptr to array of rcolord_t to mark unused.
  */
-void R_FreeRendColors(rcolor_t* rcolors)
+void R_FreeRendColors(rcolord_t* rcolors)
 {
     uint                i;
 
@@ -972,7 +972,7 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
 #undef COPYTEXCOORD
 }
 
-void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
+void R_DivVertColors(rcolord_t* dst, const rcolord_t* src,
                      const walldiv_t* divs, float bL, float tL, float bR,
                      float tR)
 {
@@ -1179,7 +1179,7 @@ patchid_t R_DeclarePatch(const char* name)
     tex = Textures_ToTexture(texId);
     if(!tex)
     {
-        Size2i size;
+        Size2Rawi size;
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
         tex = Textures_CreateWithSize(texId, flags, &size, (void*)p);
@@ -1195,7 +1195,7 @@ patchid_t R_DeclarePatch(const char* name)
     else
     {
         patchtex_t* oldPatch = Texture_DetachUserData(tex);
-        Size2i size;
+        Size2Rawi size;
 
         size.width  = SHORT(patch->width);
         size.height = SHORT(patch->height);
@@ -2887,7 +2887,7 @@ texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2i* size)
+texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2Rawi* size)
 {
     textureid_t texId;
     texture_t* tex;
@@ -3183,13 +3183,13 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     return true; // Continue iteration.
 }
 
-float RColor_AverageColor(rcolor_t* c)
+float RColor_AverageColor(rcolord_t* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3;
 }
 
-float RColor_AverageColorMulAlpha(rcolor_t* c)
+float RColor_AverageColorMulAlpha(rcolord_t* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3 * c->alpha;

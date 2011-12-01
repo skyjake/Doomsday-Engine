@@ -166,7 +166,7 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
  *    will be inherited from the actual pixel size of the texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-struct texture_s* Textures_CreateWithSize(textureid_t id, int flags, const Size2i* size, void* userData);
+struct texture_s* Textures_CreateWithSize(textureid_t id, int flags, const Size2Rawi* size, void* userData);
 struct texture_s* Textures_Create(textureid_t id, int flags, void* userData); /* width=0, height=0*/
 
 /**

@@ -51,7 +51,7 @@ typedef struct image_s {
     colorpaletteid_t paletteId;
 
     /// Size of the image in pixels.
-    Size2i size;
+    Size2Rawi size;
 
     /// Bytes per pixel in the data buffer.
     int pixelSize;

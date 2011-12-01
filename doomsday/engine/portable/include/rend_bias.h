@@ -77,7 +77,7 @@ typedef struct biastracker_s {
 
 struct rendpoly_s;
 struct rvertex_s;
-struct rcolor_s;
+struct rcolord_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern uint     currentTimeSB;
@@ -91,7 +91,7 @@ void            SB_DestroySurface(struct biassurface_s* bsuf);
 void            SB_SurfaceMoved(struct biassurface_s* bsuf);
 
 void            SB_BeginFrame(void);
-void            SB_RendPoly(struct rcolor_s* rcolors,
+void            SB_RendPoly(struct rcolord_s* rcolors,
                             struct biassurface_s* bsuf,
                             const struct rvertex_s* rvertices,
                             size_t numVertices, const vectorcomp_t* normal,

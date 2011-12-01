@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 596 <--
+; Highest ordinal is currently: --> 686 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -44,6 +44,105 @@ EXPORTS
     AnimatorVector4_Init        @458 NONAME
     AnimatorVector4_Set         @459 NONAME
     AnimatorVector4_Think       @460 NONAME
+
+    ; 2D plane Point.
+    Point2i_New                 @597 NONAME
+    Point2i_NewWithCoords       @598 NONAME
+    Point2i_NewFromRaw          @599 NONAME
+    Point2i_Delete              @600 NONAME
+    Point2i_IsNull              @601 NONAME
+    Point2i_ToRaw               @602 NONAME
+    Point2i_X                   @603 NONAME
+    Point2i_Y                   @604 NONAME
+    Point2i_SetX                @605 NONAME
+    Point2i_SetY                @606 NONAME
+    Point2i_XY                  @607 NONAME
+    Point2i_SetXY               @608 NONAME
+    Point2i_Translate           @609 NONAME
+    Point2i_Sum                 @610 NONAME
+    Point2i_Equality            @611 NONAME
+
+    Point2f_New                 @612 NONAME
+    Point2f_NewWithCoords       @613 NONAME
+    Point2f_NewFromRaw          @614 NONAME
+    Point2f_Delete              @615 NONAME
+    Point2f_IsNull              @616 NONAME
+    Point2f_ToRaw               @617 NONAME
+    Point2f_X                   @618 NONAME
+    Point2f_Y                   @619 NONAME
+    Point2f_SetX                @620 NONAME
+    Point2f_SetY                @621 NONAME
+    Point2f_XY                  @622 NONAME
+    Point2f_SetXY               @623 NONAME
+    Point2f_Translate           @624 NONAME
+    Point2f_Sum                 @625 NONAME
+    Point2f_Equality            @626 NONAME
+
+    ; 2D Size.
+    Size2i_New                  @627 NONAME
+    Size2i_NewWithDimensions    @628 NONAME
+    Size2i_Delete               @629 NONAME
+    Size2i_IsNull               @630 NONAME
+    Size2i_ToRaw                @631 NONAME
+    Size2i_Width                @632 NONAME
+    Size2i_Height               @633 NONAME
+    Size2i_SetWidth             @634 NONAME
+    Size2i_SetHeight            @635 NONAME
+    Size2i_WidthHeight          @636 NONAME
+    Size2i_SetWidthHeight       @637 NONAME
+    Size2i_Sum                  @638 NONAME
+    Size2i_Equality             @639 NONAME
+
+    Size2f_New                  @640 NONAME
+    Size2f_NewWithDimensions    @641 NONAME
+    Size2f_Delete               @642 NONAME
+    Size2f_IsNull               @643 NONAME
+    Size2f_ToRaw                @644 NONAME
+    Size2f_Width                @645 NONAME
+    Size2f_Height               @646 NONAME
+    Size2f_SetWidth             @647 NONAME
+    Size2f_SetHeight            @648 NONAME
+    Size2f_WidthHeight          @649 NONAME
+    Size2f_SetWidthHeight       @650 NONAME
+    Size2f_Sum                  @651 NONAME
+    Size2f_Equality             @652 NONAME
+
+    ; Rectangle.
+    Recti_New                   @653 NONAME
+    Recti_NewWithOriginSize     @654 NONAME
+    Recti_NewWithOriginSize2    @655 NONAME
+    Recti_NewFromRaw            @656 NONAME
+    Recti_Delete                @657 NONAME
+    Recti_IsNull                @658 NONAME
+    Recti_Width                 @659 NONAME
+    Recti_Height                @660 NONAME
+    Recti_SetWidth              @661 NONAME
+    Recti_SetHeight             @662 NONAME
+    Recti_Origin                @663 NONAME
+    Recti_SetOrigin             @664 NONAME
+    Recti_SetOrigin2            @665 NONAME
+    Recti_Size                  @666 NONAME
+    Recti_SetSize               @667 NONAME
+    Recti_SetSize2              @668 NONAME
+    Recti_Equality              @669 NONAME
+
+    Rectf_New                   @670 NONAME
+    Rectf_NewWithOriginSize     @671 NONAME
+    Rectf_NewWithOriginSize2    @672 NONAME
+    Rectf_NewFromRaw            @673 NONAME
+    Rectf_Delete                @674 NONAME
+    Rectf_IsNull                @675 NONAME
+    Rectf_Width                 @676 NONAME
+    Rectf_Height                @677 NONAME
+    Rectf_SetWidth              @678 NONAME
+    Rectf_SetHeight             @679 NONAME
+    Rectf_Origin                @680 NONAME
+    Rectf_SetOrigin             @681 NONAME
+    Rectf_SetOrigin2            @682 NONAME
+    Rectf_Size                  @683 NONAME
+    Rectf_SetSize               @684 NONAME
+    Rectf_SetSize2              @685 NONAME
+    Rectf_Equality              @686 NONAME
 
     ; String.
     Str_New                     @461 NONAME
@@ -437,6 +536,8 @@ EXPORTS
     R_ChooseScaleMode2          @505 NONAME
     R_ChooseScaleMode           @506 NONAME
 
+    R_SkyParams                 @105 NONAME
+
 ; DGL.
     DGL_SetMaterialUI           @117 NONAME
     DGL_SetNoMaterial           @115 NONAME
@@ -502,7 +603,6 @@ EXPORTS
     DGL_DrawRawScreen           @126 NONAME
 
 ; Renderer.
-    R_SkyParams              @105 NONAME
     GL_UseFog                   @104 NONAME
 
 ; InFine.
@@ -569,7 +669,7 @@ EXPORTS
     FR_CaseScale                @518 NONAME
     FR_SetCaseScale             @519 NONAME
 
-    FR_TextSize           @520 NONAME
+    FR_TextSize                 @520 NONAME
     FR_TextWidth                @521 NONAME
     FR_TextHeight               @522 NONAME
 
@@ -581,12 +681,12 @@ EXPORTS
     FR_DrawChar2                @527 NONAME
     FR_DrawChar3                @528 NONAME
 
-    FR_CharSize           @529 NONAME
+    FR_CharSize                 @529 NONAME
     FR_CharWidth                @530 NONAME
     FR_CharHeight               @531 NONAME
 
 ; Fonts.
-    Fonts_ResolveUri           @532 NONAME
+    Fonts_ResolveUri            @532 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

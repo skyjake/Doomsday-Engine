@@ -1063,7 +1063,7 @@ boolean ST_AutomapIsActive(int player)
     return UIAutomap_Active(obj);
 }
 
-boolean ST_AutomapObscures2(int player, const Rectanglei* region)
+boolean ST_AutomapObscures2(int player, const RectRawi* region)
 {
     uiwidget_t* obj = ST_UIAutomapForPlayer(player);
     if(!obj) return false;
@@ -1080,7 +1080,7 @@ boolean ST_AutomapObscures2(int player, const Rectanglei* region)
                 // We'll have to compare the dimensions.
                 const int scrwidth  = Get(DD_WINDOW_WIDTH);
                 const int scrheight = Get(DD_WINDOW_HEIGHT);
-                const Rectanglei* rect = UIWidget_Geometry(obj);
+                const Recti* rect = UIWidget_Geometry(obj);
                 float fx = FIXXTOSCREENX(region->origin.x);
                 float fy = FIXYTOSCREENY(region->origin.y);
                 float fw = FIXXTOSCREENX(region->size.width);
@@ -1096,7 +1096,7 @@ boolean ST_AutomapObscures2(int player, const Rectanglei* region)
 
 boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 {
-    Rectanglei rect;
+    RectRawi rect;
     rect.origin.x = x;
     rect.origin.y = y;
     rect.size.width  = width;

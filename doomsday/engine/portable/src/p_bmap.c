@@ -1136,12 +1136,12 @@ void rendBlockSubsectors(void* blockPtr, void* param, float r, float g, float b,
     }
 }
 
-static void drawInfoBox(const Point2i* origin_, long blockIdx, uint blockX, uint blockY,
+static void drawInfoBox(const Point2Rawi* origin_, long blockIdx, uint blockX, uint blockY,
     int lineCount, int moCount, int poCount)
 {
     char buf[160];
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     assert(origin_);
 
     sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
@@ -1170,8 +1170,8 @@ static void drawInfoBox(const Point2i* origin_, long blockIdx, uint blockX, uint
 static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     float blockWidth, float blockHeight, uint width, uint height)
 {
-    Point2i origin;
-    Size2i size;
+    Point2Rawi origin;
+    Size2Rawi size;
     char buf[80];
     int th;
 
@@ -1213,7 +1213,7 @@ static void drawBlockInfoBox(uint vBlock[2])
     long blockIdx = -1;
     bmap_t* bmap = (bmap_t*) BlockMap;
     bmapblock_t* block;
-    Point2i origin;
+    Point2Rawi origin;
 
     block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
     if(block)

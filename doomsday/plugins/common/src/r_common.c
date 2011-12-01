@@ -112,10 +112,10 @@ static boolean maximizedViewWindow(int player)
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
-static void resizeViewWindow(int player, const Rectanglei* newGeometry,
-    const Rectanglei* oldGeometry, boolean interpolate)
+static void resizeViewWindow(int player, const RectRawi* newGeometry,
+    const RectRawi* oldGeometry, boolean interpolate)
 {
-    Rectanglei geom;
+    RectRawi geom;
     assert(newGeometry);
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -178,7 +178,7 @@ void R_ResizeViewWindow(int flags)
     static boolean oldMaximized;
     int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
     boolean maximized;
-    Rectanglei port;
+    RectRawi port;
 
     // Override @c cfg.screenBlocks and force a maximized window?
     maximized = maximizedViewWindow(DISPLAYPLAYER);

@@ -877,7 +877,7 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     return id;
 }
 
-texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2i* size,
+texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Rawi* size,
     void* userData)
 {
     PathDirectoryNode* node = getDirectoryNodeForBindId(id);
@@ -921,7 +921,7 @@ texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2i* size
 
 texture_t* Textures_Create(textureid_t id, int flags, void* userData)
 {
-    Size2i size = { 0, 0 };
+    Size2Rawi size = { 0, 0 };
     return Textures_CreateWithSize(id, flags, &size, userData);
 }
 

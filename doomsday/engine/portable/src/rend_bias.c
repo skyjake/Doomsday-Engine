@@ -928,7 +928,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param elmIdx        Used with subsectors to select a specific plane.
  * @param isSeg         @c true, if surface is to a seg ELSE a subsector.
  */
-void SB_RendPoly(struct rcolor_s* rcolors, biassurface_t* bsuf,
+void SB_RendPoly(struct rcolord_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
                  size_t numVertices, const vectorcomp_t* normal,
                  float sectorLightLevel,

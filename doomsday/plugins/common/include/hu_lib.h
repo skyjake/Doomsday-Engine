@@ -194,14 +194,14 @@ typedef struct mn_object_s {
     int data2;
 
     /// Current geometry.
-    Rectanglei _geometry;
+    RectRawi _geometry;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
 
 int MNObject_Flags(const mn_object_t* obj);
 
-const Rectanglei* MNObject_Geometry(const mn_object_t* obj);
+const RectRawi* MNObject_Geometry(const mn_object_t* obj);
 
 /// @return  Flags value post operation for caller convenience.
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
@@ -745,10 +745,10 @@ typedef struct uiwidget_s {
     int alignFlags;
 
     /// Maximum size of this widget in pixels.
-    Size2i maxSize;
+    Size2Rawi maxSize;
 
     /// Geometry of this widget in pixels.
-    Rectanglei geometry;
+    RectRawi geometry;
 
     /// Local player number associated with this widget.
     /// \todo refactor away.
@@ -771,22 +771,22 @@ typedef struct uiwidget_s {
 boolean GUI_RunGameTicTrigger(timespan_t ticLength);
 boolean GUI_GameTicTriggerIsSharp(void);
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2i* drawnSize);
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Rawi* drawnSize);
 
 /// @return  @see alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
 
 float UIWidget_Alpha(uiwidget_t* obj);
 
-const Rectanglei* UIWidget_Geometry(uiwidget_t* obj);
+const RectRawi* UIWidget_Geometry(uiwidget_t* obj);
 
 int UIWidget_MaximumHeight(uiwidget_t* obj);
 
-const Size2i* UIWidget_MaximumSize(uiwidget_t* obj);
+const Size2Rawi* UIWidget_MaximumSize(uiwidget_t* obj);
 
 int UIWidget_MaximumWidth(uiwidget_t* obj);
 
-const Point2i* UIWidget_Origin(uiwidget_t* obj);
+const Point2Rawi* UIWidget_Origin(uiwidget_t* obj);
 
 /// @return  Local player number of the owner of this widget.
 int UIWidget_Player(uiwidget_t* obj);
@@ -802,7 +802,7 @@ void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags);
 
 void UIWidget_SetMaximumHeight(uiwidget_t* obj, int height);
 
-void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2i* size);
+void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Rawi* size);
 
 void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
 

@@ -118,7 +118,7 @@ static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t 
 static boolean drawThinkerId(thinker_t* thinker, void* context)
 {
 #define MAX_THINKER_DIST  2048
-    const Point2i labelOrigin = { 2, 2 };
+    const Point2Rawi labelOrigin = { 2, 2 };
     float* eye = (float*) context;
     float pos[3], dist, alpha;
     char buf[80];
