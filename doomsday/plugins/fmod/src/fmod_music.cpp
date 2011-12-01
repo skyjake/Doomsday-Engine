@@ -23,12 +23,103 @@
 
 #include "driver_fmod.h"
 
-// DM_Music_Init
-// DM_Music_Update
-// DM_Music_Get
-// DM_Music_Set
-// DM_Music_Pause
-// DM_Music_Stop
-// DM_Music_SongBuffer
 // DM_Music_Play
-// DM_Music_PlayFile
+
+int DM_Music_Init(void)
+{
+    return fmodSystem != 0;
+}
+
+void DM_Music_Shutdown(void)
+{
+
+}
+
+void DM_Music_Set(int prop, float value)
+{
+    if(!midiAvail)
+        return;
+
+    switch(prop)
+    {
+    case MUSIP_VOLUME:
+        {
+        int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
+
+        // Straighten the volume curve.
+        val <<= 8; // Make it a word.
+        val = (int) (255.9980469 * sqrt(value));
+        mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
+        break;
+        }
+
+    default:
+        break;
+    }
+}
+
+int DM_Music_Get(int prop, void* ptr)
+{
+    switch(prop)
+    {
+    case MUSIP_ID:
+        if(ptr)
+        {
+            strcpy((char*) ptr, "Win/Mus");
+            return true;
+        }
+        break;
+
+    case MUSIP_PLAYING:
+        if(midiAvail && MIDIStreamer)
+            return (MIDIStreamer->IsPlaying()? true : false);
+        return false;
+
+    default:
+        break;
+    }
+
+    return false;
+}
+
+void DM_Music_Update(void)
+{
+    // No need to do anything. The callback handles restarting.
+}
+
+void DM_Music_Stop(void)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Stop();
+    }
+}
+
+int DM_Music_Play(int looped)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Play(looped);
+        return true;
+    }
+
+    return false;
+}
+
+void DM_Music_Pause(int setPause)
+{
+    if(midiAvail)
+    {
+        MIDIStreamer->Pause(setPause);
+    }
+}
+
+void* DM_Music_SongBuffer(size_t length)
+{
+    if(midiAvail)
+    {
+        return MIDIStreamer->SongBuffer(length);
+    }
+
+    return NULL;
+}

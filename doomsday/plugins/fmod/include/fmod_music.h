@@ -27,7 +27,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
+int     DM_Music_Init(void);
+void    DM_Music_Shutdown(void);
+
 #ifdef __cplusplus
 }
 #endif
