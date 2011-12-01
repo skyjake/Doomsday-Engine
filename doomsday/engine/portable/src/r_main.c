@@ -471,20 +471,7 @@ void R_GetSharpView(viewer_t* view, player_t* player)
  */
 void R_NewSharpWorld(void)
 {
-    extern boolean firstFrameAfterLoad;
-
-    int                 i;
-
-    if(firstFrameAfterLoad)
-    {
-        /**
-         * We haven't yet drawn the world. Everything *is* sharp so simply
-         * reset the viewer data.
-         * \fixme A bit of a kludge?
-         */
-        memset(viewData, 0, sizeof(viewData));
-        return;
-    }
+    int i;
 
     if(resetNextViewer)
         resetNextViewer = 2;
