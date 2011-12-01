@@ -886,6 +886,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
 
 #define TICRATE             35 // Number of tics / second.
 #define TICSPERSEC          35
+#define SECONDSPERTIC       (1.0f/TICSPERSEC)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200

@@ -359,16 +359,16 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
-                         viewer_t* out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
-    float               inv = 1 - pos;
+    float inv = 1 - pos;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    int delta = (int)end->angle - (int)start->angle;
+    out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
@@ -642,8 +642,8 @@ void R_SetupFrame(player_t* player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->shared.flags & DDPF_INTERYAW))
-            smoothView.angle = sharpView.angle;
+        /*if(!(player->shared.flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;*/
         if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
 
