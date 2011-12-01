@@ -36,8 +36,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "p_actor.h"
@@ -48,6 +46,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "d_netsv.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -134,6 +133,9 @@ void P_DoTick(void)
 #if __JHEXEN__
     P_AnimateSurfaces();
 #endif
+
+    // Let the engine know where the viewplayer is now.
+    R_UpdateConsoleView(DISPLAYPLAYER);
 
     // For par times, among other things.
     mapTime++;

@@ -607,16 +607,17 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
-                         viewer_t* out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
     float inv = 1 - pos;
+    int delta;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    delta = (int)end->angle - (int)start->angle;
+    out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
@@ -714,35 +715,8 @@ void R_GetSharpView(viewer_t* view, player_t* player)
  */
 void R_NewSharpWorld(void)
 {
-    extern boolean firstFrameAfterLoad;
+    int i;
 
-    int                 i;
-
-    if(firstFrameAfterLoad)
-    {
-        /**
-         * We haven't yet drawn the world. Everything *is* sharp so simply
-         * reset the viewer data.
-         * \fixme A bit of a kludge?
-         */
-        int i;
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            int p = P_ConsoleToLocal(i);
-            if(p != -1)
-            {
-                viewdata_t* vd = &viewData[p];
-                memset(&vd->sharp,    0, sizeof(vd->sharp));
-                memset(&vd->current,  0, sizeof(vd->current));
-                memset(vd->lastSharp, 0, sizeof(vd->lastSharp));
-                vd->frontVec[0] = vd->frontVec[1] = vd->frontVec[2] = 0;
-                vd->sideVec[0]  = vd->sideVec[1]  = vd->sideVec[2]  = 0;
-                vd->upVec[0]    = vd->upVec[1]    = vd->upVec[2]    = 0;
-                vd->viewCos = vd->viewSin = 0;
-            }
-        }
-        return;
-    }
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -908,8 +882,8 @@ void R_SetupFrame(player_t* player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->shared.flags & DDPF_INTERYAW))
-            smoothView.angle = sharpView.angle;
+        /*if(!(player->shared.flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;*/
         if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
 

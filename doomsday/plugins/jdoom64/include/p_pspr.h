@@ -34,6 +34,8 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
+struct player_s;
+
 /**
  * Overlay psprites are scaled shapes drawn directly on the view screen,
  * coordinates are given for a 320*200 view screen.

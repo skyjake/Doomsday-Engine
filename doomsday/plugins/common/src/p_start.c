@@ -37,13 +37,10 @@
 
 #if __JDOOM__
 #  include "jdoom.h"
-#  include "r_common.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
-#  include "r_common.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "r_common.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
@@ -66,6 +63,7 @@
 #include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "hu_chat.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -562,6 +560,14 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
 #endif
+
+    if(plrNum == DISPLAYPLAYER)
+    {
+        // The display player has been spawned, so tell the engine where
+        // the camera is initially located. After this it will be updated
+        // after every game tick.
+        R_UpdateConsoleView(plrNum);
+    }
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,

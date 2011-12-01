@@ -47,6 +47,7 @@
 #include "p_actor.h"
 #include "p_player.h"
 #include "g_common.h"
+#include "g_controls.h"
 
 #include "r_common.h"
 
@@ -267,4 +268,38 @@ void R_CycleGammaLevel(void)
 
     sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);
     DD_Execute(false, buf);
+}
+
+/**
+ * Tells the engine where the camera is located. This has to be called before
+ * the end of G_Ticker() (after thinkers have been run), so that the up-to-date
+ * sharp camera position and angles are available when the new sharp world is
+ * saved.
+ *
+ * @note  Currently this assumes that there is only a single local player and
+ *        a single viewport visible at a time. For multiple local players
+ *        there should be a separate DD_VIEW_* variables.
+ *
+ * @param player  Player # to update.
+ */
+void R_UpdateConsoleView(int player)
+{
+    float viewPos[3], viewPitch;
+    angle_t viewAngle;
+    player_t* plr = &players[player];
+
+    if(IS_DEDICATED || player < 0 || player >= MAXPLAYERS)
+        return;
+
+    viewPos[VX] = plr->plr->mo->pos[VX] + plr->viewOffset[VX];
+    viewPos[VY] = plr->plr->mo->pos[VY] + plr->viewOffset[VY];
+    viewPos[VZ] = plr->viewZ + plr->viewOffset[VZ];
+    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
+    viewPitch = plr->plr->lookDir;
+
+    DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
+    DD_SetVariable(DD_VIEW_Y, &viewPos[VY]);
+    DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
+    DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
+    DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
 }

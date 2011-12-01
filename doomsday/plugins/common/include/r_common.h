@@ -50,6 +50,8 @@ void R_ResizeViewWindow(int flags);
 
 int R_UpdateViewport(int hookType, int param, void* data);
 
+void R_UpdateConsoleView(int player);
+
 void R_PrecachePSprites(void);
 
 void R_GetGammaMessageStrings(void);
