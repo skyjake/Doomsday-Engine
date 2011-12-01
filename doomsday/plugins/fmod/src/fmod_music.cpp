@@ -23,8 +23,6 @@
 
 #include "driver_fmod.h"
 
-// DM_Music_Play
-
 int DM_Music_Init(void)
 {
     return fmodSystem != 0;
@@ -44,12 +42,14 @@ void DM_Music_Set(int prop, float value)
     {
     case MUSIP_VOLUME:
         {
+        /*
         int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
 
         // Straighten the volume curve.
         val <<= 8; // Make it a word.
         val = (int) (255.9980469 * sqrt(value));
         mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
+        */
         break;
         }
 
@@ -65,14 +65,15 @@ int DM_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "Win/Mus");
+            strcpy((char*) ptr, "FMOD/Mus");
             return true;
         }
         break;
 
     case MUSIP_PLAYING:
+        /*
         if(midiAvail && MIDIStreamer)
-            return (MIDIStreamer->IsPlaying()? true : false);
+            return (MIDIStreamer->IsPlaying()? true : false);*/
         return false;
 
     default:
@@ -91,7 +92,7 @@ void DM_Music_Stop(void)
 {
     if(midiAvail)
     {
-        MIDIStreamer->Stop();
+        //MIDIStreamer->Stop();
     }
 }
 
@@ -99,10 +100,8 @@ int DM_Music_Play(int looped)
 {
     if(midiAvail)
     {
-        MIDIStreamer->Play(looped);
         return true;
     }
-
     return false;
 }
 
@@ -110,16 +109,20 @@ void DM_Music_Pause(int setPause)
 {
     if(midiAvail)
     {
-        MIDIStreamer->Pause(setPause);
     }
 }
 
-void* DM_Music_SongBuffer(size_t length)
+void* DM_Music_SongBuffer(unsigned int length)
 {
     if(midiAvail)
     {
-        return MIDIStreamer->SongBuffer(length);
+//        return MIDIStreamer->SongBuffer(length);
     }
 
     return NULL;
+}
+
+int DM_Music_PlayFile(const char *filename, int looped)
+{
+
 }

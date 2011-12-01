@@ -23,10 +23,44 @@
 
 #include "driver_fmod.h"
 
-// DM_CDAudio_Init
-// DM_CDAudio_Update
-// DM_CDAudio_Set
 // DM_CDAudio_Get
-// DM_CDAudio_Pause
-// DM_CDAudio_Stop
-// DM_CDAudio_Play
+
+int DM_CDAudio_Init(void)
+{
+    return fmodSystem != 0;
+}
+
+void DM_CDAudio_Shutdown(void)
+{
+
+}
+
+void DM_CDAudio_Update(void)
+{
+
+}
+
+void DM_CDAudio_Set(int prop, float value)
+{
+
+}
+
+int DM_CDAudio_Get(int prop, void* value)
+{
+
+}
+
+int DM_CDAudio_Play(int track, int looped)
+{
+
+}
+
+void DM_CDAudio_Pause(int pause)
+{
+
+}
+
+void DM_CDAudio_Stop(void)
+{
+
+}

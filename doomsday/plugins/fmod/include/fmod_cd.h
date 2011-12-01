@@ -24,10 +24,21 @@
 #ifndef __FMOD_CD_H__
 #define __FMOD_CD_H__
 
+#include "sys_audiod_mus.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
+int     DM_CDAudio_Init(void);
+void    DM_CDAudio_Shutdown(void);
+void    DM_CDAudio_Update(void);
+void    DM_CDAudio_Set(int prop, float value);
+int     DM_CDAudio_Get(int prop, void* value);
+int     DM_CDAudio_Play(int track, int looped);
+void    DM_CDAudio_Pause(int pause);
+void    DM_CDAudio_Stop(void);
+
 #ifdef __cplusplus
 }
 #endif
