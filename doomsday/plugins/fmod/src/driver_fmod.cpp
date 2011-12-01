@@ -28,33 +28,33 @@
 #include <fmod_errors.h>
 #include <fmod.hpp>
 
-FMOD::System* system = 0;
+FMOD::System* fmodSystem = 0;
 
 /**
  * Initialize the FMOD Ex sound driver.
  */
 int DS_Init(void)
 {
-    if(system)
+    if(fmodSystem)
     {
         return true; // Already initialized.
     }
 
     // Create the FMOD audio system.
     FMOD_RESULT result;
-    if((result = FMOD::System_Create(&system)) != FMOD_OK)
+    if((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
     {
         printf("DS_Init: FMOD::System_Create failed: (%d) %s\n", result, FMOD_ErrorString(result));
-        system = 0;
+        fmodSystem = 0;
         return false;
     }
 
     // Initialize FMOD.
-    if((result = system->init(50, FMOD_INIT_NORMAL, 0)) != FMOD_OK)
+    if((result = fmodSystem->init(50, FMOD_INIT_NORMAL, 0)) != FMOD_OK)
     {
         printf("DS_Init: FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
-        system->release();
-        system = 0;
+        fmodSystem->release();
+        fmodSystem = 0;
         return false;
     }
     return true;
@@ -65,8 +65,8 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
-    system->release();
-    system = 0;
+    fmodSystem->release();
+    fmodSystem = 0;
 }
 
 /**
@@ -75,11 +75,11 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-    if(!system) return;
+    if(!fmodSystem) return;
 
     if(type == SFXEV_END)
     {
         // End of frame, do an update.
-        system->update();
+        fmodSystem->update();
     }
 }

@@ -49,6 +49,8 @@ void    DS_Event(int type);
 #  define ERRCHECK(result)
 #endif
 
+extern FMOD::System* fmodSystem;
+
 #include "fmod_sfx.h"
 #include "fmod_music.h"
 #include "fmod_cd.h"

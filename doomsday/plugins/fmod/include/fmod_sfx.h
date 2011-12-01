@@ -24,10 +24,26 @@
 #ifndef __DSFMOD_SFX_H__
 #define __DSFMOD_SFX_H__
 
+#include "sys_audiod_sfx.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
+int             DS_SFX_Init(void);
+sfxbuffer_t*    DS_SFX_CreateBuffer(int flags, int bits, int rate);
+void            DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
+void            DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+void            DS_SFX_Reset(sfxbuffer_t* buf);
+void            DS_SFX_Play(sfxbuffer_t* buf);
+void            DS_SFX_Stop(sfxbuffer_t* buf);
+void            DS_SFX_Refresh(sfxbuffer_t* buf);
+void            DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
+void            DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+void            DS_SFX_Listener(int prop, float value);
+void            DS_SFX_Listenerv(int prop, float* values);
+int             DS_SFX_Getv(int prop, void* values);
+
 #ifdef __cplusplus
 }
 #endif

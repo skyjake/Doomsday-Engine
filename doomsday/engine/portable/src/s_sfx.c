@@ -1029,11 +1029,26 @@ void Sfx_ShutdownChannels(void)
  */
 void Sfx_StartRefresh(void)
 {
+    int disableRefresh = false;
+
     refreshing = false;
     allowRefresh = true;
-    refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
-    if(!refreshHandle)
-        Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
+
+    if(!iSFX) goto noRefresh; // Nothing to refresh.
+
+    if(iSFX->Getv) iSFX->Getv(SFXP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(!disableRefresh)
+    {
+        // Start the refresh thread. It will run until the Sfx module is shut down.
+        refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
+        if(!refreshHandle)
+            Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
+    }
+    else
+    {
+noRefresh:
+        VERBOSE( Con_Message("Sfx_StartRefresh: Driver does not require a refresh thread.\n") );
+    }
 }
 
 /**
