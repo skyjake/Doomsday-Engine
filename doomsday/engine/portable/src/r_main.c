@@ -535,7 +535,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
         for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
-            R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
+            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
 
@@ -557,7 +557,7 @@ void R_BeginWorldFrame(void)
         LG_Update();
         SB_BeginFrame();
         LO_ClearForFrame();
-        R_ClearObjLinksForFrame(); // Zeroes the links.
+        R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
         R_InitForNewFrame();

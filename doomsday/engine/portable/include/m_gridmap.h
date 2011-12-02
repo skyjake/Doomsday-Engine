@@ -1,4 +1,4 @@
-/**\file
+/**\file m_gridmap.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,31 +23,86 @@
  */
 
 /**
- * m_gridmap.h: Generalized blockmap
+ * Generalized blockmap.
  */
 
-#ifndef __DOOMSDAY_MISC_GRIDMAP_H__
-#define __DOOMSDAY_MISC_GRIDMAP_H__
+#ifndef LIBDENG_DATA_GRIDMAP_H
+#define LIBDENG_DATA_GRIDMAP_H
 
-typedef void* gridmap_t;
+struct gridmap_s; // The Gridmap instance (opaque).
+typedef struct gridmap_s Gridmap;
 
-gridmap_t  *M_GridmapCreate(uint width, uint height, size_t sizeOfBlock,
-                            int memzoneTag);
-void        M_GridmapDestroy(gridmap_t *gridmap);
+/**
+ * Create a new Gridmap.
+ *
+ * @param width  X dimension of the grid.
+ * @param height  Y dimension of the grid.
+ * @param sizeOfBlock Amount of memory to be allocated for each block element.
+ */
+Gridmap* Gridmap_New(uint width, uint height, size_t sizeOfBlock, int zoneTag);
 
-void       *M_GridmapGetBlock(gridmap_t *gridmap, uint x, uint y,
-                              boolean alloc);
+void Gridmap_Delete(Gridmap* gridmap);
 
-// Iteration
-boolean     M_GridmapIterator(gridmap_t *gridmap,
-                              boolean (*callback) (void* p, void *ctx),
-                              void *param);
-boolean     M_GridmapBoxIterator(gridmap_t *gridmap,
-                                 uint xl, uint xh, uint yl, uint yh,
-                                 boolean (*callback) (void* p, void *ctx),
-                                 void *param);
-boolean     M_GridmapBoxIteratorv(gridmap_t *gridmap, const uint box[4],
-                                  boolean (*callback) (void* p, void *ctx),
-                                  void *param);
+/// @return  Width of the Gridmap in blocks.
+uint Gridmap_Width(Gridmap* gridmap);
 
-#endif
+/// @return  Height of the Gridmap in blocks.
+uint Gridmap_Height(Gridmap* gridmap);
+
+/**
+ * Retrieve the dimensions of the Gridmap in blocks.
+ * @param widthHeight  Dimensions written here.
+ */
+void Gridmap_Size(Gridmap* gridmap, uint widthHeight[2]);
+
+/**
+ * Retrieve the user data associated with identified block.
+ *
+ * @param x  X coordinate of the block whose data to retrieve.
+ * @param y  Y coordinate of the block whose data to retrieve.
+ * @param alloc  @c true= we should allocate new user data if not present.
+ *
+ * @return  User data for the identified block else @c NULL if an invalid reference
+ *     or no data present (and not allocating).
+ */
+void* Gridmap_Block(Gridmap* gridmap, uint x, uint y, boolean alloc);
+
+/**
+ * Iteration.
+ */
+
+typedef int (C_DECL *Gridmap_IterateCallback) (void* blockData, void* paramaters);
+
+/**
+ * Iterate over blocks in the Gridmap making a callback for each.
+ * Iteration ends when all blocks have been visited or a callback
+ * returns non-zero.
+ *
+ * @param callback  Callback function ptr.
+ * @param paramaters  Passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int Gridmap_Iterate(Gridmap* gridmap, Gridmap_IterateCallback callback,
+    void* paramaters);
+
+
+/**
+ * Iterate a subset of the blocks of the gridmap and calling func for each.
+ *
+ * @param xl  Min X
+ * @param xh  Max X
+ * @param yl  Min Y
+ * @param yh  Max Y
+ * @param callback  Callback to be made for each block.
+ * @param param  Miscellaneous data to be passed in the callback.
+ *
+ * @return  @c true, iff all callbacks return @c true;
+ */
+int Gridmap_BoxIterate(Gridmap* gridmap, uint xl, uint xh, uint yl, uint yh,
+    Gridmap_IterateCallback callback, void* paramaters);
+
+int Gridmap_BoxIteratev(Gridmap* gridmap, const uint box[4],
+    Gridmap_IterateCallback callback, void* paramates);
+
+#endif /* LIBDENG_DATA_GRIDMAP_H */

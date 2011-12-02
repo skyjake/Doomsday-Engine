@@ -336,7 +336,7 @@ boolean P_LoadMap(const char *mapID)
         // Texture animations should begin from their first step.
         R_ResetAnimGroups();
 
-        R_InitObjLinksForMap();
+        R_InitObjlinkBlockmapForMap();
         LO_InitForMap(); // Lumobj management.
         DL_InitForMap(); // Projected dynlights (from lumobjs) management.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.

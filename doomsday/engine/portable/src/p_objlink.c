@@ -1,4 +1,4 @@
-/**\file
+/**\file p_objlink.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,14 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_objlink.c: Objlink management.
- *
- * Object>surface contacts and object>subsector spreading.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 
 #include "de_base.h"
@@ -40,119 +32,156 @@
 #include "de_play.h"
 #include "de_defs.h"
 
-// MACROS ------------------------------------------------------------------
+#include "m_gridmap.h"
 
 #define BLOCK_WIDTH                 (128)
 #define BLOCK_HEIGHT                (128)
-
-#define X_TO_OBBX(bm, cx)           ((int)((cx) - (bm)->origin[0]) / (float)BLOCK_WIDTH)
-#define Y_TO_OBBY(bm, cy)           ((int)((cy) - (bm)->origin[1]) / (float)BLOCK_HEIGHT)
-#define OBB_XY(bm, bx, by)          (&(bm)->blocks[by][bx])
 
 BEGIN_PROF_TIMERS()
   PROF_OBJLINK_SPREAD,
   PROF_OBJLINK_LINK
 END_PROF_TIMERS()
 
-// TYPES -------------------------------------------------------------------
-
 typedef struct objlink_s {
-    struct objlink_s* nextInBlock; // Next in the same obj block, or NULL.
+    struct objlink_s* nextInBlock; /// Next in the same obj block, or NULL.
     struct objlink_s* nextUsed;
-    struct objlink_s* next; // Next in list of ALL objlinks.
-    objtype_t       type;
-    void*           obj;
+    struct objlink_s* next; /// Next in list of ALL objlinks.
+    objtype_t type;
+    void* obj;
 } objlink_t;
 
-typedef struct objblock_s {
-    objlink_t*      head;
+typedef struct {
+    objlink_t* head;
+    /// Used to prevent repeated per-frame processing of a block.
+    boolean  doneSpread;
+} objlinkblock_t;
 
-    // Used to prevent multiple processing of a block during one refresh frame.
-    boolean         doneSpread;
-} objblock_t;
+typedef struct {
+    float origin[2]; /// Origin of the blockmap in world coordinates [x,y].
+    Gridmap* blockmap;
+} objlinkblockmap_t;
 
-typedef struct objblockmap_s {
-    objblock_t** blocks; // [height][width]
-    float origin[2];
-    int width, height; // In BLOCK_WIDTHxBLOCK_HEIGHT blocks.
-} objblockmap_t;
-
-typedef struct contactfinder_data_s {
-    void*           obj;
-    objtype_t       objType;
-    vec3_t          objPos;
-    float           objRadius;
-    float           box[4];
+typedef struct {
+    void* obj;
+    objtype_t objType;
+    vec3_t objPos;
+    float objRadius;
+    float box[4];
 } contactfinderparams_t;
 
 typedef struct objcontact_s {
-    struct objcontact_s* next; // Next in the subsector.
-    struct objcontact_s* nextUsed; // Next used contact.
-    void*           obj;
+    struct objcontact_s* next; /// Next in the subsector.
+    struct objcontact_s* nextUsed; /// Next used contact.
+    void* obj;
 } objcontact_t;
 
-typedef struct objcontactlist_s {
-    objcontact_t*   head[NUM_OBJ_TYPES];
+typedef struct {
+    objcontact_t* head[NUM_OBJ_TYPES];
 } objcontactlist_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void processSeg(seg_t* seg, void* data);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+static objlink_t* objlinks = NULL;
+static objlink_t* objlinkFirst = NULL, *objlinkCursor = NULL;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+// Each objlink type gets its own blockmap.
+static objlinkblockmap_t blockmaps[NUM_OBJ_TYPES];
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static objlink_t* objLinks = NULL;
-static objlink_t* objLinkFirst = NULL, *objLinkCursor = NULL;
-
-static objblockmap_t* objBlockmap = NULL;
-
-// List of unused and used obj-subsector contacts.
+// List of unused and used contacts.
 static objcontact_t* contFirst = NULL, *contCursor = NULL;
 
-// List of obj contacts for each subsector.
-static objcontactlist_t* subContacts = NULL;
+// List of contacts for each subsector.
+static objcontactlist_t* ssecContacts = NULL;
 
-// CODE --------------------------------------------------------------------
+static __inline objlinkblockmap_t* chooseObjlinkBlockmap(objtype_t type)
+{
+    assert(VALID_OBJTYPE(type));
+    return blockmaps + (int)type;
+}
+
+static __inline uint toObjlinkBlockmapX(objlinkblockmap_t* obm, float x)
+{
+    assert(obm && x >= obm->origin[0]);
+    return (uint)((x - obm->origin[0]) / (float)BLOCK_WIDTH);
+}
+
+static __inline uint toObjlinkBlockmapY(objlinkblockmap_t* obm, float y)
+{
+    assert(obm && y >= obm->origin[1]);
+    return (uint)((y - obm->origin[1]) / (float)BLOCK_HEIGHT);
+}
 
 /**
- * Link the given objcontact node to list.
+ * Given world coordinates @a x, @a y, determine the objlink blockmap block
+ * [x, y] it resides in. If the coordinates are outside the blockmap they
+ * are clipped within valid range.
+ *
+ * @return  @c true if the coordinates specified were within valid range.
  */
-static __inline void linkContact(objcontact_t* con, objcontact_t** list,
-                                 uint index)
+static boolean toObjlinkBlockmapBlock(objlinkblockmap_t* obm, uint block[2], float x, float y)
+{
+    boolean adjusted = false;
+    float max[2];
+    uint size[2];
+    assert(obm);
+
+    Gridmap_Size(obm->blockmap, size);
+    max[0] = obm->origin[0] + size[0] * BLOCK_WIDTH;
+    max[1] = obm->origin[1] + size[1] * BLOCK_HEIGHT;
+
+    if(x < obm->origin[0])
+    {
+        block[0] = 0;
+        adjusted = true;
+    }
+    else if(x >= max[0])
+    {
+        block[0] = size[0]-1;
+        adjusted = true;
+    }
+    else
+    {
+        block[0] = toObjlinkBlockmapX(obm, x);
+    }
+
+    if(y < obm->origin[1])
+    {
+        block[1] = 0;
+        adjusted = true;
+    }
+    else if(y >= max[1])
+    {
+        block[1] = size[1]-1;
+        adjusted = true;
+    }
+    else
+    {
+        block[1] = toObjlinkBlockmapY(obm, y);
+    }
+    return !adjusted;
+}
+
+static __inline void linkContact(objcontact_t* con, objcontact_t** list, uint index)
 {
     con->next = list[index];
     list[index] = con;
 }
 
-static void linkContactToSubSector(objcontact_t* node, objtype_t type,
-                                   uint index)
+static void linkContactToSubSector(objcontact_t* node, objtype_t type, uint index)
 {
-    linkContact(node, &subContacts[index].head[type], 0);
+    linkContact(node, &ssecContacts[index].head[type], 0);
 }
 
 /**
- * Create a new objcontact for the given obj. If there are free nodes in
- * the list of unused nodes, the new contact is taken from there.
- *
- * @param obj           Ptr to the obj the contact is required for.
- *
- * @return              Ptr to the new objcontact.
+ * Create a new objcontact. If there are none available in the list of
+ * used objects a new one will be allocated and linked to the global list.
  */
 static objcontact_t* allocObjContact(void)
 {
-    objcontact_t*       con;
-
-    if(contCursor == NULL)
+    objcontact_t* con;
+    if(!contCursor)
     {
-        con = Z_Malloc(sizeof(*con), PU_STATIC, NULL);
+        con = Z_Malloc(sizeof *con, PU_STATIC, NULL);
 
         // Link to the list of objcontact nodes.
         con->nextUsed = contFirst;
@@ -163,120 +192,112 @@ static objcontact_t* allocObjContact(void)
         con = contCursor;
         contCursor = contCursor->nextUsed;
     }
-
     con->obj = NULL;
-
     return con;
 }
 
-static objlink_t* allocObjLink(void)
+static objlink_t* allocObjlink(void)
 {
-    objlink_t*          oLink;
-
-    if(objLinkCursor == NULL)
+    objlink_t* link;
+    if(!objlinkCursor)
     {
-        oLink = Z_Malloc(sizeof(*oLink), PU_STATIC, NULL);
+        link = Z_Malloc(sizeof *link, PU_STATIC, NULL);
 
-        // Link to the list of objlink nodes.
-        oLink->nextUsed = objLinkFirst;
-        objLinkFirst = oLink;
+        // Link the link to the global list.
+        link->nextUsed = objlinkFirst;
+        objlinkFirst = link;
     }
     else
     {
-        oLink = objLinkCursor;
-        objLinkCursor = objLinkCursor->nextUsed;
+        link = objlinkCursor;
+        objlinkCursor = objlinkCursor->nextUsed;
     }
-
-    oLink->nextInBlock = NULL;
-    oLink->obj = NULL;
+    link->nextInBlock = NULL;
+    link->obj = NULL;
 
     // Link it to the list of in-use objlinks.
-    oLink->next = objLinks;
-    objLinks = oLink;
+    link->next = objlinks;
+    objlinks = link;
 
-    return oLink;
+    return link;
 }
 
-objblockmap_t* R_ObjBlockmapCreate(float originX, float originY, int width, int height)
-{
-    objblockmap_t* obm = Z_Malloc(sizeof *obm, PU_MAPSTATIC, 0);
-    int i;
-
-    obm->origin[0] = originX;
-    obm->origin[1] = originY;
-    obm->width  = width;
-    obm->height = height;
-
-    obm->blocks = Z_Malloc(sizeof *obm->blocks * height, PU_MAPSTATIC, 0);
-    for(i = 0; i < height; ++i)
-    {
-        obm->blocks[i] = Z_Malloc(sizeof **obm->blocks * width, PU_MAPSTATIC, 0);
-    }
-
-    return obm;
-}
-
-void R_InitObjLinksForMap(void)
+void R_InitObjlinkBlockmapForMap(void)
 {
     gamemap_t* map = P_GetCurrentMap();
     float min[2], max[2];
-    int width, height;
+    uint width, height;
+    int i;
 
-    // Determine the dimensions of the objblockmap in blocks.
+    // Determine the dimensions of the objlink blockmaps in blocks.
     P_GetMapBounds(map, &min[0], &max[0]);
     width  = (int)ceil(max[0] - min[0] / (float)BLOCK_WIDTH);
     height = (int)ceil(max[1] - min[1] / (float)BLOCK_HEIGHT);
 
-    // Create the blockmap.
-    objBlockmap = R_ObjBlockmapCreate(min[0], min[1], width, height);
-
-    // Initialize obj -> subsector contact lists.
-    subContacts = Z_Calloc(sizeof *subContacts * numSSectors, PU_MAPSTATIC, 0);
-}
-
-void R_ObjBlockmapClear(objblockmap_t* obm)
-{
-    if(obm)
+    // Create the blockmaps.
+    for(i = 0; i < NUM_OBJ_TYPES; ++i)
     {
-        // Clear the list head ptrs and doneSpread flags.
-        int i;
-        for(i = 0; i < obm->height; ++i)
-        {
-            memset(obm->blocks[i], 0, sizeof **obm->blocks * obm->width);
-        }
+        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        obm->origin[0] = min[0];
+        obm->origin[1] = min[1];
+        obm->blockmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
     }
+
+    // Initialize obj => subsector contact lists.
+    ssecContacts = Z_Calloc(sizeof *ssecContacts * numSSectors, PU_MAPSTATIC, 0);
 }
 
-/**
- * Called at the begining of each frame (iff the render lists are not frozen)
- * by R_BeginWorldFrame().
- */
-void R_ClearObjLinksForFrame(void)
+int clearObjlinkBlock(void* obj, void* paramaters)
 {
-    // Clear all the roots.
-    R_ObjBlockmapClear(objBlockmap);
-
-    objLinkCursor = objLinkFirst;
-    objLinks = NULL;
+    objlinkblock_t* block = (objlinkblock_t*)obj;
+    block->head = NULL;
+    block->doneSpread = false;
+    return false; // Continue iteration.
 }
 
-void R_ObjLinkCreate(void* obj, objtype_t type)
+void R_ClearObjlinkBlockmap(objtype_t type)
 {
-    objlink_t*          ol = allocObjLink();
-
-    ol->obj = obj;
-    ol->type = type;
+    if(!VALID_OBJTYPE(type))
+    {
+#if _DEBUG
+        Con_Error("R_ClearObjlinkBlockmap: Attempted with invalid type %i.", (int)type);
+#endif
+        return;
+    }
+    // Clear all the contact list heads and spread flags.
+    Gridmap_Iterate(chooseObjlinkBlockmap(type)->blockmap, clearObjlinkBlock, NULL);
 }
 
-boolean RIT_LinkObjToSubSector(subsector_t* subsector, void* data)
+void R_ClearObjlinksForFrame(void)
 {
-    linkobjtossecparams_t* params = (linkobjtossecparams_t*) data;
-    objcontact_t*       con = allocObjContact();
+    int i;
+    for(i = 0; i < NUM_OBJ_TYPES; ++i)
+    {
+        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        if(!obm->blockmap) continue;
+        R_ClearObjlinkBlockmap((objtype_t)i);
+    }
 
-    con->obj = params->obj;
+    // Start reusing objlinks.
+    objlinkCursor = objlinkFirst;
+    objlinks = NULL;
+}
 
+void R_ObjlinkCreate(void* obj, objtype_t type)
+{
+    objlink_t* link = allocObjlink();
+    link->obj = obj;
+    link->type = type;
+}
+
+boolean RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
+{
+    const linkobjtossecparams_t* p = (linkobjtossecparams_t*) paramaters;
+    objcontact_t* con = allocObjContact();
+
+    con->obj = p->obj;
     // Link the contact list for this subsector.
-    linkContactToSubSector(con, params->type, GET_SUBSECTOR_IDX(subsector));
+    linkContactToSubSector(con, p->type, GET_SUBSECTOR_IDX(subsector));
 
     return true; // Continue iteration.
 }
@@ -285,30 +306,27 @@ boolean RIT_LinkObjToSubSector(subsector_t* subsector, void* data)
  * Attempt to spread the obj from the given contact from the source ssec and
  * into the (relative) back ssec.
  *
- * @param ssec          Ptr to subsector to attempt to spread over to.
- * @param data          Ptr to contactfinder_data structure.
+ * @param ssec  Subsector to attempt to spread over to.
+ * @param data  @see contactfinderparams_t
  *
- * @return              @c true, because this function is also used as an
- *                      iterator.
+ * @return  @c true (always - this function is also used as an iterator).
  */
-static void spreadInSsec(subsector_t* ssec, void* data)
+static void spreadInSubsector(subsector_t* ssec, void* paramaters)
 {
-    seg_t**             segPtr = ssec->segs;
-
-    while(*segPtr)
-        processSeg(*segPtr++, data);
+    seg_t** segPtr = ssec->segs;
+    while(*segPtr) { processSeg(*segPtr++, paramaters); }
 }
 
-static void processSeg(seg_t* seg, void* data)
+static void processSeg(seg_t* seg, void* paramaters)
 {
-    contactfinderparams_t* params = (contactfinderparams_t*) data;
-    subsector_t*        source, *dest;
-    float               distance;
-    vertex_t*           vtx;
+    contactfinderparams_t* p = (contactfinderparams_t*) paramaters;
+    linkobjtossecparams_t loParams;
+    subsector_t* source, *dest;
+    float distance;
+    vertex_t* vtx;
 
     // Seg must be between two different ssecs.
-    if(seg->lineDef &&
-       (!seg->backSeg || seg->subsector == seg->backSeg->subsector))
+    if(seg->lineDef && (!seg->backSeg || seg->subsector == seg->backSeg->subsector))
         return;
 
     // Which way does the spread go?
@@ -325,10 +343,10 @@ static void processSeg(seg_t* seg, void* data)
     }
 
     // Is the dest ssector inside the objlink's AABB?
-    if(dest->bBox[1].pos[VX] <= params->box[BOXLEFT] ||
-       dest->bBox[0].pos[VX] >= params->box[BOXRIGHT] ||
-       dest->bBox[1].pos[VY] <= params->box[BOXBOTTOM] ||
-       dest->bBox[0].pos[VY] >= params->box[BOXTOP])
+    if(dest->bBox[1].pos[VX] <= p->box[BOXLEFT] ||
+       dest->bBox[0].pos[VX] >= p->box[BOXRIGHT] ||
+       dest->bBox[1].pos[VY] <= p->box[BOXBOTTOM] ||
+       dest->bBox[0].pos[VY] >= p->box[BOXTOP])
     {
         // The ssector is not inside the params's bounds.
         return;
@@ -357,13 +375,11 @@ static void processSeg(seg_t* seg, void* data)
 
     // Calculate 2D distance to seg.
     {
-    float               dx, dy;
-
-    dx = seg->SG_v2pos[VX] - seg->SG_v1pos[VX];
-    dy = seg->SG_v2pos[VY] - seg->SG_v1pos[VY];
+    const float dx = seg->SG_v2pos[VX] - seg->SG_v1pos[VX];
+    const float dy = seg->SG_v2pos[VY] - seg->SG_v1pos[VY];
     vtx = seg->SG_v1;
-    distance = ((vtx->V_pos[VY] - params->objPos[VY]) * dx -
-                (vtx->V_pos[VX] - params->objPos[VX]) * dy) / seg->length;
+    distance = ((vtx->V_pos[VY] - p->objPos[VY]) * dx -
+                (vtx->V_pos[VX] - p->objPos[VX]) * dy) / seg->length;
     }
 
     if(seg->lineDef)
@@ -379,7 +395,7 @@ static void processSeg(seg_t* seg, void* data)
     // Check distance against the obj radius.
     if(distance < 0)
         distance = -distance;
-    if(distance >= params->objRadius)
+    if(distance >= p->objRadius)
     {   // The obj doesn't reach that far.
         return;
     }
@@ -388,227 +404,176 @@ static void processSeg(seg_t* seg, void* data)
     dest->validCount = validCount;
 
     // Add this obj to the destination subsector.
-    {
-    linkobjtossecparams_t lparams;
+    loParams.obj   = p->obj;
+    loParams.type = p->objType;
+    RIT_LinkObjToSubsector(dest, &loParams);
 
-    lparams.obj = params->obj;
-    lparams.type = params->objType;
-
-    RIT_LinkObjToSubSector(dest, &lparams);
-    }
-
-    spreadInSsec(dest, data);
+    spreadInSubsector(dest, paramaters);
 }
 
 /**
  * Create a contact for the objlink in all the subsectors the linked obj is
  * contacting (tests done on bounding boxes and the subsector spread test).
  *
- * @param oLink         Ptr to objlink to find subsector contacts for.
+ * @param oLink Ptr to objlink to find subsector contacts for.
  */
-static void findContacts(objlink_t* oLink)
+static void findContacts(objlink_t* link)
 {
-    contactfinderparams_t params;
-    float               radius;
-    pvec3_t             pos;
-    subsector_t**       ssec;
+    contactfinderparams_t cfParams;
+    linkobjtossecparams_t loParams;
+    float radius;
+    pvec3_t pos;
+    subsector_t** ssec;
 
-    switch(oLink->type)
+    switch(link->type)
     {
-    case OT_LUMOBJ:
-        {
-        lumobj_t*           lum = (lumobj_t*) oLink->obj;
-
-        if(lum->type != LT_OMNI)
-            return; // Only omni lights spread.
+    case OT_LUMOBJ: {
+        lumobj_t* lum = (lumobj_t*) link->obj;
+        // Only omni lights spread.
+        if(lum->type != LT_OMNI) return;
 
         pos = lum->pos;
         radius = LUM_OMNI(lum)->radius;
         ssec = &lum->subsector;
         break;
-        }
-    case OT_MOBJ:
-        {
-        mobj_t*             mo = (mobj_t*) oLink->obj;
+      }
+    case OT_MOBJ: {
+        mobj_t* mo = (mobj_t*) link->obj;
 
         pos = mo->pos;
         radius = R_VisualRadius(mo);
         ssec = &mo->subsector;
         break;
-        }
+      }
     default:
-        Con_Error("Internal Error: Invalid value (%i) for objlink_t->type "
-                  "in findContacts.", (int) oLink->type);
-        return; // Unreachable.
+        Con_Error("findContacts: Invalid objtype %i.", (int) link->type);
+        exit(1); // Unreachable.
     }
 
     // Do the subsector spread. Begin from the obj's own ssec.
     (*ssec)->validCount = ++validCount;
 
-    params.obj = oLink->obj;
-    params.objType = oLink->type;
-    V3_Copy(params.objPos, pos);
+    cfParams.obj = link->obj;
+    cfParams.objType = link->type;
+    V3_Copy(cfParams.objPos, pos);
     // Use a slightly smaller radius than what the obj really is.
-    params.objRadius = radius * .98f;
+    cfParams.objRadius = radius * .98f;
 
-    params.box[BOXLEFT]   = params.objPos[VX] - radius;
-    params.box[BOXRIGHT]  = params.objPos[VX] + radius;
-    params.box[BOXBOTTOM] = params.objPos[VY] - radius;
-    params.box[BOXTOP]    = params.objPos[VY] + radius;
+    cfParams.box[BOXLEFT]   = cfParams.objPos[VX] - radius;
+    cfParams.box[BOXRIGHT]  = cfParams.objPos[VX] + radius;
+    cfParams.box[BOXBOTTOM] = cfParams.objPos[VY] - radius;
+    cfParams.box[BOXTOP]    = cfParams.objPos[VY] + radius;
 
     // Always contact the obj's own subsector.
-    {
-    linkobjtossecparams_t params;
+    loParams.obj = link->obj;
+    loParams.type = link->type;
+    RIT_LinkObjToSubsector(*ssec, &loParams);
 
-    params.obj = oLink->obj;
-    params.type = oLink->type;
-
-    RIT_LinkObjToSubSector(*ssec, &params);
-    }
-
-    spreadInSsec(*ssec, &params);
+    spreadInSubsector(*ssec, &cfParams);
 }
 
 /**
- * Spread obj contacts in the subsector > obj blockmap to all other
- * subsectors within the block.
+ * Spread contacts in the object => Subsector objlink blockmap to all
+ * other Subsectors within the block.
  *
- * @param subsector     Ptr to the subsector to spread the obj contacts of.
+ * @param subsector  Subsector to spread the contacts of.
  */
-void R_ObjBlockmapSpreadObjsInSubSector(const objblockmap_t* obm,
-                                        const subsector_t* ssec,
-                                        float maxRadius)
+void R_ObjlinkBlockmapSpreadInSubsector(objlinkblockmap_t* obm,
+    const subsector_t* ssec, float maxRadius)
 {
-    int                 xl, xh, yl, yh, x, y;
-    objlink_t*          iter;
+    uint minBlock[2], maxBlock[2], x, y;
+    objlink_t* iter;
+    assert(obm);
 
-    if(!obm || !ssec)
-        return; // Wha?
+    if(!ssec) return; // Wha?
 
-    xl = X_TO_OBBX(obm, ssec->bBox[0].pos[VX] - maxRadius);
-    xh = X_TO_OBBX(obm, ssec->bBox[1].pos[VX] + maxRadius);
-    yl = Y_TO_OBBY(obm, ssec->bBox[0].pos[VY] - maxRadius);
-    yh = Y_TO_OBBY(obm, ssec->bBox[1].pos[VY] + maxRadius);
+    toObjlinkBlockmapBlock(obm, minBlock, ssec->bBox[0].pos[VX] - maxRadius,
+                                          ssec->bBox[0].pos[VY] - maxRadius);
 
-    // Are we completely outside the blockmap?
-    if(xh < 0 || xl >= obm->width || yh < 0 || yl >= obm->height)
-        return;
+    toObjlinkBlockmapBlock(obm, maxBlock, ssec->bBox[1].pos[VX] + maxRadius,
+                                          ssec->bBox[1].pos[VY] + maxRadius);
 
-    // Clip to blockmap bounds.
-    if(xl < 0)
-        xl = 0;
-    if(xh >= obm->width)
-        xh = obm->width - 1;
-    if(yl < 0)
-        yl = 0;
-    if(yh >= obm->height)
-        yh = obm->height - 1;
-
-    for(y = yl; y <= yh; ++y)
-        for(x = xl; x <= xh; ++x)
+    for(y = minBlock[1]; y <= maxBlock[1]; ++y)
+        for(x = minBlock[0]; x <= maxBlock[0]; ++x)
         {
-            objblock_t* block = OBB_XY(obm, x, y);
+            objlinkblock_t* block = Gridmap_Block(obm->blockmap, x, y, true/*can allocate a block*/);
+            if(block->doneSpread) continue;
 
-            if(!block->doneSpread)
+            iter = block->head;
+            while(iter)
             {
-                // Spread the objs in this block.
-                iter = block->head;
-                while(iter)
-                {
-                    findContacts(iter);
-                    iter = iter->nextInBlock;
-                }
-
-                block->doneSpread = true;
+                findContacts(iter);
+                iter = iter->nextInBlock;
             }
+            block->doneSpread = true;
         }
 }
 
-/**
- * Perform any processing needed before we can draw surfaces within the
- * specified subsector with dynamic lights.
- *
- * @param ssec          Ptr to the subsector to process.
- */
+static __inline const float maxRadius(objtype_t type)
+{
+    assert(VALID_OBJTYPE(type));
+    if(type == OT_MOBJ) return DDMOBJ_RADIUS_MAX;
+    // Must be OT_LUMOBJ
+    return loMaxRadius;
+}
+
 void R_InitForSubsector(subsector_t* ssec)
 {
-    float               maxRadius = MAX_OF(DDMOBJ_RADIUS_MAX, loMaxRadius);
-
+    int i;
 BEGIN_PROF( PROF_OBJLINK_SPREAD );
 
-    // Make sure we know which objs are contacting us.
-    R_ObjBlockmapSpreadObjsInSubSector(objBlockmap, ssec, maxRadius);
+    for(i = 0; i < NUM_OBJ_TYPES; ++i)
+    {
+        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        R_ObjlinkBlockmapSpreadInSubsector(obm, ssec, maxRadius((objtype_t)i));
+    }
 
 END_PROF( PROF_OBJLINK_SPREAD );
 }
 
-/**
- * Link all objlinks into the objlink blockmap.
- */
-void R_ObjBlockmapLinkObjLink(objblockmap_t* obm, objlink_t* oLink, float x, float y)
+/// @assume  Coordinates held by @a blockXY are within valid range.
+static void linkObjlinkInBlockmap(objlinkblockmap_t* obm, objlink_t* link, uint blockXY[2])
 {
-    int bx, by;
-    objlink_t** root;
-
-    if(!obm || !oLink) return; // Wha?
-
-    oLink->nextInBlock = NULL;
-    bx = X_TO_OBBX(obm, x);
-    by = Y_TO_OBBY(obm, y);
-
-    if(bx >= 0 && by >= 0 && bx < obm->width && by < obm->height)
-    {
-        root = &OBB_XY(obm, bx, by)->head;
-        oLink->nextInBlock = *root;
-        *root = oLink;
-    }
+    objlinkblock_t* block;
+    if(!obm || !link || !blockXY) return; // Wha?
+    block = Gridmap_Block(obm->blockmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
+    link->nextInBlock = block->head;
+    block->head = link;
 }
 
-/**
- * Called by R_BeginWorldFrame() at the beginning of render tic (iff the
- * render lists are not frozen) to link all objlinks into the objlink
- * blockmap.
- */
 void R_LinkObjs(void)
 {
-    objlink_t*          oLink;
+    objlinkblockmap_t* obm;
+    objlink_t* link;
+    uint block[2];
+    pvec3_t pos;
 
 BEGIN_PROF( PROF_OBJLINK_LINK );
 
     // Link objlinks into the objlink blockmap.
-    oLink = objLinks;
-    while(oLink)
+    link = objlinks;
+    while(link)
     {
-        pvec3_t             pos;
-
-        switch(oLink->type)
+        switch(link->type)
         {
-        case OT_LUMOBJ:
-            pos = ((lumobj_t*) oLink->obj)->pos;
-            break;
-
-        case OT_MOBJ:
-            pos = ((mobj_t*) oLink->obj)->pos;
-            break;
+        case OT_LUMOBJ:     pos = ((lumobj_t*)link->obj)->pos; break;
+        case OT_MOBJ:       pos = ((mobj_t*)link->obj)->pos; break;
         default:
-            Con_Error("Internal Error: Invalid value (%i) for objlink_t->type "
-                      "in R_LinkObjs.", (int) oLink->type);
-            return; // Unreachable.
+            Con_Error("R_LinkObjs: Invalid objtype %i.", (int) link->type);
+            exit(1); // Unreachable.
         }
 
-        R_ObjBlockmapLinkObjLink(objBlockmap, oLink, pos[VX], pos[VY]);
-
-        oLink = oLink->next;
+        obm = chooseObjlinkBlockmap(link->type);
+        if(toObjlinkBlockmapBlock(obm, block, pos[VX], pos[VY]))
+        {
+            linkObjlinkInBlockmap(obm, link, block);
+        }
+        link = link->next;
     }
 
 END_PROF( PROF_OBJLINK_LINK );
 }
 
-/**
- * Initialize the obj > subsector contact lists ready for adding new
- * luminous objects. Called by R_BeginWorldFrame() at the beginning of a new
- * frame (if the render lists are not frozen).
- */
 void R_InitForNewFrame(void)
 {
 #ifdef DD_PROFILE
@@ -624,24 +589,18 @@ void R_InitForNewFrame(void)
 
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
-    if(subContacts)
-        memset(subContacts, 0, numSSectors * sizeof(*subContacts));
+    if(ssecContacts)
+        memset(ssecContacts, 0, numSSectors * sizeof *ssecContacts);
 }
 
 boolean R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
-                                   boolean (*func) (void*, void*),
-                                   void* data)
+    boolean (*callback) (void* object, void* paramaters), void* paramaters)
 {
-    objcontact_t*       con;
-
-    con = subContacts[GET_SUBSECTOR_IDX(ssec)].head[type];
+    objcontact_t* con = ssecContacts[GET_SUBSECTOR_IDX(ssec)].head[type];
     while(con)
     {
-        if(!func(con->obj, data))
-            return false;
-
+        if(!callback(con->obj, paramaters)) return false;
         con = con->next;
     }
-
     return true;
 }
