@@ -688,7 +688,7 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -696,8 +696,8 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
                         smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
-                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
+                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];

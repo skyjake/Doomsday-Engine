@@ -389,14 +389,34 @@ void DD_Ticker(timespan_t time)
  */
 void DD_AdvanceTime(timespan_t time)
 {
+    int oldGameTic = 0;
+
     sysTime += time;
 
     if(!stopTime || netGame)
     {
+        oldGameTic = SECONDS_TO_TICKS(gameTime);
+
         // The difference between gametic and demotic is that demotic
         // is not altered at any point. Gametic changes at handshakes.
         gameTime += time;
         demoTime += time;
+
+        if(DD_IsSharpTick())
+        {
+            // When a new sharp tick begins, we want that the 35 Hz tick
+            // calculated from gameTime also changes. If this is not the
+            // case, we will adjust gameTime slightly so that it syncs again.
+            if(oldGameTic == SECONDS_TO_TICKS(gameTime))
+            {
+#ifdef _DEBUG
+                Con_Message("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
+                            oldGameTic, frameTimePos);
+#endif
+                // Realign.
+                gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
+            }
+        }
 
         // Leveltic is reset to zero at every map change.
         // The map time only advances when the game is not paused.
