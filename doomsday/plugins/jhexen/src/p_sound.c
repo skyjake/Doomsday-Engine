@@ -59,11 +59,19 @@ int S_GetSoundID(const char* name)
 /**
  * Starts the song of the specified map, updating the currentmap definition
  * in the process.
+ *
+ * @param episode  "Warp" episode.
+ * @param map      "Warp" map number.
  */
 void S_MapMusic(uint episode, uint map)
 {
     int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
     int cdTrack;
+
+    // Convert to a logical map number.
+    map = P_TranslateMap(map);
+
+    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s\n", episode, map, P_GetMapSongLump(map)) );
 
     // Update the 'currentmap' music definition.
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
@@ -101,9 +109,9 @@ void S_ParseSndInfoLump(void)
                 {
                     SC_MustGetNumber();
                     SC_MustGetString();
-                    if(sc_Number)
+                    if(sc_Number - 1 >= 0)
                     {
-                        P_PutMapSongLump(sc_Number, sc_String);
+                        P_PutMapSongLump(sc_Number - 1, sc_String);
                     }
                 }
                 continue;
