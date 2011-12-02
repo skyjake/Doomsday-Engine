@@ -23,8 +23,6 @@
 
 #include "driver_fmod.h"
 
-// DM_CDAudio_Get
-
 int DM_CDAudio_Init(void)
 {
     return fmodSystem != 0;
@@ -32,35 +30,37 @@ int DM_CDAudio_Init(void)
 
 void DM_CDAudio_Shutdown(void)
 {
-
+    // Will be shut down with the rest of FMOD.
 }
 
 void DM_CDAudio_Update(void)
-{
-
-}
+{}
 
 void DM_CDAudio_Set(int prop, float value)
 {
-
+    if(!fmodSystem) return;
 }
 
 int DM_CDAudio_Get(int prop, void* value)
 {
-
+    if(!fmodSystem) return 0;
+    return 0;
 }
 
 int DM_CDAudio_Play(int track, int looped)
 {
-
+    if(!fmodSystem) return 0;
+    return 0;
 }
 
 void DM_CDAudio_Pause(int pause)
 {
+    if(!fmodSystem) return;
 
 }
 
 void DM_CDAudio_Stop(void)
 {
+    if(!fmodSystem) return;
 
 }

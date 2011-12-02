@@ -22,6 +22,7 @@
  */
 
 #include "driver_fmod.h"
+#include <string.h>
 
 int DM_Music_Init(void)
 {
@@ -30,12 +31,12 @@ int DM_Music_Init(void)
 
 void DM_Music_Shutdown(void)
 {
-
+    // Will be shut down with the rest of FMOD.
 }
 
 void DM_Music_Set(int prop, float value)
 {
-    if(!midiAvail)
+    if(!fmodSystem)
         return;
 
     switch(prop)
@@ -90,39 +91,37 @@ void DM_Music_Update(void)
 
 void DM_Music_Stop(void)
 {
-    if(midiAvail)
-    {
-        //MIDIStreamer->Stop();
-    }
+    if(!fmodSystem)
+        return;
+
+
 }
 
 int DM_Music_Play(int looped)
 {
-    if(midiAvail)
-    {
-        return true;
-    }
+    if(!fmodSystem) return false;
+
     return false;
 }
 
 void DM_Music_Pause(int setPause)
 {
-    if(midiAvail)
-    {
-    }
+    if(!fmodSystem)
+        return;
 }
 
 void* DM_Music_SongBuffer(unsigned int length)
 {
-    if(midiAvail)
-    {
-//        return MIDIStreamer->SongBuffer(length);
-    }
+    if(!fmodSystem)
+        return NULL;
 
     return NULL;
 }
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
+    if(!fmodSystem)
+        return 0;
 
+    return 0;
 }
