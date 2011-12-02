@@ -45,8 +45,8 @@
 #define BLOCK_WIDTH                 (128)
 #define BLOCK_HEIGHT                (128)
 
-#define X_TO_OBBX(bm, cx)           ((int)ceil(((cx) - (bm)->origin[0]) / (float)BLOCK_WIDTH))
-#define Y_TO_OBBY(bm, cy)           ((int)ceil(((cy) - (bm)->origin[1]) / (float)BLOCK_HEIGHT))
+#define X_TO_OBBX(bm, cx)           ((int)((cx) - (bm)->origin[0]) / (float)BLOCK_WIDTH)
+#define Y_TO_OBBY(bm, cy)           ((int)((cy) - (bm)->origin[1]) / (float)BLOCK_HEIGHT)
 #define OBB_XY(bm, bx, by)          (&(bm)->blocks[by][bx])
 
 BEGIN_PROF_TIMERS()
