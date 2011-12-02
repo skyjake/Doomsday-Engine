@@ -405,8 +405,12 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
         src->pos[VZ] = dst->pos[VZ];
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
+    {
+#ifdef _DEBUG
+        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.\n", dst->angle);
+#endif
         src->angle = dst->angle;
-
+    }
 #undef MAXMOVE
 }
 
