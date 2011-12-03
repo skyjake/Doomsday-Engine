@@ -27,26 +27,26 @@
 #include <fmod.h>
 #include <fmod.hpp>
 #include <fmod_errors.h>
+#include <cassert>
+#include <iostream>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
     
 int     DS_Init(void);
 void    DS_Shutdown(void);
 void    DS_Event(int type);
 
-#ifdef __cplusplus
 }
-#endif
+
+#define DSFMOD_TRACE(args)  std::cerr << args << std::endl;
 
 #ifdef _DEBUG
-#  define ERRCHECK(result) \
+#  define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \
         printf("FMOD error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
     }
 #else
-#  define ERRCHECK(result)
+#  define DSFMOD_ERRCHECK(result)
 #endif
 
 extern FMOD::System* fmodSystem;

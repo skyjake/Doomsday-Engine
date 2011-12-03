@@ -24,32 +24,67 @@
 #include "driver_fmod.h"
 #include <stdlib.h>
 
+struct BufferInfo
+{
+    FMOD::Channel* channel;
+    FMOD::Sound* sound;
+
+    BufferInfo() : channel(0), sound(0) {}
+};
+
 int DS_SFX_Init(void)
 {
     return fmodSystem != 0;
 }
 
+static BufferInfo& bufferInfo(sfxbuffer_t* buf)
+{
+    assert(buf->ptr != 0);
+    return *reinterpret_cast<BufferInfo*>(buf->ptr);
+}
+
+#if 0
+/**
+ * @return The length of the buffer in milliseconds.
+ */
+static unsigned int bufferLength(sfxbuffer_t* buf)
+{
+    if(!buf || !buf->sample) return 0;
+    return 1000 * buf->sample->numSamples / buf->freq;
+}
+#endif
+
 sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
+    DSFMOD_TRACE("DS_SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
+
     sfxbuffer_t* buf;
 
     // Clear the buffer.
     buf = reinterpret_cast<sfxbuffer_t*>(calloc(sizeof(*buf), 1));
 
+    // Initialize with format info.
     buf->bytes = bits / 8;
     buf->rate = rate;
     buf->flags = flags;
     buf->freq = rate; // Modified by calls to Set(SFXBP_FREQUENCY).
+
+    // Allocate extra state information.
+    buf->ptr = new BufferInfo;
+
+    DSFMOD_TRACE("DS_SFX_CreateBuffer: Created sfxbuffer " << buf);
 
     return buf;
 }
 
 void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
+
+    DSFMOD_TRACE("DS_SFX_DestroyBuffer: Destroying sfxbuffer " << buf);
 
     // Free the memory allocated for the buffer.
+    delete reinterpret_cast<BufferInfo*>(buf->ptr);
     free(buf);
 }
 
@@ -60,13 +95,41 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
  */
 void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-    if(!buf || !sample)
+    if(!fmodSystem || !buf || !sample)
         return;
 
-    // Now the buffer is ready for playing.
+    // Tell the engine we have used up the entire sample already.
     buf->sample = sample;
     buf->written = sample->size;
     buf->flags &= ~SFXBF_RELOAD;
+
+    BufferInfo& info = bufferInfo(buf);
+
+    FMOD_CREATESOUNDEXINFO params;
+    memset(&params, 0, sizeof(params));
+    params.length = sample->size;
+    params.defaultfrequency = sample->rate;
+    params.numchannels = 1; // Doomsday only uses mono samples currently.
+    params.format = (sample->bytesPer == 1? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16);
+
+    DSFMOD_TRACE("DS_SFX_Load: sfxbuffer " << buf
+                 << " sample (size:" << sample->size
+                 << ", freq:" << sample->rate
+                 << ", bps:" << sample->bytesPer);
+
+    // Pass the sample to FMOD.
+    FMOD_RESULT result;
+    result = fmodSystem->createSound(reinterpret_cast<const char*>(sample->data),
+                                     (buf->flags & SFXBF_3D? FMOD_3D : 0) |
+                                     FMOD_OPENMEMORY | FMOD_OPENUSER, &params,
+                                     &info.sound);
+    DSFMOD_ERRCHECK(result);
+    DSFMOD_TRACE("DS_SFX_Load: created Sound " << info.sound);
+
+    // Not started yet.
+    info.channel = 0;
+
+    // Now the buffer is ready for playing.
 }
 
 /**
@@ -77,23 +140,21 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     if(!buf)
         return;
 
+    DSFMOD_TRACE("DS_SFX_Reset: sfxbuffer " << buf);
+
     DS_SFX_Stop(buf);
-    buf->sample = NULL;
+    buf->sample = 0;
     buf->flags &= ~SFXBF_RELOAD;
-}
 
-#if 0
-/**
- * @return              The length of the buffer in milliseconds.
- */
-static unsigned int DS_SFX_BufferLength(sfxbuffer_t* buf)
-{
-    if(!buf)
-        return 0;
-
-    return 1000 * buf->sample->numSamples / buf->freq;
+    BufferInfo& info = bufferInfo(buf);
+    if(info.sound)
+    {
+        DSFMOD_TRACE("DS_SFX_Reset: releasing Sound " << info.sound);
+        info.sound->release();
+        info.sound = 0;
+    }
+    info.channel = 0;
 }
-#endif
 
 void DS_SFX_Play(sfxbuffer_t* buf)
 {
@@ -101,17 +162,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     if(!buf || !buf->sample)
         return;
 
-    /*
-    // Do we need to reload?
-    if(buf->flags & SFXBF_RELOAD)
-        DS_SFX_Load(buf, buf->sample);
 
-    // The sound starts playing now?
-    if(!(buf->flags & SFXBF_PLAYING))
-    {
-        // Calculate the end time (milliseconds).
-        buf->endTime = Sys_GetRealTime() + DS_DummyBufferLength(buf);
-    }*/
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
