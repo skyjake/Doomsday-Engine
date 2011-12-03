@@ -42,12 +42,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BLOCK_WIDTH                 (128)
-#define BLOCK_HEIGHT                (128)
-
-#define X_TO_OBBX(bm, cx)           ((int)ceil(((cx) - (bm)->origin[0]) / (float)BLOCK_WIDTH))
-#define Y_TO_OBBY(bm, cy)           ((int)ceil(((cy) - (bm)->origin[1]) / (float)BLOCK_HEIGHT))
-#define OBB_XY(bm, bx, by)          (&(bm)->blocks[by][bx])
+#define X_TO_OBBX(bm, cx)           (((cx) - (bm)->origin[0]) >> (FRACBITS+7))
+#define Y_TO_OBBY(bm, cy)           (((cy) - (bm)->origin[1]) >> (FRACBITS+7))
+#define OBB_XY(bm, bx, by)          (&(bm)->blocks[(bx) + (by) * (bm)->width])
 
 BEGIN_PROF_TIMERS()
   PROF_OBJLINK_SPREAD,
@@ -72,9 +69,9 @@ typedef struct objblock_s {
 } objblock_t;
 
 typedef struct objblockmap_s {
-    objblock_t** blocks; // [height][width]
-    float origin[2];
-    int width, height; // In BLOCK_WIDTHxBLOCK_HEIGHT blocks.
+    objblock_t*     blocks;
+    fixed_t         origin[2];
+    int             width, height; // In blocks.
 } objblockmap_t;
 
 typedef struct contactfinder_data_s {
@@ -197,53 +194,52 @@ static objlink_t* allocObjLink(void)
     return oLink;
 }
 
-objblockmap_t* R_ObjBlockmapCreate(float originX, float originY, int width, int height)
+objblockmap_t* R_ObjBlockmapCreate(float originX, float originY, int width,
+                                   int height)
 {
-    objblockmap_t* obm = Z_Malloc(sizeof *obm, PU_MAPSTATIC, 0);
-    int i;
+    objblockmap_t*      obm;
 
-    obm->origin[0] = originX;
-    obm->origin[1] = originY;
-    obm->width  = width;
+    obm = Z_Malloc(sizeof(objblockmap_t), PU_MAPSTATIC, 0);
+
+    // Origin has fixed-point coordinates.
+    obm->origin[0] = FLT2FIX(originX);
+    obm->origin[1] = FLT2FIX(originY);
+    obm->width = width;
     obm->height = height;
-
-    obm->blocks = Z_Malloc(sizeof *obm->blocks * height, PU_MAPSTATIC, 0);
-    for(i = 0; i < height; ++i)
-    {
-        obm->blocks[i] = Z_Malloc(sizeof **obm->blocks * width, PU_MAPSTATIC, 0);
-    }
+    obm->blocks = Z_Malloc(sizeof(*obm->blocks) * obm->width * obm->height,
+                           PU_MAPSTATIC, 0);
 
     return obm;
 }
 
 void R_InitObjLinksForMap(void)
 {
-    gamemap_t* map = P_GetCurrentMap();
-    float min[2], max[2];
-    int width, height;
+    gamemap_t*          map = P_GetCurrentMap();
+    float               min[2], max[2];
+    int                 width, height;
 
-    // Determine the dimensions of the objblockmap in blocks.
+    // Determine the dimensions of the objblockmap.
     P_GetMapBounds(map, &min[0], &max[0]);
-    width  = (int)ceil(max[0] - min[0] / (float)BLOCK_WIDTH);
-    height = (int)ceil(max[1] - min[1] / (float)BLOCK_HEIGHT);
+    max[0] -= min[0];
+    max[1] -= min[1];
+
+    // In blocks, 128x128 world units.
+    width  = (FLT2FIX(max[0]) >> (FRACBITS + 7)) + 1;
+    height = (FLT2FIX(max[1]) >> (FRACBITS + 7)) + 1;
 
     // Create the blockmap.
     objBlockmap = R_ObjBlockmapCreate(min[0], min[1], width, height);
 
     // Initialize obj -> subsector contact lists.
-    subContacts = Z_Calloc(sizeof *subContacts * numSSectors, PU_MAPSTATIC, 0);
+    subContacts =
+        Z_Calloc(sizeof(*subContacts) * numSSectors, PU_MAPSTATIC, 0);
 }
 
 void R_ObjBlockmapClear(objblockmap_t* obm)
 {
     if(obm)
-    {
-        // Clear the list head ptrs and doneSpread flags.
-        int i;
-        for(i = 0; i < obm->height; ++i)
-        {
-            memset(obm->blocks[i], 0, sizeof **obm->blocks * obm->width);
-        }
+    {   // Clear the list head ptrs and doneSpread flags.
+        memset(obm->blocks, 0, sizeof(*obm->blocks) * obm->width * obm->height);
     }
 }
 
@@ -485,10 +481,10 @@ void R_ObjBlockmapSpreadObjsInSubSector(const objblockmap_t* obm,
     if(!obm || !ssec)
         return; // Wha?
 
-    xl = X_TO_OBBX(obm, ssec->bBox[0].pos[VX] - maxRadius);
-    xh = X_TO_OBBX(obm, ssec->bBox[1].pos[VX] + maxRadius);
-    yl = Y_TO_OBBY(obm, ssec->bBox[0].pos[VY] - maxRadius);
-    yh = Y_TO_OBBY(obm, ssec->bBox[1].pos[VY] + maxRadius);
+    xl = X_TO_OBBX(obm, FLT2FIX(ssec->bBox[0].pos[VX] - maxRadius));
+    xh = X_TO_OBBX(obm, FLT2FIX(ssec->bBox[1].pos[VX] + maxRadius));
+    yl = Y_TO_OBBY(obm, FLT2FIX(ssec->bBox[0].pos[VY] - maxRadius));
+    yh = Y_TO_OBBY(obm, FLT2FIX(ssec->bBox[1].pos[VY] + maxRadius));
 
     // Are we completely outside the blockmap?
     if(xh < 0 || xl >= obm->width || yh < 0 || yl >= obm->height)
@@ -504,10 +500,10 @@ void R_ObjBlockmapSpreadObjsInSubSector(const objblockmap_t* obm,
     if(yh >= obm->height)
         yh = obm->height - 1;
 
-    for(y = yl; y <= yh; ++y)
-        for(x = xl; x <= xh; ++x)
+    for(x = xl; x <= xh; ++x)
+        for(y = yl; y <= yh; ++y)
         {
-            objblock_t* block = OBB_XY(obm, x, y);
+            objblock_t*         block = OBB_XY(obm, x, y);
 
             if(!block->doneSpread)
             {
@@ -545,16 +541,18 @@ END_PROF( PROF_OBJLINK_SPREAD );
 /**
  * Link all objlinks into the objlink blockmap.
  */
-void R_ObjBlockmapLinkObjLink(objblockmap_t* obm, objlink_t* oLink, float x, float y)
+void R_ObjBlockmapLinkObjLink(objblockmap_t* obm, objlink_t* oLink,
+                               float x, float y)
 {
-    int bx, by;
-    objlink_t** root;
+    int                 bx, by;
+    objlink_t**         root;
 
-    if(!obm || !oLink) return; // Wha?
+    if(!obm || !oLink)
+        return; // Wha?
 
     oLink->nextInBlock = NULL;
-    bx = X_TO_OBBX(obm, x);
-    by = Y_TO_OBBY(obm, y);
+    bx = X_TO_OBBX(obm, FLT2FIX(x));
+    by = Y_TO_OBBY(obm, FLT2FIX(y));
 
     if(bx >= 0 && by >= 0 && bx < obm->width && by < obm->height)
     {
