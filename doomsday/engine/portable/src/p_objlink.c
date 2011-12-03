@@ -224,8 +224,8 @@ void R_InitObjLinksForMap(void)
 
     // Determine the dimensions of the objblockmap in blocks.
     P_GetMapBounds(map, &min[0], &max[0]);
-    width  = (int)(ceil(max[0] - min[0]) / (float)BLOCK_WIDTH);
-    height = (int)(ceil(max[1] - min[1]) / (float)BLOCK_HEIGHT);
+    width  = (int)ceil((max[0] - min[0]) / (float)BLOCK_WIDTH);
+    height = (int)ceil((max[1] - min[1]) / (float)BLOCK_HEIGHT);
 
     // Create the blockmap.
     objBlockmap = R_ObjBlockmapCreate(min[0], min[1], width, height);
