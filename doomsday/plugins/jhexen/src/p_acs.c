@@ -1175,22 +1175,22 @@ typedef struct {
     int                 count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t* params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Does the type match?
     if(mo->type != params->type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static void ThingCount(int type, int tid)

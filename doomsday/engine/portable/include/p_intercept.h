@@ -1,4 +1,4 @@
-/**\file
+/**\file p_intercept.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +23,16 @@
  */
 
 /**
- * p_intercept.h: Line/Object Interception
+ * Line/Object Interception
  */
 
-#ifndef __DOOMSDAY_PLAY_INTERCEPT_H__
-#define __DOOMSDAY_PLAY_INTERCEPT_H__
+#ifndef LIBDENG_PLAY_INTERCEPT_H
+#define LIBDENG_PLAY_INTERCEPT_H
 
 void            P_ClearIntercepts(void);
 intercept_t*    P_AddIntercept(float frac, intercepttype_t type, void* ptr);
 void            P_CalcInterceptDistances(const divline_t* strace);
 
-boolean         P_TraverseIntercepts(traverser_t func, float maxfrac);
+int             P_TraverseIntercepts(traverser_t func, float maxfrac);
 
-#endif
+#endif /* LIBDENG_PLAY_INTERCEPT_H */

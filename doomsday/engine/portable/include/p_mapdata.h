@@ -90,18 +90,6 @@ typedef struct edgespan_s {
     float           shift;
 } edgespan_t;
 
-typedef struct linkmobj_s {
-    struct mobj_s* mobj;
-    struct linkmobj_s* prev;
-    struct linkmobj_s* next;
-} linkmobj_t;
-
-typedef struct linkpolyobj_s {
-    struct polyobj_s* polyobj;
-    struct linkpolyobj_s* prev;
-    struct linkpolyobj_s* next;
-} linkpolyobj_t;
-
 typedef struct watchedplanelist_s {
     uint            num, maxNum;
     struct plane_s** list;
@@ -130,7 +118,85 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
-typedef void* blockmap_t;
+#include "m_gridmap.h"
+
+struct blockmap_s; // The Blockmap instance (opaque).
+typedef struct blockmap_s Blockmap;
+
+Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
+    uint cellHeight, size_t sizeOfCell);
+
+/**
+ * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
+ */
+const pvec2_t Blockmap_Origin(Blockmap* blockmap);
+
+/**
+ * Retrieve the minimal and maximal map space points covered by the Blockmap.
+ *
+ * @param min  Minimal point [x,y] written here (i.e., the "origin").
+ * @param max  Maximal point [x,y] written here.
+ */
+void Blockmap_Bounds(Blockmap* blockmap, pvec2_t min, pvec2_t max);
+
+/**
+ * Retrieve the size of the Blockmap in cells.
+ *
+ * @param widthHeight  Size of the Blockmap [width, height] written here.
+ */
+void Blockmap_Size(Blockmap* blockmap, uint widthHeight[2]);
+
+/**
+ * Given map space X coordinate @a x, return the corresponding cell coordinate.
+ * If @a x is outside the Blockmap it will be clamped to the nearest edge on
+ * the X axis.
+ */
+uint Blockmap_CellX(Blockmap* blockmap, float x);
+
+/**
+ * Given map space Y coordinate @a y, return the corresponding cell coordinate.
+ * If @a y is outside the Blockmap it will be clamped to the nearest edge on
+ * the Y axis.
+ *
+ * @param outY  Blockmap cell X coordinate written here.
+ * @param y  Map space X coordinate to be translated.
+ * @return  @c true iff clamping was necessary.
+ */
+uint Blockmap_CellY(Blockmap* blockmap, float y);
+
+/**
+ * Same as @a Blockmap::CellX with alternative semantics for when the caller
+ * needs to know if the coordinate specified was inside/outside the Blockmap.
+ */
+boolean Blockmap_ClipCellX(Blockmap* bm, uint* outX, float x);
+
+/**
+ * Same as @a Blockmap::CellY with alternative semantics for when the caller
+ * needs to know if the coordinate specified was inside/outside the Blockmap.
+ *
+ * @param outY  Blockmap cell Y coordinate written here.
+ * @param y  Map space Y coordinate to be translated.
+ * @return  @c true iff clamping was necessary.
+ */
+boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y);
+
+/**
+ * Given map space XY coordinates @a pos, output the Blockmap cell[x, y] it
+ * resides in. If @a pos is outside the Blockmap it will be clamped to the
+ * nearest edge on one or more axes as necessary.
+ *
+ * @return  @c true iff clamping was necessary.
+ */
+boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], const pvec2_t pos);
+
+/**
+ * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
+ * they reside in. If any point defined by @a box lies outside the blockmap
+ * it will be clamped to the nearest edge on one or more axes as necessary.
+ *
+ * @return  @c true iff Clamping was necessary.
+ */
+boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const arvec2_t box);
 
 #include "p_polyob.h"
 #include "p_maptypes.h"
@@ -248,14 +314,14 @@ typedef struct gamemap_s {
 
     gameobjdata_t   gameObjData;
 
-    linkpolyobj_t** polyBlockMap;
-
     watchedplanelist_t watchedPlaneList;
     surfacelist_t   movingSurfaceList;
     surfacelist_t   decoratedSurfaceList;
 
-    blockmap_t*     blockMap;
-    blockmap_t*     ssecBlockMap;
+    Blockmap*       mobjBlockmap;
+    Blockmap*       polyobjBlockmap;
+    Blockmap*       lineDefBlockmap;
+    Blockmap*       subsectorBlockmap;
 
     nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t*    lineLinks; // Indices to roots.

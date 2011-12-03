@@ -58,7 +58,7 @@ typedef struct {
 
 typedef struct {
     float origin[2]; /// Origin of the blockmap in world coordinates [x,y].
-    Gridmap* blockmap;
+    Gridmap* gridmap;
 } objlinkblockmap_t;
 
 typedef struct {
@@ -116,49 +116,50 @@ static __inline uint toObjlinkBlockmapY(objlinkblockmap_t* obm, float y)
  * [x, y] it resides in. If the coordinates are outside the blockmap they
  * are clipped within valid range.
  *
- * @return  @c true if the coordinates specified were within valid range.
+ * @return  @c true if the coordinates specified had to be adjusted.
  */
-static boolean toObjlinkBlockmapBlock(objlinkblockmap_t* obm, uint block[2], float x, float y)
+static boolean toObjlinkBlockmapCell(objlinkblockmap_t* obm, uint coords[2],
+    float x, float y)
 {
     boolean adjusted = false;
     float max[2];
     uint size[2];
     assert(obm);
 
-    Gridmap_Size(obm->blockmap, size);
+    Gridmap_Size(obm->gridmap, size);
     max[0] = obm->origin[0] + size[0] * BLOCK_WIDTH;
     max[1] = obm->origin[1] + size[1] * BLOCK_HEIGHT;
 
     if(x < obm->origin[0])
     {
-        block[0] = 0;
+        coords[VX] = 0;
         adjusted = true;
     }
     else if(x >= max[0])
     {
-        block[0] = size[0]-1;
+        coords[VX] = size[0]-1;
         adjusted = true;
     }
     else
     {
-        block[0] = toObjlinkBlockmapX(obm, x);
+        coords[VX] = toObjlinkBlockmapX(obm, x);
     }
 
     if(y < obm->origin[1])
     {
-        block[1] = 0;
+        coords[VY] = 0;
         adjusted = true;
     }
     else if(y >= max[1])
     {
-        block[1] = size[1]-1;
+        coords[VY] = size[1]-1;
         adjusted = true;
     }
     else
     {
-        block[1] = toObjlinkBlockmapY(obm, y);
+        coords[VY] = toObjlinkBlockmapY(obm, y);
     }
-    return !adjusted;
+    return adjusted;
 }
 
 static __inline void linkContact(objcontact_t* con, objcontact_t** list, uint index)
@@ -231,8 +232,8 @@ void R_InitObjlinkBlockmapForMap(void)
 
     // Determine the dimensions of the objlink blockmaps in blocks.
     P_GetMapBounds(map, &min[0], &max[0]);
-    width  = (int)ceil(max[0] - min[0] / (float)BLOCK_WIDTH);
-    height = (int)ceil(max[1] - min[1] / (float)BLOCK_HEIGHT);
+    width  = (uint)ceil((max[0] - min[0]) / (float)BLOCK_WIDTH);
+    height = (uint)ceil((max[1] - min[1]) / (float)BLOCK_HEIGHT);
 
     // Create the blockmaps.
     for(i = 0; i < NUM_OBJ_TYPES; ++i)
@@ -240,7 +241,7 @@ void R_InitObjlinkBlockmapForMap(void)
         objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
         obm->origin[0] = min[0];
         obm->origin[1] = min[1];
-        obm->blockmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
+        obm->gridmap = Gridmap_New(width, height, sizeof(objlinkblock_t), PU_MAPSTATIC);
     }
 
     // Initialize obj => subsector contact lists.
@@ -265,7 +266,7 @@ void R_ClearObjlinkBlockmap(objtype_t type)
         return;
     }
     // Clear all the contact list heads and spread flags.
-    Gridmap_Iterate(chooseObjlinkBlockmap(type)->blockmap, clearObjlinkBlock, NULL);
+    Gridmap_Iterate(chooseObjlinkBlockmap(type)->gridmap, clearObjlinkBlock);
 }
 
 void R_ClearObjlinksForFrame(void)
@@ -274,7 +275,7 @@ void R_ClearObjlinksForFrame(void)
     for(i = 0; i < NUM_OBJ_TYPES; ++i)
     {
         objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
-        if(!obm->blockmap) continue;
+        if(!obm->gridmap) continue;
         R_ClearObjlinkBlockmap((objtype_t)i);
     }
 
@@ -487,16 +488,16 @@ void R_ObjlinkBlockmapSpreadInSubsector(objlinkblockmap_t* obm,
 
     if(!ssec) return; // Wha?
 
-    toObjlinkBlockmapBlock(obm, minBlock, ssec->bBox[0].pos[VX] - maxRadius,
+    toObjlinkBlockmapCell(obm, minBlock, ssec->bBox[0].pos[VX] - maxRadius,
                                           ssec->bBox[0].pos[VY] - maxRadius);
 
-    toObjlinkBlockmapBlock(obm, maxBlock, ssec->bBox[1].pos[VX] + maxRadius,
+    toObjlinkBlockmapCell(obm, maxBlock, ssec->bBox[1].pos[VX] + maxRadius,
                                           ssec->bBox[1].pos[VY] + maxRadius);
 
     for(y = minBlock[1]; y <= maxBlock[1]; ++y)
         for(x = minBlock[0]; x <= maxBlock[0]; ++x)
         {
-            objlinkblock_t* block = Gridmap_Block(obm->blockmap, x, y, true/*can allocate a block*/);
+            objlinkblock_t* block = Gridmap_CellXY(obm->gridmap, x, y, true/*can allocate a block*/);
             if(block->doneSpread) continue;
 
             iter = block->head;
@@ -536,7 +537,7 @@ static void linkObjlinkInBlockmap(objlinkblockmap_t* obm, objlink_t* link, uint 
 {
     objlinkblock_t* block;
     if(!obm || !link || !blockXY) return; // Wha?
-    block = Gridmap_Block(obm->blockmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
+    block = Gridmap_CellXY(obm->gridmap, blockXY[0], blockXY[1], true/*can allocate a block*/);
     link->nextInBlock = block->head;
     block->head = link;
 }
@@ -564,7 +565,7 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
         }
 
         obm = chooseObjlinkBlockmap(link->type);
-        if(toObjlinkBlockmapBlock(obm, block, pos[VX], pos[VY]))
+        if(!toObjlinkBlockmapCell(obm, block, pos[VX], pos[VY]))
         {
             linkObjlinkInBlockmap(obm, link, block);
         }

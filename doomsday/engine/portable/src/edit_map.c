@@ -820,20 +820,14 @@ void P_GetSectorBounds(sector_t *sec, float *min, float *max)
     max[VY] = sec->bBox[BOXTOP];
 }
 
-static void finishSectors(gamemap_t *map)
+static void finishSectors(gamemap_t* map)
 {
-    uint                i;
-    vec2_t              bmapOrigin;
-    uint                bmapSize[2];
-
-    P_GetBlockmapBounds(map->blockMap, bmapOrigin, NULL);
-    P_GetBlockmapDimensions(map->blockMap, bmapSize);
-
+    uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        uint                k;
-        float               min[2], max[2];
-        sector_t           *sec = &map->sectors[i];
+        uint k;
+        float min[2], max[2];
+        sector_t* sec = &map->sectors[i];
 
         updateSectorBounds(sec);
         P_GetSectorBounds(sec, min, max);
@@ -1696,7 +1690,7 @@ static int C_DECL lineEndCompare(const void* p1, const void* p2)
 
 size_t numOverlaps;
 
-boolean testOverlaps(linedef_t* b, void* data)
+int testOverlaps(linedef_t* b, void* data)
 {
     linedef_t*          a = (linedef_t*) data;
 
@@ -1711,20 +1705,19 @@ boolean testOverlaps(linedef_t* b, void* data)
             }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 typedef struct {
-    blockmap_t*         blockMap;
-    uint                block[2];
+    gamemap_t* map;
+    uint coords[2]; // Blockmap cell coordinates.
 } findoverlaps_params_t;
 
-boolean findOverlapsForLinedef(linedef_t* l, void* data)
+int findOverlapsForLinedef(linedef_t* l, void* data)
 {
-    findoverlaps_params_t* params = (findoverlaps_params_t*) data;
-
-    P_BlockmapLinesIterator(params->blockMap, params->block, testOverlaps, l);
-    return true; // Continue iteration.
+    findoverlaps_params_t* p = (findoverlaps_params_t*) data;
+    Map_IterateCellLineDefs(p->map, p->coords, testOverlaps, l);
+    return false; // Continue iteration.
 }
 
 /**
@@ -1732,48 +1725,89 @@ boolean findOverlapsForLinedef(linedef_t* l, void* data)
  */
 void MPE_DetectOverlappingLines(gamemap_t* map)
 {
-    uint                x, y, bmapDimensions[2];
+    uint x, y, bmapDimensions[2];
     findoverlaps_params_t params;
 
-    params.blockMap = map->blockMap;
+    Blockmap_Size(map->lineDefBlockmap, bmapDimensions);
+
     numOverlaps = 0;
-
-    P_GetBlockmapDimensions(map->blockMap, bmapDimensions);
-
     for(y = 0; y < bmapDimensions[VY]; ++y)
         for(x = 0; x < bmapDimensions[VX]; ++x)
         {
-            params.block[VX] = x;
-            params.block[VY] = y;
+            params.map = map;
+            params.coords[VX] = x;
+            params.coords[VY] = y;
 
-            P_BlockmapLinesIterator(map->blockMap, params.block,
-                                    findOverlapsForLinedef, &params);
+            Map_IterateCellLineDefs(map, params.coords, findOverlapsForLinedef, &params);
         }
 
-    if(numOverlaps > 0)
-        VERBOSE(Con_Message("Detected %lu overlapped linedefs\n",
-                            (unsigned long) numOverlaps));
+    if(numOverlaps == 0) return;
+
+    VERBOSE( Con_Message("Detected %lu overlapped linedefs\n", (unsigned long) numOverlaps) )
 }
 #endif
+
+/**
+ * Find the extremal coordinates for the given set of vertexes.
+ *
+ * @param vertexes  Address of the list of vertexes to be scanned.
+ * @param numVertexes  Number of vertex elements in @a vertexes.
+ * @param min  Minimal coordinates will be written here.
+ * @param max  Maximal coordinates will be written here.
+ */
+static void findBounds(vertex_t const** vertexes, uint numVertexes, vec2_t min, vec2_t max)
+{
+    vec2_t bounds[2], point;
+    const vertex_t* vtx;
+    uint i;
+
+    if(!min && !max) return;
+
+    if(!vertexes || !numVertexes)
+    {
+        V2_Set(min, DDMAXFLOAT, DDMAXFLOAT);
+        V2_Set(max, DDMINFLOAT, DDMINFLOAT);
+        return;
+    }
+
+    for(i = 0; i < numVertexes; ++i)
+    {
+        vtx = vertexes[i];
+        V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
+        if(!i)
+            V2_InitBox(bounds, point);
+        else
+            V2_AddToBox(bounds, point);
+    }
+
+    if(min)
+    {
+        V2_Set(min, bounds[0][VX], bounds[0][VY]);
+    }
+    if(max)
+    {
+        V2_Set(max, bounds[1][VX], bounds[1][VY]);
+    }
+}
 
 /**
  * Called to complete the map building process.
  */
 boolean MPE_End(void)
 {
-    uint                i;
-    gamemap_t*          gamemap;
-    boolean             builtOK;
+    gamemap_t* gamemap;
+    boolean builtOK;
+    vec2_t min, max;
+    uint i;
 
     if(!editMapInited)
         return false;
 
-    gamemap = Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
+    gamemap = Z_Calloc(sizeof *gamemap, PU_MAPSTATIC, 0);
 
     // Pass on the game map obj database. The game will want to query it
     // once we have finished constructing the map.
-    memcpy(&gamemap->gameObjData, &map->gameObjData,
-           sizeof(gamemap->gameObjData));
+    memcpy(&gamemap->gameObjData, &map->gameObjData, sizeof gamemap->gameObjData);
 
     /**
      * Perform cleanup on the loaded map data, removing duplicate vertexes,
@@ -1807,11 +1841,20 @@ boolean MPE_End(void)
     destroyEditablePolyObjs(map);
 
     /**
-     * Build a blockmap for this map.
+     * Build blockmaps.
      */
-    gamemap->blockMap =
-        DAM_BuildBlockMap(&map->vertexes, &map->numVertexes,
-                          &gamemap->lineDefs, &gamemap->numLineDefs);
+    findBounds(map->vertexes, map->numVertexes, min, max);
+
+    Map_InitLineDefBlockmap(gamemap, min, max);
+    for(i = 0; i < gamemap->numLineDefs; ++i)
+    {
+        Map_LinkLineDefInBlockmap(gamemap, gamemap->lineDefs + i);
+    }
+
+    // Mobj and Polyobj blockmaps are maintained dynamically.
+    Map_InitMobjBlockmap(gamemap, min, max);
+    Map_InitPolyobjBlockmap(gamemap, min, max);
+
     /**
      * Build a BSP for this map.
      */
@@ -1820,15 +1863,15 @@ boolean MPE_End(void)
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
-        polyobj_t*          po = gamemap->polyObjs[i];
-        seg_t**             segPtr;
-        size_t              n;
+        polyobj_t* po = gamemap->polyObjs[i];
+        seg_t** segPtr;
+        size_t n;
 
         segPtr = po->segs;
         n = 0;
         while(*segPtr)
         {
-            seg_t*              seg = *segPtr;
+            seg_t* seg = *segPtr;
 
             seg->SG_v1 = seg->lineDef->L_v1;
             seg->SG_v2 = seg->lineDef->L_v2;

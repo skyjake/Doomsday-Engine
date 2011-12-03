@@ -1088,7 +1088,7 @@ typedef struct {
     float               pos[2], minDist;
 } unstuckmobjinlinedefparams_t;
 
-boolean unstuckMobjInLinedef(linedef_t* li, void* context)
+int unstuckMobjInLinedef(linedef_t* li, void* context)
 {
     unstuckmobjinlinedefparams_t *params =
         (unstuckmobjinlinedefparams_t*) context;
@@ -1140,10 +1140,10 @@ boolean unstuckMobjInLinedef(linedef_t* li, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
+int iterateLinedefsNearMobj(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t*) th;
     mobjtype_t          type = *((mobjtype_t*) context);
@@ -1153,7 +1153,7 @@ boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
     // \todo Why not type-prune at an earlier point? We could specify a
     // custom comparison func for DD_IterateThinkers...
     if(mo->type != type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     aabb[BOXLEFT]   = mo->pos[VX] - mo->radius;
     aabb[BOXRIGHT]  = mo->pos[VX] + mo->radius;
@@ -1178,7 +1178,7 @@ boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
         P_MobjSetPosition(mo);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

@@ -228,33 +228,33 @@ extern          "C" {
     void            P_LineOpening(struct linedef_s* linedef);
 
     // Object in bounding box iterators.
-    boolean         P_MobjsBoxIterator(const float box[4],
-                                       boolean (*func) (struct mobj_s*, void*),
+    int             P_MobjsBoxIterator(const float box[4],
+                                       int (*func) (struct mobj_s*, void*),
                                        void* data);
-    boolean         P_LinesBoxIterator(const float box[4],
-                                       boolean (*func) (struct linedef_s*, void*),
+    int             P_LinesBoxIterator(const float box[4],
+                                       int (*func) (struct linedef_s*, void*),
                                        void* data);
-    boolean         P_AllLinesBoxIterator(const float box[4],
-                                          boolean (*func) (struct linedef_s*, void*),
+    int             P_AllLinesBoxIterator(const float box[4],
+                                          int (*func) (struct linedef_s*, void*),
                                           void* data);
-    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
-                                           boolean (*func) (subsector_t*, void*),
+    int             P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
+                                           int (*func) (subsector_t*, void*),
                                            void* data);
-    boolean         P_PolyobjsBoxIterator(const float box[4],
-                                          boolean (*func) (struct polyobj_s*, void*),
+    int             P_PolyobjsBoxIterator(const float box[4],
+                                          int (*func) (struct polyobj_s*, void*),
                                           void* data);
 
     // Object type touching mobjs iterators.
-    boolean         P_LineMobjsIterator(struct linedef_s* line,
-                                        boolean (*func) (struct mobj_s*,
+    int             P_LineMobjsIterator(struct linedef_s* line,
+                                        int (*func) (struct mobj_s*,
                                                          void *), void* data);
-    boolean         P_SectorTouchingMobjsIterator
-                        (sector_t* sector, boolean (*func) (struct mobj_s*, void*),
+    int             P_SectorTouchingMobjsIterator
+                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
                          void* data);
 
-    boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
+    int             P_PathTraverse(float x1, float y1, float x2, float y2,
                                    int flags,
-                                   boolean (*trav) (intercept_t*));
+                                   int (*trav) (intercept_t*));
     boolean         P_CheckLineSight(const float from[3], const float to[3],
                                      float bottomSlope, float topSlope, int flags);
 
@@ -287,11 +287,11 @@ extern          "C" {
     struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 
     // Mobj linked object iterators.
-    boolean         P_MobjLinesIterator(struct mobj_s* mo,
-                                        boolean (*func) (struct linedef_s*,
+    int             P_MobjLinesIterator(struct mobj_s* mo,
+                                        int (*func) (struct linedef_s*,
                                                           void*), void*);
-    boolean         P_MobjSectorsIterator(struct mobj_s* mo,
-                                          boolean (*func) (sector_t*, void*),
+    int             P_MobjSectorsIterator(struct mobj_s* mo,
+                                          int (*func) (sector_t*, void*),
                                           void* data);
 
     // Play: Polyobjs.
@@ -319,7 +319,7 @@ extern          "C" {
     void            DD_ThinkerRemove(thinker_t* th);
     void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
 
-    boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
+    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
 
     // Refresh.
     boolean         DD_IsSharpTick(void);

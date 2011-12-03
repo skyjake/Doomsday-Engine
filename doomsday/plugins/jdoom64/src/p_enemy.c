@@ -366,7 +366,7 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
     sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
@@ -397,7 +397,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -406,7 +406,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -520,7 +520,7 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
     }
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -531,7 +531,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 int P_Massacre(void)
@@ -552,7 +552,7 @@ typedef struct {
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -560,7 +560,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

@@ -879,11 +879,10 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
     mo->lumIdx = 0;
 }
 
-boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
+int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
     LO_UnlinkMobjLumobj((mobj_t*) th);
-
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void LO_UnlinkMobjLumobjs(cvar_t* var)

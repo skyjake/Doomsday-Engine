@@ -589,14 +589,14 @@ float XG_RandomPercentFloat(float value, int percent)
     return value * (1 + i);
 }
 
-boolean findXLThinker(thinker_t* th, void* context)
+int findXLThinker(thinker_t* th, void* context)
 {
     xlthinker_t*        xl = (xlthinker_t*) th;
 
     if(xl->line == (linedef_t*) context)
-        return false; // Stop iteration, we've found it.
+        return true; // Stop iteration, we've found it.
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -628,7 +628,7 @@ void XL_SetLineType(linedef_t* line, int id)
                xgClasses[xline->xg->info.lineClass].className, id);
 
         // If there is not already an xlthinker for this line, create one.
-        if(DD_IterateThinkers(XL_Thinker, findXLThinker, line))
+        if(!DD_IterateThinkers(XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
             xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
@@ -1894,7 +1894,7 @@ boolean XL_CheckLineStatus(linedef_t* line, int reftype, int ref, int active,
                             XLTrav_CheckLine);
 }
 
-boolean XL_CheckMobjGone(thinker_t* th, void* context)
+int XL_CheckMobjGone(thinker_t* th, void* context)
 {
     int                 thingtype = *(int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1904,10 +1904,10 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
         XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
                "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
                mo->health, mo->pos[VX], mo->pos[VY]);
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void XL_SwapSwitchTextures(linedef_t* line, int snum)
@@ -2351,7 +2351,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+        if(DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
             return false;
     }
 

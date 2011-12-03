@@ -62,7 +62,7 @@ int     ptflags;
 
 // CODE --------------------------------------------------------------------
 
-boolean PIT_MobjTargetable(mobj_t *mo, void *data)
+int PIT_MobjTargetable(mobj_t *mo, void *data)
 {
     mobjtargetableparams_t *params = (mobjtargetableparams_t*) data;
 
@@ -74,12 +74,12 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
@@ -94,12 +94,12 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
@@ -111,7 +111,7 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
@@ -127,7 +127,7 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                 if(angle > 226 || angle < 30)
                 {
                     params->target = mo;
-                    return false; // Stop iteration.
+                    return true; // Stop iteration.
                 }
             }
         }
@@ -141,17 +141,17 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player) ||
                mo == params->source->target)
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -194,7 +194,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
 
     // Check the first block.
     VALIDCOUNT++;
-    if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+    if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
     {   // Found a target right away!
         return params.target;
     }
@@ -212,7 +212,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
         // Trace the first block section (along the top).
         for(i = 0; i < count * 2 + 1; ++i)
         {
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
                 return params.target;
 
             if(i < count * 2)
@@ -228,7 +228,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
             box[BOXBOTTOM] += MAPBLOCKUNITS;
             box[BOXTOP]    += MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
@@ -238,7 +238,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
             box[BOXLEFT]  -= MAPBLOCKUNITS;
             box[BOXRIGHT] -= MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
@@ -248,7 +248,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
             box[BOXBOTTOM] -= MAPBLOCKUNITS;
             box[BOXTOP]    -= MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
                 return params.target;
         }
     }

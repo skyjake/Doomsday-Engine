@@ -478,65 +478,16 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
     return true;
 }
 
-void P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link)
-{
-    linkpolyobj_t*      tempLink;
-
-    if(!(*link))
-    {   // Create a new link at the current block cell.
-        *link = Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
-        (*link)->next = NULL;
-        (*link)->prev = NULL;
-        (*link)->polyobj = po;
-        return;
-    }
-    else
-    {
-        tempLink = *link;
-        while(tempLink->next != NULL && tempLink->polyobj != NULL)
-        {
-            tempLink = tempLink->next;
-        }
-    }
-
-    if(tempLink->polyobj == NULL)
-    {
-        tempLink->polyobj = po;
-        return;
-    }
-    else
-    {
-        tempLink->next =
-            Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
-        tempLink->next->next = NULL;
-        tempLink->next->prev = tempLink;
-        tempLink->next->polyobj = po;
-    }
-}
-
-void P_PolyobjUnlinkFromRing(polyobj_t* po, linkpolyobj_t** list)
-{
-    linkpolyobj_t*      iter = *list;
-
-    while(iter != NULL && iter->polyobj != po)
-    {
-        iter = iter->next;
-    }
-
-    if(iter != NULL)
-    {
-        iter->polyobj = NULL;
-    }
-}
-
 void P_PolyobjUnLink(struct polyobj_s* po)
 {
-    P_BlockmapUnlinkPolyobj(BlockMap, po);
+    gamemap_t* map = P_GetCurrentMap();
+    Map_UnlinkPolyobjInBlockmap(map, po);
 }
 
 void P_PolyobjLink(struct polyobj_s* po)
 {
-    P_BlockmapLinkPolyobj(BlockMap, po);
+    gamemap_t* map = P_GetCurrentMap();
+    Map_LinkPolyobjInBlockmap(map, po);
 }
 
 typedef struct ptrmobjblockingparams_s {
@@ -546,12 +497,12 @@ typedef struct ptrmobjblockingparams_s {
     polyobj_t*      po;
 } ptrmobjblockingparams_t;
 
-boolean PTR_CheckMobjBlocking(mobj_t* mo, void* data)
+int PTR_CheckMobjBlocking(mobj_t* mo, void* data)
 {
     if((mo->ddFlags & DDMF_SOLID) ||
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
-        float               tmbbox[4];
+        float tmbbox[4];
         ptrmobjblockingparams_t* params = data;
 
         tmbbox[BOXTOP]    = mo->pos[VY] + mo->radius;
@@ -574,15 +525,16 @@ boolean PTR_CheckMobjBlocking(mobj_t* mo, void* data)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
 {
-    uint                blockBox[4];
-    vec2_t              bbox[2];
-    linedef_t*          ld;
+    gamemap_t* map = P_GetCurrentMap();
     ptrmobjblockingparams_t params;
+    GridmapBlock blockCoords;
+    vec2_t bbox[2];
+    linedef_t* ld;
 
     params.blocked = false;
     params.line = ld = seg->lineDef;
@@ -595,9 +547,8 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
     bbox[1][VY] = ld->bBox[BOXTOP]    + DDMOBJ_RADIUS_MAX;
 
     validCount++;
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, bbox);
-    P_BlockBoxMobjsIterator(BlockMap, blockBox,
-                            PTR_CheckMobjBlocking, &params);
+    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, bbox);
+    Map_IterateCellBlockMobjs(map, &blockCoords, PTR_CheckMobjBlocking, &params);
 
     return params.blocked;
 }
@@ -608,29 +559,26 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
  *
  * @param po            The polyobj whose lines are to be iterated.
  * @param func          Call back function to call for each line of this po.
- * @return              @c true, if all callbacks are successfull.
+ * @return              @c false, if all callbacks are successfull.
  */
-boolean P_PolyobjLinesIterator(polyobj_t* po,
-                               boolean (*func) (struct linedef_s*, void*),
-                               void* data)
+int P_PolyobjLinesIterator(polyobj_t* po, int (*func) (struct linedef_s*, void*),
+    void* paramaters)
 {
-    uint                i;
-    seg_t**             segList;
-
-    segList = po->segs;
+    int result = false; // Continue iteration.
+    seg_t** segList = po->segs;
+    uint i;
     for(i = 0; i < po->numSegs; ++i, segList++)
     {
-        seg_t*              seg = *segList;
-        linedef_t*          line = seg->lineDef;
+        seg_t* seg = *segList;
+        linedef_t* line = seg->lineDef;
 
         if(line->validCount == validCount)
             continue;
 
         line->validCount = validCount;
 
-        if(!func(line, data))
-            return false;
+        result = func(line, paramaters);
+        if(result) break;
     }
-
-    return true;
+    return result;
 }

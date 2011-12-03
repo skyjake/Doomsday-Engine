@@ -242,21 +242,21 @@ boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
     return P_CheckLineSight(fPos, to->pos, 0, to->height, 0);
 }
 
-boolean PIT_StompThing(mobj_t* mo, void* data)
+int PIT_StompThing(mobj_t* mo, void* data)
 {
     int                 stompAnyway;
     float               blockdist;
 
     if(!(mo->flags & MF_SHOOTABLE))
-        return true;
+        return false;
 
     blockdist = mo->radius + tmThing->radius;
     if(fabs(mo->pos[VX] - tm[VX]) >= blockdist ||
        fabs(mo->pos[VY] - tm[VY]) >= blockdist)
-        return true; // Didn't hit it.
+        return false; // Didn't hit it.
 
     if(mo == tmThing)
-        return true; // Don't clip against self.
+        return false; // Don't clip against self.
 
     stompAnyway = *(int*) data;
 
@@ -264,27 +264,27 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
     if(mo != tmThing && stompAnyway)
     {
         P_DamageMobj(mo, tmThing, tmThing, 10000, true);
-        return true;
+        return false;
     }
 
 #if __JDOOM64__
     // monsters don't stomp things
     if(!tmThing->player)
-        return false;
+        return true;
 #elif __JDOOM__
     // Monsters don't stomp things except on a boss map.
     if(!tmThing->player && gameMap != 29)
-        return false;
+        return true;
 #endif
 
     if(!(tmThing->flags2 & MF2_TELESTOMP))
-        return false; // Not allowed to stomp things.
+        return true; // Not allowed to stomp things.
 
     // Do stomp damage (unless self).
     if(mo != tmThing)
         P_DamageMobj(mo, tmThing, tmThing, 10000, true);
 
-    return true;
+    return false;
 }
 
 boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
@@ -330,7 +330,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
 
     // Stomp on any things contacted.
     VALIDCOUNT++;
-    if(!P_MobjsBoxIterator(box, PIT_StompThing, &stomping))
+    if(P_MobjsBoxIterator(box, PIT_StompThing, &stomping))
         return false;
 
     // The move is ok, so link the thing into its new position.
@@ -366,7 +366,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
  *
  * @param data          Unused.
  */
-boolean PIT_CrossLine(linedef_t* ld, void* data)
+int PIT_CrossLine(linedef_t* ld, void* data)
 {
     int                 flags = P_GetIntp(ld, DMU_FLAGS);
 
@@ -386,12 +386,12 @@ boolean PIT_CrossLine(linedef_t* ld, void* data)
             if(P_PointOnLinedefSide(startPos[VX], startPos[VY], ld) !=
                P_PointOnLinedefSide(endPos[VX], endPos[VY], ld))
                 // Line blocks trajectory.
-                return false;
+                return true;
         }
     }
 
     // Line doesn't block trajectory.
-    return true;
+    return false;
 }
 
 /**
@@ -424,7 +424,7 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
     tmBBox[BOXBOTTOM] = (startPos[VY] < endPos[VY]? startPos[VY] : endPos[VY]);
 
     VALIDCOUNT++;
-    return !P_AllLinesBoxIterator(tmBBox, PIT_CrossLine, 0);
+    return P_AllLinesBoxIterator(tmBBox, PIT_CrossLine, 0);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -455,7 +455,7 @@ static int untouched(linedef_t* ld)
 }
 #endif
 
-boolean PIT_CheckThing(mobj_t* thing, void* data)
+int PIT_CheckThing(mobj_t* thing, void* data)
 {
     int                 damage;
     float               blockdist;
@@ -466,17 +466,17 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 
     // Don't clip against self.
     if(thing == tmThing)
-        return true;
+        return false;
 
 #if __JHEXEN__
     // Don't clip on something we are stood on.
     if(thing == tmThing->onMobj)
-        return true;
+        return false;
 #endif
 
     if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
        P_MobjIsCamera(thing) || P_MobjIsCamera(tmThing))
-        return true;
+        return false;
 
 #if !__JHEXEN__
     // Player only.
@@ -485,7 +485,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     {
         if((thing->pos[VZ] > tm[VZ] + tmHeight) ||
            (thing->pos[VZ] + thing->height < tm[VZ]))
-            return true; // Under or over it.
+            return false; // Under or over it.
 
         overlap = true;
     }
@@ -494,14 +494,14 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     blockdist = thing->radius + tmThing->radius;
     if(fabs(thing->pos[VX] - tm[VX]) >= blockdist ||
        fabs(thing->pos[VY] - tm[VY]) >= blockdist)
-        return true; // Didn't hit thing.
+        return false; // Didn't hit thing.
 
     if(IS_CLIENT)
     {
         // On clientside, missiles don't collide with mobjs.
         if(tmThing->ddFlags & DDMF_MISSILE)
         {
-            return true;
+            return false;
         }
     }
 
@@ -509,7 +509,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #if __JHEXEN__
     // Stop here if we are a client.
     if(IS_CLIENT)
-        return false;
+        return true;
 #endif
 */
 
@@ -524,18 +524,18 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         if((tmThing->type == MT_IMP || tmThing->type == MT_WIZARD) &&
            (thing->type == MT_IMP || thing->type == MT_WIZARD))
         {
-            return false; // Don't let imps/wizards fly over other imps/wizards.
+            return true; // Don't let imps/wizards fly over other imps/wizards.
         }
 #elif __JHEXEN__
         if(tmThing->type == MT_BISHOP && thing->type == MT_BISHOP)
-            return false; // Don't let bishops fly over other bishops.
+            return true; // Don't let bishops fly over other bishops.
 #endif
 
         if(!(thing->flags & MF_SPECIAL))
         {
             if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height ||
                tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
-                return true; // Over/under thing.
+                return false; // Over/under thing.
         }
     }
 
@@ -549,7 +549,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             // Slamming minotaurs shouldn't move non-creatures.
             if(!(thing->flags & MF_COUNTKILL))
             {
-                return false;
+                return true;
             }
         }
         else if(tmThing->type == MT_HOLY_FX)
@@ -557,14 +557,14 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
                 if(IS_NETGAME && !deathmatch && thing->player)
-                    return true; // don't attack other co-op players
+                    return false; // don't attack other co-op players
 
                 if((thing->flags2 & MF2_REFLECTIVE) &&
                    (thing->player || (thing->flags2 & MF2_BOSS)))
                 {
                     tmThing->tracer = tmThing->target;
                     tmThing->target = thing;
-                    return true;
+                    return false;
                 }
 
                 if(thing->flags & MF_COUNTKILL || thing->player)
@@ -604,7 +604,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 if(thing->health <= 0)
                     tmThing->tracer = NULL;
             }
-            return true;
+            return false;
         }
 #endif
 #if __JDOOM__
@@ -626,7 +626,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         P_MobjChangeState(tmThing, P_GetState(tmThing->type, SN_SPAWN));
 #endif
 
-        return false; // Stop moving.
+        return true; // Stop moving.
     }
 
 #if __JHEXEN__
@@ -649,7 +649,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 P_DamageMobj(tmThing, thing, thing, damage >> 2, false);
             }
 
-            return false;
+            return true;
         }
     }
 #endif
@@ -660,27 +660,27 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #if __JHEXEN__
         // Check for a non-shootable mobj.
         if(thing->flags2 & MF2_NONSHOOTABLE)
-            return true;
+            return false;
 #else
         // Check for passing through a ghost.
         if((thing->flags & MF_SHADOW) && (tmThing->flags2 & MF2_THRUGHOST))
-            return true;
+            return false;
 #endif
 
         // See if it went over / under.
         if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height)
-            return true; // Overhead.
+            return false; // Overhead.
 
         if(tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
-            return true; // Underneath.
+            return false; // Underneath.
 
 #if __JHEXEN__
         if(tmThing->flags2 & MF2_FLOORBOUNCE)
         {
             if(tmThing->target == thing || !(thing->flags & MF_SOLID))
-                return true;
-            else
                 return false;
+            else
+                return true;
         }
 
         if(tmThing->type == MT_LIGHTNING_FLOOR ||
@@ -729,7 +729,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 tmThing->health--;
                 if(tmThing->health <= 0 || thing->health <= 0)
                 {
-                    return false;
+                    return true;
                 }
 
                 if(tmThing->type == MT_LIGHTNING_FLOOR)
@@ -746,7 +746,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 }
             }
 
-            return true; // Lightning zaps through all sprites.
+            return false; // Lightning zaps through all sprites.
         }
         else if(tmThing->type == MT_LIGHTNING_ZAP)
         {
@@ -789,7 +789,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                     break;
                 default:
                     P_DamageMobj(thing, tmThing, tmThing->target, 10, false);
-                    return true;
+                    return false;
                     break;
                 }
             }
@@ -807,24 +807,24 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #endif
         {
             if(thing == tmThing->target)
-                return true;
+                return false;
 
 #if __JHEXEN__
             if(!thing->player)
-                return false; // Hit same species as originator, explode, no damage
+                return true; // Hit same species as originator, explode, no damage
 #else
             if(!monsterInfight && thing->type != MT_PLAYER)
             {
                 // Explode, but do no damage.
                 // Let players missile other players.
-                return false;
+                return true;
             }
 #endif
         }
 
         if(!(thing->flags & MF_SHOOTABLE))
         {
-            return !(thing->flags & MF_SOLID); // Didn't do any damage.
+            return !!(thing->flags & MF_SOLID); // Didn't do any damage.
         }
 
         if(tmThing->flags2 & MF2_RIP)
@@ -861,7 +861,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
                 NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
             }
             IterList_Empty(spechit);
-            return true;
+            return false;
         }
 
         // Do damage
@@ -896,7 +896,7 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         }
 #endif
         // Don't traverse anymore.
-        return false;
+        return true;
     }
 
     if((thing->flags2 & MF2_PUSHABLE) && !(tmThing->flags2 & MF2_CANNOTPUSH))
@@ -928,18 +928,18 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
             tmThing->onMobj = thing;
             if(thing->pos[VZ] + thing->height > tmFloorZ)
                 tmFloorZ = thing->pos[VZ] + thing->height;
-            return true;
+            return false;
         }
     }
 #endif
 
-    return !solid;
+    return solid;
 }
 
 /**
  * Adjusts tmFloorZ and tmCeilingZ as lines are contacted.
  */
-boolean PIT_CheckLine(linedef_t* ld, void* data)
+int PIT_CheckLine(linedef_t* ld, void* data)
 {
     float               bbox[4];
     xline_t*            xline;
@@ -950,10 +950,10 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
        tmBBox[BOXLEFT]   >= bbox[BOXRIGHT] ||
        tmBBox[BOXTOP]    <= bbox[BOXBOTTOM] ||
        tmBBox[BOXBOTTOM] >= bbox[BOXTOP])
-        return true;
+        return false;
 
     if(P_BoxOnLineSide(tmBBox, ld) != -1)
-        return true;
+        return false;
 
     /*
     if(IS_CLIENT)
@@ -961,7 +961,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
         // On clientside, missiles don't collide with anything.
         if(tmThing->ddFlags & DDMF_MISSILE)
         {
-            return true;
+            return false;
         }
     }*/
 
@@ -981,7 +981,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
         if(tmThing->flags2 & MF2_BLASTED)
             P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
         checkForPushSpecial(ld, 0, tmThing);
-        return false;
+        return true;
 #else
         float               d1[2];
 
@@ -1000,9 +1000,9 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
          */
 
         blockLine = ld;
-        return tmUnstuck && !untouched(ld) &&
+        return !(tmUnstuck && !untouched(ld) &&
             ((tm[VX] - tmThing->pos[VX]) * d1[1]) >
-            ((tm[VY] - tmThing->pos[VY]) * d1[0]);
+            ((tm[VY] - tmThing->pos[VY]) * d1[0]));
 #endif
     }
 
@@ -1016,7 +1016,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
             if(xline->special)
                 IterList_Push(spechit, ld);
         }
-        return false;
+        return true;
     }
 #endif
 
@@ -1029,10 +1029,10 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
             if(tmThing->flags2 & MF2_BLASTED)
                 P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
             checkForPushSpecial(ld, 0, tmThing);
-            return false;
+            return true;
 #else
             // $unstuck: allow escape.
-            return tmUnstuck && !untouched(ld);
+            return !(tmUnstuck && !untouched(ld));
 #endif
         }
 
@@ -1052,7 +1052,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
             if(tmThing->flags2 & MF2_BLASTED)
                 P_DamageMobj(tmThing, NULL, NULL, tmThing->info->mass >> 5, false);
 #endif
-            return false;
+            return true;
         }
     }
 
@@ -1060,7 +1060,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
     if((tmThing->flags & MF_MISSILE))
     {
         if(xline->flags & ML_BLOCKALL) // Explicitly blocking everything.
-            return tmUnstuck && !untouched(ld);  // $unstuck: allow escape.
+            return !(tmUnstuck && !untouched(ld));  // $unstuck: allow escape.
     }
 #endif
 
@@ -1096,7 +1096,7 @@ boolean PIT_CheckLine(linedef_t* ld, void* data)
 #if !__JHEXEN__
     tmThing->wallHit = false;
 #endif
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1187,7 +1187,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 #if __JHEXEN__
         blockingMobj = NULL;
 #endif
-        if(!P_MobjsBoxIterator(box, PIT_CheckThing, 0))
+        if(P_MobjsBoxIterator(box, PIT_CheckThing, 0))
             return false;
 
 #if _DEBUG
@@ -1212,7 +1212,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     box[BOXBOTTOM] = tmBBox[BOXBOTTOM];
     box[BOXTOP]    = tmBBox[BOXTOP];
 
-    return P_AllLinesBoxIterator(box, PIT_CheckLine, 0);
+    return !P_AllLinesBoxIterator(box, PIT_CheckLine, 0);
 }
 
 boolean P_CheckPosition3fv(mobj_t* thing, const float pos[3])
@@ -1614,7 +1614,7 @@ boolean P_TryMove3f(mobj_t* thing, float x, float y, float z)
  * \fixme DJS - This routine has gotten way too big, split if(in->isaline)
  * to a seperate routine?
  */
-boolean PTR_ShootTraverse(intercept_t* in)
+int PTR_ShootTraverse(intercept_t* in)
 {
 #if __JHEXEN__
     extern mobj_t lavaInflictor;
@@ -1646,7 +1646,7 @@ boolean PTR_ShootTraverse(intercept_t* in)
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
         if(!backSec && P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
-            return true; // Continue traversal.
+            return false; // Continue traversal.
 
         if(xline->special)
             P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
@@ -1680,7 +1680,7 @@ boolean PTR_ShootTraverse(intercept_t* in)
         }
 
         // Shot continues...
-        return true;
+        return false;
 
         // Hit a line.
       hitline:
@@ -1699,13 +1699,13 @@ boolean PTR_ShootTraverse(intercept_t* in)
                             DMU_FLAGS) & MATF_SKYMASK) &&
                (pos[VZ] > P_GetFloatp(frontSec, DMU_CEILING_HEIGHT) ||
                 pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT)))
-                return false;
+                return true;
 
             if((P_GetIntp(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL),
                             DMU_FLAGS) & MATF_SKYMASK) &&
                (pos[VZ] < P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT) ||
                 pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT)))
-                return false;
+                return true;
         }
 
         lineWasHit = true;
@@ -1748,12 +1748,12 @@ boolean PTR_ShootTraverse(intercept_t* in)
             if(pos[VZ] > cTop &&
                (P_GetIntp(P_GetPtrp(contact, DMU_CEILING_MATERIAL),
                             DMU_FLAGS) & MATF_SKYMASK))
-                return false;
+                return true;
 
             if(pos[VZ] < cBottom &&
                (P_GetIntp(P_GetPtrp(contact, DMU_FLOOR_MATERIAL),
                             DMU_FLAGS) & MATF_SKYMASK))
-                return false;
+                return true;
 
             // Find the approximate hitpoint by stepping back and
             // forth using smaller and smaller steps.
@@ -1797,21 +1797,21 @@ if(lineWasHit)
 */
 #endif
         // Don't go any farther.
-        return false;
+        return true;
     }
 
     // Shot a mobj.
     th = in->d.mo;
     if(th == shootThing)
-        return true; // Can't shoot self.
+        return false; // Can't shoot self.
 
     if(!(th->flags & MF_SHOOTABLE))
-        return true; // Corpse or something.
+        return false; // Corpse or something.
 
 #if __JHERETIC__
     // Check for physical attacks on a ghost.
     if((th->flags & MF_SHADOW) && shootThing->player->readyWeapon == WT_FIRST)
-        return true;
+        return false;
 #endif
 
     // Check angles to see if the thing can be aimed at
@@ -1827,11 +1827,11 @@ if(lineWasHit)
     }
 
     if(thingTopSlope < aimSlope)
-        return true; // Shot over the thing.
+        return false; // Shot over the thing.
 
     thingBottomSlope = (th->pos[VZ] - tracePos[VZ]) / dist;
     if(thingBottomSlope > aimSlope)
-        return true; // Shot under the thing.
+        return false; // Shot under the thing.
 
     // Hit thing.
 
@@ -1911,13 +1911,13 @@ if(lineWasHit)
     }
 
     // Don't go any farther.
-    return false;
+    return true;
 }
 
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-boolean PTR_AimTraverse(intercept_t* in)
+int PTR_AimTraverse(intercept_t* in)
 {
     float               slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t*             th;
@@ -1942,10 +1942,7 @@ boolean PTR_AimTraverse(intercept_t* in)
             tracePos[VY] = FIX2FLT(trace->pos[VY]);
             tracePos[VZ] = shootZ;
 
-            if(P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
-                return true; // Continue traversal.
-
-            return false; // Stop.
+            return !P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li);
         }
 
         // Crosses a two sided line.
@@ -1953,7 +1950,7 @@ boolean PTR_AimTraverse(intercept_t* in)
         P_LineOpening(li);
 
         if(OPENBOTTOM >= OPENTOP)
-            return false; // Stop.
+            return true; // Stop.
 
         dist = attackRange * in->frac;
 
@@ -1978,27 +1975,27 @@ boolean PTR_AimTraverse(intercept_t* in)
         }
 
         if(topSlope <= bottomSlope)
-            return false; // Stop.
+            return true; // Stop.
 
-        return true; // Shot continues...
+        return false; // Shot continues...
     }
 
     // Shot a mobj.
     th = in->d.mo;
     if(th == shootThing)
-        return true; // Can't shoot self.
+        return false; // Can't shoot self.
 
     if(!(th->flags & MF_SHOOTABLE))
-        return true; // Corpse or something?
+        return false; // Corpse or something?
 
 #if __JHERETIC__
     if(th->type == MT_POD)
-        return true; // Can't auto-aim at pods.
+        return false; // Can't auto-aim at pods.
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
     if(th->player && IS_NETGAME && !deathmatch)
-        return true; // Don't aim at fellow co-op players.
+        return false; // Don't aim at fellow co-op players.
 #endif
 
     // Check angles to see if the thing can be aimed at.
@@ -2012,25 +2009,25 @@ boolean PTR_AimTraverse(intercept_t* in)
     thingTopSlope = (posZ - shootZ) / dist;
 
     if(thingTopSlope < bottomSlope)
-        return true; // Shot over the thing.
+        return false; // Shot over the thing.
 
     // Too far below?
     // $addtocfg $limitautoaimZ:
 #if __JHEXEN__
     if(posZ < shootZ - attackRange / 1.2f)
-        return true;
+        return false;
 #endif
     }
 
     thingBottomSlope = (th->pos[VZ] - shootZ) / dist;
     if(thingBottomSlope > topSlope)
-        return true; // Shot under the thing.
+        return false; // Shot under the thing.
 
     // Too far above?
     // $addtocfg $limitautoaimZ:
 #if __JHEXEN__
     if(th->pos[VZ] > shootZ + attackRange / 1.2f)
-        return true;
+        return false;
 #endif
 
     // This thing can be hit!
@@ -2043,7 +2040,7 @@ boolean PTR_AimTraverse(intercept_t* in)
     aimSlope = (thingTopSlope + thingBottomSlope) / 2;
     lineTarget = th;
 
-    return false; // Don't go any farther.
+    return true; // Don't go any farther.
 }
 
 float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
@@ -2140,7 +2137,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     attackRange = distance;
     aimSlope = slope;
 
-    if(P_PathTraverse(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
+    if(!P_PathTraverse(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
                       PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
     {
 #if __JHEXEN__
@@ -2171,30 +2168,30 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
 /**
  * "bombSource" is the creature that caused the explosion at "bombSpot".
  */
-boolean PIT_RadiusAttack(mobj_t* thing, void* data)
+int PIT_RadiusAttack(mobj_t* thing, void* data)
 {
     float dx, dy, dz, dist;
 
     if(!(thing->flags & MF_SHOOTABLE))
-        return true;
+        return false;
 
     // Boss spider and cyborg take no damage from concussion.
 #if __JHERETIC__
     if(thing->type == MT_MINOTAUR || thing->type == MT_SORCERER1 ||
        thing->type == MT_SORCERER2)
-        return true;
+        return false;
 #elif __JDOOM__ || __JDOOM64__
     if(thing->type == MT_CYBORG)
-        return true;
+        return false;
 # if __JDOOM__
     if(thing->type == MT_SPIDER)
-        return true;
+        return false;
 # endif
 #endif
 
 #if __JHEXEN__
     if(!damageSource && thing == bombSource) // Don't damage the source of the explosion.
-        return true;
+        return false;
 #endif
 
     dx = fabs(thing->pos[VX] - bombSpot->pos[VX]);
@@ -2217,7 +2214,7 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
         dist = 0;
 
     if(dist >= bombDistance)
-        return true; // Out of range.
+        return false; // Out of range.
 
     // Must be in direct path.
     if(P_CheckSight(thing, bombSpot))
@@ -2232,7 +2229,7 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
         P_DamageMobj(thing, bombSpot, bombSource, damage, false);
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -2273,13 +2270,13 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
 }
 
-boolean PTR_UseTraverse(intercept_t* in)
+int PTR_UseTraverse(intercept_t* in)
 {
     int                 side;
     xline_t*            xline;
 
     if(in->type != ICPT_LINE)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     xline = P_ToXLine(in->d.lineDef);
 
@@ -2292,7 +2289,7 @@ boolean PTR_UseTraverse(intercept_t* in)
                 S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
                              useThing);
 
-            return false; // Can't use through a wall.
+            return true; // Can't use through a wall.
         }
 
 #if __JHEXEN__
@@ -2306,7 +2303,7 @@ boolean PTR_UseTraverse(intercept_t* in)
         }
 #endif
         // Not a special line, but keep checking.
-        return true;
+        return false;
     }
 
     side = 0;
@@ -2316,7 +2313,7 @@ boolean PTR_UseTraverse(intercept_t* in)
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     if(side == 1)
-        return false;       // don't use back side
+        return true;       // don't use back side
 #endif
 
     P_ActivateLine(in->d.lineDef, useThing, side, SPAC_USE);
@@ -2324,10 +2321,10 @@ boolean PTR_UseTraverse(intercept_t* in)
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Can use multiple line specials in a row with the PassThru flag.
     if(xline->flags & ML_PASSUSE)
-        return true;
+        return false;
 #endif
     // Can't use more than one special line in a row.
-    return false;
+    return true;
 }
 
 /**
@@ -2472,7 +2469,7 @@ static void P_HitSlideLine(linedef_t* ld)
     tmMove[MY] = newLen * FIX2FLT(finesine[an]);
 }
 
-boolean PTR_SlideTraverse(intercept_t* in)
+int PTR_SlideTraverse(intercept_t* in)
 {
     linedef_t*          li;
 
@@ -2484,7 +2481,7 @@ boolean PTR_SlideTraverse(intercept_t* in)
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
         if(P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], li))
-            return true; // Don't hit the back side.
+            return false; // Don't hit the back side.
 
         goto isblocking;
     }
@@ -2506,7 +2503,7 @@ boolean PTR_SlideTraverse(intercept_t* in)
         goto isblocking; // Too big a step up.
 
     // This line doesn't block movement.
-    return true;
+    return false;
 
     // The line does block movement, see if it is closer than best so far.
   isblocking:
@@ -2518,7 +2515,7 @@ boolean PTR_SlideTraverse(intercept_t* in)
         bestSlideLine = li;
     }
 
-    return false; // Stop.
+    return true; // Stop.
 }
 
 /**
@@ -2672,19 +2669,19 @@ void P_SlideMove(mobj_t* mo)
  * @param thing         The thing to check against height changes.
  * @param data          Unused.
  */
-boolean PIT_ChangeSector(mobj_t* thing, void* data)
+int PIT_ChangeSector(mobj_t* thing, void* data)
 {
     mobj_t*             mo;
 
     if(!thing->info)
-        return true; // Invalid thing?
+        return false; // Invalid thing?
 
     // Don't check things that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
-        return true;
+        return false;
 
     if(P_ThingHeightClip(thing))
-        return true; // Keep checking...
+        return false; // Keep checking...
 
     // Crunch bodies to giblets.
 #if __JDOOM__ || __JDOOM64__
@@ -2722,7 +2719,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
         thing->height = 0;
         thing->radius = 0;
 #endif
-        return true; // Keep checking...
+        return false; // Keep checking...
     }
 
     // Crunch dropped items.
@@ -2733,11 +2730,11 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
 #endif
     {
         P_MobjRemove(thing, false);
-        return true; // Keep checking...
+        return false; // Keep checking...
     }
 
     if(!(thing->flags & MF_SHOOTABLE))
-        return true; // Keep checking...
+        return false; // Keep checking...
 
     noFit = true;
     if(crushChange > 0 && !(mapTime & 3))
@@ -2766,7 +2763,7 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
         }
     }
 
-    return true; // Keep checking (crush other things)...
+    return false; // Keep checking (crush other things)...
 }
 
 /**
@@ -2850,26 +2847,26 @@ static void CheckMissileImpact(mobj_t* mobj)
 #endif
 
 #if __JHEXEN__
-boolean PIT_ThrustStompThing(mobj_t* thing, void* data)
+int PIT_ThrustStompThing(mobj_t* thing, void* data)
 {
     float               blockdist;
 
     if(!(thing->flags & MF_SHOOTABLE))
-        return true;
+        return false;
 
     blockdist = thing->radius + tsThing->radius;
     if(fabs(thing->pos[VX] - tsThing->pos[VX]) >= blockdist ||
        fabs(thing->pos[VY] - tsThing->pos[VY]) >= blockdist ||
        (thing->pos[VZ] > tsThing->pos[VZ] + tsThing->height))
-        return true; // Didn't hit it.
+        return false; // Didn't hit it.
 
     if(thing == tsThing)
-        return true; // Don't clip against self.
+        return false; // Don't clip against self.
 
     P_DamageMobj(thing, tsThing, tsThing, 10001, false);
     tsThing->args[1] = 1; // Mark thrust thing as bloody.
 
-    return true;
+    return false;
 }
 
 void PIT_ThrustSpike(mobj_t* actor)
@@ -2893,30 +2890,30 @@ void PIT_ThrustSpike(mobj_t* actor)
     P_MobjsBoxIterator(bbox, PIT_ThrustStompThing, 0);
 }
 
-boolean PIT_CheckOnmobjZ(mobj_t* thing, void* data)
+int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
 {
     float               blockdist;
 
     if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)))
-        return true; // Can't hit thing.
+        return false; // Can't hit thing.
 
     blockdist = thing->radius + tmThing->radius;
     if(fabs(thing->pos[VX] - tm[VX]) >= blockdist ||
        fabs(thing->pos[VY] - tm[VY]) >= blockdist)
-        return true; // Didn't hit thing.
+        return false; // Didn't hit thing.
 
     if(thing == tmThing)
-        return true; // Don't clip against self.
+        return false; // Don't clip against self.
 
     if(tmThing->pos[VZ] > thing->pos[VZ] + thing->height)
-        return true;
+        return false;
     else if(tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
-        return true; // Under thing.
+        return false; // Under thing.
 
     if(thing->flags & MF_SOLID)
         onMobj = thing;
 
-    return !(thing->flags & MF_SOLID);
+    return !!(thing->flags & MF_SOLID);
 }
 
 mobj_t* P_CheckOnMobj(mobj_t* thing)
@@ -2971,7 +2968,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
 
     VALIDCOUNT++;
-    if(!P_MobjsBoxIterator(box, PIT_CheckOnmobjZ, 0))
+    if(P_MobjsBoxIterator(box, PIT_CheckOnmobjZ, 0))
     {
         *tmThing = oldMo;
         return onMobj;
@@ -3072,7 +3069,7 @@ static void checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj)
     }
 }
 
-boolean PTR_BounceTraverse(intercept_t* in)
+int PTR_BounceTraverse(intercept_t* in)
 {
     linedef_t*          li;
 
@@ -3084,7 +3081,7 @@ boolean PTR_BounceTraverse(intercept_t* in)
     if(!P_GetPtrp(li, DMU_FRONT_SECTOR) || !P_GetPtrp(li, DMU_BACK_SECTOR))
     {
         if(P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], li))
-            return true; // Don't hit the back side.
+            return false; // Don't hit the back side.
 
         goto bounceblocking;
     }
@@ -3097,7 +3094,7 @@ boolean PTR_BounceTraverse(intercept_t* in)
     if(OPENTOP - slideMo->pos[VZ] < slideMo->height)
         goto bounceblocking; // Mobj is too high...
 
-    return true; // This line doesn't block movement...
+    return false; // This line doesn't block movement...
 
     // the line does block movement, see if it is closer than best so far.
   bounceblocking:
@@ -3109,7 +3106,7 @@ boolean PTR_BounceTraverse(intercept_t* in)
         bestSlideLine = li;
     }
 
-    return false; // Stop.
+    return true; // Stop.
 }
 
 void P_BounceWall(mobj_t* mo)
@@ -3165,7 +3162,7 @@ void P_BounceWall(mobj_t* mo)
     mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
 }
 
-boolean PTR_PuzzleItemTraverse(intercept_t* in)
+int PTR_PuzzleItemTraverse(intercept_t* in)
 {
     switch(in->type)
     {
@@ -3205,24 +3202,24 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
                 }
 
                 S_StartSound(sound, puzzleItemUser);
-                return false; // Can't use through a wall.
+                return true; // Can't use through a wall.
             }
 
-            return true; // Continue searching...
+            return false; // Continue searching...
         }
 
         if(P_PointOnLinedefSide(puzzleItemUser->pos[VX],
                                 puzzleItemUser->pos[VY], line) == 1)
-            return false; // Don't use back sides.
+            return true; // Don't use back sides.
 
         if(puzzleItemType != xline->arg1)
-            return false; // Item type doesn't match.
+            return true; // Item type doesn't match.
 
         P_StartACS(xline->arg2, 0, &xline->arg3, puzzleItemUser, line, 0);
         xline->special = 0;
         puzzleActivated = true;
 
-        return false; // Stop searching.
+        return true; // Stop searching.
         }
 
     case ICPT_MOBJ: // Mobj.
@@ -3230,24 +3227,21 @@ boolean PTR_PuzzleItemTraverse(intercept_t* in)
         mobj_t*             mo = in->d.mo;
 
         if(mo->special != USE_PUZZLE_ITEM_SPECIAL)
-            return true; // Wrong special...
+            return false; // Wrong special...
 
         if(puzzleItemType != mo->args[0])
-            return true; // Item type doesn't match...
+            return false; // Item type doesn't match...
 
         P_StartACS(mo->args[1], 0, &mo->args[2], puzzleItemUser, NULL, 0);
         mo->special = 0;
         puzzleActivated = true;
 
-        return false; // Stop searching.
+        return true; // Stop searching.
         }
     default:
-        Con_Error("PTR_PuzzleItemTraverse: Unknown intercept type %i.",
-                  in->type);
+        Con_Error("PTR_PuzzleItemTraverse: Unknown intercept type %i.", in->type);
+        exit(1); // Unreachable.
     }
-
-    // Unreachable.
-    return false;
 }
 
 /**

@@ -737,7 +737,7 @@ typedef struct intercept_s {
     } d;
 } intercept_t;
 
-typedef boolean (*traverser_t) (intercept_t* in);
+typedef int (*traverser_t) (intercept_t* in);
 
 #define NO_INDEX            0xffffffff
 

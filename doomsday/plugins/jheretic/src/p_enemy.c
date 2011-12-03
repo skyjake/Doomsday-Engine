@@ -356,7 +356,7 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
     sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
     float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
@@ -387,7 +387,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // back side drop off
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -395,7 +395,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
-    return true;
+    return false;
 }
 
 /**
@@ -458,45 +458,45 @@ typedef struct {
     byte                randomSkip;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Flags requirement?
     if(params->compFlags > 0 && !(mo->flags & params->compFlags))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if(params->minHealth > 0 && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Exclude this mobj?
     if(params->notThis && mo == params->notThis)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Out of range?
     if(params->maxDistance > 0 &&
        P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                         params->origin[VY] - mo->pos[VY]) >
        params->maxDistance)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Randomly skip this?
     if(params->randomSkip && P_Random() < params->randomSkip)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(params->maxTries > 0 && params->count++ > params->maxTries)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
     // Out of sight?
     if(params->checkLOS && params->notThis &&
        !P_CheckSight(params->notThis, mo))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 boolean P_LookForMonsters(mobj_t* mo)
@@ -2087,7 +2087,7 @@ void C_DECL A_MakePod(mobj_t* actor)
     return;
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2098,7 +2098,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -2122,7 +2122,7 @@ typedef struct {
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2130,7 +2130,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

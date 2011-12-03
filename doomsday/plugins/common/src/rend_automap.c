@@ -622,19 +622,19 @@ int Rend_AutomapSeg(void* obj, void* data)
 
     line = P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)
-        return 1;
+        return false;
 
     xLine = P_ToXLine(line);
     if(xLine->validCount == VALIDCOUNT)
-        return 1; // Already drawn once.
+        return false; // Already drawn once.
 
     if((xLine->flags & ML_DONTDRAW) &&
        !(p->map->flags & AMF_REND_ALLLINES))
-        return 1;
+        return false;
 
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
-        return 1; // We only want to draw twosided lines once.
+        return false; // We only want to draw twosided lines once.
 
     id = AM_MapForPlayer(plr - players);
     info = NULL;
@@ -704,10 +704,10 @@ int Rend_AutomapSeg(void* obj, void* data)
         xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean drawSegsOfSubsector(subsector_t* ssec, void* context)
+static int drawSegsOfSubsector(subsector_t* ssec, void* context)
 {
     return P_Iteratep(ssec, DMU_SEG, context, Rend_AutomapSeg);
 }
@@ -859,13 +859,13 @@ int renderPolyObjSeg(void* obj, void* context)
     return 1; // Continue iteration.
 }
 
-boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
+int drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
     seg_t**             segPtr;
-    int                 result = 1;
+    int                 result = false;
 
     segPtr = po->segs;
-    while(*segPtr && (result = renderPolyObjSeg(*segPtr, context)) != 0)
+    while(*segPtr && !(result = renderPolyObjSeg(*segPtr, context)))
         segPtr++;
 
     return result;
@@ -893,7 +893,7 @@ static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-boolean renderXGLinedef(linedef_t* line, void* context)
+int renderXGLinedef(linedef_t* line, void* context)
 {
     rendwallseg_params_t* p = (rendwallseg_params_t*) context;
     xline_t*            xLine;
@@ -901,18 +901,18 @@ boolean renderXGLinedef(linedef_t* line, void* context)
     xLine = P_ToXLine(line);
     if(!xLine || xLine->validCount == VALIDCOUNT ||
         ((xLine->flags & ML_DONTDRAW) && !(p->map->flags & AMF_REND_ALLLINES)))
-        return 1;
+        return false;
 
     // Show only active XG lines.
     if(!(xLine->xg && xLine->xg->active && (mapTime & 4)))
-        return 1;
+        return false;
 
     renderLinedef(line, .8f, 0, .8f, 1, BM_ADD,
                   (p->map->flags & AMF_REND_LINE_NORMALS)? true : false);
 
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 #endif
 
@@ -1082,7 +1082,7 @@ typedef struct {
 /**
  * Draws all things on the map
  */
-static boolean renderThing(mobj_t* mo, void* context)
+static int renderThing(mobj_t* mo, void* context)
 {
     renderthing_params_t* p = (renderthing_params_t*) context;
 
@@ -1104,7 +1104,7 @@ static boolean renderThing(mobj_t* mo, void* context)
                 renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),
                                     mo->pos[VX], mo->pos[VY], 0,
                                     PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
-                return true; // Continue iteration.
+                return false; // Continue iteration.
             }
         }
 
@@ -1117,7 +1117,7 @@ static boolean renderThing(mobj_t* mo, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

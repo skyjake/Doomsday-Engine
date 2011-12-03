@@ -144,7 +144,7 @@ void Rend_Register(void)
     C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
@@ -3641,7 +3641,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static boolean drawVertex1(linedef_t* li, void* context)
+static int drawVertex1(linedef_t* li, void* context)
 {
     vertex_t*           vtx = li->L_v1;
     polyobj_t*          po = context;
@@ -3689,10 +3689,10 @@ static boolean drawVertex1(linedef_t* li, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean drawPolyObjVertexes(polyobj_t* po, void* context)
+int drawPolyObjVertexes(polyobj_t* po, void* context)
 {
     return P_PolyobjLinesIterator(po, drawVertex1, po);
 }
@@ -4210,7 +4210,7 @@ void Rend_DrawArrow(const float pos3f[3], float a, float s,
     glPopMatrix();
 }
 
-static boolean drawMobjBBox(thinker_t* th, void* context)
+static int drawMobjBBox(thinker_t* th, void* context)
 {
     static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
     static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
@@ -4221,10 +4221,10 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
 
     // We don't want the console player.
     if(mo == ddPlayers[consolePlayer].shared.mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     // Is it vissible?
     if(!(mo->subsector && mo->subsector->sector->frameFlags & SIF_VISIBLE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     eye[VX] = vx;
     eye[VY] = vz;
@@ -4244,7 +4244,7 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
     Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
                    (mo->ddFlags & DDMF_MISSILE)? yellow :
                    (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

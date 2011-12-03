@@ -118,18 +118,19 @@ intercept_t* P_AddIntercept(float frac, intercepttype_t type, void* ptr)
 }
 
 /**
- * @return              @c true, if the traverser function returns @c true,
+ * @return              Zerp, if the traverser function returns zero,
  *                      for all lines.
  */
-boolean P_TraverseIntercepts(traverser_t func, float maxFrac)
+int P_TraverseIntercepts(traverser_t func, float maxFrac)
 {
-    int                 count = intercept_p - intercepts;
+    int count = intercept_p - intercepts;
+    int result = false; // Continue iteration.
+    intercept_t* scan, *in;
+    float dist;
 
     while(count--)
     {
-        float               dist = DDMAXFLOAT;
-        intercept_t*        scan, *in;
-
+        dist = DDMAXFLOAT;
         in = NULL;
         for(scan = intercepts; scan < intercept_p; scan++)
             if(scan->frac < dist)
@@ -139,16 +140,16 @@ boolean P_TraverseIntercepts(traverser_t func, float maxFrac)
             }
 
         if(maxFrac > 0 && dist > maxFrac)
-            return true; // Checked everything in range.
+            break; // Checked everything in range.
 
         if(in)
         {
-            if(!func(in))
-                return false; // Don't bother going farther.
+            result = func(in);
+            if(result) break; // Stop iteration.
 
             in->frac = DDMAXFLOAT;
         }
     }
 
-    return true; // Everything was traversed.
+    return result;
 }

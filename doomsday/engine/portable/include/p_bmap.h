@@ -1,4 +1,4 @@
-/**\file
+/**\file p_bmap.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,91 +23,102 @@
  */
 
 /**
- * p_bmap.h: Blockmaps
+ * Map Blockmaps
  */
 
-#ifndef __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
-#define __DOOMSDAY_PLAYSIM_BLOCKMAP_H__
+#ifndef LIBDENG_MAP_BLOCKMAP_H
+#define LIBDENG_MAP_BLOCKMAP_H
 
-//// \todo This stuff is obsolete and needs to be removed!
-#define MAPBLOCKUNITS   128
-#define MAPBLOCKSIZE    (MAPBLOCKUNITS*FRACUNIT)
-#define MAPBLOCKSHIFT   (FRACBITS+7)
-#define MAPBMASK        (MAPBLOCKSIZE-1)
-#define MAPBTOFRAC      (MAPBLOCKSHIFT-FRACBITS)
+#include "dd_types.h"
+#include "m_vector.h"
+#include "p_mapdata.h"
+#include "m_gridmap.h"
+
+/// Size of Blockmap blocks in map units. Must be an integer power of two.
+#define MAPBLOCKUNITS               (128)
 
 byte bmapShowDebug;
 float bmapDebugSize;
 
-// Alloc/dealloc:
-blockmap_t*     P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
-                                 uint width, uint height);
+/**
+ * Construct an initial (empty) Mobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max);
 
-// Management:
-void            P_BlockmapSetBlock(blockmap_t* bmap, uint x, uint y,
-                                   linedef_t** lines, linkmobj_t* moLink,
-                                   linkpolyobj_t* poLink);
-void            P_SSecBlockmapSetBlock(blockmap_t* bmap, uint x, uint y,
-                                       subsector_t** ssecs);
-void            P_BuildSubsectorBlockMap(gamemap_t* map);
+void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo);
+boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo);
 
-void            P_BlockmapLinkMobj(blockmap_t* bmap, mobj_t* mo);
-boolean         P_BlockmapUnlinkMobj(blockmap_t* bmap, mobj_t* mo);
-void            P_BlockmapLinkPolyobj(blockmap_t* bmap, polyobj_t* po);
-void            P_BlockmapUnlinkPolyobj(blockmap_t* bmap, polyobj_t* po);
+int Map_IterateCellMobjs(gamemap_t* map, const uint coords[2],
+    int (*func) (struct mobj_s*, void*), void* paramaters);
+int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (struct mobj_s*, void*), void* paramaters);
 
-// Utility:
-void            P_GetBlockmapBounds(blockmap_t* bmap, pvec2_t min, pvec2_t max);
-void            P_GetBlockmapDimensions(blockmap_t* bmap, uint v[2]);
-boolean         P_ToBlockmapBlockIdx(blockmap_t* bmap, uint destBlock[2],
-                                     const pvec2_t sourcePos);
-void            P_BoxToBlockmapBlocks(blockmap_t* bmap, uint blockBox[4],
-                                      const arvec2_t box);
+/**
+ * Construct an initial (empty) LineDef Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max);
 
-// Block Iterators:
-boolean         P_BlockmapMobjsIterator(blockmap_t* bmap, const uint block[2],
-                                         boolean (*func) (struct mobj_s*, void*),
-                                         void* data);
-boolean         P_BlockmapLinesIterator(blockmap_t* bmap, const uint block[2],
-                                        boolean (*func) (linedef_t*, void*),
-                                        void* data);
-boolean         P_BlockmapSubsectorsIterator(blockmap_t* bmap, const uint block[2],
-                                             sector_t* sector, const arvec2_t box,
-                                             int localValidCount,
-                                             boolean (*func) (subsector_t*, void*),
-                                             void* data);
-boolean         P_BlockmapPolyobjsIterator(blockmap_t* bmap, const uint block[2],
-                                           boolean (*func) (polyobj_t*, void*),
-                                           void* data);
-boolean         P_BlockmapPolyobjLinesIterator(blockmap_t* bmap, const uint block[2],
-                                               boolean (*func) (linedef_t*, void*),
-                                               void* data);
+void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef);
 
-// Block Box Iterators:
-boolean         P_BlockBoxMobjsIterator(blockmap_t* bmap, const uint blockBox[4],
-                                         boolean (*func) (struct mobj_s*, void*),
-                                         void* data);
-boolean         P_BlockBoxLinesIterator(blockmap_t* bmap, const uint blockBox[4],
-                                        boolean (*func) (linedef_t*, void*),
-                                        void* data);
-boolean         P_BlockBoxSubsectorsIterator(blockmap_t* bmap, const uint blockBox[4],
-                                             sector_t* sector, const arvec2_t box,
-                                             int localValidCount,
-                                             boolean (*func) (subsector_t*, void*),
-                                             void* data);
-boolean         P_BlockBoxPolyobjsIterator(blockmap_t* bmap, const uint blockBox[4],
-                                           boolean (*func) (polyobj_t*, void*),
-                                           void* data);
-boolean         P_BlockBoxPolyobjLinesIterator(blockmap_t* bmap, const uint blockBox[4],
-                                               boolean (*func) (linedef_t*, void*),
-                                               void* data);
+int Map_IterateCellLineDefs(gamemap_t* map, const uint coords[2],
+    int (*func) (linedef_t*, void*), void* paramaters);
+int Map_IterateCellBlockLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (linedef_t*, void*), void* paramaters);
 
-// Specialized Traversals:
-boolean         P_BlockPathTraverse(blockmap_t* bmap, const uint start[2],
-                                    const uint end[2], const float origin[2],
-                                    const float dest[2], int flags,
-                                    boolean (*func) (intercept_t*));
+/**
+ * Construct an initial (empty) Subsector Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max);
 
-// Misc:
-void            P_BlockmapDebug(void);
-#endif
+void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* subsector);
+
+int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
+    sector_t* sector, const arvec2_t box, int localValidCount,
+    int (*func) (subsector_t*, void*), void* paramaters);
+int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoords,
+    sector_t* sector, const arvec2_t box, int localValidCount,
+    int (*func) (subsector_t*, void*), void* paramaters);
+
+/**
+ * Construct an initial (empty) Polyobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max);
+
+void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po);
+void  Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po);
+
+int Map_IterateCellPolyobjs(gamemap_t* map, const uint coords[2],
+    int (*func) (polyobj_t*, void*), void* paramaters);
+int Map_IterateCellBlockPolyobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (polyobj_t*, void*), void* paramaters);
+
+int Map_IterateCellPolyobjLineDefs(gamemap_t* map, const uint coords[2],
+    int (*func) (linedef_t*, void*), void* paramaters);
+int Map_IterateCellBlockPolyobjLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
+/**
+ * General Blockmap algorithms/utilities
+ */
+boolean P_CellPathTraverse(const uint start[2], const uint end[2],
+    const float origin[2], const float dest[2], int flags);
+
+/**
+ * Render the Blockmap debugging visual.
+ * \todo Split this out into its own module.
+ */
+void Rend_BlockmapDebug(void);
+
+#endif /* LIBDENG_MAP_BLOCKMAP_H */

@@ -834,7 +834,7 @@ boolean PIT_ClientMobjParticles(mobj_t* cmo, void* context)
 /**
  * Spawn multiple new particles using all applicable sources.
  */
-static boolean manyNewParticles(thinker_t* th, void* context)
+static int manyNewParticles(thinker_t* th, void* context)
 {
     ptcgen_t*           gen = (ptcgen_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -847,10 +847,10 @@ static boolean manyNewParticles(thinker_t* th, void* context)
         P_NewParticle(gen);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
+int PIT_CheckLinePtc(linedef_t* ld, void* data)
 {
     fixed_t             ceil, floor;
     sector_t*           front, *back;
@@ -858,18 +858,18 @@ boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
     if(mbox[1][VX] <= ld->bBox[BOXLEFT] || mbox[0][VX] >= ld->bBox[BOXRIGHT] ||
        mbox[1][VY] <= ld->bBox[BOXBOTTOM] || mbox[0][VY] >= ld->bBox[BOXTOP])
     {
-        return true; // Bounding box misses the line completely.
+        return false; // Bounding box misses the line completely.
     }
 
     // Movement must cross the line.
     if(P_PointOnLinedefSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
        P_PointOnLinedefSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
-        return true;
+        return false;
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
     if(!ld->L_backside)
-        return false; // Boing!
+        return true; // Boing!
 
     // Determine the opening we have here.
     front = ld->L_frontsector;
@@ -886,13 +886,13 @@ boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
-        return false; // Boing!
+        return true; // Boing!
 
     // There is a possibility that the new position is in a new sector.
     tmcross = true; // Afterwards, update the sector pointer.
 
     // False alarm, continue checking.
-    return true;
+    return false;
 }
 
 /**
@@ -1238,7 +1238,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(!P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
+    if(P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
     {
         fixed_t             normal[2], dotp;
 

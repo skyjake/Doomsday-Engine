@@ -215,7 +215,7 @@ int findExtremalLightLevelInAdjacentSectors(void *ptr, void *context)
                 params->val = lightLevel;
                 params->foundSec = other;
                 if(params->val <= 0)
-                    return 0; // Stop iteration. Can't get any darker.
+                    return true; // Stop iteration. Can't get any darker.
             }
         }
         else
@@ -225,12 +225,12 @@ int findExtremalLightLevelInAdjacentSectors(void *ptr, void *context)
                 params->val = lightLevel;
                 params->foundSec = other;
                 if(params->val >= 1)
-                    return 0; // Stop iteration. Can't get any brighter.
+                    return true; // Stop iteration. Can't get any brighter.
             }
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -302,7 +302,7 @@ int findNextLightLevel(void *ptr, void *context)
                 params->foundSec = other;
 
                 if(!(params->val > 0))
-                    return 0; // Stop iteration. Can't get any darker.
+                    return true; // Stop iteration. Can't get any darker.
             }
         }
         else
@@ -313,12 +313,12 @@ int findNextLightLevel(void *ptr, void *context)
                 params->foundSec = other;
 
                 if(!(params->val < 1))
-                    return 0; // Stop iteration. Can't get any brighter.
+                    return true; // Stop iteration. Can't get any brighter.
             }
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -405,7 +405,7 @@ int findExtremalPlaneHeight(void *ptr, void *context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -522,7 +522,7 @@ int findNextPlaneHeight(void *ptr, void *context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -657,7 +657,7 @@ int spreadSoundToNeighbors(void *ptr, void *context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
