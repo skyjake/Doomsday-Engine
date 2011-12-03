@@ -135,7 +135,7 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *player)
+void P_BringUpWeapon(struct player_s *player)
 {
     weaponmodeinfo_t   *wminfo;
 

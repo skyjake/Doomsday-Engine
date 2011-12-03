@@ -41,6 +41,8 @@
 #pragma interface
 #endif
 
+struct player_s;
+
 /**
  * Overlay psprites are scaled shapes drawn directly on the viewscreen,
  * coordinates are in virtual, [320 x 200] viewscreen-space.
@@ -58,5 +60,6 @@ typedef struct {
 } pspdef_t;
 
 void            R_GetWeaponBob(int player, float* x, float* y);
+void            P_BringUpWeapon(struct player_s *player);
 
 #endif

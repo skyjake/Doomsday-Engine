@@ -179,8 +179,9 @@ void R_SetViewSize(int blocks)
 static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
-    float viewPos[3], viewPitch, pspriteOffsetY;
-    angle_t viewAngle;
+    int viewAngle;
+    float viewPitch;
+    float pspriteOffsetY;
     boolean isFullBright = (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
                             (plr->powers[PT_INVULNERABILITY] & 8);
 
@@ -190,15 +191,20 @@ static void rendPlayerView(int player)
         R_SetAllDoomsdayFlags();
     }
 
+    /// @todo Each player needs their own view variables.
+    /// @see R_UpdateConsoleView()
+    /*
     viewPos[VX] = plr->plr->mo->pos[VX] + plr->viewOffset[VX];
     viewPos[VY] = plr->plr->mo->pos[VY] + plr->viewOffset[VY];
     viewPos[VZ] = plr->viewZ + plr->viewOffset[VZ];
-    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
-    viewPitch = plr->plr->lookDir;
 
     DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
     DD_SetVariable(DD_VIEW_Y, &viewPos[VY]);
     DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
+    */
+    // View angles are updated with fractional ticks, so we can just use the current values.
+    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
+    viewPitch = plr->plr->lookDir;
     DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
     DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
 

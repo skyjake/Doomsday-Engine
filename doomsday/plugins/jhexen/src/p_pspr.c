@@ -404,7 +404,7 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *plr)
+void P_BringUpWeapon(struct player_s *plr)
 {
     statenum_t newState;
     weaponmodeinfo_t *wminfo;

@@ -34,6 +34,8 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+struct player_s;
+
 typedef enum {
     ps_weapon,
     ps_flash,
@@ -46,5 +48,7 @@ typedef struct pspdef_s {
     float           pos[2];
 } pspdef_t;
 
+void            P_BringUpWeapon(struct player_s *player);
 void            R_GetWeaponBob(int player, float* x, float* y);
+
 #endif

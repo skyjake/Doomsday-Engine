@@ -359,16 +359,17 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
-                         viewer_t* out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
-    float               inv = 1 - pos;
+    float inv = 1 - pos;
+    int delta;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    delta = (int)end->angle - (int)start->angle;
+    out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
@@ -471,20 +472,7 @@ void R_GetSharpView(viewer_t* view, player_t* player)
  */
 void R_NewSharpWorld(void)
 {
-    extern boolean firstFrameAfterLoad;
-
-    int                 i;
-
-    if(firstFrameAfterLoad)
-    {
-        /**
-         * We haven't yet drawn the world. Everything *is* sharp so simply
-         * reset the viewer data.
-         * \fixme A bit of a kludge?
-         */
-        memset(viewData, 0, sizeof(viewData));
-        return;
-    }
+    int i;
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -655,8 +643,8 @@ void R_SetupFrame(player_t* player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->shared.flags & DDPF_INTERYAW))
-            smoothView.angle = sharpView.angle;
+        /*if(!(player->shared.flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;*/
         if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
 
@@ -700,7 +688,7 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -708,8 +696,8 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
                         smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
-                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
+                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];
