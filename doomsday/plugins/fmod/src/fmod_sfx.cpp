@@ -22,25 +22,74 @@
  */
 
 #include "driver_fmod.h"
+#include "dd_share.h"
 #include <stdlib.h>
 
 struct BufferInfo
 {
     FMOD::Channel* channel;
     FMOD::Sound* sound;
+    float pan;
+    float volume;
 
-    BufferInfo() : channel(0), sound(0) {}
+    BufferInfo() : channel(0), sound(0), pan(0.f), volume(1.f) {}
 };
 
-int DS_SFX_Init(void)
+static const char* sfxPropToString(int prop)
 {
-    return fmodSystem != 0;
+    switch(prop)
+    {
+    case SFXBP_VOLUME:        return "SFXBP_VOLUME";
+    case SFXBP_FREQUENCY:     return "SFXBP_FREQUENCY";
+    case SFXBP_PAN:           return "SFXBP_PAN";
+    case SFXBP_MIN_DISTANCE:  return "SFXBP_MIN_DISTANCE";
+    case SFXBP_MAX_DISTANCE:  return "SFXBP_MAX_DISTANCE";
+    case SFXBP_POSITION:      return "SFXBP_POSITION";
+    case SFXBP_VELOCITY:      return "SFXBP_VELOCITY";
+    case SFXBP_RELATIVE_MODE: return "SFXBP_RELATIVE_MODE";
+    default:                  return "?";
+    }
 }
 
 static BufferInfo& bufferInfo(sfxbuffer_t* buf)
 {
     assert(buf->ptr != 0);
     return *reinterpret_cast<BufferInfo*>(buf->ptr);
+}
+
+static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNEL* chanPtr,
+                                              FMOD_CHANNEL_CALLBACKTYPE type,
+                                              void* /*commanddata1*/,
+                                              void* /*commanddata2*/)
+{
+    FMOD::Channel *channel = reinterpret_cast<FMOD::Channel*>(chanPtr);
+    sfxbuffer_t *buf = 0;
+
+    switch(type)
+    {
+    case FMOD_CHANNEL_CALLBACKTYPE_END:
+        // The sound has ended, mark the channel.
+        channel->getUserData(reinterpret_cast<void**>(&buf));
+        if(buf)
+        {
+            DSFMOD_TRACE("channelCallback: sfxbuffer " << buf << " stops.");
+            buf->flags &= ~SFXBF_PLAYING;
+            // The channel becomes invalid after the sound stops.
+            bufferInfo(buf).channel = 0;
+        }
+        channel->setCallback(0);
+        channel->setUserData(0);
+        break;
+
+    default:
+        break;
+    }
+    return FMOD_OK;
+}
+
+int DS_SFX_Init(void)
+{
+    return fmodSystem != 0;
 }
 
 #if 0
@@ -107,6 +156,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     FMOD_CREATESOUNDEXINFO params;
     memset(&params, 0, sizeof(params));
+    params.cbsize = sizeof(params);
     params.length = sample->size;
     params.defaultfrequency = sample->rate;
     params.numchannels = 1; // Doomsday only uses mono samples currently.
@@ -115,7 +165,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     DSFMOD_TRACE("DS_SFX_Load: sfxbuffer " << buf
                  << " sample (size:" << sample->size
                  << ", freq:" << sample->rate
-                 << ", bps:" << sample->bytesPer);
+                 << ", bps:" << sample->bytesPer << ")");
 
     // Pass the sample to FMOD.
     FMOD_RESULT result;
@@ -151,9 +201,13 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     {
         DSFMOD_TRACE("DS_SFX_Reset: releasing Sound " << info.sound);
         info.sound->release();
-        info.sound = 0;
     }
-    info.channel = 0;
+    if(info.channel)
+    {
+        info.channel->setCallback(0);
+        info.channel->setUserData(0);
+    }
+    info = BufferInfo();
 }
 
 void DS_SFX_Play(sfxbuffer_t* buf)
@@ -162,7 +216,29 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     if(!buf || !buf->sample)
         return;
 
+    BufferInfo& info = bufferInfo(buf);
+    assert(info.sound != 0);
 
+    FMOD_RESULT result;
+    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, info.sound, true, &info.channel);
+    DSFMOD_ERRCHECK(result);
+
+    if(!info.channel) return;
+
+    // Set the properties of the sound.
+    info.channel->setPan(info.pan);
+    info.channel->setFrequency(buf->freq);
+    info.channel->setVolume(info.volume);
+    info.channel->setUserData(buf);
+    info.channel->setCallback(channelCallback);
+
+    DSFMOD_TRACE("DS_SFX_Play: sfxbuffer " << buf <<
+                 ", pan:" << info.pan <<
+                 ", freq:" << buf->freq <<
+                 ", vol:" << info.volume);
+
+    // Start playing it.
+    info.channel->setPaused(false);
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
@@ -170,14 +246,24 @@ void DS_SFX_Play(sfxbuffer_t* buf)
 
 void DS_SFX_Stop(sfxbuffer_t* buf)
 {
-    if(!buf)
-        return;
+    if(!buf) return;
+
+    DSFMOD_TRACE("DS_SFX_Stop: sfxbuffer " << buf);
+
+    BufferInfo& info = bufferInfo(buf);
+    if(info.channel)
+    {
+        info.channel->setUserData(0);
+        info.channel->setCallback(0);
+        info.channel->stop();
+        info.channel = 0;
+    }
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;
 
     // If the sound is started again, it needs to be reloaded.
-    buf->flags |= SFXBF_RELOAD;
+    //buf->flags |= SFXBF_RELOAD;
 }
 
 /**
@@ -200,15 +286,35 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     if(!buf)
         return;
 
+    BufferInfo& info = bufferInfo(buf);
+
     switch(prop)
     {
-    case SFXBP_FREQUENCY:
-        buf->freq = buf->rate * value;
+    case SFXBP_VOLUME:
+        if(FEQUAL(info.volume, value)) return; // No change.
+        info.volume = value;
+        if(info.channel) info.channel->setVolume(info.volume);
+        break;
+
+    case SFXBP_FREQUENCY: {
+        int newFreq = buf->rate * value;
+        if(buf->freq == newFreq) return; // No change.
+        buf->freq = newFreq;
+        if(info.channel) info.channel->setFrequency(buf->freq);
+        break; }
+
+    case SFXBP_PAN:
+        if(FEQUAL(info.pan, value)) return; // No change.
+        info.pan = value;
+        if(info.channel) info.channel->setPan(info.pan);
         break;
 
     default:
         break;
     }
+
+    DSFMOD_TRACE("DS_SFX_Set: sfxbuffer " << buf << ", "
+                 << sfxPropToString(prop) << " = " << value);
 }
 
 /**
@@ -253,17 +359,15 @@ int DS_SFX_Getv(int prop, void* values)
 {
     switch(prop)
     {
-    case SFXP_DISABLE_CHANNEL_REFRESH:
-    {
+    case SFXP_DISABLE_CHANNEL_REFRESH: {
         /// For SFXP_DISABLE_CHANNEL_REFRESH, the return value is a single 32-bit int.
-        int* i = reinterpret_cast<int*>(values);
-        if(i)
+        int* wantDisable = reinterpret_cast<int*>(values);
+        if(wantDisable)
         {
             // Channel refresh is handled by FMOD, so we don't need to do anything.
-            *i = true;
+            *wantDisable = true;
         }
-        break;
-    }
+        break; }
 
     default:
         return false;

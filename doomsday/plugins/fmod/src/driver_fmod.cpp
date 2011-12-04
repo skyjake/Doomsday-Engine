@@ -57,6 +57,8 @@ int DS_Init(void)
         fmodSystem = 0;
         return false;
     }
+
+    DSFMOD_TRACE("DS_Init: FMOD initialized.");
     return true;
 }
 
@@ -65,6 +67,8 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
+    DSFMOD_TRACE("DS_Shutdown.");
+
     fmodSystem->release();
     fmodSystem = 0;
 }
