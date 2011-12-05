@@ -24,6 +24,10 @@
 #include "driver_fmod.h"
 #include "dd_share.h"
 #include <stdlib.h>
+#include <vector>
+#include <list>
+
+typedef std::vector<char> SamplePCM8;
 
 struct BufferInfo
 {
@@ -132,9 +136,22 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 
     DSFMOD_TRACE("DS_SFX_DestroyBuffer: Destroying sfxbuffer " << buf);
 
+    BufferInfo& info = bufferInfo(buf);
+    if(info.sound) info.sound->release();
+
     // Free the memory allocated for the buffer.
     delete reinterpret_cast<BufferInfo*>(buf->ptr);
     free(buf);
+}
+
+static void toSigned8bit(const unsigned char* source, int size, SamplePCM8& output)
+{
+    output.clear();
+    output.resize(size);
+    for(int i = 0; i < size; ++i)
+    {
+        output[i] = char(source[i]) - 128;
+    }
 }
 
 /**
@@ -167,9 +184,25 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
                  << ", freq:" << sample->rate
                  << ", bps:" << sample->bytesPer << ")");
 
+    // If it has a sample, release it later.
+    if(info.sound)
+    {
+        DSFMOD_TRACE("DS_SFX_Load: Releasing buffer's old Sound " << info.sound);
+        info.sound->release();
+    }
+
+    SamplePCM8 signConverted;
+    const char* sampleData = reinterpret_cast<const char*>(sample->data);
+    if(sample->bytesPer == 1)
+    {
+        // Doomsday gives us unsigned 8-bit audio samples.
+        toSigned8bit(reinterpret_cast<const unsigned char*>(sample->data), sample->size, signConverted);
+        sampleData = &signConverted[0];
+    }
+
     // Pass the sample to FMOD.
     FMOD_RESULT result;
-    result = fmodSystem->createSound(reinterpret_cast<const char*>(sample->data),
+    result = fmodSystem->createSound(sampleData,
                                      (buf->flags & SFXBF_3D? FMOD_3D : 0) |
                                      FMOD_OPENMEMORY | FMOD_OPENRAW, &params,
                                      &info.sound);
@@ -178,6 +211,14 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     // Not started yet.
     info.channel = 0;
+
+#ifdef _DEBUG
+    // Check memory.
+    int currentAlloced = 0;
+    int maxAlloced = 0;
+    FMOD::Memory_GetStats(&currentAlloced, &maxAlloced, false);
+    DSFMOD_TRACE("DS_SFX_Load: FMOD memory alloced:" << currentAlloced << ", max:" << maxAlloced);
+#endif
 
     // Now the buffer is ready for playing.
 }
@@ -206,6 +247,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     {
         info.channel->setCallback(0);
         info.channel->setUserData(0);
+        info.channel->setMute(true);
     }
     info = BufferInfo();
 }
@@ -255,7 +297,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     {
         info.channel->setUserData(0);
         info.channel->setCallback(0);
-        info.channel->stop();
+        info.channel->setMute(true);
         info.channel = 0;
     }
 
@@ -297,7 +339,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         break;
 
     case SFXBP_FREQUENCY: {
-        int newFreq = buf->rate * value;
+        unsigned int newFreq = buf->rate * value;
         if(buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
         if(info.channel) info.channel->setFrequency(buf->freq);
