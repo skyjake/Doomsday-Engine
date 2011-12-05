@@ -362,12 +362,13 @@ void R_ResetViewer(void)
 void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
     float inv = 1 - pos;
+    int delta;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    int delta = (int)end->angle - (int)start->angle;
+    delta = (int)end->angle - (int)start->angle;
     out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
@@ -404,8 +405,12 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
         src->pos[VZ] = dst->pos[VZ];
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
+    {
+#ifdef _DEBUG
+        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.\n", dst->angle);
+#endif
         src->angle = dst->angle;
-
+    }
 #undef MAXMOVE
 }
 
@@ -687,7 +692,7 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -695,8 +700,8 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
                         smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
-                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
+                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];

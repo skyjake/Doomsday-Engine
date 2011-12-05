@@ -908,8 +908,10 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
 
     if(!IS_SERVER) return;
 
+#ifdef _DEBUG
     Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
                 plrNum, x, y, z, angle);
+#endif
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
