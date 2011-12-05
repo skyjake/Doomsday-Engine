@@ -171,7 +171,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     FMOD_RESULT result;
     result = fmodSystem->createSound(reinterpret_cast<const char*>(sample->data),
                                      (buf->flags & SFXBF_3D? FMOD_3D : 0) |
-                                     FMOD_OPENMEMORY | FMOD_OPENUSER, &params,
+                                     FMOD_OPENMEMORY | FMOD_OPENRAW, &params,
                                      &info.sound);
     DSFMOD_ERRCHECK(result);
     DSFMOD_TRACE("DS_SFX_Load: created Sound " << info.sound);
