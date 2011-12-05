@@ -639,10 +639,13 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             if(!wasUndefined)
             {
                 int weapon = b & 0xf;
-                P_Impulse(pl - players, CTL_WEAPON1 + weapon);
+                if(weapon != WT_NOCHANGE)
+                {
+                    P_Impulse(pl - players, CTL_WEAPON1 + weapon);
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.\n", weapon);
+                    Con_Message("NetCl_UpdatePlayerState: Weapon already known, using an impulse to switch to %i.\n", weapon);
 #endif
+                }
             }
             else
             {
