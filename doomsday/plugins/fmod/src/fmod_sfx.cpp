@@ -109,7 +109,7 @@ static unsigned int bufferLength(sfxbuffer_t* buf)
 
 sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
-    DSFMOD_TRACE("DS_SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
+    DSFMOD_TRACE("SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
 
     sfxbuffer_t* buf;
 
@@ -125,7 +125,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     // Allocate extra state information.
     buf->ptr = new BufferInfo;
 
-    DSFMOD_TRACE("DS_SFX_CreateBuffer: Created sfxbuffer " << buf);
+    DSFMOD_TRACE("SFX_CreateBuffer: Created sfxbuffer " << buf);
 
     return buf;
 }
@@ -134,7 +134,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     if(!buf) return;
 
-    DSFMOD_TRACE("DS_SFX_DestroyBuffer: Destroying sfxbuffer " << buf);
+    DSFMOD_TRACE("SFX_DestroyBuffer: Destroying sfxbuffer " << buf);
 
     BufferInfo& info = bufferInfo(buf);
     if(info.sound) info.sound->release();
@@ -179,7 +179,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     params.numchannels = 1; // Doomsday only uses mono samples currently.
     params.format = (sample->bytesPer == 1? FMOD_SOUND_FORMAT_PCM8 : FMOD_SOUND_FORMAT_PCM16);
 
-    DSFMOD_TRACE("DS_SFX_Load: sfxbuffer " << buf
+    DSFMOD_TRACE("SFX_Load: sfxbuffer " << buf
                  << " sample (size:" << sample->size
                  << ", freq:" << sample->rate
                  << ", bps:" << sample->bytesPer << ")");
@@ -187,7 +187,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     // If it has a sample, release it later.
     if(info.sound)
     {
-        DSFMOD_TRACE("DS_SFX_Load: Releasing buffer's old Sound " << info.sound);
+        DSFMOD_TRACE("SFX_Load: Releasing buffer's old Sound " << info.sound);
         info.sound->release();
     }
 
@@ -203,11 +203,12 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     // Pass the sample to FMOD.
     FMOD_RESULT result;
     result = fmodSystem->createSound(sampleData,
-                                     (buf->flags & SFXBF_3D? FMOD_3D : 0) |
-                                     FMOD_OPENMEMORY | FMOD_OPENRAW, &params,
-                                     &info.sound);
+                                     FMOD_OPENMEMORY | FMOD_OPENRAW | FMOD_HARDWARE |
+                                     (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
+                                     (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0),
+                                     &params, &info.sound);
     DSFMOD_ERRCHECK(result);
-    DSFMOD_TRACE("DS_SFX_Load: created Sound " << info.sound);
+    DSFMOD_TRACE("SFX_Load: created Sound " << info.sound);
 
     // Not started yet.
     info.channel = 0;
@@ -217,7 +218,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     int currentAlloced = 0;
     int maxAlloced = 0;
     FMOD::Memory_GetStats(&currentAlloced, &maxAlloced, false);
-    DSFMOD_TRACE("DS_SFX_Load: FMOD memory alloced:" << currentAlloced << ", max:" << maxAlloced);
+    DSFMOD_TRACE("SFX_Load: FMOD memory alloced:" << currentAlloced << ", max:" << maxAlloced);
 #endif
 
     // Now the buffer is ready for playing.
@@ -231,7 +232,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     if(!buf)
         return;
 
-    DSFMOD_TRACE("DS_SFX_Reset: sfxbuffer " << buf);
+    DSFMOD_TRACE("SFX_Reset: sfxbuffer " << buf);
 
     DS_SFX_Stop(buf);
     buf->sample = 0;
@@ -240,7 +241,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     BufferInfo& info = bufferInfo(buf);
     if(info.sound)
     {
-        DSFMOD_TRACE("DS_SFX_Reset: releasing Sound " << info.sound);
+        DSFMOD_TRACE("SFX_Reset: releasing Sound " << info.sound);
         info.sound->release();
     }
     if(info.channel)
@@ -274,10 +275,11 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     info.channel->setUserData(buf);
     info.channel->setCallback(channelCallback);
 
-    DSFMOD_TRACE("DS_SFX_Play: sfxbuffer " << buf <<
+    DSFMOD_TRACE("SFX_Play: sfxbuffer " << buf <<
                  ", pan:" << info.pan <<
                  ", freq:" << buf->freq <<
-                 ", vol:" << info.volume);
+                 ", vol:" << info.volume <<
+                 ", loop:" << ((buf->flags & SFXBF_REPEAT) != 0));
 
     // Start playing it.
     info.channel->setPaused(false);
@@ -290,7 +292,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 {
     if(!buf) return;
 
-    DSFMOD_TRACE("DS_SFX_Stop: sfxbuffer " << buf);
+    DSFMOD_TRACE("SFX_Stop: sfxbuffer " << buf);
 
     BufferInfo& info = bufferInfo(buf);
     if(info.channel)
@@ -355,8 +357,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         break;
     }
 
-    DSFMOD_TRACE("DS_SFX_Set: sfxbuffer " << buf << ", "
-                 << sfxPropToString(prop) << " = " << value);
+    //DSFMOD_TRACE("SFX_Set: sfxbuffer " << buf << ", " << sfxPropToString(prop) << " = " << value);
 }
 
 /**

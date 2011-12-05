@@ -38,12 +38,12 @@ void    DS_Event(int type);
 
 }
 
-#define DSFMOD_TRACE(args)  std::cerr << args << std::endl;
+#define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
 
 #ifdef _DEBUG
 #  define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \
-        printf("FMOD error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
+        printf("[dsFMOD] Error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
     }
 #else
 #  define DSFMOD_ERRCHECK(result)
