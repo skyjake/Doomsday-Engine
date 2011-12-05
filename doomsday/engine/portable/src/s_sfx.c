@@ -785,9 +785,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {
         iSFX->Destroy(selCh->buffer);
         // Create a new buffer with the correct format.
-        selCh->buffer =
-            iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8,
-                         sample->rate);
+        selCh->buffer = iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
     }
 
     // Clear flags.
@@ -821,11 +819,18 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
         selCh->flags |= SFXCF_NO_ATTENUATION;
     }
 
+
     /**
      * Load in the sample. Must load prior to setting properties, because
      * the audioDriver might actually create the real buffer only upon loading.
+     *
+     * @note The sample is not reloaded if a sample with the same ID is already
+     * loaded on the channel.
      */
-    iSFX->Load(selCh->buffer, sample);
+    if(!selCh->buffer->sample || selCh->buffer->sample->id != sample->id)
+    {
+        iSFX->Load(selCh->buffer, sample);
+    }
 
     // Update channel properties.
     Sfx_ChannelUpdate(selCh);
@@ -1160,8 +1165,7 @@ void Sfx_Reset(void)
 void Sfx_RecreateChannels(void)
 {
     Sfx_DestroyChannels();
-    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits,
-                       sfxRate);
+    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
 }
 
 /**
