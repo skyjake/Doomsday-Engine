@@ -465,8 +465,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
             else
             {
-                normdist = (dist - soundMinDist) /
-                    (soundMaxDist - soundMinDist);
+                normdist = (dist - soundMinDist) / (soundMaxDist - soundMinDist);
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -505,8 +504,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
         }
 
-        iSFX->Set(buf, SFXBP_VOLUME,
-                    ch->volume * dist * sfxVolume / 255.0f);
+        iSFX->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
         iSFX->Set(buf, SFXBP_PAN, pan);
     }
 }
@@ -532,8 +530,7 @@ void Sfx_ListenerUpdate(void)
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
-        vec[VY] =
-            listener->dPlayer ? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0;
+        vec[VY] = (listener->dPlayer? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0);
         iSFX->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
@@ -839,7 +836,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     if(play3D)
     {
         // Init the buffer's min/max distances.
-        // This is only done once, when the sound is started (i.e. here).
+        // This is only done once, when the sound is started (i.e., here).
         iSFX->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
                   (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
                   soundMinDist);
@@ -895,9 +892,6 @@ void Sfx_StartFrame(void)
 {
     static int          old16Bit = false;
     static int          oldRate = 11025;
-    static double       lastUpdate = 0;
-
-    double              nowTime = Sys_GetSeconds();
 
     if(!sfxAvail)
         return;
@@ -911,7 +905,7 @@ void Sfx_StartFrame(void)
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
-        Con_Message("sound-rate corrected to 11025.\n");
+        Con_Message("Sfx_StartFrame: sound-rate corrected to 11025.\n");
         sfxSampleRate = 11025;
     }
 
@@ -925,6 +919,15 @@ void Sfx_StartFrame(void)
 
     // Should we purge the cache (to conserve memory)?
     Sfx_PurgeCache();
+}
+
+void Sfx_EndFrame(void)
+{
+    static double lastUpdate = 0;
+    double nowTime = Sys_GetSeconds();
+
+    if(!sfxAvail)
+        return;
 
     // Is it time to do a channel update?
     if(nowTime - lastUpdate >= UPDATE_TIME)
@@ -932,12 +935,6 @@ void Sfx_StartFrame(void)
         lastUpdate = nowTime;
         Sfx_Update();
     }
-}
-
-void Sfx_EndFrame(void)
-{
-    if(!sfxAvail)
-        return;
 
     // The sound frame ends.
     audioDriver->Event(SFXEV_END);
