@@ -24,8 +24,8 @@
 #include "driver_fmod.h"
 #include "dd_share.h"
 #include <stdlib.h>
+#include <cmath>
 #include <vector>
-#include <list>
 
 typedef std::vector<char> SamplePCM8;
 
@@ -33,13 +33,67 @@ struct BufferInfo
 {
     FMOD::Channel* channel;
     FMOD::Sound* sound;
+    FMOD_MODE mode;
     float pan;
     float volume;
+    float minDistanceMeters;
+    float maxDistanceMeters;
+    FMOD_VECTOR position;
+    FMOD_VECTOR velocity;
 
-    BufferInfo() : channel(0), sound(0), pan(0.f), volume(1.f) {}
+    BufferInfo()
+        : channel(0), sound(0), mode(0),
+          pan(0.f), volume(1.f),
+          minDistanceMeters(10), maxDistanceMeters(100) {
+        memset(&position, 0, sizeof(position));
+        memset(&velocity, 0, sizeof(velocity));
+    }
+
+    void setRelativeMode(bool newMode) {
+        if(newMode) {
+            mode &= ~FMOD_3D_WORLDRELATIVE;
+            mode |=  FMOD_3D_HEADRELATIVE;
+        }
+        else {
+            mode |=  FMOD_3D_WORLDRELATIVE;
+            mode &= ~FMOD_3D_HEADRELATIVE;
+        }
+        if(channel) channel->setMode(mode);
+    }
 };
 
-static const char* sfxPropToString(int prop)
+struct Listener
+{
+    FMOD_VECTOR position;
+    FMOD_VECTOR velocity;
+    FMOD_VECTOR front;
+    FMOD_VECTOR up;
+
+    /**
+     * Parameters are in radians.
+     * Example front vectors:
+     *   Yaw 0:(0,0,1), pi/2:(-1,0,0)
+     */
+    void setOrientation(float yaw, float pitch)
+    {
+        using std::sin;
+        using std::cos;
+
+        front.x = cos(yaw) * cos(pitch);
+        front.z = sin(yaw) * cos(pitch);
+        front.y = sin(pitch);
+
+        up.x = -cos(yaw) * sin(pitch);
+        up.z = -sin(yaw) * sin(pitch);
+        up.y = cos(pitch);
+    }
+};
+
+static float unitsPerMeter = 1.f;
+static float dopplerScale = 1.f;
+static Listener listener;
+
+const char* sfxPropToString(int prop)
 {
     switch(prop)
     {
@@ -161,8 +215,7 @@ static void toSigned8bit(const unsigned char* source, int size, SamplePCM8& outp
  */
 void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
-    if(!fmodSystem || !buf || !sample)
-        return;
+    if(!fmodSystem || !buf || !sample) return;
 
     // Tell the engine we have used up the entire sample already.
     buf->sample = sample;
@@ -200,12 +253,18 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
         sampleData = &signConverted[0];
     }
 
+    info.mode = FMOD_HARDWARE |
+                (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
+                (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0);
+    if(buf->flags & SFXBF_3D)
+    {
+        info.mode |= FMOD_3D_WORLDRELATIVE;
+    }
+
     // Pass the sample to FMOD.
     FMOD_RESULT result;
     result = fmodSystem->createSound(sampleData,
-                                     FMOD_OPENMEMORY | FMOD_OPENRAW | FMOD_HARDWARE |
-                                     (buf->flags & SFXBF_3D? FMOD_3D : FMOD_2D) |
-                                     (buf->flags & SFXBF_REPEAT? FMOD_LOOP_NORMAL : 0),
+                                     FMOD_OPENMEMORY | FMOD_OPENRAW | info.mode,
                                      &params, &info.sound);
     DSFMOD_ERRCHECK(result);
     DSFMOD_TRACE("SFX_Load: created Sound " << info.sound);
@@ -274,6 +333,14 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     info.channel->setVolume(info.volume);
     info.channel->setUserData(buf);
     info.channel->setCallback(channelCallback);
+    if(buf->flags & SFXBF_3D)
+    {
+        // 3D properties.
+        info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+                                          info.maxDistanceMeters);
+        info.channel->set3DAttributes(&info.position, &info.velocity);
+        info.channel->setMode(info.mode);
+    }
 
     DSFMOD_TRACE("SFX_Play: sfxbuffer " << buf <<
                  ", pan:" << info.pan <<
@@ -305,9 +372,6 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
 
     // Clear the flag that tells the Sfx module about playing buffers.
     buf->flags &= ~SFXBF_PLAYING;
-
-    // If the sound is started again, it needs to be reloaded.
-    //buf->flags |= SFXBF_RELOAD;
 }
 
 /**
@@ -318,8 +382,8 @@ void DS_SFX_Refresh(sfxbuffer_t*)
 {}
 
 /**
- * @param prop          SFXBP_VOLUME (if negative, interpreted as attenuation)
- *                      SFXBP_FREQUENCY
+ * @param prop          SFXBP_VOLUME (0..1)
+ *                      SFXBP_FREQUENCY (Hz)
  *                      SFXBP_PAN (-1..1)
  *                      SFXBP_MIN_DISTANCE
  *                      SFXBP_MAX_DISTANCE
@@ -336,6 +400,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     {
     case SFXBP_VOLUME:
         if(FEQUAL(info.volume, value)) return; // No change.
+        assert(value >= 0);
         info.volume = value;
         if(info.channel) info.channel->setVolume(info.volume);
         break;
@@ -351,6 +416,22 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         if(FEQUAL(info.pan, value)) return; // No change.
         info.pan = value;
         if(info.channel) info.channel->setPan(info.pan);
+        break;
+
+    case SFXBP_MIN_DISTANCE:
+        info.minDistanceMeters = value;
+        if(info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+                                                           info.maxDistanceMeters);
+        break;
+
+    case SFXBP_MAX_DISTANCE:
+        info.maxDistanceMeters = value;
+        if(info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+                                                           info.maxDistanceMeters);
+        break;
+
+    case SFXBP_RELATIVE_MODE:
+        info.setRelativeMode(value > 0);
         break;
 
     default:
@@ -369,7 +450,29 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  */
 void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
-    // Nothing to do.
+    if(!fmodSystem || !buf) return;
+
+    BufferInfo& info = bufferInfo(buf);
+
+    switch(prop)
+    {
+    case SFXBP_POSITION:
+        info.position.x = values[0];
+        info.position.y = values[1];
+        info.position.z = values[2];
+        if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        break;
+
+    case SFXBP_VELOCITY:
+        info.velocity.x = values[0];
+        info.velocity.y = values[1];
+        info.velocity.z = values[2];
+        if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        break;
+
+    default:
+        break;
+    }
 }
 
 /**
@@ -379,17 +482,65 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
  */
 void DS_SFX_Listener(int prop, float value)
 {
-    // Nothing to do.
+    switch(prop)
+    {
+    case SFXLP_UNITS_PER_METER:
+        unitsPerMeter = value;
+        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
+        DSFMOD_TRACE("SFX_Listener: Units per meter = " << unitsPerMeter);
+        break;
+
+    case SFXLP_DOPPLER:
+        dopplerScale = value;
+        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
+        DSFMOD_TRACE("SFX_Listener: Doppler = " << value);
+        break;
+
+    case SFXLP_UPDATE:
+        // Update the properties set with Listenerv.
+        fmodSystem->set3DListenerAttributes(0, &listener.position, &listener.velocity,
+                                            &listener.front, &listener.up);
+        break;
+
+    default:
+        break;
+    }
 }
 
-static void setListenerEnvironment(float* rev)
-{
-    // Nothing to do.
-}
-
+/**
+ * @param prop  SFXLP_ORIENTATION  (yaw, pitch) in degrees.
+ */
 void DS_SFX_Listenerv(int prop, float* values)
 {
-    // Nothing to do.
+    switch(prop)
+    {
+    case SFXLP_POSITION:
+        listener.position.x = values[0];
+        listener.position.y = values[1];
+        listener.position.z = values[2];
+        break;
+
+    case SFXLP_ORIENTATION:
+        // Convert the angles to front and up vectors.
+        listener.setOrientation(values[0], values[1]);
+        break;
+
+    case SFXLP_VELOCITY:
+        listener.velocity.x = values[0];
+        listener.velocity.y = values[1];
+        listener.velocity.z = values[2];
+        break;
+
+    case SFXLP_REVERB:
+        break;
+
+    case SFXLP_PRIMARY_FORMAT:
+        DSFMOD_TRACE("SFX_Listenerv: Ignoring SFXLP_PRIMARY_FORMAT.");
+        return;
+
+    default:
+        return;
+    }
 }
 
 /**
