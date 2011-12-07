@@ -24,14 +24,82 @@
 #include "driver_fmod.h"
 #include <string.h>
 
+struct SongBuffer
+{
+    int size;
+    char* data;
+
+    SongBuffer(int newSize) : size(newSize) {
+        data = new char[newSize];
+    }
+
+    ~SongBuffer() {
+        delete [] data;
+    }
+};
+
+static FMOD::Sound* song;
+static FMOD::Channel* music;
+static float musicVolume;
+static SongBuffer* songBuffer;
+
+static FMOD_RESULT F_CALLBACK musicCallback(FMOD_CHANNEL* chanPtr,
+                                            FMOD_CHANNEL_CALLBACKTYPE type,
+                                            void* /*commanddata1*/,
+                                            void* /*commanddata2*/)
+{
+    assert(reinterpret_cast<FMOD::Channel*>(chanPtr) == music);
+
+    switch(type)
+    {
+    case FMOD_CHANNEL_CALLBACKTYPE_END:
+        // The music has stopped.
+        music = 0;
+        break;
+
+    default:
+        break;
+    }
+    return FMOD_OK;
+}
+
+static void releaseSong()
+{
+    if(song)
+    {
+        song->release();
+        song = 0;
+    }
+    music = 0;
+}
+
+static void releaseSongBuffer()
+{
+    if(songBuffer)
+    {
+        delete songBuffer;
+        songBuffer = 0;
+    }
+}
+
 int DM_Music_Init(void)
 {
+    music = 0;
+    song = 0;
+    musicVolume = 1.f;
+    songBuffer = 0;
     return fmodSystem != 0;
 }
 
 void DM_Music_Shutdown(void)
 {
+    if(!fmodSystem) return;
+
+    releaseSongBuffer();
+    releaseSong();
+
     // Will be shut down with the rest of FMOD.
+    DSFMOD_TRACE("Music_Shutdown.");
 }
 
 void DM_Music_Set(int prop, float value)
@@ -42,17 +110,10 @@ void DM_Music_Set(int prop, float value)
     switch(prop)
     {
     case MUSIP_VOLUME:
-        {
-        /*
-        int                 val = MINMAX_OF(0, (byte) (value * 255 + .5f), 255);
-
-        // Straighten the volume curve.
-        val <<= 8; // Make it a word.
-        val = (int) (255.9980469 * sqrt(value));
-        mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
-        */
+        musicVolume = value;
+        if(music) music->setVolume(musicVolume);
+        DSFMOD_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
-        }
 
     default:
         break;
@@ -72,10 +133,8 @@ int DM_Music_Get(int prop, void* ptr)
         break;
 
     case MUSIP_PLAYING:
-        /*
-        if(midiAvail && MIDIStreamer)
-            return (MIDIStreamer->IsPlaying()? true : false);*/
-        return false;
+        if(!fmodSystem) return false;
+        return music != 0; // NULL when not playing.
 
     default:
         break;
@@ -91,37 +150,93 @@ void DM_Music_Update(void)
 
 void DM_Music_Stop(void)
 {
-    if(!fmodSystem)
-        return;
+    if(!fmodSystem || !music) return;
 
+    DSFMOD_TRACE("Music_Stop.");
 
+    music->stop();
+}
+
+static bool startSong()
+{
+    if(!fmodSystem || !song) return false;
+
+    if(music) music->stop();
+
+    // Start playing the song.
+    FMOD_RESULT result;
+    result = fmodSystem->playSound(FMOD_CHANNEL_FREE, song, true, &music);
+    DSFMOD_ERRCHECK(result);
+
+    // Properties.
+    music->setVolume(musicVolume);
+    music->setCallback(musicCallback);
+
+    // Start playing.
+    music->setPaused(false);
+    return true;
 }
 
 int DM_Music_Play(int looped)
 {
     if(!fmodSystem) return false;
 
-    return false;
+    if(songBuffer)
+    {
+        // Get rid of the old song.
+        releaseSong();
+
+        FMOD_CREATESOUNDEXINFO extra;
+        zeroStruct(extra);
+        extra.length = songBuffer->size;
+
+        // Load a new song.
+        FMOD_RESULT result;
+        result = fmodSystem->createSound(songBuffer->data,
+                                         FMOD_CREATESTREAM | FMOD_OPENMEMORY |
+                                         (looped? FMOD_LOOP_NORMAL : 0),
+                                         &extra, &song);
+        DSFMOD_TRACE("Music_Play: songBuffer has " << songBuffer->size << " bytes, created Sound " << song);
+        DSFMOD_ERRCHECK(result);
+
+        // The song buffer remains in memory, in case FMOD needs to stream from it.
+    }
+    return startSong();
 }
 
 void DM_Music_Pause(int setPause)
 {
-    if(!fmodSystem)
-        return;
+    if(!fmodSystem || !music) return;
+
+    music->setPaused(setPause != 0);
 }
 
 void* DM_Music_SongBuffer(unsigned int length)
 {
-    if(!fmodSystem)
-        return NULL;
+    if(!fmodSystem) return NULL;
 
-    return NULL;
+    releaseSongBuffer();
+
+    DSFMOD_TRACE("Music_SongBuffer: Allocating a song buffer for " << length << " bytes.");
+
+    // The caller will put data in this buffer. Before playing, we will create the
+    // FMOD sound based on the data in the song buffer.
+    songBuffer = new SongBuffer(length);
+    return songBuffer->data;
 }
 
 int DM_Music_PlayFile(const char *filename, int looped)
 {
-    if(!fmodSystem)
-        return 0;
+    if(!fmodSystem) return false;
 
-    return 0;
+    // Get rid of the current song.
+    releaseSong();
+    releaseSongBuffer();
+
+    FMOD_RESULT result;
+    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0), 0, &song);
+    DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
+    DSFMOD_ERRCHECK(result);
+
+    return startSong();
 }

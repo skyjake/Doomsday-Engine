@@ -75,8 +75,9 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
-    DSFMOD_TRACE("DS_Shutdown.");
+    DM_Music_Shutdown();
 
+    DSFMOD_TRACE("DS_Shutdown.");
     fmodSystem->release();
     fmodSystem = 0;
 }
