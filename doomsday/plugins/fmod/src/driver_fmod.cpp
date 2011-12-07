@@ -50,13 +50,21 @@ int DS_Init(void)
     }
 
     // Initialize FMOD.
-    if((result = fmodSystem->init(50, FMOD_INIT_NORMAL, 0)) != FMOD_OK)
+    if((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_HRTF_LOWPASS, 0)) != FMOD_OK)
     {
         printf("DS_Init: FMOD init failed: (%d) %s\n", result, FMOD_ErrorString(result));
         fmodSystem->release();
         fmodSystem = 0;
         return false;
     }
+
+    // Options.
+    FMOD_ADVANCEDSETTINGS settings;
+    zeroStruct(settings);
+    settings.HRTFMaxAngle = 360;
+    settings.HRTFMinAngle = 180;
+    settings.HRTFFreq = 11000;
+    fmodSystem->setAdvancedSettings(&settings);
 
     DSFMOD_TRACE("DS_Init: FMOD initialized.");
     return true;

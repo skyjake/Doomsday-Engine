@@ -27,7 +27,7 @@
 #include <cmath>
 #include <vector>
 
-typedef std::vector<char> SamplePCM8;
+typedef std::vector<char> RawSamplePCM8;
 
 struct BufferInfo
 {
@@ -38,17 +38,19 @@ struct BufferInfo
     float volume;
     float minDistanceMeters;
     float maxDistanceMeters;
-    FMOD_VECTOR position;
-    FMOD_VECTOR velocity;
+    FMODVector position;
+    FMODVector velocity;
 
     BufferInfo()
         : channel(0), sound(0), mode(0),
           pan(0.f), volume(1.f),
-          minDistanceMeters(10), maxDistanceMeters(100) {
-        memset(&position, 0, sizeof(position));
-        memset(&velocity, 0, sizeof(velocity));
-    }
+          minDistanceMeters(10), maxDistanceMeters(100) {}
 
+    /**
+     * Changes the channel's 3D position mode (head-relative or world coordinates).
+     *
+     * @param newMode  @c true, if the channel should be head-relative.
+     */
     void setRelativeMode(bool newMode) {
         if(newMode) {
             mode &= ~FMOD_3D_WORLDRELATIVE;
@@ -64,10 +66,10 @@ struct BufferInfo
 
 struct Listener
 {
-    FMOD_VECTOR position;
-    FMOD_VECTOR velocity;
-    FMOD_VECTOR front;
-    FMOD_VECTOR up;
+    FMODVector position;
+    FMODVector velocity;
+    FMODVector front;
+    FMODVector up;
 
     /**
      * Parameters are in radians.
@@ -80,12 +82,15 @@ struct Listener
         using std::cos;
 
         front.x = cos(yaw) * cos(pitch);
-        front.z = sin(yaw) * cos(pitch);
-        front.y = sin(pitch);
+        front.y = sin(yaw) * cos(pitch);
+        front.z = sin(pitch);
 
         up.x = -cos(yaw) * sin(pitch);
-        up.z = -sin(yaw) * sin(pitch);
-        up.y = cos(pitch);
+        up.y = -sin(yaw) * sin(pitch);
+        up.z = cos(pitch);
+
+        /*DSFMOD_TRACE("Front:" << front.x << "," << front.y << "," << front.z << " Up:"
+                     << up.x << "," << up.y << "," << up.z);*/
     }
 };
 
@@ -150,17 +155,6 @@ int DS_SFX_Init(void)
     return fmodSystem != 0;
 }
 
-#if 0
-/**
- * @return The length of the buffer in milliseconds.
- */
-static unsigned int bufferLength(sfxbuffer_t* buf)
-{
-    if(!buf || !buf->sample) return 0;
-    return 1000 * buf->sample->numSamples / buf->freq;
-}
-#endif
-
 sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     DSFMOD_TRACE("SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
@@ -198,7 +192,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     free(buf);
 }
 
-static void toSigned8bit(const unsigned char* source, int size, SamplePCM8& output)
+static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& output)
 {
     output.clear();
     output.resize(size);
@@ -225,8 +219,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     BufferInfo& info = bufferInfo(buf);
 
     FMOD_CREATESOUNDEXINFO params;
-    memset(&params, 0, sizeof(params));
-    params.cbsize = sizeof(params);
+    zeroStruct(params);
     params.length = sample->size;
     params.defaultfrequency = sample->rate;
     params.numchannels = 1; // Doomsday only uses mono samples currently.
@@ -244,7 +237,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
         info.sound->release();
     }
 
-    SamplePCM8 signConverted;
+    RawSamplePCM8 signConverted;
     const char* sampleData = reinterpret_cast<const char*>(sample->data);
     if(sample->bytesPer == 1)
     {
@@ -457,16 +450,12 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
     switch(prop)
     {
     case SFXBP_POSITION:
-        info.position.x = values[0];
-        info.position.y = values[1];
-        info.position.z = values[2];
+        info.position.set(values);
         if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
         break;
 
     case SFXBP_VELOCITY:
-        info.velocity.x = values[0];
-        info.velocity.y = values[1];
-        info.velocity.z = values[2];
+        info.velocity.set(values);
         if(info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
         break;
 
@@ -493,7 +482,7 @@ void DS_SFX_Listener(int prop, float value)
     case SFXLP_DOPPLER:
         dopplerScale = value;
         fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
-        DSFMOD_TRACE("SFX_Listener: Doppler = " << value);
+        DSFMOD_TRACE("SFX_Listener: Doppler factor = " << value);
         break;
 
     case SFXLP_UPDATE:
@@ -515,20 +504,17 @@ void DS_SFX_Listenerv(int prop, float* values)
     switch(prop)
     {
     case SFXLP_POSITION:
-        listener.position.x = values[0];
-        listener.position.y = values[1];
-        listener.position.z = values[2];
+        listener.position.set(values);
+        //DSFMOD_TRACE("Pos:" << values[0] << "," << values[1] << "," << values[2]);
         break;
 
     case SFXLP_ORIENTATION:
         // Convert the angles to front and up vectors.
-        listener.setOrientation(values[0], values[1]);
+        listener.setOrientation(values[0]/180*M_PI, values[1]/180*M_PI);
         break;
 
     case SFXLP_VELOCITY:
-        listener.velocity.x = values[0];
-        listener.velocity.y = values[1];
-        listener.velocity.z = values[2];
+        listener.velocity.set(values);
         break;
 
     case SFXLP_REVERB:

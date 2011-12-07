@@ -43,7 +43,6 @@
 
 #define SFX_MAX_CHANNELS        (64)
 #define SFX_LOWEST_PRIORITY     (-1000)
-#define UPDATE_TIME             (2.0/TICSPERSEC) // Seconds.
 
 // TYPES -------------------------------------------------------------------
 
@@ -923,18 +922,10 @@ void Sfx_StartFrame(void)
 
 void Sfx_EndFrame(void)
 {
-    static double lastUpdate = 0;
-    double nowTime = Sys_GetSeconds();
-
     if(!sfxAvail)
         return;
 
-    // Is it time to do a channel update?
-    if(nowTime - lastUpdate >= UPDATE_TIME)
-    {
-        lastUpdate = nowTime;
-        Sfx_Update();
-    }
+    Sfx_Update();
 
     // The sound frame ends.
     audioDriver->Event(SFXEV_END);
@@ -1098,7 +1089,7 @@ boolean Sfx_Init(void)
     // is 56 units tall, 60 is about two meters.
     //// \fixme Derive from the viewheight.
     iSFX->Listener(SFXLP_UNITS_PER_METER, 30);
-    iSFX->Listener(SFXLP_DOPPLER, 1);
+    iSFX->Listener(SFXLP_DOPPLER, 1.5f);
 
     // The audioDriver is working, let's create the channels.
     Sfx_InitChannels();

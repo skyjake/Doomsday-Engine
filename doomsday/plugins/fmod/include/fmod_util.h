@@ -21,39 +21,32 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __DSFMOD_DRIVER_H__
-#define __DSFMOD_DRIVER_H__
+#ifndef __DSFMOD_UTIL_H__
+#define __DSFMOD_UTIL_H__
 
 #include <fmod.h>
 #include <fmod.hpp>
-#include <fmod_errors.h>
-#include <cassert>
-#include <iostream>
+#include <cstring>
 
-extern "C" {
-    
-int     DS_Init(void);
-void    DS_Shutdown(void);
-void    DS_Event(int type);
+class FMODVector : public FMOD_VECTOR
+{
+public:
+    FMODVector(float _x = 0, float _y = 0, float _z = 0) {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
 
+    void set(const float* values) {
+        x = values[0];
+        y = values[1];
+        z = values[2];
+    }
+};
+
+template <typename T> void zeroStruct(T& t) {
+    std::memset(&t, 0, sizeof(T));
+    t.cbsize = sizeof(T);
 }
 
-#define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
-
-#ifdef _DEBUG
-#  define DSFMOD_ERRCHECK(result) \
-    if(result != FMOD_OK) { \
-        printf("[dsFMOD] Error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
-    }
-#else
-#  define DSFMOD_ERRCHECK(result)
-#endif
-
-extern FMOD::System* fmodSystem;
-
-#include "fmod_sfx.h"
-#include "fmod_music.h"
-#include "fmod_cd.h"
-#include "fmod_util.h"
-
-#endif /* end of include guard: __DSFMOD_DRIVER_H__ */
+#endif /* end of include guard: __DSFMOD_UTIL_H__ */
