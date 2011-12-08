@@ -378,7 +378,7 @@ void NetCl_UpdatePlayerState2(Reader* msg, int plrNum)
                 // After being reborn, the server will tell us the new weapon.
                 pl->plr->flags |= DDPF_UNDEFINED_WEAPON;
 #ifdef _DEBUG
-                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.\n", pl - players);
+                Con_Message("NetCl_UpdatePlayerState2: Player %i: Marking weapon as undefined.\n", (int)(pl - players));
 #endif
 
                 pl->plr->flags &= ~DDPF_DEAD;

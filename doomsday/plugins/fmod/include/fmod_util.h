@@ -20,29 +20,33 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
- 
-#ifndef __DSFMOD_MUS_H__
-#define __DSFMOD_MUS_H__
 
-#include "sys_audiod_mus.h"
+#ifndef __DSFMOD_UTIL_H__
+#define __DSFMOD_UTIL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <fmod.h>
+#include <fmod.hpp>
+#include <cstring>
 
-int     DM_Music_Init(void);
-void    DM_Music_Shutdown(void);
-void    DM_Music_Set(int prop, float value);
-int     DM_Music_Get(int prop, void* ptr);
-void    DM_Music_Update(void);
-void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
-int     DM_Music_Play(int looped);
-void    DM_Music_Stop(void);
-void    DM_Music_Pause(int setPause);
-int     DM_Music_PlayFile(const char *filename, int looped);
+class FMODVector : public FMOD_VECTOR
+{
+public:
+    FMODVector(float _x = 0, float _y = 0, float _z = 0) {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
 
-#ifdef __cplusplus
+    void set(const float* values) {
+        x = values[0];
+        y = values[1];
+        z = values[2];
+    }
+};
+
+template <typename T> void zeroStruct(T& t) {
+    std::memset(&t, 0, sizeof(T));
+    t.cbsize = sizeof(T);
 }
-#endif
 
-#endif /* end of include guard: __DSFMOD_MUS_H__ */
+#endif /* end of include guard: __DSFMOD_UTIL_H__ */

@@ -27,6 +27,7 @@
 #include <fmod.h>
 #include <fmod.hpp>
 #include <fmod_errors.h>
+#include <stdio.h>
 #include <cassert>
 #include <iostream>
 
@@ -55,5 +56,6 @@ extern FMOD::System* fmodSystem;
 #include "fmod_sfx.h"
 #include "fmod_music.h"
 #include "fmod_cd.h"
+#include "fmod_util.h"
 
 #endif /* end of include guard: __DSFMOD_DRIVER_H__ */
