@@ -218,12 +218,11 @@ extern          "C" {
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
-    int             P_PointOnLinedefSide(float x, float y,
-                                         const struct linedef_s* line);
+    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
+    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
     int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
-    int             P_PointOnDivlineSide(float x, float y,
-                                         const divline_t* line);
+    int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
     void            P_LineOpening(struct linedef_s* linedef);
 

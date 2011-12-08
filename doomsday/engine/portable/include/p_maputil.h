@@ -47,11 +47,18 @@ float           P_ApproxDistance3(float dx, float dy, float dz);
 void            P_LineUnitVector(linedef_t *line, float *unitvec);
 float           P_MobjPointDistancef(mobj_t *start, mobj_t *end,
                                      float *fixpoint);
-int             P_PointOnLinedefSide(float x, float y, const linedef_t* line);
+
+/**
+ * @return  Non-zero if the point is on the right side of the specified line.
+ */
+int P_PointOnLinedefSide(float xy[2], const linedef_t* lineDef);
+int P_PointOnLinedefSideXY(float x, float y, const linedef_t* lineDef);
+
 int             P_PointOnLinedefSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
                                    double linePerp, double lineLength,
                                    double epsilon);
+
 int             P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
                                  const linedef_t *ld);

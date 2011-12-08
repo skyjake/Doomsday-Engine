@@ -128,7 +128,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     if(noBack)
     {
         if((los->flags & LS_PASSLEFT) &&
-           P_PointOnLinedefSide(FIX2FLT(los->trace.pos[VX]),
+           P_PointOnLinedefSideXY(FIX2FLT(los->trace.pos[VX]),
                                 FIX2FLT(los->trace.pos[VY]), li))
             return true; // Ray does not intercept seg from left to right.
 

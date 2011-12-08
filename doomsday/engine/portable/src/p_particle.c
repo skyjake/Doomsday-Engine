@@ -862,8 +862,8 @@ int PIT_CheckLinePtc(linedef_t* ld, void* data)
     }
 
     // Movement must cross the line.
-    if(P_PointOnLinedefSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
-       P_PointOnLinedefSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
+    if(P_PointOnLinedefSideXY(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
+       P_PointOnLinedefSideXY(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
         return false;
 
     // We are possibly hitting something here.

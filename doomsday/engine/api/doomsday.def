@@ -3,7 +3,6 @@ NAME            "DOOMSDAY"
 ; Highest ordinal is currently
 ; --> 457 <--
 ; Free ordinals:
-; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
 ; 68 formerly P_BlockLinesIterator
 ; 69 formerly P_BlockMobjsIterator
@@ -131,7 +130,7 @@ EXPORTS
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
     B_BindingsForControl        @429 NONAME
-    B_SetContextFallback		@440 NONAME
+    B_SetContextFallback	@440 NONAME
 
 ; System.
 ;   Sys_TicksPerSecond          @46 NONAME
@@ -171,7 +170,8 @@ EXPORTS
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @59 NONAME
+    P_PointOnLinedefSide        @45 NONAME
+    P_PointOnLinedefSideXY      @59 NONAME
     P_BoxOnLineSide             @60 NONAME
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME

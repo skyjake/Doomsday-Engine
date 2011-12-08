@@ -231,14 +231,24 @@ int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
                               dline->pos[VY], dline->dX, dline->dY);
 }
 
-/**
- * @return              Non-zero if the point is on the right side of the
- *                      specified line.
- */
-int P_PointOnLinedefSide(float x, float y, const linedef_t* line)
+/// \note Part of the Doomsday public API.
+int P_PointOnLinedefSide(float xy[2], const linedef_t* lineDef)
 {
-    return !P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
-                              line->dX, line->dY);
+    if(!xy || !lineDef)
+    {
+#if _DEBUG
+        Con_Message("P_PointOnLineDefSide: Invalid arguments, returning zero.\n");
+#endif
+        return 0;
+    }
+    return P_PointOnLinedefSideXY(xy[0], xy[1], lineDef);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PointOnLinedefSideXY(float x, float y, const linedef_t* lineDef)
+{
+    return !P_PointOnLineSide(x, y, lineDef->L_v1pos[VX], lineDef->L_v1pos[VY],
+                              lineDef->dX, lineDef->dY);
 }
 
 /**
@@ -374,13 +384,13 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
         break;
 
       case ST_POSITIVE:
-        a = P_PointOnLinedefSide(xl, yh, ld);
-        b = P_PointOnLinedefSide(xh, yl, ld);
+        a = P_PointOnLinedefSideXY(xl, yh, ld);
+        b = P_PointOnLinedefSideXY(xh, yl, ld);
         break;
 
     case ST_NEGATIVE:
-        a = P_PointOnLinedefSide(xh, yh, ld);
-        b = P_PointOnLinedefSide(xl, yl, ld);
+        a = P_PointOnLinedefSideXY(xh, yh, ld);
+        b = P_PointOnLinedefSideXY(xl, yl, ld);
         break;
     }
 
@@ -955,9 +965,9 @@ int PIT_AddLineIntercepts(linedef_t* ld, void* data)
     }
     else
     {
-        s[0] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX]),
+        s[0] = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX]),
                                  FIX2FLT(traceLOS.pos[VY]), ld);
-        s[1] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
+        s[1] = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
                                  FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), ld);
     }
 

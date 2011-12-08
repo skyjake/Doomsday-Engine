@@ -413,198 +413,58 @@ boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
     return unlinked;
 }
 
-/**
- *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
- *
- * \algorithm  This finds the intersection of each linedef with the column
- * and row lines at the left and bottom of each blockmap cell. It then adds
- * the line to all cell lists touching the intersection.
- */
 void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
 {
-#define BLKSHIFT                7 // Places to shift rel position for cell num.
-#define BLKMASK                 ((1<<BLKSHIFT)-1) // Mask for rel position within cell.
-
-    Blockmap* blockmap = map->lineDefBlockmap;
+    vec2_t origin, cellSize, cell, from, to;
     GridmapBlock blockCoords;
-    vec2_t origin, cellSize;
-    uint coords[2];
+    Blockmap* blockmap;
+    uint x, y;
     assert(map);
 
     // LineDefs of Polyobjs don't get into the blockmap (presently...).
     if(lineDef->inFlags & LF_POLYOBJ) return;
 
+    blockmap = map->lineDefBlockmap;
     V2_Copy(origin, Blockmap_Origin(blockmap));
     V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     // Determine the block of cells we'll be working within.
     Blockmap_CellBlockCoords(blockmap, &blockCoords, &lineDef->aaBox);
 
-    // Always linked into the cells containing the LineDef's vertexes.
-    Blockmap_CellCoords(blockmap, coords, lineDef->L_v1pos);
-    Blockmap_CreateCellAndLinkObject(blockmap, coords, lineDef);
-
-    Blockmap_CellCoords(blockmap, coords, lineDef->L_v2pos);
-    Blockmap_CreateCellAndLinkObject(blockmap, coords, lineDef);
-
-    // For each column, see where the line along its left edge, which
-    // it contains, intersects the Linedef i. Add i to each corresponding
-    // cell's list.
-
-    // We don't want to interesect vertical lines with columns.
-    if(lineDef->slopeType != ST_VERTICAL)
+    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
+    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
     {
-        float point[2];
-        uint x, y;
-        int frac;
-        for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+        if(lineDef->slopeType == ST_VERTICAL || lineDef->slopeType == ST_HORIZONTAL)
         {
-            // Calculate the intersection of the vectors defined by the vertexes
-            // of this LineDef and that of the bottom edge of cell row X.
-            //
-            // (y-v1[VY])*dx = dy*(x-v1[VX])
-            //             y = dy*(x-v1[VX])+v1[VY]*dx;
-            point[VX] = origin[VX] + (x * cellSize[VX]);
-            point[VY] = (lineDef->dY * (point[VX] - lineDef->L_v1pos[VX])) /
-                         lineDef->dX + lineDef->L_v1pos[VY];
-
-            // Already outside the blockmap?
-            if(Blockmap_ClipCellY(blockmap, &y, point[VY])) continue;
-
-            // Does LineDef touch this column at all?
-            if(point[VX] < lineDef->aaBox.minX ||
-               point[VX] > lineDef->aaBox.maxX) continue;
-
-            // The cell that contains the intersection point is always added.
             Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
+            continue;
+        }
 
-            // If the intersection is at a corner it depends on the slope
-            // (and whether the line extends past the intersection) which
-            // cells are hit.
+        // Calculate cell origin.
+        V2_Copy(cell, Blockmap_CellSize(blockmap));
+        cell[VX] *= x; cell[VY] *= y;
+        V2_Sum(cell, cell, Blockmap_Origin(blockmap));
 
-            // Where does the intersection occur?
-            frac = ((int)(point[VY] - origin[VY])) & BLKMASK; // y position within cell.
-            if(frac == 0)
-            {
-                // Intersection occured at a corner.
-                switch(lineDef->slopeType)
-                {
-                case ST_NEGATIVE: // \ :cells x,y-, x-,y
-                    if(y != 0 && point[VY] >= lineDef->aaBox.minY)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
-                    }
-                    if(x != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
-                    }
-                    break;
-                case ST_POSITIVE: // / :cell x-,y-
-                    if(x != 0 && y != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y-1, lineDef);
-                    }
-                    break;
-                case ST_HORIZONTAL: // - :cell x-,y
-                    if(x != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
-                    }
-                    break;
-                default:
-                    Con_Error("Map::Map_LinkLineDefInBlockmap: Internal error, attempt to link LineDef (#%u) with VERTICAL slope to vertical cell block.", lineDef->buildData.index-1);
-                    exit(1); // Unreachable.
-                }
-            }
-            else if(x != 0)
-            {
-                // Else not at corner: x-,y
-                Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
-            }
+        // Choose a cell diagonal to test.
+        if(lineDef->slopeType == ST_POSITIVE)
+        {
+            // LineDef slope / vs \ cell diagonal.
+            V2_Set(from, cell[VX], cell[VY] + cellSize[VY]);
+            V2_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
+        }
+        else
+        {
+            // LineDef slope \ vs / cell diagonal.
+            V2_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
+            V2_Set(to,   cell[VX], cell[VY]);
+        }
+
+        // Would LineDef intersect this?
+        if(P_PointOnLinedefSide(from, lineDef) != P_PointOnLinedefSide(to, lineDef))
+        {
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
         }
     }
-
-    // For each row, see where the line along its bottom edge, which
-    // it contains, intersects the Linedef i. Add i to all the corresponding
-    // cell lists.
-    if(lineDef->slopeType != ST_HORIZONTAL)
-    {
-        float point[2];
-        uint x, y;
-        int frac;
-        for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
-        {
-            // Calculate the intersection of the vectors defined by the vertexes
-            // of this LineDef and that of the left edge of cell column Y.
-            //
-            // (y-v1[VY])*dx = dy*(x-v1[VX])
-            //             x = dx*(y-v1[VY])/dy+v1[VX];
-
-            point[VY] = origin[VY] + (y * cellSize[VY]);
-            point[VX] = (lineDef->dX * (point[VY] - lineDef->L_v1pos[VY])) /
-                         lineDef->dY + lineDef->L_v1pos[VX];
-
-            // Already outside the blockmap?
-            if(Blockmap_ClipCellX(blockmap, &x, point[VX])) continue;
-
-            // Does LineDef touch this row at all?
-            if(point[VY] < lineDef->aaBox.minY ||
-               point[VY] > lineDef->aaBox.maxY) continue;
-
-            // The cell that contains the intersection point is always added.
-            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
-
-            // If the intersection is at a corner it depends on the slope
-            // (and whether the line extends past the intersection) which
-            // cells are hit.
-
-            // Where does the intersection occur?
-            frac = ((int)(point[VX] - origin[VX])) & BLKMASK; // x position within cell.
-            if(frac == 0)
-            {
-                // Intersection occured at a corner.
-                switch(lineDef->slopeType)
-                {
-                case ST_NEGATIVE: // \ :cells x,y-, x-,y
-                    if(x != 0 && point[VX] >= lineDef->aaBox.minX)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
-                    }
-                    if(y != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
-                    }
-                    break;
-
-                case ST_POSITIVE: // / :cell x-,y-
-                    if(x != 0 && y != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y-1, lineDef);
-                    }
-                    break;
-
-                case ST_VERTICAL: // | :cell x,y-
-                    if(y != 0)
-                    {
-                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
-                    }
-                    break;
-                default:
-                    Con_Error("Map::Map_LinkLineDefInBlockmap: Internal error, attempt to link LineDef (#%u) with HORIZONTAL slope to horizontal cell block.", lineDef->buildData.index-1);
-                    exit(1); // Unreachable.
-                }
-            }
-            else if(y != 0)
-            {
-                // Else not on a corner: x, y-
-                Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
-            }
-        }
-    }
-
-#undef BLKMASK
-#undef BLKSHIFT
 }
 
 void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* ssec)
