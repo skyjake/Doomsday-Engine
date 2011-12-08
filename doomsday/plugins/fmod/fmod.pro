@@ -35,10 +35,13 @@ win32 {
     INSTALLS += target
     target.path = $$DENG_LIB_DIR
 }
-
-macx {
+else:macx {
     # Bundle the FMOD shared library in dsFMOD.bundle.
     doPostLink("cp -f \"$$FMOD_DIR/api/lib/libfmodex.dylib\" dsFMOD.bundle/")
     doPostLink("install_name_tool -id @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/libfmodex.dylib")
     doPostLink("install_name_tool -change ./libfmodex.dylib @executable_path/../../../dsFMOD.bundle/libfmodex.dylib dsFMOD.bundle/dsfmod")
+}
+else {
+    INSTALLS += target
+    target.path = $$DENG_LIB_DIR
 }
