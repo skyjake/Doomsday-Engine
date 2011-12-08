@@ -35,6 +35,7 @@ extern "C" {
 int     DS_Init(void);
 void    DS_Shutdown(void);
 void    DS_Event(int type);
+int     DS_Set(int prop, const void* ptr);
 
 }
 

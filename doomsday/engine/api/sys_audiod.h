@@ -38,10 +38,16 @@ typedef enum {
     AUDIOD_WINMM    // Win32 only
 } audiodriver_e;
 
+// Audio driver properties.
+enum {
+    AUDIOP_SOUNDFONT_FILENAME
+};
+
 typedef struct audiodriver_s {
     int             (*Init) (void);
     void            (*Shutdown) (void);
     void            (*Event) (int type);
+    int             (*Set) (int prop, const void* ptr);
 } audiodriver_t;
 
 #endif

@@ -7,6 +7,7 @@ EXPORTS
 DS_Init
 DS_Shutdown
 DS_Event
+DS_Set
 
 ; Sfx interface
 DS_SFX_Init

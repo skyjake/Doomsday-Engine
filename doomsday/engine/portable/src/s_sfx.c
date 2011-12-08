@@ -1038,7 +1038,7 @@ void Sfx_StartRefresh(void)
 
     if(!iSFX) goto noRefresh; // Nothing to refresh.
 
-    if(iSFX->Getv) iSFX->Getv(SFXP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(iSFX->Getv) iSFX->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
     if(!disableRefresh)
     {
         // Start the refresh thread. It will run until the Sfx module is shut down.

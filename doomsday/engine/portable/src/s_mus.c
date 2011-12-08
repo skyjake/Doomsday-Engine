@@ -64,6 +64,8 @@ D_CMD(StopMusic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void Mus_UpdateSoundFont(cvar_t* var);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // Music playback interfaces loaded from a sound driver plugin.
@@ -85,6 +87,8 @@ static boolean musAvail = false;
 static int currentSong = -1;
 static boolean musicPaused = false;
 
+static char* soundFontPath = "";
+
 // The interfaces.
 static audiointerface_music_t* iMusic;
 static audiointerface_cd_t* iCD;
@@ -103,6 +107,7 @@ void Mus_Register(void)
     // Cvars
     C_VAR_INT("music-volume", &musVolume, 0, 0, 255);
     C_VAR_INT("music-source", &musPreference, 0, 0, 2);
+    C_VAR_CHARPTR2("music-soundfont", &soundFontPath, 0, 0, 0, Mus_UpdateSoundFont);
 
     // Ccmds
     C_CMD_FLAGS("playmusic", NULL, PlayMusic, CMDF_NO_DEDICATED);
@@ -164,12 +169,18 @@ boolean Mus_Init(void)
         }
     }
 
+    if(audioDriver->Set)
+    {
+        // Tell the audio driver about our soundfont config.
+        audioDriver->Set(AUDIOP_SOUNDFONT_FILENAME, soundFontPath);
+    }
+
     // Print a list of the chosen interfaces.
     if(verbose)
     {
         char buf[80];
 
-        Con_Message("Mus_Init: Interfaces:");
+        Con_Message("Mus_Init: Interfaces:\n");
         for(i = 0; i < NUM_INTERFACES; ++i)
         {
             if(!(*interfaces[i].ip))
@@ -554,6 +565,12 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
     // The song was not started.
     return false;
+}
+
+static void Mus_UpdateSoundFont(cvar_t* var)
+{
+    if(!audioDriver || !audioDriver->Set) return;
+    audioDriver->Set(AUDIOP_SOUNDFONT_FILENAME, CV_CHARPTR(var));
 }
 
 /**

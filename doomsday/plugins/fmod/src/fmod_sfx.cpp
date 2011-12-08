@@ -553,8 +553,8 @@ int DS_SFX_Getv(int prop, void* values)
 {
     switch(prop)
     {
-    case SFXP_DISABLE_CHANNEL_REFRESH: {
-        /// For SFXP_DISABLE_CHANNEL_REFRESH, the return value is a single 32-bit int.
+    case SFXIP_DISABLE_CHANNEL_REFRESH: {
+        /// The return value is a single 32-bit int.
         int* wantDisable = reinterpret_cast<int*>(values);
         if(wantDisable)
         {

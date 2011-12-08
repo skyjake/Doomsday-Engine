@@ -22,6 +22,7 @@
  */
 
 #include "driver_fmod.h"
+#include "sys_audiod.h"
 #include "sys_audiod_sfx.h"
 #include <stdio.h>
 #include <fmod.h>
@@ -85,5 +86,21 @@ void DS_Event(int type)
     {
         // End of frame, do an update.
         fmodSystem->update();
+    }
+}
+
+int DS_Set(int prop, const void* ptr)
+{
+    if(!fmodSystem) return false;
+
+    switch(prop)
+    {
+    case AUDIOP_SOUNDFONT_FILENAME:
+        DSFMOD_TRACE("DS_Set: Soundfont = " << (char*)ptr);
+        return true;
+
+    default:
+        DSFMOD_TRACE("DS_Set: Unknown property " << prop);
+        return false;
     }
 }
