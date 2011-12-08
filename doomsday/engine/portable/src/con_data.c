@@ -102,7 +102,7 @@ void Con_SetString(const char* name, char* text, byte overRide)
 
     if(cvar->type == CVT_CHARPTR)
     {
-        if(CV_CHARPTR(cvar) && !stricmp(text, CV_CHARPTR(cvar)))
+        if(CV_CHARPTR(cvar) && stricmp(text, CV_CHARPTR(cvar)))
             changed = true;
 
         // Free the old string, if one exists.
