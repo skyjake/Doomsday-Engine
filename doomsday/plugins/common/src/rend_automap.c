@@ -737,11 +737,9 @@ static void renderWalls(const automap_t* map, const automapcfg_t* cfg,
     // objects?
     if(!addToLists)
     {
-        float               aabb[4];
-
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                              &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-        P_SubsectorsBoxIterator(aabb, NULL, drawSegsOfSubsector, &params);
+        AABoxf box;
+        Automap_GetInViewAABB(map, &box.minX, &box.maxX, &box.minY, &box.maxY);
+        P_SubsectorsBoxIterator(&box, NULL, drawSegsOfSubsector, &params);
     }
     else
     {   // No. As the map lists are considered static we want them to
@@ -874,8 +872,8 @@ int drawSegsOfPolyobject(polyobj_t* po, void* context)
 static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
                            int player)
 {
-    float               aabb[4];
     rendwallseg_params_t params;
+    AABoxf aaBox;
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -887,9 +885,8 @@ static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
     params.objType = MOL_LINEDEF;
 
     // Next, draw any polyobjects in view.
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                          &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_PolyobjsBoxIterator(aabb, drawSegsOfPolyobject, &params);
+    Automap_GetInViewAABB(map, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_PolyobjsBoxIterator(&aaBox, drawSegsOfPolyobject, &params);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -920,8 +917,8 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
                              int player)
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    float               aabb[4];
     rendwallseg_params_t params;
+    AABoxf aaBox;
 
     if(!(map->flags & AMF_REND_XGLINES))
         return;
@@ -936,9 +933,8 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
     params.addToLists = false;
     params.objType = -1;
 
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                          &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_LinesBoxIterator(aabb, renderXGLinedef, &params);
+    Automap_GetInViewAABB(map, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_LinesBoxIterator(&aaBox, renderXGLinedef, &params);
 #endif
 }
 
@@ -1594,8 +1590,8 @@ void Rend_Automap(int player, const automap_t* map)
     renderPlayers(map, mcfg, player);
     if(Automap_GetFlags(map) & (AMF_REND_THINGS|AMF_REND_KEYS))
     {
-        float               aabb[4];
         renderthing_params_t params;
+        AABoxf box;
 
         params.flags = Automap_GetFlags(map);
         params.vgraph = AM_GetVectorGraph(AM_GetVectorGraphic(mcfg, AMO_THING));
@@ -1604,10 +1600,9 @@ void Rend_Automap(int player, const automap_t* map)
         params.alpha = MINMAX_OF(0.f,
             cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                              &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+        Automap_GetInViewAABB(map, &box.minX, &box.maxX, &box.minY, &box.maxY);
         VALIDCOUNT++;
-        P_MobjsBoxIterator(aabb, renderThing, &params);
+        P_MobjsBoxIterator(&box, renderThing, &params);
     }
 
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

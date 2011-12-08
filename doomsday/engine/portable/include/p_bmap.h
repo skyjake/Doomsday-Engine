@@ -52,9 +52,9 @@ void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo);
 boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo);
 
 int Map_IterateCellMobjs(gamemap_t* map, const uint coords[2],
-    int (*func) (struct mobj_s*, void*), void* paramaters);
+    int (*callback) (struct mobj_s*, void*), void* paramaters);
 int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
-    int (*func) (struct mobj_s*, void*), void* paramaters);
+    int (*callback) (struct mobj_s*, void*), void* paramaters);
 
 /**
  * Construct an initial (empty) LineDef Blockmap for this map.
@@ -67,9 +67,9 @@ void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t ma
 void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef);
 
 int Map_IterateCellLineDefs(gamemap_t* map, const uint coords[2],
-    int (*func) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* paramaters);
 int Map_IterateCellBlockLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
-    int (*func) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* paramaters);
 
 /**
  * Construct an initial (empty) Subsector Blockmap for this map.
@@ -82,11 +82,11 @@ void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t 
 void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* subsector);
 
 int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
-    sector_t* sector, const arvec2_t box, int localValidCount,
-    int (*func) (subsector_t*, void*), void* paramaters);
+    sector_t* sector, const AABoxf* box, int localValidCount,
+    int (*callback) (subsector_t*, void*), void* paramaters);
 int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoords,
-    sector_t* sector, const arvec2_t box, int localValidCount,
-    int (*func) (subsector_t*, void*), void* paramaters);
+    sector_t* sector, const AABoxf* box, int localValidCount,
+    int (*callback) (subsector_t*, void*), void* paramaters);
 
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
@@ -100,12 +100,12 @@ void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po);
 void  Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po);
 
 int Map_IterateCellPolyobjs(gamemap_t* map, const uint coords[2],
-    int (*func) (polyobj_t*, void*), void* paramaters);
+    int (*callback) (polyobj_t*, void*), void* paramaters);
 int Map_IterateCellBlockPolyobjs(gamemap_t* map, const GridmapBlock* blockCoords,
-    int (*func) (polyobj_t*, void*), void* paramaters);
+    int (*callback) (polyobj_t*, void*), void* paramaters);
 
 int Map_IterateCellPolyobjLineDefs(gamemap_t* map, const uint coords[2],
-    int (*func) (linedef_t*, void*), void* paramaters);
+    int (*callback) (linedef_t*, void*), void* paramaters);
 int Map_IterateCellBlockPolyobjLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
     int (*callback) (linedef_t*, void*), void* paramaters);
 

@@ -252,10 +252,11 @@ void R_InitSectorShadows(void)
     uint            startTime = Sys_GetRealTime();
 
     uint            i, j;
-    vec2_t          bounds[2], point;
+    vec2_t          point;
     vertex_t       *vtx0, *vtx1;
     lineowner_t    *vo0, *vo1;
     shadowlinkerparms_t data;
+    AABoxf bounds;
 
     for(i = 0; i < numVertexes; ++i)
     {
@@ -293,21 +294,21 @@ void R_InitSectorShadows(void)
 
                 // Use the extended points, they are wider than inoffsets.
                 V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
-                V2_InitBox(bounds, point);
+                V2_InitBox(bounds.arvec2, point);
 
                 V2_Sum(point, point, vo0->shadowOffsets.extended);
-                V2_AddToBox(bounds, point);
+                V2_AddToBox(bounds.arvec2, point);
 
                 V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
-                V2_AddToBox(bounds, point);
+                V2_AddToBox(bounds.arvec2, point);
 
                 V2_Sum(point, point, vo1->shadowOffsets.extended);
-                V2_AddToBox(bounds, point);
+                V2_AddToBox(bounds.arvec2, point);
 
                 data.lineDef = line;
                 data.side = j;
 
-                P_SubsectorsBoxIteratorv(bounds, line->L_sector(j),
+                P_SubsectorsBoxIterator(&bounds, line->L_sector(j),
                                          RIT_ShadowSubsectorLinker, &data);
             }
     }

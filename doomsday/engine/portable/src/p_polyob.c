@@ -131,11 +131,11 @@ static void updateSegBBox(seg_t* seg)
 {
     linedef_t* line = seg->lineDef;
 
-    line->bBox[BOXLEFT]  = MIN_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
-    line->bBox[BOXRIGHT] = MAX_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.minX = MIN_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.minY = MIN_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
 
-    line->bBox[BOXBOTTOM] = MIN_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
-    line->bBox[BOXTOP]    = MAX_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
+    line->aaBox.maxX = MAX_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.maxY = MAX_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
 
     // Update the line's slopetype.
     line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
@@ -164,7 +164,7 @@ static void updateSegBBox(seg_t* seg)
 /**
  * Update the polyobj bounding box.
  */
-void P_PolyobjUpdateBBox(polyobj_t* po)
+void P_PolyobjUpdateAABox(polyobj_t* po)
 {
     uint                i;
     vec2_t              point;
@@ -173,14 +173,14 @@ void P_PolyobjUpdateBBox(polyobj_t* po)
 
     segPtr = po->segs;
     V2_Set(point, (*segPtr)->SG_v1pos[VX], (*segPtr)->SG_v1pos[VY]);
-    V2_InitBox(po->box, point);
+    V2_InitBox(po->aaBox.arvec2, point);
 
     for(i = 0; i < po->numSegs; ++i, segPtr++)
     {
         vtx = (*segPtr)->SG_v1;
 
         V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
-        V2_AddToBox(po->box, point);
+        V2_AddToBox(po->aaBox.arvec2, point);
     }
 }
 
@@ -267,10 +267,11 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
     {
         seg_t* seg = *segList;
 
-        seg->lineDef->bBox[BOXTOP]    += y;
-        seg->lineDef->bBox[BOXBOTTOM] += y;
-        seg->lineDef->bBox[BOXLEFT]   += x;
-        seg->lineDef->bBox[BOXRIGHT]  += x;
+        seg->lineDef->aaBox.minX += x;
+        seg->lineDef->aaBox.minY += y;
+
+        seg->lineDef->aaBox.maxX += x;
+        seg->lineDef->aaBox.maxY += y;
 
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
@@ -309,10 +310,11 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
         {
             seg_t* seg = *segList;
 
-            seg->lineDef->bBox[BOXTOP]    -= y;
-            seg->lineDef->bBox[BOXBOTTOM] -= y;
-            seg->lineDef->bBox[BOXLEFT]   -= x;
-            seg->lineDef->bBox[BOXRIGHT]  -= x;
+            seg->lineDef->aaBox.minX -= x;
+            seg->lineDef->aaBox.minY -= y;
+
+            seg->lineDef->aaBox.maxX -= x;
+            seg->lineDef->aaBox.maxY -= y;
 
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
@@ -502,20 +504,20 @@ int PTR_CheckMobjBlocking(mobj_t* mo, void* data)
     if((mo->ddFlags & DDMF_SOLID) ||
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
-        float tmbbox[4];
         ptrmobjblockingparams_t* params = data;
+        AABoxf moBox;
 
-        tmbbox[BOXTOP]    = mo->pos[VY] + mo->radius;
-        tmbbox[BOXBOTTOM] = mo->pos[VY] - mo->radius;
-        tmbbox[BOXLEFT]   = mo->pos[VX] - mo->radius;
-        tmbbox[BOXRIGHT]  = mo->pos[VX] + mo->radius;
+        moBox.minX = mo->pos[VX] - mo->radius;
+        moBox.minY = mo->pos[VY] - mo->radius;
+        moBox.maxX = mo->pos[VX] + mo->radius;
+        moBox.maxY = mo->pos[VY] + mo->radius;
 
-        if(!(tmbbox[BOXRIGHT]  <= params->line->bBox[BOXLEFT] ||
-             tmbbox[BOXLEFT]   >= params->line->bBox[BOXRIGHT] ||
-             tmbbox[BOXTOP]    <= params->line->bBox[BOXBOTTOM] ||
-             tmbbox[BOXBOTTOM] >= params->line->bBox[BOXTOP]))
+        if(!(moBox.maxX <= params->line->aaBox.minX ||
+             moBox.minX >= params->line->aaBox.maxX ||
+             moBox.maxY <= params->line->aaBox.minY ||
+             moBox.minY >= params->line->aaBox.maxY))
         {
-            if(P_BoxOnLineSide(tmbbox, params->line) == -1)
+            if(P_BoxOnLineSide(&moBox, params->line) == -1)
             {
                 if(po_callback)
                     po_callback(mo, params->seg, params->po);
@@ -533,21 +535,21 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
     gamemap_t* map = P_GetCurrentMap();
     ptrmobjblockingparams_t params;
     GridmapBlock blockCoords;
-    vec2_t bbox[2];
     linedef_t* ld;
+    AABoxf aaBox;
 
     params.blocked = false;
     params.line = ld = seg->lineDef;
     params.seg = seg;
     params.po = po;
 
-    bbox[0][VX] = ld->bBox[BOXLEFT]   - DDMOBJ_RADIUS_MAX;
-    bbox[0][VY] = ld->bBox[BOXBOTTOM] - DDMOBJ_RADIUS_MAX;
-    bbox[1][VX] = ld->bBox[BOXRIGHT]  + DDMOBJ_RADIUS_MAX;
-    bbox[1][VY] = ld->bBox[BOXTOP]    + DDMOBJ_RADIUS_MAX;
+    aaBox.minX = ld->aaBox.minX - DDMOBJ_RADIUS_MAX;
+    aaBox.minY = ld->aaBox.minY - DDMOBJ_RADIUS_MAX;
+    aaBox.maxX = ld->aaBox.maxX + DDMOBJ_RADIUS_MAX;
+    aaBox.maxY = ld->aaBox.maxY + DDMOBJ_RADIUS_MAX;
 
     validCount++;
-    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, bbox);
+    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, &aaBox);
     Map_IterateCellBlockMobjs(map, &blockCoords, PTR_CheckMobjBlocking, &params);
 
     return params.blocked;

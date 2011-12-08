@@ -85,7 +85,7 @@ static void  checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float tmBBox[4];
+AABoxf tmBox;
 mobj_t* tmThing;
 
 // If "floatOk" true, move would be ok if within "tmFloorZ - tmCeilingZ".
@@ -289,9 +289,9 @@ int PIT_StompThing(mobj_t* mo, void* data)
 
 boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
 {
-    int                 stomping;
-    subsector_t*        newSSec;
-    float               box[4];
+    int stomping;
+    subsector_t* newSSec;
+    AABoxf tmBoxExpanded;
 
     // Kill anything occupying the position.
     tmThing = thing;
@@ -300,10 +300,10 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tm[VX] = x;
     tm[VY] = y;
 
-    tmBBox[BOXTOP]    = tm[VY] + tmThing->radius;
-    tmBBox[BOXBOTTOM] = tm[VY] - tmThing->radius;
-    tmBBox[BOXRIGHT]  = tm[VX] + tmThing->radius;
-    tmBBox[BOXLEFT]   = tm[VX] - tmThing->radius;
+    tmBox.minX = tm[VX] - tmThing->radius;
+    tmBox.minY = tm[VY] - tmThing->radius;
+    tmBox.maxX = tm[VX] + tmThing->radius;
+    tmBox.maxY = tm[VY] + tmThing->radius;
 
     newSSec = R_PointInSubsector(tm[VX], tm[VY]);
 
@@ -323,14 +323,14 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
 
     IterList_Empty(spechit);
 
-    box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
-    box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
-    box[BOXBOTTOM] = tmBBox[BOXBOTTOM] - MAXRADIUS;
-    box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
+    tmBoxExpanded.minX = tmBox.minX - MAXRADIUS;
+    tmBoxExpanded.minY = tmBox.minY - MAXRADIUS;
+    tmBoxExpanded.maxX = tmBox.maxX + MAXRADIUS;
+    tmBoxExpanded.maxY = tmBox.maxY + MAXRADIUS;
 
     // Stomp on any things contacted.
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(box, PIT_StompThing, &stomping))
+    if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_StompThing, &stomping))
         return false;
 
     // The move is ok, so link the thing into its new position.
@@ -354,7 +354,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
  * Checks to see if a start->end trajectory line crosses a blocking line.
  * Returns false if it does.
  *
- * tmBBox holds the bounding box of the trajectory. If that box does not
+ * tmBox holds the bounding box of the trajectory. If that box does not
  * touch the bounding box of the line in question, then the trajectory is
  * not blocked. If the start is on one side of the line and the end is on
  * the other side, then the trajectory is blocked.
@@ -374,14 +374,12 @@ int PIT_CrossLine(linedef_t* ld, void* data)
        (P_ToXLine(ld)->flags & ML_BLOCKMONSTERS) ||
        (!P_GetPtrp(ld, DMU_FRONT_SECTOR) || !P_GetPtrp(ld, DMU_BACK_SECTOR)))
     {
-        float               bbox[4];
+        AABoxf* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
 
-        P_GetFloatpv(ld, DMU_BOUNDING_BOX, bbox);
-
-        if(!(tmBBox[BOXLEFT]   > bbox[BOXRIGHT] ||
-             tmBBox[BOXRIGHT]  < bbox[BOXLEFT] ||
-             tmBBox[BOXTOP]    < bbox[BOXBOTTOM] ||
-             tmBBox[BOXBOTTOM] > bbox[BOXTOP]))
+        if(!(tmBox.minX > aaBox->maxX ||
+             tmBox.maxX < aaBox->minX ||
+             tmBox.maxY < aaBox->minY ||
+             tmBox.minY > aaBox->maxY))
         {
             if(P_PointOnLinedefSide(startPos[VX], startPos[VY], ld) !=
                P_PointOnLinedefSide(endPos[VX], endPos[VY], ld))
@@ -418,13 +416,13 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
     endPos[VZ] = DDMINFLOAT; // Initialize with *something*.
 
     // The bounding box of the trajectory
-    tmBBox[BOXLEFT]   = (startPos[VX] < endPos[VX]? startPos[VX] : endPos[VX]);
-    tmBBox[BOXRIGHT]  = (startPos[VX] > endPos[VX]? startPos[VX] : endPos[VX]);
-    tmBBox[BOXTOP]    = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
-    tmBBox[BOXBOTTOM] = (startPos[VY] < endPos[VY]? startPos[VY] : endPos[VY]);
+    tmBox.minX = (startPos[VX] < endPos[VX]? startPos[VX] : endPos[VX]);
+    tmBox.minY = (startPos[VY] < endPos[VY]? startPos[VY] : endPos[VY]);
+    tmBox.maxX = (startPos[VX] > endPos[VX]? startPos[VX] : endPos[VX]);
+    tmBox.maxY = (startPos[VY] > endPos[VY]? startPos[VY] : endPos[VY]);
 
     VALIDCOUNT++;
-    return P_AllLinesBoxIterator(tmBBox, PIT_CrossLine, 0);
+    return P_AllLinesBoxIterator(&tmBox, PIT_CrossLine, 0);
 }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -434,21 +432,17 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
  */
 static int untouched(linedef_t* ld)
 {
-    float               x, y, box[4];
-    float               bbox[4];
-    float               radius;
+    const float x = tmThing->pos[VX];
+    const float y = tmThing->pos[VY];
+    const float radius = tmThing->radius;
+    AABoxf* ldBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
+    AABoxf moBox;
 
-    P_GetFloatpv(ld, DMU_BOUNDING_BOX, bbox);
-
-    x = tmThing->pos[VX];
-    y = tmThing->pos[VY];
-    radius = tmThing->radius;
-
-    if(((box[BOXRIGHT]  = x + radius) <= bbox[BOXLEFT]) ||
-       ((box[BOXLEFT]   = x - radius) >= bbox[BOXRIGHT]) ||
-       ((box[BOXTOP]    = y + radius) <= bbox[BOXBOTTOM]) ||
-       ((box[BOXBOTTOM] = y - radius) >= bbox[BOXTOP]) ||
-       P_BoxOnLineSide(box, ld) != -1)
+    if(((moBox.minX = x - radius) >= ldBox->maxX) ||
+       ((moBox.minY = y - radius) >= ldBox->maxY) ||
+       ((moBox.maxX = x + radius) <= ldBox->minX) ||
+       ((moBox.maxY = y + radius) <= ldBox->minY) ||
+       P_BoxOnLineSide(&moBox, ld) != -1)
         return true;
 
     return false;
@@ -941,18 +935,16 @@ int PIT_CheckThing(mobj_t* thing, void* data)
  */
 int PIT_CheckLine(linedef_t* ld, void* data)
 {
-    float               bbox[4];
-    xline_t*            xline;
+    AABoxf* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
+    xline_t* xline;
 
-    P_GetFloatpv(ld, DMU_BOUNDING_BOX, bbox);
-
-    if(tmBBox[BOXRIGHT]  <= bbox[BOXLEFT] ||
-       tmBBox[BOXLEFT]   >= bbox[BOXRIGHT] ||
-       tmBBox[BOXTOP]    <= bbox[BOXBOTTOM] ||
-       tmBBox[BOXBOTTOM] >= bbox[BOXTOP])
+    if(tmBox.minX >= aaBox->maxX ||
+       tmBox.minY >= aaBox->maxY ||
+       tmBox.maxX <= aaBox->minX ||
+       tmBox.maxY <= aaBox->minY)
         return false;
 
-    if(P_BoxOnLineSide(tmBBox, ld) != -1)
+    if(P_BoxOnLineSide(&tmBox, ld) != -1)
         return false;
 
     /*
@@ -1122,8 +1114,8 @@ int PIT_CheckLine(linedef_t* ld, void* data)
  */
 boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 {
-    sector_t*           newSec;
-    float               box[4];
+    sector_t* newSec;
+    AABoxf tmBoxExpanded;
 
     tmThing = thing;
 
@@ -1139,10 +1131,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tm[VY] = y;
     tm[VZ] = z;
 
-    tmBBox[BOXTOP]    = tm[VY] + tmThing->radius;
-    tmBBox[BOXBOTTOM] = tm[VY] - tmThing->radius;
-    tmBBox[BOXRIGHT]  = tm[VX] + tmThing->radius;
-    tmBBox[BOXLEFT]   = tm[VX] - tmThing->radius;
+    tmBox.minX = tm[VX] - tmThing->radius;
+    tmBox.minY = tm[VY] - tmThing->radius;
+    tmBox.maxX = tm[VX] + tmThing->radius;
+    tmBox.maxY = tm[VY] + tmThing->radius;
 
     newSec = P_GetPtrp(R_PointInSubsector(tm[VX], tm[VY]), DMU_SECTOR);
 
@@ -1174,10 +1166,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
     // based on their origin point, and can overlap into adjacent blocks by
     // up to MAXRADIUS units.
-    box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
-    box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
-    box[BOXBOTTOM] = tmBBox[BOXBOTTOM] - MAXRADIUS;
-    box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
+    tmBoxExpanded.minX = tmBox.minX - MAXRADIUS;
+    tmBoxExpanded.minY = tmBox.minY - MAXRADIUS;
+    tmBoxExpanded.maxX = tmBox.maxX + MAXRADIUS;
+    tmBoxExpanded.maxY = tmBox.maxY + MAXRADIUS;
 
     VALIDCOUNT++;
 
@@ -1187,7 +1179,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 #if __JHEXEN__
         blockingMobj = NULL;
 #endif
-        if(P_MobjsBoxIterator(box, PIT_CheckThing, 0))
+        if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_CheckThing, 0))
             return false;
 
 #if _DEBUG
@@ -1207,12 +1199,12 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     blockingMobj = NULL;
 #endif
 
-    box[BOXLEFT]   = tmBBox[BOXLEFT];
-    box[BOXRIGHT]  = tmBBox[BOXRIGHT];
-    box[BOXBOTTOM] = tmBBox[BOXBOTTOM];
-    box[BOXTOP]    = tmBBox[BOXTOP];
+    tmBoxExpanded.minX = tmBox.minX;
+    tmBoxExpanded.minY = tmBox.minY;
+    tmBoxExpanded.maxX = tmBox.maxX;
+    tmBoxExpanded.maxY = tmBox.maxY;
 
-    return !P_AllLinesBoxIterator(box, PIT_CheckLine, 0);
+    return !P_AllLinesBoxIterator(&tmBoxExpanded, PIT_CheckLine, 0);
 }
 
 boolean P_CheckPosition3fv(mobj_t* thing, const float pos[3])
@@ -2243,14 +2235,14 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
 #endif
 {
     float               dist;
-    float               box[4];
+    AABoxf box;
 
     dist = distance + MAXRADIUS;
 
-    box[BOXLEFT]   = spot->pos[VX] - dist;
-    box[BOXRIGHT]  = spot->pos[VX] + dist;
-    box[BOXBOTTOM] = spot->pos[VY] - dist;
-    box[BOXTOP]    = spot->pos[VY] + dist;
+    box.minX = spot->pos[VX] - dist;
+    box.minY = spot->pos[VY] - dist;
+    box.maxX = spot->pos[VX] + dist;
+    box.maxY = spot->pos[VY] + dist;
 
     bombSpot = spot;
     bombDamage = damage;
@@ -2267,7 +2259,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     damageSource = canDamageSource;
 #endif
     VALIDCOUNT++;
-    P_MobjsBoxIterator(box, PIT_RadiusAttack, 0);
+    P_MobjsBoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
 int PTR_UseTraverse(intercept_t* in)
@@ -2871,23 +2863,20 @@ int PIT_ThrustStompThing(mobj_t* thing, void* data)
 
 void PIT_ThrustSpike(mobj_t* actor)
 {
-    float               bbox[4];
-    float               radius;
+    float radius;
+    AABoxf box;
 
     tsThing = actor;
     radius = actor->info->radius + MAXRADIUS;
 
-    bbox[BOXLEFT]   = bbox[BOXRIGHT] = actor->pos[VX];
-    bbox[BOXBOTTOM] = bbox[BOXTOP]   = actor->pos[VY];
-
-    bbox[BOXLEFT]   -= radius;
-    bbox[BOXRIGHT]  += radius;
-    bbox[BOXBOTTOM] -= radius;
-    bbox[BOXTOP]    += radius;
+    box.minX = actor->pos[VX] - radius;
+    box.minY = actor->pos[VY] - radius;
+    box.maxX = actor->pos[VX] + radius;
+    box.maxY = actor->pos[VY] + radius;
 
     // Stomp on any things contacted.
     VALIDCOUNT++;
-    P_MobjsBoxIterator(bbox, PIT_ThrustStompThing, 0);
+    P_MobjsBoxIterator(&box, PIT_ThrustStompThing, 0);
 }
 
 int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
@@ -2919,8 +2908,9 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
 mobj_t* P_CheckOnMobj(mobj_t* thing)
 {
     subsector_t*        newSSec;
-    float               pos[3], box[4];
+    float               pos[3];
     mobj_t              oldMo;
+    AABoxf tmBoxExpanded;
 
     pos[VX] = thing->pos[VX];
     pos[VY] = thing->pos[VY];
@@ -2937,10 +2927,10 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tm[VY] = pos[VY];
     tm[VZ] = pos[VZ];
 
-    tmBBox[BOXTOP]    = pos[VY] + tmThing->radius;
-    tmBBox[BOXBOTTOM] = pos[VY] - tmThing->radius;
-    tmBBox[BOXRIGHT]  = pos[VX] + tmThing->radius;
-    tmBBox[BOXLEFT]   = pos[VX] - tmThing->radius;
+    tmBox.minX = pos[VX] - tmThing->radius;
+    tmBox.minY = pos[VY] - tmThing->radius;
+    tmBox.maxX = pos[VX] + tmThing->radius;
+    tmBox.maxY = pos[VY] + tmThing->radius;
 
     newSSec = R_PointInSubsector(pos[VX], pos[VY]);
     ceilingLine = floorLine = NULL;
@@ -2962,13 +2952,13 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     // based on their origin point, and can overlap into adjacent blocks by
     // up to MAXRADIUS.
 
-    box[BOXLEFT]   = tmBBox[BOXLEFT]   - MAXRADIUS;
-    box[BOXRIGHT]  = tmBBox[BOXRIGHT]  + MAXRADIUS;
-    box[BOXBOTTOM] = tmBBox[BOXBOTTOM] - MAXRADIUS;
-    box[BOXTOP]    = tmBBox[BOXTOP]    + MAXRADIUS;
+    tmBoxExpanded.minX = tmBox.minX - MAXRADIUS;
+    tmBoxExpanded.minY = tmBox.minY - MAXRADIUS;
+    tmBoxExpanded.maxX = tmBox.maxX + MAXRADIUS;
+    tmBoxExpanded.maxY = tmBox.maxY + MAXRADIUS;
 
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(box, PIT_CheckOnmobjZ, 0))
+    if(P_MobjsBoxIterator(&tmBoxExpanded, PIT_CheckOnmobjZ, 0))
     {
         *tmThing = oldMo;
         return onMobj;

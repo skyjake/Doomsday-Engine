@@ -136,7 +136,7 @@ boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y)
     return adjusted;
 }
 
-boolean Blockmap_CellCoords(Blockmap* bm, uint coords[2], const pvec2_t pos)
+boolean Blockmap_CellCoords(Blockmap* bm, uint coords[2], float const pos[2])
 {
     assert(bm);
     if(coords && pos)
@@ -148,14 +148,14 @@ boolean Blockmap_CellCoords(Blockmap* bm, uint coords[2], const pvec2_t pos)
     return false;
 }
 
-boolean Blockmap_CellBlockCoords(Blockmap* bm, GridmapBlock* blockCoords, const arvec2_t box)
+boolean Blockmap_CellBlockCoords(Blockmap* bm, GridmapBlock* blockCoords, const AABoxf* box)
 {
     assert(bm);
     if(blockCoords && box)
     {
         // Deliberate bitwise OR - we need to clip both Min and Max.
-        return Blockmap_CellCoords(bm, blockCoords->min, &box[0][0]) |
-               Blockmap_CellCoords(bm, blockCoords->max, &box[1][0]);
+        return Blockmap_CellCoords(bm, blockCoords->min, box->min) |
+               Blockmap_CellCoords(bm, blockCoords->max, box->max);
     }
     return false;
 }
@@ -197,6 +197,112 @@ void Blockmap_Size(Blockmap* bm, uint v[2])
 {
     assert(bm);
     Gridmap_Size(bm->gridmap, v);
+}
+
+float Blockmap_CellWidth(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize[VX];
+}
+
+float Blockmap_CellHeight(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize[VY];
+}
+
+const pvec2_t Blockmap_CellSize(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize;
+}
+
+static void linkObjectToRing(void* object, BlockmapRingNode** link)
+{
+    BlockmapRingNode* tempLink;
+    assert(object && link);
+
+    if(!(*link))
+    {
+        // Create a new link at the current cell.
+        *link = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
+        (*link)->next = NULL;
+        (*link)->prev = NULL;
+        (*link)->object = object;
+        return;
+    }
+
+    tempLink = *link;
+    while(tempLink->next && tempLink->object)
+    {
+        tempLink = tempLink->next;
+    }
+
+    if(!tempLink->object)
+    {
+        tempLink->object = object;
+        return;
+    }
+
+    tempLink->next = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
+    tempLink->next->next = NULL;
+    tempLink->next->prev = tempLink;
+    tempLink->next->object = object;
+}
+
+/**
+ * Unlink the given object from the specified cell ring (if indeed linked).
+ *
+ * @param object  Object to be unlinked.
+ * @return  @c true iff the object was linked to the ring and was unlinked.
+ */
+static boolean unlinkObjectFromRing(void* object, BlockmapRingNode** list)
+{
+    BlockmapRingNode* iter;
+    assert(object && list);
+
+    iter = *list;
+    while(iter && iter->object != object)
+    {
+        iter = iter->next;
+    }
+
+    if(iter)
+    {
+        iter->object = NULL;
+        return true; // Object was unlinked.
+    }
+    return false; // object was not linked.
+}
+
+static int unlinkObjectInCell(void* ptr, void* paramaters)
+{
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    unlinkObjectFromRing(paramaters/*object ptr*/, &cell->ringNodes);
+    return false; // Continue iteration.
+}
+
+static int linkObjectInCell(void* ptr, void* paramaters)
+{
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    linkObjectToRing(paramaters/*object ptr*/, &cell->ringNodes);
+    return false; // Continue iteration.
+}
+
+boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, void* object)
+{
+    BlockmapCell* cell;
+    assert(blockmap && object);
+    cell = (BlockmapCell*) Gridmap_CellXY(blockmap->gridmap, x, y, true);
+    if(!cell) return false; // Outside the blockmap?
+    linkObjectInCell((void*)cell, object);
+    return true; // Link added.
+}
+
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], void* object)
+{
+    assert(coords);
+    return Blockmap_CreateCellAndLinkObjectXY(blockmap, coords[VX], coords[VY], object);
 }
 
 void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max)
@@ -283,88 +389,12 @@ void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t 
 #undef BLOCKMAP_MARGIN
 }
 
-static void linkObjectToRing(void* object, BlockmapRingNode** link)
-{
-    BlockmapRingNode* tempLink;
-    assert(object && link);
-
-    if(!(*link))
-    {
-        // Create a new link at the current cell.
-        *link = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
-        (*link)->next = NULL;
-        (*link)->prev = NULL;
-        (*link)->object = object;
-        return;
-    }
-
-    tempLink = *link;
-    while(tempLink->next && tempLink->object)
-    {
-        tempLink = tempLink->next;
-    }
-
-    if(!tempLink->object)
-    {
-        tempLink->object = object;
-        return;
-    }
-
-    tempLink->next = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
-    tempLink->next->next = NULL;
-    tempLink->next->prev = tempLink;
-    tempLink->next->object = object;
-}
-
-/**
- * Unlink the given object from the specified cell ring (if indeed linked).
- *
- * @param object  Object to be unlinked.
- * @return  @c true iff the object was linked to the ring and was unlinked.
- */
-static boolean unlinkObjectFromRing(void* object, BlockmapRingNode** list)
-{
-    BlockmapRingNode* iter;
-    assert(object && list);
-
-    iter = *list;
-    while(iter && iter->object != object)
-    {
-        iter = iter->next;
-    }
-
-    if(iter)
-    {
-        iter->object = NULL;
-        return true; // Object was unlinked.
-    }
-    return false; // object was not linked.
-}
-
-static int unlinkObjectInCell(void* ptr, void* paramaters)
-{
-    BlockmapCell* cell = (BlockmapCell*) ptr;
-    unlinkObjectFromRing(paramaters/*object ptr*/, &cell->ringNodes);
-    return false; // Continue iteration.
-}
-
-static int linkObjectInCell(void* ptr, void* paramaters)
-{
-    BlockmapCell* cell = (BlockmapCell*) ptr;
-    linkObjectToRing(paramaters/*object ptr*/, &cell->ringNodes);
-    return false; // Continue iteration.
-}
-
 void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
 {
     Blockmap* blockmap = map->mobjBlockmap;
-    BlockmapCell* cell;
     uint coords[2];
-
     Blockmap_CellCoords(blockmap, coords, mo->pos);
-    cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-    if(!cell) return; // Outside the blockmap?
-    linkObjectInCell((void*)cell, (void*)mo);
+    Blockmap_CreateCellAndLinkObject(blockmap, coords, mo);
 }
 
 boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
@@ -393,135 +423,104 @@ boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
  */
 void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
 {
-#define BLKSHIFT                7 // places to shift rel position for cell num
-#define BLKMASK                 ((1<<BLKSHIFT)-1) // mask for rel position within cell
+#define BLKSHIFT                7 // Places to shift rel position for cell num.
+#define BLKMASK                 ((1<<BLKSHIFT)-1) // Mask for rel position within cell.
 
     Blockmap* blockmap = map->lineDefBlockmap;
-    uint coords[2], blockmapSize[2]; // In cells.
-    int v1[2], v2[2], j, minx, maxx, miny, maxy;
-    int xorg, yorg, dx, dy, vert, horiz;
-    boolean slopePos, slopeNeg;
-    vec2_t blockmapOrigin;
-    BlockmapCell* cell;
+    GridmapBlock blockCoords;
+    vec2_t origin, cellSize;
+    uint coords[2];
     assert(map);
 
-    if(lineDef->inFlags & LF_POLYOBJ) return; // Polyobj lines don't get into the blockmap.
+    // LineDefs of Polyobjs don't get into the blockmap (presently...).
+    if(lineDef->inFlags & LF_POLYOBJ) return;
 
-    V2_Copy(blockmapOrigin, Blockmap_Origin(blockmap));
-    Blockmap_Size(blockmap, blockmapSize);
+    V2_Copy(origin, Blockmap_Origin(blockmap));
+    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
-    xorg = (int)blockmapOrigin[VX];
-    yorg = (int)blockmapOrigin[VY];
+    // Determine the block of cells we'll be working within.
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &lineDef->aaBox);
 
-    v1[VX] = (int) lineDef->L_v1pos[VX];
-    v1[VY] = (int) lineDef->L_v1pos[VY];
-    v2[VX] = (int) lineDef->L_v2pos[VX];
-    v2[VY] = (int) lineDef->L_v2pos[VY];
-    dx = v2[VX] - v1[VX];
-    dy = v2[VY] - v1[VY];
-    vert = !dx;
-    horiz = !dy;
-    slopePos = (dx ^ dy) > 0;
-    slopeNeg = (dx ^ dy) < 0;
+    // Always linked into the cells containing the LineDef's vertexes.
+    Blockmap_CellCoords(blockmap, coords, lineDef->L_v1pos);
+    Blockmap_CreateCellAndLinkObject(blockmap, coords, lineDef);
 
-    // Extremal lines[i] coords.
-    minx = (v1[VX] > v2[VX]? v2[VX] : v1[VX]);
-    maxx = (v1[VX] > v2[VX]? v1[VX] : v2[VX]);
-    miny = (v1[VY] > v2[VY]? v2[VY] : v1[VY]);
-    maxy = (v1[VY] > v2[VY]? v1[VY] : v2[VY]);
-
-    // The line always belongs to the cells containing its endpoints
-    coords[VX] = (v1[VX] - xorg) >> BLKSHIFT;
-    coords[VY] = (v1[VY] - yorg) >> BLKSHIFT;
-    cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-    linkObjectInCell((void*)cell, (void*)lineDef);
-
-    coords[VX] = (v2[VX] - xorg) >> BLKSHIFT;
-    coords[VY] = (v2[VY] - yorg) >> BLKSHIFT;
-    cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-    linkObjectInCell((void*)cell, (void*)lineDef);
+    Blockmap_CellCoords(blockmap, coords, lineDef->L_v2pos);
+    Blockmap_CreateCellAndLinkObject(blockmap, coords, lineDef);
 
     // For each column, see where the line along its left edge, which
     // it contains, intersects the Linedef i. Add i to each corresponding
     // cell's list.
+
     // We don't want to interesect vertical lines with columns.
-    if(!vert)
+    if(lineDef->slopeType != ST_VERTICAL)
     {
-        for(j = 0; j < (signed) blockmapSize[VX]; ++j)
+        float point[2];
+        uint x, y;
+        int frac;
+        for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
         {
-            // intersection of Linedef with x=xorg+(j<<BLKSHIFT)
+            // Calculate the intersection of the vectors defined by the vertexes
+            // of this LineDef and that of the bottom edge of cell row X.
+            //
             // (y-v1[VY])*dx = dy*(x-v1[VX])
-            // y = dy*(x-v1[VX])+v1[VY]*dx;
-            int x = xorg + (j << BLKSHIFT); // (x,y) is intersection
-            int y = (dy * (x - v1[VX])) / dx + v1[VY];
-            int yb = (y - yorg) >> BLKSHIFT; // cell row number
-            int yp = (y - yorg) & BLKMASK; // y position within cell
+            //             y = dy*(x-v1[VX])+v1[VY]*dx;
+            point[VX] = origin[VX] + (x * cellSize[VX]);
+            point[VY] = (lineDef->dY * (point[VX] - lineDef->L_v1pos[VX])) /
+                         lineDef->dX + lineDef->L_v1pos[VY];
 
             // Already outside the blockmap?
-            if(yb < 0 || yb > (signed) (blockmapSize[VY]) + 1) continue;
+            if(Blockmap_ClipCellY(blockmap, &y, point[VY])) continue;
 
-            // Does the line touch this column at all?
-            if(x < minx || x > maxx) continue;
+            // Does LineDef touch this column at all?
+            if(point[VX] < lineDef->aaBox.minX ||
+               point[VX] > lineDef->aaBox.maxX) continue;
 
-            // The cell that contains the intersection point is always added
-            coords[VX] = j;
-            coords[VY] = yb;
-            cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-            linkObjectInCell((void*)cell, (void*)lineDef);
+            // The cell that contains the intersection point is always added.
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
 
             // If the intersection is at a corner it depends on the slope
             // (and whether the line extends past the intersection) which
             // cells are hit.
 
             // Where does the intersection occur?
-            if(yp == 0)
+            frac = ((int)(point[VY] - origin[VY])) & BLKMASK; // y position within cell.
+            if(frac == 0)
             {
-                // Intersection occured at a corner
-                if(slopeNeg) //   \ - cells x,y-, x-,y
+                // Intersection occured at a corner.
+                switch(lineDef->slopeType)
                 {
-                    if(yb > 0 && miny < y)
+                case ST_NEGATIVE: // \ :cells x,y-, x-,y
+                    if(y != 0 && point[VY] >= lineDef->aaBox.minY)
                     {
-                        coords[VX] = j;
-                        coords[VY] = yb - 1;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
                     }
-                    if(j > 0 && minx < x)
+                    if(x != 0)
                     {
-                        coords[VX] = j - 1;
-                        coords[VY] = yb;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
                     }
-                }
-                else if(slopePos) //   / - cell x-,y-
-                {
-                    if(yb > 0 && j > 0 && minx < x)
+                    break;
+                case ST_POSITIVE: // / :cell x-,y-
+                    if(x != 0 && y != 0)
                     {
-                        coords[VX] = j - 1;
-                        coords[VY] = yb - 1;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y-1, lineDef);
                     }
-                }
-                else if(horiz) //   - - cell x-,y
-                {
-                    if(j > 0 && minx < x)
+                    break;
+                case ST_HORIZONTAL: // - :cell x-,y
+                    if(x != 0)
                     {
-                        coords[VX] = j - 1;
-                        coords[VY] = yb;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
                     }
+                    break;
+                default:
+                    Con_Error("Map::Map_LinkLineDefInBlockmap: Internal error, attempt to link LineDef (#%u) with VERTICAL slope to vertical cell block.", lineDef->buildData.index-1);
+                    exit(1); // Unreachable.
                 }
             }
-            else if(j > 0 && minx < x)
+            else if(x != 0)
             {
                 // Else not at corner: x-,y
-                coords[VX] = j - 1;
-                coords[VY] = yb;
-                cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                linkObjectInCell((void*)cell, (void*)lineDef);
+                Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
             }
         }
     }
@@ -529,83 +528,77 @@ void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
     // For each row, see where the line along its bottom edge, which
     // it contains, intersects the Linedef i. Add i to all the corresponding
     // cell lists.
-    if(!horiz)
+    if(lineDef->slopeType != ST_HORIZONTAL)
     {
-        for(j = 0; j < (signed) blockmapSize[VY]; ++j)
+        float point[2];
+        uint x, y;
+        int frac;
+        for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
         {
-            // intersection of Linedef with y=yorg+(j<<BLKSHIFT)
-            // (x,y) on Linedef i satisfies: (y-v1[VY])*dx = dy*(x-v1[VX])
-            // x = dx*(y-v1[VY])/dy+v1[VX];
-            int y = yorg + (j << BLKSHIFT); // (x,y) is intersection
-            int x = (dx * (y - v1[VY])) / dy + v1[VX];
-            int xb = (x - xorg) >> BLKSHIFT; // cell column number
-            int xp = (x - xorg) & BLKMASK; // x position within cell
+            // Calculate the intersection of the vectors defined by the vertexes
+            // of this LineDef and that of the left edge of cell column Y.
+            //
+            // (y-v1[VY])*dx = dy*(x-v1[VX])
+            //             x = dx*(y-v1[VY])/dy+v1[VX];
 
-            // Outside the blockmap?
-            if(xb < 0 || xb > (signed) (blockmapSize[VX]) + 1) continue;
+            point[VY] = origin[VY] + (y * cellSize[VY]);
+            point[VX] = (lineDef->dX * (point[VY] - lineDef->L_v1pos[VY])) /
+                         lineDef->dY + lineDef->L_v1pos[VX];
 
-            // Touches this row?
-            if(y < miny || y > maxy) continue;
+            // Already outside the blockmap?
+            if(Blockmap_ClipCellX(blockmap, &x, point[VX])) continue;
 
-            // The cell that contains the intersection point is always added
-            coords[VX] = xb;
-            coords[VY] = j;
-            cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-            linkObjectInCell((void*)cell, (void*)lineDef);
+            // Does LineDef touch this row at all?
+            if(point[VY] < lineDef->aaBox.minY ||
+               point[VY] > lineDef->aaBox.maxY) continue;
+
+            // The cell that contains the intersection point is always added.
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
 
             // If the intersection is at a corner it depends on the slope
             // (and whether the line extends past the intersection) which
-            // cells are hit
+            // cells are hit.
 
             // Where does the intersection occur?
-            if(xp == 0)
+            frac = ((int)(point[VX] - origin[VX])) & BLKMASK; // x position within cell.
+            if(frac == 0)
             {
-                // Intersection occured at a corner
-                if(slopeNeg) //   \ - cells x,y-, x-,y
+                // Intersection occured at a corner.
+                switch(lineDef->slopeType)
                 {
-                    if(j > 0 && miny < y)
+                case ST_NEGATIVE: // \ :cells x,y-, x-,y
+                    if(x != 0 && point[VX] >= lineDef->aaBox.minX)
                     {
-                        coords[VX] = xb;
-                        coords[VY] = j - 1;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y, lineDef);
                     }
-                    if(xb > 0 && minx < x)
+                    if(y != 0)
                     {
-                        coords[VX] = xb - 1;
-                        coords[VY] = j;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
                     }
-                }
-                else if(vert) //   | - cell x,y-
-                {
-                    if(j > 0 && miny < y)
+                    break;
+
+                case ST_POSITIVE: // / :cell x-,y-
+                    if(x != 0 && y != 0)
                     {
-                        coords[VX] = xb;
-                        coords[VY] = j - 1;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x-1, y-1, lineDef);
                     }
-                }
-                else if(slopePos) //   / - cell x-,y-
-                {
-                    if(xb > 0 && j > 0 && miny < y)
+                    break;
+
+                case ST_VERTICAL: // | :cell x,y-
+                    if(y != 0)
                     {
-                        coords[VX] = xb - 1;
-                        coords[VY] = j - 1;
-                        cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                        linkObjectInCell((void*)cell, (void*)lineDef);
+                        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
                     }
+                    break;
+                default:
+                    Con_Error("Map::Map_LinkLineDefInBlockmap: Internal error, attempt to link LineDef (#%u) with HORIZONTAL slope to horizontal cell block.", lineDef->buildData.index-1);
+                    exit(1); // Unreachable.
                 }
             }
-            else if(j > 0 && miny < y)
+            else if(y != 0)
             {
                 // Else not on a corner: x, y-
-                coords[VX] = xb;
-                coords[VY] = j - 1;
-                cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, true);
-                linkObjectInCell((void*)cell, (void*)lineDef);
+                Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y-1, lineDef);
             }
         }
     }
@@ -618,25 +611,23 @@ void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* ssec)
 {
     Blockmap* blockmap = map->subsectorBlockmap;
     GridmapBlock blockCoords;
-    float box[2][2];
+    AABoxf aaBox;
     uint x, y;
     assert(map);
 
     // Subsectors without sectors don't get in.
     if(!ssec || !ssec->sector) return;
 
-    box[0][0] = ssec->bBox[0].pos[VX];
-    box[0][1] = ssec->bBox[0].pos[VY];
-    box[1][0] = ssec->bBox[1].pos[VX];
-    box[1][1] = ssec->bBox[1].pos[VY];
-    Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+    aaBox.minX = ssec->aaBox.minX;
+    aaBox.minY = ssec->aaBox.minY;
+    aaBox.maxX = ssec->aaBox.maxX;
+    aaBox.maxY = ssec->aaBox.maxY;
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &aaBox);
 
     for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
     for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
     {
-        BlockmapCell* cell = (BlockmapCell*) Gridmap_CellXY(blockmap->gridmap, x, y, true);
-        if(!cell) continue; // Outside the blockmap?
-        linkObjectInCell((void*)cell, (void*)ssec);
+        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, ssec);
     }
 }
 
@@ -646,15 +637,13 @@ void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
     GridmapBlock blockCoords;
     uint x, y;
 
-    P_PolyobjUpdateBBox(po);
-    Blockmap_CellBlockCoords(blockmap, &blockCoords, po->box);
+    P_PolyobjUpdateAABox(po);
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &po->aaBox);
 
     for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
     for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
     {
-        BlockmapCell* cell = (BlockmapCell*) Gridmap_CellXY(blockmap->gridmap, x, y, true);
-        if(!cell) continue; // Outside the blockmap?
-        linkObjectInCell((void*)cell, (void*)po);
+        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, po);
     }
 }
 
@@ -663,8 +652,8 @@ void Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
     Blockmap* blockmap = map->polyobjBlockmap;
     GridmapBlock blockCoords;
 
-    P_PolyobjUpdateBBox(po);
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, po->box);
+    P_PolyobjUpdateAABox(po);
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, &po->aaBox);
     Gridmap_BlockIterate2(blockmap->gridmap, &blockCoords, unlinkObjectInCell, (void*) po);
 }
 
@@ -894,7 +883,7 @@ int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
 }
 
 typedef struct sseciterparams_s {
-    arvec2_t box;
+    const AABoxf* box;
     sector_t* sector;
     int localValidCount;
     int (*func) (subsector_t*, void*);
@@ -926,10 +915,10 @@ static int blockmapCellSubsectorsIterator(void* ptr, void* context)
 
                 // Check the bounds.
                 if(args->box &&
-                   (ssec->bBox[1].pos[VX] < args->box[0][VX] ||
-                    ssec->bBox[0].pos[VX] > args->box[1][VX] ||
-                    ssec->bBox[0].pos[VY] > args->box[1][VY] ||
-                    ssec->bBox[1].pos[VY] < args->box[0][VY]))
+                   (ssec->aaBox.maxX < args->box->minX ||
+                    ssec->aaBox.minX > args->box->maxX ||
+                    ssec->aaBox.minY > args->box->maxY ||
+                    ssec->aaBox.maxY < args->box->minY))
                     ok = false;
 
                 if(ok)
@@ -946,7 +935,7 @@ static int blockmapCellSubsectorsIterator(void* ptr, void* context)
 }
 
 int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
-    sector_t* sector, const arvec2_t box, int localValidCount,
+    sector_t* sector, const AABoxf* box, int localValidCount,
     int (*func) (subsector_t*, void*), void* paramaters)
 {
     Blockmap* blockmap = map->subsectorBlockmap;
@@ -965,7 +954,7 @@ int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
 }
 
 int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoords,
-    sector_t* sector,  const arvec2_t box, int localValidCount,
+    sector_t* sector,  const AABoxf* box, int localValidCount,
     int (*func) (subsector_t*, void*), void* data)
 {
     Blockmap* blockmap = map->subsectorBlockmap;
@@ -1176,8 +1165,8 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
         }
 
         // Draw the bounding box.
-        V2_Set(start, ssec->bBox[0].pos[VX], ssec->bBox[0].pos[VY]);
-        V2_Set(end,   ssec->bBox[1].pos[VX], ssec->bBox[1].pos[VY]);
+        V2_Set(start, ssec->aaBox.minX, ssec->aaBox.minY);
+        V2_Set(end,   ssec->aaBox.maxX, ssec->aaBox.maxY);
 
         glBegin(GL_LINES);
             glVertex2f(start[VX], start[VY]);
@@ -1195,7 +1184,7 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
 
 int rendCellLineDefs(void* cellPtr, void* paramaters)
 {
-    BlockmapCell* cell = cellPtr;
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
         bmapiterparams_t biParams;
@@ -1214,7 +1203,7 @@ int rendCellLineDefs(void* cellPtr, void* paramaters)
 
 int rendCellPolyobjs(void* cellPtr, void* paramaters)
 {
-    BlockmapCell* cell = cellPtr;
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
         bmappoiterparams_t bpiParams;
@@ -1238,7 +1227,7 @@ int rendCellPolyobjs(void* cellPtr, void* paramaters)
 
 int rendCellMobjs(void* cellPtr, void* paramaters)
 {
-    BlockmapCell* cell = cellPtr;
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
         bmapmoiterparams_t bmiParams;
@@ -1257,7 +1246,7 @@ int rendCellMobjs(void* cellPtr, void* paramaters)
 
 int rendCellSubsectors(void* cellPtr, void* paramaters)
 {
-    BlockmapCell* cell = cellPtr;
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
         bmapsseciterparams_t bsiParams;
@@ -1473,12 +1462,12 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             // Determine the extended blockmap coords for the followed
             // Mobj's "touch" range.
             const float radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
-            vec2_t box[2];
+            AABoxf aaBox;
             V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
             V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
-            V2_InitBox(box, start);
-            V2_AddToBox(box, end);
-            Blockmap_CellBlockCoords(blockmap, &vBlockCoords, box);
+            V2_InitBox(aaBox.arvec2, start);
+            V2_AddToBox(aaBox.arvec2, end);
+            Blockmap_CellBlockCoords(blockmap, &vBlockCoords, &aaBox);
         }
     }
 

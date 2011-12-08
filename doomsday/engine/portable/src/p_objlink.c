@@ -344,10 +344,10 @@ static void processSeg(seg_t* seg, void* paramaters)
     }
 
     // Is the dest ssector inside the objlink's AABB?
-    if(dest->bBox[1].pos[VX] <= p->box[BOXLEFT] ||
-       dest->bBox[0].pos[VX] >= p->box[BOXRIGHT] ||
-       dest->bBox[1].pos[VY] <= p->box[BOXBOTTOM] ||
-       dest->bBox[0].pos[VY] >= p->box[BOXTOP])
+    if(dest->aaBox.maxX <= p->box[BOXLEFT] ||
+       dest->aaBox.minX >= p->box[BOXRIGHT] ||
+       dest->aaBox.maxY <= p->box[BOXBOTTOM] ||
+       dest->aaBox.minY >= p->box[BOXTOP])
     {
         // The ssector is not inside the params's bounds.
         return;
@@ -488,11 +488,11 @@ void R_ObjlinkBlockmapSpreadInSubsector(objlinkblockmap_t* obm,
 
     if(!ssec) return; // Wha?
 
-    toObjlinkBlockmapCell(obm, minBlock, ssec->bBox[0].pos[VX] - maxRadius,
-                                          ssec->bBox[0].pos[VY] - maxRadius);
+    toObjlinkBlockmapCell(obm, minBlock, ssec->aaBox.minX - maxRadius,
+                                         ssec->aaBox.minY - maxRadius);
 
-    toObjlinkBlockmapCell(obm, maxBlock, ssec->bBox[1].pos[VX] + maxRadius,
-                                          ssec->bBox[1].pos[VY] + maxRadius);
+    toObjlinkBlockmapCell(obm, maxBlock, ssec->aaBox.maxX + maxRadius,
+                                         ssec->aaBox.maxY + maxRadius);
 
     for(y = minBlock[1]; y <= maxBlock[1]; ++y)
         for(x = minBlock[0]; x <= maxBlock[0]; ++x)

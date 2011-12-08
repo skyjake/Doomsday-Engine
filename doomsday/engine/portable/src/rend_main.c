@@ -2129,10 +2129,10 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         float texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
-        V3_Set(texTL, ssec->bBox[0].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 1 : 0].pos[VY], height);
-        V3_Set(texBR, ssec->bBox[1].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
+        V3_Set(texTL, ssec->aaBox.minX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 1 : 0][VY], height);
+        V3_Set(texBR, ssec->aaBox.maxX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 0 : 1][VY], height);
 
         renderPlane(ssec, type, height, normal, inMat, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
@@ -3315,7 +3315,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type == PLN_CEILING)
-            texOffset[VY] -= ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY];
+            texOffset[VY] -= ssec->aaBox.maxY - ssec->aaBox.minY;
 
         // Add the additional offset to align with the worldwide grid.
         texOffset[VX] += ssec->worldGridOffset[VX];
@@ -3703,7 +3703,8 @@ int drawPolyObjVertexes(polyobj_t* po, void* context)
 void Rend_Vertexes(void)
 {
     uint                i;
-    float               oldPointSize, oldLineWidth = 1, bbox[4];
+    float               oldPointSize, oldLineWidth = 1;
+    AABoxf box;
 
     if(!devVertexBars && !devVertexIndices)
         return;
@@ -3815,11 +3816,11 @@ void Rend_Vertexes(void)
     }
 
     // Next, the vertexes of all nearby polyobjs.
-    bbox[BOXLEFT]   = vx - MAX_VERTEX_POINT_DIST;
-    bbox[BOXRIGHT]  = vx + MAX_VERTEX_POINT_DIST;
-    bbox[BOXBOTTOM] = vy - MAX_VERTEX_POINT_DIST;
-    bbox[BOXTOP]    = vy + MAX_VERTEX_POINT_DIST;
-    P_PolyobjsBoxIterator(bbox, drawPolyObjVertexes, NULL);
+    box.minX = vx - MAX_VERTEX_POINT_DIST;
+    box.minY = vy - MAX_VERTEX_POINT_DIST;
+    box.maxX = vx + MAX_VERTEX_POINT_DIST;
+    box.maxY = vy + MAX_VERTEX_POINT_DIST;
+    P_PolyobjsBoxIterator(&box, drawPolyObjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)
@@ -4299,13 +4300,13 @@ static void Rend_RenderBoundingBoxes(void)
     {
         const polyobj_t* po = polyObjs[i];
         const sector_t* sec = po->subsector->sector;
-        float width  = (po->box[1][0] - po->box[0][0])/2;
-        float length = (po->box[1][1] - po->box[0][1])/2;
+        float width  = (po->aaBox.maxX - po->aaBox.minX)/2;
+        float length = (po->aaBox.maxY - po->aaBox.minY)/2;
         float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
         float pos[3], alpha;
         
-        pos[VX] = po->box[0][0]+width;
-        pos[VY] = po->box[0][1]+length;
+        pos[VX] = po->aaBox.minX + width;
+        pos[VY] = po->aaBox.minY + length;
         pos[VZ] = sec->SP_floorheight;
 
         alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
@@ -4319,13 +4320,13 @@ static void Rend_RenderBoundingBoxes(void)
         {
             seg_t* seg = po->segs[j];
             linedef_t* lineDef = seg->lineDef;
-            float width  = (lineDef->bBox[BOXRIGHT] - lineDef->bBox[BOXLEFT])/2;
-            float length = (lineDef->bBox[BOXTOP] - lineDef->bBox[BOXBOTTOM])/2;
+            float width  = (lineDef->aaBox.maxX - lineDef->aaBox.minX)/2;
+            float length = (lineDef->aaBox.maxY - lineDef->aaBox.minY)/2;
             float pos[3];
 
             /** Draw a bounding box for the lineDef.
-            pos[VX] = lineDef->bBox[BOXLEFT]+width;
-            pos[VY] = lineDef->bBox[BOXBOTTOM]+length;
+            pos[VX] = lineDef->aaBox.minX+width;
+            pos[VY] = lineDef->aaBox.minY+length;
             pos[VZ] = sec->SP_floorheight;
             Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
             */

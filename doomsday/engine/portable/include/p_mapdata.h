@@ -142,9 +142,18 @@ void Blockmap_Bounds(Blockmap* blockmap, pvec2_t min, pvec2_t max);
 /**
  * Retrieve the size of the Blockmap in cells.
  *
- * @param widthHeight  Size of the Blockmap [width, height] written here.
+ * @param widthHeight  Size of the Blockmap [width,height] written here.
  */
 void Blockmap_Size(Blockmap* blockmap, uint widthHeight[2]);
+
+/// @return  Width of a Blockmap cell in map space units.
+float Blockmap_CellWidth(Blockmap* blockmap);
+
+/// @return  Height of a Blockmap cell in map space units.
+float Blockmap_CellHeight(Blockmap* blockmap);
+
+/// @return  Size [width,height] of a Blockmap cell in map space units.
+const pvec2_t Blockmap_CellSize(Blockmap* blockmap);
 
 /**
  * Given map space X coordinate @a x, return the corresponding cell coordinate.
@@ -187,7 +196,7 @@ boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y);
  *
  * @return  @c true iff clamping was necessary.
  */
-boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], const pvec2_t pos);
+boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], float const pos[2]);
 
 /**
  * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
@@ -196,7 +205,7 @@ boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], const pvec2_t po
  *
  * @return  @c true iff Clamping was necessary.
  */
-boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const arvec2_t box);
+boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const AABoxf* box);
 
 #include "p_polyob.h"
 #include "p_maptypes.h"

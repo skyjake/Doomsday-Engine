@@ -51,7 +51,7 @@ boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
 void            P_PolyobjLink(struct polyobj_s* po);
 void            P_PolyobjUnLink(struct polyobj_s* po);
 
-void            P_PolyobjUpdateBBox(polyobj_t* po);
+void            P_PolyobjUpdateAABox(polyobj_t* po);
 
 int             P_PolyobjLinesIterator(polyobj_t* po, int (*func) (struct linedef_s*, void*),
                                        void* data);

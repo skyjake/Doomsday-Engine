@@ -52,7 +52,7 @@ int             P_PointOnLinedefSide2(double pointX, double pointY,
                                    double lineDX, double lineDY,
                                    double linePerp, double lineLength,
                                    double epsilon);
-int             P_BoxOnLineSide(const float* tmbox, const linedef_t* ld);
+int             P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld);
 int             P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
                                  const linedef_t *ld);
 int             P_BoxOnLineSide3(const int bbox[4], double lineSX,
@@ -86,56 +86,18 @@ int             P_SectorTouchingMobjsIterator(sector_t *sector,
                                                                void *),
                                               void *data);
 
-// Mobjs in bounding box iterators.
-int             P_MobjsBoxIterator(const float box[4],
-                                   int (*func) (mobj_t *, void *),
-                                   void *data);
+int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* paramaters);
 
-int             P_MobjsBoxIteratorv(const arvec2_t box,
-                                    int (*func) (mobj_t *, void *),
-                                    void *data);
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
 
-// Lines in bounding box iterators.
-int             P_LinesBoxIterator(const float box[4],
-                                   int (*func) (linedef_t *, void *),
-                                   void *data);
-int             P_LinesBoxIteratorv(const arvec2_t box,
-                                    int (*func) (linedef_t *, void *),
-                                    void *data);
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* paramaters);
 
-// Polyobj in bounding box iterators.
-int             P_PolyobjsBoxIterator(const float box[4],
-                                     int (*func) (polyobj_t *, void *),
-                                     void *data);
-int             P_PolyobjsBoxIteratorv(const arvec2_t box,
-                                      int (*func) (polyobj_t *, void *),
-                                      void *data);
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
 
-// (Polyobj in bounding box)->lineDefs iterators.
-int             P_PolyobjLinesBoxIterator(const float box[4],
-                                          int (*func) (linedef_t *, void *),
-                                          void *data);
-int             P_PolyobjLinesBoxIteratorv(const arvec2_t box,
-                                           int (*func) (linedef_t *, void *),
-                                           void *data);
+// LineDefs and Polyobj in LineDefs (note Polyobj LineDefs are iterated first).
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
 
-// Lines and (Polyobj in bounding box)->lineDefs iterators.
-// Polyobj lines are iterated first.
-int             P_AllLinesBoxIterator(const float box[4],
-                                      int (*func) (linedef_t *, void *),
-                                      void *data);
-int             P_AllLinesBoxIteratorv(const arvec2_t box,
-                                       int (*func) (linedef_t *, void *),
-                                       void *data);
+int P_SubsectorsBoxIterator(const AABoxf* box, sector_t *sector, int (*callback) (subsector_t*, void*), void* paramaters);
 
-// Subsectors in bounding box iterators.
-int             P_SubsectorsBoxIterator(const float box[4], sector_t *sector,
-                                        int (*func) (subsector_t *, void *),
-                                       void *parm);
-int             P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t *sector,
-                                        int (*func) (subsector_t *,
-                                                         void *), void *data);
-
-int             P_PathTraverse(float x1, float y1, float x2, float y2,
-                               int flags, int (*trav) (intercept_t *));
+int P_PathTraverse(float x1, float y1, float x2, float y2, int flags, int (*trav) (intercept_t *));
 #endif

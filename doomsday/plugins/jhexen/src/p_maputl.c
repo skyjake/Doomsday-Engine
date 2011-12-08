@@ -167,7 +167,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     int             i, block[2], startBlock[2];
     int             count;
     float           mapOrigin[2];
-    float           box[4];
+    AABoxf box;
     mobjtargetableparams_t params;
 
     mapOrigin[VX] = *((float*) DD_GetVariable(DD_MAP_MIN_X));
@@ -187,14 +187,14 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     startBlock[VX] = FLT2FIX(mo->pos[VX] - mapOrigin[VX]) >> MAPBLOCKSHIFT;
     startBlock[VY] = FLT2FIX(mo->pos[VY] - mapOrigin[VY]) >> MAPBLOCKSHIFT;
 
-    box[BOXLEFT]   = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
-    box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
-    box[BOXBOTTOM] = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
-    box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
+    box.minX = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
+    box.minY = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
+    box.maxX = box.minX + MAPBLOCKUNITS;
+    box.maxY = box.minY + MAPBLOCKUNITS;
 
     // Check the first block.
     VALIDCOUNT++;
-    if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+    if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
     {   // Found a target right away!
         return params.target;
     }
@@ -204,51 +204,51 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
         block[VX] = startBlock[VX] - count;
         block[VY] = startBlock[VY] - count;
 
-        box[BOXLEFT]   = mapOrigin[VX] + block[VX] * MAPBLOCKUNITS;
-        box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
-        box[BOXBOTTOM] = mapOrigin[VY] + block[VY] * MAPBLOCKUNITS;
-        box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
+        box.minX = mapOrigin[VX] + block[VX] * MAPBLOCKUNITS;
+        box.minY = mapOrigin[VY] + block[VY] * MAPBLOCKUNITS;
+        box.maxX = box.minX + MAPBLOCKUNITS;
+        box.maxY = box.minY + MAPBLOCKUNITS;
 
         // Trace the first block section (along the top).
         for(i = 0; i < count * 2 + 1; ++i)
         {
-            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
 
             if(i < count * 2)
             {
-                box[BOXLEFT]  += MAPBLOCKUNITS;
-                box[BOXRIGHT] += MAPBLOCKUNITS;
+                box.minX += MAPBLOCKUNITS;
+                box.maxX += MAPBLOCKUNITS;
             }
         }
 
         // Trace the second block section (right edge).
         for(i = 0; i < count * 2; ++i)
         {
-            box[BOXBOTTOM] += MAPBLOCKUNITS;
-            box[BOXTOP]    += MAPBLOCKUNITS;
+            box.minY += MAPBLOCKUNITS;
+            box.maxY += MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
         // Trace the third block section (bottom edge).
         for(i = 0; i < count * 2; ++i)
         {
-            box[BOXLEFT]  -= MAPBLOCKUNITS;
-            box[BOXRIGHT] -= MAPBLOCKUNITS;
+            box.minX -= MAPBLOCKUNITS;
+            box.maxX -= MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
         // Trace the final block section (left edge).
         for(i = 0; i < count * 2 - 1; ++i)
         {
-            box[BOXBOTTOM] -= MAPBLOCKUNITS;
-            box[BOXTOP]    -= MAPBLOCKUNITS;
+            box.minY -= MAPBLOCKUNITS;
+            box.maxY -= MAPBLOCKUNITS;
 
-            if(P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
     }

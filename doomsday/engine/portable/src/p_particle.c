@@ -86,7 +86,7 @@ static pglink_t** pgLinks = NULL; // Array of pointers to pgLinks in pgStore.
 static pglink_t* pgStore;
 static unsigned int pgCursor = 0, pgMax;
 
-static vec2_t mbox[2];
+static AABoxf mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
 static boolean tmcross;
 static linedef_t* ptcHitLine;
@@ -762,10 +762,10 @@ static void P_NewParticle(ptcgen_t* gen)
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            float               x = subsec->bBox[0].pos[VX] +
-                RNG_RandFloat() * (subsec->bBox[1].pos[VX] - subsec->bBox[0].pos[VX]);
-            float               y = subsec->bBox[0].pos[VY] +
-                RNG_RandFloat() * (subsec->bBox[1].pos[VY] - subsec->bBox[0].pos[VY]);
+            float               x = subsec->aaBox.minX +
+                RNG_RandFloat() * (subsec->aaBox.maxX - subsec->aaBox.minX);
+            float               y = subsec->aaBox.minY +
+                RNG_RandFloat() * (subsec->aaBox.maxY - subsec->aaBox.minY);
 
             pt->pos[VX] = FLT2FIX(x);
             pt->pos[VY] = FLT2FIX(y);
@@ -855,8 +855,8 @@ int PIT_CheckLinePtc(linedef_t* ld, void* data)
     fixed_t             ceil, floor;
     sector_t*           front, *back;
 
-    if(mbox[1][VX] <= ld->bBox[BOXLEFT] || mbox[0][VX] >= ld->bBox[BOXRIGHT] ||
-       mbox[1][VY] <= ld->bBox[BOXBOTTOM] || mbox[0][VY] >= ld->bBox[BOXTOP])
+    if(mbox.maxX <= ld->aaBox.minX || mbox.minX >= ld->aaBox.maxX ||
+       mbox.maxY <= ld->aaBox.minY || mbox.minY >= ld->aaBox.maxY)
     {
         return false; // Bounding box misses the line completely.
     }
@@ -1230,15 +1230,15 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     tmpy2 = y;
     V2_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
                   FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
-    V2_InitBox(mbox, point);
+    V2_InitBox(mbox.arvec2, point);
     V2_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
                   FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
-    V2_AddToBox(mbox, point);
+    V2_AddToBox(mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
+    if(P_AllLinesBoxIterator(&mbox, PIT_CheckLinePtc, 0))
     {
         fixed_t             normal[2], dotp;
 

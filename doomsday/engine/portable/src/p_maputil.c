@@ -60,7 +60,7 @@
 
 typedef struct {
     mobj_t*         mo;
-    vec2_t          box[2];
+    AABoxf          box;
 } linelinker_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -390,10 +390,10 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
     return -1;
 }
 
-int P_BoxOnLineSide(const float* box, const linedef_t* ld)
+int P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld)
 {
-    return P_BoxOnLineSide2(box[BOXLEFT], box[BOXRIGHT],
-                            box[BOXBOTTOM], box[BOXTOP], ld);
+    return P_BoxOnLineSide2(box->minX, box->maxX,
+                            box->minY, box->maxY, ld);
 }
 
 /**
@@ -599,15 +599,14 @@ int PIT_LinkToLines(linedef_t* ld, void* parm)
     linelinker_data_t*  data = parm;
     nodeindex_t         nix;
 
-    if(data->box[1][VX] <= ld->bBox[BOXLEFT] ||
-       data->box[0][VX] >= ld->bBox[BOXRIGHT] ||
-       data->box[1][VY] <= ld->bBox[BOXBOTTOM] ||
-       data->box[0][VY] >= ld->bBox[BOXTOP])
+    if(data->box.minX >= ld->aaBox.maxX ||
+       data->box.minY >= ld->aaBox.maxY ||
+       data->box.maxX <= ld->aaBox.minX ||
+       data->box.maxY <= ld->aaBox.minY)
         // Bounding boxes do not overlap.
         return false;
 
-    if(P_BoxOnLineSide2(data->box[0][VX], data->box[1][VX],
-                        data->box[0][VY], data->box[1][VY], ld) != -1)
+    if(P_BoxOnLineSide(&data->box, ld) != -1)
         // Line does not cross the mobj's bounding box.
         return false;
 
@@ -635,8 +634,8 @@ int PIT_LinkToLines(linedef_t* ld, void* parm)
  */
 void P_LinkToLines(mobj_t* mo)
 {
-    linelinker_data_t   data;
-    vec2_t              point;
+    linelinker_data_t data;
+    vec2_t point;
 
     // Get a new root node.
     mo->lineRoot = NP_New(mobjNodes, NP_ROOT_NODE);
@@ -644,12 +643,12 @@ void P_LinkToLines(mobj_t* mo)
     // Set up a line iterator for doing the linking.
     data.mo = mo;
     V2_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2_InitBox(data.box, point);
+    V2_InitBox(data.box.arvec2, point);
     V2_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    V2_AddToBox(data.box, point);
+    V2_AddToBox(data.box.arvec2, point);
 
     validCount++;
-    P_AllLinesBoxIteratorv(data.box, PIT_LinkToLines, &data);
+    P_AllLinesBoxIterator(&data.box, PIT_LinkToLines, &data);
 }
 
 /**
@@ -866,40 +865,12 @@ int P_SectorTouchingMobjsIterator(sector_t* sector,
     return result;
 }
 
-int P_MobjsBoxIterator(const float box[4],
-                           int (*func) (mobj_t*, void*),
-                           void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_MobjsBoxIteratorv(bounds, func, data);
-}
-
-int P_MobjsBoxIteratorv(const arvec2_t box, int (*func) (mobj_t*, void*), void* data)
+int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* paramaters)
 {
     gamemap_t* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockMobjs(map, &blockCoords, func, data);
-}
-
-int P_PolyobjsBoxIterator(const float box[4],
-                              int (*func) (struct polyobj_s*, void*),
-                              void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_PolyobjsBoxIteratorv(bounds, func, data);
+    return Map_IterateCellBlockMobjs(map, &blockCoords, func, paramaters);
 }
 
 /**
@@ -907,61 +878,24 @@ int P_PolyobjsBoxIterator(const float box[4],
  * multiple mapblocks, so increment validCount before the first call, then
  * make one or more calls to it.
  */
-int P_PolyobjsBoxIteratorv(const arvec2_t box, int (*func) (struct polyobj_s*, void*),
-    void* data)
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* paramaters)
 {
     gamemap_t* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockPolyobjs(map, &blockCoords, func, data);
+    return Map_IterateCellBlockPolyobjs(map, &blockCoords, callback, paramaters);
 }
 
-int P_LinesBoxIterator(const float box[4],
-                           int (*func) (linedef_t*, void*),
-                           void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_LinesBoxIteratorv(bounds, func, data);
-}
-
-int P_LinesBoxIteratorv(const arvec2_t box, int (*func) (linedef_t*, void*),
-    void* data)
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
     gamemap_t* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockLineDefs(map, &blockCoords, func, data);
+    return Map_IterateCellBlockLineDefs(map, &blockCoords, callback, paramaters);
 }
 
-/**
- * @return              @c false, if the iterator func returns @c false.
- */
-int P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
-                                int (*func) (subsector_t*, void*),
-                                void* parm)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_SubsectorsBoxIteratorv(bounds, sector, func, parm);
-}
-
-/**
- * Same as the fixed-point version of this routine, but the bounding box
- * is specified using an vec2_t array (see m_vector.c).
- */
-int P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t* sector,
-    int (*func) (subsector_t*, void*), void* data)
+int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
+    int (*callback) (subsector_t*, void*), void* paramaters)
 {
     static int localValidCount = 0;
     gamemap_t* map = P_GetCurrentMap();
@@ -971,27 +905,15 @@ int P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t* sector,
 
     Blockmap_CellBlockCoords(map->subsectorBlockmap, &blockCoords, box);
     return Map_IterateCellBlockSubsectors(map, &blockCoords, sector, box,
-                                          localValidCount, func, data);
+                                          localValidCount, callback, paramaters);
 }
 
-int P_PolyobjLinesBoxIterator(const float box[4],
-    int (*func) (linedef_t*, void*), void* data)
-{
-    vec2_t  bounds[2];
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-    return P_PolyobjLinesBoxIteratorv(bounds, func, data);
-}
-
-int P_PolyobjLinesBoxIteratorv(const arvec2_t box, int (*func) (linedef_t*, void*),
-    void* data)
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
     gamemap_t* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockPolyobjLineDefs(map, &blockCoords, func, data);
+    return Map_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, paramaters);
 }
 
 /**
@@ -999,36 +921,14 @@ int P_PolyobjLinesBoxIteratorv(const arvec2_t box, int (*func) (linedef_t*, void
  * in multiple mapblocks, so increment validCount before the first call
  * to Map_IterateCellLineDefs, then make one or more calls to it.
  */
-int P_AllLinesBoxIterator(const float box[4],
-                              int (*func) (linedef_t*, void*),
-                              void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_AllLinesBoxIteratorv(bounds, func, data);
-}
-
-/**
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to Map_IterateCellLineDefs, then make one or more calls to it.
- */
-int P_AllLinesBoxIteratorv(const arvec2_t box,
-                               int (*func) (linedef_t*, void*),
-                               void* data)
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
     if(numPolyObjs > 0)
     {
-        int result = P_PolyobjLinesBoxIteratorv(box, func, data);
+        int result = P_PolyobjLinesBoxIterator(box, callback, paramaters);
         if(result) return result;
     }
-
-    return P_LinesBoxIteratorv(box, func, data);
+    return P_LinesBoxIterator(box, callback, paramaters);
 }
 
 /**

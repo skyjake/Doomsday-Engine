@@ -809,6 +809,58 @@ typedef struct linknode_s {
 
 enum { MX, MY, MZ }; // Momentum axis indices.
 
+/**
+ * (A)xis-(A)ligned (bounding) (B)ox with integer precision.
+ * Handy POD structure for manipulation of bounding boxes.
+ */
+typedef struct aabox_s {
+    union {
+        struct {
+            int vec4[4];
+        };
+        struct {
+            int arvec2[2][2];
+        };
+        struct {
+            int min[2];
+            int max[2];
+        };
+        struct {
+            int minX;
+            int minY;
+            int maxX;
+            int maxY;
+        };
+    };
+} AABox;
+
+/**
+ * (A)xis-(A)ligned (bounding) (B)ox with (f)loating-point precision.
+ * Handy POD structure for manipulation of bounding boxes.
+ *
+ * \todo switch to double?
+ */
+typedef struct aaboxf_s {
+    union {
+        struct {
+            float vec4[4];
+        };
+        struct {
+            float arvec2[2][2];
+        };
+        struct {
+            float min[2];
+            float max[2];
+        };
+        struct {
+            float minX;
+            float minY;
+            float maxX;
+            float maxY;
+        };
+    };
+} AABoxf;
+
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -860,7 +912,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    float           box[2][2]; \
+    AABoxf           aaBox; \
     float           dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \

@@ -370,15 +370,16 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  */
 static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmBBox, line) == -1)
+       // Linedef must be contacted
+       tmBox.minX < aaBox->maxX &&
+       tmBox.maxX > aaBox->minX &&
+       tmBox.minY < aaBox->maxY &&
+       tmBox.maxY > aaBox->minY &&
+       P_BoxOnLineSide(&tmBox, line) == -1)
     {
         sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -1190,29 +1191,27 @@ int PIT_VileCheck(mobj_t *thing, void *data)
  */
 void C_DECL A_VileChase(mobj_t *actor)
 {
-    mobjinfo_t         *info;
-    mobj_t             *temp;
-    float               box[4];
+    mobjinfo_t* info;
+    mobj_t* temp;
+    AABoxf box;
 
     if(actor->moveDir != DI_NODIR)
     {
         // Check for corpses to raise.
-        vileTry[VX] = actor->pos[VX] +
-            actor->info->speed * dirSpeed[actor->moveDir][VX];
-        vileTry[VY] = actor->pos[VY] +
-            actor->info->speed * dirSpeed[actor->moveDir][VY];
+        vileTry[VX] = actor->pos[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
+        vileTry[VY] = actor->pos[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
 
-        box[BOXLEFT]   = vileTry[VX] - MAXRADIUS * 2;
-        box[BOXRIGHT]  = vileTry[VX] + MAXRADIUS * 2;
-        box[BOXBOTTOM] = vileTry[VY] - MAXRADIUS * 2;
-        box[BOXTOP]    = vileTry[VY] + MAXRADIUS * 2;
+        box.minX = vileTry[VX] - MAXRADIUS * 2;
+        box.minY = vileTry[VY] - MAXRADIUS * 2;
+        box.maxX = vileTry[VX] + MAXRADIUS * 2;
+        box.maxY = vileTry[VY] + MAXRADIUS * 2;
 
         vileObj = actor;
 
         // Call PIT_VileCheck to check whether object is a corpse
         // that can be raised.
         VALIDCOUNT++;
-        if(P_MobjsBoxIterator(box, PIT_VileCheck, 0))
+        if(P_MobjsBoxIterator(&box, PIT_VileCheck, 0))
         {
             // Got one!
             temp = actor->target;

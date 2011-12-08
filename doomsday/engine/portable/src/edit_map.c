@@ -900,24 +900,24 @@ static void finishLineDefs(gamemap_t* map)
 
         if(v[0]->V_pos[VX] < v[1]->V_pos[VX])
         {
-            ld->bBox[BOXLEFT]   = v[0]->V_pos[VX];
-            ld->bBox[BOXRIGHT]  = v[1]->V_pos[VX];
+            ld->aaBox.minX = v[0]->V_pos[VX];
+            ld->aaBox.maxX = v[1]->V_pos[VX];
         }
         else
         {
-            ld->bBox[BOXLEFT]   = v[1]->V_pos[VX];
-            ld->bBox[BOXRIGHT]  = v[0]->V_pos[VX];
+            ld->aaBox.minX = v[1]->V_pos[VX];
+            ld->aaBox.maxX = v[0]->V_pos[VX];
         }
 
         if(v[0]->V_pos[VY] < v[1]->V_pos[VY])
         {
-            ld->bBox[BOXBOTTOM] = v[0]->V_pos[VY];
-            ld->bBox[BOXTOP]    = v[1]->V_pos[VY];
+            ld->aaBox.minY = v[0]->V_pos[VY];
+            ld->aaBox.maxY = v[1]->V_pos[VY];
         }
         else
         {
-            ld->bBox[BOXBOTTOM] = v[1]->V_pos[VY];
-            ld->bBox[BOXTOP]    = v[0]->V_pos[VY];
+            ld->aaBox.minY = v[1]->V_pos[VY];
+            ld->aaBox.maxY = v[0]->V_pos[VY];
         }
     }
 }
@@ -952,21 +952,21 @@ static void updateSSecMidPoint(subsector_t *sub)
     // Find the center point. First calculate the bounding box.
     ptr = sub->segs;
     vtx = &((*ptr)->SG_v1->v);
-    sub->bBox[0].pos[VX] = sub->bBox[1].pos[VX] = sub->midPoint.pos[VX] = vtx->pos[VX];
-    sub->bBox[0].pos[VY] = sub->bBox[1].pos[VY] = sub->midPoint.pos[VY] = vtx->pos[VY];
+    sub->aaBox.minX = sub->aaBox.maxX = sub->midPoint.pos[VX] = vtx->pos[VX];
+    sub->aaBox.minY = sub->aaBox.maxY = sub->midPoint.pos[VY] = vtx->pos[VY];
 
     ptr++;
     while(*ptr)
     {
         vtx = &((*ptr)->SG_v1->v);
-        if(vtx->pos[VX] < sub->bBox[0].pos[VX])
-            sub->bBox[0].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] < sub->bBox[0].pos[VY])
-            sub->bBox[0].pos[VY] = vtx->pos[VY];
-        if(vtx->pos[VX] > sub->bBox[1].pos[VX])
-            sub->bBox[1].pos[VX] = vtx->pos[VX];
-        if(vtx->pos[VY] > sub->bBox[1].pos[VY])
-            sub->bBox[1].pos[VY] = vtx->pos[VY];
+        if(vtx->pos[VX] < sub->aaBox.minX)
+            sub->aaBox.minX = vtx->pos[VX];
+        if(vtx->pos[VY] < sub->aaBox.minY)
+            sub->aaBox.minY = vtx->pos[VY];
+        if(vtx->pos[VX] > sub->aaBox.maxX)
+            sub->aaBox.maxX = vtx->pos[VX];
+        if(vtx->pos[VY] > sub->aaBox.maxY)
+            sub->aaBox.maxY = vtx->pos[VY];
 
         sub->midPoint.pos[VX] += vtx->pos[VX];
         sub->midPoint.pos[VY] += vtx->pos[VY];
@@ -977,8 +977,8 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->midPoint.pos[VY] /= sub->segCount;
 
     // Calculate the worldwide grid offset.
-    sub->worldGridOffset[VX] = fmod(sub->bBox[0].pos[VX], 64);
-    sub->worldGridOffset[VY] = fmod(sub->bBox[1].pos[VY], 64);
+    sub->worldGridOffset[VX] = fmod(sub->aaBox.minX, 64);
+    sub->worldGridOffset[VY] = fmod(sub->aaBox.maxY, 64);
 }
 
 static void prepareSubSectors(gamemap_t *map)
@@ -2160,24 +2160,24 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     if(l->L_v1pos[VX] < l->L_v2pos[VX])
     {
-        l->bBox[BOXLEFT]   = l->L_v1pos[VX];
-        l->bBox[BOXRIGHT]  = l->L_v2pos[VX];
+        l->aaBox.minX = l->L_v1pos[VX];
+        l->aaBox.maxX = l->L_v2pos[VX];
     }
     else
     {
-        l->bBox[BOXLEFT]   = l->L_v2pos[VX];
-        l->bBox[BOXRIGHT]  = l->L_v1pos[VX];
+        l->aaBox.minX = l->L_v2pos[VX];
+        l->aaBox.maxX = l->L_v1pos[VX];
     }
 
     if(l->L_v1pos[VY] < l->L_v2pos[VY])
     {
-        l->bBox[BOXBOTTOM] = l->L_v1pos[VY];
-        l->bBox[BOXTOP]    = l->L_v2pos[VY];
+        l->aaBox.minY = l->L_v1pos[VY];
+        l->aaBox.maxY = l->L_v2pos[VY];
     }
     else
     {
-        l->bBox[BOXBOTTOM] = l->L_v2pos[VY];
-        l->bBox[BOXTOP]    = l->L_v1pos[VY];
+        l->aaBox.minY = l->L_v2pos[VY];
+        l->aaBox.maxY = l->L_v1pos[VY];
     }
 
     l->L_frontside = front;

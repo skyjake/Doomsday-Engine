@@ -220,7 +220,7 @@ extern          "C" {
     float           P_ApproxDistance3(float dx, float dy, float dz);
     int             P_PointOnLinedefSide(float x, float y,
                                          const struct linedef_s* line);
-    int             P_BoxOnLineSide(const float* tmbox, const struct linedef_s* ld);
+    int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y,
                                          const divline_t* line);
@@ -228,26 +228,25 @@ extern          "C" {
     void            P_LineOpening(struct linedef_s* linedef);
 
     // Object in bounding box iterators.
-    int             P_MobjsBoxIterator(const float box[4],
+    int             P_MobjsBoxIterator(const AABoxf* box,
                                        int (*func) (struct mobj_s*, void*),
                                        void* data);
-    int             P_LinesBoxIterator(const float box[4],
+    int             P_LinesBoxIterator(const AABoxf* box,
                                        int (*func) (struct linedef_s*, void*),
                                        void* data);
-    int             P_AllLinesBoxIterator(const float box[4],
+    int             P_AllLinesBoxIterator(const AABoxf* box,
                                           int (*func) (struct linedef_s*, void*),
                                           void* data);
-    int             P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
+    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
                                            int (*func) (subsector_t*, void*),
                                            void* data);
-    int             P_PolyobjsBoxIterator(const float box[4],
+    int             P_PolyobjsBoxIterator(const AABoxf* box,
                                           int (*func) (struct polyobj_s*, void*),
                                           void* data);
 
     // Object type touching mobjs iterators.
     int             P_LineMobjsIterator(struct linedef_s* line,
-                                        int (*func) (struct mobj_s*,
-                                                         void *), void* data);
+                                        int (*func) (struct mobj_s*, void *), void* data);
     int             P_SectorTouchingMobjsIterator
                         (sector_t* sector, int (*func) (struct mobj_s*, void*),
                          void* data);
