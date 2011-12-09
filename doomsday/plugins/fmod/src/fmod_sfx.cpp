@@ -402,7 +402,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         break;
 
     case SFXBP_FREQUENCY: {
-        unsigned int newFreq = unsigned int(buf->rate * value);
+        unsigned int newFreq = (unsigned int) (buf->rate * value);
         if(buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
         if(info.channel) info.channel->setFrequency(float(buf->freq));
