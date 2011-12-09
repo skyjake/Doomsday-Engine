@@ -132,12 +132,15 @@ Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
 const pvec2_t Blockmap_Origin(Blockmap* blockmap);
 
 /**
- * Retrieve the minimal and maximal map space points covered by the Blockmap.
- *
- * @param min  Minimal point [x,y] written here (i.e., the "origin").
- * @param max  Maximal point [x,y] written here.
+ * Retrieve the extremal map space points covered by the Blockmap.
  */
-void Blockmap_Bounds(Blockmap* blockmap, pvec2_t min, pvec2_t max);
+const AABoxf* Blockmap_Bounds(Blockmap* blockmap);
+
+/// @return  Width of the Blockmap in cells.
+uint Blockmap_Width(Blockmap* blockmap);
+
+/// @return  Height of the Blockmap in cells.
+uint Blockmap_Height(Blockmap* blockmap);
 
 /**
  * Retrieve the size of the Blockmap in cells.

@@ -52,7 +52,7 @@ typedef struct {
 struct blockmap_s
 {
     /// Minimal and Maximal points in map space coordinates.
-    vec2_t min, max;
+    AABoxf bounds;
 
     /// Cell dimensions in map space coordinates.
     vec2_t cellSize;
@@ -98,19 +98,19 @@ boolean Blockmap_ClipCellX(Blockmap* bm, uint* outX, float x)
 {
     boolean adjusted = false;
     assert(bm);
-    if(x < bm->min[VX])
+    if(x < bm->bounds.minX)
     {
-        x = 0;
+        x = bm->bounds.minX;
         adjusted = true;
     }
-    else if(x >= bm->max[VX])
+    else if(x >= bm->bounds.maxX)
     {
-        x = bm->max[VX] - 1;
+        x = bm->bounds.maxX - 1;
         adjusted = true;
     }
     if(outX)
     {
-        *outX = (uint)((x - bm->min[VX]) / bm->cellSize[VX]);
+        *outX = (uint)((x - bm->bounds.minX) / bm->cellSize[VX]);
     }
     return adjusted;
 }
@@ -119,19 +119,19 @@ boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y)
 {
     boolean adjusted = false;
     assert(bm);
-    if(y < bm->min[VY])
+    if(y < bm->bounds.minY)
     {
-        y = 0;
+        y = bm->bounds.minY;
         adjusted = true;
     }
-    else if(y >= bm->max[VY])
+    else if(y >= bm->bounds.maxY)
     {
-        y = bm->max[VY] - 1;
+        y = bm->bounds.maxY - 1;
         adjusted = true;
     }
     if(outY)
     {
-        *outY = (uint)((y - bm->min[VY]) / bm->cellSize[VY]);
+        *outY = (uint)((y - bm->bounds.minY) / bm->cellSize[VY]);
     }
     return adjusted;
 }
@@ -167,8 +167,8 @@ Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
     uint width, height;
     if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
 
-    V2_Copy(bm->min, min);
-    V2_Copy(bm->max, max);
+    V2_Copy(bm->bounds.min, min);
+    V2_Copy(bm->bounds.max, max);
     bm->cellSize[VX] = cellWidth;
     bm->cellSize[VY] = cellHeight;
 
@@ -183,14 +183,25 @@ Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
 const pvec2_t Blockmap_Origin(Blockmap* bm)
 {
     assert(bm);
-    return bm->min;
+    return bm->bounds.min;
 }
 
-void Blockmap_Bounds(Blockmap* bm, pvec2_t min, pvec2_t max)
+const AABoxf* Blockmap_Bounds(Blockmap* bm)
 {
     assert(bm);
-    if(min) V2_Copy(min, bm->min);
-    if(max) V2_Copy(max, bm->max);
+    return &bm->bounds;
+}
+
+uint Blockmap_Width(Blockmap* bm)
+{
+    assert(bm);
+    return Gridmap_Width(bm->gridmap);
+}
+
+uint Blockmap_Height(Blockmap* bm)
+{
+    assert(bm);
+    return Gridmap_Height(bm->gridmap);
 }
 
 void Blockmap_Size(Blockmap* bm, uint v[2])
@@ -305,85 +316,85 @@ boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], voi
     return Blockmap_CreateCellAndLinkObjectXY(blockmap, coords[VX], coords[VY], object);
 }
 
-void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max)
+void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t bounds[2];
-    assert(map && min && max);
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    bounds[0][VX] = min[VX] - BLOCKMAP_MARGIN;
-    bounds[0][VY] = min[VY] - BLOCKMAP_MARGIN;
-    bounds[1][VX] = max[VX] + BLOCKMAP_MARGIN;
-    bounds[1][VY] = max[VY] + BLOCKMAP_MARGIN;
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    map->lineDefBlockmap = Blockmap_New(bounds[0], bounds[1], CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+    map->lineDefBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max)
+void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t bounds[2];
-    assert(map && min && max);
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    bounds[0][VX] = min[VX] - BLOCKMAP_MARGIN;
-    bounds[0][VY] = min[VY] - BLOCKMAP_MARGIN;
-    bounds[1][VX] = max[VX] + BLOCKMAP_MARGIN;
-    bounds[1][VY] = max[VY] + BLOCKMAP_MARGIN;
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    map->mobjBlockmap = Blockmap_New(bounds[0], bounds[1], CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+    map->mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max)
+void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t bounds[2];
-    assert(map && min && max);
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    bounds[0][VX] = min[VX] - BLOCKMAP_MARGIN;
-    bounds[0][VY] = min[VY] - BLOCKMAP_MARGIN;
-    bounds[1][VX] = max[VX] + BLOCKMAP_MARGIN;
-    bounds[1][VY] = max[VY] + BLOCKMAP_MARGIN;
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    map->polyobjBlockmap = Blockmap_New(bounds[0], bounds[1], CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+    map->polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min, const_pvec2_t max)
+void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
 
-    vec2_t bounds[2];
-    assert(map && min && max);
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
     // (margin is needed for a map that fits entirely inside one blockmap cell).
-    bounds[0][VX] = min[VX] - BLOCKMAP_MARGIN;
-    bounds[0][VY] = min[VY] - BLOCKMAP_MARGIN;
-    bounds[1][VX] = max[VX] + BLOCKMAP_MARGIN;
-    bounds[1][VY] = max[VY] + BLOCKMAP_MARGIN;
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    map->subsectorBlockmap = Blockmap_New(bounds[0], bounds[1], CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+    map->subsectorBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
 #undef CELL_SIZE
 #undef BLOCKMAP_MARGIN
@@ -827,132 +838,6 @@ int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoor
     return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellSubsectorsIterator, (void*) &args);
 }
 
-typedef struct {
-    int (*func) (linedef_t*, void*);
-    void* param;
-} iteratepolyobjlinedefs_params_t;
-
-int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
-{
-    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
-    return P_PolyobjLinesIterator(po, p->func, p->param);
-}
-
-/**
- * \todo: This assumes that all Blockmaps are constructed with the same
- * origin, cellSize and dimension properties. Although this is presently
- * guaranteed to be true, this should be refactored to remove this subtle
- * dependency.
- */
-boolean P_CellPathTraverse(const uint originBlock[2], const uint destBlock[2],
-    const float origin[2], const float dest[2], int flags)
-{
-/// \todo This stuff is obsolete and needs to be removed.
-#define MAPBLOCKSHIFT   (FRACBITS+7)
-#define MAPBTOFRAC      (MAPBLOCKSHIFT-FRACBITS)
-
-    gamemap_t* map = P_GetCurrentMap();
-    fixed_t intercept[2], step[2];
-    float delta[2], partial;
-    uint count, block[2];
-    int stepDir[2];
-
-    if(destBlock[VX] > originBlock[VX])
-    {
-        stepDir[VX] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else if(destBlock[VX] < originBlock[VX])
-    {
-        stepDir[VX] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else
-    {
-        stepDir[VX] = 0;
-        partial = 1;
-        delta[VY] = 256;
-    }
-    intercept[VY] = (FLT2FIX(origin[VY]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VY]);
-
-    if(destBlock[VY] > originBlock[VY])
-    {
-        stepDir[VY] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else if(destBlock[VY] < originBlock[VY])
-    {
-        stepDir[VY] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else
-    {
-        stepDir[VY] = 0;
-        partial = 1;
-        delta[VX] = 256;
-    }
-    intercept[VX] = (FLT2FIX(origin[VX]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VX]);
-
-    //
-    // Step through map blocks.
-    //
-
-    // Count is present to prevent a round off error from skipping the
-    // break and ending up in an infinite loop..
-    block[VX] = originBlock[VX];
-    block[VY] = originBlock[VY];
-    step[VX] = FLT2FIX(delta[VX]);
-    step[VY] = FLT2FIX(delta[VY]);
-    for(count = 0; count < 64; ++count)
-    {
-        if(flags & PT_ADDLINES)
-        {
-            if(numPolyObjs > 0)
-            {
-                iteratepolyobjlinedefs_params_t iplParams;
-                iplParams.func = PIT_AddLineIntercepts;
-                iplParams.param = 0;
-                if(Map_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams))
-                    return false; // Early out.
-            }
-
-            if(Map_IterateCellLineDefs(map, block, PIT_AddLineIntercepts, 0))
-                return false; // Early out
-        }
-
-        if(flags & PT_ADDMOBJS)
-        {
-            if(Map_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, 0))
-                return false; // Early out.
-        }
-
-        if(block[VX] == destBlock[VX] && block[VY] == destBlock[VY])
-            break;
-
-        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
-        {
-            intercept[VY] += step[VY];
-            block[VX] += stepDir[VX];
-        }
-        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
-        {
-            intercept[VX] += step[VX];
-            block[VY] += stepDir[VY];
-        }
-    }
-
-    return true;
-
-#undef MAPBTOFRAC
-#undef MAPBLOCKSHIFT
-}
-
 static int rendMobj(mobj_t* mo, void* paramaters)
 {
     vec2_t start, end;
@@ -1196,8 +1081,6 @@ static void drawBlockmapInfo(int x, int y, Blockmap* blockmap)
     char buf[80];
     assert(blockmap);
 
-    Gridmap_Size(blockmap->gridmap, bmapSize);
-
     // Align to the bottom right.
     x -= w;
     y -= h;
@@ -1210,17 +1093,19 @@ static void drawBlockmapInfo(int x, int y, Blockmap* blockmap)
     UI_TextOutEx("Blockmap", x, y, false, true, UI_Color(UIC_TITLE), 1);
     y += th;
 
+    Blockmap_Size(blockmap, bmapSize);
     dd_snprintf(buf, 80, "Dimensions:[%u,%u] #%li", bmapSize[VX], bmapSize[VY],
         (long) bmapSize[VY] * bmapSize[VX]);
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
     y += th;
 
-    dd_snprintf(buf, 80, "Cellsize:[%u,%u]", (uint)blockmap->cellSize[VX], (uint)blockmap->cellSize[VY]);
+    dd_snprintf(buf, 80, "Cellsize:[%.3f,%.3f]", Blockmap_CellWidth(blockmap), Blockmap_CellHeight(blockmap));
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
     y += th;
 
     dd_snprintf(buf, 80, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
-        blockmap->min[VX], blockmap->min[VY], blockmap->max[VX], blockmap->max[VY]);
+        Blockmap_Bounds(blockmap)->minX, Blockmap_Bounds(blockmap)->minY,
+        Blockmap_Bounds(blockmap)->maxX, Blockmap_Bounds(blockmap)->maxY);
     UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
     y += th;
 }
@@ -1308,8 +1193,10 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
 {
     uint x, y, vCoords[2];
     GridmapBlock vBlockCoords;
-    vec2_t start, end;
+    vec2_t start, end, cellSize;
     void* cell;
+
+    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     if(followMobj)
     {
@@ -1334,15 +1221,15 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Orient on the center of the followed Mobj.
-        V2_Set(start, vCoords[VX] * blockmap->cellSize[VX],
-                      vCoords[VY] * blockmap->cellSize[VY]);
+        V2_Set(start, vCoords[VX] * cellSize[VX],
+                      vCoords[VY] * cellSize[VY]);
         glTranslatef(-start[VX], -start[VY], 0);
     }
     else
     {
         // Orient on center of the Blockmap.
-        glTranslatef(-(blockmap->cellSize[VX] *  Gridmap_Width(blockmap->gridmap))/2,
-                     -(blockmap->cellSize[VY] * Gridmap_Height(blockmap->gridmap))/2, 0);
+        glTranslatef(-(cellSize[VX] * Blockmap_Width(blockmap))/2,
+                     -(cellSize[VY] * Blockmap_Height(blockmap))/2, 0);
     }
 
     // First we'll draw a background showing the "null" cells.
@@ -1366,8 +1253,8 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
                 glColor4f(.33f, .33f, .66f, .33f);
             }
 
-            V2_Set(start, x * blockmap->cellSize[VX], y * blockmap->cellSize[VY]);
-            V2_Set(end, blockmap->cellSize[VX], blockmap->cellSize[VY]);
+            V2_Set(start, x * cellSize[VX], y * cellSize[VY]);
+            V2_Set(end, cellSize[VX], cellSize[VY]);
             V2_Sum(end, end, start);
 
             glBegin(GL_QUADS);
@@ -1388,7 +1275,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
      */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glScalef(blockmap->cellSize[VX], blockmap->cellSize[VY], 1);
+    glScalef(cellSize[VX], cellSize[VY], 1);
 
     Gridmap_Debug(blockmap->gridmap);
 
@@ -1402,7 +1289,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
      */
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(-blockmap->min[VX], -blockmap->min[VY], 0);
+    glTranslatef(-Blockmap_Origin(blockmap)[VX], -Blockmap_Origin(blockmap)[VY], 0);
 
     if(cellDrawer)
     {
@@ -1416,8 +1303,8 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             // First, the cells outside the "touch" range (crimson).
             validCount++;
             glColor4f(.33f, 0, 0, .75f);
-            for(y = 0; y < Gridmap_Height(blockmap->gridmap); ++y)
-            for(x = 0; x < Gridmap_Width(blockmap->gridmap); ++x)
+            for(y = 0; y < Blockmap_Height(blockmap); ++y)
+            for(x = 0; x < Blockmap_Width(blockmap); ++x)
             {
                 if(x >= vBlockCoords.minX && x <= vBlockCoords.maxX &&
                    y >= vBlockCoords.minY && y <= vBlockCoords.maxY)

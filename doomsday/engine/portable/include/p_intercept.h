@@ -23,16 +23,34 @@
  */
 
 /**
- * Line/Object Interception
+ * Line/Object Interception.
  */
 
 #ifndef LIBDENG_PLAY_INTERCEPT_H
 #define LIBDENG_PLAY_INTERCEPT_H
 
-void            P_ClearIntercepts(void);
-intercept_t*    P_AddIntercept(float frac, intercepttype_t type, void* ptr);
-void            P_CalcInterceptDistances(const divline_t* strace);
+struct interceptnode_s; // The interceptnode instance (opaque).
+typedef struct interceptnode_s InterceptNode;
 
-int             P_TraverseIntercepts(traverser_t func, float maxfrac);
+/**
+ * Empties the intercepts array and makes sure it has been allocated.
+ */
+void P_ClearIntercepts(void);
+
+/**
+ * You must clear intercepts before the first time this is called.
+ * The intercepts array grows if necessary.
+ *
+ * @param type  Type of interception.
+ * @param distance  Distance along the trace vector that the interception occured [0...1].
+ * @param object  Object being intercepted.
+ * @return  Newly added intercept or @c NULL if outside the trace range.
+ */
+InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object);
+
+/**
+ * @return  Zero if the traverser callback returns zero for all processed intercepts.
+ */
+int P_TraverseIntercepts(traverser_t callback, void* paramaters);
 
 #endif /* LIBDENG_PLAY_INTERCEPT_H */

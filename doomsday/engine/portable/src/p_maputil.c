@@ -77,8 +77,6 @@ float opentop, openbottom, openrange;
 float lowfloor;
 
 divline_t traceLOS;
-boolean earlyout;
-int ptflags;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -943,213 +941,370 @@ int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*)
 
 /**
  * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list
+ * to the intercepts list.
  * A line is crossed if its endpoints are on opposite sides of the trace.
  *
- * @return              @c true if earlyout and a solid line hit.
+ * @return  Non-zero if current iteration should stop.
  */
-int PIT_AddLineIntercepts(linedef_t* ld, void* data)
+int PIT_AddLineIntercepts(linedef_t* lineDef, void* paramaters)
 {
-    int                 s[2];
-    float               frac;
-    divline_t           dl;
+    float distance;
+    divline_t dl;
+    int s1, s2;
 
+    // Is this line crossed?
     // Avoid precision problems with two routines.
-    if(traceLOS.dX > FRACUNIT * 16 || traceLOS.dY > FRACUNIT * 16 ||
+    if(traceLOS.dX >  FRACUNIT * 16 || traceLOS.dY >  FRACUNIT * 16 ||
        traceLOS.dX < -FRACUNIT * 16 || traceLOS.dY < -FRACUNIT * 16)
     {
-        s[0] = P_PointOnDivlineSide(ld->L_v1pos[VX],
-                                    ld->L_v1pos[VY], &traceLOS);
-        s[1] = P_PointOnDivlineSide(ld->L_v2pos[VX],
-                                    ld->L_v2pos[VY], &traceLOS);
+        s1 = P_PointOnDivlineSide(lineDef->L_v1pos[VX],
+                                  lineDef->L_v1pos[VY], &traceLOS);
+        s2 = P_PointOnDivlineSide(lineDef->L_v2pos[VX],
+                                  lineDef->L_v2pos[VY], &traceLOS);
     }
     else
     {
-        s[0] = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX]),
-                                 FIX2FLT(traceLOS.pos[VY]), ld);
-        s[1] = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
-                                 FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), ld);
+        s1 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX]),
+                                    FIX2FLT(traceLOS.pos[VY]), lineDef);
+        s2 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
+                                    FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), lineDef);
     }
+    if(s1 == s2) return false;
 
-    if(s[0] == s[1])
-        return false; // Line isn't crossed.
-
-    // Hit the line.
-    P_MakeDivline(ld, &dl);
-    frac = P_InterceptVector(&traceLOS, &dl);
-    if(frac < 0)
-        return false; // Behind source.
-
-    // Try to early out the check.
-    if(earlyout && frac < 1 && !ld->L_backside)
-        return true; // Stop iteration.
-
-    P_AddIntercept(frac, true, ld);
-
-    return false; // Continue iteration.
+    // Calculate interception point.
+    P_MakeDivline(lineDef, &dl);
+    distance = P_InterceptVector(&traceLOS, &dl);
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_LINE, distance, lineDef);
+    }
+    // Continue iteration.
+    return false;
 }
 
-int PIT_AddMobjIntercepts(mobj_t* mo, void* data)
+int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
 {
-    float               x1, y1, x2, y2;
-    int                 s[2];
-    divline_t           dl;
-    float               frac;
+    vec2_t from, to;
+    float distance;
+    divline_t dl;
+    int s1, s2;
 
-    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
+    if(mobj->dPlayer && (mobj->dPlayer->flags & DDPF_CAMERA))
         return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
     if((traceLOS.dX ^ traceLOS.dY) > 0)
     {
-        x1 = mo->pos[VX] - mo->radius;
-        y1 = mo->pos[VY] + mo->radius;
-
-        x2 = mo->pos[VX] + mo->radius;
-        y2 = mo->pos[VY] - mo->radius;
+        // \ Slope
+        V2_Set(from, mobj->pos[VX] - mobj->radius,
+                     mobj->pos[VY] + mobj->radius);
+        V2_Set(to,   mobj->pos[VX] + mobj->radius,
+                     mobj->pos[VY] - mobj->radius);
     }
     else
     {
-        x1 = mo->pos[VX] - mo->radius;
-        y1 = mo->pos[VY] - mo->radius;
-
-        x2 = mo->pos[VX] + mo->radius;
-        y2 = mo->pos[VY] + mo->radius;
+        // / Slope
+        V2_Set(from, mobj->pos[VX] - mobj->radius,
+                     mobj->pos[VY] - mobj->radius);
+        V2_Set(to,   mobj->pos[VX] + mobj->radius,
+                     mobj->pos[VY] + mobj->radius);
     }
 
-    s[0] = P_PointOnDivlineSide(x1, y1, &traceLOS);
-    s[1] = P_PointOnDivlineSide(x2, y2, &traceLOS);
-    if(s[0] == s[1])
-        return false; // Line isn't crossed.
+    // Is this line crossed?
+    s1 = P_PointOnDivlineSide(from[VX], from[VY], &traceLOS);
+    s2 = P_PointOnDivlineSide(to[VX], to[VY], &traceLOS);
+    if(s1 == s2) return false;
 
-    dl.pos[VX] = FLT2FIX(x1);
-    dl.pos[VY] = FLT2FIX(y1);
-    dl.dX = FLT2FIX(x2 - x1);
-    dl.dY = FLT2FIX(y2 - y1);
-
-    frac = P_InterceptVector(&traceLOS, &dl);
-    if(frac < 0)
-        return false; // Behind source.
-
-    P_AddIntercept(frac, false, mo);
-
-    return false; // Keep going.
+    // Calculate interception point.
+    dl.pos[VX] = FLT2FIX(from[VX]);
+    dl.pos[VY] = FLT2FIX(from[VY]);
+    dl.dX = FLT2FIX(to[VX] - from[VX]);
+    dl.dY = FLT2FIX(to[VY] - from[VY]);
+    distance = P_InterceptVector(&traceLOS, &dl);
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_MOBJ, distance, mobj);
+    }
+    // Continue iteration.
+    return false;
 }
 
-/**
- * Traces a line from x1,y1 to x2,y2, calling the traverser function for each
- * Returns true if the traverser function returns true for all lines
- */
-int Map_PathTraverse(gamemap_t* map, float x1, float y1, float x2, float y2,
-    int flags, int (*trav) (intercept_t*), void* paramaters)
+static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
+    const uint toBlock[2], const float from[2], const float to[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
 {
 /// \todo This stuff is obsolete and needs to be removed.
-#define MAPBLOCKSIZE    (MAPBLOCKUNITS*FRACUNIT)
+#define MAPBLOCKSHIFT   (FRACBITS+7)
+#define MAPBTOFRAC      (MAPBLOCKSHIFT-FRACBITS)
 
-    float origin[2], dest[2];
-    uint originBlock[2], destBlock[2];
-    vec2_t min, max;
-    assert(map);
+    int result = false; // Continue iteration.
+    fixed_t intercept[2], step[2];
+    float delta[2], partial;
+    uint count, block[2];
+    int stepDir[2];
+    assert(bmap);
 
-    V2_Set(origin, x1, y1);
-    V2_Set(dest, x2, y2);
+    if(toBlock[VX] > fromBlock[VX])
+    {
+        stepDir[VX] = 1;
+        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(from[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else if(toBlock[VX] < fromBlock[VX])
+    {
+        stepDir[VX] = -1;
+        partial = FIX2FLT((FLT2FIX(from[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else
+    {
+        stepDir[VX] = 0;
+        partial = 1;
+        delta[VY] = 256;
+    }
+    intercept[VY] = (FLT2FIX(from[VY]) >> MAPBTOFRAC) +
+        FLT2FIX(partial * delta[VY]);
 
-    Blockmap_Bounds(map->lineDefBlockmap, min, max);
+    if(toBlock[VY] > fromBlock[VY])
+    {
+        stepDir[VY] = 1;
+        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(from[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else if(toBlock[VY] < fromBlock[VY])
+    {
+        stepDir[VY] = -1;
+        partial = FIX2FLT((FLT2FIX(from[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else
+    {
+        stepDir[VY] = 0;
+        partial = 1;
+        delta[VX] = 256;
+    }
+    intercept[VX] = (FLT2FIX(from[VX]) >> MAPBTOFRAC) +
+        FLT2FIX(partial * delta[VX]);
 
-    if(!(origin[VX] >= min[VX] && origin[VX] <= max[VX] &&
-         origin[VY] >= min[VY] && origin[VY] <= max[VY]))
-    {   // Origin is outside the blockmap (really? very unusual...)
+    //
+    // Step through map blocks.
+    //
+
+    // Count is present to prevent a round off error from skipping the
+    // break and ending up in an infinite loop..
+    block[VX] = fromBlock[VX];
+    block[VY] = fromBlock[VY];
+    step[VX] = FLT2FIX(delta[VX]);
+    step[VY] = FLT2FIX(delta[VY]);
+    for(count = 0; count < 64; ++count)
+    {
+        result = callback(block, paramaters);
+        if(result) return result; // Early out.
+
+        if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
+            break;
+
+        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
+        {
+            intercept[VY] += step[VY];
+            block[VX] += stepDir[VX];
+        }
+        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
+        {
+            intercept[VX] += step[VX];
+            block[VY] += stepDir[VY];
+        }
+    }
+
+    return false; // Continue iteration.
+
+#undef MAPBTOFRAC
+#undef MAPBLOCKSHIFT
+}
+
+static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to_[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+{
+    // Constant terms implicitly defined by DOOM's original version of this
+    // algorithm (we must honor these fudge factors for compatibility).
+    const float epsilon    = FIX2FLT(FRACUNIT);
+    const float unitOffset = FIX2FLT(FRACUNIT);
+    uint fromBlock[2], toBlock[2];
+    vec2_t from, to, min, max;
+    float dX, dY;
+    assert(bmap);
+
+    V2_Copy(min, Blockmap_Bounds(bmap)->min);
+    V2_Copy(max, Blockmap_Bounds(bmap)->max);
+
+    // We may need to clip and/or fudge these points.
+    V2_Copy(from, from_);
+    V2_Copy(to, to_);
+
+    if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
+         from[VY] >= min[VY] && from[VY] <= max[VY]))
+    {
+        // 'From' is outside the blockmap (really? very unusual...)
         return true;
     }
 
     // Check the easy case of a path that lies completely outside the bmap.
-    if((origin[VX] < min[VX] && dest[VX] < min[VX]) ||
-       (origin[VX] > max[VX] && dest[VX] > max[VX]) ||
-       (origin[VY] < min[VY] && dest[VY] < min[VY]) ||
-       (origin[VY] > max[VY] && dest[VY] > max[VY]))
-    {   // Nothing intercepts outside the blockmap!
+    if((from[VX] < min[VX] && to[VX] < min[VX]) ||
+       (from[VX] > max[VX] && to[VX] > max[VX]) ||
+       (from[VY] < min[VY] && to[VY] < min[VY]) ||
+       (from[VY] > max[VY] && to[VY] > max[VY]))
+    {
+        // Nothing intercepts outside the blockmap!
         return true;
     }
 
-    if((FLT2FIX(origin[VX] - min[VX]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VX] += 1; // Don't side exactly on a line.
-    if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VY] += 1; // Don't side exactly on a line.
+    // Lines should not be perfectly parallel to a blockmap axis.
+    // We honor these so-called fudge factors for compatible behavior
+    // with DOOM's algorithm.
+    dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
+    dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
+    if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
+    if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
-    traceLOS.pos[VX] = FLT2FIX(origin[VX]);
-    traceLOS.pos[VY] = FLT2FIX(origin[VY]);
-    traceLOS.dX = FLT2FIX(dest[VX] - origin[VX]);
-    traceLOS.dY = FLT2FIX(dest[VY] - origin[VY]);
+    traceLOS.pos[VX] = FLT2FIX(from[VX]);
+    traceLOS.pos[VY] = FLT2FIX(from[VY]);
+    traceLOS.dX = FLT2FIX(to[VX] - from[VX]);
+    traceLOS.dY = FLT2FIX(to[VY] - from[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
-     * Clip path so that dest is within the AABB of the blockmap (note we
-     * would have already abandoned if origin lay outside. Also, to avoid
-     * potential rounding errors which might occur when determining the
-     * blocks later, we will shrink the bbox slightly first.
+     * Clip path so that 'to' is within the AABB of the blockmap (note we
+     * would have already abandoned if 'from' lay outside..
      */
-
-    if(!(dest[VX] >= min[VX] && dest[VX] <= max[VX] &&
-         dest[VY] >= min[VY] && dest[VY] <= max[VY]))
+    if(!(to[VX] >= min[VX] && to[VX] <= max[VX] &&
+         to[VY] >= min[VY] && to[VY] <= max[VY]))
     {
-        // Dest is outside the blockmap.
-        vec2_t bbox[4], point;
+        // 'to' is outside the blockmap.
+        vec2_t bounds[4], point;
         float ab;
 
-        V2_Set(bbox[0], min[VX] + 1, min[VY] + 1);
-        V2_Set(bbox[1], min[VX] + 1, max[VY] - 1);
-        V2_Set(bbox[2], max[VX] - 1, max[VY] - 1);
-        V2_Set(bbox[3], max[VX] - 1, min[VY] + 1);
+        V2_Set(bounds[0], min[VX], min[VY]);
+        V2_Set(bounds[1], min[VX], max[VY]);
+        V2_Set(bounds[2], max[VX], max[VY]);
+        V2_Set(bounds[3], max[VX], min[VY]);
 
-        ab = V2_Intercept(origin, dest, bbox[0], bbox[1], point);
+        ab = V2_Intercept(from, to, bounds[0], bounds[1], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[1], bbox[2], point);
+        ab = V2_Intercept(from, to, bounds[1], bounds[2], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[2], bbox[3], point);
+        ab = V2_Intercept(from, to, bounds[2], bounds[3], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[3], bbox[0], point);
+        ab = V2_Intercept(from, to, bounds[3], bounds[0], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
     }
 
-    // Clipping already applied above, so we don't need to check it again.
-    Blockmap_CellCoords(map->lineDefBlockmap, originBlock, origin);
-    Blockmap_CellCoords(map->lineDefBlockmap, destBlock, dest);
+    // Clipping already applied above, so we don't need to check it again...
+    Blockmap_CellCoords(bmap, fromBlock, from);
+    Blockmap_CellCoords(bmap, toBlock, to);
 
-    earlyout = flags & PT_EARLYOUT;
+    V2_Subtract(from, from, min);
+    V2_Subtract(to, to, min);
+    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, paramaters);
+}
 
-    validCount++;
+typedef struct {
+    int (*callback) (linedef_t*, void*);
+    void* paramaters;
+} iteratepolyobjlinedefs_params_t;
+
+static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
+{
+    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
+    return P_PolyobjLinesIterator(po, p->callback, p->paramaters);
+}
+
+static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    iteratepolyobjlinedefs_params_t iplParams;
+    iplParams.callback = PIT_AddLineIntercepts;
+    iplParams.paramaters = NULL;
+    return Map_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
+}
+
+static int collectLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    return Map_IterateCellLineDefs(map, block, PIT_AddLineIntercepts, NULL);
+}
+
+static int collectMobjIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    return Map_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
+}
+
+/**
+ * Traces a line between @a from and @a to, making a callback for each
+ * interceptable object linked within Blockmap cells which cover the path this
+ * defines.
+ */
+int Map_PathTraverse(gamemap_t* map, float const from[2], float const to[2],
+    int flags, traverser_t callback, void* paramaters)
+{
+    // A new intercept trace begins...
     P_ClearIntercepts();
+    validCount++;
 
-    V2_Subtract(origin, origin, min);
-    V2_Subtract(dest, dest, min);
+    // Step #1: Collect intercepts.
+    if(flags & PT_ADDLINES)
+    {
+        if(numPolyObjs != 0)
+        {
+            traverseCellPath(map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
+        }
+        traverseCellPath(map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
+    }
+    if(flags & PT_ADDMOBJS)
+    {
+        traverseCellPath(map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
+    }
 
-    if(!P_CellPathTraverse(originBlock, destBlock, origin, dest, flags))
-        return true; // Early out.
-
-    // Go through the sorted list.
-    return P_TraverseIntercepts(trav, 1.0f);
-
-#undef MAPBLOCKSIZE
+    // Step #2: Process sorted intercepts.
+    return P_TraverseIntercepts(callback, paramaters);
 }
 
 /// \note Part of the Doomsday public API.
-int P_PathTraverse2(float x1, float y1, float x2, float y2, int flags,
-    int (*trav) (intercept_t*), void* paramaters)
+int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback,
+    void* paramaters)
 {
     gamemap_t* map = P_GetCurrentMap();
-    return Map_PathTraverse(map, x1, y1, x2, y2, flags, trav, paramaters);
+    return Map_PathTraverse(map, from, to, flags, callback, paramaters);
 }
 
 /// \note Part of the Doomsday public API.
-int P_PathTraverse(float x1, float y1, float x2, float y2, int flags,
-    int (*trav) (intercept_t*))
+int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback)
 {
-    return P_PathTraverse2(x1, y1, x2, y2, flags, trav, NULL/*no params*/);
+    return P_PathTraverse2(from, to, flags, callback, NULL/*no paramaters*/);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags,
+    traverser_t callback, void* paramaters)
+{
+    vec2_t from, to;
+    V2_Set(from, fromX, fromY);
+    V2_Set(to, toX, toY);
+    return P_PathTraverse2(from, to, flags, callback, paramaters);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags,
+    traverser_t callback)
+{
+    return P_PathTraverseXY2(fromX, fromY, toX, toY, flags, callback, NULL/*no paramaters*/);
 }

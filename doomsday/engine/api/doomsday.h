@@ -250,11 +250,13 @@ extern          "C" {
                         (sector_t* sector, int (*func) (struct mobj_s*, void*),
                          void* data);
 
-    int             P_PathTraverse(float x1, float y1, float x2, float y2,
-                                   int flags,
-                                   int (*trav) (intercept_t*));
-    boolean         P_CheckLineSight(const float from[3], const float to[3],
-                                     float bottomSlope, float topSlope, int flags);
+    int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+
+    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+
+    boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);

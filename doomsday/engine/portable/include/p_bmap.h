@@ -110,12 +110,6 @@ int Map_IterateCellBlockPolyobjLineDefs(gamemap_t* map, const GridmapBlock* bloc
     int (*callback) (linedef_t*, void*), void* paramaters);
 
 /**
- * General Blockmap algorithms/utilities
- */
-boolean P_CellPathTraverse(const uint start[2], const uint end[2],
-    const float origin[2], const float dest[2], int flags);
-
-/**
  * Render the Blockmap debugging visual.
  * \todo Split this out into its own module.
  */

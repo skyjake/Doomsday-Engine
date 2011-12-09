@@ -696,10 +696,13 @@ typedef struct {
     float           pos[2], dX, dY;
 } fdivline_t;
 
-// For PathTraverse.
-#define PT_ADDLINES             1
-#define PT_ADDMOBJS             2
-#define PT_EARLYOUT             4
+/**
+ * @defgroup pathTraverseFlags  Path Traverse Flags.
+ * @{
+ */
+#define PT_ADDLINES            1 /// Intercept with LineDefs.
+#define PT_ADDMOBJS            2 /// Intercept with Mobjs.
+/**@}*/
 
 typedef enum {
     ST_HORIZONTAL,
@@ -729,15 +732,15 @@ typedef enum intercepttype_e {
 } intercepttype_t;
 
 typedef struct intercept_s {
-    float           frac; // Along trace line.
+    float           distance; // Along trace vector as a fraction.
     intercepttype_t type;
     union {
-        struct mobj_s* mo;
+        struct mobj_s* mobj;
         struct linedef_s* lineDef;
     } d;
 } intercept_t;
 
-typedef int (*traverser_t) (intercept_t* in);
+typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
 #define NO_INDEX            0xffffffff
 

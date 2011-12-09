@@ -5,9 +5,6 @@ NAME            "DOOMSDAY"
 ; Free ordinals:
 ; 65 formerly P_GetBlockRootIdx
 ; 68 formerly P_BlockLinesIterator
-; 69 formerly P_BlockMobjsIterator
-; 70 formerly P_BlockPolyobjsIterator
-; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
 ; 95 formerly R_FlatNumForName
 ; 96 formerly R_CheckTextureNumForName
@@ -184,7 +181,10 @@ EXPORTS
     P_SubsectorsBoxIterator     @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
-    P_PathTraverse              @75 NONAME
+    P_PathTraverse              @77 NONAME
+    P_PathTraverse2             @69 NONAME
+    P_PathTraverseXY            @75 NONAME
+    P_PathTraverseXY2           @70 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME

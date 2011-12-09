@@ -123,7 +123,7 @@ static float tmHeight;
 static linedef_t* tmHitLine;
 #endif
 static float tmDropoffZ;
-static float bestSlideFrac, secondSlideFrac;
+static float bestSlideDistance, secondSlideDistance;
 static linedef_t* bestSlideLine, *secondSlideLine;
 
 static mobj_t* slideMo;
@@ -1606,7 +1606,7 @@ boolean P_TryMove3f(mobj_t* thing, float x, float y, float z)
  * \fixme DJS - This routine has gotten way too big, split if(in->isaline)
  * to a seperate routine?
  */
-int PTR_ShootTraverse(intercept_t* in)
+int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
 {
 #if __JHEXEN__
     extern mobj_t lavaInflictor;
@@ -1653,7 +1653,7 @@ int PTR_ShootTraverse(intercept_t* in)
 
         // Crosses a two sided line.
         P_LineOpening(li);
-        dist = attackRange * in->frac;
+        dist = attackRange * in->distance;
 
         if(P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT) !=
            P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
@@ -1678,7 +1678,7 @@ int PTR_ShootTraverse(intercept_t* in)
       hitline:
 
         // Position a bit closer.
-        frac = in->frac - (4 / attackRange);
+        frac = in->distance - (4 / attackRange);
         pos[VX] = tracePos[VX] + (FIX2FLT(trace->dX) * frac);
         pos[VY] = tracePos[VY] + (FIX2FLT(trace->dY) * frac);
         pos[VZ] = tracePos[VZ] + (aimSlope * (frac * attackRange));
@@ -1793,7 +1793,7 @@ if(lineWasHit)
     }
 
     // Shot a mobj.
-    th = in->d.mo;
+    th = in->d.mobj;
     if(th == shootThing)
         return false; // Can't shoot self.
 
@@ -1807,7 +1807,7 @@ if(lineWasHit)
 #endif
 
     // Check angles to see if the thing can be aimed at
-    dist = attackRange * in->frac;
+    dist = attackRange * in->distance;
     {
     float               dz = th->pos[VZ];
 
@@ -1828,7 +1828,7 @@ if(lineWasHit)
     // Hit thing.
 
     // Position a bit closer.
-    frac = in->frac - (10 / attackRange);
+    frac = in->distance - (10 / attackRange);
 
     pos[VX] = tracePos[VX] + (FIX2FLT(trace->dX) * frac);
     pos[VY] = tracePos[VY] + (FIX2FLT(trace->dY) * frac);
@@ -1872,10 +1872,10 @@ if(lineWasHit)
         }
 
 #if __JHEXEN__
-        if(!(in->d.mo->flags2 & MF2_INVULNERABLE))
+        if(!(in->d.mobj->flags2 & MF2_INVULNERABLE))
 #endif
         {
-            if(!(in->d.mo->flags & MF_NOBLOOD))
+            if(!(in->d.mobj->flags & MF_NOBLOOD))
             {
                 if(damageDone > 0)
                 {   // Damage was inflicted, so shed some blood.
@@ -1886,12 +1886,12 @@ if(lineWasHit)
 # if __JHEXEN__
                     if(PuffType == MT_AXEPUFF || PuffType == MT_AXEPUFF_GLOW)
                     {
-                        P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mo);
+                        P_SpawnBloodSplatter2(pos[VX], pos[VY], pos[VZ], in->d.mobj);
                     }
                     else
 # endif
                     if(P_Random() < 192)
-                        P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mo);
+                        P_SpawnBloodSplatter(pos[VX], pos[VY], pos[VZ], in->d.mobj);
 #endif
                 }
             }
@@ -1909,7 +1909,7 @@ if(lineWasHit)
 /**
  * Sets linetarget and aimSlope when a target is aimed at.
  */
-int PTR_AimTraverse(intercept_t* in)
+int PTR_AimTraverse(const intercept_t* in, void* paramaters)
 {
     float               slope, thingTopSlope, thingBottomSlope, dist;
     mobj_t*             th;
@@ -1944,7 +1944,7 @@ int PTR_AimTraverse(intercept_t* in)
         if(OPENBOTTOM >= OPENTOP)
             return true; // Stop.
 
-        dist = attackRange * in->frac;
+        dist = attackRange * in->distance;
 
         fFloor = P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT);
         fCeil = P_GetFloatp(frontSec, DMU_CEILING_HEIGHT);
@@ -1973,7 +1973,7 @@ int PTR_AimTraverse(intercept_t* in)
     }
 
     // Shot a mobj.
-    th = in->d.mo;
+    th = in->d.mobj;
     if(th == shootThing)
         return false; // Can't shoot self.
 
@@ -1991,7 +1991,7 @@ int PTR_AimTraverse(intercept_t* in)
 #endif
 
     // Check angles to see if the thing can be aimed at.
-    dist = attackRange * in->frac;
+    dist = attackRange * in->distance;
     {
     float               posZ = th->pos[VZ];
 
@@ -2074,7 +2074,7 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, float distance)
     attackRange = distance;
     lineTarget = NULL;
 
-    P_PathTraverse(t1->pos[VX], t1->pos[VY], pos[VX], pos[VY],
+    P_PathTraverseXY(t1->pos[VX], t1->pos[VY], pos[VX], pos[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_AimTraverse);
 
     if(lineTarget)
@@ -2129,7 +2129,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     attackRange = distance;
     aimSlope = slope;
 
-    if(!P_PathTraverse(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
+    if(!P_PathTraverseXY(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
                       PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
     {
 #if __JHEXEN__
@@ -2262,7 +2262,7 @@ void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance)
     P_MobjsBoxIterator(&box, PIT_RadiusAttack, 0);
 }
 
-int PTR_UseTraverse(intercept_t* in)
+int PTR_UseTraverse(const intercept_t* in, void* paramaters)
 {
     int                 side;
     xline_t*            xline;
@@ -2351,7 +2351,7 @@ void P_UseLines(player_t* player)
     pos[VX] += USERANGE * FIX2FLT(finecosine[an]);
     pos[VY] += USERANGE * FIX2FLT(finesine[an]);
 
-    P_PathTraverse(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY],
+    P_PathTraverseXY(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY],
                    PT_ADDLINES, PTR_UseTraverse);
 }
 
@@ -2461,7 +2461,7 @@ static void P_HitSlideLine(linedef_t* ld)
     tmMove[MY] = newLen * FIX2FLT(finesine[an]);
 }
 
-int PTR_SlideTraverse(intercept_t* in)
+int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 {
     linedef_t*          li;
 
@@ -2499,11 +2499,11 @@ int PTR_SlideTraverse(intercept_t* in)
 
     // The line does block movement, see if it is closer than best so far.
   isblocking:
-    if(in->frac < bestSlideFrac)
+    if(in->distance < bestSlideDistance)
     {
-        secondSlideFrac = bestSlideFrac;
+        secondSlideDistance = bestSlideDistance;
         secondSlideLine = bestSlideLine;
-        bestSlideFrac = in->frac;
+        bestSlideDistance = in->distance;
         bestSlideLine = li;
     }
 
@@ -2559,20 +2559,20 @@ void P_SlideMove(mobj_t* mo)
             trailpos[VY] += mo->radius;
         }
 
-        bestSlideFrac = 1;
+        bestSlideDistance = 1;
 
-        P_PathTraverse(leadpos[VX], leadpos[VY],
+        P_PathTraverseXY(leadpos[VX], leadpos[VY],
                        leadpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
-        P_PathTraverse(trailpos[VX], leadpos[VY],
+        P_PathTraverseXY(trailpos[VX], leadpos[VY],
                        trailpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
-        P_PathTraverse(leadpos[VX], trailpos[VY],
+        P_PathTraverseXY(leadpos[VX], trailpos[VY],
                        leadpos[VX] + mo->mom[MX], trailpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
 
         // Move up to the wall.
-        if(bestSlideFrac == 1)
+        if(bestSlideDistance == 1)
         {   // The move must have hit the middle, so stairstep. $dropoff_fix
           stairstep:
             /**
@@ -2594,11 +2594,11 @@ void P_SlideMove(mobj_t* mo)
         }
 
         // Fudge a bit to make sure it doesn't hit.
-        bestSlideFrac -= (1.0f / 32);
-        if(bestSlideFrac > 0)
+        bestSlideDistance -= (1.0f / 32);
+        if(bestSlideDistance > 0)
         {
-            newPos[VX] = mo->mom[MX] * bestSlideFrac;
-            newPos[VY] = mo->mom[MY] * bestSlideFrac;
+            newPos[VX] = mo->mom[MX] * bestSlideDistance;
+            newPos[VY] = mo->mom[MY] * bestSlideDistance;
             newPos[VZ] = DDMAXFLOAT; // Just initialize with *something*.
 
             // $dropoff_fix: Allow objects to drop off ledges
@@ -2614,14 +2614,14 @@ void P_SlideMove(mobj_t* mo)
 
         // Now continue along the wall.
         // First calculate remainder.
-        bestSlideFrac = 1 - (bestSlideFrac + (1.0f / 32));
-        if(bestSlideFrac > 1)
-            bestSlideFrac = 1;
-        if(bestSlideFrac <= 0)
+        bestSlideDistance = 1 - (bestSlideDistance + (1.0f / 32));
+        if(bestSlideDistance > 1)
+            bestSlideDistance = 1;
+        if(bestSlideDistance <= 0)
             break;
 
-        tmMove[MX] = mo->mom[MX] * bestSlideFrac;
-        tmMove[MY] = mo->mom[MY] * bestSlideFrac;
+        tmMove[MX] = mo->mom[MX] * bestSlideDistance;
+        tmMove[MY] = mo->mom[MY] * bestSlideDistance;
 
         P_HitSlideLine(bestSlideLine); // Clip the move.
 
@@ -3059,7 +3059,7 @@ static void checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj)
     }
 }
 
-int PTR_BounceTraverse(intercept_t* in)
+int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
 {
     linedef_t*          li;
 
@@ -3088,11 +3088,11 @@ int PTR_BounceTraverse(intercept_t* in)
 
     // the line does block movement, see if it is closer than best so far.
   bounceblocking:
-    if(in->frac < bestSlideFrac)
+    if(in->distance < bestSlideDistance)
     {
-        secondSlideFrac = bestSlideFrac;
+        secondSlideDistance = bestSlideDistance;
         secondSlideLine = bestSlideLine;
-        bestSlideFrac = in->frac;
+        bestSlideDistance = in->distance;
         bestSlideLine = li;
     }
 
@@ -3124,8 +3124,8 @@ void P_BounceWall(mobj_t* mo)
         leadPos[VY] -= mo->radius;
 
     bestSlideLine = NULL;
-    bestSlideFrac = 1;
-    P_PathTraverse(leadPos[VX], leadPos[VY],
+    bestSlideDistance = 1;
+    P_PathTraverseXY(leadPos[VX], leadPos[VY],
                    leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
                    PT_ADDLINES, PTR_BounceTraverse);
 
@@ -3152,7 +3152,7 @@ void P_BounceWall(mobj_t* mo)
     mo->mom[MY] = moveLen * FIX2FLT(finesine[an]);
 }
 
-int PTR_PuzzleItemTraverse(intercept_t* in)
+int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
 {
     switch(in->type)
     {
@@ -3212,9 +3212,8 @@ int PTR_PuzzleItemTraverse(intercept_t* in)
         return true; // Stop searching.
         }
 
-    case ICPT_MOBJ: // Mobj.
-        {
-        mobj_t*             mo = in->d.mo;
+    case ICPT_MOBJ: { // Mobj.
+        mobj_t* mo = in->d.mobj;
 
         if(mo->special != USE_PUZZLE_ITEM_SPECIAL)
             return false; // Wrong special...
@@ -3227,7 +3226,7 @@ int PTR_PuzzleItemTraverse(intercept_t* in)
         puzzleActivated = true;
 
         return true; // Stop searching.
-        }
+      }
     default:
         Con_Error("PTR_PuzzleItemTraverse: Unknown intercept type %i.", in->type);
         exit(1); // Unreachable.
@@ -3259,7 +3258,7 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
     pos2[VX] += FIX2FLT(USERANGE * finecosine[angle]);
     pos2[VY] += FIX2FLT(USERANGE * finesine[angle]);
 
-    P_PathTraverse(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
+    P_PathTraverseXY(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_PuzzleItemTraverse);
 
     if(!puzzleActivated)

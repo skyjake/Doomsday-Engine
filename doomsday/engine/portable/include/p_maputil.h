@@ -76,8 +76,8 @@ void            P_LineOpening(linedef_t* linedef);
 void            P_MobjLink(mobj_t* mo, byte flags);
 int             P_MobjUnlink(mobj_t* mo);
 
-int             PIT_AddLineIntercepts(linedef_t *ld, void *data);
-int             PIT_AddMobjIntercepts(mobj_t *mo, void *data);
+int PIT_AddLineIntercepts(linedef_t* ld, void* paramaters);
+int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters);
 
 int             P_MobjLinesIterator(mobj_t *mo,
                                     int (*func) (linedef_t *, void *),
@@ -106,5 +106,13 @@ int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*)
 
 int P_SubsectorsBoxIterator(const AABoxf* box, sector_t *sector, int (*callback) (subsector_t*, void*), void* paramaters);
 
-int P_PathTraverse(float x1, float y1, float x2, float y2, int flags, int (*trav) (intercept_t *));
+int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback);
+int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+
+/**
+ * Same as P_PathTraverse except 'from' and 'to' arguments are specified
+ * as two sets of separate X and Y map space coordinates.
+ */
+int P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback);
+int P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 #endif

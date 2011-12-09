@@ -52,12 +52,6 @@ typedef struct mobjtargetableparams_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
-
-divline_t trace;
-boolean earlyout;
-int     ptflags;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
