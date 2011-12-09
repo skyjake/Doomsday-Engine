@@ -2015,7 +2015,7 @@ void G_StartNewInit(void)
 void G_StartNewGame(skillmode_t skill)
 {
     G_StartNewInit();
-    G_InitNew(skill, 0, P_TranslateMap(0));
+    G_InitNew(skill, 0, 0);
 }
 #endif
 
