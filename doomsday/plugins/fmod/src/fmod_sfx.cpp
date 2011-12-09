@@ -24,6 +24,9 @@
 #include "driver_fmod.h"
 #include "dd_share.h"
 #include <stdlib.h>
+#ifdef WIN32
+#  define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 #include <vector>
 
@@ -322,7 +325,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
 
     // Set the properties of the sound.
     info.channel->setPan(info.pan);
-    info.channel->setFrequency(buf->freq);
+    info.channel->setFrequency(float(buf->freq));
     info.channel->setVolume(info.volume);
     info.channel->setUserData(buf);
     info.channel->setCallback(channelCallback);
@@ -399,10 +402,10 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         break;
 
     case SFXBP_FREQUENCY: {
-        unsigned int newFreq = buf->rate * value;
+        unsigned int newFreq = unsigned int(buf->rate * value);
         if(buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
-        if(info.channel) info.channel->setFrequency(buf->freq);
+        if(info.channel) info.channel->setFrequency(float(buf->freq));
         break; }
 
     case SFXBP_PAN:
@@ -510,7 +513,7 @@ void DS_SFX_Listenerv(int prop, float* values)
 
     case SFXLP_ORIENTATION:
         // Convert the angles to front and up vectors.
-        listener.setOrientation(values[0]/180*M_PI, values[1]/180*M_PI);
+        listener.setOrientation(float(values[0]/180*M_PI), float(values[1]/180*M_PI));
         break;
 
     case SFXLP_VELOCITY:

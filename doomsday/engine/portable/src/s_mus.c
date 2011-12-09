@@ -595,8 +595,6 @@ static void Mus_UpdateSoundFont(cvar_t* var)
 D_CMD(PlayMusic)
 {
     int                 i;
-    size_t              len;
-    void*               ptr;
     filename_t          buf;
 
     if(!musAvail)

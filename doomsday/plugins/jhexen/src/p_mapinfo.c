@@ -321,6 +321,10 @@ static void setSongCDTrack(int index, int track)
 {
     int         cdTrack = track;
 
+#ifdef _DEBUG
+    Con_Message("setSongCDTrack: index=%i, track=%i\n", index, track);
+#endif
+
     // Set the internal array.
     cdNonMapTracks[index] = sc_Number;
 
