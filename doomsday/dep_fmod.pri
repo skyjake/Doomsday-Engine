@@ -10,7 +10,7 @@ win32 {
     LIBS += -L$$FMOD_DIR/api/lib -lfmodex_vc
 
     INSTALLS += fmodlibs
-    fmodlibs.files = $$FMOD_DIR/api/lib/fmodex_vc.dll
+    fmodlibs.files = $$FMOD_DIR/api/fmodex.dll
     fmodlibs.path = $$DENG_LIB_DIR
 }
 else:macx {
