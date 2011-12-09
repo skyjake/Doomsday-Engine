@@ -121,6 +121,12 @@ int DM_CDAudio_Play(int track, int looped)
 
     needRelease = true;
 #else
+#ifdef WIN32
+    /// @todo Check if there is a data track.
+    // (Hexen CD) The audio tracks begin at #1 even though there is a data track.
+    track--;
+#endif
+
     if(!cdSound)
     {
         // Get info about the CD tracks.
