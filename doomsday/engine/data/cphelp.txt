@@ -35,6 +35,11 @@ cvar = music-source
 def = External files
 desc = There can be a WAD lump, external file and a CD track associated with each song. This setting controls which of these resources is actually played when the song is started. If the selected resource is not available, one that is will be chosen instead.
 
+[MIDI soundfont]
+cvar = music-soundfont
+def = No
+desc = Filename of the SF2/DLS1 soundfont file to be used with MIDI playback (if supported by audio plugin).
+
 [16-bit sound effects]
 cvar = sound-16bit
 def = No

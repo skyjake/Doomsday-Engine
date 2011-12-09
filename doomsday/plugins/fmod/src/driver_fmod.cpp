@@ -77,6 +77,7 @@ int DS_Init(void)
 void DS_Shutdown(void)
 {
     DM_Music_Shutdown();
+    DM_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
     fmodSystem->release();
@@ -104,9 +105,16 @@ int DS_Set(int prop, const void* ptr)
 
     switch(prop)
     {
-    case AUDIOP_SOUNDFONT_FILENAME:
-        DSFMOD_TRACE("DS_Set: Soundfont = " << (char*)ptr);
-        return true;
+    case AUDIOP_SOUNDFONT_FILENAME: {
+        const char* path = reinterpret_cast<const char*>(ptr);
+        DSFMOD_TRACE("DS_Set: Soundfont = " << path);
+        if(!path || !strlen(path))
+        {
+            // Use the default.
+            path = 0;
+        }
+        DM_Music_SetSoundFont(path);
+        return true; }
 
     default:
         DSFMOD_TRACE("DS_Set: Unknown property " << prop);

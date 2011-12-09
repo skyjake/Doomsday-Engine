@@ -42,6 +42,7 @@ static FMOD::Sound* song;
 static FMOD::Channel* music;
 static float musicVolume;
 static SongBuffer* songBuffer;
+static const char* soundFontFileName;
 
 static FMOD_RESULT F_CALLBACK musicCallback(FMOD_CHANNEL* chanPtr,
                                             FMOD_CHANNEL_CALLBACKTYPE type,
@@ -82,12 +83,22 @@ static void releaseSongBuffer()
     }
 }
 
+void setDefaultStreamBufferSize()
+{
+    if(!fmodSystem) return;
+
+    FMOD_RESULT result;
+    result = fmodSystem->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
+    DSFMOD_ERRCHECK(result);
+}
+
 int DM_Music_Init(void)
 {
     music = 0;
     song = 0;
     musicVolume = 1.f;
     songBuffer = 0;
+    soundFontFileName = 0; // empty for the default
     return fmodSystem != 0;
 }
 
@@ -98,8 +109,15 @@ void DM_Music_Shutdown(void)
     releaseSongBuffer();
     releaseSong();
 
+    soundFontFileName = 0;
+
     // Will be shut down with the rest of FMOD.
     DSFMOD_TRACE("Music_Shutdown.");
+}
+
+void DM_Music_SetSoundFont(const char* fileName)
+{
+    soundFontFileName = fileName;
 }
 
 void DM_Music_Set(int prop, float value)
@@ -127,7 +145,7 @@ int DM_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "FMOD/Mus");
+            strcpy((char*) ptr, "FMOD/Ext");
             return true;
         }
         break;
@@ -186,9 +204,12 @@ int DM_Music_Play(int looped)
         // Get rid of the old song.
         releaseSong();
 
+        setDefaultStreamBufferSize();
+
         FMOD_CREATESOUNDEXINFO extra;
         zeroStruct(extra);
         extra.length = songBuffer->size;
+        extra.dlsname = soundFontFileName;
 
         // Load a new song.
         FMOD_RESULT result;
@@ -233,8 +254,15 @@ int DM_Music_PlayFile(const char *filename, int looped)
     releaseSong();
     releaseSongBuffer();
 
+    setDefaultStreamBufferSize();
+
+    FMOD_CREATESOUNDEXINFO extra;
+    zeroStruct(extra);
+    extra.dlsname = soundFontFileName;
+
     FMOD_RESULT result;
-    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0), 0, &song);
+    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
+                                     &extra, &song);
     DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
     DSFMOD_ERRCHECK(result);
 

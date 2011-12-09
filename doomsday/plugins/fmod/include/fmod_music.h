@@ -45,4 +45,7 @@ int     DM_Music_PlayFile(const char *filename, int looped);
 }
 #endif
 
+// Internal:
+void    DM_Music_SetSoundFont(const char* fileName);
+
 #endif /* end of include guard: __DSFMOD_MUS_H__ */

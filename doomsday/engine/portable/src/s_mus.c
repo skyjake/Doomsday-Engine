@@ -455,8 +455,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     filename_t          path;
     int                 i, order[3], songID;
 
-    if(!musAvail)
-        return false;
+    if(!musAvail) return false;
 
     songID = def - defs.music;
 
@@ -496,7 +495,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
     // Try to start the song.
     for(i = 0; i < 3; ++i)
     {
-        boolean             canPlayMUS = true;
+        boolean canPlayMUS = true;
 
         switch(order[i])
         {

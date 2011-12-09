@@ -498,6 +498,8 @@ win32 {
 # TODO: Move it to the engine.
 SOURCES += ../plugins/common/src/m_fixed.c
 
+OTHER_FILES += data/cphelp.txt
+
 # Resources ------------------------------------------------------------------
 
 data.files = $$OUT_PWD/../doomsday.pk3
