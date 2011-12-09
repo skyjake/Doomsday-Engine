@@ -15,4 +15,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "fmod_util.h"
 
+bool endsWith(const char* str, const char* ending)
+{
+    if(!str || !ending) return false;
+    int len = strlen(str);
+    int endLen = strlen(ending);
+    if(len < endLen) return false;
+    return !strnicmp(str + len - endLen, ending, endLen);
+}

@@ -23,44 +23,92 @@
 
 #include "driver_fmod.h"
 
+static int numDrives;
+
 int DM_CDAudio_Init(void)
 {
+    numDrives = 0;
+    FMOD_RESULT result;
+    result = fmodSystem->getNumCDROMDrives(&numDrives);
+    DSFMOD_ERRCHECK(result);
+    DSFMOD_TRACE("CDAudio_Init: " << numDrives << " CD drives available.");
+
     return fmodSystem != 0;
 }
 
 void DM_CDAudio_Shutdown(void)
 {
     // Will be shut down with the rest of FMOD.
+    DSFMOD_TRACE("CDAudio_Shutdown.");
 }
 
 void DM_CDAudio_Update(void)
-{}
+{
+    // No need to update anything.
+}
 
 void DM_CDAudio_Set(int prop, float value)
 {
     if(!fmodSystem) return;
+
+    switch(prop)
+    {
+    case MUSIP_VOLUME:
+        DM_Music_Set(MUSIP_VOLUME, value);
+        break;
+
+    default:
+        break;
+    }
 }
 
-int DM_CDAudio_Get(int prop, void* value)
+int DM_CDAudio_Get(int prop, void* ptr)
 {
-    if(!fmodSystem) return 0;
-    return 0;
+    if(!fmodSystem) return false;
+
+    switch(prop)
+    {
+    case MUSIP_ID:
+        if(ptr)
+        {
+            strcpy((char*) ptr, "FMOD/CD");
+            return true;
+        }
+        break;
+
+    case MUSIP_PLAYING:
+        return DM_Music_Get(MUSIP_PLAYING, ptr);
+
+    default:
+        return false;
+    }
+
+    return true;
 }
 
 int DM_CDAudio_Play(int track, int looped)
 {
-    if(!fmodSystem) return 0;
-    return 0;
+    if(!fmodSystem) return false;
+    if(!numDrives)
+    {
+        DSFMOD_TRACE("CDAudio_Play: No CD drives available.");
+        return false;
+    }
+
+    // Use a bigger stream buffer for CD audio.
+    fmodSystem->setStreamBufferSize(64*1024, FMOD_TIMEUNIT_RAWBYTES);
+
+
+
+    return true;
 }
 
 void DM_CDAudio_Pause(int pause)
 {
-    if(!fmodSystem) return;
-
+    DM_Music_Pause(pause);
 }
 
 void DM_CDAudio_Stop(void)
 {
-    if(!fmodSystem) return;
-
+    DM_Music_Stop();
 }

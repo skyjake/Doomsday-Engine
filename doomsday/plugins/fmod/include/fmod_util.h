@@ -27,6 +27,11 @@
 #include <fmod.h>
 #include <fmod.hpp>
 #include <cstring>
+#include <string.h>
+
+#ifdef UNIX
+#  define strnicmp strncasecmp
+#endif
 
 class FMODVector : public FMOD_VECTOR
 {
@@ -48,5 +53,7 @@ template <typename T> void zeroStruct(T& t) {
     std::memset(&t, 0, sizeof(T));
     t.cbsize = sizeof(T);
 }
+
+bool endsWith(const char* str, const char* ending);
 
 #endif /* end of include guard: __DSFMOD_UTIL_H__ */

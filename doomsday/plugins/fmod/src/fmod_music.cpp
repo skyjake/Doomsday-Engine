@@ -209,7 +209,10 @@ int DM_Music_Play(int looped)
         FMOD_CREATESOUNDEXINFO extra;
         zeroStruct(extra);
         extra.length = songBuffer->size;
-        extra.dlsname = soundFontFileName;
+        if(endsWith(soundFontFileName, ".dls"))
+        {
+            extra.dlsname = soundFontFileName;
+        }
 
         // Load a new song.
         FMOD_RESULT result;
@@ -258,7 +261,10 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     FMOD_CREATESOUNDEXINFO extra;
     zeroStruct(extra);
-    extra.dlsname = soundFontFileName;
+    if(endsWith(soundFontFileName, ".dls"))
+    {
+        extra.dlsname = soundFontFileName;
+    }
 
     FMOD_RESULT result;
     result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),

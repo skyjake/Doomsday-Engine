@@ -67,6 +67,25 @@ int DS_Init(void)
     settings.HRTFFreq = 11000;
     fmodSystem->setAdvancedSettings(&settings);
 
+#ifdef _DEBUG
+    int numPlugins = 0;
+    fmodSystem->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
+    DSFMOD_TRACE("Plugins loaded: " << numPlugins);
+    for(int i = 0; i < numPlugins; i++)
+    {
+        unsigned int handle;
+        fmodSystem->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
+
+        FMOD_PLUGINTYPE pType;
+        char pName[100];
+        unsigned int pVer = 0;
+        fmodSystem->getPluginInfo(handle, &pType, pName, sizeof(pName), &pVer);
+
+        DSFMOD_TRACE("Plugin " << i << ", handle " << handle << ": type " << pType
+                     << ", name:'" << pName << "', ver:" << pVer);
+    }
+#endif
+
     DSFMOD_TRACE("DS_Init: FMOD initialized.");
     return true;
 }
