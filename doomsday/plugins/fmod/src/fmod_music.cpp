@@ -195,6 +195,17 @@ static bool startSong()
     return true;
 }
 
+/// @internal
+bool DM_Music_PlaySound(FMOD::Sound* customSound)
+{
+    releaseSong();
+    releaseSongBuffer();
+
+    // Use this as the song.
+    song = customSound;
+    return startSong();
+}
+
 int DM_Music_Play(int looped)
 {
     if(!fmodSystem) return false;

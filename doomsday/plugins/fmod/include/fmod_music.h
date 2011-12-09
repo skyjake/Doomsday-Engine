@@ -24,6 +24,8 @@
 #ifndef __DSFMOD_MUS_H__
 #define __DSFMOD_MUS_H__
 
+#include <fmod.h>
+#include <fmod.hpp>
 #include "sys_audiod_mus.h"
 
 #ifdef __cplusplus
@@ -47,5 +49,6 @@ int     DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
 void    DM_Music_SetSoundFont(const char* fileName);
+bool    DM_Music_PlaySound(FMOD::Sound* customSound);
 
 #endif /* end of include guard: __DSFMOD_MUS_H__ */
