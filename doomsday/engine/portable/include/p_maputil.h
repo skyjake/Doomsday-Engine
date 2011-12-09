@@ -76,7 +76,7 @@ void            P_LineOpening(linedef_t* linedef);
 void            P_MobjLink(mobj_t* mo, byte flags);
 int             P_MobjUnlink(mobj_t* mo);
 
-int PIT_AddLineIntercepts(linedef_t* ld, void* paramaters);
+int PIT_AddLineDefIntercepts(linedef_t* ld, void* paramaters);
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters);
 
 int             P_MobjLinesIterator(mobj_t *mo,

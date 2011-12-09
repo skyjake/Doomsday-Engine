@@ -332,7 +332,7 @@ void* Gridmap_CellXY(Gridmap* gm, uint x, uint y, boolean alloc)
     return cell->userData = Z_Calloc(gm->sizeOfCell, gm->zoneTag, 0);
 }
 
-void* Gridmap_Cell(Gridmap* gm, const uint coords[2], boolean alloc)
+void* Gridmap_Cell(Gridmap* gm, uint const coords[2], boolean alloc)
 {
     return Gridmap_CellXY(gm, coords[X], coords[Y], alloc);
 }

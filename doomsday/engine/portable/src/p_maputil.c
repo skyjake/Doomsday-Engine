@@ -946,7 +946,7 @@ int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*)
  *
  * @return  Non-zero if current iteration should stop.
  */
-int PIT_AddLineIntercepts(linedef_t* lineDef, void* paramaters)
+int PIT_AddLineDefIntercepts(linedef_t* lineDef, void* paramaters)
 {
     float distance;
     divline_t dl;
@@ -1031,17 +1031,12 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
     return false;
 }
 
-static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
-    const uint toBlock[2], const float from[2], const float to[2],
+static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
+    uint const toBlock[2], float const from[2], float const to[2],
     int (*callback) (uint const block[2], void* paramaters), void* paramaters)
 {
-/// \todo This stuff is obsolete and needs to be removed.
-#define MAPBLOCKSHIFT   (FRACBITS+7)
-#define MAPBTOFRAC      (MAPBLOCKSHIFT-FRACBITS)
-
     int result = false; // Continue iteration.
-    fixed_t intercept[2], step[2];
-    float delta[2], partial;
+    float intercept[2], delta[2], partial;
     uint count, block[2];
     int stepDir[2];
     assert(bmap);
@@ -1049,13 +1044,15 @@ static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
     if(toBlock[VX] > fromBlock[VX])
     {
         stepDir[VX] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(from[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = 1 - (partial - (int) partial);
         delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
     }
     else if(toBlock[VX] < fromBlock[VX])
     {
         stepDir[VX] = -1;
-        partial = FIX2FLT((FLT2FIX(from[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = (partial - (int) partial);
         delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
     }
     else
@@ -1064,19 +1061,20 @@ static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
         partial = 1;
         delta[VY] = 256;
     }
-    intercept[VY] = (FLT2FIX(from[VY]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VY]);
+    intercept[VY] = from[VY] / Blockmap_CellHeight(bmap) + partial * delta[VY];
 
     if(toBlock[VY] > fromBlock[VY])
     {
         stepDir[VY] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(from[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = 1 - (partial - (int) partial);
         delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
     }
     else if(toBlock[VY] < fromBlock[VY])
     {
         stepDir[VY] = -1;
-        partial = FIX2FLT((FLT2FIX(from[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = (partial - (int) partial);
         delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
     }
     else
@@ -1085,8 +1083,7 @@ static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
         partial = 1;
         delta[VX] = 256;
     }
-    intercept[VX] = (FLT2FIX(from[VX]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VX]);
+    intercept[VX] = from[VX] / Blockmap_CellWidth(bmap) + partial * delta[VX];
 
     //
     // Step through map blocks.
@@ -1096,8 +1093,6 @@ static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
     // break and ending up in an infinite loop..
     block[VX] = fromBlock[VX];
     block[VY] = fromBlock[VY];
-    step[VX] = FLT2FIX(delta[VX]);
-    step[VY] = FLT2FIX(delta[VY]);
     for(count = 0; count < 64; ++count)
     {
         result = callback(block, paramaters);
@@ -1106,22 +1101,20 @@ static int traverseCellPath2(Blockmap* bmap, const uint fromBlock[2],
         if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
             break;
 
-        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
+        /// \todo Replace incremental translation?
+        if((uint)intercept[VY] == block[VY])
         {
-            intercept[VY] += step[VY];
             block[VX] += stepDir[VX];
+            intercept[VY] += delta[VY];
         }
-        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
+        else if((uint)intercept[VX] == block[VX])
         {
-            intercept[VX] += step[VX];
             block[VY] += stepDir[VY];
+            intercept[VX] += delta[VX];
         }
     }
 
     return false; // Continue iteration.
-
-#undef MAPBTOFRAC
-#undef MAPBLOCKSHIFT
 }
 
 static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to_[2],
@@ -1231,7 +1224,7 @@ static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters
 {
     gamemap_t* map = (gamemap_t*)paramaters;
     iteratepolyobjlinedefs_params_t iplParams;
-    iplParams.callback = PIT_AddLineIntercepts;
+    iplParams.callback = PIT_AddLineDefIntercepts;
     iplParams.paramaters = NULL;
     return Map_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
 }
@@ -1239,7 +1232,7 @@ static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters
 static int collectLineDefIntercepts(uint const block[2], void* paramaters)
 {
     gamemap_t* map = (gamemap_t*)paramaters;
-    return Map_IterateCellLineDefs(map, block, PIT_AddLineIntercepts, NULL);
+    return Map_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
 }
 
 static int collectMobjIntercepts(uint const block[2], void* paramaters)

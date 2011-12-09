@@ -95,7 +95,7 @@ void Gridmap_Size(const Gridmap* gridmap, uint widthHeight[2]);
  * @return  User data for the identified cell else @c NULL if an
  *     invalid reference or no data present (and not allocating).
  */
-void* Gridmap_Cell(Gridmap* gridmap, const uint coords[2], boolean alloc);
+void* Gridmap_Cell(Gridmap* gridmap, uint const coords[2], boolean alloc);
 
 /**
  * Same as Gridmap::Cell except cell coordinates are expressed with
