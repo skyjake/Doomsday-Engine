@@ -250,6 +250,10 @@ void P_InitMapInfo(void)
             case MCMD_CDTRACK:
                 SC_MustGetNumber();
                 info->cdTrack = sc_Number;
+#ifdef WIN32
+                // Track numbers begin at 1 even though there is a data track on the CD.
+                info->cdTrack--;
+#endif
                 break;
 
             case MCMD_SKY1:
@@ -321,12 +325,17 @@ static void setSongCDTrack(int index, int track)
 {
     int         cdTrack = track;
 
+#ifdef WIN32
+    // Track numbers begin at #1 even though there is a data track.
+    cdTrack--;
+#endif
+
 #ifdef _DEBUG
     Con_Message("setSongCDTrack: index=%i, track=%i\n", index, track);
 #endif
 
     // Set the internal array.
-    cdNonMapTracks[index] = sc_Number;
+    cdNonMapTracks[index] = cdTrack;
 
     // Update the corresponding Doomsday definition.
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),

@@ -121,10 +121,6 @@ int DM_CDAudio_Play(int track, int looped)
 
     needRelease = true;
 #else
-    /// @todo Check if the first track is a data track.
-    // (Hexen CD) The first track is a data track, so the numbering is off by one.
-    track--;
-
     if(!cdSound)
     {
         // Get info about the CD tracks.
