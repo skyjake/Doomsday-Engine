@@ -40,16 +40,16 @@ int     DS_Set(int prop, const void* ptr);
 
 }
 
-#define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
-
 #ifdef _DEBUG
-#  define DSFMOD_ERRCHECK(result) \
+#  define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
+#else
+#  define DSFMOD_TRACE(args)
+#endif
+
+#define DSFMOD_ERRCHECK(result) \
     if(result != FMOD_OK) { \
         printf("[dsFMOD] Error at %s, line %i: (%d) %s\n", __FILE__, __LINE__, result, FMOD_ErrorString(result)); \
     }
-#else
-#  define DSFMOD_ERRCHECK(result)
-#endif
 
 extern FMOD::System* fmodSystem;
 

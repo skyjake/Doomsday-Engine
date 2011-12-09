@@ -49,6 +49,6 @@ int     DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
 void    DM_Music_SetSoundFont(const char* fileName);
-bool    DM_Music_PlaySound(FMOD::Sound* customSound);
+bool    DM_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
 
 #endif /* end of include guard: __DSFMOD_MUS_H__ */

@@ -40,6 +40,7 @@ struct SongBuffer
 
 static FMOD::Sound* song;
 static FMOD::Channel* music;
+static bool needReleaseSong;
 static float musicVolume;
 static SongBuffer* songBuffer;
 static const char* soundFontFileName;
@@ -68,8 +69,17 @@ static void releaseSong()
 {
     if(song)
     {
-        song->release();
+        if(needReleaseSong)
+        {
+            DSFMOD_TRACE("releaseSong: Song " << song << " will be released.")
+            song->release();
+        }
+        else
+        {
+            DSFMOD_TRACE("releaseSong: Song " << song << " will NOT be released.");
+        }
         song = 0;
+        needReleaseSong = false;
     }
     music = 0;
 }
@@ -96,6 +106,7 @@ int DM_Music_Init(void)
 {
     music = 0;
     song = 0;
+    needReleaseSong = false;
     musicVolume = 1.f;
     songBuffer = 0;
     soundFontFileName = 0; // empty for the default
@@ -196,12 +207,13 @@ static bool startSong()
 }
 
 /// @internal
-bool DM_Music_PlaySound(FMOD::Sound* customSound)
+bool DM_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
 {
     releaseSong();
     releaseSongBuffer();
 
     // Use this as the song.
+    needReleaseSong = needRelease;
     song = customSound;
     return startSong();
 }
@@ -233,6 +245,8 @@ int DM_Music_Play(int looped)
                                          &extra, &song);
         DSFMOD_TRACE("Music_Play: songBuffer has " << songBuffer->size << " bytes, created Sound " << song);
         DSFMOD_ERRCHECK(result);
+
+        needReleaseSong = true;
 
         // The song buffer remains in memory, in case FMOD needs to stream from it.
     }
@@ -282,6 +296,8 @@ int DM_Music_PlayFile(const char *filename, int looped)
                                      &extra, &song);
     DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
     DSFMOD_ERRCHECK(result);
+
+    needReleaseSong = true;
 
     return startSong();
 }

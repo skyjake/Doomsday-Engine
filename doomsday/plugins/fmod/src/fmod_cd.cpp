@@ -107,6 +107,7 @@ int DM_CDAudio_Play(int track, int looped)
     DSFMOD_TRACE("CDAudio_Play: CD drive name: '" << driveName << "'");
 
     FMOD::Sound* trackSound = 0;
+    bool needRelease = false;
 
 #ifdef MACOSX
     // The CD tracks are mapped to files.
@@ -117,11 +118,13 @@ int DM_CDAudio_Play(int track, int looped)
     result = fmodSystem->createStream(trackPath, (looped? FMOD_LOOP_NORMAL : 0), 0, &trackSound);
     DSFMOD_TRACE("CDAudio_Play: Track " << track << " => Sound " << trackSound);
     DSFMOD_ERRCHECK(result);
+
+    needRelease = true;
 #else
     if(!cdSound)
     {
         // Get info about the CD tracks.
-        result = fmodSystem->createStream(driveName, FMOD_OPENONLY /* | (looped? FMOD_LOOP_NORMAL : 0)*/, 0, &cdSound);
+        result = fmodSystem->createStream(driveName, FMOD_OPENONLY, 0, &cdSound);
         DSFMOD_TRACE("CDAudio_Play: Opening CD, cdSound " << cdSound);
         DSFMOD_ERRCHECK(result);
     }
@@ -146,7 +149,7 @@ int DM_CDAudio_Play(int track, int looped)
     }
 #endif
 
-    return DM_Music_PlaySound(trackSound); // takes ownership
+    return DM_Music_PlaySound(trackSound, needRelease); // takes ownership
 }
 
 void DM_CDAudio_Pause(int pause)
