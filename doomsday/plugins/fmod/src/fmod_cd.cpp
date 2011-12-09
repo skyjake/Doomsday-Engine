@@ -109,10 +109,13 @@ int DM_CDAudio_Play(int track, int looped)
     FMOD::Sound* trackSound = 0;
     bool needRelease = false;
 
-#ifdef MACOSX
+#if MACOSX
+    for(char* ptr = driveName; *ptr; ptr++)
+        if(*ptr == '/') *ptr = ':';
+
     // The CD tracks are mapped to files.
     char trackPath[200];
-    sprintf(trackPath, "/Volumes/Audio CD/%i Audio Track.aiff", track);
+    sprintf(trackPath, "/Volumes/%s/%i Audio Track.aiff", driveName, track);
     DSFMOD_TRACE("CDAudio_Play: Opening track: " << trackPath);
 
     result = fmodSystem->createStream(trackPath, (looped? FMOD_LOOP_NORMAL : 0), 0, &trackSound);
