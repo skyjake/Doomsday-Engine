@@ -199,7 +199,6 @@ ccmdtemplate_t gameCCmds[] = {
     {"cheat",       "s",    CCmdCheat},
     {"god",         NULL,   CCmdCheatGod},
     {"noclip",      NULL,   CCmdCheatNoClip},
-    {"warp",        NULL,   CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
@@ -234,6 +233,10 @@ void G_ConsoleRegistration(void)
         Con_AddVariable(&gameCVars[i]);
     for(i = 0; gameCCmds[i].name; ++i)
         Con_AddCommand(&gameCCmds[i]);
+
+    C_CMD("warp", "i", CheatWarp);
+    if(gameModeBits & GM_ANY_DOOM)
+        C_CMD("warp", "ii", CheatWarp);
 }
 
 /**

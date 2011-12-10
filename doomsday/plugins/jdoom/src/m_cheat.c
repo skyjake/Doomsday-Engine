@@ -692,28 +692,22 @@ D_CMD(CheatWarp)
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        int num;
-
-        if(argc != 2)
-            return false;
-
-        num = atoi(argv[1]);
+        int num = atoi(argv[1]);
         args[0] = num / 10 + '0';
         args[1] = num % 10 + '0';
     }
-    else if(gameMode == doom_chex)
-    {
-        if(argc != 2)
-            return false;
-        args[0] = 0;
-        args[1] = (int) argv[1][0];
-    }
     else
     {
-        if(argc != 3)
-            return false;
-        args[0] = (int) argv[1][0];
-        args[1] = (int) argv[2][0];
+        if(argc == 3)
+        {
+            args[0] = (int) argv[1][0];
+            args[1] = (int) argv[2][0];
+        }
+        else
+        {
+            args[0] = 0;
+            args[1] = (int) argv[1][0];
+        }
     }
 
     Cht_WarpFunc(args, CONSOLEPLAYER);
