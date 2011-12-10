@@ -1498,9 +1498,9 @@ void NetSv_DoAction(int player, Reader* msg)
                 angle, lookDir, actionParam);
 #endif
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
-        if(G_GetGameState() == GS_INTERMISSION)
+        if(G_GameState() == GS_INTERMISSION)
         {
             if(type == GPA_USE || type == GPA_FIRE)
             {

@@ -44,11 +44,13 @@ void            G_StartTitle(void);
 void            G_StartHelp(void);
 void            G_EndGame(void);
 
-gamestate_t     G_GetGameState(void);
+gamestate_t     G_GameState(void);
 void            G_ChangeGameState(gamestate_t state);
 
-gameaction_t    G_GetGameAction(void);
+gameaction_t    G_GameAction(void);
 void            G_SetGameAction(gameaction_t action);
+
+boolean G_QuitInProgress(void);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);

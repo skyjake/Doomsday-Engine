@@ -484,7 +484,7 @@ void G_RegisterBindClasses(void)
 
 D_CMD(Pause)
 {
-    if(G_GetGameAction() == GA_QUIT)
+    if(G_GameAction() == GA_QUIT)
         return false;
 
     // Toggle pause.

@@ -689,10 +689,10 @@ void P_RebornPlayer(int plrNum)
         p->plr->mo->dPlayer = NULL;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
 #ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GetGameState());
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GameState());
 #endif
         return; // Nothing else to do.
     }
@@ -1075,7 +1075,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     if(IS_CLIENT)
     {
-        if(G_GetGameState() == GS_MAP)
+        if(G_GameState() == GS_MAP)
         {
             // Anywhere will do, for now.
             spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,

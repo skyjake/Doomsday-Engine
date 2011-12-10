@@ -1004,7 +1004,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     Writer_WriteInt32(msg, actionType);
 
     // Position of the action.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         Writer_WriteFloat(msg, player->plr->mo->pos[VX]);
         Writer_WriteFloat(msg, player->plr->mo->pos[VY]);

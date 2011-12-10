@@ -1147,7 +1147,7 @@ D_CMD(MakeLocal)
     char                buf[20];
     player_t           *plr;
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         Con_Printf("You must be in a game to create a local player.\n");
         return false;
@@ -1182,7 +1182,7 @@ D_CMD(PrintPlayerCoords)
 {
     mobj_t* mo;
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
         return false;
 
     if(!(mo = players[CONSOLEPLAYER].plr->mo))
@@ -1199,7 +1199,7 @@ D_CMD(CycleSpy)
     //// \fixme The engine should do this.
     Con_Printf("Spying not allowed.\n");
 #if 0
-    if(G_GetGameState() == GS_MAP && !deathmatch)
+    if(G_GameState() == GS_MAP && !deathmatch)
     {   // Cycle the display player.
         do
         {

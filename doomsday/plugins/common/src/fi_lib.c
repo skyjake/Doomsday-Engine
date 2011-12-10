@@ -222,7 +222,7 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 
     if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
 
-    prevGamestate = G_GetGameState();
+    prevGamestate = G_GameState();
     prevTopScript = stackTop();
 
     // Configure the predefined fonts.
@@ -371,7 +371,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
 int Hook_FinaleScriptTicker(int hookType, int finaleId, void* paramaters)
 {
     ddhook_finale_script_ticker_paramaters_t* p = (ddhook_finale_script_ticker_paramaters_t*) paramaters;
-    gamestate_t gamestate = G_GetGameState();
+    gamestate_t gamestate = G_GameState();
     fi_state_t* s = stateForFinaleId(finaleId);
 
     if(!s)

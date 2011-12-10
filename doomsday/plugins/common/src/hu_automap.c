@@ -1544,7 +1544,7 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
 
-    if(G_GetGameState() != GS_MAP && yes)
+    if(G_GameState() != GS_MAP && yes)
         return false;
 
     if(yes == am->active)
@@ -1617,7 +1617,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     P_GetControlState(player, CTL_MAP_PAN_X, &panX[0], &panX[1]);
     P_GetControlState(player, CTL_MAP_PAN_Y, &panY[0], &panY[1]);
 
-    if(G_GetGameState() != GS_MAP) return;
+    if(G_GameState() != GS_MAP) return;
 
     // Move towards the target alpha level for the automap.
     am->alphaTimer += (cfg.automapOpenSeconds == 0? 1 : 1/cfg.automapOpenSeconds * ticLength);

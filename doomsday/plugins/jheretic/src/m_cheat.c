@@ -661,7 +661,7 @@ D_CMD(Cheat)
 
 D_CMD(CheatGod)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
         {
@@ -692,7 +692,7 @@ D_CMD(CheatGod)
 
 D_CMD(CheatNoClip)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         if(IS_CLIENT)
         {
@@ -740,7 +740,7 @@ static int suicideResponse(msgresponse_t response, void* context)
 
 D_CMD(CheatSuicide)
 {
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         player_t* plr;
 
@@ -878,7 +878,7 @@ D_CMD(CheatGive)
             return false;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         Con_Printf("Can only \"give\" when in a game!\n");
         return true;
@@ -1091,7 +1091,7 @@ D_CMD(CheatLeaveMap)
     if(!cheatsEnabled())
         return false;
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_CHAT, NULL);
         Con_Printf("Can only exit a map when in a game!\n");

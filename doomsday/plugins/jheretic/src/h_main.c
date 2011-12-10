@@ -410,6 +410,37 @@ void H_PostInit(void)
         cfg.netDeathmatch = true;
     }
 
+    // turbo option.
+    p = ArgCheck("-turbo");
+    turboMul = 1.0f;
+    if(p)
+    {
+        int scale = 200;
+
+        turboParm = true;
+        if(p < myargc - 1)
+            scale = atoi(Argv(p + 1));
+        if(scale < 10)
+            scale = 10;
+        if(scale > 400)
+            scale = 400;
+
+        Con_Message("turbo scale: %i%%\n", scale);
+        turboMul = scale / 100.f;
+    }
+
+    // Load a saved game?
+    p = ArgCheck("-loadgame");
+    if(p && p < myargc - 1)
+    {
+        const int saveSlot = Argv(p + 1)[0] - '0';
+        if(G_LoadGame(saveSlot))
+        {
+            // No further initialization is to be done.
+            return;
+        }
+    }
+
     p = ArgCheck("-skill");
     if(p && p < myargc - 1)
     {
@@ -433,25 +464,6 @@ void H_PostInit(void)
         autoStart = true;
     }
 
-    // turbo option.
-    p = ArgCheck("-turbo");
-    turboMul = 1.0f;
-    if(p)
-    {
-        int             scale = 200;
-
-        turboParm = true;
-        if(p < myargc - 1)
-            scale = atoi(Argv(p + 1));
-        if(scale < 10)
-            scale = 10;
-        if(scale > 400)
-            scale = 400;
-
-        Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
-    }
-
     // Are we autostarting?
     if(autoStart)
     {
@@ -459,15 +471,7 @@ void H_PostInit(void)
                     startMap+1, startSkill + 1);
     }
 
-    // Load a saved game?
-    p = ArgCheck("-loadgame");
-    if(p && p < myargc - 1)
-    {
-        const int saveSlot = Argv(p + 1)[0] - '0';
-        G_LoadGame(saveSlot);
-    }
-
-    // Check valid episode and map
+    // Validate episode and map.
     uri = G_ComposeMapUri(startEpisode, startMap);
     path = Uri_ComposePath(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
@@ -478,16 +482,13 @@ void H_PostInit(void)
     Str_Delete(path);
     Uri_Delete(uri);
 
-    if(G_GetGameAction() != GA_LOADGAME)
+    if(autoStart || IS_NETGAME)
     {
-        if(autoStart || IS_NETGAME)
-        {
-            G_DeferedInitNew(startSkill, startEpisode, startMap);
-        }
-        else
-        {
-            G_StartTitle(); // Start up intro loop.
-        }
+        G_DeferedInitNew(startSkill, startEpisode, startMap);
+    }
+    else
+    {
+        G_StartTitle(); // Start up intro loop.
     }
 }
 

@@ -109,7 +109,7 @@ static boolean maximizedViewWindow(int player)
         Con_Error("maximizedViewWindow: Invalid player #%i.", player);
         exit(1);
     }
-    return (!(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+    return (!(G_GameState() == GS_MAP && cfg.screenBlocks <= 10 &&
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
@@ -253,7 +253,7 @@ void R_CycleGammaLevel(void)
 {
     char buf[50];
 
-    if(GA_QUIT == G_GetGameAction())
+    if(G_QuitInProgress())
     {
         return;
     }

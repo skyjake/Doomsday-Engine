@@ -195,7 +195,7 @@ static void rendPlayerView(int player)
 static void rendHUD(int player, const RectRaw* portGeometry)
 {
     if(player < 0 || player >= MAXPLAYERS) return;
-    if(G_GetGameState() != GS_MAP) return;
+    if(G_GameState() != GS_MAP) return;
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
     if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
 
@@ -240,7 +240,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
         return;
     }   
 
-    switch(G_GetGameState())
+    switch(G_GameState())
     {
     case GS_MAP:
         if(!ST_AutomapObscures2(player, windowGeometry))
@@ -267,7 +267,7 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 
 void D_DrawWindow(const Size2Raw* windowSize)
 {
-    if(G_GetGameState() == GS_INTERMISSION)
+    if(G_GameState() == GS_INTERMISSION)
     {
         WI_Drawer();
     }
@@ -275,7 +275,7 @@ void D_DrawWindow(const Size2Raw* windowSize)
     // Draw HUD displays; menu, messages.
     Hu_Drawer();
 
-    if(G_GetGameAction() == GA_QUIT)
+    if(G_QuitInProgress())
     {
         DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
     }

@@ -394,6 +394,25 @@ void X_PostInit(void)
         sc_ScriptsDir = Argv(p + 1);
     }
 
+    P_InitMapMusicInfo(); // Init music fields in mapinfo.
+
+    Con_Message("Parsing SNDINFO...\n");
+    S_ParseSndInfoLump();
+
+    Con_Message("SN_InitSequenceScript: Registering sound sequences.\n");
+    SN_InitSequenceScript();
+
+    // Load a saved game?
+    p = ArgCheckWith("-loadgame", 1);
+    if(p != 0)
+    {
+        if(G_LoadGame(atoi(Argv(p + 1))))
+        {
+            // No further initialization is to be done.
+            return;
+        }
+    }
+
     if((p = ArgCheckWith("-skill", 1)) != 0)
     {
         startSkill = (skillmode_t)(Argv(p + 1)[0] - '1');
@@ -421,15 +440,8 @@ void X_PostInit(void)
     {
         Con_Message("Player Class: '%s'\n", PCLASS_INFO(startPlayerClass)->niceName);
         cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
+        autoStart = true;
     }
-
-    P_InitMapMusicInfo(); // Init music fields in mapinfo.
-
-    Con_Message("Parsing SNDINFO...\n");
-    S_ParseSndInfoLump();
-
-    Con_Message("SN_InitSequenceScript: Registering sound sequences.\n");
-    SN_InitSequenceScript();
 
     // Check for command line warping.
     p = ArgCheck("-warp");
@@ -442,7 +454,7 @@ void X_PostInit(void)
     else
     {
         warpMap = 0;
-        startMap = P_TranslateMap(0);
+        startMap = P_TranslateMap(warpMap);
     }
 
     // Are we autostarting?
@@ -451,13 +463,7 @@ void X_PostInit(void)
         Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap+1, P_GetMapName(startMap), startMap+1, startSkill + 1);
     }
 
-    // Load a saved game?
-    if((p = ArgCheckWith("-loadgame", 1)) != 0)
-    {
-        G_LoadGame(atoi(Argv(p + 1)));
-    }
-
-    // Check valid episode and map.
+    // Validate episode and map.
     uri = G_ComposeMapUri(0, startMap);
     path = Uri_ComposePath(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
@@ -467,17 +473,14 @@ void X_PostInit(void)
     Str_Delete(path);
     Uri_Delete(uri);
 
-    if(G_GetGameAction() != GA_LOADGAME)
+    if(autoStart || IS_NETGAME)
     {
-        if(autoStart || IS_NETGAME)
-        {
-            G_DeferedInitNew(startSkill, startEpisode, startMap);
-        }
-        else
-        {
-            // Start up intro loop.
-            G_StartTitle();
-        }
+        G_DeferedInitNew(startSkill, startEpisode, startMap);
+    }
+    else
+    {
+        // Start up intro loop.
+        G_StartTitle();
     }
 }
 

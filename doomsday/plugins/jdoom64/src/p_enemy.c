@@ -539,7 +539,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }

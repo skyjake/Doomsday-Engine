@@ -2678,7 +2678,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 
     // No other commands are responded to once shutdown has begun.
-    if(GA_QUIT == G_GetGameAction())
+    if(G_QuitInProgress())
     {
         return;
     }
@@ -3685,7 +3685,7 @@ int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramate
             return 0;
         }
 
-        if(G_GetGameState() != GS_MAP)
+        if(G_GameState() != GS_MAP)
         {
             Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
             return 0;

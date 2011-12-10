@@ -154,6 +154,7 @@ void    G_DoVictory(void);
 void    G_DoWorldDone(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
+void    G_DoQuitGame(void);
 boolean G_ValidateMap(uint *episode, uint *map);
 
 #if __JHEXEN__
@@ -430,6 +431,7 @@ static uint dEpisode;
 static uint dMap;
 
 static gameaction_t gameAction;
+static boolean quitInProgress;
 
 // CODE --------------------------------------------------------------------
 
@@ -444,16 +446,20 @@ void G_Register(void)
         Con_AddCommand(gameCmds + i);
 }
 
+boolean G_QuitInProgress(void)
+{
+    return quitInProgress;
+}
+
 void G_SetGameAction(gameaction_t action)
 {
-    if(gameAction == GA_QUIT)
-        return;
+    if(G_QuitInProgress()) return;
 
     if(gameAction != action)
         gameAction = action;
 }
 
-gameaction_t G_GetGameAction(void)
+gameaction_t G_GameAction(void)
 {
     return gameAction;
 }
@@ -464,6 +470,7 @@ gameaction_t G_GetGameAction(void)
  */
 void G_CommonPreInit(void)
 {
+    quitInProgress = false;
     verbose = ArgExists("-verbose");
 
     // Register hooks.
@@ -942,7 +949,7 @@ void G_CommonShutdown(void)
  *
  * @return              The current game state.
  */
-gamestate_t G_GetGameState(void)
+gamestate_t G_GameState(void)
 {
     return gameState;
 }
@@ -990,8 +997,8 @@ int G_UIResponder(event_t* ev)
     if(!Hu_MenuIsActive())
     {
         // Any key/button down pops up menu if in demos.
-        if((G_GetGameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
-           (G_GetGameState() == GS_INFINE && FI_IsMenuTrigger()))
+        if((G_GameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
+           (G_GameState() == GS_INFINE && FI_IsMenuTrigger()))
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
@@ -1011,8 +1018,7 @@ void G_ChangeGameState(gamestate_t state)
     boolean gameUIActive = false;
     boolean gameActive = true;
 
-    if(G_GetGameAction() == GA_QUIT)
-        return;
+    if(G_QuitInProgress()) return;
 
     if(state < 0 || state >= NUM_GAME_STATES)
         Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
@@ -1094,11 +1100,7 @@ void G_StartTitle(void)
 void G_StartHelp(void)
 {
     ddfinale_t fin;
-
-    if(GA_QUIT == G_GetGameAction())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
@@ -1127,10 +1129,7 @@ int G_EndGameResponse(msgresponse_t response, void* context)
 
 void G_EndGame(void)
 {
-    if(GA_QUIT == G_GetGameAction())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     if(!userGame)
     {
@@ -1283,11 +1282,10 @@ int G_Responder(event_t* ev)
     assert(NULL != ev);
 
     // Eat all events once shutdown has begun.
-    if(GA_QUIT == G_GetGameAction())
-        return true; 
+    if(G_QuitInProgress()) return true;
 
     // With the menu active, none of these should respond to input events.
-    if(G_GetGameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
+    if(G_GameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
         if(ST_Responder(ev))
             return true;
@@ -1296,17 +1294,13 @@ int G_Responder(event_t* ev)
             return true;
     }
 
-    if(Hu_MenuResponder(ev))
-        return true;
-
-    return false; // Not eaten.
+    return Hu_MenuResponder(ev);
 }
 
 int G_PrivilegedResponder(event_t* ev)
 {
     // Ignore all events once shutdown has begun.
-    if(GA_QUIT == G_GetGameAction())
-        return false;
+    if(G_QuitInProgress()) return false;
 
     if(Hu_MenuPrivilegedResponder(ev))
         return true;
@@ -1335,7 +1329,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
         return;
 
     plrnum = pl - players;
-    gameState = G_GetGameState();
+    gameState = G_GameState();
 
     gsvHealth = pl->health;
 #if !__JHEXEN__
@@ -1391,89 +1385,88 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 #endif
 }
 
-static void runGameAction(void)
+void G_DoQuitGame(void)
 {
-    if(G_GetGameAction() == GA_QUIT)
-    {
 #define QUITWAIT_MILLISECONDS 1500
 
-        static uint quitTime = 0;
+    static uint quitTime = 0;
 
-        if(quitTime == 0)
+    if(!quitInProgress)
+    {
+        quitInProgress = true;
+        quitTime = Sys_GetRealTime();
+
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+
+        if(!IS_NETGAME)
         {
-            quitTime = Sys_GetRealTime();
-
-            Hu_MenuCommand(MCMD_CLOSEFAST);
-
-            if(!IS_NETGAME)
-            {
 #if __JDOOM__ || __JDOOM64__
-                // Play an exit sound if it is enabled.
-                if(cfg.menuQuitSound)
-                {
+            // Play an exit sound if it is enabled.
+            if(cfg.menuQuitSound)
+            {
 # if __JDOOM64__
-                    static int quitsounds[8] = {
-                        SFX_VILACT,
-                        SFX_GETPOW,
-                        SFX_PEPAIN,
-                        SFX_SLOP,
-                        SFX_SKESWG,
-                        SFX_KNTDTH,
-                        SFX_BSPACT,
-                        SFX_SGTATK
-                    };
+                static int quitsounds[8] = {
+                    SFX_VILACT,
+                    SFX_GETPOW,
+                    SFX_PEPAIN,
+                    SFX_SLOP,
+                    SFX_SKESWG,
+                    SFX_KNTDTH,
+                    SFX_BSPACT,
+                    SFX_SGTATK
+                };
 # else
-                    static int quitsounds[8] = {
-                        SFX_PLDETH,
-                        SFX_DMPAIN,
-                        SFX_POPAIN,
-                        SFX_SLOP,
-                        SFX_TELEPT,
-                        SFX_POSIT1,
-                        SFX_POSIT3,
-                        SFX_SGTATK
-                    };
-                    static int quitsounds2[8] = {
-                        SFX_VILACT,
-                        SFX_GETPOW,
-                        SFX_BOSCUB,
-                        SFX_SLOP,
-                        SFX_SKESWG,
-                        SFX_KNTDTH,
-                        SFX_BSPACT,
-                        SFX_SGTATK
-                    };
+                static int quitsounds[8] = {
+                    SFX_PLDETH,
+                    SFX_DMPAIN,
+                    SFX_POPAIN,
+                    SFX_SLOP,
+                    SFX_TELEPT,
+                    SFX_POSIT1,
+                    SFX_POSIT3,
+                    SFX_SGTATK
+                };
+                static int quitsounds2[8] = {
+                    SFX_VILACT,
+                    SFX_GETPOW,
+                    SFX_BOSCUB,
+                    SFX_SLOP,
+                    SFX_SKESWG,
+                    SFX_KNTDTH,
+                    SFX_BSPACT,
+                    SFX_SGTATK
+                };
 
-                    if(gameModeBits & GM_ANY_DOOM2)
-                        S_LocalSound(quitsounds2[P_Random() & 7], 0);
-                    else
+                if(gameModeBits & GM_ANY_DOOM2)
+                    S_LocalSound(quitsounds2[P_Random() & 7], 0);
+                else
 # endif
-                        S_LocalSound(quitsounds[P_Random() & 7], 0);
-                }
-#endif
-                DD_Executef(true, "activatebcontext deui");
+                    S_LocalSound(quitsounds[P_Random() & 7], 0);
             }
+#endif
+            DD_Executef(true, "activatebcontext deui");
         }
-
-        if(Sys_GetRealTime() > quitTime + QUITWAIT_MILLISECONDS)
-        {
-            Sys_Quit();
-        }
-        else
-        {
-            float t = (Sys_GetRealTime() - quitTime) / (float) QUITWAIT_MILLISECONDS;
-            quitDarkenOpacity = t*t*t;
-        }
-
-        // No game state changes occur once we have begun to quit.
-        return;
-
-#undef QUITWAIT_MILLISECONDS
     }
 
+    if(Sys_GetRealTime() > quitTime + QUITWAIT_MILLISECONDS)
+    {
+        Sys_Quit();
+    }
+    else
+    {
+        float t = (Sys_GetRealTime() - quitTime) / (float) QUITWAIT_MILLISECONDS;
+        quitDarkenOpacity = t*t*t;
+    }
+
+#undef QUITWAIT_MILLISECONDS
+}
+
+static void runGameAction(void)
+{
+    gameaction_t currentAction;
+
     // Do things to change the game state.
-    {gameaction_t currentAction;
-    while((currentAction = G_GetGameAction()) != GA_NONE)
+    while((currentAction = G_GameAction()) != GA_NONE)
     {
         switch(currentAction)
         {
@@ -1520,11 +1513,14 @@ static void runGameAction(void)
             G_SetGameAction(GA_NONE);
             break;
 
-        case GA_NONE:
-        default:
-            break;
+        case GA_QUIT:
+            G_DoQuitGame();
+            // No game state changes occur once we have begun to quit.
+            return;
+
+        default: break;
         }
-    }}
+    }
 }
 
 /**
@@ -1579,7 +1575,7 @@ void G_Ticker(timespan_t ticLength)
 
     runGameAction();
 
-    if(G_GetGameAction() != GA_QUIT)
+    if(!G_QuitInProgress())
     {
         // Update the viewer's look angle
         //G_LookAround(CONSOLEPLAYER);
@@ -1587,7 +1583,7 @@ void G_Ticker(timespan_t ticLength)
         if(!IS_CLIENT)
         {
             // Enable/disable sending of frames (delta sets) to clients.
-            Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_MAP);
+            Set(DD_ALLOW_FRAMES, G_GameState() == GS_MAP);
 
             // Tell Doomsday when the game is paused (clients can't pause
             // the game.)
@@ -1606,7 +1602,7 @@ void G_Ticker(timespan_t ticLength)
         }
     }
 
-    if(G_GetGameState() == GS_MAP && !IS_DEDICATED)
+    if(G_GameState() == GS_MAP && !IS_DEDICATED)
     {
         ST_Ticker(ticLength);
     }
@@ -1618,7 +1614,7 @@ void G_Ticker(timespan_t ticLength)
     if(DD_IsSharpTick())
     {
         // Do main actions.
-        switch(G_GetGameState())
+        switch(G_GameState())
         {
         case GS_MAP:
             // Update in-map game status cvar.
@@ -1647,7 +1643,7 @@ void G_Ticker(timespan_t ticLength)
             break;
 
         default:
-            if(oldGameState != G_GetGameState())
+            if(oldGameState != G_GameState())
             {
                 // Update game status cvars.
                 gsvInMap = 0;
@@ -2367,7 +2363,7 @@ boolean G_IsSaveGamePossible(void)
     player_t* player;
 
     if(IS_CLIENT || Get(DD_PLAYBACK)) return false;
-    if(GS_MAP != G_GetGameState()) return false;
+    if(GS_MAP != G_GameState()) return false;
 
     player = &players[CONSOLEPLAYER];
     if(PST_DEAD == player->playerState) return false;
@@ -2673,9 +2669,7 @@ int G_QuitGameResponse(msgresponse_t response, void* context)
 void G_QuitGame(void)
 {
     const char* endString;
-
-    if(G_GetGameAction() == GA_QUIT)
-        return; // Already in progress.
+    if(G_QuitInProgress()) return;
 
 #if __JDOOM__ || __JDOOM64__
     endString = endmsg[((int) GAMETIC % (NUM_QUITMESSAGES + 1))];
@@ -3146,7 +3140,7 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
     int result;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+    if(briefDisabled || G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return false;
 
     // Is there such a finale definition?
@@ -3172,12 +3166,12 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
     if(briefDisabled)
         return false;
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP &&
        !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
        P_GetMapCluster(map) != P_GetMapCluster(nextMap))
         return false;
 #endif
-    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+    if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
         return false;
 
     // Is there such a finale definition?
@@ -3321,10 +3315,7 @@ void G_QuickLoadGame(void)
     const gamesaveinfo_t* info;
     char buf[80];
 
-    if(GA_QUIT == G_GetGameAction())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     if(IS_NETGAME)
     {
@@ -3371,10 +3362,7 @@ void G_QuickSaveGame(void)
     boolean slotIsUsed;
     char buf[80];
 
-    if(GA_QUIT == G_GetGameAction())
-    {
-        return;
-    }
+    if(G_QuitInProgress()) return;
 
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
@@ -3383,7 +3371,7 @@ void G_QuickSaveGame(void)
         return;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);

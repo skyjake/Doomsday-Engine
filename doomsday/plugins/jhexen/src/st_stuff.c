@@ -3847,7 +3847,7 @@ void ST_doPaletteStuff(int player)
         return;
     }
 
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         if(plr->poisonCount)
         {
@@ -4106,7 +4106,7 @@ D_CMD(ChatOpen)
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GetGameAction() == GA_QUIT)
+    if(G_GameAction() == GA_QUIT)
     {
         return false;
     }
@@ -4137,7 +4137,7 @@ D_CMD(ChatAction)
     const char* cmd = argv[0] + 4;
     uiwidget_t* obj;
 
-    if(G_GetGameAction() == GA_QUIT)
+    if(G_GameAction() == GA_QUIT)
     {
         return false;
     }
@@ -4167,7 +4167,7 @@ D_CMD(ChatSendMacro)
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GetGameAction() == GA_QUIT)
+    if(G_GameAction() == GA_QUIT)
         return false;
 
     if(argc < 2 || argc > 3)
