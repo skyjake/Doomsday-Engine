@@ -67,7 +67,6 @@ void            GL_Init2DState(void);
 void            GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData);
 void            GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData);
 void            GL_ProjectionMatrix(void);
-void            GL_InfinitePerspective(DGLdouble fovy, DGLdouble aspect, DGLdouble znear);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
 
