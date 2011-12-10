@@ -180,6 +180,8 @@ void Net_Register(void)
 
 void Net_Init(void)
 {
+    int i;
+
 #if 0
     // Local ticcmds are stored into this array before they're copied
     // to netplayer[0]'s ticcmds buffer.
@@ -187,12 +189,11 @@ void Net_Init(void)
     numlocal = 0; // Nothing in the buffer.
 #endif
 
-    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
         clients[i].viewConsole = -1;
-    }}
+    }
 
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
@@ -518,15 +519,10 @@ void Net_BuildLocalCommands(timespan_t time)
 
 void Net_AllocClientBuffers(int clientId)
 {
-    int i;
+    if(clientId < 0 || clientId >= DDMAXPLAYERS) return;
 
-    memset(clients, 0, sizeof(clients));
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        // Movement smoother.
-        clients[i].smoother = Smoother_New();
-    }
+    // Movement smoother.
+    clients[clientId].smoother = Smoother_New();
 }
 
 void Net_DestroyArrays(void)
