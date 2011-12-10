@@ -94,7 +94,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 #undef DATAPATH
 }
 
-void G_PostInit(gameid_t gameId)
+void G_PreInit(gameid_t gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -109,7 +109,7 @@ void G_PostInit(gameid_t gameId)
         Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
 
-    H_PostInit();
+    H_PreInit();
 }
 
 /**
@@ -141,8 +141,8 @@ game_export_t* GetGameAPI(game_import_t* imports)
 
     // Fill in the data for the exports.
     gx.apiSize = sizeof(gx);
-    gx.PreInit = H_PreInit;
-    gx.PostInit = G_PostInit;
+    gx.PreInit = G_PreInit;
+    gx.PostInit = H_PostInit;
     gx.TryShutdown = G_TryShutdown;
     gx.Shutdown = H_Shutdown;
     gx.Ticker = G_Ticker;

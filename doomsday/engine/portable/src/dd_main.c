@@ -927,7 +927,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Now that resources have been located we can begin to initialize the game.
     if(!DD_IsNullGameInfo(p->info) && gx.PreInit)
-        gx.PreInit();
+        gx.PreInit((gameid_t)gameInfoIndex(p->info));
 
     /**
      * Parse the game's main config file.
@@ -1012,7 +1012,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     if(gx.PostInit)
     {
-        gx.PostInit((gameid_t)gameInfoIndex(p->info));
+        gx.PostInit();
         if(p->initiatedBusyMode)
             Con_SetProgress(190);
     }

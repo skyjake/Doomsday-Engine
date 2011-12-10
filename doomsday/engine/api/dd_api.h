@@ -59,8 +59,8 @@ typedef struct {
     size_t          apiSize; // sizeof(game_export_t)
 
     // Base-level.
-    void          (*PreInit) (void);
-    void          (*PostInit) (gameid_t gameId);
+    void          (*PreInit) (gameid_t gameId);
+    void          (*PostInit) (void);
     boolean       (*TryShutdown) (void);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
