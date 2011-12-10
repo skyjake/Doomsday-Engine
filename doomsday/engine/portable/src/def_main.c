@@ -1031,20 +1031,14 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramate
     tex = Textures_ToTexture(texId);
     if(tex)
     {
-        spritetex_t* sprTex = (spritetex_t*)Texture_UserData(tex);
-        assert(sprTex);
-
         mat->width  = Texture_Width(tex);
         mat->height = Texture_Height(tex);
-
-        st->texOrigin[0] = sprTex->offX;
-        st->texOrigin[1] = sprTex->offY;
     }
 #if _DEBUG
     else
     {
         ddstring_t* path = Uri_ToString(texUri);
-        Con_Message("Warning:generateMaterialDefForSpriteTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions and layer origin=[0, 0].\n", Str_Text(path));
+        Con_Message("Warning:generateMaterialDefForSpriteTexture: Texture \"%s\" has not yet been defined, resultant Material will inherit dimensions.\n", Str_Text(path));
         Str_Delete(path);
     }
 #endif

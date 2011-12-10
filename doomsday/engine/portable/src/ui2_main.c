@@ -1004,17 +1004,32 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
                     MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
-                DGLuint tex = MSU_gltexture(ms, MTU_PRIMARY);
 
-                if(tex)
+                glTexName = MSU_gltexture(ms, MTU_PRIMARY);
+                if(glTexName)
                 {
                     const texturevariantspecification_t* spec = MSU_texturespec(ms, MTU_PRIMARY);
 
                     /// \todo Utilize *all* properties of the Material.
-                    V3_Set(offset, -MSU(ms, MTU_PRIMARY).offset[0], -MSU(ms, MTU_PRIMARY).offset[1], 0);
                     V3_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
                                        ms->size.height + TS_GENERAL(spec)->border*2, 0);
                     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
+
+                    switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
+                    {
+                    case TN_SPRITES: {
+                        spritetex_t* sTex = (spritetex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+                        if(sTex)
+                        {
+                            V3_Set(offset, -sTex->offX, -sTex->offY, 0);
+                            break;
+                        }
+                      }
+                        // Fall through.
+                    default:
+                        V3_Set(offset, 0, 0, 0);
+                        break;
+                    }
                 }
             }
             break;
