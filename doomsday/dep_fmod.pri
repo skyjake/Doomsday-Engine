@@ -21,10 +21,6 @@ else:macx {
 }
 else {
     # Generic Unix.
-    isEmpty(FMOD_LIB) {
-        error("dep_fmod: Set FMOD_LIB in config_user.pri to specify which library to link against")
-    }
-
     contains(QMAKE_HOST.arch, x86_64): libname = fmodex64
     else: libname = fmodex
 
