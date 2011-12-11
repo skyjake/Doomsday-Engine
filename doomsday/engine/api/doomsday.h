@@ -394,6 +394,10 @@ void R_PrecacheSkinsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 
+void R_SetViewOrigin(int player, float const origin[3]);
+void R_SetViewAngle(int player, angle_t angle);
+void R_SetViewPitch(int player, float pitch);
+
 /**
  * Retrieve the geometry of the specified viewwindow by console player num.
  */

@@ -212,7 +212,7 @@ static angle_t pointToAngle(float x, float y)
  * @param   x           X coordinate to test.
  * @param   y           Y coordinate to test.
  *
- * @return  angle_t     Angle between the test point and viewX,y.
+ * @return  angle_t     Angle between the test point and view x,y.
  */
 angle_t R_PointToAngle(float x, float y)
 {

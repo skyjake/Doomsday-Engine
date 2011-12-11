@@ -43,11 +43,13 @@ typedef struct viewer_s {
 } viewer_t;
 
 typedef struct viewdata_s {
-    viewer_t sharp;
     viewer_t current;
     viewer_t lastSharp[2]; // For smoothing.
+    viewer_t latest; // Sharp values taken from here.
+
     float frontVec[3], upVec[3], sideVec[3];
     float viewCos, viewSin;
+
     RectRaw window, windowTarget, windowOld;
     float windowInter;
 } viewdata_t;
@@ -58,9 +60,6 @@ typedef enum fontstyle_e {
     FS_LIGHT,
     FONTSTYLE_COUNT
 } fontstyle_t;
-
-extern float viewX, viewY, viewZ, viewPitch;
-extern angle_t viewAngle;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern int      loadInStartupMode;
@@ -98,10 +97,9 @@ boolean R_SetViewGrid(int numCols, int numRows);
 
 void R_SetupDefaultViewWindow(int player);
 
-void R_LoadSystemFonts(void);
-
-const char* R_ChooseFixedFont(void);
-const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
+void R_SetViewOrigin(int consoleNum, float const origin[3]);
+void R_SetViewAngle(int consoleNum, angle_t angle);
+void R_SetViewPitch(int consoleNum, float pitch);
 
 int R_ViewWindowGeometry(int player, RectRaw* geometry);
 int R_ViewWindowOrigin(int player, Point2Raw* origin);
@@ -119,5 +117,10 @@ int R_ViewPortOrigin(int player, Point2Raw* origin);
 int R_ViewPortSize(int player, Size2Raw* size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+
+void R_LoadSystemFonts(void);
+
+const char* R_ChooseFixedFont(void);
+const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY);
 
 #endif /* LIBDENG_REFRESH_MAIN_H */

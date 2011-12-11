@@ -561,13 +561,9 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
 #endif
 
-    if(plrNum == DISPLAYPLAYER)
-    {
-        // The display player has been spawned, so tell the engine where
-        // the camera is initially located. After this it will be updated
-        // after every game tick.
-        R_UpdateConsoleView(plrNum);
-    }
+    // Player has been spawned, so tell the engine where the camera is
+    // initially located. After this it will be updated after every game tick.
+    R_UpdateConsoleView(plrNum);
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,

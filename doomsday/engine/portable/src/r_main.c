@@ -77,9 +77,6 @@ int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
 
-float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
-angle_t viewAngle = 0;
-
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
 
@@ -207,6 +204,39 @@ void R_LoadSystemFonts(void)
 boolean R_IsSkySurface(const surface_t* suf)
 {
     return (suf && suf->material && Material_IsSkyMasked(suf->material));
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewOrigin(int consoleNum, float const origin[3])
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        V3_Copy(vd->latest.pos, origin);
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewAngle(int consoleNum, angle_t angle)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        vd->latest.angle = angle;
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewPitch(int consoleNum, float pitch)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        vd->latest.pitch = pitch;
+    }
 }
 
 void R_SetupDefaultViewWindow(int player)
@@ -667,17 +697,14 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
  */
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
-    ddplayer_t* ddpl;
     viewdata_t* vd = &viewData[player - ddPlayers];
+    ddplayer_t* ddpl;
 
-    if(!player || !player->shared.mo)
-    {
-        return;
-    }
-
-    memcpy(view, &vd->sharp, sizeof(viewer_t));
-
+    if(!player || !player->shared.mo) return;
     ddpl = &player->shared;
+
+    R_CopyViewer(view, &vd->latest);
+
     if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
         /* STUB
@@ -1076,14 +1103,7 @@ void R_RenderPlayerView(int num)
         DD_ResetTimer();
     }
 
-    // Update the new sharp position.
     vd = &viewData[num];
-    vd->sharp.pos[VX] = viewX;
-    vd->sharp.pos[VY] = viewY;
-    vd->sharp.pos[VZ] = viewZ;
-    vd->sharp.angle = viewAngle; /* $unifiedangles */
-    vd->sharp.pitch = viewPitch;
-
     if(vd->window.size.width == 0 || vd->window.size.height == 0)
         return; // Too early? Game has not configured the view window?
 

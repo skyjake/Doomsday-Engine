@@ -1,9 +1,10 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 688 <--
+; Highest ordinal is currently: --> 691 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
+
 EXPORTS
 ; Plugins.
     Plug_AddHook                @1 NONAME
@@ -511,6 +512,10 @@ EXPORTS
     R_ViewPortSize              @596 NONAME
 
     R_SetViewPortPlayer         @65 NONAME
+
+    R_SetViewOrigin             @689 NONAME
+    R_SetViewAngle              @690 NONAME
+    R_SetViewPitch              @691 NONAME
 
     R_GetSpriteInfo             @94 NONAME
 

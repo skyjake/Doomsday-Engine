@@ -99,9 +99,10 @@ void P_RunPlayers(timespan_t ticLength)
  */
 void P_DoTick(void)
 {
+    int i;
+
     // If the game is paused, nothing will happen.
-    if(paused)
-        return;
+    if(paused) return;
 
     actualMapTime++;
 
@@ -134,8 +135,11 @@ void P_DoTick(void)
     P_AnimateSurfaces();
 #endif
 
-    // Let the engine know where the viewplayer is now.
-    R_UpdateConsoleView(DISPLAYPLAYER);
+    // Let the engine know where the local players are now.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
 
     // For par times, among other things.
     mapTime++;

@@ -1986,21 +1986,6 @@ void* DD_GetVariable(int ddvalue)
     case DD_GAME_EXPORTS:
         return &gx;
 
-    case DD_VIEW_X:
-        return &viewX;
-
-    case DD_VIEW_Y:
-        return &viewY;
-
-    case DD_VIEW_Z:
-        return &viewZ;
-
-    case DD_VIEW_ANGLE:
-        return &viewAngle;
-
-    case DD_VIEW_PITCH:
-        return &viewPitch;
-
     case DD_SECTOR_COUNT:
         return &numSectors;
 
@@ -2165,26 +2150,6 @@ void DD_SetVariable(int ddvalue, void *parm)
     {
         switch(ddvalue)
         {
-        case DD_VIEW_X:
-            viewX = *(float*) parm;
-            return;
-
-        case DD_VIEW_Y:
-            viewY = *(float*) parm;
-            return;
-
-        case DD_VIEW_Z:
-            viewZ = *(float*) parm;
-            return;
-
-        case DD_VIEW_ANGLE:
-            viewAngle = *(angle_t*) parm;
-            return;
-
-        case DD_VIEW_PITCH:
-            viewPitch = *(float*) parm;
-            return;
-
         /*case DD_CPLAYER_THRUST_MUL:
             cplrThrustMul = *(float*) parm;
             return;*/
