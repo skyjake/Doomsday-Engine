@@ -357,7 +357,7 @@ void P_MobjMoveXY(mobj_t* mo)
 }
 
 /*
-static boolean PIT_Splash(sector_t *sector, void *data)
+static int PIT_Splash(sector_t *sector, void *data)
 {
     mobj_t             *mo = data;
     float               floorheight;
@@ -372,7 +372,7 @@ static boolean PIT_Splash(sector_t *sector, void *data)
     }
 
     // Continue checking.
-    return true;
+    return false;
 }
 */
 

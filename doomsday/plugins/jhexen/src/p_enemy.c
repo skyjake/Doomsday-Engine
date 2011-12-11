@@ -400,51 +400,51 @@ typedef struct {
     byte                randomSkip;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Flags requirement?
     if(params->compFlags > 0 && !(mo->flags & params->compFlags))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if(params->minHealth > 0 && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Exclude this mobj?
     if(params->notThis && mo == params->notThis)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Out of range?
     if(params->maxDistance > 0 &&
        P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                         params->origin[VY] - mo->pos[VY]) >
        params->maxDistance)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Randomly skip this?
     if(params->randomSkip && P_Random() < params->randomSkip)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(params->maxTries > 0 && params->count++ > params->maxTries)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
     // Out of sight?
     if(params->checkLOS && params->notThis &&
        !P_CheckSight(params->notThis, mo))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Check the special case of a minotaur looking at it's master.
     if(params->checkMinotaurTracer)
         if(mo->type == MT_MINOTAUR &&
            mo->target != params->checkMinotaurTracer)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 boolean P_LookForMonsters(mobj_t* mo)
@@ -1011,20 +1011,20 @@ typedef struct {
     mobj_t*             foundMobj;
 } findmonsterparams_t;
 
-static boolean findMonster(thinker_t* th, void* context)
+static int findMonster(thinker_t* th, void* context)
 {
     findmonsterparams_t* params = (findmonsterparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     if(!(mo->flags & MF_COUNTKILL))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Health requirement?
     if(!(params->minHealth < 0) && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(!(mo->flags & MF_SHOOTABLE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     if(params->maxDistance > 0)
@@ -1033,22 +1033,22 @@ static boolean findMonster(thinker_t* th, void* context)
             P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                              params->origin[VY] - mo->pos[VY]);
         if(dist > params->maxDistance)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
     }
 
     if(params->notThis && params->notThis == mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(params->notThis2 && params->notThis2 == mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Check the special case for minotaurs.
     if(params->checkMinotaurTracer)
         if(mo->type == MT_MINOTAUR && params->checkMinotaurTracer == mo->tracer)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 /**
@@ -1110,7 +1110,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
         params.foundMobj = NULL;
         params.minHealth = 1;
         params.checkMinotaurTracer = actor->tracer;
-        if(!DD_IterateThinkers(P_MobjThinker, findMonster, &params))
+        if(DD_IterateThinkers(P_MobjThinker, findMonster, &params))
             actor->target = params.foundMobj;
     }
 
@@ -1569,7 +1569,7 @@ void C_DECL A_Explode(mobj_t *actor)
     }
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1582,7 +1582,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1707,17 +1707,17 @@ void C_DECL A_DeQueueCorpse(mobj_t *actor)
     }
 }
 
-static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
+static int addMobjToCorpseQueue(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
     // Must be a corpse.
     if(!(mo->flags & MF_CORPSE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Not ice corpses.
     if(mo->flags & MF_ICECORPSE)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Only corpses that call A_QueueCorpse from death routine.
     switch(mo->type)
@@ -1752,7 +1752,7 @@ static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
         break;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_InitCreatureCorpseQueue(boolean corpseScan)

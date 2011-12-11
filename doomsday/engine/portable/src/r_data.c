@@ -2028,7 +2028,7 @@ static boolean isInList(void** list, size_t len, void* elm)
     return false;
 }
 
-boolean findSpriteOwner(thinker_t* th, void* context)
+int findSpriteOwner(thinker_t* th, void* context)
 {
     int                 i;
     mobj_t*             mo = (mobj_t*) th;
@@ -2043,11 +2043,11 @@ boolean findSpriteOwner(thinker_t* th, void* context)
                 continue;
 
             if(&sprites[states[i].sprite] == sprDef)
-                return false; // Found an owner!
+                return true; // Found an owner!
         }
     }
 
-    return true; // Keep looking...
+    return false; // Keep looking...
 }
 
 /**
@@ -2162,7 +2162,7 @@ void R_PrecacheMap(void)
         {
             spritedef_t*        sprDef = &sprites[i];
 
-            if(!P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
+            if(P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
                                   findSpriteOwner, sprDef))
             {   // This sprite is used by some state of at least one mobj.
                 int                 j;

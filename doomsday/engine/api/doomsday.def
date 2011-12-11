@@ -3,10 +3,6 @@ NAME            "DOOMSDAY"
 ; Highest ordinal is currently
 ; --> 457 <--
 ; Free ordinals:
-; 45 formerly B_BindingsForCommand
-; 65 formerly P_GetBlockRootIdx
-; 77 formerly P_LoadBlockMap
-; 78 formerly P_LoadReject
 ; 95 formerly R_FlatNumForName
 ; 96 formerly R_CheckTextureNumForName
 ; 98 formerly R_TextureNameForNum
@@ -128,7 +124,8 @@ EXPORTS
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
     B_BindingsForControl        @429 NONAME
-    B_SetContextFallback		@440 NONAME
+    B_SetContextFallback        @440 NONAME
+    B_SetContextFallback        @440 NONAME
 
 ; System.
 ;   Sys_TicksPerSecond          @46 NONAME
@@ -168,7 +165,8 @@ EXPORTS
     P_AccurateDistance          @57 NONAME
     P_ApproxDistance            @58 NONAME
     P_ApproxDistance3           @243 NONAME
-    P_PointOnLinedefSide        @59 NONAME
+    P_PointOnLinedefSide        @45 NONAME
+    P_PointOnLinedefSideXY      @59 NONAME
     P_BoxOnLineSide             @60 NONAME
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME
@@ -181,7 +179,10 @@ EXPORTS
     P_SubsectorsBoxIterator     @345 NONAME
     P_LineMobjsIterator         @73 NONAME
     P_SectorTouchingMobjsIterator @74 NONAME
-    P_PathTraverse              @75 NONAME
+    P_PathTraverse              @77 NONAME
+    P_PathTraverse2             @78 NONAME
+    P_PathTraverseXY            @75 NONAME
+    P_PathTraverseXY2           @70 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME
@@ -341,7 +342,7 @@ EXPORTS
     R_SetViewPortPlayer         @450 NONAME
     R_SetViewOrigin             @68 NONAME
     R_SetViewAngle              @69 NONAME
-    R_SetViewPitch              @70 NONAME
+    R_SetViewPitch              @65 NONAME
 
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME

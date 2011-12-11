@@ -480,9 +480,9 @@ typedef struct {
     int                 count;
 } activateceilingparams_t;
 
-static boolean activateCeiling(thinker_t* th, void* context)
+static int activateCeiling(thinker_t* th, void* context)
 {
-    ceiling_t*          ceiling = (ceiling_t*) th;
+    ceiling_t* ceiling = (ceiling_t*) th;
     activateceilingparams_t* params = (activateceilingparams_t*) context;
 
     if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
@@ -492,7 +492,7 @@ static boolean activateCeiling(thinker_t* th, void* context)
         params->count++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -519,7 +519,7 @@ typedef struct {
     int                 count;
 } deactivateceilingparams_t;
 
-static boolean deactivateCeiling(thinker_t* th, void* context)
+static int deactivateCeiling(thinker_t* th, void* context)
 {
     ceiling_t*          ceiling = (ceiling_t*) th;
     deactivateceilingparams_t* params =
@@ -531,7 +531,7 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
         stopCeiling(ceiling);
         params->count++;
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 #else
     if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
@@ -541,7 +541,7 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         params->count++;
     }
 #endif
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

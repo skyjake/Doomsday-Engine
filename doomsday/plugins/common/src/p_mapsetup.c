@@ -314,7 +314,7 @@ int applySurfaceColor(void* obj, void* context)
         }
     }
 
-    return 1; // Continue iteration
+    return false; // Continue iteration
 }
 #endif
 
