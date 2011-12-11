@@ -28,9 +28,9 @@ else {
     contains(QMAKE_HOST.arch, x86_64): libname = fmodex64
     else: libname = fmodex
 
-    LIBS += -L$$FMOD_DIR/api/lib -l$$FMOD_LIB
+    LIBS += -L$$FMOD_DIR/api/lib -l$$libname
 
     INSTALLS += fmodlibs
-    fmodlibs.files = $$FMOD_DIR/api/lib/lib$${FMOD_LIB}.so
+    fmodlibs.files = $$FMOD_DIR/api/lib/lib$${libname}.so
     fmodlibs.path = $$DENG_LIB_DIR
 }
