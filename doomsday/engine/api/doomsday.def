@@ -5,9 +5,6 @@ NAME            "DOOMSDAY"
 ; Free ordinals:
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
-; 68 formerly P_BlockLinesIterator
-; 69 formerly P_BlockMobjsIterator
-; 70 formerly P_BlockPolyobjsIterator
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
 ; 95 formerly R_FlatNumForName
@@ -342,6 +339,10 @@ EXPORTS
     R_SetViewWindow             @92 NONAME
     R_GetViewPort               @430 NONAME
     R_SetViewPortPlayer         @450 NONAME
+    R_SetViewOrigin             @68 NONAME
+    R_SetViewAngle              @69 NONAME
+    R_SetViewPitch              @70 NONAME
+
     R_SetBorderGfx              @93 NONAME
     R_GetSpriteInfo             @94 NONAME
     R_GetPatchInfo              @237 NONAME
@@ -350,7 +351,7 @@ EXPORTS
     R_CreateAnimGroup           @241 NONAME
     R_AddToAnimGroup            @242 NONAME
     R_HSVToRGB                  @439 NONAME
-    R_CreateColorPalette		@444 NONAME
+    R_CreateColorPalette        @444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
     R_GetColorPaletteNameForNum @445 NONAME
     R_GetColorPaletteRGBf       @423 NONAME
