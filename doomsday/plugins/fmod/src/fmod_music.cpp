@@ -45,10 +45,9 @@ static float musicVolume;
 static SongBuffer* songBuffer;
 static const char* soundFontFileName;
 
-static FMOD_RESULT F_CALLBACK musicCallback(FMOD_CHANNEL* chanPtr,
-                                            FMOD_CHANNEL_CALLBACKTYPE type,
-                                            void* /*commanddata1*/,
-                                            void* /*commanddata2*/)
+static FMOD_RESULT F_CALLBACK
+musicCallback(FMOD_CHANNEL* chanPtr, FMOD_CHANNEL_CALLBACKTYPE type,
+              void* /*commanddata1*/, void* /*commanddata2*/)
 {
     assert(reinterpret_cast<FMOD::Channel*>(chanPtr) == music);
 
