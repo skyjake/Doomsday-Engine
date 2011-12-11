@@ -169,21 +169,6 @@ static void rendPlayerView(int player)
         Rend_SkyParams(1, DD_ENABLE, NULL);
     }
 
-    // How about a bit of quake?
-    if(localQuakeHappening[player] && !P_IsPaused())
-    {
-        int intensity = localQuakeHappening[player];
-
-        plr->viewOffset[VX] =
-            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
-        plr->viewOffset[VY] =
-            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
-    }
-    else
-    {
-        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
-    }
-
     // View angles are updated with fractional ticks, so we can just use the current values.
     R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
     R_SetViewPitch(player, plr->plr->lookDir);
