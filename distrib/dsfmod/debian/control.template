@@ -1,0 +1,18 @@
+Source: doomsday-fmod
+Section: universe/games
+Priority: optional
+Maintainer: Jaakko Keränen <jaakko.keranen@iki.fi>
+Build-Depends: debhelper (>= 7.0.50~)
+Standards-Version: 3.9.1
+Homepage: http://dengine.net/
+Vcs-Git: git://deng.git.sourceforge.net/gitroot/deng/deng
+Vcs-Browser: http://deng.git.sourceforge.net/git/gitweb.cgi?p=deng/deng;a=summary
+
+Package: doomsday-fmod
+Architecture: ${Arch}
+Depends: ${shlibs:Depends}, ${misc:Depends}, doomsday
+Description: FMOD Ex audio plugin for the Doomsday Engine
+ Audio plugin for the Doomsday Engine. Uses Firelight Technologies' 
+ FMOD Ex library for 2D and 3D sound effects, MIDI music playback, 
+ external music files, and CD audio.
+
