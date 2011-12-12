@@ -1,10 +1,10 @@
 #!/usr/bin/make -f
-APPNAME := doomsday
+APPNAME := doomsday-fmod
 builddir:
 	mkdir -p builddir
 
 builddir/Makefile: builddir
-	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+='release deng_packres' DENG_BUILD=`../build_number.py --print` ../../doomsday/$(APPNAME).pro
+	cd builddir && qmake-qt4 PREFIX=/usr CONFIG+=release DENG_BUILD=`../build_number.py --print` ../../../doomsday/plugins/fmod/fmod.pro
 
 build: build-stamp
 
