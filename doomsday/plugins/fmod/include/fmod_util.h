@@ -33,6 +33,10 @@
 #  define strnicmp strncasecmp
 #endif
 
+#ifdef WIN32
+#  define strnicmp _strnicmp
+#endif
+
 class FMODVector : public FMOD_VECTOR
 {
 public:

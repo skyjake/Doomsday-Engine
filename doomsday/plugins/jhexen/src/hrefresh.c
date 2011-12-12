@@ -147,8 +147,6 @@ static void rendPlayerView(int player)
     player_t* plr = &players[player];
     boolean special200 = false;
     float pspriteOffsetY;
-    int viewAngle;
-    float viewPitch;
 
     if(!plr->plr->mo)
     {
@@ -171,37 +169,9 @@ static void rendPlayerView(int player)
         Rend_SkyParams(1, DD_ENABLE, NULL);
     }
 
-    // How about a bit of quake?
-    if(localQuakeHappening[player] && !P_IsPaused())
-    {
-        int intensity = localQuakeHappening[player];
-
-        plr->viewOffset[VX] =
-            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
-        plr->viewOffset[VY] =
-            (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
-    }
-    else
-    {
-        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
-    }
-
-    /// @todo Each player needs their own view variables.
-    /// @see R_UpdateConsoleView()
-    /*
-    viewPos[VX] = plr->plr->mo->pos[VX] + plr->viewOffset[VX];
-    viewPos[VY] = plr->plr->mo->pos[VY] + plr->viewOffset[VY];
-    viewPos[VZ] = plr->viewZ + plr->viewOffset[VZ];
-
-    DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
-    DD_SetVariable(DD_VIEW_Y, &viewPos[VY]);
-    DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
-    */
     // View angles are updated with fractional ticks, so we can just use the current values.
-    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
-    viewPitch = plr->plr->lookDir;
-    DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
-    DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
+    R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
+    R_SetViewPitch(player, plr->plr->lookDir);
 
     pspriteOffsetY = HU_PSpriteYOffset(plr);
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);

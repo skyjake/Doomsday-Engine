@@ -74,8 +74,6 @@ int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
-float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
-int viewAngle = 0;
 boolean setSizeNeeded;
 
 // Precalculated math tables.
@@ -151,6 +149,39 @@ void R_SetViewWindow(int x, int y, int w, int h)
     viewwindowy = y;
     viewwidth = w;
     viewheight = h;
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewOrigin(int consoleNum, float const origin[3])
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        V3_Copy(vd->latest.pos, origin);
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewAngle(int consoleNum, angle_t angle)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        vd->latest.angle = angle;
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void R_SetViewPitch(int consoleNum, float pitch)
+{
+    int p = P_ConsoleToLocal(consoleNum);
+    if(p != -1)
+    {
+        viewdata_t* vd = &viewData[p];
+        vd->latest.pitch = pitch;
+    }
 }
 
 /**
@@ -419,21 +450,13 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
  */
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
+    viewdata_t* vd = &viewData[player - ddPlayers];
     ddplayer_t* ddpl;
 
-    if(!player || !player->shared.mo)
-    {
-        return;
-    }
-
+    if(!player || !player->shared.mo) return;
     ddpl = &player->shared;
 
-    view->pos[VX] = viewX;
-    view->pos[VY] = viewY;
-    view->pos[VZ] = viewZ;
-    /* $unifiedangles */
-    view->angle = viewAngle;
-    view->pitch = viewPitch;
+    R_CopyViewer(view, &vd->latest);
 
     if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
@@ -539,7 +562,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
         for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
-            R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
+            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
 
@@ -561,7 +584,7 @@ void R_BeginWorldFrame(void)
         LG_Update();
         SB_BeginFrame();
         LO_ClearForFrame();
-        R_ClearObjLinksForFrame(); // Zeroes the links.
+        R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
         R_InitForNewFrame();

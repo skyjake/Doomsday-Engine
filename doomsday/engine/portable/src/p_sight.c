@@ -72,10 +72,10 @@ static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
     divline_t           localDL, *dlPtr;
 
     // Try a quick, bounding-box rejection.
-    if(li->bBox[BOXLEFT]   > los->bBox[BOXRIGHT] ||
-       li->bBox[BOXRIGHT]  < los->bBox[BOXLEFT] ||
-       li->bBox[BOXBOTTOM] > los->bBox[BOXTOP] ||
-       li->bBox[BOXTOP]    < los->bBox[BOXBOTTOM])
+    if(li->aaBox.minX > los->bBox[BOXRIGHT] ||
+       li->aaBox.maxX < los->bBox[BOXLEFT] ||
+       li->aaBox.minY > los->bBox[BOXTOP] ||
+       li->aaBox.maxY < los->bBox[BOXBOTTOM])
         return false;
 
     if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY],
@@ -128,7 +128,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     if(noBack)
     {
         if((los->flags & LS_PASSLEFT) &&
-           P_PointOnLinedefSide(FIX2FLT(los->trace.pos[VX]),
+           P_PointOnLinedefSideXY(FIX2FLT(los->trace.pos[VX]),
                                 FIX2FLT(los->trace.pos[VY]), li))
             return true; // Ray does not intercept seg from left to right.
 

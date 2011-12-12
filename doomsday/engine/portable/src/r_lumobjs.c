@@ -284,7 +284,7 @@ uint LO_NewLuminous(lumtype_t type, subsector_t* ssec)
 
     linkLumObjToSSec(lum);
 
-    R_ObjLinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
+    R_ObjlinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
 
     return numLuminous; // == index + 1
 }
@@ -646,7 +646,7 @@ static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
 
         params.obj = l;
         params.type = OT_LUMOBJ;
-        RIT_LinkObjToSubSector(l->subsector, &params);
+        RIT_LinkObjToSubsector(l->subsector, &params);
         }
     }
 }
@@ -879,11 +879,10 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
     mo->lumIdx = 0;
 }
 
-boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
+int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
     LO_UnlinkMobjLumobj((mobj_t*) th);
-
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void LO_UnlinkMobjLumobjs(cvar_t* var)

@@ -622,19 +622,19 @@ int Rend_AutomapSeg(void* obj, void* data)
 
     line = P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)
-        return 1;
+        return false;
 
     xLine = P_ToXLine(line);
     if(xLine->validCount == VALIDCOUNT)
-        return 1; // Already drawn once.
+        return false; // Already drawn once.
 
     if((xLine->flags & ML_DONTDRAW) &&
        !(p->map->flags & AMF_REND_ALLLINES))
-        return 1;
+        return false;
 
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
-        return 1; // We only want to draw twosided lines once.
+        return false; // We only want to draw twosided lines once.
 
     id = AM_MapForPlayer(plr - players);
     info = NULL;
@@ -704,10 +704,10 @@ int Rend_AutomapSeg(void* obj, void* data)
         xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean drawSegsOfSubsector(subsector_t* ssec, void* context)
+static int drawSegsOfSubsector(subsector_t* ssec, void* context)
 {
     return P_Iteratep(ssec, DMU_SEG, context, Rend_AutomapSeg);
 }
@@ -737,11 +737,9 @@ static void renderWalls(const automap_t* map, const automapcfg_t* cfg,
     // objects?
     if(!addToLists)
     {
-        float               aabb[4];
-
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                              &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-        P_SubsectorsBoxIterator(aabb, NULL, drawSegsOfSubsector, &params);
+        AABoxf box;
+        Automap_GetInViewAABB(map, &box.minX, &box.maxX, &box.minY, &box.maxY);
+        P_SubsectorsBoxIterator(&box, NULL, drawSegsOfSubsector, &params);
     }
     else
     {   // No. As the map lists are considered static we want them to
@@ -859,13 +857,13 @@ int renderPolyObjSeg(void* obj, void* context)
     return 1; // Continue iteration.
 }
 
-boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
+int drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
     seg_t**             segPtr;
-    int                 result = 1;
+    int                 result = false;
 
     segPtr = po->segs;
-    while(*segPtr && (result = renderPolyObjSeg(*segPtr, context)) != 0)
+    while(*segPtr && !(result = renderPolyObjSeg(*segPtr, context)))
         segPtr++;
 
     return result;
@@ -874,8 +872,8 @@ boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
 static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
                            int player)
 {
-    float               aabb[4];
     rendwallseg_params_t params;
+    AABoxf aaBox;
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -887,13 +885,12 @@ static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
     params.objType = MOL_LINEDEF;
 
     // Next, draw any polyobjects in view.
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                          &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_PolyobjsBoxIterator(aabb, drawSegsOfPolyobject, &params);
+    Automap_GetInViewAABB(map, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_PolyobjsBoxIterator(&aaBox, drawSegsOfPolyobject, &params);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-boolean renderXGLinedef(linedef_t* line, void* context)
+int renderXGLinedef(linedef_t* line, void* context)
 {
     rendwallseg_params_t* p = (rendwallseg_params_t*) context;
     xline_t*            xLine;
@@ -901,18 +898,18 @@ boolean renderXGLinedef(linedef_t* line, void* context)
     xLine = P_ToXLine(line);
     if(!xLine || xLine->validCount == VALIDCOUNT ||
         ((xLine->flags & ML_DONTDRAW) && !(p->map->flags & AMF_REND_ALLLINES)))
-        return 1;
+        return false;
 
     // Show only active XG lines.
     if(!(xLine->xg && xLine->xg->active && (mapTime & 4)))
-        return 1;
+        return false;
 
     renderLinedef(line, .8f, 0, .8f, 1, BM_ADD,
                   (p->map->flags & AMF_REND_LINE_NORMALS)? true : false);
 
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 #endif
 
@@ -920,8 +917,8 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
                              int player)
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    float               aabb[4];
     rendwallseg_params_t params;
+    AABoxf aaBox;
 
     if(!(map->flags & AMF_REND_XGLINES))
         return;
@@ -936,9 +933,8 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
     params.addToLists = false;
     params.objType = -1;
 
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                          &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_LinesBoxIterator(aabb, renderXGLinedef, &params);
+    Automap_GetInViewAABB(map, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_LinesBoxIterator(&aaBox, renderXGLinedef, &params);
 #endif
 }
 
@@ -1082,7 +1078,7 @@ typedef struct {
 /**
  * Draws all things on the map
  */
-static boolean renderThing(mobj_t* mo, void* context)
+static int renderThing(mobj_t* mo, void* context)
 {
     renderthing_params_t* p = (renderthing_params_t*) context;
 
@@ -1104,7 +1100,7 @@ static boolean renderThing(mobj_t* mo, void* context)
                 renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),
                                     mo->pos[VX], mo->pos[VY], 0,
                                     PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
-                return true; // Continue iteration.
+                return false; // Continue iteration.
             }
         }
 
@@ -1117,7 +1113,7 @@ static boolean renderThing(mobj_t* mo, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1594,8 +1590,8 @@ void Rend_Automap(int player, const automap_t* map)
     renderPlayers(map, mcfg, player);
     if(Automap_GetFlags(map) & (AMF_REND_THINGS|AMF_REND_KEYS))
     {
-        float               aabb[4];
         renderthing_params_t params;
+        AABoxf box;
 
         params.flags = Automap_GetFlags(map);
         params.vgraph = AM_GetVectorGraph(AM_GetVectorGraphic(mcfg, AMO_THING));
@@ -1604,10 +1600,9 @@ void Rend_Automap(int player, const automap_t* map)
         params.alpha = MINMAX_OF(0.f,
             cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                              &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+        Automap_GetInViewAABB(map, &box.minX, &box.maxX, &box.minY, &box.maxY);
         VALIDCOUNT++;
-        P_MobjsBoxIterator(aabb, renderThing, &params);
+        P_MobjsBoxIterator(&box, renderThing, &params);
     }
 
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

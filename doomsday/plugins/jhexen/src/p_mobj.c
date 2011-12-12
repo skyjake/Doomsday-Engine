@@ -1333,7 +1333,7 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
                          spawnFlags);
 }
 
-static boolean addToTIDList(thinker_t* th, void* context)
+static int addToTIDList(thinker_t* th, void* context)
 {
     size_t*             count = (size_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1351,7 +1351,7 @@ static boolean addToTIDList(thinker_t* th, void* context)
         TIDMobj[(*count)++] = mo;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_CreateTIDList(void)
@@ -1747,14 +1747,14 @@ typedef struct {
     mobj_t*             source;
 } radiusblastparams_t;
 
-static boolean radiusBlast(thinker_t* th, void* context)
+static int radiusBlast(thinker_t* th, void* context)
 {
     radiusblastparams_t* params = (radiusblastparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(mo == params->source || (mo->flags2 & MF2_BOSS))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_POISONCLOUD || // poison cloud.
        mo->type == MT_HOLY_FX || // holy fx.
@@ -1764,27 +1764,27 @@ static boolean radiusBlast(thinker_t* th, void* context)
     }
     else if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
     {
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     }
     else if(!(mo->flags & MF_COUNTKILL) && !mo->player &&
             !(mo->flags & MF_MISSILE))
     {   // Must be monster, player, or missile.
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     }
 
     // Is this mobj dormant?
     if(mo->flags2 & MF2_DORMANT)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Is this an underground Wraith?
     if(mo->type == MT_WRAITHB && (mo->flags2 & MF2_DONTDRAW))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_SPLASHBASE || mo->type == MT_SPLASH)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->source->pos[VX] - mo->pos[VX],
@@ -1794,7 +1794,7 @@ static boolean radiusBlast(thinker_t* th, void* context)
         P_BlastMobj(params->source, mo, BLAST_FULLSTRENGTH);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1819,14 +1819,14 @@ typedef struct {
     boolean             effective;
 } radiusgiveparams_t;
 
-static boolean radiusGiveArmor(thinker_t* th, void* context)
+static int radiusGiveArmor(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1843,17 +1843,17 @@ static boolean radiusGiveArmor(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean radiusGiveBody(thinker_t* th, void* context)
+static int radiusGiveBody(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1869,17 +1869,17 @@ static boolean radiusGiveBody(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean radiusGiveMana(thinker_t* th, void* context)
+static int radiusGiveMana(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1896,7 +1896,7 @@ static boolean radiusGiveMana(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

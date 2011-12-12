@@ -66,23 +66,23 @@ typedef struct {
     mobj_t*             foundMobj;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Must be of the correct type?
     if(params->type >= 0 && params->type != mo->type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Must be in the specified sector?
     if(params->sec &&
        params->sec != P_GetPtrp(mo->subsector, DMU_SECTOR))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Found it!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 static mobj_t* getTeleportDestination(short tag)
@@ -104,7 +104,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(!DD_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(DD_IterateThinkers(P_MobjThinker, findMobj, &params))
             {   // Found one.
                 return params.foundMobj;
             }

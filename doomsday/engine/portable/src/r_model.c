@@ -1295,7 +1295,7 @@ void R_PrecacheSkinsForState(int stateIndex)
  * The skins are also bound here once so they should be ready for use the
  * next time they're needed.
  */
-boolean R_PrecacheSkinsForMobj(thinker_t* th, void* context)
+int R_PrecacheSkinsForMobj(thinker_t* th, void* context)
 {
     int                 i;
     mobj_t*             mo = (mobj_t*) th;
@@ -1314,5 +1314,5 @@ boolean R_PrecacheSkinsForMobj(thinker_t* th, void* context)
         R_PrecacheModelSkins(modef);
     }
 
-    return true; // Used as iterator.
+    return false; // Used as iterator.
 }

@@ -115,7 +115,6 @@ DENG_HEADERS = \
     portable/include/con_config.h \
     portable/include/con_decl.h \
     portable/include/con_main.h \
-    portable/include/dam_blockmap.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
     portable/include/dd_def.h \
@@ -350,7 +349,6 @@ SOURCES += \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
-    portable/src/dam_blockmap.c \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \

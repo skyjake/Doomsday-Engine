@@ -313,7 +313,7 @@ static int findLightSequenceSector(void* p, void* context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 typedef struct {
@@ -335,7 +335,7 @@ static int findLightSequenceStartSector(void* p, void* context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_SpawnLightSequence(sector_t* sector, int indexStep)
