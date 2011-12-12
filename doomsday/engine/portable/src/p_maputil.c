@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_misc.h"
@@ -48,14 +49,19 @@
 // a drag, but I'd like to see you iterating 2048 mobjs/lines in one block.
 
 #define MAXLINKED           2048
-#define DO_LINKS(it, end)   for(it = linkstore; it < end; it++) \
-                                if(!func(*it, data)) return false;
+#define DO_LINKS(it, end)   { \
+    for(it = linkstore; it < end; it++) \
+    { \
+        result = func(*it, data); \
+        if(result) break; \
+    } \
+}
 
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
     mobj_t*         mo;
-    vec2_t          box[2];
+    AABoxf          box;
 } linelinker_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -72,8 +78,6 @@ float opentop, openbottom, openrange;
 float lowfloor;
 
 divline_t traceLOS;
-boolean earlyout;
-int ptflags;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -226,14 +230,24 @@ int P_PointOnDivLineSidef(fvertex_t* pnt, fdivline_t* dline)
                               dline->pos[VY], dline->dX, dline->dY);
 }
 
-/**
- * @return              Non-zero if the point is on the right side of the
- *                      specified line.
- */
-int P_PointOnLinedefSide(float x, float y, const linedef_t* line)
+/// \note Part of the Doomsday public API.
+int P_PointOnLinedefSide(float xy[2], const linedef_t* lineDef)
 {
-    return !P_PointOnLineSide(x, y, line->L_v1pos[VX], line->L_v1pos[VY],
-                              line->dX, line->dY);
+    if(!xy || !lineDef)
+    {
+#if _DEBUG
+        Con_Message("P_PointOnLineDefSide: Invalid arguments, returning zero.\n");
+#endif
+        return 0;
+    }
+    return P_PointOnLinedefSideXY(xy[0], xy[1], lineDef);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PointOnLinedefSideXY(float x, float y, const linedef_t* lineDef)
+{
+    return !P_PointOnLineSide(x, y, lineDef->L_v1pos[VX], lineDef->L_v1pos[VY],
+                              lineDef->dX, lineDef->dY);
 }
 
 /**
@@ -369,13 +383,13 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
         break;
 
       case ST_POSITIVE:
-        a = P_PointOnLinedefSide(xl, yh, ld);
-        b = P_PointOnLinedefSide(xh, yl, ld);
+        a = P_PointOnLinedefSideXY(xl, yh, ld);
+        b = P_PointOnLinedefSideXY(xh, yl, ld);
         break;
 
     case ST_NEGATIVE:
-        a = P_PointOnLinedefSide(xh, yh, ld);
-        b = P_PointOnLinedefSide(xl, yl, ld);
+        a = P_PointOnLinedefSideXY(xh, yh, ld);
+        b = P_PointOnLinedefSideXY(xl, yl, ld);
         break;
     }
 
@@ -385,10 +399,10 @@ int P_BoxOnLineSide2(float xl, float xh, float yl, float yh,
     return -1;
 }
 
-int P_BoxOnLineSide(const float* box, const linedef_t* ld)
+int P_BoxOnLineSide(const AABoxf* box, const linedef_t* ld)
 {
-    return P_BoxOnLineSide2(box[BOXLEFT], box[BOXRIGHT],
-                            box[BOXBOTTOM], box[BOXTOP], ld);
+    return P_BoxOnLineSide2(box->minX, box->maxX,
+                            box->minY, box->maxY, ld);
 }
 
 /**
@@ -550,6 +564,21 @@ boolean P_UnlinkFromLines(mobj_t* mo)
 }
 
 /**
+ * \pre The mobj must be currently unlinked.
+ */
+void P_LinkToBlockmap(mobj_t* mo)
+{
+    gamemap_t* map = P_GetCurrentMap();
+    Map_LinkMobjInBlockmap(map, mo);
+}
+
+boolean P_UnlinkFromBlockmap(mobj_t* mo)
+{
+    gamemap_t* map = P_GetCurrentMap();
+    return Map_UnlinkMobjInBlockmap(map, mo);
+}
+
+/**
  * Unlinks a mobj from everything it has been linked to.
  *
  * @param mo            Ptr to the mobj to be unlinked.
@@ -558,11 +587,11 @@ boolean P_UnlinkFromLines(mobj_t* mo)
  */
 int P_MobjUnlink(mobj_t* mo)
 {
-    int                 links = 0;
+    int links = 0;
 
     if(P_UnlinkFromSector(mo))
         links |= DDLINK_SECTOR;
-    if(P_BlockmapUnlinkMobj(BlockMap, mo))
+    if(P_UnlinkFromBlockmap(mo))
         links |= DDLINK_BLOCKMAP;
     if(!P_UnlinkFromLines(mo))
         links |= DDLINK_NOLINE;
@@ -574,27 +603,26 @@ int P_MobjUnlink(mobj_t* mo)
  * The given line might cross the mobj. If necessary, link the mobj into
  * the line's mobj link ring.
  */
-boolean PIT_LinkToLines(linedef_t* ld, void* parm)
+int PIT_LinkToLines(linedef_t* ld, void* parm)
 {
     linelinker_data_t*  data = parm;
     nodeindex_t         nix;
 
-    if(data->box[1][VX] <= ld->bBox[BOXLEFT] ||
-       data->box[0][VX] >= ld->bBox[BOXRIGHT] ||
-       data->box[1][VY] <= ld->bBox[BOXBOTTOM] ||
-       data->box[0][VY] >= ld->bBox[BOXTOP])
+    if(data->box.minX >= ld->aaBox.maxX ||
+       data->box.minY >= ld->aaBox.maxY ||
+       data->box.maxX <= ld->aaBox.minX ||
+       data->box.maxY <= ld->aaBox.minY)
         // Bounding boxes do not overlap.
-        return true;
+        return false;
 
-    if(P_BoxOnLineSide2(data->box[0][VX], data->box[1][VX],
-                        data->box[0][VY], data->box[1][VY], ld) != -1)
+    if(P_BoxOnLineSide(&data->box, ld) != -1)
         // Line does not cross the mobj's bounding box.
-        return true;
+        return false;
 
     // One sided lines will not be linked to because a mobj
     // can't legally cross one.
     if(!ld->L_frontside || !ld->L_backside)
-        return true;
+        return false;
 
     // No redundant nodes will be creates since this routine is
     // called only once for each line.
@@ -607,7 +635,7 @@ boolean PIT_LinkToLines(linedef_t* ld, void* parm)
     NP_Link(lineNodes, mobjNodes->nodes[nix].data =
             NP_New(lineNodes, data->mo), linelinks[GET_LINE_IDX(ld)]);
 
-    return true;
+    return false;
 }
 
 /**
@@ -615,8 +643,8 @@ boolean PIT_LinkToLines(linedef_t* ld, void* parm)
  */
 void P_LinkToLines(mobj_t* mo)
 {
-    linelinker_data_t   data;
-    vec2_t              point;
+    linelinker_data_t data;
+    vec2_t point;
 
     // Get a new root node.
     mo->lineRoot = NP_New(mobjNodes, NP_ROOT_NODE);
@@ -624,73 +652,12 @@ void P_LinkToLines(mobj_t* mo)
     // Set up a line iterator for doing the linking.
     data.mo = mo;
     V2_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2_InitBox(data.box, point);
+    V2_InitBox(data.box.arvec2, point);
     V2_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    V2_AddToBox(data.box, point);
+    V2_AddToBox(data.box.arvec2, point);
 
     validCount++;
-    P_AllLinesBoxIteratorv(data.box, PIT_LinkToLines, &data);
-}
-
-void P_MobjLinkToRing(mobj_t* mo, linkmobj_t** link)
-{
-    linkmobj_t*      tempLink;
-
-    if(!(*link))
-    {   // Create a new link at the current block cell.
-        *link = Z_Malloc(sizeof(linkmobj_t), PU_MAP, 0);
-        (*link)->next = NULL;
-        (*link)->prev = NULL;
-        (*link)->mobj = mo;
-        return;
-    }
-    else
-    {
-        tempLink = *link;
-        while(tempLink->next != NULL && tempLink->mobj != NULL)
-        {
-            tempLink = tempLink->next;
-        }
-    }
-
-    if(tempLink->mobj == NULL)
-    {
-        tempLink->mobj = mo;
-        return;
-    }
-    else
-    {
-        tempLink->next =
-            Z_Malloc(sizeof(linkmobj_t), PU_MAP, 0);
-        tempLink->next->next = NULL;
-        tempLink->next->prev = tempLink;
-        tempLink->next->mobj = mo;
-    }
-}
-
-/**
- * Unlink the given mobj from the specified block ring (if indeed linked).
- *
- * @param mo            Ptr to the mobj to unlink.
- * @return              @c true, iff the mobj was linked to the ring and was
- *                      successfully unlinked.
- */
-boolean P_MobjUnlinkFromRing(mobj_t* mo, linkmobj_t** list)
-{
-    linkmobj_t*         iter = *list;
-
-    while(iter != NULL && iter->mobj != mo)
-    {
-        iter = iter->next;
-    }
-
-    if(iter != NULL)
-    {
-        iter->mobj = NULL;
-        return true; // Mobj was unlinked.
-    }
-
-    return false; // Mobj was not linked.
+    P_AllLinesBoxIterator(&data.box, PIT_LinkToLines, &data);
 }
 
 /**
@@ -700,7 +667,8 @@ boolean P_MobjUnlinkFromRing(mobj_t* mo, linkmobj_t** list)
  */
 void P_MobjLink(mobj_t* mo, byte flags)
 {
-    sector_t*           sec;
+    gamemap_t* map = P_GetCurrentMap();
+    sector_t* sec;
 
     // Link into the sector.
     mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
@@ -726,8 +694,8 @@ void P_MobjLink(mobj_t* mo, byte flags)
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        P_BlockmapUnlinkMobj(BlockMap, mo);
-        P_BlockmapLinkMobj(BlockMap, mo);
+        P_UnlinkFromBlockmap(mo);
+        P_LinkToBlockmap(mo);
     }
 
     // Link into lines.
@@ -760,24 +728,25 @@ void P_MobjLink(mobj_t* mo, byte flags)
  * The callback function will be called once for each line that crosses
  * trough the object. This means all the lines will be two-sided.
  */
-boolean P_MobjLinesIterator(mobj_t* mo,
-                            boolean (*func) (linedef_t*, void*),
+int P_MobjLinesIterator(mobj_t* mo,
+                            int (*func) (linedef_t*, void*),
                             void* data)
 {
     void*               linkstore[MAXLINKED];
     void**              end = linkstore, **it;
     nodeindex_t         nix;
     linknode_t*         tn = mobjNodes->nodes;
+    int result = false;
 
-    if(!mo->lineRoot)
-        return true; // No lines to process.
+    if(mo->lineRoot)
+    {
+        for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+            nix = tn[nix].next)
+            *end++ = tn[nix].ptr;
 
-    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-        nix = tn[nix].next)
-        *end++ = tn[nix].ptr;
-
-    DO_LINKS(it, end);
-    return true;
+        DO_LINKS(it, end);
+    }
+    return result;
 }
 
 /**
@@ -786,8 +755,8 @@ boolean P_MobjLinesIterator(mobj_t* mo,
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-boolean P_MobjSectorsIterator(mobj_t* mo,
-                              boolean (*func) (sector_t*, void*),
+int P_MobjSectorsIterator(mobj_t* mo,
+                              int (*func) (sector_t*, void*),
                               void* data)
 {
     void*               linkstore[MAXLINKED];
@@ -796,6 +765,7 @@ boolean P_MobjSectorsIterator(mobj_t* mo,
     linknode_t*         tn = mobjNodes->nodes;
     linedef_t*          ld;
     sector_t*           sec;
+    int result = false;
 
     // Always process the mobj's own sector first.
     *end++ = sec = mo->subsector->sector;
@@ -831,23 +801,24 @@ boolean P_MobjSectorsIterator(mobj_t* mo,
     }
 
     DO_LINKS(it, end);
-    return true;
+    return result;
 }
 
-boolean P_LineMobjsIterator(linedef_t* line,
-                            boolean (*func) (mobj_t*, void*),
+int P_LineMobjsIterator(linedef_t* line,
+                            int (*func) (mobj_t*, void*),
                             void* data)
 {
     void*               linkstore[MAXLINKED];
     void**              end = linkstore, **it;
     nodeindex_t         root = linelinks[GET_LINE_IDX(line)], nix;
     linknode_t*         ln = lineNodes->nodes;
+    int result = false;
 
     for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         *end++ = ln[nix].ptr;
 
     DO_LINKS(it, end);
-    return true;
+    return result;
 }
 
 /**
@@ -858,8 +829,8 @@ boolean P_LineMobjsIterator(linedef_t* line,
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-boolean P_SectorTouchingMobjsIterator(sector_t* sector,
-                                      boolean (*func) (mobj_t*, void*),
+int P_SectorTouchingMobjsIterator(sector_t* sector,
+                                      int (*func) (mobj_t*, void*),
                                       void* data)
 {
     uint                i;
@@ -869,6 +840,7 @@ boolean P_SectorTouchingMobjsIterator(sector_t* sector,
     linedef_t*          li;
     nodeindex_t         root, nix;
     linknode_t*         ln = lineNodes->nodes;
+    int result = false;
 
     // First process the mobjs that obviously are in the sector.
     for(mo = sector->mobjList; mo; mo = mo->sNext)
@@ -899,46 +871,15 @@ boolean P_SectorTouchingMobjsIterator(sector_t* sector,
     }
 
     DO_LINKS(it, end);
-    return true;
+    return result;
 }
 
-boolean P_MobjsBoxIterator(const float box[4],
-                           boolean (*func) (mobj_t*, void*),
-                           void* data)
+int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* paramaters)
 {
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_MobjsBoxIteratorv(bounds, func, data);
-}
-
-boolean P_MobjsBoxIteratorv(const arvec2_t box,
-                            boolean (*func) (mobj_t*, void*),
-                            void* data)
-{
-    uint                blockBox[4];
-
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
-
-    return P_BlockBoxMobjsIterator(BlockMap, blockBox, func, data);
-}
-
-boolean P_PolyobjsBoxIterator(const float box[4],
-                              boolean (*func) (struct polyobj_s*, void*),
-                              void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_PolyobjsBoxIteratorv(bounds, func, data);
+    gamemap_t* map = P_GetCurrentMap();
+    GridmapBlock blockCoords;
+    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
+    return Map_IterateCellBlockMobjs(map, &blockCoords, func, paramaters);
 }
 
 /**
@@ -946,335 +887,418 @@ boolean P_PolyobjsBoxIterator(const float box[4],
  * multiple mapblocks, so increment validCount before the first call, then
  * make one or more calls to it.
  */
-boolean P_PolyobjsBoxIteratorv(const arvec2_t box,
-                               boolean (*func) (struct polyobj_s*, void*),
-                               void* data)
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* paramaters)
 {
-    uint                blockBox[4];
-
-    // Blockcoords to check.
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
-
-    return P_BlockBoxPolyobjsIterator(BlockMap, blockBox, func, data);
+    gamemap_t* map = P_GetCurrentMap();
+    GridmapBlock blockCoords;
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
+    return Map_IterateCellBlockPolyobjs(map, &blockCoords, callback, paramaters);
 }
 
-boolean P_LinesBoxIterator(const float box[4],
-                           boolean (*func) (linedef_t*, void*),
-                           void* data)
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_LinesBoxIteratorv(bounds, func, data);
+    gamemap_t* map = P_GetCurrentMap();
+    GridmapBlock blockCoords;
+    Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
+    return Map_IterateCellBlockLineDefs(map, &blockCoords, callback, paramaters);
 }
 
-boolean P_LinesBoxIteratorv(const arvec2_t box,
-                            boolean (*func) (linedef_t*, void*),
-                            void* data)
+int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
+    int (*callback) (subsector_t*, void*), void* paramaters)
 {
-    uint                blockBox[4];
-
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
-
-    return P_BlockBoxLinesIterator(BlockMap, blockBox, func, data);
-}
-
-/**
- * @return              @c false, if the iterator func returns @c false.
- */
-boolean P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
-                                boolean (*func) (subsector_t*, void*),
-                                void* parm)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_SubsectorsBoxIteratorv(bounds, sector, func, parm);
-}
-
-/**
- * Same as the fixed-point version of this routine, but the bounding box
- * is specified using an vec2_t array (see m_vector.c).
- */
-boolean P_SubsectorsBoxIteratorv(const arvec2_t box, sector_t* sector,
-                                 boolean (*func) (subsector_t*, void*),
-                                 void* data)
-{
-    static int          localValidCount = 0;
-    uint                blockBox[4];
-
+    static int localValidCount = 0;
+    gamemap_t* map = P_GetCurrentMap();
+    GridmapBlock blockCoords;
     // This is only used here.
     localValidCount++;
 
-    // Blockcoords to check.
-    P_BoxToBlockmapBlocks(SSecBlockMap, blockBox, box);
-
-    return P_BlockBoxSubsectorsIterator(SSecBlockMap, blockBox, sector,
-                                        box, localValidCount, func, data);
+    Blockmap_CellBlockCoords(map->subsectorBlockmap, &blockCoords, box);
+    return Map_IterateCellBlockSubsectors(map, &blockCoords, sector, box,
+                                          localValidCount, callback, paramaters);
 }
 
-boolean P_PolyobjLinesBoxIterator(const float box[4],
-                                  boolean (*func) (linedef_t*, void*),
-                                  void* data)
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_PolyobjLinesBoxIteratorv(bounds, func, data);
-}
-
-boolean P_PolyobjLinesBoxIteratorv(const arvec2_t box,
-                                   boolean (*func) (linedef_t*, void*),
-                                   void* data)
-{
-    uint                blockBox[4];
-
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, box);
-
-    return P_BlockBoxPolyobjLinesIterator(BlockMap, blockBox, func, data);
-}
-
-
-/**
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to P_BlockmapLinesIterator, then make one or more calls to it.
- */
-boolean P_AllLinesBoxIterator(const float box[4],
-                              boolean (*func) (linedef_t*, void*),
-                              void* data)
-{
-    vec2_t              bounds[2];
-
-    bounds[0][VX] = box[BOXLEFT];
-    bounds[0][VY] = box[BOXBOTTOM];
-    bounds[1][VX] = box[BOXRIGHT];
-    bounds[1][VY] = box[BOXTOP];
-
-    return P_AllLinesBoxIteratorv(bounds, func, data);
+    gamemap_t* map = P_GetCurrentMap();
+    GridmapBlock blockCoords;
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
+    return Map_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, paramaters);
 }
 
 /**
  * The validCount flags are used to avoid checking lines that are marked
  * in multiple mapblocks, so increment validCount before the first call
- * to P_BlockmapLinesIterator, then make one or more calls to it.
+ * to Map_IterateCellLineDefs, then make one or more calls to it.
  */
-boolean P_AllLinesBoxIteratorv(const arvec2_t box,
-                               boolean (*func) (linedef_t*, void*),
-                               void* data)
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
     if(numPolyObjs > 0)
     {
-        if(!P_PolyobjLinesBoxIteratorv(box, func, data))
-            return false;
+        int result = P_PolyobjLinesBoxIterator(box, callback, paramaters);
+        if(result) return result;
     }
-
-    return P_LinesBoxIteratorv(box, func, data);
+    return P_LinesBoxIterator(box, callback, paramaters);
 }
 
 /**
  * Looks for lines in the given block that intercept the given trace to add
- * to the intercepts list
+ * to the intercepts list.
  * A line is crossed if its endpoints are on opposite sides of the trace.
  *
- * @return              @c true if earlyout and a solid line hit.
+ * @return  Non-zero if current iteration should stop.
  */
-boolean PIT_AddLineIntercepts(linedef_t* ld, void* data)
+int PIT_AddLineDefIntercepts(linedef_t* lineDef, void* paramaters)
 {
-    int                 s[2];
-    float               frac;
-    divline_t           dl;
+    float distance;
+    divline_t dl;
+    int s1, s2;
 
+    // Is this line crossed?
     // Avoid precision problems with two routines.
-    if(traceLOS.dX > FRACUNIT * 16 || traceLOS.dY > FRACUNIT * 16 ||
+    if(traceLOS.dX >  FRACUNIT * 16 || traceLOS.dY >  FRACUNIT * 16 ||
        traceLOS.dX < -FRACUNIT * 16 || traceLOS.dY < -FRACUNIT * 16)
     {
-        s[0] = P_PointOnDivlineSide(ld->L_v1pos[VX],
-                                    ld->L_v1pos[VY], &traceLOS);
-        s[1] = P_PointOnDivlineSide(ld->L_v2pos[VX],
-                                    ld->L_v2pos[VY], &traceLOS);
+        s1 = P_PointOnDivlineSide(lineDef->L_v1pos[VX],
+                                  lineDef->L_v1pos[VY], &traceLOS);
+        s2 = P_PointOnDivlineSide(lineDef->L_v2pos[VX],
+                                  lineDef->L_v2pos[VY], &traceLOS);
     }
     else
     {
-        s[0] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX]),
-                                 FIX2FLT(traceLOS.pos[VY]), ld);
-        s[1] = P_PointOnLinedefSide(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
-                                 FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), ld);
+        s1 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX]),
+                                    FIX2FLT(traceLOS.pos[VY]), lineDef);
+        s2 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
+                                    FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), lineDef);
     }
+    if(s1 == s2) return false;
 
-    if(s[0] == s[1])
-        return true; // Line isn't crossed.
-
-    // Hit the line.
-    P_MakeDivline(ld, &dl);
-    frac = P_InterceptVector(&traceLOS, &dl);
-    if(frac < 0)
-        return true; // Behind source.
-
-    // Try to early out the check.
-    if(earlyout && frac < 1 && !ld->L_backside)
-        return false; // Stop iteration.
-
-    P_AddIntercept(frac, true, ld);
-
-    return true; // Continue iteration.
+    // Calculate interception point.
+    P_MakeDivline(lineDef, &dl);
+    distance = P_InterceptVector(&traceLOS, &dl);
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_LINE, distance, lineDef);
+    }
+    // Continue iteration.
+    return false;
 }
 
-boolean PIT_AddMobjIntercepts(mobj_t* mo, void* data)
+int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
 {
-    float               x1, y1, x2, y2;
-    int                 s[2];
-    divline_t           dl;
-    float               frac;
+    vec2_t from, to;
+    float distance;
+    divline_t dl;
+    int s1, s2;
 
-    if(mo->dPlayer && (mo->dPlayer->flags & DDPF_CAMERA))
-        return true; // $democam: ssshh, keep going, we're not here...
+    if(mobj->dPlayer && (mobj->dPlayer->flags & DDPF_CAMERA))
+        return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
     if((traceLOS.dX ^ traceLOS.dY) > 0)
     {
-        x1 = mo->pos[VX] - mo->radius;
-        y1 = mo->pos[VY] + mo->radius;
-
-        x2 = mo->pos[VX] + mo->radius;
-        y2 = mo->pos[VY] - mo->radius;
+        // \ Slope
+        V2_Set(from, mobj->pos[VX] - mobj->radius,
+                     mobj->pos[VY] + mobj->radius);
+        V2_Set(to,   mobj->pos[VX] + mobj->radius,
+                     mobj->pos[VY] - mobj->radius);
     }
     else
     {
-        x1 = mo->pos[VX] - mo->radius;
-        y1 = mo->pos[VY] - mo->radius;
-
-        x2 = mo->pos[VX] + mo->radius;
-        y2 = mo->pos[VY] + mo->radius;
+        // / Slope
+        V2_Set(from, mobj->pos[VX] - mobj->radius,
+                     mobj->pos[VY] - mobj->radius);
+        V2_Set(to,   mobj->pos[VX] + mobj->radius,
+                     mobj->pos[VY] + mobj->radius);
     }
 
-    s[0] = P_PointOnDivlineSide(x1, y1, &traceLOS);
-    s[1] = P_PointOnDivlineSide(x2, y2, &traceLOS);
-    if(s[0] == s[1])
-        return true; // Line isn't crossed.
+    // Is this line crossed?
+    s1 = P_PointOnDivlineSide(from[VX], from[VY], &traceLOS);
+    s2 = P_PointOnDivlineSide(to[VX], to[VY], &traceLOS);
+    if(s1 == s2) return false;
 
-    dl.pos[VX] = FLT2FIX(x1);
-    dl.pos[VY] = FLT2FIX(y1);
-    dl.dX = FLT2FIX(x2 - x1);
-    dl.dY = FLT2FIX(y2 - y1);
-
-    frac = P_InterceptVector(&traceLOS, &dl);
-    if(frac < 0)
-        return true; // Behind source.
-
-    P_AddIntercept(frac, false, mo);
-
-    return true; // Keep going.
+    // Calculate interception point.
+    dl.pos[VX] = FLT2FIX(from[VX]);
+    dl.pos[VY] = FLT2FIX(from[VY]);
+    dl.dX = FLT2FIX(to[VX] - from[VX]);
+    dl.dY = FLT2FIX(to[VY] - from[VY]);
+    distance = P_InterceptVector(&traceLOS, &dl);
+    // On the correct side of the trace origin?
+    if(!(distance < 0))
+    {
+        P_AddIntercept(ICPT_MOBJ, distance, mobj);
+    }
+    // Continue iteration.
+    return false;
 }
 
-/**
- * Traces a line from x1,y1 to x2,y2, calling the traverser function for each
- * Returns true if the traverser function returns true for all lines
- */
-boolean P_PathTraverse(float x1, float y1, float x2, float y2,
-                       int flags, boolean (*trav) (intercept_t*))
+static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
+    uint const toBlock[2], float const from[2], float const to[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
 {
-    float               origin[2], dest[2];
-    uint                originBlock[2], destBlock[2];
-    gamemap_t*          map = P_GetCurrentMap();
-    vec2_t              min, max;
+    int result = false; // Continue iteration.
+    float intercept[2], delta[2], partial;
+    uint count, block[2];
+    int stepDir[2];
+    assert(bmap);
 
-    V2_Set(origin, x1, y1);
-    V2_Set(dest, x2, y2);
+    if(toBlock[VX] > fromBlock[VX])
+    {
+        stepDir[VX] = 1;
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = 1 - (partial - (int) partial);
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else if(toBlock[VX] < fromBlock[VX])
+    {
+        stepDir[VX] = -1;
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = (partial - (int) partial);
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else
+    {
+        stepDir[VX] = 0;
+        partial = 1;
+        delta[VY] = 256;
+    }
+    intercept[VY] = from[VY] / Blockmap_CellHeight(bmap) + partial * delta[VY];
 
-    P_GetBlockmapBounds(map->blockMap, min, max);
+    if(toBlock[VY] > fromBlock[VY])
+    {
+        stepDir[VY] = 1;
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = 1 - (partial - (int) partial);
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else if(toBlock[VY] < fromBlock[VY])
+    {
+        stepDir[VY] = -1;
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = (partial - (int) partial);
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else
+    {
+        stepDir[VY] = 0;
+        partial = 1;
+        delta[VX] = 256;
+    }
+    intercept[VX] = from[VX] / Blockmap_CellWidth(bmap) + partial * delta[VX];
 
-    if(!(origin[VX] >= min[VX] && origin[VX] <= max[VX] &&
-         origin[VY] >= min[VY] && origin[VY] <= max[VY]))
-    {   // Origin is outside the blockmap (really? very unusual...)
-        return false;
+    //
+    // Step through map blocks.
+    //
+
+    // Count is present to prevent a round off error from skipping the
+    // break and ending up in an infinite loop..
+    block[VX] = fromBlock[VX];
+    block[VY] = fromBlock[VY];
+    for(count = 0; count < 64; ++count)
+    {
+        result = callback(block, paramaters);
+        if(result) return result; // Early out.
+
+        if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
+            break;
+
+        /// \todo Replace incremental translation?
+        if((uint)intercept[VY] == block[VY])
+        {
+            block[VX] += stepDir[VX];
+            intercept[VY] += delta[VY];
+        }
+        else if((uint)intercept[VX] == block[VX])
+        {
+            block[VY] += stepDir[VY];
+            intercept[VX] += delta[VX];
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to_[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+{
+    // Constant terms implicitly defined by DOOM's original version of this
+    // algorithm (we must honor these fudge factors for compatibility).
+    const float epsilon    = FIX2FLT(FRACUNIT);
+    const float unitOffset = FIX2FLT(FRACUNIT);
+    uint fromBlock[2], toBlock[2];
+    vec2_t from, to, min, max;
+    float dX, dY;
+    assert(bmap);
+
+    V2_Copy(min, Blockmap_Bounds(bmap)->min);
+    V2_Copy(max, Blockmap_Bounds(bmap)->max);
+
+    // We may need to clip and/or fudge these points.
+    V2_Copy(from, from_);
+    V2_Copy(to, to_);
+
+    if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
+         from[VY] >= min[VY] && from[VY] <= max[VY]))
+    {
+        // 'From' is outside the blockmap (really? very unusual...)
+        return true;
     }
 
     // Check the easy case of a path that lies completely outside the bmap.
-    if((origin[VX] < min[VX] && dest[VX] < min[VX]) ||
-       (origin[VX] > max[VX] && dest[VX] > max[VX]) ||
-       (origin[VY] < min[VY] && dest[VY] < min[VY]) ||
-       (origin[VY] > max[VY] && dest[VY] > max[VY]))
-    {   // Nothing intercepts outside the blockmap!
-        return false;
+    if((from[VX] < min[VX] && to[VX] < min[VX]) ||
+       (from[VX] > max[VX] && to[VX] > max[VX]) ||
+       (from[VY] < min[VY] && to[VY] < min[VY]) ||
+       (from[VY] > max[VY] && to[VY] > max[VY]))
+    {
+        // Nothing intercepts outside the blockmap!
+        return true;
     }
 
-    if((FLT2FIX(origin[VX] - min[VX]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VX] += 1; // Don't side exactly on a line.
-    if((FLT2FIX(origin[VY] - min[VY]) & (MAPBLOCKSIZE - 1)) == 0)
-        origin[VY] += 1; // Don't side exactly on a line.
+    // Lines should not be perfectly parallel to a blockmap axis.
+    // We honor these so-called fudge factors for compatible behavior
+    // with DOOM's algorithm.
+    dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
+    dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
+    if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
+    if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
-    traceLOS.pos[VX] = FLT2FIX(origin[VX]);
-    traceLOS.pos[VY] = FLT2FIX(origin[VY]);
-    traceLOS.dX = FLT2FIX(dest[VX] - origin[VX]);
-    traceLOS.dY = FLT2FIX(dest[VY] - origin[VY]);
+    traceLOS.pos[VX] = FLT2FIX(from[VX]);
+    traceLOS.pos[VY] = FLT2FIX(from[VY]);
+    traceLOS.dX = FLT2FIX(to[VX] - from[VX]);
+    traceLOS.dY = FLT2FIX(to[VY] - from[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
-     * Clip path so that dest is within the AABB of the blockmap (note we
-     * would have already abandoned if origin lay outside. Also, to avoid
-     * potential rounding errors which might occur when determining the
-     * blocks later, we will shrink the bbox slightly first.
+     * Clip path so that 'to' is within the AABB of the blockmap (note we
+     * would have already abandoned if 'from' lay outside..
      */
+    if(!(to[VX] >= min[VX] && to[VX] <= max[VX] &&
+         to[VY] >= min[VY] && to[VY] <= max[VY]))
+    {
+        // 'to' is outside the blockmap.
+        vec2_t bounds[4], point;
+        float ab;
 
-    if(!(dest[VX] >= min[VX] && dest[VX] <= max[VX] &&
-         dest[VY] >= min[VY] && dest[VY] <= max[VY]))
-    {   // Dest is outside the blockmap.
-        float               ab;
-        vec2_t              bbox[4], point;
+        V2_Set(bounds[0], min[VX], min[VY]);
+        V2_Set(bounds[1], min[VX], max[VY]);
+        V2_Set(bounds[2], max[VX], max[VY]);
+        V2_Set(bounds[3], max[VX], min[VY]);
 
-        V2_Set(bbox[0], min[VX] + 1, min[VY] + 1);
-        V2_Set(bbox[1], min[VX] + 1, max[VY] - 1);
-        V2_Set(bbox[2], max[VX] - 1, max[VY] - 1);
-        V2_Set(bbox[3], max[VX] - 1, min[VY] + 1);
-
-        ab = V2_Intercept(origin, dest, bbox[0], bbox[1], point);
+        ab = V2_Intercept(from, to, bounds[0], bounds[1], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[1], bbox[2], point);
+        ab = V2_Intercept(from, to, bounds[1], bounds[2], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[2], bbox[3], point);
+        ab = V2_Intercept(from, to, bounds[2], bounds[3], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
 
-        ab = V2_Intercept(origin, dest, bbox[3], bbox[0], point);
+        ab = V2_Intercept(from, to, bounds[3], bounds[0], point);
         if(ab >= 0 && ab <= 1)
-            V2_Copy(dest, point);
+            V2_Copy(to, point);
     }
 
-    if(!(P_ToBlockmapBlockIdx(map->blockMap, originBlock, origin) &&
-         P_ToBlockmapBlockIdx(map->blockMap, destBlock, dest)))
-    {   // Shouldn't reach here due to the clipping above.
-        return false;
-    }
+    // Clipping already applied above, so we don't need to check it again...
+    Blockmap_CellCoords(bmap, fromBlock, from);
+    Blockmap_CellCoords(bmap, toBlock, to);
 
-    earlyout = flags & PT_EARLYOUT;
+    V2_Subtract(from, from, min);
+    V2_Subtract(to, to, min);
+    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, paramaters);
+}
 
-    validCount++;
+typedef struct {
+    int (*callback) (linedef_t*, void*);
+    void* paramaters;
+} iteratepolyobjlinedefs_params_t;
+
+static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
+{
+    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
+    return P_PolyobjLinesIterator(po, p->callback, p->paramaters);
+}
+
+static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    iteratepolyobjlinedefs_params_t iplParams;
+    iplParams.callback = PIT_AddLineDefIntercepts;
+    iplParams.paramaters = NULL;
+    return Map_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
+}
+
+static int collectLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    return Map_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
+}
+
+static int collectMobjIntercepts(uint const block[2], void* paramaters)
+{
+    gamemap_t* map = (gamemap_t*)paramaters;
+    return Map_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
+}
+
+/**
+ * Traces a line between @a from and @a to, making a callback for each
+ * interceptable object linked within Blockmap cells which cover the path this
+ * defines.
+ */
+int Map_PathTraverse(gamemap_t* map, float const from[2], float const to[2],
+    int flags, traverser_t callback, void* paramaters)
+{
+    // A new intercept trace begins...
     P_ClearIntercepts();
+    validCount++;
 
-    V2_Subtract(origin, origin, min);
-    V2_Subtract(dest, dest, min);
+    // Step #1: Collect intercepts.
+    if(flags & PT_ADDLINES)
+    {
+        if(numPolyObjs != 0)
+        {
+            traverseCellPath(map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
+        }
+        traverseCellPath(map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
+    }
+    if(flags & PT_ADDMOBJS)
+    {
+        traverseCellPath(map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
+    }
 
-    if(!P_BlockPathTraverse(BlockMap, originBlock, destBlock, origin, dest,
-                            flags, trav))
-        return false; // Early out.
+    // Step #2: Process sorted intercepts.
+    return P_TraverseIntercepts(callback, paramaters);
+}
 
-    // Go through the sorted list.
-    return P_TraverseIntercepts(trav, 1.0f);
+/// \note Part of the Doomsday public API.
+int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback,
+    void* paramaters)
+{
+    gamemap_t* map = P_GetCurrentMap();
+    return Map_PathTraverse(map, from, to, flags, callback, paramaters);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback)
+{
+    return P_PathTraverse2(from, to, flags, callback, NULL/*no paramaters*/);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags,
+    traverser_t callback, void* paramaters)
+{
+    vec2_t from, to;
+    V2_Set(from, fromX, fromY);
+    V2_Set(to, toX, toY);
+    return P_PathTraverse2(from, to, flags, callback, paramaters);
+}
+
+/// \note Part of the Doomsday public API.
+int P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags,
+    traverser_t callback)
+{
+    return P_PathTraverseXY2(fromX, fromY, toX, toY, flags, callback, NULL/*no paramaters*/);
 }

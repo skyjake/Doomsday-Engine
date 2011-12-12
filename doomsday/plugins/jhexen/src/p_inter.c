@@ -1306,31 +1306,31 @@ typedef struct {
     mobj_t* foundMobj;
 } findactiveminotaurparams_t;
 
-static boolean findActiveMinotaur(thinker_t* th, void* context)
+static int findActiveMinotaur(thinker_t* th, void* context)
 {
     findactiveminotaurparams_t* params =
         (findactiveminotaurparams_t*) context;
     mobj_t* mo = (mobj_t*) th;
 
     if(mo->type != MT_MINOTAUR)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(!(mo->flags & MF_COUNTKILL)) // For morphed minotaurs.
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(mo->flags & MF_CORPSE)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mapTime - mo->argsUInt >= MAULATORTICS)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->tracer->player == params->master)
     {   // Found it!
         params->foundMobj = mo;
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 mobj_t* ActiveMinotaur(player_t* master)
@@ -1340,7 +1340,7 @@ mobj_t* ActiveMinotaur(player_t* master)
     params.master = master;
     params.foundMobj = NULL;
 
-    if(!DD_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
+    if(DD_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
         return params.foundMobj;
 
     return NULL;

@@ -3,9 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
+ *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +21,43 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * dam_blockmap.h: BlockMap generation.
- *
- * Generate valid blockmap data from the already loaded map data.
- * Adapted from algorithm used in prBoom 2.2.6 -DJS
- *
- * Algorithm is order of nlines*(ncols+nrows) not nlines*ncols*nrows
- */
+#ifndef __DSFMOD_UTIL_H__
+#define __DSFMOD_UTIL_H__
 
-#ifndef __DOOMSDAY_ARCHIVED_MAP_BLOCKMAP_H__
-#define __DOOMSDAY_ARCHIVED_MAP_BLOCKMAP_H__
+#include <fmod.h>
+#include <fmod.hpp>
+#include <cstring>
+#include <string.h>
 
-#include "p_mapdata.h"
-
-blockmap_t*     DAM_BuildBlockMap(vertex_t*** vertexes, uint* numVertexes,
-                                  linedef_t** lineDefs, uint* numLineDefs);
+#ifdef UNIX
+#  define strnicmp strncasecmp
 #endif
+
+#ifdef WIN32
+#  define strnicmp _strnicmp
+#endif
+
+class FMODVector : public FMOD_VECTOR
+{
+public:
+    FMODVector(float _x = 0, float _y = 0, float _z = 0) {
+        x = _x;
+        y = _y;
+        z = _z;
+    }
+
+    void set(const float* values) {
+        x = values[0];
+        y = values[1];
+        z = values[2];
+    }
+};
+
+template <typename T> void zeroStruct(T& t) {
+    std::memset(&t, 0, sizeof(T));
+    t.cbsize = sizeof(T);
+}
+
+bool endsWith(const char* str, const char* ending);
+
+#endif /* end of include guard: __DSFMOD_UTIL_H__ */

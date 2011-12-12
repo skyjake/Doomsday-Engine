@@ -33,19 +33,24 @@ typedef enum {
     AUDIOD_DUMMY,
     AUDIOD_SDL_MIXER,
     AUDIOD_OPENAL,
-#ifdef WIN32
-    AUDIOD_DSOUND,
-    AUDIOD_WINMM,
-#endif
+    AUDIOD_FMOD,
+    AUDIOD_DSOUND,  // Win32 only
+    AUDIOD_WINMM,   // Win32 only
     AUDIODRIVER_COUNT
 } audiodriver_e;
 
 #define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
 
+// Audio driver properties.
+enum {
+    AUDIOP_SOUNDFONT_FILENAME
+};
+
 typedef struct audiodriver_s {
     int (*Init) (void);
     void (*Shutdown) (void);
     void (*Event) (int type);
+    int (*Set) (int prop, const void* ptr);
 } audiodriver_t;
 
 #endif /* LIBDENG_AUDIO_DRIVER_H */

@@ -1865,6 +1865,10 @@ static void conPrintf(int flags, const char* format, va_list args)
             fprintf(outFile, "%s", text);
     }
 
+#if defined(_DEBUG) && defined(WIN32)
+    fprintf(stderr, "%s", prbuff);
+#endif
+
     // Servers might have to send the text to a number of clients.
     if(isServer)
     {

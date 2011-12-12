@@ -604,19 +604,18 @@ static int rendSeg(void* seg_, void* data)
     xline_t* xLine;
 
     line = P_GetPtrp(seg, DMU_LINEDEF);
-    if(!line)
-        return 1;
+    if(!line) return false;
 
     xLine = P_ToXLine(line);
-    if(xLine->validCount == VALIDCOUNT)
-        return 1; // Already drawn once.
+    // Already drawn once?
+    if(xLine->validCount == VALIDCOUNT) return false;
 
-    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES))
-        return 1;
+    // Is this line being drawn?
+    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
 
+    // We only want to draw twosided lines once.
     frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
-        return 1; // We only want to draw twosided lines once.
+    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR)) return false;
 
     info = NULL;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[plr - players])
@@ -682,11 +681,11 @@ static int rendSeg(void* seg_, void* data)
         xLine->validCount = VALIDCOUNT; // Mark as drawn this frame.
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
     }
 }
 
-static boolean rendSegsOfSubsector(subsector_t* ssec, void* context)
+static int rendSegsOfSubsector(subsector_t* ssec, void* context)
 {
     return P_Iteratep(ssec, DMU_SEG, context, rendSeg);
 }
@@ -698,10 +697,9 @@ static boolean rendSegsOfSubsector(subsector_t* ssec, void* context)
  */
 static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     uint i;
+    assert(obj && obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -713,9 +711,9 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
     // Can we use the automap's in-view bounding box to cull out of view objects?
     if(!addToLists)
     {
-        float aabb[4];
-        UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-        P_SubsectorsBoxIterator(aabb, NULL, rendSegsOfSubsector, obj);
+        AABoxf aaBox;
+        UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+        P_SubsectorsBoxIterator(&aaBox, NULL, rendSegsOfSubsector, obj);
     }
     else
     {   // No. As the map lists are considered static we want them to contain all
@@ -724,7 +722,6 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
         {
             P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_SEG, obj, rendSeg);
         }
-    }
     }
 }
 
@@ -802,13 +799,13 @@ int rendPolyobjSeg(void* segPtr, void* context)
     xline_t* xLine;
 
     if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
-        return 1;
+        return false;
 
     if(xLine->validCount == VALIDCOUNT)
-        return 1; // Already processed this frame.
+        return false; // Already processed this frame.
 
     if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES))
-        return 1;
+        return false;
 
     amo = AMO_NONE;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[rs.plr - players])
@@ -821,7 +818,7 @@ int rendPolyobjSeg(void* segPtr, void* context)
     }
 
     info = AM_GetInfoForLine(UIAutomap_Config(obj), amo);
-    if(NULL != info)
+    if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
                       info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
@@ -830,24 +827,23 @@ int rendPolyobjSeg(void* segPtr, void* context)
 
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean rendSegsOfPolyobj(polyobj_t* po, void* context)
+int rendSegsOfPolyobj(polyobj_t* po, void* context)
 {
-    int result = 1;
+    int result = false; // Continue iteration.
     seg_t** segPtr = po->segs;
-    while(*segPtr && (result = rendPolyobjSeg(*segPtr, context)) != 0)
+    while(*segPtr && !(result = rendPolyobjSeg(*segPtr, context)))
         segPtr++;
     return result;
 }
 
 static void rendPolyobjs(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    float aabb[4];
+    AABoxf aaBox;
+    assert(obj && obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -856,15 +852,14 @@ static void rendPolyobjs(uiwidget_t* obj)
     rs.objType = MOL_LINEDEF;
 
     // Draw any polyobjects in view.
-    UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_PolyobjsBoxIterator(aabb, rendSegsOfPolyobj, obj);
-    }
+    UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_PolyobjsBoxIterator(&aaBox, rendSegsOfPolyobj, obj);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-boolean rendXGLinedef(linedef_t* line, void* context)
+int rendXGLinedef(linedef_t* line, void* context)
 {
-    assert(NULL != line && NULL != context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
+    assert(line && context && ((uiwidget_t*)context)->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)((uiwidget_t*)context)->typedata;
     xline_t* xLine;
@@ -872,25 +867,25 @@ boolean rendXGLinedef(linedef_t* line, void* context)
     xLine = P_ToXLine(line);
     if(!xLine || xLine->validCount == VALIDCOUNT ||
         ((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)))
-        return 1;
+        return false;
 
     // Show only active XG lines.
     if(!(xLine->xg && xLine->xg->active && (mapTime & 4)))
-        return 1;
+        return false;
 
     rendLinedef(line, .8f, 0, .8f, 1, BM_ADD, (am->flags & AMF_REND_LINE_NORMALS)? true : false);
     xLine->validCount = VALIDCOUNT; // Mark as processed this frame.
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
     }
 }
 
 static void rendXGLinedefs(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    float aabb[4];
+    AABoxf aaBox;
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -899,8 +894,8 @@ static void rendXGLinedefs(uiwidget_t* obj)
     rs.addToLists = false;
     rs.objType = -1;
 
-    UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
-    P_LinesBoxIterator(aabb, rendXGLinedef, obj);
+    UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
+    P_LinesBoxIterator(&aaBox, rendXGLinedef, obj);
     }
 }
 #endif
@@ -926,7 +921,7 @@ static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float an
  */
 static void rendPlayerMarkers(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     vectorgraphicid_t vgId = AM_GetVectorGraphic(am->mcfg, AMO_THINGPLAYER);
@@ -1004,7 +999,7 @@ typedef struct {
 /**
  * Draws all things on the map
  */
-static boolean rendThingPoint(mobj_t* mo, void* context)
+static int rendThingPoint(mobj_t* mo, void* context)
 {
     renderthing_params_t* p = (renderthing_params_t*) context;
 
@@ -1024,7 +1019,7 @@ static boolean rendThingPoint(mobj_t* mo, void* context)
 
                 /* $unifiedangles */
                 drawVectorGraphic(VG_KEYSQUARE, mo->pos[VX], mo->pos[VY], 0, PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
-                return true; // Continue iteration.
+                return false; // Continue iteration.
             }
         }
 
@@ -1037,26 +1032,26 @@ static boolean rendThingPoint(mobj_t* mo, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static void rendThingPoints(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
+    assert(obj && obj->type == GUI_AUTOMAP);
     {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     renderthing_params_t params;
-    float aabb[4];
+    AABoxf aaBox;
 
     params.flags = UIAutomap_Flags(obj);
     params.vgId = AM_GetVectorGraphic(am->mcfg, AMO_THING);
     AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, customPal);
     params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * alpha, 1.f);
 
-    UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+    UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     VALIDCOUNT++;
-    P_MobjsBoxIterator(aabb, rendThingPoint, &params);
+    P_MobjsBoxIterator(&aaBox, rendThingPoint, &params);
     }
 }
 

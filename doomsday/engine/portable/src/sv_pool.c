@@ -2139,7 +2139,7 @@ typedef struct {
     pool_t**            targets;
 } newmobjdeltaparams_t;
 
-static boolean newMobjDelta(thinker_t* th, void* context)
+static int newMobjDelta(thinker_t* th, void* context)
 {
     newmobjdeltaparams_t* params = (newmobjdeltaparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2166,7 +2166,7 @@ static boolean newMobjDelta(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

@@ -141,9 +141,6 @@ boolean     P_LookForMonsters(mobj_t* mo);
 void        P_InitCorpseQueue(void);
 void        P_AddCorpsesToQueue(void);
 
-#define MAXINTERCEPTS       128
-extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
-
 mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();

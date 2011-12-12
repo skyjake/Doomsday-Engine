@@ -47,7 +47,7 @@ extern mobj_t* puffSpawned;
 extern mobj_t* blockingMobj;
 #endif
 
-extern float tmBBox[];
+extern AABoxf tmBox;
 extern boolean fellDown;
 
 boolean         P_CheckSight(const mobj_t* from, const mobj_t* to);

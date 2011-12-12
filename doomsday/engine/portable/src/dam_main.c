@@ -532,6 +532,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         if(loadedOK)
         {
             ded_sky_t* skyDef = NULL;
+            vec2_t min, max;
+            uint i;
 
             // Do any initialization/error checking work we need to do.
             // Must be called before we go any further.
@@ -543,7 +545,13 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             Rend_DecorInit();
 
             // Init blockmap for searching subsectors.
-            P_BuildSubsectorBlockMap(map);
+            V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
+            V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
+            Map_InitSubsectorBlockmap(map, min, max);
+            for(i = 0; i < map->numSSectors; ++i)
+            {
+                Map_LinkSubsectorInBlockmap(map, map->ssectors + i);
+            }
 
             map->uri = Uri_NewCopy(dam->uri);
             strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));

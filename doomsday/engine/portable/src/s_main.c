@@ -103,10 +103,9 @@ const char* S_GetDriverName(audiodriver_e id)
     /* AUDIOD_DUMMY */      "Dummy",
     /* AUDIOD_SDL_MIXER */  "SDLMixer",
     /* AUDIOD_OPENAL */     "OpenAL",
-#ifdef WIN32
-    /* AUDIOD_DSOUND */     "DirectSound",
-    /* AUDIOD_WINMM */      "Windows Multimedia"
-#endif
+    /* AUDIOD_FMOD */       "FMOD Ex",
+    /* AUDIOD_DSOUND */     "DirectSound", // Win32 only
+    /* AUDIOD_WINMM */      "Windows Multimedia" // Win32 only
     };
     if(VALID_AUDIODRIVER_IDENTIFIER(id))
         return audioDrivers[id];
@@ -127,8 +126,15 @@ boolean S_InitDriver(audiodriver_e drvid)
         audioDriver = &audiod_dummy;
         break;
 
+#ifndef DENG_DISABLE_SDLMIXER
     case AUDIOD_SDL_MIXER:
         audioDriver = &audiod_sdlmixer;
+        break;
+#endif
+
+    case AUDIOD_FMOD:
+        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
+            return false;
         break;
 
     case AUDIOD_OPENAL:
@@ -164,6 +170,9 @@ audiodriver_e S_ChooseAudioDriver(void)
     if(ArgExists("-oal"))
         return AUDIOD_OPENAL;
 
+    if(ArgExists("-fmod"))
+        return AUDIOD_FMOD;
+
 #ifdef WIN32
     if(ArgExists("-dsound"))
         return AUDIOD_DSOUND;
@@ -173,7 +182,11 @@ audiodriver_e S_ChooseAudioDriver(void)
 #endif
 
     // The default audio driver.
+#ifndef DENG_DISABLE_SDLMIXER
     return AUDIOD_SDL_MIXER;
+#else
+    return AUDIOD_DUMMY;
+#endif
 }
 
 /**

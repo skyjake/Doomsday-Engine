@@ -96,6 +96,7 @@ static audiodriver_t* importExternal(void)
     d->Init = Imp("DS_Init");
     d->Shutdown = Imp("DS_Shutdown");
     d->Event = Imp("DS_Event");
+    d->Set = Imp("DS_Set");
 
     // The driver may provide SFX playback functionality.
     if(Imp("DS_SFX_Init"))

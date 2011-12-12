@@ -376,10 +376,10 @@ static void writeLine(const gamemap_t *map, uint idx)
     writeLong((long) l->slopeType);
     writeLong((long) (l->sideDefs[0]? ((l->sideDefs[0] - map->sideDefs) + 1) : 0));
     writeLong((long) (l->sideDefs[1]? ((l->sideDefs[1] - map->sideDefs) + 1) : 0));
-    writeFloat(l->bBox[BOXLEFT]);
-    writeFloat(l->bBox[BOXRIGHT]);
-    writeFloat(l->bBox[BOXBOTTOM]);
-    writeFloat(l->bBox[BOXTOP]);
+    writeFloat(l->aaBox.minX);
+    writeFloat(l->aaBox.minY);
+    writeFloat(l->aaBox.maxX);
+    writeFloat(l->aaBox.maxY);
     writeFloat(l->length);
     writeLong((long) l->angle);
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -403,10 +403,10 @@ static void readLine(const gamemap_t *map, uint idx)
     l->sideDefs[0] = (sideIdx == 0? NULL : &map->sideDefs[sideIdx-1]);
     sideIdx = readLong();
     l->sideDefs[1] = (sideIdx == 0? NULL : &map->sideDefs[sideIdx-1]);
-    l->bBox[BOXLEFT] = readFloat();
-    l->bBox[BOXRIGHT] = readFloat();
-    l->bBox[BOXBOTTOM] = readFloat();
-    l->bBox[BOXTOP] = readFloat();
+    l->aaBox.minX = readFloat();
+    l->aaBox.minY = readFloat();
+    l->aaBox.maxX = readFloat();
+    l->aaBox.maxY = readFloat();
     l->length = readFloat();
     l->angle = (binangle_t) readLong();
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -732,10 +732,10 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     subsector_t        *s = &map->ssectors[idx];
 
     writeLong((long) s->flags);
-    writeFloat(s->bBox[0].pos[VX]);
-    writeFloat(s->bBox[0].pos[VY]);
-    writeFloat(s->bBox[1].pos[VX]);
-    writeFloat(s->bBox[1].pos[VY]);
+    writeFloat(s->aaBox.minX);
+    writeFloat(s->aaBox.minY);
+    writeFloat(s->aaBox.maxX);
+    writeFloat(s->aaBox.maxY);
     writeFloat(s->midPoint.pos[VX]);
     writeFloat(s->midPoint.pos[VY]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
@@ -758,10 +758,10 @@ static void readSubsector(const gamemap_t *map, uint idx)
     subsector_t        *s = &map->ssectors[idx];
 
     s->flags = (int) readLong();
-    s->bBox[0].pos[VX] = readFloat();
-    s->bBox[0].pos[VY] = readFloat();
-    s->bBox[1].pos[VX] = readFloat();
-    s->bBox[1].pos[VY] = readFloat();
+    s->aaBox.minX = readFloat();
+    s->aaBox.minY = readFloat();
+    s->aaBox.maxX = readFloat();
+    s->aaBox.maxY = readFloat();
     s->midPoint.pos[VX] = readFloat();
     s->midPoint.pos[VY] = readFloat();
     obIdx = readLong();
@@ -984,10 +984,10 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeFloat(p->pos[VZ]);
     writeLong((long) p->angle);
     writeLong((long) p->tag);
-    writeFloat(p->box[0][VX]);
-    writeFloat(p->box[0][VY]);
-    writeFloat(p->box[1][VX]);
-    writeFloat(p->box[1][VY]);
+    writeFloat(p->aaBox.minX);
+    writeFloat(p->aaBox.minY);
+    writeFloat(p->aaBox.maxX);
+    writeFloat(p->aaBox.maxY);
     writeFloat(p->dest[VX]);
     writeFloat(p->dest[VY]);
     writeFloat(p->speed);
@@ -1025,10 +1025,10 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->pos[VZ] = readFloat();
     p->angle = (angle_t) readLong();
     p->tag = (int) readLong();
-    p->box[0][VX] = readFloat();
-    p->box[0][VY] = readFloat();
-    p->box[1][VX] = readFloat();
-    p->box[1][VY] = readFloat();
+    p->aaBox.minX = readFloat();
+    p->aaBox.minY = readFloat();
+    p->aaBox.maxX = readFloat();
+    p->aaBox.maxY = readFloat();
     p->dest[VX] = readFloat();
     p->dest[VY] = readFloat();
     p->speed = readFloat();

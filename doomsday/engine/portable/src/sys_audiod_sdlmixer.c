@@ -26,6 +26,8 @@
  * SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
+#ifndef DENG_DISABLE_SDLMIXER
+
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
@@ -563,3 +565,5 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
 
     return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
 }
+
+#endif // DENG_DISABLE_SDLMIXER

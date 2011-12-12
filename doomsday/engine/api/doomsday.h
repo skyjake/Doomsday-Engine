@@ -292,25 +292,44 @@ boolean MPE_End(void);
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
-    int             P_PointOnLinedefSide(float x, float y, const struct linedef_s* line);
-    int             P_BoxOnLineSide(const float* tmbox, const struct linedef_s* ld);
+    int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
+    int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
+    int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
     void            P_LineOpening(struct linedef_s* linedef);
 
     // Object in bounding box iterators.
-    boolean         P_MobjsBoxIterator(const float box[4], boolean (*func) (struct mobj_s*, void*), void* data);
-    boolean         P_LinesBoxIterator(const float box[4], boolean (*func) (struct linedef_s*, void*), void* data);
-    boolean         P_AllLinesBoxIterator(const float box[4], boolean (*func) (struct linedef_s*, void*), void* data);
-    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t* sector, boolean (*func) (subsector_t*, void*), void* data);
-    boolean         P_PolyobjsBoxIterator(const float box[4], boolean (*func) (struct polyobj_s*, void*), void* data);
+    int             P_MobjsBoxIterator(const AABoxf* box,
+                                       int (*func) (struct mobj_s*, void*),
+                                       void* data);
+    int             P_LinesBoxIterator(const AABoxf* box,
+                                       int (*func) (struct linedef_s*, void*),
+                                       void* data);
+    int             P_AllLinesBoxIterator(const AABoxf* box,
+                                          int (*func) (struct linedef_s*, void*),
+                                          void* data);
+    int             P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
+                                           int (*func) (subsector_t*, void*),
+                                           void* data);
+    int             P_PolyobjsBoxIterator(const AABoxf* box,
+                                          int (*func) (struct polyobj_s*, void*),
+                                          void* data);
 
     // Object type touching mobjs iterators.
-    boolean         P_LineMobjsIterator(struct linedef_s* line, boolean (*func) (struct mobj_s*, void*), void* data);
-    boolean         P_SectorTouchingMobjsIterator(sector_t* sector, boolean (*func) (struct mobj_s*, void*), void* data);
+    int             P_LineMobjsIterator(struct linedef_s* line,
+                                        int (*func) (struct mobj_s*, void *), void* data);
+    int             P_SectorTouchingMobjsIterator
+                        (sector_t* sector, int (*func) (struct mobj_s*, void*),
+                         void* data);
 
-    boolean         P_PathTraverse(float x1, float y1, float x2, float y2, int flags, boolean (*trav) (intercept_t*));
+    int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+
+    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 
     // Play: Controls.
@@ -344,8 +363,12 @@ boolean P_LoadMap(const char* uri);
     struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 
     // Mobj linked object iterators.
-    boolean         P_MobjLinesIterator(struct mobj_s* mo, boolean (*func) (struct linedef_s*, void*), void*);
-    boolean         P_MobjSectorsIterator(struct mobj_s* mo, boolean (*func) (sector_t*, void*), void* data);
+    int             P_MobjLinesIterator(struct mobj_s* mo,
+                                        int (*func) (struct linedef_s*,
+                                                          void*), void*);
+    int             P_MobjSectorsIterator(struct mobj_s* mo,
+                                          int (*func) (sector_t*, void*),
+                                          void* data);
 
     // Play: Polyobjs.
     boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
@@ -368,7 +391,7 @@ Uri* Materials_ComposeUri(materialid_t materialId);
     void            DD_ThinkerRemove(thinker_t* th);
     void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
 
-    boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
+    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
 
 //------------------------------------------------------------------------
 //

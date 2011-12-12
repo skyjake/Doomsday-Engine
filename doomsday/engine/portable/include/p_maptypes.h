@@ -104,7 +104,7 @@ typedef struct subsector_s {
     int                 flags;
     int                 validCount;
     unsigned int        reverb[NUM_REVERB_DATA];
-    fvertex_t           bBox[2];       // Min and max points.
+    AABoxf              aaBox;         // Min and max points.
     float               worldGridOffset[2]; // Offset to align the top left of the bBox to the world grid.
     fvertex_t           midPoint;      // Center of vertices.
     unsigned short      numVertices;
@@ -133,7 +133,7 @@ typedef struct material_s {
     struct material_variantlist_node_s* _variants;
     material_env_class_t _envClass;    // Environmental sound class.
     materialid_t        _primaryBind;  // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
-    Size2*             _size;         // Logical dimensions in world-space units.
+    Size2*              _size;         // Logical dimensions in world-space units.
     short               _flags;        // @see materialFlags
     boolean             _inAnimGroup;  // @c true if belongs to some animgroup.
     boolean             _isCustom;
@@ -451,7 +451,7 @@ typedef struct linedef_s {
     float               dX;
     float               dY;
     float               length;        // Accurate length
-    float               bBox[4];
+    AABoxf              aaBox;
     boolean             mapped[DDMAXPLAYERS]; // Whether the line has been mapped by each player yet.
     mlinedef_t          buildData;
     unsigned short      shadowVisFrame[2]; // Framecount of last time shadows were drawn for this line, for each side [right, left].

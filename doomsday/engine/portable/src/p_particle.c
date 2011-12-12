@@ -87,7 +87,7 @@ static pglink_t** pgLinks = NULL; // Array of pointers to pgLinks in pgStore.
 static pglink_t* pgStore;
 static unsigned int pgCursor = 0, pgMax;
 
-static vec2_t mbox[2];
+static AABoxf mbox;
 static fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
 static boolean tmcross;
 static linedef_t* ptcHitLine;
@@ -826,10 +826,10 @@ static void P_NewParticle(ptcgen_t* gen)
         // Try a couple of times to get a good random spot.
         for(i = 0; i < 10; ++i) // Max this many tries before giving up.
         {
-            float               x = subsec->bBox[0].pos[VX] +
-                RNG_RandFloat() * (subsec->bBox[1].pos[VX] - subsec->bBox[0].pos[VX]);
-            float               y = subsec->bBox[0].pos[VY] +
-                RNG_RandFloat() * (subsec->bBox[1].pos[VY] - subsec->bBox[0].pos[VY]);
+            float               x = subsec->aaBox.minX +
+                RNG_RandFloat() * (subsec->aaBox.maxX - subsec->aaBox.minX);
+            float               y = subsec->aaBox.minY +
+                RNG_RandFloat() * (subsec->aaBox.maxY - subsec->aaBox.minY);
 
             pt->pos[VX] = FLT2FIX(x);
             pt->pos[VY] = FLT2FIX(y);
@@ -898,7 +898,7 @@ boolean PIT_ClientMobjParticles(mobj_t* cmo, void* context)
 /**
  * Spawn multiple new particles using all applicable sources.
  */
-static boolean manyNewParticles(thinker_t* th, void* context)
+static int manyNewParticles(thinker_t* th, void* context)
 {
     ptcgen_t*           gen = (ptcgen_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -911,29 +911,29 @@ static boolean manyNewParticles(thinker_t* th, void* context)
         P_NewParticle(gen);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
+int PIT_CheckLinePtc(linedef_t* ld, void* data)
 {
     fixed_t             ceil, floor;
     sector_t*           front, *back;
 
-    if(mbox[1][VX] <= ld->bBox[BOXLEFT] || mbox[0][VX] >= ld->bBox[BOXRIGHT] ||
-       mbox[1][VY] <= ld->bBox[BOXBOTTOM] || mbox[0][VY] >= ld->bBox[BOXTOP])
+    if(mbox.maxX <= ld->aaBox.minX || mbox.minX >= ld->aaBox.maxX ||
+       mbox.maxY <= ld->aaBox.minY || mbox.minY >= ld->aaBox.maxY)
     {
-        return true; // Bounding box misses the line completely.
+        return false; // Bounding box misses the line completely.
     }
 
     // Movement must cross the line.
-    if(P_PointOnLinedefSide(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
-       P_PointOnLinedefSide(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
-        return true;
+    if(P_PointOnLinedefSideXY(FIX2FLT(tmpx1), FIX2FLT(tmpy1), ld) ==
+       P_PointOnLinedefSideXY(FIX2FLT(tmpx2), FIX2FLT(tmpy2), ld))
+        return false;
 
     // We are possibly hitting something here.
     ptcHitLine = ld;
     if(!ld->L_backside)
-        return false; // Boing!
+        return true; // Boing!
 
     // Determine the opening we have here.
     front = ld->L_frontsector;
@@ -950,13 +950,13 @@ boolean PIT_CheckLinePtc(linedef_t* ld, void* data)
 
     // There is a backsector. We possibly might hit something.
     if(tmpz - tmprad < floor || tmpz + tmprad > ceil)
-        return false; // Boing!
+        return true; // Boing!
 
     // There is a possibility that the new position is in a new sector.
     tmcross = true; // Afterwards, update the sector pointer.
 
     // False alarm, continue checking.
-    return true;
+    return false;
 }
 
 /**
@@ -1296,15 +1296,15 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
     tmpy2 = y;
     V2_Set(point, FIX2FLT(MIN_OF(x, pt->pos[VX]) - st->radius),
                   FIX2FLT(MIN_OF(y, pt->pos[VY]) - st->radius));
-    V2_InitBox(mbox, point);
+    V2_InitBox(mbox.arvec2, point);
     V2_Set(point, FIX2FLT(MAX_OF(x, pt->pos[VX]) + st->radius),
                   FIX2FLT(MAX_OF(y, pt->pos[VY]) + st->radius));
-    V2_AddToBox(mbox, point);
+    V2_AddToBox(mbox.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(!P_AllLinesBoxIteratorv(mbox, PIT_CheckLinePtc, 0))
+    if(P_AllLinesBoxIterator(&mbox, PIT_CheckLinePtc, 0))
     {
         fixed_t             normal[2], dotp;
 

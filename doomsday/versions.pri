@@ -15,6 +15,7 @@ DEHREAD_VERSION         = $$findVersion(plugins/dehread/include/version.h)
 WADMAPCONVERTER_VERSION = $$findVersion(plugins/wadmapconverter/include/version.h)
 DIRECTSOUND_VERSION     = $$findVersion(plugins/directsound/include/version.h)
 OPENAL_VERSION          = $$findVersion(plugins/openal/include/version.h)
+FMOD_VERSION            = $$findVersion(plugins/fmod/include/version.h)
 WINMM_VERSION           = $$findVersion(plugins/winmm/include/version.h)
 
 JDOOM64_VERSION         = $$findVersion(plugins/jdoom64/include/version.h)

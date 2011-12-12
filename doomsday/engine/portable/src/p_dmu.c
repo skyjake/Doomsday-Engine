@@ -506,35 +506,44 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         switch(prop)
         {
         case DMU_LINEDEF:
-            { sector_t* sec = (sector_t*) ptr;
-            int result = 1;
+            {
+            sector_t*           sec = (sector_t*) ptr;
+            int                 result = false; // Continue iteration.
+
             if(sec->lineDefs)
             {
                 linedef_t** linePtr = sec->lineDefs;
-                while(*linePtr && (result = callback(*linePtr, context)) != 0)
+                while(*linePtr && !(result = callback(*linePtr, context)))
                     linePtr++;
             }
-            return result; }
+            return result;
+          }
         case DMU_PLANE:
-            { sector_t* sec = (sector_t*) ptr;
-            int result = 1;
+            {
+            sector_t*           sec = (sector_t*) ptr;
+            int                 result = false; // Continue iteration.
+
             if(sec->planes)
             {
                 plane_t** planePtr = sec->planes;
-                while(*planePtr && (result = callback(*planePtr, context)) != 0)
+                while(*planePtr && !(result = callback(*planePtr, context)))
                     planePtr++;
             }
-            return result; }
+            return result;
+          }
         case DMU_SUBSECTOR:
-            { sector_t* sec = (sector_t*) ptr;
-            int result = 1;
+            {
+            sector_t*           sec = (sector_t*) ptr;
+            int                 result = false; // Continue iteration.
+
             if(sec->ssectors)
             {
                 subsector_t** ssecPtr = sec->ssectors;
-                while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
+                while(*ssecPtr && !(result = callback(*ssecPtr, context)))
                     ssecPtr++;
             }
-            return result; }
+            return result;
+          }
         default:
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
@@ -543,15 +552,18 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         switch(prop)
         {
         case DMU_SEG:
-            { subsector_t* ssec = (subsector_t*) ptr;
-            int result = 1;
+            {
+            subsector_t*        ssec = (subsector_t*) ptr;
+            int                 result = false; // Continue iteration.
+
             if(ssec->segs)
             {
                 seg_t** segPtr = ssec->segs;
-                while(*segPtr && (result = callback(*segPtr, context)) != 0)
+                while(*segPtr && !(result = callback(*segPtr, context)))
                     segPtr++;
             }
-            return result; }
+            return result;
+          }
         default:
             Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
@@ -562,7 +574,7 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         break;
     }
 
-    return true; // Successfully completed.
+    return false;
 }
 
 /**

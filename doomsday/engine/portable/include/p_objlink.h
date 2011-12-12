@@ -23,13 +23,13 @@
  */
 
 /**
- * Object > Surface Contact Lists
+ * p_objlink.c: Objlink management.
  *
- * Implements subsector contact spreading.
+ * Object => Subsector contacts and object => Subsector spreading.
  */
 
-#ifndef LIBDENG_REFRESH_OBJLINK_H
-#define LIBDENG_REFRESH_OBJLINK_H
+#ifndef LIBDENG_OBJLINK_BLOCKMAP_H
+#define LIBDENG_OBJLINK_BLOCKMAP_H
 
 typedef enum {
     OT_MOBJ,
@@ -37,64 +37,63 @@ typedef enum {
     NUM_OBJ_TYPES
 } objtype_t;
 
-#define VALID_OBJTYPE(v) ((v) >= OT_MOBJ && (v) <= OT_LUMOBJ)
-
-void R_InitObjLinksForMap(void);
-
-void R_DestroyObjLinks(void);
+#define VALID_OBJTYPE(val) ((val) >= OT_MOBJ && (val) < NUM_OBJ_TYPES)
 
 /**
- * Called at the begining of each frame (iff the render lists are not frozen)
- * by R_BeginWorldFrame().
+ * Construct the objlink blockmap for the current map.
  */
-void R_ClearObjLinksForFrame(void);
+void R_InitObjlinkBlockmapForMap(void);
 
 /**
- * Initialize the obj > subsector contact lists ready for adding new
- * luminous objects. Called by R_BeginWorldFrame() at the beginning of a new
- * frame (if the render lists are not frozen).
+ * Initialize the object => Subsector contact lists, ready for linking to
+ * objects. To be called at the beginning of a new world frame.
  */
 void R_InitForNewFrame(void);
 
 /**
- * Called by R_BeginWorldFrame() at the beginning of render tic (iff the
- * render lists are not frozen) to link all objlinks into the objlink
- * blockmap.
+ * To be called at the begining of a render frame to clear the objlink
+ * blockmap prior to linking objects for the new viewer.
+ */
+void R_ClearObjlinksForFrame(void);
+
+/**
+ * Create a new object link of the specified @a type in the objlink blockmap.
+ */
+void R_ObjlinkCreate(void* object, objtype_t type);
+
+/**
+ * To be called at the beginning of a render frame to link all objects
+ * into the objlink blockmap.
  */
 void R_LinkObjs(void);
 
-void R_ObjLinkCreate(void* object, objtype_t type);
-
 /**
- * Perform any processing needed before we can draw surfaces within the
- * specified subsector.
- *
- * @param ssec  Subsector to process.
+ * Spread object => Subsector links for the given @a subsector. Note that
+ * all object types will be spread at this time.
  */
-void R_InitForSubsector(subsector_t* ssec);
+void R_InitForSubsector(subsector_t* subsector);
 
 typedef struct {
     void* obj;
     objtype_t type;
 } linkobjtossecparams_t;
 
-int RIT_LinkObjToSubsector(subsector_t* ssec, void* paramaters);
+/**
+ * Create a new object => Subsector contact in the objlink blockmap.
+ * Can be used as an iterator.
+ *
+ * @params paramaters  @see linkobjtossecparams_t
+ * @return  @c false (always).
+ */
+int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);
 
 /**
- * Iterate over subsector contacts of the specified type, making a callback for
- * each visited. Iteration ends when all selected contacts have been visited or
- * a callback returns non-zero.
- *
- * @param ssec  Subsector whoose contact list to process.
- * @param type  Type of objects to be processed.
- * @param callback  Callback to make for each visited contact.
- * @param paramaters  Passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
+ * Traverse the list of objects of the specified @a type which have been linked
+ * with @a subsector for the current render frame.
  */
-int R_IterateSubsectorContacts2(subsector_t* ssec, objtype_t type,
-    int (*callback) (void* object, void* paramaters), void* paramaters);
-int R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
-    int (*callback) (void* object, void* paramaters)); /* paramaters = NULL */
+int R_IterateSubsectorContacts2(subsector_t* subsector, objtype_t type,
+    int (*func) (void* object, void* paramaters), void* paramaters);
+int R_IterateSubsectorContacts(subsector_t* subsector, objtype_t type,
+    int (*func) (void* object, void* paramaters)); /*paramaters=NULL*/
 
-#endif /* LIBDENG_REFRESH_OBJLINK_H */
+#endif /* LIBDENG_OBJLINK_BLOCKMAP_H */

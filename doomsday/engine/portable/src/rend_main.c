@@ -180,8 +180,8 @@ void Rend_Register(void)
     C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
-    C_VAR_FLOAT("rend-dev-blockmap-debug", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
+    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
@@ -1903,8 +1903,10 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type, float height,
         float texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
-        V3_Set(texTL, ssec->bBox[0].pos[VX], ssec->bBox[type == PLN_FLOOR? 1 : 0].pos[VY], height);
-        V3_Set(texBR, ssec->bBox[1].pos[VX], ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
+        V3_Set(texTL, ssec->aaBox.minX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 1 : 0][VY], height);
+        V3_Set(texBR, ssec->aaBox.maxX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 0 : 1][VY], height);
 
         renderPlane(ssec, type, height, tangent, bitangent, normal, inMat, sufFlags, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
@@ -3964,7 +3966,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type == PLN_CEILING)
-            texOffset[VY] -= ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY];
+            texOffset[VY] -= ssec->aaBox.maxY - ssec->aaBox.minY;
 
         // Add the additional offset to align with the worldwide grid.
         texOffset[VX] += ssec->worldGridOffset[VX];
@@ -4309,7 +4311,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static boolean drawVertex1(linedef_t* li, void* context)
+static int drawVertex1(linedef_t* li, void* context)
 {
     vertex_t*           vtx = li->L_v1;
     polyobj_t*          po = context;
@@ -4353,10 +4355,10 @@ static boolean drawVertex1(linedef_t* li, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean drawPolyObjVertexes(polyobj_t* po, void* context)
+int drawPolyObjVertexes(polyobj_t* po, void* context)
 {
     return P_PolyobjLinesIterator(po, drawVertex1, po);
 }
@@ -4367,7 +4369,8 @@ boolean drawPolyObjVertexes(polyobj_t* po, void* context)
 void Rend_Vertexes(void)
 {
     uint                i;
-    float               oldPointSize, oldLineWidth = 1, bbox[4];
+    float               oldPointSize, oldLineWidth = 1;
+    AABoxf box;
 
     if(!devVertexBars && !devVertexIndices)
         return;
@@ -4472,11 +4475,11 @@ void Rend_Vertexes(void)
     }
 
     // Next, the vertexes of all nearby polyobjs.
-    bbox[BOXLEFT]   = vx - MAX_VERTEX_POINT_DIST;
-    bbox[BOXRIGHT]  = vx + MAX_VERTEX_POINT_DIST;
-    bbox[BOXBOTTOM] = vy - MAX_VERTEX_POINT_DIST;
-    bbox[BOXTOP]    = vy + MAX_VERTEX_POINT_DIST;
-    P_PolyobjsBoxIterator(bbox, drawPolyObjVertexes, NULL);
+    box.minX = vx - MAX_VERTEX_POINT_DIST;
+    box.minY = vy - MAX_VERTEX_POINT_DIST;
+    box.maxX = vx + MAX_VERTEX_POINT_DIST;
+    box.maxY = vy + MAX_VERTEX_POINT_DIST;
+    P_PolyobjsBoxIterator(&box, drawPolyObjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)
@@ -4867,7 +4870,7 @@ void Rend_DrawArrow(const float pos3f[3], float a, float s,
     glPopMatrix();
 }
 
-static boolean drawMobjBBox(thinker_t* th, void* context)
+static int drawMobjBBox(thinker_t* th, void* context)
 {
     static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
     static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
@@ -4878,10 +4881,10 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
 
     // We don't want the console player.
     if(mo == ddPlayers[consolePlayer].shared.mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     // Is it vissible?
     if(!(mo->subsector && mo->subsector->sector->frameFlags & SIF_VISIBLE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     eye[VX] = vx;
     eye[VY] = vz;
@@ -4901,7 +4904,7 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
     Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
                    (mo->ddFlags & DDMF_MISSILE)? yellow :
                    (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -4958,13 +4961,13 @@ static void Rend_RenderBoundingBoxes(void)
     {
         const polyobj_t* po = polyObjs[i];
         const sector_t* sec = po->subsector->sector;
-        float width  = (po->box[1][0] - po->box[0][0])/2;
-        float length = (po->box[1][1] - po->box[0][1])/2;
+        float width  = (po->aaBox.maxX - po->aaBox.minX)/2;
+        float length = (po->aaBox.maxY - po->aaBox.minY)/2;
         float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
         float pos[3], alpha;
 
-        pos[VX] = po->box[0][0]+width;
-        pos[VY] = po->box[0][1]+length;
+        pos[VX] = po->aaBox.minX + width;
+        pos[VY] = po->aaBox.minY + length;
         pos[VZ] = sec->SP_floorheight;
 
         alpha = 1 - ((M_Distance(pos, eye)/(theWindow->geometry.size.width/2))/4);
@@ -4978,13 +4981,13 @@ static void Rend_RenderBoundingBoxes(void)
         {
             seg_t* seg = po->segs[j];
             linedef_t* lineDef = seg->lineDef;
-            float width  = (lineDef->bBox[BOXRIGHT] - lineDef->bBox[BOXLEFT])/2;
-            float length = (lineDef->bBox[BOXTOP] - lineDef->bBox[BOXBOTTOM])/2;
+            float width  = (lineDef->aaBox.maxX - lineDef->aaBox.minX)/2;
+            float length = (lineDef->aaBox.maxY - lineDef->aaBox.minY)/2;
             float pos[3];
 
             /** Draw a bounding box for the lineDef.
-            pos[VX] = lineDef->bBox[BOXLEFT]+width;
-            pos[VY] = lineDef->bBox[BOXBOTTOM]+length;
+            pos[VX] = lineDef->aaBox.minX+width;
+            pos[VY] = lineDef->aaBox.minY+length;
             pos[VZ] = sec->SP_floorheight;
             Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
             */

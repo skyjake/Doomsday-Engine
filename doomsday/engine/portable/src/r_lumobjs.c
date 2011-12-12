@@ -475,26 +475,26 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
     vec2_t s, t;
 
     // Early test of the external blend factor for quick rejection.
-    if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
+    if(spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
 
     // No lightmap texture?
     tex = chooseOmniLightTexture(lum, spParams);
-    if(!tex) return 0; // Continue iteration.
+    if(!tex) return false; // Continue iteration.
 
     // Has this already been occluded?
     lumIdx = LO_ToIndex(lum);
-    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return 0; // Continue iteration.
+    if(LO_IsHidden(lumIdx, viewPlayer - ddPlayers)) return false; // Continue iteration.
 
     V3_Set(lumCenter, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
     V3_Subtract(vToLum, spParams->v1, lumCenter);
 
     // On the right side?
-    if(V3_DotProduct(vToLum, spParams->normal) > 0.f) return 0; // Continue iteration.
+    if(V3_DotProduct(vToLum, spParams->normal) > 0.f) return false; // Continue iteration.
 
     // Calculate 3D distance between surface and lumobj.
     V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, lumCenter);
     dist = V3_Distance(point, lumCenter);
-    if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return 0; // Continue iteration.
+    if(dist <= 0 || dist > LUM_OMNI(lum)->radius) return false; // Continue iteration.
 
     // Calculate the final surface light attribution factor.
     luma = 1.5f - 1.5f * dist / LUM_OMNI(lum)->radius;
@@ -507,18 +507,18 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
     }
 
     // Would this light be seen?
-    if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
+    if(luma * spParams->blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
 
     // Project this light.
     scale = 1.0f / ((2.f * LUM_OMNI(lum)->radius) - dist);
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return 0; // Continue iteration.
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
 
     // Attach to the projection list.
     calcLightColor(color, LUM_OMNI(lum)->color, luma);
     newLightProjection(&p->listIdx, ((spParams->flags & PLF_SORT_LUMINOSITY_DESC)? SPLF_SORT_LUMINOUS_DESC : 0),
         tex, s, t, color, 1 * spParams->blendFactor);
 
-    return 0; // Continue iteration.
+    return false; // Continue iteration.
     }
 }
 
@@ -634,7 +634,7 @@ static lumobj_t* createLuminous(lumtype_t type, subsector_t* ssec)
     linkLumObjToSSec(lum, ssec);
 
     if(type != LT_PLANE)
-        R_ObjLinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
+        R_ObjlinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
 
     return lum;
 }
@@ -1065,7 +1065,7 @@ int LOIT_RadiusLumobjs(void* ptr, void* paramaters)
     const lumobj_t* lum = (const lumobj_t*) ptr;
     lumobjiterparams_t* p = (lumobjiterparams_t*)paramaters;
     float dist = P_ApproxDistance(lum->pos[VX] - p->origin[VX], lum->pos[VY] - p->origin[VY]);
-    int result = 0; // Continue iteration.
+    int result = false; // Continue iteration.
     if(dist <= p->radius)
     {
         result = p->callback(lum, dist, p->paramaters);
@@ -1208,10 +1208,10 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
     mo->lumIdx = 0;
 }
 
-boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
+int LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
 {
     LO_UnlinkMobjLumobj((mobj_t*) th);
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void LO_UnlinkMobjLumobjs(void)

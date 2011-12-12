@@ -279,8 +279,8 @@ static boolean calcSSecReverb(subsector_t* ssec)
     // Space is the rough volume of the subsector (bounding box).
     ssec->reverb[SRD_SPACE] =
         (int) (ssec->sector->SP_ceilheight - ssec->sector->SP_floorheight) *
-        (ssec->bBox[1].pos[VX] - ssec->bBox[0].pos[VX]) *
-        (ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY]);
+        (ssec->aaBox.maxX - ssec->aaBox.minX) *
+        (ssec->aaBox.maxY - ssec->aaBox.minY);
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the subsector.

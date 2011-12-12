@@ -1075,7 +1075,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Con_SaveDefaults();
 
         LO_Clear();
-        R_DestroyObjLinks();
+        //R_DestroyObjlinks();
         R_ClearAnimGroups();
 
         P_PtcShutdown();

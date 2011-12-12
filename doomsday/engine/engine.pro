@@ -132,7 +132,6 @@ DENG_HEADERS = \
     portable/include/con_busy.h \
     portable/include/con_config.h \
     portable/include/con_main.h \
-    portable/include/dam_blockmap.h \
     portable/include/dam_file.h \
     portable/include/dam_main.h \
     portable/include/dd_def.h \
@@ -275,7 +274,6 @@ DENG_HEADERS = \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
     portable/include/sys_audiod_loader.h \
-    portable/include/sys_audiod_sdlmixer.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
@@ -398,7 +396,6 @@ SOURCES += \
     portable/src/con_config.c \
     portable/src/con_data.c \
     portable/src/con_main.c \
-    portable/src/dam_blockmap.c \
     portable/src/dam_file.c \
     portable/src/dam_main.c \
     portable/src/dd_help.c \
@@ -534,7 +531,6 @@ SOURCES += \
     portable/src/sv_pool.c \
     portable/src/sv_sound.c \
     portable/src/sys_audiod_dummy.c \
-    portable/src/sys_audiod_sdlmixer.c \
     portable/src/sys_direc.c \
     portable/src/sys_master.c \
     portable/src/sys_network.c \
@@ -564,9 +560,16 @@ win32 {
     SOURCES += $$DENG_WIN32_SOURCES
 }
 
+!deng_nosdlmixer {
+    HEADERS += portable/include/sys_audiod_sdlmixer.h
+    SOURCES += portable/src/sys_audiod_sdlmixer.c
+}
+
 # Use the fixed-point math from libcommon.
 # TODO: Move it to the engine.
 SOURCES += ../plugins/common/src/m_fixed.c
+
+OTHER_FILES += data/cphelp.txt
 
 # Resources ------------------------------------------------------------------
 
@@ -585,7 +588,11 @@ startupgfx.files = \
 macx {
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    QMAKE_POST_LINK = "rm -rf $${OUT_PWD}/doomsday.app/Contents/Frameworks && mkdir $${OUT_PWD}/doomsday.app/Contents/Frameworks && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_mixer.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/ && cp -fRp $${SDL_FRAMEWORK_DIR}/SDL_net.framework $${OUT_PWD}/doomsday.app/Contents/Frameworks/"
+    doPostLink("rm -rf \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
+    doPostLink("mkdir \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_net.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
 
     RES_PATH = Contents/Resources
     res.files = \

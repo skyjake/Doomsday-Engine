@@ -50,7 +50,7 @@ typedef struct audiointerface_music_generic_s {
 // Driver interface for playing music.
 typedef struct audiointerface_music_s {
     audiointerface_music_generic_t gen;
-    void*           (*SongBuffer) (size_t length);
+    void*           (*SongBuffer) (unsigned int length);
     int             (*Play) (int looped);
     int             (*PlayFile) (const char *filename, int looped);
 } audiointerface_music_t;

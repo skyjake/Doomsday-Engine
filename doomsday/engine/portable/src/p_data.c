@@ -97,9 +97,6 @@ surfacelist_t* movingSurfaceList = NULL;
 surfacelist_t* decoratedSurfaceList = NULL;
 surfacelist_t* glowingSurfaceList = NULL;
 
-blockmap_t* BlockMap = NULL;
-blockmap_t* SSecBlockMap = NULL;
-
 nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
 float mapGravity;
@@ -111,7 +108,7 @@ static gamemap_t* currentMap = NULL;
 // Bad texture list
 static uint numBadTexNames = 0;
 static uint maxBadTexNames = 0;
-static badtex_t *badTexNames = NULL;
+static badtex_t* badTexNames = NULL;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
@@ -214,9 +211,6 @@ void P_SetCurrentMap(gamemap_t* map)
         lineNodes = 0;
         linelinks = 0;
 
-        BlockMap = 0;
-        SSecBlockMap = 0;
-
         mapGravity = 0;
 
         currentMap = map;
@@ -257,9 +251,6 @@ void P_SetCurrentMap(gamemap_t* map)
     mobjNodes = &map->mobjNodes;
     lineNodes = &map->lineNodes;
     linelinks = map->lineLinks;
-
-    BlockMap = map->blockMap;
-    SSecBlockMap = map->ssecBlockMap;
 
     mapGravity = map->globalGravity;
 
@@ -407,7 +398,7 @@ boolean P_LoadMap(const char* uriCString)
         // Texture animations should begin from their first step.
         Materials_ResetAnimGroups();
 
-        R_InitObjLinksForMap();
+        R_InitObjlinkBlockmapForMap();
         LO_InitForMap(); // Lumobj management.
         R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.

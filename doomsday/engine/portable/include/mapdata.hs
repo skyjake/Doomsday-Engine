@@ -111,7 +111,7 @@ struct subsector
     -       int         flags
     -       int         validCount
     -       uint[NUM_REVERB_DATA] reverb
-    -       fvertex_t   bBox[2] // Min and max points.
+    -       AABoxf      aaBox // Min and max points.
     -       float[2]    worldGridOffset // Offset to align the top left of the bBox to the world grid.
     -       fvertex_t   midPoint // Center of vertices.
     -       ushort      numVertices
@@ -470,21 +470,22 @@ end
 
 public
 #define DMT_LINEDEF_SEC    DDVT_PTR
+#define DMT_LINEDEF_AABOX  DDVT_FLOAT
 end
 
 struct linedef
     PTR     vertex_s*[2] v
     -       lineowner_s*[2] vo      // Links to vertex line owner nodes [left, right]
     PTR     sidedef_s*[2] sideDefs
-    INT     int         flags		// Public DDLF_* flags.
-    -		byte		inFlags		// Internal LF_* flags
+    INT     int         flags       // Public DDLF_* flags.
+    -       byte        inFlags	    // Internal LF_* flags
     INT     slopetype_t slopeType
     INT     int         validCount
     -       binangle_t  angle       // Calculated from front side's normal
     FLOAT   float       dX
     FLOAT   float       dY
     -       float       length      // Accurate length
-    FLOAT   float[4]    bBox
+    -       AABox       aaBox
     -       boolean[DDMAXPLAYERS] mapped // Whether the line has been mapped by each player yet.
     -       mlinedef_t  buildData
     -       ushort[2]   shadowVisFrame // Framecount of last time shadows were drawn for this line, for each side [right, left].

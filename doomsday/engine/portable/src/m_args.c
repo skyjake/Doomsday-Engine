@@ -177,6 +177,8 @@ int ArgParse(int mode, const char* cmdline)
             file = fopen(Str_Text(&nativePath), "rt");
             if(file)
             {
+                int result;
+
                 // How long is it?
                 if(fseek(file, 0, SEEK_END))
                     Con_Error("ArgParse: fseek failed on SEEK_END!");
@@ -188,7 +190,7 @@ int ArgParse(int mode, const char* cmdline)
                 if(!response)
                     Con_Error("ArgParse: failed on alloc of %d bytes.", i + 1);
 
-                fread(response, 1, i, file);
+                result = fread(response, 1, i, file);
                 fclose(file);
                 count += ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC, response);
                 free(response);

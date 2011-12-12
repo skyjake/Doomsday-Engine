@@ -73,24 +73,24 @@
 
 // CODE --------------------------------------------------------------------
 
-static boolean mangleMobj(thinker_t* th, void* context)
+static int mangleMobj(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = MANGLE_STATE(mo->state);
     mo->info = INT2PTR(mobjinfo_t, mo->info - MOBJINFO);
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean restoreMobj(thinker_t* th, void* context)
+static int restoreMobj(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
     mo->state = RESTORE_STATE(mo->state);
     mo->info = &MOBJINFO[PTR2INT(mo->info)];
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

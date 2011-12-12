@@ -915,7 +915,7 @@ typedef struct {
  * may be slightly different than the actual Z coordinate due to smoothed
  * plane movement.
  */
-boolean RIT_VisMobjZ(sector_t* sector, void* data)
+int RIT_VisMobjZ(sector_t* sector, void* data)
 {
     vismobjzparams_t*   params;
 
@@ -933,7 +933,7 @@ boolean RIT_VisMobjZ(sector_t* sector, void* data)
         params->vis->center[VZ] = sector->SP_ceilvisheight - params->mo->height;
     }
 
-    return true;
+    return false; // Continue iteration.
 }
 
 static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
@@ -1590,7 +1590,7 @@ int RIT_AddSprite(void* ptr, void* paramaters)
         }
         mo->addFrameCount = frameCount;
     }
-    return 0; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void R_AddSprites(subsector_t* ssec)

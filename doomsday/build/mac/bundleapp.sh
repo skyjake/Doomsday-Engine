@@ -25,5 +25,6 @@ $CP plugins/jdoom/jDoom.bundle $BUILDDIR/jDoom.bundle
 $CP plugins/jheretic/jHeretic.bundle $BUILDDIR/jHeretic.bundle
 $CP plugins/jhexen/jHexen.bundle $BUILDDIR/jHexen.bundle
 $CP plugins/jdoom64/jDoom64.bundle $BUILDDIR/jDoom64.bundle
+$CP plugins/fmod/dsFMOD.bundle $BUILDDIR/dsFMOD.bundle
 
 echo "Bundling done."

@@ -241,13 +241,14 @@ boolean R_IsShadowingLinedef(linedef_t* line)
 
 void R_InitFakeRadioForMap(void)
 {
-    uint            startTime = Sys_GetRealTime();
+    uint startTime = Sys_GetRealTime();
 
-    uint            i, j;
-    vec2_t          bounds[2], point;
-    vertex_t       *vtx0, *vtx1;
-    lineowner_t    *vo0, *vo1;
     shadowlinkerparms_t data;
+    vertex_t* vtx0, *vtx1;
+    lineowner_t* vo0, *vo1;
+    AABoxf bounds;
+    vec2_t point;
+    uint i, j;
 
     for(i = 0; i < numVertexes; ++i)
     {
@@ -270,38 +271,36 @@ void R_InitFakeRadioForMap(void)
 
     for(i = 0; i < numLineDefs; ++i)
     {
-        linedef_t          *line = LINE_PTR(i);
+        linedef_t* line = LINE_PTR(i);
+        if(!R_IsShadowingLinedef(line)) continue;
 
-        if(R_IsShadowingLinedef(line))
-            for(j = 0; j < 2; ++j)
-            {
-                if(!line->L_side(j))
-                    continue;
+        for(j = 0; j < 2; ++j)
+        {
+            if(!line->L_side(j)) continue;
 
-                vtx0 = line->L_v(j);
-                vtx1 = line->L_v(j^1);
-                vo0 = line->L_vo(j)->LO_next;
-                vo1 = line->L_vo(j^1)->LO_prev;
+            vtx0 = line->L_v(j);
+            vtx1 = line->L_v(j^1);
+            vo0 = line->L_vo(j)->LO_next;
+            vo1 = line->L_vo(j^1)->LO_prev;
 
-                // Use the extended points, they are wider than inoffsets.
-                V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
-                V2_InitBox(bounds, point);
+            // Use the extended points, they are wider than inoffsets.
+            V2_Set(point, vtx0->V_pos[VX], vtx0->V_pos[VY]);
+            V2_InitBox(bounds.arvec2, point);
 
-                V2_Sum(point, point, vo0->shadowOffsets.extended);
-                V2_AddToBox(bounds, point);
+            V2_Sum(point, point, vo0->shadowOffsets.extended);
+            V2_AddToBox(bounds.arvec2, point);
 
-                V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
-                V2_AddToBox(bounds, point);
+            V2_Set(point, vtx1->V_pos[VX], vtx1->V_pos[VY]);
+            V2_AddToBox(bounds.arvec2, point);
 
-                V2_Sum(point, point, vo1->shadowOffsets.extended);
-                V2_AddToBox(bounds, point);
+            V2_Sum(point, point, vo1->shadowOffsets.extended);
+            V2_AddToBox(bounds.arvec2, point);
 
-                data.lineDef = line;
-                data.side = j;
+            data.lineDef = line;
+            data.side = j;
 
-                P_SubsectorsBoxIteratorv(bounds, line->L_sector(j),
-                                         RIT_ShadowSubsectorLinker, &data);
-            }
+            P_SubsectorsBoxIterator(&bounds, line->L_sector(j), RIT_ShadowSubsectorLinker, &data);
+        }
     }
 
     VERBOSE2( Con_Message("R_InitFakeRadioForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )

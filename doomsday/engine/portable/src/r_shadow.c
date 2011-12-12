@@ -212,17 +212,17 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     if(shadowMaxDistance > 0)
     {
         distanceFromViewer = Rend_PointDist2D(mobjOrigin);
-        if(distanceFromViewer > shadowMaxDistance) return 0; // Continue iteration.
+        if(distanceFromViewer > shadowMaxDistance) return false; // Continue iteration.
     }
 
     // Should this mobj even have a shadow?
     shadowStrength = R_ShadowStrength(mo) * shadowFactor;
     if(usingFog) shadowStrength /= 2;
-    if(shadowStrength <= 0) return 0; // Continue iteration.
+    if(shadowStrength <= 0) return false; // Continue iteration.
 
     // Calculate the radius of the shadow.
     shadowRadius = R_VisualRadius(mo);
-    if(shadowRadius <= 0) return 0; // Continue iteration.
+    if(shadowRadius <= 0) return false; // Continue iteration.
     if(shadowRadius > (float) shadowMaxRadius)
         shadowRadius = (float) shadowMaxRadius;
 
@@ -240,16 +240,16 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     //
     // vec3_t vToMobj;
     // V3_Subtract(vToMobj, spParams->v1, mobjOrigin);
-    // if(V3_DotProduct(vToMobj, spParams->normal) > 0) return 0; // Continue iteration
+    // if(V3_DotProduct(vToMobj, spParams->normal) > 0) return false; // Continue iteration
 
     // Calculate 3D distance between surface and mobj.
     V3_ClosestPointOnPlane(point, spParams->normal, spParams->v1, mobjOrigin);
     distanceFromSurface = V3_Distance(point, mobjOrigin);
 
     // Too far above or below the shadowed surface?
-    if(distanceFromSurface > mo->height) return 0; // Continue iteration.
-    if(mobjOrigin[VZ] + mo->height < point[VZ]) return 0; // Continue iteration.
-    if(distanceFromSurface > shadowRadius) return 0; // Continue iteration.
+    if(distanceFromSurface > mo->height) return false; // Continue iteration.
+    if(mobjOrigin[VZ] + mo->height < point[VZ]) return false; // Continue iteration.
+    if(distanceFromSurface > shadowRadius) return false; // Continue iteration.
 
     // Calculate the final strength of the shadow's attribution to the surface.
     shadowStrength *= 1.5f - 1.5f * distanceFromSurface / shadowRadius;
@@ -268,16 +268,16 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     shadowStrength *= spParams->blendFactor;
 
     // Would this shadow be seen?
-    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return 0; // Continue iteration.
+    if(shadowStrength < SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN) return false; // Continue iteration.
 
     // Project this shadow.
     scale = 1.0f / ((2.f * shadowRadius) - distanceFromSurface);
-    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return 0; // Continue iteration.
+    if(!genTexCoords(s, t, point, scale, spParams->v1, spParams->v2, spParams->tangent, spParams->bitangent)) return false; // Continue iteration.
 
     // Attach to the projection list.
     newShadowProjection(&p->listIdx, s, t, shadowStrength);
 
-    return 0; // Continue iteration.
+    return false; // Continue iteration.
     }
 }
 
@@ -333,7 +333,7 @@ uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
 int R_IterateShadowProjections2(uint listIdx, int (*callback) (const shadowprojection_t*, void*),
     void* paramaters)
 {
-    int result = 0; // Continue iteration.
+    int result = false; // Continue iteration.
     if(callback && listIdx != 0 && listIdx <= projectionListCount)
     {
         listnode_t* node = projectionLists[listIdx-1].head;
@@ -351,13 +351,13 @@ int R_IterateShadowProjections(uint listIdx, int (*callback) (const shadowprojec
     return R_IterateShadowProjections2(listIdx, callback, NULL);
 }
 
-boolean RIT_FindShadowPlaneIterator(sector_t* sector, void* paramaters)
+int RIT_FindShadowPlaneIterator(sector_t* sector, void* paramaters)
 {
     plane_t** highest = (plane_t**)paramaters;
     plane_t* compare = sector->SP_plane(PLN_FLOOR);
     if(compare->visHeight > (*highest)->visHeight)
         *highest = compare;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 plane_t* R_FindShadowPlane(mobj_t* mo)

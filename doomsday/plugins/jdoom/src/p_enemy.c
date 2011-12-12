@@ -365,17 +365,18 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmBBox, line) == -1)
+       // Linedef must be contacted
+       tmBox.minX < aaBox->maxX &&
+       tmBox.maxX > aaBox->minX &&
+       tmBox.minY < aaBox->maxY &&
+       tmBox.maxY > aaBox->minY &&
+       P_BoxOnLineSide(&tmBox, line) == -1)
     {
         sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -396,7 +397,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -405,7 +406,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -522,7 +523,7 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
     }
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -533,7 +534,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -552,12 +553,13 @@ int P_Massacre(void)
     return count;
 }
 
+
 typedef struct {
     mobjtype_t          type;
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -565,7 +567,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1083,25 +1085,25 @@ void C_DECL A_SkelFist(mobj_t *actor)
 /**
  * Detect a corpse that could be raised.
  */
-boolean PIT_VileCheck(mobj_t *thing, void *data)
+int PIT_VileCheck(mobj_t *thing, void *data)
 {
     float               maxdist;
     boolean             check;
 
     if(!(thing->flags & MF_CORPSE))
-        return true; // Not a monster.
+        return false; // Not a monster.
 
     if(thing->tics != -1)
-        return true; // Not lying still yet.
+        return false; // Not lying still yet.
 
     if(P_GetState(thing->type, SN_RAISE) == S_NULL)
-        return true; // Monster doesn't have a raise state.
+        return false; // Monster doesn't have a raise state.
 
     maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
 
     if(fabs(thing->pos[VX] - vileTry[VX]) > maxdist ||
        fabs(thing->pos[VY] - vileTry[VY]) > maxdist)
-        return true; // Not actually touching.
+        return false; // Not actually touching.
 
     corpseHit = thing;
     corpseHit->mom[MX] = corpseHit->mom[MY] = 0;
@@ -1133,9 +1135,9 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
     // End raiseghosts.
 
     if(!check)
-        return true; // Doesn't fit here.
+        return false; // Doesn't fit here.
 
-    return false; // Got one, so stop checking.
+    return true; // Got one, so stop checking.
 }
 
 /**
@@ -1143,29 +1145,27 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
  */
 void C_DECL A_VileChase(mobj_t *actor)
 {
-    mobjinfo_t         *info;
-    mobj_t             *temp;
-    float               box[4];
+    mobjinfo_t* info;
+    mobj_t* temp;
+    AABoxf box;
 
     if(actor->moveDir != DI_NODIR)
     {
         // Check for corpses to raise.
-        vileTry[VX] = actor->pos[VX] +
-            actor->info->speed * dirSpeed[actor->moveDir][VX];
-        vileTry[VY] = actor->pos[VY] +
-            actor->info->speed * dirSpeed[actor->moveDir][VY];
+        vileTry[VX] = actor->pos[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
+        vileTry[VY] = actor->pos[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
 
-        box[BOXLEFT]   = vileTry[VX] - MAXRADIUS * 2;
-        box[BOXRIGHT]  = vileTry[VX] + MAXRADIUS * 2;
-        box[BOXBOTTOM] = vileTry[VY] - MAXRADIUS * 2;
-        box[BOXTOP]    = vileTry[VY] + MAXRADIUS * 2;
+        box.minX = vileTry[VX] - MAXRADIUS * 2;
+        box.minY = vileTry[VY] - MAXRADIUS * 2;
+        box.maxX = vileTry[VX] + MAXRADIUS * 2;
+        box.maxY = vileTry[VY] + MAXRADIUS * 2;
 
         vileObj = actor;
 
         // Call PIT_VileCheck to check whether object is a corpse
         // that can be raised.
         VALIDCOUNT++;
-        if(!P_MobjsBoxIterator(box, PIT_VileCheck, 0))
+        if(P_MobjsBoxIterator(&box, PIT_VileCheck, 0))
         {
             // Got one!
             temp = actor->target;
