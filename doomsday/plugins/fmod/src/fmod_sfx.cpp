@@ -499,6 +499,61 @@ void DS_SFX_Listener(int prop, float value)
     }
 }
 
+static updateListenerEnvironmentSettings(float* reverb)
+{
+#if 0
+    float               val;
+    int                 eaxVal;
+
+    if(!rev)
+        return;
+
+    // This can only be done if EAX is available.
+    if(!propertySet)
+        return;
+
+    val = rev[SRD_SPACE];
+    if(rev[SRD_DECAY] > .5)
+    {
+        // This much decay needs at least the Generic environment.
+        if(val < .2)
+            val = .2f;
+    }
+
+    // Set the environment. Other properties are updated automatically.
+    if(val >= 1)
+        eaxVal = EAX_ENVIRONMENT_PLAIN;
+    else if(val >= .8)
+        eaxVal = EAX_ENVIRONMENT_CONCERTHALL;
+    else if(val >= .6)
+        eaxVal = EAX_ENVIRONMENT_AUDITORIUM;
+    else if(val >= .4)
+        eaxVal = EAX_ENVIRONMENT_CAVE;
+    else if(val >= .2)
+        eaxVal = EAX_ENVIRONMENT_GENERIC;
+    else
+        eaxVal = EAX_ENVIRONMENT_ROOM;
+    setEAXdw(DSPROPERTY_EAXLISTENER_ENVIRONMENT, eaxVal);
+
+    // General reverb volume adjustment.
+    setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SRD_VOLUME]));
+
+    // Reverb decay.
+    val = (rev[SRD_DECAY] - .5f) * 1.5f + 1;
+    mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME,
+               EAXLISTENER_MAXDECAYTIME);
+
+    // Damping.
+    val = 1.1f * (1.2f - rev[SRD_DAMPING]);
+    if(val < .1)
+        val = .1f;
+    mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
+
+    // A slightly increased roll-off.
+    setEAXf(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, 1.3f);
+#endif
+}
+
 /**
  * @param prop  SFXLP_ORIENTATION  (yaw, pitch) in degrees.
  */
@@ -521,6 +576,7 @@ void DS_SFX_Listenerv(int prop, float* values)
         break;
 
     case SFXLP_REVERB:
+        updateListenerEnvironmentSettings(values);
         break;
 
     case SFXLP_PRIMARY_FORMAT:
