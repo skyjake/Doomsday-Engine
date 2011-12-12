@@ -1375,6 +1375,10 @@ void R_SetupMap(int mode, int flags)
       }
     case DDSMM_FINALIZE: {
         gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo;
+        float startTime;
+        char cmd[80];
+        int i;
 
         // We are now finished with the game data, map object db.
         P_DestroyGameMapObjDB(&map->gameObjData);
@@ -1390,26 +1394,27 @@ void R_SetupMap(int mode, int flags)
 
         R_MapInitSurfaces(true);
         R_MapInitSurfaceLists();
-        R_PrecacheForMap();
 
+        startTime = Sys_GetSeconds();
+        R_PrecacheForMap();
         Materials_ProcessCacheQueue();
+        VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime) )
 
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        { ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
-        }}
+        }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        { char cmd[80];
         sprintf(cmd, "init-%s", P_MapUri(map));
         if(Con_IsValidCommand(cmd))
         {
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
-        }}
+        }
 
         // Clear any input events that might have accumulated during the
         // setup period.
@@ -1420,7 +1425,6 @@ void R_SetupMap(int mode, int flags)
         DD_ResetTimer();
 
         // Kill all local commands and determine the invoid status of players.
-        { int i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
@@ -1438,7 +1442,7 @@ void R_SetupMap(int mode, int flags)
                 if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
-        }}
+        }
 
         // Reset the map tick timer.
         ddMapTime = 0;

@@ -2556,16 +2556,12 @@ void R_PrecacheMobjNum(int num)
 
 void R_PrecacheForMap(void)
 {
-    float startTime;
-
     // Don't precache when playing demo.
     if(isDedicated || playback)
         return;
 
     // Precaching from 100 to 200.
     Con_SetProgress(100);
-
-    startTime = Sys_GetSeconds();
 
     if(precacheMapMaterials)
     {
@@ -2632,8 +2628,6 @@ void R_PrecacheForMap(void)
         // All mobjs are public.
         P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
     }
-
-    VERBOSE(Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime))
 }
 
 texture_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
