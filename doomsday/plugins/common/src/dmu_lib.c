@@ -342,7 +342,7 @@ int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
     float lightLevel;
 
     if(!other)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     lightLevel = P_GetFloatp(other, DMU_LIGHT_LEVEL);
     if(params->flags & FELLF_MIN)
@@ -352,7 +352,7 @@ int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
             params->val = lightLevel;
             params->foundSec = other;
             if(params->val <= 0)
-                return 0; // Stop iteration. Can't get any darker.
+                return true; // Stop iteration. Can't get any darker.
         }
     }
     else if(lightLevel > params->val)
@@ -360,9 +360,9 @@ int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
         params->val = lightLevel;
         params->foundSec = other;
         if(params->val >= 1)
-            return 0; // Stop iteration. Can't get any brighter.
+            return true; // Stop iteration. Can't get any brighter.
     }
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 sector_t* P_FindSectorSurroundingLowestLight(sector_t* sec, float* val)
@@ -400,7 +400,7 @@ int findNextLightLevel(void* ptr, void* context)
     float otherLight;
 
     if(!other)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     otherLight = P_GetFloatp(other, DMU_LIGHT_LEVEL);
     if(params->flags & FNLLF_ABOVE)
@@ -411,7 +411,7 @@ int findNextLightLevel(void* ptr, void* context)
             params->foundSec = other;
 
             if(!(params->val > 0))
-                return 0; // Stop iteration. Can't get any darker.
+                return true; // Stop iteration. Can't get any darker.
         }
     }
     else if(otherLight > params->val && otherLight < params->baseLight)
@@ -420,9 +420,9 @@ int findNextLightLevel(void* ptr, void* context)
         params->foundSec = other;
 
         if(!(params->val < 1))
-            return 0; // Stop iteration. Can't get any brighter.
+            return true; // Stop iteration. Can't get any brighter.
     }
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 sector_t* P_FindSectorSurroundingNextLowestLight(sector_t* sec, float baseLight, float* val)
@@ -460,7 +460,7 @@ int findExtremalPlaneHeight(void* ptr, void* context)
     float height;
 
     if(!other)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     height = P_GetFloatp(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FEPHF_MIN)
@@ -477,7 +477,7 @@ int findExtremalPlaneHeight(void* ptr, void* context)
         params->foundSec = other;
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float max, float* val)
@@ -539,7 +539,7 @@ int findNextPlaneHeight(void* ptr, void* context)
     float otherHeight;
 
     if(!other)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     otherHeight = P_GetFloatp(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
     if(params->flags & FNPHF_ABOVE)
@@ -555,7 +555,7 @@ int findNextPlaneHeight(void* ptr, void* context)
         params->val = otherHeight;
         params->foundSec = other;
     }
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t* sec, float baseHeight, float* val)
