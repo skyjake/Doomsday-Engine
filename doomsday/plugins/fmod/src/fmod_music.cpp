@@ -50,7 +50,8 @@ static FMOD_RESULT F_CALLBACK musicCallback(FMOD_CHANNEL* chanPtr,
                                             void* /*commanddata1*/,
                                             void* /*commanddata2*/)
 {
-    assert(reinterpret_cast<FMOD::Channel*>(chanPtr) == music);
+    if(reinterpret_cast<FMOD::Channel*>(chanPtr) != music)
+        return FMOD_OK; // Safety check.
 
     switch(type)
     {

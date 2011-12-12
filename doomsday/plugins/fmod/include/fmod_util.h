@@ -33,15 +33,17 @@
 #  define strnicmp strncasecmp
 #endif
 
-class FMODVector : public FMOD_VECTOR
-{
+#ifdef WIN32
+#  define strnicmp _strnicmp
+#endif
+
+class FMODVector : public FMOD_VECTOR {
 public:
     FMODVector(float _x = 0, float _y = 0, float _z = 0) {
         x = _x;
         y = _y;
         z = _z;
     }
-
     void set(const float* values) {
         x = values[0];
         y = values[1];
