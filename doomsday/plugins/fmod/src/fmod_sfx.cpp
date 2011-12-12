@@ -499,59 +499,84 @@ void DS_SFX_Listener(int prop, float value)
     }
 }
 
-static updateListenerEnvironmentSettings(float* reverb)
+/**
+ * Convert linear volume 0..1 to logarithmic -10000..0.
+ */
+static int linearToLog(float vol)
 {
-#if 0
-    float               val;
-    int                 eaxVal;
+    if(vol <= 0) return -10000;
+    if(vol >= 1) return 0;
 
-    if(!rev)
-        return;
+    // Straighten the volume curve.
+    return std::min(std::max(-10000, (int) (100 * 20 * std::log10(vol))), 0);
+}
 
-    // This can only be done if EAX is available.
-    if(!propertySet)
-        return;
+/**
+ * Update the ambient reverb properties.
+ *
+ * @param reverb  Array of NUM_REVERB_DATA parameters (see SRD_*).
+ */
+static void updateListenerEnvironmentSettings(float* reverb)
+{
+    if(!fmodSystem || !reverb) return;
 
-    val = rev[SRD_SPACE];
-    if(rev[SRD_DECAY] > .5)
+    // No reverb?
+    if(reverb[SRD_VOLUME] == 0 && reverb[SRD_SPACE]   == 0 &&
+       reverb[SRD_DECAY]  == 0 && reverb[SRD_DAMPING] == 0)
     {
-        // This much decay needs at least the Generic environment.
-        if(val < .2)
-            val = .2f;
+        FMOD_REVERB_PROPERTIES noReverb = FMOD_PRESET_OFF;
+        fmodSystem->setReverbAmbientProperties(&noReverb);
+        return;
     }
 
-    // Set the environment. Other properties are updated automatically.
-    if(val >= 1)
-        eaxVal = EAX_ENVIRONMENT_PLAIN;
-    else if(val >= .8)
-        eaxVal = EAX_ENVIRONMENT_CONCERTHALL;
-    else if(val >= .6)
-        eaxVal = EAX_ENVIRONMENT_AUDITORIUM;
-    else if(val >= .4)
-        eaxVal = EAX_ENVIRONMENT_CAVE;
-    else if(val >= .2)
-        eaxVal = EAX_ENVIRONMENT_GENERIC;
-    else
-        eaxVal = EAX_ENVIRONMENT_ROOM;
-    setEAXdw(DSPROPERTY_EAXLISTENER_ENVIRONMENT, eaxVal);
+    const static FMOD_REVERB_PROPERTIES presetPlain       = FMOD_PRESET_PLAIN;
+    const static FMOD_REVERB_PROPERTIES presetConcertHall = FMOD_PRESET_CONCERTHALL;
+    const static FMOD_REVERB_PROPERTIES presetAuditorium  = FMOD_PRESET_AUDITORIUM;
+    const static FMOD_REVERB_PROPERTIES presetCave        = FMOD_PRESET_CAVE;
+    const static FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
+    const static FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
 
-    // General reverb volume adjustment.
-    setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SRD_VOLUME]));
+    float space = reverb[SRD_SPACE];
+    if(reverb[SRD_DECAY] > .5)
+    {
+        // This much decay needs at least the Generic environment.
+        if(space < .2)
+            space = .2f;
+    }
+
+    // Choose a preset based on the size of the space.
+    FMOD_REVERB_PROPERTIES props;
+    if(space >= 1)
+        props = presetPlain;
+    else if(space >= .8)
+        props = presetConcertHall;
+    else if(space >= .6)
+        props = presetAuditorium;
+    else if(space >= .4)
+        props = presetCave;
+    else if(space >= .2)
+        props = presetGeneric;
+    else
+        props = presetRoom;
+
+    // Overall reverb volume adjustment.
+    props.Room = linearToLog(reverb[SRD_VOLUME]);
+    //setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SRD_VOLUME]));
 
     // Reverb decay.
-    val = (rev[SRD_DECAY] - .5f) * 1.5f + 1;
-    mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME,
-               EAXLISTENER_MAXDECAYTIME);
+    float decay = (reverb[SRD_DECAY] - .5f) * 1.5f + 1;
+    props.DecayTime = std::min(std::max(0.1f, props.DecayTime * decay), 20.f);
+    //mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME, EAXLISTENER_MAXDECAYTIME);
 
     // Damping.
-    val = 1.1f * (1.2f - rev[SRD_DAMPING]);
-    if(val < .1)
-        val = .1f;
-    mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
+    float damping = std::max(.1f, 1.1f * (1.2f - reverb[SRD_DAMPING]));
+    props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
+    //mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
 
-    // A slightly increased roll-off.
-    setEAXf(DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR, 1.3f);
-#endif
+    // A slightly increased roll-off. (Not in FMOD?)
+    //props.RoomRolloffFactor = 1.3f;
+
+    fmodSystem->setReverbAmbientProperties(&props);
 }
 
 /**
