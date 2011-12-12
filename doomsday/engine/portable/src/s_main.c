@@ -113,9 +113,17 @@ boolean S_InitDriver(audiodriver_e drvid)
         audioDriver = &audiod_dummy;
         break;
 
+#ifndef DENG_DISABLE_SDLMIXER
     case AUDIOD_SDL_MIXER:
         Con_Printf("SDLMixer\n");
         audioDriver = &audiod_sdlmixer;
+        break;
+#endif
+
+    case AUDIOD_FMOD:
+        Con_Printf("FMOD Ex\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
+            return false;
         break;
 
     case AUDIOD_OPENAL:
@@ -164,6 +172,10 @@ boolean S_Init(void)
     {
         ok = S_InitDriver(AUDIOD_DUMMY);
     }
+    else if(ArgExists("-fmod"))
+    {
+        ok = S_InitDriver(AUDIOD_FMOD);
+    }
     else if(ArgExists("-oal"))
     {
         ok = S_InitDriver(AUDIOD_OPENAL);
@@ -179,8 +191,13 @@ boolean S_Init(void)
     }
 #endif
     else
-    {   // The default audio driver, sdl_mixer.
+    {
+        // Use the default audio driver.
+#ifndef DENG_DISABLE_SDLMIXER
         ok = S_InitDriver(AUDIOD_SDL_MIXER);
+#else
+        ok = S_InitDriver(AUDIOD_DUMMY);
+#endif
     }
 
     // Did we succeed?

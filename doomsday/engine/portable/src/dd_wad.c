@@ -746,6 +746,7 @@ int W_IsIWAD(const char* fn)
     FILE*               file;
     char                id[5];
     const char*         ext;
+    int                 result;
 
     if(!M_FileExists(fn))
         return false;
@@ -765,7 +766,7 @@ int W_IsIWAD(const char* fn)
     if((file = fopen(fn, "rb")) == NULL)
         return false;
 
-    fread(id, 4, 1, file);
+    result = fread(id, 4, 1, file);
     id[4] = 0;
     fclose(file);
 

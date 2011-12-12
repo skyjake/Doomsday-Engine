@@ -39,6 +39,9 @@
 
 #include "sys_audiod_loader.h"
 #include "sys_audiod_dummy.h"
-#include "sys_audiod_sdlmixer.h"
+
+#ifndef DENG_DISABLE_SDLMIXER
+#  include "sys_audiod_sdlmixer.h"
+#endif
 
 #endif

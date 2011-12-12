@@ -98,8 +98,8 @@ static boolean inited;
 // CODE --------------------------------------------------------------------
 
 /**
- * Init DirectSound, start playing the primary buffer. Returns true
- * if successful.
+ * Initialization of the sound driver.
+ * @return @c true if successful.
  */
 int DS_DummyInit(void)
 {

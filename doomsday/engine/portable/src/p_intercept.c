@@ -1,4 +1,4 @@
-/**\file
+/**\file p_intercept.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,133 +22,127 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_intercept.c: Line/Object Interception
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define MININTERCEPTS       128
 
-// TYPES -------------------------------------------------------------------
+struct interceptnode_s {
+    struct interceptnode_s* next;
+    struct interceptnode_s* prev;
+    intercept_t intercept;
+};
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+// Blockset from which intercepts are allocated.
+static zblockset_t* interceptNodeSet = NULL;
+// Head of the used intercept list.
+static InterceptNode* interceptFirst;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// Trace nodes.
+static InterceptNode head;
+static InterceptNode tail;
+static InterceptNode* mru;
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// Must be static so these are not confused with intercepts in game libs.
-static intercept_t* intercepts = 0;
-static intercept_t* intercept_p = 0;
-static int maxIntercepts = 0;
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Calculate intercept distances.
- */
-void P_CalcInterceptDistances(const divline_t* strace)
+static __inline boolean isSentinel(const InterceptNode* node)
 {
-    intercept_t*        scan;
-
-    for(scan = intercepts; scan < intercept_p; scan++)
-    {
-        divline_t           dl;
-
-        P_MakeDivline(scan->d.lineDef, &dl);
-        scan->frac = P_InterceptVector(strace, &dl);
-    }
+    assert(node);
+    return node == &tail || node == &head;
 }
 
-/**
- * Empties the intercepts array and makes sure it has been allocated.
- */
+static InterceptNode* newInterceptNode(void)
+{
+    // Can we reuse an existing intercept?
+    if(!isSentinel(interceptFirst))
+    {
+        InterceptNode* node = interceptFirst;
+        interceptFirst = node->next;
+        return node;
+    }
+    return Z_BlockNewElement(interceptNodeSet);
+}
+
 void P_ClearIntercepts(void)
 {
-    if(!intercepts)
+    if(!interceptNodeSet)
     {
-        maxIntercepts = MININTERCEPTS;
-        intercepts =
-            Z_Malloc(sizeof(*intercepts) * maxIntercepts, PU_STATIC, 0);
+        interceptNodeSet = Z_BlockCreate(sizeof(InterceptNode), MININTERCEPTS, PU_STATIC);
+
+        // Configure the static head and tail.
+        head.intercept.distance = 0.0f;
+        head.next = &tail;
+        head.prev = NULL;
+        tail.intercept.distance = 1.0f;
+        tail.prev = &head;
+        tail.next = NULL;
     }
 
-    intercept_p = intercepts;
+    // Start reusing intercepts (may point to a sentinel but that is Ok).
+    interceptFirst = head.next;
+
+    // Reset the trace.
+    head.next = &tail;
+    tail.prev = &head;
+    mru = NULL;
 }
 
-/**
- * You must clear intercepts before the first time this is called.
- * The intercepts array grows if necessary.
- *
- * @return              Ptr to the new intercept.
- */
-intercept_t* P_AddIntercept(float frac, intercepttype_t type, void* ptr)
+InterceptNode* P_AddIntercept(intercepttype_t type, float distance, void* object)
 {
-    int                 count = intercept_p - intercepts;
+    InterceptNode* newNode, *before;
+    intercept_t* in;
 
-    if(count == maxIntercepts)
+    if(!object)
+        Con_Error("P_AddIntercept: Invalid arguments (object=NULL).");
+
+    // First reject vs our sentinels
+    if(distance < head.intercept.distance) return NULL;
+    if(distance > tail.intercept.distance) return NULL;
+
+    // Find the new intercept's ordered place along the trace.
+    if(mru && mru->intercept.distance <= distance)
+        before = mru->next;
+    else
+        before = head.next;
+    while(before->next && distance >= before->intercept.distance) { before = before->next; }
+
+    // Pull a new intercept from the used queue.
+    newNode = newInterceptNode();
+
+    // Configure the new intercept.
+    in = &newNode->intercept;
+    in->type = type;
+    in->distance = distance;
+    switch(in->type)
     {
-        // Allocate more memory.
-        maxIntercepts *= 2;
-        intercepts = Z_Realloc(intercepts, sizeof(*intercepts) * maxIntercepts, PU_STATIC);
-        intercept_p = intercepts + count;
+    case ICPT_MOBJ:
+        in->d.mobj = object;
+        break;
+    case ICPT_LINE:
+        in->d.lineDef = object;
+        break;
+    default:
+        Con_Error("P_AddIntercept: Invalid type %i.", (int)type);
+        exit(1); // Unreachable.
     }
 
-    if(type == ICPT_LINE && P_ToIndex(ptr) >= numLineDefs)
-    {
-        count = count;
-    }
+    // Link it in.
+    newNode->next = before;
+    newNode->prev = before->prev;
 
-    // Fill in the data that has been provided.
-    intercept_p->frac = frac;
-    intercept_p->type = type;
-    intercept_p->d.mo = ptr;
-    return intercept_p++;
+    newNode->prev->next = newNode;
+    newNode->next->prev = newNode;
+
+    mru = newNode;
+    return newNode;
 }
 
-/**
- * @return              @c true, if the traverser function returns @c true,
- *                      for all lines.
- */
-boolean P_TraverseIntercepts(traverser_t func, float maxFrac)
+int P_TraverseIntercepts(traverser_t callback, void* paramaters)
 {
-    int                 count = intercept_p - intercepts;
-
-    while(count--)
+    int result = false; // Continue iteration.
+    const InterceptNode* node;
+    for(node = head.next; !isSentinel(node); node = node->next)
     {
-        float               dist = DDMAXFLOAT;
-        intercept_t*        scan, *in;
-
-        in = NULL;
-        for(scan = intercepts; scan < intercept_p; scan++)
-            if(scan->frac < dist)
-            {
-                dist = scan->frac;
-                in = scan;
-            }
-
-        if(maxFrac > 0 && dist > maxFrac)
-            return true; // Checked everything in range.
-
-        if(in)
-        {
-            if(!func(in))
-                return false; // Don't bother going farther.
-
-            in->frac = DDMAXFLOAT;
-        }
+        result = callback(&node->intercept, paramaters);
+        if(result) break; // Stop iteration.
     }
-
-    return true; // Everything was traversed.
+    return result;
 }

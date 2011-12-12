@@ -284,11 +284,6 @@ enum {
     DD_OPENTOP,
     DD_OPENBOTTOM,
     DD_LOWFLOOR,
-    DD_VIEW_X,
-    DD_VIEW_Y,
-    DD_VIEW_Z,
-    DD_VIEW_ANGLE,
-    DD_VIEW_PITCH,
     DD_CPLAYER_THRUST_MUL_OBSOLETE, // obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, // 10x
@@ -696,10 +691,13 @@ typedef struct {
     float           pos[2], dX, dY;
 } fdivline_t;
 
-// For PathTraverse.
-#define PT_ADDLINES             1
-#define PT_ADDMOBJS             2
-#define PT_EARLYOUT             4
+/**
+ * @defgroup pathTraverseFlags  Path Traverse Flags.
+ * @{
+ */
+#define PT_ADDLINES            1 /// Intercept with LineDefs.
+#define PT_ADDMOBJS            2 /// Intercept with Mobjs.
+/**@}*/
 
 typedef enum {
     ST_HORIZONTAL,
@@ -729,15 +727,15 @@ typedef enum intercepttype_e {
 } intercepttype_t;
 
 typedef struct intercept_s {
-    float           frac; // Along trace line.
+    float           distance; // Along trace vector as a fraction.
     intercepttype_t type;
     union {
-        struct mobj_s* mo;
+        struct mobj_s* mobj;
         struct linedef_s* lineDef;
     } d;
 } intercept_t;
 
-typedef boolean (*traverser_t) (intercept_t* in);
+typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
 #define NO_INDEX            0xffffffff
 
@@ -809,6 +807,58 @@ typedef struct linknode_s {
 
 enum { MX, MY, MZ }; // Momentum axis indices.
 
+/**
+ * (A)xis-(A)ligned (bounding) (B)ox with integer precision.
+ * Handy POD structure for manipulation of bounding boxes.
+ */
+typedef struct aabox_s {
+    union {
+        struct {
+            int vec4[4];
+        };
+        struct {
+            int arvec2[2][2];
+        };
+        struct {
+            int min[2];
+            int max[2];
+        };
+        struct {
+            int minX;
+            int minY;
+            int maxX;
+            int maxY;
+        };
+    };
+} AABox;
+
+/**
+ * (A)xis-(A)ligned (bounding) (B)ox with (f)loating-point precision.
+ * Handy POD structure for manipulation of bounding boxes.
+ *
+ * \todo switch to double?
+ */
+typedef struct aaboxf_s {
+    union {
+        struct {
+            float vec4[4];
+        };
+        struct {
+            float arvec2[2][2];
+        };
+        struct {
+            float min[2];
+            float max[2];
+        };
+        struct {
+            float minX;
+            float minY;
+            float maxX;
+            float maxY;
+        };
+    };
+} AABoxf;
+
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -860,7 +910,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    float           box[2][2]; \
+    AABoxf           aaBox; \
     float           dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \

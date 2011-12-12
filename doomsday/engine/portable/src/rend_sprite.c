@@ -111,7 +111,7 @@ static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
     glEnd();
 }
 
-static boolean drawThinkerId(thinker_t* thinker, void* context)
+static int drawThinkerId(thinker_t* thinker, void* context)
 {
 #define MAX_THINKER_DIST  2048
     float* eye = (float*) context;
@@ -120,7 +120,7 @@ static boolean drawThinkerId(thinker_t* thinker, void* context)
     mobj_t* mo;
 
     // Skip non-mobjs.
-    if(!P_IsMobjThinker(thinker->function)) return true;
+    if(!P_IsMobjThinker(thinker->function)) return false;
 
     mo = (mobj_t*)thinker;
     pos[VX] = mo->pos[VX];
@@ -149,7 +149,7 @@ static boolean drawThinkerId(thinker_t* thinker, void* context)
         glPopMatrix();
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 #undef MAX_THINKER_DIST
 }
 

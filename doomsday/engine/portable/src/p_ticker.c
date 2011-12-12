@@ -55,7 +55,7 @@
 
 // CODE --------------------------------------------------------------------
 
-boolean P_MobjTicker(thinker_t* th, void* context)
+int P_MobjTicker(thinker_t* th, void* context)
 {
     uint                i;
     mobj_t*             mo = (mobj_t*) th;
@@ -110,15 +110,7 @@ boolean P_MobjTicker(thinker_t* th, void* context)
         *haloFactor |= f;
     }
 
-    return true; // Continue iteration.
-}
-
-boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
-{
-    P_MobjTicker((thinker_t*) cmo, NULL);
-
-    // Continue iteration.
-    return true;
+    return false; // Continue iteration.
 }
 
 /**

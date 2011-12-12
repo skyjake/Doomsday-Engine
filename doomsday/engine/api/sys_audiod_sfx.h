@@ -36,6 +36,11 @@
 #define SFXBF_DONT_STOP     (0x8) // Never stop until normal finish.
 #define SFXBF_RELOAD        (0x10000) // Sample must be reloaded before playing.
 
+// Sfx interface properties.
+enum {
+    SFXIP_DISABLE_CHANNEL_REFRESH = 1 // The channel refresh thread is not needed.
+};
+
 // Events.
 enum {
     SFXEV_BEGIN, // An update is about to begin.

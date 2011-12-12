@@ -429,7 +429,7 @@ void DM_Music_Pause(int setPause)
     }
 }
 
-void* DM_Music_SongBuffer(size_t length)
+void* DM_Music_SongBuffer(unsigned int length)
 {
     if(midiAvail)
     {

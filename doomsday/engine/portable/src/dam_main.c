@@ -507,7 +507,9 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
         if(loadedOK)
         {
-            ded_sky_t*          skyDef = NULL;
+            ded_sky_t* skyDef = NULL;
+            vec2_t min, max;
+            uint i;
 
             // Do any initialization/error checking work we need to do.
             // Must be called before we go any further.
@@ -519,7 +521,13 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             R_BuildSectorLinks(map);
 
             // Init blockmap for searching subsectors.
-            P_BuildSubsectorBlockMap(map);
+            V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
+            V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
+            Map_InitSubsectorBlockmap(map, min, max);
+            for(i = 0; i < map->numSSectors; ++i)
+            {
+                Map_LinkSubsectorInBlockmap(map, map->ssectors + i);
+            }
 
             // Init the watched object lists.
             memset(&map->watchedPlaneList, 0, sizeof(map->watchedPlaneList));

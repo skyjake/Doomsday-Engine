@@ -43,7 +43,6 @@
 
 #define SFX_MAX_CHANNELS        (64)
 #define SFX_LOWEST_PRIORITY     (-1000)
-#define UPDATE_TIME             (2.0/TICSPERSEC) // Seconds.
 
 // TYPES -------------------------------------------------------------------
 
@@ -465,8 +464,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
             else
             {
-                normdist = (dist - soundMinDist) /
-                    (soundMaxDist - soundMinDist);
+                normdist = (dist - soundMinDist) / (soundMaxDist - soundMinDist);
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -505,8 +503,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
         }
 
-        iSFX->Set(buf, SFXBP_VOLUME,
-                    ch->volume * dist * sfxVolume / 255.0f);
+        iSFX->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
         iSFX->Set(buf, SFXBP_PAN, pan);
     }
 }
@@ -532,8 +529,7 @@ void Sfx_ListenerUpdate(void)
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
-        vec[VY] =
-            listener->dPlayer ? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0;
+        vec[VY] = (listener->dPlayer? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0);
         iSFX->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
@@ -785,9 +781,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {
         iSFX->Destroy(selCh->buffer);
         // Create a new buffer with the correct format.
-        selCh->buffer =
-            iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8,
-                         sample->rate);
+        selCh->buffer = iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
     }
 
     // Clear flags.
@@ -821,11 +815,18 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
         selCh->flags |= SFXCF_NO_ATTENUATION;
     }
 
+
     /**
      * Load in the sample. Must load prior to setting properties, because
      * the audioDriver might actually create the real buffer only upon loading.
+     *
+     * @note The sample is not reloaded if a sample with the same ID is already
+     * loaded on the channel.
      */
-    iSFX->Load(selCh->buffer, sample);
+    if(!selCh->buffer->sample || selCh->buffer->sample->id != sample->id)
+    {
+        iSFX->Load(selCh->buffer, sample);
+    }
 
     // Update channel properties.
     Sfx_ChannelUpdate(selCh);
@@ -834,7 +835,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     if(play3D)
     {
         // Init the buffer's min/max distances.
-        // This is only done once, when the sound is started (i.e. here).
+        // This is only done once, when the sound is started (i.e., here).
         iSFX->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
                   (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
                   soundMinDist);
@@ -890,9 +891,6 @@ void Sfx_StartFrame(void)
 {
     static int          old16Bit = false;
     static int          oldRate = 11025;
-    static double       lastUpdate = 0;
-
-    double              nowTime = Sys_GetSeconds();
 
     if(!sfxAvail)
         return;
@@ -906,7 +904,7 @@ void Sfx_StartFrame(void)
     // Check that the rate is valid.
     if(sfxSampleRate != 11025 && sfxSampleRate != 22050 && sfxSampleRate != 44100)
     {
-        Con_Message("sound-rate corrected to 11025.\n");
+        Con_Message("Sfx_StartFrame: sound-rate corrected to 11025.\n");
         sfxSampleRate = 11025;
     }
 
@@ -920,19 +918,14 @@ void Sfx_StartFrame(void)
 
     // Should we purge the cache (to conserve memory)?
     Sfx_PurgeCache();
-
-    // Is it time to do a channel update?
-    if(nowTime - lastUpdate >= UPDATE_TIME)
-    {
-        lastUpdate = nowTime;
-        Sfx_Update();
-    }
 }
 
 void Sfx_EndFrame(void)
 {
     if(!sfxAvail)
         return;
+
+    Sfx_Update();
 
     // The sound frame ends.
     audioDriver->Event(SFXEV_END);
@@ -1029,11 +1022,26 @@ void Sfx_ShutdownChannels(void)
  */
 void Sfx_StartRefresh(void)
 {
+    int disableRefresh = false;
+
     refreshing = false;
     allowRefresh = true;
-    refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
-    if(!refreshHandle)
-        Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
+
+    if(!iSFX) goto noRefresh; // Nothing to refresh.
+
+    if(iSFX->Getv) iSFX->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(!disableRefresh)
+    {
+        // Start the refresh thread. It will run until the Sfx module is shut down.
+        refreshHandle = Sys_StartThread(Sfx_ChannelRefreshThread, NULL);
+        if(!refreshHandle)
+            Con_Error("Sfx_StartRefresh: Failed to start refresh.\n");
+    }
+    else
+    {
+noRefresh:
+        VERBOSE( Con_Message("Sfx_StartRefresh: Driver does not require a refresh thread.\n") );
+    }
 }
 
 /**
@@ -1060,13 +1068,15 @@ boolean Sfx_Init(void)
     {
         iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
     }
+#ifndef DENG_DISABLE_SDLMIXER
     else if(audioDriver == &audiod_sdlmixer)
     {
         iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
     }
+#endif
     else
     {
-        iSFX = (audiodExternalISFX.gen.Init ?
+        iSFX = (audiodExternalISFX.gen.Init?
             (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
     }
 
@@ -1079,7 +1089,7 @@ boolean Sfx_Init(void)
     // is 56 units tall, 60 is about two meters.
     //// \fixme Derive from the viewheight.
     iSFX->Listener(SFXLP_UNITS_PER_METER, 30);
-    iSFX->Listener(SFXLP_DOPPLER, 1);
+    iSFX->Listener(SFXLP_DOPPLER, 1.5f);
 
     // The audioDriver is working, let's create the channels.
     Sfx_InitChannels();
@@ -1143,8 +1153,7 @@ void Sfx_Reset(void)
 void Sfx_RecreateChannels(void)
 {
     Sfx_DestroyChannels();
-    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits,
-                       sfxRate);
+    Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits, sfxRate);
 }
 
 /**

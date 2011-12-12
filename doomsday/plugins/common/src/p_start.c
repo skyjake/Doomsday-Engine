@@ -537,13 +537,9 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
 #endif
 
-    if(plrNum == DISPLAYPLAYER)
-    {
-        // The display player has been spawned, so tell the engine where
-        // the camera is initially located. After this it will be updated
-        // after every game tick.
-        R_UpdateConsoleView(plrNum);
-    }
+    // Player has been spawned, so tell the engine where the camera is
+    // initially located. After this it will be updated after every game tick.
+    R_UpdateConsoleView(plrNum);
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
@@ -1088,7 +1084,7 @@ typedef struct {
     float               pos[2], minDist;
 } unstuckmobjinlinedefparams_t;
 
-boolean unstuckMobjInLinedef(linedef_t* li, void* context)
+int unstuckMobjInLinedef(linedef_t* li, void* context)
 {
     unstuckmobjinlinedefparams_t *params =
         (unstuckmobjinlinedefparams_t*) context;
@@ -1140,25 +1136,25 @@ boolean unstuckMobjInLinedef(linedef_t* li, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
+int iterateLinedefsNearMobj(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t*) th;
     mobjtype_t          type = *((mobjtype_t*) context);
-    float               aabb[4];
     unstuckmobjinlinedefparams_t params;
+    AABoxf aaBox;
 
     // \todo Why not type-prune at an earlier point? We could specify a
     // custom comparison func for DD_IterateThinkers...
     if(mo->type != type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
-    aabb[BOXLEFT]   = mo->pos[VX] - mo->radius;
-    aabb[BOXRIGHT]  = mo->pos[VX] + mo->radius;
-    aabb[BOXBOTTOM] = mo->pos[VY] - mo->radius;
-    aabb[BOXTOP]    = mo->pos[VY] + mo->radius;
+    aaBox.minX = mo->pos[VX] - mo->radius;
+    aaBox.minY = mo->pos[VY] - mo->radius;
+    aaBox.maxX = mo->pos[VX] + mo->radius;
+    aaBox.maxY = mo->pos[VY] + mo->radius;
 
     params.pos[VX] = mo->pos[VX];
     params.pos[VY] = mo->pos[VY];
@@ -1166,19 +1162,18 @@ boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
 
     VALIDCOUNT++;
 
-    P_LinesBoxIterator(aabb, unstuckMobjInLinedef, &params);
+    P_LinesBoxIterator(&aaBox, unstuckMobjInLinedef, &params);
 
     if(mo->pos[VX] != params.pos[VX] || mo->pos[VY] != params.pos[VY])
     {
-        mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                    params.pos[VX], params.pos[VY]);
+        mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY], params.pos[VX], params.pos[VY]);
         P_MobjUnsetPosition(mo);
         mo->pos[VX] = params.pos[VX];
         mo->pos[VY] = params.pos[VY];
         P_MobjSetPosition(mo);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

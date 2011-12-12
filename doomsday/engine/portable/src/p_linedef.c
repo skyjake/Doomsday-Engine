@@ -259,15 +259,15 @@ boolean Linedef_GetProperty(const linedef_t *lin, setargs_t *args)
     case DMU_BOUNDING_BOX:
         if(args->valueType == DDVT_PTR)
         {
-            const float* bbox = lin->bBox;
-            DMU_GetValue(DDVT_PTR, &bbox, args, 0);
+            const AABoxf* aaBox = &lin->aaBox;
+            DMU_GetValue(DDVT_PTR, &aaBox, args, 0);
         }
         else
         {
-            DMU_GetValue(DMT_LINEDEF_BBOX, &lin->bBox[0], args, 0);
-            DMU_GetValue(DMT_LINEDEF_BBOX, &lin->bBox[1], args, 1);
-            DMU_GetValue(DMT_LINEDEF_BBOX, &lin->bBox[2], args, 2);
-            DMU_GetValue(DMT_LINEDEF_BBOX, &lin->bBox[3], args, 3);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minX, args, 0);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxX, args, 1);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minY, args, 2);
+            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxY, args, 3);
         }
         break;
     case DMU_VALID_COUNT:
