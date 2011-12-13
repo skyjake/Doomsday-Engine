@@ -753,9 +753,9 @@ void IN_DrawSingleStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawText("KILLS", 50, 65);
-    FR_DrawText("ITEMS", 50, 90);
-    FR_DrawText("SECRETS", 50, 115);
+    FR_DrawText3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawText3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawText3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
@@ -852,7 +852,7 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawText("TIME", 85, 160);
+        FR_DrawText3("TIME", 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
         IN_DrawTime(284, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
@@ -892,9 +892,9 @@ void IN_DrawCoopStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawText("KILLS", 95, 35);
-    FR_DrawText("BONUS", 155, 35);
-    FR_DrawText("SECRET", 232, 35);
+    FR_DrawText3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawText3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawText3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
@@ -963,15 +963,15 @@ void IN_DrawDMStats(void)
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    FR_DrawText("TOTAL", 265, 30);
+    FR_DrawText3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawText("VICTIMS", 140, 8);
+    FR_DrawText3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     for(i = 0; i < 7; ++i)
     {
-        FR_DrawText(killersText[i], 10, 80 + 9 * i);
+        FR_DrawText3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
