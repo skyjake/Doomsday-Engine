@@ -95,9 +95,9 @@ struct fi_object_s* FI_Object(fi_objectid_t id);
 struct fi_page_s* FIObject_Page(struct fi_object_s* obj);
 
 /**
- * Change/setup a reverse link between this object an it's owning page.
+ * Change/setup a reverse link between this object and it's owning page.
  * \note Changing this relationship here does not complete the task of
- * linking an object with a page (not enough information). It is therfore
+ * linking an object with a page (not enough information). It is therefore
  * the page's responsibility to call this when adding/removing objects.
  */
 void FIObject_SetPage(struct fi_object_s* obj, struct fi_page_s* page);
