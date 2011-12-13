@@ -8,21 +8,23 @@ import glob
 import build_version
 import build_number
 
-LAUNCH_DIR = os.path.abspath(os.getcwd())
-DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
+# Configuration.
+LAUNCH_DIR    = os.path.abspath(os.getcwd())
+DOOMSDAY_DIR  = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
-WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
-OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
-DOOMSDAY_VERSION_FULL = "0.0.0-Name"
+WORK_DIR      = os.path.join(LAUNCH_DIR, 'work')
+OUTPUT_DIR    = os.path.join(os.getcwd(), 'releases')
+DOOMSDAY_VERSION_FULL       = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
-DOOMSDAY_VERSION_MAJOR = 0
-DOOMSDAY_VERSION_MINOR = 0
-DOOMSDAY_VERSION_REVISION = 0
-DOOMSDAY_RELEASE_TYPE = "Unstable"
-now = time.localtime()
-DOOMSDAY_BUILD_NUMBER = build_number.todays_build()
-DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
+DOOMSDAY_VERSION_MAJOR      = 0
+DOOMSDAY_VERSION_MINOR      = 0
+DOOMSDAY_VERSION_REVISION   = 0
+DOOMSDAY_RELEASE_TYPE       = "Unstable"
+DOOMSDAY_BUILD_NUMBER       = build_number.todays_build()
+DOOMSDAY_BUILD              = 'build' + DOOMSDAY_BUILD_NUMBER
+
 TIMESTAMP = time.strftime('%y-%m-%d')
+now = time.localtime()
 
 print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
 

@@ -1,9 +1,8 @@
 #!/usr/bin/python
 # coding=utf-8
 
-# Script for managing build events.
-# - create: tag a new build and prepare the build directory
-# - platform_release: run today's platform build and copy the result to the build directory
+# Script for managing automated build events.
+# http://dengine.net/dew/index.php?title=Automated_build_system
 
 import sys
 import os
@@ -23,8 +22,8 @@ if len(sys.argv) < 4:
     print 'The arguments must be: (command) (eventdir) (distribdir) [localaptdir]'
     sys.exit(1)
 
-EVENT_DIR = sys.argv[2] #/Users/jaakko/Builds
-DISTRIB_DIR = sys.argv[3] #/Users/jaakko/Projects/deng
+EVENT_DIR = sys.argv[2]   
+DISTRIB_DIR = sys.argv[3] 
 if len(sys.argv) > 4:
     APT_REPO_DIR = sys.argv[4]
 else:
