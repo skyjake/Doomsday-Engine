@@ -936,8 +936,9 @@ int Textures_UniqueId(textureid_t id)
 const Uri* Textures_ResourcePath(textureid_t id)
 {
     PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    if(!node) return emptyUri;
-    return ((texturerecord_t*)PathDirectoryNode_UserData(node))->resourcePath;
+    texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
+    if(!record) return emptyUri;
+    return record->resourcePath;
 }
 
 textureid_t Textures_Id(texture_t* tex)
