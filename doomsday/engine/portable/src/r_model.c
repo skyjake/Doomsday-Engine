@@ -801,7 +801,7 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
     spritedef_t* spr = &sprites[sprite];
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
-    spritetex_t* sprTex;
+    patchtex_t* pTex;
     int off;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
@@ -816,10 +816,10 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
         Con_Error("R_ScaleModelToSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
 
-    off = sprTex->offY - ms->size.height;
+    off = -pTex->offY - ms->size.height;
     if(off < 0)
         off = 0;
 

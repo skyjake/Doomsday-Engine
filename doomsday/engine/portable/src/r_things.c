@@ -596,7 +596,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 {
     spritedef_t* sprDef;
     spriteframe_t* sprFrame;
-    spritetex_t* sprTex;
+    patchtex_t* pTex;
     material_t* mat;
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
@@ -630,16 +630,16 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
         Con_Error("R_GetSpriteInfo: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
     info->flip = sprFrame->flip[0];
-    info->geometry.origin.x = sprTex->offX + -texSpec->border;
-    info->geometry.origin.y = sprTex->offY + texSpec->border;
+    info->geometry.origin.x = -pTex->offX + -texSpec->border;
+    info->geometry.origin.y = -pTex->offY + texSpec->border;
     info->geometry.size.width  = ms->size.width  + texSpec->border*2;
     info->geometry.size.height = ms->size.height + texSpec->border*2;
     TextureVariant_Coords(MST(ms, MTU_PRIMARY), &info->texCoord[0], &info->texCoord[1]);
@@ -949,7 +949,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 {
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
-    spritetex_t* sprTex;
+    patchtex_t* pTex;
     const variantspecification_t* texSpec;
 
     if(!params) return; // Wha?
@@ -963,8 +963,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
         Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(texSpec);
 
@@ -978,7 +978,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - params->width/2;
+    params->viewOffX = (float) -pTex->offX - params->width/2;
     params->viewOffY = 0;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
@@ -1126,7 +1126,7 @@ void R_ProjectSprite(mobj_t* mo)
     boolean align, fullBright, viewAlign, floorAdjust;
     modeldef_t* mf = NULL, *nextmf = NULL;
     float interp = 0, distance, gzt;
-    spritetex_t* sprTex;
+    patchtex_t* pTex;
     vismobjzparams_t params;
     visspritetype_t visType = VSPR_SPRITE;
     float ambientColor[3];
@@ -1216,8 +1216,8 @@ void R_ProjectSprite(mobj_t* mo)
         Con_Error("R_ProjectSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
 
     // Align to the view plane?
     if(mo->ddFlags & DDMF_VIEWALIGN)
@@ -1234,7 +1234,7 @@ void R_ProjectSprite(mobj_t* mo)
     float width = R_VisualRadius(mo)*2, offset = 0;
 
     if(!mf)
-        offset = (float) sprTex->offX - (width / 2);
+        offset = (float) -pTex->offX - (width / 2);
 
     // Project a line segment relative to the view in 2D, then check
     // if not entirely clipped away in the 360 degree angle clipper.
@@ -1300,7 +1300,7 @@ void R_ProjectSprite(mobj_t* mo)
     params.floorAdjust = floorAdjust;
     P_MobjSectorsIterator(mo, RIT_VisMobjZ, &params);
 
-    gzt = vis->center[VZ] + ((float) sprTex->offY);
+    gzt = vis->center[VZ] + ((float) -pTex->offY);
 
     viewAlign = (align || alwaysAlign == 3)? true : false;
     fullBright = ((mo->state->flags & STF_FULLBRIGHT) || levelFullBright)? true : false;
@@ -1514,7 +1514,7 @@ void R_ProjectSprite(mobj_t* mo)
         
         flareSize = pl->brightMul;
         // X offset to the flare position.
-        xOffset = ms->size.width * pl->originX - sprTex->offX;
+        xOffset = ms->size.width * pl->originX - -pTex->offX;
 
         // Does the mobj have an active light definition?
         if(def)

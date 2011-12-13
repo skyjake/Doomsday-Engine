@@ -786,7 +786,7 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
                 if(F_IsValidLumpNum(lumpNum))
                 {
                     DFile* file = F_OpenLump(lumpNum);
-                    loadResult = GL_LoadPatchLumpAsSprite(image, file, tclass, tmap, spec->border, tex);
+                    loadResult = GL_LoadPatchLumpAsPatch(image, file, tclass, tmap, spec->border, tex);
                     F_Delete(file);
                 }
             }
@@ -2424,26 +2424,6 @@ byte GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int tmap, 
             F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
             pTex->offX = -SHORT(hdr.leftOffset);
             pTex->offY = -SHORT(hdr.topOffset);
-        }
-    }
-    return MIN_OF(1, result);
-}
-
-byte GL_LoadPatchLumpAsSprite(image_t* image, DFile* file, int tclass, int tmap, int border,
-    texture_t* tex)
-{
-    byte result = loadPatchLump(image, file, tclass, tmap, border);
-    if(1 == result && tex)
-    {
-        // Loaded from a lump assumed to be in DOOM's Patch format.
-        spritetex_t* sTex = (spritetex_t*)Texture_UserData(tex);
-        if(sTex)
-        {
-            // Load the extended metadata from the lump.
-            doompatch_header_t hdr;
-            F_ReadLumpSection(DFile_File(file), 0, (uint8_t*)&hdr, 0, sizeof(hdr));
-            sTex->offX = SHORT(hdr.leftOffset);
-            sTex->offY = SHORT(hdr.topOffset);
         }
     }
     return MIN_OF(1, result);

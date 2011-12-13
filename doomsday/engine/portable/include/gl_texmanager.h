@@ -199,9 +199,6 @@ byte GL_LoadFlatLump(struct image_s* image, DFile* file);
 byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass, int tmap,
     int border, texture_t* tex);
 
-byte GL_LoadPatchLumpAsSprite(struct image_s* image, DFile* file, int tclass, int tmap,
-    int border, texture_t* tex);
-
 byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 
 byte GL_LoadPatchComposite(struct image_s* image, texture_t* tex);

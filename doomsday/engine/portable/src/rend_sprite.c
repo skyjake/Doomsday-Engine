@@ -319,7 +319,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     int frame = psp->statePtr->frame;
     float offScaleY = weaponOffsetScaleY / 1000.0f;
     const spritedef_t* sprDef;
-    const spritetex_t* sprTex;
+    const patchtex_t* pTex;
     const spriteframe_t* sprFrame;
     const materialsnapshot_t* ms;
     const materialvariantspecification_t* spec;
@@ -348,13 +348,13 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
         Con_Error("setupPSpriteParams: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
     texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
     assert(spec);
 
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -texSpec->border;
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -texSpec->border;
+    params->pos[VX] = psp->pos[VX] - -pTex->offX + pspOffset[VX] + -texSpec->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - -pTex->offY) + pspOffset[VY] + -texSpec->border;
     params->width  = ms->size.width  + texSpec->border*2;
     params->height = ms->size.height + texSpec->border*2;
 

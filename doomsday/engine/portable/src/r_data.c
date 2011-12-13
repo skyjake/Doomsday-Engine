@@ -2227,7 +2227,7 @@ void R_InitSpriteTextures(void)
     for(i = 0; i < numLumps; ++i)
     {
         const lumpinfo_t* info = F_FindInfoForLumpNum((lumpnum_t)i);
-        spritetex_t* sprTex;
+        patchtex_t* pTex;
         textureid_t texId;
         texture_t* tex;
         int flags;
@@ -2271,26 +2271,26 @@ void R_InitSpriteTextures(void)
             if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
             Texture_SetFlags(tex, flags);
 
-            sprTex = (spritetex_t*)Texture_UserData(tex);
+            pTex = (patchtex_t*)Texture_UserData(tex);
         }
         else
         {
             // A new sprite texture.
-            sprTex = (spritetex_t*)malloc(sizeof *sprTex);
-            if(!sprTex)
-                Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new SpriteTex.", (unsigned long) sizeof *sprTex);
-            sprTex->offX = sprTex->offY = 0; // Deferred until texture load time.
+            pTex = (patchtex_t*)malloc(sizeof *pTex);
+            if(!pTex)
+                Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *pTex);
+            pTex->offX = pTex->offY = 0; // Deferred until texture load time.
 
             flags = 0;
             if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
 
-            tex = Textures_Create(texId, flags, (void*)sprTex);
+            tex = Textures_Create(texId, flags, (void*)pTex);
             if(!tex)
             {
                 ddstring_t* path = Uri_ComposePath(uri);
                 Con_Message("Warning: Failed defining Texture for sprite texture \"%s\" (#%i), ignoring.\n", Str_Text(path), (lumpnum_t)i);
                 Str_Delete(path);
-                free(sprTex);
+                free(pTex);
                 continue;
             }
         }

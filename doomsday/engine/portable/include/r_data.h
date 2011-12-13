@@ -191,11 +191,6 @@ typedef struct {
     texpatch_t* patches; // [patchcount] drawn back to front into the cached texture.
 } patchcompositetex_t;
 
-typedef struct {
-    /// Offset to texture origin in logical pixels.
-    short offX, offY;
-} spritetex_t;
-
 // Patch flags.
 #define PF_MONOCHROME         0x1
 #define PF_UPSCALE_AND_SHARPEN 0x2

@@ -349,8 +349,8 @@ static void destroyTexture(texture_t* tex)
         break;
     }
     case TN_SPRITES: {
-        spritetex_t* sprTex = (spritetex_t*)Texture_DetachUserData(tex);
-        if(sprTex) free(sprTex);
+        patchtex_t* pTex = (patchtex_t*)Texture_DetachUserData(tex);
+        if(pTex) free(pTex);
         break;
     }
     case TN_PATCHES: {

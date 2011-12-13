@@ -714,7 +714,7 @@ static void addLuminous(mobj_t* mo)
     ded_light_t* def;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame;
-    spritetex_t* sprTex;
+    patchtex_t* pTex;
     material_t* mat;
     const materialsnapshot_t* ms;
     const materialvariantspecification_t* spec;
@@ -771,13 +771,13 @@ static void addLuminous(mobj_t* mo)
         Con_Error("LO_AddLuminous: Internal error, material snapshot's primary texture is not a SpriteTex!");
 #endif
 
-    sprTex = (spritetex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(sprTex);
+    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+    assert(pTex);
 
-    center = sprTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
+    center = -pTex->offY - mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
     // Will the sprite be allowed to go inside the floor?
-    mul = mo->pos[VZ] + sprTex->offY - (float) ms->size.height - mo->subsector->sector->SP_floorheight;
+    mul = mo->pos[VZ] + -pTex->offY - (float) ms->size.height - mo->subsector->sector->SP_floorheight;
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && mul < 0)
     {
         // Must adjust.
