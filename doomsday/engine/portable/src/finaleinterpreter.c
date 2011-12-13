@@ -296,8 +296,6 @@ static const command_t commands[] = {
     { "pos",        "si", FIC_TextPos }, // pos (id) (pos)
     { "rate",       "si", FIC_TextRate }, // rate (id) (rate)
     { "font",       "ss", FIC_Font }, // font (id) (font)
-    { "fonta",      "s", FIC_FontA }, // fonta (id)
-    { "fontb",      "s", FIC_FontB }, // fontb (id)
     { "linehgt",    "sf", FIC_TextLineHeight }, // linehgt (hndl) (hgt)
 
     // Game Control
@@ -309,6 +307,10 @@ static const command_t commands[] = {
     // Misc.
     { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
     { "prefont",    "is", FIC_PredefinedFont }, // prefont (num) (font)
+
+    // Deprecated Font commands
+    { "fonta",      "s", FIC_FontA }, // fonta (id)
+    { "fontb",      "s", FIC_FontB }, // fontb (id)
 
     // Deprecated Pic commands
     { "delpic",     "o", FIC_Delete }, // delpic (obj)
@@ -714,26 +716,31 @@ static __inline uint pageForObjectType(fi_obtype_e type)
  */
 static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const char* name)
 {
+    fi_objectid_t id;
+    fi_object_t* obj;
+    uint pageIdx;
     assert(name && name);
+
     // An existing object?
-    { fi_objectid_t id;
     if((id = findObjectIdForName(&fi->_namespace, name, type)))
+    {
         return FI_Object(id);
     }
 
     // A new object.
-    { fi_object_t* obj = FI_NewObject(type, name);
-    uint pageIdx = pageForObjectType(type);
+    obj = FI_NewObject(type, name);
+    pageIdx = pageForObjectType(type);
     switch(type)
     {
     case FI_TEXT:
         FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[pageIdx], 0));
+        FIData_TextSetPreColor(obj, 1);
         break;
     default:
+        // No additional pre-configuration.
         break;
     }
     return FIPage_AddObject(fi->_pages[pageIdx], addObjectToNamespace(&fi->_namespace, name, obj));
-    }
 }
 
 static void clearEventHandlers(finaleinterpreter_t* fi)
@@ -1635,13 +1642,9 @@ DEFFC(ObjectRGB)
     {
     default: Con_Error("FinaleInterpreter::FIC_ObjectRGB: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
-        {
-        fidata_text_t* t = (fidata_text_t*)obj;
-        AnimatorVector3_Set(t->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        FIData_TextSetColor(obj, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
-        }
-    case FI_PIC:
-        {
+    case FI_PIC: {
         fidata_pic_t* p = (fidata_pic_t*)obj;
         AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         // This affects all the colors.
@@ -1649,7 +1652,7 @@ DEFFC(ObjectRGB)
         AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
-        }
+      }
     }
 }
 
@@ -1664,18 +1667,14 @@ DEFFC(ObjectAlpha)
     {
     default: Con_Error("FinaleInterpreter::FIC_ObjectAlpha: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
-        {
-        fidata_text_t* t = (fidata_text_t*)obj;
-        Animator_Set(&t->color[3], alpha, fi->_inTime);
+        FIData_TextSetAlpha(obj, alpha, fi->_inTime);
         break;
-        }
-    case FI_PIC:
-        {
+    case FI_PIC: {
         fidata_pic_t* p = (fidata_pic_t*)obj;
         Animator_Set(&p->color[3], alpha, fi->_inTime);
         Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
         break;
-        }
+      }
     }
 }
 
@@ -1992,13 +1991,13 @@ DEFFC(PredefinedFont)
 DEFFC(TextRGB)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector3_Set(((fidata_text_t*)obj)->color, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIData_TextSetColor(obj, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(TextAlpha)
 {
     fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&((fidata_text_t*)obj)->color[CA], OP_FLOAT(1), fi->_inTime);
+    FIData_TextSetAlpha(obj, OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextOffX)

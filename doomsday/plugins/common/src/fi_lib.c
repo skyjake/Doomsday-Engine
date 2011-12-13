@@ -218,7 +218,7 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
     gamestate_t prevGamestate;
     ddstring_t setupCmds;
     finaleid_t finaleId;
-    int fontIdx;
+    int i, fontIdx;
 
     if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
 
@@ -240,9 +240,33 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 #if __JHERETIC__ || __JHEXEN__
     Str_Appendf(&setupCmds, "\nprefont %i %s", fontIdx++, "smallin");
 #endif
-    // Configure the predefined colors. All white.
-    { int i;
-    for(i = 1; i <= FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+
+    // Configure the predefined colors.
+#if __JDOOM__
+    Str_Appendf(&setupCmds, "\nprecolor 2 %f %f %f\n", defFontRGB[CR],  defFontRGB[CG],  defFontRGB[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 1 %f %f %f\n", defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 3 %f %f %f\n", defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB]);
+    i = 4;
+#elif __JHERETIC__
+    Str_Appendf(&setupCmds, "\nprecolor 3 %f %f %f\n", defFontRGB[CR],  defFontRGB[CG],  defFontRGB[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 2 %f %f %f\n", defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 1 %f %f %f\n", defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB]);
+    i = 4;
+#elif __JHEXEN__
+    Str_Appendf(&setupCmds, "\nprecolor 3 %f %f %f\n", defFontRGB[CR],  defFontRGB[CG],  defFontRGB[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 2 %f %f %f\n", defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 1 %f %f %f\n", defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB]);
+    i = 4;
+#elif __JDOOM64__
+    Str_Appendf(&setupCmds, "\nprecolor 2 %f %f %f\n", defFontRGB[CR],  defFontRGB[CG],  defFontRGB[CB]);
+    Str_Appendf(&setupCmds, "\nprecolor 1 %f %f %f\n", defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB]);
+    i = 3;
+#else
+    i = 0;
+#endif
+    // Set the rest to white.
+    for(; i <= FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+    {
         Str_Appendf(&setupCmds, "\nprecolor %i 1 1 1\n", i);
     }
 
@@ -273,19 +297,19 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 
 boolean FI_StackActive(void)
 {
+    fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_StackActive: Not initialized yet!");
-    {fi_state_t* s;
     if((s = stackTop()))
     {
         return FI_ScriptActive(s->finaleId);
-    }}
+    }
     return false;
 }
 
 static void stackClear(boolean ignoreSuspendedScripts)
 {
+    fi_state_t* s;
     assert(finaleStackInited);
-    {fi_state_t* s;
     if((s = stackTop()) && FI_ScriptActive(s->finaleId))
     {
         // The state is suspended when the PlayDemo command is used.
@@ -299,7 +323,7 @@ static void stackClear(boolean ignoreSuspendedScripts)
         {
             FI_ScriptTerminate(s->finaleId);
         }
-    }}
+    }
 }
 
 void FI_StackClear(void)
@@ -318,13 +342,15 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
 {
     gamestate_t initialGamestate;
     finale_mode_t mode;
-    { fi_state_t* s = stateForFinaleId(finaleId);
+    fi_state_t* s = stateForFinaleId(finaleId);
+
     if(!s)
-    {   // Finale was not initiated by us.
+    {
+        // Finale was not initiated by us...
         return true;
     }
     initialGamestate = s->initialGamestate;
-    mode = s->mode; }
+    mode = s->mode;
 
     // Should we go back to NULL?
     if(finaleStackSize > 1)
@@ -417,6 +443,10 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 {
     ddhook_finale_script_evalif_paramaters_t* p = (ddhook_finale_script_evalif_paramaters_t*) paramaters;
     fi_state_t* s = stateForFinaleId(finaleId);
+#if __JHEXEN__
+    // Player class names.
+    int pclass;
+#endif
 
     if(!s)
     {   // Finale was not initiated by us, therefore we have no say in this.
@@ -443,12 +473,11 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 
 #if __JHEXEN__
     // Player class names.
-    {int pclass;
     if((pclass = playerClassForName(p->token)))
     {
         p->returnVal = pclass;
         return true;
-    }}
+    }
 #endif 
     
     /**
@@ -486,34 +515,34 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 
 int FI_PrivilegedResponder(const void* ev)
 {
+    fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_Responder: Not initialized yet!");
-    {fi_state_t* s;
     if((s = stackTop()))
     {
         return FI_ScriptResponder(s->finaleId, ev);
-    }}
+    }
     return false;
 }
 
 boolean FI_IsMenuTrigger(void)
 {
+    fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_IsMenuTrigger: Not initialized yet!");
-    {fi_state_t* s;
     if((s = stackTop()))
     {
         return FI_ScriptIsMenuTrigger(s->finaleId);
-    }}
+    }
     return false;
 }
 
 boolean FI_RequestSkip(void)
 {
+    fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_RequestSkip: Not initialized yet!");
-    {fi_state_t* s;
     if((s = stackTop()))
     {
         return FI_ScriptRequestSkip(s->finaleId);
-    }}
+    }
     return false;
 }
 

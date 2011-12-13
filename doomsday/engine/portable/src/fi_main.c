@@ -262,6 +262,7 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
 {
     const char* script = _script;
     char* tempScript = 0;
+    finale_t* f;
 
     if(!inited)
     {
@@ -302,7 +303,7 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
         script = tempScript;
     }
 
-    {finale_t* f = P_CreateFinale();
+    f = P_CreateFinale();
     f->flags = flags;
     FinaleInterpreter_LoadScript(f->_interpreter, script);
     if(!(flags & FF_LOCAL) && isServer)
@@ -314,7 +315,7 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
 #endif
     if(tempScript)
         free(tempScript);
-    return f->id; }
+    return f->id;
 }
 
 finaleid_t FI_Execute(const char* script, int flags)

@@ -70,6 +70,7 @@ struct fi_page_s;
  */
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_obtype_e     type; /* Type of the object. */ \
+    struct fi_page_s* page; /* Owning page */ \
     int             group; \
     struct { \
         char looping:1; /* Animation will loop. */ \
@@ -86,6 +87,20 @@ struct fi_page_s;
 struct fi_object_s* FI_NewObject(fi_obtype_e type, const char* name);
 void FI_DeleteObject(struct fi_object_s* obj);
 struct fi_object_s* FI_Object(fi_objectid_t id);
+
+/**
+ * @return  Page which presently owns this object. Can be @c NULL if the
+ *     object is presently being moved from one page to another.
+ */
+struct fi_page_s* FIObject_Page(struct fi_object_s* obj);
+
+/**
+ * Change/setup a reverse link between this object an it's owning page.
+ * \note Changing this relationship here does not complete the task of
+ * linking an object with a page (not enough information). It is therfore
+ * the page's responsibility to call this when adding/removing objects.
+ */
+void FIObject_SetPage(struct fi_object_s* obj, struct fi_page_s* page);
 
 /**
  * A page is an aggregate visual/visual container.
@@ -146,10 +161,10 @@ void FIPage_Drawer(fi_page_t* page);
 /// Tic the page if not paused.
 void FIPage_Ticker(fi_page_t* page, timespan_t ticLength);
 
-/// Adds a UI object to the page if not already present.
+/// Adds UI object to the page if not already present. Page takes ownership.
 struct fi_object_s* FIPage_AddObject(fi_page_t* page, struct fi_object_s* obj);
 
-/// Removes a UI object from the page if present.
+/// Removes UI object from the page if present. Page gives up ownership.
 struct fi_object_s* FIPage_RemoveObject(fi_page_t* page, struct fi_object_s* obj);
 
 /// Is the UI object present on the page?
@@ -193,6 +208,9 @@ void FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, floa
 
 /// Sets a predefined color.
 void FIPage_SetPredefinedColor(fi_page_t* page, uint idx, float red, float green, float blue, int steps);
+
+/// @return  Animator which represents the identified predefined color.
+const animatorvector3_t* FIPage_PredefinedColor(fi_page_t* page, uint idx);
 
 /// Sets a predefined font.
 void FIPage_SetPredefinedFont(fi_page_t* page, uint idx, fontid_t font);
@@ -253,6 +271,7 @@ void FIData_PicClearAnimation(struct fi_object_s* pic);
 typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
+    uint pageColor; /// Identifier of the owning page's predefined color. Zero means use our own color.
     int alignFlags; /// @see alignmentFlags
     short textFlags; /// @see drawTextFlags
     int scrollWait, scrollTimer; /// Automatic scrolling upwards.
@@ -267,6 +286,10 @@ void FIData_TextThink(struct fi_object_s* text);
 void FIData_TextDraw(struct fi_object_s* text, const float offset[3]);
 void FIData_TextCopy(struct fi_object_s* text, const char* str);
 void FIData_TextSetFont(struct fi_object_s* text, fontid_t fontNum);
+void FIData_TextSetPreColor(struct fi_object_s* text, uint id);
+void FIData_TextSetColor(struct fi_object_s* text, float red, float green, float blue, int steps);
+void FIData_TextSetAlpha(struct fi_object_s* text, float alpha, int steps);
+void FIData_TextSetColorAndAlpha(struct fi_object_s* text, float red, float green, float blue, float alpha, int steps);
 
 /**
  * @return Length of the current text as a counter.

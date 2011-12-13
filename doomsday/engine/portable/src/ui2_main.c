@@ -104,6 +104,8 @@ static fi_page_t* pagesRemove(fi_page_t* p)
  */
 static void pageClear(fi_page_t* p)
 {
+    uint i;
+
     p->_timer = 0;
     p->flags.showBackground = true; /// Draw background by default.
     p->_bg.material = 0; // No background material.
@@ -121,11 +123,11 @@ static void pageClear(fi_page_t* p)
     AnimatorVector4_Init(p->_bg.bottomColor, 1, 1, 1, 0);
     AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
     memset(p->_preFont, 0, sizeof(p->_preFont));
-    {uint i;
+
     for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
         AnimatorVector3_Init(p->_preColor[i], 1, 1, 1);
-    }}
+    }
 }
 
 static fi_page_t* newPage(fi_page_t* prevPage)
@@ -345,27 +347,28 @@ void UI_Shutdown(void)
 
 void UI2_Ticker(timespan_t ticLength)
 {
+    uint i;
+
     // Always tic.
     FR_Ticker(ticLength);
 
-    if(!inited)
-        return;
+    if(!inited) return;
 
     // All pages tic unless paused.
-    { uint i;
     for(i = 0; i < numPages; ++i)
     {
         fi_page_t* page = pages[i];
         page->ticker(page, ticLength);
-    }}
+    }
 }
 
-void FIObject_Destructor(fi_object_t* obj)
+void FIObject_Delete(fi_object_t* obj)
 {
+    uint i;
     assert(obj);
     // Destroy all references to this object on all pages.
-    {uint i;
     for(i = 0; i < numPages; ++i)
+    {
         FIPage_RemoveObject(pages[i], obj);
     }
     objectsRemove(&objects, obj);
@@ -395,7 +398,7 @@ void P_DestroyPic(fidata_pic_t* pic)
     assert(pic);
     FIData_PicClearAnimation((fi_object_t*)pic);
     // Call parent destructor.
-    FIObject_Destructor((fi_object_t*)pic);
+    FIObject_Delete((fi_object_t*)pic);
 }
 
 fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t fontNum)
@@ -413,6 +416,7 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name, fontid_t fontNum
     t->alignFlags = ALIGN_TOPLEFT;
     t->textFlags = DTF_ONLY_SHADOW;
     objectSetName((fi_object_t*)t, name);
+    t->pageColor = 0; // Do not use a predefined color by default.
     AnimatorVector4_Init(t->color, 1, 1, 1, 1);
     AnimatorVector3_Init(t->scale, 1, 1, 1);
 
@@ -433,7 +437,7 @@ void P_DestroyText(fidata_text_t* text)
         Z_Free(text->text); text->text = 0;
     }
     // Call parent destructor.
-    FIObject_Destructor((fi_object_t*)text);
+    FIObject_Delete((fi_object_t*)text);
 }
 
 void FIObject_Think(fi_object_t* obj)
@@ -444,6 +448,18 @@ void FIObject_Think(fi_object_t* obj)
     Animator_Think(&obj->angle);
 }
 
+struct fi_page_s* FIObject_Page(struct fi_object_s* obj)
+{
+    assert(obj);
+    return obj->page;
+}
+
+void FIObject_SetPage(struct fi_object_s* obj, struct fi_page_s* page)
+{
+    assert(obj);
+    obj->page = page;
+}
+
 fi_page_t* FI_NewPage(fi_page_t* prevPage)
 {
     return pagesAdd(newPage(prevPage));
@@ -451,16 +467,16 @@ fi_page_t* FI_NewPage(fi_page_t* prevPage)
 
 void FI_DeletePage(fi_page_t* p)
 {
+    uint i;
     if(!p) Con_Error("FI_DeletePage: Invalid page.");
     pageClear(p);
     pagesRemove(p);
-    { uint i;
     for(i = 0; i < numPages; ++i)
     {
         fi_page_t* other = pages[i];
         if(other->previous == p)
             other->previous = 0;
-    }}
+    }
     Z_Free(p);
 }
 
@@ -676,6 +692,7 @@ fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
     if(!p) Con_Error("FIPage_AddObject: Invalid page.");
     if(obj && !objectsIsPresent(&p->_objects, obj))
     {
+        FIObject_SetPage(obj, p);
         return objectsAdd(&p->_objects, obj);
     }
     return obj;
@@ -686,6 +703,7 @@ fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
     if(!p) Con_Error("FIPage_RemoveObject: Invalid page.");
     if(obj && objectsIsPresent(&p->_objects, obj))
     {
+        FIObject_SetPage(obj, NULL);
         return objectsRemove(&p->_objects, obj);
     }
     return obj;
@@ -762,6 +780,13 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
     if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
     AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
+}
+
+const animatorvector3_t* FIPage_PredefinedColor(fi_page_t* p, uint idx)
+{
+    if(!p) Con_Error("FIPage_PredefinedColor: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_PredefinedColor: Invalid color id %u.", idx);
+    return &p->_preColor[idx];
 }
 
 void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontid_t fontNum)
@@ -1248,13 +1273,12 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
 
     {
-    int x = 0, y = 0;
-    int ch, linew = -1;
+    int x = 0, y = 0, ch, linew = -1;
+    const animatorvector3_t* color;
     char* ptr;
     size_t cnt;
 
-    if(!t->text)
-        return;
+    if(!t->text) return;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1270,13 +1294,18 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
     }
 
     glScalef(t->scale[0].value, t->scale[1].value, t->scale[2].value);
-
     glEnable(GL_TEXTURE_2D);
 
-    // Draw it.
-    // Set the normal color.
-    FR_SetColorAndAlpha(t->color[CR].value, t->color[CG].value, t->color[CB].value, t->color[CA].value);
     FR_SetFont(t->fontNum);
+
+    // Set the normal color.
+    if(t->pageColor == 0)
+        color = (animatorvector3_t*)&t->color;
+    else
+        color = FIPage_PredefinedColor(FIObject_Page(obj), t->pageColor-1);
+    FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
+    FR_SetAlpha(t->color[CA].value);
+
     for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
         if(linew < 0)
@@ -1288,23 +1317,16 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
             if(!*++ptr)
                 break;
 
-            // Change of color.
+            // Change of color?
             if(*ptr >= '0' && *ptr <= '9')
             {
-                /// \fixme disabled for now as this violates our ownership model.
-                /*animatorvector3_t* color;
                 uint colorIdx = *ptr - '0';
-                if(!colorIdx)
-                {   // Use the default color.
-                    color = (animatorvector3_t*) &t->color;
-                }
+                if(colorIdx == 0)
+                    color = (animatorvector3_t*)&t->color;
                 else
-                {
-                    finale_t* f = finalesById(stackTop());
-                    color = &f->_interpreter->_pages[PAGE_TEXT]->_preColor[colorIdx-1];
-                }
-                FR_SetColorAndAlpha((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
-                */
+                    color = FIPage_PredefinedColor(FIObject_Page(obj), colorIdx-1);
+                FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
+                FR_SetAlpha(t->color[CA].value);
                 continue;
             }
 
@@ -1414,4 +1436,36 @@ void FIData_TextSetFont(fi_object_t* obj, fontid_t fontNum)
     if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetFont: Not a FI_TEXT.");
     if(fontNum != 0)
         t->fontNum = fontNum;
+}
+
+void FIData_TextSetColor(struct fi_object_s* obj, float red, float green, float blue, int steps)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetColor: Not a FI_TEXT.");
+    AnimatorVector3_Set(*((animatorvector3_t*)t->color), red, green, blue, steps);
+    t->pageColor = 0;
+}
+
+void FIData_TextSetAlpha(struct fi_object_s* obj, float alpha, int steps)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetAlpha: Not a FI_TEXT.");
+    Animator_Set(&t->color[CA], alpha, steps);
+}
+
+void FIData_TextSetColorAndAlpha(struct fi_object_s* obj, float red, float green, float blue,
+    float alpha, int steps)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetColorAndAlpha: Not a FI_TEXT.");
+    AnimatorVector4_Set(t->color, red, green, blue, alpha, steps);
+    t->pageColor = 0;
+}
+
+void FIData_TextSetPreColor(fi_object_t* obj, uint id)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSetPreColor: Not a FI_TEXT.");
+    if(id >= FIPAGE_NUM_PREDEFINED_COLORS) Con_Error("FIData_TextSetPreColor: Invalid color id %u.", id);
+    t->pageColor = id;
 }
