@@ -197,28 +197,32 @@ def html_build_description(name, encoded=True):
     # What do we have here?
     files = list_package_files(name)    
 
-    oses = [('Windows (x86)', '.exe', ['win32', 'win32-32bit']),
-            ('Mac OS X 10.4+ (i386/ppc)', '.dmg', ['darwin', 'darwin-32bit']),
-            ('Ubuntu (x86)', 'i386.deb', ['linux2', 'linux2-32bit']),
-            ('Ubuntu (x86_64)', 'amd64.deb', ['linux2-64bit'])]
+    oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
+            ('Mac OS X 10.4+ (i386/ppc)', '.dmg',      'darwin-32bit'),
+            ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
+            ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
     
     # Prepare compiler logs.
     for package in ['doomsday', 'fmod']:
-        for osIdent in [identifiers for osName, osExt, identifiers in oses]:
+        for osName, osExt, osIdent in oses:
             names = glob.glob(os.path.join(buildDir, '%s-*-%s.txt' % (package, osIdent)))
+            if not names: continue
             # Join the logs into a single file.
             combinedName = os.path.join(buildDir, 'buildlog-%s-%s.txt' % (package, osIdent))
             combined = file(combinedName, 'wt')
             for n in names:
                 combined.write(file(n).read() + "\n\n")
+                # Remove the original log.
+                os.remove(n)
             combined.close()            
-            os.system('gzip -9 %s' % combinedName)    
+            os.system('gzip -f9 %s' % combinedName)
     
     # Print out the matrix.
     msg += '<p><table cellspacing="4" border="0">'
-    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Err./Warn.</tr>'
+    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Er/Wrn</tr>'
     
     for osName, osExt, osIdent in oses:
+        isFirst = True
         # Find the binaries for this OS.
         binaries = []
         for f in files:
@@ -232,9 +236,12 @@ def html_build_description(name, encoded=True):
 
         # List all the binaries. One row per binary.
         for binary in binaries:
-            msg += '<tr><td>' + osName + '<td>'
-            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, binary, binary)
+            msg += '<tr><td>'
+            if isFirst:
+                msg += osName
+                isFirst = False
             msg += '<td>'
+            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, binary, binary)
 
             if 'fmod' in binary:
                 packageName = 'fmod'
@@ -242,7 +249,7 @@ def html_build_description(name, encoded=True):
                 packageName = 'doomsday'
         
             # Status of the log.
-            logName = 'buildlog-%s-%s.txt.gz' % (packageName, osi)
+            logName = 'buildlog-%s-%s.txt.gz' % (packageName, osIdent)
             logFileName = os.path.join(buildDir, logName)
             if not os.path.exists(logFileName):
                 msg += '</tr>'
