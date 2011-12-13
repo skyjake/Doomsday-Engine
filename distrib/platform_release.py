@@ -13,7 +13,7 @@ LAUNCH_DIR    = os.path.abspath(os.getcwd())
 DOOMSDAY_DIR  = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
 WORK_DIR      = os.path.join(LAUNCH_DIR, 'work')
-OUTPUT_DIR    = os.path.join(os.getcwd(), 'releases')
+OUTPUT_DIR    = os.path.abspath(os.path.join(os.getcwd(), 'releases'))
 DOOMSDAY_VERSION_FULL       = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
 DOOMSDAY_VERSION_MAJOR      = 0
@@ -252,13 +252,22 @@ import snowberry"""
     f.close()
 
     def clean_products():
-        # Remove previously build deb packages.
+        # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
+        os.system('rm -f doomsday-fmod*.deb doomsday-fmod*.changes doomsday-fmod*.tar.gz doomsday-fmod*.dsc')
 
     clean_products()
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
+
+    # Build dsFMOD separately.
+    os.chdir('dsfmod')
+    if os.system('dpkg-buildpackage -b'):
+        raise Exception("Failure to build dsFMOD from source.")
+    shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
+    shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
+    os.chdir('..')
 
     # Place the result in the output directory.
     shutil.copy(glob.glob('../doomsday*.deb')[0], OUTPUT_DIR)
