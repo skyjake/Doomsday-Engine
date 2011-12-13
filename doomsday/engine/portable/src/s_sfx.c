@@ -560,7 +560,7 @@ void Sfx_ListenerUpdate(void)
 
 void Sfx_ListenerNoReverb(void)
 {
-    float               rev[4] = { 0, 0, 0, 0 };
+    float rev[4] = { 0, 0, 0, 0 };
 
     if(!sfxAvail)
         return;
