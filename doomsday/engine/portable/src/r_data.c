@@ -2067,6 +2067,7 @@ static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     Uri* uri, *resourcePath;
     textureid_t texId;
     texture_t* tex;
+    Size2Raw size;
     char name[9];
     int flags;
 
@@ -2108,7 +2109,15 @@ static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
         flags = 0;
         if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
 
-        tex = Textures_Create(texId, flags, NULL);
+        /**
+         * \kludge Assume 64x64 else when the flat is loaded it will inherit the
+         * dimensions of the texture, which, if it has been replaced with a hires
+         * version - will be much larger than it should be.
+         *
+         * \todo Always determine size from the lowres original.
+         */
+        size.width = size.height = 64;
+        tex = Textures_CreateWithSize(texId, flags, &size, NULL);
         if(!tex)
         {
             ddstring_t* path = Uri_ToString(uri);
