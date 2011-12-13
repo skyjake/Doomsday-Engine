@@ -1913,27 +1913,27 @@ DEFFC(TextFromLump)
         size_t lumpSize = F_LumpLength(absoluteLumpNum);
         abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
         const uint8_t* lumpPtr = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-        size_t bufSize = 2 * lumpSize + 1;
+        size_t bufSize = 2 * lumpSize + 1, i;
         char* str, *out;
 
         str = (char*) calloc(1, bufSize);
-        if(NULL == str)
-            Con_Error("FinaleInterpreter::FIC_TextFromLump: Failed on allocation of %lu bytes for "
-                "text formatting translation buffer.", (unsigned long) bufSize);
+        if(!str)
+            Con_Error("FinaleInterpreter::FIC_TextFromLump: Failed on allocation of %lu bytes for text formatting translation buffer.", (unsigned long) bufSize);
 
-        { size_t i;
         for(i = 0, out = str; i < lumpSize; ++i)
         {
-            if((char)(lumpPtr[i]) == '\n')
+            char ch = (char)(lumpPtr[i]);
+            if(ch == '\r') continue;
+            if(ch == '\n')
             {
                 *out++ = '\\';
                 *out++ = 'n';
             }
             else
             {
-                *out++ = (char)(lumpPtr[i]);
+                *out++ = ch;
             }
-        }}
+        }
         F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
 
         FIData_TextCopy(obj, str);
