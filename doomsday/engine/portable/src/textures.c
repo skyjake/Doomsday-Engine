@@ -116,7 +116,7 @@ static __inline boolean validTextureId(textureid_t id)
     return (id != NOTEXTUREID && id <= textureIdMapSize);
 }
 
-static PathDirectoryNode* getDirectoryNodeForBindId(textureid_t id)
+static PathDirectoryNode* directoryNodeForBindId(textureid_t id)
 {
     if(!validTextureId(id)) return NULL;
     return textureIdMap[id-1/*1-based index*/];
@@ -280,7 +280,7 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
                 strtol(uid +1/*skip namespace delimiter*/, 0, 0));
             if(id != NOTEXTUREID)
             {
-                return getDirectoryNodeForBindId(id);
+                return directoryNodeForBindId(id);
             }
         }
         return NULL;
@@ -617,20 +617,19 @@ void Textures_Release(texture_t* tex)
 
 texture_t* Textures_ToTexture(textureid_t id)
 {
-    PathDirectoryNode* node;
-    if(!validTextureId(id))
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
+    if(record)
     {
-#if _DEBUG
-        if(id != NOTEXTUREID)
-        {
-            Con_Message("Warning:Textures::ToTexture: Failed to locate texture for id #%i, returning NULL.\n", id);
-        }
-#endif
-        return NULL;
+        return record->texture;
     }
-    node = getDirectoryNodeForBindId(id);
-    if(!node) return NULL;
-    return ((texturerecord_t*)PathDirectoryNode_UserData(node))->texture;
+#if _DEBUG
+    else if(id != NOTEXTUREID)
+    {
+        Con_Message("Warning:Textures::ToTexture: Failed to locate texture for id #%i, returning NULL.\n", id);
+    }
+#endif
+    return NULL;
 }
 
 typedef struct {
@@ -880,21 +879,19 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
 texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
     void* userData)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    texturerecord_t* record;
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
     if(!size)
     {
         Con_Message("Warning: Failed defining Texture #%u (invalid size), ignoring.\n", id);
         return NULL;
     }
-    if(!node)
+    if(!record)
     {
         Con_Message("Warning: Failed defining Texture #%u (invalid id), ignoring.\n", id);
         return NULL;
     }
 
-    record = (texturerecord_t*)PathDirectoryNode_UserData(node);
-    assert(record);
     if(record->texture)
     {
         /// \todo Do not update textures here (not enough knowledge). We should instead
@@ -927,103 +924,118 @@ texture_t* Textures_Create(textureid_t id, int flags, void* userData)
 
 int Textures_UniqueId(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    if(!node)
-        Con_Error("Textures::UniqueId: Passed invalid textureId #%u.", id);
-    return ((texturerecord_t*)PathDirectoryNode_UserData(node))->uniqueId;
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
+    if(record)
+    {
+        return record->uniqueId;
+    }
+#if _DEBUG
+    if(id != NOTEXTUREID)
+        Con_Message("Warning:Textures::UniqueId: Attempted with unbound textureId #%u, returning zero.\n", id);
+#endif
+    return 0;
 }
 
 const Uri* Textures_ResourcePath(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
+    PathDirectoryNode* node = directoryNodeForBindId(id);
     texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
-    if(!record || !record->resourcePath) return emptyUri;
-    return record->resourcePath;
+    if(record)
+    {
+        if(record->resourcePath)
+        {
+            return record->resourcePath;
+        }
+    }
+#if _DEBUG
+    else if(id != NOTEXTUREID)
+    {
+        Con_Message("Warning:Textures::ResourcePath: Attempted with unbound textureId #%u, returning null-object.\n", id);
+    }
+#endif
+    return emptyUri;
 }
 
 textureid_t Textures_Id(texture_t* tex)
 {
-    if(!tex)
+    if(tex)
     {
-#if _DEBUG
-        Con_Message("Warning:Textures::Id: Attempted with invalid reference [%p], returning invalid id.\n", (void*)tex);
-#endif
-        return NOTEXTUREID;
+        return Texture_PrimaryBind(tex);
     }
-    return Texture_PrimaryBind(tex);
+#if _DEBUG
+    Con_Message("Warning:Textures::Id: Attempted with invalid reference [%p], returning invalid id.\n", (void*)tex);
+#endif
+    return NOTEXTUREID;
 }
 
 texturenamespaceid_t Textures_Namespace(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    if(!node)
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    if(node)
     {
-#if _DEBUG
-        if(id != NOTEXTUREID)
-        {
-            Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
-        }
-#endif
-        return TN_ANY;
+        return namespaceIdForDirectoryNode(node);
     }
-    return namespaceIdForDirectoryNode(node);
+#if _DEBUG
+    if(id != NOTEXTUREID)
+        Con_Message("Warning:Textures::Namespace: Attempted with unbound textureId #%u, returning null-object.\n", id);
+#endif
+    return TN_ANY;
 }
 
 ddstring_t* Textures_ComposePath(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    if(!node)
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    if(node)
     {
-#if _DEBUG
-        Con_Message("Warning:Textures::ComposePath: Attempted with unbound textureId #%u, returning null-object.\n", id);
-#endif
-        return Str_New();
+        return composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
     }
-    return composePathForDirectoryNode(node, TEXTURES_PATH_DELIMITER);
+#if _DEBUG
+    Con_Message("Warning:Textures::ComposePath: Attempted with unbound textureId #%u, returning null-object.\n", id);
+#endif
+    return Str_New();
 }
 
 Uri* Textures_ComposeUri(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    if(!node)
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    if(node)
     {
-#if _DEBUG
-        if(id != NOTEXTUREID)
-        {
-            Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
-        }
-#endif
-        return Uri_New();
+        return composeUriForDirectoryNode(node);
     }
-    return composeUriForDirectoryNode(node);
+#if _DEBUG
+    if(id != NOTEXTUREID)
+        Con_Message("Warning:Textures::ComposeUri: Attempted with unbound textureId #%u, returning null-object.\n", id);
+#endif
+    return Uri_New();
 }
 
 Uri* Textures_ComposeUrn(textureid_t id)
 {
-    PathDirectoryNode* node = getDirectoryNodeForBindId(id);
-    const ddstring_t* namespaceName;
-    const texturerecord_t* record;
+    PathDirectoryNode* node = directoryNodeForBindId(id);
+    const texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
     Uri* uri = Uri_New();
-    ddstring_t path;
-    if(!node)
+
+    if(record)
     {
-#if _DEBUG
-        if(id != NOTEXTUREID)
-        {
-            Con_Message("Warning:Textures::ComposeUrn: Attempted with unbound textureId #%u, returning null-object.\n", id);
-        }
-#endif
+        const ddstring_t* namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
+        ddstring_t path;
+
+        Str_Init(&path);
+        Str_Reserve(&path, Str_Length(namespaceName) +1/*delimiter*/ +M_NumDigits(DDMAXINT));
+        Str_Appendf(&path, "%s:%i", Str_Text(namespaceName), record->uniqueId);
+
+        Uri_SetScheme(uri, "urn");
+        Uri_SetPath(uri, Str_Text(&path));
+
+        Str_Free(&path);
         return uri;
     }
-    record = (texturerecord_t*)PathDirectoryNode_UserData(node);
-    assert(record);
-    namespaceName = Textures_NamespaceName(namespaceIdForDirectoryNode(node));
-    Str_Init(&path);
-    Str_Reserve(&path, Str_Length(namespaceName) +1/*delimiter*/ +M_NumDigits(DDMAXINT));
-    Str_Appendf(&path, "%s:%i", Str_Text(namespaceName), record->uniqueId);
-    Uri_SetScheme(uri, "urn");
-    Uri_SetPath(uri, Str_Text(&path));
-    Str_Free(&path);
+
+#if _DEBUG
+    if(id != NOTEXTUREID)
+        Con_Message("Warning:Textures::ComposeUrn: Attempted with unbound textureId #%u, returning null-object.\n", id);
+#endif
     return uri;
 }
 
