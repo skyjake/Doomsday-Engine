@@ -195,64 +195,72 @@ def html_build_description(name, encoded=True):
     msg = '<p>' + text_build_summary(name) + '</p>'
     
     # What do we have here?
-    files = list_package_files(name)
-    
-    # Prepare compiler logs.
-    for f in glob.glob(os.path.join(buildDir, 'build*txt')):
-        os.system('gzip -9 %s' % f)    
-    
+    files = list_package_files(name)    
+
     oses = [('Windows (x86)', '.exe', ['win32', 'win32-32bit']),
             ('Mac OS X 10.4+ (i386/ppc)', '.dmg', ['darwin', 'darwin-32bit']),
             ('Ubuntu (x86)', 'i386.deb', ['linux2', 'linux2-32bit']),
             ('Ubuntu (x86_64)', 'amd64.deb', ['linux2-64bit'])]
     
+    # Prepare compiler logs.
+    for package in ['doomsday', 'fmod']:
+        for osIdent in [identifiers for osName, osExt, identifiers in oses]:
+            names = glob.glob(os.path.join(buildDir, '%s-*-%s.txt' % (package, osIdent)))
+            # Join the logs into a single file.
+            combinedName = os.path.join(buildDir, 'buildlog-%s-%s.txt' % (package, osIdent))
+            combined = file(combinedName, 'wt')
+            for n in names:
+                combined.write(file(n).read() + "\n\n")
+            combined.close()            
+            os.system('gzip -9 %s' % combinedName)    
+    
     # Print out the matrix.
     msg += '<p><table cellspacing="4" border="0">'
-    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th><tt>stdout</tt><th>Err.<th>Warn.<th><tt>stderr</tt><th>Err.<th>Warn.</tr>'
+    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Err./Warn.</tr>'
     
     for osName, osExt, osIdent in oses:
-        msg += '<tr><td>' + osName + '<td>'
-        
-        # Find the binary.
-        binary = None
+        # Find the binaries for this OS.
+        binaries = []
         for f in files:
             if osExt in f:
-                binary = f
-                break
+                binaries.append(f)
         
-        if binary:
-            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, f, f)
-        else:
-            msg += 'n/a'
-            
-        # Status of the log.
-        for logType in ['log', 'errors']:
-            logFiles = []
-            for osi in osIdent:
-                for i in glob.glob(os.path.join(buildDir, 'build%s-%s.txt.gz' % (logType, osi))):
-                    logFiles.append(i)
-            if len(logFiles) == 0:
-                msg += '<td>'
-                continue
+        if not binaries:
+            # Nothing available for this OS.
+            msg += '<tr><td>' + osName + '<td>n/a</tr>'
+            continue
 
-            # There should only be one.
-            f = logFiles[0]
+        # List all the binaries. One row per binary.
+        for binary in binaries:
+            msg += '<tr><td>' + osName + '<td>'
+            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, binary, binary)
+            msg += '<td>'
 
-            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (BUILD_URI, name, os.path.basename(f))
-                                
-            errors, warnings = count_log_status(f)
+            if 'fmod' in binary:
+                packageName = 'fmod'
+            else:
+                packageName = 'doomsday'
+        
+            # Status of the log.
+            logName = 'buildlog-%s-%s.txt.gz' % (packageName, osi)
+            logFileName = os.path.join(buildDir, logName)
+            if not os.path.exists(logFileName):
+                msg += '</tr>'
+                continue                            
+
+            # Link to the compressed log.
+            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (BUILD_URI, name, logName)
+              
+            # Show a traffic light indicator based on warning and error counts.              
+            errors, warnings = count_log_status(logFileName)
             form = '<td bgcolor="%s" style="text-align:center;">'
             if errors > 0:
-                msg += form % '#ff4444'
+                msg += form % '#ff4444' # red
+            elif warnings > 0:
+                msg += form % '#ffee00' # yellow
             else:
-                msg += form % '#00ee00'
-            msg += str(errors)
-            
-            if warnings > 0:
-                msg += form % '#ffee00'
-            else:
-                msg += form % '#00ee00'
-            msg += str(warnings)                
+                msg += form % '#00ee00' # green
+            msg += str(errors + warnings)
 
         msg += '</tr>'
     
@@ -451,9 +459,9 @@ def todays_platform_release():
                                  
     # Also the build log.
     remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-        'buildlog-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
+        'doomsday-out-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
     remote_copy('builderrors.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
-        'builderrors-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
+        'doomsday-err-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
                                              
     git_checkout('master')
 

@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# This script builds the distribution packages platform-independently.
+# No parameters needed; config is auto-detected.
+
 import sys
 import os
 import platform
@@ -255,6 +258,7 @@ import snowberry"""
         # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
         os.system('rm -f doomsday-fmod*.deb doomsday-fmod*.changes doomsday-fmod*.tar.gz doomsday-fmod*.dsc')
+        os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
 
@@ -263,10 +267,12 @@ import snowberry"""
 
     # Build dsFMOD separately.
     os.chdir('dsfmod')
-    if os.system('dpkg-buildpackage -b'):
+    logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])))
+    if os.system('dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
     shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
+    shutil.copy(glob.glob('fmod-*.txt')[0], OUTPUT_DIR)    
     os.chdir('..')
 
     # Place the result in the output directory.
