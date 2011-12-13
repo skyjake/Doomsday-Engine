@@ -31,6 +31,10 @@
 
 #include "m_vector.h"
 
+struct rendpoly_s;
+struct rvertex_s;
+struct ColorRawf_s;
+
 #define MAX_BIAS_LIGHTS     (8 * 32) // Hard limit due to change tracking.
 #define MAX_BIAS_TRACKED    (MAX_BIAS_LIGHTS / 8)
 #define MAX_BIAS_AFFECTED   (6)
@@ -75,9 +79,6 @@ typedef struct biastracker_s {
     uint            changes[MAX_BIAS_TRACKED];
 } biastracker_t;
 
-struct rendpoly_s;
-struct rvertex_s;
-struct rcolord_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern uint     currentTimeSB;

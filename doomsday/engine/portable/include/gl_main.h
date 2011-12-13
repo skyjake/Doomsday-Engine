@@ -34,7 +34,7 @@
 struct colorpalette_s;
 struct material_s;
 struct colorpalette_s;
-struct rcolord_s;
+struct ColorRawf_s;
 
 #define MAX_TEX_UNITS           2 // More won't be used.
 
