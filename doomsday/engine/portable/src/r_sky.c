@@ -65,7 +65,7 @@ static float height;
 
 static boolean skyAmbientColorDefined; /// @c true= pre-defined in a MapInfo def.
 static boolean needUpdateSkyAmbientColor; /// @c true= update if not pre-defined.
-static rcolord_t skyAmbientColor;
+static ColorRawf skyAmbientColor;
 
 static __inline skylayer_t* skyLayerById(int id)
 {
@@ -96,9 +96,9 @@ static void configureDefaultSky(void)
 
 static void calculateSkyAmbientColor(void)
 {
-    rcolord_t avgMaterialColor = { 0, 0, 0, 0 };
-    rcolord_t bottomCapColor = { 0, 0, 0, 0 };
-    rcolord_t topCapColor = { 0, 0, 0, 0 };
+    ColorRawf avgMaterialColor = { 0, 0, 0, 0 };
+    ColorRawf bottomCapColor = { 0, 0, 0, 0 };
+    ColorRawf topCapColor = { 0, 0, 0, 0 };
     skylayer_t* slayer;
     int i, avgCount;
 
@@ -320,9 +320,9 @@ int R_SkyFirstActiveLayer(void)
     return firstSkyLayer+1; //1-based index.
 }
 
-const rcolord_t* R_SkyAmbientColor(void)
+const ColorRawf* R_SkyAmbientColor(void)
 {
-    static const rcolord_t white = { 1.0f, 1.0f, 1.0f, 0 };
+    static const ColorRawf white = { 1.0f, 1.0f, 1.0f, 0 };
     if(skyAmbientColorDefined || rendSkyLightAuto)
     {
         if(!skyAmbientColorDefined)

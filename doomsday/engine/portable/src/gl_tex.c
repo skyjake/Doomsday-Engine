@@ -869,7 +869,7 @@ void GL_DeSaturatePalettedImage(uint8_t* buffer, colorpalette_t* palette,
 }
 
 void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
-    const colorpalette_t* palette, boolean hasAlpha, rcolord_t* color)
+    const colorpalette_t* palette, boolean hasAlpha, ColorRawf* color)
 {
     long i, count, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* start, *alphaStart;
@@ -916,7 +916,7 @@ void FindAverageLineColorIdx(const uint8_t* data, int w, int h, int line,
 }
 
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, int line, rcolord_t* color)
+    int pixelSize, int line, ColorRawf* color)
 {
     long avg[3] = { 0, 0, 0 };
     const uint8_t* src;
@@ -952,7 +952,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
 }
 
 void FindAverageColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, rcolord_t* color)
+    int pixelSize, ColorRawf* color)
 {
     long i, numpels, avg[3] = { 0, 0, 0 };
     const uint8_t* src;
@@ -988,7 +988,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
 }
 
 void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t* palette,
-    boolean hasAlpha, rcolord_t* color)
+    boolean hasAlpha, ColorRawf* color)
 {
     long i, numpels, count, avg[3] = { 0, 0, 0 };
     const uint8_t* alphaStart;

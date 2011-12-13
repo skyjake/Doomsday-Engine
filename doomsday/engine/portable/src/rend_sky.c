@@ -51,7 +51,7 @@ typedef struct {
     boolean fadeout;
     Size2Raw texSize;
     float texOffset;
-    rcolord_t capColor;
+    ColorRawf capColor;
 } renderhemispherestate_t;
 
 int skyDetail = 6, skyColumns = 4*6, skyRows = 3;

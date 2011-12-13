@@ -289,7 +289,7 @@ static listnode_t* newProjection(DGLuint texture, const float s[2],
 static __inline float calcProjectionLuminosity(dynlight_t* tp)
 {
     assert(tp);
-    return RColor_AverageColorMulAlpha(&tp->color);
+    return ColorRawf_AverageColorMulAlpha(&tp->color);
 }
 
 /// @return  Same as @a node for convenience (chaining).

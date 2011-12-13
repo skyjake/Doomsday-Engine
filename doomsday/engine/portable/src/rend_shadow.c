@@ -31,7 +31,7 @@
 
 typedef struct {
     rvertex_t vertices[4];
-    rcolord_t colors[4];
+    ColorRawf colors[4];
     rtexcoord_t texCoords[4];
 } shadowprim_t;
 
@@ -203,7 +203,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
     rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
     rvertex_t* rvertices;
     rtexcoord_t* rtexcoords;
-    rcolord_t* rcolors;
+    ColorRawf* rcolors;
     uint i, c;
 
     // Allocate enough for the divisions too.
@@ -213,7 +213,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
 
     for(i = 0; i < p->numVertices; ++i)
     {
-        rcolord_t* col = &rcolors[i];
+        ColorRawf* col = &rcolors[i];
         // Shadows are black.
         for(c = 0; c < 3; ++c) col->rgba[c] = black[c];
         // Blend factor.
@@ -232,7 +232,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
             // We need to subdivide the projection quad.
             float bL, tL, bR, tR;
             rvertex_t origVerts[4];
-            rcolord_t origColors[4];
+            ColorRawf origColors[4];
             rtexcoord_t origTexCoords[4];
 
             /**
@@ -243,7 +243,7 @@ int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* param
 
             memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
             memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-            memcpy(origColors, rcolors, sizeof(rcolord_t) * 4);
+            memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
             bL = p->rvertices[0].pos[VZ];
             tL = p->rvertices[1].pos[VZ];

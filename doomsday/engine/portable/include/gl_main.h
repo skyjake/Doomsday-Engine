@@ -165,7 +165,7 @@ uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
  */
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int comps,
     struct colorpalette_s* palette, float* brightX, float* brightY,
-    struct rcolord_s* color, float* lumSize);
+    struct ColorRawf_s* color, float* lumSize);
 
 // Console commands.
 D_CMD(UpdateGammaRamp);

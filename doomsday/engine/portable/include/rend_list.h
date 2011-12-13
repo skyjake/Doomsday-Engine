@@ -138,10 +138,10 @@ void RL_Rtu_SetTexture(uint idx, DGLuint glName);
  * @param flags  @see rendpolyFlags
  */
 void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const rcolord_t* colors,
+    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const rcolord_t* modColor, const rtexcoord_t* modCoords,
-    const rcolord_t* reflectionColors, const rtexcoord_t* reflectionCoords,
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords,
+    const ColorRawf* reflectionColors, const rtexcoord_t* reflectionCoords,
     const rtexcoord_t* reflectionMaskCoords);
 
 /**
@@ -149,16 +149,16 @@ void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
  * @param flags  @see rendpolyFlags
  */
 void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
-    uint numElements, const rvertex_t* vertices, const rcolord_t* colors,
+    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
-    DGLuint modTex, const rcolord_t* modColor, const rtexcoord_t* modCoords);
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
 
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
  */
 void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const rcolord_t* colors,
+    const rvertex_t* vertices, const ColorRawf* colors,
     const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords);
 
 /**
@@ -166,15 +166,15 @@ void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
  * @param flags  @see rendpolyFlags
  */
 void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const rcolord_t* colors,
-    DGLuint modTex, const rcolord_t* modColor, const rtexcoord_t* modCoords);
+    const rvertex_t* vertices, const ColorRawf* colors,
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
 
 /**
  * @param primType  Type of primitive being written.
  * @param flags  @see rendpolyFlags
  */
 void RL_AddPoly(primtype_t primType, int flags, uint numElements,
-    const rvertex_t* vertices, const rcolord_t* colors);
+    const rvertex_t* vertices, const ColorRawf* colors);
 
 void RL_RenderAllLists(void);
 

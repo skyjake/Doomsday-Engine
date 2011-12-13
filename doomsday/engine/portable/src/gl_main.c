@@ -1081,7 +1081,7 @@ uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat
 }
 
 void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
-    colorpalette_t* palette, float* brightX, float* brightY, rcolord_t* color, float* lumSize)
+    colorpalette_t* palette, float* brightX, float* brightY, ColorRawf* color, float* lumSize)
 {
     const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
     int i, k, x, y, c, cnt = 0, posCnt = 0;

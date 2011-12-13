@@ -91,7 +91,7 @@ void            SB_DestroySurface(struct biassurface_s* bsuf);
 void            SB_SurfaceMoved(struct biassurface_s* bsuf);
 
 void            SB_BeginFrame(void);
-void            SB_RendPoly(struct rcolord_s* rcolors,
+void            SB_RendPoly(struct ColorRawf_s* rcolors,
                             struct biassurface_s* bsuf,
                             const struct rvertex_s* rvertices,
                             size_t numVertices, const vectorcomp_t* normal,

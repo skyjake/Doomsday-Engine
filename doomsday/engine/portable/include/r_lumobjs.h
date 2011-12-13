@@ -69,7 +69,7 @@ typedef struct lumobj_s {
 typedef struct {
     DGLuint texture;
     float s[2], t[2];
-    rcolord_t color;
+    ColorRawf color;
 } dynlight_t;
 
 extern boolean loInited;

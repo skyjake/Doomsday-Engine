@@ -311,17 +311,17 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
     return 0;
 }
 
-void Rend_VertexColorsGlow(rcolord_t* colors, size_t num, float glow)
+void Rend_VertexColorsGlow(ColorRawf* colors, size_t num, float glow)
 {
     size_t i;
     for(i = 0; i < num; ++i)
     {
-        rcolord_t* c = &colors[i];
+        ColorRawf* c = &colors[i];
         c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = glow;
     }
 }
 
-void Rend_VertexColorsAlpha(rcolord_t* colors, size_t num, float alpha)
+void Rend_VertexColorsAlpha(ColorRawf* colors, size_t num, float alpha)
 {
     size_t               i;
 
@@ -361,7 +361,7 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
-static void lightVertex(rcolord_t* color, const rvertex_t* vtx, float lightLevel,
+static void lightVertex(ColorRawf* color, const rvertex_t* vtx, float lightLevel,
     const float* ambientColor)
 {
     float dist = Rend_PointDist2D(vtx->pos);
@@ -378,7 +378,7 @@ static void lightVertex(rcolord_t* color, const rvertex_t* vtx, float lightLevel
     color->rgba[CB] = lightVal * ambientColor[CB];
 }
 
-static void lightVertices(size_t num, rcolord_t* colors, const rvertex_t* verts,
+static void lightVertices(size_t num, ColorRawf* colors, const rvertex_t* verts,
     float lightLevel, const float* ambientColor)
 {
     size_t i;
@@ -388,7 +388,7 @@ static void lightVertices(size_t num, rcolord_t* colors, const rvertex_t* verts,
     }
 }
 
-void Rend_VertexColorsApplyTorchLight(rcolord_t* colors, const rvertex_t* vertices,
+void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertices,
     size_t numVertices)
 {
     ddplayer_t* ddpl = &viewPlayer->shared;
@@ -400,7 +400,7 @@ void Rend_VertexColorsApplyTorchLight(rcolord_t* colors, const rvertex_t* vertic
     for(i = 0; i < numVertices; ++i)
     {
         const rvertex_t* vtx = &vertices[i];
-        rcolord_t* c = &colors[i];
+        ColorRawf* c = &colors[i];
         Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
     }}
 }
@@ -862,7 +862,7 @@ int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(const rvertex_t* rvertices,
-                        const rcolord_t* rcolors, float wallLength,
+                        const ColorRawf* rcolors, float wallLength,
                         DGLuint tex, int magMode, float texWidth, float texHeight,
                         const float texOffset[2], blendmode_t blendMode,
                         uint lightListIdx, float glow, boolean masked)
@@ -1135,11 +1135,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     boolean useLights = false, useShadows = false, hasDynlights = false;
     rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
     uint realNumVertices = p->isWall && divs? 3 + divs[0].num + 3 + divs[1].num : numVertices;
-    rcolord_t* rcolors;
-    rcolord_t* shinyColors = NULL;
+    ColorRawf* rcolors;
+    ColorRawf* shinyColors = NULL;
     rtexcoord_t* shinyTexCoords = NULL;
     float modTexTC[2][2] = {{ 0, 0 }, { 0, 0 }};
-    rcolord_t modColor = { 0, 0, 0, 0 };
+    ColorRawf modColor = { 0, 0, 0, 0 };
     DGLuint modTex = 0;
     float glowing = p->glowing;
     boolean drawAsVisSprite = false;
@@ -1517,7 +1517,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     {
         float               bL, tL, bR, tR;
         rvertex_t           origVerts[4];
-        rcolord_t            origColors[4];
+        ColorRawf            origColors[4];
         rtexcoord_t         origTexCoords[4];
 
         /**
@@ -1528,7 +1528,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         memcpy(origVerts, rvertices, sizeof(rvertex_t) * 4);
         memcpy(origTexCoords, primaryCoords, sizeof(rtexcoord_t) * 4);
-        memcpy(origColors, rcolors, sizeof(rcolord_t) * 4);
+        memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
         bL = origVerts[0].pos[VZ];
         tL = origVerts[1].pos[VZ];
@@ -1565,8 +1565,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         if(shinyColors)
         {
-            rcolord_t origShinyColors[4];
-            memcpy(origShinyColors, shinyColors, sizeof(rcolord_t) * 4);
+            ColorRawf origShinyColors[4];
+            memcpy(origShinyColors, shinyColors, sizeof(ColorRawf) * 4);
             R_DivVertColors(shinyColors, origShinyColors, divs, bL, tL, bR, tR);
         }
 
@@ -2648,8 +2648,8 @@ static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
 /**
  * @param rpFlags  @see rendpolyFlags
  */
-void lightGeometry(int rpFlags, size_t count, rvertex_t* rvertices, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny, const rtexmapunit_t* shinyRTU, const materialsnapshot_t* msA,
+void lightGeometry(int rpFlags, size_t count, rvertex_t* rvertices, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny, const rtexmapunit_t* shinyRTU, const materialsnapshot_t* msA,
     const float* surfaceNormal, const float* surfaceColor, float surfaceAlpha, const float* surfaceColor2,
     const float* ambientLightColor, float ambientLightLevel, float lightLevelDeltaLeft, float lightLevelDeltaRight, float lightLevelDeltaBottom, float lightLevelDeltaTop,
     biassurface_t* bsuf, void* mapObject, uint elmIdx, float glowing, boolean isWall, boolean drawAsVisSprite)
@@ -2773,7 +2773,7 @@ void lightGeometry(int rpFlags, size_t count, rvertex_t* rvertices, rcolord_t* r
  * @param rpFlags  @see rendpolyFlags
  */
 static void prepareSkyMaskSurface(int rpFlags, size_t count, rvertex_t* rvertices,
-    rtexcoord_t* rtexcoords, rcolord_t* rcolors, rcolord_t* rcolorsShiny,
+    rtexcoord_t* rtexcoords, ColorRawf* rcolors, ColorRawf* rcolorsShiny,
     const rtexmapunit_t** primaryRTU, const rtexmapunit_t** primaryDetailRTU,
     const float* surfaceNormal, const float* surfaceColor, float surfaceAlpha, const float* surfaceColor2,
     const float* ambientLightColor, float lightLevel, float lightLevelDeltaLeft, float lightLevelDeltaRight,
@@ -2842,7 +2842,7 @@ static int buildSkymaskQuad(int rpFlags, rvertex_t* rvertices, rtexcoord_t* rtex
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryAxis(int rpFlags, byte axis, float delta,
-    rvertex_t* rvertices, rtexcoord_t* rtexcoord, rcolord_t* rcolor, rcolord_t* shinyColor)
+    rvertex_t* rvertices, rtexcoord_t* rtexcoord, ColorRawf* rcolor, ColorRawf* shinyColor)
 {
     rvertices[0].pos[axis] += delta;
 }
@@ -2851,8 +2851,8 @@ static __inline void translateGeometryAxis(int rpFlags, byte axis, float delta,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryX(int rpFlags, vec3_t* deltas,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2865,8 +2865,8 @@ static __inline void translateGeometryX(int rpFlags, vec3_t* deltas,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryY(int rpFlags, vec3_t* deltas,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2879,8 +2879,8 @@ static __inline void translateGeometryY(int rpFlags, vec3_t* deltas,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryZ(int rpFlags, vec3_t* deltas,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2893,8 +2893,8 @@ static __inline void translateGeometryZ(int rpFlags, vec3_t* deltas,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryXY(int rpFlags, vec3_t* deltas,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     translateGeometryX(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
     translateGeometryY(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
@@ -2904,8 +2904,8 @@ static __inline void translateGeometryXY(int rpFlags, vec3_t* deltas,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void translateGeometryXYZ(int rpFlags, vec3_t* deltas,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     translateGeometryXY(rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
     translateGeometryZ (rpFlags, deltas, count, rvertices, rtexcoords, rcolors, rcolorsShiny);
@@ -2915,7 +2915,7 @@ static __inline void translateGeometryXYZ(int rpFlags, vec3_t* deltas,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryAxis(int rpFlags, byte axis, float delta,
-    rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors, rcolord_t* rcolorsShiny)
+    rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors, ColorRawf* rcolorsShiny)
 {
     rvertices[0].pos[axis] = 0;
     translateGeometryAxis(rpFlags, axis, delta, rvertices, rtexcoords, rcolors, rcolorsShiny);
@@ -2925,8 +2925,8 @@ static __inline void setGeometryAxis(int rpFlags, byte axis, float delta,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryX(int rpFlags, vec3_t* destPoints,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2939,8 +2939,8 @@ static __inline void setGeometryX(int rpFlags, vec3_t* destPoints,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryY(int rpFlags, vec3_t* destPoints,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2953,8 +2953,8 @@ static __inline void setGeometryY(int rpFlags, vec3_t* destPoints,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryZ(int rpFlags, vec3_t* destPoints,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2967,8 +2967,8 @@ static __inline void setGeometryZ(int rpFlags, vec3_t* destPoints,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryXY(int rpFlags, vec3_t* destPoints,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -2982,8 +2982,8 @@ static __inline void setGeometryXY(int rpFlags, vec3_t* destPoints,
  * @param rpFlags  @see rendpolyFlags
  */
 static __inline void setGeometryXYZ(int rpFlags, vec3_t* destPoints,
-    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolord_t* rcolors,
-    rcolord_t* rcolorsShiny)
+    size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, ColorRawf* rcolors,
+    ColorRawf* rcolorsShiny)
 {
     size_t i;
     for(i = 0; i < count; ++i)
@@ -3341,7 +3341,7 @@ static void drawSSectSkyFixBottom(subsector_t* ssec, boolean clipBackFacing, boo
     const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
-    rcolord_t rcolors[4], rcolorsShiny[4];
+    ColorRawf rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 
@@ -3455,7 +3455,7 @@ static void drawSSectSkyFixTop(subsector_t* ssec, boolean clipBackFacing, boolea
     const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
-    rcolord_t rcolors[4], rcolorsShiny[4];
+    ColorRawf rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 
@@ -3600,7 +3600,7 @@ static void drawSSectSkyFixClosed(subsector_t* ssec, boolean clipBackFacing, boo
     const rtexmapunit_t* primaryRTU, *primaryDetailRTU;
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
-    rcolord_t rcolors[4], rcolorsShiny[4];
+    ColorRawf rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
 

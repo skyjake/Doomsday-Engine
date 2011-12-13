@@ -506,7 +506,7 @@ void R_InfoRendVerticesPool(void)
 void R_InitRendVerticesPool(void)
 {
     rvertex_t*          rvertices;
-    rcolord_t*           rcolors;
+    ColorRawf*           rcolors;
     rtexcoord_t*        rtexcoords;
 
     numrendpolys = maxrendpolys = 0;
@@ -597,14 +597,14 @@ rvertex_t* R_AllocRendVertices(uint num)
 }
 
 /**
- * Retrieves a batch of rcolord_t.
+ * Retrieves a batch of ColorRawf.
  * Possibly allocates new if necessary.
  *
  * @param num           The number of verts required.
  *
- * @return              Ptr to array of rcolord_t
+ * @return              Ptr to array of ColorRawf
  */
-rcolord_t* R_AllocRendColors(uint num)
+ColorRawf* R_AllocRendColors(uint num)
 {
     unsigned int        idx;
     boolean             found = false;
@@ -618,7 +618,7 @@ rcolord_t* R_AllocRendColors(uint num)
         {
             // Use this one.
             rendPolys[idx]->inUse = true;
-            return (rcolord_t*) rendPolys[idx]->data;
+            return (ColorRawf*) rendPolys[idx]->data;
         }
         else if(rendPolys[idx]->num == 0)
         {
@@ -665,9 +665,9 @@ rcolord_t* R_AllocRendColors(uint num)
     rendPolys[idx]->type = RPT_COLOR;
     rendPolys[idx]->num = num;
     rendPolys[idx]->data =
-        Z_Malloc(sizeof(rcolord_t) * num, PU_MAP, 0);
+        Z_Malloc(sizeof(ColorRawf) * num, PU_MAP, 0);
 
-    return (rcolord_t*) rendPolys[idx]->data;
+    return (ColorRawf*) rendPolys[idx]->data;
 }
 
 /**
@@ -774,9 +774,9 @@ void R_FreeRendVertices(rvertex_t* rvertices)
  * Doesn't actually free anything. Instead, mark them as unused ready for
  * the next time a batch of rendvertex_t is needed.
  *
- * @param vertices      Ptr to array of rcolord_t to mark unused.
+ * @param vertices      Ptr to array of ColorRawf to mark unused.
  */
-void R_FreeRendColors(rcolord_t* rcolors)
+void R_FreeRendColors(ColorRawf* rcolors)
 {
     uint                i;
 
@@ -972,7 +972,7 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
 #undef COPYTEXCOORD
 }
 
-void R_DivVertColors(rcolord_t* dst, const rcolord_t* src,
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src,
                      const walldiv_t* divs, float bL, float tL, float bR,
                      float tR)
 {
@@ -3186,13 +3186,13 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     return true; // Continue iteration.
 }
 
-float RColor_AverageColor(rcolord_t* c)
+float ColorRawf_AverageColor(ColorRawf* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3;
 }
 
-float RColor_AverageColorMulAlpha(rcolord_t* c)
+float ColorRawf_AverageColorMulAlpha(ColorRawf* c)
 {
     assert(c);
     return (c->red + c->green + c->blue) / 3 * c->alpha;

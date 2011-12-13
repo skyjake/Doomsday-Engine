@@ -37,11 +37,11 @@ typedef struct colorpalette_analysis_s {
 
 typedef struct pointlight_analysis_s {
     float originX, originY, brightMul;
-    rcolord_t color;
+    ColorRawf color;
 } pointlight_analysis_t;
 
 typedef struct averagecolor_analysis_s {
-    rcolord_t color;
+    ColorRawf color;
 } averagecolor_analysis_t;
 
 /**
@@ -119,7 +119,7 @@ void EqualizeLuma(uint8_t* pixels, int width, int height, float* rBaMul,
  * @param color  Determined average color written here.
  */
 void FindAverageColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, rcolord_t* color);
+    int pixelSize, ColorRawf* color);
 
 /**
  * @param pixels  Index-color image to evaluate.
@@ -130,7 +130,7 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
-    const struct colorpalette_s* palette, boolean hasAlpha, rcolord_t* color);
+    const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
 
 /**
  * @param pixels  RGB(a) image to evaluate.
@@ -139,7 +139,7 @@ void FindAverageColorIdx(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageLineColor(const uint8_t* pixels, int width, int height,
-    int pixelSize, int line, rcolord_t* color);
+    int pixelSize, int line, ColorRawf* color);
 
 /**
  * @param pixels  Index-color image to evaluate.
@@ -150,7 +150,7 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  * @param color  Determined average color written here.
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
-    int line, const struct colorpalette_s* palette, boolean hasAlpha, rcolord_t* color);
+    int line, const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.

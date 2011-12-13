@@ -133,11 +133,11 @@ typedef struct rvertex_s {
 } rvertex_t;
 
 /**
- * RColor4f. (R)aw Color (f)loating point. Is intended as a handy POD
+ * ColorRawf. Color Raw (f)loating point. Is intended as a handy POD
  * structure for easy manipulation of four component, floating point
  * color plus alpha value sets.
  */
-typedef struct rcolord_s {
+typedef struct ColorRawf_s {
     union {
         // Straight RGBA vector representation.
         float rgba[4];
@@ -154,10 +154,10 @@ typedef struct rcolord_s {
             float _alpha;
         };
     };
-} rcolord_t;
+} ColorRawf;
 
-float RColor_AverageColor(rcolord_t* color);
-float RColor_AverageColorMulAlpha(rcolord_t* color);
+float ColorRawf_AverageColor(ColorRawf* color);
+float ColorRawf_AverageColorMulAlpha(ColorRawf* color);
 
 typedef struct rtexcoord_s {
     float           st[2];
@@ -270,16 +270,16 @@ extern byte* translationTables;
 void            R_UpdateData(void);
 void            R_InitRendVerticesPool(void);
 rvertex_t*      R_AllocRendVertices(uint num);
-rcolord_t*       R_AllocRendColors(uint num);
+ColorRawf*       R_AllocRendColors(uint num);
 rtexcoord_t*    R_AllocRendTexCoords(uint num);
 void            R_FreeRendVertices(rvertex_t* rvertices);
-void            R_FreeRendColors(rcolord_t* rcolors);
+void            R_FreeRendColors(ColorRawf* rcolors);
 void            R_FreeRendTexCoords(rtexcoord_t* rtexcoords);
 void            R_InfoRendVerticesPool(void);
 
 void R_DivVerts(rvertex_t* dst, const rvertex_t* src, const walldiv_t* divs);
 
-void R_DivVertColors(rcolord_t* dst, const rcolord_t* src, const walldiv_t* divs,
+void R_DivVertColors(ColorRawf* dst, const ColorRawf* src, const walldiv_t* divs,
     float bL, float tL, float bR, float tR);
 
 void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src, const walldiv_t* divs,
