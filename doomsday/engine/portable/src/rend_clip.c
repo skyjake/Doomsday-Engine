@@ -1237,8 +1237,8 @@ int C_CheckViewRelSeg(float x1, float y1, float x2, float y2)
     if(devNoCulling)
         return 1;
 
-    return C_SafeCheckRange(bamsAtan2((int) (dy2 * 100), (int) (dx2 * 100)),
-                            bamsAtan2((int) (dy1 * 100), (int) (dx1 * 100)));
+    return C_SafeCheckRange(bamsAtan2((int) (dy2 * 1000), (int) (dx2 * 1000)) - BANG_45/90,
+                            bamsAtan2((int) (dy1 * 1000), (int) (dx1 * 1000)) + BANG_45/90);
 }
 
 /**

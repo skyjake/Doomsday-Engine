@@ -1842,7 +1842,7 @@ boolean MPE_End(void)
     /**
      * Build blockmaps.
      */
-    findBounds(map->vertexes, map->numVertexes, min, max);
+    findBounds((vertex_t const**)map->vertexes, map->numVertexes, min, max);
 
     Map_InitLineDefBlockmap(gamemap, min, max);
     for(i = 0; i < gamemap->numLineDefs; ++i)
