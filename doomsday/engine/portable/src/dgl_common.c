@@ -802,37 +802,6 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
 }
 #endif
 
-/**
- * \todo No need for this special method now. Refactor callers to use the
- * normal DGL drawing methods.
- */
-void DGL_DrawRawScreen(lumpnum_t lumpNum, int x, int y)
-{
-    if(lumpNum < 0 || lumpNum >= F_LumpCount())
-        return;
-
-    GL_SetRawImage(lumpNum, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    glEnable(GL_TEXTURE_2D);
-
-    {rawtex_t* raw = R_GetRawTex(lumpNum);
-    if(NULL != raw)
-    {
-        // The first part is rendered in any case.
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + raw->width, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + raw->width, y + raw->height);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + raw->height);
-        glEnd();
-    }}
-
-    glDisable(GL_TEXTURE_2D);
-}
-
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)

@@ -255,8 +255,6 @@ void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, in
 
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
-void            DGL_DrawRawScreen(lumpnum_t lumpNum, int x, int y);
-
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);
