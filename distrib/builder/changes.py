@@ -1,9 +1,11 @@
+# coding=utf-8
 import os
 import utils
+from event import Event
 import build_version
 
 class Entry:
-    def __init__():
+    def __init__(self):
         self.subject = ''
         self.extra = ''
         self.author = ''
@@ -11,33 +13,33 @@ class Entry:
         self.link = ''
         self.message = ''
         
-    def setSubject(subject):
-        extra = ''
+    def setSubject(self, subject):
+        self.extra = ''
         # Check that the subject lines are not too long.
+        MAX_SUBJECT = 100
         if len(utils.collated(subject)) > MAX_SUBJECT:
-            extra = '...' + subject[MAX_SUBJECT:] + ' '
+            self.extra = '...' + subject[MAX_SUBJECT:] + ' '
             subject = subject[:MAX_SUBJECT] + '...'
         else:
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
         self.subject = subject
-        self.extra = extra
         
-    def setMessage(message):
+    def setMessage(self, message):
         self.message = message.strip()
-        if extra:
+        if self.extra:
             self.message = extra + ' ' + self.message
         self.message = self.message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
         
 
 class Changes:
-    def __init__(fromTag, toTag):
+    def __init__(self, fromTag, toTag):
         self.fromTag = fromTag
         self.toTag = toTag
         self.parse()
         
-    def parse():
+    def parse(self):
         tmpName = '__ctmp'
 
         format = '[[Subject]]%s[[/Subject]]' + \
@@ -46,7 +48,7 @@ class Changes:
                  '[[Link]]http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
                  'p=deng/deng;a=commit;h=%H[[/Link]]' + \
                  '[[Message]]%b[[/Message]]'
-        os.system("git log %s..%s --format=\"%s\" >> %s" % (fromTag, toTag, format, tmpName))
+        os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
         logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
         logText = logText.replace(u'ä', u'&auml;')
@@ -59,7 +61,6 @@ class Changes:
         
         os.remove(tmpName)        
 
-        MAX_SUBJECT = 100
         pos = 0
         self.entries = []
         self.debChangeEntries = []
@@ -99,7 +100,7 @@ class Changes:
             self.entries.append(entry)
         
         
-    def generate(format):
+    def generate(self, format):
         fromTag = self.fromTag
         toTag = self.toTag
         

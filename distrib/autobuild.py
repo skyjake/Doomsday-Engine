@@ -91,8 +91,8 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         if fromTag is None or toTag is None:
             builds = builder.events_by_time()
             if len(builds) < 2: return
-            fromTag = builds[1][1]
-            toTag = builds[0][1]
+            fromTag = builds[1][1].tag()
+            toTag = builds[0][1].tag()
 
     changes = builder.Changes(fromTag, toTag)
 
@@ -122,7 +122,7 @@ def rebuild_apt_repository():
 
 
 def write_index_html(tag):
-    ev = Event(tag)
+    ev = builder.Event(tag)
     f = file(ev.filePath('index.html'), 'wt')
     print >> f, "<html>"
     print >> f, "<head><title>Build %i</title></head>" % ev.number()
@@ -152,21 +152,21 @@ def update_feed():
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME, 
         time.gmtime(builder.find_newest_event()['time']))
-    print >> out, '<generator>dengBot</generator>'
+    print >> out, '<generator>autobuild.py</generator>'
     print >> out, '<ttl>180</ttl>' # 3 hours
     
-    for timestamp, tag, ev in builder.events_by_time():
+    for timestamp, ev in builder.events_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %i</title>' % ev.number()
-        print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, tag)
+        print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, ev.tag())
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
         print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
         print >> out, '<description>%s</description>' % ev.html_description()
-        print >> out, '<guid isPermaLink="false">%s</guid>' % tag
+        print >> out, '<guid isPermaLink="false">%s</guid>' % ev.tag()
         print >> out, '</item>'
         
-        write_index_html(tag)
+        write_index_html(ev.tag())
     
     # Close.
     print >> out, '</channel>'

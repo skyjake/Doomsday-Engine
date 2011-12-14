@@ -7,19 +7,19 @@ class Event:
     """Build event. Manages the contents of a single build directory under
     the event directory."""
     
-    def __init__(build=None):
+    def __init__(self, build=None):
         if build is None:
             # Use today's build number.
             self.name = 'build' + build_number.todays_build()
-            self.number = int(self.name[5:])
+            self.num = int(self.name[5:])
         elif type(build) == int:
             self.name = 'build' + str(build)
-            self.number = build
+            self.num = build
         elif type(build) == str:
             if build[:5] != 'build': 
                 raise Exception("Event build name must begin with 'build'")
             self.name = build
-            self.number = int(build[5:])
+            self.num = int(build[5:])
 
         # Where the build is located.
         self.buildDir = os.path.join(config.EVENT_DIR, self.name)
@@ -32,45 +32,45 @@ class Event:
                      ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
                      ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
 
-         # Prepare compiler logs present in the build dir.
-         self.compress_logs()
+        # Prepare compiler logs present in the build dir.
+        self.compress_logs()
 
-     def package_from_filename(name):
-         if 'fmod' in name:
-             return 'fmod'
-         else:
-             return 'doomsday'        
+    def package_from_filename(self, name):
+        if 'fmod' in name:
+            return 'fmod'
+        else:
+            return 'doomsday'        
         
-    def tag():
+    def tag(self):
         return self.name
         
-    def name():
+    def name(self):
         return self.name
         
-    def number():
-        return self.number
+    def number(self):
+        return self.num
         
-    def path():
+    def path(self):
         return self.buildDir
         
-    def filePath(fileName):
+    def filePath(self, fileName):
         return os.path.join(self.buildDir, fileName)
         
-    def clean():
+    def clean(self):
         # Make sure we have a clean directory for this build.
         if os.path.exists(self.buildDir):
             # Kill it and recreate.
             shutil.rmtree(self.buildDir, True)
         os.mkdir(self.buildDir)        
         
-    def list_package_files():
+    def list_package_files(self):
         files = glob.glob(os.path.join(self.buildDir, '*.dmg')) + \
                 glob.glob(os.path.join(self.buildDir, '*.exe')) + \
                 glob.glob(os.path.join(self.buildDir, '*.deb'))
 
         return [os.path.basename(f) for f in files]
 
-    def timestamp():
+    def timestamp(self):
         """Looks through the files of the build and returns the timestamp
         for the oldest file."""
         oldest = os.stat(self.buildDir).st_ctime
@@ -82,7 +82,7 @@ class Event:
 
         return oldest        
         
-    def text_summary():
+    def text_summary(self):
         """Composes a textual summary of the event."""
         
         msg = "The build event was started on %s." % (time.strftime(config.RFC_TIME, 
@@ -92,7 +92,7 @@ class Event:
 
         pkgCount = len(self.list_package_files())
 
-        changesName = os.path.join(config.EVENT_DIR, name, 'changes.html')
+        changesName = self.filePath('changes.html')
         commitCount = 0
         if os.path.exists(changesName):
             commitCount = utils.count_word('<li>', file(changesName).read())
@@ -104,7 +104,7 @@ class Event:
 
         return msg
         
-    def compress_logs():
+    def compress_logs(self):
         if not os.path.exists(self.buildDir): return
         
         """Combines the stdout and stderr logs for a package and compresses
@@ -123,7 +123,7 @@ class Event:
                 combined.close()            
                 os.system('gzip -f9 %s' % combinedName)        
                 
-    def html_description(encoded=True):
+    def html_description(self, encoded=True):
         """Composes an HTML build report. Compresses any .txt logs present in 
         the build directory into a combined .txt.gz (one per package)."""
 
@@ -250,7 +250,7 @@ def events_by_time():
     builds = []
     for fn in os.listdir(config.EVENT_DIR):
         if fn[:5] == 'build':
-            builds.append((build_timestamp(fn), fn, Event(fn)))
+            builds.append((Event(fn).timestamp(), Event(fn)))
     builds.sort()
     builds.reverse()
     return builds
