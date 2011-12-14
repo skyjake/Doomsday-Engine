@@ -44,7 +44,7 @@ def create_build_event():
 def todays_platform_release():
     """Build today's release for the current platform."""
     print "Building today's build."
-    ev = Event()
+    ev = builder.Event()
     
     git_pull()
     git_checkout(ev.tag())
