@@ -120,7 +120,7 @@ class Changes:
             
         elif format == 'deb':
             # Append the changes to the debian package changelog.
-            os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'linux'))
+            os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
             build_version.find_version()
