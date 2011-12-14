@@ -141,7 +141,7 @@ def create_build_event():
     # Tag the source with the build identifier.
     git_tag(todaysBuild)
     
-    prevBuild = find_newest_build()['tag']
+    prevBuild = builder.find_newest_event()['tag']
     print 'The previous build is:', prevBuild
     
     if prevBuild == todaysBuild:
@@ -221,11 +221,11 @@ def update_feed():
     print >> out, '<language>en-us</language>'
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME, 
-        time.gmtime(find_newest_build()['time']))
+        time.gmtime(builder.find_newest_event()['time']))
     print >> out, '<generator>dengBot</generator>'
     print >> out, '<ttl>180</ttl>' # 3 hours
     
-    for timestamp, tag, ev in events_by_time():
+    for timestamp, tag, ev in builder.events_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %i</title>' % ev.number()
         print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, tag)

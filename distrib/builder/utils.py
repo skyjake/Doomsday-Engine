@@ -8,7 +8,7 @@ import config
 
 
 def sys_id():
-    return "%s-%s" % (sys.platform, platform.architecture()[0])))
+    return "%s-%s" % (sys.platform, platform.architecture()[0])
 
 
 def remote_copy(src, dst):
