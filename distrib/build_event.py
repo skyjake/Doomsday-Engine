@@ -8,175 +8,26 @@ import sys
 import os
 import shutil
 import time
+import string
 import glob
 import platform
 import gzip
 import codecs
 import build_version
+import builder
+from builder.git import * 
+from builder.utils import * 
 
-BUILD_URI = "http://code.iki.fi/builds"
-
-RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
-
-if len(sys.argv) < 4:
-    print 'The arguments must be: (command) (eventdir) (distribdir) [localaptdir]'
-    sys.exit(1)
-
-EVENT_DIR = sys.argv[2]   
-DISTRIB_DIR = sys.argv[3] 
-if len(sys.argv) > 4:
-    APT_REPO_DIR = sys.argv[4]
-else:
-    APT_REPO_DIR = ''
-
-
-def git_checkout(ident):
-    print 'Checking out %s...' % ident
-    os.chdir(DISTRIB_DIR)
-    os.system("git checkout %s" % ident)
-
-
-def git_pull():
-    """Updates the source with a git pull."""
-    print 'Updating source...'
-    os.chdir(DISTRIB_DIR)
-    os.system("git checkout master")
-    os.system("git pull")
-    
-    
-def git_tag(tag):
-    """Tags the source with a new tag."""
-    print 'Tagging with %s...' % tag
-    os.chdir(DISTRIB_DIR)
-    os.system("git tag %s" % tag)
-    os.system("git push --tags")
-    
-    
-def remote_copy(src, dst):
-    dst = dst.replace('\\', '/')
-    os.system('scp %s %s' % (src, dst))  
-    
-    
-def build_timestamp(tag):
-    path = os.path.join(EVENT_DIR, tag)
-    oldest = os.stat(path).st_ctime
-
-    for fn in os.listdir(path):
-        t = os.stat(os.path.join(path, fn))
-        if int(t.st_ctime) < oldest:
-            oldest = int(t.st_ctime)
-    
-    return oldest        
-    
-    
-def find_newest_build():
-    newest = None
-    for fn in os.listdir(EVENT_DIR):
-        if fn[:5] != 'build': continue
-        bt = build_timestamp(fn)
-        if newest is None or newest[0] < bt:
-            newest = (bt, fn)
-    if newest is None:
-        return {'tag': None, 'time': time.time()}
-    return {'tag': newest[1], 'time': newest[0]}
-
-
-def find_old_builds(atLeastSecs):
-    result = []
-    now = time.time()
-    if not os.path.exists(EVENT_DIR): return result
-    for fn in os.listdir(EVENT_DIR):
-        if fn[:5] != 'build': continue
-        bt = build_timestamp(fn)
-        if now - bt >= atLeastSecs:
-            result.append({'time':bt, 'tag':fn})
-    return result
-    
-
-def find_empty_events(baseDir=None):
-    result = []
-    if not baseDir: baseDir = EVENT_DIR
-    print 'Finding empty subdirs in', baseDir
-    for fn in os.listdir(baseDir):
-        path = os.path.join(baseDir, fn)
-        if os.path.isdir(path):
-            # Is this an empty directory?
-            empty = True
-            for c in os.listdir(path):
-                if c != '.' and c != '..':
-                    empty = False
-                    break
-            if empty:
-                result.append(path)
-    return result
-    
-    
-def builds_by_time():
-    builds = []
-    for fn in os.listdir(EVENT_DIR):
-        if fn[:5] == 'build':
-            builds.append((build_timestamp(fn), fn))
-    builds.sort()
-    builds.reverse()
-    return builds
-
-
-def aptrepo_by_time(arch):
-    files = []
-    for fn in os.listdir(os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-' + arch)):
-        if fn[-4:] == '.deb':
-            files.append(fn)
-    return files
-    
-def count_log_word(fn, word):
-    txt = unicode(gzip.open(fn).read(), 'latin1').lower()
-    pos = 0
-    count = 0
-    while True:
-        pos = txt.find(unicode(word), pos)
-        if pos < 0: break 
-        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's' and \
-            txt[pos-11:pos] != 'shlibdeps: ':
-            count += 1            
-        pos += len(word)
-    return count
-        
-    
-def count_log_status(fn):
-    """Returns tuple of (#warnings, #errors) in the fn."""
-    return (count_log_word(fn, 'error'), count_log_word(fn, 'warning'))    
-    
-    
-def count_word(word, inText):
-    pos = 0
-    count = 0
-    while True:
-        pos = inText.find(word, pos)
-        if pos < 0: break
-        count += 1
-        pos += len(word)
-    return count
-    
-    
-def list_package_files(name):
-    buildDir = os.path.join(EVENT_DIR, name)
-
-    files = glob.glob(os.path.join(buildDir, '*.dmg')) + \
-            glob.glob(os.path.join(buildDir, '*.exe')) + \
-            glob.glob(os.path.join(buildDir, '*.deb'))
-            
-    return [os.path.basename(f) for f in files]
-    
 
 def text_build_summary(name):
-    msg = "The build event was started on %s." % (time.strftime(RFC_TIME, 
+    msg = "The build event was started on %s." % (time.strftime(builder.config.RFC_TIME, 
                                                   time.gmtime(build_timestamp(name))))
     
     msg += ' It'
     
     pkgCount = len(list_package_files(name))
         
-    changesName = os.path.join(EVENT_DIR, name, 'changes.html')
+    changesName = os.path.join(builder.config.EVENT_DIR, name, 'changes.html')
     commitCount = 0
     if os.path.exists(changesName):
         commitCount = count_word('<li>', file(changesName).read())
@@ -190,7 +41,7 @@ def text_build_summary(name):
     
         
 def html_build_description(name, encoded=True):
-    buildDir = os.path.join(EVENT_DIR, name)
+    buildDir = os.path.join(builder.config.EVENT_DIR, name)
     
     msg = '<p>' + text_build_summary(name) + '</p>'
     
@@ -241,7 +92,7 @@ def html_build_description(name, encoded=True):
                 msg += osName
                 isFirst = False
             msg += '<td>'
-            msg += '<a href="%s/%s/%s">%s</a>' % (BUILD_URI, name, binary, binary)
+            msg += '<a href="%s/%s/%s">%s</a>' % (builder.config.BUILD_URI, name, binary, binary)
 
             if 'fmod' in binary:
                 packageName = 'fmod'
@@ -256,7 +107,7 @@ def html_build_description(name, encoded=True):
                 continue                            
 
             # Link to the compressed log.
-            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (BUILD_URI, name, logName)
+            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (builder.config.BUILD_URI, name, logName)
               
             # Show a traffic light indicator based on warning and error counts.              
             errors, warnings = count_log_status(logFileName)
@@ -284,19 +135,8 @@ def html_build_description(name, encoded=True):
     return msg
     
 
-def todays_build_tag():
-    now = time.localtime()
-    return 'build' + str((now.tm_year - 2011)*365 + now.tm_yday)
-
-
-def collated(s):
-    s = s.strip()
-    while s[-1] == '.':
-        s = s[:-1]
-    return s
-
-
 def update_changes(fromTag=None, toTag=None, debChanges=False):
+    """Generates the list of commits for the latest build."""
     if debChanges:
         # Make sure we have the latest changes.
         git_pull()
@@ -324,12 +164,12 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
 
     # Generate a changelog.
     if not debChanges:
-        buildDir = os.path.join(EVENT_DIR, toTag)
+        buildDir = os.path.join(builder.config.EVENT_DIR, toTag)
         fn = os.path.join(buildDir, 'changes.html')
         changes = file(fn, 'wt')
         print >> changes, '<ol>'
     else:
-        buildDir = EVENT_DIR
+        buildDir = builder.config.EVENT_DIR
     
     tmpName = os.path.abspath(os.path.join(buildDir, 'ctmp'))
     
@@ -388,7 +228,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         changes.close()
     else:
         # Append the changes to the debian package changelog.
-        os.chdir(os.path.join(DISTRIB_DIR, 'linux'))
+        os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'linux'))
         
         # First we need to update the version.
         build_version.find_version()
@@ -409,6 +249,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
            
 
 def create_build_event():
+    """Creates and tags a new build for with today's number."""
     print 'Creating a new build event.'
     git_pull()
 
@@ -424,7 +265,7 @@ def create_build_event():
     if prevBuild == todaysBuild:
         prevBuild = ''
     
-    buildDir = os.path.join(EVENT_DIR, todaysBuild)
+    buildDir = os.path.join(builder.config.EVENT_DIR, todaysBuild)
 
     # Make sure we have a clean directory for this build.
     if os.path.exists(buildDir):
@@ -437,11 +278,12 @@ def create_build_event():
 
 
 def todays_platform_release():
+    """Build today's release for the current platform."""
     print "Building today's build."
     git_pull()
     git_checkout(todays_build_tag())
     
-    os.chdir(DISTRIB_DIR)
+    os.chdir(builder.config.DISTRIB_DIR)
     # We'll copy the new files to the build dir.
     existingFiles = os.listdir('releases')    
     
@@ -455,26 +297,26 @@ def todays_platform_release():
     for n in currentFiles:
         # Copy any new files.
         remote_copy(os.path.join('releases', n),
-                    os.path.join(EVENT_DIR, todays_build_tag(), n))
+                    os.path.join(builder.config.EVENT_DIR, todays_build_tag(), n))
 
-        if APT_REPO_DIR:
+        if builder.config.APT_REPO_DIR:
             # Copy also to the appropriate apt directory.
             arch = 'i386'
             if '_amd64' in n: arch = 'amd64'
             remote_copy(os.path.join('releases', n),
-                        os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
+                        os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
                                  
     # Also the build log.
-    remote_copy('buildlog.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
+    remote_copy('buildlog.txt', os.path.join(builder.config.EVENT_DIR, todays_build_tag(), 
         'doomsday-out-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
-    remote_copy('builderrors.txt', os.path.join(EVENT_DIR, todays_build_tag(), 
+    remote_copy('builderrors.txt', os.path.join(builder.config.EVENT_DIR, todays_build_tag(), 
         'doomsday-err-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
                                              
     git_checkout('master')
 
 
 def write_index_html(tag):
-    f = file(os.path.join(EVENT_DIR, tag, 'index.html'), 'wt')
+    f = file(os.path.join(builder.config.EVENT_DIR, tag, 'index.html'), 'wt')
     print >> f, "<html>"
     print >> f, "<head><title>Build %s</title></head>" % tag[5:]
     print >> f, "<body>"
@@ -485,7 +327,8 @@ def write_index_html(tag):
 
 
 def update_feed():
-    feedName = os.path.join(EVENT_DIR, "events.rss")
+    """Generate events.rss into the event directory."""
+    feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
     print "Updating feed in %s..." % feedName
     
     out = file(feedName, 'wt')
@@ -495,11 +338,11 @@ def update_feed():
     
     print >> out, '<title>Doomsday Engine Builds</title>'
     print >> out, '<link>http://dengine.net/</link>'
-    print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % BUILD_URI
+    print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % builder.config.BUILD_URI
     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
     print >> out, '<language>en-us</language>'
     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
-    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(RFC_TIME, 
+    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME, 
         time.gmtime(find_newest_build()['time']))
     print >> out, '<generator>dengBot</generator>'
     print >> out, '<ttl>180</ttl>' # 3 hours
@@ -507,9 +350,9 @@ def update_feed():
     for timestamp, tag in builds_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %s</title>' % tag[5:]
-        print >> out, '<link>%s/%s/</link>' % (BUILD_URI, tag)
+        print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, tag)
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
-        print >> out, '<pubDate>%s</pubDate>' % time.strftime(RFC_TIME, time.gmtime(timestamp))
+        print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
         print >> out, '<atom:summary>%s</atom:summary>' % text_build_summary(tag)
         print >> out, '<description>%s</description>' % html_build_description(tag)
         print >> out, '<guid isPermaLink="false">%s</guid>' % tag
@@ -523,7 +366,8 @@ def update_feed():
 
 
 def rebuild_apt_repository():
-    aptDir = APT_REPO_DIR
+    """Rebuilds the Apt repository by running apt-ftparchive."""
+    aptDir = builder.config.APT_REPO_DIR
     print 'Rebuilding the apt repository in %s...' % aptDir
     
     os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
@@ -531,12 +375,12 @@ def rebuild_apt_repository():
     os.chdir("%s/dists/unstable" % aptDir)
     os.remove("Release.gpg")
     os.system("gpg --output Release.gpg -ba Release")
-    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(EVENT_DIR, 'apt')))
+    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
     
 
 def purge_apt_repository(atLeastSeconds):
     for d in ['i386', 'amd64']:
-        binDir = os.path.join(APT_REPO_DIR, 'dists/unstable/main/binary-') + d
+        binDir = os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-') + d
         print 'Pruning binary apt directory', binDir
         # Find the old files.
         for fn in os.listdir(binDir):
@@ -549,55 +393,74 @@ def purge_apt_repository(atLeastSeconds):
 
 
 def purge_obsolete():
+    """Purge old builds from the event directory (old > 12 weeks)."""
     threshold = 3600 * 24 * 7 * 12
 
     # Also purge the apt repository if one has been specified.
-    if APT_REPO_DIR:
+    if builder.config.APT_REPO_DIR:
         purge_apt_repository(threshold)
     
     # Purge the old events.
     print 'Deleting build events older than 12 weeks...'
     for bld in find_old_builds(threshold):
         print bld['tag']
-        shutil.rmtree(os.path.join(EVENT_DIR, bld['tag']))  
+        shutil.rmtree(os.path.join(builder.config.EVENT_DIR, bld['tag']))  
         
     print 'Purge done.'
 
 
 def dir_cleanup():
+    """Purges empty build directories from the event directory."""
     print 'Event directory cleanup starting...'
-    # Purge empty event directories.
     for bp in find_empty_events():
         print 'Deleting', bp
         os.rmdir(bp)
     print 'Cleanup done.'
 
 
-if sys.argv[1] == 'create':
-    create_build_event()
-
-elif sys.argv[1] == 'platform_release':
-    todays_platform_release()
-    
-elif sys.argv[1] == 'feed':
-    update_feed()
-    
-elif sys.argv[1] == 'apt':
-    rebuild_apt_repository()
-    
-elif sys.argv[1] == 'changes':
-    update_changes()
-    
-elif sys.argv[1] == 'debchanges':
+def update_debian_changelog():
+    """Updates the Debian changelog at (distrib)/debian/changelog."""
     # Update debian changelog.
     update_changes(None, None, True)
+
+
+def show_help():
+    """Prints a description of each command."""
+    sortedCommands = commands.keys()
+    sortedCommands.sort()
+    for cmd in sortedCommands:
+        if commands[cmd].__doc__:
+            print "%-17s " % (cmd + ":") + commands[cmd].__doc__
+        else:
+            print cmd
     
-elif sys.argv[1] == 'purge':
-    purge_obsolete()
-    
-elif sys.argv[1] == 'cleanup':
-    dir_cleanup()
-    
-else:
-    print 'Unknown command:', sys.argv[1]
-    sys.exit(1)
+
+commands = {
+    'create': create_build_event,
+    'platform_release': todays_platform_release,
+    'feed': update_feed,
+    'apt': rebuild_apt_repository,
+    'changes': update_changes,
+    'debchanges': update_debian_changelog,
+    'purge': purge_obsolete,
+    'cleanup': dir_cleanup,
+    'help': show_help
+}
+
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print 'The arguments must be: (command) [args]'
+        sortedCommands = commands.keys()
+        sortedCommands.sort()
+        print 'Commands:', string.join(sortedCommands)
+        print 'Arguments:'
+        print '--distrib  Doomsday distrib directory'
+        print '--events   Event directory (builds are stored here in subdirs)'
+        print '--apt      Apt repository'
+        sys.exit(1)
+
+    if sys.argv[1] not in commands:
+        print 'Unknown command:', sys.argv[1]
+        sys.exit(1)
+
+    commands[sys.argv[1]]()
