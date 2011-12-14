@@ -29,8 +29,6 @@ DOOMSDAY_BUILD              = 'build' + DOOMSDAY_BUILD_NUMBER
 TIMESTAMP = time.strftime('%y-%m-%d')
 now = time.localtime()
 
-print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
-
 
 def exit_with_error():
     os.chdir(LAUNCH_DIR)
@@ -86,6 +84,9 @@ def find_version():
     DOOMSDAY_VERSION_MAJOR = build_version.DOOMSDAY_VERSION_MAJOR
     DOOMSDAY_VERSION_MINOR = build_version.DOOMSDAY_VERSION_MINOR
     DOOMSDAY_VERSION_REVISION = build_version.DOOMSDAY_VERSION_REVISION
+    
+    print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
+    print 'Version:', DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_RELEASE_TYPE
 
 
 def prepare_work_dir():

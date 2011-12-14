@@ -10,128 +10,10 @@ import shutil
 import time
 import string
 import glob
-import platform
-import codecs
 import build_version
 import builder
 from builder.git import * 
 from builder.utils import * 
-
-
-def text_build_summary(name):
-    msg = "The build event was started on %s." % (time.strftime(builder.config.RFC_TIME, 
-                                                  time.gmtime(build_timestamp(name))))
-    
-    msg += ' It'
-    
-    pkgCount = len(list_package_files(name))
-        
-    changesName = os.path.join(builder.config.EVENT_DIR, name, 'changes.html')
-    commitCount = 0
-    if os.path.exists(changesName):
-        commitCount = count_word('<li>', file(changesName).read())
-    if commitCount:
-        msg += " contains %i commits and" % commitCount
-        
-    msg += " produced %i installable binary package%s." % \
-        (pkgCount, 's' if (pkgCount != 1) else '')
-    
-    return msg
-    
-        
-def html_build_description(name, encoded=True):
-    buildDir = os.path.join(builder.config.EVENT_DIR, name)
-    
-    msg = '<p>' + text_build_summary(name) + '</p>'
-    
-    # What do we have here?
-    files = list_package_files(name)    
-
-    oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
-            ('Mac OS X 10.4+ (i386/ppc)', '.dmg',      'darwin-32bit'),
-            ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
-            ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
-    
-    # Prepare compiler logs.
-    for package in ['doomsday', 'fmod']:
-        for osName, osExt, osIdent in oses:
-            names = glob.glob(os.path.join(buildDir, '%s-*-%s.txt' % (package, osIdent)))
-            if not names: continue
-            # Join the logs into a single file.
-            combinedName = os.path.join(buildDir, 'buildlog-%s-%s.txt' % (package, osIdent))
-            combined = file(combinedName, 'wt')
-            for n in names:
-                combined.write(file(n).read() + "\n\n")
-                # Remove the original log.
-                os.remove(n)
-            combined.close()            
-            os.system('gzip -f9 %s' % combinedName)
-    
-    # Print out the matrix.
-    msg += '<p><table cellspacing="4" border="0">'
-    msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Er/Wrn</tr>'
-    
-    for osName, osExt, osIdent in oses:
-        isFirst = True
-        # Find the binaries for this OS.
-        binaries = []
-        for f in files:
-            if osExt in f:
-                binaries.append(f)
-        
-        if not binaries:
-            # Nothing available for this OS.
-            msg += '<tr><td>' + osName + '<td>n/a</tr>'
-            continue
-
-        # List all the binaries. One row per binary.
-        for binary in binaries:
-            msg += '<tr><td>'
-            if isFirst:
-                msg += osName
-                isFirst = False
-            msg += '<td>'
-            msg += '<a href="%s/%s/%s">%s</a>' % (builder.config.BUILD_URI, name, binary, binary)
-
-            if 'fmod' in binary:
-                packageName = 'fmod'
-            else:
-                packageName = 'doomsday'
-        
-            # Status of the log.
-            logName = 'buildlog-%s-%s.txt.gz' % (packageName, osIdent)
-            logFileName = os.path.join(buildDir, logName)
-            if not os.path.exists(logFileName):
-                msg += '</tr>'
-                continue                            
-
-            # Link to the compressed log.
-            msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (builder.config.BUILD_URI, name, logName)
-              
-            # Show a traffic light indicator based on warning and error counts.              
-            errors, warnings = count_log_status(logFileName)
-            form = '<td bgcolor="%s" style="text-align:center;">'
-            if errors > 0:
-                msg += form % '#ff4444' # red
-            elif warnings > 0:
-                msg += form % '#ffee00' # yellow
-            else:
-                msg += form % '#00ee00' # green
-            msg += str(errors + warnings)
-
-        msg += '</tr>'
-    
-    msg += '</table></p>'
-    
-    # Changes.
-    chgFn = os.path.join(buildDir, 'changes.html')
-    if os.path.exists(chgFn):
-        if count_word('<li>', file(chgFn).read()):
-            msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
-        
-    # Enclose it in a CDATA block if needed.
-    if encoded: return '<![CDATA[' + msg + ']]>'    
-    return msg
     
 
 def update_changes(fromTag=None, toTag=None, debChanges=False):
@@ -156,7 +38,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     else:
         # Determine automatically?
         if fromTag is None or toTag is None:
-            builds = builds_by_time()
+            builds = builder.events_by_time()
             if len(builds) < 2: return
             fromTag = builds[1][1]
             toTag = builds[0][1]
@@ -235,7 +117,8 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         
         # Always make one entry.
         print 'Marking new version...'
-        msg = 'New release: unstable ' + todays_build_tag() + '.'
+        msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
+                                             Event().number())
         os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
 
         for ch in changeEntries:
@@ -264,13 +147,9 @@ def create_build_event():
     if prevBuild == todaysBuild:
         prevBuild = ''
     
-    buildDir = os.path.join(builder.config.EVENT_DIR, todaysBuild)
-
-    # Make sure we have a clean directory for this build.
-    if os.path.exists(buildDir):
-        # Kill it and recreate.
-        shutil.rmtree(buildDir, True)
-    os.mkdir(buildDir)
+    # Prepare the build directory.
+    ev = builder.Event(todaysBuild)
+    ev.clean()
 
     if prevBuild:
         update_changes(prevBuild, todaysBuild)
@@ -279,11 +158,13 @@ def create_build_event():
 def todays_platform_release():
     """Build today's release for the current platform."""
     print "Building today's build."
-    git_pull()
-    git_checkout(todays_build_tag())
+    ev = Event()
     
-    os.chdir(builder.config.DISTRIB_DIR)
+    git_pull()
+    git_checkout(ev.tag())
+    
     # We'll copy the new files to the build dir.
+    os.chdir(builder.config.DISTRIB_DIR)
     existingFiles = os.listdir('releases')    
     
     print 'platform_release.py...'
@@ -295,8 +176,7 @@ def todays_platform_release():
         
     for n in currentFiles:
         # Copy any new files.
-        remote_copy(os.path.join('releases', n),
-                    os.path.join(builder.config.EVENT_DIR, todays_build_tag(), n))
+        remote_copy(os.path.join('releases', n), ev.filePath(n))
 
         if builder.config.APT_REPO_DIR:
             # Copy also to the appropriate apt directory.
@@ -306,21 +186,20 @@ def todays_platform_release():
                         os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
                                  
     # Also the build log.
-    remote_copy('buildlog.txt', os.path.join(builder.config.EVENT_DIR, todays_build_tag(), 
-        'doomsday-out-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
-    remote_copy('builderrors.txt', os.path.join(builder.config.EVENT_DIR, todays_build_tag(), 
-        'doomsday-err-%s-%s.txt' % (sys.platform, platform.architecture()[0])))
+    remote_copy('buildlog.txt', ev.filePath('doomsday-out-%s.txt' % sys_id()))
+    remote_copy('builderrors.txt', ev.filePath('doomsday-err-%s.txt' % sys_id()))
                                              
     git_checkout('master')
 
 
 def write_index_html(tag):
-    f = file(os.path.join(builder.config.EVENT_DIR, tag, 'index.html'), 'wt')
+    ev = Event(tag)
+    f = file(ev.filePath('index.html'), 'wt')
     print >> f, "<html>"
-    print >> f, "<head><title>Build %s</title></head>" % tag[5:]
+    print >> f, "<head><title>Build %i</title></head>" % ev.number()
     print >> f, "<body>"
-    print >> f, "<h1>Build %s</h1>" % tag[5:]
-    print >> f, html_build_description(tag, False)
+    print >> f, "<h1>Build %i</h1>" % ev.number()
+    print >> f, ev.html_description(False)
     print >> f, "</body>"
     print >> f, "</html>"
 
@@ -346,14 +225,14 @@ def update_feed():
     print >> out, '<generator>dengBot</generator>'
     print >> out, '<ttl>180</ttl>' # 3 hours
     
-    for timestamp, tag in builds_by_time():
+    for timestamp, tag, ev in events_by_time():
         print >> out, '<item>'
-        print >> out, '<title>Build %s</title>' % tag[5:]
+        print >> out, '<title>Build %i</title>' % ev.number()
         print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, tag)
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
-        print >> out, '<atom:summary>%s</atom:summary>' % text_build_summary(tag)
-        print >> out, '<description>%s</description>' % html_build_description(tag)
+        print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
+        print >> out, '<description>%s</description>' % ev.html_description()
         print >> out, '<guid isPermaLink="false">%s</guid>' % tag
         print >> out, '</item>'
         
@@ -401,9 +280,9 @@ def purge_obsolete():
     
     # Purge the old events.
     print 'Deleting build events older than 12 weeks...'
-    for bld in find_old_builds(threshold):
-        print bld['tag']
-        shutil.rmtree(os.path.join(builder.config.EVENT_DIR, bld['tag']))  
+    for ev in builder.find_old_events(threshold):
+        print ev.tag()
+        shutil.rmtree(ev.path()) 
         
     print 'Purge done.'
 
@@ -411,9 +290,9 @@ def purge_obsolete():
 def dir_cleanup():
     """Purges empty build directories from the event directory."""
     print 'Event directory cleanup starting...'
-    for bp in find_empty_events():
-        print 'Deleting', bp
-        os.rmdir(bp)
+    for emptyEventPath in builder.find_empty_events():
+        print 'Deleting', emptyEventPath
+        os.rmdir(emptyEventPath)
     print 'Cleanup done.'
 
 

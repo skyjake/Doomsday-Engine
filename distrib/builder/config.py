@@ -9,10 +9,10 @@ def get_arg(label):
     return None
 
 
-BUILD_URI = "http://code.iki.fi/builds"
-RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
-EVENT_DIR = os.path.join(os.environ['HOME'], 'BuildMaster')
-DISTRIB_DIR = '.'
+BUILD_URI    = "http://code.iki.fi/builds"
+RFC_TIME     = "%a, %d %b %Y %H:%M:%S +0000"
+EVENT_DIR    = os.path.join(os.environ['HOME'], 'BuildMaster')
+DISTRIB_DIR  = '.'
 APT_REPO_DIR = ''
 
 val = get_arg('--distrib')
