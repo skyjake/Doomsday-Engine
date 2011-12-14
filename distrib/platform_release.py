@@ -268,7 +268,7 @@ import snowberry"""
 
     # Build dsFMOD separately.
     os.chdir('dsfmod')
-    logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])))
+    logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
     if os.system('dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
