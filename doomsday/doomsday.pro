@@ -3,4 +3,4 @@
 
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = build engine plugins
+SUBDIRS = build external engine plugins
