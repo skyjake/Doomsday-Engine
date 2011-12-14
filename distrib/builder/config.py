@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 def get_arg(label):
     """Find the value for the command line option @a label."""
     if label in sys.argv:

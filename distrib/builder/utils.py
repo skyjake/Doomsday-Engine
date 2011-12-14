@@ -28,13 +28,32 @@ def todays_build_tag():
     return 'build' + build_number.todays_build()
 
 
-def aptrepo_by_time(arch):
+def deb_arch():
+    os.system('dpkg --print-architecture > __debarch.tmp')
+    arch = file('__debarch.tmp', 'rt').read().strip()
+    os.remove('__debarch.tmp')
+    return arch
+
+
+def aptrepo_by_time():
     files = []
-    for fn in os.listdir(os.path.join(config.APT_REPO_DIR, 'dists/unstable/main/binary-' + arch)):
+    for fn in os.listdir(os.path.join(config.APT_REPO_DIR, 
+                                      'dists/unstable/main/binary-' + deb_arch())):
         if fn[-4:] == '.deb':
             files.append(fn)
     return files
+    
 
+def aptrepo_find_latest_tag():    
+    debs = aptrepo_by_time()
+    if not debs: return 'master'
+    arch = deb_arch()
+    biggest = 0
+    for deb in debs:
+        number = int(deb[deb.find('-build')+6 : deb.find('_'+arch)])
+        biggest = max(biggest, number)
+    return 'build' + str(biggest)
+    
 
 def count_log_word(fn, word):
     txt = unicode(gzip.open(fn).read(), 'latin1').lower()

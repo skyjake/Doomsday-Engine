@@ -20,8 +20,26 @@ class Event:
                 raise Exception("Event build name must begin with 'build'")
             self.name = build
             self.number = int(build[5:])
+
         # Where the build is located.
         self.buildDir = os.path.join(config.EVENT_DIR, self.name)
+        
+        self.packages = ['doomsday', 'fmod']
+        
+        # Platforms:  Name                         File ext     sys_id()
+        self.oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
+                     ('Mac OS X 10.4+ (i386/ppc)', '.dmg',      'darwin-32bit'),
+                     ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
+                     ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
+
+         # Prepare compiler logs present in the build dir.
+         self.compress_logs()
+
+     def package_from_filename(name):
+         if 'fmod' in name:
+             return 'fmod'
+         else:
+             return 'doomsday'        
         
     def tag():
         return self.name
@@ -86,37 +104,37 @@ class Event:
 
         return msg
         
-    def html_description(encoded=True):
-        """Composes an HTML build report. Compresses any .txt logs present in 
-        the build directory into a combined .txt.gz (one per package)."""
+    def compress_logs():
+        if not os.path.exists(self.buildDir): return
         
-        name = self.name
-        buildDir = self.buildDir
-
-        msg = '<p>' + self.text_summary() + '</p>'
-
-        # What do we have here?
-        files = self.list_package_files()
-
-        oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
-                ('Mac OS X 10.4+ (i386/ppc)', '.dmg',      'darwin-32bit'),
-                ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
-                ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
-
-        # Prepare compiler logs.
-        for package in ['doomsday', 'fmod']:
-            for osName, osExt, osIdent in oses:
-                names = glob.glob(os.path.join(buildDir, '%s-*-%s.txt' % (package, osIdent)))
+        """Combines the stdout and stderr logs for a package and compresses
+        them with gzip (requires gzip on the system path)."""
+        for package in self.packages:
+            for osName, osExt, osIdent in self.oses:
+                names = glob.glob(self.filePath('%s-*-%s.txt' % (package, osIdent)))
                 if not names: continue
                 # Join the logs into a single file.
-                combinedName = os.path.join(buildDir, 'buildlog-%s-%s.txt' % (package, osIdent))
+                combinedName = self.filePath('buildlog-%s-%s.txt' % (package, osIdent))
                 combined = file(combinedName, 'wt')
                 for n in names:
                     combined.write(file(n).read() + "\n\n")
                     # Remove the original log.
                     os.remove(n)
                 combined.close()            
-                os.system('gzip -f9 %s' % combinedName)
+                os.system('gzip -f9 %s' % combinedName)        
+                
+    def html_description(encoded=True):
+        """Composes an HTML build report. Compresses any .txt logs present in 
+        the build directory into a combined .txt.gz (one per package)."""
+
+        name = self.name
+        buildDir = self.buildDir
+        oses = self.oses
+
+        msg = '<p>' + self.text_summary() + '</p>'
+
+        # What do we have here?
+        files = self.list_package_files()
 
         # Print out the matrix.
         msg += '<p><table cellspacing="4" border="0">'
@@ -145,14 +163,9 @@ class Event:
                 msg += '<a href="%s/%s/%s">%s</a>' % (config.BUILD_URI, 
                                                       name, binary, binary)
 
-                if 'fmod' in binary:
-                    packageName = 'fmod'
-                else:
-                    packageName = 'doomsday'
-
                 # Status of the log.
-                logName = 'buildlog-%s-%s.txt.gz' % (packageName, osIdent)
-                logFileName = os.path.join(buildDir, logName)
+                logName = 'buildlog-%s-%s.txt.gz' % (self.package_from_filename(binary), osIdent)
+                logFileName = self.filePath(logName)
                 if not os.path.exists(logFileName):
                     msg += '</tr>'
                     continue                            
@@ -176,7 +189,7 @@ class Event:
         msg += '</table></p>'
 
         # Changes.
-        chgFn = os.path.join(buildDir, 'changes.html')
+        chgFn = self.filePath('changes.html')
         if os.path.exists(chgFn):
             if utils.count_word('<li>', file(chgFn).read()):
                 msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()

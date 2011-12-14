@@ -15,121 +15,7 @@ import builder
 from builder.git import * 
 from builder.utils import * 
     
-
-def update_changes(fromTag=None, toTag=None, debChanges=False):
-    """Generates the list of commits for the latest build."""
-    if debChanges:
-        # Make sure we have the latest changes.
-        git_pull()
-        
-        # Use the apt repo for determining fromTag.
-        os.system('dpkg --print-architecture > debarch.tmp')
-        arch = file('debarch.tmp', 'rt').read().strip()
-        os.remove('debarch.tmp')
-        debs = aptrepo_by_time(arch)
-        
-        biggest = 0
-        for deb in debs:
-            number = int(deb[deb.find('-build')+6 : deb.find('_'+arch)])
-            biggest = max(biggest, number)
-        
-        fromTag = 'build' + str(biggest)
-        toTag = 'master' # Everything up to now.
-    else:
-        # Determine automatically?
-        if fromTag is None or toTag is None:
-            builds = builder.events_by_time()
-            if len(builds) < 2: return
-            fromTag = builds[1][1]
-            toTag = builds[0][1]
-
-    # Generate a changelog.
-    if not debChanges:
-        buildDir = os.path.join(builder.config.EVENT_DIR, toTag)
-        fn = os.path.join(buildDir, 'changes.html')
-        changes = file(fn, 'wt')
-        print >> changes, '<ol>'
-    else:
-        buildDir = builder.config.EVENT_DIR
     
-    tmpName = os.path.abspath(os.path.join(buildDir, 'ctmp'))
-    
-    format = '{{{{li}}}}{{{{b}}}}[[subjectline]]%s[[/subjectline]]{{{{/b}}}}' + \
-             '{{{{br/}}}}by {{{{i}}}}%an{{{{/i}}}} on ' + \
-             '%ai ' + \
-             '{{{{a href=\\"http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
-             'p=deng/deng;a=commit;h=%H\\"}}}}(show in repository){{{{/a}}}}' + \
-             '{{{{blockquote}}}}%b{{{{/blockquote}}}}'
-    os.system("git log %s..%s --format=\"%s\" >> %s" % (fromTag, toTag, format, tmpName))
-
-    logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
-    logText = logText.replace(u'ä', u'&auml;')
-    logText = logText.encode('utf-8')
-    logText = logText.replace('<', '&lt;')
-    logText = logText.replace('>', '&gt;')
-    logText = logText.replace('{{{{', '<')
-    logText = logText.replace('}}}}', '>')
-    
-    # Check that the subject lines are not too long.
-    MAX_SUBJECT = 100
-    pos = 0
-    changeEntries = []
-    while True:
-        pos = logText.find('[[subjectline]]', pos)
-        if pos < 0: break
-        end = logText.find('[[/subjectline]]', pos)
-        
-        subject = logText[pos+15:end]    
-        extra = ''
-        if len(collated(subject)) > MAX_SUBJECT:
-            extra = '...' + subject[MAX_SUBJECT:] + ' '
-            subject = subject[:MAX_SUBJECT] + '...'
-        else:
-            # If there is a single dot at the end of the subject, remove it.
-            if subject[-1] == '.' and subject[-2] != '.':
-                subject = subject[:-1]
-
-        if subject not in changeEntries:
-            changeEntries.append(subject)
-        
-        # Do the replace.
-        logText = logText[:pos] + subject + logText[end+16:]
-        
-        if len(extra):
-            # Place the extra bit in the blockquote.
-            bq = logText.find('<blockquote>', pos)
-            logText = logText[:bq+12] + extra + logText[bq+12:]            
-    
-    if not debChanges:
-        logText = logText.replace('\n\n', '<br/><br/>').replace('\n', ' ').replace('</blockquote><br/>', '</blockquote>')
-        print >> changes, logText
-
-    if not debChanges:
-        print >> changes, '</ol>'
-        changes.close()
-    else:
-        # Append the changes to the debian package changelog.
-        os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'linux'))
-        
-        # First we need to update the version.
-        build_version.find_version()
-        debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + todays_build_tag()
-        
-        # Always make one entry.
-        print 'Marking new version...'
-        msg = 'New release: %s build %i.' % (build_version.DOOMSDAY_RELEASE_TYPE,
-                                             Event().number())
-        os.system("dch --check-dirname-level 0 -v %s \"%s\"" % (debVersion, msg))       
-
-        for ch in changeEntries:
-            # Quote it for the command line.
-            qch = ch.replace('"', '\\"').replace('!', '\\!')
-            print ' *', qch
-            os.system("dch --check-dirname-level 0 -a \"%s\"" % qch)
-
-    os.remove(tmpName)
-           
-
 def create_build_event():
     """Creates and tags a new build for with today's number."""
     print 'Creating a new build event.'
@@ -153,7 +39,7 @@ def create_build_event():
 
     if prevBuild:
         update_changes(prevBuild, todaysBuild)
-
+    
 
 def todays_platform_release():
     """Build today's release for the current platform."""
@@ -192,6 +78,49 @@ def todays_platform_release():
     git_checkout('master')
 
 
+def update_changes(fromTag=None, toTag=None, debChanges=False):
+    """Generates the list of commits for the latest build."""
+    
+    if debChanges:
+        # Make sure we have the latest changes.
+        git_pull()
+        fromTag = aptrepo_find_latest_tag()
+        toTag = 'master' # Everything up to now.
+    else:
+        # Use the two most recent builds by default.
+        if fromTag is None or toTag is None:
+            builds = builder.events_by_time()
+            if len(builds) < 2: return
+            fromTag = builds[1][1]
+            toTag = builds[0][1]
+
+    changes = builder.Changes(fromTag, toTag)
+
+    if debChanges:
+        changes.generate('deb')
+    else:
+        changes.generate('html')
+           
+           
+def update_debian_changelog():
+    """Updates the Debian changelog at (distrib)/debian/changelog."""
+    # Update debian changelog.
+    update_changes(None, None, True)
+           
+
+def rebuild_apt_repository():
+    """Rebuilds the Apt repository by running apt-ftparchive."""
+    aptDir = builder.config.APT_REPO_DIR
+    print 'Rebuilding the apt repository in %s...' % aptDir
+    
+    os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
+    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (aptDir, aptDir))
+    os.chdir("%s/dists/unstable" % aptDir)
+    os.remove("Release.gpg")
+    os.system("gpg --output Release.gpg -ba Release")
+    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
+
+
 def write_index_html(tag):
     ev = Event(tag)
     f = file(ev.filePath('index.html'), 'wt')
@@ -206,6 +135,7 @@ def write_index_html(tag):
 
 def update_feed():
     """Generate events.rss into the event directory."""
+    
     feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
     print "Updating feed in %s..." % feedName
     
@@ -241,19 +171,6 @@ def update_feed():
     # Close.
     print >> out, '</channel>'
     print >> out, '</rss>'
-
-
-def rebuild_apt_repository():
-    """Rebuilds the Apt repository by running apt-ftparchive."""
-    aptDir = builder.config.APT_REPO_DIR
-    print 'Rebuilding the apt repository in %s...' % aptDir
-    
-    os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
-    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (aptDir, aptDir))
-    os.chdir("%s/dists/unstable" % aptDir)
-    os.remove("Release.gpg")
-    os.system("gpg --output Release.gpg -ba Release")
-    os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
     
 
 def purge_apt_repository(atLeastSeconds):
@@ -296,30 +213,28 @@ def dir_cleanup():
     print 'Cleanup done.'
 
 
-def update_debian_changelog():
-    """Updates the Debian changelog at (distrib)/debian/changelog."""
-    # Update debian changelog.
-    update_changes(None, None, True)
-
-
 def show_help():
     """Prints a description of each command."""
-    sortedCommands = commands.keys()
-    sortedCommands.sort()
-    for cmd in sortedCommands:
+    for cmd in sorted_commands():
         if commands[cmd].__doc__:
             print "%-17s " % (cmd + ":") + commands[cmd].__doc__
         else:
             print cmd
     
 
+def sorted_commands():
+    sc = commands.keys()
+    sc.sort()
+    return sc
+
+
 commands = {
     'create': create_build_event,
     'platform_release': todays_platform_release,
-    'feed': update_feed,
-    'apt': rebuild_apt_repository,
     'changes': update_changes,
     'debchanges': update_debian_changelog,
+    'apt': rebuild_apt_repository,
+    'feed': update_feed,
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
     'help': show_help
@@ -328,9 +243,7 @@ commands = {
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print 'The arguments must be: (command) [args]'
-        sortedCommands = commands.keys()
-        sortedCommands.sort()
-        print 'Commands:', string.join(sortedCommands)
+        print 'Commands:', string.join(sorted_commands())
         print 'Arguments:'
         print '--distrib  Doomsday distrib directory'
         print '--events   Event directory (builds are stored here in subdirs)'
