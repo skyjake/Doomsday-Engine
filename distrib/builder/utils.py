@@ -1,4 +1,7 @@
 import os
+import glob
+import gzip
+import time
 import build_number
 import config
 
@@ -35,7 +38,7 @@ def build_timestamp(tag):
 
 
 def list_package_files(name):
-    buildDir = os.path.join(builder.config.EVENT_DIR, name)
+    buildDir = os.path.join(config.EVENT_DIR, name)
 
     files = glob.glob(os.path.join(buildDir, '*.dmg')) + \
             glob.glob(os.path.join(buildDir, '*.exe')) + \

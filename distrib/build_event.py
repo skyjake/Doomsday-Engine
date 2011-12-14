@@ -11,7 +11,6 @@ import time
 import string
 import glob
 import platform
-import gzip
 import codecs
 import build_version
 import builder
