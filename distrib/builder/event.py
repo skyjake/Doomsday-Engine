@@ -35,6 +35,11 @@ class Event:
                      ('Ubuntu (x86)',              'i386.deb',  'linux2-32bit'),
                      ('Ubuntu (x86_64)',           'amd64.deb', 'linux2-64bit')]
 
+        self.platId = {'win32-32bit':  'win-x86',
+                       'darwin-32bit': 'mac10_4-x86-ppc',
+                       'linux2-32bit': 'linux-x86',
+                       'linux2-64bit': 'linux-x86_64'}
+
         # Prepare compiler logs present in the build dir.
         self.compress_logs()
 
@@ -226,7 +231,7 @@ class Event:
         # Packages.
         for fn in files:
             msg += '<package>'
-            msg += '<platform>%s</platform>' % self.os_from_filename(fn)[2]
+            msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
             msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
             logName = self.compressed_log_filename(fn)
             if os.path.exists(self.file_path(logName)):
