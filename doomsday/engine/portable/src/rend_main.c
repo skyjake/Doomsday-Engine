@@ -2648,7 +2648,8 @@ static int segSkyFixes(seg_t* seg)
 
                 if(!P_IsInVoid(viewPlayer))
                 {
-                    if(!(backSec && R_IsSkySurface(&bfloor->surface)) && ffloor->visHeight > skyFloor)
+                    if((backSec && Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/) ||
+                       !(backSec && R_IsSkySurface(&bfloor->surface))) && ffloor->visHeight > skyFloor)
                     {
                         fixes |= SKYCAP_LOWER;
                     }
@@ -2674,7 +2675,8 @@ static int segSkyFixes(seg_t* seg)
 
                 if(!P_IsInVoid(viewPlayer))
                 {
-                    if(!(backSec && R_IsSkySurface(&bceil->surface)) && fceil->visHeight < skyCeil)
+                    if((backSec && Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/) ||
+                       !(backSec && R_IsSkySurface(&bceil->surface))) && fceil->visHeight < skyCeil)
                     {
                         fixes |= SKYCAP_UPPER;
                     }
