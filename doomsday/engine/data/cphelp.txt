@@ -1081,7 +1081,7 @@ desc = 1=Render polyobj bounding boxes.
 desc = 1=Render mobj vlight vectors (for debug).
 
 [rend-dev-sky]
-desc = 1=Render the sky as a solid surface. 2= Draw sky surface planes.
+desc = 1=Render the sky as a solid surface.
 
 [rend-dev-sky-always]
 desc = 1=Always render the sky, even if there are no sky surfaces visible.
