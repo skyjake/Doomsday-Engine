@@ -1619,7 +1619,6 @@ static boolean doRenderSeg(seg_t* seg,
                            const walldiv_t* divs,
                            boolean skyMask,
                            boolean addFakeRadio,
-                           float glowing,
                            vec3_t texTL, vec3_t texBR,
                            const float texOffset[2],
                            const float texScale[2],
@@ -1654,7 +1653,7 @@ static boolean doRenderSeg(seg_t* seg,
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.surfaceColor2 = color2;
-    params.glowing = glowing;
+    params.glowing = msA? msA->glowing : 0;
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
@@ -1986,7 +1985,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
     {
         uint                lightListIdx = 0, shadowListIdx = 0;
         float               texTL[3], texBR[3], texScale[2],
-                            inter = 0, glowing = 0;
+                            inter = 0;
         walldiv_t           divs[2];
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
@@ -1994,7 +1993,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         boolean             isTwoSided = (seg->lineDef &&
             seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
-        boolean             addFakeRadio = false, blended = false;
+        boolean             addFakeRadio = false;
         const float*        color = NULL, *color2 = NULL;
         materialsnapshot_t* msA = NULL, *msB = NULL;
 
@@ -2013,9 +2012,6 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         {
             // Geometry not normally rendered however we do so in dev sky mode.
             mat = seg->SG_frontsector->SP_planematerial(section == SEG_TOP? PLN_CEILING : PLN_FLOOR);
-            // Lets make it stand out.
-            forceOpaque = true;
-            glowing = 1.0;
         }
         else
         {
@@ -2045,10 +2041,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                 }
                 else
                 {
-                    // In devRendSkyMode mode we render all polys destined for the skymask
-                    // as regular world polys (with a few obvious properties).
+                    // In dev sky mode we render all would-be skymask geometry
+                    // as if it were non-skymask.
                     forceOpaque = true;
-                    glowing = 1.0;
                 }
             }
         }
@@ -2083,22 +2078,10 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
         }
 
-        if(!(rpFlags & RPF_SKYMASK))
+        if(!(rpFlags & RPF_SKYMASK) && mat)
         {
             // Smooth Texture Animation?
-            if(smoothTexAnim)
-                blended = true;
-
-            inter = getSnapshots(&msA, blended? &msB : NULL, mat);
-           {
-                material_t* surfaceMaterial = ((!surface->material ||
-                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))? Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing")) : surface->material);
-                const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                    MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-                const materialsnapshot_t* ms = Materials_Prepare(surfaceMaterial, spec, true);
-
-                glowing = ms->glowing;
-            }
+            inter = getSnapshots(&msA, smoothTexAnim? &msB : NULL, mat);
 
             // Dynamic Lights?
             if(addDLights && msA->glowing < 1 && !(!useDynlights && !useWallGlow))
@@ -2115,7 +2098,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                     SEG_SIDEDEF(seg)->SW_middletangent, SEG_SIDEDEF(seg)->SW_middlebitangent, SEG_SIDEDEF(seg)->SW_middlenormal);
             }
         
-            addFakeRadio = ((addFakeRadio && glowing == 0)? true : false);
+            addFakeRadio = ((addFakeRadio && msA->glowing == 0)? true : false);
 
             selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
         }
@@ -2148,11 +2131,10 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
                                !!(rpFlags & RPF_SKYMASK),
                                addFakeRadio,
-                               glowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
                                seg->bsuf[section], (uint) section,
-                               msA, inter, blended? msB : NULL,
+                               msA, inter, msB,
                                (section == SEG_MIDDLE && isTwoSided));
         }
     }
