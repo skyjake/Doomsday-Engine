@@ -69,7 +69,7 @@ def count_log_word(fn, word):
     return count
 
 
-def count_log_status(fn):
+def count_log_issues(fn):
     """Returns tuple of (#warnings, #errors) in the fn."""
     return (count_log_word(fn, 'error'), count_log_word(fn, 'warning'))    
 

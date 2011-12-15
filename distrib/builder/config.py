@@ -7,7 +7,8 @@ def get_arg(label):
         return sys.argv[sys.argv.index(label) + 1]
     return None
 
-
+BUILD_AUTHOR_NAME = "skyjake"
+BUILD_AUTHOR_EMAIL = "skyjake@users.sourceforge.net"
 BUILD_URI = "http://code.iki.fi/builds"
 RFC_TIME = "%a, %d %b %Y %H:%M:%S +0000"
 if 'HOME' in os.environ:

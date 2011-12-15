@@ -8,6 +8,9 @@ class Event:
     the event directory."""
     
     def __init__(self, build=None):
+        """Any .txt logs present in the build directory are compressed into
+        a combined .txt.gz (one per package)."""
+        
         if build is None:
             # Use today's build number.
             self.name = 'build' + build_number.todays_build()
@@ -40,6 +43,12 @@ class Event:
             return 'fmod'
         else:
             return 'doomsday'        
+    
+    def os_from_filename(self, name):
+        for n, ext, ident in self.oses:
+            if name.endswith(ext) or ident in name:
+                return (n, ext, ident)
+        return None
         
     def tag(self):
         return self.name
@@ -53,7 +62,7 @@ class Event:
     def path(self):
         return self.buildDir
         
-    def filePath(self, fileName):
+    def file_path(self, fileName):
         return os.path.join(self.buildDir, fileName)
         
     def clean(self):
@@ -82,17 +91,19 @@ class Event:
 
         return oldest        
         
+    def text_timestamp(self):
+        return time.strftime(config.RFC_TIME, time.gmtime(self.timestamp()))
+    
     def text_summary(self):
         """Composes a textual summary of the event."""
         
-        msg = "The build event was started on %s." % (time.strftime(config.RFC_TIME, 
-                                                      time.gmtime(self.timestamp())))
+        msg = "The build event was started on %s." % self.text_timestamp()
 
         msg += ' It'
 
         pkgCount = len(self.list_package_files())
 
-        changesName = self.filePath('changes.html')
+        changesName = self.file_path('changes.html')
         commitCount = 0
         if os.path.exists(changesName):
             commitCount = utils.count_word('<li>', file(changesName).read())
@@ -111,10 +122,10 @@ class Event:
         them with gzip (requires gzip on the system path)."""
         for package in self.packages:
             for osName, osExt, osIdent in self.oses:
-                names = glob.glob(self.filePath('%s-*-%s.txt' % (package, osIdent)))
+                names = glob.glob(self.file_path('%s-*-%s.txt' % (package, osIdent)))
                 if not names: continue
                 # Join the logs into a single file.
-                combinedName = self.filePath('buildlog-%s-%s.txt' % (package, osIdent))
+                combinedName = self.file_path('buildlog-%s-%s.txt' % (package, osIdent))
                 combined = file(combinedName, 'wt')
                 for n in names:
                     combined.write(file(n).read() + "\n\n")
@@ -123,9 +134,15 @@ class Event:
                 combined.close()            
                 os.system('gzip -f9 %s' % combinedName)        
                 
+    def download_uri(self, fn):
+        return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
+                
+    def compressed_log_filename(self, binaryFn):
+        return 'buildlog-%s-%s.txt.gz' % (self.package_from_filename(binaryFn), 
+                                          self.os_from_filename(binaryFn)[2]) 
+                
     def html_description(self, encoded=True):
-        """Composes an HTML build report. Compresses any .txt logs present in 
-        the build directory into a combined .txt.gz (one per package)."""
+        """Composes an HTML build report."""
 
         name = self.name
         buildDir = self.buildDir
@@ -138,7 +155,7 @@ class Event:
 
         # Print out the matrix.
         msg += '<p><table cellspacing="4" border="0">'
-        msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Er/Wrn</tr>'
+        msg += '<tr style="text-align:left;"><th>OS<th>Binary<th>Logs<th>Issues</tr>'
 
         for osName, osExt, osIdent in oses:
             isFirst = True
@@ -160,21 +177,20 @@ class Event:
                     msg += osName
                     isFirst = False
                 msg += '<td>'
-                msg += '<a href="%s/%s/%s">%s</a>' % (config.BUILD_URI, 
-                                                      name, binary, binary)
+                msg += '<a href="%s">%s</a>' % (self.download_uri(binary), binary)
 
                 # Status of the log.
-                logName = 'buildlog-%s-%s.txt.gz' % (self.package_from_filename(binary), osIdent)
-                logFileName = self.filePath(logName)
+                logName = self.compressed_log_filename(binary)
+                logFileName = self.file_path(logName)
                 if not os.path.exists(logFileName):
                     msg += '</tr>'
                     continue                            
 
                 # Link to the compressed log.
-                msg += '<td><a href="%s/%s/%s">txt.gz</a>' % (config.BUILD_URI, name, logName)
+                msg += '<td><a href="%s">txt.gz</a>' % self.download_uri(logName)
 
                 # Show a traffic light indicator based on warning and error counts.              
-                errors, warnings = utils.count_log_status(logFileName)
+                errors, warnings = utils.count_log_issues(logFileName)
                 form = '<td bgcolor="%s" style="text-align:center;">'
                 if errors > 0:
                     msg += form % '#ff4444' # red
@@ -189,7 +205,7 @@ class Event:
         msg += '</table></p>'
 
         # Changes.
-        chgFn = self.filePath('changes.html')
+        chgFn = self.file_path('changes.html')
         if os.path.exists(chgFn):
             if utils.count_word('<li>', file(chgFn).read()):
                 msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
@@ -197,6 +213,35 @@ class Event:
         # Enclose it in a CDATA block if needed.
         if encoded: return '<![CDATA[' + msg + ']]>'    
         return msg
+        
+    def xml_description():
+        msg = '<build>'
+        msg += '<uniqueId>%i</uniqueId>' % self.number()
+        msg += '<startDate>%s</startDate>' % self.text_timestamp()
+        msg += '<authorName>%s</authorName>' % config.BUILD_AUTHOR_NAME
+        msg += '<authorEmail>%s</authorEmail>' % config.BUILD_AUTHOR_EMAIL        
+        files = self.list_package_files()
+        msg += '<packageCount>%i</packageCount>' % len(files)
+        
+        # Packages.
+        for fn in files:
+            msg += '<package>'
+            msg += '<platform>%s</platform>' % self.os_from_filename(fn)[2]
+            msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
+            logName = self.compressed_log_filename(fn)
+            if os.path.exists(self.file_path(logName)):
+                msg += '<compileLogUri>%s</compileLogUri>' % self.download_uri(logName)
+                errors, warnings = utils.count_log_issues(self.file_path(logName))
+                msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
+                msg += '<compileErrorCount>%i</compileErrorCount>' % errors
+            msg += '</package>'
+        
+        # Commits.
+        chgFn = self.file_path('changes.xml')
+        if os.path.exists(chgFn):
+            msg += file(chgFn, 'rt').read()
+                    
+        return msg + '</build>'
 
 
 def find_newest_event():

@@ -112,7 +112,7 @@ class Changes:
         toTag = self.toTag
         
         if format == 'html':
-            out = file(Event(toTag).filePath('changes.html'), 'wt')
+            out = file(Event(toTag).file_path('changes.html'), 'wt')
             print >> out, '<ol>'
 
             # Write a list entry for each commit.
@@ -126,7 +126,7 @@ class Changes:
             out.close()
             
         elif format == 'xml':
-            out = file(Event(toTag).filePath('changes.xml'), 'wt')
+            out = file(Event(toTag).file_path('changes.xml'), 'wt')
             print >> out, '<commitCount>%i</commitCount>' % len(self.entries)
             print >> out, '<commits>'
             for entry in self.entries:

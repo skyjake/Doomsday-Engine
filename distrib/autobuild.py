@@ -62,7 +62,7 @@ def todays_platform_release():
         
     for n in currentFiles:
         # Copy any new files.
-        remote_copy(os.path.join('releases', n), ev.filePath(n))
+        remote_copy(os.path.join('releases', n), ev.file_path(n))
 
         if builder.config.APT_REPO_DIR:
             # Copy also to the appropriate apt directory.
@@ -72,8 +72,8 @@ def todays_platform_release():
                         os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
                                  
     # Also the build log.
-    remote_copy('buildlog.txt', ev.filePath('doomsday-out-%s.txt' % sys_id()))
-    remote_copy('builderrors.txt', ev.filePath('doomsday-err-%s.txt' % sys_id()))
+    remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
+    remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
                                              
     git_checkout('master')
 
@@ -125,7 +125,7 @@ def rebuild_apt_repository():
 
 def write_index_html(tag):
     ev = builder.Event(tag)
-    f = file(ev.filePath('index.html'), 'wt')
+    f = file(ev.file_path('index.html'), 'wt')
     print >> f, "<html>"
     print >> f, "<head><title>Build %i</title></head>" % ev.number()
     print >> f, "<body>"
@@ -173,6 +173,20 @@ def update_feed():
     # Close.
     print >> out, '</channel>'
     print >> out, '</rss>'
+    
+    
+def update_xml_feed():
+    """Generate events.xml into the event directory."""
+    
+    feedName = os.path.join(builder.config.EVENT_DIR, "events.xml")
+    print "Updating XML feed in %s..." % feedName
+    
+    out = file(feedName, 'wt')
+    print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
+    print >> out, '<log>'
+    for timestamp, ev in builder.events_by_time():
+        print >> out, ev.xml_description()    
+    print >> out, '</log>'
     
 
 def purge_apt_repository(atLeastSeconds):
@@ -237,6 +251,7 @@ commands = {
     'debchanges': update_debian_changelog,
     'apt': rebuild_apt_repository,
     'feed': update_feed,
+    'xmlfeed': update_xml_feed,
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
     'help': show_help
