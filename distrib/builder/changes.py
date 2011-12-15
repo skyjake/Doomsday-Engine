@@ -136,7 +136,8 @@ class Changes:
                 print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
                 print >> out, '<sha1>%s</sha1>' % entry.hash
                 print >> out, '<title>%s</title>' % entry.subject
-                print >> out, '<message>%s</message>' % entry.message
+                if len(entry.message):
+                    print >> out, '<message>%s</message>' % entry.message
                 print >> out, '</commit>'                
             print >> out, '</commits>'
             out.close()

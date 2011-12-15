@@ -214,7 +214,7 @@ class Event:
         if encoded: return '<![CDATA[' + msg + ']]>'    
         return msg
         
-    def xml_description():
+    def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
         msg += '<startDate>%s</startDate>' % self.text_timestamp()
