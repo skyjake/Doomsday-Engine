@@ -97,9 +97,11 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     changes = builder.Changes(fromTag, toTag)
 
     if debChanges:
+        # Only update the Debian changelog.
         changes.generate('deb')
     else:
         changes.generate('html')
+        changes.generate('xml')
            
            
 def update_debian_changelog():
