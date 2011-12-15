@@ -11,6 +11,7 @@ class Entry:
         self.author = ''
         self.date = ''
         self.link = ''
+        self.hash = ''
         self.message = ''
         
     def setSubject(self, subject):
@@ -47,6 +48,7 @@ class Changes:
                  '[[Date]]%ai[[/Date]]' + \
                  '[[Link]]http://deng.git.sourceforge.net/git/gitweb.cgi?' + \
                  'p=deng/deng;a=commit;h=%H[[/Link]]' + \
+                 '[[Hash]]%H[[/Hash]]' + \
                  '[[Message]]%b[[/Message]]'
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
@@ -92,6 +94,11 @@ class Changes:
             end = logText.find('[[/Link]]', pos)
             entry.link = logText[pos+8:end]
 
+            # Hash.
+            pos = logText.find('[[Hash]]', pos)
+            end = logText.find('[[/Hash]]', pos)
+            entry.hash = logText[pos+8:end]
+
             # Message.
             pos = logText.find('[[Message]]', pos)
             end = logText.find('[[/Message]]', pos)
@@ -116,6 +123,22 @@ class Changes:
                 print >> out, '<blockquote>%s</blockquote>' % entry.message
                     
             print >> out, '</ol>'
+            out.close()
+            
+        elif format == 'xml':
+            out = file(Event(toTag).filePath('changes.xml'), 'wt')
+            print >> out, '<commitCount>%i</commitCount>' % len(self.entries)
+            print >> out, '<commits>'
+            for entry in self.entries:
+                print >> out, '<commit>'
+                print >> out, '<submitDate>%s</submitDate>' % entry.date
+                print >> out, '<author>%s</author>' % entry.author
+                print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
+                print >> out, '<sha1>%s</sha1>' % entry.hash
+                print >> out, '<title>%s</title>' % entry.subject
+                print >> out, '<message>%s</message>' % entry.message
+                print >> out, '</commit>'                
+            print >> out, '</commits>'
             out.close()
             
         elif format == 'deb':
