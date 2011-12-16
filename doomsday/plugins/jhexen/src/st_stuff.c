@@ -224,7 +224,6 @@ void ST_Register(void)
 {
     cvartemplate_t cvars[] = {
         { "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1, unhideHUD },
-        { "hud-wideoffset", 0, CVT_FLOAT, &cfg.hudWideOffset, 0, 1, unhideHUD },
 
         { "hud-status-size", 0, CVT_FLOAT, &cfg.statusbarScale, 0.1f, 1, updateViewWindow },
 
@@ -3955,31 +3954,6 @@ void ST_Drawer(int player)
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
             GUI_DrawWidget(obj, x, y, &drawnSize);
-        }
-
-        /**
-         * Wide offset scaling.
-         * Used with ultra-wide/tall resolutions to move the uiwidgets into
-         * the viewer's primary field of vision (without this, uiwidgets
-         * would be positioned at the very edges of the view window and
-         * likely into the viewer's peripheral vision range).
-         *
-         * \note Statusbar is exempt because it is intended to extend over
-         * the entire width of the view window and as such, uses another
-         * special-case scale-positioning calculation.
-         */
-        if(cfg.hudWideOffset != 1)
-        {
-            if(portSize.width > portSize.height)
-            {
-                x = (portSize.width/2/scale -  SCREENWIDTH/2) * (1-cfg.hudWideOffset);
-                width -= x*2;
-            }
-            else
-            {
-                y = (portSize.height/2/scale - SCREENHEIGHT/2) * (1-cfg.hudWideOffset);
-                height -= y*2;
-            }
         }
 
         alpha = hud->alpha * (1-hud->hideAmount);

@@ -253,7 +253,6 @@ void X_PreInit(void)
     cfg.menuTextFlashSpeed = 4;
     cfg.menuCursorRotate = false;
     cfg.hudScale = .7f;
-    cfg.hudWideOffset = 1;
     cfg.hudColor[0] = defFontRGB[0];
     cfg.hudColor[1] = defFontRGB[1];
     cfg.hudColor[2] = defFontRGB[2];

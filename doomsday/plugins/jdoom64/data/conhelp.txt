@@ -619,9 +619,6 @@ desc = Scaling for HUD info.
 [hud-status-size]
 desc = Status bar size (1-20).
 
-[hud-wideoffset]
-desc = Size of hud offset for wide/tall screen dimensions.
-
 [hud-color-r]
 desc = HUD info color red component.
 

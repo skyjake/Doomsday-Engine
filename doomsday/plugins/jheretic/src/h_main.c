@@ -214,7 +214,6 @@ void H_PreInit(void)
         cfg.hudUnHide[i] = 1;
     }
     cfg.hudScale = .7f;
-    cfg.hudWideOffset = 1;
     cfg.hudColor[0] = .325f;
     cfg.hudColor[1] = .686f;
     cfg.hudColor[2] = .278f;

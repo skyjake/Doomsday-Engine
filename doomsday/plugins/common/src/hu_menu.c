@@ -705,7 +705,6 @@ mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, "view-size" };
 #else
 mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, "view-size" };
 #endif
-mndata_slider_t sld_hud_wideoffset = { 0, 1, 0, .1f, true, "hud-wideoffset" };
 mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, "hud-timer", "Disabled", NULL, " second", " seconds" };
 mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, "view-cross-size" };
 mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, "view-cross-a" };
@@ -778,7 +777,6 @@ mndata_list_t list_hud_cntr_secrets = {
 #endif
 
 mndata_text_t txt_hud_view_size = { "View Size" };
-mndata_text_t txt_hud_wide_offset = { "Wide Offset" };
 #if __JDOOM__
 mndata_text_t txt_hud_single_key_display = { "Single Key Display" };
 #endif
@@ -885,8 +883,6 @@ mndata_button_t btn_hud_full_show_readyitem = { true, "hud-currentitem" };
 static mn_object_t HudMenuObjects[] = {
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_view_size },
     { MN_SLIDER,    0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_viewsize },
-    { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_wide_offset },
-    { MN_SLIDER,    0,  0,  'w',MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_wideoffset },
 #if __JDOOM__
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_single_key_display },
     { MN_BUTTON,    0,  0,  0,  MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_single_key_display },

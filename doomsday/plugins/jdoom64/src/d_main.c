@@ -213,7 +213,6 @@ void D_PreInit(void)
         cfg.hudUnHide[i] = 1;
     }
     cfg.hudScale = .6f;
-    cfg.hudWideOffset = 1;
     cfg.hudColor[0] = 1;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 0.75f;
