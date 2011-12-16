@@ -118,7 +118,6 @@ typedef struct jdoom64_config_s {
     byte            confirmQuickGameSave;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     float           hudScale; // How to scale HUD data?
-    float           hudWideOffset;
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud auto-hides.

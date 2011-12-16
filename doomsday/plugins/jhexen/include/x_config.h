@@ -71,7 +71,6 @@ typedef struct {
     int             setBlocks;
     byte            hudShown[4]; // HUD data visibility.
     float           hudScale;
-    float           hudWideOffset;
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.

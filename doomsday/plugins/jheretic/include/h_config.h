@@ -117,7 +117,6 @@ typedef struct jheretic_config_s {
     byte            confirmQuickGameSave;
     byte            hudShown[6];   // HUD data visibility.
     float           hudScale;      // How to scale HUD data?
-    float           hudWideOffset;
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
