@@ -1,4 +1,4 @@
-# Determining the current Doomsday version and release type from headers.
+# Parsing the current Doomsday version and release type from headers.
 
 import os
 import string

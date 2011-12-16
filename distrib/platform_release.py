@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# This script builds the distribution packages platform-independently.
+# No parameters needed; config is auto-detected.
+
 import sys
 import os
 import platform
@@ -8,23 +11,23 @@ import glob
 import build_version
 import build_number
 
-LAUNCH_DIR = os.path.abspath(os.getcwd())
-DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
+# Configuration.
+LAUNCH_DIR    = os.path.abspath(os.getcwd())
+DOOMSDAY_DIR  = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
-WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
-OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
-DOOMSDAY_VERSION_FULL = "0.0.0-Name"
+WORK_DIR      = os.path.join(LAUNCH_DIR, 'work')
+OUTPUT_DIR    = os.path.abspath(os.path.join(os.getcwd(), 'releases'))
+DOOMSDAY_VERSION_FULL       = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
-DOOMSDAY_VERSION_MAJOR = 0
-DOOMSDAY_VERSION_MINOR = 0
-DOOMSDAY_VERSION_REVISION = 0
-DOOMSDAY_RELEASE_TYPE = "Unstable"
-now = time.localtime()
-DOOMSDAY_BUILD_NUMBER = build_number.todays_build()
-DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
-TIMESTAMP = time.strftime('%y-%m-%d')
+DOOMSDAY_VERSION_MAJOR      = 0
+DOOMSDAY_VERSION_MINOR      = 0
+DOOMSDAY_VERSION_REVISION   = 0
+DOOMSDAY_RELEASE_TYPE       = "Unstable"
+DOOMSDAY_BUILD_NUMBER       = build_number.todays_build()
+DOOMSDAY_BUILD              = 'build' + DOOMSDAY_BUILD_NUMBER
 
-print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
+TIMESTAMP = time.strftime('%y-%m-%d')
+now = time.localtime()
 
 
 def exit_with_error():
@@ -81,6 +84,9 @@ def find_version():
     DOOMSDAY_VERSION_MAJOR = build_version.DOOMSDAY_VERSION_MAJOR
     DOOMSDAY_VERSION_MINOR = build_version.DOOMSDAY_VERSION_MINOR
     DOOMSDAY_VERSION_REVISION = build_version.DOOMSDAY_VERSION_REVISION
+    
+    print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
+    print 'Version:', DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_RELEASE_TYPE
 
 
 def prepare_work_dir():
@@ -250,13 +256,25 @@ import snowberry"""
     f.close()
 
     def clean_products():
-        # Remove previously build deb packages.
+        # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
+        os.system('rm -f doomsday-fmod*.deb doomsday-fmod*.changes doomsday-fmod*.tar.gz doomsday-fmod*.dsc')
+        os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
+
+    # Build dsFMOD separately.
+    os.chdir('dsfmod')
+    logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
+    if os.system('dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
+        raise Exception("Failure to build dsFMOD from source.")
+    shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
+    shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
+    shutil.copy(glob.glob('fmod-*.txt')[0], OUTPUT_DIR)    
+    os.chdir('..')
 
     # Place the result in the output directory.
     shutil.copy(glob.glob('../doomsday*.deb')[0], OUTPUT_DIR)
