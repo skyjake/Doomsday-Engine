@@ -98,7 +98,7 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
 
     if debChanges:
         # Only update the Debian changelog.
-        #changes.generate('deb')
+        changes.generate('deb')
 
         # Also update the doomsday-fmod changelog (just version number).
         os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'dsfmod'))
