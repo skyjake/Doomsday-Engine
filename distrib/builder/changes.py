@@ -3,6 +3,7 @@ import os
 import utils
 from event import Event
 import build_version
+import config
 
 class Entry:
     def __init__(self):
