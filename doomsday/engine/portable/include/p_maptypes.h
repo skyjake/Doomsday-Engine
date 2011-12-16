@@ -389,8 +389,8 @@ typedef struct sidedef_s {
 } sidedef_t;
 
 // Helper macros for accessing linedef data elements.
-#define L_v(n)                  v[(n)]
-#define L_vpos(n)               v[(n)]->V_pos
+#define L_v(n)                  v[(n)? 1:0]
+#define L_vpos(n)               v[(n)? 1:0]->V_pos
 
 #define L_v1                    L_v(0)
 #define L_v1pos                 L_v(0)->V_pos
@@ -398,14 +398,14 @@ typedef struct sidedef_s {
 #define L_v2                    L_v(1)
 #define L_v2pos                 L_v(1)->V_pos
 
-#define L_vo(n)                 vo[(n)]
+#define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)]
+#define L_side(n)               sideDefs[(n)? 1:0]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)]->sector
+#define L_sector(n)             sideDefs[(n)? 1:0]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 

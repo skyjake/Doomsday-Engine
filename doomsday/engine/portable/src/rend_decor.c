@@ -611,7 +611,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             else
             {
                 float texOffset[2];
-                if(R_FindBottomTop(SEG_MIDDLE, 0, suf,
+                if(R_FindBottomTop(line, sid, SEG_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
                              frontFloor, frontCeil, backFloor, backCeil,
                              (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                              (line->flags & DDLF_DONTPEGTOP)? true : false,

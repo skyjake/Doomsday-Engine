@@ -1086,7 +1086,7 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_LINEDEF:
-        Linedef_SetProperty(obj, args);
+        LineDef_SetProperty(obj, args);
         break;
 
     case DMU_SIDEDEF:
@@ -1531,7 +1531,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_LINEDEF:
-        Linedef_GetProperty(obj, args);
+        LineDef_GetProperty(obj, args);
         break;
 
     case DMU_SURFACE:

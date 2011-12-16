@@ -1,4 +1,4 @@
-/**\file
+/**\file p_seg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,51 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * World segs.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-void Seg_GetGeometryDeltasXY(seg_t* seg, boolean flipEdges,
-    vec3_t bottomLeft, vec3_t topLeft, vec3_t bottomRight, vec3_t topRight)
-{
-    assert(seg && bottomLeft && topLeft && bottomRight && topRight);
-    {
-    vertex_t* vtx1 = seg->SG_v(flipEdges?1:0), *vtx2 = seg->SG_v(flipEdges?0:1);
-    V3_Set(bottomLeft,  vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
-    V3_Set(topLeft,     vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
-    V3_Set(bottomRight, vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
-    V3_Set(topRight,    vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
-    }
-}
-
-/**
- * Update the seg, property is selected by DMU_* name.
- */
 boolean Seg_SetProperty(seg_t *seg, const setargs_t *args)
 {
     switch(args->prop)
@@ -82,9 +42,6 @@ boolean Seg_SetProperty(seg_t *seg, const setargs_t *args)
     return true; // Continue iteration.
 }
 
-/**
- * Get the value of a seg property, selected by DMU_* name.
- */
 boolean Seg_GetProperty(const seg_t *seg, setargs_t *args)
 {
     switch(args->prop)

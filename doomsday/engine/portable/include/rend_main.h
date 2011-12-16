@@ -75,14 +75,7 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
 float           Rend_PointDist3D(const float c[3]);
-float           Rend_SectorLight(sector_t* sec);
 void            Rend_ApplyTorchLight(float* color, float distance);
-int             Rend_MidMaterialPos(float* bottomleft, float* bottomright,
-                                    float* topleft, float* topright,
-                                    float* texoffy, float tcyoff, float texHeight,
-                                    boolean lower_unpeg, boolean clipTop,
-                                    boolean clipBottom);
-boolean         Rend_DoesMidTextureFillGap(linedef_t* line, int backside, boolean ignoreAlpha);
 
 void            Rend_ApplyLightAdaptation(float* lightvalue);
 float           Rend_GetLightAdaptVal(float lightvalue);

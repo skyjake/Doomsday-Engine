@@ -432,72 +432,6 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
     }
 }
 
-/**
- * \fixme No need to do this each frame. Set a flag in sidedef_t->flags to
- * denote this. Is sensitive to plane heights, surface properties
- * (e.g. alpha) and surface texture properties.
- */
-boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignoreAlpha)
-{
-    // Check for unmasked midtextures on twosided lines that completely
-    // fill the gap between floor and ceiling (we don't want to give away
-    // the location of any secret areas (false walls)).
-    if(line->L_backside)
-    {
-        sector_t* front = line->L_sector(backside);
-        sector_t* back  = line->L_sector(backside^1);
-        sidedef_t* side  = line->L_side(backside);
-
-        if(side->SW_middlematerial)
-        {
-            // Ensure we have up to date info.
-            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
-            material_t* mat = side->SW_middlematerial;
-            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
-
-            if(ignoreAlpha || (ms->isOpaque && !side->SW_middleblendmode && side->SW_middlergba[3] >= 1))
-            {
-                float openTop[2], matTop[2];
-                float openBottom[2], matBottom[2];
-
-                if(side->flags & SDF_MIDDLE_STRETCH)
-                    return true;
-
-                openTop[0] = openTop[1] = matTop[0] = matTop[1] =
-                    MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
-                openBottom[0] = openBottom[1] = matBottom[0] = matBottom[1] =
-                    MAX_OF(back->SP_floorvisheight, front->SP_floorvisheight);
-
-                // Could the mid texture fill enough of this gap for us
-                // to consider it completely closed?
-                if(ms->size.height >= (openTop[0] - openBottom[0]) &&
-                   ms->size.height >= (openTop[1] - openBottom[1]))
-                {
-                    // Possibly. Check the placement of the mid texture.
-                    if(Rend_MidMaterialPos
-                       (&matBottom[0], &matBottom[1], &matTop[0], &matTop[1],
-                        NULL, side->SW_middlevisoffset[VY], ms->size.height,
-                        0 != (line->flags & DDLF_DONTPEGBOTTOM),
-                        !(R_IsSkySurface(&front->SP_ceilsurface) &&
-                          R_IsSkySurface(&back->SP_ceilsurface)),
-                        !(R_IsSkySurface(&front->SP_floorsurface) &&
-                          R_IsSkySurface(&back->SP_floorsurface))))
-                    {
-                        if(matTop[0] >= openTop[0] &&
-                           matTop[1] >= openTop[1] &&
-                           matBottom[0] <= openBottom[0] &&
-                           matBottom[1] <= openBottom[1])
-                            return true;
-                    }
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
 static void markSegSectionsPVisible(seg_t* seg)
 {
     const plane_t* fceil, *bceil, *ffloor, *bfloor;
@@ -729,66 +663,6 @@ for(k = 0; k < div->num; ++k)
 }
 #endif
     }
-}
-
-/**
- * Calculates the placement for a middle texture (top, bottom, offset).
- * texoffy may be NULL.
- * Returns false if the middle texture isn't visible (in the opening).
- */
-int Rend_MidMaterialPos(float* bottomleft, float* bottomright,
-                        float* topleft, float* topright, float* texoffy,
-                        float tcyoff, float texHeight, boolean lowerUnpeg,
-                        boolean clipTop, boolean clipBottom)
-{
-    int                 side;
-    float               openingTop, openingBottom;
-    boolean             visible[2] = {false, false};
-
-    for(side = 0; side < 2; ++side)
-    {
-        openingTop = *(side? topright : topleft);
-        openingBottom = *(side? bottomright : bottomleft);
-
-        if(openingTop <= openingBottom)
-            continue;
-
-        // Else the mid texture is visible on this side.
-        visible[side] = true;
-
-        if(side == 0 && texoffy)
-            *texoffy = 0;
-
-        if(lowerUnpeg)
-        {
-            *(side? bottomright : bottomleft) += tcyoff;
-            *(side? topright : topleft) =
-                *(side? bottomright : bottomleft) + texHeight;
-        }
-        else
-        {
-            *(side? topright : topleft) += tcyoff;
-            *(side? bottomright : bottomleft) =
-                *(side? topright : topleft) - texHeight;
-        }
-
-        // Clip it.
-        if(clipBottom)
-            if(*(side? bottomright : bottomleft) < openingBottom)
-            {
-                *(side? bottomright : bottomleft) = openingBottom;
-            }
-
-        if(clipTop)
-            if(*(side? topright : topleft) > openingTop)
-            {
-                if(side == 0 && texoffy)
-                    *texoffy += *(side? topright : topleft) - openingTop;
-                *(side? topright : topleft) = openingTop;
-            }
-    }
-
-    return (visible[0] || visible[1]);
 }
 
 static void selectSurfaceColors(const float** topColor,
@@ -2114,7 +1988,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         {
         float deltaL, deltaR, diff;
 
-        Linedef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
+        LineDef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
 
         // Linear interpolation of the linedef light deltas to the edges of the seg.
         diff = deltaR - deltaL;
@@ -2209,13 +2083,13 @@ static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
     return solidSeg;
 }
 
-boolean R_FindBottomTop(segsection_t section, float segOffset,
-                             const surface_t* suf,
-                             const plane_t* ffloor, const plane_t* fceil,
-                             const plane_t* bfloor, const plane_t* bceil,
-                             boolean unpegBottom, boolean unpegTop,
-                             boolean stretchMiddle, boolean isSelfRef,
-                             float* bottom, float* top, float texOffset[2])
+boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
+    float matOffsetX, float matOffsetY,
+    const plane_t* ffloor, const plane_t* fceil,
+    const plane_t* bfloor, const plane_t* bceil,
+    boolean unpegBottom, boolean unpegTop,
+    boolean stretchMiddle, boolean isSelfRef,
+    float* bottom, float* top, float texOffset[2])
 {
     switch(section)
     {
@@ -2228,8 +2102,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             *bottom = bceil->visHeight;
         if(*top > *bottom)
         {
-            texOffset[VX] = suf->visOffset[VX] + segOffset;
-            texOffset[VY] = suf->visOffset[VY];
+            texOffset[VX] = matOffsetX;
+            texOffset[VY] = matOffsetY;
 
             // Align with normal middle texture?
             if(!unpegTop)
@@ -2239,9 +2113,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         }
         break;
 
-    case SEG_BOTTOM:
-        {
-        float               t = bfloor->visHeight;
+    case SEG_BOTTOM: {
+        float t = bfloor->visHeight;
 
         *bottom = ffloor->visHeight;
         // Can't go over the back ceiling, would induce polygon flaws.
@@ -2255,8 +2128,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
 
         if(*top > *bottom)
         {
-            texOffset[VX] = suf->visOffset[VX] + segOffset;
-            texOffset[VY] = suf->visOffset[VY];
+            texOffset[VX] = matOffsetX;
+            texOffset[VY] = matOffsetY;
 
             if(bfloor->visHeight > fceil->visHeight)
                 texOffset[VY] += -(fceil->visHeight - bfloor->visHeight);
@@ -2268,9 +2141,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             return true;
         }
         break;
-        }
-    case SEG_MIDDLE:
-        {
+      }
+    case SEG_MIDDLE: {
         float ftop, fbottom, vR_ZBottom, vR_ZTop;
 
         if(isSelfRef)
@@ -2284,9 +2156,6 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
         }
 
-        //fbottom += suf->visOffset[VY];
-        //ftop    += suf->visOffset[VY];
-
         *bottom = vR_ZBottom = fbottom;
         *top    = vR_ZTop    = ftop;
 
@@ -2294,7 +2163,7 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         {
             if(*top > *bottom)
             {
-                texOffset[VX] = suf->visOffset[VX] + segOffset;
+                texOffset[VX] = matOffsetX;
                 texOffset[VY] = 0;
 
                 return true;
@@ -2312,11 +2181,10 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
                     clipTop = false;
             }
 
-            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, &texOffset[VY],
-               suf->visOffset[VY], Material_Height(suf->material),
-                    unpegBottom, clipTop, clipBottom))
+            if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
+                   &vR_ZTop, &texOffset[VY], unpegBottom, clipTop, clipBottom))
             {
-                texOffset[VX] = suf->visOffset[VX] + segOffset;
+                texOffset[VX] = matOffsetX;
                 //texOffset[VY] = 0;
 
                 return true;
@@ -2330,7 +2198,7 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
 }
 
 /**
- * Renders wall sections for given two-sided seg.
+ * Render wall sections for a Seg belonging to a two-sided LineDef.
  */
 static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
 {
@@ -2386,13 +2254,14 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_middlesurface;
 
-        if(R_FindBottomTop(SEG_MIDDLE, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_MIDDLE,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, suf,
                                       &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
@@ -2431,13 +2300,14 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*      suf = &frontSide->SW_topsurface;
 
-        if(R_FindBottomTop(SEG_TOP, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_TOP,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_TOP, suf,
                            &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
@@ -2450,13 +2320,14 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_bottomsurface;
 
-        if(R_FindBottomTop(SEG_BOTTOM, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_BOTTOM,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_BOTTOM, suf,
                            &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
@@ -2500,14 +2371,6 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
         return true;
 
     return false;
-}
-
-float Rend_SectorLight(sector_t *sec)
-{
-    if(levelFullBright)
-        return 1.0f;
-
-    return sec->lightLevel;
 }
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
@@ -2647,7 +2510,7 @@ static int segSkyFixes(seg_t* seg)
                     {
                         floor = ffloor;
                     }
-                    else if(Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/))
+                    else if(LineDef_MiddleMaterialCoversOpening(seg->lineDef, seg->side, false/*test alpha*/))
                     {
                         floor = ffloor;
                         isGapFilled = true;
@@ -2688,7 +2551,7 @@ static int segSkyFixes(seg_t* seg)
                     {
                         ceil = fceil;
                     }
-                    else if(Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/))
+                    else if(LineDef_MiddleMaterialCoversOpening(seg->lineDef, seg->side, false/*test alpha*/))
                     {
                         ceil = fceil;
                         isGapFilled = true;

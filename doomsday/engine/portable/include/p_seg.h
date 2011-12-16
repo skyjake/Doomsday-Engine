@@ -1,4 +1,4 @@
-/**\file
+/**\file p_seg.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,18 +23,23 @@
  */
 
 /**
- * World segs.
+ * Map Seg.
  */
 
-#ifndef LIBDENG_WORLD_SEG_H
-#define LIBDENG_WORLD_SEG_H
+#ifndef LIBDENG_MAP_SEG_H
+#define LIBDENG_MAP_SEG_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-void Seg_GetGeometryDeltasXY(seg_t* seg, boolean flipEdges, vec3_t bottomLeft, vec3_t topLeft, vec3_t bottomRight, vec3_t topRight);
+/**
+ * Update the seg, property is selected by DMU_* name.
+ */
+boolean Seg_GetProperty(const seg_t* seg, setargs_t* args);
 
-boolean         Seg_GetProperty(const seg_t *seg, setargs_t *args);
-boolean         Seg_SetProperty(seg_t *seg, const setargs_t *args);
+/**
+ * Get the value of a seg property, selected by DMU_* name.
+ */
+boolean Seg_SetProperty(seg_t* seg, const setargs_t* args);
 
-#endif /* LIBDENG_WORLD_SEG_H */
+#endif /* LIBDENG_MAP_SEG_H */
