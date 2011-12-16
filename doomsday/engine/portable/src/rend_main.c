@@ -2487,8 +2487,7 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
             // A closed gap.
             solidSeg = true;
         }
-        else if((seg->frameFlags & SEGINF_BACKSECSKYFIX) ||
-                (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
+        else if((!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
                 (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
                 (frontSide->SW_bottommaterial)))
         {
@@ -2524,8 +2523,6 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         // Occlusions can only happen where two sectors contact.
         if(seg->lineDef && !(seg->flags & SEGF_POLYOBJ))
         {
-            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
-
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
                 seg->frameFlags |= SEGINF_FACINGFRONT;
@@ -2542,8 +2539,6 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
         for(i = 0; i < sub->polyObj->numSegs; ++i)
         {
             seg = sub->polyObj->segs[i];
-
-            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
@@ -2608,20 +2603,14 @@ static __inline float skyCapZ(subsector_t* ssec, int skyCap)
 static __inline float skyFixFloorZ(const plane_t* frontFloor, const plane_t* backFloor)
 {
     if(P_IsInVoid(viewPlayer))
-    {
-        if(!(R_IsSkySurface(&frontFloor->surface) && backFloor && R_IsSkySurface(&backFloor->surface)))
-            return frontFloor->visHeight;
-    }
+        return frontFloor->visHeight;
     return skyFix[PLN_FLOOR].height;
 }
 
 static __inline float skyFixCeilZ(const plane_t* frontCeil, const plane_t* backCeil)
 {
     if(P_IsInVoid(viewPlayer))
-    {
-        if(!(R_IsSkySurface(&frontCeil->surface) && backCeil && R_IsSkySurface(&backCeil->surface)))
-            return frontCeil->visHeight;
-    }
+        return frontCeil->visHeight;
     return skyFix[PLN_CEILING].height;
 }
 
@@ -2639,19 +2628,38 @@ static int segSkyFixes(seg_t* seg)
         const sector_t* backSec  = seg->SG_backsector;
         if(!backSec || backSec != seg->SG_frontsector)
         {
+            const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
+            const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
+            const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
+            const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+
             // Lower fix?
             if(R_IsSkySurface(&frontSec->SP_floorsurface))
             {
-                const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
-                const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
                 const float skyFloor = skyFixFloorZ(ffloor, bfloor);
 
                 if(!P_IsInVoid(viewPlayer))
                 {
-                    if((backSec && Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/) ||
-                       !(backSec && R_IsSkySurface(&bfloor->surface))) && ffloor->visHeight > skyFloor)
+                    boolean isGapFilled = false;
+                    const plane_t* floor;
+
+                    if(!backSec || bfloor->visHeight < fceil->visHeight && !R_IsSkySurface(&bfloor->surface))
                     {
-                        fixes |= SKYCAP_LOWER;
+                        floor = ffloor;
+                    }
+                    else if(Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/))
+                    {
+                        floor = ffloor;
+                        isGapFilled = true;
+                    }
+                    else
+                    {
+                        floor = bfloor;
+                    }
+
+                    if(floor->visHeight > skyFloor && !(!isGapFilled && backSec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight < fceil->visHeight))
+                    {
+                        fixes |= SKYCAP_UPPER;
                     }
                 }
                 else
@@ -2669,14 +2677,28 @@ static int segSkyFixes(seg_t* seg)
             // Upper fix?
             if(R_IsSkySurface(&frontSec->SP_ceilsurface))
             {
-                const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
-                const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
                 const float skyCeil = skyFixCeilZ(fceil, bceil);
 
                 if(!P_IsInVoid(viewPlayer))
                 {
-                    if((backSec && Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/) ||
-                       !(backSec && R_IsSkySurface(&bceil->surface))) && fceil->visHeight < skyCeil)
+                    boolean isGapFilled = false;
+                    const plane_t* ceil;
+
+                    if(!backSec || bceil->visHeight > ffloor->visHeight && !R_IsSkySurface(&bceil->surface))
+                    {
+                        ceil = fceil;
+                    }
+                    else if(Rend_DoesMidTextureFillGap(seg->lineDef, seg->side, false/*test alpha*/))
+                    {
+                        ceil = fceil;
+                        isGapFilled = true;
+                    }
+                    else
+                    {
+                        ceil = bceil;
+                    }
+
+                    if(ceil->visHeight < skyCeil && !(!isGapFilled && backSec && R_IsSkySurface(&bceil->surface) && bceil->visHeight > ffloor->visHeight))
                     {
                         fixes |= SKYCAP_UPPER;
                     }
@@ -2718,29 +2740,13 @@ static void skyFixZCoords(seg_t* seg, int skyCap, float* bottom, float* top)
 
     if(skyCap & SKYCAP_UPPER)
     {
-        if(!P_IsInVoid(viewPlayer))
-        {
-            if(top)    *top    = skyFixCeilZ(fceil, bceil);
-            if(bottom) *bottom = MAX_OF(fceil->visHeight, ffloor->visHeight);
-        }
-        else
-        {
-            if(top)    *top    = (backSec? fceil->visHeight : skyFixCeilZ(fceil, bceil));
-            if(bottom) *bottom = MAX_OF(ffloor->visHeight, (backSec? bceil->visHeight : fceil->visHeight));
-        }
+        if(top)    *top    = skyFixCeilZ(fceil, bceil);
+        if(bottom) *bottom = MAX_OF((backSec && R_IsSkySurface(&bceil->surface))? bceil->visHeight : fceil->visHeight, ffloor->visHeight);
     }
     else
     {
-        if(!P_IsInVoid(viewPlayer))
-        {
-            if(top)    *top    = MIN_OF(fceil->visHeight, ffloor->visHeight);
-            if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
-        }
-        else
-        {
-            if(top)    *top    = MIN_OF(fceil->visHeight, (backSec? bfloor->visHeight : ffloor->visHeight));
-            if(bottom) *bottom = (backSec? ffloor->visHeight : skyFixFloorZ(ffloor, bfloor));
-        }
+        if(top)    *top    = MIN_OF(fceil->visHeight, (backSec? bfloor->visHeight : ffloor->visHeight));
+        if(bottom) *bottom = (backSec? ffloor->visHeight : skyFixFloorZ(ffloor, bfloor));
     }
 }
 
@@ -2844,170 +2850,6 @@ static void rendSubsectorSky(subsector_t* ssec, int skyCap)
     }
 }
 
-static void getSkymaskBottomTop3(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
-    float skyFloor, float skyCeil,
-    const seg_t* seg, const sector_t* frontSec, const sector_t* backSec,
-    float* bottom, float* top)
-{
-    float texOffset[2];
-    linedef_t* lineDef = seg->lineDef;
-    assert(ffloor && fceil && bfloor && bceil && bottom && top);
-
-    *bottom = 0;
-    *top = 0;
-    if(!(bceil->visHeight <= ffloor->visHeight || bfloor->visHeight >= fceil->visHeight))
-    {
-        if(lineDef)
-        {
-           sidedef_t* sideDef = SEG_SIDEDEF(seg);
-           if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
-               R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
-                               ffloor, fceil, bfloor, bceil,
-                               (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                               (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
-                               (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                               LINE_SELFREF(lineDef)? true : false,
-                               bottom, top, texOffset);
-        }
-    }
-    else
-    {
-        *bottom = skyFloor;
-        *top = fceil->visHeight;
-        return;
-    }
-
-    if(*top > *bottom)
-    {
-        if(R_IsSkySurface(&frontSec->SP_floorsurface) && R_IsSkySurface(&backSec->SP_floorsurface) &&
-            bfloor->visHeight > skyFloor && !(*bottom > ffloor->visHeight))
-        {
-            *bottom = skyFloor;
-            *top = MIN_OF(bfloor->visHeight, *bottom);
-        }
-    }
-    else
-    {
-        *bottom = 0;
-        *top = 0;
-    }
-}
-
-static void getSkymaskBottomTop4(const plane_t* ffloor, const plane_t* fceil,
-    const plane_t* bfloor, const plane_t* bceil, float skyFloor, float skyCeil,
-    const seg_t* seg, const sector_t* frontSec, const sector_t* backSec,
-    float* bottom, float* top)
-{
-    float texOffset[2];
-    linedef_t* lineDef = seg->lineDef;
-    assert(ffloor && fceil && bfloor && bceil && bottom && top);
-
-    *bottom = 0;
-    *top = 0;
-    if(!(bceil->visHeight <= ffloor->visHeight || bfloor->visHeight >= fceil->visHeight))
-    {
-        if(lineDef)
-        {
-            sidedef_t* sideDef = SEG_SIDEDEF(seg);
-            if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
-               R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
-                               ffloor, fceil, bfloor, bceil,
-                               (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                               (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
-                               (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                               LINE_SELFREF(lineDef)? true : false,
-                               bottom, top, texOffset);
-        }
-    }
-    else
-    {
-        *bottom = ffloor->visHeight;
-        *top = skyCeil;
-        return;
-    }
-
-    if(*top > *bottom)
-    {
-        if(R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface) &&
-           bceil->visHeight < skyCeil && !(*top < fceil->visHeight))
-        {
-            *bottom = MAX_OF(bceil->visHeight, *top);
-            *top = skyCeil;
-        }
-    }
-    else
-    {
-        *bottom = 0;
-        *top = 0;
-    }
-}
-
-static void getSkymaskBottomTop5(const plane_t* ffloor, const plane_t* fceil,
-    const plane_t* bfloor, const plane_t* bceil, float skyFloor, float skyCeil,
-    boolean bottomHasMaterialFix, const seg_t* seg, const sector_t* frontSec,
-    const sector_t* backSec, float* bottom, float* top, boolean* addSolidViewSeg)
-{
-    assert(ffloor && fceil && bfloor && bceil && bottom && top);
-
-    *bottom = 0;
-    *top = 0;
-    *addSolidViewSeg = false;
-
-    if((R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
-       (R_IsSkySurface(&bfloor->surface) && bottomHasMaterialFix))
-    {
-        if(bfloor->visHeight > skyFloor)
-        {
-           *bottom = skyFloor;
-           *top = bfloor->visHeight;
-        }
-        // Ensure we add a solid view seg.
-        *addSolidViewSeg = true;
-    }
-}
-
-static void getSkymaskBottomTop6(const plane_t* ffloor, const plane_t* fceil,
-    const plane_t* bfloor, const plane_t* bceil, float skyFloor, float skyCeil,
-    boolean topHasMaterialFix, const seg_t* seg, const sector_t* frontSec,
-    const sector_t* backSec, float* bottom, float* top, boolean* addSolidViewSeg)
-{
-    assert(ffloor && fceil && bfloor && bceil && bottom && top);
-
-    *bottom = 0;
-    *top = 0;
-    *addSolidViewSeg = false;
-
-    if((R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
-       (R_IsSkySurface(&bceil->surface) && topHasMaterialFix))
-    {
-        if(bceil->visHeight < skyCeil)
-        {
-            *top = skyCeil;
-            *bottom = bceil->visHeight;
-        }
-        // Ensure we add a solid view seg.
-        *addSolidViewSeg = true;
-    }
-}
-
-static void getSkymaskClosedOffsets(const seg_t* seg, const sector_t* frontsec,
-    const sector_t* backsec, const plane_t* ffloor, const plane_t* fceil,
-    const plane_t* bfloor, const plane_t* bceil, float skyFloor, float skyCeil,
-    boolean topHasMaterialFix, float* bottom, float* top, boolean* addSolidViewSeg)
-{
-    assert(bottom && top && addSolidViewSeg);
-    *bottom = 0;
-    *top    = 0;
-    *addSolidViewSeg = false;
-    if(!P_IsInVoid(viewPlayer) && backsec && !(seg->lineDef && LINE_SELFREF(seg->lineDef)) && bceil && (bceil->visHeight <= ffloor->visHeight||bfloor->visHeight>= bceil->visHeight))
-    {
-        if((backsec && bfloor->visHeight < bceil->visHeight))
-            getSkymaskBottomTop4(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
-        else
-            getSkymaskBottomTop6(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, topHasMaterialFix, seg, frontsec, backsec, bottom, top, addSolidViewSeg);
-    }
-}
-
 static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
 {
     linedef_t* lineDef;
@@ -3034,55 +2876,6 @@ static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
             !sideDef->SW_middlematerial);
 }
 
-static void rendSubsectorSkyClosedBackFixes(subsector_t* ssec)
-{
-    const int rpFlags = RPF_DEFAULT | RPF_SKYMASK;
-    float skyFloorZ, skyCeilZ, zBottom, zTop;
-    boolean addSolidViewSeg;
-    vertex_t* from, *to;
-    rvertex_t verts[4];
-    seg_t** segPtr;
-
-    for(segPtr = ssec->segs; *segPtr; segPtr++)
-    {
-        seg_t* seg = *segPtr;
-        const sector_t* frontSec = seg->SG_frontsector;
-        const sector_t* backSec  = seg->SG_backsector;
-        const plane_t* ffloor = frontSec? frontSec->SP_plane(PLN_FLOOR)   : NULL;
-        const plane_t* fceil  = frontSec? frontSec->SP_plane(PLN_CEILING) : NULL;
-        const plane_t* bceil  =  backSec?  backSec->SP_plane(PLN_CEILING) : NULL;
-        const plane_t* bfloor =  backSec?  backSec->SP_plane(PLN_FLOOR)   : NULL;
-
-        if(!skymaskSegIsVisible(seg, false)) continue;
-
-        skyFloorZ = skyFixFloorZ(ffloor, bfloor);
-        skyCeilZ  = skyFixCeilZ(fceil, bceil);
-
-        getSkymaskClosedOffsets(seg, seg->SG_frontsector, seg->SG_backsector,
-            ffloor, fceil, bfloor, bceil, skyFloorZ, skyCeilZ,
-            (SEG_SIDEDEF(seg)->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL) != 0,
-            &zBottom, &zTop, &addSolidViewSeg);
-
-        if(addSolidViewSeg && !P_IsInVoid(viewPlayer) && seg->SG_backsector &&
-           !LINE_SELFREF(seg->lineDef))
-        {
-            seg->frameFlags |= SEGINF_BACKSECSKYFIX;
-        }
-
-        if(zTop <= zBottom) continue;
-
-        from = seg->SG_v(0);
-        to   = seg->SG_v(1);
-        V3_Set(verts[0].pos, from->V_pos[VX], from->V_pos[VY], zBottom);
-        V3_Set(verts[1].pos, from->V_pos[VX], from->V_pos[VY], zTop);
-
-        V3_Set(verts[2].pos,   to->V_pos[VX],   to->V_pos[VY], zBottom);
-        V3_Set(verts[3].pos,   to->V_pos[VX],   to->V_pos[VY], zTop);
-
-        RL_AddPoly(PT_TRIANGLE_STRIP, rpFlags, 4, verts, NULL);
-    }
-}
-
 static void Rend_RenderSubsectorSky(subsector_t* ssec)
 {
     // Any work to do?
@@ -3093,7 +2886,6 @@ static void Rend_RenderSubsectorSky(subsector_t* ssec)
 
     // Write geometry.
     rendSubsectorSky(ssec, SKYCAP_LOWER|SKYCAP_UPPER);
-    rendSubsectorSkyClosedBackFixes(ssec);
 }
 
 /**

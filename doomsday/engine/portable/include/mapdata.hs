@@ -75,7 +75,6 @@ internal
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
-#define SEGINF_BACKSECSKYFIX    0x0002
 end
 
 public

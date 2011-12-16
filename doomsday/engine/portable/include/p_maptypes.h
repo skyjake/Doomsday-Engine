@@ -73,7 +73,6 @@ typedef struct vertex_s {
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
-#define SEGINF_BACKSECSKYFIX    0x0002
 
 typedef struct seg_s {
     runtime_mapdata_header_t header;
