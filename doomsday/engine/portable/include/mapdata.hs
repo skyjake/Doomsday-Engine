@@ -55,7 +55,7 @@ internal
 #define FRONT 0
 #define BACK  1
 
-#define SG_v(n)                 v[(n)]
+#define SG_v(n)                 v[(n)? 1:0]
 #define SG_vpos(n)              SG_v(n)->V_pos
 
 #define SG_v1                   SG_v(0)
@@ -64,7 +64,7 @@ internal
 #define SG_v2                   SG_v(1)
 #define SG_v2pos                SG_v(1)->V_pos
 
-#define SG_sector(n)            sec[(n)]
+#define SG_sector(n)            sec[(n)? 1:0]
 #define SG_frontsector          SG_sector(FRONT)
 #define SG_backsector           SG_sector(BACK)
 
@@ -276,7 +276,7 @@ internal
 #define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
 #define SP_floorvisheight       SP_planevisheight(PLN_FLOOR)
 
-#define S_skyfix(n)             skyFix[(n)]
+#define S_skyfix(n)             skyFix[(n)? 1:0]
 #define S_floorskyfix           S_skyfix(PLN_FLOOR)
 #define S_ceilskyfix            S_skyfix(PLN_CEILING)
 end
@@ -416,7 +416,7 @@ end
 
 internal
 // Helper macros for accessing linedef data elements.
-#define L_v(n)                  v[(n)]
+#define L_v(n)                  v[(n)? 1:0]
 #define L_vpos(n)               v[(n)]->V_pos
 
 #define L_v1                    L_v(0)
@@ -425,14 +425,14 @@ internal
 #define L_v2                    L_v(1)
 #define L_v2pos                 L_v(1)->V_pos
 
-#define L_vo(n)                 vo[(n)]
+#define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)]
+#define L_side(n)               sideDefs[(n)? 1:0]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)]->sector
+#define L_sector(n)             sideDefs[(n)? 1:0]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 
