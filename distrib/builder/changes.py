@@ -61,6 +61,7 @@ class Changes:
         logText = logText.encode('utf-8')
         logText = logText.replace('<', '&lt;')
         logText = logText.replace('>', '&gt;')
+        logText = logText.replace('&', '&amp;')
         
         os.remove(tmpName)        
 

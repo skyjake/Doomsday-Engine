@@ -140,11 +140,23 @@ class Event:
                 os.system('gzip -f9 %s' % combinedName)        
                 
     def download_uri(self, fn):
+        # Available on SourceForge?
+        if self.number() >= 350 and (fn.endswith('.exe') or fn.endswith('.deb') or fn.endswith('.dmg')):
+            return "http://sourceforge.net/projects/deng/files/Doomsday%%20Engine/Builds/%s/download" % fn
+        # Default to the old location.
         return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
                 
     def compressed_log_filename(self, binaryFn):
         return 'buildlog-%s-%s.txt.gz' % (self.package_from_filename(binaryFn), 
                                           self.os_from_filename(binaryFn)[2]) 
+
+    def sort_by_package(self, binaries):
+        """Returns the list of binaries sorted by package."""
+        pl = []
+        for bin in binaries:
+            pl.append((self.package_from_filename(bin), bin))
+        pl.sort()
+        return [bin for pkg, bin in pl]
                 
     def html_description(self, encoded=True):
         """Composes an HTML build report."""
@@ -176,7 +188,7 @@ class Event:
                 continue
 
             # List all the binaries. One row per binary.
-            for binary in binaries:
+            for binary in self.sort_by_package(binaries):
                 msg += '<tr><td>'
                 if isFirst:
                     msg += osName
