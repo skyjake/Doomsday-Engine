@@ -525,10 +525,10 @@ void F_EndStartup(void)
 
 static int unloadListFiles(FileList* list, boolean nonStartup)
 {
-    assert(list);
-    {
     abstractfile_t* file;
     int i, unloaded = 0;
+    assert(list);
+
     for(i = FileList_Size(list) - 1; i >= 0; i--)
     {
         file = FileList_GetFile(list, i);
@@ -541,7 +541,6 @@ static int unloadListFiles(FileList* list, boolean nonStartup)
         }
     }
     return unloaded;
-    }
 }
 
 int F_Reset(void)
@@ -591,9 +590,10 @@ int F_Reset(void)
 
 boolean F_IsValidLumpNum(lumpnum_t absoluteLumpNum)
 {
+    lumpnum_t lumpNum;
     errorIfNotInited("F_IsValidLumpNum");
-    { lumpnum_t lumpNum = chooseWadLumpDirectory(absoluteLumpNum);
-    return LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum); }
+    lumpNum = chooseWadLumpDirectory(absoluteLumpNum);
+    return LumpDirectory_IsValidIndex(ActiveWadLumpDirectory, lumpNum);
 }
 
 lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
@@ -670,11 +670,11 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
+    lumpnum_t translated;
     errorIfNotInited("F_FindFileForLumpNum2");
-    { lumpnum_t translated = chooseWadLumpDirectory(absoluteLumpNum);
+    translated = chooseWadLumpDirectory(absoluteLumpNum);
     if(lumpIdx) *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, translated);
     return LumpDirectory_SourceFile(ActiveWadLumpDirectory, translated);
-    }
 }
 
 abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
@@ -712,8 +712,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
 
     errorIfNotInited("F_OpenAuxiliary");
 
-    if(!path || !path[0])
-        return -1;
+    if(!path || !path[0]) return -1;
 
     // Make it a full path.
     Str_Init(&searchPath); Str_Set(&searchPath, path);
@@ -727,7 +726,9 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
     if(!file)
     {
         if(foundPath)
+        {
             Str_Delete(foundPath);
+        }
         if(!silent)
         {
             Con_Message("Warning:F_OpenAuxiliary: Resource \"%s\" not found, aborting.\n", path);
@@ -756,7 +757,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         Str_Delete(foundPath);
 
         dfile = DFileBuilder_NewFromAbstractFile(newWadFile(dfile, &info));
-        FileList_AddBack(openFiles,   dfile);
+        FileList_AddBack(openFiles, dfile);
         FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(dfile));
         WadFile_PublishLumpsToDirectory((wadfile_t*)DFile_File(dfile), ActiveWadLumpDirectory);
 
@@ -772,6 +773,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         else
             Con_Message("Warning:F_OpenAuxiliary: Cannot open a resource with neither a path nor a handle to it.\n");
     }
+
     if(foundPath)
         Str_Delete(foundPath);
     return -1;
