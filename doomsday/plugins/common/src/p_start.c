@@ -1218,9 +1218,8 @@ float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
     len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
 
     if(offset)
-        *offset =
-            ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
-             (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
+        *offset = ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
+                   (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
     return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
             (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
 }
@@ -1236,7 +1235,7 @@ void P_TurnGizmosAwayFromDoors(void)
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    linedef_t     *closestline = NULL, *li;
+    linedef_t  *closestline = NULL, *li;
     xline_t    *xli;
     float       closestdist = 0, dist, off, linelen;    //, minrad;
     mobj_t     *tlist[MAXLIST];
@@ -1266,7 +1265,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
                 li = P_ToPtr(DMU_LINEDEF, l);
 
-                if(P_GetPtrp(li, DMU_BACK_SECTOR))
+                if(!P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
 
                 xli = P_ToXLine(li);
