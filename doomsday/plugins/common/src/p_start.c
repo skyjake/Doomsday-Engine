@@ -1257,10 +1257,10 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-static int iterateLinedefsNearMobj(thinker_t* th, void* context)
+static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
 {
-    mobj_t*             mo = (mobj_t*) th;
-    mobjtype_t          type = *((mobjtype_t*) context);
+    mobj_t* mo = (mobj_t*) th;
+    mobjtype_t type = *((mobjtype_t*)paramaters);
     unstuckmobjinlinedefparams_t params;
     AABoxf aaBox;
 
@@ -1309,12 +1309,12 @@ void P_MoveThingsOutOfWalls(void)
 #endif
         NUMMOBJTYPES // terminate.
     };
-    uint                i;
+    uint i;
 
     for(i = 0; types[i] != NUMMOBJTYPES; ++i)
     {
         mobjtype_t type = types[i];
-        DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+        DD_IterateThinkers(P_MobjThinker, moveMobjOutOfNearbyLines, &type);
         DD_IterateThinkers(P_MobjThinker, turnMobjToNearestLine, &type);
     }
 }

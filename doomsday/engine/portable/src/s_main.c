@@ -81,7 +81,7 @@ static boolean noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
-static void S_ReverbVolumeChanged(cvar_t* var)
+static void S_ReverbVolumeChanged(void)
 {
     Sfx_UpdateReverb();
 }

@@ -40,20 +40,19 @@
 #  include "jdoom64.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "p_start.h"
 #endif
 
-#include "p_actor.h"
+#include "am_map.h"
 #include "dmu_lib.h"
 #include "r_common.h"
+#include "p_actor.h"
 #include "p_mapsetup.h"
-#include "am_map.h"
-#include "p_tick.h"
 #include "p_start.h"
+#include "p_tick.h"
 #include "hu_pspr.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1019,7 +1018,9 @@ static void P_FinalizeMap(void)
 #endif
 
     // Do some fine tuning with mobj placement and orientation.
+#if __JHERETIC__ || __JHEXEN__
     P_MoveThingsOutOfWalls();
+#endif
 #if __JHERETIC__
     P_TurnGizmosAwayFromDoors();
 #endif
