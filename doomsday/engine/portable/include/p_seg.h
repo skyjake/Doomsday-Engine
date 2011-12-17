@@ -35,11 +35,11 @@
 /**
  * Update the seg, property is selected by DMU_* name.
  */
-boolean Seg_GetProperty(const seg_t* seg, setargs_t* args);
+int Seg_GetProperty(const seg_t* seg, setargs_t* args);
 
 /**
  * Get the value of a seg property, selected by DMU_* name.
  */
-boolean Seg_SetProperty(seg_t* seg, const setargs_t* args);
+int Seg_SetProperty(seg_t* seg, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_SEG_H */

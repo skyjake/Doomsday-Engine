@@ -108,11 +108,11 @@ int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
 /**
  * Get the value of a linedef property, selected by DMU_* name.
  */
-boolean LineDef_GetProperty(const linedef_t* lineDef, setargs_t* args);
+int LineDef_GetProperty(const linedef_t* lineDef, setargs_t* args);
 
 /**
  * Update the linedef, property is selected by DMU_* name.
  */
-boolean LineDef_SetProperty(linedef_t* lineDef, const setargs_t* args);
+int LineDef_SetProperty(linedef_t* lineDef, const setargs_t* args);
 
 #endif /* LIBDENG_MAP_LINEDEF_H */

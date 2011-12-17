@@ -1,4 +1,4 @@
-/**\file
+/**\file p_surface.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,17 +23,25 @@
  */
 
 /**
- * p_surface.h: World surfaces.
+ * Map surface.
  */
 
-#ifndef __DOOMSDAY_REFRESH_SURFACE_H__
-#define __DOOMSDAY_REFRESH_SURFACE_H__
+#ifndef LIBDENG_MAP_SURFACE_H
+#define LIBDENG_MAP_SURFACE_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Surface_GetProperty(const surface_t* suf, setargs_t* args);
-boolean         Surface_SetProperty(surface_t* suf, const setargs_t* args);
+/**
+ * Get the value of a surface property, selected by DMU_* name.
+ */
+int Surface_GetProperty(const surface_t* suf, setargs_t* args);
+
+/**
+ * Update the surface, property is selected by DMU_* name.
+ */
+ int Surface_SetProperty(surface_t* suf, const setargs_t* args);
+
 void            Surface_Update(surface_t* suf);
 
 boolean         Surface_IsAttachedToMap(surface_t* suf);
@@ -48,4 +56,4 @@ boolean         Surface_SetColorA(surface_t* suf, float a);
 boolean         Surface_SetColorRGBA(surface_t* suf, float r, float g, float b, float a);
 boolean         Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode);
 
-#endif
+#endif /* LIBDENG_MAP_SURFACE_H */

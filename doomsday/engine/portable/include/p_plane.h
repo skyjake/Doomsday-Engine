@@ -1,4 +1,4 @@
-/**\file
+/**\file p_plane.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +23,23 @@
  */
 
 /**
- * r_plane.h: World planes.
+ * Map plane.
  */
 
-#ifndef __DOOMSDAY_WORLD_PLANE_H__
-#define __DOOMSDAY_WORLD_PLANE_H__
+#ifndef LIBDENG_MAP_PLANE_H
+#define LIBDENG_MAP_PLANE_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Plane_GetProperty(const plane_t *pln, setargs_t *args);
-boolean         Plane_SetProperty(plane_t *pln, const setargs_t *args);
+/**
+ * Get the value of a plane property, selected by DMU_* name.
+ */
+int Plane_GetProperty(const plane_t* plane, setargs_t* args);
 
-#endif
+/**
+ * Update the plane, property is selected by DMU_* name.
+ */
+int Plane_SetProperty(plane_t* plane, const setargs_t* args);
+
+#endif /* LIBDENG_MAP_PLANE_H */

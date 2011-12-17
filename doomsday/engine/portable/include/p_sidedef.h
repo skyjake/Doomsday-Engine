@@ -1,4 +1,4 @@
-/**\file
+/**\file p_sidedef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +23,23 @@
  */
 
 /**
- * p_sidedef.h: World sidedefs.
+ * Map sidedefs
  */
 
-#ifndef __DOOMSDAY_WORLD_SIDEDEF_H__
-#define __DOOMSDAY_WORLD_SIDEDEF_H__
+#ifndef LIBDENG_MAP_SIDEDEF_H
+#define LIBDENG_MAP_SIDEDEF_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Sidedef_GetProperty(const sidedef_t* sid, setargs_t* args);
-boolean         Sidedef_SetProperty(sidedef_t* sid, const setargs_t* args);
+/**
+ * Get the value of a sidedef property, selected by DMU_* name.
+ */
+int SideDef_GetProperty(const sidedef_t* sideDef, setargs_t* args);
 
-#endif
+/**
+ * Update the sidedef, property is selected by DMU_* name.
+ */
+int SideDef_SetProperty(sidedef_t* sideDef, const setargs_t* args);
+
+#endif /* LIBDENG_MAP_SIDEDEF_H */

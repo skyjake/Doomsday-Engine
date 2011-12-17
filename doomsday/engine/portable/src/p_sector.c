@@ -1,4 +1,4 @@
-/**\file
+/**\file p_sector.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,39 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * World sectors.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Update the sector, property is selected by DMU_* name.
- */
-boolean Sector_SetProperty(sector_t *sec, const setargs_t *args)
+int Sector_SetProperty(sector_t* sec, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -79,17 +52,13 @@ boolean Sector_SetProperty(sector_t *sec, const setargs_t *args)
         DMU_SetValue(DMT_SECTOR_VALIDCOUNT, &sec->validCount, args, 0);
         break;
     default:
-        Con_Error("Sector_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Sector_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-/**
- * Get the value of a sector property, selected by DMU_* name.
- */
-boolean Sector_GetProperty(const sector_t *sec, setargs_t *args)
+int Sector_GetProperty(const sector_t* sec, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -110,18 +79,16 @@ boolean Sector_GetProperty(const sector_t *sec, setargs_t *args)
     case DMU_COLOR_BLUE:
         DMU_GetValue(DMT_SECTOR_RGB, &sec->rgb[2], args, 0);
         break;
-    case DMU_SOUND_ORIGIN:
-    {
+    case DMU_SOUND_ORIGIN: {
         const ddmobj_base_t* dmo = &sec->soundOrg;
         DMU_GetValue(DMT_SECTOR_SOUNDORG, &dmo, args, 0);
         break;
-    }
-    case DMU_LINEDEF_COUNT:
-    {
+      }
+    case DMU_LINEDEF_COUNT: {
         int val = (int) sec->lineDefCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
         break;
-    }
+      }
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &sec->mobjList, args, 0);
         break;
@@ -129,9 +96,8 @@ boolean Sector_GetProperty(const sector_t *sec, setargs_t *args)
         DMU_GetValue(DMT_SECTOR_VALIDCOUNT, &sec->validCount, args, 0);
         break;
     default:
-        Con_Error("Sector_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Sector_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }

@@ -1,4 +1,4 @@
-/**\file
+/**\file p_plane.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,39 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * World planes.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Update the plane, property is selected by DMU_* name.
- */
-boolean Plane_SetProperty(plane_t *pln, const setargs_t *args)
+int Plane_SetProperty(plane_t* pln, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -73,17 +46,13 @@ boolean Plane_SetProperty(plane_t *pln, const setargs_t *args)
         DMU_SetValue(DMT_PLANE_SPEED, &pln->speed, args, 0);
         break;
     default:
-        Con_Error("Plane_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Plane_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-/**
- * Get the value of a plane property, selected by DMU_* name.
- */
-boolean Plane_GetProperty(const plane_t *pln, setargs_t *args)
+int Plane_GetProperty(const plane_t* pln, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -93,12 +62,11 @@ boolean Plane_GetProperty(const plane_t *pln, setargs_t *args)
     case DMU_HEIGHT:
         DMU_GetValue(DMT_PLANE_HEIGHT, &pln->height, args, 0);
         break;
-    case DMU_SOUND_ORIGIN:
-    {
+    case DMU_SOUND_ORIGIN: {
         const ddmobj_base_t* dmo = &pln->soundOrg;
         DMU_GetValue(DMT_PLANE_SOUNDORG, &dmo, args, 0);
         break;
-    }
+      }
     case DMU_TARGET_HEIGHT:
         DMU_GetValue(DMT_PLANE_TARGET, &pln->target, args, 0);
         break;
@@ -106,9 +74,8 @@ boolean Plane_GetProperty(const plane_t *pln, setargs_t *args)
         DMU_GetValue(DMT_PLANE_SPEED, &pln->speed, args, 0);
         break;
     default:
-        Con_Error("Plane_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Plane_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }

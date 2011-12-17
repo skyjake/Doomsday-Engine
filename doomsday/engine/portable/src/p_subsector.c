@@ -1,4 +1,4 @@
-/**\file
+/**\file p_subsector.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,50 +22,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * World subsectors.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Update the subsector, property is selected by DMU_* name.
- */
-boolean Subsector_SetProperty(subsector_t *sub, const setargs_t *args)
+int Subsector_SetProperty(subsector_t* sub, const setargs_t* args)
 {
-    Con_Error("Subsector_SetProperty: Property %s is not writable.\n",
-              DMU_Str(args->prop));
-
-    return true; // Continue iteration.
+    Con_Error("Subsector_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
+    exit(1);// Unreachable.
 }
 
-/**
- * Get the value of a subsector property, selected by DMU_* name.
- */
-boolean Subsector_GetProperty(const subsector_t *sub, setargs_t *args)
+int Subsector_GetProperty(const subsector_t* sub, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -78,18 +46,16 @@ boolean Subsector_GetProperty(const subsector_t *sub, setargs_t *args)
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &sub->sector->mobjList, args, 0);
         break;
-    case DMU_SEG_COUNT:
-    {
+    case DMU_SEG_COUNT: {
         // FIXME:
         //DMU_GetValue(DMT_SUBSECTOR_SEGCOUNT, &sub->segCount, args, 0);
         int val = (int) sub->segCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
         break;
-    }
+      }
     default:
-        Con_Error("Subsector_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Subsector_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }

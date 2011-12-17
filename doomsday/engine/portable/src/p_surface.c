@@ -340,104 +340,86 @@ void Surface_Update(surface_t* suf)
     suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
-/**
- * Update the surface, property is selected by DMU_* name.
- */
-boolean Surface_SetProperty(surface_t* suf, const setargs_t* args)
+int Surface_SetProperty(surface_t* suf, const setargs_t* args)
 {
     switch(args->prop)
     {
-    case DMU_BLENDMODE:
-        {
-        blendmode_t             blendMode;
+    case DMU_BLENDMODE: {
+        blendmode_t blendMode;
         DMU_SetValue(DMT_SURFACE_BLENDMODE, &blendMode, args, 0);
         Surface_SetBlendMode(suf, blendMode);
-        }
         break;
-
+     }
     case DMU_FLAGS:
         DMU_SetValue(DMT_SURFACE_FLAGS, &suf->flags, args, 0);
         break;
-
-    case DMU_COLOR:
-        {
-        float                   rgb[3];
+    case DMU_COLOR: {
+        float rgb[3];
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CR], args, 0);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CG], args, 1);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CB], args, 2);
         Surface_SetColorR(suf, rgb[CR]);
         Surface_SetColorG(suf, rgb[CG]);
         Surface_SetColorB(suf, rgb[CB]);
-        }
         break;
-    case DMU_COLOR_RED:
-        {
-        float           r;
+      }
+    case DMU_COLOR_RED: {
+        float r;
         DMU_SetValue(DMT_SURFACE_RGBA, &r, args, 0);
         Surface_SetColorR(suf, r);
-        }
         break;
-    case DMU_COLOR_GREEN:
-        {
-        float           g;
+      }
+    case DMU_COLOR_GREEN: {
+        float g;
         DMU_SetValue(DMT_SURFACE_RGBA, &g, args, 0);
         Surface_SetColorG(suf, g);
-        }
         break;
-    case DMU_COLOR_BLUE:
-        {
-        float           b;
+      }
+    case DMU_COLOR_BLUE: {
+        float b;
         DMU_SetValue(DMT_SURFACE_RGBA, &b, args, 0);
         Surface_SetColorB(suf, b);
-        }
         break;
-    case DMU_ALPHA:
-        {
-        float           a;
+      }
+    case DMU_ALPHA: {
+        float a;
         DMU_SetValue(DMT_SURFACE_RGBA, &a, args, 0);
         Surface_SetColorA(suf, a);
-        }
         break;
+      }
     case DMU_MATERIAL: {
         material_t* mat;
         DMU_SetValue(DMT_SURFACE_MATERIAL, &mat, args, 0);
         Surface_SetMaterial(suf, mat);
         break;
       }
-    case DMU_OFFSET_X:
-        {
-        float           offX;
+    case DMU_OFFSET_X: {
+        float offX;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offX, args, 0);
         Surface_SetMaterialOffsetX(suf, offX);
-        }
         break;
-    case DMU_OFFSET_Y:
-        {
-        float           offY;
+      }
+    case DMU_OFFSET_Y: {
+        float offY;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offY, args, 0);
         Surface_SetMaterialOffsetY(suf, offY);
-        }
         break;
-    case DMU_OFFSET_XY:
-        {
-        float           offset[2];
+      }
+    case DMU_OFFSET_XY: {
+        float offset[2];
         DMU_SetValue(DMT_SURFACE_OFFSET, &offset[VX], args, 0);
         DMU_SetValue(DMT_SURFACE_OFFSET, &offset[VY], args, 1);
         Surface_SetMaterialOffsetXY(suf, offset[VX], offset[VY]);
-        }
         break;
+      }
     default:
-        Con_Error("Surface_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Surface_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-/**
- * Get the value of a surface property, selected by DMU_* name.
- */
-boolean Surface_GetProperty(const surface_t* suf, setargs_t* args)
+int Surface_GetProperty(const surface_t* suf, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -525,9 +507,8 @@ boolean Surface_GetProperty(const surface_t* suf, setargs_t* args)
         DMU_GetValue(DMT_SURFACE_FLAGS, &suf->flags, args, 0);
         break;
     default:
-        Con_Error("Surface_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Surface_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }

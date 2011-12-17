@@ -300,7 +300,7 @@ boolean LineDef_BackClosed(const linedef_t* lineDef, int side, boolean ignoreOpa
     return LineDef_MiddleMaterialCoversOpening(lineDef, side, ignoreOpacity);
 }
 
-boolean LineDef_SetProperty(linedef_t *lin, const setargs_t *args)
+int LineDef_SetProperty(linedef_t* lin, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -319,9 +319,8 @@ boolean LineDef_SetProperty(linedef_t *lin, const setargs_t *args)
     case DMU_VALID_COUNT:
         DMU_SetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
         break;
-    case DMU_FLAGS:
-        {
-        sidedef_t          *s;
+    case DMU_FLAGS: {
+        sidedef_t* s;
 
         DMU_SetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
 
@@ -337,16 +336,15 @@ boolean LineDef_SetProperty(linedef_t *lin, const setargs_t *args)
             Surface_Update(&s->SW_middlesurface);
         }
         break;
-        }
+      }
     default:
-        Con_Error("LineDef_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
+        Con_Error("LineDef_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean LineDef_GetProperty(const linedef_t *lin, setargs_t *args)
+int LineDef_GetProperty(const linedef_t* lin, setargs_t* args)
 {
     switch(args->prop)
     {

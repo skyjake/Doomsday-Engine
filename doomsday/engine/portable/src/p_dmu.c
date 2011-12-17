@@ -701,10 +701,10 @@ int P_Callbackp(int type, void* ptr, void* context,
     return true;
 }
 
-boolean DMU_SetMaterialProperty(material_t* mat, const setargs_t* args)
+int DMU_SetMaterialProperty(material_t* mat, const setargs_t* args)
 {
     Con_Error("DMU::SetMaterialProperty: Property %s is not writable.\n", DMU_Str(args->prop));
-    return true; // Unreachable.
+    exit(1); // Unreachable.
 }
 
 /**
@@ -1090,7 +1090,7 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_SetProperty(obj, args);
+        SideDef_SetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:
@@ -1173,7 +1173,7 @@ static int setProperty(void* obj, void* context)
     return true; // Continue iteration.
 }
 
-boolean DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
+int DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -1195,7 +1195,7 @@ boolean DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
     default:
         Con_Error("DMU::GetMaterialProperty: No property %s.\n", DMU_Str(args->prop));
     }
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1547,7 +1547,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_GetProperty(obj, args);
+        SideDef_GetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:

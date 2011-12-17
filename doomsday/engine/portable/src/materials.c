@@ -102,6 +102,19 @@ materialid_t MaterialBind_Id(const materialbind_t* mb);
 /// @return  Material associated with this else @c NULL.
 material_t* MaterialBind_Material(const materialbind_t* mb);
 
+/**
+ * Change the Material associated with this binding. Note that only the
+ * relationship between MaterialBind and Material is updated!
+ *
+ * \post If @a material differs from that currently associated with this,
+ *     any MaterialBindInfo presently owned by this is destroyed (it is
+ *     now invalid).
+ *
+ * @param  material  New Material to associate with this.
+ * @return  Same as @a material for caller convenience.
+ */
+material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material);
+
 /// @return  PathDirectory node associated with this.
 PathDirectoryNode* MaterialBind_DirectoryNode(const materialbind_t* mb);
 
@@ -387,30 +400,28 @@ typedef struct {
 
 static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
 {
-    assert(initedOk && variant && paramaters);
-    {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) paramaters;
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
+    assert(p);
+
     if(!compareVariantSpecifications(cand, p->spec))
-    {   // This will do fine.
+    {
+        // This will do fine.
         p->chosen = variant;
-        return 1; // Stop iteration.
+        return true; // Stop iteration.
     }
-    return 0; // Continue iteration.
-    }
+    return false; // Continue iteration.
 }
 
-static materialvariant_t* chooseVariant(material_t* mat,
-    const materialvariantspecification_t* spec)
+static materialvariant_t* chooseVariant(material_t* mat, const materialvariantspecification_t* spec)
 {
-    assert(initedOk && mat && spec);
-    {
     choosevariantworker_paramaters_t params;
+    assert(mat && spec);
+
     params.spec = spec;
     params.chosen = NULL;
     Material_IterateVariants(mat, chooseVariantWorker, &params);
     return params.chosen;
-    }
 }
 
 static materialbind_t* getMaterialBindForId(materialid_t id)
@@ -421,8 +432,6 @@ static materialbind_t* getMaterialBindForId(materialid_t id)
 
 static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
 {
-    assert(initedOk && mb);
-    {
     materialbindinfo_t* info = MaterialBind_Info(mb);
     material_t* mat = MaterialBind_Material(mb);
     materialid_t matId = Materials_Id(mat);
@@ -455,7 +464,6 @@ static void updateMaterialBindInfo(materialbind_t* mb, boolean canCreate)
     // Detail texture.
     info->detailtextureDefs[0] = Def_GetDetailTex(matId, 0, isCustom);
     info->detailtextureDefs[1] = Def_GetDetailTex(matId, 1, isCustom);
-    }
 }
 
 static boolean newMaterialBind(const Uri* uri, material_t* material)
@@ -829,27 +837,27 @@ static boolean validateMaterialUri(const Uri* uri, int flags)
  * @param path  Path of the material to search for.
  * @return  Found Material else @c NULL
  */
-static material_t* findMaterialForPath(PathDirectory* matDirectory, const char* path)
+static materialbind_t* findMaterialBindForPath(PathDirectory* matDirectory, const char* path)
 {
     PathDirectoryNode* node = PathDirectory_Find(matDirectory,
         PCF_NO_BRANCH|PCF_MATCH_FULL, path, MATERIALS_PATH_DELIMITER);
     if(node)
     {
-        return MaterialBind_Material((materialbind_t*) PathDirectoryNode_UserData(node));
+        return (materialbind_t*) PathDirectoryNode_UserData(node);
     }
     return NULL; // Not found.
 }
 
 /// \assume @a uri has already been validated and is well-formed.
-static material_t* findMaterialForUri(const Uri* uri)
+static materialbind_t* findMaterialBindForUri(const Uri* uri)
 {
     materialnamespaceid_t namespaceId = Materials_ParseNamespace(Str_Text(Uri_Scheme(uri)));
     const char* path = Str_Text(Uri_Path(uri));
-    material_t* mat = NULL;
+    materialbind_t* bind = NULL;
     if(namespaceId != MN_ANY)
     {
         // Caller wants a material in a specific namespace.
-        mat = findMaterialForPath(getDirectoryForNamespaceId(namespaceId), path);
+        bind = findMaterialBindForPath(getDirectoryForNamespaceId(namespaceId), path);
     }
     else
     {
@@ -861,15 +869,15 @@ static material_t* findMaterialForUri(const Uri* uri)
         int n = 0;
         do
         {
-            mat = findMaterialForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!mat && order[++n] != MN_ANY);
+            bind = findMaterialBindForPath(getDirectoryForNamespaceId(order[n]), path);
+        } while(!bind && order[++n] != MN_ANY);
     }
-    return mat;
+    return bind;
 }
 
 materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
 {
-    material_t* mat;
+    materialbind_t* bind;
     if(!initedOk || !uri) return NOMATERIALID;
     if(!validateMaterialUri2(uri, VMUF_ALLOW_NAMESPACE_ANY, true /*quiet please*/))
     {
@@ -882,8 +890,8 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     }
 
     // Perform the search.
-    mat = findMaterialForUri(uri);
-    if(mat) return Materials_Id(mat);
+    bind = findMaterialBindForUri(uri);
+    if(bind) return MaterialBind_Id(bind);
 
     // Not found.
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
@@ -949,6 +957,7 @@ Uri* Materials_ComposeUri(materialid_t id)
 material_t* Materials_CreateFromDef(ded_material_t* def)
 {
     const Uri* uri = def->uri;
+    materialbind_t* bind;
     textureid_t texId;
     material_t* mat;
     assert(def);
@@ -965,15 +974,15 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     }
 
     // Have we already created a material for this?
-    mat = findMaterialForUri(uri);
-    if(mat)
+    bind = findMaterialBindForUri(uri);
+    if(bind && MaterialBind_Material(bind))
     {
 #if _DEBUG
         ddstring_t* path = Uri_ToString(uri);
         Con_Message("Warning:Materials::CreateFromDef: A Material with uri \"%s\" already exists, returning existing.\n", Str_Text(path));
         Str_Delete(path);
 #endif
-        return mat;
+        return MaterialBind_Material(bind);
     }
 
     // Ensure the primary layer has a valid texture reference.
@@ -1003,7 +1012,15 @@ material_t* Materials_CreateFromDef(ded_material_t* def)
     mat->_def = def;
     Size2_SetWidthHeight(mat->_size, MAX_OF(0, def->width), MAX_OF(0, def->height));
     mat->_envClass = S_MaterialEnvClassForUri(uri);
-    newMaterialBind(uri, mat);
+
+    if(!bind)
+    {
+        newMaterialBind(uri, mat);
+    }
+    else
+    {
+        MaterialBind_SetMaterial(bind, mat);
+    }
 
     return mat;
 }
@@ -1968,6 +1985,22 @@ materialid_t MaterialBind_Id(const materialbind_t* mb)
 material_t* MaterialBind_Material(const materialbind_t* mb)
 {
     assert(mb);
+    return mb->_material;
+}
+
+material_t* MaterialBind_SetMaterial(materialbind_t* mb, material_t* material)
+{
+    assert(mb);
+    if(mb->_material != material)
+    {
+        // Any extended info will be invalid after this op, so destroy it
+        // (it will automatically be rebuilt later, if subsequently needed).
+        materialbindinfo_t* info = MaterialBind_DetachInfo(mb);
+        if(info) free(mb->_info);
+
+        // Associate with the new Material.
+        mb->_material = material;
+    }
     return mb->_material;
 }
 
