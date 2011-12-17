@@ -376,7 +376,7 @@ int Cht_WarpFunc(const int* args, int player)
 
     tens = args[0] - '0';
     ones = args[1] - '0';
-    if(tens < 0 || tens > 9 || ones < 1 || ones > 9)
+    if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
     {   // Bad map
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;

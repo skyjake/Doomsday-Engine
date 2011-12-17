@@ -14,6 +14,7 @@ The following branches are currently active in the repository.
 
 Other branches (not very active):
 
+- **dsfmod**: Development branch for the FMOD Ex audio plugin.
 - **remove-sdlnet**: On-going work to remove SDL_net and the rest of SDL in favor of Qt. However, currently waiting for the stable 1.9.7 release, after which this work will be the basis for a new branch for full removal of SDL. This branch also introduces a revised and trimmed version of libdeng2 (based on the hawthorn branch).
 - **replacing-innosetup-with-wixtoolset**: Reimplementing the Windows installer with WiX Toolset.
 

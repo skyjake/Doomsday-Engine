@@ -187,10 +187,13 @@ typedef int                 ddboolean_t;
 
 #if BAMS_BITS == 32
 typedef uint32_t binangle_t;
+#define BANG_TO_ANGLE(bang)     ((angle_t)bang)
 #elif BAMS_BITS == 16
 typedef uint16_t binangle_t;
+#define BANG_TO_ANGLE(bang)     ((angle_t)bang << 16)
 #else
 typedef unsigned char binangle_t;
+#define BANG_TO_ANGLE(bang)     ((angle_t)bang << 24)
 #endif
 
 #define DDMAXCHAR   ((char)0x7f)

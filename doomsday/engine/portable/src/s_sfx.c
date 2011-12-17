@@ -94,6 +94,14 @@ static byte refMonitor = 0;
 // CODE --------------------------------------------------------------------
 
 /**
+ * Requests listener reverb update at the end of the frame.
+ */
+void Sfx_UpdateReverb(void)
+{
+    listenerSector = NULL;
+}
+
+/**
  * This is a high-priority thread that periodically checks if the channels
  * need to be updated with more data. The thread terminates when it notices
  * that the channels have been destroyed. The Sfx audioDriver maintains a 250ms
