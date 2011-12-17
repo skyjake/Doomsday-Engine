@@ -217,11 +217,11 @@ typedef struct shadowlinkerparms_s {
  * If the shadow polygon (parm) contacts the subsector, link the poly
  * to the subsector's shadow list.
  */
-boolean RIT_ShadowSubsectorLinker(subsector_t* subsector, void *parm)
+int RIT_ShadowSubsectorLinker(subsector_t* subsector, void *parm)
 {
     shadowlinkerparms_t* data = (shadowlinkerparms_t*) parm;
     linkShadowLineDefToSSec(data->lineDef, data->side, subsector);
-    return true;
+    return false; // Continue iteration.
 }
 
 boolean R_IsShadowingLinedef(linedef_t* line)
