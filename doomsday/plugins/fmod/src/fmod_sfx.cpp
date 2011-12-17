@@ -520,6 +520,10 @@ static void updateListenerEnvironmentSettings(float* reverb)
 {
     if(!fmodSystem || !reverb) return;
 
+    DSFMOD_TRACE("updateListenerEnvironmentSettings: " <<
+                 reverb[0] << " " << reverb[1] << " " <<
+                 reverb[2] << " " << reverb[3]);
+
     // No reverb?
     if(reverb[SRD_VOLUME] == 0 && reverb[SRD_SPACE]   == 0 &&
        reverb[SRD_DECAY]  == 0 && reverb[SRD_DAMPING] == 0)

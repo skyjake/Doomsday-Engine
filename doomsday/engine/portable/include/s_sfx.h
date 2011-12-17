@@ -76,6 +76,7 @@ int             Sfx_StopSound(int id, mobj_t* emitter);
 void            Sfx_StopSoundGroup(int group, mobj_t* emitter);
 int             Sfx_CountPlaying(int id);
 void            Sfx_UnloadSoundID(int id);
+void            Sfx_UpdateReverb(void);
 
 void            Sfx_DebugInfo(void);
 
