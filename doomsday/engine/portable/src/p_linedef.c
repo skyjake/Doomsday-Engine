@@ -208,75 +208,78 @@ boolean Linedef_SetProperty(linedef_t *lin, const setargs_t *args)
 boolean Linedef_GetProperty(const linedef_t *lin, setargs_t *args)
 {
    switch(args->prop)
-    {
-    case DMU_VERTEX0:
-        DMU_GetValue(DMT_LINEDEF_V, &lin->L_v1, args, 0);
-        break;
-    case DMU_VERTEX1:
-        DMU_GetValue(DMT_LINEDEF_V, &lin->L_v2, args, 0);
-        break;
-    case DMU_DX:
-        DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
-        break;
-    case DMU_DY:
-        DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 0);
-        break;
-    case DMU_DXY:
-        DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
-        DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 1);
-        break;
-    case DMU_LENGTH:
-        DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
-        break;
-    case DMU_ANGLE:
-        DMU_GetValue(DDVT_ANGLE, &lin->angle, args, 0);
-        break;
-    case DMU_SLOPE_TYPE:
-        DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
-        break;
-    case DMU_FRONT_SECTOR:
-    {
-        sector_t *sec = (lin->L_frontside? lin->L_frontsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
-        break;
-    }
-    case DMU_BACK_SECTOR:
-    {
-        sector_t *sec = (lin->L_backside? lin->L_backsector : NULL);
-        DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
-        break;
-    }
-    case DMU_FLAGS:
-        DMU_GetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
-        break;
-    case DMU_SIDEDEF0:
-        DMU_GetValue(DDVT_PTR, &lin->L_frontside, args, 0);
-        break;
-    case DMU_SIDEDEF1:
-        DMU_GetValue(DDVT_PTR, &lin->L_backside, args, 0);
-        break;
+   {
+   case DMU_VERTEX0:
+       DMU_GetValue(DMT_LINEDEF_V, &lin->L_v1, args, 0);
+       break;
+   case DMU_VERTEX1:
+       DMU_GetValue(DMT_LINEDEF_V, &lin->L_v2, args, 0);
+       break;
+   case DMU_DX:
+       DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
+       break;
+   case DMU_DY:
+       DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 0);
+       break;
+   case DMU_DXY:
+       DMU_GetValue(DMT_LINEDEF_DX, &lin->dX, args, 0);
+       DMU_GetValue(DMT_LINEDEF_DY, &lin->dY, args, 1);
+       break;
+   case DMU_LENGTH:
+       DMU_GetValue(DDVT_FLOAT, &lin->length, args, 0);
+       break;
+   case DMU_ANGLE:
+   {
+       angle_t lineAngle = BANG_TO_ANGLE(lin->angle);
+       DMU_GetValue(DDVT_ANGLE, &lineAngle, args, 0);
+       break;
+   }
+   case DMU_SLOPE_TYPE:
+       DMU_GetValue(DMT_LINEDEF_SLOPETYPE, &lin->slopeType, args, 0);
+       break;
+   case DMU_FRONT_SECTOR:
+   {
+       sector_t *sec = (lin->L_frontside? lin->L_frontsector : NULL);
+       DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+       break;
+   }
+   case DMU_BACK_SECTOR:
+   {
+       sector_t *sec = (lin->L_backside? lin->L_backsector : NULL);
+       DMU_GetValue(DMT_LINEDEF_SEC, &sec, args, 0);
+       break;
+   }
+   case DMU_FLAGS:
+       DMU_GetValue(DMT_LINEDEF_FLAGS, &lin->flags, args, 0);
+       break;
+   case DMU_SIDEDEF0:
+       DMU_GetValue(DDVT_PTR, &lin->L_frontside, args, 0);
+       break;
+   case DMU_SIDEDEF1:
+       DMU_GetValue(DDVT_PTR, &lin->L_backside, args, 0);
+       break;
 
-    case DMU_BOUNDING_BOX:
-        if(args->valueType == DDVT_PTR)
-        {
-            const AABoxf* aaBox = &lin->aaBox;
-            DMU_GetValue(DDVT_PTR, &aaBox, args, 0);
-        }
-        else
-        {
-            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minX, args, 0);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxX, args, 1);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minY, args, 2);
-            DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxY, args, 3);
-        }
-        break;
-    case DMU_VALID_COUNT:
-        DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
-        break;
-    default:
-        Con_Error("Linedef_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
-    }
+   case DMU_BOUNDING_BOX:
+       if(args->valueType == DDVT_PTR)
+       {
+           const AABoxf* aaBox = &lin->aaBox;
+           DMU_GetValue(DDVT_PTR, &aaBox, args, 0);
+       }
+       else
+       {
+           DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minX, args, 0);
+           DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxX, args, 1);
+           DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.minY, args, 2);
+           DMU_GetValue(DMT_LINEDEF_AABOX, &lin->aaBox.maxY, args, 3);
+       }
+       break;
+   case DMU_VALID_COUNT:
+       DMU_GetValue(DMT_LINEDEF_VALIDCOUNT, &lin->validCount, args, 0);
+       break;
+   default:
+       Con_Error("Linedef_GetProperty: No property %s.\n",
+                 DMU_Str(args->prop));
+   }
 
-    return true; // Continue iteration.
+   return true; // Continue iteration.
 }
