@@ -11,6 +11,7 @@
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
 # - deng_aptunstable        Include the unstable apt repository
+# - deng_fluidsynth         Build the FluidSynth sound driver
 # - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
