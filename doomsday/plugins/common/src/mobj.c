@@ -37,13 +37,13 @@
 #include "p_player.h"
 #include "dmu_lib.h"
 
-#define VANISHTICS              (2*TICSPERSEC)
-
-#define MAX_BOB_OFFSET          (8)
-
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
 #define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
+
+/// Threshold for killing momentum of a freely moving object.
+#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
+
+/// Threshold for stopping walk animation.
+#define STANDSPEED              (1.0f/2)       // FIX2FLT(0x8000)
 
 static float getFriction(mobj_t* mo)
 {
@@ -71,6 +71,8 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     player_t* player = mo->player;
     boolean isVoodooDoll = false;
     boolean belowWalkStop = false;
+    boolean belowStandSpeed = false;
+    boolean playerMoving = false;
 
     assert(mo != 0);
 
@@ -114,19 +116,31 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     isVoodooDoll = (player && player->plr->mo != mo);
     belowWalkStop = (INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
                      INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD));
-
-    // Stop player walking animation.
-    if(isVoodooDoll
-       || (player && belowWalkStop &&
-           FEQUAL(player->plr->forwardMove, 0) &&
-           FEQUAL(player->plr->sideMove, 0)))
+    if(player)
     {
-        /// @todo Voodoo doll animation is not stopped, should it be?
+        belowStandSpeed = (INRANGE_OF(mo->mom[MX], 0, STANDSPEED) &&
+                           INRANGE_OF(mo->mom[MY], 0, STANDSPEED));
+        playerMoving = (!FEQUAL(player->plr->forwardMove, 0) ||
+                        !FEQUAL(player->plr->sideMove, 0));
+    }
 
-        // If in a walking frame, stop moving.
-        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+    // Stop player walking animation (only real players).
+    /// @todo Voodoo doll animation is not stopped, should it be?
+    if(!isVoodooDoll && player && belowStandSpeed && !playerMoving)
+    {
+        if(!(IS_NETGAME && IS_SERVER)) // Netgame servers use logic elsewhere for player animation.
+        {
+            // If in a walking frame, stop moving.
+            if(P_PlayerInWalkState(player))
+            {
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+            }
+        }
+    }
 
+    // Friction.
+    if(isVoodooDoll || (player && belowWalkStop && !playerMoving))
+    {
         // $voodoodolls: Do not zero mom!
         if(!isVoodooDoll)
         {

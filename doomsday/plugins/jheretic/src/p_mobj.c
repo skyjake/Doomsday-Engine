@@ -50,7 +50,6 @@
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
 #define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-#define STANDSPEED              (1.0f/2)
 
 // TYPES -------------------------------------------------------------------
 
