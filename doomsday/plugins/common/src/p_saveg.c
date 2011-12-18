@@ -5480,6 +5480,19 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 # endif
         };
         hdr->gameMode = oldGameModes[(int)hdr->gameMode];
+#  if __JDOOM__
+        /**
+         * \kludge Older versions did not differentiate between versions of
+         * Doom2 (i.e., Plutonia and TNT are marked as Doom2). If we detect
+         * that this save is from some version of Doom2, replace the marked
+         * gamemode with the current gamemode.
+         */
+        if(hdr->gameMode == doom2 && (gameModeBits & GM_ANY_DOOM2))
+        {
+            hdr->gameMode = gameMode;
+        }
+        /// kludge end.
+#  endif
     }
 #endif
 
