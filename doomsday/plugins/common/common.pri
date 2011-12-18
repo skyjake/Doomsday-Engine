@@ -30,6 +30,7 @@ HEADERS += \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
     $$common_inc/m_defs.h \
+    $$common_inc/mobj.h \
     $$common_inc/p_actor.h \
     $$common_inc/p_automap.h \
     $$common_inc/p_ceiling.h \
@@ -81,6 +82,7 @@ SOURCES += \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
     $$common_src/m_multi.c \
+    $$common_src/mobj.c \
     $$common_src/p_actor.c \
     $$common_src/p_automap.c \
     $$common_src/p_ceiling.c \
