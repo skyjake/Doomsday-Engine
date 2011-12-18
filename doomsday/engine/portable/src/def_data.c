@@ -519,6 +519,8 @@ int DED_AddDetail(ded_t *ded, const char *lumpname)
     strcpy(dtl->detailLump.path, lumpname);
     dtl->scale = 1;
     dtl->strength = 1;
+    // Default usage is allowed with custom textures and external replacements.
+    dtl->flags = DTLF_PWAD|DTLF_EXTERNAL;
     return dtl - ded->details;
 }
 
@@ -611,6 +613,8 @@ int DED_AddReflection(ded_t *ded)
     ref->maskWidth = 1.0f;
     ref->maskHeight = 1.0f;
     ref->blendMode = BM_ADD;
+    // Default usage is allowed with custom textures and external replacements.
+    ref->flags = REFF_PWAD|REFF_EXTERNAL;
 
     return ref - ded->reflections;
 }
