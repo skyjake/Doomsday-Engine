@@ -2884,7 +2884,7 @@ static void drawVector(const_pvec3_t origin, const_pvec3_t normal, float scalar,
     glBegin(GL_LINES);
         glColor4fv(black);
         glVertex3f(scalar * normal[VX], scalar * normal[VZ], scalar * normal[VY]);
-        glColor4f(color[CR], color[CG], color[CB], 1);
+        glColor3fv(color);
         glVertex3f(0, 0, 0);
     glEnd();
 }

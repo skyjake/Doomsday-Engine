@@ -2267,6 +2267,7 @@ END_PROF( PROF_RL_RENDER_SHADOW );
     // Return to the normal GL state.
     GL_SelectTexUnits(1);
     GL_ModulateTexture(1);
+    glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);

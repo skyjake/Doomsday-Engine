@@ -2491,7 +2491,6 @@ void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float al
 
     if(alpha < 1.0)
     {
-        glEnable(GL_BLEND);
         GL_BlendMode(BM_NORMAL);
     }
     else

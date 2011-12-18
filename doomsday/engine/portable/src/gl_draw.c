@@ -126,7 +126,6 @@ void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuin
 
     if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
     {
-        glEnable(GL_BLEND);
         GL_BlendMode(BM_NORMAL);
     }
     else
@@ -152,7 +151,6 @@ void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuin
 
     if(tex)
         glDisable(GL_TEXTURE_2D);
-
     glEnable(GL_BLEND);
 }
 

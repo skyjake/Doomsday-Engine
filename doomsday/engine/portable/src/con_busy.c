@@ -456,7 +456,6 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     edgeCount = MAX_OF(1, pos * 30);
 
     // Draw a background.
-    glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
     glBegin(GL_TRIANGLE_FAN);
@@ -601,7 +600,6 @@ void Con_BusyDrawConsoleOutput(void)
         }
     }
 
-    glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
     // Dark gradient as background.
