@@ -1081,7 +1081,9 @@ static void P_FinalizeMap(void)
 #endif
 
     // Do some fine tuning with mobj placement and orientation.
+#if __JHERETIC__ || __JHEXEN__
     P_MoveThingsOutOfWalls();
+#endif
 #if __JHERETIC__
     P_TurnGizmosAwayFromDoors();
 #endif
