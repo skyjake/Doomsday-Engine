@@ -2491,89 +2491,40 @@ static int segSkyFixes(seg_t* seg)
         const sector_t* backSec  = seg->SG_backsector;
         if(!backSec || backSec != seg->SG_frontsector)
         {
-            const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
-            const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
-            const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
-            const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+            const boolean hasSkyFloor   = R_IsSkySurface(&frontSec->SP_floorsurface);
+            const boolean hasSkyCeiling = R_IsSkySurface(&frontSec->SP_ceilsurface);
 
-            // Lower fix?
-            if(R_IsSkySurface(&frontSec->SP_floorsurface))
+            if(hasSkyFloor || hasSkyCeiling)
             {
-                const float skyFloor = skyFixFloorZ(ffloor, bfloor);
+                const boolean hasClosedBack = LineDef_BackClosed(seg->lineDef, seg->side, true/*ignore opacity*/);
 
-                if(!P_IsInVoid(viewPlayer))
+                // Lower fix?
+                if(hasSkyFloor)
                 {
-                    boolean isGapFilled = false;
-                    const plane_t* floor;
+                    const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
+                    const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
+                    const float skyZ = skyFixFloorZ(ffloor, bfloor);
 
-                    if(!backSec || bfloor->visHeight < fceil->visHeight && !R_IsSkySurface(&bfloor->surface))
+                    if(hasClosedBack || (!R_IsSkySurface(&bfloor->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        floor = ffloor;
-                    }
-                    else if(LineDef_MiddleMaterialCoversOpening(seg->lineDef, seg->side, false/*test alpha*/))
-                    {
-                        floor = ffloor;
-                        isGapFilled = true;
-                    }
-                    else
-                    {
-                        floor = bfloor;
-                    }
-
-                    if(floor->visHeight > skyFloor && !(!isGapFilled && backSec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight < fceil->visHeight))
-                    {
-                        fixes |= SKYCAP_UPPER;
-                    }
-                }
-                else
-                {
-                    if(!backSec || (R_IsSkySurface(&bfloor->surface) && bfloor->visHeight > skyFloor))
-                    {
-                        if(!(backSec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight <= ffloor->visHeight))
-                        {
+                        const plane_t* floor = (bfloor && R_IsSkySurface(&bfloor->surface)? bfloor : ffloor);
+                        if(floor->visHeight > skyZ)
                             fixes |= SKYCAP_LOWER;
-                        }
                     }
                 }
-            }
 
-            // Upper fix?
-            if(R_IsSkySurface(&frontSec->SP_ceilsurface))
-            {
-                const float skyCeil = skyFixCeilZ(fceil, bceil);
-
-                if(!P_IsInVoid(viewPlayer))
+                // Upper fix?
+                if(hasSkyCeiling)
                 {
-                    boolean isGapFilled = false;
-                    const plane_t* ceil;
+                    const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
+                    const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+                    const float skyZ = skyFixCeilZ(fceil, bceil);
 
-                    if(!backSec || bceil->visHeight > ffloor->visHeight && !R_IsSkySurface(&bceil->surface))
+                    if(hasClosedBack || (!R_IsSkySurface(&bceil->surface) || P_IsInVoid(viewPlayer)))
                     {
-                        ceil = fceil;
-                    }
-                    else if(LineDef_MiddleMaterialCoversOpening(seg->lineDef, seg->side, false/*test alpha*/))
-                    {
-                        ceil = fceil;
-                        isGapFilled = true;
-                    }
-                    else
-                    {
-                        ceil = bceil;
-                    }
-
-                    if(ceil->visHeight < skyCeil && !(!isGapFilled && backSec && R_IsSkySurface(&bceil->surface) && bceil->visHeight > ffloor->visHeight))
-                    {
-                        fixes |= SKYCAP_UPPER;
-                    }
-                }
-                else
-                {
-                    if(!backSec || (R_IsSkySurface(&bceil->surface) && bceil->visHeight < skyCeil))
-                    {
-                        if(!(backSec && R_IsSkySurface(&bceil->surface) && bceil->visHeight >= fceil->visHeight))
-                        {
+                        const plane_t* ceil = (bceil && R_IsSkySurface(&bceil->surface)? bceil : fceil);
+                        if(ceil->visHeight < skyZ)
                             fixes |= SKYCAP_UPPER;
-                        }
                     }
                 }
             }
