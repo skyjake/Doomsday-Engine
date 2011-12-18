@@ -155,7 +155,7 @@ mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
 void            P_SpawnPlayers(void);
 
 #if __JHERETIC__ || __JHEXEN__
-void            P_MoveThingsOutOfWalls(void);
+void P_MoveThingsOutOfWalls(void);
 #endif
 
 #if __JHERETIC__
