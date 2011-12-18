@@ -489,7 +489,7 @@ static void readSide(const gamemap_t *map, uint idx)
         suf->normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOffsetXY(suf, offset[VX], offset[VY]);
+        Surface_SetMaterialOrigin(suf, offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
@@ -638,7 +638,7 @@ static void readSector(const gamemap_t *map, uint idx)
         p->surface.normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOffsetXY(&p->surface, offset[VX], offset[VY]);
+        Surface_SetMaterialOrigin(&p->surface, offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();

@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Rendering Subsystem.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -48,18 +42,10 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01
 #define SVF_BITANGENT           0x02
 #define SVF_NORMAL              0x04
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
                    const float color3f[3], float alpha, float br,
@@ -67,17 +53,8 @@ void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
 void Rend_DrawArrow(const float pos3f[3], float a, float s,
                     const float color3f[3], float alpha);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void Rend_RenderBoundingBoxes(void);
 static DGLuint constructBBox(DGLuint name, float br);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int translucentIceCorpse;
-extern int loMaxRadius;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
@@ -119,6 +96,14 @@ float yfov;
 
 int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be drawn
 
+/**
+ * Implements a pre-calculated LUT for light level limiting and range
+ * compression offsets, arranged such that it may be indexed with a
+ * light level value. Return value is an appropriate delta (considering
+ * all applicable renderer properties) which has been pre-clamped such
+ * that when summed with the original light value the result remains in
+ * the normalized range [0..1].
+ */
 float lightRangeCompression = 0;
 float lightModRange[255];
 byte devLightModRange = 0;
@@ -135,11 +120,7 @@ byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
 byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean firstsubsector; // No range checking for the first one.
-
-// CODE --------------------------------------------------------------------
 
 void Rend_Register(void)
 {
@@ -199,18 +180,6 @@ void Rend_Register(void)
     Rend_ConsoleRegister();
 }
 
-#if 0 // unused atm
-float Rend_SignedPointDist2D(float c[2])
-{
-    /*          (YA-YC)(XB-XA)-(XA-XC)(YB-YA)
-       s = -----------------------------
-       L**2
-       Luckily, L**2 is one. dist = s*L. Even more luckily, L is also one.
-     */
-    return (vz - c[VY]) * viewsidex - (vx - c[VX]) * viewsidey;
-}
-#endif
-
 /**
  * Approximated! The Z axis aspect ratio is corrected.
  */
@@ -236,8 +205,10 @@ void Rend_Reset(void)
 {
     LO_Clear(); // Free lumobj stuff.
     if(dlBBox)
+    {
         GL_DeleteLists(dlBBox, 1);
-    dlBBox = 0;
+        dlBBox = 0;
+    }
 }
 
 void Rend_ModelViewMatrix(boolean useAngles)
@@ -267,47 +238,19 @@ static __inline float segFacingViewerDot(float v1[2], float v2[2])
     return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] - vz);
 }
 
-#if 0 // unused atm
-static int Rend_FixedSegFacingDir(const seg_t *seg)
+static int C_DECL DivSortAscend(const void* e1, const void* e2)
 {
-    // The dot product. (1 if facing front.)
-    return((seg->fv1.pos[VY] - seg->fv2.pos[VY]) * (seg->fv1.pos[VX] - viewX) +
-           (seg->fv2.pos[VX] - seg->fv1.pos[VX]) * (seg->fv1.pos[VY] - viewY)) > 0;
-}
-#endif
-
-#if 0 // unused atm
-int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
-{
-    float   nx = v1[VY] - v2[VY], ny = v2[VX] - v1[VX];
-    float   vvx = v1[VX] - pnt[VX], vvy = v1[VY] - pnt[VY];
-
-    // The dot product.
-    if(nx * vvx + ny * vvy > 0)
-        return 1;               // Facing front.
-    return 0;                   // Facing away.
-}
-#endif
-
-static int C_DECL DivSortAscend(const void *e1, const void *e2)
-{
-    float   f1 = *(float *) e1, f2 = *(float *) e2;
-
-    if(f1 > f2)
-        return 1;
-    if(f2 > f1)
-        return -1;
+    float f1 = *(float*) e1, f2 = *(float*) e2;
+    if(f1 > f2) return 1;
+    if(f2 > f1) return -1;
     return 0;
 }
 
-static int C_DECL DivSortDescend(const void *e1, const void *e2)
+static int C_DECL DivSortDescend(const void* e1, const void* e2)
 {
-    float   f1 = *(float *) e1, f2 = *(float *) e2;
-
-    if(f1 > f2)
-        return -1;
-    if(f2 > f1)
-        return 1;
+    float f1 = *(float*) e1, f2 = *(float*) e2;
+    if(f1 > f2) return -1;
+    if(f2 > f1) return 1;
     return 0;
 }
 
@@ -323,8 +266,7 @@ void Rend_VertexColorsGlow(ColorRawf* colors, size_t num, float glow)
 
 void Rend_VertexColorsAlpha(ColorRawf* colors, size_t num, float alpha)
 {
-    size_t               i;
-
+    size_t i;
     for(i = 0; i < num; ++i)
     {
         colors[i].rgba[CA] = alpha;
@@ -333,18 +275,18 @@ void Rend_VertexColorsAlpha(ColorRawf* colors, size_t num, float alpha)
 
 void Rend_ApplyTorchLight(float* color, float distance)
 {
-    ddplayer_t*         ddpl = &viewPlayer->shared;
+    ddplayer_t* ddpl = &viewPlayer->shared;
 
-    if(!ddpl->fixedColorMap)
-        return;
+    // Disabled?
+    if(!ddpl->fixedColorMap) return;
 
     // Check for torch.
     if(distance < 1024)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        int                 ll = 16 - ddpl->fixedColorMap;
-        float               d = (1024 - distance) / 1024.0f * ll / 15.0f;
+        int ll = 16 - ddpl->fixedColorMap;
+        float d = (1024 - distance) / 1024.0f * ll / 15.0f;
 
         if(torchAdditive)
         {
@@ -392,24 +334,23 @@ void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertic
     size_t numVertices)
 {
     ddplayer_t* ddpl = &viewPlayer->shared;
+    size_t i;
 
-    if(!ddpl->fixedColorMap)
-        return; // No need, its disabled.
+    // Disabled?
+    if(!ddpl->fixedColorMap) return;
 
-    { size_t i;
     for(i = 0; i < numVertices; ++i)
     {
         const rvertex_t* vtx = &vertices[i];
         ColorRawf* c = &colors[i];
         Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
-    }}
+    }
 }
 
 void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
-                       float height, const subsector_t* subsector,
-                       boolean antiClockwise)
+    float height, const subsector_t* subsector, boolean antiClockwise)
 {
-    size_t              i, vid;
+    size_t i, vid;
 
     // First vertex is always #0.
     rvertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
@@ -436,13 +377,13 @@ static void markSegSectionsPVisible(seg_t* seg)
 {
     const plane_t* fceil, *bceil, *ffloor, *bfloor;
     sidedef_t* side;
+    uint i;
 
-    if(!seg->lineDef || !seg->lineDef->L_side(seg->side))
-        return;
+    if(!seg->lineDef || !seg->lineDef->L_side(seg->side)) return;
     side = seg->lineDef->L_side(seg->side);
 
-    { uint i;
     for(i = 0; i < 3; ++i)
+    {
         side->sections[i].inFlags |= SUIF_PVIS;
     }
 
@@ -485,29 +426,29 @@ static void Rend_MarkSegSectionsPVisible(seg_t* seg)
 }
 
 /**
- * @return              @true, if there is a division at the specified height.
+ * @return  @true if there is a division at the specified height.
  */
-static int checkDiv(walldiv_t *div, float height)
+static int checkDiv(walldiv_t* div, float height)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < div->num; ++i)
+    {
         if(div->pos[i] == height)
             return true;
-
+    }
     return false;
 }
 
 static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
-                               boolean backSide, const sector_t* frontSec,
-                               float bottomZ, float topZ, boolean doRight)
+    boolean backSide, const sector_t* frontSec, float bottomZ, float topZ,
+    boolean doRight)
 {
-    uint                i, j;
-    linedef_t          *iter;
-    sector_t           *scanSec;
-    lineowner_t        *base, *own;
-    boolean             clockwise = !doRight;
-    boolean             stopScan = false;
+    uint i, j;
+    linedef_t* iter;
+    sector_t* scanSec;
+    lineowner_t* base, *own;
+    boolean clockwise = !doRight;
+    boolean stopScan = false;
 
     if(bottomZ >= topZ)
         return; // Obviously no division.
@@ -519,7 +460,9 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
         own = own->link[clockwise];
 
         if(own == base)
+        {
             stopScan = true;
+        }
         else
         {
             iter = own->lineDef;
@@ -542,7 +485,7 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                     {
                         for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                         {
-                            plane_t            *pln = scanSec->SP_plane(j);
+                            plane_t* pln = scanSec->SP_plane(j);
 
                             if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                             {
@@ -557,7 +500,8 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                             }
 
                             if(!stopScan)
-                            {   // Clip a range bound to this height?
+                            {
+                                // Clip a range bound to this height?
                                 if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
                                     bottomZ = pln->visHeight;
                                 else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
@@ -578,7 +522,7 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                          * we automatically fix the case of a floor above a
                          * ceiling by lowering the floor.
                          */
-                        float               z = scanSec->SP_ceilvisheight;
+                        float z = scanSec->SP_ceilvisheight;
 
                         if(z > bottomZ && z < topZ)
                         {
@@ -603,39 +547,35 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
 }
 
 static void calcSegDivisions(walldiv_t* div, const seg_t* seg,
-                             const sector_t* frontSec, float bottomZ,
-                             float topZ, boolean doRight)
+    const sector_t* frontSec, float bottomZ, float topZ, boolean doRight)
 {
-    sidedef_t*          side;
+    sidedef_t* side;
 
     div->num = 0;
 
-    side = SEG_SIDEDEF(seg);
-
-    if(seg->flags & SEGF_POLYOBJ)
-        return; // Polyobj segs are never split.
+    // Polyobj segs are never split.
+    if(seg->flags & SEGF_POLYOBJ) return;
 
     // Only segs at sidedef ends can/should be split.
+    side = SEG_SIDEDEF(seg);
     if(!((seg == side->segs[0] && !doRight) ||
          (seg == side->segs[side->segCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ,
-                       topZ, doRight);
+    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ, topZ, doRight);
 }
 
 /**
  * Division will only happen if it must be done.
  */
 static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
-                                    const sector_t* frontsec, float low,
-                                    float hi)
+    const sector_t* frontsec, float low, float hi)
 {
-    uint                i;
-    walldiv_t*          div;
+    walldiv_t* div;
+    uint i;
 
-    if(!seg->lineDef)
-        return; // Mini-segs arn't drawn.
+    // Mini-segs are never drawn.
+    if(!seg->lineDef) return;
 
     for(i = 0; i < 2; ++i)
     {
@@ -652,24 +592,22 @@ static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
         }
 
 #ifdef RANGECHECK
-{
-uint        k;
+{ uint k;
 for(k = 0; k < div->num; ++k)
+{
     if(div->pos[k] > hi || div->pos[k] < low)
     {
         Con_Error("DivQuad: i=%i, pos (%f), hi (%f), low (%f), num=%i\n",
                   i, div->pos[k], hi, low, div->num);
     }
-}
+}}
 #endif
     }
 }
 
 static void selectSurfaceColors(const float** topColor,
-                                const float** bottomColor, sidedef_t* side,
-                                segsection_t section)
+    const float** bottomColor, sidedef_t* side, segsection_t section)
 {
-    // Select the colors for this surface.
     switch(section)
     {
     case SEG_MIDDLE:
@@ -704,7 +642,6 @@ static void selectSurfaceColors(const float** topColor,
         break;
 
     case SEG_BOTTOM:
-        // Select the correct colors for this surface.
         if(side->flags & SDF_BLENDBOTTOMTOMID)
         {
             *topColor = side->SW_middlergba;
@@ -741,9 +678,9 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                         const float texOffset[2], blendmode_t blendMode,
                         uint lightListIdx, float glow, boolean masked)
 {
-    vissprite_t*        vis = R_NewVisSprite();
-    int                 i, c;
-    float               midpoint[3];
+    vissprite_t* vis = R_NewVisSprite();
+    float midpoint[3];
+    int i, c;
 
     midpoint[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
     midpoint[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
@@ -806,7 +743,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
 }
 
 static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
-                          float wallLength, const vectorcomp_t topLeft[3])
+    float wallLength, const vectorcomp_t topLeft[3])
 {
     tc[0].st[0] = tc[1].st[0] =
         rverts[0].pos[VX] - topLeft[VX];
@@ -817,8 +754,7 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
 }
 
-static void quadLightCoords(rtexcoord_t* tc, const float s[2],
-                            const float t[2])
+static void quadLightCoords(rtexcoord_t* tc, const float s[2], const float t[2])
 {
     tc[1].st[0] = tc[0].st[0] = s[0];
     tc[1].st[1] = tc[3].st[1] = t[0];
@@ -826,38 +762,21 @@ static void quadLightCoords(rtexcoord_t* tc, const float s[2],
     tc[2].st[1] = tc[0].st[1] = t[1];
 }
 
-#if 0
-static void quadShinyMaskTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
-                                   float wallLength, float texWidth,
-                                   float texHeight, const pvec2_t texOrigin[2],
-                                   const pvec2_t texOffset)
-{
-    tc[0].st[0] = tc[1].st[0] =
-        rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VX] / texWidth;
-    tc[3].st[1] = tc[1].st[1] =
-        rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VY] / texHeight;
-    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texWidth;
-    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
-    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
-}
-#endif
-
 static float shinyVertical(float dy, float dx)
 {
-    return ( (atan(dy/dx) / (PI/2)) + 1 ) / 2;
+    return ((atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
 static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
-                               const rvertex_t* bottomRight, float wallLength)
+    const rvertex_t* bottomRight, float wallLength)
 {
-    uint                i;
-    vec2_t              surface, normal, projected, s, reflected, view;
-    float               distance, angle, prevAngle = 0;
+    vec2_t surface, normal, projected, s, reflected, view;
+    float distance, angle, prevAngle = 0;
+    uint i;
 
     // Quad surface vector.
-    V2_Set(surface,
-           (bottomRight->pos[VX] - topLeft->pos[VX]) / wallLength,
-           (bottomRight->pos[VY] - topLeft->pos[VY]) / wallLength);
+    V2_Set(surface, (bottomRight->pos[VX] - topLeft->pos[VX]) / wallLength,
+                    (bottomRight->pos[VY] - topLeft->pos[VY]) / wallLength);
 
     V2_Set(normal, surface[VY], -surface[VX]);
 
@@ -866,7 +785,7 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
     {
         // View vector.
         V2_Set(view, vx - (i == 0? topLeft->pos[VX] : bottomRight->pos[VX]),
-                vz - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
+                     vz - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
 
         distance = V2_Normalize(view);
 
@@ -893,7 +812,7 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
 
         // Horizontal coordinates.
         tc[ (i == 0 ? 1 : 2) ].st[0] = tc[ (i == 0 ? 0 : 3) ].st[0] =
-            angle + .3f;     /*acos(-dot)/PI*/
+            angle + .3f; /*acos(-dot)/PI*/
 
         tc[ (i == 0 ? 0 : 2) ].st[1] =
             shinyVertical(vy - bottomRight->pos[VZ], distance);
@@ -906,9 +825,8 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
 
 static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
 {
-    vec2_t              view, start;
-    float               distance;
-    float               offset;
+    float distance, offset;
+    vec2_t view, start;
 
     // View vector.
     V2_Set(view, vx - xyz[VX], vz - xyz[VY]);
@@ -931,14 +849,13 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     tc->st[1] = shinyVertical(vy - xyz[VZ], distance);
 }
 
-static float getSnapshots(const materialsnapshot_t** msA, const materialsnapshot_t** msB,
-    material_t* mat)
+static float getSnapshots(const materialsnapshot_t** msA,
+    const materialsnapshot_t** msB, material_t* mat)
 {
-    assert(msA);
-    {
     const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
         MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
     float interPos = 0;
+    assert(msA);
 
     *msA = Materials_Prepare(mat, spec, true);
 
@@ -968,7 +885,6 @@ static float getSnapshots(const materialsnapshot_t** msA, const materialsnapshot
     }
 
     return interPos;
-    }
 }
 
 typedef struct {
@@ -1750,8 +1666,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type, float height,
     vec3_t vec, tangent, bitangent, normal;
 
     // Must have a visible surface.
-    if(!inMat || !Material_IsDrawable(inMat))
-        return;
+    if(!inMat || !Material_IsDrawable(inMat)) return;
 
     V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY], vy - height);
 
@@ -1787,11 +1702,6 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type, float height,
     }
 }
 
-static boolean isVisible(surface_t* surface, sector_t* frontsec)
-{
-    return (!(surface->material && !Material_IsDrawable(surface->material)));
-}
-
 static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                               segsection_t section, surface_t* surface,
                               const fvertex_t* from, const fvertex_t* to,
@@ -1803,7 +1713,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
     boolean solidSeg = true;
     float alpha;
 
-    if(!isVisible(surface, frontsec)) return false;
+    if(!Surface_IsDrawable(surface)) return false;
     if(bottom >= top) return true;
 
     alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
@@ -1830,12 +1740,11 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             delta[0] = lineDef->dX;
             delta[1] = lineDef->dY;
 
-            pos = M_ProjectPointOnLine(mo->pos, lineDef->L_v1pos, delta, 0,
-                                       result);
+            pos = M_ProjectPointOnLine(mo->pos, lineDef->L_v1pos, delta, 0, result);
             if(pos > 0 && pos < 1)
             {
-                float               distance;
-                float               minDistance = mo->radius * .8f;
+                float distance;
+                float minDistance = mo->radius * .8f;
 
                 delta[VX] = mo->pos[VX] - result[VX];
                 delta[VY] = mo->pos[VY] - result[VY];
@@ -2021,19 +1930,16 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
  */
 static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
 {
-    boolean             solidSeg = true;
-    sidedef_t*          side;
-    linedef_t*          ldef;
-    float               ffloor, fceil;
-    boolean             backSide;
-    sector_t*           frontsec;
-    int                 pid;
+    boolean solidSeg = true;
+    sidedef_t* side;
+    linedef_t* ldef;
+    float ffloor, fceil;
+    boolean backSide;
+    sector_t* frontsec;
+    int pid;
 
     side = SEG_SIDEDEF(seg);
-    if(!side)
-    {   // A one-way window.
-        return false;
-    }
+    if(!side) return false; // A one-way window?
 
     frontsec = ssec->sector;
     backSide = seg->side;
@@ -2059,8 +1965,8 @@ static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
     // Middle section.
     if(side->SW_middleinflags & SUIF_PVIS)
     {
-        float               texOffset[2];
-        surface_t*          surface = &side->SW_middlesurface;
+        float texOffset[2];
+        surface_t* surface = &side->SW_middlesurface;
 
         texOffset[0] = surface->visOffset[0] + seg->offset;
         texOffset[1] = surface->visOffset[1];
@@ -2375,16 +2281,15 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
-    uint                i;
-    seg_t              *seg, **ptr;
+    seg_t* seg, **segIt;
+    uint i;
 
-    ptr = sub->segs;
-    while(*ptr)
+    for(segIt = sub->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->lineDef && !(seg->flags & SEGF_POLYOBJ))
+        if(seg->lineDef)
         {
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
@@ -2394,8 +2299,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
             Rend_MarkSegSectionsPVisible(seg);
         }
-        ptr++;
-     }
+    }
 
     if(sub->polyObj)
     {
@@ -2416,33 +2320,33 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
 static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
 {
-    seg_t** ptr;
+    seg_t** segIt;
+    seg_t* seg;
+    uint i;
 
-    ptr = ssec->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg_t* seg = *ptr;
+        seg = *segIt;
+        if(!seg->lineDef || !(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
 
-        if((seg->frameFlags & SEGINF_FACINGFRONT) && seg->lineDef &&
-           !(seg->flags & SEGF_POLYOBJ))
+        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
         {
-            if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
-                seg->frameFlags &= ~SEGINF_FACINGFRONT;
+            seg->frameFlags &= ~SEGINF_FACINGFRONT;
         }
-        ptr++;
     }
 
-    if(ssec->polyObj)
+    if(!ssec->polyObj) return;
+
+    for(i = 0; i < ssec->polyObj->numSegs; ++i)
     {
-        uint i;
-        for(i = 0; i < ssec->polyObj->numSegs; ++i)
+        seg = ssec->polyObj->segs[i];
+        if(!(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
+
+        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
         {
-            seg_t* seg = ssec->polyObj->segs[i];
-            if(seg->frameFlags & SEGINF_FACINGFRONT)
-            {
-                if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
-                    seg->frameFlags &= ~SEGINF_FACINGFRONT;
-            }
+            seg->frameFlags &= ~SEGINF_FACINGFRONT;
         }
     }
 }
@@ -2489,6 +2393,7 @@ static int segSkyFixes(seg_t* seg)
     {
         const sector_t* frontSec = seg->SG_frontsector;
         const sector_t* backSec  = seg->SG_backsector;
+
         if(!backSec || backSec != seg->SG_frontsector)
         {
             const boolean hasSkyFloor   = R_IsSkySurface(&frontSec->SP_floorsurface);
@@ -2559,8 +2464,8 @@ static void skyFixZCoords(seg_t* seg, int skyCap, float* bottom, float* top)
     }
     else
     {
-        if(top)    *top    = MIN_OF(fceil->visHeight, (backSec? bfloor->visHeight : ffloor->visHeight));
-        if(bottom) *bottom = (backSec? ffloor->visHeight : skyFixFloorZ(ffloor, bfloor));
+        if(top)    *top    = MIN_OF((backSec && R_IsSkySurface(&bfloor->surface)? bfloor->visHeight : ffloor->visHeight), fceil->visHeight);
+        if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
     }
 }
 
@@ -2708,12 +2613,12 @@ static void Rend_RenderSubsectorSky(subsector_t* ssec)
  * the remaining faces, i.e. the forward facing segs. This is done before
  * rendering segs, so solid segments cut out all unnecessary oranges.
  */
-static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
+static void occludeSubsector(const subsector_t* ssec, boolean forwardFacing)
 {
     float fronth[2], backh[2];
     float* startv, *endv;
-    sector_t* front = sub->sector, *back;
-    seg_t* seg, **ptr;
+    sector_t* front = ssec->sector, *back;
+    seg_t* seg, **segIt;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
         return;
@@ -2721,10 +2626,9 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    ptr = sub->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
 
         // Occlusions can only happen where two sectors contact.
         if(seg->lineDef &&
@@ -2734,6 +2638,7 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
             back = seg->SG_backsector;
             backh[0] = back->SP_floorheight;
             backh[1] = back->SP_ceilheight;
+
             // Choose start and end vertices so that it's facing forward.
             if(forwardFacing)
             {
@@ -2755,8 +2660,7 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
                    (backh[0] < fronth[0] && vy >= fronth[0]))
                 {
                     // Occlude down.
-                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]),
-                                          false);
+                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]), false);
                 }
             }
 
@@ -2769,28 +2673,22 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
                    (backh[1] > fronth[1] && vy <= fronth[1]))
                 {
                     // Occlude up.
-                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]),
-                                          true);
+                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]), true);
                 }
             }
         }
-
-        ptr++;
     }
 }
 
 static void Rend_RenderSubsector(uint ssecidx)
 {
-    uint                i;
-    subsector_t*        ssec = SUBSECTOR_PTR(ssecidx);
-    seg_t*              seg, **ptr;
-    sector_t*           sect;
-    float               sceil, sfloor;
+    uint i;
+    subsector_t* ssec = SUBSECTOR_PTR(ssecidx);
+    seg_t* seg, **segIt;
+    sector_t* sect;
+    float sceil, sfloor;
 
-    if(!ssec->sector)
-    {   // An orphan subsector.
-        return;
-    }
+    if(!ssec->sector) return; // An orphan subsector?
 
     sect = ssec->sector;
     sceil = sect->SP_ceilvisheight;
@@ -2851,16 +2749,15 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_RenderSubsectorSky(ssec);
 
     // Draw the walls.
-    ptr = ssec->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
+
         if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
            seg->lineDef && // "minisegs" have no linedefs.
            (seg->frameFlags & SEGINF_FACINGFRONT))
         {
             boolean solid;
-
             if(!seg->SG_backsector || !seg->SG_frontsector)
                 solid = Rend_RenderSeg(ssec, seg);
             else
@@ -2868,11 +2765,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             if(solid)
             {
-                C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+                C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                                seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
             }
         }
-
-        ptr++;
     }
 
     // Is there a polyobj on board?
@@ -2887,7 +2783,8 @@ static void Rend_RenderSubsector(uint ssecidx)
                 boolean solid = Rend_RenderSeg(ssec, seg);
                 if(solid)
                 {
-                    C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+                    C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                                    seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
                 }
             }
         }
@@ -2955,8 +2852,7 @@ static void Rend_RenderNode(uint bspnum)
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
-    if(C_IsFull())
-        return;
+    if(C_IsFull()) return;
 
     if(bspnum & NF_SUBSECTOR)
     {
@@ -3137,16 +3033,15 @@ void Rend_RenderSurfaceVectors(void)
 
 static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
 {
-    lineowner_t*        vo, *base;
+    lineowner_t* vo, *base;
 
     if(!vtx || (!min && !max))
         return; // Wha?
 
     vo = base = vtx->lineOwners;
-
     do
     {
-        linedef_t*          li = vo->lineDef;
+        linedef_t* li = vo->lineDef;
 
         if(li->L_frontside)
         {
@@ -3178,12 +3073,11 @@ static void drawVertexPoint(const vertex_t* vtx, float z, float alpha)
     glEnd();
 }
 
-static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
-                          float alpha)
+static void drawVertexBar(const vertex_t* vtx, float bottom, float top, float alpha)
 {
 #define EXTEND_DIST     64
 
-    static const float  black[4] = { 0, 0, 0, 0 };
+    static const float black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -3233,19 +3127,18 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
 
 static int drawVertex1(linedef_t* li, void* context)
 {
-    vertex_t*           vtx = li->L_v1;
-    polyobj_t*          po = context;
-    float               dist2D =
-        M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+    vertex_t* vtx = li->L_v1;
+    polyobj_t* po = context;
+    float dist2D = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
-        float               alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
+        float alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
 
         if(alpha > 0)
         {
-            float               bottom = po->subsector->sector->SP_floorvisheight;
-            float               top = po->subsector->sector->SP_ceilvisheight;
+            float bottom = po->subsector->sector->SP_floorvisheight;
+            float top = po->subsector->sector->SP_ceilvisheight;
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
@@ -3256,7 +3149,7 @@ static int drawVertex1(linedef_t* li, void* context)
 
     if(devVertexIndices)
     {
-        float               eye[3], pos[3], dist3D;
+        float eye[3], pos[3], dist3D;
 
         eye[VX] = vx;
         eye[VY] = vz;
@@ -3288,12 +3181,11 @@ int drawPolyObjVertexes(polyobj_t* po, void* context)
  */
 void Rend_Vertexes(void)
 {
-    uint                i;
-    float               oldPointSize, oldLineWidth = 1;
+    float oldPointSize, oldLineWidth = 1;
+    uint i;
     AABoxf box;
 
-    if(!devVertexBars && !devVertexIndices)
-        return;
+    if(!devVertexBars && !devVertexIndices) return;
 
     glDisable(GL_DEPTH_TEST);
 
@@ -3305,8 +3197,8 @@ void Rend_Vertexes(void)
 
         for(i = 0; i < numVertexes; ++i)
         {
-            vertex_t*           vtx = &vertexes[i];
-            float               alpha;
+            vertex_t* vtx = &vertexes[i];
+            float alpha;
 
             if(!vtx->lineOwners)
                 continue; // Not a linedef vertex.
@@ -3319,7 +3211,7 @@ void Rend_Vertexes(void)
 
             if(alpha > 0)
             {
-                float               bottom, top;
+                float bottom, top;
 
                 bottom = DDMAXFLOAT;
                 top = DDMINFLOAT;
@@ -3337,8 +3229,8 @@ void Rend_Vertexes(void)
 
     for(i = 0; i < numVertexes; ++i)
     {
-        vertex_t*           vtx = &vertexes[i];
-        float               dist;
+        vertex_t* vtx = &vertexes[i];
+        float dist;
 
         if(!vtx->lineOwners)
             continue; // Not a linedef vertex.
@@ -3349,7 +3241,7 @@ void Rend_Vertexes(void)
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
-            float               bottom;
+            float bottom;
 
             bottom = DDMAXFLOAT;
             getVertexPlaneMinMax(vtx, &bottom, NULL);
@@ -3361,7 +3253,7 @@ void Rend_Vertexes(void)
 
     if(devVertexIndices)
     {
-        float               eye[3];
+        float eye[3];
 
         eye[VX] = vx;
         eye[VY] = vz;
@@ -3508,10 +3400,9 @@ void Rend_RenderMap(void)
  */
 void Rend_CalcLightModRange(void)
 {
-    int                 j;
-    int                 mapAmbient;
-    float               f;
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t* map = P_GetCurrentMap();
+    int j, mapAmbient;
+    float f;
 
     memset(lightModRange, 0, sizeof(float) * 255);
 
@@ -3527,10 +3418,16 @@ void Rend_CalcLightModRange(void)
         f = 0;
         if(lightRangeCompression != 0)
         {
-            if(lightRangeCompression >= 0) // Brighten dark areas.
+            if(lightRangeCompression >= 0)
+            {
+                // Brighten dark areas.
                 f = (float) (255 - j) * lightRangeCompression;
-            else // Darken bright areas.
+            }
+            else
+            {
+                // Darken bright areas.
                 f = (float) -j * -lightRangeCompression;
+            }
         }
 
         // Lower than the ambient limit?
@@ -3548,53 +3445,23 @@ void Rend_CalcLightModRange(void)
     }
 }
 
-/**
- * Applies the offset from the lightModRangeto the given light value.
- *
- * The lightModRange is used to implement (precalculated) ambient light
- * limit, light range compression and light range shift.
- *
- * \note There is no need to clamp the result. Since the offset values in
- *       the lightModRange have already been clamped so that the resultant
- *       lightvalue is NEVER outside the range 0-254 when the original
- *       lightvalue is used as the index.
- *
- * @param lightvar      Ptr to the value to apply the adaptation to.
- */
-void Rend_ApplyLightAdaptation(float *lightvar)
+float Rend_GetLightAdaptVal(float val)
 {
-    int                 lightval;
+    int clampedVal;
 
-    if(lightvar == NULL)
-        return; // Can't apply adaptation with a NULL val ptr...
+    clampedVal = ROUND(255.0f * val);
+    if(clampedVal > 254)
+        clampedVal = 254;
+    else if(clampedVal < 0)
+        clampedVal = 0;
 
-    lightval = ROUND(255.0f * *lightvar);
-    if(lightval > 254)
-        lightval = 254;
-    else if(lightval < 0)
-        lightval = 0;
-
-    *lightvar += lightModRange[lightval];
+    return lightModRange[clampedVal];
 }
 
-/**
- * Same as above but instead of applying light adaptation to the var directly
- * it returns the light adaptation value for the passed light value.
- *
- * @param lightvalue    Light value to look up the adaptation value of.
- * @return int          Adaptation value for the passed light value.
- */
-float Rend_GetLightAdaptVal(float lightvalue)
+void Rend_ApplyLightAdaptation(float* val)
 {
-    int                 lightval;
-
-    lightval = ROUND(255.0f * lightvalue);
-    if(lightval > 254)
-        lightval = 254;
-    else if(lightval < 0)
-        lightval = 0;
-
-    return lightModRange[lightval];
+    if(!val) return;
+    *val += Rend_GetLightAdaptVal(*val);
 }
 
 /**
@@ -3602,16 +3469,16 @@ float Rend_GetLightAdaptVal(float lightvalue)
  */
 void R_DrawLightRange(void)
 {
-#define bWidth          1.0f
-#define bHeight         (bWidth * 255.0f)
-#define BORDER          20
+#define BLOCK_WIDTH             (1.0f)
+#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
+#define BORDER                  (20)
 
-    int                 i;
-    float               c, off;
-    ui_color_t          color;
+    ui_color_t color;
+    float c, off;
+    int i;
 
-    if(!devLightModRange)
-        return;
+    // Disabled?
+    if(!devLightModRange) return;
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -3629,11 +3496,11 @@ void R_DrawLightRange(void)
     glBegin(GL_LINES);
         glVertex2f(-1, -1);
         glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1,  -1);
-        glVertex2f(255 + 1,  bHeight + 1);
-        glVertex2f(255 + 1,  bHeight + 1);
-        glVertex2f(-1,  bHeight + 1);
-        glVertex2f(-1,  bHeight + 1);
+        glVertex2f(255 + 1, -1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
         glVertex2f(-1, -1);
     glEnd();
 
@@ -3644,19 +3511,19 @@ void R_DrawLightRange(void)
         off = lightModRange[i];
 
         glColor4f(c + off, c + off, c + off, 1);
-        glVertex2f(i * bWidth, 0);
-        glVertex2f(i * bWidth + bWidth, 0);
-        glVertex2f(i * bWidth + bWidth,  bHeight);
-        glVertex2f(i * bWidth, bHeight);
+        glVertex2f(i * BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
+        glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
     }
     glEnd();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 
-#undef bWidth
-#undef bHeight
 #undef BORDER
+#undef BLOCK_HEIGHT
+#undef BLOCK_WIDTH
 }
 
 static DGLuint constructBBox(DGLuint name, float br)
@@ -3697,10 +3564,8 @@ static DGLuint constructBBox(DGLuint name, float br)
             glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
         }
         glEnd();
-
         return GL_EndList();
     }
-
     return 0;
 }
 

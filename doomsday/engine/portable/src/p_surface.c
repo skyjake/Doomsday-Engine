@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * World surfaces.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
@@ -35,31 +29,15 @@
 
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Is this surface part of the map geometry?
- */
-boolean Surface_IsAttachedToMap(surface_t* suf)
+boolean Surface_IsDrawable(surface_t* surface)
 {
-    if(!suf || !suf->owner)
-        return false;
+    return surface->material && Material_IsDrawable(surface->material);
+}
+
+boolean Surface_AttachedToMap(surface_t* suf)
+{
+    assert(suf);
+    if(!suf->owner) return false;
     if(DMU_GetType(suf->owner) == DMU_PLANE)
     {
         sector_t* sec = ((plane_t*)suf->owner)->sector;
@@ -69,219 +47,150 @@ boolean Surface_IsAttachedToMap(surface_t* suf)
     return true;
 }
 
-/**
- * Change the material to be used on the specified surface.
- *
- * @param mat  Material to change to.
- * @return  @c true if changed successfully.
- */
 boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
 {
-    if(!suf || !mat)
-        return false;
-
-    if(suf->material == mat)
-        return true;
-
-    // If the material has changed and this is a world surface.
-    if(Surface_IsAttachedToMap(suf))
+    assert(suf);
+    if(suf->material != mat)
     {
-        // No longer a missing texture fix?
-        if(mat && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
-            suf->inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
-
-        if(mat != suf->material && !ddMapSetup)
+        if(Surface_AttachedToMap(suf))
         {
-            // If this plane's surface is in the decorated list, remove it.
-            R_SurfaceListRemove(decoratedSurfaceList, suf);
-            // If this plane's surface is in the glowing list, remove it.
-            R_SurfaceListRemove(glowingSurfaceList, suf);
+            // No longer a missing texture fix?
+            if(mat && (suf->oldFlags & SUIF_FIX_MISSING_MATERIAL))
+                suf->inFlags &= ~SUIF_FIX_MISSING_MATERIAL;
 
-            if(NULL != mat)
+            if(!ddMapSetup)
             {
-                if(Material_HasGlow(mat))
-                    R_SurfaceListAdd(glowingSurfaceList, suf);
-                if(Materials_HasDecorations(mat))
-                    R_SurfaceListAdd(decoratedSurfaceList, suf);
+                // If this plane's surface is in the decorated list, remove it.
+                R_SurfaceListRemove(decoratedSurfaceList, suf);
+                // If this plane's surface is in the glowing list, remove it.
+                R_SurfaceListRemove(glowingSurfaceList, suf);
 
-                if(DMU_GetType(suf->owner) == DMU_PLANE)
+                if(mat)
                 {
-                    const ded_ptcgen_t* def = Materials_PtcGenDef(mat);
-                    P_SpawnPlaneParticleGen(def, (plane_t*)suf->owner);
+                    if(Material_HasGlow(mat))
+                        R_SurfaceListAdd(glowingSurfaceList, suf);
+                    if(Materials_HasDecorations(mat))
+                        R_SurfaceListAdd(decoratedSurfaceList, suf);
+
+                    if(DMU_GetType(suf->owner) == DMU_PLANE)
+                    {
+                        const ded_ptcgen_t* def = Materials_PtcGenDef(mat);
+                        P_SpawnPlaneParticleGen(def, (plane_t*)suf->owner);
+                    }
                 }
             }
         }
+
+        suf->material = mat;
+        suf->oldFlags = suf->inFlags;
+        if(Surface_AttachedToMap(suf))
+            suf->inFlags |= SUIF_UPDATE_DECORATIONS;
     }
-
-    suf->material = mat;
-    suf->oldFlags = suf->inFlags;
-    if(Surface_IsAttachedToMap(suf))
-        suf->inFlags |= SUIF_UPDATE_DECORATIONS;
-
     return true;
 }
 
-/**
- * Update the surface, material X offset.
- *
- * @param suf           The surface to be updated.
- * @param x             Material offset, X delta.
- *
- * @return              @c true, if the change was made successfully.
- */
-boolean Surface_SetMaterialOffsetX(surface_t* suf, float x)
+boolean Surface_SetMaterialOriginX(surface_t* suf, float x)
 {
-    if(!suf)
-        return false;
-
-    if(suf->offset[VX] == x)
-        return true;
-
-    suf->offset[VX] = x;
-    if(Surface_IsAttachedToMap(suf))
+    assert(suf);
+    if(suf->offset[VX] != x)
     {
-        suf->inFlags |= SUIF_UPDATE_DECORATIONS;
-        if(!ddMapSetup)
-            R_SurfaceListAdd(movingSurfaceList, suf);
+        suf->offset[VX] = x;
+        if(Surface_AttachedToMap(suf))
+        {
+            suf->inFlags |= SUIF_UPDATE_DECORATIONS;
+            if(!ddMapSetup)
+                R_SurfaceListAdd(movingSurfaceList, suf);
+        }
     }
     return true;
 }
 
-/**
- * Update the surface, material Y offset.
- *
- * @param suf           The surface to be updated.
- * @param y             Material offset, Y delta.
- *
- * @return              @c true, if the change was made successfully.
- */
-boolean Surface_SetMaterialOffsetY(surface_t* suf, float y)
+boolean Surface_SetMaterialOriginY(surface_t* suf, float y)
 {
-    if(!suf)
-        return false;
-
-    if(suf->offset[VY] == y)
-        return true;
-
-    suf->offset[VY] = y;
-    if(Surface_IsAttachedToMap(suf))
+    assert(suf);
+    if(suf->offset[VY] != y)
     {
-        suf->inFlags |= SUIF_UPDATE_DECORATIONS;
-        if(!ddMapSetup)
-            R_SurfaceListAdd(movingSurfaceList, suf);
+        suf->offset[VY] = y;
+        if(Surface_AttachedToMap(suf))
+        {
+            suf->inFlags |= SUIF_UPDATE_DECORATIONS;
+            if(!ddMapSetup)
+                R_SurfaceListAdd(movingSurfaceList, suf);
+        }
     }
     return true;
 }
 
-/**
- * Update the surface, material X+Y offset.
- *
- * @param suf           The surface to be updated.
- * @param x             Material offset, X delta.
- * @param y             Material offset, Y delta.
- *
- * @return              @c true, if the change was made successfully.
- */
-boolean Surface_SetMaterialOffsetXY(surface_t* suf, float x, float y)
+boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
 {
-    if(!suf)
-        return false;
-
-    if(suf->offset[VX] == x && suf->offset[VY] == y)
-        return true;
-
-    suf->offset[VX] = x;
-    suf->offset[VY] = y;
-    if(Surface_IsAttachedToMap(suf))
+    assert(suf);
+    if(suf->offset[VX] != x || suf->offset[VY] != y)
     {
-        suf->inFlags |= SUIF_UPDATE_DECORATIONS;
-        if(!ddMapSetup)
-            R_SurfaceListAdd(movingSurfaceList, suf);
+        suf->offset[VX] = x;
+        suf->offset[VY] = y;
+        if(Surface_AttachedToMap(suf))
+        {
+            suf->inFlags |= SUIF_UPDATE_DECORATIONS;
+            if(!ddMapSetup)
+                R_SurfaceListAdd(movingSurfaceList, suf);
+        }
     }
     return true;
 }
 
-/**
- * Update the surface, red color component.
- */
 boolean Surface_SetColorR(surface_t* suf, float r)
 {
-    if(!suf)
-        return false;
-
+    assert(suf);
     r = MINMAX_OF(0, r, 1);
-
-    if(suf->rgba[CR] == r)
-        return true;
-
-    // \todo when surface colours are intergrated with the
-    // bias lighting model we will need to recalculate the
-    // vertex colours when they are changed.
-    suf->rgba[CR] = r;
-
+    if(suf->rgba[CR] != r)
+    {
+        // \todo when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
+        suf->rgba[CR] = r;
+    }
     return true;
 }
 
-/**
- * Update the surface, green color component.
- */
 boolean Surface_SetColorG(surface_t* suf, float g)
 {
-    if(!suf)
-        return false;
-
+    assert(suf);
     g = MINMAX_OF(0, g, 1);
-
-    if(suf->rgba[CG] == g)
-        return true;
-
-    // \todo when surface colours are intergrated with the
-    // bias lighting model we will need to recalculate the
-    // vertex colours when they are changed.
-    suf->rgba[CG] = g;
-
+    if(suf->rgba[CG] != g)
+    {
+        // \todo when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
+        suf->rgba[CG] = g;
+    }
     return true;
 }
 
-/**
- * Update the surface, blue color component.
- */
 boolean Surface_SetColorB(surface_t* suf, float b)
 {
-    if(!suf)
-        return false;
-
+    assert(suf);
     b = MINMAX_OF(0, b, 1);
-
-    if(suf->rgba[CB] == b)
-        return true;
-
-    // \todo when surface colours are intergrated with the
-    // bias lighting model we will need to recalculate the
-    // vertex colours when they are changed.
-    suf->rgba[CB] = b;
-
+    if(suf->rgba[CB] != b)
+    {
+        // \todo when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
+        suf->rgba[CB] = b;
+    }
     return true;
 }
 
-/**
- * Update the surface, alpha.
- */
 boolean Surface_SetColorA(surface_t* suf, float a)
 {
-    if(!suf)
-        return false;
-
+    assert(suf);
     a = MINMAX_OF(0, a, 1);
-
-    if(suf->rgba[CA] == a)
-        return true;
-
-    // \todo when surface colours are intergrated with the
-    // bias lighting model we will need to recalculate the
-    // vertex colours when they are changed.
-    suf->rgba[CA] = a;
-
+    if(suf->rgba[CA] != a)
+    {
+        // \todo when surface colours are intergrated with the
+        // bias lighting model we will need to recalculate the
+        // vertex colours when they are changed.
+        suf->rgba[CA] = a;
+    }
     return true;
 }
 
@@ -291,8 +200,7 @@ boolean Surface_SetColorA(surface_t* suf, float a)
 boolean Surface_SetColorRGBA(surface_t* suf, float r, float g, float b,
                              float a)
 {
-    if(!suf)
-        return false;
+    assert(suf);
 
     r = MINMAX_OF(0, r, 1);
     g = MINMAX_OF(0, g, 1);
@@ -314,29 +222,20 @@ boolean Surface_SetColorRGBA(surface_t* suf, float r, float g, float b,
     return true;
 }
 
-/**
- * Update the surface, blendmode.
- */
 boolean Surface_SetBlendMode(surface_t* suf, blendmode_t blendMode)
 {
-    if(!suf)
-        return false;
-
-    if(suf->blendMode == blendMode)
-        return true;
-
-    suf->blendMode = blendMode;
+    assert(suf);
+    if(suf->blendMode != blendMode)
+    {
+        suf->blendMode = blendMode;
+    }
     return true;
 }
 
-/**
- * Mark the surface as requiring a full update. Called during engine-reset.
- */
 void Surface_Update(surface_t* suf)
 {
-    if(!suf || !Surface_IsAttachedToMap(suf))
-        return;
-
+    assert(suf);
+    if(!Surface_AttachedToMap(suf)) return;
     suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 }
 
@@ -396,20 +295,20 @@ int Surface_SetProperty(surface_t* suf, const setargs_t* args)
     case DMU_OFFSET_X: {
         float offX;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offX, args, 0);
-        Surface_SetMaterialOffsetX(suf, offX);
+        Surface_SetMaterialOriginX(suf, offX);
         break;
       }
     case DMU_OFFSET_Y: {
         float offY;
         DMU_SetValue(DMT_SURFACE_OFFSET, &offY, args, 0);
-        Surface_SetMaterialOffsetY(suf, offY);
+        Surface_SetMaterialOriginY(suf, offY);
         break;
       }
     case DMU_OFFSET_XY: {
         float offset[2];
         DMU_SetValue(DMT_SURFACE_OFFSET, &offset[VX], args, 0);
         DMU_SetValue(DMT_SURFACE_OFFSET, &offset[VY], args, 1);
-        Surface_SetMaterialOffsetXY(suf, offset[VX], offset[VY]);
+        Surface_SetMaterialOrigin(suf, offset[VX], offset[VY]);
         break;
       }
     default:

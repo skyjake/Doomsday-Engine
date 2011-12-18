@@ -77,8 +77,14 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 float           Rend_PointDist3D(const float c[3]);
 void            Rend_ApplyTorchLight(float* color, float distance);
 
-void            Rend_ApplyLightAdaptation(float* lightvalue);
-float           Rend_GetLightAdaptVal(float lightvalue);
+/**
+ * Apply range compression delta to @a lightValue.
+ * @param lightValue  Address of the value for adaptation.
+ */
+void Rend_ApplyLightAdaptation(float* lightValue);
+
+/// Same as Rend_ApplyLightAdaptation except the delta is returned.
+float Rend_GetLightAdaptVal(float lightvalue);
 
 void            Rend_CalcLightModRange(void);
 
