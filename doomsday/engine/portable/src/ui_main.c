@@ -1196,10 +1196,67 @@ void UIEdit_Drawer(ui_object_t* ob)
     glDisable(GL_TEXTURE_2D);
 }
 
+RectRaw* UIList_ItemGeometry(ui_object_t* ob, RectRaw* rect)
+{
+    assert(ob);
+    if(rect)
+    {
+        uidata_list_t* dat = ob->data;
+        rect->origin.x = ob->geometry.origin.x + UI_BORDER;
+        rect->origin.y = ob->geometry.origin.y + UI_BORDER;
+        rect->size.width  = ob->geometry.size.width  - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0);
+        rect->size.height = ob->geometry.size.height - 2 * UI_BORDER;
+    }
+    return rect;
+}
+
+RectRaw* UIList_ButtonUpGeometry(ui_object_t* ob, RectRaw* rect)
+{
+    assert(ob);
+    if(rect)
+    {
+        const int buttonHeight = listButtonHeight(ob);
+        rect->origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
+        rect->origin.y = ob->geometry.origin.y + UI_BORDER;
+        rect->size.width  = UI_BAR_WDH;
+        rect->size.height = buttonHeight;
+    }
+    return rect;
+}
+
+RectRaw* UIList_ButtonDownGeometry(ui_object_t* ob, RectRaw* rect)
+{
+    assert(ob);
+    if(rect)
+    {
+        const int buttonHeight = listButtonHeight(ob);
+        rect->origin.x = ob->geometry.origin.x + ob->geometry.size.width  - UI_BORDER - UI_BAR_WDH;
+        rect->origin.y = ob->geometry.origin.y + ob->geometry.size.height - UI_BORDER - buttonHeight;
+        rect->size.width  = UI_BAR_WDH;
+        rect->size.height = buttonHeight;
+    }
+    return rect;
+}
+
+RectRaw* UIList_ThumbGeometry(ui_object_t* ob, RectRaw* rect)
+{
+    assert(ob);
+    if(rect)
+    {
+        const int buttonHeight = listButtonHeight(ob);
+        const int thumbPos = listThumbPos(ob);
+        rect->origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
+        rect->origin.y = thumbPos;
+        rect->size.width  = UI_BAR_WDH;
+        rect->size.height = buttonHeight;
+    }
+    return rect;
+}
+
 int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
 {
     uidata_list_t* dat = ob->data;
-    int i, oldsel = dat->selection, buth, barh;
+    int i, oldsel = dat->selection;
     int used = false;
 
     if(ob->flags & UIF_CLICKED)
@@ -1210,8 +1267,8 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             if(ev->type == E_AXIS)
             {
                 // Calculate the new position.
-                buth = listButtonHeight(ob);
-                barh = ob->geometry.size.height - 2 * (UI_BORDER + buth);
+                int buth = listButtonHeight(ob);
+                int barh = ob->geometry.size.height - 2 * (UI_BORDER + buth);
                 if(barh - buth)
                 {
                     dat->first = ((uiCY - ob->geometry.origin.y - UI_BORDER - (buth * 3) / 2) *
@@ -1268,20 +1325,14 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
     }
     else if(IS_MOUSE_DOWN(ev))
     {
-        Point2Raw origin;
-        Size2Raw size;
+        RectRaw rect;
 
         if(!UI_MouseInside(ob)) return false;
         // Now we know we're going to eat this event.
         used = true;
 
-        buth = listButtonHeight(ob);
         // Clicked in the item section?
-        origin.x = ob->geometry.origin.x + UI_BORDER;
-        origin.y = ob->geometry.origin.y + UI_BORDER;
-        size.width  = ob->geometry.size.width  - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0);
-        size.height = ob->geometry.size.height - 2 * UI_BORDER;
-        if(dat->count > 0 && UI_MouseInsideBox(&origin, &size))
+        if(dat->count > 0 && UI_MouseInsideRect(UIList_ItemGeometry(ob, &rect)))
         {
             dat->selection = dat->first + (uiCY - ob->geometry.origin.y - UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= dat->count)
@@ -1292,39 +1343,24 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             // No scrollbar.
             return true;
         }
-
         // Clicked the Up button?
-        origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
-        origin.y = ob->geometry.origin.y + UI_BORDER;
-        size.width  = UI_BAR_WDH;
-        size.height = buth;
-        if(UI_MouseInsideBox(&origin, &size))
+        else if(UI_MouseInsideRect(UIList_ButtonUpGeometry(ob, &rect)))
         {
             // The Up button is now pressed.
             dat->button[0] = true;
             ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
-
         // Clicked the Down button?
-        origin.x = ob->geometry.origin.x + ob->geometry.size.width  - UI_BORDER - UI_BAR_WDH;
-        origin.y = ob->geometry.origin.y + ob->geometry.size.height - UI_BORDER - buth;
-        size.width  = UI_BAR_WDH;
-        size.height = buth;
-        if(UI_MouseInsideBox(&origin, &size))
+        else if(UI_MouseInsideRect(UIList_ButtonDownGeometry(ob, &rect)))
         {
             // The Down button is now pressed.
             dat->button[2] = true;
             ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
-
         // Clicked the Thumb?
-        origin.x = ob->geometry.origin.x + ob->geometry.size.width - UI_BORDER - UI_BAR_WDH;
-        origin.y = listThumbPos(ob);
-        size.width  = UI_BAR_WDH;
-        size.height = buth;
-        if(UI_MouseInsideBox(&origin, &size))
+        else if(UI_MouseInsideRect(UIList_ThumbGeometry(ob, &rect)))
         {
             dat->button[1] = true;
             // Capture input and start tracking mouse movement.
@@ -1332,7 +1368,10 @@ int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
             ob->flags |= UIF_CLICKED;
             return true;
         }
-        return false;
+        else
+        {
+            return false;
+        }
     }
     else if(IS_MOUSE_UP(ev))
     {
@@ -1880,16 +1919,27 @@ static void strCpyLen(char* dest, const char* src, int maxWidth)
     }
 }
 
+int UI_MouseInsideRect(const RectRaw* rect)
+{
+    assert(rect);
+    return (uiCX >= rect->origin.x && uiCX <= rect->origin.x + rect->size.width &&
+            uiCY >= rect->origin.y && uiCY <= rect->origin.y + rect->size.height);
+}
+
 int UI_MouseInsideBox(const Point2Raw* origin, const Size2Raw* size)
 {
+    RectRaw rect;
     assert(origin && size);
-    return (uiCX >= origin->x && uiCX <= origin->x + size->width &&
-            uiCY >= origin->y && uiCY <= origin->y + size->height);
+    rect.origin.x = origin->x;
+    rect.origin.y = origin->y;
+    rect.size.width  = size->width;
+    rect.size.height = size->height;
+    return UI_MouseInsideRect(&rect);
 }
 
 int UI_MouseInside(ui_object_t* ob)
 {
-    return UI_MouseInsideBox(&ob->geometry.origin, &ob->geometry.size);
+    return UI_MouseInsideRect(&ob->geometry);
 }
 
 int UI_MouseResting(ui_page_t* page)

@@ -268,15 +268,52 @@ void UIPage_Ticker(ui_page_t* page);
 void UIPage_Drawer(ui_page_t* page);
 
 void UIFrame_Drawer(ui_object_t* ob);
+
 void UIText_Drawer(ui_object_t* ob);
 void UIText_BrightDrawer(ui_object_t* ob);
+
 int UIButton_Responder(ui_object_t* ob, ddevent_t* ev);
 void UIButton_Drawer(ui_object_t* ob);
+
 int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev);
 void UIEdit_Drawer(ui_object_t* ob);
+
 int UIList_Responder(ui_object_t* ob, ddevent_t* ev);
 void UIList_Ticker(ui_object_t* ob);
 void UIList_Drawer(ui_object_t* ob);
+
+/**
+ * Calculate the geometry of the visible Item Selection region in screen space.
+ *
+ * @param rect  Calculated values written here.
+ * @return  Same as @a rect for caller convenience.
+ */
+RectRaw* UIList_ItemGeometry(ui_object_t* ob, RectRaw* rect);
+
+/**
+ * Calculate the geometry of the Up Button in screen space.
+ *
+ * @param rect  Calculated values written here.
+ * @return  Same as @a rect for caller convenience.
+ */
+RectRaw* UIList_ButtonUpGeometry(ui_object_t* ob, RectRaw* rect);
+
+/**
+ * Calculate the geometry of the Down Button in screen space.
+ *
+ * @param rect  Calculated values written here.
+ * @return  Same as @a rect for caller convenience.
+ */
+RectRaw* UIList_ButtonDownGeometry(ui_object_t* ob, RectRaw* rect);
+
+/**
+ * Calculate the geometry of the Thumb scroller in screen space.
+ *
+ * @param rect  Calculated values written here.
+ * @return  Same as @a rect for caller convenience.
+ */
+RectRaw* UIList_ThumbGeometry(ui_object_t* ob, RectRaw* rect);
+
 int UISlider_Responder(ui_object_t* ob, ddevent_t* ev);
 void UISlider_Ticker(ui_object_t* ob);
 void UISlider_Drawer(ui_object_t* ob);
@@ -298,6 +335,8 @@ int UI_ScreenW(int relw);
 int UI_ScreenH(int relh);
 
 void UI_InitColumns(ui_object_t* ob);
+
+int UI_MouseInsideRect(const RectRaw* rect);
 int UI_MouseInsideBox(const Point2Raw* origin, const Size2Raw* size);
 
 /// @return  @c true, if the mouse is inside the object.
