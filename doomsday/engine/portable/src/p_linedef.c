@@ -127,15 +127,16 @@ void LineDef_LightLevelDelta(const linedef_t* l, int side, float* deltaL, float*
 }
 
 int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
-    float* bottomleft, float* bottomright, float* topleft, float* topright, float* texoffy,
-    boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
+    float* bottomleft, float* bottomright, float* topleft, float* topright,
+    float* texoffy, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
 {
-    float tcyoff, openingTop, openingBottom;
+    float openingTop[2], openingBottom[2]; // {left, right}
+    float tcyoff;
     sidedef_t* sideDef;
     int texHeight;
     assert(lineDef && bottomleft && bottomright && topleft && topright);
 
-    if(texoffy) *texoffy = 0;
+    if(texoffy)  *texoffy  = 0;
 
     sideDef = lineDef->L_side(side);
     if(!sideDef || !sideDef->SW_middlematerial) return false;
@@ -143,38 +144,60 @@ int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
     texHeight = Material_Height(sideDef->SW_middlematerial);
     tcyoff = sideDef->SW_middlevisoffset[VY];
 
-    openingTop = *(side? topright : topleft);
-    openingBottom = *(side? bottomright : bottomleft);
+    openingTop[0] = *topleft;
+    openingTop[1] = *topright;
+    openingBottom[0] = *bottomleft;
+    openingBottom[1] = *bottomright;
 
-    if(openingTop <= openingBottom) return false;
+    if(openingTop[0] <= openingBottom[0] &&
+       openingTop[1] <= openingBottom[1]) return false;
 
     if(lowerUnpeg)
     {
-        *(side? bottomright : bottomleft) += tcyoff;
-        *(side? topright : topleft) =
-                *(side? bottomright : bottomleft) + texHeight;
+        *bottomright += tcyoff;
+        *bottomleft  += tcyoff;
+        *topright = *bottomright + texHeight;
+        *topleft  = *bottomleft  + texHeight;
     }
     else
     {
-        *(side? topright : topleft) += tcyoff;
-        *(side? bottomright : bottomleft) =
-                *(side? topright : topleft) - texHeight;
+        *topright += tcyoff;
+        *topleft  += tcyoff;
+        *bottomright = *topright - texHeight;
+        *bottomleft  = *topleft  - texHeight;
     }
 
     // Clip it.
     if(clipBottom)
-        if(*(side? bottomright : bottomleft) < openingBottom)
+    {
+        if(*bottomleft < openingBottom[0])
         {
-            *(side? bottomright : bottomleft) = openingBottom;
+            *bottomleft = openingBottom[0];
         }
+        if(*bottomright < openingBottom[1])
+        {
+            *bottomright = openingBottom[1];
+        }
+    }
 
     if(clipTop)
-        if(*(side? topright : topleft) > openingTop)
+    {
+        if(texoffy && (*topleft > openingTop[0] || *topright > openingTop[1]))
         {
-            if(side == 0 && texoffy)
-                *texoffy += *(side? topright : topleft) - openingTop;
-            *(side? topright : topleft) = openingTop;
+            if(*topright > *topleft)
+                *texoffy += *topright - openingTop[1];
+            else
+                *texoffy += *topleft  - openingTop[0];
         }
+        if(*topleft > openingTop[0])
+        {
+            *topleft = openingTop[0];
+        }
+        if(*topright > openingTop[1])
+        {
+            *topright = openingTop[1];
+        }
+    }
 
     return true;
 }
