@@ -34,6 +34,7 @@
 #include <math.h>
 #include <assert.h>
 #include "mobj.h"
+#include "p_player.h"
 #include "dmu_lib.h"
 
 #define VANISHTICS              (2*TICSPERSEC)
