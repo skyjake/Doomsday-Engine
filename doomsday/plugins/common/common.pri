@@ -32,6 +32,7 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
+    $$common_inc/mobj.h \
     $$common_inc/p_actor.h \
     $$common_inc/p_ceiling.h \
     $$common_inc/p_door.h \
@@ -82,6 +83,7 @@ SOURCES += \
     $$common_src/hu_stuff.c \
     $$common_src/m_ctrl.c \
     $$common_src/m_fixed.c \
+    $$common_src/mobj.c \
     $$common_src/p_actor.c \
     $$common_src/p_ceiling.c \
     $$common_src/p_door.c \

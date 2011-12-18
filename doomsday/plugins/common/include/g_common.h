@@ -27,6 +27,7 @@
 
 #include "dd_share.h"
 #include "g_controls.h"
+#include "mobj.h"
 #include "common.h"
 
 enum {

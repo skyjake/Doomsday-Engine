@@ -159,11 +159,6 @@ float P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
-static __inline boolean isInWalkState(player_t* pl)
-{
-    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
-}
-
 static float getFriction(mobj_t* mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
@@ -296,59 +291,8 @@ void P_MobjMoveXY(mobj_t* mo)
     } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
             !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
-    // Slow down.
-    if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
-    {
-        // Debug option for no sliding at all.
-        mo->mom[MX] = mo->mom[MY] = 0;
-        return;
-    }
-
-    if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
-        return; // No friction for missiles ever.
-
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
-        return; // No friction when falling.
-
-    if(cfg.slidingCorpses)
-    {
-        // $dropoff_fix: Add objects falling off ledges, does not apply to
-        // players!
-        if(((mo->flags & MF_CORPSE) || (mo->intFlags & MIF_FALLING)) &&
-           !mo->player)
-        {
-            // Do not stop sliding if halfway off a step with some momentum.
-            if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOM_THRESHOLD) ||
-               !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOM_THRESHOLD))
-            {
-                if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-                    return;
-            }
-        }
-    }
-
-    // Stop player walking animation.
-    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
-        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
-       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {
-        mo->mom[MX] = mo->mom[MY] = 0;
-
-        // If in a walking frame, stop moving.
-        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
-    }
-    else
-    {
-        float friction = getFriction(mo);
-        mo->mom[MX] *= friction;
-        mo->mom[MY] *= friction;
-    }
+    // Slow down.    
+    Mobj_XYMoveStopping(mo);
 }
 
 /*

@@ -43,8 +43,6 @@
 #include "info.h"
 
 #define NOMOM_THRESHOLD     (0.00000001f) // (integer) 0
-#define WALKSTOP_THRESHOLD  (0.062515259f) // 0x1000+1
-#define STANDSPEED_THRESHOLD (0.50001526f) // 0x8000+1
 #define DROPOFFMOM_THRESHOLD (0.25f) // FRACUNIT/4
 #define MAXMOM              (30) // 30*FRACUNIT
 #define MAXMOMSTEP          (15) // 30*FRACUNIT/2
