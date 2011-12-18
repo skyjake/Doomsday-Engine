@@ -953,14 +953,14 @@ void LG_Evaluate(const vectorcomp_t point[3], float color[3])
             color[i] *= dimming;
 
             // Add the light range compression factor
-            color[i] += Rend_GetLightAdaptVal(color[i]);
+            color[i] += Rend_LightAdaptationDelta(color[i]);
         }
     }
     else*/
     {
         // Just add the light range compression factor
         for(i = 0; i < 3; ++i)
-            color[i] += Rend_GetLightAdaptVal(color[i]);
+            color[i] += Rend_LightAdaptationDelta(color[i]);
     }
 }
 

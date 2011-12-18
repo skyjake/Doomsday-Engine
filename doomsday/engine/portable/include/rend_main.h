@@ -84,7 +84,7 @@ void            Rend_ApplyTorchLight(float* color, float distance);
 void Rend_ApplyLightAdaptation(float* lightValue);
 
 /// Same as Rend_ApplyLightAdaptation except the delta is returned.
-float Rend_GetLightAdaptVal(float lightvalue);
+float Rend_LightAdaptationDelta(float lightvalue);
 
 void            Rend_CalcLightModRange(void);
 

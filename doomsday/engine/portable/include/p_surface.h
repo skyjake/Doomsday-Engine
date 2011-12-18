@@ -79,11 +79,13 @@ boolean Surface_SetMaterialOriginX(surface_t* surface, float x);
  */
 boolean Surface_SetMaterialOriginY(surface_t* surface, float y);
 
-boolean Surface_SetColorR(surface_t* surface, float red);
-boolean Surface_SetColorG(surface_t* surface, float green);
-boolean Surface_SetColorB(surface_t* surface, float blue);
-boolean Surface_SetColorA(surface_t* surface, float alpha);
-boolean Surface_SetColorRGBA(surface_t* surface, float red, float green, float blue, float alpha);
+boolean Surface_SetColorAndAlpha(surface_t* surface, float red, float green, float blue, float alpha);
+
+boolean Surface_SetColorRed(surface_t* surface, float red);
+boolean Surface_SetColorGreen(surface_t* surface, float green);
+boolean Surface_SetColorBlue(surface_t* surface, float blue);
+
+boolean Surface_SetAlpha(surface_t* surface, float alpha);
 
 /**
  * Change blendmode.

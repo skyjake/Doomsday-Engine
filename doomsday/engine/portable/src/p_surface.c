@@ -138,7 +138,7 @@ boolean Surface_SetMaterialOrigin(surface_t* suf, float x, float y)
     return true;
 }
 
-boolean Surface_SetColorR(surface_t* suf, float r)
+boolean Surface_SetColorRed(surface_t* suf, float r)
 {
     assert(suf);
     r = MINMAX_OF(0, r, 1);
@@ -152,7 +152,7 @@ boolean Surface_SetColorR(surface_t* suf, float r)
     return true;
 }
 
-boolean Surface_SetColorG(surface_t* suf, float g)
+boolean Surface_SetColorGreen(surface_t* suf, float g)
 {
     assert(suf);
     g = MINMAX_OF(0, g, 1);
@@ -166,7 +166,7 @@ boolean Surface_SetColorG(surface_t* suf, float g)
     return true;
 }
 
-boolean Surface_SetColorB(surface_t* suf, float b)
+boolean Surface_SetColorBlue(surface_t* suf, float b)
 {
     assert(suf);
     b = MINMAX_OF(0, b, 1);
@@ -180,7 +180,7 @@ boolean Surface_SetColorB(surface_t* suf, float b)
     return true;
 }
 
-boolean Surface_SetColorA(surface_t* suf, float a)
+boolean Surface_SetAlpha(surface_t* suf, float a)
 {
     assert(suf);
     a = MINMAX_OF(0, a, 1);
@@ -194,11 +194,7 @@ boolean Surface_SetColorA(surface_t* suf, float a)
     return true;
 }
 
-/**
- * Update the surface, color.
- */
-boolean Surface_SetColorRGBA(surface_t* suf, float r, float g, float b,
-                             float a)
+boolean Surface_SetColorAndAlpha(surface_t* suf, float r, float g, float b, float a)
 {
     assert(suf);
 
@@ -257,33 +253,33 @@ int Surface_SetProperty(surface_t* suf, const setargs_t* args)
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CR], args, 0);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CG], args, 1);
         DMU_SetValue(DMT_SURFACE_RGBA, &rgb[CB], args, 2);
-        Surface_SetColorR(suf, rgb[CR]);
-        Surface_SetColorG(suf, rgb[CG]);
-        Surface_SetColorB(suf, rgb[CB]);
+        Surface_SetColorRed(suf, rgb[CR]);
+        Surface_SetColorGreen(suf, rgb[CG]);
+        Surface_SetColorBlue(suf, rgb[CB]);
         break;
       }
     case DMU_COLOR_RED: {
         float r;
         DMU_SetValue(DMT_SURFACE_RGBA, &r, args, 0);
-        Surface_SetColorR(suf, r);
+        Surface_SetColorRed(suf, r);
         break;
       }
     case DMU_COLOR_GREEN: {
         float g;
         DMU_SetValue(DMT_SURFACE_RGBA, &g, args, 0);
-        Surface_SetColorG(suf, g);
+        Surface_SetColorGreen(suf, g);
         break;
       }
     case DMU_COLOR_BLUE: {
         float b;
         DMU_SetValue(DMT_SURFACE_RGBA, &b, args, 0);
-        Surface_SetColorB(suf, b);
+        Surface_SetColorBlue(suf, b);
         break;
       }
     case DMU_ALPHA: {
         float a;
         DMU_SetValue(DMT_SURFACE_RGBA, &a, args, 0);
-        Surface_SetColorA(suf, a);
+        Surface_SetAlpha(suf, a);
         break;
       }
     case DMU_MATERIAL: {

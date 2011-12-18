@@ -2062,15 +2062,15 @@ uint MPE_SidedefCreate(uint sector, short flags,
 
     Surface_SetMaterial(&s->SW_topsurface, Materials_ToMaterial(topMaterial));
     Surface_SetMaterialOrigin(&s->SW_topsurface, topOffsetX, topOffsetY);
-    Surface_SetColorRGBA(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
+    Surface_SetColorAndAlpha(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
     Surface_SetMaterial(&s->SW_middlesurface, Materials_ToMaterial(middleMaterial));
     Surface_SetMaterialOrigin(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
-    Surface_SetColorRGBA(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
+    Surface_SetColorAndAlpha(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
     Surface_SetMaterial(&s->SW_bottomsurface, Materials_ToMaterial(bottomMaterial));
     Surface_SetMaterialOrigin(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
-    Surface_SetColorRGBA(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
+    Surface_SetColorAndAlpha(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
@@ -2225,7 +2225,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
     pln->surface.owner = (void*) pln;
     pln->height = height;
     Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
-    Surface_SetColorRGBA(&pln->surface, r, g, b, a);
+    Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
     Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
     V3_Set(pln->PS_normal, normalX, normalY, normalZ);
     V3_Normalize(pln->PS_normal);

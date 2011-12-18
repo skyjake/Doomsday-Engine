@@ -595,18 +595,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -744,27 +744,27 @@ if(num >= numSideDefs)
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
+        Surface_SetColorRed(&sid->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_topsurface, toprgb[CG]);
+        Surface_SetColorGreen(&sid->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_topsurface, toprgb[CB]);
+        Surface_SetColorBlue(&sid->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorR(&sid->SW_middlesurface, midrgba[CR]);
+        Surface_SetColorRed(&sid->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_middlesurface, midrgba[CG]);
+        Surface_SetColorGreen(&sid->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_middlesurface, midrgba[CB]);
+        Surface_SetColorBlue(&sid->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetColorA(&sid->SW_middlesurface, midrgba[CA]);
+        Surface_SetAlpha(&sid->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorR(&sid->SW_bottomsurface, bottomrgb[CR]);
+        Surface_SetColorRed(&sid->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_bottomsurface, bottomrgb[CG]);
+        Surface_SetColorGreen(&sid->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_bottomsurface, bottomrgb[CB]);
+        Surface_SetColorBlue(&sid->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
         Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);

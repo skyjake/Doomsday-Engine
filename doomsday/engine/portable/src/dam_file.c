@@ -494,7 +494,7 @@ static void readSide(const gamemap_t *map, uint idx)
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorRGBA(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        Surface_SetColorAndAlpha(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
         suf->decorations = NULL;
         suf->numDecorations = 0;
     }
@@ -643,7 +643,7 @@ static void readSector(const gamemap_t *map, uint idx)
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorRGBA(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        Surface_SetColorAndAlpha(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         p->soundOrg.pos[VX] = readFloat();
         p->soundOrg.pos[VY] = readFloat();

@@ -590,7 +590,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     // \todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
     Surface_SetMaterialOrigin(suf, 0, 0);
-    Surface_SetColorRGBA(suf, 1, 1, 1, 1);
+    Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
     Surface_SetBlendMode(suf, BM_NORMAL);
 
     /**

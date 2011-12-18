@@ -3445,7 +3445,7 @@ void Rend_CalcLightModRange(void)
     }
 }
 
-float Rend_GetLightAdaptVal(float val)
+float Rend_LightAdaptationDelta(float val)
 {
     int clampedVal;
 
@@ -3461,7 +3461,7 @@ float Rend_GetLightAdaptVal(float val)
 void Rend_ApplyLightAdaptation(float* val)
 {
     if(!val) return;
-    *val += Rend_GetLightAdaptVal(*val);
+    *val += Rend_LightAdaptationDelta(*val);
 }
 
 /**
