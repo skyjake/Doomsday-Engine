@@ -127,75 +127,70 @@ void LineDef_LightLevelDelta(const linedef_t* l, int side, float* deltaL, float*
 }
 
 int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
-    float* bottomleft, float* bottomright, float* topleft, float* topright,
-    float* texoffy, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
+    float* bottomLeft, float* bottomRight, float* topLeft, float* topRight,
+    float* texOffY, boolean lowerUnpeg, boolean clipTop, boolean clipBottom)
 {
-    float openingTop[2], openingBottom[2]; // {left, right}
-    float tcyoff;
+    float* top[2], *bottom[2], openingTop[2], openingBottom[2]; // {left, right}
+    float tcYOff;
     sidedef_t* sideDef;
-    int texHeight;
-    assert(lineDef && bottomleft && bottomright && topleft && topright);
+    int i, texHeight;
+    assert(lineDef && bottomLeft && bottomRight && topLeft && topRight);
 
-    if(texoffy)  *texoffy  = 0;
+    if(texOffY)  *texOffY  = 0;
 
     sideDef = lineDef->L_side(side);
     if(!sideDef || !sideDef->SW_middlematerial) return false;
 
     texHeight = Material_Height(sideDef->SW_middlematerial);
-    tcyoff = sideDef->SW_middlevisoffset[VY];
+    tcYOff = sideDef->SW_middlevisoffset[VY];
 
-    openingTop[0] = *topleft;
-    openingTop[1] = *topright;
-    openingBottom[0] = *bottomleft;
-    openingBottom[1] = *bottomright;
+    top[0] = topLeft;
+    top[1] = topRight;
+    bottom[0] = bottomLeft;
+    bottom[1] = bottomRight;
+
+    openingTop[0] = *top[0];
+    openingTop[1] = *top[1];
+    openingBottom[0] = *bottom[0];
+    openingBottom[1] = *bottom[1];
 
     if(openingTop[0] <= openingBottom[0] &&
        openingTop[1] <= openingBottom[1]) return false;
 
-    if(lowerUnpeg)
+    // For each edge (left then right).
+    for(i = 0; i < 2; ++i)
     {
-        *bottomright += tcyoff;
-        *bottomleft  += tcyoff;
-        *topright = *bottomright + texHeight;
-        *topleft  = *bottomleft  + texHeight;
+        if(lowerUnpeg)
+        {
+            *bottom[i] += tcYOff;
+            *top[i] = *bottom[i] + texHeight;
+        }
+        else
+        {
+            *top[i] += tcYOff;
+            *bottom[i] = *top[i] - texHeight;
+        }
     }
-    else
+
+    if(texOffY && (*top[0] > openingTop[0] || *top[1] > openingTop[1]))
     {
-        *topright += tcyoff;
-        *topleft  += tcyoff;
-        *bottomright = *topright - texHeight;
-        *bottomleft  = *topleft  - texHeight;
+        if(*top[1] > *top[0])
+            *texOffY += *top[1] - openingTop[1];
+        else
+            *texOffY += *top[0] - openingTop[0];
     }
 
     // Clip it.
-    if(clipBottom)
+    if(clipTop || clipBottom)
     {
-        if(*bottomleft < openingBottom[0])
+        // For each edge (left then right).
+        for(i = 0; i < 2; ++i)
         {
-            *bottomleft = openingBottom[0];
-        }
-        if(*bottomright < openingBottom[1])
-        {
-            *bottomright = openingBottom[1];
-        }
-    }
+            if(clipBottom && *bottom[i] < openingBottom[i])
+                *bottom[i] = openingBottom[i];
 
-    if(clipTop)
-    {
-        if(texoffy && (*topleft > openingTop[0] || *topright > openingTop[1]))
-        {
-            if(*topright > *topleft)
-                *texoffy += *topright - openingTop[1];
-            else
-                *texoffy += *topleft  - openingTop[0];
-        }
-        if(*topleft > openingTop[0])
-        {
-            *topleft = openingTop[0];
-        }
-        if(*topright > openingTop[1])
-        {
-            *topright = openingTop[1];
+            if(clipTop && *top[i] > openingTop[i])
+                *top[i] = openingTop[i];
         }
     }
 
