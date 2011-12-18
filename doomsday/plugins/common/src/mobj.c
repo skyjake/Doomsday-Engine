@@ -91,7 +91,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
         return;
     }
 
-#if __JDOOM__ || __JDOOM64__
+#ifndef __JHEXEN__
     if(cfg.slidingCorpses)
     {
         /**
