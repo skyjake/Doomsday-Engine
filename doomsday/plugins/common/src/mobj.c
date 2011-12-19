@@ -72,7 +72,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     boolean isVoodooDoll = false;
     boolean belowWalkStop = false;
     boolean belowStandSpeed = false;
-    boolean playerMoving = false;
+    boolean isMovingPlayer = false;
 
     assert(mo != 0);
 
@@ -120,33 +120,32 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     {
         belowStandSpeed = (INRANGE_OF(mo->mom[MX], 0, STANDSPEED) &&
                            INRANGE_OF(mo->mom[MY], 0, STANDSPEED));
-        playerMoving = (!FEQUAL(player->plr->forwardMove, 0) ||
+        isMovingPlayer = (!FEQUAL(player->plr->forwardMove, 0) ||
                         !FEQUAL(player->plr->sideMove, 0));
     }
 
     // Stop player walking animation (only real players).
-    if(!isVoodooDoll && player && belowStandSpeed && !playerMoving)
+    if(!isVoodooDoll && player && belowStandSpeed && !isMovingPlayer &&
+        !(IS_NETGAME && IS_SERVER)) // Netgame servers use logic elsewhere for player animation.
     {
-        if(!(IS_NETGAME && IS_SERVER)) // Netgame servers use logic elsewhere for player animation.
+        // If in a walking frame, stop moving.
+        if(P_PlayerInWalkState(player))
         {
-            // If in a walking frame, stop moving.
-            if(P_PlayerInWalkState(player))
-            {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
-            }
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
         }
     }
 
-    // Friction.
-    if(isVoodooDoll || (player && belowWalkStop && !playerMoving))
+    // Apply friction.
+    if(belowWalkStop && !isMovingPlayer)
     {
-        // $voodoodolls: Do not zero mom!
+        // $voodoodolls: Do not zero mom for voodoo dolls!
         if(!isVoodooDoll)
         {
+            // Momentum is below the walkstop threshold; stop it completely.
             mo->mom[MX] = mo->mom[MY] = 0;
 
             // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-            player->bob = 0;
+            if(player) player->bob = 0;
         }
     }
     else
