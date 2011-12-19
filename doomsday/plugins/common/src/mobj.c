@@ -39,7 +39,7 @@
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
 
-/// Threshold for killing momentum of a freely moving object.
+/// Threshold for killing momentum of a freely moving object affected by friction.
 #define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
 
 /// Threshold for stopping walk animation.
@@ -125,7 +125,6 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 
     // Stop player walking animation (only real players).
-    /// @todo Voodoo doll animation is not stopped, should it be?
     if(!isVoodooDoll && player && belowStandSpeed && !playerMoving)
     {
         if(!(IS_NETGAME && IS_SERVER)) // Netgame servers use logic elsewhere for player animation.
