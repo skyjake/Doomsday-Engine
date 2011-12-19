@@ -54,9 +54,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-// Radiation suit, green shift.
-#define RADIATIONPAL        13
-
 // Frags pos.
 #define ST_FRAGSX           138
 #define ST_FRAGSY           171
@@ -299,53 +296,6 @@ void ST_Ticker(timespan_t ticLength)
             }
         }
     }
-}
-
-void ST_doPaletteStuff(int player)
-{
-    int palette = 0, cnt, bzc;
-    player_t* plr = &players[player];
-
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
-    }
-
-    if(cnt)
-    {
-        palette = (cnt + 7) >> 3;
-
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-
-        palette += STARTREDPALS;
-    }
-    else if(plr->bonusCount)
-    {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
-    }
-
-    // $democam
-    if(palette)
-    {
-        plr->plr->flags |= DDPF_VIEW_FILTER;
-        R_GetFilterColor(plr->plr->filterColor, palette);
-    }
-    else
-        plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
 static void drawWidgets(hudstate_t* hud)
@@ -705,7 +655,7 @@ void ST_Drawer(int player)
     hud->statusbarActive = (fullscreenMode < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
-    ST_doPaletteStuff(player);
+    R_UpdateViewFilter(player);
 
     ST_doFullscreenStuff(player);
 }

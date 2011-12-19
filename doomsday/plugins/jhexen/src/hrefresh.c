@@ -66,6 +66,132 @@ float quitDarkenOpacity = 0;
 
 // CODE --------------------------------------------------------------------
 
+boolean R_ViewFilterColor(float rgba[4], int filter)
+{
+    if(!rgba) return false;
+
+    // We have to choose the right color and alpha.
+    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
+    {   // Red.
+        rgba[CR] = 1;
+        rgba[CG] = 0;
+        rgba[CB] = 0;
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        return true;
+    }
+    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
+    {   // Light Yellow.
+        rgba[CR] = 1;
+        rgba[CG] = 1;
+        rgba[CB] = .5f;
+        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        return true;
+    }
+    else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
+    {   // Green.
+        rgba[CR] = 0;
+        rgba[CG] = 1;
+        rgba[CB] = 0;
+        rgba[CA] = cfg.filterStrength * (filter - STARTPOISONPALS + 1) / 16.f;
+        return true;
+    }
+    else if(filter >= STARTSCOURGEPAL)
+    {   // Orange.
+        rgba[CR] = 1;
+        rgba[CG] = .5f;
+        rgba[CB] = 0;
+        rgba[CA] = cfg.filterStrength * (STARTSCOURGEPAL + 3 - filter) / 6.f;
+        return true;
+    }
+    else if(filter >= STARTHOLYPAL)
+    {   // White.
+        rgba[CR] = 1;
+        rgba[CG] = 1;
+        rgba[CB] = 1;
+        rgba[CA] = cfg.filterStrength * (STARTHOLYPAL + 3 - filter) / 6.f;
+        return true;
+    }
+    else if(filter == STARTICEPAL)
+    {   // Light blue.
+        rgba[CR] = .5f;
+        rgba[CG] = .5f;
+        rgba[CB] = 1;
+        rgba[CA] = cfg.filterStrength * .4f;
+        return true;
+    }
+
+    if(filter)
+        Con_Error("R_ViewFilterColor: Strange filter number: %d.\n", filter);
+    return false;
+}
+
+/**
+ * Sets the new palette based upon the current values of
+ * player_t->damageCount and player_t->bonusCount.
+ */
+void R_UpdateViewFilter(int player)
+{
+    int palette = 0;
+    player_t* plr;
+
+    if(player < 0 || player >= MAXPLAYERS)
+        return;
+
+    plr = &players[player];
+    if(!plr->plr->inGame)
+    {
+        // Not currently present.
+        return;
+    }
+
+    if(G_GameState() == GS_MAP)
+    {
+        if(plr->poisonCount)
+        {
+            palette = 0;
+            palette = (plr->poisonCount + 7) >> 3;
+            if(palette >= NUMPOISONPALS)
+            {
+                palette = NUMPOISONPALS - 1;
+            }
+            palette += STARTPOISONPALS;
+        }
+        else if(plr->damageCount)
+        {
+            palette = (plr->damageCount + 7) >> 3;
+            if(palette >= NUMREDPALS)
+            {
+                palette = NUMREDPALS - 1;
+            }
+            palette += STARTREDPALS;
+        }
+        else if(plr->bonusCount)
+        {
+            palette = (plr->bonusCount + 7) >> 3;
+            if(palette >= NUMBONUSPALS)
+            {
+                palette = NUMBONUSPALS - 1;
+            }
+            palette += STARTBONUSPALS;
+        }
+        else if(plr->plr->mo->flags2 & MF2_ICEDAMAGE)
+        {   // Frozen player
+            palette = STARTICEPAL;
+        }
+    }
+
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_ViewFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+    {
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
+    }
+}
+
 static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
@@ -204,66 +330,6 @@ void X_DrawWindow(const Size2Raw* windowSize)
     {
         DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
     }
-}
-
-boolean R_GetFilterColor(float rgba[4], int filter)
-{
-    if(!rgba)
-        return false;
-
-    // We have to choose the right color and alpha.
-    if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
-        rgba[CR] = 1;
-        rgba[CG] = 0;
-        rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
-        return true;
-    }
-    else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Light Yellow.
-        rgba[CR] = 1;
-        rgba[CG] = 1;
-        rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
-        return true;
-    }
-    else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
-    {   // Green.
-        rgba[CR] = 0;
-        rgba[CG] = 1;
-        rgba[CB] = 0;
-        rgba[CA] = cfg.filterStrength * (filter - STARTPOISONPALS + 1) / 16.f;
-        return true;
-    }
-    else if(filter >= STARTSCOURGEPAL)
-    {   // Orange.
-        rgba[CR] = 1;
-        rgba[CG] = .5f;
-        rgba[CB] = 0;
-        rgba[CA] = cfg.filterStrength * (STARTSCOURGEPAL + 3 - filter) / 6.f;
-        return true;
-    }
-    else if(filter >= STARTHOLYPAL)
-    {   // White.
-        rgba[CR] = 1;
-        rgba[CG] = 1;
-        rgba[CB] = 1;
-        rgba[CA] = cfg.filterStrength * (STARTHOLYPAL + 3 - filter) / 6.f;
-        return true;
-    }
-    else if(filter == STARTICEPAL)
-    {   // Light blue.
-        rgba[CR] = .5f;
-        rgba[CG] = .5f;
-        rgba[CB] = 1;
-        rgba[CA] = cfg.filterStrength * .4f;
-        return true;
-    }
-
-    if(filter)
-        Con_Error("R_GetFilterColor: Strange filter number: %d.\n", filter);
-    return false;
 }
 
 /**

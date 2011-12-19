@@ -58,8 +58,6 @@ void ST_Drawer(int player);
 void ST_Start(int player);
 void ST_Stop(int player);
 
-void ST_doPaletteStuff(int player);
-
 uiwidget_t* ST_UIChatForPlayer(int player);
 uiwidget_t* ST_UILogForPlayer(int player);
 uiwidget_t* ST_UIAutomapForPlayer(int player);

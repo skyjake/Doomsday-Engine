@@ -4181,16 +4181,17 @@ void C_DECL A_FreezeDeath(mobj_t* mo)
 
     if(mo->player)
     {
-        player_t*           plr = mo->player;
+        player_t* plr = mo->player;
 
         plr->damageCount = 0;
         plr->poisonCount = 0;
         plr->bonusCount = 0;
 
-        ST_doPaletteStuff(plr - players);
+        R_UpdateViewFilter(plr - players);
     }
     else if(mo->flags & MF_COUNTKILL && mo->special)
-    {   // Initiate monster death actions.
+    {
+        // Initiate monster death actions.
         P_ExecuteLineSpecial(mo->special, mo->args, NULL, 0, mo);
     }
 }

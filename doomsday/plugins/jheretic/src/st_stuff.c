@@ -686,44 +686,6 @@ void ST_Ticker(timespan_t ticLength)
     }
 }
 
-/**
- * Sets the new palette based upon current values of player->damageCount
- * and player->bonusCount
- */
-void ST_doPaletteStuff(int player)
-{
-    int palette = 0;
-    player_t* plr = &players[player];
-
-    if(plr->damageCount)
-    {
-        palette = (plr->damageCount + 7) >> 3;
-        if(palette >= NUMREDPALS)
-        {
-            palette = NUMREDPALS - 1;
-        }
-        palette += STARTREDPALS;
-    }
-    else if(plr->bonusCount)
-    {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-        {
-            palette = NUMBONUSPALS - 1;
-        }
-        palette += STARTBONUSPALS;
-    }
-
-    // $democam
-    if(palette)
-    {
-        plr->plr->flags |= DDPF_VIEW_FILTER;
-        R_GetFilterColor(plr->plr->filterColor, palette);
-    }
-    else
-        plr->plr->flags &= ~DDPF_VIEW_FILTER;
-}
-
 void SBarInventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 {
     const hudstate_t* hud = &hudStates[obj->player];
@@ -2485,7 +2447,7 @@ void ST_Drawer(int player)
     hud->statusbarActive = (fullscreen < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     // Do palette shifts
-    ST_doPaletteStuff(player);
+    R_UpdateViewFilter(player);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
     UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));

@@ -3640,71 +3640,6 @@ void ST_Ticker(timespan_t ticLength)
     }
 }
 
-/**
- * Sets the new palette based upon the current values of
- * player_t->damageCount and player_t->bonusCount.
- */
-void ST_doPaletteStuff(int player)
-{
-    int palette = 0;
-    player_t* plr;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    plr = &players[player];
-    if(!plr->plr->inGame)
-    {
-        // Not currently present.
-        return;
-    }
-
-    if(G_GameState() == GS_MAP)
-    {
-        if(plr->poisonCount)
-        {
-            palette = 0;
-            palette = (plr->poisonCount + 7) >> 3;
-            if(palette >= NUMPOISONPALS)
-            {
-                palette = NUMPOISONPALS - 1;
-            }
-            palette += STARTPOISONPALS;
-        }
-        else if(plr->damageCount)
-        {
-            palette = (plr->damageCount + 7) >> 3;
-            if(palette >= NUMREDPALS)
-            {
-                palette = NUMREDPALS - 1;
-            }
-            palette += STARTREDPALS;
-        }
-        else if(plr->bonusCount)
-        {
-            palette = (plr->bonusCount + 7) >> 3;
-            if(palette >= NUMBONUSPALS)
-            {
-                palette = NUMBONUSPALS - 1;
-            }
-            palette += STARTBONUSPALS;
-        }
-        else if(plr->plr->mo->flags2 & MF2_ICEDAMAGE)
-        {   // Frozen player
-            palette = STARTICEPAL;
-        }
-    }
-
-    // $democam
-    if(palette)
-    {
-        plr->plr->flags |= DDPF_VIEW_FILTER;
-        R_GetFilterColor(plr->plr->filterColor, palette);
-    }
-    else
-        plr->plr->flags &= ~DDPF_VIEW_FILTER;
-}
-
 void ST_Drawer(int player)
 {
     int fullscreen = fullscreenMode();
@@ -3721,7 +3656,7 @@ void ST_Drawer(int player)
     hud->statusbarActive = (fullscreen < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
-    ST_doPaletteStuff(player);
+    R_UpdateViewFilter(player);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
     UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));

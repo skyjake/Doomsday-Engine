@@ -236,7 +236,7 @@ void NetSv_Ticker(void)
         // $democam
         if(oldPals[i] != palette)
         {   // The filter changes.
-            R_GetFilterColor(plr->plr->filterColor, palette);
+            R_ViewFilterColor(plr->plr->filterColor, palette);
             // If we are the server, we'll need inform the client.
             //plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;

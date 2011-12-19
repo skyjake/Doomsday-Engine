@@ -133,7 +133,6 @@ void ST_RebuildAutomap(int player);
 // Call when it might be neccessary for the hud to unhide.
 void ST_HUDUnHide(int player, hueevent_t ev);
 
-void ST_doPaletteStuff(int player);
 void ST_FlashCurrentItem(int player);
 
 D_CMD(ChatOpen);

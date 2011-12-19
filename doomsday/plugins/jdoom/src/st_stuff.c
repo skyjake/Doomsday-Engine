@@ -23,15 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Status bar code - jDoom specific.
- *
- * Does the face/direction indicator animation and the palette indicators as
- * well (red pain/berserk, bright pickup)
- */
-
- // HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,11 +42,6 @@
 #include "p_user.h"
 #include "r_common.h"
 #include "am_map.h"
-
-// MACROS ------------------------------------------------------------------
-
-// Radiation suit, green shift.
-#define RADIATIONPAL        (13)
 
 // N/256*100% probability
 //  that the normal face state will change
@@ -876,54 +862,6 @@ void ST_Ticker(timespan_t ticLength)
 
         //ST_updateWidgets(i);
         //hud->oldHealth = plr->health;
-    }
-}
-
-void ST_doPaletteStuff(int player)
-{
-    int palette = 0, cnt, bzc;
-    player_t* plr = &players[player];
-
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
-    }
-
-    if(cnt)
-    {
-        palette = (cnt + 7) >> 3;
-
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-        palette += STARTREDPALS;
-    }
-    else if(plr->bonusCount)
-    {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
-    }
-
-    // $democam
-    if(palette)
-    {
-        plr->plr->flags |= DDPF_VIEW_FILTER;
-        R_GetFilterColor(plr->plr->filterColor, palette);
-    }
-    else
-    {
-        plr->plr->flags &= ~DDPF_VIEW_FILTER;
     }
 }
 
@@ -2650,7 +2588,7 @@ void ST_Drawer(int player)
     hud->statusbarActive = (fullscreen < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
-    ST_doPaletteStuff(player);
+    R_UpdateViewFilter(player);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
     UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));
@@ -2908,7 +2846,8 @@ static void initData(hudstate_t* hud)
 
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
+    const int playerNum = UIWidget_Player(obj);
+    hudstate_t* hud = &hudStates[playerNum];
     int flags;
 
     hud->automapCheatLevel = level;

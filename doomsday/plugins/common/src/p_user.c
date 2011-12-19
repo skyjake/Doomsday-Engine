@@ -1190,6 +1190,7 @@ void P_PlayerThinkView(player_t* player)
     }
 }
 
+
 void P_PlayerThinkSpecial(player_t* player)
 {
     if(!player->plr->mo) return;
