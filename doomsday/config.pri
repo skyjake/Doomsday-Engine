@@ -179,7 +179,9 @@ macx {
             QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
             QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
             CONFIG += x86
-            CONFIG -= x86_64
+            QMAKE_CFLAGS_X86_64 = ""
+            QMAKE_OBJECTIVE_CFLAGS_X86_64 = ""
+            QMAKE_LFLAGS_X86_64 = ""
         } else {
             echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
             QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
