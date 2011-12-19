@@ -423,7 +423,7 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
         }
 
         FR_SetColorAndAlpha(col[CR], col[CG], col[CB], col[CA]);
-        FR_DrawText3(msg->text, 0, y, alignFlags, textFlags);
+        FR_DrawTextXY3(msg->text, 0, y, alignFlags, textFlags);
 
         ++drawnMsgCount;
         y += lineHeight;

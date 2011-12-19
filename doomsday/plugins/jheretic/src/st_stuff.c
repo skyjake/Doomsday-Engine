@@ -422,7 +422,7 @@ void SBarChain_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(pGemInfo.id, x + gemXOffset, chainY);
+    GL_DrawPatchXY(pGemInfo.id, x + gemXOffset, chainY);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -495,28 +495,28 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
-        GL_DrawPatch(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatchXY(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
+        GL_DrawPatchXY(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
 
         // Faces.
-        GL_DrawPatch(pStatusbar, ORIGINX, ORIGINY);
+        GL_DrawPatchXY(pStatusbar, ORIGINX, ORIGINY);
 
         if(P_GetPlayerCheats(&players[obj->player]) & CF_GODMODE)
         {
-            GL_DrawPatch(pGodLeft, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatch(pGodRight, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatchXY(pGodLeft, ORIGINX+16, ORIGINY+9);
+            GL_DrawPatchXY(pGodRight, ORIGINX+287, ORIGINY+9);
         }
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
             if(deathmatch)
-                GL_DrawPatch(pStatBar, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
-                GL_DrawPatch(pLifeBar, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            GL_DrawPatch(pInvBar, ORIGINX+34, ORIGINY+2);
+            GL_DrawPatchXY(pInvBar, ORIGINX+34, ORIGINY+2);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -528,8 +528,8 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        GL_DrawPatch(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
-        GL_DrawPatch(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatchXY(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
+        GL_DrawPatchXY(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
 
         DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -546,8 +546,8 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            GL_DrawPatch(pGodLeft, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatch(pGodRight, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatchXY(pGodLeft, ORIGINX+16, ORIGINY+9);
+            GL_DrawPatchXY(pGodRight, ORIGINX+287, ORIGINY+9);
         }
         else
         {
@@ -558,13 +558,13 @@ void SBarBackground_Drawer(uiwidget_t* obj, int x, int y)
         if(!Hu_InventoryIsOpen(obj->player))
         {
             if(deathmatch)
-                GL_DrawPatch(pStatBar, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
             else
-                GL_DrawPatch(pLifeBar, ORIGINX+34, ORIGINY+2);
+                GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            GL_DrawPatch(pInvBar, ORIGINX+34, ORIGINY+2);
+            GL_DrawPatchXY(pInvBar, ORIGINX+34, ORIGINY+2);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -827,7 +827,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -917,7 +917,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1005,7 +1005,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1062,18 +1062,15 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    typedef struct {
-        int x, y;
-    } loc_t;
     assert(obj);
     {
-    static const loc_t elements[] = {
+    static const Point2Raw elements[] = {
         { ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y },
         { ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y },
         { ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y }
     };
     guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
-    const loc_t* loc = &elements[kslt->keytypeA];
+    const Point2Raw* loc = &elements[kslt->keytypeA];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
@@ -1092,7 +1089,7 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatch(kslt->patchId, loc->x, loc->y);
+    GL_DrawPatch(kslt->patchId, loc);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1180,7 +1177,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], iconAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1272,7 +1269,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatch(icon->patchId, X, Y);
+    GL_DrawPatchXY(icon->patchId, X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1374,7 +1371,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(item->patchId, x, y);
+        GL_DrawPatchXY(item->patchId, x, y);
 
         readyItem = P_InventoryReadyItem(obj->player);
         if(!(item->flashCounter > 0) && IIT_NONE != readyItem)
@@ -1388,7 +1385,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
                 FR_SetFont(obj->font);
                 FR_SetTracking(TRACKING);
                 FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-                FR_DrawText3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+                FR_DrawTextXY3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
             }
         }
 
@@ -1523,7 +1520,7 @@ void Flight_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(flht->patchId, 16, 14);
+        GL_DrawPatchXY(flht->patchId, 16, 14);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1615,7 +1612,7 @@ void Tome_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, alpha);
-        GL_DrawPatch(tome->patchId, -13, 13);
+        GL_DrawPatchXY(tome->patchId, -13, 13);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1635,7 +1632,7 @@ void Tome_Drawer(uiwidget_t* obj, int x, int y)
         FR_SetFont(obj->font);
         FR_SetTracking(TRACKING);
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-        FR_DrawText3(buf, 0, 25 + 2, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, 0, 25 + 2, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1760,7 +1757,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch3(icon->patchId, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatchXY3(icon->patchId, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1815,7 +1812,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, 0, -2, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, -2, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1878,10 +1875,10 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(0, 0, 0, textAlpha * .4f);
-    FR_DrawText3(buf, 2, 1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 2, 1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1943,7 +1940,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, -1, -11, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, -1, -11, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1999,7 +1996,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[0], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[0], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[0], &pInfo))
@@ -2010,7 +2007,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[1], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[1], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[1], &pInfo))
@@ -2021,7 +2018,7 @@ void Keys_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch3(pKeys[2], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[2], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2117,7 +2114,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2187,9 +2184,9 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatch3(pInvItemBox, 0, 0, ALIGN_BOTTOMRIGHT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pInvItemBox, 0, 0, ALIGN_BOTTOMRIGHT, DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(item->patchId, -boxInfo.geometry.size.width + xOffset, -boxInfo.geometry.size.height + yOffset);
+        GL_DrawPatchXY(item->patchId, -boxInfo.geometry.size.width + xOffset, -boxInfo.geometry.size.height + yOffset);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2205,7 +2202,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
             FR_SetTracking(TRACKING);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
-            FR_DrawText3(buf, -1, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawTextXY3(buf, -1, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
             DGL_Disable(DGL_TEXTURE_2D);
         }
     }
@@ -2331,7 +2328,7 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2418,7 +2415,7 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2505,7 +2502,7 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2565,7 +2562,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);

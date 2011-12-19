@@ -751,24 +751,45 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
+void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short textFlags)
 {
     char str[2];
     str[0] = ch;
     str[1] = '\0';
-    FR_DrawText3(str, x, y, alignFlags, textFlags);
+    FR_DrawText3(str, origin, alignFlags, textFlags);
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags)
+void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags)
 {
-    FR_DrawChar3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+    FR_DrawChar3(ch, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawChar(unsigned char ch, int x, int y)
+void FR_DrawChar(unsigned char ch, const Point2Raw* origin)
 {
-    FR_DrawChar2(ch, x, y, DEFAULT_ALIGNFLAGS);
+    FR_DrawChar2(ch, origin, DEFAULT_ALIGNFLAGS);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short textFlags)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    FR_DrawChar3(ch, &origin, alignFlags, textFlags);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags)
+{
+    FR_DrawCharXY3(ch, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawCharXY(unsigned char ch, int x, int y)
+{
+    FR_DrawCharXY2(ch, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
@@ -1159,7 +1180,7 @@ static void freeTextBuffer(void)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origTextFlags)
+void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, short origTextFlags)
 {
     fontid_t origFont = FR_Font();
     float cx, cy, extraScale;
@@ -1173,8 +1194,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
 
     errorIfNotInited("FR_DrawText");
 
-    if(!text || !text[0])
-        return;
+    if(!text || !text[0] || !origin) return;
 
     origTextFlags &= ~(DTF_INTERNAL_MASK);
 
@@ -1185,8 +1205,8 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
         pass < ((origTextFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
         // Configure the next pass.
-        cx = (float) x;
-        cy = (float) y;
+        cx = (float) origin->x;
+        cy = (float) origin->y;
         curCase = -1;
         charCount = 0;
         switch(pass)
@@ -1224,7 +1244,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
                 {
                     do
                     {
-                        cx = (float) x;
+                        cx = (float) origin->x;
                         cy += state.lastLineHeight * (1+lastLeading);
                     } while(--numBreaks > 0);
                 }
@@ -1311,11 +1331,11 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
                     /// \fixme Do not assume the aspect ratio and therefore whether
                     // correction is even needed.
-                    glTranslatef((float)x, (float)y, 0);
+                    glTranslatef((float)origin->x, (float)origin->y, 0);
                     glScalef(1, 200.0f / 240.0f, 1);
                     glRotatef(state.angle, 0, 0, 1);
                     glScalef(1, 240.0f / 200.0f, 1);
-                    glTranslatef(-(float)x, -(float)y, 0);
+                    glTranslatef(-(float)origin->x, -(float)origin->y, 0);
                 }
 
                 glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
@@ -1336,7 +1356,7 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
                     if(strlen(fragment) > 0)
                         state.lastLineHeight = textFragmentHeight(fragment);
 
-                    cx = (float) x;
+                    cx = (float) origin->x;
                     cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
                 }
 
@@ -1355,15 +1375,36 @@ void FR_DrawText3(const char* text, int x, int y, int alignFlags, short origText
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawText2(const char* text, int x, int y, int alignFlags)
+void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags)
 {
-    FR_DrawText3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+    FR_DrawText3(text, origin, alignFlags, DEFAULT_DRAWFLAGS);
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawText(const char* text, int x, int y)
+void FR_DrawText(const char* text, const Point2Raw* origin)
 {
-    FR_DrawText2(text, x, y, DEFAULT_ALIGNFLAGS);
+    FR_DrawText2(text, origin, DEFAULT_ALIGNFLAGS);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    FR_DrawText3(text, &origin, alignFlags, flags);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags)
+{
+    FR_DrawTextXY3(text, x, y, alignFlags, DEFAULT_DRAWFLAGS);
+}
+
+/// \note Member of the Doomsday public API.
+void FR_DrawTextXY(const char* text, int x, int y)
+{
+    FR_DrawTextXY2(text, x, y, DEFAULT_ALIGNFLAGS);
 }
 
 /// \note Member of the Doomsday public API.

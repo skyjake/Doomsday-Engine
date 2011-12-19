@@ -365,7 +365,7 @@ static void drawWidgets(hudstate_t* hud)
         FR_LoadDefaultAttrib();
         FR_SetColorAndAlpha(1, 1, 1, hud->alpha);
 
-        FR_DrawText3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -477,7 +477,7 @@ void ST_doFullscreenStuff(int player)
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
-        FR_DrawText3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -499,13 +499,13 @@ void ST_doFullscreenStuff(int player)
         FR_SetColorAndAlpha(1, 1, 1, iconalpha);
 
         pos = FR_TextWidth(buf)/2;
-        FR_DrawText3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         sprintf(buf, "%i", plr->health);
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        FR_DrawText3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -582,7 +582,7 @@ Draw_EndZoom();
 
             FR_SetFont(FID(GF_FONTB));
             FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-            FR_DrawText3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
+            FR_DrawTextXY3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
 
             DGL_Disable(DGL_TEXTURE_2D);
             break;
@@ -598,12 +598,12 @@ Draw_EndZoom();
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(1, 1, 1, iconalpha);
         w = FR_TextWidth(buf);
-        FR_DrawText3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         sprintf(buf, "%i", plr->armorPoints);
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        FR_DrawText3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -634,7 +634,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

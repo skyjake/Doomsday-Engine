@@ -391,8 +391,8 @@ static void drawDeathTally(void)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatch(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
-    GL_DrawPatch(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
+    GL_DrawPatchXY(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
+    GL_DrawPatchXY(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {
@@ -444,12 +444,12 @@ static void drawDeathTally(void)
                 if(bold)
                 {
                     FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
-                    FR_DrawText3("--", x, y, ALIGN_TOP, DTF_NO_EFFECTS);
+                    FR_DrawTextXY3("--", x, y, ALIGN_TOP, DTF_NO_EFFECTS);
                 }
                 else
                 {
                     FR_SetColorAndAlpha(1, 1, 1, 1);
-                    FR_DrawText("--", x, y);
+                    FR_DrawTextXY("--", x, y);
                 }
             }
         }
@@ -477,7 +477,7 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
     }
 
     FR_SetColorAndAlpha(1, 1, 1, 1);
-    FR_DrawText3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
@@ -490,5 +490,5 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
     }
 
     FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
-    FR_DrawText3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }

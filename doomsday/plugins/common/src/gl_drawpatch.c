@@ -26,63 +26,74 @@
 #include "doomsday.h"
 #include "gl_drawpatch.h"
 
-void GL_DrawPatch3(patchid_t id, int posX, int posY, int alignFlags, int patchFlags)
+void GL_DrawPatch3(patchid_t id, const Point2Raw* origin, int alignFlags, int patchFlags)
 {
-    float x = (float) posX, y = (float) posY, w, h;
+    RectRaw rect;
     patchinfo_t info;
 
-    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
+    if(id == 0 || !origin || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
     if(!R_GetPatchInfo(id, &info)) return;
 
-    DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    rect.origin.x = origin->x;
+    rect.origin.y = origin->y;
 
     if(alignFlags & ALIGN_RIGHT)
-        x -= info.geometry.size.width;
+        rect.origin.x -= info.geometry.size.width;
     else if(!(alignFlags & ALIGN_LEFT))
-        x -= info.geometry.size.width /2;
+        rect.origin.x -= info.geometry.size.width /2;
 
     if(alignFlags & ALIGN_BOTTOM)
-        y -= info.geometry.size.height;
+        rect.origin.y -= info.geometry.size.height;
     else if(!(alignFlags & ALIGN_TOP))
-        y -= info.geometry.size.height/2;
+        rect.origin.y -= info.geometry.size.height/2;
 
-    w = (float) info.geometry.size.width;
-    h = (float) info.geometry.size.height;
+    rect.size.width  = info.geometry.size.width;
+    rect.size.height = info.geometry.size.height;
 
     if(!(patchFlags & DPF_NO_OFFSETX))
-        x += (float) info.geometry.origin.x;
+        rect.origin.x += info.geometry.origin.x;
     if(!(patchFlags & DPF_NO_OFFSETY))
-        y += (float) info.geometry.origin.y;
+        rect.origin.y += info.geometry.origin.y;
 
     if(info.extraOffset[0])
     {
         // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
-        x += info.extraOffset[0];
-        y += info.extraOffset[1];
-        w += abs(info.extraOffset[0])*2;
-        h += abs(info.extraOffset[1])*2;
+        rect.origin.x += info.extraOffset[0];
+        rect.origin.y += info.extraOffset[1];
+        rect.size.width  += abs(info.extraOffset[0])*2;
+        rect.size.height += abs(info.extraOffset[1])*2;
     }
 
-    DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, 0, 0);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(0, 1, 0);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(0, 1, 1);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, 0, 1);
-        DGL_Vertex2f(x, y + h);
-    DGL_End();
+    DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(&rect);
 }
 
-void GL_DrawPatch2(patchid_t id, int x, int y, int alignFlags)
+void GL_DrawPatch2(patchid_t id, const Point2Raw* origin, int alignFlags)
 {
-    GL_DrawPatch3(id, x, y, alignFlags, 0);
+    GL_DrawPatch3(id, origin, alignFlags, 0);
 }
 
-void GL_DrawPatch(patchid_t id, int x, int y)
+void GL_DrawPatch(patchid_t id, const Point2Raw* origin)
 {
-    GL_DrawPatch2(id, x, y, ALIGN_TOPLEFT);
+    GL_DrawPatch2(id, origin, ALIGN_TOPLEFT);
+}
+
+void GL_DrawPatchXY3(patchid_t id, int x, int y, int alignFlags, int patchFlags)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    GL_DrawPatch3(id, &origin, alignFlags, patchFlags);
+}
+
+void GL_DrawPatchXY2(patchid_t id, int x, int y, int alignFlags)
+{
+    GL_DrawPatchXY3(id, x, y, alignFlags, 0);
+}
+
+void GL_DrawPatchXY(patchid_t id, int x, int y)
+{
+    GL_DrawPatchXY2(id, x, y, ALIGN_TOPLEFT);
 }

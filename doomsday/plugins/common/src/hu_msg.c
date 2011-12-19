@@ -191,7 +191,7 @@ static void drawMessage(void)
 #define LEADING             (0)
 
     short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
-    int x = SCREENWIDTH/2, y = SCREENHEIGHT/2;
+    Point2Raw origin = { SCREENWIDTH/2, SCREENHEIGHT/2 };
     const char* questionString;
 
     switch(msgType)
@@ -211,12 +211,12 @@ static void drawMessage(void)
     FR_SetGlitterStrength(cfg.menuShadow);
     FR_SetColorAndAlpha(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
 
-    FR_DrawText3(msgText, x, y, ALIGN_TOP, textFlags);
-    y += FR_TextHeight(msgText);
+    FR_DrawText3(msgText, &origin, ALIGN_TOP, textFlags);
+    origin.y += FR_TextHeight(msgText);
     // An additional blank line between the message and response prompt.
-    y += FR_CharHeight('A') * (1+LEADING);
+    origin.y += FR_CharHeight('A') * (1+LEADING);
 
-    FR_DrawText3(questionString, x, y, ALIGN_TOP, textFlags);
+    FR_DrawText3(questionString, &origin, ALIGN_TOP, textFlags);
     DGL_Disable(DGL_TEXTURE_2D);
 
 #undef LEADING

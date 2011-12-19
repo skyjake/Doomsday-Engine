@@ -156,15 +156,21 @@ const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t 
  * @param patchId  Unique identifier of the patch to be drawn if no replacement.
  * @param replacement  Patch replacement string. Will be drawn instead of the
  *      patch if not @c NULL.
- * @param x  X-offset to the draw origin.
- * @param y  Y-offset to the draw origin.
+ * @param origin  Orient drawing about this offset (topleft:[0,0]).
  * @param alignFlags  @see alignmentFlags
  * @param patchFlags  @see drawPatchFlags
  * @param textFlags  @see drawTextFlags
  */
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags);
-void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y);
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags, int patchFlags, short textFlags);
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags);
+void WI_DrawPatch(patchid_t patchId, const char* replacement, const Point2Raw* origin);
+
+/**
+ * Same as @a WI_DrawPatch except origin is specified with separate xy coordinates.
+ */
+void WI_DrawPatchXY3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags, int patchFlags, short textFlags);
+void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags);
+void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
 
 /**
  * Misc specialised elements:

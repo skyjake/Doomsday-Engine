@@ -383,10 +383,10 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
         xOffset = 0;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(text, xOffset, 0);
+    FR_DrawTextXY(text, xOffset, 0);
     if(actualMapTime & 12)
     {
-        FR_DrawChar('_', xOffset + textWidth, 0);
+        FR_DrawCharXY('_', xOffset + textWidth, 0);
     }
     DGL_Disable(DGL_TEXTURE_2D);
 

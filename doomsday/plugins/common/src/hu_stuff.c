@@ -361,7 +361,7 @@ void HU_DrawText(const char* str, float x, float y, float scale,
     DGL_Translatef(-x, -y, 0);
 
     FR_SetColorAndAlpha(r, g, b, a);
-    FR_DrawText3(str, x, y, alignFlags, textFlags);
+    FR_DrawTextXY3(str, x, y, alignFlags, textFlags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -757,14 +757,14 @@ static void drawMapMetaData(float x, float y, float alpha)
     FR_SetColorAndAlpha(1, 1, 1, alpha);
 
     // Map name:
-    FR_DrawText("map: ", x, y + 16);
-    FR_DrawText(lname, x += FR_TextWidth("map: "), y + 16);
+    FR_DrawTextXY("map: ", x, y + 16);
+    FR_DrawTextXY(lname, x += FR_TextWidth("map: "), y + 16);
 
     x += 8;
 
     // Game mode:
-    FR_DrawText("gamemode: ", x += FR_TextWidth(lname), y + 16);
-    FR_DrawText(P_GetGameModeName(), x += FR_TextWidth("gamemode: "), y + 16);
+    FR_DrawTextXY("gamemode: ", x += FR_TextWidth(lname), y + 16);
+    FR_DrawTextXY(P_GetGameModeName(), x += FR_TextWidth("gamemode: "), y + 16);
 }
 
 /**
@@ -828,7 +828,7 @@ void HU_DrawScoreBoard(int player)
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 0, 0, ss->alpha);
-    FR_DrawText3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     drawMapMetaData(x, y + 16, ss->alpha);
@@ -1112,10 +1112,10 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, int alignFlags
     short textFlags, float r, float g, float b, float a)
 {
     FR_SetColorAndAlpha(0, 0, 0, a * .4f);
-    FR_DrawText3(string, x+2, y+2, alignFlags, textFlags);
+    FR_DrawTextXY3(string, x+2, y+2, alignFlags, textFlags);
 
     FR_SetColorAndAlpha(r, g, b, a);
-    FR_DrawText3(string, x, y, alignFlags, textFlags);
+    FR_DrawTextXY3(string, x, y, alignFlags, textFlags);
 }
 
 const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
@@ -1190,28 +1190,46 @@ const char* Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
     return Hu_ChoosePatchReplacement2(mode, patchId, NULL);
 }
 
-void WI_DrawPatch3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
-    int patchFlags, short textFlags)
+void WI_DrawPatch3(patchid_t patchId, const char* replacement, const Point2Raw* origin,
+    int alignFlags, int patchFlags, short textFlags)
 {
-    if(NULL != replacement && replacement[0])
+    if(replacement && replacement[0])
     {
         // Use the replacement string.
-        FR_DrawText3(replacement, x, y, alignFlags, textFlags);
+        FR_DrawText3(replacement, origin, alignFlags, textFlags);
         return;
     }
-
     // Use the original patch.
-    GL_DrawPatch3(patchId, x, y, alignFlags, patchFlags);
+    GL_DrawPatch3(patchId, origin, alignFlags, patchFlags);
 }
 
-void WI_DrawPatch2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags)
+void WI_DrawPatch2(patchid_t patchId, const char* replacement, const Point2Raw* origin, int alignFlags)
 {
-    WI_DrawPatch3(patchId, replacement, x, y, alignFlags, 0, 0);
+    WI_DrawPatch3(patchId, replacement, origin, alignFlags, 0, 0);
 }
 
-void WI_DrawPatch(patchid_t patchId, const char* replacement, int x, int y)
+void WI_DrawPatch(patchid_t patchId, const char* replacement, const Point2Raw* origin)
 {
-    WI_DrawPatch2(patchId, replacement, x, y, ALIGN_TOPLEFT);
+    WI_DrawPatch2(patchId, replacement, origin, ALIGN_TOPLEFT);
+}
+
+void WI_DrawPatchXY3(patchid_t patchId, const char* replacement, int x, int y, int alignFlags,
+    int patchFlags, short textFlags)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    WI_DrawPatch3(patchId, replacement, &origin, alignFlags, patchFlags, textFlags);
+}
+
+void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, int alignFlags)
+{
+    WI_DrawPatchXY3(patchId, replacement, x, y, alignFlags, 0, 0);
+}
+
+void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y)
+{
+    WI_DrawPatchXY2(patchId, replacement, x, y, ALIGN_TOPLEFT);
 }
 
 /**
@@ -1483,7 +1501,7 @@ void Hu_Drawer(void)
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        WI_DrawPatch3(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
+        WI_DrawPatchXY3(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1552,13 +1570,13 @@ static void drawMapTitle(void)
 # else // __JDOOM64__
     mapnum = gameMap;
 # endif
-    WI_DrawPatch3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, pMapNames[mapnum], lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
+    WI_DrawPatchXY3(pMapNames[mapnum], Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, pMapNames[mapnum], lname), 0, 0, ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     y += 14;
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
-        FR_DrawText3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(lname, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
         y += 20;
     }
 #endif
@@ -1567,7 +1585,7 @@ static void drawMapTitle(void)
     {
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
-        FR_DrawText3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(lauthor, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1593,10 +1611,10 @@ void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchF
         return;
 
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawPatch3(id, x+2, y+2, alignFlags, patchFlags);
+    GL_DrawPatchXY3(id, x+2, y+2, alignFlags, patchFlags);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch3(id, x, y, alignFlags, patchFlags);
+    GL_DrawPatchXY3(id, x, y, alignFlags, patchFlags);
 }
 
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags)

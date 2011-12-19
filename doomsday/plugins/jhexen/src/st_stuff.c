@@ -340,7 +340,7 @@ void Flight_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(flht->patchId, 16, 14);
+        GL_DrawPatchXY(flht->patchId, 16, 14);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -402,7 +402,7 @@ void Boots_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(boots->patchId, 12, 14);
+    GL_DrawPatchXY(boots->patchId, 12, 14);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -463,7 +463,7 @@ void Defense_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(dfns->patchId, -13, 14);
+    GL_DrawPatchXY(dfns->patchId, -13, 14);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -524,7 +524,7 @@ void Servant_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(svnt->patchId, -13, 17);
+    GL_DrawPatchXY(svnt->patchId, -13, 17);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -588,26 +588,26 @@ void SBarWeaponPieces_Drawer(uiwidget_t* obj, int x, int y)
     if(wpn->pieces == 7)
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(pWeaponFull[pClass], ORIGINX+190, ORIGINY);
+        GL_DrawPatchXY(pWeaponFull[pClass], ORIGINX+190, ORIGINY);
     }
     else
     {
         if(wpn->pieces & WPIECE1)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece1[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
+            GL_DrawPatchXY(pWeaponPiece1[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
         }
 
         if(wpn->pieces & WPIECE2)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece2[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
+            GL_DrawPatchXY(pWeaponPiece2[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
         }
 
         if(wpn->pieces & WPIECE3)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(pWeaponPiece3[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
+            GL_DrawPatchXY(pWeaponPiece3[pClass], ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
         }
     }
 
@@ -876,7 +876,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBar, ORIGINX, ORIGINY-28);
+        GL_DrawPatchXY(pStatusBar, ORIGINX, ORIGINY-28);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -893,30 +893,30 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatch(pStatusBarTop, ORIGINX, ORIGINY-28);
+        GL_DrawPatchXY(pStatusBarTop, ORIGINX, ORIGINY-28);
 
         if(!Hu_InventoryIsOpen(obj->player))
         {
             // Main interface
             if(!ST_AutomapIsActive(obj->player))
             {
-                GL_DrawPatch(pStatBar, ORIGINX+38, ORIGINY);
+                GL_DrawPatchXY(pStatBar, ORIGINX+38, ORIGINY);
 
                 if(deathmatch)
                 {
-                    GL_DrawPatch(pKills, ORIGINX+38, ORIGINY);
+                    GL_DrawPatchXY(pKills, ORIGINX+38, ORIGINY);
                 }
 
-                GL_DrawPatch(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
+                GL_DrawPatchXY(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
             }
             else
             {
-                GL_DrawPatch(pKeyBar, ORIGINX+38, ORIGINY);
+                GL_DrawPatchXY(pKeyBar, ORIGINX+38, ORIGINY);
             }
         }
         else
         {
-            GL_DrawPatch(pInventoryBar, ORIGINX+38, ORIGINY);
+            GL_DrawPatchXY(pInventoryBar, ORIGINX+38, ORIGINY);
         }
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -1012,13 +1012,13 @@ void SBarBackground_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
                     DGL_DrawCutRectTiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
                 }
 
-                GL_DrawPatch(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
+                GL_DrawPatchXY(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
                 if(deathmatch)
-                    GL_DrawPatch(pKills, ORIGINX+38, ORIGINY);
+                    GL_DrawPatchXY(pKills, ORIGINX+38, ORIGINY);
             }
             else
             {
-                GL_DrawPatch(pKeyBar, ORIGINX+38, ORIGINY);
+                GL_DrawPatchXY(pKeyBar, ORIGINX+38, ORIGINY);
             }
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -1167,7 +1167,7 @@ void SBarKeys_Drawer(uiwidget_t* obj, int x, int y)
         patch = pKeySlot[i];
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(patch, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
+        GL_DrawPatchXY(patch, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1272,7 +1272,7 @@ void SBarArmorIcons_Drawer(uiwidget_t* obj, int x, int y)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha * alpha);
-        GL_DrawPatch(patch, ORIGINX + 150 + 31 * i, ORIGINY + 2);
+        GL_DrawPatchXY(patch, ORIGINX + 150 + 31 * i, ORIGINY + 2);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -1371,7 +1371,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1459,7 +1459,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1552,7 +1552,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1638,7 +1638,7 @@ void SBarBlueMana_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1718,7 +1718,7 @@ void SBarGreenMana_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1825,7 +1825,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(item->patchId, ORIGINX+x, ORIGINY+y);
+    GL_DrawPatchXY(item->patchId, ORIGINX+x, ORIGINY+y);
 
     readyItem = P_InventoryReadyItem(obj->player);
     if(!(item->flashCounter > 0) && readyItem != IIT_NONE)
@@ -1837,7 +1837,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
             FR_SetFont(obj->font);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
-            FR_DrawText3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawTextXY3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
     }
 
@@ -1939,7 +1939,7 @@ void SBarBlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(pManaAIcons[icon->iconIdx], X, Y);
+        GL_DrawPatchXY(pManaAIcons[icon->iconIdx], X, Y);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2036,7 +2036,7 @@ void SBarGreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(pManaBIcons[icon->iconIdx], X, Y);
+        GL_DrawPatchXY(pManaBIcons[icon->iconIdx], X, Y);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2125,7 +2125,7 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, int x, int y)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(pManaAVials[vial->iconIdx], X, Y);
+        GL_DrawPatchXY(pManaAVials[vial->iconIdx], X, Y);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2219,7 +2219,7 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, int x, int y)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch(pManaBVials[vial->iconIdx], X, Y);
+        GL_DrawPatchXY(pManaBVials[vial->iconIdx], X, Y);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2304,7 +2304,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, -1, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, -1, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2363,7 +2363,7 @@ void BlueManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(pManaAIcons[icon->iconIdx], 0, 0);
+        GL_DrawPatchXY(pManaAIcons[icon->iconIdx], 0, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2416,7 +2416,7 @@ void BlueMana_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2472,7 +2472,7 @@ void GreenManaIcon_Drawer(uiwidget_t* obj, int x, int y)
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
 
-        GL_DrawPatch(pManaBIcons[icon->iconIdx], 0, 0);
+        GL_DrawPatchXY(pManaBIcons[icon->iconIdx], 0, 0);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -2524,7 +2524,7 @@ void GreenMana_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2588,7 +2588,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, 0, -13, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, -13, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2651,7 +2651,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha/2);
-    GL_DrawPatch(pInvItemBox, -30, -30);
+    GL_DrawPatchXY(pInvItemBox, -30, -30);
 
     if(item->flashCounter > 0)
     {
@@ -2665,7 +2665,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(item->patchId, xOffset, yOffset);
+    GL_DrawPatchXY(item->patchId, xOffset, yOffset);
 
     readyItem = P_InventoryReadyItem(obj->player);
     if(item->flashCounter == 0 && readyItem != IIT_NONE)
@@ -2677,7 +2677,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, int x, int y)
             FR_SetFont(obj->font);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
-            FR_DrawText3(buf, -2, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawTextXY3(buf, -2, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
     }
 
@@ -2801,19 +2801,19 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     x = ORIGINX;
     y = ORIGINY;
     dd_snprintf(buf, 20, "%.2d", time->seconds);
-    FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
     x -= counterWidth + spacerWidth;
 
-    FR_DrawChar3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
+    FR_DrawCharXY3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
 
     dd_snprintf(buf, 20, "%.2d", time->minutes);
-    FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
     x -= counterWidth + spacerWidth;
 
-    FR_DrawChar3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
+    FR_DrawCharXY3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
 
     dd_snprintf(buf, 20, "%.2d", time->hours);
-    FR_DrawText3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
     x -= counterWidth;
     y += lineHeight;
 
@@ -2821,14 +2821,14 @@ void WorldTimer_Drawer(uiwidget_t* obj, int xOffset, int yOffset)
     {
         y += lineHeight * LEADING;
         dd_snprintf(buf, 20, "%.2d %s", time->days, time->days == 1? "day" : "days");
-        FR_DrawText3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+        FR_DrawTextXY3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
         y += lineHeight;
 
         if(time->days >= 5)
         {
             y += lineHeight * LEADING;
             strncpy(buf, "You Freak!!!", 20);
-            FR_DrawText3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+            FR_DrawTextXY3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
             x = -MAX_OF(abs(x), FR_TextWidth(buf));
             y += lineHeight;
         }
@@ -2920,7 +2920,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

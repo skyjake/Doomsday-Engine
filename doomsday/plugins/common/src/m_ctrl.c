@@ -410,7 +410,7 @@ static void drawSmallText(const char* string, int x, int y, float alpha)
     DGL_Translatef(-x, -y - height/2, 0);
 
     FR_SetColorAndAlpha(1, 1, 1, alpha);
-    FR_DrawText3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -670,13 +670,13 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    FR_DrawText3("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    FR_DrawText3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -686,7 +686,7 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    FR_DrawText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -698,11 +698,11 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
-    FR_DrawText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
+    FR_DrawTextXY3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
-    FR_DrawText3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
+    FR_DrawTextXY3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

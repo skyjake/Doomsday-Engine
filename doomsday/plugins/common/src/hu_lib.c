@@ -1185,13 +1185,13 @@ void MNText_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *txt->patch, txt->text);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch3(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+        WI_DrawPatchXY3(*txt->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(txt->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(txt->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
     }
 }
@@ -1328,7 +1328,7 @@ void MNEdit_Drawer(mn_object_t* obj, int x, int y)
         color[CB] *= light;
 
         FR_SetColorAndAlphav(color);
-        FR_DrawText3(string, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+        FR_DrawTextXY3(string, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1529,7 +1529,7 @@ void MNList_Drawer(mn_object_t* obj, int x, int y)
                 FR_SetColorAndAlphav(dimColor);
             }
 
-            FR_DrawText3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+            FR_DrawTextXY3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
             y += FR_TextHeight(item->text) * (1+MNDATA_LIST_LEADING);
         } while(++i < list->count && i < list->first + list->numvis);
 
@@ -1686,7 +1686,7 @@ void MNList_InlineDrawer(mn_object_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
     FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
-    FR_DrawText3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(item->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1809,13 +1809,13 @@ void MNButton_Drawer(mn_object_t* obj, int x, int y)
             replacement = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
         }
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch3(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+        WI_DrawPatchXY3(*btn->patch, replacement, x, y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(btn->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(btn->text, x, y, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
     }
 }
@@ -2232,14 +2232,14 @@ void MNSlider_Drawer(mn_object_t* obj, int inX, int inY)
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
 
-    GL_DrawPatch3(pSliderLeft, 0, 0, ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
-    GL_DrawPatch(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
+    GL_DrawPatchXY3(pSliderLeft, 0, 0, ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
+    GL_DrawPatchXY(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
-    GL_DrawPatch3(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
+    GL_DrawPatchXY3(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2420,13 +2420,18 @@ void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y)
     const char* str = composeValueString(value, 0, sldr->floatMode, 0,
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
 
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(x, y, 0);
+
     DGL_Enable(DGL_TEXTURE_2D);
+
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
     FR_SetColorAndAlphav(rs.textColors[obj->_pageColorIdx]);
-    FR_DrawText3(str, 0, 0, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(str, 0, 0, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(-x, -y, 0);
     }
 }

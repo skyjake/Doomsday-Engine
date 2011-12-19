@@ -992,7 +992,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1044,20 +1044,16 @@ void Ammo_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINY             (-ST_HEIGHT)
 #define MAXDIGITS           (ST_AMMOWIDTH)
 
-    typedef struct {
-        float x, y;
-    } loc_t;
-
     assert(obj);
     {
-    static const loc_t ammoPos[NUM_AMMO_TYPES] = {
+    static const Point2Raw ammoPos[NUM_AMMO_TYPES] = {
         {ST_AMMOX, ST_AMMOY},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 1)},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 3)},
         {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 2)}
     };
     const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
-    const loc_t* loc = &ammoPos[ammo->ammotype];
+    const Point2Raw* loc = &ammoPos[ammo->ammotype];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
@@ -1079,7 +1075,7 @@ void Ammo_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1122,20 +1118,16 @@ void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINY             (-ST_HEIGHT)
 #define MAXDIGITS           (ST_MAXAMMOWIDTH)
 
-    typedef struct {
-        float x, y;
-    } loc_t;
-
     assert(obj);
     {
-    static const loc_t ammoMaxPos[NUM_AMMO_TYPES] = {
+    static const Point2Raw ammoMaxPos[NUM_AMMO_TYPES] = {
         {ST_MAXAMMOX, ST_MAXAMMOY},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 1)},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 3)},
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
     };
     const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
-    const loc_t* loc = &ammoMaxPos[ammo->ammotype];
+    const Point2Raw* loc = &ammoMaxPos[ammo->ammotype];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
@@ -1157,7 +1149,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    FR_DrawText3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, ORIGINX+loc->x, ORIGINY+loc->y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1228,8 +1220,8 @@ void SBarHealth_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
-    FR_DrawChar('%', X, Y);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawCharXY('%', X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1307,8 +1299,8 @@ void SBarArmor_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
-    FR_DrawChar('%', X, Y);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawCharXY('%', X, Y);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1393,7 +1385,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
 
-    FR_DrawText3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1456,7 +1448,7 @@ void SBarFace_Drawer(uiwidget_t* obj, int x, int y)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatch2(patchId, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT);
+        GL_DrawPatchXY2(patchId, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1517,19 +1509,15 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    typedef struct {
-        int x, y;
-    } loc_t;
-
     assert(obj);
     {
-    static const loc_t elements[] = {
+    static const Point2Raw elements[] = {
         { ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y },
         { ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y },
         { ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y }
     };
     guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
-    const loc_t* loc = &elements[kslt->slot];
+    const Point2Raw* loc = &elements[kslt->slot];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
@@ -1549,10 +1537,10 @@ void KeySlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatch(kslt->patchId, loc->x + offset, loc->y + offset);
+    GL_DrawPatchXY(kslt->patchId, loc->x + offset, loc->y + offset);
     if(kslt->patchId2 != 0)
     {
-        GL_DrawPatch(kslt->patchId2, loc->x - offset, loc->y - offset);
+        GL_DrawPatchXY(kslt->patchId2, loc->x - offset, loc->y - offset);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1641,13 +1629,9 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    typedef struct {
-        int x, y;
-    } loc_t;
-
     assert(obj);
     {
-    static const loc_t elements[] = {
+    static const Point2Raw elements[] = {
         { ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY },
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY },
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY },
@@ -1656,7 +1640,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
         { ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
     };
     guidata_weaponslot_t* wpns = (guidata_weaponslot_t*)obj->typedata;
-    const loc_t* element = &elements[wpns->slot-1];
+    const Point2Raw* element = &elements[wpns->slot-1];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode();
@@ -1676,7 +1660,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, textAlpha);
 
-    GL_DrawPatch(wpns->patchId, element->x, element->y);
+    GL_DrawPatch(wpns->patchId, element);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1859,7 +1843,7 @@ void Frags_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1912,7 +1896,7 @@ void Health_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2004,7 +1988,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2140,11 +2124,11 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     {
         if(IS_NETGAME)
         {
-            GL_DrawPatch2(bgInfo.id, 0, 0, ALIGN_BOTTOM);
+            GL_DrawPatchXY2(bgInfo.id, 0, 0, ALIGN_BOTTOM);
         }
         y -= bgInfo.geometry.size.height;
     }
-    GL_DrawPatch(pFace, x, y);
+    GL_DrawPatchXY(pFace, x, y);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2202,7 +2186,7 @@ void Armor_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2485,7 +2469,7 @@ void Kills_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2576,7 +2560,7 @@ void Items_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2655,7 +2639,7 @@ void Secrets_Drawer(uiwidget_t* obj, int x, int y)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawText3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2732,7 +2716,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
