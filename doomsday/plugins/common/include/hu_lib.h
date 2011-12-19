@@ -771,7 +771,7 @@ typedef struct uiwidget_s {
 boolean GUI_RunGameTicTrigger(timespan_t ticLength);
 boolean GUI_GameTicTriggerIsSharp(void);
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize);
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y);
 
 /// @return  @see alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
@@ -825,6 +825,8 @@ typedef struct {
 void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
 int UIGroup_Flags(uiwidget_t* obj);
 void UIGroup_SetFlags(uiwidget_t* obj, int flags);
+
+void UIGroup_UpdateGeometry(uiwidget_t* obj);
 
 typedef struct {
     int value;

@@ -2803,7 +2803,7 @@ void ST_Drawer(int player)
     UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));
     size.width = SCREENWIDTH; size.height = SCREENHEIGHT;
     UIWidget_SetMaximumSize(obj, &size);
-    GUI_DrawWidget(obj, 0, 0, NULL);
+    GUI_DrawWidget(obj, 0, 0);
 
     if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
     {
@@ -2842,7 +2842,10 @@ void ST_Drawer(int player)
             UIWidget_SetAlpha(obj, (1 - hud->hideAmount) * hud->showBar);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y, &drawnSize);
+            GUI_DrawWidget(obj, x, y);
+
+            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
+            drawnSize.height = UIWidget_Geometry(obj)->size.height;
         }
 
         alpha = hud->alpha * (1-hud->hideAmount);
@@ -2859,21 +2862,30 @@ void ST_Drawer(int player)
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y, &drawnSize);
+            GUI_DrawWidget(obj, x, y);
+
+            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
+            drawnSize.height = UIWidget_Geometry(obj)->size.height;
             if(drawnSize.height > h) h = drawnSize.height;
 
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]);
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y, &drawnSize);
+            GUI_DrawWidget(obj, x, y);
+
+            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
+            drawnSize.height = UIWidget_Geometry(obj)->size.height;
             if(drawnSize.height > h) h = drawnSize.height;
 
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]);
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y, &drawnSize);
+            GUI_DrawWidget(obj, x, y);
+
+            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
+            drawnSize.height = UIWidget_Geometry(obj)->size.height;
             if(drawnSize.height > h) h = drawnSize.height;
             drawnSize.height = h;
         }
@@ -2887,7 +2899,10 @@ void ST_Drawer(int player)
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = availHeight;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y, &drawnSize);
+            GUI_DrawWidget(obj, x, y);
+
+            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
+            drawnSize.height = UIWidget_Geometry(obj)->size.height;
             drawnSize.height += h;
         }
 
@@ -2896,19 +2911,19 @@ void ST_Drawer(int player)
         UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));
         size.width = width; size.height = availHeight;
         UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y, NULL);
+        GUI_DrawWidget(obj, x, y);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
         UIWidget_SetAlpha(obj, alpha);
         size.width = width; size.height = height;
         UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y, NULL);
+        GUI_DrawWidget(obj, x, y);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_COUNTERS]);
         UIWidget_SetAlpha(obj, alpha);
         size.width = width; size.height = height;
         UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y, NULL);
+        GUI_DrawWidget(obj, x, y);
 
 #undef PADDING
         }

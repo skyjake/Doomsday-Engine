@@ -158,6 +158,7 @@ static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontI
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
+    assert(updateGeometry);
     obj->font = fontId;
     obj->alpha = alpha;
     obj->alignFlags = alignFlags;
@@ -269,7 +270,7 @@ uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int pad
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
-    obj = createWidget(GUI_GROUP, player, 0, 1, alignFlags, NULL, NULL, NULL, NULL);
+    obj = createWidget(GUI_GROUP, player, 0, 1, alignFlags, UIGroup_UpdateGeometry, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
     grp->padding = padding;
@@ -330,34 +331,44 @@ boolean GUI_GameTicTriggerIsSharp(void)
     return sharpTic;
 }
 
-static void drawWidget(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize)
+static void drawWidget(uiwidget_t* obj, int x, int y)
 {
-    assert(obj && drawnSize);
-    if(obj->drawer && obj->alpha > 0)
-    {
-        uiRS.pageAlpha = obj->alpha;
+    assert(obj);
+    if(!obj->drawer || obj->alpha <= 0) return;
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(x, y, 0);
+    uiRS.pageAlpha = obj->alpha;
 
-        obj->drawer(obj, 0, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(x, y, 0);
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-x, -y, 0);
-    }
-    if(obj->updateGeometry)
-    {
-        obj->updateGeometry(obj);
-    }
-    drawnSize->width  = obj->geometry.size.width;
-    drawnSize->height = obj->geometry.size.height;
+    obj->drawer(obj, 0, 0);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(-x, -y, 0);
 }
 
-static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize)
+static void drawChildWidgets(uiwidget_t* obj, int x, int y)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i, numDrawnWidgets = 0;
-    assert(obj && obj->type == GUI_GROUP && drawnSize);
+    int i;
+    assert(obj && obj->type == GUI_GROUP);
+
+    if(!grp->widgetIdCount) return;
+
+    for(i = 0; i < grp->widgetIdCount; ++i)
+    {
+        uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
+        GUI_DrawWidget(child, x + child->geometry.origin.x, y + child->geometry.origin.y);
+    }
+}
+
+void UIGroup_UpdateGeometry(uiwidget_t* obj)
+{
+    guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+    int i, x = 0, y = 0, numDrawnWidgets = 0;
+    assert(obj && obj->type == GUI_GROUP);
+
+    obj->geometry.size.width = obj->geometry.size.height = 0;
 
     if(!grp->widgetIdCount) return;
 
@@ -376,49 +387,56 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize)
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
         Size2Raw childSize = { 0, 0 };
 
-        GUI_DrawWidget(child, x, y, &childSize);
-
-        if(childSize.width > 0 || childSize.height > 0)
+        if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
+           UIWidget_Alpha(child) > 0)
         {
-            ++numDrawnWidgets;
+            child->updateGeometry(child);
+            child->geometry.origin.x = x;
+            child->geometry.origin.y = y;
 
-            if(grp->flags & UWGF_RIGHTTOLEFT)
-            {
-                if(!(grp->flags & UWGF_VERTICAL))
-                    x -= childSize.width  + grp->padding;
-                else
-                    y -= childSize.height + grp->padding;
-            }
-            else if(grp->flags & UWGF_LEFTTORIGHT)
-            {
-                if(!(grp->flags & UWGF_VERTICAL))
-                    x += childSize.width  + grp->padding;
-                else
-                    y += childSize.height + grp->padding;
-            }
+            childSize.width  = UIWidget_Geometry(child)->size.width;
+            childSize.height = UIWidget_Geometry(child)->size.height;
 
-            if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
+            if(childSize.width > 0 || childSize.height > 0)
             {
-                if(!(grp->flags & UWGF_VERTICAL))
+                if(grp->flags & UWGF_RIGHTTOLEFT)
                 {
-                    drawnSize->width  += childSize.width;
-                    if(childSize.height > drawnSize->height)
-                        drawnSize->height = childSize.height;
+                    if(!(grp->flags & UWGF_VERTICAL))
+                        x -= childSize.width  + grp->padding;
+                    else
+                        y -= childSize.height + grp->padding;
+                }
+                else if(grp->flags & UWGF_LEFTTORIGHT)
+                {
+                    if(!(grp->flags & UWGF_VERTICAL))
+                        x += childSize.width  + grp->padding;
+                    else
+                        y += childSize.height + grp->padding;
+                }
+
+                if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
+                {
+                    if(!(grp->flags & UWGF_VERTICAL))
+                    {
+                        obj->geometry.size.width  += childSize.width;
+                        if(childSize.height > obj->geometry.size.height)
+                            obj->geometry.size.height = childSize.height;
+                    }
+                    else
+                    {
+                        if(childSize.width  > obj->geometry.size.width)
+                            obj->geometry.size.width  = childSize.width;
+                        obj->geometry.size.height += childSize.height;
+                    }
                 }
                 else
                 {
-                    if(childSize.width  > drawnSize->width)
-                        drawnSize->width  = childSize.width;
-                    drawnSize->height += childSize.height;
-                }
-            }
-            else
-            {
-                if(childSize.width  > drawnSize->width)
-                    drawnSize->width  = childSize.width;
+                    if(childSize.width  > obj->geometry.size.width)
+                        obj->geometry.size.width  = childSize.width;
 
-                if(childSize.height > drawnSize->height)
-                    drawnSize->height = childSize.height;
+                    if(childSize.height > obj->geometry.size.height)
+                        obj->geometry.size.height = childSize.height;
+                }
             }
         }
     }
@@ -426,22 +444,14 @@ static void drawChildWidgets(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize)
     if(0 != numDrawnWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
     {
         if(!(grp->flags & UWGF_VERTICAL))
-            drawnSize->width  += (numDrawnWidgets-1) * grp->padding;
+            obj->geometry.size.width  += (numDrawnWidgets-1) * grp->padding;
         else
-            drawnSize->height += (numDrawnWidgets-1) * grp->padding;
+            obj->geometry.size.height += (numDrawnWidgets-1) * grp->padding;
     }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize_)
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y)
 {
-    Size2Raw drawnSize = { 0, 0 };
-
-    if(drawnSize_)
-    {
-        drawnSize_->width = 0;
-        drawnSize_->height = 0;
-    }
-
     if(UIWidget_MaximumWidth(obj) == 0 || UIWidget_MaximumHeight(obj) == 0 ||
        UIWidget_Alpha(obj) <= 0) return;
 
@@ -449,22 +459,13 @@ void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize_)
     FR_LoadDefaultAttrib();
 
     // First we draw ourself.
-    drawWidget(obj, x, y, &drawnSize);
+    obj->updateGeometry(obj);
+    drawWidget(obj, x, y);
 
     if(obj->type == GUI_GROUP)
     {
         // Now our children.
-        Size2Raw childSize = { 0, 0 };
-        drawChildWidgets(obj, x, y, &childSize);
-
-        if(childSize.width  > drawnSize.width)  drawnSize.width = childSize.width;
-        if(childSize.height > drawnSize.height) drawnSize.height = childSize.height;
-    }
-
-    if(drawnSize_)
-    {
-        drawnSize_->width  = drawnSize.width;
-        drawnSize_->height = drawnSize.height;
+        drawChildWidgets(obj, x, y);
     }
 
     FR_PopAttrib();
