@@ -2906,37 +2906,8 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
-static void findMapBounds(float* lowX, float* hiX, float* lowY, float* hiY)
-{
-    assert(NULL != lowX && NULL != hiX && NULL != lowY && NULL != hiY);
-    {
-    float pos[2];
-    uint i;
-
-    *lowX = *lowY =  DDMAXFLOAT;
-    *hiX  = *hiY  = -DDMAXFLOAT;
-
-    for(i = 0; i < numvertexes; ++i)
-    {
-        P_GetFloatv(DMU_VERTEX, i, DMU_XY, pos);
-
-        if(pos[VX] < *lowX)
-            *lowX = pos[VX];
-        if(pos[VX] > *hiX)
-            *hiX  = pos[VX];
-
-        if(pos[VY] < *lowY)
-            *lowY = pos[VY];
-        if(pos[VY] > *hiY)
-            *hiY  = pos[VY];
-    }
-    }
-}
-
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     int flags;
 
@@ -2950,22 +2921,22 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
     if(hud->automapCheatLevel > 2)
         flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
     UIAutomap_SetFlags(obj, flags);
-    }
 }
 
 static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    float lowX, hiX, lowY, hiY;
     automapcfg_t* mcfg;
+    mobj_t* followMobj;
+    uint i;
 
     UIAutomap_Reset(obj);
 
-    findMapBounds(&lowX, &hiX, &lowY, &hiY);
     UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
-    UIAutomap_SetWorldBounds(obj, lowX, hiX, lowY, hiY);
+    UIAutomap_SetWorldBounds(obj, *((float*) DD_GetVariable(DD_MAP_MIN_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MIN_Y)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_Y)));
 
     mcfg = UIAutomap_Config(obj);
 
@@ -2985,11 +2956,11 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 #endif
 
     // Are we re-centering on a followed mobj?
-    { mobj_t* mo = UIAutomap_FollowMobj(obj);
-    if(NULL != mo)
+    followMobj = UIAutomap_FollowMobj(obj);
+    if(followMobj)
     {
-        UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
-    }}
+        UIAutomap_SetCameraOrigin(obj, followMobj->pos[VX], followMobj->pos[VY]);
+    }
 
     if(IS_NETGAME)
     {
@@ -2999,13 +2970,12 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_SetReveal(obj, false);
 
     // Add all immediately visible lines.
-    { uint i;
     for(i = 0; i < numlines; ++i)
     {
         xline_t* xline = &xlines[i];
         if(!(xline->flags & ML_MAPPED)) continue;
+
         P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
-    }}
     }
 }
 
@@ -3016,7 +2986,8 @@ void ST_Start(int player)
     uiwidget_t* obj;
     hudstate_t* hud;
     int flags;
-    if(player < 0 && player >= MAXPLAYERS)
+
+    if(player < 0 || player >= MAXPLAYERS)
     {
         Con_Error("ST_Start: Invalid player #%i.", player);
         exit(1); // Unreachable.
@@ -3024,11 +2995,11 @@ void ST_Start(int player)
     hud = &hudStates[player];
 
     if(!hud->stopped)
+    {
         ST_Stop(player);
+    }
 
     initData(hud);
-    // If the automap has been left open; close it.
-    ST_AutomapOpen(player, false, true);
 
     /**
      * Initialize widgets according to player preferences.
@@ -3044,6 +3015,8 @@ void ST_Start(int player)
     UIWidget_SetAlignment(obj, flags);
 
     obj = GUI_MustFindObjectById(hud->automapWidgetId);
+    // If the automap was left open; close it.
+    UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
     UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
@@ -3055,14 +3028,12 @@ void ST_Start(int player)
 
 void ST_Stop(int player)
 {
-    hudstate_t*         hud;
+    hudstate_t* hud;
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    if(player < 0 || player >= MAXPLAYERS) return;
 
     hud = &hudStates[player];
-    if(hud->stopped)
-        return;
+    if(hud->stopped) return;
 
     hud->stopped = true;
 }
@@ -3222,21 +3193,17 @@ uiwidget_t* ST_UIAutomapForPlayer(int player)
 int ST_ChatResponder(int player, event_t* ev)
 {
     uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
-    {
-        return UIChat_Responder(obj, ev);
-    }
-    return false;
+    if(!obj) return false;
+
+    return UIChat_Responder(obj, ev);
 }
 
 boolean ST_ChatIsActive(int player)
 {    
     uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
-    {
-        return UIChat_IsActive(obj);
-    }
-    return false;
+    if(!obj) return false;
+
+    return UIChat_IsActive(obj);
 }
 
 void ST_LogPost(int player, byte flags, const char* msg)
@@ -3365,7 +3332,9 @@ int ST_AutomapAddPoint(int player, float x, float y, float z)
     if(!obj) return - 1;
 
     if(UIAutomap_PointCount(obj) == MAX_MAP_POINTS)
+    {
         return -1;
+    }
 
     newPoint = UIAutomap_AddPoint(obj, x, y, z);
     sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newPoint);
@@ -3455,19 +3424,22 @@ void ST_RebuildAutomap(int player)
 int ST_AutomapCheatLevel(int player)
 {
     if(player >=0 && player < MAXPLAYERS)
+    {
         return hudStates[player].automapCheatLevel;
+    }
     return 0;
 }
 
-/**
- * Called when the statusbar scale cvar changes.
- */
+/// \note Called when the statusbar scale cvar changes.
 void updateViewWindow(void)
 {
     int i;
     R_ResizeViewWindow(RWF_FORCE);
+    // Reveal the HUD so the user can see the change.
     for(i = 0; i < MAXPLAYERS; ++i)
-        ST_HUDUnHide(i, HUE_FORCE); // So the user can see the change.
+    {
+        ST_HUDUnHide(i, HUE_FORCE);
+    }
 }
 
 /**
@@ -3477,7 +3449,9 @@ void unhideHUD(void)
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         ST_HUDUnHide(i, HUE_FORCE);
+    }
 }
 
 D_CMD(ChatOpen)
@@ -3485,16 +3459,10 @@ D_CMD(ChatOpen)
     int player = CONSOLEPLAYER, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
-    {
-        return false;
-    }
+    if(G_GameAction() == GA_QUIT) return false;
 
     obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
+    if(!obj) return false;
 
     if(argc == 2)
     {
@@ -3516,16 +3484,11 @@ D_CMD(ChatAction)
     const char* cmd = argv[0] + 4;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
-    {
-        return false;
-    }
+    if(G_GameAction() == GA_QUIT) return false;
 
     obj = ST_UIChatForPlayer(player);
-    if(NULL == obj || !UIChat_IsActive(obj))
-    {
-        return false;
-    }
+    if(!obj || !UIChat_IsActive(obj)) return false;
+
     if(!stricmp(cmd, "complete")) // Send the message.
     {
         return UIChat_CommandResponder(obj, MCMD_SELECT);
@@ -3546,8 +3509,7 @@ D_CMD(ChatSendMacro)
     int player = CONSOLEPLAYER, macroId, destination = 0;
     uiwidget_t* obj;
 
-    if(G_GameAction() == GA_QUIT)
-        return false;
+    if(G_GameAction() == GA_QUIT) return false;
 
     if(argc < 2 || argc > 3)
     {
@@ -3558,10 +3520,7 @@ D_CMD(ChatSendMacro)
     }
 
     obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
+    if(!obj) return false;
 
     if(argc == 3)
     {

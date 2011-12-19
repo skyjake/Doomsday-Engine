@@ -2768,37 +2768,8 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
-static void findMapBounds(float* lowX, float* hiX, float* lowY, float* hiY)
-{
-    assert(NULL != lowX && NULL != hiX && NULL != lowY && NULL != hiY);
-    {
-    float pos[2];
-    uint i;
-
-    *lowX = *lowY =  DDMAXFLOAT;
-    *hiX  = *hiY  = -DDMAXFLOAT;
-
-    for(i = 0; i < numvertexes; ++i)
-    {
-        P_GetFloatv(DMU_VERTEX, i, DMU_XY, pos);
-
-        if(pos[VX] < *lowX)
-            *lowX = pos[VX];
-        if(pos[VX] > *hiX)
-            *hiX  = pos[VX];
-
-        if(pos[VY] < *lowY)
-            *lowY = pos[VY];
-        if(pos[VY] > *hiY)
-            *hiY  = pos[VY];
-    }
-    }
-}
-
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     int flags;
 
@@ -2812,22 +2783,22 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
     if(hud->automapCheatLevel > 2)
         flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
     UIAutomap_SetFlags(obj, flags);
-    }
 }
 
 static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    float lowX, hiX, lowY, hiY;
     automapcfg_t* mcfg;
+    mobj_t* followMobj;
+    uint i;
 
     UIAutomap_Reset(obj);
 
-    findMapBounds(&lowX, &hiX, &lowY, &hiY);
     UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
-    UIAutomap_SetWorldBounds(obj, lowX, hiX, lowY, hiY);
+    UIAutomap_SetWorldBounds(obj, *((float*) DD_GetVariable(DD_MAP_MIN_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MIN_Y)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_Y)));
 
     mcfg = UIAutomap_Config(obj);
 
@@ -2847,11 +2818,11 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 #endif
 
     // Are we re-centering on a followed mobj?
-    { mobj_t* mo = UIAutomap_FollowMobj(obj);
-    if(NULL != mo)
+    followMobj = UIAutomap_FollowMobj(obj);
+    if(followMobj)
     {
-        UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
-    }}
+        UIAutomap_SetCameraOrigin(obj, followMobj->pos[VX], followMobj->pos[VY]);
+    }
 
     if(IS_NETGAME)
     {
@@ -2861,13 +2832,12 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_SetReveal(obj, false);
 
     // Add all immediately visible lines.
-    { uint i;
     for(i = 0; i < numlines; ++i)
     {
         xline_t* xline = &xlines[i];
         if(!(xline->flags & ML_MAPPED)) continue;
+
         P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
-    }}
     }
 }
 
@@ -2878,6 +2848,7 @@ void ST_Start(int player)
     uiwidget_t* obj;
     hudstate_t* hud;
     int flags;
+
     if(player < 0 || player >= MAXPLAYERS)
     {
         Con_Error("ST_Start: Invalid player #%i.", player);
@@ -2886,11 +2857,11 @@ void ST_Start(int player)
     hud = &hudStates[player];
 
     if(!hud->stopped)
+    {
         ST_Stop(player);
+    }
 
     initData(hud);
-    // If the map has been left open; close it.
-    ST_AutomapOpen(player, false, true);
 
     /**
      * Initialize widgets according to player preferences.
@@ -2906,6 +2877,8 @@ void ST_Start(int player)
     UIWidget_SetAlignment(obj, flags);
 
     obj = GUI_MustFindObjectById(hud->automapWidgetId);
+    // If the automap was left open; close it.
+    UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
     UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
