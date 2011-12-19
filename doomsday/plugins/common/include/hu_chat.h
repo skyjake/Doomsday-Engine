@@ -80,7 +80,7 @@ int UIChat_Responder(uiwidget_t* obj, event_t* ev);
 int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd);
 
 /// Draw this widget.
-void UIChat_Drawer(uiwidget_t* obj, int x, int y);
+void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* origin);
 
 /// Calculate the "physical" dimensions of this widget in fixed-pixels.
 void UIChat_UpdateGeometry(uiwidget_t* obj);

@@ -761,7 +761,7 @@ typedef struct uiwidget_s {
     float alpha;
 
     void (*updateGeometry) (struct uiwidget_s* obj);
-    void (*drawer) (struct uiwidget_s* obj, int x, int y);
+    void (*drawer) (struct uiwidget_s* obj, const Point2Raw* origin);
     void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
 
     void* typedata;
@@ -1003,7 +1003,7 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
 uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding);

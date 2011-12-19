@@ -107,21 +107,20 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
 {
     uiwidget_t* obj;
     widgets = (uiwidget_t*) realloc(widgets, sizeof(*widgets) * ++numWidgets);
-    if(NULL == widgets)
-        Con_Error("allocateWidget: Failed on (re)allocation of %lu bytes for new widget.",
-            (unsigned long) (sizeof(*widgets) * numWidgets));
+    if(!widgets) Con_Error("allocateWidget: Failed on (re)allocation of %lu bytes for new widget.", (unsigned long) (sizeof(*widgets) * numWidgets));
+
     obj = &widgets[numWidgets-1];
     memset(obj, 0, sizeof(*obj));
     obj->type = type;
     obj->id = id;
     obj->player = player;
+
     switch(obj->type)
     {
     case GUI_GROUP: {
         guidata_group_t* grp = (guidata_group_t*)calloc(1, sizeof(*grp));
-        if(NULL == grp)
-            Con_Error("allocateWidget: Failed on (re)allocation of %lu bytes for GUI_GROUP typedata.",
-                (unsigned long) sizeof(*grp));
+        if(!grp) Con_Error("allocateWidget: Failed on (re)allocation of %lu bytes for GUI_GROUP typedata.", (unsigned long) sizeof(*grp));
+
         obj->typedata = grp;
         break;
       }
@@ -130,6 +129,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
         obj->typedata = typedata;
         break;
     }
+
     switch(obj->type)
     {
     case GUI_AUTOMAP: {
@@ -149,12 +149,13 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
       }
     default: break;
     }
+
     return obj;
 }
 
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
     float alpha, int alignFlags, void (*updateGeometry) (uiwidget_t* obj),
-    void (*drawer) (uiwidget_t* obj, int x, int y),
+    void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
@@ -170,9 +171,9 @@ static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontI
 
 static void clearWidgets(void)
 {
+    int i;
     if(0 == numWidgets) return;
 
-    { int i;
     for(i = 0; i < numWidgets; ++i)
     {
         uiwidget_t* obj = &widgets[i];
@@ -183,7 +184,7 @@ static void clearWidgets(void)
                 free(grp->widgetIds);
             free(grp);
         }
-    }}
+    }
     free(widgets);
     widgets = NULL;
     numWidgets = 0;
@@ -209,7 +210,9 @@ uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id)
 {
     uiwidget_t* obj = GUI_FindObjectById(id);
     if(!obj)
+    {
         Con_Error("GUI_MustFindObjectById: Failed to locate object with id %i.", (int) id);
+    }
     return obj;
 }
 
@@ -241,8 +244,8 @@ void GUI_Shutdown(void)
 
 void GUI_LoadResources(void)
 {
-    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO))
-        return;
+    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
+
     UIAutomap_LoadResources();
     MNEdit_LoadResources();
     MNSlider_LoadResources();
@@ -250,13 +253,13 @@ void GUI_LoadResources(void)
 
 void GUI_ReleaseResources(void)
 {
-    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO))
-        return;
+    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
+
     UIAutomap_ReleaseResources();
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
@@ -270,55 +273,57 @@ uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int pad
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
+
     obj = createWidget(GUI_GROUP, player, 0, 1, alignFlags, UIGroup_UpdateGeometry, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
     grp->padding = padding;
+
     return obj->id;
 }
 
 void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other)
 {
-    assert(NULL != obj && obj->type == GUI_GROUP);
-    {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+    int i;
+    assert(obj->type == GUI_GROUP);
 
-    if(NULL == other)
+    if(!other || other == obj)
+    {
+#if _DEBUG
+        Con_Message("Warning:UIGroup::AddWidget: Attempt to add invalid widget %s, ignoring.\n", obj? "(this)" : "(null)");
+#endif
         return;
+    }
 
     // Ensure widget is not already in this grp.
-    { int i;
     for(i = 0; i < grp->widgetIdCount; ++i)
+    {
         if(grp->widgetIds[i] == other->id)
             return; // Already present. Ignore.
     }
 
     // Must add to this grp.
     grp->widgetIds = (uiwidgetid_t*) realloc(grp->widgetIds, sizeof(*grp->widgetIds) * ++grp->widgetIdCount);
-    if(NULL == grp->widgetIds)
-        Con_Error("UIGroup::AddWidget: Failed on (re)allocation of %lu bytes for widget id list.",
-            (unsigned long) (sizeof(*grp->widgetIds) * grp->widgetIdCount));
+    if(!grp->widgetIds) Con_Error("UIGroup::AddWidget: Failed on (re)allocation of %lu bytes for widget id list.", (unsigned long) (sizeof(*grp->widgetIds) * grp->widgetIdCount));
 
     grp->widgetIds[grp->widgetIdCount-1] = other->id;
-    }
 }
 
 int UIGroup_Flags(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_GROUP);
-    {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+    assert(obj->type == GUI_GROUP);
+
     return grp->flags;
-    }
 }
 
 void UIGroup_SetFlags(uiwidget_t* obj, int flags)
 {
-    assert(NULL != obj && obj->type == GUI_GROUP);
-    {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+    assert(obj->type == GUI_GROUP);
+
     grp->flags = flags;
-    }
 }
 
 boolean GUI_RunGameTicTrigger(timespan_t ticLength)
@@ -421,12 +426,15 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
 
 static void drawWidget2(uiwidget_t* obj, int x, int y)
 {
+    Point2Raw origin;
     assert(obj);
     if(!obj->drawer || obj->alpha <= 0) return;
 
     uiRS.pageAlpha = obj->alpha;
 
-    obj->drawer(obj, x + obj->geometry.origin.x, y + obj->geometry.origin.y);
+    origin.x = x + obj->geometry.origin.x;
+    origin.y = y + obj->geometry.origin.y;
+    obj->drawer(obj, &origin);
 }
 
 static void drawWidget(uiwidget_t* obj, int x, int y)

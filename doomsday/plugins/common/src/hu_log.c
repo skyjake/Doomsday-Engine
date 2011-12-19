@@ -289,10 +289,8 @@ void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
+void UILog_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
     const short textFlags = DTF_NO_EFFECTS;
@@ -303,17 +301,17 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
     guidata_log_message_t* msg;
+    assert(obj->type == GUI_LOG);
 
     /// \kludge Do not draw message logs while the map title is being displayed.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
+    if(cfg.mapTitle && actualMapTime < 6 * 35) return;
     /// kludge end.
 
     if(0 == pvisMsgCount) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(xOrigin, yOrigin, 0);
+    DGL_Translatef(origin->x, origin->y, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
@@ -436,19 +434,17 @@ void UILog_Drawer(uiwidget_t* obj, int xOrigin, int yOrigin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
 }
 
 void UILog_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     int lineHeight, lineWidth;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float scrollFactor;
     guidata_log_message_t* msg;
+    assert(obj->type == GUI_LOG);
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
@@ -532,5 +528,4 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
 
     obj->geometry.size.width  *= cfg.msgScale;
     obj->geometry.size.height *= cfg.msgScale;
-    }
 }
