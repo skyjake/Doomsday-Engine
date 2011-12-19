@@ -2118,7 +2118,6 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     const guidata_face_t* face = (guidata_face_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     patchinfo_t bgInfo;
-    int alignFlags = 0;
     patchid_t pFace;
 
     if(!cfg.hudShown[HUD_FACE]) return;
@@ -2136,19 +2135,13 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Color4f(1, 1, 1, iconAlpha);
     if(R_GetPatchInfo(pFaceBackground[cfg.playerColor[obj->player]], &bgInfo))
     {
-        x = -(bgInfo.geometry.size.width/2);
         if(IS_NETGAME)
         {
-            GL_DrawPatch(bgInfo.id, x, -bgInfo.geometry.size.height + 1);
+            GL_DrawPatch2(bgInfo.id, x, y, ALIGN_BOTTOM);
         }
-        y = -bgInfo.geometry.size.height;
+        y -= bgInfo.geometry.size.height;
     }
-    else
-    {
-        // Not likely but possible.
-        alignFlags = ALIGN_BOTTOM;
-    }
-    GL_DrawPatch2(pFace, x, y, alignFlags);
+    GL_DrawPatch(pFace, x - (SCREENWIDTH/2 - ST_FACESX), y - 1);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
