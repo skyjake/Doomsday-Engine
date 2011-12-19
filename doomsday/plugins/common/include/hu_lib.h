@@ -170,7 +170,7 @@ typedef struct mn_object_s {
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (struct mn_object_s* obj, int x, int y);
+    void (*drawer) (struct mn_object_s* obj, const Point2Raw* origin);
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
@@ -277,10 +277,10 @@ typedef enum {
 
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
-    int offset[2];
+    Point2Raw origin;
     fontid_t fonts[MENU_FONT_COUNT];
     uint colors[MENU_COLOR_COUNT];
-    void (*drawer) (struct mn_page_s* page, int x, int y);
+    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin);
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
     struct mn_page_s* previous; // Pointer to the previous page, if any.
     void* data;
@@ -344,7 +344,7 @@ typedef struct mndata_text_s {
     patchid_t* patch;
 } mndata_text_t;
 
-void MNText_Drawer(mn_object_t* obj, int x, int y);
+void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
@@ -359,7 +359,7 @@ typedef struct mndata_button_s {
     const char* yes, *no;
 } mndata_button_t;
 
-void MNButton_Drawer(mn_object_t* obj, int x, int y);
+void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
@@ -396,7 +396,7 @@ typedef struct mndata_edit_s {
     int data2;
 } mndata_edit_t;
 
-void MNEdit_Drawer(mn_object_t* obj, int x, int y);
+void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNEdit_Responder(mn_object_t* obj, event_t* ev);
 void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
@@ -442,8 +442,8 @@ typedef struct mndata_list_s {
     int numvis;
 } mndata_list_t;
 
-void MNList_Drawer(mn_object_t* obj, int x, int y);
-void MNList_InlineDrawer(mn_object_t* obj, int x, int y);
+void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
+void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin);
 
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
@@ -503,7 +503,7 @@ typedef struct mndata_colorbox_s {
     void* data4;
 } mndata_colorbox_t;
 
-void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
+void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
@@ -603,8 +603,8 @@ typedef struct mndata_slider_s {
     void* data5;
 } mndata_slider_t;
 
-void MNSlider_Drawer(mn_object_t* obj, int x, int y);
-void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y);
+void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin);
+void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page);
@@ -645,7 +645,7 @@ void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);
 void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
 void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap);
 
-void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
+void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 // Menu render state:

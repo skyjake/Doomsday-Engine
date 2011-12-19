@@ -69,9 +69,8 @@ typedef enum {
 } bindingitertype_t;
 
 typedef struct bindingdrawerdata_s {
-    int             x;
-    int             y;
-    float           alpha;
+    Point2Raw origin;
+    float alpha;
 } bindingdrawerdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -440,13 +439,13 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
+        DGL_DrawRectColor(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(name, d->x + 1, d->y, d->alpha);
+        drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        d->x += width * SMALL_SCALE + 2 + BIND_GAP;
+        d->origin.x += width * SMALL_SCALE + 2 + BIND_GAP;
     }
     else
     {
@@ -458,10 +457,10 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(temp);
 
         DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(temp, d->x, d->y, d->alpha);
+        drawSmallText(temp, d->origin.x, d->origin.y, d->alpha);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        d->x += width * SMALL_SCALE + BIND_GAP;
+        d->origin.x += width * SMALL_SCALE + BIND_GAP;
     }
 
 #undef BIND_GAP
@@ -587,10 +586,8 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
     }
 }
 
-void MNBindings_Drawer(mn_object_t* obj, int x, int y)
+void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
-    assert(obj);
-    {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     bindingdrawerdata_t draw;
     char buf[1024];
@@ -603,17 +600,14 @@ void MNBindings_Drawer(mn_object_t* obj, int x, int y)
     {
         B_BindingsForCommand(binds->command, buf, sizeof(buf));
     }
-    draw.x = x;
-    draw.y = y;
+    draw.origin.x = origin->x;
+    draw.origin.y = origin->y;
     draw.alpha = mnRendState->pageAlpha;
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
-    }
 }
 
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
-    assert(obj);
-    {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
     switch(cmd)
     {
@@ -646,7 +640,6 @@ int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e cmd)
         break;
     }
     return false; // Not eaten.
-    }
 }
 
 void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
@@ -660,7 +653,7 @@ void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin)
 {
 /*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
@@ -670,7 +663,7 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    FR_DrawTextXY3("CONTROLS", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("CONTROLS", SCREENWIDTH/2, origin->y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
