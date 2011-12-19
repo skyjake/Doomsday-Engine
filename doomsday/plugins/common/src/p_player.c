@@ -234,7 +234,7 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
  * @return              Non-zero if no weapon is bound to the slot @a slot,
  *                      or callback @a callback signals an end to iteration.
  */
-int P_IterateWeaponsInSlot(byte slot, boolean reverse,
+int P_IterateWeaponsBySlot(byte slot, boolean reverse,
                            int (*callback) (weapontype_t, void* context),
                            void* context)
 {

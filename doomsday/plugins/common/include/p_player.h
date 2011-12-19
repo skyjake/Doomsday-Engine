@@ -57,7 +57,7 @@ void            P_FreeWeaponSlots(void);
 boolean         P_SetWeaponSlot(weapontype_t type, byte slot);
 byte            P_GetWeaponSlot(weapontype_t type);
 
-int             P_IterateWeaponsInSlot(byte slot, boolean reverse,
+int             P_IterateWeaponsBySlot(byte slot, boolean reverse,
                                        int (*callback) (weapontype_t, void* context),
                                         void* context);
 // A specialized iterator for weapon slot cycling.

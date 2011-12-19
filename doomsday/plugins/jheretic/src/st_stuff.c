@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Statusbar code - Heretic specific.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,8 +42,6 @@
 #include "p_inventory.h"
 #include "r_common.h"
 #include "am_map.h"
-
-// MACROS ------------------------------------------------------------------
 
 // Current ammo icon(sbbar).
 #define ST_AMMOIMGWIDTH     (24)
@@ -100,8 +92,6 @@
 #define ST_FRAGSX           (85)
 #define ST_FRAGSY           (13)
 #define ST_FRAGSWIDTH       (2)
-
-// TYPES -------------------------------------------------------------------
 
 enum {
     UWG_STATUSBAR = 0,
@@ -165,22 +155,10 @@ typedef struct {
     guidata_kills_t kills;
 } hudstate_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void updateViewWindow(void);
 void unhideHUD(void);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 int ST_ChatResponder(int player, event_t* ev);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static hudstate_t hudStates[MAXPLAYERS];
 
@@ -200,72 +178,51 @@ static patchid_t pKeys[NUM_KEY_TYPES];
 static patchid_t pGodLeft;
 static patchid_t pGodRight;
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Register CVARs and CCmds for the HUD/Status bar
- */
 void ST_Register(void)
 {
-    cvartemplate_t cvars[] = {
-        { "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1, unhideHUD },
+    C_VAR_FLOAT2( "hud-color-r", &cfg.hudColor[0], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-g", &cfg.hudColor[1], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
+    C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
-        { "hud-status-size", 0, CVT_FLOAT, &cfg.statusbarScale, 0.1f, 1, updateViewWindow },
+    // Displays
+    C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
+    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-currentitem", &cfg.hudShown[HUD_READYITEM], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
+    C_VAR_INT(    "hud-tome-timer", &cfg.tomeCounter, CVF_NO_MAX, 0, 0 )
+    C_VAR_INT(    "hud-tome-sound", &cfg.tomeSound, CVF_NO_MAX, 0, 0 )
 
-        // HUD color + alpha
-        { "hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, unhideHUD },
-        { "hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, unhideHUD },
-        { "hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, unhideHUD },
-        { "hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, unhideHUD },
-        { "hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, unhideHUD },
+    C_VAR_FLOAT2( "hud-status-alpha", &cfg.statusbarOpacity, 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-status-icon-a", &cfg.statusbarCounterAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-status-size", &cfg.statusbarScale, 0, 0.1f, 1, updateViewWindow )
 
-        { "hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1, unhideHUD },
-        { "hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1, unhideHUD },
+    // Events.
+    C_VAR_BYTE(   "hud-unhide-damage", &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-ammo", &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-armor", &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-health", &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-invitem", &cfg.hudUnHide[HUE_ON_PICKUP_INVITEM], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-key", &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-powerup", &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-weapon", &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
 
-        // HUD icons
-        { "hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1, unhideHUD },
-        { "hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1, unhideHUD },
-        { "hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1, unhideHUD },
-        { "hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1, unhideHUD },
-        { "hud-currentitem", 0, CVT_BYTE, &cfg.hudShown[HUD_READYITEM], 0, 1, unhideHUD },
-
-        // HUD displays
-        { "hud-tome-timer", CVF_NO_MAX, CVT_INT, &cfg.tomeCounter, 0, 0 },
-        { "hud-tome-sound", CVF_NO_MAX, CVT_INT, &cfg.tomeSound, 0, 0 },
-
-        { "hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60 },
-
-        { "hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1 },
-        { "hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1 },
-        { "hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1 },
-        { "hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1 },
-        { "hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1 },
-        { "hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1 },
-        { "hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1 },
-        { "hud-unhide-pickup-invitem", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_INVITEM], 0, 1 },
-
-        { "hud-cheat-counter", 0, CVT_BYTE, &cfg.hudShownCheatCounters, 0, 63, unhideHUD },
-        { "hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.hudCheatCounterScale, .1f, 1, unhideHUD },
-        { NULL }
-    };
-    ccmdtemplate_t ccmds[] = {
-        { "beginchat",       NULL,   CCmdChatOpen },
-        { "chatcancel",      "",     CCmdChatAction },
-        { "chatcomplete",    "",     CCmdChatAction },
-        { "chatdelete",      "",     CCmdChatAction },
-        { "chatsendmacro",   NULL,   CCmdChatSendMacro },
-        { NULL }
-    };
-    int i;
-    for(i = 0; cvars[i].path; ++i)
-        Con_AddVariable(cvars + i);
-    for(i = 0; ccmds[i].name; ++i)
-        Con_AddCommand(ccmds + i);
+    C_CMD("beginchat",       NULL,   ChatOpen )
+    C_CMD("chatcancel",      "",     ChatAction )
+    C_CMD("chatcomplete",    "",     ChatAction )
+    C_CMD("chatdelete",      "",     ChatAction )
+    C_CMD("chatsendmacro",   NULL,   ChatSendMacro )
 
     Hu_InventoryRegister();
 }
 
-static int fullscreenMode(void)
+static int fullscreenMode(int player)
 {
     return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 }
@@ -292,13 +249,12 @@ static void shadeChain(int x, int y, float alpha)
 
 void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(obj);
-    {
     guidata_chain_t* chain = (guidata_chain_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     int delta, curHealth = MAX_OF(plr->plr->mo->health, 0);
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
-        return;
+
+    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+
     // Health marker chain animates up to the actual health value.
     if(curHealth < chain->healthMarker)
     {
@@ -318,7 +274,6 @@ void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
     else
     {
         chain->wiggle = 0;
-    }
     }
 }
 
@@ -340,7 +295,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     float cw, rgb[3];
     const hudstate_t* hud = &hudStates[obj->player];
     int chainYOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     patchinfo_t pChainInfo, pGemInfo;
@@ -473,7 +428,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 #define ORIGINY     ((int)(-HEIGHT * hud->showBar))
 
     const hudstate_t* hud = &hudStates[obj->player];
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
 
@@ -597,14 +552,13 @@ void SBarBackground_UpdateGeometry(uiwidget_t* obj)
 
 int ST_Responder(event_t* ev)
 {
-    int i, eaten;
+    int i, eaten = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         eaten = ST_ChatResponder(i, ev);
-        if(0 != eaten)
-            return eaten;
+        if(eaten) break;
     }
-    return false;
+    return eaten;
 }
 
 void ST_Ticker(timespan_t ticLength)
@@ -690,7 +644,7 @@ void SBarInventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 {
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
@@ -752,7 +706,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     char buf[20];
@@ -834,7 +788,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
@@ -914,7 +868,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
@@ -998,7 +952,7 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     const Point2Raw* loc = &elements[kslt->keytypeA];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(obj->player)) return;
@@ -1074,7 +1028,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
@@ -1165,7 +1119,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
@@ -1245,7 +1199,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
-    int fullscreen = fullscreenMode();
+    int fullscreen = fullscreenMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     inventoryitemtype_t readyItem;
@@ -1337,22 +1291,27 @@ void ST_FlashCurrentItem(int player)
     hud->readyitem.flashCounter = 4;
 }
 
-/**
- * Unhides the current HUD display if hidden.
- *
- * @param player        The player whoose HUD to (maybe) unhide.
- * @param event         The HUD Update Event type to check for triggering.
- */
 void ST_HUDUnHide(int player, hueevent_t ev)
 {
     player_t* plr;
 
-    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid player #%i, ignoring.", player);
+#endif
         return;
+    }
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
+#endif
+        return;
+    }
 
     plr = &players[player];
-    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
-        return;
+    if(!plr->plr->inGame) return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
@@ -2429,89 +2388,75 @@ typedef struct {
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
 
-void ST_Drawer(int player)
+static void drawUIWidgetsForPlayer(player_t* plr)
 {
-    int fullscreen = fullscreenMode();
-    boolean blended = (fullscreen!=0);
-    hudstate_t* hud;
-    player_t* plr;
+/// Units in fixed 320x200 screen space.
+#define DISPLAY_BORDER      (2)
+#define PADDING             (2)
+
+    const int playerNum = plr - players;
+    const int fullscreen = fullscreenMode(playerNum);
+    hudstate_t* hud = hudStates + playerNum;
     uiwidget_t* obj;
     Size2Raw size;
-
-    if(player < 0 || player >= MAXPLAYERS) return;
-
-    plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame)) return;
-
-    hud = &hudStates[player];
-    hud->statusbarActive = (fullscreen < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
-
-    // Do palette shifts
-    R_UpdateViewFilter(player);
+    assert(plr);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
-    UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));
+    UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
     size.width = SCREENWIDTH; size.height = SCREENHEIGHT;
     UIWidget_SetMaximumSize(obj, &size);
-    GUI_DrawWidget(obj, 0, 0);
+
+    GUI_DrawWidgetXY(obj, 0, 0);
 
     if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
     {
-        int x, y, width, height;
-        float alpha = (hud->statusbarActive? (blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
+        const float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
+        Size2Raw portSize, drawnSize = { 0, 0 };
+        RectRaw displayRegion;
+        int posX, posY, availWidth, availHeight;
         float scale;
-        Size2Raw portSize;
 
-        R_ViewPortSize(player, &portSize);
+        R_ViewPortSize(playerNum, &portSize);
 
         if(portSize.width >= portSize.height)
             scale = (float)portSize.height/SCREENHEIGHT;
         else
             scale = (float)portSize.width/SCREENWIDTH;
 
-        x = y = 0;
-        width  = portSize.width  / scale;
-        height = portSize.height / scale;
+        displayRegion.origin.x = displayRegion.origin.y = 0;
+        displayRegion.size.width  = portSize.width  / scale;
+        displayRegion.size.height = portSize.height / scale;
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-
         DGL_Scalef(scale, scale, 1);
-
-        /**
-         * Draw widgets.
-         */
-        {
-#define PADDING 2 // In fixed 320x200 units.
-
-        int posX, posY, availWidth, availHeight;
-        Size2Raw drawnSize = { 0, 0 };
 
         if(hud->statusbarActive)
         {
+            const float statusbarOpacity = (1 - hud->hideAmount) * hud->showBar;
+
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_STATUSBAR]);
-            UIWidget_SetAlpha(obj, (1 - hud->hideAmount) * hud->showBar);
-            size.width = width; size.height = height;
-            UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
+            UIWidget_SetOpacity(obj, statusbarOpacity);
+            UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+            GUI_DrawWidget(obj, &displayRegion.origin);
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
         }
 
-        alpha = hud->alpha * (1-hud->hideAmount);
-        x += PADDING;
-        y += PADDING;
-        width -= PADDING*2;
-        height -= PADDING*2;
+        displayRegion.origin.x += DISPLAY_BORDER;
+        displayRegion.origin.y += DISPLAY_BORDER;
+        displayRegion.size.width  -= DISPLAY_BORDER*2;
+        displayRegion.size.height -= DISPLAY_BORDER*2;
 
         if(!hud->statusbarActive)
         {
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]);
-            UIWidget_SetAlpha(obj, alpha);
-            size.width = width; size.height = height;
-            UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
+            UIWidget_SetOpacity(obj, opacity);
+            UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+            GUI_DrawWidget(obj, &displayRegion.origin);
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
@@ -2520,40 +2465,44 @@ void ST_Drawer(int player)
         if(!hud->statusbarActive)
         {
             int h = drawnSize.height;
-            availHeight = height - (drawnSize.height > 0 ? drawnSize.height : 0);
+            availHeight = displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0);
+
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]);
-            UIWidget_SetAlpha(obj, alpha);
-            size.width = width; size.height = availHeight;
+            UIWidget_SetOpacity(obj, opacity);
+            size.width = displayRegion.size.width; size.height = availHeight;
             UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
+
+            GUI_DrawWidget(obj, &displayRegion.origin);
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
             drawnSize.height += h;
         }
 
-        availHeight = height - (drawnSize.height > 0 ? drawnSize.height : 0);
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_MAPNAME]);
-        UIWidget_SetAlpha(obj, ST_AutomapOpacity(player));
-        size.width = width; size.height = availHeight;
+        UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
+        availHeight = displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0);
+        size.width = displayRegion.size.width; size.height = availHeight;
         UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y);
+
+        GUI_DrawWidget(obj, &displayRegion.origin);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
-        UIWidget_SetAlpha(obj, alpha);
-        size.width = width; size.height = height;
-        UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y);
+        UIWidget_SetOpacity(obj, opacity);
+        UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+        GUI_DrawWidget(obj, &displayRegion.origin);
+
         drawnSize.width  = UIWidget_Geometry(obj)->size.width;
         drawnSize.height = UIWidget_Geometry(obj)->size.height;
 
         if(!hud->statusbarActive)
         {
             obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]);
-            UIWidget_SetAlpha(obj, alpha);
-            size.width = width; size.height = height;
-            UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
+            UIWidget_SetOpacity(obj, opacity);
+            UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+            GUI_DrawWidget(obj, &displayRegion.origin);
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
@@ -2563,39 +2512,57 @@ void ST_Drawer(int player)
             drawnSize.width = 0;
         }
 
-        posX = x + (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
-        posY = y;
-        availWidth = width - (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
-        availHeight = height;
+        posX = displayRegion.origin.x + (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
+        posY = displayRegion.origin.y;
+        availWidth  = displayRegion.size.width - (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
+        availHeight = displayRegion.size.height;
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT2]);
-        UIWidget_SetAlpha(obj, alpha);
+        UIWidget_SetOpacity(obj, opacity);
         size.width = availWidth; size.height = availHeight;
         UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, posX, posY);
-        drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-        drawnSize.height = UIWidget_Geometry(obj)->size.height;
 
+        GUI_DrawWidgetXY(obj, posX, posY);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]);
-        UIWidget_SetAlpha(obj, alpha);
-        size.width = width; size.height = height;
-        UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y);
-        drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-        drawnSize.height = UIWidget_Geometry(obj)->size.height;
+        UIWidget_SetOpacity(obj, opacity);
+        UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+        GUI_DrawWidget(obj, &displayRegion.origin);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_COUNTERS]);
-        UIWidget_SetAlpha(obj, alpha);
-        size.width = width; size.height = height;
-        UIWidget_SetMaximumSize(obj, &size);
-        GUI_DrawWidget(obj, x, y);
-#undef PADDING
-        }
+        UIWidget_SetOpacity(obj, opacity);
+        UIWidget_SetMaximumSize(obj, &displayRegion.size);
+
+        GUI_DrawWidget(obj, &displayRegion.origin);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
+
+#undef PADDING
+#undef DISPLAY_BORDER
+}
+
+void ST_Drawer(int player)
+{
+    hudstate_t* hud;
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_Drawer: Invalid player #%i, ignoring.\n", player);
+#endif
+        return;
+    }
+    if(!players[player].plr->inGame) return;
+
+    R_UpdateViewFilter(player);
+
+    hud = &hudStates[player];
+    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
+
+    drawUIWidgetsForPlayer(players + player);
 }
 
 void ST_loadGraphics(void)
@@ -3285,7 +3252,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }
@@ -3352,7 +3319,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }

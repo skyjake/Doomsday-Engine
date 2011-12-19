@@ -192,7 +192,7 @@ void UIAutomap_ClearLists(uiwidget_t* obj)
 void UIAutomap_LoadResources(void)
 {
 #if !__JDOOM64__
-    { int i;
+    int i;
     char patchName[9];
     for(i = 0; i < 10; ++i)
     {
@@ -202,7 +202,7 @@ void UIAutomap_LoadResources(void)
         sprintf(patchName, "fonta%d", 16+i);
 #  endif
         pPointMarkers[i] = R_DeclarePatch(patchName);
-    }}
+    }
 #endif
 
     if(autopageLumpNum >= 0)
@@ -233,12 +233,11 @@ void UIAutomap_ReleaseResources(void)
 
 void UIAutomap_Reset(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     UIAutomap_ClearLists(obj);
     am->constructMap = true;
-    }
 }
 
 /**
@@ -249,14 +248,13 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     boolean glowOnly, boolean scaleGlowWithView, boolean caps, blendmode_t blend,
     boolean drawNormal, boolean addToLists)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     //automapcfg_t* mcfg = am->mcfg;
     float a[2], b[2];
     float length, dx, dy;
     float normal[2], unit[2];
+    assert(obj->type == GUI_AUTOMAP);
 
     // Scale into map, screen space units.
     a[VX] = x1;
@@ -267,8 +265,7 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     dx = b[VX] - a[VX];
     dy = b[VY] - a[VY];
     length = sqrt(dx * dx + dy * dy);
-    if(length <= 0)
-        return;
+    if(length <= 0) return;
 
     unit[VX] = dx / length;
     unit[VY] = dy / length;
@@ -585,7 +582,6 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
             DGL_BlendMode(BM_NORMAL);
 
 #undef NORMTAIL_LENGTH
-    }
     }
 }
 

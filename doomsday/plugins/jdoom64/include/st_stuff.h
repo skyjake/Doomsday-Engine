@@ -51,7 +51,9 @@
 
 #define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
 
+/// Register the console commands, variables, etc..., of this module.
 void ST_Register(void);
+
 void ST_Init(void);
 void ST_Shutdown(void);
 
@@ -139,8 +141,13 @@ boolean ST_AutomapHasReveal(int player);
 
 void ST_RebuildAutomap(int player);
 
-/// Call when it might be neccessary for the hud to unhide.
-void ST_HUDUnHide(int player, hueevent_t event);
+/**
+ * Unhides the current HUD display if hidden.
+ *
+ * @param player  Player whoose HUD to (maybe) unhide.
+ * @param event  Event type trigger.
+ */
+ void ST_HUDUnHide(int player, hueevent_t event);
 
 D_CMD(ChatOpen);
 D_CMD(ChatAction);

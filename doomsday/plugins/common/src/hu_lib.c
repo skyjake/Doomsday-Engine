@@ -154,14 +154,14 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
 }
 
 static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    float alpha, int alignFlags, void (*updateGeometry) (uiwidget_t* obj),
+    float opacity, int alignFlags, void (*updateGeometry) (uiwidget_t* obj),
     void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
     assert(updateGeometry);
     obj->font = fontId;
-    obj->alpha = alpha;
+    obj->opacity = opacity;
     obj->alignFlags = alignFlags;
     obj->updateGeometry = updateGeometry;
     obj->drawer = drawer;
@@ -362,7 +362,7 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
         Size2Raw childSize = { 0, 0 };
 
         if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
-           UIWidget_Alpha(child) > 0)
+           UIWidget_Opacity(child) > 0)
         {
             child->updateGeometry(child);
             child->geometry.origin.x = x;
@@ -424,28 +424,39 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
     }
 }
 
-static void drawWidget2(uiwidget_t* obj, int x, int y)
+static void drawWidget2(uiwidget_t* obj, const Point2Raw* _origin)
 {
     Point2Raw origin;
     assert(obj);
-    if(!obj->drawer || obj->alpha <= 0) return;
 
-    uiRS.pageAlpha = obj->alpha;
+    if(!obj->drawer || obj->opacity <= 0) return;
 
-    origin.x = x + obj->geometry.origin.x;
-    origin.y = y + obj->geometry.origin.y;
+    uiRS.pageAlpha = obj->opacity;
+
+    origin.x = obj->geometry.origin.x;
+    origin.y = obj->geometry.origin.y;
+    // An offset?
+    if(_origin)
+    {
+        origin.x = _origin->x;
+        origin.y = _origin->y;
+    }
+
     obj->drawer(obj, &origin);
 }
 
-static void drawWidget(uiwidget_t* obj, int x, int y)
+static void drawWidget(uiwidget_t* obj, const Point2Raw* origin)
 {
     assert(obj);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(x, y, 0);
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(origin->x, origin->y, 0);
+    }
 
     // First we draw ourself.
-    drawWidget2(obj, 0, 0);
+    drawWidget2(obj, NULL/*no origin offset*/);
 
     if(obj->type == GUI_GROUP)
     {
@@ -455,28 +466,39 @@ static void drawWidget(uiwidget_t* obj, int x, int y)
         for(i = 0; i < grp->widgetIdCount; ++i)
         {
             uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-            drawWidget(child, 0, 0);
+            drawWidget(child, NULL/*no origin offset*/);
         }
     }
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-x, -y, 0);
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-origin->x, -origin->y, 0);
+    }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y)
+void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin)
 {
     if(!obj) return;
     if(UIWidget_MaximumWidth(obj) < 1 || UIWidget_MaximumHeight(obj) < 1) return;
-    if(UIWidget_Alpha(obj) <= 0) return;
+    if(UIWidget_Opacity(obj) <= 0) return;
 
     obj->updateGeometry(obj);
 
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
 
-    drawWidget(obj, x, y);
+    drawWidget(obj, origin);
 
     FR_PopAttrib();
+}
+
+void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y)
+{
+    Point2Raw origin;
+    origin.x = x;
+    origin.y = y;
+    GUI_DrawWidget(obj, &origin);
 }
 
 void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength)
@@ -604,23 +626,23 @@ void UIWidget_SetAlignment(uiwidget_t* obj, int alignFlags)
     obj->alignFlags = alignFlags;
 }
 
-float UIWidget_Alpha(uiwidget_t* obj)
+float UIWidget_Opacity(uiwidget_t* obj)
 {
     assert(obj);
-    return obj->alpha;
+    return obj->opacity;
 }
 
-void UIWidget_SetAlpha(uiwidget_t* obj, float alpha)
+void UIWidget_SetOpacity(uiwidget_t* obj, float opacity)
 {
     assert(obj);
-    obj->alpha = alpha;
+    obj->opacity = opacity;
     if(obj->type == GUI_GROUP)
     {
         guidata_group_t* grp = (guidata_group_t*)obj->typedata;
         int i;
         for(i = 0; i < grp->widgetIdCount; ++i)
         {
-            UIWidget_SetAlpha(GUI_MustFindObjectById(grp->widgetIds[i]), alpha);
+            UIWidget_SetOpacity(GUI_MustFindObjectById(grp->widgetIds[i]), opacity);
         }
     }
 }

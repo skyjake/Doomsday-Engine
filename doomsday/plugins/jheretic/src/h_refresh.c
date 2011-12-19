@@ -137,8 +137,19 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
  */
 void R_UpdateViewFilter(int player)
 {
+    player_t* plr = players + player;
     int palette = 0;
-    player_t* plr = &players[player];
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+#endif
+        return;
+    }
+
+    // Not currently present?
+    if(!plr->plr->inGame) return;
 
     if(plr->damageCount)
     {

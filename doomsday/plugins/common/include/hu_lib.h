@@ -757,8 +757,8 @@ typedef struct uiwidget_s {
     /// Current font used for text child objects of this widget.
     fontid_t font;
 
-    /// Current opacity value for this widget. Used during render.
-    float alpha;
+    /// Current opacity value for this widget.
+    float opacity;
 
     void (*updateGeometry) (struct uiwidget_s* obj);
     void (*drawer) (struct uiwidget_s* obj, const Point2Raw* origin);
@@ -771,12 +771,13 @@ typedef struct uiwidget_s {
 boolean GUI_RunGameTicTrigger(timespan_t ticLength);
 boolean GUI_GameTicTriggerIsSharp(void);
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y);
+void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
+void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
 
 /// @return  @see alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
 
-float UIWidget_Alpha(uiwidget_t* obj);
+float UIWidget_Opacity(uiwidget_t* obj);
 
 const RectRaw* UIWidget_Geometry(uiwidget_t* obj);
 
@@ -793,7 +794,7 @@ int UIWidget_Player(uiwidget_t* obj);
 
 void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
 
-void UIWidget_SetAlpha(uiwidget_t* obj, float alpha);
+void UIWidget_SetOpacity(uiwidget_t* obj, float alpha);
 
 /**
  * @param alignFlags  @see alignmentFlags

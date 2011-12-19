@@ -143,10 +143,21 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
 
 void R_UpdateViewFilter(int player)
 {
-#define RADIATIONPAL            (13) // Radiation suit, green shift.
+#define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
+    player_t* plr = players + player;
     int palette = 0, cnt, bzc;
-    player_t* plr = &players[player];
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+#endif
+        return;
+    }
+
+    // Not currently present?
+    if(!plr->plr->inGame) return;
 
     cnt = plr->damageCount;
 

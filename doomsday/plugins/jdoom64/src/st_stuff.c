@@ -24,14 +24,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Fullscreen HUD code.
- *
- * Does palette indicators as well (red pain/berserk, bright pickup)
- */
-
- // HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,14 +44,10 @@
 #include "am_map.h"
 #include "r_common.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Frags pos.
 #define ST_FRAGSX           138
 #define ST_FRAGSY           171
 #define ST_FRAGSWIDTH       2
-
-// TYPES -------------------------------------------------------------------
 
 enum {
     UWG_MAPNAME = 0,
@@ -102,95 +90,73 @@ typedef enum hotloc_e {
     HOT_BLEFT
 } hotloc_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 int ST_ChatResponder(int player, event_t* ev);
 void unhideHUD(void);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static hudstate_t hudStates[MAXPLAYERS];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Register CVARs and CCmds for the HUD/Status bar
- */
 void ST_Register(void)
 {
-    cvartemplate_t cvars[] = {
-        { "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10, unhideHUD },
+    C_VAR_FLOAT2( "hud-color-r", &cfg.hudColor[0], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-g", &cfg.hudColor[1], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
+    C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
-        // HUD color + alpha
-        { "hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, unhideHUD },
-        { "hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, unhideHUD },
-        { "hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, unhideHUD },
-        { "hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, unhideHUD },
-        { "hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, unhideHUD },
+    // Displays
+    C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
+    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-power", &cfg.hudShown[HUD_INVENTORY], 0, 0, 1, unhideHUD )
 
-        // HUD icons
-        { "hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1, unhideHUD },
-        { "hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1, unhideHUD },
-        { "hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1, unhideHUD },
-        { "hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1, unhideHUD },
-        { "hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_INVENTORY], 0, 1, unhideHUD },
+    // Events.
+    C_VAR_BYTE(   "hud-unhide-damage", &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-ammo", &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-armor", &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-health", &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-key", &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-powerup", &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-weapon", &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
 
-        // HUD displays
-        { "hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1, unhideHUD },
-
-        { "hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60 },
-
-        { "hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1 },
-        { "hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1 },
-        { "hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1 },
-        { "hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1 },
-        { "hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1 },
-        { "hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1 },
-        { "hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1 },
-
-        { "hud-cheat-counter", 0, CVT_BYTE, &cfg.hudShownCheatCounters, 0, 63, unhideHUD },
-        { "hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.hudCheatCounterScale, .1f, 1, unhideHUD },
-        { NULL }
-    };
-    ccmdtemplate_t ccmds[] = {
-        { "beginchat",       NULL,   CCmdChatOpen },
-        { "chatcancel",      "",     CCmdChatAction },
-        { "chatcomplete",    "",     CCmdChatAction },
-        { "chatdelete",      "",     CCmdChatAction },
-        { "chatsendmacro",   NULL,   CCmdChatSendMacro },
-        { NULL }
-    };
-    int i;
-    for(i = 0; cvars[i].path; ++i)
-        Con_AddVariable(cvars + i);
-    for(i = 0; ccmds[i].name; ++i)
-        Con_AddCommand(ccmds + i);
+    C_CMD("beginchat",       NULL,   ChatOpen )
+    C_CMD("chatcancel",      "",     ChatAction )
+    C_CMD("chatcomplete",    "",     ChatAction )
+    C_CMD("chatdelete",      "",     ChatAction )
+    C_CMD("chatsendmacro",   NULL,   ChatSendMacro )
 }
 
-/**
- * Unhides the current HUD display if hidden.
- *
- * @param player        The player whoose HUD to (maybe) unhide.
- * @param event         The HUD Update Event type to check for triggering.
- */
+static int fullscreenMode(int player)
+{
+    return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+}
+
 void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    player_t*           plr;
+    player_t* plr;
 
-    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid player #%i, ignoring.", player);
+#endif
         return;
+    }
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
+#endif
+        return;
+    }
 
     plr = &players[player];
-    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
-        return;
+    if(!plr->plr->inGame) return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
@@ -219,14 +185,13 @@ void ST_updateWidgets(int player)
 
 int ST_Responder(event_t* ev)
 {
-    int i, eaten;
+    int i, eaten = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         eaten = ST_ChatResponder(i, ev);
-        if(0 != eaten)
-            return eaten;
+        if(eaten) break;
     }
-    return false;
+    return eaten;
 }
 
 void ST_Ticker(timespan_t ticLength)
@@ -636,28 +601,33 @@ typedef struct {
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
 
+static void drawUIWidgetsForPlayer(player_t* plr)
+{
+    const int playerNum = plr - players;
+    assert(plr);
+    ST_doFullscreenStuff(playerNum);
+}
+
 void ST_Drawer(int player)
 {
     hudstate_t* hud;
-    player_t* plr;
-    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 
     if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_Drawer: Invalid player #%i, ignoring.\n", player);
+#endif
         return;
+    }
+    if(!players[player].plr->inGame) return;
 
-    plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
-        return;
-
-    hud = &hudStates[player];
-
-    hud->firstTime = hud->firstTime;
-    hud->statusbarActive = (fullscreenMode < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
-
-    // Do palette shifts.
     R_UpdateViewFilter(player);
 
-    ST_doFullscreenStuff(player);
+    hud = &hudStates[player];
+    hud->firstTime = hud->firstTime;
+    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+
+    drawUIWidgetsForPlayer(players + player);
 }
 
 void ST_loadData(void)
@@ -1168,7 +1138,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1235,7 +1205,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }
