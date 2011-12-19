@@ -111,7 +111,7 @@ enum {
     UWG_MAPNAME,
     UWG_BOTTOMLEFT,
     UWG_BOTTOMRIGHT,
-    UWG_BOTTOM,
+    UWG_BOTTOMCENTER,
     UWG_TOP,
     UWG_TOPLEFT,
     UWG_TOPLEFT2,
@@ -3356,7 +3356,7 @@ void ST_BuildWidgets(int player)
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
         { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
@@ -3395,7 +3395,7 @@ void ST_BuildWidgets(int player)
         { GUI_HEALTH,       UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_FRAGS,        UWG_BOTTOMLEFT,   GF_STATUS,    Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
         { GUI_READYITEM,    UWG_BOTTOMRIGHT,  GF_SMALLIN,   ReadyItem_UpdateGeometry, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-        { GUI_INVENTORY,    UWG_BOTTOM,       GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
+        { GUI_INVENTORY,    UWG_BOTTOMCENTER, GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
         { GUI_NONE }
     };
     size_t i;
@@ -3987,7 +3987,7 @@ void ST_Drawer(int player)
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
             if(drawnSize.height > h) h = drawnSize.height;
 
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]);
+            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]);
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);

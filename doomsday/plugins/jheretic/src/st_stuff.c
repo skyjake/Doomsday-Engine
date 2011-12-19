@@ -112,7 +112,7 @@ enum {
     UWG_BOTTOMLEFT,
     UWG_BOTTOMLEFT2,
     UWG_BOTTOMRIGHT,
-    UWG_BOTTOM,
+    UWG_BOTTOMCENTER,
     UWG_TOP,
     UWG_COUNTERS,
     UWG_AUTOMAP,
@@ -2707,7 +2707,7 @@ void ST_Drawer(int player)
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
             if(drawnSize.height > h) h = drawnSize.height;
 
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]);
+            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]);
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
@@ -3107,7 +3107,7 @@ void ST_BuildWidgets(int player)
         { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
@@ -3135,7 +3135,7 @@ void ST_BuildWidgets(int player)
         { GUI_ARMOR,        UWG_BOTTOMLEFT,   GF_STATUS,    Armor_UpdateGeometry, Armor_Drawer, Armor_Ticker, &hud->armor },
         { GUI_FRAGS,        UWG_BOTTOMLEFT2,  GF_STATUS,    Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
         { GUI_READYITEM,    UWG_BOTTOMRIGHT,  GF_SMALLIN,   ReadyItem_UpdateGeometry, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-        { GUI_INVENTORY,    UWG_BOTTOM,       GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
+        { GUI_INVENTORY,    UWG_BOTTOMCENTER, GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
         { GUI_SECRETS,      UWG_COUNTERS,     GF_FONTA,     Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
         { GUI_ITEMS,        UWG_COUNTERS,     GF_FONTA,     Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
         { GUI_KILLS,        UWG_COUNTERS,     GF_FONTA,     Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
