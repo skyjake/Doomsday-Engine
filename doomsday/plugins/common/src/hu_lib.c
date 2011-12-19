@@ -331,37 +331,6 @@ boolean GUI_GameTicTriggerIsSharp(void)
     return sharpTic;
 }
 
-static void drawWidget(uiwidget_t* obj, int x, int y)
-{
-    assert(obj);
-    if(!obj->drawer || obj->alpha <= 0) return;
-
-    uiRS.pageAlpha = obj->alpha;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(x, y, 0);
-
-    obj->drawer(obj, 0, 0);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-x, -y, 0);
-}
-
-static void drawChildWidgets(uiwidget_t* obj, int x, int y)
-{
-    guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i;
-    assert(obj && obj->type == GUI_GROUP);
-
-    if(!grp->widgetIdCount) return;
-
-    for(i = 0; i < grp->widgetIdCount; ++i)
-    {
-        uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-        GUI_DrawWidget(child, x + child->geometry.origin.x, y + child->geometry.origin.y);
-    }
-}
-
 void UIGroup_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
@@ -450,23 +419,54 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
     }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y)
+static void drawWidget2(uiwidget_t* obj, int x, int y)
 {
-    if(UIWidget_MaximumWidth(obj) == 0 || UIWidget_MaximumHeight(obj) == 0 ||
-       UIWidget_Alpha(obj) <= 0) return;
+    assert(obj);
+    if(!obj->drawer || obj->alpha <= 0) return;
 
-    FR_PushAttrib();
-    FR_LoadDefaultAttrib();
+    uiRS.pageAlpha = obj->alpha;
+
+    obj->drawer(obj, x + obj->geometry.origin.x, y + obj->geometry.origin.y);
+}
+
+static void drawWidget(uiwidget_t* obj, int x, int y)
+{
+    assert(obj);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(x, y, 0);
 
     // First we draw ourself.
-    obj->updateGeometry(obj);
-    drawWidget(obj, x, y);
+    drawWidget2(obj, 0, 0);
 
     if(obj->type == GUI_GROUP)
     {
         // Now our children.
-        drawChildWidgets(obj, x, y);
+        guidata_group_t* grp = (guidata_group_t*)obj->typedata;
+        int i;
+        for(i = 0; i < grp->widgetIdCount; ++i)
+        {
+            uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
+            drawWidget(child, 0, 0);
+        }
     }
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(-x, -y, 0);
+}
+
+void GUI_DrawWidget(uiwidget_t* obj, int x, int y)
+{
+    if(!obj) return;
+    if(UIWidget_MaximumWidth(obj) < 1 || UIWidget_MaximumHeight(obj) < 1) return;
+    if(UIWidget_Alpha(obj) <= 0) return;
+
+    obj->updateGeometry(obj);
+
+    FR_PushAttrib();
+    FR_LoadDefaultAttrib();
+
+    drawWidget(obj, x, y);
 
     FR_PopAttrib();
 }

@@ -161,6 +161,7 @@ typedef enum {
 enum {
     UWG_STATUSBAR = 0,
     UWG_MAPNAME,
+    UWG_BOTTOM,
     UWG_BOTTOMLEFT,
     UWG_BOTTOMLEFT2,
     UWG_BOTTOMRIGHT,
@@ -2133,15 +2134,17 @@ void Face_Drawer(uiwidget_t* obj, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
+    x = -(SCREENWIDTH/2 - ST_FACESX);
+    y = -1;
     if(R_GetPatchInfo(pFaceBackground[cfg.playerColor[obj->player]], &bgInfo))
     {
         if(IS_NETGAME)
         {
-            GL_DrawPatch2(bgInfo.id, x, y, ALIGN_BOTTOM);
+            GL_DrawPatch2(bgInfo.id, 0, 0, ALIGN_BOTTOM);
         }
         y -= bgInfo.geometry.size.height;
     }
-    GL_DrawPatch(pFace, x - (SCREENWIDTH/2 - ST_FACESX), y - 1);
+    GL_DrawPatch(pFace, x, y);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2848,7 +2851,7 @@ void ST_Drawer(int player)
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
         }
 
-        alpha = hud->alpha * (1-hud->hideAmount);
+        alpha = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         x += PADDING;
         y += PADDING;
         width  -= PADDING*2;
@@ -2856,9 +2859,7 @@ void ST_Drawer(int player)
 
         if(!hud->statusbarActive)
         {
-            int h = 0;
-
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]);
+            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]);
             UIWidget_SetAlpha(obj, alpha);
             size.width = width; size.height = height;
             UIWidget_SetMaximumSize(obj, &size);
@@ -2866,28 +2867,6 @@ void ST_Drawer(int player)
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
-            if(drawnSize.height > h) h = drawnSize.height;
-
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]);
-            UIWidget_SetAlpha(obj, alpha);
-            size.width = width; size.height = height;
-            UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
-
-            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-            drawnSize.height = UIWidget_Geometry(obj)->size.height;
-            if(drawnSize.height > h) h = drawnSize.height;
-
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]);
-            UIWidget_SetAlpha(obj, alpha);
-            size.width = width; size.height = height;
-            UIWidget_SetMaximumSize(obj, &size);
-            GUI_DrawWidget(obj, x, y);
-
-            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-            drawnSize.height = UIWidget_Geometry(obj)->size.height;
-            if(drawnSize.height > h) h = drawnSize.height;
-            drawnSize.height = h;
         }
 
         if(!hud->statusbarActive)
@@ -3250,6 +3229,7 @@ void ST_BuildWidgets(int player)
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_LEFTTORIGHT },
         { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
@@ -3313,6 +3293,13 @@ void ST_BuildWidgets(int player)
         uiwidgetid_t id = GUI_CreateWidget(def->type, player, FID(def->fontIdx), 1, def->updateGeometry, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
+
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
     hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
