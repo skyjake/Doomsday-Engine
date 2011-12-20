@@ -175,8 +175,6 @@ void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
-    //C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
 }
 
 static void N_StartJoinedListener(void)
