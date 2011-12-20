@@ -417,6 +417,7 @@ maximum-texture-size-2048: 2048 x 2048
 maximum-texture-size-4096: 4096 x 4096
 
 sound-driver: Sound driver
+sound-driver-fmod: FMOD Ex
 sound-driver-directsound: DirectSound
 sound-driver-sdlmixer: SDL_mixer
 sound-driver-openal: OpenAL
