@@ -827,6 +827,7 @@ void HU_DrawScoreBoard(int player)
 
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
     FR_SetColorAndAlpha(1, 0, 0, ss->alpha);
     FR_DrawTextXY3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
@@ -1500,6 +1501,7 @@ void Hu_Drawer(void)
         DGL_Color4f(1, 1, 1, 1);
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
+        FR_SetLeading(0);
 
         WI_DrawPatchXY3(m_pause, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, m_pause), 0, 0, ALIGN_TOP, DPF_NO_OFFSET, 0);
 
