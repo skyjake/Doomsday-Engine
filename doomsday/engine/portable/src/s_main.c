@@ -171,10 +171,10 @@ boolean S_Init(void)
     if(ArgExists("-nosound"))
         return true;
 
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
+    // First let's set up the drivers. First we must choose which one we want to use.
     if(isDedicated || ArgExists("-dummy"))
     {
+        // No audio output.
         ok = S_InitDriver(AUDIOD_DUMMY);
     }
     else if(ArgExists("-fmod"))
@@ -195,17 +195,26 @@ boolean S_Init(void)
         ok = S_InitDriver(AUDIOD_WINMM);
     }
 #endif
+#ifndef DENG_DISABLE_SDLMIXER
+    else if(ArgExists("-sdlmixer"))
+    {
+        ok = S_InitDriver(AUDIOD_SDL_MIXER);
+    }
+#endif
     else
     {
         // Use the default audio driver.
+        ok = S_InitDriver(AUDIOD_FMOD);
+        if(!ok)
+        {
 #ifndef DENG_DISABLE_SDLMIXER
-        ok = S_InitDriver(AUDIOD_SDL_MIXER);
-#else
-        ok = S_InitDriver(AUDIOD_DUMMY);
+            // Fallback option for the default driver.
+            ok = S_InitDriver(AUDIOD_SDLMIXER);
 #endif
+        }
     }
 
-    // Did we succeed?
+    // Did we manage to load a driver?
     if(!ok)
     {
         Con_Message("S_Init: Driver init failed. Sound is disabled.\n");
@@ -218,8 +227,7 @@ boolean S_Init(void)
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
-    Con_Message("S_Init: %s.\n", sfxOK &&
-                musOK ? "OK" : "Errors during initialization.");
+    Con_Message("S_Init: %s.\n", (sfxOK && musOK? "OK" : "Errors during initialization."));
     return (sfxOK && musOK);
 }
 
