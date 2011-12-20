@@ -435,7 +435,7 @@ int DD_Main(void)
 
     // Incoming TCP port.
     if(ArgCheckWith("-port", 1))
-        Con_Executef(CMDS_CMDLINE, false, "net-ip-port %i", ArgNext());
+        Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", ArgNext());
 
     // Server start command.
     // (shortcut for -command "net init tcpip; net server start").
