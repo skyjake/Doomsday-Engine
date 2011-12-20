@@ -84,7 +84,7 @@ typedef struct {
 void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength);
 
 /// Draw this message log widget.
-void UILog_Drawer(uiwidget_t* obj, const Point2Raw* origin);
+void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset);
 
 /// Calculate the "physical" dimensions of this widget.
 void UILog_UpdateGeometry(uiwidget_t* obj);

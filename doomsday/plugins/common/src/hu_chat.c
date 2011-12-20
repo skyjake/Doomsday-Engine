@@ -351,7 +351,7 @@ int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd)
     }
 }
 
-void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     //guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -364,7 +364,7 @@ void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     FR_SetFont(obj->font);

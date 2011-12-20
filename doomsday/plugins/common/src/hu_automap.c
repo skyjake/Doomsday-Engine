@@ -1380,9 +1380,9 @@ void UIAutomap_Rebuild(uiwidget_t* obj)
 /**
  * Render the automap view window for the specified player.
  */
-void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    static int updateWait = 0;
+    static int updateWait = 0; /// \fixme should be an instance var of UIAutomap
 
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
@@ -1399,7 +1399,8 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     // Freeze the lists if the map is fading out from being open, or for debug.
     if((++updateWait % 10) && am->constructMap && !freezeMapRLs && UIAutomap_Active(obj))
-    {   // Its time to rebuild the automap object display lists.
+    {
+        // Its time to rebuild the automap object display lists.
         compileObjectLists(obj);
     }
 
@@ -1407,7 +1408,8 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     setupGLStateForMap(obj);
 
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(UIWidget_Geometry(obj)->origin.x + UIWidget_Geometry(obj)->size.width / 2, UIWidget_Geometry(obj)->origin.y + UIWidget_Geometry(obj)->size.height / 2, 0);
+    DGL_Translatef(UIWidget_Geometry(obj)->origin.x + UIWidget_Geometry(obj)->size.width  / 2,
+                   UIWidget_Geometry(obj)->origin.y + UIWidget_Geometry(obj)->size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);

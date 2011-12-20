@@ -274,7 +274,7 @@ static int fullscreenMode(int player)
     return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 }
 
-void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define WIDTH       (ST_WIDTH)
 #define HEIGHT      (ST_HEIGHT)
@@ -304,7 +304,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
 
     DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
@@ -859,7 +859,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -882,7 +882,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
@@ -932,17 +932,17 @@ void Ammo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     ammo->value = plr->ammo[ammo->ammotype].owned;
 }
 
-void Ammo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Ammo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
 #define MAXDIGITS           (ST_AMMOWIDTH)
 
     static const Point2Raw ammoPos[NUM_AMMO_TYPES] = {
-        {ST_AMMOX, ST_AMMOY},
-        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 1)},
-        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 3)},
-        {ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 2)}
+        { ST_AMMOX, ST_AMMOY },
+        { ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 1) },
+        { ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 3) },
+        { ST_AMMOX, ST_AMMOY + (ST_AMMOHEIGHT * 2) }
     };
     const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
     const Point2Raw* loc = &ammoPos[ammo->ammotype];
@@ -960,7 +960,7 @@ void Ammo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1002,17 +1002,17 @@ void MaxAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     ammo->value = plr->ammo[ammo->ammotype].max;
 }
 
-void MaxAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void MaxAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
 #define MAXDIGITS           (ST_MAXAMMOWIDTH)
 
     static const Point2Raw ammoMaxPos[NUM_AMMO_TYPES] = {
-        {ST_MAXAMMOX, ST_MAXAMMOY},
-        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 1)},
-        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 3)},
-        {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
+        { ST_MAXAMMOX, ST_MAXAMMOY },
+        { ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 1) },
+        { ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 3) },
+        { ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2) }
     };
     const guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
     const Point2Raw* loc = &ammoMaxPos[ammo->ammotype];
@@ -1030,7 +1030,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1072,7 +1072,7 @@ void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
     hlth->value = plr->health;
 }
 
-void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1095,7 +1095,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
@@ -1145,7 +1145,7 @@ void Armor_Ticker(uiwidget_t* obj, timespan_t ticLength)
     armor->value = plr->armorPoints;
 }
 
-void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1168,7 +1168,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1223,7 +1223,7 @@ void SBarFrags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1247,7 +1247,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1287,7 +1287,7 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.statusbarScale;
 }
 
-void SBarFace_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarFace_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -1307,7 +1307,7 @@ void SBarFace_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-        DGL_Translatef(origin->x, origin->y, 0);
+        if(offset) DGL_Translatef(offset->x, offset->y, 0);
         DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
         DGL_Translatef(0, yOffset, 0);
 
@@ -1365,7 +1365,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -1389,7 +1389,7 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
@@ -1482,7 +1482,7 @@ void WeaponSlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     wpn->patchId = pArms[wpn->slot-1][used?1:0];
 }
 
-void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -1509,7 +1509,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
@@ -1668,7 +1668,7 @@ void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Frags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -1683,7 +1683,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1716,7 +1716,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudScale;
 }
 
-void Health_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Health_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -1730,7 +1730,7 @@ void Health_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1762,7 +1762,7 @@ void Health_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudScale;
 }
 
-void HealthIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void HealthIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
@@ -1772,7 +1772,7 @@ void HealthIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false, NULL, NULL);
@@ -1796,7 +1796,7 @@ void HealthIcon_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudScale;
 }
 
-void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -1811,7 +1811,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1870,7 +1870,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
@@ -1884,7 +1884,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     scale = (icon->sprite == SPR_ROCK? .72f : 1);
@@ -1914,7 +1914,7 @@ void ReadyAmmoIcon_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudScale;
 }
 
-void Face_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Face_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define EXTRA_SCALE         .7f
 
@@ -1933,7 +1933,7 @@ void Face_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1984,7 +1984,7 @@ void Face_UpdateGeometry(uiwidget_t* obj)
 #undef EXTRA_SCALE
 }
 
-void Armor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Armor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -1999,7 +1999,7 @@ void Armor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -2042,7 +2042,7 @@ void ArmorIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     icon->sprite = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
 }
 
-void ArmorIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ArmorIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
@@ -2055,7 +2055,7 @@ void ArmorIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     ST_drawHUDSprite(icon->sprite, 0, 0, HOT_BRIGHT, 1, iconAlpha, false, NULL, NULL);
@@ -2095,7 +2095,7 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Keys_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define EXTRA_SCALE     .75f
 
@@ -2123,7 +2123,7 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
 
     x = 0;
@@ -2234,7 +2234,7 @@ void Kills_Ticker(uiwidget_t* obj, timespan_t ticLength)
     kills->value = plr->killCount;
 }
 
-void Kills_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Kills_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     char buf[40], tmp[20];
@@ -2261,7 +2261,7 @@ void Kills_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -2316,7 +2316,7 @@ void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
     items->value = plr->itemCount;
 }
 
-void Items_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Items_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_items_t* items = (guidata_items_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -2343,7 +2343,7 @@ void Items_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -2389,7 +2389,7 @@ void Items_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudCheatCounterScale;
 }
 
-void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -2416,7 +2416,7 @@ void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -2471,7 +2471,7 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudCheatCounterScale;
 }
 
-void MapName_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
@@ -2483,7 +2483,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);

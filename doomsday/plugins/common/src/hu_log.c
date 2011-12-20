@@ -289,7 +289,7 @@ void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void UILog_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
@@ -311,7 +311,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);

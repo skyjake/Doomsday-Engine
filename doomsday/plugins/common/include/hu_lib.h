@@ -761,7 +761,7 @@ typedef struct uiwidget_s {
     float opacity;
 
     void (*updateGeometry) (struct uiwidget_s* obj);
-    void (*drawer) (struct uiwidget_s* obj, const Point2Raw* origin);
+    void (*drawer) (struct uiwidget_s* obj, const Point2Raw* offset);
     void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
 
     void* typedata;

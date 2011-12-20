@@ -146,7 +146,7 @@ void UIAutomap_Rebuild(uiwidget_t* obj);
 void UIAutomap_ClearLists(uiwidget_t* obj);
 void UIAutomap_Reset(uiwidget_t* obj);
 
-void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* origin);
+void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset);
 
 boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast);
 void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength);
