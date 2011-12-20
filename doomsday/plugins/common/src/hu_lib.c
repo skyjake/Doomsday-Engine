@@ -153,16 +153,16 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
     return obj;
 }
 
-static uiwidget_t* createWidget(guiwidgettype_t type, int player, fontid_t fontId,
-    float opacity, int alignFlags, void (*updateGeometry) (uiwidget_t* obj),
-    void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
+static uiwidget_t* createWidget(guiwidgettype_t type, int player, int alignFlags,
+    fontid_t fontId, float opacity, void (*updateGeometry) (uiwidget_t* obj),
+    void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj = allocateWidget(type, nextUnusedId(), player, typedata);
     assert(updateGeometry);
+    obj->alignFlags = alignFlags;
     obj->font = fontId;
     obj->opacity = opacity;
-    obj->alignFlags = alignFlags;
     obj->updateGeometry = updateGeometry;
     obj->drawer = drawer;
     obj->ticker = ticker;
@@ -258,23 +258,24 @@ void GUI_ReleaseResources(void)
     UIAutomap_ReleaseResources();
 }
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
+    fontid_t fontId, float opacity,
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata)
 {
     uiwidget_t* obj;
     errorIfNotInited("GUI_CreateWidget");
-    obj = createWidget(type, player, fontId, alpha, 0, updateGeometry, drawer, ticker, typedata);
+    obj = createWidget(type, player, alignFlags, fontId, opacity, updateGeometry, drawer, ticker, typedata);
     return obj->id;
 }
 
-uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding)
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding)
 {
     uiwidget_t* obj;
     guidata_group_t* grp;
     errorIfNotInited("GUI_CreateGroup");
 
-    obj = createWidget(GUI_GROUP, player, 0, 1, alignFlags, UIGroup_UpdateGeometry, NULL, NULL, NULL);
+    obj = createWidget(GUI_GROUP, player, alignFlags, 1, 0, UIGroup_UpdateGeometry, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
     grp->padding = padding;
@@ -336,25 +337,54 @@ boolean GUI_GameTicTriggerIsSharp(void)
     return sharpTic;
 }
 
+static void applyAlignmentOffset(uiwidget_t* obj, int* x, int* y)
+{
+    assert(obj);
+    if(x)
+    {
+        if(obj->alignFlags & ALIGN_RIGHT)
+            *x += UIWidget_MaximumWidth(obj);
+        else if(!(obj->alignFlags & ALIGN_LEFT))
+            *x += UIWidget_MaximumWidth(obj)/2;
+    }
+    if(y)
+    {
+        if(obj->alignFlags & ALIGN_BOTTOM)
+            *y += UIWidget_MaximumHeight(obj);
+        else if(!(obj->alignFlags & ALIGN_TOP))
+            *y += UIWidget_MaximumHeight(obj)/2;
+    }
+}
+
+static void updateWidgetGeometry(uiwidget_t* obj)
+{
+    obj->updateGeometry(obj);
+
+    obj->geometry.origin.x = obj->geometry.origin.y = 0;
+
+    if(obj->alignFlags & ALIGN_RIGHT)
+        obj->geometry.origin.x -= obj->geometry.size.width;
+    else if(!(obj->alignFlags & ALIGN_LEFT))
+        obj->geometry.origin.x -= obj->geometry.size.width/2;
+
+    if(obj->alignFlags & ALIGN_BOTTOM)
+        obj->geometry.origin.y -= obj->geometry.size.height;
+    else if(!(obj->alignFlags & ALIGN_TOP))
+        obj->geometry.origin.y -= obj->geometry.size.height/2;
+}
+
 void UIGroup_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i, x = 0, y = 0, numDrawnWidgets = 0;
+    int i, x, y, numDrawnWidgets = 0;
     assert(obj && obj->type == GUI_GROUP);
 
     obj->geometry.size.width = obj->geometry.size.height = 0;
 
     if(!grp->widgetIdCount) return;
 
-    if(obj->alignFlags & ALIGN_RIGHT)
-        x += UIWidget_MaximumWidth(obj);
-    else if(!(obj->alignFlags & ALIGN_LEFT))
-        x += UIWidget_MaximumWidth(obj)/2;
-
-    if(obj->alignFlags & ALIGN_BOTTOM)
-        y += UIWidget_MaximumHeight(obj);
-    else if(!(obj->alignFlags & ALIGN_TOP))
-        y += UIWidget_MaximumHeight(obj)/2;
+    x = y = 0;
+    applyAlignmentOffset(obj, &x, &y);
 
     for(i = 0; i < grp->widgetIdCount; ++i)
     {
@@ -364,9 +394,9 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
         if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
            UIWidget_Opacity(child) > 0)
         {
-            child->updateGeometry(child);
-            child->geometry.origin.x = x;
-            child->geometry.origin.y = y;
+            updateWidgetGeometry(child);
+            child->geometry.origin.x += x;
+            child->geometry.origin.y += y;
 
             childSize.width  = UIWidget_Geometry(child)->size.width;
             childSize.height = UIWidget_Geometry(child)->size.height;
@@ -424,25 +454,58 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
     }
 }
 
-static void drawWidget2(uiwidget_t* obj, const Point2Raw* _origin)
+#if _DEBUG
+static void drawWidgetGeometry(uiwidget_t* obj)
 {
-    Point2Raw origin;
+    assert(obj);
+    DGL_Color3f(1, 1, 1);
+    DGL_Begin(DGL_LINES);
+        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y);
+        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y);
+        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y);
+        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y + obj->geometry.size.height);
+        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y + obj->geometry.size.height);
+        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y + obj->geometry.size.height);
+        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y + obj->geometry.size.height);
+        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y);
+    DGL_End();
+}
+
+static void drawWidgetAvailableSpace(uiwidget_t* obj)
+{
+    assert(obj);
+    DGL_Color4f(0, .4f, 0, .1f);
+    DGL_DrawRect2(obj->geometry.origin.x, obj->geometry.origin.y, obj->maxSize.width, obj->maxSize.height);
+}
+#endif
+
+static void drawWidget2(uiwidget_t* obj, const Point2Raw* offset)
+{
     assert(obj);
 
-    if(!obj->drawer || obj->opacity <= 0) return;
+/*#if _DEBUG
+    drawWidgetAvailableSpace(obj);
+#endif*/
 
-    uiRS.pageAlpha = obj->opacity;
-
-    origin.x = obj->geometry.origin.x;
-    origin.y = obj->geometry.origin.y;
-    // An offset?
-    if(_origin)
+    if(obj->drawer && obj->opacity > .0001f)
     {
-        origin.x = _origin->x;
-        origin.y = _origin->y;
+        // Configure the page render state.
+        /// \todo Initial font renderer setup.
+        uiRS.pageAlpha = obj->opacity;
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(obj->geometry.origin.x, obj->geometry.origin.y, 0);
+
+        // Do not pass a zero length offset.
+        obj->drawer(obj, ((offset && (offset->x || offset->y))? offset : NULL));
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-obj->geometry.origin.x, -obj->geometry.origin.y, 0);
     }
 
-    obj->drawer(obj, &origin);
+/*#if _DEBUG
+    drawWidgetGeometry(obj);
+#endif*/
 }
 
 static void drawWidget(uiwidget_t* obj, const Point2Raw* origin)
@@ -483,10 +546,11 @@ void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin)
     if(UIWidget_MaximumWidth(obj) < 1 || UIWidget_MaximumHeight(obj) < 1) return;
     if(UIWidget_Opacity(obj) <= 0) return;
 
-    obj->updateGeometry(obj);
-
     FR_PushAttrib();
     FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
+
+    updateWidgetGeometry(obj);
 
     drawWidget(obj, origin);
 

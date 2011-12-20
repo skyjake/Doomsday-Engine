@@ -2525,23 +2525,6 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height = info.geometry.size.height * scale;
 }
 
-typedef struct {
-    guiwidgettype_t type;
-    int group;
-    gamefontid_t fontIdx;
-    void (*updateGeometry) (uiwidget_t* obj);
-    void (*drawer) (uiwidget_t* obj, const Point2Raw* origin);
-    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
-    void* typedata;
-} uiwidgetdef_t;
-
-typedef struct {
-    int group;
-    int alignFlags;
-    int groupFlags;
-    int padding; // In fixed 320x200 pixels.
-} uiwidgetgroupdef_t;
-
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
@@ -2958,7 +2941,25 @@ void ST_Stop(int player)
 
 void ST_BuildWidgets(int player)
 {
-#define PADDING 2 // In fixed 320x200 units.
+#define PADDING             (2) /// Units in fixed 320x200 screen space.
+
+typedef struct {
+    guiwidgettype_t type;
+    int alignFlags;
+    int group;
+    gamefontid_t fontIdx;
+    void (*updateGeometry) (uiwidget_t* obj);
+    void (*drawer) (uiwidget_t* obj, const Point2Raw* origin);
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
+    void* typedata;
+} uiwidgetdef_t;
+
+typedef struct {
+    int group;
+    int alignFlags;
+    int groupFlags;
+    int padding;
+} uiwidgetgroupdef_t;
 
     hudstate_t* hud = hudStates + player;
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
@@ -2974,42 +2975,42 @@ void ST_BuildWidgets(int player)
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
-        { GUI_BOX,      UWG_STATUSBAR,      0,          SBarBackground_UpdateGeometry, SBarBackground_Drawer },
-        { GUI_READYAMMO, UWG_STATUSBAR,     GF_STATUS,  SBarReadyAmmo_UpdateGeometry, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
-        { GUI_HEALTH,   UWG_STATUSBAR,      GF_STATUS,  SBarHealth_UpdateGeometry, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[1] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[2] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[3] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[4] },
-        { GUI_WEAPONSLOT, UWG_STATUSBAR,    0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[5] },
-        { GUI_FRAGS,    UWG_STATUSBAR,      GF_STATUS,  SBarFrags_UpdateGeometry, SBarFrags_Drawer, SBarFrags_Ticker, &hud->sbarFrags },
-        { GUI_FACE,     UWG_STATUSBAR,      0,          SBarFace_UpdateGeometry, SBarFace_Drawer, Face_Ticker, &hud->sbarFace },
-        { GUI_ARMOR,    UWG_STATUSBAR,      GF_STATUS,  SBarArmor_UpdateGeometry, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
-        { GUI_KEYSLOT,  UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CLIP] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_SHELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_MISSILE] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CLIP] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
-        { GUI_AMMO,     UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
-        { GUI_MAPNAME,  UWG_MAPNAME,        GF_FONTB,   MapName_UpdateGeometry, MapName_Drawer },
-        { GUI_BOX,      UWG_BOTTOMLEFT,     0,          HealthIcon_UpdateGeometry, HealthIcon_Drawer },
-        { GUI_HEALTH,   UWG_BOTTOMLEFT,     GF_FONTB,   Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
-        { GUI_READYAMMOICON, UWG_BOTTOMLEFT,0,          ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
-        { GUI_READYAMMO, UWG_BOTTOMLEFT,    GF_FONTB,   ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
-        { GUI_FRAGS,    UWG_BOTTOMLEFT2,    GF_FONTA,   Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
-        { GUI_ARMOR,    UWG_BOTTOMRIGHT,    GF_FONTB,   Armor_UpdateGeometry, Armor_Drawer, Armor_Ticker, &hud->armor },
-        { GUI_ARMORICON, UWG_BOTTOMRIGHT,   0,          ArmorIcon_UpdateGeometry, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
-        { GUI_KEYS,     UWG_BOTTOMRIGHT,    0,          Keys_UpdateGeometry, Keys_Drawer, Keys_Ticker, &hud->keys },
-        { GUI_FACE,     UWG_BOTTOMCENTER,   0,          Face_UpdateGeometry, Face_Drawer, Face_Ticker, &hud->face },
-        { GUI_SECRETS,  UWG_COUNTERS,       GF_FONTA,   Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
-        { GUI_ITEMS,    UWG_COUNTERS,       GF_FONTA,   Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
-        { GUI_KILLS,    UWG_COUNTERS,       GF_FONTA,   Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
+        { GUI_BOX,      ALIGN_TOPLEFT,      UWG_STATUSBAR,      0,          SBarBackground_UpdateGeometry, SBarBackground_Drawer },
+        { GUI_READYAMMO, ALIGN_TOPLEFT,     UWG_STATUSBAR,      GF_STATUS,  SBarReadyAmmo_UpdateGeometry, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
+        { GUI_HEALTH,   ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_STATUS,  SBarHealth_UpdateGeometry, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[0] },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[1] },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[2] },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[3] },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[4] },
+        { GUI_WEAPONSLOT, ALIGN_TOPLEFT,    UWG_STATUSBAR,      0,          WeaponSlot_UpdateGeometry, WeaponSlot_Drawer, WeaponSlot_Ticker, &hud->sbarWeaponslots[5] },
+        { GUI_FRAGS,    ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_STATUS,  SBarFrags_UpdateGeometry, SBarFrags_Drawer, SBarFrags_Ticker, &hud->sbarFrags },
+        { GUI_FACE,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      0,          SBarFace_UpdateGeometry, SBarFace_Drawer, Face_Ticker, &hud->sbarFace },
+        { GUI_ARMOR,    ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_STATUS,  SBarArmor_UpdateGeometry, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
+        { GUI_KEYSLOT,  ALIGN_TOPLEFT,      UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
+        { GUI_KEYSLOT,  ALIGN_TOPLEFT,      UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
+        { GUI_KEYSLOT,  ALIGN_TOPLEFT,      UWG_STATUSBAR,      0,          KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CLIP] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_SHELL] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_CELL] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   Ammo_UpdateGeometry, Ammo_Drawer, Ammo_Ticker, &hud->sbarAmmos[AT_MISSILE] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CLIP] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_SHELL] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_CELL] },
+        { GUI_AMMO,     ALIGN_TOPLEFT,      UWG_STATUSBAR,      GF_INDEX,   MaxAmmo_UpdateGeometry, MaxAmmo_Drawer, MaxAmmo_Ticker, &hud->sbarMaxammos[AT_MISSILE] },
+        { GUI_MAPNAME,  ALIGN_BOTTOMLEFT,   UWG_MAPNAME,        GF_FONTB,   MapName_UpdateGeometry, MapName_Drawer },
+        { GUI_BOX,      ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    0,          HealthIcon_UpdateGeometry, HealthIcon_Drawer },
+        { GUI_HEALTH,   ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
+        { GUI_READYAMMOICON, ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT2, 0,          ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
+        { GUI_READYAMMO, ALIGN_BOTTOMLEFT,  UWG_BOTTOMLEFT2,    GF_FONTB,   ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
+        { GUI_FRAGS,    ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT,     GF_FONTA,   Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
+        { GUI_ARMOR,    ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_FONTB,   Armor_UpdateGeometry, Armor_Drawer, Armor_Ticker, &hud->armor },
+        { GUI_ARMORICON, ALIGN_BOTTOMRIGHT, UWG_BOTTOMRIGHT,    0,          ArmorIcon_UpdateGeometry, ArmorIcon_Drawer, ArmorIcon_Ticker, &hud->armoricon },
+        { GUI_KEYS,     ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    0,          Keys_UpdateGeometry, Keys_Drawer, Keys_Ticker, &hud->keys },
+        { GUI_FACE,     ALIGN_BOTTOM,       UWG_BOTTOMCENTER,   0,          Face_UpdateGeometry, Face_Drawer, Face_Ticker, &hud->face },
+        { GUI_SECRETS,  ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
+        { GUI_ITEMS,    ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
+        { GUI_KILLS,    ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
         { GUI_NONE }
     };
     size_t i;
@@ -3023,13 +3024,16 @@ void ST_BuildWidgets(int player)
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->groupFlags, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
     }
+
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]));
 
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
     {
         const uiwidgetdef_t* def = &widgetDefs[i];
-        uiwidgetid_t id = GUI_CreateWidget(def->type, player, FID(def->fontIdx), 1, def->updateGeometry, def->drawer, def->ticker, def->typedata);
+        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->alignFlags, FID(def->fontIdx), 1, def->updateGeometry, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
 
@@ -3040,13 +3044,13 @@ void ST_BuildWidgets(int player)
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
                       GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
-    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
+    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
-    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
+    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING

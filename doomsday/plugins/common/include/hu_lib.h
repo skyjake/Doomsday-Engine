@@ -1003,11 +1003,12 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 /// Identical to GUI_FindObjectById except results in a fatal error if not found.
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* origin),
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
+    fontid_t fontId, float opacity,
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
-uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding);
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;
