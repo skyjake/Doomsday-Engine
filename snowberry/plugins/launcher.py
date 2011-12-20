@@ -2,7 +2,7 @@
 # $Id$
 # Snowberry: Extensible Launcher for the Doomsday Engine
 #
-# Copyright (C) 2004, 2005
+# Copyright (C) 2004, 2011
 #   Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -216,16 +216,35 @@ def startGame(profile):
     # Execute the command line.
     if host.isWindows():
         spawnFunc = os.spawnv
+    elif host.isMac() and '-dedicated' in options:
+        # On the Mac, we'll tell Terminal to run it.
+        osaFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')
+        scpt = file(osaFile, 'w')
+        print >> scpt, 'tell application "Terminal"'
+        print >> scpt, '    activate'
+        def q1p(s): return '\\\"' + s + '\\\"'
+        def q2p(s): return '\\\\\\\"' + s + '\\\\\\\"'
+        curDir = os.getcwd()
+        print >> scpt, "    do script \"cd %s; %s @%s\"" % \
+            (q1p(curDir), engineBin.replace(' ', '\\\\ '), q2p(responseFile))
+        print >> scpt, 'end tell'
+        scpt.close()
+        spawnFunc = spawnWithTerminal
     else:
         spawnFunc = os.spawnvp
-    spawnFunc(os.P_NOWAIT, engineBin, 
-              [engineBin, '@' + paths.quote(responseFile)])
+
+    spawnFunc(os.P_NOWAIT, engineBin, [engineBin, '@' + paths.quote(responseFile)])
 
     # Shut down if the configuration settings say so.
     value = profile.getValue('quit-on-launch')
     if not value or value.getValue() == 'yes':
         # Quit Snowberry.
         events.sendAfter(events.Command('quit'))
+
+
+def spawnWithTerminal(wait, bin, arguments):
+    os.spawnvp(wait, 'osascript', ['osascript', 
+        os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')])
 
 
 def generateOptions(profile):
