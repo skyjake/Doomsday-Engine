@@ -1381,7 +1381,7 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     int yOffset = ST_HEIGHT*(1-hud->showBar);
     int fullscreen = fullscreenMode(obj->player);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
-    int offset = (kslt->patchId2 != 0? -1 : 0);
+    int comboOffset = (kslt->patchId2 != 0? -1 : 0);
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -1396,10 +1396,10 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatchXY(kslt->patchId, loc->x + offset, loc->y + offset);
+    GL_DrawPatchXY(kslt->patchId, loc->x + comboOffset, loc->y + comboOffset);
     if(kslt->patchId2 != 0)
     {
-        GL_DrawPatchXY(kslt->patchId2, loc->x - offset, loc->y - offset);
+        GL_DrawPatchXY(kslt->patchId2, loc->x - comboOffset, loc->y - comboOffset);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1689,7 +1689,7 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1736,7 +1736,7 @@ void Health_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1775,7 +1775,7 @@ void HealthIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
-    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false, NULL, NULL);
+    ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_TLEFT, 1, iconAlpha, false, NULL, NULL);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1817,7 +1817,7 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1888,7 +1888,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     scale = (icon->sprite == SPR_ROCK? .72f : 1);
-    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_BLEFT, scale, iconAlpha, false, NULL, NULL);
+    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_TLEFT, scale, iconAlpha, false, NULL, NULL);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1944,9 +1944,9 @@ void Face_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     {
         if(IS_NETGAME)
         {
-            GL_DrawPatchXY2(bgInfo.id, 0, 0, ALIGN_BOTTOM);
+            GL_DrawPatchXY(bgInfo.id, 0, 0);
         }
-        y -= bgInfo.geometry.size.height;
+        x += bgInfo.geometry.size.width/2;
     }
     GL_DrawPatchXY(pFace, x, y);
 
@@ -2005,7 +2005,7 @@ void Armor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2058,7 +2058,7 @@ void ArmorIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
-    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_BRIGHT, 1, iconAlpha, false, NULL, NULL);
+    ST_drawHUDSprite(icon->sprite, 0, 0, HOT_TLEFT, 1, iconAlpha, false, NULL, NULL);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -2149,8 +2149,8 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         if(shown)
         {
             int w, h, spr = keyIcons[i];
-            ST_drawHUDSprite(spr, x, 0, HOT_BRIGHT, 1, iconAlpha, false, &w, &h);
-            x -= w + 2;
+            ST_drawHUDSprite(spr, x, 0, HOT_TLEFT, 1, iconAlpha, false, &w, &h);
+            x += w + 2;
             numDrawnKeys++;
         }
     }
@@ -2267,7 +2267,7 @@ void Kills_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2303,8 +2303,8 @@ void Kills_UpdateGeometry(uiwidget_t* obj)
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
 void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2349,7 +2349,7 @@ void Items_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2385,8 +2385,8 @@ void Items_UpdateGeometry(uiwidget_t* obj)
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
 void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* offset)
@@ -2422,7 +2422,7 @@ void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2467,8 +2467,8 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
 void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
@@ -2491,7 +2491,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2595,23 +2595,6 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
             drawnSize.width  = UIWidget_Geometry(obj)->size.width;
             drawnSize.height = UIWidget_Geometry(obj)->size.height;
-        }
-
-        if(!hud->statusbarActive)
-        {
-            int h = drawnSize.height;
-            availHeight = displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0);
-
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]);
-            UIWidget_SetOpacity(obj, opacity);
-            size.width = displayRegion.size.width; size.height = availHeight;
-            UIWidget_SetMaximumSize(obj, &size);
-
-            GUI_DrawWidget(obj, &displayRegion.origin);
-
-            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-            drawnSize.height = UIWidget_Geometry(obj)->size.height;
-            drawnSize.height += h;
         }
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_MAPNAME]);
@@ -2965,11 +2948,11 @@ typedef struct {
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_LEFTTORIGHT },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT },
         { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
