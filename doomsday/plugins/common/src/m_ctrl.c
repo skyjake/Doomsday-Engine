@@ -690,6 +690,7 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
 
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
     FR_DrawTextXY3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
