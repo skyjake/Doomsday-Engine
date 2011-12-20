@@ -794,14 +794,12 @@ int rendPolyobjSeg(void* segPtr, void* context)
     linedef_t* line;
     xline_t* xLine;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
-        return false;
+    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
 
-    if(xLine->validCount == VALIDCOUNT)
-        return false; // Already processed this frame.
+    // Already processed this frame?
+    if(xLine->validCount == VALIDCOUNT) return false;
 
-    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES))
-        return false;
+    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
 
     amo = AMO_NONE;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[rs.plr - players])
@@ -878,10 +876,9 @@ int rendXGLinedef(linedef_t* line, void* context)
 
 static void rendXGLinedefs(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     AABoxf aaBox;
+    assert(obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -892,7 +889,6 @@ static void rendXGLinedefs(uiwidget_t* obj)
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     P_LinesBoxIterator(&aaBox, rendXGLinedef, obj);
-    }
 }
 #endif
 
@@ -917,14 +913,13 @@ static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float an
  */
 static void rendPlayerMarkers(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     vectorgraphicid_t vgId = AM_GetVectorGraphic(am->mcfg, AMO_THINGPLAYER);
     const float pageAlpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float size = PLAYERRADIUS;
     int i;
+    assert(obj->type == GUI_AUTOMAP);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -932,11 +927,8 @@ static void rendPlayerMarkers(uiwidget_t* obj)
         float rgb[3], alpha;
         mobj_t* mo;
 
-        if(!p->plr->inGame)
-            continue;
-
-        if(deathmatch && p != &players[player])
-            continue;
+        if(!p->plr->inGame) continue;
+        if(deathmatch && p != &players[player]) continue;
 
         R_GetColorPaletteRGBf(0, (!IS_NETGAME? WHITE : playerColorPaletteIndices[cfg.playerColor[i]]), rgb, false);
         alpha = cfg.automapLineAlpha * pageAlpha;
@@ -953,36 +945,34 @@ static void rendPlayerMarkers(uiwidget_t* obj)
                           mo->angle / (float) ANGLE_MAX * 360, size,
                           rgb, alpha, BM_NORMAL);
     }
-    }
 }
 
 static int getKeyColorForMobjType(int type)
 {
     struct keycolor_s {
-        int             moType;
-        int             color;
-    } keyColors[] =
-    {
+        int mobjType;
+        int palColor;
+    } keyColors[] = {
 #if __JDOOM__ || __JDOOM64__
-        {MT_MISC4, KEY1_COLOR},
-        {MT_MISC5, KEY2_COLOR},
-        {MT_MISC6, KEY3_COLOR},
-        {MT_MISC7, KEY4_COLOR},
-        {MT_MISC8, KEY5_COLOR},
-        {MT_MISC9, KEY6_COLOR},
+        { MT_MISC4, KEY1_COLOR },
+        { MT_MISC5, KEY2_COLOR },
+        { MT_MISC6, KEY3_COLOR },
+        { MT_MISC7, KEY4_COLOR },
+        { MT_MISC8, KEY5_COLOR },
+        { MT_MISC9, KEY6_COLOR },
 #elif __JHERETIC__
-        {MT_CKEY, KEY1_COLOR},
-        {MT_BKYY, KEY2_COLOR},
-        {MT_AKYY, KEY3_COLOR},
+        { MT_CKEY, KEY1_COLOR },
+        { MT_BKYY, KEY2_COLOR },
+        { MT_AKYY, KEY3_COLOR },
 #endif
-        {-1, -1} // Terminate.
+        { -1, -1 }
     };
-    uint                i;
-
-    for(i = 0; keyColors[i].moType != -1; ++i)
-        if(keyColors[i].moType == type)
-            return keyColors[i].color;
-
+    uint i;
+    for(i = 0; keyColors[i].mobjType != -1; ++i)
+    {
+        if(keyColors[i].mobjType == type)
+            return keyColors[i].palColor;
+    }
     return -1; // Not a key.
 }
 
@@ -1033,12 +1023,11 @@ static int rendThingPoint(mobj_t* mo, void* context)
 
 static void rendThingPoints(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     renderthing_params_t params;
     AABoxf aaBox;
+    assert(obj->type == GUI_AUTOMAP);
 
     params.flags = UIAutomap_Flags(obj);
     params.vgId = AM_GetVectorGraphic(am->mcfg, AMO_THING);
@@ -1048,7 +1037,6 @@ static void rendThingPoints(uiwidget_t* obj)
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     VALIDCOUNT++;
     P_MobjsBoxIterator(&aaBox, rendThingPoint, &params);
-    }
 }
 
 static boolean interceptEdge(float point[2], const float fromA[2], const float toA[2],
@@ -1085,14 +1073,13 @@ static void positionPointInView(uiwidget_t* obj, float point[2],
  */
 static void drawMarkedPoints(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
     uint i, pointCount = UIAutomap_PointCount(obj);
     Size2Raw portSize;
+    assert(obj->type == GUI_AUTOMAP);
 
     if(!pointCount) return;
 
@@ -1131,7 +1118,6 @@ static void drawMarkedPoints(uiwidget_t* obj)
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
-    }
 }
 
 /**
@@ -1139,13 +1125,12 @@ static void drawMarkedPoints(uiwidget_t* obj)
  */
 static void setupGLStateForMap(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
     Point2Raw portOrigin;
+    assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1287,7 +1272,6 @@ static void setupGLStateForMap(uiwidget_t* obj)
                 UIWidget_Geometry(obj)->size.width  - am->border*2,
                 UIWidget_Geometry(obj)->size.height - am->border*2);
     DGL_Enable(DGL_SCISSOR_TEST);
-    }
 }
 
 /**
@@ -1295,23 +1279,19 @@ static void setupGLStateForMap(uiwidget_t* obj)
  */
 static void restoreGLStateFromMap(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     if(!am->scissorState[0])
         DGL_Disable(DGL_SCISSOR_TEST);
     DGL_Scissor(am->scissorState[1], am->scissorState[2], am->scissorState[3], am->scissorState[4]);
-    }
 }
 
 static void renderVertexes(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
     uint i;
+    assert(obj->type == GUI_AUTOMAP);
 
     DGL_Color4f(.2f, .5f, 1, alpha);
 
@@ -1330,7 +1310,6 @@ static void renderVertexes(uiwidget_t* obj)
 
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     DGL_Disable(DGL_POINT_SMOOTH);
-    }
 }
 
 /**
@@ -1338,10 +1317,9 @@ static void renderVertexes(uiwidget_t* obj)
  */
 static void compileObjectLists(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     uint i;
+    assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ClearLists(obj);
 
@@ -1356,25 +1334,22 @@ static void compileObjectLists(uiwidget_t* obj)
     }
 
     am->constructMap = false;
-    }
 }
 
 automapcfg_t* UIAutomap_Config(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* map = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return map->mcfg;
-    }
 }
 
 void UIAutomap_Rebuild(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* map = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     map->constructMap = true;
-    }
 }
 
 /**
@@ -1554,15 +1529,17 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
     if(am->active)
     {
         mobj_t* mo = UIAutomap_FollowMobj(obj);
-        if(NULL == mo)
-        {   // Set viewer target to the center of the map.
+        if(!mo)
+        {
+            // Set viewer target to the center of the map.
             float aabb[4];
             UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
             UIAutomap_SetCameraOrigin(obj, (aabb[BOXRIGHT] - aabb[BOXLEFT]) / 2, (aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
             UIAutomap_SetCameraAngle(obj, 0);
         }
         else
-        {   // The map's target player is available.
+        {
+            // The map's target player is available.
             if(!(am->pan && !cfg.automapPanResetOnOpen))
                 UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
 
