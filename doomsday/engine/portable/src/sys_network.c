@@ -1519,6 +1519,12 @@ boolean N_Disconnect(void)
 
 boolean N_ServerOpen(void)
 {
+    if(!isDedicated)
+    {
+        Con_Message("N_ServerOpen: Server can only be started in dedicated mode! (run with -dedicated)\n");
+        return false;
+    }
+
     if(!N_IsAvailable())
         return false;
 
