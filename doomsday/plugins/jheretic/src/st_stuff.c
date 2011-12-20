@@ -97,7 +97,6 @@ enum {
     UWG_STATUSBAR = 0,
     UWG_MAPNAME,
     UWG_TOPLEFT,
-    UWG_TOPLEFT2,
     UWG_TOPRIGHT,
     UWG_BOTTOMLEFT,
     UWG_BOTTOMLEFT2,
@@ -2413,7 +2412,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         const float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         Size2Raw portSize, drawnSize = { 0, 0 };
         RectRaw displayRegion;
-        int posX, posY, availWidth, availHeight;
+        int availHeight;
         float scale;
 
         R_ViewPortSize(playerNum, &portSize);
@@ -2511,18 +2510,6 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         {
             drawnSize.width = 0;
         }
-
-        posX = displayRegion.origin.x + (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
-        posY = displayRegion.origin.y;
-        availWidth  = displayRegion.size.width - (drawnSize.width > 0 ? drawnSize.width + PADDING : 0);
-        availHeight = displayRegion.size.height;
-
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT2]);
-        UIWidget_SetOpacity(obj, opacity);
-        size.width = availWidth; size.height = availHeight;
-        UIWidget_SetMaximumSize(obj, &size);
-
-        GUI_DrawWidgetXY(obj, posX, posY);
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]);
         UIWidget_SetOpacity(obj, opacity);
@@ -2840,7 +2827,6 @@ void ST_BuildWidgets(int player)
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
         { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
@@ -2867,7 +2853,7 @@ void ST_BuildWidgets(int player)
         { GUI_MAPNAME,      UWG_MAPNAME,      GF_FONTB,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_READYAMMOICON, UWG_TOPLEFT,     0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
-        { GUI_FLIGHT,       UWG_TOPLEFT2,     0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },
+        { GUI_FLIGHT,       UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },
         { GUI_TOME,         UWG_TOPRIGHT,     GF_SMALLIN,   Tome_UpdateGeometry, Tome_Drawer, Tome_Ticker, &hud->tome },
         { GUI_HEALTH,       UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_KEYS,         UWG_BOTTOMLEFT,   0,            Keys_UpdateGeometry, Keys_Drawer, Keys_Ticker, &hud->keys },
