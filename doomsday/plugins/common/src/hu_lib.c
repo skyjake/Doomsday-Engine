@@ -777,6 +777,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     }
     FR_SetFont(rs.textFonts[0]);
     FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
     FR_SetShadowStrength(rs.textShadow);
     FR_SetGlitterStrength(rs.textGlitter);
 
