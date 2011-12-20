@@ -209,7 +209,7 @@ boolean S_Init(void)
         {
 #ifndef DENG_DISABLE_SDLMIXER
             // Fallback option for the default driver.
-            ok = S_InitDriver(AUDIOD_SDLMIXER);
+            ok = S_InitDriver(AUDIOD_SDL_MIXER);
 #endif
         }
     }
