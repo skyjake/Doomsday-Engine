@@ -239,7 +239,7 @@ def startGame(profile):
         print >> sh, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
         sh.close()
         os.chmod(shFile, 0744)
-        engineBin = shFile
+        engineBin = paths.quote(shFile)
         spawnFunc = spawnWithTerminal
     else:
         spawnFunc = os.spawnvp
@@ -255,7 +255,7 @@ def startGame(profile):
 
 def spawnWithTerminal(wait, launchScript, arguments):
     term = st.getSystemString('system-terminal').split(' ')
-    os.spawnvp(wait, term[0], term + [paths.quote(launchScript)]) 
+    os.spawnvp(wait, term[0], term + [launchScript]) 
 
 
 def generateOptions(profile):
