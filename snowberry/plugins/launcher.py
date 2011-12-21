@@ -28,7 +28,7 @@
 
 # TODO: Implement a timer service so wx isn't needed here.
 
-import os, string, time
+import os, string, time, subprocess
 import ui, host
 import sb.util.dialog
 import events
@@ -215,7 +215,19 @@ def startGame(profile):
 
     # Execute the command line.
     if host.isWindows():
-        spawnFunc = os.spawnv
+        if '-dedicated' in options:
+            batFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.bat')
+            bat = file(batFile, 'wt')
+            print >> bat, '@ECHO OFF'
+            print >> bat, 'ECHO Launching Doomsday...'
+            curDir = os.getcwd()
+            print >> bat, 'cd', paths.quote(curDir)
+            print >> bat, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
+            bat.close()
+            engineBin = batFile
+            spawnFunc = spawnWithTerminal
+        else:
+            spawnFunc = os.spawnv
     elif host.isMac() and '-dedicated' in options:
         # On the Mac, we'll tell Terminal to run it.
         osaFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')
@@ -255,7 +267,14 @@ def startGame(profile):
 
 def spawnWithTerminal(wait, launchScript, arguments):
     term = st.getSystemString('system-terminal').split(' ')
-    os.spawnvp(wait, term[0], term + [launchScript]) 
+    #print term + [launchScript]
+    subprocess.Popen(term + [launchScript])
+
+    #if host.isWindows():
+    #    spawn = os.spawnv
+    #else:
+    #    spawn = os.spawnvp
+    #spawn(wait, term[0], term + [launchScript])    
 
 
 def generateOptions(profile):
