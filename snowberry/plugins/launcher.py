@@ -229,6 +229,17 @@ def startGame(profile):
             (q1p(curDir), engineBin.replace(' ', '\\\\ '), q2p(responseFile))
         print >> scpt, 'end tell'
         scpt.close()
+        engineBin = osaFile
+        spawnFunc = spawnWithTerminal
+    elif host.isUnix() and '-dedicated' in options:
+        shFile = os.path.join(paths.getUserPath(paths.RUNTIME), 'launch.sh')
+        sh = file(shFile, 'w')
+        print >> sh, '#!/bin/sh'
+        print >> sh, "cd %s" % (paths.quote(os.getcwd()))
+        print >> sh, "%s @%s" % (paths.quote(engineBin), paths.quote(responseFile))
+        sh.close()
+        os.chmod(shFile, 0744)
+        engineBin = shFile
         spawnFunc = spawnWithTerminal
     else:
         spawnFunc = os.spawnvp
@@ -242,9 +253,9 @@ def startGame(profile):
         events.sendAfter(events.Command('quit'))
 
 
-def spawnWithTerminal(wait, bin, arguments):
-    os.spawnvp(wait, 'osascript', ['osascript', 
-        os.path.join(paths.getUserPath(paths.RUNTIME), 'Launch.scpt')])
+def spawnWithTerminal(wait, launchScript, arguments):
+    term = st.getSystemString('system-terminal').split(' ')
+    os.spawnvp(wait, term[0], term + [paths.quote(launchScript)]) 
 
 
 def generateOptions(profile):
