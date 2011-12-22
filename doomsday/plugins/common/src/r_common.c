@@ -290,7 +290,7 @@ void R_UpdateConsoleView(int player)
     if(IS_DEDICATED || player < 0 || player >= MAXPLAYERS) return;
     plr = &players[player];
     mo = plr->plr->mo;
-    if(!mo) return; // Not present?
+    if(!mo || !plr->plr->inGame) return; // Not present?
 
     viewOrigin[VX] = mo->pos[VX] + plr->viewOffset[VX];
     viewOrigin[VY] = mo->pos[VY] + plr->viewOffset[VY];
