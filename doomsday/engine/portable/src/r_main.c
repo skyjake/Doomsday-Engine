@@ -92,7 +92,7 @@ static int rendCameraSmooth = true; // Smoothed by default.
 
 static boolean resetNextViewer = true;
 
-static viewdata_t viewData[DDMAXPLAYERS];
+static viewdata_t viewData[DDMAXPLAYERS]; // Indexed by console number.
 
 static byte showFrameTimePos = false;
 static byte showViewAngleDeltas = false;
@@ -151,37 +151,43 @@ void R_SetViewWindow(int x, int y, int w, int h)
     viewheight = h;
 }
 
-/// \note Part of the Doomsday public API.
+/**
+ * Update the view origin position for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
 void R_SetViewOrigin(int consoleNum, float const origin[3])
 {
-    int p = P_ConsoleToLocal(consoleNum);
-    if(p != -1)
-    {
-        viewdata_t* vd = &viewData[p];
-        V3_Copy(vd->latest.pos, origin);
-    }
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    V3_Copy(viewData[consoleNum].latest.pos, origin);
 }
 
-/// \note Part of the Doomsday public API.
+/**
+ * Update the view yaw angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
 void R_SetViewAngle(int consoleNum, angle_t angle)
 {
-    int p = P_ConsoleToLocal(consoleNum);
-    if(p != -1)
-    {
-        viewdata_t* vd = &viewData[p];
-        vd->latest.angle = angle;
-    }
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewData[consoleNum].latest.angle = angle;
 }
 
-/// \note Part of the Doomsday public API.
+/**
+ * Update the view pitch angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
 void R_SetViewPitch(int consoleNum, float pitch)
 {
-    int p = P_ConsoleToLocal(consoleNum);
-    if(p != -1)
-    {
-        viewdata_t* vd = &viewData[p];
-        vd->latest.pitch = pitch;
-    }
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewData[consoleNum].latest.pitch = pitch;
 }
 
 /**
@@ -413,11 +419,10 @@ void R_CopyViewer(viewer_t* dst, const viewer_t* src)
     dst->pitch = src->pitch;
 }
 
-const viewdata_t* R_ViewData(int localPlayerNum)
+const viewdata_t* R_ViewData(int consoleNum)
 {
-    assert(localPlayerNum >= 0 && localPlayerNum < DDMAXPLAYERS);
-
-    return &viewData[localPlayerNum];
+    assert(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    return &viewData[consoleNum];
 }
 
 /**
