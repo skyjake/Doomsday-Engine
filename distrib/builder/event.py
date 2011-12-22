@@ -44,6 +44,13 @@ class Event:
 
         # Prepare compiler logs present in the build dir.
         self.compress_logs()
+        
+    def package_type(self, name):
+        pkg = self.package_from_filename(name)
+        if pkg == 'doomsday':
+            return 'distribution'
+        else:
+            return 'plugin'
 
     def package_from_filename(self, name):
         if 'fmod' in name:
@@ -257,7 +264,7 @@ class Event:
         
         # Packages.
         for fn in files:
-            msg += '<package>'
+            msg += '<package type="%s">' % self.package_type(fn)
             msg += '<name>%s</name>' % self.packageName[self.package_from_filename(fn)]
             msg += '<version>%s</version>' % self.version_from_filename(fn)
             msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
