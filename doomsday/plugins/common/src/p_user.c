@@ -1315,14 +1315,17 @@ void P_PlayerThinkWeapons(player_t* player)
 
     if(IS_NETWORK_SERVER)
     {
-        // Weapon change logic has already been done by the client.
-        newweapon = brain->changeWeapon;
-
-        if(!player->weapons[newweapon].owned)
+        if(brain->changeWeapon != WT_NOCHANGE)
         {
-            Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
-                        (int)(player - players), newweapon);
-            newweapon = WT_NOCHANGE;
+            // Weapon change logic has already been done by the client.
+            newweapon = brain->changeWeapon;
+
+            if(!player->weapons[newweapon].owned)
+            {
+                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
+                            (int)(player - players), newweapon);
+                newweapon = WT_NOCHANGE;
+            }
         }
     }
     else
