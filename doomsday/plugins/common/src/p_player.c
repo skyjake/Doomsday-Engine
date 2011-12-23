@@ -407,7 +407,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     weaponinfo_t       *winf;
     boolean             found;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // This is done on clientside.
         NetSv_MaybeChangeWeapon(player - players, weapon, ammo, force);

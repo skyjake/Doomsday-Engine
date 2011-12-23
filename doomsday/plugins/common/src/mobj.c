@@ -126,7 +126,7 @@ void Mobj_XYMoveStopping(mobj_t* mo)
 
     // Stop player walking animation (only real players).
     if(!isVoodooDoll && player && belowStandSpeed && !isMovingPlayer &&
-        !(IS_NETGAME && IS_SERVER)) // Netgame servers use logic elsewhere for player animation.
+        !IS_NETWORK_SERVER) // Netgame servers use logic elsewhere for player animation.
     {
         // If in a walking frame, stop moving.
         if(P_PlayerInWalkState(player))
