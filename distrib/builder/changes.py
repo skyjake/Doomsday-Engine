@@ -42,7 +42,7 @@ class Changes:
         self.parse()
         
     def should_ignore(self, subject):
-        if subject.startswith("Merge branch 'master'"):
+        if subject.startswith("Merge branch 'master' of"):
             # master->master merges are not listed.
             return True
         return False
