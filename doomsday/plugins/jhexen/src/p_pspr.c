@@ -793,6 +793,8 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
 
 void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
 {
+    if(IS_CLIENT) return;
+
     P_SpawnPlayerMissile(MT_MWAND_MISSILE, plr->plr->mo);
     S_StartSound(SFX_MAGE_WAND_FIRE, plr->plr->mo);
 }
