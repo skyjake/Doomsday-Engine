@@ -225,7 +225,6 @@ static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
     float pspriteOffsetY;
-
     int isFullBright = ((plr->powers[PT_INFRARED] > 4 * 32) ||
                         (plr->powers[PT_INFRARED] & 8) ||
                         plr->powers[PT_INVULNERABILITY] > 30);
@@ -239,7 +238,7 @@ static void rendPlayerView(int player)
     // View angles are updated with fractional ticks, so we can just use the current values.
     R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
     R_SetViewPitch(player, plr->plr->lookDir);
-    DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
+
     pspriteOffsetY = HU_PSpriteYOffset(plr);
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
 
