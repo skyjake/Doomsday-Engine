@@ -74,6 +74,7 @@
  */
 void P_CalcHeight(player_t* plr)
 {
+    int plrNum = plr - players;
     boolean         airborne;
     boolean         morphed = false;
     ddplayer_t*     ddplr = plr->plr;
@@ -200,4 +201,18 @@ void P_CalcHeight(player_t* plr)
 
     // Set the plr's eye-level Z coordinate.
     plr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
+
+#if __JHEXEN__
+    // How about a bit of quake?
+    if(localQuakeHappening[plrNum] && !P_IsPaused())
+    {
+        int intensity = localQuakeHappening[plrNum];
+        plr->viewOffset[VX] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        plr->viewOffset[VY] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+    }
+    else
+    {
+        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
+    }
+#endif
 }

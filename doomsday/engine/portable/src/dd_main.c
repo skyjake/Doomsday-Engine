@@ -433,6 +433,10 @@ int DD_Main(void)
     if(ArgCheckWith("-connect", 1))
         Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
 
+    // Incoming TCP port.
+    if(ArgCheckWith("-port", 1))
+        Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", ArgNext());
+
     // Server start command.
     // (shortcut for -command "net init tcpip; net server start").
     if(ArgExists("-server"))
@@ -973,21 +977,6 @@ void* DD_GetVariable(int ddvalue)
         case DD_GAME_EXPORTS:
             return &gx;
 
-        case DD_VIEW_X:
-            return &viewX;
-
-        case DD_VIEW_Y:
-            return &viewY;
-
-        case DD_VIEW_Z:
-            return &viewZ;
-
-        case DD_VIEW_ANGLE:
-            return &viewAngle;
-
-        case DD_VIEW_PITCH:
-            return &viewPitch;
-
         case DD_SECTOR_COUNT:
             return &numSectors;
 
@@ -1150,26 +1139,6 @@ void DD_SetVariable(int ddvalue, void *parm)
     {
         switch(ddvalue)
         {
-        case DD_VIEW_X:
-            viewX = *(float*) parm;
-            return;
-
-        case DD_VIEW_Y:
-            viewY = *(float*) parm;
-            return;
-
-        case DD_VIEW_Z:
-            viewZ = *(float*) parm;
-            return;
-
-        case DD_VIEW_ANGLE:
-            viewAngle = *(angle_t*) parm;
-            return;
-
-        case DD_VIEW_PITCH:
-            viewPitch = *(float*) parm;
-            return;
-
         /*case DD_CPLAYER_THRUST_MUL:
             cplrThrustMul = *(float*) parm;
             return;*/

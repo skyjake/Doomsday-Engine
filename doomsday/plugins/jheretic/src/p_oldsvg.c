@@ -449,14 +449,14 @@ void P_v13_UnArchiveWorld(void)
     save_p = (byte *) get;
 }
 
-static boolean removeThinker(thinker_t* th, void* context)
+static int removeThinker(thinker_t* th, void* context)
 {
     if(th->function == P_MobjThinker)
         P_MobjRemove((mobj_t *) th, true);
     else
         Z_Free(th);
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_v13_UnArchiveThinkers(void)

@@ -364,7 +364,7 @@ int Cht_WarpFunc(const int* args, int player)
 
     tens = args[0] - '0';
     ones = args[1] - '0';
-    if(tens < 0 || tens > 9 || ones < 1 || ones > 9)
+    if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
     {   // Bad map
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
@@ -448,7 +448,7 @@ static void printDebugInfo(int player)
         return;
 
     P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
+    sprintf(textBuffer, "Map [%s]  x:%g  y:%g  z:%g",
             lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);
     P_SetMessage(plr, textBuffer, false);
@@ -590,7 +590,7 @@ int Cht_PigFunc(const int* args, int player)
         P_MorphPlayer(plr);
     }
 
-    P_SetMessage(plr, "SQUEAL!!", false);
+    P_SetMessage(plr, "Squeal!!", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -609,7 +609,7 @@ int Cht_MassacreFunc(const int* args, int player)
         return false; // Dead players can't cheat.
 
     count = P_Massacre();
-    sprintf(buf, "%d MONSTERS KILLED\n", count);
+    sprintf(buf, "%d monsters killed.", count);
     P_SetMessage(plr, buf, false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
@@ -654,7 +654,7 @@ int Cht_QuickenFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "TRYING TO CHEAT?  THAT'S ONE....", false);
+    P_SetMessage(plr, "Trying to cheat? That's one....", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -670,7 +670,7 @@ int Cht_QuickenFunc2(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "THAT'S TWO....", false);
+    P_SetMessage(plr, "That's two....", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -687,7 +687,7 @@ int Cht_QuickenFunc3(const int* args, int player)
         return false; // Dead players can't cheat.
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
-    P_SetMessage(plr, "THAT'S THREE!  TIME TO DIE.", false);
+    P_SetMessage(plr, "That's three! Time to die.", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -703,7 +703,7 @@ int Cht_ClassFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "ENTER NEW PLAYER CLASS NUMBER", false);
+    P_SetMessage(plr, "Enter new player class number", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -751,7 +751,7 @@ int Cht_ScriptFunc1(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "RUN WHICH SCRIPT(01-99)?", false);
+    P_SetMessage(plr, "Run which script(01-99)?", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -767,7 +767,7 @@ int Cht_ScriptFunc2(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    P_SetMessage(plr, "RUN WHICH SCRIPT(01-99)?", false);
+    P_SetMessage(plr, "Run which script(01-99)?", false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
     return true;
 }
@@ -797,7 +797,7 @@ int Cht_ScriptFunc3(const int* args, int player)
 
     if(P_StartACS(script, 0, scriptArgs, plr->plr->mo, NULL, 0))
     {
-        sprintf(textBuffer, "RUNNING SCRIPT %.2d", script);
+        sprintf(textBuffer, "Running script %.2d", script);
         P_SetMessage(plr, textBuffer, false);
     }
     S_LocalSound(SFX_PLATFORM_STOP, NULL);

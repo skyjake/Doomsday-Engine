@@ -11,7 +11,9 @@
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
 # - deng_aptunstable        Include the unstable apt repository
+# - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nofixedasm         Disable assembler fixed-point math
+# - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
 # - deng_openal             Build the OpenAL sound driver
 # - deng_packres            Package the Doomsday resources
 # - deng_rangecheck         Parameter range checking/value assertions
@@ -37,7 +39,7 @@ DENG_WIN_PRODUCTS_DIR = $$PWD/../distrib/products
 
 include(versions.pri)
 
-# Build Options --------------------------------------------------------------
+# Macros ---------------------------------------------------------------------
 
 defineTest(echo) {
     !win32 {
@@ -48,6 +50,17 @@ defineTest(echo) {
         system(echo $$1)
     }
 }
+
+defineTest(doPostLink) {
+    isEmpty(QMAKE_POST_LINK) {
+        QMAKE_POST_LINK = $$1
+    } else {
+        QMAKE_POST_LINK = $$QMAKE_POST_LINK && $$1
+    }
+    export(QMAKE_POST_LINK)
+}
+
+# Build Options --------------------------------------------------------------
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
@@ -155,6 +168,9 @@ deng_nofixedasm {
 !deng_rangecheck {
     DEFINES += NORANGECHECKING
 }
+deng_nosdlmixer {
+    DEFINES += DENG_DISABLE_SDLMIXER
+}
 macx {
     # Select OS version.
     deng_snowleopard {
@@ -163,7 +179,9 @@ macx {
             QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
             QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
             CONFIG += x86
-            CONFIG -= x86_64
+            QMAKE_CFLAGS_X86_64 = ""
+            QMAKE_OBJECTIVE_CFLAGS_X86_64 = ""
+            QMAKE_LFLAGS_X86_64 = ""
         } else {
             echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
             QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk

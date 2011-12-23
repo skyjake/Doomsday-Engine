@@ -492,7 +492,7 @@ typedef struct {
     int                 count;
 } activateplatparams_t;
 
-static boolean activatePlat(thinker_t* th, void* context)
+static int activatePlat(thinker_t* th, void* context)
 {
     plat_t*             plat = (plat_t*) th;
     activateplatparams_t* params = (activateplatparams_t*) context;
@@ -504,7 +504,7 @@ static boolean activatePlat(thinker_t* th, void* context)
         params->count++;
     }
 
-    return true; // Contiue iteration.
+    return false; // Contiue iteration.
 }
 
 /**
@@ -530,7 +530,7 @@ typedef struct {
     int                 count;
 } deactivateplatparams_t;
 
-static boolean deactivatePlat(thinker_t* th, void* context)
+static int deactivatePlat(thinker_t* th, void* context)
 {
     plat_t*             plat = (plat_t*) th;
     deactivateplatparams_t* params = (deactivateplatparams_t*) context;
@@ -542,7 +542,7 @@ static boolean deactivatePlat(thinker_t* th, void* context)
         // Destroy it.
         stopPlat(plat);
         params->count++;
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 #else
     // For one with the tag and not in stasis.
@@ -555,7 +555,7 @@ static boolean deactivatePlat(thinker_t* th, void* context)
     }
 #endif
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

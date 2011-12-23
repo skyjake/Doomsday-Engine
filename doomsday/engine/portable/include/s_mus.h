@@ -49,6 +49,7 @@ void            Mus_SetVolume(float vol);
 void            Mus_Pause(boolean doPause);
 void            Mus_StartFrame(void);
 int             Mus_Start(ded_music_t* def, boolean looped);
+int             Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS);
 void            Mus_Stop(void);
 
 #endif

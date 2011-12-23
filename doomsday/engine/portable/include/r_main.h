@@ -43,6 +43,8 @@ typedef struct viewer_s {
 typedef struct viewdata_s {
     viewer_t        current; // Current view paramaters.
     viewer_t        lastSharp[2]; // For smoothing.
+    viewer_t latest; // Sharp values taken from here.
+
     float           frontVec[3], upVec[3], sideVec[3];
     float           viewCos, viewSin;
 
@@ -50,9 +52,6 @@ typedef struct viewdata_s {
     angle_t         frozenAngle;
     float           frozenPitch;
 } viewdata_t;
-
-extern float    viewX, viewY, viewZ, viewPitch;
-extern int      viewAngle;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
 extern int      loadInStartupMode;
@@ -75,7 +74,7 @@ void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
 void            R_RenderViewPorts(void);
 
-const viewdata_t* R_ViewData(int localPlayerNum);
+const viewdata_t* R_ViewData(int consoleNum);
 void            R_ResetViewer(void);
 
 void            R_SetViewWindow(int x, int y, int w, int h);
@@ -84,5 +83,9 @@ void            R_NewSharpWorld(void);
 void            R_SetViewGrid(int numCols, int numRows);
 void            R_SetViewWindow(int x, int y, int w, int h);
 void            R_SetViewPortPlayer(int consoleNum, int viewPlayer);
+
+void R_SetViewOrigin(int consoleNum, float const origin[3]);
+void R_SetViewAngle(int consoleNum, angle_t angle);
+void R_SetViewPitch(int consoleNum, float pitch);
 
 #endif

@@ -42,8 +42,8 @@ typedef struct thinker_s {
 boolean         P_ThinkerListInited(void);
 
 void            P_InitThinkerLists(byte flags);
-boolean         P_IterateThinkers(think_t type, byte flags,
-                                  boolean (*callback) (thinker_t* th, void*),
+int             P_IterateThinkers(think_t type, byte flags,
+                                  int (*callback) (thinker_t* th, void*),
                                   void* context);
 
 void            P_ThinkerAdd(thinker_t* th, boolean makePublic);
@@ -60,6 +60,6 @@ void            DD_RunThinkers(void);
 void            DD_ThinkerAdd(thinker_t* th);
 void            DD_ThinkerRemove(thinker_t* th);
 void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-boolean         DD_IterateThinkers(think_t func, boolean (*callback) (thinker_t*, void*),
+int             DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*),
                                    void* context);
 #endif

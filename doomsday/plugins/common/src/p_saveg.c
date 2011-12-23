@@ -534,14 +534,14 @@ static thinkerinfo_t* infoForThinker(thinker_t* th)
     return NULL;
 }
 
-static boolean removeThinker(thinker_t* th, void* context)
+static int removeThinker(thinker_t* th, void* context)
 {
     if(th->function == P_MobjThinker)
         P_MobjRemove((mobj_t *) th, true);
     else
         Z_Free(th);
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 typedef struct {
@@ -549,7 +549,7 @@ typedef struct {
     boolean             savePlayers;
 } countmobjsparams_t;
 
-static boolean countMobjs(thinker_t* th, void* context)
+static int countMobjs(thinker_t* th, void* context)
 {
     countmobjsparams_t* params = (countmobjsparams_t*) context;
     mobj_t*             mo = (mobj_t*) th;
@@ -557,7 +557,7 @@ static boolean countMobjs(thinker_t* th, void* context)
     if(!(mo->player && !params->savePlayers))
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -3070,7 +3070,6 @@ static int SV_ReadFloor(floor_t* floor)
         floor->resetHeight = FIX2FLT(SV_ReadLong());
         floor->resetDelay = SV_ReadShort();
         floor->resetDelayCount = SV_ReadShort();
-        /*floor->textureChange =*/ SV_ReadByte();
 #endif
     }
     else
@@ -4034,7 +4033,7 @@ static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
  *
  * @param th        The thinker to be archived.
  */
-static boolean archiveThinker(thinker_t* th, void* context)
+static int archiveThinker(thinker_t* th, void* context)
 {
     boolean             savePlayers = *(boolean*) context;
 
@@ -4045,7 +4044,7 @@ static boolean archiveThinker(thinker_t* th, void* context)
         thinkerinfo_t*      thInfo = infoForThinker(th);
 
         if(!thInfo)
-            return true; // This is not a thinker we need to save.
+            return false; // This is not a thinker we need to save.
 
         // Only the server saves this class of thinker?
         if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
@@ -4062,7 +4061,7 @@ assert(thInfo->Write);
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -4088,7 +4087,7 @@ static void P_ArchiveThinkers(boolean savePlayers)
     SV_WriteByte(TC_END);
 }
 
-static boolean restoreMobjLinks(thinker_t* th, void* context)
+static int restoreMobjLinks(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
@@ -4150,7 +4149,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
 # endif
 #endif
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -4257,7 +4256,8 @@ static void P_UnArchiveThinkers(void)
                 found = true;
 
                 // Not for us? (it shouldn't be here anyway!).
-                if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
+                assert(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+
                 {
                     // Mobjs use a special engine-side allocator.
                     if(thInfo->thinkclass == TC_MOBJ)
@@ -5253,6 +5253,12 @@ static boolean SV_LoadGame2(void)
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(hdr.gameID);
 #endif
+
+    // Let the engine know where the local players are now.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
 
     return true; // Success!
 }

@@ -10,3 +10,4 @@ macx_release_build
 *.changes
 server-runtime
 client-runtime
+Zcustom.conf

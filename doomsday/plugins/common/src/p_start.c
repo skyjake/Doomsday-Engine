@@ -536,6 +536,10 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
 #endif
+
+    // Player has been spawned, so tell the engine where the camera is
+    // initially located. After this it will be updated after every game tick.
+    R_UpdateConsoleView(plrNum);
 }
 
 static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
@@ -1076,11 +1080,39 @@ void G_DeathMatchSpawnPlayer(int playerNum)
     }
 }
 
+/**
+ * @param offset  Returns the position of the nearest point along the line (0..1).
+ */
+float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
+{
+    float   a[2], b[2], c[2], d[2], len;
+
+    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, a);
+    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, b);
+
+    c[VX] = x;
+    c[VY] = y;
+
+    d[VX] = b[VX] - a[VX];
+    d[VY] = b[VY] - a[VY];
+    len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
+
+    if(offset)
+    {
+        *offset = ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
+                   (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
+    }
+    return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
+            (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
+}
+
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+
 typedef struct {
     float               pos[2], minDist;
 } unstuckmobjinlinedefparams_t;
 
-boolean unstuckMobjInLinedef(linedef_t* li, void* context)
+int unstuckMobjInLinedef(linedef_t* li, void* context)
 {
     unstuckmobjinlinedefparams_t *params =
         (unstuckmobjinlinedefparams_t*) context;
@@ -1132,25 +1164,93 @@ boolean unstuckMobjInLinedef(linedef_t* li, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
+typedef struct nearestfacinglineparams_s {
+    mobj_t* mo;
+    float dist;
+    linedef_t* line;
+} nearestfacinglineparams_t;
+
+static int PIT_FindNearestFacingLine(linedef_t* line, void* ptr)
+{
+    nearestfacinglineparams_t* params = (nearestfacinglineparams_t*) ptr;
+    float dist;
+    float off;
+
+    dist = P_PointLineDistance(line, params->mo->pos[VX], params->mo->pos[VY], &off);
+    if(off < 0 || off > P_GetFloatp(line, DMU_LENGTH) || dist < 0)
+        return false; // Wrong way or too far.
+
+    if(!params->line || dist < params->dist)
+    {
+        params->line = line;
+        params->dist = dist;
+    }
+
+    return false; // Continue.
+}
+
+static int turnMobjToNearestLine(thinker_t* th, void* context)
+{
+    mobj_t* mo = (mobj_t*) th;
+    mobjtype_t type = *((mobjtype_t*) context);
+    nearestfacinglineparams_t params;
+    AABoxf aaBox;
+
+    if(mo->type != type)
+        return false; // Continue iteration.
+
+#ifdef _DEBUG
+    VERBOSE( Con_Message("Checking mo %i...\n", mo->thinker.id) );
+#endif
+
+    memset(&params, 0, sizeof(params));
+    params.mo = mo;
+
+    aaBox.minX = mo->pos[VX] - 50;
+    aaBox.minY = mo->pos[VY] - 50;
+    aaBox.maxX = mo->pos[VX] + 50;
+    aaBox.maxY = mo->pos[VY] + 50;
+
+    VALIDCOUNT++;
+
+    P_LinesBoxIterator(&aaBox, PIT_FindNearestFacingLine, &params);
+
+    if(params.line)
+    {
+        mo->angle = P_GetAnglep(params.line, DMU_ANGLE) - ANGLE_90;
+#ifdef _DEBUG
+        VERBOSE( Con_Message("turnMobjToNearestLine: mo=%i angle=%x\n", mo->thinker.id, mo->angle) );
+#endif
+    }
+    else
+    {
+#ifdef _DEBUG
+        VERBOSE( Con_Message(" => no nearest list found\n") );
+#endif
+    }
+
+    return false; // Continue iteration.
+}
+
+static int iterateLinedefsNearMobj(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t*) th;
     mobjtype_t          type = *((mobjtype_t*) context);
-    float               aabb[4];
     unstuckmobjinlinedefparams_t params;
+    AABoxf aaBox;
 
     // \todo Why not type-prune at an earlier point? We could specify a
     // custom comparison func for DD_IterateThinkers...
     if(mo->type != type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
-    aabb[BOXLEFT]   = mo->pos[VX] - mo->radius;
-    aabb[BOXRIGHT]  = mo->pos[VX] + mo->radius;
-    aabb[BOXBOTTOM] = mo->pos[VY] - mo->radius;
-    aabb[BOXTOP]    = mo->pos[VY] + mo->radius;
+    aaBox.minX = mo->pos[VX] - mo->radius;
+    aaBox.minY = mo->pos[VY] - mo->radius;
+    aaBox.maxX = mo->pos[VX] + mo->radius;
+    aaBox.maxY = mo->pos[VY] + mo->radius;
 
     params.pos[VX] = mo->pos[VX];
     params.pos[VY] = mo->pos[VY];
@@ -1158,25 +1258,23 @@ boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
 
     VALIDCOUNT++;
 
-    P_LinesBoxIterator(aabb, unstuckMobjInLinedef, &params);
+    P_LinesBoxIterator(&aaBox, unstuckMobjInLinedef, &params);
 
     if(mo->pos[VX] != params.pos[VX] || mo->pos[VY] != params.pos[VY])
     {
-        mo->angle = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
-                                    params.pos[VX], params.pos[VY]);
         P_MobjUnsetPosition(mo);
         mo->pos[VX] = params.pos[VX];
         mo->pos[VY] = params.pos[VY];
         P_MobjSetPosition(mo);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
  * Only affects torches, which are often placed inside walls in the
  * original maps. The DOOM engine allowed these kinds of things but a
- * Z-buffer doesn't.
+ * Z-buffer doesn't. Also turns the torches so they face the nearest line.
  */
 void P_MoveThingsOutOfWalls(void)
 {
@@ -1193,35 +1291,15 @@ void P_MoveThingsOutOfWalls(void)
 
     for(i = 0; types[i] != NUMMOBJTYPES; ++i)
     {
-        mobjtype_t          type = types[i];
-
+        mobjtype_t type = types[i];
         DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+        DD_IterateThinkers(P_MobjThinker, turnMobjToNearestLine, &type);
     }
 }
 
-#if __JHERETIC__
-float P_PointLineDistance(linedef_t *line, float x, float y, float *offset)
-{
-    float   a[2], b[2], c[2], d[2], len;
+#endif
 
-    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX0), DMU_XY, a);
-    P_GetFloatpv(P_GetPtrp(line, DMU_VERTEX1), DMU_XY, b);
-
-    c[VX] = x;
-    c[VY] = y;
-
-    d[VX] = b[VX] - a[VX];
-    d[VY] = b[VY] - a[VY];
-    len = sqrt(d[VX] * d[VX] + d[VY] * d[VY]);  // Accurate.
-
-    if(offset)
-        *offset =
-            ((a[VY] - c[VY]) * (a[VY] - b[VY]) -
-             (a[VX] - c[VX]) * (b[VX] - a[VX])) / len;
-    return ((a[VY] - c[VY]) * (b[VX] - a[VX]) -
-            (a[VX] - c[VX]) * (b[VY] - a[VY])) / len;
-}
-
+#ifdef __JHERETIC__
 /**
  * Fails in some places, but works most of the time.
  */
@@ -1233,7 +1311,7 @@ void P_TurnGizmosAwayFromDoors(void)
     mobj_t     *iter;
     uint        i, l;
     int         k, t;
-    linedef_t     *closestline = NULL, *li;
+    linedef_t  *closestline = NULL, *li;
     xline_t    *xli;
     float       closestdist = 0, dist, off, linelen;    //, minrad;
     mobj_t     *tlist[MAXLIST];
@@ -1263,7 +1341,7 @@ void P_TurnGizmosAwayFromDoors(void)
 
                 li = P_ToPtr(DMU_LINEDEF, l);
 
-                if(P_GetPtrp(li, DMU_BACK_SECTOR))
+                if(!P_GetPtrp(li, DMU_BACK_SECTOR))
                     continue;
 
                 xli = P_ToXLine(li);
@@ -1277,8 +1355,7 @@ void P_TurnGizmosAwayFromDoors(void)
                 P_GetFloatpv(li, DMU_DXY, d1);
                 linelen = P_ApproxDistance(d1[0], d1[1]);
 
-                dist = fabs(P_PointLineDistance(li, iter->pos[VX],
-                                                iter->pos[VY], &off));
+                dist = fabs(P_PointLineDistance(li, iter->pos[VX], iter->pos[VY], &off));
                 if(!closestline || dist < closestdist)
                 {
                     closestdist = dist;

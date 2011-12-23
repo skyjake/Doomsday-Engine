@@ -273,27 +273,27 @@ int C_DECL XLTrav_LineAngle(linedef_t* line, boolean dummy, void* context,
     return false; // Stop looking after first hit.
 }
 
-boolean findXSThinker(thinker_t* th, void* context)
+int findXSThinker(thinker_t* th, void* context)
 {
     xsthinker_t*        xs = (xsthinker_t*) th;
 
     if(xs->sector == (sector_t*) context)
-        return false; // Stop iteration, we've found it.
+        return true; // Stop iteration, we've found it.
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean destroyXSThinker(thinker_t* th, void* context)
+int destroyXSThinker(thinker_t* th, void* context)
 {
     xsthinker_t*        xs = (xsthinker_t*) th;
 
     if(xs->sector == (sector_t*) context)
     {
         DD_ThinkerRemove(&xs->thinker);
-        return false; // Stop iteration, we're done.
+        return true; // Stop iteration, we're done.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void XS_SetSectorType(struct sector_s* sec, int special)
@@ -372,7 +372,7 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         }
 
         // If there is not already an xsthinker for this sector, create one.
-        if(DD_IterateThinkers(XS_Thinker, findXSThinker, sec))
+        if(!DD_IterateThinkers(XS_Thinker, findXSThinker, sec))
         {   // Not created one yet.
             xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
@@ -615,7 +615,7 @@ typedef struct {
     boolean             ceiling;
 } stopplanemoverparams_t;
 
-static boolean stopPlaneMover(thinker_t* th, void* context)
+static int stopPlaneMover(thinker_t* th, void* context)
 {
     stopplanemoverparams_t* params = (stopplanemoverparams_t*) context;
     xgplanemover_t*     mover = (xgplanemover_t *) th;
@@ -627,7 +627,7 @@ static boolean stopPlaneMover(thinker_t* th, void* context)
         DD_ThinkerRemove(th); // Remove it.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -975,7 +975,7 @@ int findSectorExtremalMaterialHeight(void *ptr, void *context)
             params->val = height;
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 boolean XS_GetPlane(linedef_t* actline, sector_t* sector, int ref,
@@ -1612,11 +1612,11 @@ int spreadBuild(void *ptr, void *context)
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
-        return 1;
+        return false;
 
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
-        return 1;
+        return false;
 
     if(params->flags & F_MATERIALSTOP)
     {   // Planepic must match.
@@ -1624,26 +1624,26 @@ int spreadBuild(void *ptr, void *context)
         {
             if(P_GetPtrp(params->baseSec, DMU_CEILING_MATERIAL) !=
                params->baseMat)
-                return 1;
+                return false;
         }
         else
         {
             if(P_GetPtrp(params->baseSec, DMU_FLOOR_MATERIAL) !=
                params->baseMat)
-                return 1;
+                return false;
         }
     }
 
     // Don't spread to sectors which have already spreaded.
     if(P_ToXSector(backSec)->blFlags & BL_SPREADED)
-        return 1;
+        return false;
 
     // Build backsector.
     XS_DoBuild(backSec, ((params->flags & F_CEILING)? true : false),
                params->origin, params->info, params->stepCount);
     params->spreaded++;
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static void markBuiltSectors(void)
@@ -1730,11 +1730,11 @@ int findBuildNeighbor(void* ptr, void* context)
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
-        return 1;
+        return false;
 
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
-        return 1;
+        return false;
 
     if(params->flags & F_MATERIALSTOP)
     {   // Planepic must match.
@@ -1742,19 +1742,19 @@ int findBuildNeighbor(void* ptr, void* context)
         {
             if(P_GetPtrp(params->baseSec, DMU_CEILING_MATERIAL) !=
                params->baseMat)
-                return 1;
+                return false;
         }
         else
         {
             if(P_GetPtrp(params->baseSec, DMU_FLOOR_MATERIAL) !=
                params->baseMat)
-                return 1;
+                return false;
         }
     }
 
     // Don't spread to sectors which have already spreaded.
     if(P_ToXSector(backSec)->blFlags & BL_SPREADED)
-        return 1;
+        return false;
 
     // We need the lowest line number.
     idx = P_ToIndex(li);
@@ -1764,7 +1764,7 @@ int findBuildNeighbor(void* ptr, void* context)
         params->foundIDX = idx;
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 boolean spreadBuildToNeighborLowestIDX(linedef_t* origin, linetype_t* info,
@@ -2753,7 +2753,7 @@ typedef struct {
     int                 data;
 } xstrav_sectorchainparams_t;
 
-boolean XSTrav_SectorChain(thinker_t* th, void* context)
+int XSTrav_SectorChain(thinker_t* th, void* context)
 {
     xstrav_sectorchainparams_t* params =
         (xstrav_sectorchainparams_t*) context;
@@ -2767,7 +2767,7 @@ boolean XSTrav_SectorChain(thinker_t* th, void* context)
             XS_DoChain(params->sec, params->data, activating, mo);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_ApplyWind(mobj_t* mo, sector_t* sec)
@@ -2818,7 +2818,7 @@ typedef struct {
     sector_t*           sec;
 } xstrav_windparams_t;
 
-boolean XSTrav_Wind(thinker_t* th, void* context)
+int XSTrav_Wind(thinker_t* th, void* context)
 {
     xstrav_windparams_t* params = (xstrav_windparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2828,7 +2828,7 @@ boolean XSTrav_Wind(thinker_t* th, void* context)
         P_ApplyWind(mo, params->sec);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

@@ -74,8 +74,6 @@ int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
-float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
-int viewAngle = 0;
 boolean setSizeNeeded;
 
 // Precalculated math tables.
@@ -94,7 +92,7 @@ static int rendCameraSmooth = true; // Smoothed by default.
 
 static boolean resetNextViewer = true;
 
-static viewdata_t viewData[DDMAXPLAYERS];
+static viewdata_t viewData[DDMAXPLAYERS]; // Indexed by console number.
 
 static byte showFrameTimePos = false;
 static byte showViewAngleDeltas = false;
@@ -151,6 +149,45 @@ void R_SetViewWindow(int x, int y, int w, int h)
     viewwindowy = y;
     viewwidth = w;
     viewheight = h;
+}
+
+/**
+ * Update the view origin position for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewOrigin(int consoleNum, float const origin[3])
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    V3_Copy(viewData[consoleNum].latest.pos, origin);
+}
+
+/**
+ * Update the view yaw angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewAngle(int consoleNum, angle_t angle)
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewData[consoleNum].latest.angle = angle;
+}
+
+/**
+ * Update the view pitch angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewPitch(int consoleNum, float pitch)
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewData[consoleNum].latest.pitch = pitch;
 }
 
 /**
@@ -359,16 +396,17 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
-                         viewer_t* out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
-    float               inv = 1 - pos;
+    float inv = 1 - pos;
+    int delta;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    delta = (int)end->angle - (int)start->angle;
+    out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
@@ -381,11 +419,10 @@ void R_CopyViewer(viewer_t* dst, const viewer_t* src)
     dst->pitch = src->pitch;
 }
 
-const viewdata_t* R_ViewData(int localPlayerNum)
+const viewdata_t* R_ViewData(int consoleNum)
 {
-    assert(localPlayerNum >= 0 && localPlayerNum < DDMAXPLAYERS);
-
-    return &viewData[localPlayerNum];
+    assert(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    return &viewData[consoleNum];
 }
 
 /**
@@ -404,8 +441,12 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
         src->pos[VZ] = dst->pos[VZ];
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
+    {
+#ifdef _DEBUG
+        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.\n", dst->angle);
+#endif
         src->angle = dst->angle;
-
+    }
 #undef MAXMOVE
 }
 
@@ -414,21 +455,13 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
  */
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
+    viewdata_t* vd = &viewData[player - ddPlayers];
     ddplayer_t* ddpl;
 
-    if(!player || !player->shared.mo)
-    {
-        return;
-    }
-
+    if(!player || !player->shared.mo) return;
     ddpl = &player->shared;
 
-    view->pos[VX] = viewX;
-    view->pos[VY] = viewY;
-    view->pos[VZ] = viewZ;
-    /* $unifiedangles */
-    view->angle = viewAngle;
-    view->pitch = viewPitch;
+    R_CopyViewer(view, &vd->latest);
 
     if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
@@ -471,20 +504,7 @@ void R_GetSharpView(viewer_t* view, player_t* player)
  */
 void R_NewSharpWorld(void)
 {
-    extern boolean firstFrameAfterLoad;
-
-    int                 i;
-
-    if(firstFrameAfterLoad)
-    {
-        /**
-         * We haven't yet drawn the world. Everything *is* sharp so simply
-         * reset the viewer data.
-         * \fixme A bit of a kludge?
-         */
-        memset(viewData, 0, sizeof(viewData));
-        return;
-    }
+    int i;
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -547,7 +567,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
         for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
-            R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
+            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
 
@@ -569,7 +589,7 @@ void R_BeginWorldFrame(void)
         LG_Update();
         SB_BeginFrame();
         LO_ClearForFrame();
-        R_ClearObjLinksForFrame(); // Zeroes the links.
+        R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
         R_InitForNewFrame();
@@ -655,8 +675,8 @@ void R_SetupFrame(player_t* player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->shared.flags & DDPF_INTERYAW))
-            smoothView.angle = sharpView.angle;
+        /*if(!(player->shared.flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;*/
         if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
 
@@ -700,7 +720,7 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -708,8 +728,8 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
                         smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
-                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
+                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];

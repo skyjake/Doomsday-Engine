@@ -16,6 +16,9 @@ SUBDIRS += jdoom64
 deng_openal {
     SUBDIRS += openal
 }
+deng_fmod {
+    SUBDIRS += fmod
+}
 
 # Platform-specific plugins.
 win32 {

@@ -31,6 +31,7 @@
 
 #include "dd_share.h"
 #include "g_controls.h"
+#include "mobj.h"
 #include "common.h"
 
 #define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE

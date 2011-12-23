@@ -100,15 +100,15 @@ typedef struct mobjidlookup_s {
     mobj_t* result;
 } mobjidlookup_t;
 
-static boolean mobjIdLookup(thinker_t* thinker, void* context)
+static int mobjIdLookup(thinker_t* thinker, void* context)
 {
     mobjidlookup_t* lookup = (mobjidlookup_t*) context;
     if(thinker->id == lookup->id)
     {
         lookup->result = (mobj_t*) thinker;
-        return false;
+        return true; // Stop iteration.
     }
-    return true; // Keep looking.
+    return false; // Continue iteration.
 }
 
 /**
@@ -179,7 +179,7 @@ static thinkerlist_t* listForThinkFunc(think_t func, boolean isPublic,
     }
 }
 
-static boolean runThinker(thinker_t* th, void* context)
+static int runThinker(thinker_t* th, void* context)
 {
     // Thinker cannot think when in stasis.
     if(!th->inStasis)
@@ -215,14 +215,14 @@ static boolean runThinker(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean iterateThinkers(thinkerlist_t* list,
-                               boolean (*callback) (thinker_t*, void*),
+static int iterateThinkers(thinkerlist_t* list,
+                               int (*callback) (thinker_t*, void*),
                                void* context)
 {
-    boolean             result = true;
+    int              result = false;
 
     if(list)
     {
@@ -237,8 +237,8 @@ static boolean iterateThinkers(thinkerlist_t* list,
 #endif
 
             next = th->next;
-            if((result = callback(th, context)) == 0)
-                break;
+            result = callback(th, context);
+            if(result) break;
             th = next;
         }
     }
@@ -365,47 +365,43 @@ boolean P_ThinkerListInited(void)
  *                      whose function matches this.
  * @param flags         Thinker filter flags.
  * @param callback      The callback to make. Iteration will continue
- *                      until a callback returns a zero value.
+ *                      until a callback returns a non-zero value.
  * @param context       Is passed to the callback function.
  */
-boolean P_IterateThinkers(think_t func, byte flags,
-                          boolean (*callback) (thinker_t*, void*),
+int P_IterateThinkers(think_t func, byte flags,
+                          int (*callback) (thinker_t*, void*),
                           void* context)
 {
-    if(!inited)
-        return true;
+    int result = false;
+    size_t i;
+
+    if(!inited) return false;
 
     if(func)
-    {   // We might have both public and shared lists for this func.
-        boolean             result = true;
-
+    {
+        // We might have both public and shared lists for this func.
         if(flags & 0x1)
             result = iterateThinkers(listForThinkFunc(func, true, false),
                                      callback, context);
-        if(result && (flags & 0x2))
+        if(!result && (flags & 0x2))
             result = iterateThinkers(listForThinkFunc(func, false, false),
                                      callback, context);
         return result;
     }
 
-    {
-    boolean result = true;
-    size_t i;
-
     for(i = 0; i < numThinkerLists; ++i)
     {
-        thinkerlist_t*      list = thinkerLists[i];
+        thinkerlist_t* list = thinkerLists[i];
 
         if(list->isPublic && !(flags & 0x1))
             continue;
         if(!list->isPublic && !(flags & 0x2))
             continue;
 
-        if((result = iterateThinkers(list, callback, context)) == 0)
-            break;
+        result = iterateThinkers(list, callback, context);
+        if(result) break;
     }
     return result;
-    }
 }
 
 /**
@@ -459,9 +455,7 @@ void DD_ThinkerSetStasis(thinker_t* th, boolean on)
 /**
  * Part of the Doomsday public API.
  */
-boolean DD_IterateThinkers(think_t func,
-                           boolean (*callback) (thinker_t*, void*),
-                           void* context)
+int DD_IterateThinkers(think_t func, int (*callback) (thinker_t*, void*), void* context)
 {
     return P_IterateThinkers(func, 0x1, callback, context);
 }

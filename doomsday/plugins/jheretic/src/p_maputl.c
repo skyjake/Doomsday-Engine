@@ -69,7 +69,7 @@ extern mobj_t *tmThing;
  * If more than one linedef is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
+static int PIT_ApplyTorque(linedef_t* ld, void* data)
 {
     mobj_t*             mo = tmThing;
     float               dist;
@@ -78,11 +78,11 @@ static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
     float               d1[2], vtx[2];
 
     if(tmThing->player)
-        return true; // Skip players!
+        return false; // Skip players!
 
     if(!(frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR)) ||
        !(backsec = P_GetPtrp(ld, DMU_BACK_SECTOR)))
-        return true; // Shouldn't ever happen.
+        return false; // Shouldn't ever happen.
 
     ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
     bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
@@ -143,7 +143,7 @@ static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
         mo->mom[MY] += y;
     }
 
-    return true;
+    return false;
 }
 
 /**

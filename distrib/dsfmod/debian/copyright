@@ -1,0 +1,29 @@
+Format: http://dep.debian.net/deps/dep5
+Upstream-Name: deng
+Source: http://dengine.net/
+
+Files: *
+Copyright: 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+License: GPL-2.0+
+
+Files: debian/*
+Copyright: 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+License: GPL-3.0+
+
+Files: libfmod.so libfmod64.so
+Copyright: Firelight Technologies Pty, Ltd., 1994-2011.
+License: FMOD Non-Commercial License
+ - No license fees for non-commercial applications.
+ .
+ Conditions/Limitations:
+ - When using this license, the FMOD library cannot be used for resale or 
+   other commercial distribution.
+ - This license cannot be used for titles which do not make profit but are
+   still commercially released.
+ - This license cannot be used for commercial services, where the executable
+   containing fmod is not sold, but the data is.
+ - When using FMOD, a credit line is required in either documentation, or 
+   'on screen' format (if possible). It should contain at least the words 
+   'FMOD Sound System' and 'Firelight Technologies'. Logos are available 
+   for box or manual art, but are not mandatory.
+

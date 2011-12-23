@@ -77,14 +77,14 @@ void Rend_ShadowRegister(void)
  *
  * @return              @c true, if iteration should continue.
  */
-static boolean Rend_ShadowIterator(sector_t *sector, void *data)
+static int Rend_ShadowIterator(sector_t *sector, void *data)
 {
     plane_t           **highest = (plane_t**) data;
     plane_t            *compare = sector->SP_plane(PLN_FLOOR);
 
     if(compare->visHeight > (*highest)->visHeight)
         *highest = compare;
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static void processMobjShadow(mobj_t* mo)

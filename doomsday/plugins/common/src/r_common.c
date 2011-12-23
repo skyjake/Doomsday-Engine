@@ -279,30 +279,23 @@ void R_CycleGammaLevel(void)
  * sharp camera position and angles are available when the new sharp world is
  * saved.
  *
- * @note  Currently this assumes that there is only a single local player and
- *        a single viewport visible at a time. For multiple local players
- *        there should be a separate DD_VIEW_* variables.
- *
  * @param player  Player # to update.
  */
 void R_UpdateConsoleView(int player)
 {
-    float viewPos[3], viewPitch;
-    angle_t viewAngle;
-    player_t* plr = &players[player];
+    float viewOrigin[3];
+    player_t* plr;
+    mobj_t* mo;
 
-    if(IS_DEDICATED || player < 0 || player >= MAXPLAYERS)
-        return;
+    if(IS_DEDICATED || player < 0 || player >= MAXPLAYERS) return;
+    plr = &players[player];
+    mo = plr->plr->mo;
+    if(!mo || !plr->plr->inGame) return; // Not present?
 
-    viewPos[VX] = plr->plr->mo->pos[VX] + plr->viewOffset[VX];
-    viewPos[VY] = plr->plr->mo->pos[VY] + plr->viewOffset[VY];
-    viewPos[VZ] = plr->viewZ + plr->viewOffset[VZ];
-    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
-    viewPitch = plr->plr->lookDir;
-
-    DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
-    DD_SetVariable(DD_VIEW_Y, &viewPos[VY]);
-    DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
-    DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
-    DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
+    viewOrigin[VX] = mo->pos[VX] + plr->viewOffset[VX];
+    viewOrigin[VY] = mo->pos[VY] + plr->viewOffset[VY];
+    viewOrigin[VZ] = plr->viewZ + plr->viewOffset[VZ];
+    R_SetViewOrigin(player, viewOrigin);
+    R_SetViewAngle(player, mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
+    R_SetViewPitch(player, plr->plr->lookDir);
 }

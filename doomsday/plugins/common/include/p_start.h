@@ -140,9 +140,13 @@ extern int bossSpotCount;
 void            P_Init(void);
 mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
 void            P_SpawnPlayers(void);
-void            P_MoveThingsOutOfWalls();
+
+#if __JHERETIC__ || __JHEXEN__
+void P_MoveThingsOutOfWalls(void);
+#endif
+
 #if __JHERETIC__
-void            P_TurnGizmosAwayFromDoors();
+void            P_TurnGizmosAwayFromDoors(void);
 #endif
 
 #if __JHERETIC__

@@ -81,6 +81,11 @@ static boolean noRndPitch;
 
 // CODE --------------------------------------------------------------------
 
+static void S_ReverbVolumeChanged(cvar_t* var)
+{
+    Sfx_UpdateReverb();
+}
+
 void S_Register(void)
 {
     // Cvars
@@ -89,7 +94,7 @@ void S_Register(void)
     C_VAR_INT("sound-rate", &sfxSampleRate, 0, 11025, 44100);
     C_VAR_INT("sound-16bit", &sfx16Bit, 0, 0, 1);
     C_VAR_INT("sound-3d", &sfx3D, 0, 0, 1);
-    C_VAR_FLOAT("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10);
+    C_VAR_FLOAT2("sound-reverb-volume", &sfxReverbStrength, 0, 0, 10, S_ReverbVolumeChanged);
 
     // Ccmds
     C_CMD_FLAGS("playsound", NULL, PlaySound, CMDF_NO_DEDICATED);
@@ -113,9 +118,17 @@ boolean S_InitDriver(audiodriver_e drvid)
         audioDriver = &audiod_dummy;
         break;
 
+#ifndef DENG_DISABLE_SDLMIXER
     case AUDIOD_SDL_MIXER:
         Con_Printf("SDLMixer\n");
         audioDriver = &audiod_sdlmixer;
+        break;
+#endif
+
+    case AUDIOD_FMOD:
+        Con_Printf("FMOD Ex\n");
+        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
+            return false;
         break;
 
     case AUDIOD_OPENAL:
@@ -158,11 +171,15 @@ boolean S_Init(void)
     if(ArgExists("-nosound"))
         return true;
 
-    // First let's set up the drivers. First we much choose which one we
-    // want to use.
+    // First let's set up the drivers. First we must choose which one we want to use.
     if(isDedicated || ArgExists("-dummy"))
     {
+        // No audio output.
         ok = S_InitDriver(AUDIOD_DUMMY);
+    }
+    else if(ArgExists("-fmod"))
+    {
+        ok = S_InitDriver(AUDIOD_FMOD);
     }
     else if(ArgExists("-oal"))
     {
@@ -178,12 +195,26 @@ boolean S_Init(void)
         ok = S_InitDriver(AUDIOD_WINMM);
     }
 #endif
-    else
-    {   // The default audio driver, sdl_mixer.
+#ifndef DENG_DISABLE_SDLMIXER
+    else if(ArgExists("-sdlmixer"))
+    {
         ok = S_InitDriver(AUDIOD_SDL_MIXER);
     }
+#endif
+    else
+    {
+        // Use the default audio driver.
+        ok = S_InitDriver(AUDIOD_FMOD);
+        if(!ok)
+        {
+#ifndef DENG_DISABLE_SDLMIXER
+            // Fallback option for the default driver.
+            ok = S_InitDriver(AUDIOD_SDL_MIXER);
+#endif
+        }
+    }
 
-    // Did we succeed?
+    // Did we manage to load a driver?
     if(!ok)
     {
         Con_Message("S_Init: Driver init failed. Sound is disabled.\n");
@@ -196,8 +227,7 @@ boolean S_Init(void)
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
-    Con_Message("S_Init: %s.\n", sfxOK &&
-                musOK ? "OK" : "Errors during initialization.");
+    Con_Message("S_Init: %s.\n", (sfxOK && musOK? "OK" : "Errors during initialization."));
     return (sfxOK && musOK);
 }
 

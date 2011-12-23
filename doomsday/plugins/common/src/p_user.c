@@ -473,7 +473,7 @@ void P_MovePlayer(player_t *player)
 
     if(!plrmo) return;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // Server starts the walking animation for remote players.
         if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
@@ -1313,6 +1313,22 @@ void P_PlayerThinkWeapons(player_t* player)
     weapontype_t        oldweapon = player->pendingWeapon;
     weapontype_t        newweapon = WT_NOCHANGE;
 
+    if(IS_NETWORK_SERVER)
+    {
+        if(brain->changeWeapon != WT_NOCHANGE)
+        {
+            // Weapon change logic has already been done by the client.
+            newweapon = brain->changeWeapon;
+
+            if(!player->weapons[newweapon].owned)
+            {
+                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
+                            (int)(player - players), newweapon);
+                newweapon = WT_NOCHANGE;
+            }
+        }
+    }
+    else
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
     if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
@@ -1321,7 +1337,7 @@ void P_PlayerThinkWeapons(player_t* player)
 #endif
     {
         // Direct slot selection.
-        weapontype_t        cand, first;
+        weapontype_t cand, first;
 
         // Is this a same-slot weapon cycle?
         if(P_GetWeaponSlot(brain->changeWeapon) ==
@@ -1382,7 +1398,7 @@ void P_PlayerThinkWeapons(player_t* player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    if(IS_NETGAME && IS_SERVER && player != &players[CONSOLEPLAYER])
+    if(IS_NETWORK_SERVER && player != &players[CONSOLEPLAYER])
     {
         // Clients send use requests instead.
         return;
@@ -1648,7 +1664,44 @@ void P_PlayerThinkPowers(player_t* player)
 }
 
 /**
- * Handles the updating of the player's view angles depending on the game
+ * Handles the updating of the player's yaw view angle depending on the game
+ * input controllers. Control states are queried from the engine. Note
+ * that this is done once per sharp tic so that behavior conforms to the
+ * original engine.
+ *
+ * @param player        Player doing the thinking.
+ */
+void P_PlayerThinkLookYaw(player_t* player)
+{
+    int playerNum = player - players;
+    ddplayer_t* plr = player->plr;
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
+    float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
+    float vel, off, turnSpeedPerTic;
+
+    if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
+        return;
+
+    turnSpeedPerTic = pClassInfo->turnSpeed[0];
+
+    // Check for extra speed.
+    P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
+    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
+    {   // Hurry, good man!
+        turnSpeedPerTic = pClassInfo->turnSpeed[1];
+    }
+
+    // Yaw.
+    if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
+    {
+        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+        plr->mo->angle -= FLT2FIX(turnSpeedPerTic * vel) +
+            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
+    }
+}
+
+/**
+ * Handles the updating of the player's view pitch angle depending on the game
  * input controllers. Control states are queried from the engine. Note
  * that this is done as often as possible (i.e., on every frame) so that
  * changes will be smooth and lag-free.
@@ -1658,33 +1711,15 @@ void P_PlayerThinkPowers(player_t* player)
  *                      Note that original game logic was always using a
  *                      tick duration of 1/35 seconds.
  */
-void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
+void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
 {
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
-    float vel, off, turnSpeed;
+    float vel, off;
     float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
-
-    turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
-
-    // Check for extra speed.
-    P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
-    {   // Hurry, good man!
-        turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
-    }
-
-    // Yaw.
-    if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
-    {
-        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
-            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
-    }
 
     // Look center requested?
     if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
@@ -1937,7 +1972,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookAround(player, ticLength);
+    P_PlayerThinkLookPitch(player, ticLength);
 
     P_PlayerRemoteMove(player);
 
@@ -1951,6 +1986,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     player->worldTimer++;
 #endif
 
+    P_PlayerThinkLookYaw(player);
     P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 

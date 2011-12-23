@@ -327,7 +327,7 @@ typedef struct {
     sidedefsurfaceid_t  ssurfaceID;
 } findmaterialchangerparams_t;
 
-boolean findMaterialChanger(thinker_t* th, void* data)
+int findMaterialChanger(thinker_t* th, void* data)
 {
     materialchanger_t*  mchanger = (materialchanger_t*) th;
     findmaterialchangerparams_t* params =
@@ -335,9 +335,9 @@ boolean findMaterialChanger(thinker_t* th, void* data)
 
     if(mchanger->side == params->side &&
        mchanger->ssurfaceID == params->ssurfaceID)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
-    return true; // Keep looking.
+    return false; // Keep looking.
 }
 
 void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
@@ -349,7 +349,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     params.ssurfaceID = ssurfaceID;
 
     // See if a material change has already been queued.
-    if(!DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+    if(DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
         return;
 
     P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);

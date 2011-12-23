@@ -1,4 +1,4 @@
-/**\file
+/**\file p_objlink.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,13 @@
  */
 
 /**
- * r_objlink.h: Objlink management.
+ * p_objlink.c: Objlink management.
+ *
+ * Object => Subsector contacts and object => Subsector spreading.
  */
 
-#ifndef __DOOMSDAY_OBJLINK_H__
-#define __DOOMSDAY_OBJLINK_H__
+#ifndef LIBDENG_OBJLINK_BLOCKMAP_H
+#define LIBDENG_OBJLINK_BLOCKMAP_H
 
 typedef enum {
     OT_MOBJ,
@@ -35,22 +37,61 @@ typedef enum {
     NUM_OBJ_TYPES
 } objtype_t;
 
-void            R_InitObjLinksForMap(void);
-void            R_ClearObjLinksForFrame(void);
+#define VALID_OBJTYPE(val) ((val) >= OT_MOBJ && (val) < NUM_OBJ_TYPES)
 
-void            R_ObjLinkCreate(void* obj, objtype_t type);
-void            R_LinkObjs(void);
-void            R_InitForSubsector(subsector_t* ssec);
-void            R_InitForNewFrame(void);
+/**
+ * Construct the objlink blockmap for the current map.
+ */
+void R_InitObjlinkBlockmapForMap(void);
+
+/**
+ * Initialize the object => Subsector contact lists, ready for linking to
+ * objects. To be called at the beginning of a new world frame.
+ */
+void R_InitForNewFrame(void);
+
+/**
+ * To be called at the begining of a render frame to clear the objlink
+ * blockmap prior to linking objects for the new viewer.
+ */
+void R_ClearObjlinksForFrame(void);
+
+/**
+ * Create a new object link of the specified @a type in the objlink blockmap.
+ */
+void R_ObjlinkCreate(void* object, objtype_t type);
+
+/**
+ * To be called at the beginning of a render frame to link all objects
+ * into the objlink blockmap.
+ */
+void R_LinkObjs(void);
+
+/**
+ * Spread object => Subsector links for the given @a subsector. Note that
+ * all object types will be spread at this time.
+ */
+void R_InitForSubsector(subsector_t* subsector);
 
 typedef struct {
-    void*               obj;
-    objtype_t           type;
+    void* obj;
+    objtype_t type;
 } linkobjtossecparams_t;
 
-boolean         RIT_LinkObjToSubSector(subsector_t* subsector, void* params);
+/**
+ * Create a new object => Subsector contact in the objlink blockmap.
+ * Can be used as an iterator.
+ *
+ * @params paramaters  @see linkobjtossecparams_t
+ * @return  @c true (always).
+ */
+boolean RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);
 
-boolean         R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
-                                           boolean (*func) (void*, void*),
-                                           void* data);
-#endif
+/**
+ * Traverse the list of objects of the specified @a type which have been linked
+ * with @a subsector for the current render frame.
+ */
+boolean R_IterateSubsectorContacts(subsector_t* subsector, objtype_t type,
+    boolean (*func) (void* object, void* paramaters), void* paramaters);
+
+#endif /* LIBDENG_OBJLINK_BLOCKMAP_H */
