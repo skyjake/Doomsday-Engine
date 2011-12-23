@@ -60,6 +60,7 @@ class Changes:
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
         logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
+        logText = logText.replace('&', '&amp;')
         logText = logText.replace(u'ä', u'&auml;')
         logText = logText.replace(u'ö', u'&ouml;')
         logText = logText.replace(u'Ä', u'&Auml;')
@@ -67,7 +68,6 @@ class Changes:
         logText = logText.encode('utf-8')
         logText = logText.replace('<', '&lt;')
         logText = logText.replace('>', '&gt;')
-        logText = logText.replace('&', '&amp;')
         
         os.remove(tmpName)        
 
