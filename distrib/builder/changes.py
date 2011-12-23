@@ -41,6 +41,12 @@ class Changes:
         self.toTag = toTag
         self.parse()
         
+    def should_ignore(self, subject):
+        if subject.startswith("Merge branch 'master'"):
+            # master->master merges are not listed.
+            return True
+        return False
+        
     def parse(self):
         tmpName = '__ctmp'
 
@@ -78,7 +84,8 @@ class Changes:
             entry.setSubject(logText[pos+11:end])
 
             # Debian changelog just gets the subjects.
-            if entry.subject not in self.debChangeEntries:
+            if entry.subject not in self.debChangeEntries and not \
+                self.should_ignore(entry.subject):
                 self.debChangeEntries.append(entry.subject)
 
             # Author.
@@ -106,7 +113,8 @@ class Changes:
             end = logText.find('[[/Message]]', pos)
             entry.setMessage(logText[pos+11:end])            
             
-            self.entries.append(entry)
+            if not self.should_ignore(entry.subject):
+                self.entries.append(entry)
         
         
     def generate(self, format):
