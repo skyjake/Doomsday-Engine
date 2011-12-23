@@ -56,3 +56,4 @@ Flag { ID = "mf2_dontdraw"; Value = 0x100000; }
 
 # Mobj flags3:
 Flag { ID = "mf3_noinfight"; Value = 0x1; }
+Flag { ID = "mf3_clientaction"; Value = 0x2; }
