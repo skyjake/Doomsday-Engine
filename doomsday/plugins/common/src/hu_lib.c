@@ -376,7 +376,7 @@ static void updateWidgetGeometry(uiwidget_t* obj)
 void UIGroup_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i, x, y, numDrawnWidgets = 0;
+    int i, x, y, numVisibleChildWidgets = 0;
     assert(obj && obj->type == GUI_GROUP);
 
     obj->geometry.size.width = obj->geometry.size.height = 0;
@@ -394,6 +394,8 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
         if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
            UIWidget_Opacity(child) > 0)
         {
+            numVisibleChildWidgets++;
+
             updateWidgetGeometry(child);
             child->geometry.origin.x += x;
             child->geometry.origin.y += y;
@@ -445,12 +447,12 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
         }
     }
 
-    if(0 != numDrawnWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
+    if(0 != numVisibleChildWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
     {
         if(!(grp->flags & UWGF_VERTICAL))
-            obj->geometry.size.width  += (numDrawnWidgets-1) * grp->padding;
+            obj->geometry.size.width  += (numVisibleChildWidgets-1) * grp->padding;
         else
-            obj->geometry.size.height += (numDrawnWidgets-1) * grp->padding;
+            obj->geometry.size.height += (numVisibleChildWidgets-1) * grp->padding;
     }
 }
 
