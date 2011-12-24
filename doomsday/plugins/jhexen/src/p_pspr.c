@@ -1203,6 +1203,8 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     float       slope;
     int         damage, useMana;
 
+    if(IS_CLIENT) return;
+
     damage = 40 + (P_Random() & 15) + (P_Random() & 7);
     power = 0;
     if(plr->ammo[AT_BLUEMANA].owned > 0)
