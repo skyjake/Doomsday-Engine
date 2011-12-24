@@ -276,7 +276,7 @@ void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (0)
@@ -323,7 +323,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, chainYOffset, 0);
 
@@ -419,7 +419,7 @@ void SBarChain_UpdateGeometry(uiwidget_t* obj)
  * \todo There is a whole lot of constants in here. What if someone wants to
  * replace the statusbar with new patches?
  */
-void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define WIDTH       (ST_WIDTH)
 #define HEIGHT      (ST_HEIGHT)
@@ -436,7 +436,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
 
     if(!(iconAlpha < 1))
@@ -639,7 +639,7 @@ void ST_Ticker(timespan_t ticLength)
     }
 }
 
-void SBarInventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarInventory_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -653,7 +653,7 @@ void SBarInventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
 
     Hu_InventoryDraw2(obj->player, -ST_WIDTH/2 + ST_INVENTORYX, -ST_HEIGHT + yOffset + ST_INVENTORYY, iconAlpha);
@@ -694,7 +694,7 @@ void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -719,7 +719,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -775,7 +775,7 @@ void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
     hlth->value = plr->health;
 }
 
-void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -800,7 +800,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -855,7 +855,7 @@ void Armor_Ticker(uiwidget_t* obj, timespan_t ticLength)
     armor->value = plr->armorPoints;
 }
 
-void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -881,7 +881,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -937,7 +937,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     kslt->patchId = plr->keys[kslt->keytypeA] ? pKeys[kslt->keytypeA] : 0;
 }
 
-void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
@@ -961,7 +961,7 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1015,7 +1015,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1041,7 +1041,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1108,7 +1108,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX             (-ST_WIDTH/2)
 #define ORIGINY             (-ST_HEIGHT)
@@ -1129,7 +1129,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1190,7 +1190,7 @@ void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT*hud->showBar)
@@ -1224,7 +1224,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-        DGL_Translatef(origin->x, origin->y, 0);
+        if(offset) DGL_Translatef(offset->x, offset->y, 0);
         DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1358,7 +1358,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Flight_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Flight_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
 
@@ -1371,7 +1371,7 @@ void Flight_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
-        DGL_Translatef(origin->x, origin->y, 0);
+        if(offset) DGL_Translatef(offset->x, offset->y, 0);
         DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1437,7 +1437,7 @@ void Tome_Ticker(uiwidget_t* obj, timespan_t ticLength)
     }
 }
 
-void Tome_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Tome_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_tomeofpower_t* tome = (guidata_tomeofpower_t*)obj->typedata;
 
@@ -1447,7 +1447,7 @@ void Tome_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     if(tome->patchId != 0)
@@ -1459,7 +1459,7 @@ void Tome_Drawer(uiwidget_t* obj, const Point2Raw* origin)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, alpha);
-        GL_DrawPatchXY(tome->patchId, -13, 13);
+        GL_DrawPatchXY(tome->patchId, 13, 13);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1479,7 +1479,7 @@ void Tome_Drawer(uiwidget_t* obj, const Point2Raw* origin)
         FR_SetFont(obj->font);
         FR_SetTracking(TRACKING);
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-        FR_DrawTextXY3(buf, 0, 25 + 2, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY2(buf, 26, 26 - 2, ALIGN_BOTTOMRIGHT);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1506,25 +1506,8 @@ void Tome_UpdateGeometry(uiwidget_t* obj)
     if(tome->patchId != 0)
     {
         // \fixme Determine the actual center point of the animation at widget creation time.
-        obj->geometry.size.width  += 25;
-        obj->geometry.size.height += 25;
-    }
-
-    if(tome->countdownSeconds != 0)
-    {
-#define TRACKING            (2)
-
-        char buf[20];
-        int w;
-        dd_snprintf(buf, 20, "%i", tome->countdownSeconds);
-        FR_SetFont(obj->font);
-        FR_SetTracking(TRACKING);
-        w = FR_TextWidth(buf);
-        if(w > obj->geometry.size.width)
-            obj->geometry.size.width += w;
-        obj->geometry.size.height += FR_TextHeight(buf) + 2;
-
-#undef TRACKING
+        obj->geometry.size.width  += 26;
+        obj->geometry.size.height += 26;
     }
 
     obj->geometry.size.width  *= cfg.hudScale;
@@ -1581,7 +1564,7 @@ static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 }
 */
 
-void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
@@ -1593,7 +1576,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1623,7 +1606,7 @@ void ReadyAmmoIcon_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height = info.geometry.size.height * cfg.hudScale;
 }
 
-void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define TRACKING                (1)
 
@@ -1640,14 +1623,14 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextXY3(buf, 0, -2, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, -2);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1681,7 +1664,7 @@ void ReadyAmmo_UpdateGeometry(uiwidget_t* obj)
 #undef TRACKING
 }
 
-void Health_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Health_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define TRACKING                (1)
 
@@ -1696,7 +1679,7 @@ void Health_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     dd_snprintf(buf, 5, "%i", health);
@@ -1706,10 +1689,10 @@ void Health_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(0, 0, 0, textAlpha * .4f);
-    FR_DrawTextXY3(buf, 2, 1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 2, 1);
 
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, -1, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, -1);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1743,7 +1726,7 @@ void Health_UpdateGeometry(uiwidget_t* obj)
 #undef TRACKING
 }
 
-void Armor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Armor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define TRACKING                (1)
 
@@ -1760,14 +1743,14 @@ void Armor_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextXY3(buf, -1, -11, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, -2); /// \todo Why is an offset needed?
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1801,7 +1784,7 @@ void Armor_UpdateGeometry(uiwidget_t* obj)
 #undef TRACKING
 }
 
-void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Keys_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
@@ -1814,14 +1797,14 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     if(keys->keyBoxes[KT_YELLOW])
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[0], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[0], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[0], &pInfo))
@@ -1832,7 +1815,7 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[1], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[1], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[1], &pInfo))
@@ -1843,7 +1826,7 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[2], x, 0, ALIGN_BOTTOMLEFT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pKeys[2], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -1910,7 +1893,7 @@ void Keys_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height *= cfg.hudScale;
 }
 
-void Frags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Frags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define TRACKING                (1)
 
@@ -1927,14 +1910,14 @@ void Frags_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1969,7 +1952,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
 #undef TRACKING
 }
 
-void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define TRACKING                (2)
 
@@ -1987,7 +1970,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
     if(item->patchId != 0)
@@ -2001,9 +1984,9 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatchXY3(pInvItemBox, 0, 0, ALIGN_BOTTOMRIGHT, DPF_NO_OFFSET);
+        GL_DrawPatchXY3(pInvItemBox, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY(item->patchId, -boxInfo.geometry.size.width + xOffset, -boxInfo.geometry.size.height + yOffset);
+        GL_DrawPatchXY(item->patchId, xOffset, yOffset);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -2019,7 +2002,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* origin)
             FR_SetTracking(TRACKING);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
-            FR_DrawTextXY3(buf, -1, -7, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+            FR_DrawTextXY2(buf, boxInfo.geometry.size.width-1, boxInfo.geometry.size.height-3, ALIGN_BOTTOMRIGHT);
             DGL_Disable(DGL_TEXTURE_2D);
         }
     }
@@ -2047,7 +2030,7 @@ void ReadyItem_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.height = boxInfo.geometry.size.height * cfg.hudScale;
 }
 
-void Inventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Inventory_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
 #define INVENTORY_HEIGHT    29
 #define EXTRA_SCALE         .75f
@@ -2061,7 +2044,7 @@ void Inventory_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(EXTRA_SCALE * cfg.hudScale, EXTRA_SCALE * cfg.hudScale, 1);
 
     Hu_InventoryDraw(obj->player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
@@ -2104,7 +2087,7 @@ void Kills_Ticker(uiwidget_t* obj, timespan_t ticLength)
     kills->value = plr->killCount;
 }
 
-void Kills_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Kills_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -2123,19 +2106,21 @@ void Kills_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     }
     if(cfg.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""), totalKills ? kills->value * 100 / totalKills : 100, (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""),
+                totalKills ? kills->value * 100 / totalKills : 100,
+                (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2163,14 +2148,16 @@ void Kills_UpdateGeometry(uiwidget_t* obj)
     }
     if(cfg.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""), totalKills ? kills->value * 100 / totalKills : 100, (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_KILLS ? "(" : ""),
+                totalKills ? kills->value * 100 / totalKills : 100,
+                (cfg.hudShownCheatCounters & CCH_KILLS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
 void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2182,7 +2169,7 @@ void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
     items->value = plr->itemCount;
 }
 
-void Items_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Items_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_items_t* items = (guidata_items_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -2201,19 +2188,21 @@ void Items_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     }
     if(cfg.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""), totalItems ? items->value * 100 / totalItems : 100, (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""),
+                totalItems ? items->value * 100 / totalItems : 100,
+                (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2241,14 +2230,16 @@ void Items_UpdateGeometry(uiwidget_t* obj)
     }
     if(cfg.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""), totalItems ? items->value * 100 / totalItems : 100, (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_ITEMS ? "(" : ""),
+                totalItems ? items->value * 100 / totalItems : 100,
+                (cfg.hudShownCheatCounters & CCH_ITEMS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
 void Secrets_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -2260,7 +2251,7 @@ void Secrets_Ticker(uiwidget_t* obj, timespan_t ticLength)
     scrt->value = plr->secretCount;
 }
 
-void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
@@ -2279,19 +2270,21 @@ void Secrets_Drawer(uiwidget_t* obj, const Point2Raw* origin)
     }
     if(cfg.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""), totalSecret ? scrt->value * 100 / totalSecret : 100, (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""),
+                totalSecret ? scrt->value * 100 / totalSecret : 100,
+                (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.hudCheatCounterScale, cfg.hudCheatCounterScale, 1);
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    FR_DrawTextXY3(buf, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2319,17 +2312,19 @@ void Secrets_UpdateGeometry(uiwidget_t* obj)
     }
     if(cfg.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""), totalSecret ? scrt->value * 100 / totalSecret : 100, (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.hudShownCheatCounters & CCH_SECRETS ? "(" : ""),
+                totalSecret ? scrt->value * 100 / totalSecret : 100,
+                (cfg.hudShownCheatCounters & CCH_SECRETS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     FR_SetFont(obj->font);
     FR_TextSize(&obj->geometry.size, buf);
-    obj->geometry.size.width  *= cfg.hudCheatCounterScale;
-    obj->geometry.size.height *= cfg.hudCheatCounterScale;
+    obj->geometry.size.width  = .5f + obj->geometry.size.width  * cfg.hudCheatCounterScale;
+    obj->geometry.size.height = .5f + obj->geometry.size.height * cfg.hudCheatCounterScale;
 }
 
-void MapName_Drawer(uiwidget_t* obj, const Point2Raw* origin)
+void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     const float scale = .75f;
     const float textAlpha = uiRendState->pageAlpha;
@@ -2340,7 +2335,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* origin)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(origin->x, origin->y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(scale, scale, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -2369,23 +2364,6 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     obj->geometry.size.width  *= scale;
     obj->geometry.size.height *= scale;
 }
-
-typedef struct {
-    guiwidgettype_t type;
-    int group;
-    gamefontid_t fontIdx;
-    void (*updateGeometry) (uiwidget_t* obj);
-    void (*drawer) (uiwidget_t* obj, const Point2Raw* origin);
-    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
-    void* typedata;
-} uiwidgetdef_t;
-
-typedef struct {
-    int group;
-    int alignFlags;
-    int groupFlags;
-    int padding; // In fixed 320x200 pixels.
-} uiwidgetgroupdef_t;
 
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
@@ -2820,7 +2798,25 @@ void ST_Stop(int player)
 
 void ST_BuildWidgets(int player)
 {
-#define PADDING 2 // In fixed 320x200 units.
+#define PADDING             (2) /// Units in fixed 320x200 screen space.
+
+typedef struct {
+    int group;
+    int alignFlags;
+    int groupFlags;
+    int padding; // In fixed 320x200 pixels.
+} uiwidgetgroupdef_t;
+
+typedef struct {
+    guiwidgettype_t type;
+    int alignFlags;
+    int group;
+    gamefontid_t fontIdx;
+    void (*updateGeometry) (uiwidget_t* obj);
+    void (*drawer) (uiwidget_t* obj, const Point2Raw* offset);
+    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
+    void* typedata;
+} uiwidgetdef_t;
 
     hudstate_t* hud = hudStates + player;
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
@@ -2832,38 +2828,38 @@ void ST_BuildWidgets(int player)
         { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_LEFTTORIGHT },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT },
         { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
-        { GUI_BOX,          UWG_STATUSBAR,    0,            SBarBackground_UpdateGeometry, SBarBackground_Drawer },
-        { GUI_INVENTORY,    UWG_STATUSBAR,    GF_SMALLIN,   SBarInventory_UpdateGeometry, SBarInventory_Drawer },
-        { GUI_FRAGS,        UWG_STATUSBAR,    GF_STATUS,    SBarFrags_UpdateGeometry, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
-        { GUI_HEALTH,       UWG_STATUSBAR,    GF_STATUS,    SBarHealth_UpdateGeometry, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
-        { GUI_ARMOR,        UWG_STATUSBAR,    GF_STATUS,    SBarArmor_UpdateGeometry, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
-        { GUI_KEYSLOT,      UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
-        { GUI_READYAMMO,    UWG_STATUSBAR,    GF_STATUS,    SBarReadyAmmo_UpdateGeometry, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
-        { GUI_READYAMMOICON, UWG_STATUSBAR,   0,            SBarReadyAmmoIcon_UpdateGeometry, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
-        { GUI_READYITEM,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateGeometry, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
-        { GUI_CHAIN,        UWG_STATUSBAR,    0,            SBarChain_UpdateGeometry, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        { GUI_MAPNAME,      UWG_MAPNAME,      GF_FONTB,     MapName_UpdateGeometry, MapName_Drawer },
-        { GUI_READYAMMOICON, UWG_TOPLEFT,     0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
-        { GUI_READYAMMO,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
-        { GUI_FLIGHT,       UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },
-        { GUI_TOME,         UWG_TOPRIGHT,     GF_SMALLIN,   Tome_UpdateGeometry, Tome_Drawer, Tome_Ticker, &hud->tome },
-        { GUI_HEALTH,       UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
-        { GUI_KEYS,         UWG_BOTTOMLEFT,   0,            Keys_UpdateGeometry, Keys_Drawer, Keys_Ticker, &hud->keys },
-        { GUI_ARMOR,        UWG_BOTTOMLEFT,   GF_STATUS,    Armor_UpdateGeometry, Armor_Drawer, Armor_Ticker, &hud->armor },
-        { GUI_FRAGS,        UWG_BOTTOMLEFT2,  GF_STATUS,    Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
-        { GUI_READYITEM,    UWG_BOTTOMRIGHT,  GF_SMALLIN,   ReadyItem_UpdateGeometry, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
-        { GUI_INVENTORY,    UWG_BOTTOMCENTER, GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
-        { GUI_SECRETS,      UWG_COUNTERS,     GF_FONTA,     Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
-        { GUI_ITEMS,        UWG_COUNTERS,     GF_FONTA,     Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
-        { GUI_KILLS,        UWG_COUNTERS,     GF_FONTA,     Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
+        { GUI_BOX,          ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            SBarBackground_UpdateGeometry, SBarBackground_Drawer },
+        { GUI_INVENTORY,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarInventory_UpdateGeometry, SBarInventory_Drawer },
+        { GUI_FRAGS,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_STATUS,    SBarFrags_UpdateGeometry, SBarFrags_Drawer, Frags_Ticker, &hud->sbarFrags },
+        { GUI_HEALTH,       ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_STATUS,    SBarHealth_UpdateGeometry, SBarHealth_Drawer, Health_Ticker, &hud->sbarHealth },
+        { GUI_ARMOR,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_STATUS,    SBarArmor_UpdateGeometry, SBarArmor_Drawer, Armor_Ticker, &hud->sbarArmor },
+        { GUI_KEYSLOT,      ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[0] },
+        { GUI_KEYSLOT,      ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[1] },
+        { GUI_KEYSLOT,      ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            KeySlot_UpdateGeometry, KeySlot_Drawer, KeySlot_Ticker, &hud->sbarKeyslots[2] },
+        { GUI_READYAMMO,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_STATUS,    SBarReadyAmmo_UpdateGeometry, SBarReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->sbarReadyammo },
+        { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarReadyAmmoIcon_UpdateGeometry, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
+        { GUI_READYITEM,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateGeometry, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
+        { GUI_CHAIN,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            SBarChain_UpdateGeometry, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
+        { GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTB,     MapName_UpdateGeometry, MapName_Drawer },
+        { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_TOPLEFT,      0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
+        { GUI_READYAMMO,    ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
+        { GUI_FLIGHT,       ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },
+        { GUI_TOME,         ALIGN_TOPRIGHT,   UWG_TOPRIGHT,     GF_SMALLIN,   Tome_UpdateGeometry, Tome_Drawer, Tome_Ticker, &hud->tome },
+        { GUI_HEALTH,       ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
+        { GUI_KEYS,         ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT,   0,            Keys_UpdateGeometry, Keys_Drawer, Keys_Ticker, &hud->keys },
+        { GUI_ARMOR,        ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT,   GF_STATUS,    Armor_UpdateGeometry, Armor_Drawer, Armor_Ticker, &hud->armor },
+        { GUI_FRAGS,        ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT2,  GF_STATUS,    Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
+        { GUI_READYITEM,    ALIGN_BOTTOMRIGHT, UWG_BOTTOMRIGHT, GF_SMALLIN,   ReadyItem_UpdateGeometry, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
+        { GUI_INVENTORY,    ALIGN_TOPLEFT,    UWG_BOTTOMCENTER, GF_SMALLIN,   Inventory_UpdateGeometry, Inventory_Drawer },
+        { GUI_SECRETS,      ALIGN_TOPLEFT,    UWG_COUNTERS,     GF_FONTA,     Secrets_UpdateGeometry, Secrets_Drawer, Secrets_Ticker, &hud->secrets },
+        { GUI_ITEMS,        ALIGN_TOPLEFT,    UWG_COUNTERS,     GF_FONTA,     Items_UpdateGeometry, Items_Drawer, Items_Ticker, &hud->items },
+        { GUI_KILLS,        ALIGN_TOPLEFT,    UWG_COUNTERS,     GF_FONTA,     Kills_UpdateGeometry, Kills_Drawer, Kills_Ticker, &hud->kills },
         { GUI_NONE }
     };
     size_t i;
@@ -2883,7 +2879,7 @@ void ST_BuildWidgets(int player)
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
     {
         const uiwidgetdef_t* def = &widgetDefs[i];
-        uiwidgetid_t id = GUI_CreateWidget(def->type, player, 0, FID(def->fontIdx), 1, def->updateGeometry, def->drawer, def->ticker, def->typedata);
+        uiwidgetid_t id = GUI_CreateWidget(def->type, player, def->alignFlags, FID(def->fontIdx), 1, def->updateGeometry, def->drawer, def->ticker, def->typedata);
         UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[def->group]), GUI_FindObjectById(id));
     }
 
@@ -2894,13 +2890,13 @@ void ST_BuildWidgets(int player)
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
                       GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
-    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, 0, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
+    hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
-    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, 0, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
+    hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
