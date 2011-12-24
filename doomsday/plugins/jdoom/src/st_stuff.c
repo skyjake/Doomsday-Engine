@@ -2237,8 +2237,8 @@ void Kills_Ticker(uiwidget_t* obj, timespan_t ticLength)
 void Kills_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
-    char buf[40], tmp[20];
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    char buf[40], tmp[20];
 
     if(!(cfg.hudShownCheatCounters & (CCH_KILLS | CCH_KILLS_PRCNT))) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
@@ -2927,6 +2927,13 @@ void ST_BuildWidgets(int player)
 #define PADDING             (2) /// Units in fixed 320x200 screen space.
 
 typedef struct {
+    int group;
+    int alignFlags;
+    int groupFlags;
+    int padding;
+} uiwidgetgroupdef_t;
+
+typedef struct {
     guiwidgettype_t type;
     int alignFlags;
     int group;
@@ -2936,13 +2943,6 @@ typedef struct {
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
     void* typedata;
 } uiwidgetdef_t;
-
-typedef struct {
-    int group;
-    int alignFlags;
-    int groupFlags;
-    int padding;
-} uiwidgetgroupdef_t;
 
     hudstate_t* hud = hudStates + player;
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
