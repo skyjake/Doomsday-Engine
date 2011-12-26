@@ -3059,7 +3059,7 @@ void ST_Start(int player)
      * Initialize widgets according to player preferences.
      */
 
-    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]);
     flags = UIWidget_Alignment(obj);
     flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
     if(cfg.msgAlign == 0)
@@ -3321,7 +3321,7 @@ void ST_LogUpdateAlignment(void)
         hudstate_t* hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]);
         flags = UIWidget_Alignment(obj);
         flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
