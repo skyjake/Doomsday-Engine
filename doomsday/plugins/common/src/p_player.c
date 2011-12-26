@@ -407,7 +407,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
     weaponinfo_t       *winf;
     boolean             found;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // This is done on clientside.
         NetSv_MaybeChangeWeapon(player - players, weapon, ammo, force);
@@ -570,15 +570,23 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         }
     }
 
-    // Don't change to the exisitng weapon.
+    // Don't change to the existing weapon.
     if(returnval == player->readyWeapon)
         returnval = WT_NOCHANGE;
 
     // Choosen a weapon to change to?
     if(returnval != WT_NOCHANGE)
     {
+#ifdef _DEBUG
+        Con_Message("P_MaybeChangeWeapon: Decided to change to weapon %i.\n", returnval);
+#endif
         player->pendingWeapon = returnval;
-        //player->update |= PSF_PENDING_WEAPON | PSF_READY_WEAPON;
+
+        if(IS_CLIENT)
+        {
+            // Tell the server.
+            NetCl_PlayerActionRequest(player, GPA_CHANGE_WEAPON, player->pendingWeapon);
+        }
     }
 
     return returnval;

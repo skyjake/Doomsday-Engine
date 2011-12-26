@@ -40,7 +40,7 @@ int     DS_Set(int prop, const void* ptr);
 
 }
 
-#ifdef _DEBUG
+#ifdef DENG_DSFMOD_DEBUG
 #  define DSFMOD_TRACE(args)  std::cerr << "[dsFMOD] " << args << std::endl;
 #else
 #  define DSFMOD_TRACE(args)

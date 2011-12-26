@@ -433,6 +433,10 @@ int DD_Main(void)
     if(ArgCheckWith("-connect", 1))
         Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
 
+    // Incoming TCP port.
+    if(ArgCheckWith("-port", 1))
+        Con_Executef(CMDS_CMDLINE, false, "net-ip-port %s", ArgNext());
+
     // Server start command.
     // (shortcut for -command "net init tcpip; net server start").
     if(ArgExists("-server"))

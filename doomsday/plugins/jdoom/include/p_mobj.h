@@ -137,6 +137,7 @@
 // --- mobj.flags3 ---
 
 #define MF3_NOINFIGHT       0x00000001  // Mobj will never be targeted for in-fighting
+#define MF3_CLIENTACTION    0x00000002  // States' action funcs are executed by client
 
 // --- mobj.intflags ---
 // Internal mobj flags cannot be set using an external definition.

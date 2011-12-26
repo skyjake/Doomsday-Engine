@@ -74,7 +74,7 @@ void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
 void            R_RenderViewPorts(void);
 
-const viewdata_t* R_ViewData(int localPlayerNum);
+const viewdata_t* R_ViewData(int consoleNum);
 void            R_ResetViewer(void);
 
 void            R_SetViewWindow(int x, int y, int w, int h);

@@ -962,12 +962,6 @@ desc = TCP/IP address for searching servers.
 [net-ip-port]
 desc = TCP port to use for control connections.
 
-[net-port-control]
-desc = TCP port to use for control connections.
-
-[net-port-data]
-desc = UDP port to use for client data traffic.
-
 [net-queue-show]
 desc = Monitor send queue.
 

@@ -3070,7 +3070,6 @@ static int SV_ReadFloor(floor_t* floor)
         floor->resetHeight = FIX2FLT(SV_ReadLong());
         floor->resetDelay = SV_ReadShort();
         floor->resetDelayCount = SV_ReadShort();
-        /*floor->textureChange =*/ SV_ReadByte();
 #endif
     }
     else
@@ -4257,7 +4256,8 @@ static void P_UnArchiveThinkers(void)
                 found = true;
 
                 // Not for us? (it shouldn't be here anyway!).
-                if(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT))
+                assert(!((thInfo->flags & TSF_SERVERONLY) && IS_CLIENT));
+
                 {
                     // Mobjs use a special engine-side allocator.
                     if(thInfo->thinkclass == TC_MOBJ)
@@ -5253,6 +5253,12 @@ static boolean SV_LoadGame2(void)
     // In netgames, the server tells the clients about this.
     NetSv_LoadGame(hdr.gameID);
 #endif
+
+    // Let the engine know where the local players are now.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
 
     return true; // Success!
 }
