@@ -1237,7 +1237,6 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 #define X                   (ORIGINX+ST_FRAGSX)
 #define Y                   (ORIGINY+ST_FRAGSY)
 #define MAXDIGITS           (ST_FRAGSWIDTH)
-#define TRACKING            (1)
 
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
@@ -1262,7 +1261,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1270,7 +1269,6 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1280,8 +1278,6 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
 void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 {
-#define TRACKING            (1)
-
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     char buf[20];
 
@@ -1295,12 +1291,10 @@ void SBarFrags_UpdateGeometry(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", frags->value);
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, buf);
     obj->geometry.size.width  *= cfg.statusbarScale;
     obj->geometry.size.height *= cfg.statusbarScale;
-
-#undef TRACKING
 }
 
 void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1319,7 +1313,6 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 #define X                   (ORIGINX+ST_HEALTHX)
 #define Y                   (ORIGINY+ST_HEALTHY)
 #define MAXDIGITS           (ST_HEALTHWIDTH)
-#define TRACKING            (1)
 
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
@@ -1344,7 +1337,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1352,7 +1345,6 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1362,8 +1354,6 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
 void SBarHealth_UpdateGeometry(uiwidget_t* obj)
 {
-#define TRACKING            (1)
-
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     char buf[20];
 
@@ -1377,12 +1367,10 @@ void SBarHealth_UpdateGeometry(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", hlth->value);
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, buf);
     obj->geometry.size.width  *= cfg.statusbarScale;
     obj->geometry.size.height *= cfg.statusbarScale;
-
-#undef TRACKING
 }
 
 void SBarArmor_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1406,7 +1394,6 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 #define X                   (ORIGINX+ST_ARMORX)
 #define Y                   (ORIGINY+ST_ARMORY)
 #define MAXDIGITS           (ST_ARMORWIDTH)
-#define TRACKING            (1)
 
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
@@ -1430,7 +1417,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1438,7 +1425,6 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1448,8 +1434,6 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
 void SBarArmor_UpdateGeometry(uiwidget_t* obj)
 {
-#define TRACKING            (1)
-
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     char buf[20];
 
@@ -1463,12 +1447,10 @@ void SBarArmor_UpdateGeometry(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", armor->value);
     FR_SetFont(obj->font);
-    FR_SetTracking(TRACKING);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, buf);
     obj->geometry.size.width  *= cfg.statusbarScale;
     obj->geometry.size.height *= cfg.statusbarScale;
-
-#undef TRACKING
 }
 
 void BlueMana_Ticker(uiwidget_t* obj, timespan_t ticLength)
@@ -1510,6 +1492,7 @@ void SBarBlueMana_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1539,6 +1522,7 @@ void SBarBlueMana_UpdateGeometry(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, buf);
     obj->geometry.size.width  *= cfg.statusbarScale;
     obj->geometry.size.height *= cfg.statusbarScale;
@@ -1584,6 +1568,7 @@ void SBarGreenMana_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
@@ -1613,6 +1598,7 @@ void SBarGreenMana_UpdateGeometry(uiwidget_t* obj)
 
     dd_snprintf(buf, 20, "%i", mana->value);
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, buf);
     obj->geometry.size.width  *= cfg.statusbarScale;
     obj->geometry.size.height *= cfg.statusbarScale;
@@ -1694,6 +1680,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         {
             char buf[20];
             FR_SetFont(obj->font);
+            FR_SetTracking(0);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextXY3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
@@ -2487,6 +2474,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         {
             char buf[20];
             FR_SetFont(obj->font);
+            FR_SetTracking(0);
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
             FR_DrawTextXY2(buf, boxInfo.geometry.size.width-1, boxInfo.geometry.size.height-3, ALIGN_BOTTOMRIGHT);
@@ -2592,6 +2580,7 @@ void WorldTimer_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(!ST_AutomapIsActive(obj->player)) return;
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(1, 1, 1, textAlpha);
     counterWidth = FR_TextWidth("00");
     lineHeight = FR_TextHeight("00");
@@ -2666,6 +2655,7 @@ void WorldTimer_UpdateGeometry(uiwidget_t* obj)
     if(!ST_AutomapIsActive(obj->player)) return;
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     counterWidth = FR_TextWidth("00");
     lineHeight = FR_TextHeight("00");
     spacerWidth = FR_TextWidth(" : ");
@@ -2722,6 +2712,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     FR_DrawTextXY3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
 
@@ -2742,6 +2733,7 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     if(!text) return;
 
     FR_SetFont(obj->font);
+    FR_SetTracking(0);
     FR_TextSize(&obj->geometry.size, text);
     obj->geometry.size.width  *= scale;
     obj->geometry.size.height *= scale;
