@@ -2570,7 +2570,6 @@ void WorldTimer_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 #define ORIGINX         (0)
 #define ORIGINY         (0)
 #define LEADING         (.5)
-#define DRAWFLAGS       (DTF_NO_EFFECTS)
 
     guidata_worldtimer_t* time = (guidata_worldtimer_t*)obj->typedata;
     int counterWidth, spacerWidth, lineHeight, x, y;
@@ -2583,8 +2582,8 @@ void WorldTimer_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     FR_SetTracking(0);
     FR_SetColorAndAlpha(1, 1, 1, textAlpha);
     counterWidth = FR_TextWidth("00");
-    lineHeight = FR_TextHeight("00");
-    spacerWidth = FR_TextWidth(" : ");
+    lineHeight   = FR_TextHeight("00");
+    spacerWidth  = FR_TextWidth(" : ");
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2593,37 +2592,38 @@ void WorldTimer_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    x = ORIGINX;
+    x = ORIGINX - counterWidth;
     y = ORIGINY;
     dd_snprintf(buf, 20, "%.2d", time->seconds);
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
-    x -= counterWidth + spacerWidth;
+    FR_DrawTextXY(buf, x, y);
+    x -= spacerWidth;
 
-    FR_DrawCharXY3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
+    FR_DrawCharXY2(':', x + spacerWidth/2, y, ALIGN_TOP);
+    x -= counterWidth;
 
     dd_snprintf(buf, 20, "%.2d", time->minutes);
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
-    x -= counterWidth + spacerWidth;
+    FR_DrawTextXY(buf, x, y);
+    x -= spacerWidth;
 
-    FR_DrawCharXY3(':', x + spacerWidth/2, y, ALIGN_TOP, DRAWFLAGS);
+    FR_DrawCharXY2(':', x + spacerWidth/2, y, ALIGN_TOP);
+    x -= counterWidth;
 
     dd_snprintf(buf, 20, "%.2d", time->hours);
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DRAWFLAGS);
-    x -= counterWidth;
+    FR_DrawTextXY(buf, x, y);
     y += lineHeight;
 
     if(time->days)
     {
         y += lineHeight * LEADING;
         dd_snprintf(buf, 20, "%.2d %s", time->days, time->days == 1? "day" : "days");
-        FR_DrawTextXY3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+        FR_DrawTextXY(buf, ORIGINX, y);
         y += lineHeight;
 
         if(time->days >= 5)
         {
             y += lineHeight * LEADING;
             strncpy(buf, "You Freak!!!", 20);
-            FR_DrawTextXY3(buf, ORIGINX, y, ALIGN_TOPRIGHT, DRAWFLAGS);
+            FR_DrawTextXY(buf, ORIGINX, y);
             x = -MAX_OF(abs(x), FR_TextWidth(buf));
             y += lineHeight;
         }
@@ -2633,7 +2633,6 @@ void WorldTimer_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-#undef DRAWFLAGS
 #undef LEADING
 #undef ORIGINY
 #undef ORIGINX
@@ -2657,8 +2656,8 @@ void WorldTimer_UpdateGeometry(uiwidget_t* obj)
     FR_SetFont(obj->font);
     FR_SetTracking(0);
     counterWidth = FR_TextWidth("00");
-    lineHeight = FR_TextHeight("00");
-    spacerWidth = FR_TextWidth(" : ");
+    lineHeight   = FR_TextHeight("00");
+    spacerWidth  = FR_TextWidth(" : ");
 
     x = ORIGINX;
     y = ORIGINY;
@@ -3130,7 +3129,7 @@ typedef struct {
         { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT3,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_TOPRIGHT2,    ALIGN_TOPRIGHT,    UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOPRIGHT2,    ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
