@@ -2341,7 +2341,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], textAlpha);
-    FR_DrawTextXY3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(text, 0, 0);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
