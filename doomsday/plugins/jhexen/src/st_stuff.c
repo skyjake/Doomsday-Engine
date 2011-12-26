@@ -305,13 +305,14 @@ void Flight_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Flight_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(flht->patchId == 0) return;
+    if(!plr->powers[PT_FLIGHT]) return;
 
     obj->geometry.size.width  = 32 * cfg.hudScale;
     obj->geometry.size.height = 28 * cfg.hudScale;
@@ -357,13 +358,14 @@ void Boots_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Boots_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_boots_t* boots = (guidata_boots_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(boots->patchId == 0) return;
+    if(!plr->powers[PT_SPEED]) return;
 
     obj->geometry.size.width  = 24 * cfg.hudScale;
     obj->geometry.size.height = 28 * cfg.hudScale;
@@ -373,6 +375,7 @@ void Defense_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_defense_t* dfns = (guidata_defense_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
+
     if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
     dfns->patchId = 0;
     if(!plr->powers[PT_INVULNERABILITY]) return;
@@ -409,13 +412,14 @@ void Defense_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Defense_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_defense_t* dfns = (guidata_defense_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(dfns->patchId == 0) return;
+    if(!plr->powers[PT_INVULNERABILITY]) return;
 
     obj->geometry.size.width  = 26 * cfg.hudScale;
     obj->geometry.size.height = 28 * cfg.hudScale;
@@ -463,13 +467,14 @@ void Servant_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Servant_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_servant_t* svnt = (guidata_servant_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(svnt->patchId == 0) return;
+    if(!plr->powers[PT_MINOTAUR]) return;
 
     obj->geometry.size.width  = 26 * cfg.hudScale;
     obj->geometry.size.height = 29 * cfg.hudScale;
