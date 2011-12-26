@@ -3193,6 +3193,9 @@ typedef struct {
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
                       GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT2]));
+
     hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
 
@@ -3739,18 +3742,6 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         UIWidget_SetMaximumSize(obj, &displayRegion.size);
 
         GUI_DrawWidget(obj, &displayRegion.origin);
-
-        drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-        drawnSize.height = UIWidget_Geometry(obj)->size.height;
-
-        posY = displayRegion.origin.y + (drawnSize.height > 0 ? drawnSize.height + PADDING : 0);
-        availHeight = displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height + PADDING : 0);
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT2]);
-        UIWidget_SetOpacity(obj, opacity);
-        size.width = displayRegion.size.width; size.height = availHeight;
-        UIWidget_SetMaximumSize(obj, &size);
-
-        GUI_DrawWidgetXY(obj, displayRegion.origin.x, posY);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
