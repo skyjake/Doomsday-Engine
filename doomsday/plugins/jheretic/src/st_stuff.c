@@ -97,13 +97,14 @@ enum {
     UWG_STATUSBAR = 0,
     UWG_MAPNAME,
     UWG_TOPLEFT,
+    UWG_TOPCENTER,
     UWG_TOPRIGHT,
+    UWG_TOP,
     UWG_BOTTOMLEFT,
     UWG_BOTTOMLEFT2,
     UWG_BOTTOMRIGHT,
     UWG_BOTTOMCENTER,
     UWG_BOTTOM,
-    UWG_TOP,
     UWG_COUNTERS,
     UWG_AUTOMAP,
     NUM_UIWIDGET_GROUPS
@@ -2486,31 +2487,6 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
         GUI_DrawWidget(obj, &displayRegion.origin);
 
-        drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-        drawnSize.height = UIWidget_Geometry(obj)->size.height;
-
-        if(!hud->statusbarActive)
-        {
-            obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]);
-            UIWidget_SetOpacity(obj, opacity);
-            UIWidget_SetMaximumSize(obj, &displayRegion.size);
-
-            GUI_DrawWidget(obj, &displayRegion.origin);
-
-            drawnSize.width  = UIWidget_Geometry(obj)->size.width;
-            drawnSize.height = UIWidget_Geometry(obj)->size.height;
-        }
-        else
-        {
-            drawnSize.width = 0;
-        }
-
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]);
-        UIWidget_SetOpacity(obj, opacity);
-        UIWidget_SetMaximumSize(obj, &displayRegion.size);
-
-        GUI_DrawWidget(obj, &displayRegion.origin);
-
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_COUNTERS]);
         UIWidget_SetOpacity(obj, opacity);
         UIWidget_SetMaximumSize(obj, &displayRegion.size);
@@ -2777,7 +2753,7 @@ void ST_Start(int player)
      * Initialize widgets according to player preferences.
      */
 
-    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]);
     flags = UIWidget_Alignment(obj);
     flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
     if(cfg.msgAlign == 0)
@@ -2838,6 +2814,8 @@ typedef struct {
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
+        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT },
+        { UWG_TOPCENTER,    ALIGN_TOP,         UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
@@ -2845,7 +2823,6 @@ typedef struct {
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT },
-        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
@@ -2906,11 +2883,18 @@ typedef struct {
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
                       GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]));
+
     hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->logWidgetId));
 
     hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->chatWidgetId));
 
     hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
@@ -3030,7 +3014,7 @@ void ST_LogUpdateAlignment(void)
         hudstate_t* hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
+        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]);
         flags = UIWidget_Alignment(obj);
         flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
