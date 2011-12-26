@@ -2686,7 +2686,7 @@ void WorldTimer_UpdateGeometry(uiwidget_t* obj)
         }
     }
 
-    obj->geometry.size.width  = (ORIGINX - x) * cfg.hudScale;
+    obj->geometry.size.width  = (x - ORIGINX) * cfg.hudScale;
     obj->geometry.size.height = (y - ORIGINY) * cfg.hudScale;
 
 #undef DRAWFLAGS
