@@ -1580,8 +1580,10 @@ static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
 
+    if(hud->statusbarActive) return;
     if(!cfg.hudShown[HUD_AMMO]) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -1604,11 +1606,13 @@ void ReadyAmmoIcon_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void ReadyAmmoIcon_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_readyammoicon_t* icon = (guidata_readyammoicon_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     patchinfo_t info;
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
+    if(hud->statusbarActive) return;
     if(!cfg.hudShown[HUD_AMMO]) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -1625,8 +1629,10 @@ void ReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    const hudstate_t* hud = &hudStates[obj->player];
     char buf[20];
 
+    if(hud->statusbarActive) return;
     if(!cfg.hudShown[HUD_AMMO]) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -1657,11 +1663,13 @@ void ReadyAmmo_UpdateGeometry(uiwidget_t* obj)
 #define TRACKING                (1)
 
     guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     char buf[20];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
+    if(hud->statusbarActive) return;
     if(!cfg.hudShown[HUD_AMMO]) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
