@@ -376,7 +376,7 @@ static void updateWidgetGeometry(uiwidget_t* obj)
 void UIGroup_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i, x, y, numVisibleChildWidgets = 0;
+    int i, x, y, numVisibleChildren = 0;
     assert(obj && obj->type == GUI_GROUP);
 
     obj->geometry.size.width = obj->geometry.size.height = 0;
@@ -389,70 +389,69 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
     for(i = 0; i < grp->widgetIdCount; ++i)
     {
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-        Size2Raw childSize = { 0, 0 };
+        const RectRaw* childGeometry;
 
         if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
            UIWidget_Opacity(child) > 0)
         {
-            numVisibleChildWidgets++;
-
             updateWidgetGeometry(child);
             child->geometry.origin.x += x;
             child->geometry.origin.y += y;
 
-            childSize.width  = UIWidget_Geometry(child)->size.width;
-            childSize.height = UIWidget_Geometry(child)->size.height;
+            childGeometry = UIWidget_Geometry(child);
 
-            if(childSize.width > 0 || childSize.height > 0)
+            if(childGeometry->size.width > 0 && childGeometry->size.height > 0)
             {
+                numVisibleChildren++;
+
                 if(grp->flags & UWGF_RIGHTTOLEFT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
-                        x -= childSize.width  + grp->padding;
+                        x -= childGeometry->size.width  + grp->padding;
                     else
-                        y -= childSize.height + grp->padding;
+                        y -= childGeometry->size.height + grp->padding;
                 }
                 else if(grp->flags & UWGF_LEFTTORIGHT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
-                        x += childSize.width  + grp->padding;
+                        x += childGeometry->size.width  + grp->padding;
                     else
-                        y += childSize.height + grp->padding;
+                        y += childGeometry->size.height + grp->padding;
                 }
 
                 if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
                     {
-                        obj->geometry.size.width  += childSize.width;
-                        if(childSize.height > obj->geometry.size.height)
-                            obj->geometry.size.height = childSize.height;
+                        obj->geometry.size.width  += childGeometry->size.width;
+                        if(childGeometry->size.height > obj->geometry.size.height)
+                            obj->geometry.size.height = childGeometry->size.height;
                     }
                     else
                     {
-                        if(childSize.width  > obj->geometry.size.width)
-                            obj->geometry.size.width  = childSize.width;
-                        obj->geometry.size.height += childSize.height;
+                        if(childGeometry->size.width  > obj->geometry.size.width)
+                            obj->geometry.size.width  = childGeometry->size.width;
+                        obj->geometry.size.height += childGeometry->size.height;
                     }
                 }
                 else
                 {
-                    if(childSize.width  > obj->geometry.size.width)
-                        obj->geometry.size.width  = childSize.width;
+                    if(childGeometry->size.width  > obj->geometry.size.width)
+                        obj->geometry.size.width  = childGeometry->size.width;
 
-                    if(childSize.height > obj->geometry.size.height)
-                        obj->geometry.size.height = childSize.height;
+                    if(childGeometry->size.height > obj->geometry.size.height)
+                        obj->geometry.size.height = childGeometry->size.height;
                 }
             }
         }
     }
 
-    if(0 != numVisibleChildWidgets && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
+    if(0 != numVisibleChildren && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
     {
         if(!(grp->flags & UWGF_VERTICAL))
-            obj->geometry.size.width  += (numVisibleChildWidgets-1) * grp->padding;
+            obj->geometry.size.width  += (numVisibleChildren-1) * grp->padding;
         else
-            obj->geometry.size.height += (numVisibleChildWidgets-1) * grp->padding;
+            obj->geometry.size.height += (numVisibleChildren-1) * grp->padding;
     }
 }
 
@@ -708,7 +707,8 @@ void UIWidget_SetOpacity(uiwidget_t* obj, float opacity)
         int i;
         for(i = 0; i < grp->widgetIdCount; ++i)
         {
-            UIWidget_SetOpacity(GUI_MustFindObjectById(grp->widgetIds[i]), opacity);
+            uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
+            UIWidget_SetOpacity(child, opacity);
         }
     }
 }
