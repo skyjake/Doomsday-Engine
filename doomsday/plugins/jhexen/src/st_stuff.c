@@ -108,11 +108,11 @@ enum {
     UWG_BOTTOMCENTER,
     UWG_BOTTOM,
     UWG_TOP,
+    UWG_TOPCENTER,
     UWG_TOPLEFT,
     UWG_TOPLEFT2,
     UWG_TOPLEFT3,
     UWG_TOPRIGHT,
-    UWG_TOPRIGHT2,
     UWG_AUTOMAP,
     NUM_UIWIDGET_GROUPS
 };
@@ -3124,12 +3124,12 @@ typedef struct {
         { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
         { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_LEFTTORIGHT },
-        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
+        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT },
+        { UWG_TOPCENTER,    ALIGN_TOP,         UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPLEFT3,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
         { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_TOPRIGHT2,    ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
@@ -3158,7 +3158,7 @@ typedef struct {
         { GUI_BOOTS,        ALIGN_TOPLEFT,    UWG_TOPLEFT3,     0,            Boots_UpdateGeometry, Boots_Drawer, Boots_Ticker, &hud->boots },
         { GUI_SERVANT,      ALIGN_TOPRIGHT,   UWG_TOPRIGHT,     0,            Servant_UpdateGeometry, Servant_Drawer, Servant_Ticker, &hud->servant },
         { GUI_DEFENSE,      ALIGN_TOPRIGHT,   UWG_TOPRIGHT,     0,            Defense_UpdateGeometry, Defense_Drawer, Defense_Ticker, &hud->defense },
-        { GUI_WORLDTIMER,   ALIGN_TOPRIGHT,   UWG_TOPRIGHT2,    GF_FONTA,     WorldTimer_UpdateGeometry, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
+        { GUI_WORLDTIMER,   ALIGN_TOPRIGHT,   UWG_TOPRIGHT,     GF_FONTA,     WorldTimer_UpdateGeometry, WorldTimer_Drawer, WorldTimer_Ticker, &hud->worldtimer },
         { GUI_HEALTH,       ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT,   GF_FONTB,     Health_UpdateGeometry, Health_Drawer, Health_Ticker, &hud->health },
         { GUI_FRAGS,        ALIGN_BOTTOMLEFT, UWG_BOTTOMLEFT,   GF_STATUS,    Frags_UpdateGeometry, Frags_Drawer, Frags_Ticker, &hud->frags },
         { GUI_READYITEM,    ALIGN_BOTTOMRIGHT, UWG_BOTTOMRIGHT, GF_SMALLIN,   ReadyItem_UpdateGeometry, ReadyItem_Drawer, ReadyItem_Ticker, &hud->readyitem },
@@ -3193,14 +3193,18 @@ typedef struct {
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
                       GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
 
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]),
-                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT2]));
+    //UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+    //                  GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPLEFT]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]),
+                      GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]));
 
     hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->logWidgetId));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->logWidgetId));
 
     hud->chatWidgetId = GUI_CreateWidget(GUI_CHAT, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]), GUI_FindObjectById(hud->chatWidgetId));
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->chatWidgetId));
 
     hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
@@ -3736,12 +3740,6 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         UIWidget_SetMaximumSize(obj, &size);
 
         GUI_DrawWidgetXY(obj, posX, displayRegion.origin.y);
-
-        obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPRIGHT]);
-        UIWidget_SetOpacity(obj, opacity);
-        UIWidget_SetMaximumSize(obj, &displayRegion.size);
-
-        GUI_DrawWidget(obj, &displayRegion.origin);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
