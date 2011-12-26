@@ -358,9 +358,10 @@ static void applyAlignmentOffset(uiwidget_t* obj, int* x, int* y)
 
 static void updateWidgetGeometry(uiwidget_t* obj)
 {
+    obj->geometry.origin.x = obj->geometry.origin.y = 0;
     obj->updateGeometry(obj);
 
-    obj->geometry.origin.x = obj->geometry.origin.y = 0;
+    if(obj->geometry.size.width <= 0 || obj->geometry.size.height <= 0) return;
 
     if(obj->alignFlags & ALIGN_RIGHT)
         obj->geometry.origin.x -= obj->geometry.size.width;
