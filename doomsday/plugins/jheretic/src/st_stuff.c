@@ -1321,15 +1321,13 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
 void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(obj);
-    {
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
-        return;
+
+    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+
     flht->patchId = 0;
-    if(0 == plr->powers[PT_FLIGHT])
-        return;
+    if(plr->powers[PT_FLIGHT] <= 0) return;
 
     if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16))
     {
@@ -1354,7 +1352,6 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
             }
         }
         flht->patchId = pSpinFly[frame];
-    }
     }
 }
 
@@ -1387,13 +1384,14 @@ void Flight_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Flight_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
 
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(0 == flht->patchId) return;
+    if(plr->powers[PT_FLIGHT] <= 0) return;
 
     /// \fixme Calculate dimensions properly!
     obj->geometry.size.width  = 32 * cfg.hudScale;
@@ -1411,8 +1409,7 @@ void Tome_Ticker(uiwidget_t* obj, timespan_t ticLength)
     tome->patchId = 0;
     tome->countdownSeconds = 0;
 
-    if(0 == ticsRemain || 0 != plr->morphTics)
-        return;
+    if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 
     // Time to player the countdown sound?
     if(0 != ticsRemain && ticsRemain < cfg.tomeSound * TICSPERSEC)
@@ -1495,19 +1492,34 @@ void Tome_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void Tome_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_tomeofpower_t* tome = (guidata_tomeofpower_t*)obj->typedata;
+    const player_t* plr = &players[obj->player];
+    const int ticsRemain = plr->powers[PT_WEAPONLEVEL2];
 
-    obj->geometry.size.width = 0;
+    obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(tome->patchId == 0 && tome->countdownSeconds == 0) return;
+    if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 
     if(tome->patchId != 0)
     {
         // \fixme Determine the actual center point of the animation at widget creation time.
         obj->geometry.size.width  += 26;
         obj->geometry.size.height += 26;
+    }
+    else
+    {
+#define TRACKING            (2)
+
+        char buf[20];
+        dd_snprintf(buf, 20, "%i", tome->countdownSeconds);
+
+        FR_SetFont(obj->font);
+        FR_SetTracking(TRACKING);
+        FR_TextSize(&obj->geometry.size, buf);
+
+#undef TRACKING
     }
 
     obj->geometry.size.width  *= cfg.hudScale;
