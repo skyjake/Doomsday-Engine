@@ -269,7 +269,7 @@ void ST_Register(void)
     C_CMD( "chatsendmacro",   NULL,   ChatSendMacro )
 }
 
-static int fullscreenMode(int player)
+static int headupDisplayMode(int player)
 {
     return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 }
@@ -283,7 +283,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     const hudstate_t* hud = &hudStates[obj->player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT, armsBGX;
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     //const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarOpacity);
     patchinfo_t fbgInfo, armsInfo;
@@ -869,7 +869,7 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const guidata_readyammo_t* ammo = (guidata_readyammo_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
@@ -948,7 +948,7 @@ void Ammo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const Point2Raw* loc = &ammoPos[ammo->ammotype];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
@@ -1018,7 +1018,7 @@ void MaxAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const Point2Raw* loc = &ammoMaxPos[ammo->ammotype];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
@@ -1082,7 +1082,7 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
@@ -1156,7 +1156,7 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
 
@@ -1233,7 +1233,7 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     char buf[20];
@@ -1295,7 +1295,7 @@ void SBarFace_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const guidata_face_t* face = (guidata_face_t*)obj->typedata;
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
@@ -1379,7 +1379,7 @@ void KeySlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const Point2Raw* loc = &elements[kslt->slot];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     int comboOffset = (kslt->patchId2 != 0? -1 : 0);
 
@@ -1499,7 +1499,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const Point2Raw* element = &elements[wpns->slot-1];
     const hudstate_t* hud = &hudStates[obj->player];
     int yOffset = ST_HEIGHT*(1-hud->showBar);
-    int fullscreen = fullscreenMode(obj->player);
+    int fullscreen = headupDisplayMode(obj->player);
     const float textAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
     //const float iconAlpha = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.statusbarCounterAlpha);
 
@@ -2530,7 +2530,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
 
     const int playerNum = plr - players;
-    const int fullscreen = fullscreenMode(playerNum);
+    const int fullscreenMode = headupDisplayMode(playerNum);
     hudstate_t* hud = hudStates + playerNum;
     uiwidget_t* obj;
     Size2Raw size;
@@ -2543,13 +2543,13 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     GUI_DrawWidgetXY(obj, 0, 0);
 
-    if(hud->statusbarActive || (fullscreen < 3 || hud->alpha > 0))
+    if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
     {
-        const float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
+        float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         Size2Raw portSize, drawnSize = { 0, 0 };
+        float scale;
         RectRaw displayRegion;
         int availHeight;
-        float scale;
 
         R_ViewPortSize(playerNum, &portSize);
 
@@ -2605,6 +2605,10 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
         GUI_DrawWidget(obj, &displayRegion.origin);
 
+        // The other displays are always visible except when using the "no-hud" mode.
+        if(hud->statusbarActive || fullscreenMode < 3)
+            opacity = 1.0f;
+
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
         UIWidget_SetOpacity(obj, opacity);
         UIWidget_SetMaximumSize(obj, &displayRegion.size);
@@ -2640,7 +2644,7 @@ void ST_Drawer(int player)
     R_UpdateViewFilter(player);
 
     hud = &hudStates[player];
-    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (headupDisplayMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     drawUIWidgetsForPlayer(players + player);
 }
