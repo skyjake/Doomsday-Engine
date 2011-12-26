@@ -2340,7 +2340,7 @@ void MapName_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], textAlpha);
     FR_DrawTextXY3(text, 0, 0, ALIGN_BOTTOMLEFT, DTF_NO_EFFECTS);
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2850,7 +2850,7 @@ typedef struct {
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_STATUSBAR,    0,            SBarReadyAmmoIcon_UpdateGeometry, SBarReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->sbarReadyammoicon },
         { GUI_READYITEM,    ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_SMALLIN,   SBarReadyItem_UpdateGeometry, SBarReadyItem_Drawer, ReadyItem_Ticker, &hud->sbarReadyitem },
         { GUI_CHAIN,        ALIGN_TOPLEFT,    UWG_STATUSBAR,    0,            SBarChain_UpdateGeometry, SBarChain_Drawer, SBarChain_Ticker, &hud->sbarChain },
-        { GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTB,     MapName_UpdateGeometry, MapName_Drawer },
+        { GUI_MAPNAME,      ALIGN_TOPLEFT,    UWG_MAPNAME,      GF_FONTA,     MapName_UpdateGeometry, MapName_Drawer },
         { GUI_READYAMMOICON, ALIGN_TOPLEFT,   UWG_TOPLEFT,      0,            ReadyAmmoIcon_UpdateGeometry, ReadyAmmoIcon_Drawer, ReadyAmmoIcon_Ticker, &hud->readyammoicon },
         { GUI_READYAMMO,    ALIGN_TOPLEFT,    UWG_TOPLEFT,      GF_STATUS,    ReadyAmmo_UpdateGeometry, ReadyAmmo_Drawer, ReadyAmmo_Ticker, &hud->readyammo },
         { GUI_FLIGHT,       ALIGN_TOPLEFT,    UWG_TOPLEFT,      0,            Flight_UpdateGeometry, Flight_Drawer, Flight_Ticker, &hud->flight },
