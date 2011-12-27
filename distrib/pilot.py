@@ -276,7 +276,7 @@ def handleCompletedTasks():
 def autobuild(cmd):
     if cmd in ['apt', 'debchanges'] and 'linux' not in platform.platform():
         # Ignore this...
-        return False
+        return True
     
     cmdLine = "python %s %s" % (os.path.join(pilotcfg.DISTRIB_DIR,
                                              'autobuild.py'), cmd)
