@@ -277,8 +277,8 @@ def autobuild(cmd):
     if cmd in ['apt', 'debchanges']:
         if 'Linux' not in platform.platform() or \
                 ('APT_DIR' in dir(pilotcfg) and ':' in pilotcfg.APT_DIR):
-        # Ignore this...
-        return True
+            # Ignore this...
+            return True
     
     cmdLine = "python %s %s" % (os.path.join(pilotcfg.DISTRIB_DIR,
                                              'autobuild.py'), cmd)
