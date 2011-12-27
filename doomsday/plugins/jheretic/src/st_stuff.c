@@ -253,7 +253,7 @@ void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int delta, curHealth = MAX_OF(plr->plr->mo->health, 0);
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     // Health marker chain animates up to the actual health value.
     if(curHealth < chain->healthMarker)
@@ -563,12 +563,10 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    /// \kludge 
-    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
-    /// kludge end.
+    const boolean isSharpTic = DD_IsSharpTick();
     int i;
 
-    if(runGameTic)
+    if(isSharpTic)
         Hu_InventoryTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -614,7 +612,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runGameTic && !P_IsPaused())
+        if(isSharpTic && !P_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {
@@ -685,7 +683,7 @@ void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     frags->value = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -772,7 +770,7 @@ void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     hlth->value = plr->health;
 }
 
@@ -852,7 +850,7 @@ void Armor_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     armor->value = plr->armorPoints;
 }
 
@@ -934,7 +932,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     kslt->patchId = plr->keys[kslt->keytypeA] ? pKeys[kslt->keytypeA] : 0;
 }
 
@@ -1002,7 +1000,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
     ammotype_t ammoType;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     ammo->value = 1994; // Means n/a.
     if(!(plr->readyWeapon > 0 && plr->readyWeapon < 7)) return;
@@ -1096,7 +1094,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
     ammotype_t ammoType;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     icon->patchId = 0;
     if(!(plr->readyWeapon > 0 && plr->readyWeapon < 7)) return;
 
@@ -1169,7 +1167,7 @@ void SBarReadyAmmoIcon_UpdateGeometry(uiwidget_t* obj)
 void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     if(item->flashCounter > 0)
         --item->flashCounter;
@@ -1325,7 +1323,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     flht->patchId = 0;
     if(plr->powers[PT_FLIGHT] <= 0) return;
@@ -1405,7 +1403,7 @@ void Tome_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     const int ticsRemain = plr->powers[PT_WEAPONLEVEL2];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     tome->patchId = 0;
     tome->countdownSeconds = 0;
@@ -1861,7 +1859,7 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     for(i = 0; i < 3; ++i)
     {
@@ -2104,7 +2102,7 @@ void Kills_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     kills->value = plr->killCount;
 }
 
@@ -2186,7 +2184,7 @@ void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_items_t* items = (guidata_items_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     items->value = plr->itemCount;
 }
 
@@ -2268,7 +2266,7 @@ void Secrets_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     scrt->value = plr->secretCount;
 }
 

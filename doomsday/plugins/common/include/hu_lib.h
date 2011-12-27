@@ -767,10 +767,6 @@ typedef struct uiwidget_s {
     void* typedata;
 } uiwidget_t;
 
-/// @return  @c true= the current tic is 'sharp' once ran for @a ticLength
-boolean GUI_RunGameTicTrigger(timespan_t ticLength);
-boolean GUI_GameTicTriggerIsSharp(void);
-
 void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
 void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
 

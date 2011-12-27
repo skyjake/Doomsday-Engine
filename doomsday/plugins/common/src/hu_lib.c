@@ -50,9 +50,6 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
 static boolean inited = false;
 
-static trigger_t gameTicTrigger = {1.0 / TICSPERSEC};
-static boolean sharpTic = true;
-
 static int numWidgets;
 static uiwidget_t* widgets;
 
@@ -325,16 +322,6 @@ void UIGroup_SetFlags(uiwidget_t* obj, int flags)
     assert(obj->type == GUI_GROUP);
 
     grp->flags = flags;
-}
-
-boolean GUI_RunGameTicTrigger(timespan_t ticLength)
-{
-    return (sharpTic = M_RunTrigger(&gameTicTrigger, ticLength));
-}
-
-boolean GUI_GameTicTriggerIsSharp(void)
-{
-    return sharpTic;
 }
 
 static void applyAlignmentOffset(uiwidget_t* obj, int* x, int* y)

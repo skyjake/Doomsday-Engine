@@ -562,7 +562,7 @@ void Face_Ticker(uiwidget_t* obj, timespan_t ticLength)
     boolean doEvilGrin;
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
+    if(P_IsPaused() || !DD_IsSharpTick())
         return;
 
     if(face->priority < 10)
@@ -754,11 +754,8 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    /// \kludge 
-    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
-    /// kludge end.
+    const boolean isSharpTic = DD_IsSharpTick();
     int i;
-
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* plr = &players[i];
@@ -802,7 +799,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runGameTic && !P_IsPaused())
+        if(isSharpTic && !P_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {
@@ -843,7 +840,7 @@ void ReadyAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     ammotype_t ammoType;
     boolean found;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     found = false;
     for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
@@ -928,7 +925,7 @@ void Ammo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     ammo->value = plr->ammo[ammo->ammotype].owned;
 }
 
@@ -998,7 +995,7 @@ void MaxAmmo_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_ammo_t* ammo = (guidata_ammo_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     ammo->value = plr->ammo[ammo->ammotype].max;
 }
 
@@ -1068,7 +1065,7 @@ void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_health_t* hlth = (guidata_health_t*) obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     hlth->value = plr->health;
 }
 
@@ -1141,7 +1138,7 @@ void Armor_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     armor->value = plr->armorPoints;
 }
 
@@ -1214,7 +1211,7 @@ void SBarFrags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     frags->value = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -1345,7 +1342,7 @@ void KeySlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_keyslot_t* kslt = (guidata_keyslot_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     if(plr->keys[kslt->keytypeA] || plr->keys[kslt->keytypeB])
     {
@@ -1463,7 +1460,7 @@ void WeaponSlot_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     boolean used = false;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     if(cfg.fixStatusbarOwnedWeapons)
     {
@@ -1658,7 +1655,7 @@ void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     frags->value = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1856,7 +1853,7 @@ void ReadyAmmoIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     ammotype_t ammoType;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)) return;
 
@@ -2038,7 +2035,7 @@ void ArmorIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_armoricon_t* icon = (guidata_armoricon_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     icon->sprite = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
 }
 
@@ -2088,7 +2085,7 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         keys->keyBoxes[i] = plr->keys[i];
@@ -2230,7 +2227,7 @@ void Kills_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_kills_t* kills = (guidata_kills_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     kills->value = plr->killCount;
 }
 
@@ -2312,7 +2309,7 @@ void Items_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_items_t* items = (guidata_items_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     items->value = plr->itemCount;
 }
 
@@ -2434,7 +2431,7 @@ void Secrets_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_secrets_t* scrt = (guidata_secrets_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     scrt->value = plr->secretCount;
 }
 

@@ -196,9 +196,7 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    /// \kludge 
-    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
-    /// kludge end.
+    const boolean isSharpTic = DD_IsSharpTick();
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -234,7 +232,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runGameTic && !P_IsPaused())
+        if(isSharpTic && !P_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {

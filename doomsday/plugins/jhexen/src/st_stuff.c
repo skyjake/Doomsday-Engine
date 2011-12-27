@@ -246,7 +246,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_flight_t* flht = (guidata_flight_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     flht->patchId = 0;
     if(!plr->powers[PT_FLIGHT]) return;
@@ -322,7 +322,7 @@ void Boots_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_boots_t* boots = (guidata_boots_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     boots->patchId = 0;
     if(0 != plr->powers[PT_SPEED] && 
@@ -376,7 +376,7 @@ void Defense_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_defense_t* dfns = (guidata_defense_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     dfns->patchId = 0;
     if(!plr->powers[PT_INVULNERABILITY]) return;
 
@@ -430,7 +430,7 @@ void Servant_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_servant_t* svnt = (guidata_servant_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     svnt->patchId = 0;
     if(!plr->powers[PT_MINOTAUR]) return;
@@ -484,7 +484,7 @@ void WeaponPieces_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_weaponpieces_t* wpn = (guidata_weaponpieces_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     wpn->pieces = plr->pieces;
 }
@@ -565,7 +565,7 @@ void SBarChain_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     // Health marker chain animates up to the actual health value.
     int delta, curHealth = MAX_OF(plr->plr->mo->health, 0);
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     if(curHealth < chain->healthMarker)
     {
@@ -1036,7 +1036,7 @@ void Keys_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     int i;
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
@@ -1131,7 +1131,7 @@ void ArmorIcons_Ticker(uiwidget_t* obj, timespan_t ticLength)
     const player_t* plr = &players[obj->player];
     int i;
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     for(i = 0; i < NUMARMOR; ++i)
     {
         icons->types[i].value = plr->armorPoints[i];
@@ -1224,7 +1224,7 @@ void Frags_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_frags_t* frags = (guidata_frags_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     int i;
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     frags->value = 0;
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1307,7 +1307,7 @@ void Health_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_health_t* hlth = (guidata_health_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     hlth->value = plr->health;
 }
 
@@ -1383,7 +1383,7 @@ void SBarArmor_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_armor_t* armor = (guidata_armor_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     int pClass = cfg.playerClass[obj->player]; // Original player class (i.e. not pig).
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     armor->value = FixedDiv(
         PCLASS_INFO(pClass)->autoArmorSave + plr->armorPoints[ARMOR_ARMOR] +
@@ -1462,7 +1462,7 @@ void BlueMana_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_bluemana_t* mana = (guidata_bluemana_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     mana->value = plr->ammo[AT_BLUEMANA].owned;
 }
@@ -1538,7 +1538,7 @@ void GreenMana_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_greenmana_t* mana = (guidata_greenmana_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     mana->value = plr->ammo[AT_GREENMANA].owned;
 }
@@ -1612,7 +1612,7 @@ void SBarGreenMana_UpdateGeometry(uiwidget_t* obj)
 void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     if(item->flashCounter > 0)
         --item->flashCounter;
@@ -1722,7 +1722,7 @@ void BlueManaIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_bluemanaicon_t* icon = (guidata_bluemanaicon_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     icon->iconIdx = -1;
     if(!(plr->ammo[AT_BLUEMANA].owned > 0))
@@ -1816,7 +1816,7 @@ void GreenManaIcon_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_greenmanaicon_t* icon = (guidata_greenmanaicon_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     icon->iconIdx = -1;
     if(!(plr->ammo[AT_GREENMANA].owned > 0))
         icon->iconIdx = 0; // Draw dim Mana icon.
@@ -1908,7 +1908,7 @@ void BlueManaVial_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_bluemanavial_t* vial = (guidata_bluemanavial_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
     vial->iconIdx = -1;
     // Update mana graphics based upon mana count weapon type
     if(plr->readyWeapon == WT_FIRST)
@@ -1996,7 +1996,7 @@ void GreenManaVial_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_greenmanavial_t* vial = (guidata_greenmanavial_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     vial->iconIdx = -1;
     // Update mana graphics based upon mana count weapon type
@@ -2562,7 +2562,7 @@ void WorldTimer_Ticker(uiwidget_t* obj, timespan_t ticLength)
     guidata_worldtimer_t* time = (guidata_worldtimer_t*)obj->typedata;
     const player_t* plr = &players[obj->player];
     int worldTime = plr->worldTimer / TICRATE;
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
+    if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     time->days    = worldTime / 86400; worldTime -= time->days * 86400;
     time->hours   = worldTime / 3600;  worldTime -= time->hours * 3600;
@@ -3532,12 +3532,10 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    /// \kludge 
-    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
-    /// kludge end.
+    const boolean isSharpTic = DD_IsSharpTick();
     int i;
 
-    if(runGameTic)
+    if(isSharpTic)
         Hu_InventoryTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -3583,7 +3581,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runGameTic && !P_IsPaused())
+        if(isSharpTic && !P_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {
