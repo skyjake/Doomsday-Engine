@@ -171,13 +171,13 @@ class ReqHandler(SocketServer.StreamRequestHandler):
               
     def newTasksForClient(self):
         """Returns the tasks that a client should work on next."""
-                
         self.respond({ 'tasks': listTasks(self.clientId(), includeCompleted=False), 'result': 'ok' })
 
     def doAction(self):
         act = self.request['action']
         if act == 'complete_task':
             completeTask(self.request['task'], self.clientId())
+            self.respond({ 'result': 'ok', 'did_action': act })
         else:
             raise Exception("Unknown action: " + act)
     
@@ -245,7 +245,7 @@ def handleCompletedTasks():
     """Check the completed tasks and see if we should start new tasks."""
 
     while True:
-        tasks = listTasks(onlyCompleted=True)
+        tasks = listTasks(allClients=True, onlyCompleted=True)
         if len(tasks) == 0: break
 
         task = tasks[0]
