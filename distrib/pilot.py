@@ -1,4 +1,5 @@
-#!/usr/bin
+#!/usr/bin/python
+# coding=utf-8
 #
 # The Doomsday Build Pilot
 # (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -37,7 +38,15 @@ import os
 import platform
 import subprocess
 import pickle
+import struct
 import time
+import SocketServer
+
+def homeDir():
+    """Determines the path of the pilot home directory."""
+    if 'Windows' in platform.platform():
+        return os.path.join(os.getenv('USERPROFILE'), '.pilot')
+    return os.path.join(os.getenv('HOME'), '.pilot')
 
 # Get the configuration.
 sys.path.append(homeDir())
@@ -50,9 +59,7 @@ def main():
     startNewPilotInstance()
     try:
         if isServer():
-            print APP_NAME + ' starting in server mode.'
             listen()
-            print APP_NAME + ' server has been stopped.'
         else:
             # Client mode. Check quietly for new tasks.
             checkForTasks()
@@ -67,13 +74,6 @@ def isServer():
     return 'server' in sys.argv
 
 
-def homeDir():
-    """Determines the path of the pilot home directory."""
-    if 'Windows' in platform.platform():
-        return os.path.join(os.getenv('USERPROFILE'), '.pilot'
-    return os.path.join(os.getenv('HOME'), '.pilot')
-    
-    
 def checkHome():
     if not os.path.exists(homeDir()):
         raise Exception(".pilot home directory does not exist.")
@@ -131,11 +131,16 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
     tasks.sort()
     return tasks
             
+            
+def packs(s):
+    return struct.pack('!i', len(s)) + s
+
         
 class ReqHandler(SocketServer.StreamRequestHandler):
     def handle(self):
         try:
-            self.request = pickle.loads(self.rfile().read())
+            bytes = struct.unpack('!i', self.rfile.read(4))[0]
+            self.request = pickle.loads(self.rfile.read(bytes))
             if type(self.request) != dict:
                 raise Exception("Requests must be of type 'dict'")
             self.doRequest()
@@ -145,7 +150,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
             self.respond(response)
             
     def respond(self, rsp):
-        self.wfile.write(pickle.dumps(rsp, 2))
+        self.wfile.write(packs(pickle.dumps(rsp, 2)))
             
     def doRequest(self):
         if 'query' in self.request:
@@ -153,7 +158,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
                 self.newTasksForClient()
             else:
                 raise Exception("Unknown query: " + self.request['query'])
-        elif 'action' in self.request;
+        elif 'action' in self.request:
             self.doAction()
         else:
             raise Exception("Unknown request")
@@ -167,7 +172,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
     def newTasksForClient(self):
         """Returns the tasks that a client should work on next."""
                 
-        self.respond({ 'tasks': self.listTasks(self.clientId(), includeCompleted=False), 'result': 'ok' })
+        self.respond({ 'tasks': listTasks(self.clientId(), includeCompleted=False), 'result': 'ok' })
 
     def doAction(self):
         act = self.request['action']
@@ -178,11 +183,11 @@ class ReqHandler(SocketServer.StreamRequestHandler):
     
         
 def listen():
-    import SocketServer
+    print APP_NAME + ' starting in server mode (port %i).' % pilotcfg.PORT
     server = SocketServer.TCPServer(('localhost', pilotcfg.PORT), ReqHandler)
     server.serve_forever()
-    
-    
+
+
 def query(q):
     """Sends a query to the server and returns the result."""
     
@@ -191,8 +196,9 @@ def query(q):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((pilotcfg.HOST, pilotcfg.PORT))
-        sock.send(pickle.dumps(q, 2))
-        response = pickle.loads(sock.recv(65535))
+        sock.send(packs(pickle.dumps(q, 2)))
+        bytes = struct.unpack('!i', sock.recv(4))[0]
+        response = pickle.loads(sock.recv(bytes))
     finally:
         sock.close()
     return response
@@ -258,7 +264,7 @@ def handleCompletedTasks():
         
         elif task == 'build':
             newTask('publish', forClient='master')
-            newTask('apt_refresh', forClient='linux')
+            newTask('apt_refresh', forClient='ubuntu')
             
         elif task == 'publish':
             newTask('update_feed', forClient='master')
@@ -297,7 +303,7 @@ def newTask(name, forClient=None, allClients=False):
     if forClient:
         path = os.path.join(path, forClient)
         print "New task '%s' for client '%s'" % (name, forClient)
-    else
+    else:
         print "New common task '%s'" % name
     
     print >> file(os.path.join(path, 'task_' + name), 'wt'), time.asctime()
