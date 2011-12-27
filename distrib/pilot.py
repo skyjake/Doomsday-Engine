@@ -23,15 +23,6 @@
 ## tasks for the builder client systems. It listens on a TCP port for incoming
 ## queries and actions. On the clients the pilot is run periodically by cron,
 ## and any new tasks are carried out.
-##
-## pilotcfg.py must be created in the .pilot home directory. It contains 
-## information such as:
-## - pilot server address (for clients) [HOST]
-## - pilot server port [PORT]
-## - identifier of the build system [ID]
-## - distrib directory path [DISTRIB_DIR]
-## - events directory path [EVENTS_DIR]
-## - apt repository path (if present on system) [APT_DIR]
 
 import sys
 import os
@@ -49,8 +40,23 @@ def homeDir():
     return os.path.join(os.getenv('HOME'), '.pilot')
 
 # Get the configuration.
-sys.path.append(homeDir())
-import pilotcfg
+try:
+    sys.path.append(homeDir())
+    import pilotcfg
+except ImportError:
+    print """Configuration needed: pilotcfg.py must be created in ~/.pilot/
+
+pilotcfg.py contains information such as (global variables):
+- HOST: pilot server address (for clients)
+- PORT: pilot server port
+- ID: identifier of the build system
+- DISTRIB_DIR: distrib directory path
+- EVENTS_DIR: events directory path
+- APT_DIR: apt repository path (for Linux systems)
+
+The function 'postTaskHook(task)' can be defined for actions to be carried out 
+after a successful execution of a task."""
+    sys.exit(1)
 
 APP_NAME = 'Doomsday Build Pilot'
 
