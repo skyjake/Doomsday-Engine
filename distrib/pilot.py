@@ -184,7 +184,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
         
 def listen():
     print APP_NAME + ' starting in server mode (port %i).' % pilotcfg.PORT
-    server = SocketServer.TCPServer(('localhost', pilotcfg.PORT), ReqHandler)
+    server = SocketServer.TCPServer(('0.0.0.0', pilotcfg.PORT), ReqHandler)
     server.serve_forever()
 
 
