@@ -210,8 +210,9 @@ def checkForTasks():
         handleCompletedTasks()
     else:
         for task in query({'id': pilotcfg.ID, 'query': 'get_tasks'})['tasks']:
-            # Try to do this task.
-            doTask(task)
+            if not doTask(task): 
+                # Ignore this task...
+                continue 
             # No exception was thrown -- the task was successful.
             query({'action': 'complete_task', 
                    'task': task, 
@@ -222,23 +223,25 @@ def doTask(task):
     """Throws an exception if the task fails."""
 
     if task == 'tag_build':
-        autobuild('create')
+        return autobuild('create')
 
     elif task == 'deb_changes':
-        autobuild('debchanges')
+        return autobuild('debchanges')
 
     elif task == 'build':
-        autobuild('platform_release')
+        return autobuild('platform_release')
 
     elif task == 'publish':
         systemCommand('deng_copy_build_to_sourceforge.sh')
+        return True
 
     elif task == 'apt_refresh':
-        autobuild('apt')
-
+        return autobuild('apt')
+        
     elif task == 'update_feed':
         autobuild('feed')
         autobuild('xmlfeed')
+        return True
     
 
 def handleCompletedTasks():
@@ -273,7 +276,7 @@ def handleCompletedTasks():
 def autobuild(cmd):
     if cmd == 'apt' and 'APT_DIR' not in pilotcfg.APT_DIR:
         # Ignore this...
-        return
+        return False
     
     cmdLine = "python %s %s" % (os.path.join(pilotcfg.DISTRIB_DIR,
                                              'autobuild.py'), cmd)
@@ -284,6 +287,7 @@ def autobuild(cmd):
         cmdLine += " --apt %s" % pilotcfg.APT_DIR
 
     systemCommand(cmdLine)
+    return True
         
     
 def systemCommand(cmd):
