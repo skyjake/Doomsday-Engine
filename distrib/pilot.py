@@ -274,7 +274,7 @@ def handleCompletedTasks():
     
     
 def autobuild(cmd):
-    if cmd == 'apt' and 'APT_DIR' not in pilotcfg.APT_DIR:
+    if cmd in ['apt', 'debchanges'] and 'linux' not in platform.platform():
         # Ignore this...
         return False
     
