@@ -251,7 +251,7 @@ def handleCompletedTasks():
         tasks = listTasks(allClients=True, onlyCompleted=True)
         if len(tasks) == 0: break
 
-        task = tasks[0]
+        task = tasks[0][:-5]
         if not isTaskComplete(task): continue
         
         clearTask(task)
