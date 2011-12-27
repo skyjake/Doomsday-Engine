@@ -2216,6 +2216,7 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
     am->bounds[BOXTOP]    = hiY;
     am->bounds[BOXRIGHT]  = hiX;
     am->bounds[BOXBOTTOM] = lowY;
+    am->updateViewScale = true;
 
     // Choose a default view scale factor.
     UIAutomap_SetScale(obj, am->minScaleMTOF * 20);
