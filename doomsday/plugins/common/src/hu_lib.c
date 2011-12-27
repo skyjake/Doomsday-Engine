@@ -542,7 +542,7 @@ static void drawWidget(uiwidget_t* obj, const Point2Raw* origin)
     }
 }
 
-void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin)
+void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* offset)
 {
     if(!obj) return;
     if(UIWidget_MaximumWidth(obj) < 1 || UIWidget_MaximumHeight(obj) < 1) return;
@@ -554,7 +554,8 @@ void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin)
 
     updateWidgetGeometry(obj);
 
-    drawWidget(obj, origin);
+    // Do not pass a zero length offset.
+    drawWidget(obj, ((offset && (offset->x || offset->y))? offset : NULL));
 
     FR_PopAttrib();
 }

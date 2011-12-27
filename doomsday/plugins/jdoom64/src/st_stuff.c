@@ -687,7 +687,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     mcfg = UIAutomap_Config(obj);
 
     // Determine the obj view scale factors.
-    UIAutomap_SetScale(obj, UIAutomap_ZoomMax(obj)? 0 : .45f);
+    if(UIAutomap_ZoomMax(obj))
+        UIAutomap_SetScale(obj, 0);
+
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
@@ -727,8 +729,6 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 
 void ST_Start(int player)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     uiwidget_t* obj;
     hudstate_t* hud;
     int flags;
@@ -764,10 +764,7 @@ void ST_Start(int player)
     // If the automap was left open; close it.
     UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
-    UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
-    UIAutomap_SetOrigin(obj, 0, 0);
-    UIAutomap_SetSize(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }

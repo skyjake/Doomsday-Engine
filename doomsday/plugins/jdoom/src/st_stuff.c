@@ -2532,9 +2532,21 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     const int playerNum = plr - players;
     const int fullscreenMode = headupDisplayMode(playerNum);
     hudstate_t* hud = hudStates + playerNum;
+    Size2Raw size, portSize;
     uiwidget_t* obj;
-    Size2Raw size;
+    float scale;
     assert(plr);
+
+    R_ViewPortSize(playerNum, &portSize);
+
+    if(portSize.width >= portSize.height)
+        scale = (float)portSize.height/SCREENHEIGHT;
+    else
+        scale = (float)portSize.width/SCREENWIDTH;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(scale, scale, 1);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
     UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
@@ -2546,25 +2558,13 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
     {
         float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
-        Size2Raw portSize, drawnSize = { 0, 0 };
-        float scale;
+        Size2Raw drawnSize = { 0, 0 };
         RectRaw displayRegion;
         int availHeight;
-
-        R_ViewPortSize(playerNum, &portSize);
-
-        if(portSize.width >= portSize.height)
-            scale = (float)portSize.height/SCREENHEIGHT;
-        else
-            scale = (float)portSize.width/SCREENWIDTH;
 
         displayRegion.origin.x = displayRegion.origin.y = 0;
         displayRegion.size.width  = portSize.width  / scale;
         displayRegion.size.height = portSize.height / scale;
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Scalef(scale, scale, 1);
 
         if(hud->statusbarActive)
         {
@@ -2620,10 +2620,10 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         UIWidget_SetMaximumSize(obj, &displayRegion.size);
 
         GUI_DrawWidget(obj, &displayRegion.origin);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
     }
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
 #undef DISPLAY_BORDER
 }
@@ -2829,7 +2829,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     mcfg = UIAutomap_Config(obj);
 
     // Determine the obj view scale factors.
-    UIAutomap_SetScale(obj, UIAutomap_ZoomMax(obj)? 0 : .45f);
+    if(UIAutomap_ZoomMax(obj))
+        UIAutomap_SetScale(obj, 0);
+
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
@@ -2869,8 +2871,6 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 
 void ST_Start(int player)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     uiwidget_t* obj;
     hudstate_t* hud;
     int flags;
@@ -2906,10 +2906,7 @@ void ST_Start(int player)
     // If the automap was left open; close it.
     UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
-    UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
-    UIAutomap_SetOrigin(obj, 0, 0);
-    UIAutomap_SetSize(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
