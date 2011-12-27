@@ -274,7 +274,7 @@ def handleCompletedTasks():
     
     
 def autobuild(cmd):
-    if cmd in ['apt', 'debchanges'] and 'linux' not in platform.platform():
+    if cmd in ['apt', 'debchanges'] and 'Linux' not in platform.platform():
         # Ignore this...
         return True
     
