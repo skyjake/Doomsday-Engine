@@ -126,6 +126,7 @@ typedef struct {
     float showBar; // Slide statusbar amount 1.0 is fully open.
     boolean statusbarActive; // Whether the statusbar is active.
     int automapCheatLevel; /// \todo Belongs in player state?
+    int readyItemFlashCounter;
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
     int automapWidgetId;
@@ -1612,13 +1613,11 @@ void SBarGreenMana_UpdateGeometry(uiwidget_t* obj)
 void ReadyItem_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
-    if(P_IsPaused() || !DD_IsSharpTick()) return;
+    const int flashCounter = hudStates[obj->player].readyItemFlashCounter;
 
-    if(item->flashCounter > 0)
-        --item->flashCounter;
-    if(item->flashCounter > 0)
+    if(flashCounter > 0)
     {
-        item->patchId = pInvItemFlash[item->flashCounter % 5];
+        item->patchId = pInvItemFlash[flashCounter % 5];
     }
     else
     {
@@ -1661,7 +1660,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Scalef(cfg.statusbarScale, cfg.statusbarScale, 1);
     DGL_Translatef(0, yOffset, 0);
 
-    if(item->flashCounter > 0)
+    if(hud->readyItemFlashCounter > 0)
     {
         x = ST_INVITEMX + 4;
         y = ST_INVITEMY;
@@ -1678,7 +1677,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     GL_DrawPatchXY(item->patchId, ORIGINX+x, ORIGINY+y);
 
     readyItem = P_InventoryReadyItem(obj->player);
-    if(!(item->flashCounter > 0) && readyItem != IIT_NONE)
+    if(!(hud->readyItemFlashCounter > 0) && readyItem != IIT_NONE)
     {
         uint count = P_InventoryCount(obj->player, readyItem);
         if(count > 1)
@@ -2435,6 +2434,7 @@ void Frags_UpdateGeometry(uiwidget_t* obj)
 void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
     guidata_readyitem_t* item = (guidata_readyitem_t*)obj->typedata;
+    const hudstate_t* hud = &hudStates[obj->player];
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     inventoryitemtype_t readyItem;
@@ -2457,7 +2457,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Color4f(1, 1, 1, iconAlpha/2);
     GL_DrawPatchXY(pInvItemBox, 0, 0);
 
-    if(item->flashCounter > 0)
+    if(hud->readyItemFlashCounter > 0)
     {
         xOffset = 3;
         yOffset = 0;
@@ -2472,7 +2472,7 @@ void ReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     GL_DrawPatchXY(item->patchId, xOffset, yOffset);
 
     readyItem = P_InventoryReadyItem(obj->player);
-    if(item->flashCounter == 0 && readyItem != IIT_NONE)
+    if(hud->readyItemFlashCounter == 0 && readyItem != IIT_NONE)
     {
         uint count = P_InventoryCount(obj->player, readyItem);
         if(count > 1)
@@ -2912,6 +2912,7 @@ static void initData(hudstate_t* hud)
     hud->statusbarActive = true;
     hud->stopped = true;
     hud->showBar = 1;
+    hud->readyItemFlashCounter = 0;
 
     // Statusbar:
     hud->sbarHealth.value = 1994;
@@ -2928,7 +2929,6 @@ static void initData(hudstate_t* hud)
     hud->sbarGreenmana.value = 1994;
     hud->sbarGreenmanavial.iconIdx = -1;
     hud->sbarGreenmanavial.filled = 0;
-    hud->sbarReadyitem.flashCounter = 0;
     hud->sbarReadyitem.patchId = 0;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
@@ -2946,7 +2946,6 @@ static void initData(hudstate_t* hud)
     hud->bluemana.value = 1994;
     hud->greenmanaicon.iconIdx = -1;
     hud->greenmana.value = 1994;
-    hud->readyitem.flashCounter = 0;
     hud->readyitem.patchId = 0;
 
     // Other:
@@ -3503,20 +3502,16 @@ int ST_AutomapCheatLevel(int player)
 
 void ST_FlashCurrentItem(int player)
 {
-    player_t*           plr;
-    hudstate_t*         hud;
+    player_t* plr;
+    hudstate_t* hud;
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
+    if(player < 0 || player >= MAXPLAYERS) return;
 
     plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
-        return;
+    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame)) return;
 
     hud = &hudStates[player];
-
-    hud->sbarReadyitem.flashCounter = 4;
-    hud->readyitem.flashCounter = 4;
+    hud->readyItemFlashCounter = 4;
 }
 
 int ST_Responder(event_t* ev)
@@ -3594,6 +3589,9 @@ void ST_Ticker(timespan_t ticLength)
                 if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
+
+            if(hud->readyItemFlashCounter > 0)
+                --hud->readyItemFlashCounter;
         }
 
         if(hud->inited)

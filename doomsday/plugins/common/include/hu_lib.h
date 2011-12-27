@@ -978,7 +978,6 @@ typedef struct {
 
 typedef struct {
     patchid_t patchId;
-    int flashCounter;
 } guidata_readyitem_t;
 
 typedef struct {
