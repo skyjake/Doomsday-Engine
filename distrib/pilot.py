@@ -208,6 +208,14 @@ def checkForTasks():
     if 'finish' in sys.argv:
         # Check for completed tasks.
         handleCompletedTasks()
+    elif 'new' in sys.argv:
+        # Create a new task: new sysid taskname
+        target = sys.argv[2]
+        taskName = sys.argv[3]
+        if target == 'all':
+            newTask(taskName, allClients=True)
+        else:
+            newTask(taskName, forClient=target)
     else:
         for task in query({'id': pilotcfg.ID, 'query': 'get_tasks'})['tasks']:
             if not doTask(task): 
