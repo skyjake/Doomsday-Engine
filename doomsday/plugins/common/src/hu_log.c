@@ -77,11 +77,11 @@ void UILog_Register(void)
 }
 
 /// @return  Index of the first (i.e., earliest) message that is potentially visible.
-static __inline int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
+static int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    assert(obj->type == GUI_LOG);
+
     if(0 != log->_pvisMsgCount)
     {
         int n = log->_nextUsedMsg - MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
@@ -89,15 +89,14 @@ static __inline int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
         return n;
     }
     return -1;
-    }
 }
 
 /// @return  Index of the first (i.e., earliest) message.
-static __inline int UILog_FirstMessageIdx(const uiwidget_t* obj)
+static int UILog_FirstMessageIdx(const uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    assert(obj->type == GUI_LOG);
+
     if(0 != log->_pvisMsgCount)
     {
         int n = log->_nextUsedMsg - log->_pvisMsgCount;
@@ -105,22 +104,19 @@ static __inline int UILog_FirstMessageIdx(const uiwidget_t* obj)
         return n;
     }
     return -1;
-    }
 }
 
 /// @return  Index of the next (possibly already used) message.
 static __inline int UILog_NextMessageIdx(const uiwidget_t* obj, int current)
 {
-    if(current < LOG_MAX_MESSAGES - 1)
-        return current + 1;
+    if(current < LOG_MAX_MESSAGES - 1) return current + 1;
     return 0; // Wrap around.
 }
 
 /// @return  Index of the previous (possibly already used) message.
 static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
 {
-    if(current > 0)
-        return current - 1;
+    if(current > 0) return current - 1;
     return LOG_MAX_MESSAGES - 1; // Wrap around.
 }
 
@@ -133,11 +129,12 @@ static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
  */
 static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char* text, int tics)
 {
-    assert(NULL != obj && obj->type == GUI_LOG && NULL != text );
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     guidata_log_message_t* msg;
-    int len = (int)strlen(text);
+    int len;
+    assert(obj->type == GUI_LOG && text);
+
+    len = (int)strlen(text);
     if(0 == len)
     {
         Con_Error("Log::Push: Attempted to log zero-length message.");
@@ -150,9 +147,8 @@ static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char*
     {
         msg->textMaxLen = len+1;
         msg->text = (char*) Z_Realloc(msg->text, msg->textMaxLen, PU_GAMESTATIC);
-        if(NULL == msg->text)
-            Con_Error("Log::Push: Failed on (re)allocation of %lu bytes for log message.",
-                (unsigned long) msg->textMaxLen);
+        if(!msg->text)
+            Con_Error("Log::Push: Failed on (re)allocation of %lu bytes for log message.", (unsigned long) msg->textMaxLen);
     }
 
     if(log->_msgCount < LOG_MAX_MESSAGES)
@@ -164,17 +160,17 @@ static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char*
     msg->ticsRemain = msg->tics = tics;
     msg->flags = LMF_JUSTADDED | flags;
     return msg;
-    }
 }
 
 /// Remove the oldest message from the log.
 static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
     guidata_log_message_t* msg;
-    int oldest = UILog_FirstMessageIdx(obj);
+    int oldest;
+    assert(obj->type == GUI_LOG);
+
+    oldest = UILog_FirstMessageIdx(obj);
     if(0 > oldest) return NULL;
 
     msg = &log->_msgs[oldest];
@@ -183,7 +179,6 @@ static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
     msg->ticsRemain = LOG_MESSAGE_SCROLLTICS;
     msg->flags &= ~LMF_JUSTADDED;
     return msg;
-    }
 }
 
 void UILog_Empty(uiwidget_t* obj)
@@ -195,12 +190,11 @@ void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
 {
 #define SMALLBUF_MAXLEN 128
 
-    assert(NULL != obj && obj->type == GUI_LOG && NULL != text);
-    {
     //guidata_log_t* log = (guidata_log_t*)obj->typedata;
     char smallBuf[SMALLBUF_MAXLEN+1];
     char* bigBuf = NULL, *p;
     size_t requiredLen = strlen(text);
+    assert(obj->type == GUI_LOG && text);
 
     if(0 == requiredLen) return;
 
@@ -224,23 +218,20 @@ void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
     UILog_Push(obj, flags, p, cfg.msgUptime * TICSPERSEC);
     if(NULL != bigBuf)
         free(bigBuf);
-    }
 
 #undef SMALLBUF_MAXLEN
 }
 
 void UILog_Refresh(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    int n;
+    int i, n;
+    assert(obj->type == GUI_LOG);
 
     log->_pvisMsgCount = MIN_OF(log->_msgCount, MAX_OF(0, cfg.msgCount));
     n = UILog_FirstMessageIdx(obj);
     if(0 > n) return;
 
-    { int i;
     for(i = 0; i < log->_pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         guidata_log_message_t* msg = &log->_msgs[n];
@@ -249,7 +240,6 @@ void UILog_Refresh(uiwidget_t* obj)
         // so that they do not all disappear at once.
         msg->ticsRemain = msg->tics + i * TICSPERSEC;
         msg->flags &= ~LMF_JUSTADDED;
-    }}
     }
 }
 
@@ -259,22 +249,19 @@ void UILog_Refresh(uiwidget_t* obj)
  */
 void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(NULL != obj && obj->type == GUI_LOG);
-    {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    int oldest;
+    int i, oldest;
+    assert(obj->type == GUI_LOG);
 
-    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp())
-        return;
+    if(P_IsPaused() || !GUI_GameTicTriggerIsSharp()) return;
 
     // All messags tic away.
-    { int i;
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
         guidata_log_message_t* msg = &log->_msgs[i];
         if(0 == msg->ticsRemain) continue;
         --msg->ticsRemain;
-    }}
+    }
 
     // Is it time to pop?
     oldest = UILog_FirstMessageIdx(obj);
@@ -285,7 +272,6 @@ void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
         {
             UILog_Pop(obj);
         }
-    }
     }
 }
 
