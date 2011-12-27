@@ -213,6 +213,11 @@ def checkForTasks():
             if not doTask(task): 
                 # Ignore this task...
                 continue 
+            
+            # Check for a post-task hook.
+            if 'postTaskHook' in dir(pilotcfg):
+                pilotcfg.postTaskHook(task)
+
             # No exception was thrown -- the task was successful.
             query({'action': 'complete_task', 
                    'task': task, 
