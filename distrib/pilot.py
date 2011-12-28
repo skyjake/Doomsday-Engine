@@ -62,6 +62,8 @@ APP_NAME = 'Doomsday Build Pilot'
 
 def main():
     checkHome()
+    checkMasterActions()    
+
     startNewPilotInstance()
     try:
         if isServer():
@@ -83,6 +85,31 @@ def isServer():
 def checkHome():
     if not os.path.exists(homeDir()):
         raise Exception(".pilot home directory does not exist.")
+
+
+def checkMasterActions():
+    """Special master actions."""
+    if len(sys.argv) < 2: return
+    
+    if sys.argv[1] == 'new':
+        assert pilotcfg.ID == 'master'
+        
+        # Create a new task: new sysid[,sysid]* taskname
+        target = sys.argv[2]
+        taskName = sys.argv[3]
+        if target == 'ALL':
+            newTask(taskName, allClients=True)
+        else:
+            for tgt in target.split(','):
+                newTask(taskName, forClient=tgt)
+        sys.exit(0)
+        
+    if sys.argv[1] == 'finish':
+        assert pilotcfg.ID == 'master'
+        
+        # Check for completed tasks.
+        handleCompletedTasks()
+        sys.exit(0)    
 
 
 def pidFileName():
@@ -116,17 +143,14 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
     for name in os.listdir(homeDir()):
         fn = os.path.join(homeDir(), name)
 
-        # Tasks specific to a client.
+        # All tasks are specific to a client.
         if os.path.isdir(fn) and (name == clientId or allClients):
             for subname in os.listdir(fn):
+                # Every task begins with the task prefix.
                 if not subname.startswith('task_'): continue
                 subfn = os.path.join(fn, subname)
                 if not os.path.isdir(subfn):
-                    tasks.append(subname[5:])
-
-        # Common tasks.
-        elif not os.path.isdir(fn) and name.startswith('task_'):
-            tasks.append(name[5:])
+                    tasks.append(subname[5:]) # Remove prefix.
     
     if not includeCompleted:
         tasks = filter(lambda n: not n.endswith('.done'), tasks)
@@ -139,10 +163,14 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
             
             
 def packs(s):
+    """The length of the string is prefixed as a 32-bit integer in network
+    byte order."""
     return struct.pack('!i', len(s)) + s
 
         
 class ReqHandler(SocketServer.StreamRequestHandler):
+    """Handler for requests from clients."""
+    
     def handle(self):
         try:
             bytes = struct.unpack('!i', self.rfile.read(4))[0]
@@ -158,27 +186,29 @@ class ReqHandler(SocketServer.StreamRequestHandler):
     def respond(self, rsp):
         self.wfile.write(packs(pickle.dumps(rsp, 2)))
             
-    def doRequest(self):
-        if 'query' in self.request:
-            if self.request['query'] == 'get_tasks':
-                self.newTasksForClient()
-            else:
-                raise Exception("Unknown query: " + self.request['query'])
-        elif 'action' in self.request:
-            self.doAction()
-        else:
-            raise Exception("Unknown request")
-             
     def clientId(self):
         if 'id' in self.request:
             return self.request['id']
         else:
             return None
-              
-    def newTasksForClient(self):
-        """Returns the tasks that a client should work on next."""
-        self.respond({ 'tasks': listTasks(self.clientId(), includeCompleted=False), 'result': 'ok' })
 
+    def doRequest(self):
+        if 'query' in self.request:
+            self.doQuery()
+        elif 'action' in self.request:
+            self.doAction()
+        else:
+            raise Exception("Unknown request")
+             
+    def doQuery(self):
+        qry = self.request['query']
+        if qry == 'get_tasks':
+            # Returns the tasks that a client should work on next.
+            self.respond({ 'tasks': listTasks(self.clientId(),
+                includeCompleted=False), 'result': 'ok' })
+        else:
+            raise Exception("Unknown query: " + qry)
+              
     def doAction(self):
         act = self.request['action']
         if act == 'complete_task':
@@ -211,31 +241,19 @@ def query(q):
 
     
 def checkForTasks():
-    if 'finish' in sys.argv:
-        # Check for completed tasks.
-        handleCompletedTasks()
-    elif 'new' in sys.argv:
-        # Create a new task: new sysid taskname
-        target = sys.argv[2]
-        taskName = sys.argv[3]
-        if target == 'all':
-            newTask(taskName, allClients=True)
-        else:
-            newTask(taskName, forClient=target)
-    else:
-        for task in query({'id': pilotcfg.ID, 'query': 'get_tasks'})['tasks']:
-            if not doTask(task): 
-                # Ignore this task...
-                continue 
-            
-            # Check for a post-task hook.
-            if 'postTaskHook' in dir(pilotcfg):
-                pilotcfg.postTaskHook(task)
+    for task in query({'id': pilotcfg.ID, 'query': 'get_tasks'})['tasks']:
+        if not doTask(task): 
+            # Ignore this task... (It will be done later.)
+            continue 
+        
+        # Check for a post-task hook.
+        if 'postTaskHook' in dir(pilotcfg):
+            pilotcfg.postTaskHook(task)
 
-            # No exception was thrown -- the task was successful.
-            query({'action': 'complete_task', 
-                   'task': task, 
-                   'id': pilotcfg.ID})
+        # No exception was thrown -- the task was successful.
+        query({'action': 'complete_task', 
+               'task': task, 
+               'id': pilotcfg.ID})
             
 
 def doTask(task):
@@ -252,7 +270,6 @@ def doTask(task):
 
     elif task == 'publish':
         systemCommand('deng_copy_build_to_sourceforge.sh')
-        return True
 
     elif task == 'apt_refresh':
         return autobuild('apt')
@@ -260,7 +277,11 @@ def doTask(task):
     elif task == 'update_feed':
         autobuild('feed')
         autobuild('xmlfeed')
-        return True
+        
+    elif task == 'purge':
+        return autobuild('purge')
+        
+    return True
     
 
 def handleCompletedTasks():
@@ -270,7 +291,7 @@ def handleCompletedTasks():
         tasks = listTasks(allClients=True, onlyCompleted=True)
         if len(tasks) == 0: break
 
-        task = tasks[0][:-5]
+        task = tasks[0][:-5] # Remove '.done'
         if not isTaskComplete(task): continue
         
         clearTask(task)
@@ -278,11 +299,10 @@ def handleCompletedTasks():
         print "Task '%s' has been completed (noticed at %s)" % (task, time.asctime())
         
         if task == 'tag_build':
-            # Process to generating the list of changes.
-            newTask('deb_changes', allClients=True)
+            newTask('deb_changes', forClient='ubuntu')
         
         elif task == 'deb_changes':
-            newTask('build', allClients=True)            
+            newTask('build', allClients=True)
         
         elif task == 'build':
             newTask('publish', forClient='master')
@@ -293,12 +313,6 @@ def handleCompletedTasks():
     
     
 def autobuild(cmd):
-    if cmd in ['apt', 'debchanges']:
-        if 'Linux' not in platform.platform() or \
-                ('APT_DIR' in dir(pilotcfg) and ':' in pilotcfg.APT_DIR):
-            # Ignore this...
-            return True
-    
     cmdLine = "python %s %s" % (os.path.join(pilotcfg.DISTRIB_DIR,
                                              'autobuild.py'), cmd)
     cmdLine += " --distrib %s" % pilotcfg.DISTRIB_DIR
@@ -324,35 +338,18 @@ def newTask(name, forClient=None, allClients=False):
                 newTask(name, fn)
         return
                 
-    path = homeDir()
-    if forClient:
-        path = os.path.join(path, forClient)
-        print "New task '%s' for client '%s'" % (name, forClient)
-    else:
-        print "New common task '%s'" % name
+    path = os.path.join(homeDir(), forClient)
+    print "New task '%s' for client '%s'" % (name, forClient)
     
     print >> file(os.path.join(path, 'task_' + name), 'wt'), time.asctime()
         
         
-def completeTask(name, byClient, quiet=False):
-    if byClient:
-        path = os.path.join(homeDir(), byClient, 'task_' + name)
-        if not os.path.exists(path):
-            # Maybe it's a common task?
-            completeTask(name, quiet=True)
-            return
-    else:
-        path = os.path.join(homeDir(), 'task_' + name)
-
+def completeTask(name, byClient):
+    path = os.path.join(homeDir(), byClient, 'task_' + name)
     if not os.path.exists(path):
-        raise Exception("Cannot complete missing task '%s'" % name)
-        
-    if not quiet:
-        if byClient:
-            print "Task '%s' completed by '%s' at" % (name, byClient), time.asctime()
-        else:
-            print "Task '%s' completed at", time.asctime()
-        
+        raise Exception("Cannot complete missing task '%s' (by client '%s')" % (name, byClient))
+
+    print "Task '%s' completed by '%s' at" % (name, byClient), time.asctime()    
     os.rename(path, path + '.done')
 
         
