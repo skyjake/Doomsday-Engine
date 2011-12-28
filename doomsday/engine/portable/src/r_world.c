@@ -1376,6 +1376,7 @@ void R_SetupMap(int mode, int flags)
     case DDSMM_FINALIZE: {
         gamemap_t* map = P_GetCurrentMap();
         ded_mapinfo_t* mapInfo;
+        ddstring_t* str = 0;
         float startTime;
         char cmd[80];
         int i;
@@ -1418,7 +1419,10 @@ void R_SetupMap(int mode, int flags)
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        sprintf(cmd, "init-%s", P_MapUri(map));
+        sprintf(cmd, "init-%s", Str_Text(Uri_Path(P_MapUri(map))));
+#ifdef _DEBUG
+        Con_Message("R_SetupMap: Setup command: %s\n", cmd);
+#endif
         if(Con_IsValidCommand(cmd))
         {
             Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
