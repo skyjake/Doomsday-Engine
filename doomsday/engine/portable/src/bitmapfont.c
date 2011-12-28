@@ -101,78 +101,6 @@ int Font_Leading(font_t* font)
     return font->_leading;
 }
 
-static void drawCharacter(unsigned char ch, font_t* font)
-{
-    int s[2], t[2], x, y, w, h;
-
-    switch(Font_Type(font))
-    {
-    case FT_BITMAP: {
-        bitmapfont_t* bf = (bitmapfont_t*)font;
-
-        s[0] = bf->_chars[ch].geometry.origin.x;
-        s[1] = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
-        t[0] = bf->_chars[ch].geometry.origin.y;
-        t[1] = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
-
-        x = y = 0;
-        w = s[1] - s[0];
-        h = t[1] - t[0];
-        break;
-      }
-    case FT_BITMAPCOMPOSITE: {
-        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-
-        if(ch != 0)
-        {
-            x = cf->_chars[ch].geometry.origin.x;
-            y = cf->_chars[ch].geometry.origin.y;
-        }
-        else
-        {
-            x = y = 0;
-        }
-        w = BitmapCompositeFont_CharWidth(font, ch);
-        h = BitmapCompositeFont_CharHeight(font, ch);
-        if(cf->_chars[ch].patch != 0)
-        {
-            w += 2;
-            h += 2;
-        }
-
-        s[0] = 0;
-        s[1] = 1;
-        t[0] = 0;
-        t[1] = 1;
-        break;
-      }
-    default:
-        Con_Error("FR::DrawCharacter: Invalid font type %i.", (int) Font_Type(font));
-        exit(1); // Unreachable.
-    }
-
-    x -= font->_marginWidth;
-    y -= font->_marginHeight;
-
-    glBegin(GL_QUADS);
-        // Upper left.
-        glTexCoord2i(s[0], t[0]);
-        glVertex2f(x, y);
-
-        // Upper Right.
-        glTexCoord2i(s[1], t[0]);
-        glVertex2f(x + w, y);
-
-        // Lower right.
-        glTexCoord2i(s[1], t[1]);
-        glVertex2f(x + w, y + h);
-
-        // Lower left.
-        glTexCoord2i(s[0], t[1]);
-        glVertex2f(x, y + h);
-    glEnd();
-}
-
 static byte inByte(DFile* file)
 {
     byte b;
@@ -544,6 +472,13 @@ int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
     return cf->_chars[ch].geometry.size.height - font->_marginHeight * 2 - 2;
 }
 
+static __inline texturevariantspecification_t* BitmapCompositeFont_CharSpec(void)
+{
+    return GL_TextureVariantSpecificationForContext(
+                TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+}
+
 void BitmapCompositeFont_Prepare(font_t* font)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
@@ -572,8 +507,8 @@ void BitmapCompositeFont_Prepare(font_t* font)
         R_GetPatchInfo(patch, &info);
         memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
-        ch->geometry.origin.x += info.extraOffset[0] + font->_marginWidth;
-        ch->geometry.origin.y += info.extraOffset[1] + font->_marginHeight;
+        ch->geometry.origin.x += -1 + font->_marginWidth;
+        ch->geometry.origin.y += -1 + font->_marginHeight;
         ch->geometry.size.width  += 2;
         ch->geometry.size.height += 2;
 
@@ -582,7 +517,8 @@ void BitmapCompositeFont_Prepare(font_t* font)
 
         if(!(novideo || isDedicated) && !Con_IsBusy())
         {
-            GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch)));
+            texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
+            ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
         }
     }
 
@@ -610,9 +546,14 @@ void BitmapCompositeFont_DeleteGLTextures(font_t* font)
     for(i = 0; i < 256; ++i)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, ch->patch));
-        if(!tex) continue;
-        GL_ReleaseGLTexturesByTexture(tex);
+        texture_t* tex;
+
+        if(!ch->patch) continue;
+        tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, ch->patch));
+        assert(tex);
+
+        GL_ReleaseVariantTexturesBySpec(tex, BitmapCompositeFont_CharSpec());
+        ch->tex = 0;
     }
 }
 
@@ -633,13 +574,10 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
 DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-    bitmapcompositefont_char_t* chr = &cf->_chars[ch];
-    texture_t* tex;
     assert(font->_type == FT_BITMAPCOMPOSITE);
 
     BitmapCompositeFont_Prepare(font);
-    tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, chr->patch));
-    return GL_PreparePatchTexture(tex);
+    return cf->_chars[ch].tex;
 }
 
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch)
@@ -657,24 +595,16 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char chr, const cha
     patchinfo_t info;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
-    // Load the patches in monochrome mode. (2 = weighted average).
-    monochrome = 2;
-    upscaleAndSharpenPatches = true;
-
     ch->patch = R_DeclarePatch(patchName);
-
     R_GetPatchInfo(ch->patch, &info);
     memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
-    ch->geometry.origin.x += info.extraOffset[0] + font->_marginWidth;
-    ch->geometry.origin.y += info.extraOffset[1] + font->_marginHeight;
+    ch->geometry.origin.x += -1 + font->_marginWidth;
+    ch->geometry.origin.y += -1 + font->_marginHeight;
     ch->geometry.size.width  += 2;
     ch->geometry.size.height += 2;
 
     font->_isDirty = true;
-
-    upscaleAndSharpenPatches = false;
-    monochrome = 0;
 }
 
 void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,

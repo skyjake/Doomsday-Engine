@@ -604,14 +604,20 @@ static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* 
 
 static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
 {
-    // Have we uploaded yet?
-    if(TextureVariant_IsUploaded(variant))
+    texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
+    if(!spec || spec == TextureVariant_Spec(variant))
     {
-        // Delete and mark it not-loaded.
-        DGLuint glName = TextureVariant_GLName(variant);
-        glDeleteTextures(1, (const GLuint*) &glName);
-        TextureVariant_SetGLName(variant, 0);
-        TextureVariant_FlagUploaded(variant, false);
+        if(TextureVariant_IsUploaded(variant))
+        {
+            // Delete and mark it not-loaded.
+            DGLuint glName = TextureVariant_GLName(variant);
+            glDeleteTextures(1, (const GLuint*) &glName);
+            TextureVariant_SetGLName(variant, 0);
+            TextureVariant_FlagUploaded(variant, false);
+        }
+
+        if(spec)
+            return 0; // We're done.
     }
     return 0; // Continue iteration.
 }
@@ -3301,14 +3307,15 @@ DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* 
 
 int GL_ReleaseGLTexturesByTexture2(texture_t* tex, void* paramaters)
 {
-    int i;
-    assert(tex);
-
-    Texture_IterateVariants(tex, releaseVariantGLTexture, 0);
-    for(i = (int) TEXTURE_ANALYSIS_FIRST; i < (int) TEXTURE_ANALYSIS_COUNT; ++i)
+    if(tex)
     {
-        void* data = Texture_DetachAnalysis(tex, (texture_analysisid_t) i);
-        if(data) free(data);
+        int i;
+        Texture_IterateVariants(tex, releaseVariantGLTexture, NULL/*no paramaters*/);
+        for(i = (int) TEXTURE_ANALYSIS_FIRST; i < (int) TEXTURE_ANALYSIS_COUNT; ++i)
+        {
+            void* data = Texture_DetachAnalysis(tex, (texture_analysisid_t) i);
+            if(data) free(data);
+        }
     }
     return 0; // Continue iteration.
 }
@@ -3321,6 +3328,12 @@ int GL_ReleaseGLTexturesByTexture(texture_t* tex)
 void GL_ReleaseTexturesByNamespace(texturenamespaceid_t texNamespace)
 {
     Textures_Iterate(texNamespace, GL_ReleaseGLTexturesByTexture2);
+}
+
+void GL_ReleaseVariantTexturesBySpec(texture_t* tex, texturevariantspecification_t* spec)
+{
+    if(!tex) return;
+    Texture_IterateVariants(tex, releaseVariantGLTexture, (void*)spec);
 }
 
 static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramaters)

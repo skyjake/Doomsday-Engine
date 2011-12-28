@@ -131,6 +131,14 @@ void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
 int GL_ReleaseGLTexturesByTexture2(texture_t* texture, void* paramaters);
 int GL_ReleaseGLTexturesByTexture(texture_t* texture); /*paramaters=NULL*/
 
+/**
+ * Release all variants of @a tex which match @a spec.
+ *
+ * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
+ * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
+ */
+void GL_ReleaseVariantTexturesBySpec(texture_t* tex, texturevariantspecification_t* spec);
+
 /// Release all textures associated with the identified colorpalette @a paletteId.
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
 
