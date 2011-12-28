@@ -3469,7 +3469,7 @@ D_CMD(MipMap)
     int newMipMode = strtol(argv[1], NULL, 0);
     if(newMipMode < 0 || newMipMode > 5)
     {
-        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0...5].\n");
+        Con_Message("Invalid mipmapping mode %i specified. Valid range is [0...5].\n", newMipMode);
         return false;
     }
 
