@@ -591,19 +591,20 @@ macx {
     doPostLink("rm -rf \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
     doPostLink("mkdir \"$${OUT_PWD}/doomsday.app/Contents/Frameworks\"")
     doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
-    doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    !deng_nosdlmixer {
+        doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_mixer.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
+    }
     doPostLink("cp -fRp \"$${SDL_FRAMEWORK_DIR}/SDL_net.framework\" \"$${OUT_PWD}/doomsday.app/Contents/Frameworks/\"")
 
-    RES_PATH = Contents/Resources
+    res.path = Contents/Resources
     res.files = \
         mac/res/English.lproj \
         mac/res/Startup.nib \
         mac/res/deng.icns
-    res.path = $$RES_PATH
 
-    data.path = $$RES_PATH
-    startupfonts.path = $$RES_PATH/Data/Fonts
-    startupgfx.path = $$RES_PATH/Data/Graphics
+    data.path = $$res.path
+    startupfonts.path = $${res.path}/Data/Fonts
+    startupgfx.path = $${res.path}/Data/Graphics
 
     QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
 
