@@ -752,7 +752,7 @@ void GL_TotalRestore(void)
     map = P_GetCurrentMap();
     if(map)
     {
-        mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        mapInfo = Def_GetMapInfo(P_MapUri(map));
     }
 
     // Restore map's fog settings.

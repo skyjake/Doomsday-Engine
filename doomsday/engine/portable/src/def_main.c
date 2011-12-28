@@ -348,23 +348,16 @@ acfnptr_t Def_GetActionPtr(const char* name)
     return 0;
 }
 
-ded_mapinfo_t* Def_GetMapInfo(const char* uriCString)
+ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 {
-    Uri* uri;
     int i;
+    if(!uri) return 0;
 
-    if(!uriCString || !uriCString[0]) return 0;
-
-    uri = Uri_NewWithPath2(uriCString, RC_NULL);
     for(i = defs.count.mapInfo.num - 1; i >= 0; i--)
     {
         if(defs.mapInfo[i].uri && Uri_Equality(defs.mapInfo[i].uri, uri))
-        {
-            Uri_Delete(uri);
             return defs.mapInfo + i;
-        }
     }
-    Uri_Delete(uri);
     return 0;
 }
 
@@ -1720,7 +1713,10 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_MAP_INFO: {
         ddmapinfo_t* mout;
-        ded_mapinfo_t* map = Def_GetMapInfo(id);
+        Uri* mapUri = Uri_NewWithPath2(id, RC_NULL);
+        ded_mapinfo_t* map = Def_GetMapInfo(mapUri);
+
+        Uri_Delete(mapUri);
         if(!map) return false;
 
         mout = (ddmapinfo_t*) out;

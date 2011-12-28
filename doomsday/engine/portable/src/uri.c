@@ -90,11 +90,10 @@ static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
  */
 static ddstring_t* resolveUri(const Uri* uri)
 {
-    assert(uri);
-    {
     ddstring_t part, *dest = Str_New();
     boolean successful = false;
     const char* p;
+    assert(uri);
 
     Str_Init(&part);
 
@@ -194,7 +193,6 @@ parseEnded:
         return 0;
     }
     return dest;
-    }
 }
 
 void Uri_Clear(Uri* uri)
@@ -225,16 +223,17 @@ Uri* Uri_New(void)
 
 Uri* Uri_NewCopy(const Uri* other)
 {
+    Uri* uri;
     if(!other)
     {
         Con_Error("Attempted Uri::ConstructCopy with invalid reference (other==0).");
         return 0; // Unreachable.
     }
-    { Uri* uri = allocUri(0, RC_NULL);
+
+    uri = allocUri(0, RC_NULL);
     Str_Copy(&uri->_scheme, Uri_Scheme(other));
     Str_Copy(&uri->_path, Uri_Path(other));
     return uri;
-    }
 }
 
 void Uri_Delete(Uri* uri)

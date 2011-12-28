@@ -393,7 +393,9 @@ static boolean SBE_Save(const char* name)
     Str_Init(&fileName);
     if(!name || !name[0])
     {
-        Str_Appendf(&fileName, "%s.ded", P_MapUri(map));
+        ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
+        Str_Delete(mapPath);
     }
     else
     {

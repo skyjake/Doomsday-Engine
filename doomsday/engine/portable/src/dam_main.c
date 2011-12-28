@@ -557,10 +557,12 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             strncpy(map->uniqueId, P_GenerateUniqueMapId(Str_Text(Uri_Path(map->uri))), sizeof(map->uniqueId));
 
             // See what mapinfo says about this map.
-            mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(map->uri)));
+            mapInfo = Def_GetMapInfo(map->uri);
             if(!mapInfo)
             {
-                mapInfo = Def_GetMapInfo("*");
+                Uri* mapUri = Uri_NewWithPath2("*", RC_NULL);
+                mapInfo = Def_GetMapInfo(mapUri);
+                Uri_Delete(mapUri);
             }
 
             if(mapInfo)

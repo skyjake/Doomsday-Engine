@@ -1954,7 +1954,7 @@ int DD_GetInteger(int ddvalue)
 
     case DD_MAP_MUSIC: {
         gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
         if(!mapInfo) return -1;
         return Def_GetMusicNum(mapInfo->music);
       }
@@ -2028,7 +2028,7 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_MAP_NAME: {
         gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
         if(mapInfo && mapInfo->name[0])
         {
             int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
@@ -2042,7 +2042,7 @@ void* DD_GetVariable(int ddvalue)
       }
     case DD_MAP_AUTHOR: {
         gamemap_t* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(Str_Text(Uri_Path(P_MapUri(map))));
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
 
         if(mapInfo && mapInfo->author[0])
             return mapInfo->author;

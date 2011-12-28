@@ -83,9 +83,11 @@ int     svMaxPlayers = DDMAXPLAYERS;
 /**
  * Fills the provided struct with information about the local server.
  */
-void Sv_GetInfo(serverinfo_t *info)
+void Sv_GetInfo(serverinfo_t* info)
 {
     gamemap_t* currentMap = P_GetCurrentMap();
+    ddstring_t* mapPath;
+    int i;
 
     memset(info, 0, sizeof(*info));
 
@@ -108,7 +110,9 @@ void Sv_GetInfo(serverinfo_t *info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    strncpy(info->map, Str_Text(Uri_Path(P_MapUri(currentMap))), sizeof(info->map) - 1);
+    mapPath = Uri_Resolved(P_MapUri(currentMap));
+    strncpy(info->map, Str_Text(mapPath), sizeof(info->map) - 1);
+    Str_Delete(mapPath);
 
     // These are largely unused at the moment... Mainly intended for
     // the game's custom values.
@@ -118,8 +122,8 @@ void Sv_GetInfo(serverinfo_t *info)
     info->port = nptIPPort;
 
     // Let's compile a list of client names.
-    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(clients[i].connected)
             M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';', sizeof(info->clientNames));
     }
@@ -132,9 +136,9 @@ void Sv_GetInfo(serverinfo_t *info)
 }
 
 /**
- * @return              The length of the string.
+ * @return  Length of the string.
  */
-size_t Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
+size_t Sv_InfoToString(serverinfo_t* info, ddstring_t* msg)
 {
     unsigned int i;
 
