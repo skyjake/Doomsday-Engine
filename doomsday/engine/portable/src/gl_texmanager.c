@@ -616,8 +616,7 @@ static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
             TextureVariant_FlagUploaded(variant, false);
         }
 
-        if(spec)
-            return 0; // We're done.
+        if(spec) return true; // We're done.
     }
     return 0; // Continue iteration.
 }
