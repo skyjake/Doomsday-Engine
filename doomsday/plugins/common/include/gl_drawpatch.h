@@ -29,7 +29,7 @@
 #ifndef LIBCOMMON_GRAPHICS_DRAW_PATCH_H
 #define LIBCOMMON_GRAPHICS_DRAW_PATCH_H
 
-#include "dd_types.h"
+#include "doomsday.h"
 
 /**
  * @defGroup drawPatchFlags Draw Patch Flags.
@@ -42,13 +42,19 @@
 
 /**
  * @param patchId  Unique identifier of the patch to be drawn.
- * @param x  X-offset to the draw origin.
- * @param y  Y-offset to the draw origin.
+ * @param origin  Orient drawing about this offset (topleft:[0,0]).
  * @param alignFlags  @see alignmentFlags
  * @param patchFlags  @see drawPatchFlags
  */
-void GL_DrawPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags);
-void GL_DrawPatch2(patchid_t id, int x, int y, int alignFlags);
-void GL_DrawPatch(patchid_t id, int x, int y);
+void GL_DrawPatch3(patchid_t id, const Point2Raw* origin, int alignFlags, int patchFlags);
+void GL_DrawPatch2(patchid_t id, const Point2Raw* origin, int alignFlags);
+void GL_DrawPatch(patchid_t id, const Point2Raw* origin);
+
+/**
+ * Same as @a GL_DrawPatch except origin is specified with separate xy coordinates.
+ */
+void GL_DrawPatchXY3(patchid_t id, int x, int y, int alignFlags, int patchFlags);
+void GL_DrawPatchXY2(patchid_t id, int x, int y, int alignFlags);
+void GL_DrawPatchXY(patchid_t id, int x, int y);
 
 #endif /* LIBCOMMON_GRAPHICS_DRAW_PATCH_H */

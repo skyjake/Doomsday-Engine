@@ -24,14 +24,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Fullscreen HUD code.
- *
- * Does palette indicators as well (red pain/berserk, bright pickup)
- */
-
- // HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,23 +44,16 @@
 #include "am_map.h"
 #include "r_common.h"
 
-// MACROS ------------------------------------------------------------------
-
-// Radiation suit, green shift.
-#define RADIATIONPAL        13
-
 // Frags pos.
 #define ST_FRAGSX           138
 #define ST_FRAGSY           171
 #define ST_FRAGSWIDTH       2
 
-// TYPES -------------------------------------------------------------------
-
 enum {
     UWG_MAPNAME = 0,
     UWG_BOTTOMLEFT,
     UWG_BOTTOMRIGHT,
-    UWG_BOTTOM,
+    UWG_BOTTOMCENTER,
     UWG_TOP,
     UWG_COUNTERS,
     UWG_AUTOMAP,
@@ -105,95 +90,73 @@ typedef enum hotloc_e {
     HOT_BLEFT
 } hotloc_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 int ST_ChatResponder(int player, event_t* ev);
 void unhideHUD(void);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static hudstate_t hudStates[MAXPLAYERS];
 
-// CODE --------------------------------------------------------------------
-
-/**
- * Register CVARs and CCmds for the HUD/Status bar
- */
 void ST_Register(void)
 {
-    cvartemplate_t cvars[] = {
-        { "hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10, unhideHUD },
+    C_VAR_FLOAT2( "hud-color-r", &cfg.hudColor[0], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-g", &cfg.hudColor[1], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
+    C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
-        // HUD color + alpha
-        { "hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, unhideHUD },
-        { "hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, unhideHUD },
-        { "hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, unhideHUD },
-        { "hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, unhideHUD },
-        { "hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, unhideHUD },
+    // Displays
+    C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
+    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-power", &cfg.hudShown[HUD_INVENTORY], 0, 0, 1, unhideHUD )
 
-        // HUD icons
-        { "hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1, unhideHUD },
-        { "hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1, unhideHUD },
-        { "hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1, unhideHUD },
-        { "hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1, unhideHUD },
-        { "hud-power", 0, CVT_BYTE, &cfg.hudShown[HUD_INVENTORY], 0, 1, unhideHUD },
+    // Events.
+    C_VAR_BYTE(   "hud-unhide-damage", &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-ammo", &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-armor", &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-health", &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-key", &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-powerup", &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 0, 1 )
+    C_VAR_BYTE(   "hud-unhide-pickup-weapon", &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
 
-        // HUD displays
-        { "hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1, unhideHUD },
-
-        { "hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60 },
-
-        { "hud-unhide-damage", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 1 },
-        { "hud-unhide-pickup-health", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 1 },
-        { "hud-unhide-pickup-armor", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 1 },
-        { "hud-unhide-pickup-powerup", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 1 },
-        { "hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1 },
-        { "hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1 },
-        { "hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1 },
-
-        { "hud-cheat-counter", 0, CVT_BYTE, &cfg.hudShownCheatCounters, 0, 63, unhideHUD },
-        { "hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.hudCheatCounterScale, .1f, 1, unhideHUD },
-        { NULL }
-    };
-    ccmdtemplate_t ccmds[] = {
-        { "beginchat",       NULL,   CCmdChatOpen },
-        { "chatcancel",      "",     CCmdChatAction },
-        { "chatcomplete",    "",     CCmdChatAction },
-        { "chatdelete",      "",     CCmdChatAction },
-        { "chatsendmacro",   NULL,   CCmdChatSendMacro },
-        { NULL }
-    };
-    int i;
-    for(i = 0; cvars[i].path; ++i)
-        Con_AddVariable(cvars + i);
-    for(i = 0; ccmds[i].name; ++i)
-        Con_AddCommand(ccmds + i);
+    C_CMD("beginchat",       NULL,   ChatOpen )
+    C_CMD("chatcancel",      "",     ChatAction )
+    C_CMD("chatcomplete",    "",     ChatAction )
+    C_CMD("chatdelete",      "",     ChatAction )
+    C_CMD("chatsendmacro",   NULL,   ChatSendMacro )
 }
 
-/**
- * Unhides the current HUD display if hidden.
- *
- * @param player        The player whoose HUD to (maybe) unhide.
- * @param event         The HUD Update Event type to check for triggering.
- */
+static int fullscreenMode(int player)
+{
+    return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+}
+
 void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    player_t*           plr;
+    player_t* plr;
 
-    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid player #%i, ignoring.", player);
+#endif
         return;
+    }
+    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_HUDUnHide: Invalid event type %i, ignoring.", (int) ev);
+#endif
+        return;
+    }
 
     plr = &players[player];
-    if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
-        return;
+    if(!plr->plr->inGame) return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
@@ -222,21 +185,18 @@ void ST_updateWidgets(int player)
 
 int ST_Responder(event_t* ev)
 {
-    int i, eaten;
+    int i, eaten = false;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         eaten = ST_ChatResponder(i, ev);
-        if(0 != eaten)
-            return eaten;
+        if(eaten) break;
     }
-    return false;
+    return eaten;
 }
 
 void ST_Ticker(timespan_t ticLength)
 {
-    /// \kludge 
-    boolean runGameTic = GUI_RunGameTicTrigger(ticLength);
-    /// kludge end.
+    const boolean isSharpTic = DD_IsSharpTick();
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -272,7 +232,7 @@ void ST_Ticker(timespan_t ticLength)
         }
 
         // The following is restricted to fixed 35 Hz ticks.
-        if(runGameTic && !P_IsPaused())
+        if(isSharpTic && !P_IsPaused())
         {
             if(cfg.hudTimer == 0)
             {
@@ -301,53 +261,6 @@ void ST_Ticker(timespan_t ticLength)
     }
 }
 
-void ST_doPaletteStuff(int player)
-{
-    int palette = 0, cnt, bzc;
-    player_t* plr = &players[player];
-
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
-    }
-
-    if(cnt)
-    {
-        palette = (cnt + 7) >> 3;
-
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-
-        palette += STARTREDPALS;
-    }
-    else if(plr->bonusCount)
-    {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
-    }
-
-    // $democam
-    if(palette)
-    {
-        plr->plr->flags |= DDPF_VIEW_FILTER;
-        R_GetFilterColor(plr->plr->filterColor, palette);
-    }
-    else
-        plr->plr->flags &= ~DDPF_VIEW_FILTER;
-}
-
 static void drawWidgets(hudstate_t* hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
@@ -365,7 +278,7 @@ static void drawWidgets(hudstate_t* hud)
         FR_LoadDefaultAttrib();
         FR_SetColorAndAlpha(1, 1, 1, hud->alpha);
 
-        FR_DrawText3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -477,7 +390,7 @@ void ST_doFullscreenStuff(int player)
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
-        FR_DrawText3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -499,13 +412,13 @@ void ST_doFullscreenStuff(int player)
         FR_SetColorAndAlpha(1, 1, 1, iconalpha);
 
         pos = FR_TextWidth(buf)/2;
-        FR_DrawText3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         sprintf(buf, "%i", plr->health);
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        FR_DrawText3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -582,7 +495,7 @@ Draw_EndZoom();
 
             FR_SetFont(FID(GF_FONTB));
             FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-            FR_DrawText3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
+            FR_DrawTextXY3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
 
             DGL_Disable(DGL_TEXTURE_2D);
             break;
@@ -598,12 +511,12 @@ Draw_EndZoom();
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(1, 1, 1, iconalpha);
         w = FR_TextWidth(buf);
-        FR_DrawText3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         sprintf(buf, "%i", plr->armorPoints);
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
-        FR_DrawText3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -634,7 +547,7 @@ void MapName_Drawer(uiwidget_t* obj, int x, int y)
     FR_SetFont(obj->font);
     FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 
-    WI_DrawPatch3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
+    WI_DrawPatchXY3(patch, text, 0, 0, ALIGN_BOTTOMLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -686,28 +599,33 @@ typedef struct {
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
 
+static void drawUIWidgetsForPlayer(player_t* plr)
+{
+    const int playerNum = plr - players;
+    assert(plr);
+    ST_doFullscreenStuff(playerNum);
+}
+
 void ST_Drawer(int player)
 {
     hudstate_t* hud;
-    player_t* plr;
-    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 
     if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:ST_Drawer: Invalid player #%i, ignoring.\n", player);
+#endif
         return;
+    }
+    if(!players[player].plr->inGame) return;
 
-    plr = &players[player];
-    if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
-        return;
+    R_UpdateViewFilter(player);
 
     hud = &hudStates[player];
-
     hud->firstTime = hud->firstTime;
-    hud->statusbarActive = (fullscreenMode < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
-    // Do palette shifts.
-    ST_doPaletteStuff(player);
-
-    ST_doFullscreenStuff(player);
+    drawUIWidgetsForPlayer(players + player);
 }
 
 void ST_loadData(void)
@@ -732,37 +650,8 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
-static void findMapBounds(float* lowX, float* hiX, float* lowY, float* hiY)
-{
-    assert(NULL != lowX && NULL != hiX && NULL != lowY && NULL != hiY);
-    {
-    float pos[2];
-    uint i;
-
-    *lowX = *lowY =  DDMAXFLOAT;
-    *hiX  = *hiY  = -DDMAXFLOAT;
-
-    for(i = 0; i < numvertexes; ++i)
-    {
-        P_GetFloatv(DMU_VERTEX, i, DMU_XY, pos);
-
-        if(pos[VX] < *lowX)
-            *lowX = pos[VX];
-        if(pos[VX] > *hiX)
-            *hiX  = pos[VX];
-
-        if(pos[VY] < *lowY)
-            *lowY = pos[VY];
-        if(pos[VY] > *hiY)
-            *hiY  = pos[VY];
-    }
-    }
-}
-
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
     int flags;
 
@@ -776,27 +665,29 @@ static void setAutomapCheatLevel(uiwidget_t* obj, int level)
     if(hud->automapCheatLevel > 2)
         flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
     UIAutomap_SetFlags(obj, flags);
-    }
 }
 
 static void initAutomapForCurrentMap(uiwidget_t* obj)
 {
-    assert(obj);
-    {
     hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    float lowX, hiX, lowY, hiY;
     automapcfg_t* mcfg;
+    mobj_t* followMobj;
+    uint i;
 
     UIAutomap_Reset(obj);
 
-    findMapBounds(&lowX, &hiX, &lowY, &hiY);
     UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
-    UIAutomap_SetWorldBounds(obj, lowX, hiX, lowY, hiY);
+    UIAutomap_SetWorldBounds(obj, *((float*) DD_GetVariable(DD_MAP_MIN_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_X)),
+                                  *((float*) DD_GetVariable(DD_MAP_MIN_Y)),
+                                  *((float*) DD_GetVariable(DD_MAP_MAX_Y)));
 
     mcfg = UIAutomap_Config(obj);
 
     // Determine the obj view scale factors.
-    UIAutomap_SetScale(obj, UIAutomap_ZoomMax(obj)? 0 : .45f);
+    if(UIAutomap_ZoomMax(obj))
+        UIAutomap_SetScale(obj, 0);
+
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
@@ -811,11 +702,11 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 #endif
 
     // Are we re-centering on a followed mobj?
-    { mobj_t* mo = UIAutomap_FollowMobj(obj);
-    if(NULL != mo)
+    followMobj = UIAutomap_FollowMobj(obj);
+    if(followMobj)
     {
-        UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
-    }}
+        UIAutomap_SetCameraOrigin(obj, followMobj->pos[VX], followMobj->pos[VY]);
+    }
 
     if(IS_NETGAME)
     {
@@ -825,20 +716,17 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_SetReveal(obj, false);
 
     // Add all immediately visible lines.
-    { uint i;
     for(i = 0; i < numlines; ++i)
     {
         xline_t* xline = &xlines[i];
         if(!(xline->flags & ML_MAPPED)) continue;
+
         P_SetLinedefAutomapVisibility(UIWidget_Player(obj), i, true);
-    }}
     }
 }
 
 void ST_Start(int player)
 {
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     uiwidget_t* obj;
     hudstate_t* hud;
     int flags;
@@ -851,11 +739,11 @@ void ST_Start(int player)
     hud = &hudStates[player];
 
     if(!hud->stopped)
+    {
         ST_Stop(player);
+    }
 
     initData(hud);
-    // If the automap has been left open; close it.
-    ST_AutomapOpen(player, false, true);
 
     /**
      * Initialize widgets according to player preferences.
@@ -871,11 +759,10 @@ void ST_Start(int player)
     UIWidget_SetAlignment(obj, flags);
 
     obj = GUI_MustFindObjectById(hud->automapWidgetId);
+    // If the automap was left open; close it.
+    UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
-    UIAutomap_SetScale(obj, 1);
     UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
-    UIAutomap_SetOrigin(obj, 0, 0);
-    UIAutomap_SetSize(obj, winWidth, winHeight);
 
     hud->stopped = false;
 }
@@ -910,10 +797,10 @@ void ST_BuildWidgets(int player)
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(player, def->groupFlags, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
     }
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
 
 #undef PADDING
@@ -1246,7 +1133,7 @@ D_CMD(ChatOpen)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }
@@ -1313,7 +1200,7 @@ D_CMD(ChatSendMacro)
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            Con_Message("Invalid team number #%i (valid range: 0...%i).\n", destination, NUMTEAMS);
+            Con_Message("Invalid team number #%i (valid range: 0..%i).\n", destination, NUMTEAMS);
             return false;
         }
     }

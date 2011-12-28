@@ -113,28 +113,28 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, 
 #endif
 int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
-void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawGameTypePage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin);
 #if __JHEXEN__
-void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawPlayerClassPage(mn_page_t* page, const Point2Raw* origin);
 #endif
 #if __JDOOM__ || __JHERETIC__
-void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin);
 #endif
-void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawSoundPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawGameplayPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawHUDPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawOptionsPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawSoundPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawGameplayPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawHUDPage(mn_page_t* page, const Point2Raw* origin);
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawInventoryPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawInventoryPage(mn_page_t* page, const Point2Raw* origin);
 #endif
-void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawMultiplayerPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, int x, int y);
-void Hu_MenuDrawAutomapPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawWeaponsPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawLoadGamePage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawMultiplayerPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin);
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd);
 
@@ -2032,7 +2032,7 @@ void Hu_MenuInit(void)
     {
         mn_object_t* obj = MN_MustFindObjectOnPage(&MainMenu, 0, MNF_ID0); // Read This!
         MNObject_SetFlags(obj, FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
-        MainMenu.offset[VY] += 8;
+        MainMenu.origin.y += 8;
     }
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
     {
@@ -2199,7 +2199,7 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
 
-    GL_DrawPatch3(pCursor, 0, 0, 0, DPF_NO_OFFSET);
+    GL_DrawPatchXY3(pCursor, 0, 0, 0, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2803,7 +2803,7 @@ int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* paramate
     }
 }
 
-void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JDOOM__ || __JDOOM64__
 #  define TITLEOFFSET_X         (-3)
@@ -2822,13 +2822,14 @@ void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
-    WI_DrawPatch3(pMainTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pMainTitle), x + TITLEOFFSET_X, y + TITLEOFFSET_Y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pMainTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pMainTitle),
+        origin->x + TITLEOFFSET_X, origin->y + TITLEOFFSET_Y, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #if __JHEXEN__
-    GL_DrawPatch(pBullWithFire[(frame + 2) % 7], x - 73, y + 24);
-    GL_DrawPatch(pBullWithFire[frame], x + 168, y + 24);
+    GL_DrawPatchXY(pBullWithFire[(frame + 2) % 7], origin->x - 73, origin->y + 24);
+    GL_DrawPatchXY(pBullWithFire[frame], origin->x + 168, origin->y + 24);
 #elif __JHERETIC__
-    GL_DrawPatch(pRotatingSkull[17 - frame], x - 70, y - 46);
-    GL_DrawPatch(pRotatingSkull[frame], x + 122, y - 46);
+    GL_DrawPatchXY(pRotatingSkull[17 - frame], origin->x - 70, origin->y - 46);
+    GL_DrawPatchXY(pRotatingSkull[frame], origin->x + 122, origin->y - 46);
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2837,7 +2838,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, int x, int y)
 #undef TITLEOFFSET_X
 }
 
-void Hu_MenuDrawGameTypePage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JDOOM__ || __JDOOM64__
 #  define TITLEOFFSET_X         (67)
@@ -2848,7 +2849,7 @@ void Hu_MenuDrawGameTypePage(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawText3(GET_TXT(TXT_PICKGAMETYPE), x + TITLEOFFSET_X, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(GET_TXT(TXT_PICKGAMETYPE), origin->x + TITLEOFFSET_X, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2887,13 +2888,11 @@ static void composeNotDesignedForMessage(const char* str)
 #endif
 
 #if __JHEXEN__
-void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawPlayerClassPage(mn_page_t* page, const Point2Raw* origin)
 {
 #define BG_X            (108)
 #define BG_Y            (-58)
 
-    assert(NULL != page);
-    {
     mn_object_t* obj;
     int pClass;
 
@@ -2901,7 +2900,8 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    FR_DrawText3("Choose class:", x - 32, y - 42, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Choose class:", origin->x - 32, origin->y - 42, ALIGN_TOPLEFT,
+        MN_MergeMenuEffectWithDrawTextFlags(0));
 
     obj = MNPage_FocusObject(page);
     assert(obj);
@@ -2913,8 +2913,7 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y)
     }
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pPlayerClassBG[pClass % 3], x + BG_X, y + BG_Y);
-    }
+    GL_DrawPatchXY(pPlayerClassBG[pClass % 3], origin->x + BG_X, origin->y + BG_Y);
 
 #undef BG_X
 #undef BG_Y
@@ -2922,7 +2921,7 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t* page, int x, int y)
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JHERETIC__
     mn_object_t* obj;
@@ -2933,13 +2932,13 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
 #if __JHERETIC__
     /// \kludge Inform the user episode 6 is designed for deathmatch only.
     obj = MNPage_FocusObject(page);
-    if(NULL != obj && obj->data2 == 5)
+    if(obj && obj->data2 == 5)
     {
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-        FR_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+        FR_DrawTextXY3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
     }
     // kludge end.
 #else // __JDOOM__
@@ -2947,14 +2946,15 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, int x, int y)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch3(pEpisode, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pEpisode), x + 7, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pEpisode, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pEpisode),
+        origin->x + 7, origin->y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 #endif
 
-void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -2962,10 +2962,13 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JDOOM__ || __JDOOM64__
-    WI_DrawPatch3(pNewGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pNewGame), x + 48, y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-    WI_DrawPatch3(pSkill, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSkill), x + 6, y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pNewGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pNewGame),
+        origin->x + 48, origin->y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pSkill, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSkill),
+        origin->x + 6, origin->y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #elif __JHEXEN__
-    FR_DrawText3("Choose Skill Level:", x - 46, y - 28, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Choose Skill Level:", origin->x - 46, origin->y - 28, ALIGN_TOPLEFT,
+        MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3236,7 +3239,7 @@ int Hu_MenuCvarColorBox(mn_object_t* obj, mn_actionid_t action, void* paramaters
     return 0;
 }
 
-void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawLoadGamePage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3244,15 +3247,16 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawText3("Load Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Load Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pLoadGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pLoadGame), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pLoadGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pLoadGame),
+        origin->x - 8, origin->y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3260,9 +3264,10 @@ void Hu_MenuDrawSaveGamePage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawText3("Save Game", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Save Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pSaveGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSaveGame), x - 8, y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pSaveGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSaveGame),
+        origin->x - 8, origin->y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3277,7 +3282,7 @@ int Hu_MenuSelectHelp(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 }
 #endif
 
-void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawOptionsPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3285,37 +3290,38 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, int x, int y)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawText3("OPTIONS", x + 42, y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("OPTIONS", origin->x + 42, origin->y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch3(pOptionsTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pOptionsTitle), x + 42, y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+    WI_DrawPatchXY3(pOptionsTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pOptionsTitle),
+        origin->x + 42, origin->y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawSoundPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawSoundPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawText3("SOUND OPTIONS", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("SOUND OPTIONS", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawGameplayPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawGameplayPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawText3("GAMEPLAY", SCREENWIDTH/2, y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("GAMEPLAY", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawWeaponsPage(mn_page_t* page, const Point2Raw* origin)
 {
 /*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
@@ -3325,28 +3331,28 @@ void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawText3("WEAPONS", SCREENWIDTH/2, y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("WEAPONS", SCREENWIDTH/2, origin->y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    FR_DrawText3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(buf, SCREENWIDTH/2, origin->y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #elif __JHERETIC__
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y - 22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, origin->y - 22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - origin->x, origin->y - 22);
 #endif*/
 
     /// \kludge Inform the user how to change the order.
     /*{ mn_object_t* obj = MNPage_FocusObject(page);
-    if(NULL != obj && obj == &page->objects[1])
+    if(obj && obj == &page->objects[1])
     {
         const char* str = "Use left/right to move weapon up/down";
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-        FR_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+        FR_DrawTextXY3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
     }}*/
     // kludge end.
 
@@ -3354,19 +3360,19 @@ void Hu_MenuDrawWeaponsPage(mn_page_t* page, int x, int y)
 }
 
 #if __JHERETIC__ || __JHEXEN__
-void Hu_MenuDrawInventoryPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawInventoryPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    FR_DrawText3("Inventory Options", SCREENWIDTH/2, y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Inventory Options", SCREENWIDTH/2, origin->y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 #endif
 
-void Hu_MenuDrawHUDPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawHUDPage(mn_page_t* page, const Point2Raw* origin)
 {
 /*#if __JDOOM__ || __JDOOM64__
     char buf[1024];
@@ -3376,41 +3382,41 @@ void Hu_MenuDrawHUDPage(mn_page_t* page, int x, int y)
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawText3("HUD options", SCREENWIDTH/2, y - 20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("HUD options", SCREENWIDTH/2, origin->y - 20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JDOOM__ || __JDOOM64__
     Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(1, .7f, .3f, mnRendState->pageAlpha);
-    FR_DrawText3(buf, x + SCREENWIDTH/2, y + -12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(buf, origin->x + SCREENWIDTH/2, origin->y + -12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y + -22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - x, y + -22);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], origin->x, origin->y + -22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - origin->x, origin->y + -22);
 #endif*/
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawMultiplayerPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawMultiplayerPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
 
-    FR_DrawText3(GET_TXT(TXT_MULTIPLAYER), x + 60, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(GET_TXT(TXT_MULTIPLAYER), origin->x + 60, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
 
-    FR_DrawText3(GET_TXT(TXT_PLAYERSETUP), x + 90, y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(GET_TXT(TXT_PLAYERSETUP), origin->x + 90, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3751,9 +3757,9 @@ int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* param
 
     switch(mnPlrClass)
     {
-    case PCLASS_FIGHTER:    SkillMenu.offset[VX] = 120; break;
-    case PCLASS_CLERIC:     SkillMenu.offset[VX] = 116; break;
-    case PCLASS_MAGE:       SkillMenu.offset[VX] = 112; break;
+    case PCLASS_FIGHTER:    SkillMenu.origin.x = 120; break;
+    case PCLASS_CLERIC:     SkillMenu.origin.x = 116; break;
+    case PCLASS_MAGE:       SkillMenu.origin.x = 112; break;
     }
     Hu_MenuSetActivePage(&SkillMenu);
     return 0;
@@ -3872,19 +3878,19 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* 
 /**
  * Draws the automap options menu
  */
-void Hu_MenuDrawAutomapPage(mn_page_t* page, int x, int y)
+void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    FR_DrawText3("Automap OPTIONS", SCREENWIDTH/2, y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Automap OPTIONS", SCREENWIDTH/2, origin->y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
 /*#if __JHERETIC__ || __JHEXEN__
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y - 22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (menuTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], origin->x, origin->y - 22);
+    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (menuTime & 8)], 312 - origin->x, origin->y - 22);
 #endif*/
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3895,7 +3901,7 @@ D_CMD(MenuOpen)
     if(argc > 1)
     {
         mn_page_t* page = Hu_MenuFindPageForName(argv[1]);
-        if(NULL != page)
+        if(page)
         {
             Hu_MenuCommand(MCMD_OPEN);
             Hu_MenuSetActivePage(page);
@@ -3909,7 +3915,7 @@ D_CMD(MenuOpen)
 }
 
 /**
- * Routes menu commands for actions and navigation into the menu.
+ * Routes console commands for menu actions and navigation into the menu subsystem.
  */
 D_CMD(MenuCommand)
 {

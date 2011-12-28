@@ -29,6 +29,8 @@
 #ifndef LIBDENG_API_FONT_RENDERER_H
 #define LIBDENG_API_FONT_RENDERER_H
 
+//#include "doomsday.h"
+
 /**
  * Font attributes are managed as a finite stack of attribute sets.
  * This value defines the maximum allowed depth of the attribute stack.
@@ -164,14 +166,17 @@ void FR_SetCaseScale(boolean value);
  * Draw a text block.
  *
  * @param text  Block of text to be drawn.
- * @param x  X origin/offset at which to begin drawing.
- * @param y  Y origin/offset at which to begin drawing.
+ * @param origin  Orient drawing about this offset (topleft:[0,0]).
  * @param alignFlags  @see alignmentFlags
  * @param flags  @see drawTextFlags
  */
-void FR_DrawText3(const char* text, int x, int y, int alignFlags, short flags);
-void FR_DrawText2(const char* text, int x, int y, int alignFlags);
-void FR_DrawText(const char* text, int x, int y);
+void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, short flags);
+void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags);
+void FR_DrawText(const char* text, const Point2Raw* origin);
+
+void FR_DrawTextXY3(const char* text, int x, int y, int alignFlags, short flags);
+void FR_DrawTextXY2(const char* text, int x, int y, int alignFlags);
+void FR_DrawTextXY(const char* text, int x, int y);
 
 // Utility routines:
 void FR_TextSize(Size2Raw* size, const char* text);
@@ -193,9 +198,13 @@ int FR_TextHeight(const char* text);
  * @param alignFlags  @see alignmentFlags
  * @param flags  @see drawTextFlags
  */
-void FR_DrawChar3(unsigned char ch, int x, int y, int alignFlags, short flags);
-void FR_DrawChar2(unsigned char ch, int x, int y, int alignFlags);
-void FR_DrawChar(unsigned char ch, int x, int y);
+void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short flags);
+void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags);
+void FR_DrawChar(unsigned char ch, const Point2Raw* origin);
+
+void FR_DrawCharXY3(unsigned char ch, int x, int y, int alignFlags, short flags);
+void FR_DrawCharXY2(unsigned char ch, int x, int y, int alignFlags);
+void FR_DrawCharXY(unsigned char ch, int x, int y);
 
 // Utility routines:
 void FR_CharSize(Size2Raw* size, unsigned char ch);

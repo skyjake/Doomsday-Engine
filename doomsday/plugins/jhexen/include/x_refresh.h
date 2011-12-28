@@ -34,6 +34,7 @@ void X_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* window
 void X_DrawWindow(const Size2Raw* windowSize);
 
 void R_SetAllDoomsdayFlags(void);
-boolean R_GetFilterColor(float rgba[4], int filter);
+boolean R_ViewFilterColor(float rgba[4], int filter);
+void R_UpdateViewFilter(int player);
 
 #endif /* JHEXEN_REFRESH_H */

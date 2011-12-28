@@ -515,7 +515,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         FR_SetFont(busyFont);
         FR_LoadDefaultAttrib();
         FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
-        FR_DrawText3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -644,7 +644,7 @@ void Con_BusyDrawConsoleOutput(void)
             alpha = 1 - (alpha - LINE_COUNT);
 
         FR_SetAlpha(alpha);
-        FR_DrawText3(line->text, theWindow->geometry.size.width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(line->text, theWindow->geometry.size.width/2, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);

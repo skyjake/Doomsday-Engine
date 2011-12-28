@@ -102,7 +102,7 @@ static void rendSpecialFilter(int player, const RectRaw* region)
     DGL_BlendMode(BM_NORMAL);
 }
 
-boolean R_GetFilterColor(float rgba[4], int filter)
+boolean R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba)
         return false;
@@ -136,9 +136,72 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     }
 
     if(filter)
-        Con_Message("R_GetFilterColor: Real strange filter number: %d.\n", filter);
+        Con_Message("R_ViewFilterColor: Real strange filter number: %d.\n", filter);
 
     return false;
+}
+
+void R_UpdateViewFilter(int player)
+{
+#define RADIATIONPAL            (13) /// Radiation suit, green shift.
+
+    player_t* plr = players + player;
+    int palette = 0, cnt, bzc;
+
+    if(player < 0 || player >= MAXPLAYERS)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_UpdateViewFilter: Invalid player #%i, ignoring.\n", player);
+#endif
+        return;
+    }
+
+    // Not currently present?
+    if(!plr->plr->inGame) return;
+
+    cnt = plr->damageCount;
+
+    if(plr->powers[PT_STRENGTH])
+    {   // Slowly fade the berzerk out.
+        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
+
+        if(bzc > cnt)
+            cnt = bzc;
+    }
+
+    if(cnt)
+    {
+        palette = (cnt + 7) >> 3;
+
+        if(palette >= NUMREDPALS)
+            palette = NUMREDPALS - 1;
+        palette += STARTREDPALS;
+    }
+    else if(plr->bonusCount)
+    {
+        palette = (plr->bonusCount + 7) >> 3;
+        if(palette >= NUMBONUSPALS)
+            palette = NUMBONUSPALS - 1;
+        palette += STARTBONUSPALS;
+    }
+    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+            plr->powers[PT_IRONFEET] & 8)
+    {
+        palette = RADIATIONPAL;
+    }
+
+    // $democam
+    if(palette)
+    {
+        plr->plr->flags |= DDPF_VIEW_FILTER;
+        R_ViewFilterColor(plr->plr->filterColor, palette);
+    }
+    else
+    {
+        plr->plr->flags &= ~DDPF_VIEW_FILTER;
+    }
+
+#undef RADIATIONPAL
 }
 
 static void rendPlayerView(int player)

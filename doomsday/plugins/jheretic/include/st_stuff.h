@@ -46,8 +46,9 @@
 
 #define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
 
-// Called by startup code.
+/// Register the console commands, variables, etc..., of this module.
 void ST_Register(void);
+
 void ST_Init(void);
 void ST_Shutdown(void);
 
@@ -57,8 +58,6 @@ void ST_Drawer(int player);
 
 void ST_Start(int player);
 void ST_Stop(int player);
-
-void ST_doPaletteStuff(int player);
 
 uiwidget_t* ST_UIChatForPlayer(int player);
 uiwidget_t* ST_UILogForPlayer(int player);
@@ -133,8 +132,13 @@ boolean ST_AutomapHasReveal(int player);
 
 void ST_RebuildAutomap(int player);
 
-/// Call when it might be neccessary for the hud to unhide.
-void ST_HUDUnHide(int player, hueevent_t ev);
+/**
+ * Unhides the current HUD display if hidden.
+ *
+ * @param player  Player whoose HUD to (maybe) unhide.
+ * @param event  Event type trigger.
+ */
+ void ST_HUDUnHide(int player, hueevent_t ev);
 
 void ST_FlashCurrentItem(int player);
 

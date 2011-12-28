@@ -1245,19 +1245,19 @@ void Sfx_DebugInfo(void)
     lh = FR_TextHeight("W") - 3;
     if(!sfxAvail)
     {
-        FR_DrawText3("Sfx disabled", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3("Sfx disabled", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
         glDisable(GL_TEXTURE_2D);
         return;
     }
 
     if(refMonitor)
-        FR_DrawText3("!", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3("!", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
     FR_SetColor(1, 1, 1);
-    FR_DrawText3(buf, 10, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(buf, 10, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
@@ -1276,7 +1276,7 @@ void Sfx_DebugInfo(void)
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
                 ch->startTime, ch->buffer ? ch->buffer->endTime : 0);
-        FR_DrawText3(buf, 5, lh * (1 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, 5, lh * (1 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
         if(!ch->buffer)
             continue;
@@ -1291,7 +1291,7 @@ void Sfx_DebugInfo(void)
                 id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
                 ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
                 ch->buffer->cursor, ch->buffer->written);
-        FR_DrawText3(buf, 5, lh * (2 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY3(buf, 5, lh * (2 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
     }
 
     glDisable(GL_TEXTURE_2D);

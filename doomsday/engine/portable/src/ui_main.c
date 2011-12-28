@@ -2072,7 +2072,7 @@ void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color,
     alpha *= uiAlpha;
     if(alpha <= 0) return;
     FR_SetColorAndAlpha(color->red, color->green, color->blue, alpha);
-    FR_DrawText3(text, origin->x, origin->y, alignFlags, textFlags);
+    FR_DrawText3(text, origin, alignFlags, textFlags);
 }
 
 void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha)
@@ -2119,7 +2119,7 @@ int UI_TextOutWrapEx(const char* text, const Point2Raw* origin, const Size2Raw* 
             // Can't print any more? (always print the 1st line)
             if(t.y + linehgt > origin->y + size->height && t.y != origin->y)
                 return t.y;
-            FR_DrawText(word, t.x, t.y);
+            FR_DrawText(word, &t);
             t.x += len;
             wp = word;
             // React to delimiter.

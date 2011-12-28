@@ -149,10 +149,9 @@ static void rotate2D(float* x, float* y, float angle)
  */
 static void calcViewScaleFactors(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float dx, dy, dist, a, b;
+    assert(obj->type == GUI_AUTOMAP);
 
     dx = am->bounds[BOXRIGHT] - am->bounds[BOXLEFT];
     dy = am->bounds[BOXTOP]   - am->bounds[BOXBOTTOM];
@@ -167,18 +166,15 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     am->maxScaleMTOF = UIWidget_Geometry(obj)->size.height / am->minScale;
 
     am->updateViewScale = false;
-    }
 }
 
 void UIAutomap_ClearLists(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     uint i;
+    assert(obj->type == GUI_AUTOMAP);
 
-    if(Get(DD_NOVIDEO) || IS_DEDICATED)
-        return; // Nothing to do.
+    if(Get(DD_NOVIDEO) || IS_DEDICATED) return; // Nothing to do.
 
     for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
     {
@@ -186,13 +182,12 @@ void UIAutomap_ClearLists(uiwidget_t* obj)
             DGL_DeleteLists(am->lists[i], 1);
         am->lists[i] = 0;
     }
-    }
 }
 
 void UIAutomap_LoadResources(void)
 {
 #if !__JDOOM64__
-    { int i;
+    int i;
     char patchName[9];
     for(i = 0; i < 10; ++i)
     {
@@ -202,7 +197,7 @@ void UIAutomap_LoadResources(void)
         sprintf(patchName, "fonta%d", 16+i);
 #  endif
         pPointMarkers[i] = R_DeclarePatch(patchName);
-    }}
+    }
 #endif
 
     if(autopageLumpNum >= 0)
@@ -233,12 +228,11 @@ void UIAutomap_ReleaseResources(void)
 
 void UIAutomap_Reset(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     UIAutomap_ClearLists(obj);
     am->constructMap = true;
-    }
 }
 
 /**
@@ -249,14 +243,13 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     boolean glowOnly, boolean scaleGlowWithView, boolean caps, blendmode_t blend,
     boolean drawNormal, boolean addToLists)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     //automapcfg_t* mcfg = am->mcfg;
     float a[2], b[2];
     float length, dx, dy;
     float normal[2], unit[2];
+    assert(obj->type == GUI_AUTOMAP);
 
     // Scale into map, screen space units.
     a[VX] = x1;
@@ -267,8 +260,7 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     dx = b[VX] - a[VX];
     dy = b[VY] - a[VY];
     length = sqrt(dx * dx + dy * dy);
-    if(length <= 0)
-        return;
+    if(length <= 0) return;
 
     unit[VX] = dx / length;
     unit[VY] = dy / length;
@@ -586,7 +578,6 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
 
 #undef NORMTAIL_LENGTH
     }
-    }
 }
 
 static int rendSeg(void* seg_, void* data)
@@ -798,14 +789,12 @@ int rendPolyobjSeg(void* segPtr, void* context)
     linedef_t* line;
     xline_t* xLine;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
-        return false;
+    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
 
-    if(xLine->validCount == VALIDCOUNT)
-        return false; // Already processed this frame.
+    // Already processed this frame?
+    if(xLine->validCount == VALIDCOUNT) return false;
 
-    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES))
-        return false;
+    if((xLine->flags & ML_DONTDRAW) && !(am->flags & AMF_REND_ALLLINES)) return false;
 
     amo = AMO_NONE;
     if((am->flags & AMF_REND_ALLLINES) || xLine->mapped[rs.plr - players])
@@ -882,10 +871,9 @@ int rendXGLinedef(linedef_t* line, void* context)
 
 static void rendXGLinedefs(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     AABoxf aaBox;
+    assert(obj->type == GUI_AUTOMAP);
 
     // VALIDCOUNT is used to track which lines have been drawn this frame.
     VALIDCOUNT++;
@@ -896,7 +884,6 @@ static void rendXGLinedefs(uiwidget_t* obj)
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     P_LinesBoxIterator(&aaBox, rendXGLinedef, obj);
-    }
 }
 #endif
 
@@ -921,14 +908,13 @@ static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float an
  */
 static void rendPlayerMarkers(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     vectorgraphicid_t vgId = AM_GetVectorGraphic(am->mcfg, AMO_THINGPLAYER);
     const float pageAlpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float size = PLAYERRADIUS;
     int i;
+    assert(obj->type == GUI_AUTOMAP);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -936,11 +922,8 @@ static void rendPlayerMarkers(uiwidget_t* obj)
         float rgb[3], alpha;
         mobj_t* mo;
 
-        if(!p->plr->inGame)
-            continue;
-
-        if(deathmatch && p != &players[player])
-            continue;
+        if(!p->plr->inGame) continue;
+        if(deathmatch && p != &players[player]) continue;
 
         R_GetColorPaletteRGBf(0, (!IS_NETGAME? WHITE : playerColorPaletteIndices[cfg.playerColor[i]]), rgb, false);
         alpha = cfg.automapLineAlpha * pageAlpha;
@@ -957,36 +940,34 @@ static void rendPlayerMarkers(uiwidget_t* obj)
                           mo->angle / (float) ANGLE_MAX * 360, size,
                           rgb, alpha, BM_NORMAL);
     }
-    }
 }
 
 static int getKeyColorForMobjType(int type)
 {
     struct keycolor_s {
-        int             moType;
-        int             color;
-    } keyColors[] =
-    {
+        int mobjType;
+        int palColor;
+    } keyColors[] = {
 #if __JDOOM__ || __JDOOM64__
-        {MT_MISC4, KEY1_COLOR},
-        {MT_MISC5, KEY2_COLOR},
-        {MT_MISC6, KEY3_COLOR},
-        {MT_MISC7, KEY4_COLOR},
-        {MT_MISC8, KEY5_COLOR},
-        {MT_MISC9, KEY6_COLOR},
+        { MT_MISC4, KEY1_COLOR },
+        { MT_MISC5, KEY2_COLOR },
+        { MT_MISC6, KEY3_COLOR },
+        { MT_MISC7, KEY4_COLOR },
+        { MT_MISC8, KEY5_COLOR },
+        { MT_MISC9, KEY6_COLOR },
 #elif __JHERETIC__
-        {MT_CKEY, KEY1_COLOR},
-        {MT_BKYY, KEY2_COLOR},
-        {MT_AKYY, KEY3_COLOR},
+        { MT_CKEY, KEY1_COLOR },
+        { MT_BKYY, KEY2_COLOR },
+        { MT_AKYY, KEY3_COLOR },
 #endif
-        {-1, -1} // Terminate.
+        { -1, -1 }
     };
-    uint                i;
-
-    for(i = 0; keyColors[i].moType != -1; ++i)
-        if(keyColors[i].moType == type)
-            return keyColors[i].color;
-
+    uint i;
+    for(i = 0; keyColors[i].mobjType != -1; ++i)
+    {
+        if(keyColors[i].mobjType == type)
+            return keyColors[i].palColor;
+    }
     return -1; // Not a key.
 }
 
@@ -1037,12 +1018,11 @@ static int rendThingPoint(mobj_t* mo, void* context)
 
 static void rendThingPoints(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     renderthing_params_t params;
     AABoxf aaBox;
+    assert(obj->type == GUI_AUTOMAP);
 
     params.flags = UIAutomap_Flags(obj);
     params.vgId = AM_GetVectorGraphic(am->mcfg, AMO_THING);
@@ -1052,7 +1032,6 @@ static void rendThingPoints(uiwidget_t* obj)
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     VALIDCOUNT++;
     P_MobjsBoxIterator(&aaBox, rendThingPoint, &params);
-    }
 }
 
 static boolean interceptEdge(float point[2], const float fromA[2], const float toA[2],
@@ -1089,19 +1068,16 @@ static void positionPointInView(uiwidget_t* obj, float point[2],
  */
 static void drawMarkedPoints(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
     float viewPoint[2], angle, stom;
     uint i, pointCount = UIAutomap_PointCount(obj);
-    Size2Raw portSize;
+    assert(obj->type == GUI_AUTOMAP);
 
     if(!pointCount) return;
 
-    R_ViewPortSize(UIWidget_Player(obj), &portSize);
-    stom = UIAutomap_FrameToMap(obj, (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1)));
+    stom = UIAutomap_FrameToMap(obj, 1);
 
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
     UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
@@ -1135,7 +1111,6 @@ static void drawMarkedPoints(uiwidget_t* obj)
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
-    }
 }
 
 /**
@@ -1143,13 +1118,11 @@ static void drawMarkedPoints(uiwidget_t* obj)
  */
 static void setupGLStateForMap(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
-    Point2Raw portOrigin;
+    assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
@@ -1162,7 +1135,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
 #if __JHERETIC__ || __JHEXEN__
@@ -1202,7 +1175,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_Scalef(1, (float)UIWidget_Geometry(obj)->size.height / UIWidget_Geometry(obj)->size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_DrawRect(UIWidget_Geometry(obj));
+        DGL_DrawRect2(0, 0, obj->geometry.size.width, obj->geometry.size.height);
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1214,7 +1187,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
-        DGL_DrawRect(UIWidget_Geometry(obj));
+        DGL_DrawRect2(0, 0, obj->geometry.size.width, obj->geometry.size.height);
     }
 
 #if __JDOOM64__
@@ -1285,11 +1258,19 @@ static void setupGLStateForMap(uiwidget_t* obj)
 #endif
 
     // Setup the scissor clipper.
-    R_ViewPortOrigin(player, &portOrigin);
-    DGL_Scissor(portOrigin.x + UIWidget_Geometry(obj)->origin.x + am->border,
-                portOrigin.y + UIWidget_Geometry(obj)->origin.y + am->border,
-                UIWidget_Geometry(obj)->size.width  - am->border*2,
-                UIWidget_Geometry(obj)->size.height - am->border*2);
+    /// \todo Do this in the UI module.
+    {
+    RectRaw clipRegion;
+    Size2Raw portSize;
+
+    R_ViewPortSize(obj->player, &portSize);
+    clipRegion.origin.x = .5f + FIXXTOSCREENX(obj->geometry.origin.x  + am->border);
+    clipRegion.origin.y = .5f + FIXYTOSCREENY(obj->geometry.origin.y  + am->border);
+    clipRegion.size.width  = .5f + FIXXTOSCREENX(obj->geometry.size.width  - am->border*2);
+    clipRegion.size.height = .5f + FIXYTOSCREENY(obj->geometry.size.height - am->border*2);
+
+    DGL_Scissor(clipRegion.origin.x, clipRegion.origin.y,
+                clipRegion.size.width, clipRegion.size.height);
     DGL_Enable(DGL_SCISSOR_TEST);
     }
 }
@@ -1299,23 +1280,19 @@ static void setupGLStateForMap(uiwidget_t* obj)
  */
 static void restoreGLStateFromMap(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     if(!am->scissorState[0])
         DGL_Disable(DGL_SCISSOR_TEST);
     DGL_Scissor(am->scissorState[1], am->scissorState[2], am->scissorState[3], am->scissorState[4]);
-    }
 }
 
 static void renderVertexes(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float v[2], oldPointSize;
     uint i;
+    assert(obj->type == GUI_AUTOMAP);
 
     DGL_Color4f(.2f, .5f, 1, alpha);
 
@@ -1334,7 +1311,6 @@ static void renderVertexes(uiwidget_t* obj)
 
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
     DGL_Disable(DGL_POINT_SMOOTH);
-    }
 }
 
 /**
@@ -1342,10 +1318,9 @@ static void renderVertexes(uiwidget_t* obj)
  */
 static void compileObjectLists(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     uint i;
+    assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ClearLists(obj);
 
@@ -1360,43 +1335,39 @@ static void compileObjectLists(uiwidget_t* obj)
     }
 
     am->constructMap = false;
-    }
 }
 
 automapcfg_t* UIAutomap_Config(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* map = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return map->mcfg;
-    }
 }
 
 void UIAutomap_Rebuild(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* map = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     map->constructMap = true;
-    }
 }
 
 /**
  * Render the automap view window for the specified player.
  */
-void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
+void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
-    static int updateWait = 0;
+    static int updateWait = 0; /// \fixme should be an instance var of UIAutomap
 
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     player_t* plr = &players[UIWidget_Player(obj)];
     float vx, vy, angle, oldLineWidth;
+    int i;
+    assert(obj->type == GUI_AUTOMAP);
 
-    if(!plr->plr->inGame)
-        return;
+    if(!plr->plr->inGame) return;
 
     // Configure render state:
     rs.plr = plr;
@@ -1405,25 +1376,29 @@ void UIAutomap_Drawer(uiwidget_t* obj, int x, int y)
 
     // Freeze the lists if the map is fading out from being open, or for debug.
     if((++updateWait % 10) && am->constructMap && !freezeMapRLs && UIAutomap_Active(obj))
-    {   // Its time to rebuild the automap object display lists.
+    {
+        // Its time to rebuild the automap object display lists.
         compileObjectLists(obj);
     }
 
     // Setup for frame.
     setupGLStateForMap(obj);
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(UIWidget_Geometry(obj)->origin.x + UIWidget_Geometry(obj)->size.width / 2, UIWidget_Geometry(obj)->origin.y + UIWidget_Geometry(obj)->size.height / 2, 0);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Translatef(obj->geometry.size.width  / 2,
+                   obj->geometry.size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
     DGL_Translatef(-vx, -vy, 0);
 
-    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
     {
-    int winWidth = Get(DD_WINDOW_WIDTH);
-    int winHeight = Get(DD_WINDOW_HEIGHT);
-    DGL_SetFloat(DGL_LINE_WIDTH, (winWidth>= winHeight? winHeight : winWidth) * (AM_LINE_WIDTH/SCREENWIDTH));
+    Size2Raw portSize;
+    R_ViewPortSize(obj->player, &portSize);
+
+    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, portSize.width>= portSize.height? FIXXTOSCREENX(AM_LINE_WIDTH) : FIXYTOSCREENY(AM_LINE_WIDTH));
     }
 
 /*#if _DEBUG
@@ -1455,15 +1430,16 @@ DGL_End();
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / (UIWidget_Geometry(obj)->size.width-am->border*2), 1.f / (UIWidget_Geometry(obj)->size.height-am->border*2), 1);
-        DGL_Translatef(UIWidget_Geometry(obj)->size.width / 2, UIWidget_Geometry(obj)->size.height / 2, 0);
+        DGL_Scalef(1.f / (obj->geometry.size.width  - am->border*2),
+                   1.f / (obj->geometry.size.height - am->border*2), 1);
+        DGL_Translatef(obj->geometry.size.width  /2 - am->border,
+                       obj->geometry.size.height /2 - am->border, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
         DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
     }
 
     // Draw static map geometry.
-    { int i;
     for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
     {
         if(am->lists[i])
@@ -1477,7 +1453,7 @@ DGL_End();
             // Draw.
             DGL_CallList(am->lists[i]);
         }
-    }}
+    }
 
     // Draw dynamic map geometry.
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -1524,26 +1500,22 @@ DGL_End();
 
     drawMarkedPoints(obj);
 
-    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
     // Return to the normal GL state.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
 }
 
 boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
 
-    if(G_GameState() != GS_MAP && yes)
-        return false;
+    if(G_GameState() != GS_MAP && yes) return false;
 
-    if(yes == am->active)
-        return false; // No change.
+    if(yes == am->active) return false; // No change.
 
     am->targetAlpha = (yes? 1.f : 0.f);
     if(fast)
@@ -1562,15 +1534,17 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
     if(am->active)
     {
         mobj_t* mo = UIAutomap_FollowMobj(obj);
-        if(NULL == mo)
-        {   // Set viewer target to the center of the map.
+        if(!mo)
+        {
+            // Set viewer target to the center of the map.
             float aabb[4];
             UIAutomap_PVisibleAABounds(obj, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
             UIAutomap_SetCameraOrigin(obj, (aabb[BOXRIGHT] - aabb[BOXLEFT]) / 2, (aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
             UIAutomap_SetCameraAngle(obj, 0);
         }
         else
-        {   // The map's target player is available.
+        {
+            // The map's target player is available.
             if(!(am->pan && !cfg.automapPanResetOnOpen))
                 UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
 
@@ -1595,17 +1569,15 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
         DD_Execute(true, "deactivatebcontext map-freepan");
     }
     return true;
-    }
 }
 
 void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const int player = UIWidget_Player(obj);
     const mobj_t* mo = UIAutomap_FollowMobj(obj);
     float panX[2], panY[2], zoomVel, zoomSpeed, width, height, scale;
+    assert(obj->type == GUI_AUTOMAP);
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
@@ -1644,11 +1616,9 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(am->pan || NULL == mo)
     {
         float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
-        Size2Raw portSize;
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        R_ViewPortSize(player, &portSize);
-        panUnitsPerTic = (UIAutomap_FrameToMap(obj, portSize.width >= portSize.height? FIXYTOSCREENY(140):FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
+        panUnitsPerTic = (UIAutomap_FrameToMap(obj, 140) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
 
@@ -1739,11 +1709,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->scaleFTOM = 1.0f / am->scaleMTOF;
 
     // Calculate border (viewport coordinate space).
-    {
-    Size2Raw portSize;
-    R_ViewPortSize(player, &portSize);
-    am->border = 4 * (portSize.width >= portSize.height? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
-    }
+    am->border = 4;
 
     /**
      * Calculate the am coordinates of the rotated view window.
@@ -1752,8 +1718,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     float viewPoint[2], rads, viewWidth, viewHeight;
 
     // Determine the dimensions of the view window in am coordinates.
-    viewWidth  = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.width  - (am->border*2));
-    viewHeight = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.height - (am->border*2));
+    viewWidth  = UIAutomap_FrameToMap(obj, obj->geometry.size.width  - (am->border*2));
+    viewHeight = UIAutomap_FrameToMap(obj, obj->geometry.size.height - (am->border*2));
     am->topLeft[0]     = am->bottomLeft[0] = -viewWidth/2;
     am->topLeft[1]     = am->topRight[1]   =  viewHeight/2;
     am->bottomRight[0] = am->topRight[0]   =  viewWidth/2;
@@ -1824,37 +1790,43 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
 #undef ADDTOBOX
     }
-    }
 }
 
 float UIAutomap_MapToFrame(uiwidget_t* obj, float val)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return MTOF(am, val);
-    }
 }
 
 float UIAutomap_FrameToMap(uiwidget_t* obj, float val)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return FTOM(am, val);
-    }
 }
 
 void UIAutomap_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    float scaleX, scaleY;
+    Size2Raw portSize;
     RectRaw newGeom;
+    assert(obj->type == GUI_AUTOMAP);
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
+    R_ViewPortSize(UIWidget_Player(obj), &portSize);
+    scaleX = (float)SCREENWIDTH  / portSize.width;
+    scaleY = (float)SCREENHEIGHT / portSize.height;
+
     R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
+    newGeom.origin.x = .5f + newGeom.origin.x * scaleX;
+    newGeom.origin.y = .5f + newGeom.origin.y * scaleY;
+    newGeom.size.width  = .5f + newGeom.size.width  * scaleX;
+    newGeom.size.height = .5f + newGeom.size.height * scaleY;
 
     if(newGeom.origin.x != obj->geometry.origin.x ||
        newGeom.origin.y != obj->geometry.origin.y ||
@@ -1867,48 +1839,22 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
         // factors accordingly.
         am->updateViewScale = true;
     }
-    }
-}
-
-void UIAutomap_SetOrigin(uiwidget_t* obj, int x, int y)
-{
-    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    assert(obj && obj->type == GUI_AUTOMAP);
-    // Already at this target?
-    if(x == obj->geometry.origin.x && y == obj->geometry.origin.y) return;
-    obj->geometry.origin.x = x;
-    obj->geometry.origin.y = y;
-}
-
-void UIAutomap_SetSize(uiwidget_t* obj, int w, int h)
-{
-    //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    assert(obj && obj->type == GUI_AUTOMAP);
-    // Already at this target?
-    if(w == obj->geometry.size.width && h == obj->geometry.size.height) return;
-    obj->geometry.size.width  = w;
-    obj->geometry.size.height = h;
 }
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(x) *x = am->viewX;
     if(y) *y = am->viewY;
-    }
 }
 
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean instantChange = false;
-
-    x = MINMAX_OF(-32768, x, 32768);
-    y = MINMAX_OF(-32768, y, 32768);
+    assert(obj->type == GUI_AUTOMAP);
 
     // Already at this target?
     if(x == am->targetViewX && y == am->targetViewY)
@@ -1943,58 +1889,52 @@ boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
         am->viewTimer = 0;
     }
     return true;
-    }
 }
 
 boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return UIAutomap_SetCameraOrigin(obj, am->viewX + x, am->viewY + y);
-    }
 }
 
 void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, float* x, float* y)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(x) *x = am->viewPLX;
     if(y) *y = am->viewPLY;
-    }
 }
 
 float UIAutomap_CameraAngle(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->angle;
-    }
 }
 
 boolean UIAutomap_SetCameraAngle(uiwidget_t* obj, float angle)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     angle = MINMAX_OF(0, angle, 359.9999f);
-    if(angle == am->targetAngle)
-        return false;
+    if(angle == am->targetAngle) return false;
     am->oldAngle = am->angle;
     am->targetAngle = angle;
     // Restart the timer.
     am->angleTimer = 0;
     return true;
-    }
 }
 
 boolean UIAutomap_SetScale(uiwidget_t* obj, float scale)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(am->updateViewScale)
         calcViewScaleFactors(obj);
 
@@ -2010,61 +1950,56 @@ boolean UIAutomap_SetScale(uiwidget_t* obj, float scale)
 
     am->targetViewScale = scale;
     return true;
-    }
 }
 
 boolean UIAutomap_Active(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->active;
-    }
 }
 
 boolean UIAutomap_Reveal(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->reveal;
-    }
 }
 
 boolean UIAutomap_SetReveal(uiwidget_t* obj, boolean yes)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean oldReveal = am->reveal;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->reveal = yes;
     if(oldReveal != am->reveal)
     {
         UIAutomap_Rebuild(obj);
     }
     return false;
-    }
 }
 
 void UIAutomap_PVisibleAABounds(const uiwidget_t* obj, float* lowX, float* hiX,
     float* lowY, float* hiY)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(lowX) *lowX = am->viewAABB[BOXLEFT];
     if(hiX)  *hiX  = am->viewAABB[BOXRIGHT];
     if(lowY) *lowY = am->viewAABB[BOXBOTTOM];
     if(hiY)  *hiY  = am->viewAABB[BOXTOP];
-    }
 }
 
 void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2],
     float bottomRight[2], float topRight[2], float bottomLeft[2])
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(topLeft)
     {
         topLeft[0] = am->topLeft[0];
@@ -2085,43 +2020,41 @@ void UIAutomap_VisibleBounds(const uiwidget_t* obj, float topLeft[2],
         bottomLeft[0] = am->bottomLeft[0];
         bottomLeft[1] = am->bottomLeft[1];
     }
-    }
 }
 
 void UIAutomap_ClearPoints(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     int i;
+    assert(obj->type == GUI_AUTOMAP);
+
     for(i = 0; i < MAX_MAP_POINTS; ++i)
+    {
         am->pointsUsed[i] = false;
-    am->pointCount = 0;
     }
+    am->pointCount = 0;
 }
 
 int UIAutomap_PointCount(const uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     int i, used = 0;
+    assert(obj->type == GUI_AUTOMAP);
+
     for(i = 0; i < MAX_MAP_POINTS; ++i)
     {
         if(am->pointsUsed[i])
             ++used;
     }
     return used;
-    }
 }
 
 int UIAutomap_AddPoint(uiwidget_t* obj, float x, float y, float z)
 {
-    assert(obj != NULL && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     unsigned int newIdx;
     guidata_automap_point_t* point;
+    assert(obj->type == GUI_AUTOMAP);
 
     newIdx = am->pointCount;
     point = &am->points[newIdx];
@@ -2132,16 +2065,15 @@ int UIAutomap_AddPoint(uiwidget_t* obj, float x, float y, float z)
     ++am->pointCount;
 
     return newIdx;
-    }
 }
 
 boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, float* x, float* y, float* z)
 {
-    assert(obj != NULL && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(!x && !y && !z)
-        return false;
+    assert(obj->type == GUI_AUTOMAP);
+
+    if(!x && !y && !z) return false;
+
     if(pointIdx >= 0 && pointIdx < MAX_MAP_POINTS && am->pointsUsed[pointIdx])
     {
         const guidata_automap_point_t* point = &am->points[pointIdx];
@@ -2151,24 +2083,21 @@ boolean UIAutomap_PointOrigin(const uiwidget_t* obj, int pointIdx, float* x, flo
         return true;
     }
     return false;
-    }
 }
 
 boolean UIAutomap_ZoomMax(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->forceMaxScale;
-    }
 }
 
 boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean oldZoomMax = am->forceMaxScale;
+    assert(obj->type == GUI_AUTOMAP);
 
     if(am->updateViewScale)
         calcViewScaleFactors(obj);
@@ -2180,24 +2109,22 @@ boolean UIAutomap_SetZoomMax(uiwidget_t* obj, boolean on)
     am->forceMaxScale = on;
     UIAutomap_SetScale(obj, (am->forceMaxScale? 0 : am->priorToMaxScale));
     return (oldZoomMax != am->forceMaxScale);
-    }
 }
 
 boolean UIAutomap_PanMode(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->pan;
-    }
 }
 
 boolean UIAutomap_SetPanMode(uiwidget_t* obj, boolean on)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean oldPanMode = am->pan;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->pan = on;
     if(oldPanMode != am->pan)
     {
@@ -2205,61 +2132,54 @@ boolean UIAutomap_SetPanMode(uiwidget_t* obj, boolean on)
         return true;
     }
     return false;
-    }
 }
 
 mobj_t* UIAutomap_FollowMobj(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     if(players[am->followPlayer].plr->inGame)
     {
         return players[am->followPlayer].plr->mo;
     }
     return NULL;
-    }
 }
 
 boolean UIAutomap_CameraRotation(uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->rotate;
-    }
 }
 
 boolean UIAutomap_SetCameraRotation(uiwidget_t* obj, boolean on)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     boolean oldRotate = am->rotate;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->rotate = on;
     return (oldRotate != am->rotate);
-    }
 }
 
 float UIAutomap_Opacity(const uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->alpha;
-    }
 }
 
 boolean UIAutomap_SetOpacity(uiwidget_t* obj, float value)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
 
     value = MINMAX_OF(0, value, 1);
     // Already at this target?
-    if(value == am->targetAlpha)
-        return false;
+    if(value == am->targetAlpha) return false;
 
     am->oldAlpha = am->alpha;
     // Restart the timer.
@@ -2267,58 +2187,54 @@ boolean UIAutomap_SetOpacity(uiwidget_t* obj, float value)
 
     am->targetAlpha = value;
     return true;
-    }
 }
 
 int UIAutomap_Flags(const uiwidget_t* obj)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     return am->flags;
-    }
 }
 
 void UIAutomap_SetFlags(uiwidget_t* obj, int flags)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->flags = flags;
     // We will need to rebuild one or more display lists.
     UIAutomap_Rebuild(obj);
-    }
 }
 
 void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY, float hiY)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->bounds[BOXLEFT]   = lowX;
     am->bounds[BOXTOP]    = hiY;
     am->bounds[BOXRIGHT]  = hiX;
     am->bounds[BOXBOTTOM] = lowY;
     am->updateViewScale = true;
-    }
+
+    // Choose a default view scale factor.
+    UIAutomap_SetScale(obj, am->minScaleMTOF * 20);
 }
 
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
+    assert(obj->type == GUI_AUTOMAP);
+
     am->minScale = MAX_OF(1, scale);
     am->updateViewScale = true;
-    }
 }
 
 void UIAutomap_SetCameraOriginFollowMoveDelta(uiwidget_t* obj, float max)
 {
-    assert(NULL != obj && obj->type == GUI_AUTOMAP);
-    {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    am->maxViewPositionDelta = MINMAX_OF(0, max, 32768*2);
-    }
-}
+    assert(obj->type == GUI_AUTOMAP);
 
+    am->maxViewPositionDelta = MINMAX_OF(0, max, 32768*2);
+}

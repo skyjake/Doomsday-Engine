@@ -170,7 +170,7 @@ typedef struct mn_object_s {
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (struct mn_object_s* obj, int x, int y);
+    void (*drawer) (struct mn_object_s* obj, const Point2Raw* origin);
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
@@ -277,10 +277,10 @@ typedef enum {
 
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
-    int offset[2];
+    Point2Raw origin;
     fontid_t fonts[MENU_FONT_COUNT];
     uint colors[MENU_COLOR_COUNT];
-    void (*drawer) (struct mn_page_s* page, int x, int y);
+    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin);
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
     struct mn_page_s* previous; // Pointer to the previous page, if any.
     void* data;
@@ -344,7 +344,7 @@ typedef struct mndata_text_s {
     patchid_t* patch;
 } mndata_text_t;
 
-void MNText_Drawer(mn_object_t* obj, int x, int y);
+void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
@@ -359,7 +359,7 @@ typedef struct mndata_button_s {
     const char* yes, *no;
 } mndata_button_t;
 
-void MNButton_Drawer(mn_object_t* obj, int x, int y);
+void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
@@ -396,7 +396,7 @@ typedef struct mndata_edit_s {
     int data2;
 } mndata_edit_t;
 
-void MNEdit_Drawer(mn_object_t* obj, int x, int y);
+void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNEdit_Responder(mn_object_t* obj, event_t* ev);
 void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
@@ -442,8 +442,8 @@ typedef struct mndata_list_s {
     int numvis;
 } mndata_list_t;
 
-void MNList_Drawer(mn_object_t* obj, int x, int y);
-void MNList_InlineDrawer(mn_object_t* obj, int x, int y);
+void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
+void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin);
 
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
@@ -503,7 +503,7 @@ typedef struct mndata_colorbox_s {
     void* data4;
 } mndata_colorbox_t;
 
-void MNColorBox_Drawer(mn_object_t* obj, int x, int y);
+void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
@@ -603,8 +603,8 @@ typedef struct mndata_slider_s {
     void* data5;
 } mndata_slider_t;
 
-void MNSlider_Drawer(mn_object_t* obj, int x, int y);
-void MNSlider_TextualValueDrawer(mn_object_t* obj, int x, int y);
+void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin);
+void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
 void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page);
@@ -645,7 +645,7 @@ void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);
 void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
 void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap);
 
-void MNMobjPreview_Drawer(mn_object_t* obj, int x, int y);
+void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 // Menu render state:
@@ -757,26 +757,23 @@ typedef struct uiwidget_s {
     /// Current font used for text child objects of this widget.
     fontid_t font;
 
-    /// Current opacity value for this widget. Used during render.
-    float alpha;
+    /// Current opacity value for this widget.
+    float opacity;
 
     void (*updateGeometry) (struct uiwidget_s* obj);
-    void (*drawer) (struct uiwidget_s* obj, int x, int y);
+    void (*drawer) (struct uiwidget_s* obj, const Point2Raw* offset);
     void (*ticker) (struct uiwidget_s* obj, timespan_t ticLength);
 
     void* typedata;
 } uiwidget_t;
 
-/// @return  @c true= the current tic is 'sharp' once ran for @a ticLength
-boolean GUI_RunGameTicTrigger(timespan_t ticLength);
-boolean GUI_GameTicTriggerIsSharp(void);
-
-void GUI_DrawWidget(uiwidget_t* obj, int x, int y, Size2Raw* drawnSize);
+void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* origin);
+void GUI_DrawWidgetXY(uiwidget_t* obj, int x, int y);
 
 /// @return  @see alignmentFlags
 int UIWidget_Alignment(uiwidget_t* obj);
 
-float UIWidget_Alpha(uiwidget_t* obj);
+float UIWidget_Opacity(uiwidget_t* obj);
 
 const RectRaw* UIWidget_Geometry(uiwidget_t* obj);
 
@@ -793,7 +790,7 @@ int UIWidget_Player(uiwidget_t* obj);
 
 void UIWidget_RunTic(uiwidget_t* obj, timespan_t ticLength);
 
-void UIWidget_SetAlpha(uiwidget_t* obj, float alpha);
+void UIWidget_SetOpacity(uiwidget_t* obj, float alpha);
 
 /**
  * @param alignFlags  @see alignmentFlags
@@ -825,6 +822,8 @@ typedef struct {
 void UIGroup_AddWidget(uiwidget_t* obj, uiwidget_t* other);
 int UIGroup_Flags(uiwidget_t* obj);
 void UIGroup_SetFlags(uiwidget_t* obj, int flags);
+
+void UIGroup_UpdateGeometry(uiwidget_t* obj);
 
 typedef struct {
     int value;
@@ -979,7 +978,6 @@ typedef struct {
 
 typedef struct {
     patchid_t patchId;
-    int flashCounter;
 } guidata_readyitem_t;
 
 typedef struct {
@@ -1000,11 +998,12 @@ uiwidget_t* GUI_FindObjectById(uiwidgetid_t id);
 /// Identical to GUI_FindObjectById except results in a fatal error if not found.
 uiwidget_t* GUI_MustFindObjectById(uiwidgetid_t id);
 
-uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, fontid_t fontId, float alpha,
-    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, int x, int y),
+uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
+    fontid_t fontId, float opacity,
+    void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
-uiwidgetid_t GUI_CreateGroup(int player, int groupFlags, int alignFlags, int padding);
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;

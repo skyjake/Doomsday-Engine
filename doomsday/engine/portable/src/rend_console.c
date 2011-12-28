@@ -622,7 +622,7 @@ static void drawSideText(const char* text, int line, float alpha)
         }
 
         FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
-        FR_DrawText3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+        FR_DrawTextXY3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
 }
 
@@ -761,7 +761,7 @@ static void drawConsole(float consoleAlpha)
                         calcAvgColor(line->flags, rgb);
                         FR_SetColorv(rgb);
                     }
-                    FR_DrawText3(buff, XORIGIN + PADDING + xOffset, YORIGIN + y / scale[1], alignFlags, textFlags);
+                    FR_DrawTextXY3(buff, XORIGIN + PADDING + xOffset, YORIGIN + y / scale[1], alignFlags, textFlags);
                 }
 
                 // Move up.
@@ -819,7 +819,7 @@ static void drawConsole(float consoleAlpha)
         FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
     }
 
-    FR_DrawText3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
+    FR_DrawTextXY3(buff, XORIGIN + PADDING, YORIGIN + y / scale[1], ALIGN_TOPLEFT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     glDisable(GL_TEXTURE_2D);
 
     // Draw the cursor in the appropriate place.

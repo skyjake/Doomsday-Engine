@@ -37,6 +37,7 @@ void D_DrawWindow(const Size2Raw* windowSize);
 
 void P_SetDoomsdayFlags(mobj_t* mo);
 void R_SetAllDoomsdayFlags(void);
-boolean R_GetFilterColor(float rgba[4], int filter);
+boolean R_ViewFilterColor(float rgba[4], int filter);
+void R_UpdateViewFilter(int player);
 
 #endif /* JDOOM_REFRESH_H */

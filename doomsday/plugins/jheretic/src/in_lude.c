@@ -54,10 +54,6 @@ typedef struct teaminfo_s {
     int             totalFrags;
 } teaminfo_t;
 
-typedef struct yahpt_s {
-    int             x, y;
-} yahpt_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -120,7 +116,7 @@ static fixed_t dSlideY[NUMTEAMS];
 
 static char* killersText[] = { "K", "I", "L", "L", "E", "R", "S" };
 
-static yahpt_t YAHspot[3][9] = {
+static Point2Raw YAHspot[3][9] = {
     {
      {172, 78},
      {86, 90},
@@ -607,7 +603,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic, 0, 0);
+            GL_DrawPatchXY(dpInterPic, 0, 0);
 
             DGL_Disable(DGL_TEXTURE_2D);
 
@@ -621,7 +617,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic, 0, 0);
+            GL_DrawPatchXY(dpInterPic, 0, 0);
             IN_DrawYAH();
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -634,7 +630,7 @@ void IN_Drawer(void)
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatch(dpInterPic, 0, 0);
+            GL_DrawPatchXY(dpInterPic, 0, 0);
 
             DGL_Disable(DGL_TEXTURE_2D);
         }
@@ -667,11 +663,11 @@ void IN_DrawOldLevel(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
-    FR_DrawText3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     if(wbs->currentMap == 8)
     {
@@ -679,12 +675,12 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
         }
     }
     else
@@ -693,17 +689,17 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
+            GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][wbs->currentMap]);
         }
     }
 
@@ -717,26 +713,26 @@ void IN_DrawYAH(void)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-    FR_DrawText3("NOW ENTERING:", 160, 10, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("NOW ENTERING:", 160, 10, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+        GL_DrawPatch(dpBeenThere, &YAHspot[wbs->episode][8]);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
+        GL_DrawPatch(dpGoingThere, &YAHspot[wbs->episode][wbs->nextMap]);
     }
 }
 
@@ -753,15 +749,15 @@ void IN_DrawSingleStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawText3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
 
-    FR_DrawText3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -852,7 +848,7 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawText3("TIME", 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3("TIME", 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
         IN_DrawTime(284, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
@@ -864,11 +860,11 @@ void IN_DrawSingleStats(void)
 
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-        FR_DrawText3("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -892,14 +888,14 @@ void IN_DrawCoopStats(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawText3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawText3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawText3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
@@ -912,10 +908,10 @@ void IN_DrawCoopStats(void)
             char buf[20];
 
             DGL_Color4f(0, 0, 0, .4f);
-            GL_DrawPatch(dpFaceAlive[i], 27, ypos+2);
+            GL_DrawPatchXY(dpFaceAlive[i], 27, ypos+2);
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatch(dpFaceAlive[i], 25, ypos);
+            GL_DrawPatchXY(dpFaceAlive[i], 25, ypos);
 
 
             if(interTime < 40)
@@ -963,15 +959,15 @@ void IN_DrawDMStats(void)
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    FR_DrawText3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawText3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     for(i = 0; i < 7; ++i)
     {
-        FR_DrawText3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1023,8 +1019,8 @@ void IN_DrawDMStats(void)
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                GL_DrawPatch(dpFaceAlive[i], 40, ypos);
-                GL_DrawPatch(dpFaceDead[i], xpos, 18);
+                GL_DrawPatchXY(dpFaceAlive[i], 40, ypos);
+                GL_DrawPatchXY(dpFaceDead[i], xpos, 18);
             }
 
             FR_SetFont(FID(GF_FONTB));

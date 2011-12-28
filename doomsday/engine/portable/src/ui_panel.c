@@ -1067,7 +1067,7 @@ int CP_LabelText(char* label, char* text, const Point2Raw* origin_, const Size2R
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetColorAndAlpha(color->red, color->green, color->blue, .5f * alpha * UI_Alpha());
 
-    FR_DrawText(label, origin.x, origin.y);
+    FR_DrawText(label, &origin);
 
     ind = FR_TextWidth(label);
     origin.x += ind;

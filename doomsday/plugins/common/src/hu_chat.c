@@ -351,22 +351,20 @@ int UIChat_CommandResponder(uiwidget_t* obj, menucommand_e cmd)
     }
 }
 
-void UIChat_Drawer(uiwidget_t* obj, int x, int y)
+void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 {
-    assert(NULL != obj && obj->type == GUI_CHAT);
-    {
     //guidata_chat_t* chat = (guidata_chat_t*)obj->typedata;
     const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
     //const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     const char* text = UIChat_Text(obj);
     int xOffset, textWidth, cursorWidth;
+    assert(obj->type == GUI_CHAT);
 
-    if(!UIChat_IsActive(obj))
-        return;
+    if(!UIChat_IsActive(obj)) return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
+    if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
     FR_SetFont(obj->font);
@@ -383,32 +381,29 @@ void UIChat_Drawer(uiwidget_t* obj, int x, int y)
         xOffset = 0;
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText(text, xOffset, 0);
+    FR_DrawTextXY(text, xOffset, 0);
     if(actualMapTime & 12)
     {
-        FR_DrawChar('_', xOffset + textWidth, 0);
+        FR_DrawCharXY('_', xOffset + textWidth, 0);
     }
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-    }
 }
 
 void UIChat_UpdateGeometry(uiwidget_t* obj)
 {
-    assert(obj && obj->type == GUI_CHAT);
-    {
     const char* text = UIChat_Text(obj);
     obj->geometry.size.width  = 0;
     obj->geometry.size.height = 0;
+    assert(obj->type == GUI_CHAT);
 
     if(!UIChat_IsActive(obj)) return;
 
     FR_SetFont(obj->font);
     obj->geometry.size.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
     obj->geometry.size.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
-    }
 }
 
 int UIChat_ParseDestination(const char* str)

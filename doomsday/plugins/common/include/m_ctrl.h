@@ -34,7 +34,7 @@
 extern mn_page_t ControlsMenu;
 
 void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(mn_page_t* page, int x, int y);
+void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha);
 
 /**
@@ -50,7 +50,7 @@ typedef struct mndata_bindings_s {
 
 const char* MNBindings_ControlName(mn_object_t* obj);
 
-void MNBindings_Drawer(mn_object_t* obj, int x, int y);
+void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNBindings_CommandResponder(mn_object_t* obj, menucommand_e command);
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev);
 void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
