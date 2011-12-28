@@ -1119,7 +1119,9 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
     tmThing = thing;
 
+#if !__JHEXEN__
     thing->onMobj = NULL;
+#endif
     thing->wallHit = false;
 
 #if !__JHEXEN__
@@ -2912,17 +2914,16 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     mobj_t              oldMo;
     AABoxf tmBoxExpanded;
 
-    pos[VX] = thing->pos[VX];
-    pos[VY] = thing->pos[VY];
-    pos[VZ] = thing->pos[VZ];
+    //// \fixme Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 
     tmThing = thing;
-
-    //// \fixme Do this properly!
     oldMo = *thing; // Save the old mobj before the fake z movement.
 
     P_FakeZMovement(tmThing);
 
+    pos[VX] = thing->pos[VX];
+    pos[VY] = thing->pos[VY];
+    pos[VZ] = thing->pos[VZ];
     tm[VX] = pos[VX];
     tm[VY] = pos[VY];
     tm[VZ] = pos[VZ];
@@ -2945,7 +2946,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     IterList_Empty(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
-        return NULL;
+        goto nothingUnderneath;
 
     // Check things first, possibly picking things up the bounding box is
     // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
@@ -2964,8 +2965,8 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
         return onMobj;
     }
 
+nothingUnderneath:
     *tmThing = oldMo;
-
     return NULL;
 }
 
