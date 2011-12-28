@@ -450,9 +450,12 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
         if(Str_At(src, 1) == '/' && getenv("HOME"))
         {   // Replace it with the HOME environment variable.
             ddstring_t buf;
+            ddstring_t homeStr;
             Str_Init(&buf);
+            Str_Init(&homeStr);
 
-            F_FixSlashes(&buf, getenv("HOME"));
+            Str_Set(&homeStr, getenv("HOME"));
+            F_FixSlashes(&buf, &homeStr);
             if(Str_RAt(&buf, 0) != '/')
                 Str_AppendChar(&buf, '/');
 
@@ -461,6 +464,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 
             Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
+            Str_Free(&homeStr);
             return true;
         }
 
@@ -478,10 +482,14 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
             Str_Init(&buf);
             if((pw = getpwnam(Str_Text(&userName))) != NULL)
             {
-                F_FixSlashes(&buf, pw->pw_dir);
+                ddstring_t pwStr;
+                Str_Init(&pwStr);
+                Str_Set(&pwStr, pw->pw_dir);
+                F_FixSlashes(&buf, &pwStr);
                 if(Str_RAt(&buf, 0) != '/')
                     Str_AppendChar(&buf, '/');
                 result = true;
+                Str_Free(&pwStr);
             }
 
             Str_Append(&buf, Str_Text(src) + 1);

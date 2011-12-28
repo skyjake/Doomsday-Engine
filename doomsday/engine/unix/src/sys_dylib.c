@@ -121,7 +121,7 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
 #endif
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
-    if(bundlePath + strlen(bundlePath)-1 != '/')
+    if(bundlePath[strlen(bundlePath) - 1] != '/')
         strncat(bundlePath, "/", FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
