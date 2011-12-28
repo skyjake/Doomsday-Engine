@@ -497,6 +497,12 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         {
             return false;
         }
+
+        // Players can't hit their own clmobjs.
+        if(tmThing->player && ClPlayer_ClMobj(tmThing->player - players) == thing)
+        {
+            return false;
+        }
     }
 
 /*
@@ -1119,7 +1125,9 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 
     tmThing = thing;
 
+#if !__JHEXEN__
     thing->onMobj = NULL;
+#endif
     thing->wallHit = false;
 
 #if !__JHEXEN__
@@ -2889,6 +2897,13 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
     else if(tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
         return false; // Under thing.
 
+    // Players cannot hit their clmobjs.
+    if(tmThing->player)
+    {
+        if(thing == ClPlayer_ClMobj(tmThing->player - players))
+            return false;
+    }
+
     if(thing->flags & MF_SOLID)
         onMobj = thing;
 
@@ -2902,17 +2917,23 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     mobj_t              oldMo;
     AABoxf tmBoxExpanded;
 
-    pos[VX] = thing->pos[VX];
-    pos[VY] = thing->pos[VY];
-    pos[VZ] = thing->pos[VZ];
+    if(Mobj_IsPlayerClMobj(thing))
+    {
+        // Players' clmobjs shouldn't do any on-mobj logic; the real player mobj
+        // will interact with (cl)mobjs.
+        return NULL;
+    }
+
+    //// \fixme Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 
     tmThing = thing;
-
-    //// \fixme Do this properly!
     oldMo = *thing; // Save the old mobj before the fake z movement.
 
     P_FakeZMovement(tmThing);
 
+    pos[VX] = thing->pos[VX];
+    pos[VY] = thing->pos[VY];
+    pos[VZ] = thing->pos[VZ];
     tm[VX] = pos[VX];
     tm[VY] = pos[VY];
     tm[VZ] = pos[VZ];
@@ -2935,7 +2956,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     IterList_Empty(spechit);
 
     if(tmThing->flags & MF_NOCLIP)
-        return NULL;
+        goto nothingUnderneath;
 
     // Check things first, possibly picking things up the bounding box is
     // extended by MAXRADIUS because mobj_ts are grouped into mapblocks
@@ -2954,8 +2975,8 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
         return onMobj;
     }
 
+nothingUnderneath:
     *tmThing = oldMo;
-
     return NULL;
 }
 
