@@ -1126,7 +1126,9 @@ uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths,
 
 uint F_FindResourceForRecord(resourcerecord_t* rec, ddstring_t* foundPath)
 {
-    return findResource(ResourceRecord_ResourceClass(rec), ResourceRecord_SearchPaths(rec), foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
+    return findResource(ResourceRecord_ResourceClass(rec),
+                        (const Uri* const*) ResourceRecord_SearchPaths(rec),
+                        foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
 }
 
 uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,

@@ -120,6 +120,12 @@ static __inline pathdirectory_pathhash_t** hashAddressForNodeType(PathDirectory*
     return (type == PT_LEAF? &pd->_pathLeafHash : &pd->_pathBranchHash);
 }
 
+static __inline const pathdirectory_pathhash_t** hashAddressForNodeType_Const(const PathDirectory* pd,
+    pathdirectorynode_type_t type)
+{
+    return (const pathdirectory_pathhash_t**) hashAddressForNodeType((PathDirectory*)pd, type);
+}
+
 static void initPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 {
     pathdirectory_pathhash_t** hashAdr = hashAddressForNodeType(pd, type);
@@ -483,10 +489,12 @@ static int iteratePaths_Const(const PathDirectory* pd, int flags, const PathDire
     assert(pd && callback);
 
     if(!(flags & PCF_NO_LEAF))
-        result = iteratePathsInHash_Const(*hashAddressForNodeType((PathDirectory*)pd, PT_LEAF), flags, parent, hash, callback, paramaters);
+        result = iteratePathsInHash_Const(*hashAddressForNodeType_Const(pd, PT_LEAF),
+                                          flags, parent, hash, callback, paramaters);
 
     if(!result && !(flags & PCF_NO_BRANCH))
-        result = iteratePathsInHash_Const(*hashAddressForNodeType((PathDirectory*)pd, PT_BRANCH), flags, parent, hash, callback, paramaters);
+        result = iteratePathsInHash_Const(*hashAddressForNodeType_Const(pd, PT_BRANCH),
+                                          flags, parent, hash, callback, paramaters);
 
     return result;
 }

@@ -1554,7 +1554,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type, float height,
     boolean             blended = false;
     sector_t*           sec = ssec->sector;
     material_t*         mat = NULL;
-    materialsnapshot_t* msA = NULL, *msB = NULL;
+    const materialsnapshot_t* msA = NULL, *msB = NULL;
 
     memset(&params, 0, sizeof(params));
 
@@ -1778,7 +1778,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         blendmode_t         blendMode = BM_NORMAL;
         boolean             addFakeRadio = false;
         const float*        color = NULL, *color2 = NULL;
-        materialsnapshot_t* msA = NULL, *msB = NULL;
+        const materialsnapshot_t* msA = NULL, *msB = NULL;
 
         texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);

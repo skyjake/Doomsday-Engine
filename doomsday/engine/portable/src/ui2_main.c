@@ -786,7 +786,7 @@ const animatorvector3_t* FIPage_PredefinedColor(fi_page_t* p, uint idx)
 {
     if(!p) Con_Error("FIPage_PredefinedColor: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_PredefinedColor: Invalid color id %u.", idx);
-    return &p->_preColor[idx];
+    return (const animatorvector3_t*) &p->_preColor[idx];
 }
 
 void FIPage_SetPredefinedFont(fi_page_t* p, uint idx, fontid_t fontNum)
@@ -1300,7 +1300,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
     // Set the normal color.
     if(t->pageColor == 0)
-        color = (animatorvector3_t*)&t->color;
+        color = (const animatorvector3_t*)&t->color;
     else
         color = FIPage_PredefinedColor(FIObject_Page(obj), t->pageColor-1);
     FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
@@ -1322,7 +1322,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
             {
                 uint colorIdx = *ptr - '0';
                 if(colorIdx == 0)
-                    color = (animatorvector3_t*)&t->color;
+                    color = (const animatorvector3_t*)&t->color;
                 else
                     color = FIPage_PredefinedColor(FIObject_Page(obj), colorIdx-1);
                 FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
