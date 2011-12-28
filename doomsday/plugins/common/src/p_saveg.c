@@ -63,6 +63,7 @@
 #if __JHERETIC__ || __JHEXEN__
 #include "hu_inventory.h"
 #endif
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
