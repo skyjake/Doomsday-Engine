@@ -1140,7 +1140,8 @@ void P_MobjThinker(mobj_t* mobj)
         }
     }
     else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || blockingMobj)
-    {   // Handle Z momentum and gravity
+    {
+        // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
             mobj->onMobj = P_CheckOnMobj(mobj);

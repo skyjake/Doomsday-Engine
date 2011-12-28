@@ -497,6 +497,12 @@ int PIT_CheckThing(mobj_t* thing, void* data)
         {
             return false;
         }
+
+        // Players can't hit their own clmobjs.
+        if(tmThing->player && ClPlayer_ClMobj(tmThing->player - players) == thing)
+        {
+            return false;
+        }
     }
 
 /*
@@ -2901,6 +2907,13 @@ int PIT_CheckOnmobjZ(mobj_t* thing, void* data)
     else if(tmThing->pos[VZ] + tmThing->height < thing->pos[VZ])
         return false; // Under thing.
 
+    // Players cannot hit their clmobjs.
+    if(tmThing->player)
+    {
+        if(thing == ClPlayer_ClMobj(tmThing->player - players))
+            return false;
+    }
+
     if(thing->flags & MF_SOLID)
         onMobj = thing;
 
@@ -2913,6 +2926,13 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     float               pos[3];
     mobj_t              oldMo;
     AABoxf tmBoxExpanded;
+
+    if(Mobj_IsPlayerClMobj(thing))
+    {
+        // Players' clmobjs shouldn't do any on-mobj logic; the real player mobj
+        // will interact with (cl)mobjs.
+        return NULL;
+    }
 
     //// \fixme Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
 

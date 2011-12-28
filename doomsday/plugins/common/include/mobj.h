@@ -29,5 +29,6 @@
 #include "g_common.h"
 
 void    Mobj_XYMoveStopping(mobj_t* mo);
+boolean Mobj_IsPlayerClMobj(mobj_t* thing);
 
 #endif // __LIBCOMMON_MOBJ__

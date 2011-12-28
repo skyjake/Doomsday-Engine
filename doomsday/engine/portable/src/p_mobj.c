@@ -256,6 +256,10 @@ D_CMD(InspectMobj)
                mo->angle,
                mo->pos[0], mo->pos[1], mo->pos[2],
                mo->mom[0], mo->mom[1], mo->mom[2]);
+    if(mo->onMobj)
+    {
+        Con_Printf("onMobj:%i\n", mo->onMobj->thinker.id);
+    }
 
     return true;
 }

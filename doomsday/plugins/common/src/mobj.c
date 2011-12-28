@@ -155,3 +155,18 @@ void Mobj_XYMoveStopping(mobj_t* mo)
         mo->mom[MY] *= friction;
     }
 }
+
+/**
+ * Checks if @a thing is a clmobj of one of the players.
+ */
+boolean Mobj_IsPlayerClMobj(mobj_t* thing)
+{
+    int i;
+
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(ClPlayer_ClMobj(i) == thing)
+            return true;
+    }
+    return false;
+}
