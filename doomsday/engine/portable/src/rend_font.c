@@ -814,52 +814,45 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     {
     case FT_BITMAP: {
         bitmapfont_t* bf = (bitmapfont_t*)font;
+        int s[2], t[2], x = 0, y = 0, w, h;
 
         if(0 != BitmapFont_GLTextureName(font))
             GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
 
-        if(bf->_chars[ch].dlist)
-        {
-            GL_CallList(bf->_chars[ch].dlist);
-        }
-        else
-        {
-            int s[2], t[2], x = 0, y = 0, w, h;
+        BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
+        w = s[1] - s[0];
+        h = t[1] - t[0];
 
-            BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-            w = s[1] - s[0];
-            h = t[1] - t[0];
+        x -= font->_marginWidth;
+        y -= font->_marginHeight;
 
-            x -= font->_marginWidth;
-            y -= font->_marginHeight;
+        glBegin(GL_QUADS);
+            // Upper left.
+            glTexCoord2i(s[0], t[0]);
+            glVertex2f(x, y);
 
-            glBegin(GL_QUADS);
-                // Upper left.
-                glTexCoord2i(s[0], t[0]);
-                glVertex2f(x, y);
+            // Upper Right.
+            glTexCoord2i(s[1], t[0]);
+            glVertex2f(x + w, y);
 
-                // Upper Right.
-                glTexCoord2i(s[1], t[0]);
-                glVertex2f(x + w, y);
+            // Lower right.
+            glTexCoord2i(s[1], t[1]);
+            glVertex2f(x + w, y + h);
 
-                // Lower right.
-                glTexCoord2i(s[1], t[1]);
-                glVertex2f(x + w, y + h);
-
-                // Lower left.
-                glTexCoord2i(s[0], t[1]);
-                glVertex2f(x, y + h);
-            glEnd();
-        }
+            // Lower left.
+            glTexCoord2i(s[0], t[1]);
+            glVertex2f(x, y + h);
+        glEnd();
         break;
       }
     case FT_BITMAPCOMPOSITE: {
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-        patchid_t patch = BitmapCompositeFont_CharPatch(font, ch);
+        DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        int s[2], t[2], x = 0, y = 0, w, h;
 
-        if(patch)
+        if(glTex)
         {
-            GL_BindTexture(GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch))), filterUI? GL_LINEAR : GL_NEAREST);
+            GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
@@ -868,47 +861,38 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
             GL_SetNoTexture();
         }
 
-        if(cf->_chars[ch].dlist)
+        BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
+
+        x = cf->_chars[ch].geometry.origin.x;
+        y = cf->_chars[ch].geometry.origin.y;
+        w = BitmapCompositeFont_CharWidth(font, ch);
+        h = BitmapCompositeFont_CharHeight(font, ch);
+        if(glTex)
         {
-            GL_CallList(cf->_chars[ch].dlist);
+            w += 2;
+            h += 2;
         }
-        else
-        {
-            int s[2], t[2], x = 0, y = 0, w, h;
 
-            BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-         
-            x = cf->_chars[ch].geometry.origin.x;
-            y = cf->_chars[ch].geometry.origin.y;
-            w = BitmapCompositeFont_CharWidth(font, ch);
-            h = BitmapCompositeFont_CharHeight(font, ch);
-            if(patch != 0)
-            {
-                w += 2;
-                h += 2;
-            }
+        x -= font->_marginWidth;
+        y -= font->_marginHeight;
 
-            x -= font->_marginWidth;
-            y -= font->_marginHeight;
+        glBegin(GL_QUADS);
+            // Upper left.
+            glTexCoord2i(s[0], t[0]);
+            glVertex2f(x, y);
 
-            glBegin(GL_QUADS);
-                // Upper left.
-                glTexCoord2i(s[0], t[0]);
-                glVertex2f(x, y);
+            // Upper Right.
+            glTexCoord2i(s[1], t[0]);
+            glVertex2f(x + w, y);
 
-                // Upper Right.
-                glTexCoord2i(s[1], t[0]);
-                glVertex2f(x + w, y);
+            // Lower right.
+            glTexCoord2i(s[1], t[1]);
+            glVertex2f(x + w, y + h);
 
-                // Lower right.
-                glTexCoord2i(s[1], t[1]);
-                glVertex2f(x + w, y + h);
-
-                // Lower left.
-                glTexCoord2i(s[0], t[1]);
-                glVertex2f(x, y + h);
-            glEnd();
-        }
+            // Lower left.
+            glTexCoord2i(s[0], t[1]);
+            glVertex2f(x, y + h);
+        glEnd();
         break;
       }
     default:

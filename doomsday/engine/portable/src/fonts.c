@@ -543,11 +543,9 @@ void Fonts_Release(font_t* font)
     {
     case FT_BITMAP:
         BitmapFont_DeleteGLTexture(font);
-        BitmapFont_DeleteGLDisplayLists(font);
         break;
     case FT_BITMAPCOMPOSITE:
         BitmapCompositeFont_DeleteGLTextures(font);
-        BitmapCompositeFont_DeleteGLDisplayLists(font);
         break;
     default:
         Con_Error("Fonts::Release: Invalid font type %i.", (int) Font_Type(font));

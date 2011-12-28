@@ -32,7 +32,7 @@ typedef enum {
     FT_FIRST = 0,
     FT_BITMAP = FT_FIRST,
     FT_BITMAPCOMPOSITE,
-    FT_LAST = FT_BITMAPCOMPOSITE,
+    FT_LAST = FT_BITMAPCOMPOSITE
 } fonttype_t;
 
 #define VALID_FONTTYPE(v)       ((v) >= FT_FIRST && (v) <= FT_LAST)

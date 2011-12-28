@@ -30,7 +30,6 @@
 // Data for a character.
 typedef struct {
     RectRaw geometry;
-    DGLuint dlist;
 } bitmapfont_char_t;
 
 typedef struct bitmapfont_s {
@@ -64,7 +63,6 @@ int BitmapFont_TextureHeight(const font_t* font);
 int BitmapFont_TextureWidth(const font_t* font);
 
 void BitmapFont_DeleteGLTexture(font_t* font);
-void BitmapFont_DeleteGLDisplayLists(font_t* font);
 
 int BitmapFont_CharWidth(font_t* font, unsigned char ch);
 int BitmapFont_CharHeight(font_t* font, unsigned char ch);
@@ -77,8 +75,8 @@ void BitmapFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, uns
 // Data for a character.
 typedef struct {
     RectRaw geometry;
-    DGLuint dlist;
     patchid_t patch;
+    DGLuint tex;
 } bitmapcompositefont_char_t;
 
 typedef struct bitmapcompositefont_s {
@@ -106,8 +104,8 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch);
 void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char* patchName);
 
+DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch);
 void BitmapCompositeFont_DeleteGLTextures(font_t* font);
-void BitmapCompositeFont_DeleteGLDisplayLists(font_t* font);
 
 /**
  * Query the texture coordinates of a character in this font.

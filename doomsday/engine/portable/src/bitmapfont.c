@@ -357,7 +357,6 @@ font_t* BitmapFont_New(fontid_t bindId)
 void BitmapFont_Delete(font_t* font)
 {
     BitmapFont_DeleteGLTexture(font);
-    BitmapFont_DeleteGLDisplayLists(font);
     free(font);
 }
 
@@ -391,7 +390,6 @@ void BitmapFont_Prepare(font_t* font)
     file = F_Open(Str_Text(&bf->_filePath), "rb");
     if(file)
     {
-        BitmapFont_DeleteGLDisplayLists(font);
         BitmapFont_DeleteGLTexture(font);
 
         // Load the font glyph map from the file.
@@ -420,49 +418,10 @@ void BitmapFont_Prepare(font_t* font)
             bf->_tex = GL_NewTextureWithParams2(DGL_RGBA, bf->_texSize.width,
                 bf->_texSize.height, image, 0, 0, GL_LINEAR, GL_NEAREST, 0 /* no AF */,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-            if(!Con_IsBusy()) // Cannot do this while in busy mode.
-            {
-                GLuint base = glGenLists(MAX_CHARS);
-                uint i;
-
-                glListBase(base);
-
-                for(i = 0; i < MAX_CHARS; ++i)
-                {
-                    glNewList(base+i, GL_COMPILE);
-                    drawCharacter((unsigned char)i, font);
-                    glEndList();
-                    bf->_chars[i].dlist = base+i;
-                }
-
-                // All preparation complete.
-                font->_isDirty = false;
-            }
         }
 
         free(image);
         F_Delete(file);
-    }
-}
-
-void BitmapFont_DeleteGLDisplayLists(font_t* font)
-{
-    bitmapfont_t* bf = (bitmapfont_t*)font;
-    int i;
-    assert(font && font->_type == FT_BITMAP);
-
-    if(novideo || isDedicated) return;
-
-    font->_isDirty = true;
-    if(Con_IsBusy()) return;
-
-    for(i = 0; i < 256; ++i)
-    {
-        bitmapfont_char_t* ch = &bf->_chars[i];
-        if(ch->dlist)
-            GL_DeleteLists(ch->dlist, 1);
-        ch->dlist = 0;
     }
 }
 
@@ -566,7 +525,6 @@ font_t* BitmapCompositeFont_New(fontid_t bindId)
 void BitmapCompositeFont_Delete(font_t* font)
 {
     BitmapCompositeFont_DeleteGLTextures(font);
-    BitmapCompositeFont_DeleteGLDisplayLists(font);
     free(font);
 }
 
@@ -596,7 +554,6 @@ void BitmapCompositeFont_Prepare(font_t* font)
 
     if(!font->_isDirty) return;
 
-    BitmapCompositeFont_DeleteGLDisplayLists(font);
     BitmapCompositeFont_DeleteGLTextures(font);
 
     avgSize.width = avgSize.height = 0;
@@ -623,54 +580,19 @@ void BitmapCompositeFont_Prepare(font_t* font)
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;
 
-        if(!(novideo || isDedicated))
+        if(!(novideo || isDedicated) && !Con_IsBusy())
+        {
             GL_PreparePatchTexture(Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch)));
+        }
     }
 
     font->_noCharSize.width  = avgSize.width  / numPatches;
     font->_noCharSize.height = avgSize.height / numPatches;
 
-    if(!(novideo || isDedicated || Con_IsBusy())) // Cannot do this while in busy mode.
+    if(!(novideo || isDedicated) && !Con_IsBusy())
     {
-        GLuint base = glGenLists(numPatches);
-
-        glListBase(base);
-        for(i = 0; i < MAX_CHARS; ++i)
-        {
-            if(0 != cf->_chars[i].patch)
-            {
-                glNewList(base+i, GL_COMPILE);
-                drawCharacter((unsigned char)i, font);
-                glEndList();
-                cf->_chars[i].dlist = base+i;
-            }
-            else
-            {
-                cf->_chars[i].dlist = 0;
-            }
-        }
-
+        // We have prepared all patches.
         font->_isDirty = false;
-    }
-}
-
-void BitmapCompositeFont_DeleteGLDisplayLists(font_t* font)
-{
-    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-    int i;
-    assert(font && font->_type == FT_BITMAPCOMPOSITE);
-
-    if(novideo || isDedicated) return;
-
-    font->_isDirty = true;
-    if(Con_IsBusy()) return;
-
-    for(i = 0; i < 256; ++i)
-    {
-        bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        if(!ch->dlist) continue;
-        GL_DeleteLists(ch->dlist, 1);
-        ch->dlist = 0;
     }
 }
 
@@ -708,6 +630,18 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
     cf->_def = def;
 }
 
+DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch)
+{
+    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    bitmapcompositefont_char_t* chr = &cf->_chars[ch];
+    texture_t* tex;
+    assert(font->_type == FT_BITMAPCOMPOSITE);
+
+    BitmapCompositeFont_Prepare(font);
+    tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, chr->patch));
+    return GL_PreparePatchTexture(tex);
+}
+
 patchid_t BitmapCompositeFont_CharPatch(font_t* font, unsigned char ch)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
@@ -726,13 +660,6 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char chr, const cha
     // Load the patches in monochrome mode. (2 = weighted average).
     monochrome = 2;
     upscaleAndSharpenPatches = true;
-
-    if(!novideo && !isDedicated && !Con_IsBusy())
-    {
-        if(ch->dlist)
-            glDeleteLists((GLuint)ch->dlist, 1);
-        ch->dlist = 0;
-    }
 
     ch->patch = R_DeclarePatch(patchName);
 
