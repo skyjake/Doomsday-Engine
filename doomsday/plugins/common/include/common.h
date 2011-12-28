@@ -26,6 +26,8 @@
 
 #define WEAPONBOTTOM            (128)   // from p_pspr.c
 
+#define IS_NETWORK_SERVER           (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__

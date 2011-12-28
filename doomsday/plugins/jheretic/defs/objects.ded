@@ -2299,6 +2299,7 @@ Thing {
   Damage = 6;
   Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity mf_brightexplode";
   Flags2 = "mf2_noteleport";
+  Flags3 = "mf3_clientaction";
 }
 
 Thing {

@@ -69,6 +69,7 @@ Flag { ID = "mf2_reflective"; Value = 0x80000000; }
 
 # Mobj flags3:
 Flag { ID = "mf3_noinfight"; Value = 0x1; }
+Flag { ID = "mf3_clientaction"; Value = 0x2; }
 
 #
 # Obsolete (unused) flags:

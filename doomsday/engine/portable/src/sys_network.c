@@ -175,8 +175,6 @@ void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
-    //C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
 }
 
 static void N_StartJoinedListener(void)
@@ -1518,6 +1516,12 @@ boolean N_Disconnect(void)
 
 boolean N_ServerOpen(void)
 {
+    if(!isDedicated)
+    {
+        Con_Message("N_ServerOpen: Server can only be started in dedicated mode! (run with -dedicated)\n");
+        return false;
+    }
+
     if(!N_IsAvailable())
         return false;
 

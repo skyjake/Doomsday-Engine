@@ -169,29 +169,33 @@ boolean S_InitDriver(audiodriver_e drvid)
 
 audiodriver_e S_ChooseAudioDriver(void)
 {
+    // No audio output?
     if(isDedicated || ArgExists("-dummy"))
         return AUDIOD_DUMMY;
-
-    if(ArgExists("-oal"))
-        return AUDIOD_OPENAL;
 
     if(ArgExists("-fmod"))
         return AUDIOD_FMOD;
 
+    if(ArgExists("-oal"))
+        return AUDIOD_OPENAL;
+
 #ifdef WIN32
+    // DirectSound with 3D sound support, EAX effects?
     if(ArgExists("-dsound"))
         return AUDIOD_DSOUND;
 
+    // Windows Multimedia?
     if(ArgExists("-winmm"))
         return AUDIOD_WINMM;
 #endif
 
-    // The default audio driver.
 #ifndef DENG_DISABLE_SDLMIXER
-    return AUDIOD_SDL_MIXER;
-#else
-    return AUDIOD_DUMMY;
+    if(ArgExists("-sdlmixer"))
+        return AUDIOD_SDL_MIXER;
 #endif
+
+    // The default audio driver.
+    return AUDIOD_FMOD;
 }
 
 /**
@@ -203,13 +207,28 @@ boolean S_Init(void)
 {
     boolean ok = false, sfxOK, musOK;
 
+    if(ArgExists("-nosound"))
+        return true;
+
+    // First let's set up the drivers. First we must choose which one we want to use.
     if(!ArgExists("-nosound"))
     {
         audiodriver_e drvid = S_ChooseAudioDriver();
-        if(!(ok = S_InitDriver(drvid)))
-            Con_Message("Warning: Failed initializing audio driver \"%s\", Audio subsystem disabled.\n", S_GetDriverName(drvid));
+
+        ok = S_InitDriver(drvid);
+        if(!ok)
+            Con_Message("Warning: Failed initializing audio driver \"%s\"\n", S_GetDriverName(drvid));
+
+        // Fallback option for the default driver.
+#ifndef DENG_DISABLE_SDLMIXER
+        if(!ok)
+        {
+            ok = S_InitDriver(AUDIOD_SDL_MIXER);
+        }
+#endif
     }
 
+    // Did we manage to load a driver?
     if(!ok)
     {
         Con_Message("Music and Sound Effects disabled.\n");
@@ -222,6 +241,7 @@ boolean S_Init(void)
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
+    Con_Message("S_Init: %s.\n", (sfxOK && musOK? "OK" : "Errors during initialization."));
     return (sfxOK && musOK);
 }
 

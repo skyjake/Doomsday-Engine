@@ -49,8 +49,9 @@
 
 #define MAX_BOB_OFFSET          (8)
 
+#define NOMOMENTUM_THRESHOLD    (0.000001f)
+#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
 // TYPES -------------------------------------------------------------------
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -94,7 +95,8 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
     mobj->turnTime = false; // $visangle-facetarget.
 
     st = &STATES[state];
-    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs?
+       (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
     {
         if(st->action) st->action(mobj); // Call action function.
     }

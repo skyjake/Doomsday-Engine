@@ -105,8 +105,11 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
         // Modified handling.
         // Call action functions when the state is set
-        if(st->action)
-            st->action(mobj);
+        if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
+           (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+        {
+            if(st->action) st->action(mobj);
+        }
 
         state = st->nextState;
     } while(!mobj->tics);

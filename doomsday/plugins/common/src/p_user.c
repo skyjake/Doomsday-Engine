@@ -473,7 +473,7 @@ void P_MovePlayer(player_t *player)
 
     if(!plrmo) return;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // Server starts the walking animation for remote players.
         if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
@@ -1315,6 +1315,22 @@ void P_PlayerThinkWeapons(player_t* player)
     weapontype_t        oldweapon = player->pendingWeapon;
     weapontype_t        newweapon = WT_NOCHANGE;
 
+    if(IS_NETWORK_SERVER)
+    {
+        if(brain->changeWeapon != WT_NOCHANGE)
+        {
+            // Weapon change logic has already been done by the client.
+            newweapon = brain->changeWeapon;
+
+            if(!player->weapons[newweapon].owned)
+            {
+                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
+                            (int)(player - players), newweapon);
+                newweapon = WT_NOCHANGE;
+            }
+        }
+    }
+    else
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
     if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
@@ -1323,7 +1339,7 @@ void P_PlayerThinkWeapons(player_t* player)
 #endif
     {
         // Direct slot selection.
-        weapontype_t        cand, first;
+        weapontype_t cand, first;
 
         // Is this a same-slot weapon cycle?
         if(P_GetWeaponSlot(brain->changeWeapon) ==
@@ -1384,7 +1400,7 @@ void P_PlayerThinkWeapons(player_t* player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    if(IS_NETGAME && IS_SERVER && player != &players[CONSOLEPLAYER])
+    if(IS_NETWORK_SERVER && player != &players[CONSOLEPLAYER])
     {
         // Clients send use requests instead.
         return;

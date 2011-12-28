@@ -28,6 +28,8 @@ class Event:
         self.buildDir = os.path.join(config.EVENT_DIR, self.name)
         
         self.packages = ['doomsday', 'fmod']
+        self.packageName = {'doomsday': 'Doomsday',
+                            'fmod':     'FMOD Ex Audio Plugin'}
         
         # Platforms:  Name                         File ext     sys_id()
         self.oses = [('Windows (x86)',             '.exe',      'win32-32bit'),
@@ -42,6 +44,13 @@ class Event:
 
         # Prepare compiler logs present in the build dir.
         self.compress_logs()
+        
+    def package_type(self, name):
+        pkg = self.package_from_filename(name)
+        if pkg == 'doomsday':
+            return 'distribution'
+        else:
+            return 'plugin'
 
     def package_from_filename(self, name):
         if 'fmod' in name:
@@ -54,6 +63,19 @@ class Event:
             if name.endswith(ext) or ident in name:
                 return (n, ext, ident)
         return None
+        
+    def version_from_filename(self, name):
+        pos = name.find('_')
+        if pos < 0: return None
+        dash = name.find('-', pos + 1)
+        us = name.find('_', pos + 1)
+        if dash > 0 and us < 0:
+            return name[pos+1:dash]
+        elif us > 0 and dash < 0:
+            return name[pos+1:us]
+        elif dash > 0 and us > 0:
+            return name[pos+1:min(dash, us)]
+        return name[pos+1:name.find('.', pos)]
         
     def tag(self):
         return self.name
@@ -242,7 +264,9 @@ class Event:
         
         # Packages.
         for fn in files:
-            msg += '<package>'
+            msg += '<package type="%s">' % self.package_type(fn)
+            msg += '<name>%s</name>' % self.packageName[self.package_from_filename(fn)]
+            msg += '<version>%s</version>' % self.version_from_filename(fn)
             msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
             msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
             logName = self.compressed_log_filename(fn)

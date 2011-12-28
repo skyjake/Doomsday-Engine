@@ -381,7 +381,7 @@ void MPIGoBack(ui_object_t* ob)
 void MPIStartServer(ui_object_t* ob)
 {
     N_ShutdownService();
-    Con_SetInteger2("net-port-control", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
+    Con_SetInteger2("net-port-data", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
     N_InitService(true);
 
     // Update the variables.

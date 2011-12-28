@@ -41,6 +41,12 @@ class Changes:
         self.toTag = toTag
         self.parse()
         
+    def should_ignore(self, subject):
+        if subject.startswith("Merge branch 'master' of"):
+            # master->master merges are not listed.
+            return True
+        return False
+        
     def parse(self):
         tmpName = '__ctmp'
 
@@ -54,6 +60,7 @@ class Changes:
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
         logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
+        logText = logText.replace('&', '&amp;')
         logText = logText.replace(u'ä', u'&auml;')
         logText = logText.replace(u'ö', u'&ouml;')
         logText = logText.replace(u'Ä', u'&Auml;')
@@ -61,7 +68,6 @@ class Changes:
         logText = logText.encode('utf-8')
         logText = logText.replace('<', '&lt;')
         logText = logText.replace('>', '&gt;')
-        logText = logText.replace('&', '&amp;')
         
         os.remove(tmpName)        
 
@@ -78,7 +84,8 @@ class Changes:
             entry.setSubject(logText[pos+11:end])
 
             # Debian changelog just gets the subjects.
-            if entry.subject not in self.debChangeEntries:
+            if entry.subject not in self.debChangeEntries and not \
+                self.should_ignore(entry.subject):
                 self.debChangeEntries.append(entry.subject)
 
             # Author.
@@ -106,7 +113,8 @@ class Changes:
             end = logText.find('[[/Message]]', pos)
             entry.setMessage(logText[pos+11:end])            
             
-            self.entries.append(entry)
+            if not self.should_ignore(entry.subject):
+                self.entries.append(entry)
         
         
     def generate(self, format):

@@ -5676,6 +5676,12 @@ static boolean SV_LoadGame2(void)
     NetSv_LoadGame(hdr.gameId);
 #endif
 
+    // Let the engine know where the local players are now.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        R_UpdateConsoleView(i);
+    }
+
     return true; // Success!
 }
 

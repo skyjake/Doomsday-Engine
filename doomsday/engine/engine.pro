@@ -323,7 +323,7 @@ macx {
         $$DENG_MAC_INCLUDE_DIR/SDLMain.h \
         $$DENG_MAC_INCLUDE_DIR/StartupWindowController.h
 
-    SOURCES += \
+    OBJECTIVE_SOURCES += \
         mac/src/DoomsdayRunner.m \
         mac/src/MusicPlayer.m \
         mac/src/SDLMain.m \

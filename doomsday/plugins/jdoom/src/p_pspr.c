@@ -396,8 +396,6 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
 
     damage = (P_Random() % 10 + 1) * 2;
     angle = player->plr->mo->angle;
@@ -415,10 +413,12 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     S_StartSoundEx(SFX_SAWHIT, player->plr->mo);
 
+    if(IS_CLIENT)
+        return;
+
     // Turn to face target.
-    angle =
-        R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                        lineTarget->pos[VX], lineTarget->pos[VY]);
+    angle = R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
+                            lineTarget->pos[VX], lineTarget->pos[VY]);
     if(angle - player->plr->mo->angle > ANG180)
     {
         if(angle - player->plr->mo->angle < -ANG90 / 20)

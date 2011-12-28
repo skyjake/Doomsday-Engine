@@ -10,7 +10,6 @@ import shutil
 import time
 import string
 import glob
-import build_version
 import builder
 from builder.git import * 
 from builder.utils import * 
@@ -71,9 +70,12 @@ def todays_platform_release():
             remote_copy(os.path.join('releases', n),
                         os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
                                  
-    # Also the build log.
+    # Also the build logs.
     remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
     remote_copy('builderrors.txt', ev.file_path('doomsday-err-%s.txt' % sys_id()))
+    if 'linux' in sys_id():
+        remote_copy('dsfmod/fmod-out-%s.txt' % sys_id(), ev.file_path('fmod-out-%s.txt' % sys_id()))
+        remote_copy('dsfmod/fmod-err-%s.txt' % sys_id(), ev.file_path('fmod-err-%s.txt' % sys_id()))
                                              
     git_checkout('master')
 
@@ -97,11 +99,14 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
     changes = builder.Changes(fromTag, toTag)
 
     if debChanges:
+        import build_version
+
         # Only update the Debian changelog.
         changes.generate('deb')
 
         # Also update the doomsday-fmod changelog (just version number).
         os.chdir(os.path.join(builder.config.DISTRIB_DIR, 'dsfmod'))
+
         fmodVer = build_version.parse_header_for_version('../../doomsday/plugins/fmod/include/version.h')
         debVer = "%s.%s.%s-%s" % (fmodVer[0], fmodVer[1], fmodVer[2], todays_build_tag())
         print "Marking new FMOD version:", debVer

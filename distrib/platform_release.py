@@ -98,8 +98,9 @@ def mac_os_version():
     return platform.mac_ver()[0][:4]
 
 
-"""The Mac OS X release procedure."""
 def mac_release():
+    """The Mac OS X release procedure."""
+    
     # Check Python dependencies.
     try:
         import wx
@@ -210,8 +211,9 @@ def mac_release():
     remove('imaging.dmg')
 
 
-"""The Windows release procedure."""
 def win_release():
+    """The Windows release procedure."""
+    
     PROD_DIR = os.path.join(LAUNCH_DIR, 'products')
     if not os.path.exists(PROD_DIR):
         print "Creating the products directory."
@@ -241,8 +243,9 @@ def win_release():
         raise Exception("Failure in the Windows release script.")
 
 
-"""The Linux release procedure."""
 def linux_release():
+    """The Linux release procedure."""
+    
     os.chdir(LAUNCH_DIR)
 
     # Generate a launcher script.
@@ -259,7 +262,7 @@ import snowberry"""
         # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
         os.system('rm -f doomsday-fmod*.deb doomsday-fmod*.changes doomsday-fmod*.tar.gz doomsday-fmod*.dsc')
-        os.system('rm -f dsfmod/fmod-*.txt')
+        #os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
 
@@ -273,7 +276,6 @@ import snowberry"""
         raise Exception("Failure to build dsFMOD from source.")
     shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
     shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
-    shutil.copy(glob.glob('fmod-*.txt')[0], OUTPUT_DIR)    
     os.chdir('..')
 
     # Place the result in the output directory.

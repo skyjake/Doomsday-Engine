@@ -1380,6 +1380,14 @@ void R_SetupMap(int mode, int flags)
         char cmd[80];
         int i;
 
+        if(gameTime > 20000000 / TICSPERSEC)
+        {
+            // In very long-running games, gameTime will become so large that it cannot be
+            // accurately converted to 35 Hz integer tics. Thus it needs to be reset back
+            // to zero.
+            gameTime = 0;
+        }
+
         // We are now finished with the game data, map object db.
         P_DestroyGameMapObjDB(&map->gameObjData);
 

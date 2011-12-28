@@ -88,33 +88,33 @@ void            R_RenderViewPorts(void);
 /// @return  Current viewport else @c NULL.
 const viewport_t* R_CurrentViewPort(void);
 
-const viewdata_t* R_ViewData(int localPlayerNum);
+const viewdata_t* R_ViewData(int consoleNum);
 void            R_ResetViewer(void);
 
 void            R_NewSharpWorld(void);
 
 boolean R_SetViewGrid(int numCols, int numRows);
 
-void R_SetupDefaultViewWindow(int player);
+void R_SetupDefaultViewWindow(int consoleNum);
 
 void R_SetViewOrigin(int consoleNum, float const origin[3]);
 void R_SetViewAngle(int consoleNum, angle_t angle);
 void R_SetViewPitch(int consoleNum, float pitch);
 
-int R_ViewWindowGeometry(int player, RectRaw* geometry);
-int R_ViewWindowOrigin(int player, Point2Raw* origin);
-int R_ViewWindowSize(int player, Size2Raw* size);
+int R_ViewWindowGeometry(int consoleNum, RectRaw* geometry);
+int R_ViewWindowOrigin(int consoleNum, Point2Raw* origin);
+int R_ViewWindowSize(int consoleNum, Size2Raw* size);
 
-void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate);
+void R_SetViewWindowGeometry(int consoleNum, const RectRaw* geometry, boolean interpolate);
 
 /**
  * Animates the view window towards the target values.
  */
-void R_ViewWindowTicker(int player, timespan_t ticLength);
+void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
 
-int R_ViewPortGeometry(int player, RectRaw* geometry);
-int R_ViewPortOrigin(int player, Point2Raw* origin);
-int R_ViewPortSize(int player, Size2Raw* size);
+int R_ViewPortGeometry(int consoleNum, RectRaw* geometry);
+int R_ViewPortOrigin(int consoleNum, Point2Raw* origin);
+int R_ViewPortSize(int consoleNum, Size2Raw* size);
 
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 
