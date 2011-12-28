@@ -359,6 +359,7 @@ boolean P_LoadMap(const char* uri);
     void            P_MobjLink(struct mobj_s* mo, byte flags);
     int             P_MobjUnlink(struct mobj_s* mo);
     struct mobj_s*  P_MobjForID(int id);
+    void            Mobj_OriginSmoothed(struct mobj_s* mobj, float origin[3]);
     boolean         ClMobj_IsValid(struct mobj_s* mo);
     struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 

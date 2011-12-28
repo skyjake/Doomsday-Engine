@@ -206,7 +206,7 @@ int RIT_ProjectShadowToSurfaceIterator(void* obj, void* paramaters)
     vec3_t mobjOrigin, point;
     vec2_t s, t;
 
-    R_VisualOrigin(mo, mobjOrigin);
+    Mobj_OriginSmoothed(mo, mobjOrigin);
 
     // Is this too far?
     if(shadowMaxDistance > 0)

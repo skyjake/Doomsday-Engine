@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 701 <--
+; Highest ordinal is currently: --> 702 <--
 ; Other free ordinals:
 ;
 ; 126 formerly DGL_DrawRawScreen
@@ -469,6 +469,7 @@ EXPORTS
     P_MobjLinesIterator         @71 NONAME
     P_MobjSectorsIterator       @72 NONAME
     P_MobjForID                 @333 NONAME
+    Mobj_OriginSmoothed         @702 NONAME
     ClMobj_IsValid              @103 NONAME
     ClPlayer_ClMobj             @588 NONAME
 

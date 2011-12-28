@@ -890,6 +890,8 @@ static void rendXGLinedefs(uiwidget_t* obj)
 static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float angle,
     float scale, const float rgb[3], float alpha, blendmode_t blendmode)
 {
+    alpha = MINMAX_OF(0.f, alpha, 1.f);
+
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 1);
@@ -903,42 +905,53 @@ static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float an
     DGL_PopMatrix();
 }
 
+static __inline int playerPaletteColor(int consoleNum)
+{
+    if(!IS_NETGAME) return WHITE;
+    return playerColorPaletteIndices[cfg.playerColor[MAX_OF(0, consoleNum) % MAXPLAYERS]];
+}
+
+static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
+{
+    player_t* player = players + consoleNum;
+    mobj_t* mo = player->plr->mo;
+    vectorgraphicid_t svgId;
+    float origin[3], angle, radius, color[3], alpha;
+
+    if(!player->plr->inGame || !mo) return;
+
+    svgId  = AM_GetVectorGraphic(config, AMO_THINGPLAYER);
+    Mobj_OriginSmoothed(mo, origin);
+    /* $unifiedangles */
+    angle  = (mo->visAngle << 16) / (float) ANGLE_MAX * 360;
+    radius = PLAYERRADIUS;
+
+    R_GetColorPaletteRGBf(0, playerPaletteColor(consoleNum), color, false);
+
+    alpha = cfg.automapLineAlpha * uiRendState->pageAlpha;
+#if !__JHEXEN__
+    if(player->powers[PT_INVISIBILITY])
+        alpha *= .125f;
+#endif
+
+    drawVectorGraphic(svgId, origin[VX], origin[VY], angle, radius, color, alpha, BM_NORMAL);
+}
+
 /**
  * Draws all players on the map using a line character
  */
 static void rendPlayerMarkers(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    vectorgraphicid_t vgId = AM_GetVectorGraphic(am->mcfg, AMO_THINGPLAYER);
-    const float pageAlpha = uiRendState->pageAlpha;
-    int player = UIWidget_Player(obj);
-    float size = PLAYERRADIUS;
     int i;
     assert(obj->type == GUI_AUTOMAP);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* p = &players[i];
-        float rgb[3], alpha;
-        mobj_t* mo;
+        // Do not show markers for other players in deathmatch.
+        if(deathmatch && i != UIWidget_Player(obj)) continue;
 
-        if(!p->plr->inGame) continue;
-        if(deathmatch && p != &players[player]) continue;
-
-        R_GetColorPaletteRGBf(0, (!IS_NETGAME? WHITE : playerColorPaletteIndices[cfg.playerColor[i]]), rgb, false);
-        alpha = cfg.automapLineAlpha * pageAlpha;
-#if !__JHEXEN__
-        if(p->powers[PT_INVISIBILITY])
-            alpha *= .125f;
-#endif
-        alpha = MINMAX_OF(0.f, alpha, 1.f);
-
-        mo = p->plr->mo;
-
-        /* $unifiedangles */
-        drawVectorGraphic(vgId, mo->pos[VX], mo->pos[VY],
-                          mo->angle / (float) ANGLE_MAX * 360, size,
-                          rgb, alpha, BM_NORMAL);
+        drawPlayerMarker(i, am->mcfg);
     }
 }
 
@@ -977,9 +990,6 @@ typedef struct {
     float rgb[3], alpha;
 } renderthing_params_t;
 
-/**
- * Draws all things on the map
- */
 static int rendThingPoint(mobj_t* mo, void* context)
 {
     renderthing_params_t* p = (renderthing_params_t*) context;
@@ -987,29 +997,37 @@ static int rendThingPoint(mobj_t* mo, void* context)
     // Only sector linked mobjs should be visible in the automap.
     if(!(mo->flags & MF_NOSECTOR))
     {
+        vectorgraphicid_t vgId = p->vgId;
+        boolean isVisible = false;
+        float* color = p->rgb;
+        float keyColorRGB[3];
+
         if(p->flags & AMF_REND_KEYS)
         {
-            int keyColor;
-
-            // Is this a key?
-            if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
-            {   // This mobj is indeed a key.
-                float rgb[3];
-
-                R_GetColorPaletteRGBf(0, keyColor, rgb, false);
-
-                /* $unifiedangles */
-                drawVectorGraphic(VG_KEYSQUARE, mo->pos[VX], mo->pos[VY], 0, PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
-                return false; // Continue iteration.
+            int keyColor = getKeyColorForMobjType(mo->type);
+            if(keyColor != -1)
+            {
+                R_GetColorPaletteRGBf(0, keyColor, keyColorRGB, false);
+                vgId  = VG_KEYSQUARE;
+                color = keyColorRGB;
+                isVisible = true;
             }
         }
 
-        if(p->flags & AMF_REND_THINGS)
-        {   // Something else.
+        // Something else?
+        if(!isVisible)
+            isVisible = !!(p->flags & AMF_REND_THINGS);
+
+        if(isVisible)
+        {
             /* $unifiedangles */
-            drawVectorGraphic(p->vgId, mo->pos[VX], mo->pos[VY],
-                              mo->angle / (float) ANGLE_MAX * 360,
-                              PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
+            const float angle = (mo->visAngle << 16) / (float) ANGLE_MAX * 360; // In degrees.
+            const float radius = 16;
+            float origin[3];
+            Mobj_OriginSmoothed(mo, origin);
+
+            drawVectorGraphic(vgId, origin[VX], origin[VY], angle, radius,
+                              color, p->alpha, BM_NORMAL);
         }
     }
 
@@ -1546,7 +1564,11 @@ boolean UIAutomap_Open(uiwidget_t* obj, boolean yes, boolean fast)
         {
             // The map's target player is available.
             if(!(am->pan && !cfg.automapPanResetOnOpen))
-                UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
+            {
+                float origin[3];
+                Mobj_OriginSmoothed(mo, origin);
+                UIAutomap_SetCameraOrigin(obj, origin[VX], origin[VY]);
+            }
 
             if(am->pan && cfg.automapPanResetOnOpen)
             {
@@ -1575,7 +1597,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const int player = UIWidget_Player(obj);
-    const mobj_t* mo = UIAutomap_FollowMobj(obj);
+    mobj_t* mo = UIAutomap_FollowMobj(obj);
     float panX[2], panY[2], zoomVel, zoomSpeed, width, height, scale;
     assert(obj->type == GUI_AUTOMAP);
 
@@ -1634,8 +1656,11 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     else
     {
         /* $unifiedangles */
-        float angle = (am->rotate? (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360 : 0);
-        UIAutomap_SetCameraOrigin(obj, mo->pos[VX], mo->pos[VY]);
+        const float angle = (am->rotate? (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360 : 0);
+        float origin[3];
+
+        Mobj_OriginSmoothed(mo, origin);
+        UIAutomap_SetCameraOrigin(obj, origin[VX], origin[VY]);
         UIAutomap_SetCameraAngle(obj, angle);
     }
 

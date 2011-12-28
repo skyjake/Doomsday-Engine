@@ -213,6 +213,28 @@ boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
     return gx.MobjTryMove3f(mo, x, y, z);
 }
 
+void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
+{
+    if(!origin) return;
+
+    origin[VX] = origin[VY] = origin[VZ] = 0;
+
+    if(!mo) return;
+
+    origin[VX] = mo->pos[VX];
+    origin[VY] = mo->pos[VY];
+    origin[VZ] = mo->pos[VZ];
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVO && mo->state && mo->tics >= 0)
+    {
+        float mul = mo->tics / (float) mo->state->tics;
+        origin[VX] += mo->srvo[VX] * mul;
+        origin[VY] += mo->srvo[VY] * mul;
+        origin[VZ] += mo->srvo[VZ] * mul;
+    }
+}
+
 D_CMD(InspectMobj)
 {
     mobj_t* mo = 0;

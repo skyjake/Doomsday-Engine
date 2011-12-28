@@ -677,23 +677,6 @@ float R_VisualRadius(mobj_t* mo)
     return mo->radius;
 }
 
-void R_VisualOrigin(mobj_t* mo, float origin[3])
-{
-    assert(mo && origin);
-    origin[VX] = mo->pos[VX];
-    origin[VY] = mo->pos[VY];
-    origin[VZ] = mo->pos[VZ];
-
-    // Apply a Short Range Visual Offset?
-    if(useSRVO && mo->state && mo->tics >= 0)
-    {
-        float mul = mo->tics / (float) mo->state->tics;
-        origin[VX] += mo->srvo[VX] * mul;
-        origin[VY] += mo->srvo[VY] * mul;
-        origin[VZ] += mo->srvo[VZ] * mul;
-    }
-}
-
 float R_ShadowStrength(mobj_t* mo)
 {
     float ambientLightLevel;

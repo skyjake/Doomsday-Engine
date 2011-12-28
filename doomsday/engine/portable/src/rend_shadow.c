@@ -82,7 +82,7 @@ static void processMobjShadow(mobj_t* mo)
     float mobjOrigin[3], shadowRadius, shadowStrength;
     plane_t* plane;
 
-    R_VisualOrigin(mo, mobjOrigin);
+    Mobj_OriginSmoothed(mo, mobjOrigin);
 
     // Is this too far?
     if(shadowMaxDistance > 0)
