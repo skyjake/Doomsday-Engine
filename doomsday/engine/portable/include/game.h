@@ -30,11 +30,6 @@
 struct resourcerecord_s;
 struct GameDef;
 
-typedef struct {
-    struct resourcerecord_s** records;
-    size_t numRecords;
-} resourcerecordset_t;
-
 /**
  * Game.  Used to record top-level game configurations registered by
  * the loaded game plugin(s).

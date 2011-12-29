@@ -29,6 +29,11 @@
 #include "game.h"
 #include "resourcerecord.h"
 
+typedef struct {
+    struct resourcerecord_s** records;
+    size_t numRecords;
+} resourcerecordset_t;
+
 struct Game_s {
     /// Unique identifier of the plugin which registered this game.
     pluginid_t pluginId;
