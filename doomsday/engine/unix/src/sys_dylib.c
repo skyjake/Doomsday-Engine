@@ -108,7 +108,13 @@ int lt_dlforeachfile(const char* searchPath,
 
     while((entry = readdir(dir)))
     {
+#ifdef MACOSX
+        // Mac plugins are bundled in a subdir.
+        if(entry->d_type != DT_REG && entry->d_type != DT_DIR) continue;
+        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+#else
         if(entry->d_type != DT_REG) continue;
+#endif
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
