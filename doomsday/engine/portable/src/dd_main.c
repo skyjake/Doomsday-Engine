@@ -117,6 +117,7 @@ static ddstring_t** gameResourceFileList = 0;
 static size_t numGameResourceFileList = 0;
 
 // Game records and associated found-file lists.
+static Game* nullGame; // Special "null-game" object.
 static Game** games = 0;
 static int gamesCount = 0, currentGameIndex = 0;
 
@@ -152,11 +153,13 @@ void DD_Register(void)
 static int gameIndex(const Game* game)
 {
     int i;
-    assert(game);
-    for(i = 0; i < gamesCount; ++i)
+    if(game && !DD_IsNullGame(game))
     {
-        if(game == games[i])
-            return i+1;
+        for(i = 0; i < gamesCount; ++i)
+        {
+            if(game == games[i])
+                return i+1;
+        }
     }
     return 0;
 }
@@ -245,7 +248,6 @@ static Game* addGame(Game* game)
 
 boolean DD_GameLoaded(void)
 {
-    if(currentGameIndex <= 0) return false;
     return !DD_IsNullGame(DD_CurrentGame());
 }
 
@@ -270,14 +272,14 @@ Game* DD_GameByIdentityKey(const char* identityKey)
 
 Game* DD_CurrentGame(void)
 {
-    assert(currentGameIndex > 0);
+    if(currentGameIndex <= 0) return nullGame;
     return games[currentGameIndex-1];
 }
 
-boolean DD_IsNullGame(Game* game)
+boolean DD_IsNullGame(const Game* game)
 {
-    assert(game);
-    return Game_PluginId(game) == 0;
+    if(!game) return false;
+    return game == nullGame;
 }
 
 static void populateGameInfo(GameInfo* info, Game* game)
@@ -320,7 +322,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     ddstring_t str;
     const char* p;
 
-    if(!game || DD_IsNullGame(game))
+    if(!game)
         Con_Error("DD_AddGameResource: Error, unknown game id %i.", gameId);
     if(!VALID_RESOURCE_CLASS(rclass))
         Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
@@ -421,6 +423,11 @@ void DD_DestroyGames(void)
         gamesCount = 0;
     }
 
+    if(nullGame)
+    {
+        Game_Delete(nullGame);
+        nullGame = NULL;
+    }
     currentGameIndex = 0;
 }
 
@@ -591,7 +598,6 @@ static void locateGameResources(Game* game)
 
 static boolean allGameResourcesFound(Game* game)
 {
-    assert(game);
     if(!DD_IsNullGame(game))
     {
         uint i;
@@ -691,7 +697,6 @@ static void printGameResources(Game* game, boolean printStatus, int rflags)
 
 void DD_PrintGame(Game* game, int flags)
 {
-    assert(game);
     if(DD_IsNullGame(game))
         flags &= ~PGF_BANNER;
 
@@ -1046,6 +1051,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     // If a game is presently loaded; unload it.
     if(DD_GameLoaded())
     {
+        uint i;
+
         if(gx.Shutdown)
             gx.Shutdown();
         Con_SaveDefaults();
@@ -1058,7 +1065,6 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         P_ControlShutdown();
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
 
-        { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
@@ -1074,7 +1080,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
             ddpl->fixedColorMap = 0;
             ddpl->extraLight = 0;
-        }}
+        }
 
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
@@ -1093,8 +1099,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Con_ClearDatabases();
 
-        // This is now the current game.
-        currentGameIndex = gameIndex(findGameForIdentityKey("null-game"));
+        // The current game is now the special "null-game".
+        currentGameIndex = 0;
 
         Con_InitDatabases();
         DD_Register();
@@ -1141,7 +1147,14 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     }
 
     // This is now the current game.
-    currentGameIndex = gameIndex(game);
+    if(!DD_IsNullGame(game))
+    {
+        currentGameIndex = gameIndex(game);
+    }
+    else
+    {
+        currentGameIndex = 0;
+    }
 
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
@@ -1205,24 +1218,13 @@ static void DD_AutoLoad(void)
     }
 }
 
-static int countAvailableGames(void)
-{
-    int i, count = 0;
-    for(i = 0; i < gamesCount; ++i)
-    {
-        if(DD_IsNullGame(games[i])) continue;
-        ++count;
-    }
-    return count;
-}
-
 static int countPlayableGames(void)
 {
     int i, count = 0;
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(DD_IsNullGame(game) || !allGameResourcesFound(game)) continue;
+        if(!allGameResourcesFound(game)) continue;
         ++count;
     }
     return count;
@@ -1245,7 +1247,6 @@ void DD_AutoselectGame(void)
         for(i = 0; i < gamesCount; ++i)
         {
             Game* cand = games[i];
-            if(DD_IsNullGame(cand)) continue;
             if(!allGameResourcesFound(cand)) continue;
 
             game = cand;
@@ -1273,7 +1274,6 @@ void DD_AutoselectGame(void)
 int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
-    Game* game;
 
     // Determine the requested degree of verbosity.
     verbose = ArgExists("-verbose");
@@ -1318,8 +1318,8 @@ int DD_EarlyInit(void)
     if(Str_RAt(&defsPath, 0) != '/')
         Str_AppendChar(&defsPath, '/');
 
-    game = Game_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
-    currentGameIndex = gameIndex(addGame(game));
+    nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
+    currentGameIndex = 0;
 
     Str_Free(&defsPath);
     Str_Free(&dataPath);
@@ -1335,7 +1335,7 @@ int DD_Main(void)
     int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
     uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
     boolean noCenter = false;
-    int exitCode = 0;
+    int i, exitCode = 0;
 
 #ifdef _DEBUG
     // Type size check.
@@ -1401,7 +1401,7 @@ int DD_Main(void)
         // Render a few black frames before we continue. This will help to
         // stabilize things before we begin drawing for real and to avoid any
         // unwanted video artefacts.
-        int i = 0;
+        i = 0;
         while(i++ < 3)
         {
             glClear(GL_COLOR_BUFFER_BIT);
@@ -1455,16 +1455,13 @@ int DD_Main(void)
 #endif
 
     // Try to locate all required data files for all registered games.
-    { int i;
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(DD_IsNullGame(game))
-            continue;
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) );
         locateGameResources(game);
         VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) );
-    }}
+    }
 
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
@@ -2336,7 +2333,7 @@ D_CMD(Unload)
             Con_Message("There is no game currently loaded.\n");
             return true;
         }
-        return DD_ChangeGame(findGameForIdentityKey("null-game"));
+        return DD_ChangeGame(nullGame);
     }
 
     Str_Init(&searchPath);
@@ -2363,7 +2360,7 @@ D_CMD(Unload)
         Str_Free(&searchPath);
         if(DD_GameLoaded())
         {
-            return DD_ChangeGame(findGameForIdentityKey("null-game"));
+            return DD_ChangeGame(nullGame);
         }
 
         Con_Message("%s is not currently loaded.\n", Str_Text(Game_IdentityKey(game)));
@@ -2424,7 +2421,7 @@ static int C_DECL compareGameByName(const void* a, const void* b)
 
 D_CMD(ListGames)
 {
-    int numAvailableGames = countAvailableGames();
+    const int numAvailableGames = gamesCount;
     if(numAvailableGames)
     {
         int i, numCompleteGames = 0;
@@ -2444,7 +2441,6 @@ D_CMD(ListGames)
         for(i = 0; i < gamesCount; ++i)
         {
             Game* game = gamePtrs[i];
-            if(DD_IsNullGame(game)) continue;
 
             Con_Printf(" %s %-16s %s (%s)\n", DD_CurrentGame() == game? "*" :
                                           !allGameResourcesFound(game)? "!" : " ",

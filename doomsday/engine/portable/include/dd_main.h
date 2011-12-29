@@ -118,7 +118,7 @@ Game* DD_GameByIdentityKey(const char* identityKey);
  * Is this the special "null-game" object (not a real playable game).
  * \todo Implement a proper null-game object for this.
  */
-boolean DD_IsNullGame(Game* game);
+boolean DD_IsNullGame(const Game* game);
 
 /**
  * @defgroup printGameFlags  Print Game Flags.

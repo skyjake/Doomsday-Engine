@@ -372,11 +372,10 @@ static int addVariableToKnownWords(const PathDirectoryNode* node, void* paramate
 static void updateKnownWords(void)
 {
     countvariableparams_t countCVarParams;
-    const int gameCount = DD_GameCount();
-    uint c, knownGames;
+    int i, gameCount;
     ccmd_t* ccmd;
     size_t len;
-    int i;
+    uint c;
 
     if(!knownWordsNeedUpdate) return;
 
@@ -387,16 +386,8 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
 
-    knownGames = 0;
-    for(i = 0; i < gameCount; ++i)
-    {
-        Game* game = DD_GameByIndex(i+1);
-        if(!DD_IsNullGame(game))
-            ++knownGames;
-    }
-
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + knownGames;
+    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + DD_GameCount();
     len = sizeof(knownword_t) * numKnownWords;
     knownWords = realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -435,18 +426,15 @@ static void updateKnownWords(void)
         }
     }
 
-    // Add gameinfos?
-    if(0 != knownGames)
+    // Add games?
+    gameCount = DD_GameCount();
+    for(i = 0; i < gameCount; ++i)
     {
-        for(i = 0; i < gameCount; ++i)
-        {
-            Game* game = DD_GameByIndex(i+1);
-            if(DD_IsNullGame(game)) continue;
+        Game* game = DD_GameByIndex(i+1);
 
-            knownWords[c].type = WT_GAME;
-            knownWords[c].data = game;
-            ++c;
-        }
+        knownWords[c].type = WT_GAME;
+        knownWords[c].data = game;
+        ++c;
     }
 
     // Sort it so we get nice alphabetical word completions.
