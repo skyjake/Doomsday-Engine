@@ -31,11 +31,7 @@
 
 typedef uint32_t svgid_t;
 
-typedef struct svgline_s {
-    Point2Rawf from, to;
-} svgline_t;
-
-void R_NewSVG(svgid_t svgId, const svgline_t* lines, size_t numLines);
+void R_NewSVG(svgid_t svgId, const SvgLine* lines, size_t numLines);
 
 void GL_DrawSVG(svgid_t svgId, float x, float y);
 void GL_DrawSVG2(svgid_t svgId, float x, float y, float scale);

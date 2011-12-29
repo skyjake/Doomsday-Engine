@@ -31,13 +31,6 @@
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
 
-typedef struct SVG_s {
-    svgid_t id;
-    DGLuint dlist;
-    size_t count;
-    struct svgline_s* lines;
-} Svg;
-
 static boolean inited = false;
 static uint svgCount;
 static Svg* svgs;
@@ -55,63 +48,6 @@ static Svg* svgForId(svgid_t id)
         }
     }
     return 0;
-}
-
-static void draw(const Svg* svg)
-{
-    uint i;
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < svg->count; ++i)
-    {
-        svgline_t* l = &svg->lines[i];
-        DGL_TexCoord2f(0, l->from.x, l->from.y);
-        DGL_Vertex2f(l->from.x, l->from.y);
-        DGL_TexCoord2f(0, l->to.x, l->to.y);
-        DGL_Vertex2f(l->to.x, l->to.y);
-    }
-    DGL_End();
-}
-
-static DGLuint constructDisplayList(DGLuint name, const Svg* svg)
-{
-    if(DGL_NewList(name, DGL_COMPILE))
-    {
-        draw(svg);
-        return DGL_EndList();
-    }
-    return 0;
-}
-
-static Svg* prepareSVG(svgid_t id)
-{
-    Svg* svg = svgForId(id);
-    if(svg)
-    {
-        if(!svg->dlist)
-        {
-            svg->dlist = constructDisplayList(0, svg);
-        }
-        return svg;
-    }
-    Con_Message("prepareSVG: Warning, no vectorgraphic is known by id %i.", (int) id);
-    return NULL;
-}
-
-static void unloadSVG(Svg* svg)
-{
-    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
-    {
-        if(svg->dlist)
-            DGL_DeleteLists(svg->dlist, 1);
-    }
-    svg->dlist = 0;
-}
-
-static void deleteSVG(Svg* svg)
-{
-    unloadSVG(svg);
-    free(svg->lines);
-    svg->lines = 0;
 }
 
 static void clearSVGs(void)
@@ -156,6 +92,21 @@ void R_UnloadSVGs(void)
     }
 }
 
+static void draw(const Svg* svg)
+{
+    uint i;
+    DGL_Begin(DGL_LINES);
+    for(i = 0; i < svg->count; ++i)
+    {
+        SvgLine* l = &svg->lines[i];
+        DGL_TexCoord2f(0, l->from.x, l->from.y);
+        DGL_Vertex2f(l->from.x, l->from.y);
+        DGL_TexCoord2f(0, l->to.x, l->to.y);
+        DGL_Vertex2f(l->to.x, l->to.y);
+    }
+    DGL_End();
+}
+
 void GL_DrawSVG3(svgid_t id, float x, float y, float scale, float angle)
 {
     Svg* svg = prepareSVG(id);
@@ -197,7 +148,7 @@ void GL_DrawSVG(svgid_t id, float x, float y)
     GL_DrawSVG2(id, x, y, DEFAULT_SCALE);
 }
 
-void R_NewSVG(svgid_t id, const svgline_t* lines, size_t numLines)
+void R_NewSVG(svgid_t id, const SvgLine* lines, size_t numLines)
 {
     Svg* svg;
     size_t i;
@@ -223,7 +174,7 @@ void R_NewSVG(svgid_t id, const svgline_t* lines, size_t numLines)
     }
 
     svg->count = numLines;
-    svg->lines = (svgline_t*)malloc(sizeof(*svg->lines) * numLines);
+    svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * numLines);
     if(!svg->lines) Con_Error("R_NewSVG: Failed on allocation of %lu bytes for new SVGLine list.", (unsigned long) (sizeof(*svg->lines) * numLines));
 
     for(i = 0; i < numLines; ++i)

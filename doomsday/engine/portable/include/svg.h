@@ -1,4 +1,4 @@
-/**\file de_refresh.h
+/**\file svg.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,29 +22,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Refresh Subsystem
- */
+#ifndef LIBDENG_SVG_H
+#define LIBDENG_SVG_H
 
-#ifndef LIBDENG_REFRESH
-#define LIBDENG_REFRESH
+typedef struct SvgLine_s {
+    Point2Rawf from, to;
+} SvgLine;
 
-#include "materials.h"
-#include "textures.h"
-#include "fonts.h"
-#include "svg.h"
-#include "r_data.h"
-#include "r_draw.h"
-#include "r_fakeradio.h"
-#include "r_lgrid.h"
-#include "r_lumobjs.h"
-#include "r_main.h"
-#include "r_model.h"
-#include "r_shadow.h"
-#include "r_sky.h"
-#include "rend_dynlight.h"
-#include "r_things.h"
-#include "r_util.h"
-#include "r_world.h"
+struct Svg_s; // The svg instance (opaque).
+typedef struct Svg_s Svg;
 
-#endif /* LIBDENG_REFRESH */
+#endif /* LIBDENG_SVG_H */

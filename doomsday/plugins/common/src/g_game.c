@@ -673,7 +673,7 @@ void R_LoadColorPalettes(void)
 void R_LoadVectorGraphics(void)
 {
 #define R (1.0f)
-    const svgline_t keysquare[] = {
+    const SvgLine keysquare[] = {
         { {0, 0}, {R / 4, -R / 2} },
         { {R / 4, -R / 2}, {R / 2, -R / 2} },
         { {R / 2, -R / 2}, {R / 2, R / 2} },
@@ -683,13 +683,13 @@ void R_LoadVectorGraphics(void)
         { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
         { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
     };
-    const svgline_t thintriangle_guy[] = {
+    const SvgLine thintriangle_guy[] = {
         { {-R / 2, R - R / 2}, {R, 0} }, // >
         { {R, 0}, {-R / 2, -R + R / 2} },
         { {-R / 2, -R + R / 2}, {-R / 2, R - R / 2} } // |>
     };
 #if __JDOOM__ || __JDOOM64__
-    const svgline_t player_arrow[] = {
+    const SvgLine player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 4} }, // ----->
         { {R, 0}, {R - R / 2, -R / 4} },
@@ -698,7 +698,7 @@ void R_LoadVectorGraphics(void)
         { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 4} }, // >>--->
         { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4} }
     };
-    const svgline_t cheat_player_arrow[] = {
+    const SvgLine cheat_player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 6} }, // ----->
         { {R, 0}, {R - R / 2, -R / 6} },
@@ -717,7 +717,7 @@ void R_LoadVectorGraphics(void)
         { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
     };
 #elif __JHERETIC__
-    const svgline_t player_arrow[] = {
+    const SvgLine player_arrow[] = {
         { {-R + R / 4, 0}, {0, 0} }, // center line.
         { {-R + R / 4, R / 8}, {R, 0} }, // blade
         { {-R + R / 4, -R / 8}, {R, 0} },
@@ -729,7 +729,7 @@ void R_LoadVectorGraphics(void)
         { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
         { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
     };
-    const svgline_t cheat_player_arrow[] = {
+    const SvgLine cheat_player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 6} }, // ----->
         { {R, 0}, {R - R / 2, -R / 6} },
@@ -748,7 +748,7 @@ void R_LoadVectorGraphics(void)
         { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
     };
 #elif __JHEXEN__
-    const svgline_t player_arrow[] = {
+    const SvgLine player_arrow[] = {
         { {-R + R / 4, 0}, {0, 0} }, // center line.
         { {-R + R / 4, R / 8}, {R, 0} }, // blade
         { {-R + R / 4, -R / 8}, {R, 0} },
@@ -762,25 +762,25 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 #undef R
-    const svgline_t crossHair1[] = { // + (open center)
+    const SvgLine crossHair1[] = { // + (open center)
         { {-1,  0}, {-.4f, 0} },
         { { 0, -1}, { 0,  -.4f} },
         { { 1,  0}, { .4f, 0} },
         { { 0,  1}, { 0,   .4f} }
     };
-    const svgline_t crossHair2[] = { // > <
+    const SvgLine crossHair2[] = { // > <
         { {-1, -.714f}, {-.286f, 0} },
         { {-1,  .714f}, {-.286f, 0} },
         { { 1, -.714f}, { .286f, 0} },
         { { 1,  .714f}, { .286f, 0} }
     };
-    const svgline_t crossHair3[] = { // square
+    const SvgLine crossHair3[] = { // square
         { {-1, -1}, {-1,  1} },
         { {-1,  1}, { 1,  1} },
         { { 1,  1}, { 1, -1} },
         { { 1, -1}, {-1, -1} }
     };
-    const svgline_t crossHair4[] = { // square (open center)
+    const SvgLine crossHair4[] = { // square (open center)
         { {-1, -1}, {-1, -.5f} },
         { {-1, .5f}, {-1, 1} },
         { {-1, 1}, {-.5f, 1} },
@@ -790,13 +790,13 @@ void R_LoadVectorGraphics(void)
         { { 1, -1}, {.5f, -1} },
         { {-.5f, -1}, {-1, -1} }
     };
-    const svgline_t crossHair5[] = { // diamond
+    const SvgLine crossHair5[] = { // diamond
         { { 0, -1}, { 1,  0} },
         { { 1,  0}, { 0,  1} },
         { { 0,  1}, {-1,  0} },
         { {-1,  0}, { 0, -1} }
     };
-    const svgline_t crossHair6[] = { // ^
+    const SvgLine crossHair6[] = { // ^
         { {-1, -1}, { 0,  0} },
         { { 0,  0}, { 1, -1} }
     };
