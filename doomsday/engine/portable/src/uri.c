@@ -240,7 +240,7 @@ void Uri_Delete(Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Destruct with invalid reference (this==0).");
+        Con_Error("Attempted Uri::Delete with invalid reference (this==0).");
         return; // Unreachable.
     }
     Str_Free(&uri->_scheme);
