@@ -116,7 +116,7 @@ void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const
  * @param info          Info structure to be populated.
  * @return              @c true if successful else @c false (i.e., no game loaded).
  */
-boolean DD_GameInfo(ddgameinfo_t* info);
+boolean DD_GameInfo(GameInfo* info);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);

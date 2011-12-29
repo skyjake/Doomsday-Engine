@@ -1354,7 +1354,7 @@ DEFFC(If)
     else if(!strnicmp(token, "mode:", 5))
     {
         if(DD_GameLoaded())
-            val = !stricmp(token + 5, Str_Text(GameInfo_IdentityKey(DD_CurrentGameInfo())));
+            val = !stricmp(token + 5, Str_Text(Game_IdentityKey(DD_CurrentGame())));
         else
             val = 0;
     }

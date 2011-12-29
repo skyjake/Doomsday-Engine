@@ -137,7 +137,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
 
-        Str_Appendf(out, "%sauto/", Str_Text(GameInfo_DefsPath(DD_CurrentGameInfo())));
+        Str_Appendf(out, "%sauto/", Str_Text(Game_DefsPath(DD_CurrentGame())));
         Str_PartAppend(out, Str_Text(src), 1, Str_Length(src)-1);
 
         if(dest == src)
@@ -153,7 +153,7 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
 
-        Str_Appendf(out, "%sauto/", Str_Text(GameInfo_DataPath(DD_CurrentGameInfo())));
+        Str_Appendf(out, "%sauto/", Str_Text(Game_DataPath(DD_CurrentGame())));
         Str_PartAppend(out, Str_Text(src), 1, Str_Length(src)-1);
 
         if(dest == src)
@@ -199,10 +199,10 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
         switch(rclass)
         {
         case RC_PACKAGE: // Mapped to the Data directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(GameInfo_DataPath(DD_CurrentGameInfo())));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(Game_DataPath(DD_CurrentGame())));
             break;
         case RC_DEFINITION: // Mapped to the Defs directory.
-            Str_Appendf(&mapped, "%sauto/", Str_Text(GameInfo_DefsPath(DD_CurrentGameInfo())));
+            Str_Appendf(&mapped, "%sauto/", Str_Text(Game_DefsPath(DD_CurrentGame())));
             break;
         default: /* Not mapped */ break;
         }

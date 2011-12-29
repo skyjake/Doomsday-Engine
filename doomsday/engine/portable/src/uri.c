@@ -123,28 +123,28 @@ static ddstring_t* resolveUri(const Uri* uri)
             {
                 Str_Append(dest, "defs");
             }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
+            else if(!Str_CompareIgnoreCase(&part, "Game.DataPath"))
             {
                 /// \note DataPath already has ending '/'.
-                gameinfo_t* info = DD_CurrentGameInfo();
-                if(DD_IsNullGameInfo(info))
+                Game* game = DD_CurrentGame();
+                if(DD_IsNullGame(game))
                     goto parseEnded;
-                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
+                Str_PartAppend(dest, Str_Text(Game_DataPath(game)), 0, Str_Length(Game_DataPath(game))-1);
             }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
+            else if(!Str_CompareIgnoreCase(&part, "Game.DefsPath"))
             {
                 /// \note DefsPath already has ending '/'.
-                gameinfo_t* info = DD_CurrentGameInfo();
-                if(DD_IsNullGameInfo(info))
+                Game* game = DD_CurrentGame();
+                if(DD_IsNullGame(game))
                     goto parseEnded;
-                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
+                Str_PartAppend(dest, Str_Text(Game_DefsPath(game)), 0, Str_Length(Game_DefsPath(game))-1);
             }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
+            else if(!Str_CompareIgnoreCase(&part, "Game.IdentityKey"))
             {
-                gameinfo_t* info = DD_CurrentGameInfo();
-                if(DD_IsNullGameInfo(info))
+                Game* game = DD_CurrentGame();
+                if(DD_IsNullGame(game))
                     goto parseEnded;
-                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
+                Str_Append(dest, Str_Text(Game_IdentityKey(game)));
             }
             else
             {

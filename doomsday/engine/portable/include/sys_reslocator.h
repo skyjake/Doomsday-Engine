@@ -236,9 +236,9 @@ resourcetype_t F_GuessResourceTypeByName(const char* name);
  * Apply mapping for this namespace to the specified path (if enabled).
  *
  * This mapping will translate directives and symbolic identifiers into their default paths,
- * which themselves are determined using the current GameInfo.
+ * which themselves are determined using the current Game.
  *
- *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
+ *  e.g.: "Models:my/cool/model.dmd" -> "}data/<Game::IdentityKey>/models/my/cool/model.dmd"
  *
  * @param rni  Unique identifier of the namespace whose mappings to apply.
  * @param path  The path to be mapped (applied in-place).

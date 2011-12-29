@@ -5031,7 +5031,7 @@ static ddstring_t* composeSaveDir(void)
     }
 
     // Use the default path.
-    { ddgameinfo_t gameInfo;
+    { GameInfo gameInfo;
     if(DD_GameInfo(&gameInfo))
     {
 #if __JHEXEN__
@@ -5043,7 +5043,7 @@ static ddstring_t* composeSaveDir(void)
     }}
 
     Str_Delete(dir);
-    Con_Error("composeSaveDir: Error, failed retrieving GameInfo.");
+    Con_Error("composeSaveDir: Error, failed retrieving Game.");
     return NULL; // Unreachable.
 }
 

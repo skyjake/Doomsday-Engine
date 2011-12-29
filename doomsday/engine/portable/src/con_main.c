@@ -1245,9 +1245,9 @@ static int completeWord(int mode)
                     Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", foundWord, calias->command);
                 break;
               }
-            case WT_GAMEINFO: {
-                gameinfo_t* info = (gameinfo_t*)(*match)->data;
-                foundWord = Str_Text(GameInfo_IdentityKey(info));
+            case WT_GAME: {
+                Game* game = (Game*)(*match)->data;
+                foundWord = Str_Text(Game_IdentityKey(game));
                 if(printCompletions)
                     Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", foundWord);
                 break;
@@ -1287,7 +1287,7 @@ static int completeWord(int mode)
             foundName = CVar_ComposePath((cvar_t*)completeWord->data);
             str = Str_Text(foundName);
             break;
-        case WT_GAMEINFO: str = Str_Text(GameInfo_IdentityKey((gameinfo_t*)completeWord->data)); break;
+        case WT_GAME: str = Str_Text(Game_IdentityKey((Game*)completeWord->data)); break;
         default:
             Con_Error("completeWord: Invalid word type %i.", (int)completeWord->type);
             exit(1); // Unreachable.

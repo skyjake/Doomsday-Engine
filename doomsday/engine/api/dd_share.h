@@ -323,7 +323,7 @@ enum {
  * GameDef. Record (POD) structure for use with DD_DefineGame, to define
  * the numerous high-level properties of a logical game component.
  */
-typedef struct GameDef_s {
+typedef struct gamedef_s {
    /**
     * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
     * - Used during resource location for mode-specific assets.
@@ -352,11 +352,11 @@ typedef struct GameDef_s {
  * Extended info about a registered game component.
  * Used with DD_GameInfo.
  */
-typedef struct {
+typedef struct gameinfo_s {
     const char* title;
     const char* author;
     const char* identityKey;
-} ddgameinfo_t;
+} GameInfo;
 
 /**
  * @defgroup resourceFlags ResourceFlags

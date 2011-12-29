@@ -3242,13 +3242,13 @@ void G_ScreenShot(void)
  */
 static ddstring_t* composeScreenshotFileName(void)
 {
-    ddgameinfo_t gameInfo;
+    GameInfo gameInfo;
     ddstring_t* name;
     int numPos;
 
     if(!DD_GameInfo(&gameInfo))
     {
-        Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
+        Con_Error("composeScreenshotFileName: Failed retrieving Game.");
         return NULL; // Unreachable.
     }
    
