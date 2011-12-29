@@ -488,6 +488,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
     if(!font->_isDirty) return;
+    if(novideo || isDedicated || Con_IsBusy()) return;
 
     BitmapCompositeFont_DeleteGLTextures(font);
 
@@ -499,6 +500,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
         patchid_t patch = ch->patch;
         patchinfo_t info;
+        texture_t* tex;
 
         if(0 == patch) continue;
 
@@ -515,21 +517,15 @@ void BitmapCompositeFont_Prepare(font_t* font)
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;
 
-        if(!(novideo || isDedicated) && !Con_IsBusy())
-        {
-            texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
-            ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
-        }
+        tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
+        ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
     }
 
     font->_noCharSize.width  = avgSize.width  / numPatches;
     font->_noCharSize.height = avgSize.height / numPatches;
 
-    if(!(novideo || isDedicated) && !Con_IsBusy())
-    {
-        // We have prepared all patches.
-        font->_isDirty = false;
-    }
+    // We have prepared all patches.
+    font->_isDirty = false;
 }
 
 void BitmapCompositeFont_DeleteGLTextures(font_t* font)
@@ -592,18 +588,9 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char chr, const cha
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     bitmapcompositefont_char_t* ch = &cf->_chars[chr];
-    patchinfo_t info;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
 
     ch->patch = R_DeclarePatch(patchName);
-    R_GetPatchInfo(ch->patch, &info);
-    memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
-
-    ch->geometry.origin.x += -1 + font->_marginWidth;
-    ch->geometry.origin.y += -1 + font->_marginHeight;
-    ch->geometry.size.width  += 2;
-    ch->geometry.size.height += 2;
-
     font->_isDirty = true;
 }
 
