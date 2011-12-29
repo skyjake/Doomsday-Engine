@@ -1,4 +1,4 @@
-/**\file resourcerecord.c
+/**\file abstractresource.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +25,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "resourcerecord.h"
+#include "abstractresource.h"
 
 struct AbstractResource_s {
     /// Class of resource.

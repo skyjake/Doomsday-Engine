@@ -27,7 +27,7 @@
 #include "de_filesys.h"
 
 #include "game.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 
 typedef struct {
     struct AbstractResource_s** records;

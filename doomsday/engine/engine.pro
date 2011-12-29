@@ -252,7 +252,7 @@ DENG_HEADERS = \
     portable/include/rend_sky.h \
     portable/include/rend_sprite.h \
     portable/include/resourcenamespace.h \
-    portable/include/resourcerecord.h \
+    portable/include/abstractresource.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
@@ -513,7 +513,7 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
-    portable/src/resourcerecord.c \
+    portable/src/abstractresource.c \
     portable/src/smoother.c \
     portable/src/stringpool.c \
     portable/src/s_cache.c \

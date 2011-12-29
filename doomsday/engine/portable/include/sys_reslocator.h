@@ -32,7 +32,7 @@
 #include "dd_types.h"
 
 #include "resourcenamespace.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 #include "filedirectory.h"
 
 struct uri_s;

@@ -41,7 +41,7 @@
 #include "m_misc.h"
 
 #include "filedirectory.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 #include "resourcenamespace.h"
 
 #define PATH_DELIMIT_CHAR       ';'

@@ -49,7 +49,7 @@
 #include "bitmapfont.h"
 #include "texture.h"
 #include "resourcenamespace.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"

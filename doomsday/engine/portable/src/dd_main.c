@@ -54,7 +54,7 @@
 #include "de_edit.h"
 
 #include "filedirectory.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 #include "resourcenamespace.h"
 #include "m_misc.h"
 #include "m_args.h"
