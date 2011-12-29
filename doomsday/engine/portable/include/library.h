@@ -48,6 +48,12 @@ void Library_Init(void);
 void Library_Shutdown(void);
 
 /**
+ * Closes the library handles of all game plugins. The library will be
+ * reopened automatically when needed.
+ */
+void Library_ReleaseGames(void);
+
+/**
  * Defines an additional library @a dir where to look for dynamic libraries.
  */
 void Library_AddSearchDir(const char* dir);

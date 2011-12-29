@@ -1099,6 +1099,14 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Con_ClearDatabases();
 
+        { // Tell the plugin it is being unloaded.
+            void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
+#ifdef _DEBUG
+            Con_Message("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader);
+#endif
+            if(unloader) ((pluginfunc_t)unloader)();
+        }
+
         // The current game is now the special "null-game".
         theGame = nullGame;
 
@@ -1133,6 +1141,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         }
     )
 
+    Library_ReleaseGames();
+
     if(!exchangeEntryPoints(Game_PluginId(game)))
     {
         DD_ComposeMainWindowTitle(buf);
@@ -1148,6 +1158,14 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     // This is now the current game.
     theGame = game;
+
+    { // Tell the plugin it is being unloaded.
+        void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
+#ifdef _DEBUG
+        Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
+#endif
+        if(loader) ((pluginfunc_t)loader)();
+    }
 
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);

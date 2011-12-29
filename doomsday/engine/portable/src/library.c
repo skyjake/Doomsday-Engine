@@ -33,15 +33,19 @@
 #include <dlfcn.h>
 #include <string.h>
 
-typedef void* handle_t;
+#define MAX_LIBRARIES   64  /// @todo  Replace with a dynamic list.
 
-static filename_t appDir; /// @todo  Use ddstring_t
-static ddstring_t* lastError;
+typedef void* handle_t;
 
 struct library_s {
     ddstring_t* path;
     handle_t handle;
+    boolean isGamePlugin;
 };
+
+static filename_t appDir; /// @todo  Use ddstring_t
+static ddstring_t* lastError;
+static Library* loadedLibs[MAX_LIBRARIES];
 
 static void getBundlePath(char* path, size_t len)
 {
@@ -71,6 +75,34 @@ static void getBundlePath(char* path, size_t len)
 #endif
 }
 
+static void addToLoaded(Library* lib)
+{
+    int i;
+    for(i = 0; i < MAX_LIBRARIES; ++i)
+    {
+        if(!loadedLibs[i])
+        {
+            loadedLibs[i] = lib;
+            return;
+        }
+    }
+    assert(false);
+}
+
+static void removeFromLoaded(Library* lib)
+{
+    int i;
+    for(i = 0; i < MAX_LIBRARIES; ++i)
+    {
+        if(loadedLibs[i] == lib)
+        {
+            loadedLibs[i] = 0;
+            return;
+        }
+    }
+    assert(false);
+}
+
 void Library_Init(void)
 {
     lastError = Str_NewStd();
@@ -81,7 +113,39 @@ void Library_Shutdown(void)
 {
     Str_Delete(lastError); lastError = 0;
 
-    /// @todo  Unload all remaining libraries.
+    /// @todo  Unload all remaining libraries?
+}
+
+void Library_ReleaseGames(void)
+{
+    int i;
+
+    for(i = 0; i < MAX_LIBRARIES; ++i)
+    {
+        Library* lib = loadedLibs[i];
+        if(!lib) continue;
+        if(lib->isGamePlugin && lib->handle)
+        {
+#ifdef _DEBUG
+            fprintf(stderr, "Library_ReleaseGames: Closing '%s'\n", Str_Text(lib->path));
+#endif
+            dlclose(lib->handle);
+            lib->handle = 0;
+        }
+    }
+}
+
+static void reopenLibraryIfNeeded(Library* lib)
+{
+    assert(lib);
+    if(!lib->handle)
+    {
+#ifdef _DEBUG
+        fprintf(stderr, "reopenLibraryIfNeeded: Opening '%s'\n", Str_Text(lib->path));
+#endif
+        lib->handle = dlopen(Str_Text(lib->path), RTLD_NOW);
+        assert(lib->handle);
+    }
 }
 
 Library* Library_New(const char *fileName)
@@ -130,6 +194,17 @@ Library* Library_New(const char *fileName)
     lib->handle = handle;
     lib->path = Str_NewStd();
     Str_Set(lib->path, bundlePath);
+
+    addToLoaded(lib);
+
+    // Symbols from game plugins conflict with each other, so we have to
+    // keep track of them.
+    /// @todo  Needs a more generic way to detect the type of plugin.
+    if(Library_Symbol(lib, "G_RegisterGames"))
+    {
+        lib->isGamePlugin = true;
+    }
+
     return lib;
 }
 
@@ -141,12 +216,14 @@ void Library_Delete(Library *lib)
         dlclose(lib->handle);
     }
     Str_Delete(lib->path);
+    removeFromLoaded(lib);
     free(lib);
 }
 
 void* Library_Symbol(Library* lib, const char* symbolName)
 {
     assert(lib);
+    reopenLibraryIfNeeded(lib);
     void* ptr = dlsym(lib->handle, symbolName);
     if(!ptr)
     {
