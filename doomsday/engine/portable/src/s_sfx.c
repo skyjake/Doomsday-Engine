@@ -37,6 +37,8 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_render.h"
+
 #include "sys_audio.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1242,22 +1244,22 @@ void Sfx_DebugInfo(void)
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
-    lh = FR_TextHeight("W") - 3;
+    lh = FR_SingleLineHeight("Q");
     if(!sfxAvail)
     {
-        FR_DrawTextXY3("Sfx disabled", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY("Sfx disabled", 0, 0);
         glDisable(GL_TEXTURE_2D);
         return;
     }
 
     if(refMonitor)
-        FR_DrawTextXY3("!", 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY("!", 0, 0);
 
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
     FR_SetColor(1, 1, 1);
-    FR_DrawTextXY3(buf, 10, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY(buf, 10, 0);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
@@ -1276,10 +1278,10 @@ void Sfx_DebugInfo(void)
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
                 ch->startTime, ch->buffer ? ch->buffer->endTime : 0);
-        FR_DrawTextXY3(buf, 5, lh * (1 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY(buf, 5, lh * (1 + i * 2));
 
-        if(!ch->buffer)
-            continue;
+        if(!ch->buffer) continue;
+
         sprintf(buf,
                 "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i "
                 "(C%05i/W%05i)", (ch->buffer->flags & SFXBF_3D) ? '3' : '.',
@@ -1291,7 +1293,7 @@ void Sfx_DebugInfo(void)
                 id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
                 ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
                 ch->buffer->cursor, ch->buffer->written);
-        FR_DrawTextXY3(buf, 5, lh * (2 + i * 2), ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+        FR_DrawTextXY(buf, 5, lh * (2 + i * 2));
     }
 
     glDisable(GL_TEXTURE_2D);

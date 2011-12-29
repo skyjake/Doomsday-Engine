@@ -661,8 +661,7 @@ void S_PauseMusic(boolean paused)
  */
 void S_Drawer(void)
 {
-    if(!showSoundInfo)
-        return;
+    if(!showSoundInfo) return;
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
