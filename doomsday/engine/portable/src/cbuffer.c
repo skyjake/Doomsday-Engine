@@ -416,6 +416,7 @@ static uint bufferGetLines(CBuffer* cb, uint reqCount, int firstIdx,
         {
             cbnode_t* node = bufferGetLine(cb, idx++);
             const cbline_t* line = node->data;
+            if(!line) continue;
             if((blflags & BLF_OMIT_RULER) && (line->flags & CBLF_RULER))
                 continue;
             if((blflags & BLF_OMIT_EMPTYLINE) && !(line->flags & CBLF_RULER) &&
