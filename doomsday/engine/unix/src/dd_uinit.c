@@ -38,7 +38,7 @@
 #include <SDL.h>
 
 #ifdef UNIX
-#  include "sys_dylib.h"
+#  include "library.h"
 #endif
 
 #include "de_base.h"
@@ -55,6 +55,8 @@
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+
+typedef Library* PluginHandle;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -74,11 +76,10 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
-static lt_dlhandle* findFirstUnusedPluginHandle(application_t* app)
+static PluginHandle* findFirstUnusedPluginHandle(application_t* app)
 {
     int i;
     assert(app);
-
     for(i = 0; i < MAX_PLUGS; ++i)
     {
         if(!app->hInstPlug[i])
@@ -89,26 +90,27 @@ static lt_dlhandle* findFirstUnusedPluginHandle(application_t* app)
 
 static int loadPlugin(application_t* app, const char* pluginPath, void* paramaters)
 {
-    lt_dlhandle plugin, *handle;
+    Library* plugin;
+    PluginHandle* handle;
     void (*initializer)(void);
     filename_t name;
     assert(app && pluginPath && pluginPath[0]);
 
-    plugin = lt_dlopenext(pluginPath);
+    plugin = Library_New(pluginPath);
     if(!plugin)
     {
-        Con_Message("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, lt_dlerror());
+        Con_Message("  loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, Library_LastError());
         return 0; // Continue iteration.
     }
 
-    initializer = lt_dlsym(plugin, "DP_Initialize");
+    initializer = Library_Symbol(plugin, "DP_Initialize");
     if(!initializer)
     {
         // Clearly not a Doomsday plugin.
 #if _DEBUG
-        Con_Message("loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
+        Con_Message("  loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
 #endif
-        lt_dlclose(plugin);
+        Library_Delete(plugin);
         return 0; // Continue iteration.
     }
 
@@ -116,15 +118,15 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     if(!handle)
     {
 #if _DEBUG
-        Con_Message("loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
+        Con_Message("  loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
 #endif
-        lt_dlclose(plugin);
+        Library_Delete(plugin);
         return 0; // Continue iteration.
     }
 
     // This seems to be a Doomsday plugin.
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    Con_Printf("  %s\n", name);
+    Con_Message("  %s\n", name);
 
     *handle = plugin;
     initializer();
@@ -137,7 +139,7 @@ typedef struct {
     application_t* app;
 } loadpluginparamaters_t;
 
-static int loadPluginWorker(const char* pluginPath, lt_ptr data)
+static int loadPluginWorker(const char* pluginPath, void* data)
 {
     loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
     filename_t name;
@@ -159,15 +161,14 @@ static int loadPluginWorker(const char* pluginPath, lt_ptr data)
     return 0; // Continue search.
 }
 
-static boolean unloadPlugin(lt_dlhandle* handle)
+static boolean unloadPlugin(PluginHandle* handle)
 {
     int result;
     assert(handle);
+    if(!*handle) return true;
 
-    result = lt_dlclose(*handle);
+    Library_Delete(*handle);
     *handle = 0;
-    if(result != 0)
-        Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", lt_dlerror());
     return result;
 }
 
@@ -178,20 +179,20 @@ static boolean loadAllPlugins(application_t* app)
 {
     assert(app);
 
-    Con_Printf("Initializing plugins...\n");
+    Con_Message("Initializing plugins...\n");
 
     // Try to load all libraries that begin with libj.
     { loadpluginparamaters_t params;
     params.app = app;
     params.loadingGames = true;
-    lt_dlforeachfile(NULL, loadPluginWorker, (lt_ptr) &params);
+    Library_IterateAvailableLibraries(loadPluginWorker, &params);
     }
 
     // Try to load all libraries that begin with libdp.
     { loadpluginparamaters_t params;
     params.app = app;
     params.loadingGames = false;
-    lt_dlforeachfile(NULL, loadPluginWorker, (lt_ptr) &params);
+    Library_IterateAvailableLibraries(loadPluginWorker, &params);
     }
     return true;
 }
@@ -217,10 +218,10 @@ static int initTimingSystem(void)
 static int initPluginSystem(void)
 {
     // Initialize libtool's dynamic library routines.
-    lt_dlinit();
+    Library_Init();
 #ifdef DENG_LIBRARY_DIR
     // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
-    lt_dladdsearchdir(DENG_LIBRARY_DIR);
+    Library_AddSearchDir(DENG_LIBRARY_DIR);
 #endif
     return true;
 }
@@ -423,5 +424,5 @@ void DD_Shutdown(void)
 
     SDL_Quit();
     unloadAllPlugins(&app);
-	lt_dlexit();
+    Library_Shutdown();
 }

@@ -185,6 +185,7 @@ DENG_HEADERS = \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
     portable/include/image.h \
+    portable/include/library.h \
     portable/include/lumpdirectory.h \
     portable/include/lumpfile.h \
     portable/include/lumpinfo.h \
@@ -311,7 +312,6 @@ DENG_HEADERS = \
 unix:!win32 {
     DENG_PLATFORM_HEADERS += \
         $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_dylib.h \
         $$DENG_UNIX_INCLUDE_DIR/sys_path.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
@@ -353,7 +353,6 @@ DENG_UNIX_SOURCES += \
     unix/src/dd_uinit.c \
     unix/src/sys_audiod_loader.c \
     unix/src/sys_console.c \
-    unix/src/sys_dylib.c \
     unix/src/sys_findfile.c \
     unix/src/sys_input.c \
     unix/src/sys_path.c
@@ -433,6 +432,7 @@ SOURCES += \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
     portable/src/image.c \
+    portable/src/library.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
