@@ -870,7 +870,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
  */
 static void dispatchEvents(timespan_t ticLength)
 {
-    boolean callGameResponders = !DD_IsNullGameInfo(DD_GameInfo());
+    const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
 
     while((ddev = DD_GetEvent()))

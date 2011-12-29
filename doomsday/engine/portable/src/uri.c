@@ -126,7 +126,7 @@ static ddstring_t* resolveUri(const Uri* uri)
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
             {
                 /// \note DataPath already has ending '/'.
-                gameinfo_t* info = DD_GameInfo();
+                gameinfo_t* info = DD_CurrentGameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
                 Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
@@ -134,14 +134,14 @@ static ddstring_t* resolveUri(const Uri* uri)
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
             {
                 /// \note DefsPath already has ending '/'.
-                gameinfo_t* info = DD_GameInfo();
+                gameinfo_t* info = DD_CurrentGameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
                 Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
             {
-                gameinfo_t* info = DD_GameInfo();
+                gameinfo_t* info = DD_CurrentGameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
                 Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));

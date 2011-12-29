@@ -246,8 +246,7 @@ void B_BindDefaults(void)
 
 void B_BindGameDefaults(void)
 {
-    if(DD_IsNullGameInfo(DD_GameInfo()))
-        return;
+    if(!DD_GameLoaded()) return;
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 

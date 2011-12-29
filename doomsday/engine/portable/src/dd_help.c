@@ -322,11 +322,11 @@ void DD_ReadGameHelp(void)
 {
     ddstring_t helpFileName;
 
-    if(!helpInited || DD_IsNullGameInfo(DD_GameInfo()))
+    if(!helpInited || !DD_GameLoaded())
         return; // Nothing to do.
 
     Str_Init(&helpFileName);
-    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
+    Str_Appendf(&helpFileName, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_CurrentGameInfo())));
     F_ExpandBasePath(&helpFileName, &helpFileName);
     DH_ReadStrings(Str_Text(&helpFileName));
     Str_Free(&helpFileName);

@@ -111,10 +111,10 @@ void DD_ErrorBox(boolean error, char* format, ...)
  */
 void DD_ComposeMainWindowTitle(char* title)
 {
-    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
+    if(DD_GameLoaded() && gx.GetVariable)
     {
         sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s (%s %s)",
-            (isDedicated? " (Dedicated)" : ""), Str_Text(GameInfo_Title(DD_GameInfo())),
+            (isDedicated? " (Dedicated)" : ""), Str_Text(GameInfo_Title(DD_CurrentGameInfo())),
             (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     }
     else

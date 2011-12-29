@@ -141,7 +141,7 @@ void Sys_Init(void)
 void Sys_Shutdown(void)
 {
     // Time to unload *everything*.
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    if(DD_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
 
     B_Shutdown();

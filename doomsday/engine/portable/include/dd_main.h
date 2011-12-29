@@ -95,18 +95,17 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
 const char* value_Str(int val);
 
-/**
- * @return  Ptr to the currently active GameInfo structure (always succeeds).
- */
-gameinfo_t* DD_GameInfo(void);
+/// @return  @c true iff there is presently a game loaded.
+boolean DD_GameLoaded(void);
 
-/**
- * @return  Current number of GameInfo structures.
- */
+/// @return  Currently active GameInfo record (always succeeds).
+gameinfo_t* DD_CurrentGameInfo(void);
+
+/// @return  Current number of GameInfo records.
 int DD_GameInfoCount(void);
 
 /**
- * @return  GameInfo for index @a idx else @c NULL.
+ * @return  GameInfo associated with unique index @a idx else @c NULL.
  */
 gameinfo_t* DD_GameInfoByIndex(int idx);
 

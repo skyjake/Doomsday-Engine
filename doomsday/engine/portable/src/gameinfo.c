@@ -29,12 +29,15 @@
 #include "gameinfo.h"
 #include "resourcerecord.h"
 
-gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
+gameinfo_t* GameInfo_New(pluginid_t pluginId, const char* identityKey,
     const ddstring_t* dataPath, const ddstring_t* defsPath, const char* mainConfig,
     const char* title, const char* author, const ddstring_t* cmdlineFlag,
     const ddstring_t* cmdlineFlag2)
 {
-    gameinfo_t* info = malloc(sizeof(*info));
+    int i;
+    gameinfo_t* info = (gameinfo_t*)malloc(sizeof(*info));
+
+    if(!info) Con_Error("GameInfo::New: Failed on allocation of %lu bytes for new GameInfo.", (unsigned long) sizeof(*info));
 
     info->_pluginId = pluginId;
 
@@ -85,19 +88,19 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     else
         info->_cmdlineFlag2 = 0;
 
-    { size_t i;
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourcerecordset_t* rset = &info->_requiredResources[i];
         rset->numRecords = 0;
         rset->records = 0;
-    }}
+    }
 
     return info;
 }
 
-void P_DestroyGameInfo(gameinfo_t* info)
+void GameInfo_Delete(gameinfo_t* info)
 {
+    int i;
     assert(info);
 
     Str_Free(&info->_identityKey);
@@ -111,22 +114,21 @@ void P_DestroyGameInfo(gameinfo_t* info)
     if(info->_cmdlineFlag) { Str_Delete(info->_cmdlineFlag);  info->_cmdlineFlag  = 0; }
     if(info->_cmdlineFlag2){ Str_Delete(info->_cmdlineFlag2); info->_cmdlineFlag2 = 0; }
 
-    { int i;
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourcerecordset_t* rset = &info->_requiredResources[i];
+        resourcerecord_t** rec;
 
-        if(!rset || rset->numRecords == 0)
-            continue;
+        if(!rset || rset->numRecords == 0) continue;
 
-        { resourcerecord_t** rec;
         for(rec = rset->records; *rec; rec++)
+        {
             ResourceRecord_Delete(*rec);
         }
         free(rset->records);
         rset->records = 0;
         rset->numRecords = 0;
-    }}
+    }
 
     free(info);
 }
@@ -134,15 +136,30 @@ void P_DestroyGameInfo(gameinfo_t* info)
 resourcerecord_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
     resourcerecord_t* record)
 {
-    assert(info && VALID_RESOURCE_CLASS(rclass) && record);
+    resourcerecordset_t* rset;
+    assert(info && record);
+
+    if(!VALID_RESOURCE_CLASS(rclass))
     {
-    resourcerecordset_t* rset = &info->_requiredResources[rclass];
+#if _DEBUG
+        Con_Message("GameInfo::AddResource: Invalid resource class %i specified, ignoring.\n", (int)rclass);
+#endif
+        return NULL;
+    }
+    if(!record)
+    {
+#if _DEBUG
+        Con_Message("GameInfo::AddResource: Received invalid ResourceRecord %p, ignoring.\n", (void*)record);
+#endif
+        return NULL;
+    }
+
+    rset = &info->_requiredResources[rclass];
     rset->records = realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
     rset->records[rset->numRecords] = record;
     rset->records[rset->numRecords+1] = 0; // Terminate.
     rset->numRecords++;
     return record;
-    }
 }
 
 pluginid_t GameInfo_PluginId(gameinfo_t* info)
@@ -207,8 +224,13 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
 
 resourcerecord_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rclass, size_t* count)
 {
-    assert(info && VALID_RESOURCE_CLASS(rclass));
-    if(count)
-        *count = info->_requiredResources[rclass].numRecords;
+    assert(info);
+    if(!VALID_RESOURCE_CLASS(rclass))
+    {
+        if(count) *count = 0;
+        return NULL;
+    }
+
+    if(count) *count = info->_requiredResources[rclass].numRecords;
     return info->_requiredResources[rclass].records? info->_requiredResources[rclass].records : 0;
 }

@@ -331,20 +331,19 @@ int Def_GetMusicNum(const char* id)
 
 acfnptr_t Def_GetActionPtr(const char* name)
 {
-    if(!name || !name[0])
-        return 0;
+    actionlink_t* linkIt;
 
-    if(DD_IsNullGameInfo(DD_GameInfo()))
-        return 0;
+    if(!name || !name[0]) return 0;
+    if(!DD_GameLoaded()) return 0;
 
     // Action links are provided by the game, who owns the actual action functions.
-    { actionlink_t* link;
-    if((link = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK)))
+    for(linkIt = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK);
+        linkIt && linkIt->name; linkIt++)
     {
-        for(; link->name; link++)
-            if(!stricmp(name, link->name))
-                return link->func;
-    }}
+        actionlink_t* link = linkIt;
+        if(!stricmp(name, link->name))
+            return link->func;
+    }
     return 0;
 }
 
@@ -363,15 +362,14 @@ ded_mapinfo_t* Def_GetMapInfo(const Uri* uri)
 
 ded_sky_t* Def_GetSky(const char* id)
 {
-    int                 i;
-
-    if(!id || !id[0])
-        return NULL;
+    int i;
+    if(!id || !id[0]) return NULL;
 
     for(i = defs.count.skies.num - 1; i >= 0; i--)
+    {
         if(!stricmp(defs.skies[i].id, id))
             return defs.skies + i;
-
+    }
     return NULL;
 }
 
@@ -812,9 +810,11 @@ static int autoDefsReader(const ddstring_t* fileName, pathdirectorynode_type_t t
 static void readAllDefinitions(void)
 {
     uint startTime = Sys_GetRealTime();
+    ddstring_t foundPath, buf;
+    int p;
 
     // Start with engine's own top-level definition file, it is always read first.
-    { ddstring_t foundPath; Str_Init(&foundPath);
+    Str_Init(&foundPath);
     if(0 != F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath))
     {
         VERBOSE2( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(&foundPath))) )
@@ -825,28 +825,32 @@ static void readAllDefinitions(void)
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
     }
     Str_Free(&foundPath);
-    }
 
     // Now any definition files required by the game on load.
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    if(DD_GameLoaded())
     {
-        gameinfo_t* info = DD_GameInfo();
-        resourcerecord_t* const* records;
-        if((records = GameInfo_Resources(info, RC_DEFINITION, 0)))
-            do
+        gameinfo_t* info = DD_CurrentGameInfo();
+        resourcerecord_t* const* records = GameInfo_Resources(info, RC_DEFINITION, 0);
+        resourcerecord_t* const* recordIt;
+
+        if(records)
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            resourcerecord_t* rec = *recordIt;
+            const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
+
+            if(!resolvedPath)
             {
-                resourcerecord_t* rec = *records;
-                const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
-                if(!resolvedPath)
-                {
-                    ddstring_t* names = ResourceRecord_NameStringList(rec);
-                    Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
-                    // Unreachable.
-                    Str_Delete(names);
-                }
-                VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
-                readDefinitionFile(Str_Text(resolvedPath));
-            } while(*(++records));
+                ddstring_t* names = ResourceRecord_NameStringList(rec);
+                Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
+                // Unreachable.
+                Str_Delete(names);
+            }
+
+            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
+
+            readDefinitionFile(Str_Text(resolvedPath));
+        }
     }
 
     // Next up are definition files in the /auto directory.
@@ -854,19 +858,17 @@ static void readAllDefinitions(void)
     {
         ddstring_t pattern;
         Str_Init(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(GameInfo_DefsPath(DD_CurrentGameInfo())));
         F_AllResourcePaths(Str_Text(&pattern), autoDefsReader);
         Str_Free(&pattern);
     }
 
     // Any definition files on the command line?
-    { int p; ddstring_t buf;
     Str_Init(&buf);
     for(p = 0; p < Argc(); ++p)
     {
         const char* arg = Argv(p);
-        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
-            continue;
+        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg)) continue;
 
         while(++p != Argc() && !ArgIsOption(p))
         {
@@ -886,7 +888,6 @@ static void readAllDefinitions(void)
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
     Str_Free(&buf);
-    }
 
     // Read DD_DEFNS definition lumps.
     Def_ReadLumpDefs();

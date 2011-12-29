@@ -1236,7 +1236,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
             {
-                Str_Prepend(path, Str_Text(GameInfo_DataPath(DD_GameInfo())));
+                Str_Prepend(path, Str_Text(GameInfo_DataPath(DD_CurrentGameInfo())));
                 return true;
             }
         }

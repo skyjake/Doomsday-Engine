@@ -58,7 +58,7 @@ static filename_t cfgFile;
 
 static void writeHeaderComment(FILE* file)
 {
-    if(DD_IsNullGameInfo(DD_GameInfo()))
+    if(!DD_GameLoaded())
         fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
     else
         fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
@@ -272,7 +272,7 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
  */
 void Con_SaveDefaults(void)
 {
-    Con_WriteState(cfgFile, (!isDedicated? Str_Text(GameInfo_BindingConfig(DD_GameInfo())) : 0));
+    Con_WriteState(cfgFile, (!isDedicated? Str_Text(GameInfo_BindingConfig(DD_CurrentGameInfo())) : 0));
 }
 
 D_CMD(WriteConsole)

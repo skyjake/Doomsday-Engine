@@ -226,7 +226,7 @@ static void initArgs(setargs_t* args, int type, uint prop)
  */
 void P_InitMapUpdate(void)
 {
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    if(DD_GameLoaded())
     {
         // Request the DMU API version the game is expecting.
         usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);

@@ -1179,7 +1179,7 @@ extern boolean usingFog;
             hadFog = usingFog;
             GL_TotalReset();
 
-            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
+            if(DD_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
             R_UnloadVectorGraphics();
@@ -1204,7 +1204,7 @@ extern boolean usingFog;
             if(hadFog)
                 GL_UseFog(true);
 
-            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
+            if(DD_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_POST);
         }
     }

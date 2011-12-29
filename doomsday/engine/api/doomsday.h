@@ -135,7 +135,7 @@ void DD_GetGameInfo2(gameid_t game, ddgameinfo_t* info);
  * @param info          Info structure to be populated.
  * @return              @c true if successful else @c false (i.e., no game loaded).
  */
-boolean DD_GetGameInfo(ddgameinfo_t* info);
+boolean DD_GameInfo(ddgameinfo_t* info);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);

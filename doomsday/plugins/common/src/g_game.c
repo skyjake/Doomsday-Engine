@@ -3246,7 +3246,7 @@ static ddstring_t* composeScreenshotFileName(void)
     ddstring_t* name;
     int numPos;
 
-    if(!DD_GetGameInfo(&gameInfo))
+    if(!DD_GameInfo(&gameInfo))
     {
         Con_Error("composeScreenshotFileName: Failed retrieving GameInfo.");
         return NULL; // Unreachable.

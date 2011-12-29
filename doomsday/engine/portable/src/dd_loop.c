@@ -207,13 +207,15 @@ void DD_DrawAndBlit(void)
 
     if(drawGame)
     {
-        if(!DD_IsNullGameInfo(DD_GameInfo()))
-        {   // Interpolate the world ready for drawing view(s) of it.
+        if(DD_GameLoaded())
+        {
+            // Interpolate the world ready for drawing view(s) of it.
             R_BeginWorldFrame();
             R_RenderViewPorts();
         }
         else if(titleFinale == 0)
-        {   // No loaded title finale. Lets do it manually.
+        {
+            // Title finale is not playing. Lets do it manually.
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();
@@ -230,7 +232,7 @@ void DD_DrawAndBlit(void)
             UI2_Drawer();
 
             // Draw any full window game graphics.
-            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.DrawWindow)
+            if(DD_GameLoaded() && gx.DrawWindow)
                 gx.DrawWindow(&theWindow->geometry.size);
         }
     }
@@ -354,7 +356,7 @@ void DD_Ticker(timespan_t time)
         FI_Ticker();
 
         // Game logic.
-        if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Ticker)
+        if(DD_GameLoaded() && gx.Ticker)
         {
             gx.Ticker(time);
         }

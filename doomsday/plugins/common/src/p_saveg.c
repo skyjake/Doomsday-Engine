@@ -5032,7 +5032,7 @@ static ddstring_t* composeSaveDir(void)
 
     // Use the default path.
     { ddgameinfo_t gameInfo;
-    if(DD_GetGameInfo(&gameInfo))
+    if(DD_GameInfo(&gameInfo))
     {
 #if __JHEXEN__
         Str_Appendf(dir, "hexndata/%s/", gameInfo.identityKey);

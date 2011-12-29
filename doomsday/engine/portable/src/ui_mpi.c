@@ -481,11 +481,11 @@ void MPIUpdateServerList(void)
             N_MasterGet(i, &info);
 
             // Is this suitable?
-            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_GameInfo()))) || !info.canJoin)
+            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_CurrentGameInfo()))) || !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
                 Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
+                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_CurrentGameInfo())));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }
@@ -620,7 +620,7 @@ void MPIUpdatePublicButton(void)
  */
 void DD_NetSetup(int serverMode)
 {
-    if(DD_IsNullGameInfo(DD_GameInfo()))
+    if(!DD_GameLoaded())
     {
         Con_Message("%s setup can only be activated when a game is loaded.\n", serverMode? "Server" : "Client");
         return;
