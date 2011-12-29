@@ -31,31 +31,31 @@
 
 struct Game_s {
     /// Unique identifier of the plugin which registered this game.
-    pluginid_t _pluginId;
+    pluginid_t pluginId;
 
     /// Unique identifier string (e.g., "doom1-ultimate").
-    ddstring_t _identityKey;
+    ddstring_t identityKey;
 
     /// Formatted default title suitable for printing (e.g., "The Ultimate DOOM").
-    ddstring_t _title;
+    ddstring_t title;
 
     /// Formatted default author suitable for printing (e.g., "id Software").
-    ddstring_t _author;
+    ddstring_t author;
 
     /// The base directory for all data-class resources.
-    ddstring_t _dataPath;
+    ddstring_t dataPath;
 
     /// The base directory for all defs-class resources.
-    ddstring_t _defsPath;
+    ddstring_t defsPath;
 
     /// Name of the main config file (e.g., "jdoom.cfg").
-    ddstring_t _mainConfig;
+    ddstring_t mainConfig;
 
     /// Name of the file used for control bindings, set automatically at creation time.
-    ddstring_t _bindingConfig;
+    ddstring_t bindingConfig;
 
     /// Vector of records for required game resources (e.g., doomu.wad).
-    resourcerecordset_t _requiredResources[RESOURCECLASS_COUNT];
+    resourcerecordset_t requiredResources[RESOURCECLASS_COUNT];
 };
 
 Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
@@ -67,45 +67,45 @@ Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
 
     if(!g) Con_Error("Game::New: Failed on allocation of %lu bytes for new Game.", (unsigned long) sizeof(*g));
 
-    Str_Init(&g->_identityKey);
+    Str_Init(&g->identityKey);
     if(identityKey)
-        Str_Set(&g->_identityKey, identityKey);
+        Str_Set(&g->identityKey, identityKey);
 
-    Str_Init(&g->_dataPath);
+    Str_Init(&g->dataPath);
     if(dataPath && !Str_IsEmpty(dataPath))
-        Str_Set(&g->_dataPath, Str_Text(dataPath));
+        Str_Set(&g->dataPath, Str_Text(dataPath));
 
-    Str_Init(&g->_defsPath);
+    Str_Init(&g->defsPath);
     if(defsPath && !Str_IsEmpty(defsPath))
-        Str_Set(&g->_defsPath, Str_Text(defsPath));
+        Str_Set(&g->defsPath, Str_Text(defsPath));
 
-    Str_Init(&g->_mainConfig);
-    Str_Init(&g->_bindingConfig);
+    Str_Init(&g->mainConfig);
+    Str_Init(&g->bindingConfig);
     if(mainConfig)
     {
-        Str_Set(&g->_mainConfig, mainConfig);
-        Str_Strip(&g->_mainConfig);
-        F_FixSlashes(&g->_mainConfig, &g->_mainConfig);
-        Str_PartAppend(&g->_bindingConfig, Str_Text(&g->_mainConfig), 0, Str_Length(&g->_mainConfig)-4);
-        Str_Append(&g->_bindingConfig, "-bindings.cfg");
+        Str_Set(&g->mainConfig, mainConfig);
+        Str_Strip(&g->mainConfig);
+        F_FixSlashes(&g->mainConfig, &g->mainConfig);
+        Str_PartAppend(&g->bindingConfig, Str_Text(&g->mainConfig), 0, Str_Length(&g->mainConfig)-4);
+        Str_Append(&g->bindingConfig, "-bindings.cfg");
     }
 
-    Str_Init(&g->_title);
+    Str_Init(&g->title);
     if(title)
-        Str_Set(&g->_title, title);
+        Str_Set(&g->title, title);
 
-    Str_Init(&g->_author);
+    Str_Init(&g->author);
     if(author)
-        Str_Set(&g->_author, author);
+        Str_Set(&g->author, author);
 
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourcerecordset_t* rset = &g->_requiredResources[i];
+        resourcerecordset_t* rset = &g->requiredResources[i];
         rset->numRecords = 0;
         rset->records = 0;
     }
 
-    g->_pluginId = 0;
+    g->pluginId = 0;
 
     return g;
 }
@@ -115,17 +115,17 @@ void Game_Delete(Game* g)
     int i;
     assert(g);
 
-    Str_Free(&g->_identityKey);
-    Str_Free(&g->_dataPath);
-    Str_Free(&g->_defsPath);
-    Str_Free(&g->_mainConfig);
-    Str_Free(&g->_bindingConfig);
-    Str_Free(&g->_title);
-    Str_Free(&g->_author);
+    Str_Free(&g->identityKey);
+    Str_Free(&g->dataPath);
+    Str_Free(&g->defsPath);
+    Str_Free(&g->mainConfig);
+    Str_Free(&g->bindingConfig);
+    Str_Free(&g->title);
+    Str_Free(&g->author);
 
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourcerecordset_t* rset = &g->_requiredResources[i];
+        resourcerecordset_t* rset = &g->requiredResources[i];
         resourcerecord_t** rec;
 
         if(!rset || rset->numRecords == 0) continue;
@@ -163,7 +163,7 @@ resourcerecord_t* Game_AddResource(Game* g, resourceclass_t rclass,
         return NULL;
     }
 
-    rset = &g->_requiredResources[rclass];
+    rset = &g->requiredResources[rclass];
     rset->records = realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
     rset->records[rset->numRecords] = record;
     rset->records[rset->numRecords+1] = 0; // Terminate.
@@ -174,55 +174,55 @@ resourcerecord_t* Game_AddResource(Game* g, resourceclass_t rclass,
 pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)
 {
     assert(g);
-    return g->_pluginId = pluginId;
+    return g->pluginId = pluginId;
 }
 
 pluginid_t Game_PluginId(Game* g)
 {
     assert(g);
-    return g->_pluginId;
+    return g->pluginId;
 }
 
 const ddstring_t* Game_IdentityKey(Game* g)
 {
     assert(g);
-    return &g->_identityKey;
+    return &g->identityKey;
 }
 
 const ddstring_t* Game_DataPath(Game* g)
 {
     assert(g);
-    return &g->_dataPath;
+    return &g->dataPath;
 }
 
 const ddstring_t* Game_DefsPath(Game* g)
 {
     assert(g);
-    return &g->_defsPath;
+    return &g->defsPath;
 }
 
 const ddstring_t* Game_MainConfig(Game* g)
 {
     assert(g);
-    return &g->_mainConfig;
+    return &g->mainConfig;
 }
 
 const ddstring_t* Game_BindingConfig(Game* g)
 {
     assert(g);
-    return &g->_bindingConfig;
+    return &g->bindingConfig;
 }
 
 const ddstring_t* Game_Title(Game* g)
 {
     assert(g);
-    return &g->_title;
+    return &g->title;
 }
 
 const ddstring_t* Game_Author(Game* g)
 {
     assert(g);
-    return &g->_author;
+    return &g->author;
 }
 
 resourcerecord_t* const* Game_Resources(Game* g, resourceclass_t rclass, size_t* count)
@@ -234,8 +234,8 @@ resourcerecord_t* const* Game_Resources(Game* g, resourceclass_t rclass, size_t*
         return NULL;
     }
 
-    if(count) *count = g->_requiredResources[rclass].numRecords;
-    return g->_requiredResources[rclass].records? g->_requiredResources[rclass].records : 0;
+    if(count) *count = g->requiredResources[rclass].numRecords;
+    return g->requiredResources[rclass].records? g->requiredResources[rclass].records : 0;
 }
 
 Game* Game_FromDef(const GameDef* def)
