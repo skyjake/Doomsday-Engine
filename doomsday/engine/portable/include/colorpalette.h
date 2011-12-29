@@ -1,4 +1,4 @@
-/**\file resourcerecord.h
+/**\file abstractresource.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html

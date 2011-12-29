@@ -1182,7 +1182,7 @@ extern boolean usingFog;
             if(DD_GameLoaded() && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_PRE);
 
-            R_UnloadVectorGraphics();
+            R_UnloadSvgs();
             GL_ReleaseTextures();
 
             wglMakeCurrent(NULL, NULL);

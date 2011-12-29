@@ -41,7 +41,7 @@
 #include "m_misc.h"
 
 #include "filedirectory.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 #include "resourcenamespace.h"
 
 #define PATH_DELIMIT_CHAR       ';'
@@ -659,7 +659,7 @@ static void createPackagesResourceNamespace(void)
     idx = 0;
     // Add the default paths.
     searchPaths[idx++] = Uri_NewWithPath2("$(App.DataPath)/", RC_NULL);
-    searchPaths[idx++] = Uri_NewWithPath2("$(GameInfo.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_NewWithPath2("$(Game.DataPath)/", RC_NULL);
 
     // Add any paths from the DOOMWADPATH environment variable.
     if(doomWadPaths != 0)
@@ -710,25 +710,25 @@ void F_CreateNamespacesForFileResourcePaths(void)
         const char* defaultPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
         { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0,
-            { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)/", "$(GameInfo.DefsPath)/", "$(App.DefsPath)/" } },
+            { "$(Game.DefsPath)/$(Game.IdentityKey)/", "$(Game.DefsPath)/", "$(App.DefsPath)/" } },
         { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0,
             { "$(App.DataPath)/graphics/" } },
         { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/models/" } },
+            { "$(Game.DataPath)/models/$(Game.IdentityKey)/", "$(Game.DataPath)/models/" } },
         { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/sfx/" } },
+            { "$(Game.DataPath)/sfx/$(Game.IdentityKey)/", "$(Game.DataPath)/sfx/" } },
         { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/music/" } },
+            { "$(Game.DataPath)/music/$(Game.IdentityKey)/", "$(Game.DataPath)/music/" } },
         { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/textures/" } },
+            { "$(Game.DataPath)/textures/$(Game.IdentityKey)/", "$(Game.DataPath)/textures/" } },
         { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/flats/" } },
+            { "$(Game.DataPath)/flats/$(Game.IdentityKey)/", "$(Game.DataPath)/flats/" } },
         { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/patches/" } },
+            { "$(Game.DataPath)/patches/$(Game.IdentityKey)/", "$(Game.DataPath)/patches/" } },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" } },
+            { "$(Game.DataPath)/lightmaps/$(Game.IdentityKey)/", "$(Game.DataPath)/lightmaps/" } },
         { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP,
-            { "$(GameInfo.DataPath)/fonts/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
+            { "$(Game.DataPath)/fonts/$(Game.IdentityKey)/", "$(Game.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
         { NULL }
     };
     Uri* uri = Uri_New();
@@ -763,7 +763,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
 
             // Override paths are added in reverse order.
             Str_Init(&path2);
-            Str_Appendf(&path2, "%s/$(GameInfo.IdentityKey)", path);
+            Str_Appendf(&path2, "%s/$(Game.IdentityKey)", path);
             Uri_SetUri3(uri, Str_Text(&path2), RC_NULL);
             ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
 
@@ -1124,10 +1124,10 @@ uint F_FindResourceStr4(resourceclass_t rclass, const ddstring_t* searchPaths,
     return result;
 }
 
-uint F_FindResourceForRecord(resourcerecord_t* rec, ddstring_t* foundPath)
+uint F_FindResourceForRecord(AbstractResource* rec, ddstring_t* foundPath)
 {
-    return findResource(ResourceRecord_ResourceClass(rec),
-                        (const Uri* const*) ResourceRecord_SearchPaths(rec),
+    return findResource(AbstractResource_ResourceClass(rec),
+                        (const Uri* const*) AbstractResource_SearchPaths(rec),
                         foundPath, RLF_DEFAULT, NULL/*no optional suffix*/);
 }
 
@@ -1236,7 +1236,7 @@ boolean F_MapResourcePath(resourcenamespaceid_t rni, ddstring_t* path)
             if(nameLen <= pathLen && Str_At(path, nameLen) == '/' &&
                !strnicmp(Str_Text(&info->name), Str_Text(path), nameLen))
             {
-                Str_Prepend(path, Str_Text(GameInfo_DataPath(DD_CurrentGameInfo())));
+                Str_Prepend(path, Str_Text(Game_DataPath(theGame)));
                 return true;
             }
         }

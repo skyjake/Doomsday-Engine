@@ -69,20 +69,33 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
+    const GameDef hereticExtDef = {
+        "heretic-ext", DATAPATH, DEFSPATH, MAINCONFIG,
+        "Heretic: Shadow of the Serpent Riders", "Raven Software"
+    };
+    const GameDef hereticDef = {
+        "heretic", DATAPATH, DEFSPATH, MAINCONFIG,
+        "Heretic Registered", "Raven Software"
+    };
+    const GameDef hereticShareDef = {
+        "heretic-share", DATAPATH, DEFSPATH, MAINCONFIG,
+        "Heretic Shareware", "Raven Software"
+    };
+
     /* Heretic (Extended) */
-    gameIds[heretic_extended] = DD_AddGame("heretic-ext", DATAPATH, DEFSPATH, MAINCONFIG, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
+    gameIds[heretic_extended] = DD_DefineGame(&hereticExtDef);
     DD_AddGameResource(GID(heretic_extended), RC_PACKAGE, RF_STARTUP, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(GID(heretic_extended), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(heretic_extended), RC_DEFINITION, 0, "heretic-ext.ded", 0);
 
     /* Heretic */
-    gameIds[heretic] = DD_AddGame("heretic", DATAPATH, DEFSPATH, MAINCONFIG, "Heretic Registered", "Raven Software", "heretic", 0);
+    gameIds[heretic] = DD_DefineGame(&hereticDef);
     DD_AddGameResource(GID(heretic), RC_PACKAGE, RF_STARTUP, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(GID(heretic), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(heretic), RC_DEFINITION, 0, "heretic.ded", 0);
 
     /* Heretic (Shareware) */
-    gameIds[heretic_shareware] = DD_AddGame("heretic-share", DATAPATH, DEFSPATH, MAINCONFIG, "Heretic Shareware", "Raven Software", "sheretic", 0);
+    gameIds[heretic_shareware] = DD_DefineGame(&hereticShareDef);
     DD_AddGameResource(GID(heretic_shareware), RC_PACKAGE, RF_STARTUP, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(GID(heretic_shareware), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(heretic_shareware), RC_DEFINITION, 0, "heretic-share.ded", 0);

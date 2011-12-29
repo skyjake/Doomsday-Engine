@@ -887,19 +887,25 @@ static void rendXGLinedefs(uiwidget_t* obj)
 }
 #endif
 
-static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float angle,
-    float scale, const float rgb[3], float alpha, blendmode_t blendmode)
+static void drawVectorGraphic(svgid_t vgId, float x, float y, float angle,
+    float scale, const float color[3], float alpha, blendmode_t blendmode)
 {
+    Point2Rawf origin;
+
+    if(!color) return;
+
+    origin.x = x;
+    origin.y = y;
     alpha = MINMAX_OF(0.f, alpha, 1.f);
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PushMatrix();
-    DGL_Translatef(x, y, 1);
+    DGL_Translatef(origin.x, origin.y, 1);
 
-    DGL_Color4f(rgb[0], rgb[1], rgb[2], alpha);
+    DGL_Color4f(color[CR], color[CG], color[CB], alpha);
     DGL_BlendMode(blendmode);
 
-    GL_DrawVectorGraphic3(vgId, x, y, scale, angle);
+    GL_DrawSvg3(vgId, &origin, scale, angle);
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();
@@ -915,7 +921,7 @@ static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
 {
     player_t* player = players + consoleNum;
     mobj_t* mo = player->plr->mo;
-    vectorgraphicid_t svgId;
+    svgid_t svgId;
     float origin[3], angle, radius, color[3], alpha;
 
     if(!player->plr->inGame || !mo) return;
@@ -986,7 +992,7 @@ static int getKeyColorForMobjType(int type)
 
 typedef struct {
     int flags; // AMF_* flags.
-    vectorgraphicid_t vgId;
+    svgid_t vgId;
     float rgb[3], alpha;
 } renderthing_params_t;
 
@@ -997,7 +1003,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
     // Only sector linked mobjs should be visible in the automap.
     if(!(mo->flags & MF_NOSECTOR))
     {
-        vectorgraphicid_t vgId = p->vgId;
+        svgid_t vgId = p->vgId;
         boolean isVisible = false;
         float* color = p->rgb;
         float keyColorRGB[3];

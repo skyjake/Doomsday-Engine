@@ -263,7 +263,7 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textAString = CVar_ComposePath((cvar_t*)wA->data);
         textA = Str_Text(textAString);
         break;
-    case WT_GAMEINFO: textA = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wA->data)); break;
+    case WT_GAME: textA = Str_Text(Game_IdentityKey((Game*)wA->data)); break;
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word A.", wA->type);
         exit(1); // Unreachable
@@ -277,7 +277,7 @@ static int C_DECL compareKnownWordByName(const void* a, const void* b)
         textBString = CVar_ComposePath((cvar_t*)wB->data);
         textB = Str_Text(textBString);
         break;
-    case WT_GAMEINFO: textB = Str_Text(GameInfo_IdentityKey((gameinfo_t*)wB->data)); break;
+    case WT_GAME: textB = Str_Text(Game_IdentityKey((Game*)wB->data)); break;
     default:
         Con_Error("compareKnownWordByName: Invalid type %i for word B.", wB->type);
         exit(1); // Unreachable
@@ -372,11 +372,12 @@ static int addVariableToKnownWords(const PathDirectoryNode* node, void* paramate
 static void updateKnownWords(void)
 {
     countvariableparams_t countCVarParams;
-    uint c, knownGames;
+    int i, gameCount;
+    ccmd_t* ccmd;
     size_t len;
+    uint c;
 
-    if(!knownWordsNeedUpdate)
-        return;
+    if(!knownWordsNeedUpdate) return;
 
     // Count the number of visible console variables.
     countCVarParams.count = 0;
@@ -385,17 +386,8 @@ static void updateKnownWords(void)
     countCVarParams.ignoreHidden = true;
     PathDirectory_Iterate2_Const(cvarDirectory, PCF_NO_BRANCH, NULL, PATHDIRECTORY_NOHASH, countVariable, &countCVarParams);
 
-    knownGames = 0;
-    { int i, gameInfoCount = DD_GameInfoCount();
-    for(i = 0; i < gameInfoCount; ++i)
-    {
-        gameinfo_t* info = DD_GameInfoByIndex(i+1);
-        if(!DD_IsNullGameInfo(info))
-            ++knownGames;
-    }}
-
     // Build the known words table.
-    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + knownGames;
+    numKnownWords = numUniqueNamedCCmds + countCVarParams.count + numCAliases + DD_GameCount();
     len = sizeof(knownword_t) * numKnownWords;
     knownWords = realloc(knownWords, len);
     memset(knownWords, 0, len);
@@ -403,15 +395,15 @@ static void updateKnownWords(void)
     c = 0;
     // Add commands?
     /// \note ccmd list is NOT yet sorted.
-    { ccmd_t* ccmd;
     for(ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
     {
-        if(ccmd->prevOverload)
-            continue; // Skip overloaded variants.
+        // Skip overloaded variants.
+        if(ccmd->prevOverload) continue;
+
         knownWords[c].type = WT_CCMD;
         knownWords[c].data = ccmd;
         ++c;
-    }}
+    }
 
     // Add variables?
     if(0 != countCVarParams.count)
@@ -434,19 +426,15 @@ static void updateKnownWords(void)
         }
     }
 
-    // Add gameinfos?
-    if(0 != knownGames)
+    // Add games?
+    gameCount = DD_GameCount();
+    for(i = 0; i < gameCount; ++i)
     {
-        int i, gameInfoCount = DD_GameInfoCount();
-        for(i = 0; i < gameInfoCount; ++i)
-        {
-            gameinfo_t* info = DD_GameInfoByIndex(i+1);
-            if(DD_IsNullGameInfo(info))
-                continue;
-            knownWords[c].type = WT_GAMEINFO;
-            knownWords[c].data = info;
-            ++c;
-        }
+        Game* game = DD_GameByIndex(i+1);
+
+        knownWords[c].type = WT_GAME;
+        knownWords[c].data = game;
+        ++c;
     }
 
     // Sort it so we get nice alphabetical word completions.
@@ -1367,7 +1355,7 @@ int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
                 textString = CVar_ComposePath((cvar_t*)word->data);
                 text = Str_Text(textString);
                 break;
-            case WT_GAMEINFO: text = Str_Text(GameInfo_IdentityKey((gameinfo_t*)word->data)); break;
+            case WT_GAME: text = Str_Text(Game_IdentityKey((Game*)word->data)); break;
             default:
                 Con_Error("Con_IterateKnownWords: Invalid type %i for word.", word->type);
                 exit(1); // Unreachable
@@ -1563,10 +1551,10 @@ D_CMD(HelpWhat)
 
     if(found == 0) // Perhaps a game?
     {
-        gameinfo_t* info = DD_GameInfoByIdentityKey(argv[1]);
-        if(NULL != info)
+        Game* game = DD_GameByIdentityKey(argv[1]);
+        if(game)
         {
-            DD_PrintGameInfo(info, PGIF_EVERYTHING);
+            DD_PrintGame(game, PGF_EVERYTHING);
             found = true;
         }
     }
@@ -1611,9 +1599,9 @@ static int printKnownWordWorker(const knownword_t* word, void* paramaters)
         Con_FPrintf(CPF_LIGHT|CPF_YELLOW, "  %s == %s\n", cal->name, cal->command);
         break;
       }
-    case WT_GAMEINFO: {
-        gameinfo_t* info = (gameinfo_t*) word->data;
-        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(GameInfo_IdentityKey(info)));
+    case WT_GAME: {
+        Game* game = (Game*) word->data;
+        Con_FPrintf(CPF_LIGHT|CPF_BLUE, "  %s\n", Str_Text(Game_IdentityKey(game)));
         break;
       }
     default:

@@ -173,7 +173,7 @@ DENG_HEADERS = \
     portable/include/fonts.h \
     portable/include/fs_main.h \
     portable/include/fs_util.h \
-    portable/include/gameinfo.h \
+    portable/include/game.h \
     portable/include/gl_defer.h \
     portable/include/gl_draw.h \
     portable/include/gl_hq2x.h \
@@ -252,7 +252,7 @@ DENG_HEADERS = \
     portable/include/rend_sky.h \
     portable/include/rend_sprite.h \
     portable/include/resourcenamespace.h \
-    portable/include/resourcerecord.h \
+    portable/include/abstractresource.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
@@ -271,6 +271,7 @@ DENG_HEADERS = \
     portable/include/sv_missile.h \
     portable/include/sv_pool.h \
     portable/include/sv_sound.h \
+    portable/include/svg.h \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
     portable/include/sys_audiod_loader.h \
@@ -421,7 +422,7 @@ SOURCES += \
     portable/src/fonts.c \
     portable/src/fs_main.c \
     portable/src/fs_util.c \
-    portable/src/gameinfo.c \
+    portable/src/game.c \
     portable/src/gl_defer.c \
     portable/src/gl_draw.c \
     portable/src/gl_drawvectorgraphic.c \
@@ -513,7 +514,7 @@ SOURCES += \
     portable/src/rend_sky.c \
     portable/src/rend_sprite.c \
     portable/src/resourcenamespace.c \
-    portable/src/resourcerecord.c \
+    portable/src/abstractresource.c \
     portable/src/smoother.c \
     portable/src/stringpool.c \
     portable/src/s_cache.c \
@@ -530,6 +531,7 @@ SOURCES += \
     portable/src/sv_missile.c \
     portable/src/sv_pool.c \
     portable/src/sv_sound.c \
+    portable/src/svg.c \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \
     portable/src/sys_master.c \

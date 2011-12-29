@@ -69,21 +69,32 @@ int G_RegisterGames(int hookType, int param, void* data)
 #define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
+    const GameDef deathkingsDef = {
+        "hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG,
+        "Hexen: Deathkings of the Dark Citadel", "Raven Software"
+    };
+    const GameDef hexenDef = {
+        "hexen", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen", "Raven Software"
+    };
+    const GameDef hexenDemoDef = {
+        "hexen-demo", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software"
+    };
+
     /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen: Deathkings of the Dark Citadel", "Raven Software", "deathkings", "dk");
+    gameIds[hexen_deathkings] = DD_DefineGame(&deathkingsDef);
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexdd.wad", "MAP59;MAP60");
     DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(hexen_deathkings), RC_DEFINITION, 0, "hexen-dk.ded", 0);
 
     /* Hexen */
-    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen", "Raven Software", "hexen", 0);
+    gameIds[hexen] = DD_DefineGame(&hexenDef);
     DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(hexen), RC_DEFINITION, 0, "hexen.ded", 0);
 
     /* Hexen (Demo) */
-    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
+    gameIds[hexen_demo] = DD_DefineGame(&hexenDemoDef);
     DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);

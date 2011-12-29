@@ -157,7 +157,7 @@ void Sys_Shutdown(void)
     I_ShutdownInputDevices();
     I_Shutdown();
 
-    DD_DestroyGameInfo();
+    DD_DestroyGames();
 }
 
 static int showCriticalMessage(const char* msg)

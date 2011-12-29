@@ -493,7 +493,7 @@ void AM_SetGlow(automapcfg_t* mcfg, automapcfg_objectname_t name, glowtype_t typ
     }
 }
 
-vectorgraphicid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name)
+svgid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name)
 {
     assert(NULL != mcfg);
     if(name < 0 || name >= AMO_NUMOBJECTS)
@@ -510,7 +510,7 @@ vectorgraphicid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_
 }
 
 void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name,
-    vectorgraphicid_t svg)
+    svgid_t svg)
 {
     assert(NULL != mcfg);
 

@@ -1,4 +1,4 @@
-/**\file dd_vectorgraphic.h
+/**\file svg.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,25 +22,37 @@
  * Boston, MA  02110-1301  USA
  */
 
+#ifndef LIBDENG_SVG_H
+#define LIBDENG_SVG_H
+
+#include "dd_vectorgraphic.h"
+
 /**
- * SVG (Scalable Vector Graphic).
+ * Svg. Scaleable Vector Graphic.
+ */
+struct Svg_s; // The svg instance (opaque).
+typedef struct Svg_s Svg;
+
+void Svg_Delete(Svg* svg);
+
+void Svg_Draw(Svg* svg);
+
+boolean Svg_Prepare(Svg* svg);
+
+void Svg_Unload(Svg* svg);
+
+/// @return  Unique identifier associated with this.
+svgid_t Svg_UniqueId(Svg* svg);
+
+/**
+ * Static non-members:
  */
 
-#ifndef LIBDENG_API_VECTORGRAPHIC_H
-#define LIBDENG_API_VECTORGRAPHIC_H
+/**
+ * Try to construct a new Svg instance from specified definition.
+ *
+ * @return  Newly created Svg instance if definition was valid else @a NULL
+ */
+Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t numLines);
 
-typedef uint32_t svgid_t;
-
-#include "point.h"
-
-typedef struct SvgLine_s {
-    Point2Rawf from, to;
-} SvgLine;
-
-void R_NewSvg(svgid_t svgId, const SvgLine* lines, size_t numLines);
-
-void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
-void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);
-void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
-
-#endif /* LIBDENG_API_VECTORGRAPHIC_H */
+#endif /* LIBDENG_SVG_H */

@@ -150,7 +150,7 @@ const char* P_GenerateUniqueMapId(const char* mapID)
     Str_Init(&fileName);
     F_FileName(&fileName, F_LumpSourceFile(lumpNum));
     dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
-        (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_CurrentGameInfo())));
+        (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(Game_IdentityKey(theGame)));
     strlwr(uid);
 
     Str_Free(&fileName);

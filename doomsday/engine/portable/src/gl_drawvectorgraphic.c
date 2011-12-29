@@ -1,4 +1,4 @@
-/**\file
+/**\file gl_drawvectorgraphic.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -21,14 +21,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * SVG (Scalable Vector Graphics) management.
- *
- * \todo replace me with a fuller implementation with file IO et al.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <string.h>
 #include <assert.h>
 
@@ -36,222 +28,209 @@
 #include "de_console.h"
 #include "de_refresh.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
 
-// TYPES -------------------------------------------------------------------
-
-typedef struct vectorgraphic_s {
-    vectorgraphicid_t id;
-    DGLuint dlist;
-    size_t count;
-    struct vgline_s* lines;
-} vectorgraphic_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean inited = false;
-static uint numVectorGraphics;
-static vectorgraphic_t* vectorGraphics;
+static uint svgCount;
+static Svg** svgs;
 
-// CODE --------------------------------------------------------------------
-
-static vectorgraphic_t* vectorGraphicForId(vectorgraphicid_t id)
+static Svg* svgForId(svgid_t id)
 {
-    if(numVectorGraphics && id != 0)
+    if(id != 0)
     {
         uint i;
-        for(i = 0; i < numVectorGraphics; ++i)
+        for(i = 0; i < svgCount; ++i)
         {
-            vectorgraphic_t* vg = &vectorGraphics[i];
-            if(vg->id == id)
-                return vg;
+            Svg* svg = svgs[i];
+            if(Svg_UniqueId(svg) == id)
+                return svg;
         }
     }
-    return 0;
-}
-
-static void draw(const vectorgraphic_t* vg)
-{
-    uint i;
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < vg->count; ++i)
-    {
-        vgline_t* l = &vg->lines[i];
-        DGL_TexCoord2f(0, l->a.pos[VX], l->a.pos[VY]);
-        DGL_Vertex2f(l->a.pos[VX], l->a.pos[VY]);
-        DGL_TexCoord2f(0, l->b.pos[VX], l->b.pos[VY]);
-        DGL_Vertex2f(l->b.pos[VX], l->b.pos[VY]);
-    }
-    DGL_End();
-}
-
-static DGLuint constructDisplayList(DGLuint name, const vectorgraphic_t* vg)
-{
-    if(DGL_NewList(name, DGL_COMPILE))
-    {
-        draw(vg);
-        return DGL_EndList();
-    }
-    return 0;
-}
-
-static vectorgraphic_t* prepareVectorGraphic(vectorgraphicid_t vgId)
-{
-    vectorgraphic_t* vg;
-    if((vg = vectorGraphicForId(vgId)))
-    {
-        if(!vg->dlist)
-        {
-            vg->dlist = constructDisplayList(0, vg);
-        }
-        return vg;
-    }
-    Con_Message("prepareVectorGraphic: Warning, no vectorgraphic is known by id %i.", (int) vgId);
     return NULL;
 }
 
-static void unloadVectorGraphic(vectorgraphic_t* vg)
+/// @return  1-based index for @a svg if found, else zero.
+static uint indexForSvg(Svg* svg)
 {
-    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
-    {
-        if(vg->dlist)
-            DGL_DeleteLists(vg->dlist, 1);
-    }
-    vg->dlist = 0;
-}
-
-static void deleteVectorGraphic(vectorgraphic_t* vg)
-{
-    unloadVectorGraphic(vg);
-    free(vg->lines);
-    vg->lines = 0;
-}
-
-static void deleteVectorGraphics(void)
-{
-    if(numVectorGraphics != 0)
+    if(svg)
     {
         uint i;
-        for(i = 0; i < numVectorGraphics; ++i)
-            deleteVectorGraphic(&vectorGraphics[i]);
-        free(vectorGraphics);
-        vectorGraphics = 0;
-        numVectorGraphics = 0;
+        for(i = 0; i < svgCount; ++i)
+        {
+            if(svgs[i] == svg) return i+1;
+        }
     }
-}
-
-void R_InitVectorGraphics(void)
-{
-    if(inited)
-        return;
-    numVectorGraphics = 0;
-    vectorGraphics = 0;
-    inited = true;
-}
-
-void R_ShutdownVectorGraphics(void)
-{
-    if(!inited)
-        return;
-    deleteVectorGraphics();
-    inited = false;
+    return 0;
 }
 
 /**
- * Unload any resources needed for vector graphics.
- * Called during shutdown and before a renderer restart.
+ * Link @a svg into the global collection.
+ * \assume Not presently linked.
  */
-void R_UnloadVectorGraphics(void)
+static Svg* insertSvg(Svg* svg)
 {
-    uint i;
-    if(!inited)
-        return;
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
-        return; // Nothing to do.
-    for(i = 0; i < numVectorGraphics; ++i)
-        unloadVectorGraphic(&vectorGraphics[i]);
+    if(svg)
+    {
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * ++svgCount);
+        if(!svgs) Con_Error("insertSvg: Failed on allocation of %lu bytes enlarging SVG collection.", (unsigned long) (sizeof(*svgs) * svgCount));
+
+        svgs[svgCount-1] = svg;
+    }
+    return svg;
 }
 
-void GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle)
+/**
+ * Unlink @a svg if present in the global collection.
+ */
+static Svg* removeSvg(Svg* svg)
 {
-    vectorgraphic_t* vg;
-    
-    if((vg = prepareVectorGraphic(vgId)))
+    uint index = indexForSvg(svg);
+    if(index)
     {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(x, y, 0);
-        if(angle != 0 || scale != 1)
-        {
-            DGL_PushMatrix();
-            DGL_Rotatef(angle, 0, 0, 1);
-            DGL_Scalef(scale, scale, 1);
-        }
+        index--; // 1-based index.
 
-        if(vg->dlist)
-        {   // We have a display list available; call it and get out of here.
-            DGL_CallList(vg->dlist);
-        }
-        else
-        {   // No display list available. Lets draw it manually.
-            draw(vg);
-        }
+        // Unlink from the collection.
+        if(index != svgCount-1)
+            memmove(svgs + index, svgs + index + 1, sizeof(*svgs) * (svgCount - index - 1));
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * --svgCount);
+    }
+    return svg;
+}
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        if(angle != 0 || scale != 1)
-            DGL_PopMatrix();
-        DGL_Translatef(-x, -y, 0);
+static void deleteSvg(Svg* svg)
+{
+    if(!svg) return;
+
+    removeSvg(svg);
+    Svg_Delete(svg);
+}
+
+static void clearSvgs(void)
+{
+    while(svgCount)
+    {
+        deleteSvg(*svgs);
     }
 }
 
-void GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale)
+void R_InitSvgs(void)
 {
-    GL_DrawVectorGraphic3(vgId, x, y, scale, DEFAULT_ANGLE);
-}
-
-void GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y)
-{
-    GL_DrawVectorGraphic2(vgId, x, y, DEFAULT_SCALE);
-}
-
-void R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines)
-{
-    vectorgraphic_t* vg;
-    size_t i;
-
-    // Valid id?
-    if(vgId == 0)
-        Con_Error("R_NewVectorGraphic: Invalid id, zero is reserved.");
-
-    // Already a vector graphic with this id?
-    if((vg = vectorGraphicForId(vgId)))
-    {   // We are replacing an existing vector graphic.
-        deleteVectorGraphic(vg);
+    if(inited)
+    {
+        // Allow re-init.
+        clearSvgs();
     }
     else
-    {   // A new vector graphic.
-        vectorGraphics = realloc(vectorGraphics, sizeof(*vectorGraphics) * ++numVectorGraphics);
-        vg = &vectorGraphics[numVectorGraphics-1];
-        vg->id = vgId;
-        vg->dlist = 0;
+    {
+        // First init.
+        svgs = NULL;
+        svgCount = 0;
+    }
+    inited = true;
+}
+
+void R_ShutdownSvgs(void)
+{
+    if(!inited) return;
+
+    clearSvgs();
+    inited = false;
+}
+
+void R_UnloadSvgs(void)
+{
+    uint i;
+    if(!inited) return;
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return; // Nothing to do.
+
+    for(i = 0; i < svgCount; ++i)
+    {
+        Svg_Unload(svgs[i]);
+    }
+}
+
+void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
+{
+    Svg* svg = svgForId(id);
+
+    if(!origin)
+    {
+#if _DEBUG
+        if(id != 0)
+            Con_Message("GL_DrawSvg: Invalid origin argument (=NULL), aborting draw.\n");
+#endif
+        return;
+    }
+    if(!svg)
+    {
+#if _DEBUG
+        if(id != 0)
+            Con_Message("GL_DrawSvg: Unknown SVG id #%u, aborting draw.\n", (unsigned int)id);
+#endif
+        return;
+    }
+    if(!Svg_Prepare(svg))
+    {
+#if _DEBUG
+        Con_Message("GL_DrawSvg: Failed preparing SVG #%u, aborting draw.\n", (unsigned int)id);
+#endif
+        return;
+    }
+    
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(origin->x, origin->y, 0);
+
+    if(angle != 0 || scale != 1)
+    {
+        DGL_PushMatrix();
+        DGL_Rotatef(angle, 0, 0, 1);
+        DGL_Scalef(scale, scale, 1);
     }
 
-    vg->count = numLines;
-    vg->lines = malloc(numLines * sizeof(vgline_t));
-    for(i = 0; i < numLines; ++i)
+    Svg_Draw(svg);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    if(angle != 0 || scale != 1)
+        DGL_PopMatrix();
+    DGL_Translatef(-origin->x, -origin->y, 0);
+}
+
+void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
+{
+    GL_DrawSvg3(id, origin, scale, DEFAULT_ANGLE);
+}
+
+void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
+{
+    GL_DrawSvg2(id, origin, DEFAULT_SCALE);
+}
+
+void R_NewSvg(svgid_t id, const SvgLine* lines, size_t numLines)
+{
+    Svg* svg, *oldSvg;
+
+    // Valid id?
+    if(id == 0) Con_Error("R_NewSvg: Invalid id, zero is reserved.");
+
+    // A new vector graphic.
+    svg = Svg_FromDef(id, lines, numLines);
+    if(!svg)
     {
-        memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
+#if _DEBUG
+        Con_Message("Warning:R_NewSvg: Failed constructing new SVG #%u, aborting.", (unsigned int)id);
+#endif
+        return;
     }
+
+    // Already a vector graphic with this id?
+    oldSvg = svgForId(id);
+    if(oldSvg)
+    {
+        // We are replacing an existing vector graphic.
+        deleteSvg(oldSvg);
+    }
+
+    // Add the new SVG to the global collection.
+    insertSvg(svg);
 }

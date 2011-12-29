@@ -89,9 +89,10 @@ void X_Drawer(int player)
 {
 #define XHAIR_LINE_WIDTH    1.f
 
-    int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS), centerX, centerY;
+    int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS);
     float alpha, scale, oldLineWidth;
     player_t* plr = &players[player];
+    Point2Rawf origin;
     RectRaw win;
 
     // Is there a crosshair to draw?
@@ -113,8 +114,8 @@ void X_Drawer(int player)
         return;
 
     R_ViewWindowGeometry(player, &win);
-    centerX = win.origin.x + (win.size.width / 2);
-    centerY = win.origin.y + (win.size.height / 2);
+    origin.x = win.origin.x + (win.size.width  / 2);
+    origin.y = win.origin.y + (win.size.height / 2);
     scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
@@ -148,7 +149,7 @@ void X_Drawer(int player)
         DGL_Color4fv(color);
     }
 
-    GL_DrawVectorGraphic2(VG_XHAIR1 + (xhair-1), centerX, centerY, scale);
+    GL_DrawSvg2(VG_XHAIR1 + (xhair-1), &origin, scale);
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

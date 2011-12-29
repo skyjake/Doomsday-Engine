@@ -32,7 +32,7 @@
 #include "dd_types.h"
 
 #include "resourcenamespace.h"
-#include "resourcerecord.h"
+#include "abstractresource.h"
 #include "filedirectory.h"
 
 struct uri_s;
@@ -167,7 +167,7 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
  * @return  The index+1 of the path in the list of search paths for this resource
  *     if found, else @c 0
  */
-uint F_FindResourceForRecord(struct resourcerecord_s* rec, ddstring_t* foundPath);
+uint F_FindResourceForRecord(struct AbstractResource_s* rec, ddstring_t* foundPath);
 
 /**
  * Attempt to locate a named resource.
@@ -236,9 +236,9 @@ resourcetype_t F_GuessResourceTypeByName(const char* name);
  * Apply mapping for this namespace to the specified path (if enabled).
  *
  * This mapping will translate directives and symbolic identifiers into their default paths,
- * which themselves are determined using the current GameInfo.
+ * which themselves are determined using the current Game.
  *
- *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
+ *  e.g.: "Models:my/cool/model.dmd" -> "}data/<Game::IdentityKey>/models/my/cool/model.dmd"
  *
  * @param rni  Unique identifier of the namespace whose mappings to apply.
  * @param path  The path to be mapped (applied in-place).

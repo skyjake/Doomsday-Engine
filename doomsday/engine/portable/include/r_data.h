@@ -471,9 +471,15 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, boolean hasExternal, bool
 
 boolean R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
-void R_InitVectorGraphics(void);
-void R_UnloadVectorGraphics(void);
-void R_ShutdownVectorGraphics(void);
+void R_InitSvgs(void);
+
+/**
+ * Unload any resources needed for vector graphics.
+ * Called during shutdown and before a renderer restart.
+ */
+void R_UnloadSvgs(void);
+
+void R_ShutdownSvgs(void);
 
 int R_TextureUniqueId2(const Uri* uri, boolean quiet);
 int R_TextureUniqueId(const Uri* uri); /* quiet=false */

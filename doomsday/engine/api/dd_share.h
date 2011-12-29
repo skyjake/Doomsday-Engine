@@ -320,14 +320,43 @@ enum {
 //------------------------------------------------------------------------
 
 /**
+ * GameDef. Record (POD) structure for use with DD_DefineGame, to define
+ * the numerous high-level properties of a logical game component.
+ */
+typedef struct gamedef_s {
+   /**
+    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+    * - Used during resource location for mode-specific assets.
+    * - Sent out in netgames (a client can't connect unless mode strings match).
+    */
+    const char* identityKey;
+
+    /// The base directory for all data-class resources.
+    const char* dataPath;
+
+    /// The base directory for all defs-class resources.
+    const char* defsPath;
+
+    /// The name of the main config file. Can be @c NULL
+    const char* mainConfig;
+
+    /// Default title. May be overridden later.
+    const char* defaultTitle;
+
+    /// Default author. May be overridden later.
+    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
+    const char* defaultAuthor;
+} GameDef;
+
+/**
  * Extended info about a registered game component.
  * Used with DD_GameInfo.
  */
-typedef struct {
+typedef struct gameinfo_s {
     const char* title;
     const char* author;
     const char* identityKey;
-} ddgameinfo_t;
+} GameInfo;
 
 /**
  * @defgroup resourceFlags ResourceFlags

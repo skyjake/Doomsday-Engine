@@ -30,7 +30,7 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "gameinfo.h"
+#include "game.h"
 #include "sys_direc.h"
 #include "textures.h"
 
@@ -53,6 +53,9 @@ extern finaleid_t titleFinale;
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif
+
+/// Currently active game.
+extern Game* theGame;
 
 int DD_EarlyInit(void);
 int DD_Main(void);
@@ -98,51 +101,48 @@ const char* value_Str(int val);
 /// @return  @c true iff there is presently a game loaded.
 boolean DD_GameLoaded(void);
 
-/// @return  Currently active GameInfo record (always succeeds).
-gameinfo_t* DD_CurrentGameInfo(void);
-
-/// @return  Current number of GameInfo records.
-int DD_GameInfoCount(void);
+/// @return  Current number of Game records.
+int DD_GameCount(void);
 
 /**
- * @return  GameInfo associated with unique index @a idx else @c NULL.
+ * @return  Game associated with unique index @a idx else @c NULL.
  */
-gameinfo_t* DD_GameInfoByIndex(int idx);
+Game* DD_GameByIndex(int idx);
 
 /**
- * @return  GameInfo associated with @a identityKey else @c NULL.
+ * @return  Game associated with @a identityKey else @c NULL.
  */
-gameinfo_t* DD_GameInfoByIdentityKey(const char* identityKey);
+Game* DD_GameByIdentityKey(const char* identityKey);
 
 /**
  * Is this the special "null-game" object (not a real playable game).
- * \todo Implement a proper null-gameinfo object for this.
+ * \todo Implement a proper null-game object for this.
  */
-boolean DD_IsNullGameInfo(gameinfo_t* info);
+boolean DD_IsNullGame(const Game* game);
 
 /**
- * @defgroup printGameInfoFlags  Print Game Info Flags.
+ * @defgroup printGameFlags  Print Game Flags.
  * @{
  */
-#define PGIF_BANNER                 0x1
-#define PGIF_STATUS                 0x2
-#define PGIF_LIST_STARTUP_RESOURCES 0x4
-#define PGIF_LIST_OTHER_RESOURCES   0x8
+#define PGF_BANNER                 0x1
+#define PGF_STATUS                 0x2
+#define PGF_LIST_STARTUP_RESOURCES 0x4
+#define PGF_LIST_OTHER_RESOURCES   0x8
 
-#define PGIF_EVERYTHING             (PGIF_BANNER|PGIF_STATUS|PGIF_LIST_STARTUP_RESOURCES|PGIF_LIST_OTHER_RESOURCES)
+#define PGF_EVERYTHING             (PGF_BANNER|PGF_STATUS|PGF_LIST_STARTUP_RESOURCES|PGF_LIST_OTHER_RESOURCES)
 /**@}*/
 
 /**
  * Print extended information about game @a info.
- * @param info  GameInfo record to be printed.
- * @param flags  &see printGameInfoFlags
+ * @param info  Game record to be printed.
+ * @param flags  &see printGameFlags
  */
-void DD_PrintGameInfo(gameinfo_t* info, int flags);
+void DD_PrintGame(Game* game, int flags);
 
 /**
  * Frees the info structures for all registered games.
  */
-void DD_DestroyGameInfo(void);
+void DD_DestroyGames(void);
 
 D_CMD(Load);
 D_CMD(Unload);

@@ -139,7 +139,7 @@ typedef enum {
     WT_CCMD = KNOWNWORDTYPE_FIRST,
     WT_CVAR,
     WT_CALIAS,
-    WT_GAMEINFO,
+    WT_GAME,
     KNOWNWORDTYPE_COUNT
 } knownwordtype_t;
 

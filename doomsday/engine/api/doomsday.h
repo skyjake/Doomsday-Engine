@@ -85,32 +85,21 @@ struct font_s;
 //------------------------------------------------------------------------
 
 /**
- * Registers a new game.
+ * Register a new game.
  *
- * \note Game registration order defines the order of the automatic game identification/selection logic.
+ * \note Game registration order defines the order of the automatic game
+ * identification/selection logic.
  *
- * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
- *                      - Used during resource location for mode-specific assets.
- *                      - Sent out in netgames (a client can't connect unless mode strings match).
- * @param dataPath      The base directory for all data-class resources.
- * @param defsPath      The base directory for all defs-class resources.
- * @param mainConfig    The name of the main game config file. Can be @c NULL.
- * @param defaultTitle  Default game title. May be overridden later.
- * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
- *                      if not specified in a Map Info definition.
- * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
- * @param cmdlineFlag2  Alternative override. Can be @c NULL.
- *
- * @return              Unique identifier/name assigned to the game.
+ * @param definition  GameDef structure defining the new game.
+ * @return  Unique identifier/name assigned to resultant game.
  */
-gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath,
-    const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
-    const char* cmdlineFlag2);
+gameid_t DD_DefineGame(const GameDef* definition);
 
 /**
  * Registers a new resource for the specified game.
  *
- * \note Resource registration order defines the load order of resources (among those of the same type).
+ * \note Resource registration order defines the load order of resources
+ * (among those of the same type).
  *
  * @param game          Unique identifier/name of the game.
  * @param rclass        Class of resource being added.
@@ -122,20 +111,12 @@ gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* d
 void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
 
 /**
- * Retrieve extended info about the specified game.
- *
- * @param game          Unique identifier/name of the game.
- * @param info          Info structure to be populated.
- */
-void DD_GetGameInfo2(gameid_t game, ddgameinfo_t* info);
-
-/**
  * Retrieve extended info about the current game.
  *
  * @param info          Info structure to be populated.
  * @return              @c true if successful else @c false (i.e., no game loaded).
  */
-boolean DD_GameInfo(ddgameinfo_t* info);
+boolean DD_GameInfo(GameInfo* info);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
