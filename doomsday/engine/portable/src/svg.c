@@ -22,68 +22,128 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include <assert.h>
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_refresh.h"
+#include "de_render.h"
+
 #include "svg.h"
 
 struct Svg_s {
     svgid_t id;
     DGLuint dlist;
-    size_t count;
-    struct svgline_s* lines;
+    size_t lineCount;
+    SvgLine* lines;
 };
+
+void Svg_Delete(Svg* svg)
+{
+    assert(svg);
+    Svg_Unload(svg);
+    free(svg->lines);
+    free(svg);
+}
+
+svgid_t Svg_UniqueId(Svg* svg)
+{
+    assert(svg);
+    return svg->id;
+}
 
 static void draw(const Svg* svg)
 {
     uint i;
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < svg->count; ++i)
+    glBegin(GL_LINES);
+    for(i = 0; i < svg->lineCount; ++i)
     {
         SvgLine* l = &svg->lines[i];
-        DGL_TexCoord2f(0, l->from.x, l->from.y);
-        DGL_Vertex2f(l->from.x, l->from.y);
-        DGL_TexCoord2f(0, l->to.x, l->to.y);
-        DGL_Vertex2f(l->to.x, l->to.y);
+        glTexCoord2f(l->from.x, l->from.y);
+        glVertex2f(l->from.x, l->from.y);
+        glTexCoord2f(l->to.x, l->to.y);
+        glVertex2f(l->to.x, l->to.y);
     }
-    DGL_End();
+    glEnd();
 }
 
 static DGLuint constructDisplayList(DGLuint name, const Svg* svg)
 {
-    if(DGL_NewList(name, DGL_COMPILE))
+    if(GL_NewList(name, DGL_COMPILE))
     {
         draw(svg);
-        return DGL_EndList();
+        return GL_EndList();
     }
     return 0;
 }
 
-static Svg* prepareSVG(svgid_t id)
+void Svg_Draw(Svg* svg)
 {
-    Svg* svg = svgForId(id);
-    if(svg)
+    assert(svg);
+
+    if(novideo || isDedicated)
+    {
+        assert(0); // Should not have been called!
+        return;
+    }
+
+    // Have we uploaded our draw-optimized representation yet?
+    if(svg->dlist)
+    {
+        // Draw!
+        GL_CallList(svg->dlist);
+        return;
+    }
+
+    // Draw manually in so-called 'immediate' mode.
+    draw(svg);
+}
+
+boolean Svg_Prepare(Svg* svg)
+{
+    assert(svg);
+    if(!novideo && !isDedicated)
     {
         if(!svg->dlist)
         {
             svg->dlist = constructDisplayList(0, svg);
         }
-        return svg;
     }
-    Con_Message("prepareSVG: Warning, no vectorgraphic is known by id %i.", (int) id);
-    return NULL;
+    return !!svg->dlist;
 }
 
-static void unloadSVG(Svg* svg)
+void Svg_Unload(Svg* svg)
 {
-    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
+    assert(svg);
+    if(novideo || isDedicated) return;
+
+    if(svg->dlist)
     {
-        if(svg->dlist)
-            DGL_DeleteLists(svg->dlist, 1);
+        GL_DeleteLists(svg->dlist, 1);
+        svg->dlist = 0;
     }
-    svg->dlist = 0;
 }
 
-static void deleteSVG(Svg* svg)
+Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t lineCount)
 {
-    unloadSVG(svg);
-    free(svg->lines);
-    svg->lines = 0;
+    Svg* svg;
+    size_t i;
+
+    if(!lines || lineCount == 0) return NULL;
+
+    svg = (Svg*)malloc(sizeof(*svg));
+    if(!svg) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new Svg.", (unsigned long) sizeof(*svg));
+
+    svg->id = uniqueId;
+    svg->dlist = 0;
+    svg->lineCount = lineCount;
+    svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * lineCount);
+    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SVGLine list.", (unsigned long) (sizeof(*svg->lines) * lineCount));
+
+    for(i = 0; i < lineCount; ++i)
+    {
+        memcpy(&svg->lines[i], &lines[i], sizeof(*svg->lines));
+    }
+
+    return svg;
 }

@@ -31,10 +31,16 @@
 
 typedef uint32_t svgid_t;
 
-void R_NewSVG(svgid_t svgId, const SvgLine* lines, size_t numLines);
+#include "point.h"
 
-void GL_DrawSVG(svgid_t svgId, float x, float y);
-void GL_DrawSVG2(svgid_t svgId, float x, float y, float scale);
-void GL_DrawSVG3(svgid_t svgId, float x, float y, float scale, float angle);
+typedef struct SvgLine_s {
+    Point2Rawf from, to;
+} SvgLine;
+
+void R_NewSvg(svgid_t svgId, const SvgLine* lines, size_t numLines);
+
+void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
+void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);
+void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
 
 #endif /* LIBDENG_API_VECTORGRAPHIC_H */

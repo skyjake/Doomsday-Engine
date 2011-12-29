@@ -25,11 +25,34 @@
 #ifndef LIBDENG_SVG_H
 #define LIBDENG_SVG_H
 
-typedef struct SvgLine_s {
-    Point2Rawf from, to;
-} SvgLine;
+#include "dd_vectorgraphic.h"
 
+/**
+ * Svg. Scaleable Vector Graphic.
+ */
 struct Svg_s; // The svg instance (opaque).
 typedef struct Svg_s Svg;
+
+void Svg_Delete(Svg* svg);
+
+void Svg_Draw(Svg* svg);
+
+boolean Svg_Prepare(Svg* svg);
+
+void Svg_Unload(Svg* svg);
+
+/// @return  Unique identifier associated with this.
+svgid_t Svg_UniqueId(Svg* svg);
+
+/**
+ * Static non-members:
+ */
+
+/**
+ * Try to construct a new Svg instance from specified definition.
+ *
+ * @return  Newly created Svg instance if definition was valid else @a NULL
+ */
+Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t numLines);
 
 #endif /* LIBDENG_SVG_H */

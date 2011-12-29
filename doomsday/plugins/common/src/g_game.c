@@ -801,18 +801,18 @@ void R_LoadVectorGraphics(void)
         { { 0,  0}, { 1, -1} }
     };
 
-    R_NewSVG(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
-    R_NewSVG(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
-    R_NewSVG(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
+    R_NewSvg(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
+    R_NewSvg(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
+    R_NewSvg(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
 #if !__JHEXEN__
-    R_NewSVG(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
+    R_NewSvg(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
 #endif
-    R_NewSVG(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
-    R_NewSVG(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
-    R_NewSVG(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
-    R_NewSVG(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
-    R_NewSVG(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
-    R_NewSVG(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
+    R_NewSvg(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
+    R_NewSvg(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
+    R_NewSvg(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
+    R_NewSvg(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
+    R_NewSvg(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
+    R_NewSvg(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
 }
 
 /**

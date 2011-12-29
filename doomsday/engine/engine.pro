@@ -271,6 +271,7 @@ DENG_HEADERS = \
     portable/include/sv_missile.h \
     portable/include/sv_pool.h \
     portable/include/sv_sound.h \
+    portable/include/svg.h \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
     portable/include/sys_audiod_loader.h \
@@ -530,6 +531,7 @@ SOURCES += \
     portable/src/sv_missile.c \
     portable/src/sv_pool.c \
     portable/src/sv_sound.c \
+    portable/src/svg.c \
     portable/src/sys_audiod_dummy.c \
     portable/src/sys_direc.c \
     portable/src/sys_master.c \

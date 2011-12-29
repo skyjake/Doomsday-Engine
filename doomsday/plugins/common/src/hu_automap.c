@@ -888,18 +888,24 @@ static void rendXGLinedefs(uiwidget_t* obj)
 #endif
 
 static void drawVectorGraphic(svgid_t vgId, float x, float y, float angle,
-    float scale, const float rgb[3], float alpha, blendmode_t blendmode)
+    float scale, const float color[3], float alpha, blendmode_t blendmode)
 {
+    Point2Rawf origin;
+
+    if(!color) return;
+
+    origin.x = x;
+    origin.y = y;
     alpha = MINMAX_OF(0.f, alpha, 1.f);
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PushMatrix();
-    DGL_Translatef(x, y, 1);
+    DGL_Translatef(origin.x, origin.y, 1);
 
-    DGL_Color4f(rgb[0], rgb[1], rgb[2], alpha);
+    DGL_Color4f(color[CR], color[CG], color[CB], alpha);
     DGL_BlendMode(blendmode);
 
-    GL_DrawSVG3(vgId, x, y, scale, angle);
+    GL_DrawSvg3(vgId, &origin, scale, angle);
 
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();

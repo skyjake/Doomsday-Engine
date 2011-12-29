@@ -33,7 +33,7 @@
 
 static boolean inited = false;
 static uint svgCount;
-static Svg* svgs;
+static Svg** svgs;
 
 static Svg* svgForId(svgid_t id)
 {
@@ -42,45 +42,103 @@ static Svg* svgForId(svgid_t id)
         uint i;
         for(i = 0; i < svgCount; ++i)
         {
-            Svg* svg = &svgs[i];
-            if(svg->id == id)
+            Svg* svg = svgs[i];
+            if(Svg_UniqueId(svg) == id)
                 return svg;
+        }
+    }
+    return NULL;
+}
+
+/// @return  1-based index for @a svg if found, else zero.
+static uint indexForSvg(Svg* svg)
+{
+    if(svg)
+    {
+        uint i;
+        for(i = 0; i < svgCount; ++i)
+        {
+            if(svgs[i] == svg) return i+1;
         }
     }
     return 0;
 }
 
-static void clearSVGs(void)
+/**
+ * Link @a svg into the global collection.
+ * \assume Not presently linked.
+ */
+static Svg* insertSvg(Svg* svg)
 {
-    if(svgCount != 0)
+    if(svg)
     {
-        uint i;
-        for(i = 0; i < svgCount; ++i)
-            deleteSVG(&svgs[i]);
-        free(svgs);
-        svgs = 0;
-        svgCount = 0;
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * ++svgCount);
+        if(!svgs) Con_Error("insertSvg: Failed on allocation of %lu bytes enlarging SVG collection.", (unsigned long) (sizeof(*svgs) * svgCount));
+
+        svgs[svgCount-1] = svg;
+    }
+    return svg;
+}
+
+/**
+ * Unlink @a svg if present in the global collection.
+ */
+static Svg* removeSvg(Svg* svg)
+{
+    uint index = indexForSvg(svg);
+    if(index)
+    {
+        index--; // 1-based index.
+
+        // Unlink from the collection.
+        if(index != svgCount-1)
+            memmove(svgs + index, svgs + index + 1, sizeof(*svgs) * (svgCount - index - 1));
+        svgs = (Svg**)realloc(svgs, sizeof(*svgs) * --svgCount);
+    }
+    return svg;
+}
+
+static void deleteSvg(Svg* svg)
+{
+    if(!svg) return;
+
+    removeSvg(svg);
+    Svg_Delete(svg);
+}
+
+static void clearSvgs(void)
+{
+    while(svgCount)
+    {
+        deleteSvg(*svgs);
     }
 }
 
-void R_InitSVGs(void)
+void R_InitSvgs(void)
 {
-    if(inited) return;
-
-    svgCount = 0;
-    svgs = 0;
+    if(inited)
+    {
+        // Allow re-init.
+        clearSvgs();
+    }
+    else
+    {
+        // First init.
+        svgs = NULL;
+        svgCount = 0;
+    }
     inited = true;
 }
 
-void R_ShutdownSVGs(void)
+void R_ShutdownSvgs(void)
 {
     if(!inited) return;
 
-    clearSVGs();
+    clearSvgs();
     inited = false;
 }
 
-void R_UnloadSVGs(void)
+void R_UnloadSvgs(void)
 {
     uint i;
     if(!inited) return;
@@ -88,33 +146,41 @@ void R_UnloadSVGs(void)
 
     for(i = 0; i < svgCount; ++i)
     {
-        unloadSVG(&svgs[i]);
+        Svg_Unload(svgs[i]);
     }
 }
 
-static void draw(const Svg* svg)
+void GL_DrawSvg3(svgid_t id, const Point2Rawf* origin, float scale, float angle)
 {
-    uint i;
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < svg->count; ++i)
+    Svg* svg = svgForId(id);
+
+    if(!origin)
     {
-        SvgLine* l = &svg->lines[i];
-        DGL_TexCoord2f(0, l->from.x, l->from.y);
-        DGL_Vertex2f(l->from.x, l->from.y);
-        DGL_TexCoord2f(0, l->to.x, l->to.y);
-        DGL_Vertex2f(l->to.x, l->to.y);
+#if _DEBUG
+        if(id != 0)
+            Con_Message("GL_DrawSvg: Invalid origin argument (=NULL), aborting draw.\n");
+#endif
+        return;
     }
-    DGL_End();
-}
-
-void GL_DrawSVG3(svgid_t id, float x, float y, float scale, float angle)
-{
-    Svg* svg = prepareSVG(id);
+    if(!svg)
+    {
+#if _DEBUG
+        if(id != 0)
+            Con_Message("GL_DrawSvg: Unknown SVG id #%u, aborting draw.\n", (unsigned int)id);
+#endif
+        return;
+    }
+    if(!Svg_Prepare(svg))
+    {
+#if _DEBUG
+        Con_Message("GL_DrawSvg: Failed preparing SVG #%u, aborting draw.\n", (unsigned int)id);
+#endif
+        return;
+    }
     
-    if(!svg) return;
-
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(x, y, 0);
+    DGL_Translatef(origin->x, origin->y, 0);
+
     if(angle != 0 || scale != 1)
     {
         DGL_PushMatrix();
@@ -122,63 +188,49 @@ void GL_DrawSVG3(svgid_t id, float x, float y, float scale, float angle)
         DGL_Scalef(scale, scale, 1);
     }
 
-    if(svg->dlist)
-    {
-        // We have a display list available; call it and get out of here.
-        DGL_CallList(svg->dlist);
-    }
-    else
-    {   // No display list available. Lets draw it manually.
-        draw(svg);
-    }
+    Svg_Draw(svg);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     if(angle != 0 || scale != 1)
         DGL_PopMatrix();
-    DGL_Translatef(-x, -y, 0);
+    DGL_Translatef(-origin->x, -origin->y, 0);
 }
 
-void GL_DrawSVG2(svgid_t id, float x, float y, float scale)
+void GL_DrawSvg2(svgid_t id, const Point2Rawf* origin, float scale)
 {
-    GL_DrawSVG3(id, x, y, scale, DEFAULT_ANGLE);
+    GL_DrawSvg3(id, origin, scale, DEFAULT_ANGLE);
 }
 
-void GL_DrawSVG(svgid_t id, float x, float y)
+void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
 {
-    GL_DrawSVG2(id, x, y, DEFAULT_SCALE);
+    GL_DrawSvg2(id, origin, DEFAULT_SCALE);
 }
 
-void R_NewSVG(svgid_t id, const SvgLine* lines, size_t numLines)
+void R_NewSvg(svgid_t id, const SvgLine* lines, size_t numLines)
 {
-    Svg* svg;
-    size_t i;
+    Svg* svg, *oldSvg;
 
     // Valid id?
-    if(id == 0) Con_Error("R_NewSVG: Invalid id, zero is reserved.");
+    if(id == 0) Con_Error("R_NewSvg: Invalid id, zero is reserved.");
+
+    // A new vector graphic.
+    svg = Svg_FromDef(id, lines, numLines);
+    if(!svg)
+    {
+#if _DEBUG
+        Con_Message("Warning:R_NewSvg: Failed constructing new SVG #%u, aborting.", (unsigned int)id);
+#endif
+        return;
+    }
 
     // Already a vector graphic with this id?
-    svg = svgForId(id);
-    if(svg)
+    oldSvg = svgForId(id);
+    if(oldSvg)
     {
         // We are replacing an existing vector graphic.
-        deleteSVG(svg);
-    }
-    else
-    {   // A new vector graphic.
-        svgs = (Svg*)realloc(svgs, sizeof(*svgs) * ++svgCount);
-        if(!svgs) Con_Error("R_NewSVG: Failed on allocation of %lu bytes enlarging SVG collection.", (unsigned long) (sizeof(*svgs) * svgCount));
-
-        svg = &svgs[svgCount-1];
-        svg->id = id;
-        svg->dlist = 0;
+        deleteSvg(oldSvg);
     }
 
-    svg->count = numLines;
-    svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * numLines);
-    if(!svg->lines) Con_Error("R_NewSVG: Failed on allocation of %lu bytes for new SVGLine list.", (unsigned long) (sizeof(*svg->lines) * numLines));
-
-    for(i = 0; i < numLines; ++i)
-    {
-        memcpy(&svg->lines[i], &lines[i], sizeof(*svg->lines));
-    }
+    // Add the new SVG to the global collection.
+    insertSvg(svg);
 }
