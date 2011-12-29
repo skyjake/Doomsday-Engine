@@ -515,7 +515,8 @@ PathDirectory* PathDirectory_New(void)
 
 void PathDirectory_Delete(PathDirectory* pd)
 {
-    assert(pd);
+    if(!pd) return;
+
     clearPathHash(*hashAddressForNodeType(pd, PT_LEAF));
     destroyPathHash(pd, PT_LEAF);
 
@@ -556,6 +557,7 @@ PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path, cha
 int PathDirectory_Iterate2(PathDirectory* pd, int flags, PathDirectoryNode* parent,
     ushort hash, pathdirectory_iteratecallback_t callback, void* paramaters)
 {
+    if(!pd) return false;
     return iteratePaths(pd, flags, parent, hash, callback, paramaters);
 }
 

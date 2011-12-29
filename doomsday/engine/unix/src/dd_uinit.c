@@ -94,14 +94,10 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     filename_t name;
     assert(app && pluginPath && pluginPath[0]);
 
-/*#if _DEBUG
-    Con_Printf("Attempting to load \"%s\" as a plugin...\n", pluginPath);
-#endif*/
-
     plugin = lt_dlopenext(pluginPath);
     if(!plugin)
     {
-        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, lt_dlerror());
+        Con_Message("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, lt_dlerror());
         return 0; // Continue iteration.
     }
 
@@ -110,7 +106,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     {
         // Clearly not a Doomsday plugin.
 #if _DEBUG
-        Con_Printf("loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
+        Con_Message("loadPlugin: \"%s\" does not export entrypoint DP_Initialize, ignoring.\n", pluginPath);
 #endif
         lt_dlclose(plugin);
         return 0; // Continue iteration.
@@ -120,7 +116,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     if(!handle)
     {
 #if _DEBUG
-        Con_Printf("loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
+        Con_Message("loadPlugin: Failed acquiring new handle for \"%s\", ignoring.\n", pluginPath);
 #endif
         lt_dlclose(plugin);
         return 0; // Continue iteration.

@@ -169,7 +169,7 @@ audiodriver_t* Sys_LoadAudioDriver(const char* name)
         }
         if(NULL == ad)
         {
-            Con_Message("Warning:Sys_LoadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
+            Con_Message("Warning: Sys_LoadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
         }
         Str_Free(&libPath);
     }

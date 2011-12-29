@@ -463,7 +463,10 @@ void Textures_Shutdown(void)
     }
     textureIdMapSize = 0;
 
-    Uri_Delete(emptyUri), emptyUri = NULL;
+    if(emptyUri)
+    {
+        Uri_Delete(emptyUri), emptyUri = NULL;
+    }
 }
 
 texturenamespaceid_t Textures_ParseNamespace(const char* str)
