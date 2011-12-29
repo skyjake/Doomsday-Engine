@@ -173,7 +173,7 @@ DENG_HEADERS = \
     portable/include/fonts.h \
     portable/include/fs_main.h \
     portable/include/fs_util.h \
-    portable/include/gameinfo.h \
+    portable/include/game.h \
     portable/include/gl_defer.h \
     portable/include/gl_draw.h \
     portable/include/gl_hq2x.h \
@@ -421,7 +421,7 @@ SOURCES += \
     portable/src/fonts.c \
     portable/src/fs_main.c \
     portable/src/fs_util.c \
-    portable/src/gameinfo.c \
+    portable/src/game.c \
     portable/src/gl_defer.c \
     portable/src/gl_draw.c \
     portable/src/gl_drawvectorgraphic.c \

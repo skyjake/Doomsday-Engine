@@ -30,7 +30,7 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "gameinfo.h"
+#include "game.h"
 #include "sys_direc.h"
 #include "textures.h"
 

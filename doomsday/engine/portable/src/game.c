@@ -26,7 +26,7 @@
 #include "de_console.h"
 #include "de_filesys.h"
 
-#include "gameinfo.h"
+#include "game.h"
 #include "resourcerecord.h"
 
 struct Game_s {
