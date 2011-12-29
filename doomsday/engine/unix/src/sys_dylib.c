@@ -24,6 +24,7 @@
  */
 
 #include "de_base.h"
+#include "de_filesys.h"
 #include "m_misc.h"
 #include "m_args.h"
 #include "sys_dylib.h"
@@ -35,6 +36,7 @@
 #include <string.h>
 
 static filename_t appDir;
+static const char* errorMessage = 0;
 
 void lt_dlinit(void)
 {
@@ -47,6 +49,7 @@ void lt_dlexit(void)
 
 const char* lt_dlerror(void)
 {
+    if(errorMessage) return errorMessage;
     return dlerror();
 }
 
@@ -132,10 +135,18 @@ lt_dlhandle lt_dlopenext(const char* libraryName)
     strncat(bundlePath, libraryName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
+    { const char* ext = F_FindFileExtension(bundlePath);
+        if(ext && stricmp(ext, "dylib") && stricmp(ext, "bundle")) {
+            // Not a dynamic library... We already know this will fail.
+            errorMessage = "not a dynamic library";
+            return NULL;
+    }}
+
     // Get rid of the ".bundle" in the end.
     if(NULL != (ptr = strrchr(bundlePath, '.')))
         *ptr = '\0';
 #endif
+    errorMessage = NULL;
 
     handle = dlopen(bundlePath, RTLD_NOW);
     if(!handle)
