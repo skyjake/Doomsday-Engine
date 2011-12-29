@@ -181,20 +181,6 @@ static gameinfo_t* findGameInfoForIdentityKey(const char* identityKey)
     return NULL; // Not found.
 }
 
-static gameinfo_t* findGameInfoForCmdlineFlag(const char* cmdlineFlag)
-{
-    int i;
-    assert(cmdlineFlag && cmdlineFlag[0]);
-    for(i = 0; i < gameInfoCount; ++i)
-    {
-        gameinfo_t* info = gameInfo[i];
-        if((GameInfo_CmdlineFlag(info)  && !stricmp(Str_Text(GameInfo_CmdlineFlag (info)), cmdlineFlag)) ||
-           (GameInfo_CmdlineFlag2(info) && !stricmp(Str_Text(GameInfo_CmdlineFlag2(info)), cmdlineFlag)))
-            return info;
-    }
-    return 0; // Not found.
-}
-
 static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawPath)
 {
     ddstring_t* newPath = Str_New();
@@ -246,18 +232,14 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
     *listSize = 0;
 }
 
-static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey,
-    const ddstring_t* dataPath, const ddstring_t* defsPath, const char* mainConfig,
-    const char* title, const char* author, const ddstring_t* cmdlineFlag,
-    const ddstring_t* cmdlineFlag2)
+static gameinfo_t* addGameInfoRecord(gameinfo_t* info)
 {
-    gameinfo_t* info = GameInfo_New(pluginId, identityKey, dataPath,
-        defsPath, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
-
-    gameInfo = (gameinfo_t**)realloc(gameInfo, sizeof(*gameInfo) * ++gameInfoCount);
-    if(!gameInfo) Con_Error("addGameInfoRecord: Failed on allocation of %lu bytes enlarging GameInfo list.", (unsigned long) (sizeof(*gameInfo) * gameInfoCount));
-
-    gameInfo[gameInfoCount-1] = info;
+    if(info)
+    {
+        gameInfo = (gameinfo_t**)realloc(gameInfo, sizeof(*gameInfo) * ++gameInfoCount);
+        if(!gameInfo) Con_Error("addGameInfoRecord: Failed on allocation of %lu bytes enlarging GameInfo list.", (unsigned long) (sizeof(*gameInfo) * gameInfoCount));
+        gameInfo[gameInfoCount-1] = info;
+    }
     return info;
 }
 
@@ -303,20 +285,6 @@ static void populateExtendedInfo(gameinfo_t* info, ddgameinfo_t* ex)
     ex->identityKey = Str_Text(GameInfo_IdentityKey(info));
     ex->title = Str_Text(GameInfo_Title(info));
     ex->author = Str_Text(GameInfo_Author(info));
-}
-
-void DD_GetGameInfo2(gameid_t gameId, ddgameinfo_t* ex)
-{
-    gameinfo_t* info;
-    if(!ex) Con_Error("DD_GetGameInfo2: Invalid info argument.");
-
-    info = findGameInfoForId(gameId);
-    if(info)
-    {
-        populateExtendedInfo(info, ex);
-    }
-
-    Con_Message("Warning:DD_GetGameInfo2: Unknown gameid %i.\n", gameId);
 }
 
 boolean DD_GameInfo(ddgameinfo_t* ex)
@@ -406,91 +374,35 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     Str_Free(&str);
 }
 
-gameid_t DD_AddGame(const char* identityKey, const char* _dataPath,
-    const char* _defsPath, const char* mainConfig, const char* defaultTitle,
-    const char* defaultAuthor, const char* _cmdlineFlag, const char* _cmdlineFlag2)
+gameid_t DD_DefineGame(const GameDef* def)
 {
     gameinfo_t* info;
-    gameid_t newGameId = 0; // Not a valid id.
-    ddstring_t cmdlineFlag, cmdlineFlag2;
-    ddstring_t dataPath, defsPath;
-    pluginid_t pluginId = DD_PluginIdForActiveHook();
-    assert(identityKey && identityKey[0] && _dataPath && _dataPath[0] && _defsPath &&
-           _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor &&
-           defaultAuthor[0]);
 
-    if(strlen(identityKey) > 16)
+    if(!def)
     {
 #if _DEBUG
-        Con_Message("Warning:DD_AddGame: Failed adding game \"s\", identity key '%s' is too long (max 16 characters), ignoring.\n", defaultTitle, identityKey);
+        Con_Message("Warning:DD_DefineGame: Received invalid GameDef (=NULL), ignoring.");
 #endif
-        return 0; // Not a valid game id.
+        return 0; // Invalid id.
     }
 
     // Game mode identity keys must be unique. Ensure that is the case.
-    if(findGameInfoForIdentityKey(identityKey))
+    if(findGameInfoForIdentityKey(def->identityKey))
     {
 #if _DEBUG
-        Con_Message("Warning:DD_AddGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", defaultTitle, identityKey);
+        Con_Message("Warning:DD_DefineGame: Failed adding game \"%s\", identity key '%s' already in use, ignoring.\n", def->defaultTitle, def->identityKey);
 #endif
-        return 0; // Not a valid game id.
-    }
-
-    Str_Init(&dataPath);
-    Str_Set(&dataPath, _dataPath);
-    Str_Strip(&dataPath);
-    F_FixSlashes(&dataPath, &dataPath);
-    F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != '/')
-        Str_AppendChar(&dataPath, '/');
-
-    Str_Init(&defsPath);
-    Str_Set(&defsPath, _defsPath);
-    Str_Strip(&defsPath);
-    F_FixSlashes(&defsPath, &defsPath);
-    F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != '/')
-        Str_AppendChar(&defsPath, '/');
-
-    Str_Init(&cmdlineFlag);
-    Str_Init(&cmdlineFlag2);
-
-    // Command-line game selection override arguments must be unique. Ensure that is the case.
-    if(_cmdlineFlag)
-    {
-        Str_Appendf(&cmdlineFlag, "-%s", _cmdlineFlag);
-        if(findGameInfoForCmdlineFlag(Str_Text(&cmdlineFlag)))
-        {
-            Con_Error("DD_AddGame: Failed adding game \"%s\", cmdlineFlag '%s' already in use.", defaultTitle, Str_Text(&cmdlineFlag));
-            goto endValidation;
-        }
-    }
-
-    if(_cmdlineFlag2)
-    {
-        Str_Appendf(&cmdlineFlag2, "-%s", _cmdlineFlag2);
-        if(findGameInfoForCmdlineFlag(Str_Text(&cmdlineFlag2)))
-        {
-            Con_Error("DD_AddGame: Failed adding game \"%s\", cmdlineFlag '%s' already in use.", defaultTitle, Str_Text(&cmdlineFlag2));
-            goto endValidation;
-        }
+        return 0; // Invalid id.
     }
 
     // Add this game to our records.
-    info = addGameInfoRecord(pluginId, identityKey, &dataPath, &defsPath,
-                             mainConfig, defaultTitle, defaultAuthor,
-                             _cmdlineFlag? &cmdlineFlag : 0,
-                             _cmdlineFlag2? &cmdlineFlag2 : 0);
-    newGameId = (gameid_t)gameInfoIndex(info);
-
- endValidation:
-
-    Str_Free(&cmdlineFlag2);
-    Str_Free(&cmdlineFlag);
-    Str_Free(&defsPath);
-    Str_Free(&dataPath);
-
-    return newGameId;
+    info = addGameInfoRecord(GameInfo_FromDef(def));
+    if(info)
+    {
+        GameInfo_SetPluginId(info, DD_PluginIdForActiveHook());
+        return (gameid_t)gameInfoIndex(info);
+    }
+    return 0; // Invalid id.
 }
 
 void DD_DestroyGameInfo(void)
@@ -1346,40 +1258,21 @@ void DD_AutoselectGame(void)
         return;
     }
 
+    if(ArgCheckWith("-game", 1))
     {
-    const char* expGame = ArgCheckWith("-game", 1)? ArgNext() : 0;
-    int pass = expGame? 0 : 1;
-    do
-    {
-        int infoIndex = 0;
-        do
+        const char* identityKey = ArgNext();
+        gameinfo_t* info = findGameInfoForIdentityKey(identityKey);
+        if(info && allGameResourcesFound(info))
         {
-            gameinfo_t* info = gameInfo[infoIndex];
-
-            if(DD_IsNullGameInfo(info)) continue;
-            if(!allGameResourcesFound(info)) continue;
-
-            switch(pass)
-            {
-            case 0: // Command line modestring match for-development/debug (e.g., "-game doom1-ultimate").
-                if(!Str_CompareIgnoreCase(GameInfo_IdentityKey(info), expGame))
-                    DD_ChangeGame(info);
-                break;
-
-            case 1: // Command line name flag match (e.g., "-doom2").
-                if((GameInfo_CmdlineFlag (info) && ArgCheck(Str_Text(GameInfo_CmdlineFlag (info)))) ||
-                   (GameInfo_CmdlineFlag2(info) && ArgCheck(Str_Text(GameInfo_CmdlineFlag2(info)))))
-                    DD_ChangeGame(info);
-                break;
-            }
-        } while(++infoIndex < gameInfoCount && !DD_GameLoaded());
-    } while(++pass < 2 && !DD_GameLoaded());
+            DD_ChangeGame(info);
+        }
     }
 }
 
 int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
+    gameinfo_t* info;
 
     // Determine the requested degree of verbosity.
     verbose = ArgExists("-verbose");
@@ -1424,7 +1317,8 @@ int DD_EarlyInit(void)
     if(Str_RAt(&defsPath, 0) != '/')
         Str_AppendChar(&defsPath, '/');
 
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0, 0, 0));
+    info = GameInfo_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(info));
 
     Str_Free(&defsPath);
     Str_Free(&dataPath);

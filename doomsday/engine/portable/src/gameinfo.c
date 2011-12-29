@@ -29,17 +29,14 @@
 #include "gameinfo.h"
 #include "resourcerecord.h"
 
-gameinfo_t* GameInfo_New(pluginid_t pluginId, const char* identityKey,
-    const ddstring_t* dataPath, const ddstring_t* defsPath, const char* mainConfig,
-    const char* title, const char* author, const ddstring_t* cmdlineFlag,
-    const ddstring_t* cmdlineFlag2)
+gameinfo_t* GameInfo_New(const char* identityKey, const ddstring_t* dataPath,
+    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const char* author)
 {
     int i;
     gameinfo_t* info = (gameinfo_t*)malloc(sizeof(*info));
 
     if(!info) Con_Error("GameInfo::New: Failed on allocation of %lu bytes for new GameInfo.", (unsigned long) sizeof(*info));
-
-    info->_pluginId = pluginId;
 
     Str_Init(&info->_identityKey);
     if(identityKey)
@@ -72,28 +69,14 @@ gameinfo_t* GameInfo_New(pluginid_t pluginId, const char* identityKey,
     if(author)
         Str_Set(&info->_author, author);
 
-    if(cmdlineFlag)
-    {
-        info->_cmdlineFlag = Str_New();
-        Str_Set(info->_cmdlineFlag, Str_Text(cmdlineFlag));
-    }
-    else
-        info->_cmdlineFlag = 0;
-
-    if(cmdlineFlag2)
-    {
-        info->_cmdlineFlag2 = Str_New();
-        Str_Set(info->_cmdlineFlag2, Str_Text(cmdlineFlag2));
-    }
-    else
-        info->_cmdlineFlag2 = 0;
-
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourcerecordset_t* rset = &info->_requiredResources[i];
         rset->numRecords = 0;
         rset->records = 0;
     }
+
+    info->_pluginId = 0;
 
     return info;
 }
@@ -110,9 +93,6 @@ void GameInfo_Delete(gameinfo_t* info)
     Str_Free(&info->_bindingConfig);
     Str_Free(&info->_title);
     Str_Free(&info->_author);
-
-    if(info->_cmdlineFlag) { Str_Delete(info->_cmdlineFlag);  info->_cmdlineFlag  = 0; }
-    if(info->_cmdlineFlag2){ Str_Delete(info->_cmdlineFlag2); info->_cmdlineFlag2 = 0; }
 
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
@@ -162,6 +142,12 @@ resourcerecord_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
     return record;
 }
 
+pluginid_t GameInfo_SetPluginId(gameinfo_t* info, pluginid_t pluginId)
+{
+    assert(info);
+    return info->_pluginId = pluginId;
+}
+
 pluginid_t GameInfo_PluginId(gameinfo_t* info)
 {
     assert(info);
@@ -198,18 +184,6 @@ const ddstring_t* GameInfo_BindingConfig(gameinfo_t* info)
     return &info->_bindingConfig;
 }
 
-const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info)
-{
-    assert(info);
-    return info->_cmdlineFlag;
-}
-
-const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info)
-{
-    assert(info);
-    return info->_cmdlineFlag2;
-}
-
 const ddstring_t* GameInfo_Title(gameinfo_t* info)
 {
     assert(info);
@@ -233,4 +207,34 @@ resourcerecord_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rc
 
     if(count) *count = info->_requiredResources[rclass].numRecords;
     return info->_requiredResources[rclass].records? info->_requiredResources[rclass].records : 0;
+}
+
+gameinfo_t* GameInfo_FromDef(const GameDef* def)
+{
+    gameinfo_t* info;
+    ddstring_t dataPath, defsPath;
+
+    if(!def) return NULL;
+
+    Str_Init(&dataPath); Str_Set(&dataPath, def->dataPath);
+    Str_Strip(&dataPath);
+    F_FixSlashes(&dataPath, &dataPath);
+    F_ExpandBasePath(&dataPath, &dataPath);
+    if(Str_RAt(&dataPath, 0) != '/')
+        Str_AppendChar(&dataPath, '/');
+
+    Str_Init(&defsPath); Str_Set(&defsPath, def->defsPath);
+    Str_Strip(&defsPath);
+    F_FixSlashes(&defsPath, &defsPath);
+    F_ExpandBasePath(&defsPath, &defsPath);
+    if(Str_RAt(&defsPath, 0) != '/')
+        Str_AppendChar(&defsPath, '/');
+
+    info = GameInfo_New(def->identityKey, &dataPath, &defsPath, def->mainConfig,
+                        def->defaultTitle, def->defaultAuthor);
+
+    Str_Free(&defsPath);
+    Str_Free(&dataPath);
+
+    return info;
 }

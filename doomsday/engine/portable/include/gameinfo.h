@@ -27,6 +27,7 @@
 #include "dd_string.h"
 
 struct resourcerecord_s;
+struct GameDef;
 
 typedef struct {
     struct resourcerecord_s** records;
@@ -65,9 +66,6 @@ typedef struct {
     /// Name of the file used for control bindings, set automatically at creation time.
     ddstring_t _bindingConfig;
 
-    /// Command-line selection flags.
-    ddstring_t* _cmdlineFlag, *_cmdlineFlag2;
-
     /// Vector of records for required game resources (e.g., doomu.wad).
     resourcerecordset_t _requiredResources[RESOURCECLASS_COUNT];
 } gameinfo_t;
@@ -75,19 +73,16 @@ typedef struct {
 /**
  * Construct a new GameInfo instance.
  *
- * @param pluginId      Unique identifier of the plugin to associate with this game.
  * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
  * @param mainConfig    The main config file. Can be @c NULL.
  * @param title         Default game title.
  * @param author        Default game author.
- * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
- * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
-gameinfo_t* GameInfo_New(pluginid_t pluginId, const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* mainConfig, const char* title, const char* author,
-    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
+gameinfo_t* GameInfo_New(const char* identityKey, const ddstring_t* dataPath,
+    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const char* author);
 
 void GameInfo_Delete(gameinfo_t* info);
 
@@ -102,6 +97,13 @@ void GameInfo_Delete(gameinfo_t* info);
  */
 struct resourcerecord_s* GameInfo_AddResource(gameinfo_t* info,
     resourceclass_t rclass, struct resourcerecord_s* record);
+
+/**
+ * Change the identfier of the plugin associated with this.
+ * @param pluginId  New identifier.
+ * @return  Same as @a pluginId for convenience.
+ */
+pluginid_t GameInfo_SetPluginId(gameinfo_t* info, pluginid_t pluginId);
 
 /**
  * Accessor methods.
@@ -123,12 +125,6 @@ const ddstring_t* GameInfo_MainConfig(gameinfo_t* info);
 
 /// @return  String containing the name of the binding config file.
 const ddstring_t* GameInfo_BindingConfig(gameinfo_t* info);
-
-/// @return  String containing command line (name) flag.
-const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info);
-
-/// @return  String containing command line (name) flag2.
-const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /**
  * Retrieve a subset of the resource collection associated with this.
@@ -154,5 +150,10 @@ const ddstring_t* GameInfo_DataPath(gameinfo_t* info);
  * @return  String containing the base defs-class resource directory.
  */
 const ddstring_t* GameInfo_DefsPath(gameinfo_t* info);
+
+/**
+ * Static non-members:
+ */
+gameinfo_t* GameInfo_FromDef(const GameDef* def);
 
 #endif /* LIBDENG_GAMEINFO_H */

@@ -3,7 +3,7 @@
 ; Highest ordinal is currently: --> 702 <--
 ; Other free ordinals:
 ;
-; 126 formerly DGL_DrawRawScreen
+; 7, 126
 
 NAME                            "DOOMSDAY"
 
@@ -14,10 +14,9 @@ EXPORTS
     Plug_CheckForHook           @3 NONAME
 
 ; Base.
-    DD_AddGame                  @4 NONAME
+    DD_DefineGame               @4 NONAME
     DD_AddGameResource          @5 NONAME
-    DD_GameInfo              @6 NONAME
-    DD_GetGameInfo2             @7 NONAME
+    DD_GameInfo                 @6 NONAME
     DD_GetInteger               @8 NONAME
     DD_SetInteger               @9 NONAME
     DD_SetVariable              @10 NONAME
