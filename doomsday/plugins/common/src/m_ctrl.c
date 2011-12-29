@@ -634,7 +634,8 @@ void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
-    FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
+    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetAlpha(mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
 

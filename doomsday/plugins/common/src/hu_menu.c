@@ -1112,7 +1112,7 @@ mndata_button_t btn_weapons_aswch_pickup_berserk = { true, "player-autoswitch-be
 
 static mn_object_t WeaponMenuObjects[] = {
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_priority_order },
-    { MN_LIST,      0,  0,  'p',MENU_FONT1, MENU_COLOR3, MNList_UpdateGeometry, MNList_Drawer, { Hu_MenuChangeWeaponPriority, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_CommandResponder, NULL, NULL, &list_weapons_order },
+    { MN_LIST,      0,  MNF_ID0,  'p',MENU_FONT1, MENU_COLOR3, MNList_UpdateGeometry, MNList_Drawer, { Hu_MenuChangeWeaponPriority, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_CommandResponder, NULL, NULL, &list_weapons_order },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_cycling },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_cycl_use_priority_order },
     { MN_BUTTON,    0,  0,  'o',MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_cycl_use_priority_order },
@@ -1861,18 +1861,13 @@ void Hu_MenuInitEpisodeMenu(void)
         obj->cmdResponder = MNButton_CommandResponder;
         obj->updateGeometry = MNButton_UpdateGeometry;
 
+        if(i != 0
 #if __JHERETIC__
-        if(gameMode == heretic_shareware && i != 0)
-        {
-            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
-        }
-        else
-        {
-            obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-            obj->data1 = &SkillMenu;
-        }
+           && gameMode == heretic_shareware
 #else
-        if(gameMode == doom_shareware && i != 0)
+           && gameMode == doom_shareware
+#endif
+           )
         {
             obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
         }
@@ -1880,8 +1875,14 @@ void Hu_MenuInitEpisodeMenu(void)
         {
             obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
             obj->data1 = &SkillMenu;
-        }
+#if __JHERETIC__
+            if(gameMode == heretic_extended && i == 5)
+            {
+                obj->_flags |= MNF_ID0;
+            }
 #endif
+        }
+
         obj->actions[MNA_FOCUS].callback = Hu_MenuFocusEpisode;
         obj->data2 = i;
         obj->_pageFontIdx = MENU_FONT2;
@@ -2182,6 +2183,53 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
 
 #undef OFFSET_Y
 #undef OFFSET_X
+}
+
+void Hu_MenuDrawPageTitle(const char* title, int x, int y)
+{
+    if(!title) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorv(cfg.menuTextColors[0]);
+    FR_SetAlpha(mnRendState->pageAlpha);
+
+    FR_DrawTextXY3(title, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
+}
+
+void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y)
+{
+#if __JDOOM__ || __JDOOM64__
+    char buf[1024];
+
+    if(!page) return;
+
+    Hu_MenuComposeSubpageString(page, 1024, buf);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetAlpha(mnRendState->pageAlpha);
+
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#else
+    const boolean havePrevPage = true;//page->firstObject;
+    const boolean haveNextPage = true;//!(page->firstObject + page->numVisObjects >= page->objectsCount);
+
+    if(!page) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+
+    GL_DrawPatchXY2( pInvPageLeft[!havePrevPage || (menuTime & 8)], x - 152, y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[!haveNextPage || (menuTime & 8)], x + 152, y, ALIGN_LEFT);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#endif
 }
 
 static void drawOverlayBackground(float darken)
@@ -2807,20 +2855,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin)
 {
-#if __JDOOM__ || __JDOOM64__
-#  define TITLEOFFSET_X         (67)
-#else
-#  define TITLEOFFSET_X         (60)
-#endif
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3(GET_TXT(TXT_PICKGAMETYPE), origin->x + TITLEOFFSET_X, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-#undef TITLEOFFSET_X
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_PICKGAMETYPE), SCREENWIDTH/2, origin->y - 28);
 }
 
 #if __JHERETIC__
@@ -2891,54 +2926,55 @@ void Hu_MenuDrawPlayerClassPage(mn_page_t* page, const Point2Raw* origin)
 void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JHERETIC__
-    mn_object_t* obj;
-#endif
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-#if __JHERETIC__
-    /// \kludge Inform the user episode 6 is designed for deathmatch only.
-    obj = MNPage_FocusObject(page);
-    if(obj && obj->data2 == 5)
+    // Inform the user episode 6 is designed for deathmatch only.
+    if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
     {
         const char* str = notDesignedForMessage;
+
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
+
+        DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
+        FR_SetColorv(cfg.menuTextColors[1]);
+        FR_SetAlpha(mnRendState->pageAlpha);
+
         FR_DrawTextXY3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
-    // kludge end.
 #else // __JDOOM__
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorv(cfg.menuTextColors[0]);
+    FR_SetAlpha(mnRendState->pageAlpha);
 
     WI_DrawPatchXY3(pEpisode, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pEpisode),
         origin->x + 7, origin->y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-#endif
 
     DGL_Disable(DGL_TEXTURE_2D);
+#endif
 }
 #endif
 
 void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 {
+#if __JDOOM__ || __JDOOM64__
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-#if __JDOOM__ || __JDOOM64__
     WI_DrawPatchXY3(pNewGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pNewGame),
         origin->x + 48, origin->y - 49, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
     WI_DrawPatchXY3(pSkill, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSkill),
         origin->x + 6, origin->y - 25, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-#elif __JHEXEN__
-    FR_DrawTextXY3("Choose Skill Level:", origin->x - 46, origin->y - 28, ALIGN_TOPLEFT,
-        MN_MergeMenuEffectWithDrawTextFlags(0));
-#endif
 
     DGL_Disable(DGL_TEXTURE_2D);
+#elif __JHEXEN__
+    Hu_MenuDrawPageTitle("Choose Skill Level:", origin->x - 46, origin->y - 28);
+#endif
 }
 
 void Hu_MenuUpdateGameSaveWidgets(void)
@@ -3208,19 +3244,19 @@ void Hu_MenuDrawLoadGamePage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuDrawSaveGamePage(mn_page_t* page, const Point2Raw* origin)
 {
+#if __JHERETIC__ || __JHEXEN__
+    Hu_MenuDrawPageTitle("Save Game", SCREENWIDTH/2, origin->y - 20);
+#else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-#if __JHERETIC__ || __JHEXEN__
-    FR_DrawTextXY3("Save Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-#else
     WI_DrawPatchXY3(pSaveGame, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pSaveGame),
         origin->x - 8, origin->y - 26, ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-#endif
 
     DGL_Disable(DGL_TEXTURE_2D);
+#endif
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
@@ -3234,19 +3270,19 @@ int Hu_MenuSelectHelp(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 
 void Hu_MenuDrawOptionsPage(mn_page_t* page, const Point2Raw* origin)
 {
+#if __JHERETIC__ || __JHEXEN__
+    Hu_MenuDrawPageTitle("Options", origin->x + 42, origin->y - 38);
+#else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-#if __JHERETIC__ || __JHEXEN__
-    FR_DrawTextXY3("OPTIONS", origin->x + 42, origin->y - 38, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-#else
     WI_DrawPatchXY3(pOptionsTitle, Hu_ChoosePatchReplacement(cfg.menuPatchReplaceMode, pOptionsTitle),
         origin->x + 42, origin->y - 20, ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
-#endif
 
     DGL_Disable(DGL_TEXTURE_2D);
+#endif
 }
 
 void Hu_MenuDrawSoundPage(mn_page_t* page, const Point2Raw* origin)
@@ -3264,19 +3300,20 @@ void Hu_MenuDrawWeaponsPage(mn_page_t* page, const Point2Raw* origin)
     Hu_MenuDrawPageTitle("Weapons", SCREENWIDTH/2, origin->y - 28);
     Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
 
-    /// \kludge Inform the user how to change the order.
-    /*{ mn_object_t* obj = MNPage_FocusObject(page);
-    if(obj && obj == &page->objects[1])
+    // Inform the user how to change the order.
+    if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
     {
         const char* str = "Use left/right to move weapon up/down";
 
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
+        FR_SetColorv(cfg.menuTextColors[1]);
+        FR_SetAlpha(mnRendState->pageAlpha);
+
         FR_DrawTextXY3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+
         DGL_Disable(DGL_TEXTURE_2D);
-    }}*/
-    // kludge end.
+    }
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -3751,53 +3788,6 @@ void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin)
 {
     Hu_MenuDrawPageTitle("Automap Options", SCREENWIDTH/2, origin->y - 28);
     Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
-}
-
-void Hu_MenuDrawPageTitle(const char* title, int x, int y)
-{
-    if(!title) return;
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorv(cfg.menuTextColors[0]);
-    FR_SetAlpha(mnRendState->pageAlpha);
-
-    FR_DrawTextXY3(title, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
-}
-
-void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y)
-{
-#if __JDOOM__ || __JDOOM64__
-    char buf[1024];
-
-    if(!page) return;
-
-    Hu_MenuComposeSubpageString(page, 1024, buf);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
-    FR_SetAlpha(mnRendState->pageAlpha);
-
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
-#else
-    const boolean havePrevPage = true;//page->firstObject;
-    const boolean haveNextPage = true;//!(page->firstObject + page->numVisObjects >= page->objectsCount);
-
-    if(!page) return;
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-
-    GL_DrawPatchXY2( pInvPageLeft[!havePrevPage || (menuTime & 8)], x - 152, y, ALIGN_RIGHT);
-    GL_DrawPatchXY2(pInvPageRight[!haveNextPage || (menuTime & 8)], x + 152, y, ALIGN_LEFT);
-
-    DGL_Disable(DGL_TEXTURE_2D);
-#endif
 }
 
 D_CMD(MenuOpen)
