@@ -406,7 +406,7 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
 
     if(!sourcePath || !sourcePath[0]) return NULL;
 
-    gameIdentityKey = Game_IdentityKey(DD_CurrentGame());
+    gameIdentityKey = Game_IdentityKey(theGame);
     mapPathIdentifier = calculateIdentifierForMapPath(sourcePath);
     Str_Init(&mapFileName);
     F_FileName(&mapFileName, sourcePath);

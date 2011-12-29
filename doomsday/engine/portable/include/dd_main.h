@@ -54,6 +54,9 @@ extern finaleid_t titleFinale;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
+/// Currently active game.
+extern Game* theGame;
+
 int DD_EarlyInit(void);
 int DD_Main(void);
 void DD_CheckTimeDemo(void);
@@ -97,9 +100,6 @@ const char* value_Str(int val);
 
 /// @return  @c true iff there is presently a game loaded.
 boolean DD_GameLoaded(void);
-
-/// @return  Currently active Game record (always succeeds).
-Game* DD_CurrentGame(void);
 
 /// @return  Current number of Game records.
 int DD_GameCount(void);

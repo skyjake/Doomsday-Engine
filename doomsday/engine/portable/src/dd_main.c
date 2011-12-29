@@ -116,10 +116,12 @@ finaleid_t titleFinale = 0;
 static ddstring_t** gameResourceFileList = 0;
 static size_t numGameResourceFileList = 0;
 
-// Game records and associated found-file lists.
-static Game* nullGame; // Special "null-game" object.
+Game* theGame = NULL; // Currently active game.
+
+// Game collection.
 static Game** games = 0;
-static int gamesCount = 0, currentGameIndex = 0;
+static int gamesCount = 0;
+static Game* nullGame; // Special "null-game" object.
 
 // CODE --------------------------------------------------------------------
 
@@ -248,7 +250,7 @@ static Game* addGame(Game* game)
 
 boolean DD_GameLoaded(void)
 {
-    return !DD_IsNullGame(DD_CurrentGame());
+    return !DD_IsNullGame(theGame);
 }
 
 int DD_GameCount(void)
@@ -270,10 +272,10 @@ Game* DD_GameByIdentityKey(const char* identityKey)
     return NULL;
 }
 
-Game* DD_CurrentGame(void)
+gameid_t DD_GameId(Game* game)
 {
-    if(currentGameIndex <= 0) return nullGame;
-    return games[currentGameIndex-1];
+    if(!game || game == nullGame) return 0; // Invalid id.
+    return (gameid_t)gameIndex(game);
 }
 
 boolean DD_IsNullGame(const Game* game)
@@ -303,7 +305,7 @@ boolean DD_GameInfo(GameInfo* info)
 
     if(DD_GameLoaded())
     {
-        populateGameInfo(info, DD_CurrentGame());
+        populateGameInfo(info, theGame);
         return true;
     }
 
@@ -403,7 +405,7 @@ gameid_t DD_DefineGame(const GameDef* def)
     if(game)
     {
         Game_SetPluginId(game, DD_PluginIdForActiveHook());
-        return (gameid_t)gameIndex(game);
+        return DD_GameId(game);
     }
     return 0; // Invalid id.
 }
@@ -428,7 +430,7 @@ void DD_DestroyGames(void)
         Game_Delete(nullGame);
         nullGame = NULL;
     }
-    currentGameIndex = 0;
+    theGame = NULL;
 }
 
 /**
@@ -557,15 +559,15 @@ static boolean isRequiredResource(Game* game, const char* absolutePath)
 
 static void locateGameResources(Game* game)
 {
-    int oldGameIndex = currentGameIndex;
+    Game* oldGame = theGame;
     uint i;
 
     if(!game) return;
 
-    if(DD_CurrentGame() != game)
+    if(theGame != game)
     {
         /// \kludge Temporarily switch Game.
-        currentGameIndex = gameIndex(game);
+        theGame = game;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
@@ -587,10 +589,10 @@ static void locateGameResources(Game* game)
         }
     }
 
-    if(currentGameIndex != oldGameIndex)
+    if(theGame != oldGame)
     {
         /// \kludge Restore the old Game.
-        currentGameIndex = oldGameIndex;
+        theGame = oldGame;
         // Re-init the resource locator using the search paths of this Game.
         F_ResetAllResourceNamespaces();
     }
@@ -731,7 +733,7 @@ void DD_PrintGame(Game* game, int flags)
     }
 
     if(flags & PGF_STATUS)
-        Con_Printf("Status: %s\n",       DD_CurrentGame() == game? "Loaded" :
+        Con_Printf("Status: %s\n",       theGame == game? "Loaded" :
                                    allGameResourcesFound(game)? "Complete/Playable" :
                                                                 "Incomplete/Not playable");
 }
@@ -786,7 +788,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     for(i = 0; extensions[i]; ++i)
     {
         Str_Clear(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(DD_CurrentGame())), extensions[i]);
+        Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
         F_AllResourcePaths2(Str_Text(&pattern), autoDataAdder, (void*)&data);
     }
     Str_Free(&pattern);
@@ -908,7 +910,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Now that resources have been located we can begin to initialize the game.
     if(!DD_IsNullGame(p->game) && gx.PreInit)
-        gx.PreInit((gameid_t)gameIndex(p->game));
+        gx.PreInit(DD_GameId(p->game));
 
     /**
      * Parse the game's main config file.
@@ -1025,7 +1027,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     assert(game);
 
     // Ignore attempts to re-load the current game?
-    if(DD_CurrentGame() == game)
+    if(theGame == game)
     {
         if(!allowReload)
         {
@@ -1100,7 +1102,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Con_ClearDatabases();
 
         // The current game is now the special "null-game".
-        currentGameIndex = 0;
+        theGame = nullGame;
 
         Con_InitDatabases();
         DD_Register();
@@ -1147,14 +1149,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     }
 
     // This is now the current game.
-    if(!DD_IsNullGame(game))
-    {
-        currentGameIndex = gameIndex(game);
-    }
-    else
-    {
-        currentGameIndex = 0;
-    }
+    theGame = game;
 
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
@@ -1318,8 +1313,7 @@ int DD_EarlyInit(void)
     if(Str_RAt(&defsPath, 0) != '/')
         Str_AppendChar(&defsPath, '/');
 
-    nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
-    currentGameIndex = 0;
+    theGame = nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
 
     Str_Free(&defsPath);
     Str_Free(&dataPath);
@@ -2378,7 +2372,7 @@ D_CMD(Unload)
             continue;
 
         // Do not attempt to unload a resource required by the current game.
-        if(isRequiredResource(DD_CurrentGame(), Str_Text(&foundPath)))
+        if(isRequiredResource(theGame, Str_Text(&foundPath)))
         {
             Con_Message("\"%s\" is required by the current game and cannot be unloaded in isolation.\n",
                 F_PrettyPath(Str_Text(&foundPath)));
@@ -2410,7 +2404,7 @@ D_CMD(ReloadGame)
         Con_Message("No game is presently loaded.\n");
         return true;
     }
-    DD_ChangeGame2(DD_CurrentGame(), true);
+    DD_ChangeGame2(theGame, true);
     return true;
 }
 
@@ -2442,7 +2436,7 @@ D_CMD(ListGames)
         {
             Game* game = gamePtrs[i];
 
-            Con_Printf(" %s %-16s %s (%s)\n", DD_CurrentGame() == game? "*" :
+            Con_Printf(" %s %-16s %s (%s)\n", theGame == game? "*" :
                                           !allGameResourcesFound(game)? "!" : " ",
                        Str_Text(Game_IdentityKey(game)), Str_Text(Game_Title(game)),
                        Str_Text(Game_Author(game)));

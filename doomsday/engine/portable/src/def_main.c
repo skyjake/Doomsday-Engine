@@ -829,7 +829,7 @@ static void readAllDefinitions(void)
     // Now any definition files required by the game on load.
     if(DD_GameLoaded())
     {
-        Game* game = DD_CurrentGame();
+        Game* game = theGame;
         AbstractResource* const* records = Game_Resources(game, RC_DEFINITION, 0);
         AbstractResource* const* recordIt;
 
@@ -858,7 +858,7 @@ static void readAllDefinitions(void)
     {
         ddstring_t pattern;
         Str_Init(&pattern);
-        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(DD_CurrentGame())));
+        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
         F_AllResourcePaths(Str_Text(&pattern), autoDefsReader);
         Str_Free(&pattern);
     }
