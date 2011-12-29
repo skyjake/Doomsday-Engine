@@ -48,7 +48,7 @@ typedef struct {
 } skyvertex_t;
 
 typedef struct {
-    boolean fadeout;
+    boolean fadeout, texXFlip;
     Size2Raw texSize;
     float texOffset;
     ColorRawf capColor;
@@ -247,6 +247,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
     rs.texSize.width = rs.texSize.height = 0;
     if(setupCap != HC_NONE)
         rs.fadeout = false;
+    rs.texXFlip = true;
 
     if(renderTextures != 0)
     {
@@ -262,7 +263,10 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         {
             mat = R_SkyLayerMaterial(layer);
             if(!mat)
+            {
                 mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+                rs.texXFlip = false;
+            }
         }
         assert(mat);
 
@@ -348,7 +352,7 @@ static void renderSkyHemisphere(int flags)
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                glScalef(1024.f / rs.texSize.width, yflip? -1.0f : 1.0f, 1.0f);
+                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1.0f : -1.0f), yflip? -1.0f : 1.0f, 1.0f);
                 glTranslatef(rs.texOffset / rs.texSize.width, yflip? -1.0f : 0.0f, 0.0f);
             }
 
