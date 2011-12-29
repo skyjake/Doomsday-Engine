@@ -427,8 +427,8 @@ void DD_AdvanceTime(timespan_t time)
             if(oldGameTic == SECONDS_TO_TICKS(gameTime))
             {
 #ifdef _DEBUG
-                VERBOSE( Con_Message("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
-                                     oldGameTic, frameTimePos) );
+                VERBOSE2( Con_Message("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
+                                      oldGameTic, frameTimePos) );
 #endif
                 // Realign.
                 gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;
