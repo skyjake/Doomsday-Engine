@@ -1985,7 +1985,7 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
         return;
 
     // Make this an absolute path.
-    Str_Init(&src), Str_Set(&src, source);
+    Str_Init(&src); Str_Set(&src, source);
     Str_Strip(&src);
     F_FixSlashes(&src, &src);
     if(Str_RAt(&src, 0) != '/')
@@ -2011,7 +2011,7 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
         }
         vdm = &vdMappings[vdMappingsCount - 1];
 
-        Str_Init(&vdm->source), Str_Set(&vdm->source, Str_Text(&src));
+        Str_Init(&vdm->source); Str_Set(&vdm->source, Str_Text(&src));
         Str_Init(&vdm->destination);
         Str_Free(&src);
     }

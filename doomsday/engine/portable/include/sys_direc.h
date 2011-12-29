@@ -75,6 +75,7 @@ void Dir_SetPath(directory_t* dir, const char* path);
  * into their system-specific form. On Unix '~' expansion is applied.
  */
 void Dir_CleanPath(char* path, size_t len);
+void Dir_CleanPathStr(ddstring_t* str);
 
 /**
  * @return  Absolute path to the current working directory for the default drive.

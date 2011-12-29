@@ -400,11 +400,8 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
 
     if(!F_IsAbsolute(src))
     {
-        ddstring_t dir;
-        Str_Init(&dir);
-        F_FileDir(&dir, src);
-        Str_Prepend(dst, Str_Text(&dir));
-        Str_Free(&dir);
+        Str_Prepend(dst, Dir_CurrentPath());
+        Dir_CleanPathStr(dst);
         return true;
     }
 

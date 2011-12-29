@@ -265,6 +265,16 @@ void Dir_CleanPath(char* path, size_t len)
     resolveHomeRelativeDirectives(path, len);
 #endif
     Dir_FixSeparators(path, len);
+    resolvePathRelativeDirectives(path);
+}
+
+void Dir_CleanPathStr(ddstring_t* str)
+{
+    size_t len = Str_Length(str);
+    char* path = strdup(Str_Text(str));
+    Dir_CleanPath(path, len);
+    Str_Set(str, path);
+    free(path);
 }
 
 char* Dir_CurrentPath(void)

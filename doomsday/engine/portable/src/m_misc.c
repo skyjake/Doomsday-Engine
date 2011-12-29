@@ -133,12 +133,16 @@ void M_StripLeft(char* str)
 void M_StripRight(char* str, size_t len)
 {
     char* end;
+    int numZeroed = 0;
     if(NULL == str || 0 == len) return;
 
     end = str + strlen(str) - 1;
     while(end >= str && isspace(*end))
+    {
         end--;
-    memset(end + 1, 0, len - (end - str) - 2);
+        numZeroed++;
+    }
+    memset(end + 1, 0, numZeroed);
 }
 
 void M_Strip(char* str, size_t len)
