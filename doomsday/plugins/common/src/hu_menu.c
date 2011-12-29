@@ -22,8 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -57,10 +55,6 @@
 
 #include "hu_menu.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct cvarbutton_s {
     char            active;
     const char*     cvarname;
@@ -68,10 +62,6 @@ typedef struct cvarbutton_s {
     const char*     no;
     int             mask;
 } cvarbutton_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 int Hu_MenuActionInitNewGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
@@ -125,7 +115,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuDrawOptionsPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuDrawSoundPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuDrawGameplayPage(mn_page_t* page, const Point2Raw* origin);
-void Hu_MenuDrawHUDPage(mn_page_t* page, const Point2Raw* origin);
+void Hu_MenuDrawHudPage(mn_page_t* page, const Point2Raw* origin);
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuDrawInventoryPage(mn_page_t* page, const Point2Raw* origin);
 #endif
@@ -138,17 +128,11 @@ void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin);
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void initAllObjectsOnAllPages(void);
 
 static void Hu_MenuUpdateCursorState(void);
 
 static boolean Hu_MenuHasCursorRotation(mn_object_t* obj);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 cvarbutton_t mnCVarButtons[] = {
     { 0, "ctl-aim-noauto" },
@@ -273,8 +257,6 @@ cvarbutton_t mnCVarButtons[] = {
 int menuTime = 0;
 int menuFlashCounter = 0;
 boolean menuNominatingQuickSaveSlot = false;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mn_page_t* menuActivePage = NULL;
 static boolean menuActive = false;
@@ -992,7 +974,7 @@ mn_page_t HudMenu = {
     { 97, 28 },
 #endif
     { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
-    Hu_MenuDrawHUDPage, NULL,
+    Hu_MenuDrawHudPage, NULL,
     &OptionsMenu,
 #if __JHEXEN__
     //0, 15        // 21
@@ -1616,12 +1598,6 @@ ccmdtemplate_t menuCCmds[] = {
     { NULL }
 };
 
-// Code -------------------------------------------------------------------
-
-/**
- * Called during the PreInit of each game during start up
- * Register Cvars and CCmds for the operation/look of the menu.
- */
 void Hu_MenuRegister(void)
 {
     int i;
@@ -1673,7 +1649,7 @@ mn_page_t* Hu_MenuFindPageForName(const char* name)
         { NULL }
     };
     size_t i;
-    for(i = 0; NULL != pairs[i].page; ++i)
+    for(i = 0; pairs[i].page; ++i)
     {
         if(!stricmp(name, pairs[i].name))
         {
@@ -1690,7 +1666,7 @@ static boolean Hu_MenuHasCursorRotation(mn_object_t* obj)
     assert(obj);
     return (!(MNObject_Flags(obj) & MNF_DISABLED) &&
        ((MNObject_Type(obj) == MN_LIST && obj->cmdResponder == MNList_InlineCommandResponder) ||
-                 MNObject_Type(obj) == MN_SLIDER));
+        MNObject_Type(obj) == MN_SLIDER));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).
@@ -1707,7 +1683,7 @@ static void Hu_MenuUpdateCursorState(void)
             page = Hu_MenuActivePage();
 
         obj = MNPage_FocusObject(page);
-        if(NULL != obj)
+        if(obj)
         {
             cursorHasRotation = Hu_MenuHasCursorRotation(obj);
             return;
@@ -1718,15 +1694,16 @@ static void Hu_MenuUpdateCursorState(void)
 
 void Hu_MenuComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf)
 {
-    assert(NULL != page);
-    if(NULL == buf || 0 == bufSize) return;
-/*    snprintf(buf, bufSize, "PAGE %i/%i", (page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
-            (int)ceil((float)page->objectsCount/page->numVisObjects));*/
+    assert(page);
+    if(!buf || 0 == bufSize) return;
+    dd_snprintf(buf, bufSize, "PAGE %i/%i", 0, 0/*(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
+               (int)ceil((float)page->objectsCount/page->numVisObjects)*/);
 }
 
 void Hu_MenuLoadResources(void)
 {
     char buffer[9];
+    int i;
 
 #if __JDOOM__ || __JDOOM64__
     pMainTitle = R_DeclarePatch("M_DOOM");
@@ -1771,28 +1748,25 @@ void Hu_MenuLoadResources(void)
 #endif
 
 #if __JHERETIC__
-    { int i;
     for(i = 0; i < 18; ++i)
     {
         dd_snprintf(buffer, 9, "M_SKL%02d", i);
         pRotatingSkull[i] = R_DeclarePatch(buffer);
-    }}
+    }
 #endif
 
 #if __JHEXEN__
-    { int i;
     for(i = 0; i < 7; ++i)
     {
         dd_snprintf(buffer, 9, "FBUL%c0", 'A'+i);
         pBullWithFire[i] = R_DeclarePatch(buffer);
-    }}
+    }
 
     pPlayerClassBG[0] = R_DeclarePatch("M_FBOX");
     pPlayerClassBG[1] = R_DeclarePatch("M_CBOX");
     pPlayerClassBG[2] = R_DeclarePatch("M_MBOX");
 #endif
 
-    { int i;
     for(i = 0; i < MENU_CURSOR_FRAMECOUNT; ++i)
     {
 #if __JDOOM__ || __JDOOM64__
@@ -1801,7 +1775,7 @@ void Hu_MenuLoadResources(void)
         dd_snprintf(buffer, 9, "M_SLCTR%d", i+1);
 #endif
         pCursors[i] = R_DeclarePatch(buffer);
-    }}
+    }
 }
 
 void Hu_MenuInitSkillMenu(void)
@@ -1824,6 +1798,7 @@ static int compareWeaponPriority(const void* _a, const void* _b)
     const mndata_listitem_t* a = (const mndata_listitem_t*)_a;
     const mndata_listitem_t* b = (const mndata_listitem_t*)_b;
     int i = 0, aIndex = -1, bIndex = -1;
+
     do
     {
         if(cfg.weaponOrder[i] == a->data)
@@ -1831,17 +1806,16 @@ static int compareWeaponPriority(const void* _a, const void* _b)
         if(cfg.weaponOrder[i] == b->data)
             bIndex = i;
     } while(!(aIndex != -1 && bIndex != -1) && ++i < NUM_WEAPON_TYPES);
-    if(aIndex > bIndex)
-        return 1;
-    if(aIndex < bIndex)
-        return -1;
+
+    if(aIndex > bIndex) return 1;
+    if(aIndex < bIndex) return -1;
     return 0; // Should never happen.
 }
 
 void Hu_MenuInitWeaponsMenu(void)
 {
     qsort(listit_weapons_order, NUMLISTITEMS(listit_weapons_order),
-        sizeof(listit_weapons_order[0]), compareWeaponPriority);
+          sizeof(listit_weapons_order[0]), compareWeaponPriority);
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -1951,8 +1925,8 @@ void Hu_MenuInitPlayerClassMenu(void)
     while(n < count)
     {
         classinfo_t* info = PCLASS_INFO(n++);
-        if(!info->userSelectable)
-            continue;
+
+        if(!info->userSelectable) continue;
 
         obj->_type = MN_BUTTON;
         btn->text = info->niceName;
@@ -2135,7 +2109,7 @@ mn_page_t* Hu_MenuActivePage(void)
 void Hu_MenuSetActivePage(mn_page_t* page)
 {
     if(!menuActive) return;
-    if(NULL == page) return;
+    if(!page) return;
 
     if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
     {
@@ -2253,7 +2227,7 @@ void Hu_MenuDrawer(void)
 
     // First determine whether the focus cursor should be visible.
     focusObj = MNPage_FocusObject(Hu_MenuActivePage());
-    if(NULL != focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
+    if(focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
     {
         if(MNObject_Type(focusObj) == MN_COLORBOX || MNObject_Type(focusObj) == MN_BINDINGS)
         {
@@ -2276,7 +2250,7 @@ void Hu_MenuDrawer(void)
     GL_EndBorderedProjection(&bp);
 
     // Drawing any overlays?
-    if(NULL != focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
+    if(focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
     {
         switch(MNObject_Type(focusObj))
         {
@@ -2308,9 +2282,10 @@ void Hu_MenuDrawer(void)
 void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
 {
 #if 0
-    assert(NULL != page);
-    {
-    int index = MAX_OF(0, page->focus), oldIndex = index;
+    int index;
+    assert(page);
+
+    oldIndex = index = MAX_OF(0, page->focus);
 
     if(pageDelta < 0)
     {
@@ -2332,7 +2307,6 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
         S_LocalSound(SFX_MENU_NAV_RIGHT, NULL);
         MNPage_SetFocus(page, page->objects + index);
     }
-    }
 #endif
 }
 
@@ -2349,7 +2323,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_BUTTON: {
             const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
             mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-            if(NULL != action && action->callback == Hu_MenuCvarButton)
+            if(action && action->callback == Hu_MenuCvarButton)
             {
                 cvarbutton_t* cvb;
                 if(obj->data1)
@@ -2361,6 +2335,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
                     btn->text = cvb->active ? cvb->yes : cvb->no;
                     continue;
                 }
+
                 // Find the cvarbutton representing this one.
                 for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
                 {
@@ -2381,7 +2356,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_LIST: {
             const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
             mndata_list_t* list = (mndata_list_t*) obj->_typedata;
-            if(NULL != action && action->callback == Hu_MenuCvarList)
+            if(action && action->callback == Hu_MenuCvarList)
             {
                 MNList_SelectItemByValue(obj, MNLIST_SIF_NO_ACTION, Con_GetInteger(list->data));
             }
@@ -2390,7 +2365,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_EDIT: {
             const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
             mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-            if(NULL != action && action->callback == Hu_MenuCvarEdit)
+            if(action && action->callback == Hu_MenuCvarEdit)
             {
                 MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Con_GetString(edit->data1));
             }
@@ -2399,7 +2374,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_SLIDER: {
             const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
             mndata_slider_t* sldr = (mndata_slider_t*) obj->_typedata;
-            if(NULL != action && action->callback == Hu_MenuCvarSlider)
+            if(action && action->callback == Hu_MenuCvarSlider)
             {
                 float value;
                 if(sldr->floatMode)
@@ -2413,7 +2388,7 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
         case MN_COLORBOX: {
             const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
             mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->_typedata;
-            if(NULL != action && action->callback == Hu_MenuCvarColorBox)
+            if(action && action->callback == Hu_MenuCvarColorBox)
             {
                 float rgba[4];
                 rgba[CR] = Con_GetFloat(cbox->data1);
@@ -2544,7 +2519,7 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd)
 
 static void fallbackCommandResponder(mn_page_t* page, menucommand_e cmd)
 {
-    assert(NULL != page);
+    assert(page);
     switch(cmd)
     {
     case MCMD_NAV_PAGEUP:
@@ -2557,7 +2532,7 @@ static void fallbackCommandResponder(mn_page_t* page, menucommand_e cmd)
     case MCMD_NAV_DOWN: {
         mn_object_t* obj = MNPage_FocusObject(page);
         // An object on this page must have focus in order to navigate.
-        if(NULL != obj)
+        if(obj)
         {
             int i = 0, giveFocus = page->focus;
             do
@@ -2605,7 +2580,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj)
+        if(obj)
         {
             switch(MNObject_Type(obj))
             {
@@ -2627,15 +2602,8 @@ static menucommand_e translateCommand(menucommand_e cmd)
 
 void Hu_MenuCommand(menucommand_e cmd)
 {
-    //uint firstVisible, lastVisible; // first and last visible obj
-    //uint numVisObjectsOffset = 0;
     mn_page_t* page;
     mn_object_t* obj;
-
-    /*firstVisible = page->firstObject;
-    lastVisible = firstVisible + page->numVisObjects - 1 - numVisObjectsOffset;
-    if(lastVisible > page->objectsCount - 1 - numVisObjectsOffset)
-        lastVisible = page->objectsCount - 1 - numVisObjectsOffset;*/
 
     cmd = translateCommand(cmd);
 
@@ -2710,14 +2678,14 @@ void Hu_MenuCommand(menucommand_e cmd)
 
     // Try the current focus object.
     obj = MNPage_FocusObject(page);
-    if(NULL != obj && NULL != obj->cmdResponder)
+    if(obj && obj->cmdResponder)
     {
         if(obj->cmdResponder(obj, cmd))
             return;
     }
 
     // Try the page's cmd responder.
-    if(NULL != page->cmdResponder)
+    if(page->cmdResponder)
     {
         if(page->cmdResponder(page, cmd))
             return;
@@ -2731,9 +2699,9 @@ int Hu_MenuPrivilegedResponder(event_t* ev)
     if(Hu_MenuIsActive())
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj && !(MNObject_Flags(obj) & MNF_DISABLED))
+        if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
         {
-            if(NULL != obj->privilegedResponder)
+            if(obj->privilegedResponder)
             {
                 return obj->privilegedResponder(obj, ev);
             }
@@ -2747,9 +2715,9 @@ int Hu_MenuResponder(event_t* ev)
     if(Hu_MenuIsActive())
     {
         mn_object_t* obj = MNPage_FocusObject(Hu_MenuActivePage());
-        if(NULL != obj && !(MNObject_Flags(obj) & MNF_DISABLED))
+        if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
         {
-            if(NULL != obj->responder)
+            if(obj->responder)
             {
                 return obj->responder(obj, ev);
             }
@@ -2762,7 +2730,7 @@ int Hu_MenuFallbackResponder(event_t* ev)
 {
     mn_page_t* page = Hu_MenuActivePage();
 
-    if(!Hu_MenuIsActive() || NULL == page) return false;
+    if(!Hu_MenuIsActive() || !page) return false;
 
     if(cfg.menuShortcutsEnabled)
     {
@@ -2791,16 +2759,15 @@ int Hu_MenuFallbackResponder(event_t* ev)
  */
 int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     const int saveSlot = edit->data2;
+
     if(MNA_ACTIVEOUT != action) return 1;
+
     MNPage_SetFocus(&SaveMenu, MNPage_FindObject(&SaveMenu, 0, obj->data2));
     G_LoadGame(saveSlot);
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
-    }
 }
 
 void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin)
@@ -2976,6 +2943,8 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuUpdateGameSaveWidgets(void)
 {
+    int i;
+
     if(!menuActive) return;
 
     // Prompt a refresh of the game-save info. We don't yet actively monitor
@@ -2984,7 +2953,6 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     SV_UpdateGameSaveInfo();
 
     // Update widgets.
-    { int i;
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         /// \fixme Find object by id.
@@ -3000,7 +2968,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
             MNObject_SetFlags(obj, FO_CLEAR, MNF_DISABLED);
         }
         MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, text);
-    }}
+    }
 }
 
 /**
@@ -3008,8 +2976,6 @@ void Hu_MenuUpdateGameSaveWidgets(void)
  */
 int Hu_MenuSelectSaveSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     const int saveSlot = edit->data2;
     const char* saveName = MNEdit_Text(obj);
@@ -3022,20 +2988,16 @@ int Hu_MenuSelectSaveSlot(mn_object_t* obj, mn_actionid_t action, void* paramate
         menuNominatingQuickSaveSlot = false;
     }
 
-    if(!G_SaveGame2(saveSlot, saveName))
-        return 0;
+    if(!G_SaveGame2(saveSlot, saveName)) return 0;
 
     MNPage_SetFocus(&SaveMenu, MN_MustFindObjectOnPage(&SaveMenu, 0, obj->data2));
     MNPage_SetFocus(&LoadMenu, MN_MustFindObjectOnPage(&LoadMenu, 0, obj->data2));
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
-    }
 }
 
 int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     const cvarbutton_t* cb = obj->data1;
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
@@ -3046,8 +3008,7 @@ int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters)
     //strcpy(btn->text, cb->active? cb->yes : cb->no);
     btn->text = cb->active? cb->yes : cb->no;
 
-    if(CVT_NULL == varType)
-        return 0;
+    if(CVT_NULL == varType) return 0;
 
     if(cb->mask)
     {
@@ -3068,13 +3029,10 @@ int Hu_MenuCvarButton(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 
     Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
     return 0;
-    }
 }
 
 int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     const mndata_list_t* list = (mndata_list_t*) obj->_typedata;
     const mndata_listitem_t* item;
     cvartype_t varType;
@@ -3082,12 +3040,10 @@ int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 
     if(MNA_MODIFIED != action) return 1;
 
-    if(MNList_Selection(obj) < 0)
-        return 0; // Hmm?
+    if(MNList_Selection(obj) < 0) return 0; // Hmm?
 
     varType = Con_GetVariableType(list->data);
-    if(CVT_NULL == varType)
-        return 0;
+    if(CVT_NULL == varType) return 0;
 
     item = &((mndata_listitem_t*) list->items)[list->selection];
     if(list->mask)
@@ -3113,13 +3069,12 @@ int Hu_MenuCvarList(mn_object_t* obj, mn_actionid_t action, void* paramaters)
         break;
     }
     return 0;
-    }
 }
 
 int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
     if(MNA_ACTIVE != action) return 1;
+
     // Are we suggesting a new name?
     if(cfg.menuGameSaveSuggestName)
     {
@@ -3132,11 +3087,11 @@ int Hu_MenuSaveSlotEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters
 
 int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     const mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     cvartype_t varType = Con_GetVariableType(edit->data1);
+
     if(MNA_MODIFIED != action) return 1;
+
     switch(varType)
     {
     case CVT_CHARPTR:
@@ -3152,21 +3107,17 @@ int Hu_MenuCvarEdit(mn_object_t* obj, mn_actionid_t action, void* paramaters)
     default: break;
     }
     return 0;
-    }
 }
 
 int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     const mndata_slider_t* sldr = obj->_typedata;
     cvartype_t varType = Con_GetVariableType(sldr->data1);
     float value = MNSlider_Value(obj);
 
     if(MNA_MODIFIED != action) return 1;
 
-    if(CVT_NULL == varType)
-        return 0;
+    if(CVT_NULL == varType) return 0;
 
     switch(varType)
     {
@@ -3190,7 +3141,6 @@ int Hu_MenuCvarSlider(mn_object_t* obj, mn_actionid_t action, void* paramaters)
         break;
     }
     return 0;
-    }
 }
 
 int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* paramaters)
@@ -3301,124 +3251,55 @@ void Hu_MenuDrawOptionsPage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuDrawSoundPage(mn_page_t* page, const Point2Raw* origin)
 {
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3("SOUND OPTIONS", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle("Sound Options", SCREENWIDTH/2, origin->y - 28);
 }
 
 void Hu_MenuDrawGameplayPage(mn_page_t* page, const Point2Raw* origin)
 {
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3("GAMEPLAY", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle("Gameplay", SCREENWIDTH/2, origin->y - 28);
 }
 
 void Hu_MenuDrawWeaponsPage(mn_page_t* page, const Point2Raw* origin)
 {
-/*#if __JDOOM__ || __JDOOM64__
-    char buf[1024];
-#endif*/
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3("WEAPONS", SCREENWIDTH/2, origin->y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-/*#if __JDOOM__ || __JDOOM64__
-    Hu_MenuComposeSubpageString(page, 1024, buf);
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3(buf, SCREENWIDTH/2, origin->y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-#elif __JHERETIC__
-    // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, origin->y - 22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - origin->x, origin->y - 22);
-#endif*/
+    Hu_MenuDrawPageTitle("Weapons", SCREENWIDTH/2, origin->y - 28);
+    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
 
     /// \kludge Inform the user how to change the order.
     /*{ mn_object_t* obj = MNPage_FocusObject(page);
     if(obj && obj == &page->objects[1])
     {
         const char* str = "Use left/right to move weapon up/down";
+
+        DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
         FR_DrawTextXY3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+        DGL_Disable(DGL_TEXTURE_2D);
     }}*/
     // kludge end.
-
-    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuDrawInventoryPage(mn_page_t* page, const Point2Raw* origin)
 {
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-
-    FR_DrawTextXY3("Inventory Options", SCREENWIDTH/2, origin->y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle("Inventory Options", SCREENWIDTH/2, origin->y - 28);
 }
 #endif
 
-void Hu_MenuDrawHUDPage(mn_page_t* page, const Point2Raw* origin)
+void Hu_MenuDrawHudPage(mn_page_t* page, const Point2Raw* origin)
 {
-/*#if __JDOOM__ || __JDOOM64__
-    char buf[1024];
-#endif*/
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3("HUD options", SCREENWIDTH/2, origin->y - 20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-/*#if __JDOOM__ || __JDOOM64__
-    Hu_MenuComposeSubpageString(page, 1024, buf);
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorAndAlpha(1, .7f, .3f, mnRendState->pageAlpha);
-    FR_DrawTextXY3(buf, origin->x + SCREENWIDTH/2, origin->y + -12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-#else
-    // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], origin->x, origin->y + -22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - origin->x, origin->y + -22);
-#endif*/
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle("HUD options", SCREENWIDTH/2, origin->y - 28);
+    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
 }
 
 void Hu_MenuDrawMultiplayerPage(mn_page_t* page, const Point2Raw* origin)
 {
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-
-    FR_DrawTextXY3(GET_TXT(TXT_MULTIPLAYER), origin->x + 60, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_MULTIPLAYER), SCREENWIDTH/2, origin->y - 28);
 }
 
 void Hu_MenuDrawPlayerSetupPage(mn_page_t* page, const Point2Raw* origin)
 {
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-
-    FR_DrawTextXY3(GET_TXT(TXT_PLAYERSETUP), origin->x + 90, origin->y - 25, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, origin->y - 28);
 }
 
 int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* paramaters)
@@ -3431,8 +3312,6 @@ int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* par
 
 int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     float value = MNSlider_Value(obj);
     /// \fixme Find object by id.
     mn_object_t* cboxMix = &ColorWidgetMenu.objects[0];
@@ -3449,7 +3328,6 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* 
         Con_Error("Hu_MenuUpdateColorWidgetColor: Invalid value (%i) for data2.", obj->data2);
     }
     return 0;
-    }
 }
 
 int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* paramaters)
@@ -3573,8 +3451,6 @@ int Hu_MenuSelectPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* param
 #if __JHEXEN__
 int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     int selection;
     if(MNA_MODIFIED != action) return 1;
 
@@ -3586,14 +3462,11 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, 
         MNMobjPreview_SetMobjType(mop, PCLASS_INFO(selection)->mobjType);
     }
     return 0;
-    }
 }
 #endif
 
 int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     int selection;
     if(MNA_MODIFIED != action) return 1;
 
@@ -3604,7 +3477,6 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
         MNMobjPreview_SetTranslationMap(mop, selection);
     }
     return 0;
-    }
 }
 
 int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters)
@@ -3767,8 +3639,6 @@ int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* param
 
 int Hu_MenuFocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    assert(obj);
-    {
     playerclass_t plrClass = (playerclass_t)obj->data2;
     mn_object_t* mop;
 
@@ -3780,7 +3650,6 @@ int Hu_MenuFocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* para
 
     Hu_MenuDefaultFocusAction(obj, action, paramaters);
     return 0;
-    }
 }
 #endif
 
@@ -3880,20 +3749,55 @@ int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* 
  */
 void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin)
 {
+    Hu_MenuDrawPageTitle("Automap Options", SCREENWIDTH/2, origin->y - 28);
+    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
+}
+
+void Hu_MenuDrawPageTitle(const char* title, int x, int y)
+{
+    if(!title) return;
+
     DGL_Enable(DGL_TEXTURE_2D);
-
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    FR_DrawTextXY3("Automap OPTIONS", SCREENWIDTH/2, origin->y-26, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_SetColorv(cfg.menuTextColors[0]);
+    FR_SetAlpha(mnRendState->pageAlpha);
 
-/*#if __JHERETIC__ || __JHEXEN__
-    // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, mnRendState->page_alpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], origin->x, origin->y - 22);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (menuTime & 8)], 312 - origin->x, origin->y - 22);
-#endif*/
+    FR_DrawTextXY3(title, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
+}
+
+void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y)
+{
+#if __JDOOM__ || __JDOOM64__
+    char buf[1024];
+
+    if(!page) return;
+
+    Hu_MenuComposeSubpageString(page, 1024, buf);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetAlpha(mnRendState->pageAlpha);
+
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#else
+    const boolean havePrevPage = true;//page->firstObject;
+    const boolean haveNextPage = true;//!(page->firstObject + page->numVisObjects >= page->objectsCount);
+
+    if(!page) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+
+    GL_DrawPatchXY2( pInvPageLeft[!havePrevPage || (menuTime & 8)], x - 152, y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[!haveNextPage || (menuTime & 8)], x + 152, y, ALIGN_LEFT);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#endif
 }
 
 D_CMD(MenuOpen)

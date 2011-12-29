@@ -103,8 +103,11 @@ extern mn_page_t InventoryMenu;
 #endif
 extern mn_page_t WeaponMenu;
 
+extern int menuTime;
+
 extern boolean menuNominatingQuickSaveSlot;
 
+/// Register the console commands, variables, etc..., of this module.
 void Hu_MenuRegister(void);
 
 /**
@@ -137,6 +140,10 @@ boolean Hu_MenuIsVisible(void);
 void Hu_MenuDrawer(void);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
+
+void Hu_MenuDrawPageTitle(const char* title, int x, int y);
+
+void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y);
 
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuPrivilegedResponder(event_t* ev);

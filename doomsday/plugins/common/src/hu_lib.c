@@ -70,7 +70,6 @@ static patchid_t pEditMiddle;
 
 static void MNSlider_LoadResources(void);
 static void MNEdit_LoadResources(void);
-static void MNPage_CalcNumVisObjects(mn_page_t* page);
 
 static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id);
 
@@ -772,12 +771,6 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     FR_SetShadowStrength(rs.textShadow);
     FR_SetGlitterStrength(rs.textGlitter);
 
-    /*if(page->unscaled.numVisObjects)
-    {
-        page->numVisObjects = page->unscaled.numVisObjects / cfg.menuScale;
-        page->offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - page->unscaled.y) / cfg.menuScale;
-    }*/
-
     if(page->drawer)
     {
         FR_PushAttrib();
@@ -788,8 +781,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
-    for(i = 0/*page->firstObject*/;
-        i < page->objectsCount /*&& i < page->firstObject + page->numVisObjects*/; ++i)
+    for(i = 0; i < page->objectsCount; ++i)
     {
         mn_object_t* obj = &page->objects[i];
 
@@ -902,14 +894,11 @@ static void MNPage_GiveChildFocus(mn_page_t* page, mn_object_t* obj, boolean all
     {
         MNObject_ExecAction(obj, MNA_FOCUS, NULL);
     }
-    MNPage_CalcNumVisObjects(page);
 }
 
 void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
 {
     int objIndex = MNPage_FindObjectIndex(page, obj);
-    assert(page);
-
     if(objIndex < 0)
     {
 #if _DEBUG
@@ -920,26 +909,15 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
     MNPage_GiveChildFocus(page, page->objects + objIndex, false);
 }
 
-static void MNPage_CalcNumVisObjects(mn_page_t* page)
-{
-/*    page->firstObject = MAX_OF(0, page->focus - page->numVisObjects/2);
-    page->firstObject = MIN_OF(page->firstObject, page->objectsCount - page->numVisObjects);
-    page->firstObject = MAX_OF(0, page->firstObject);*/
-}
-
 void MNPage_Initialize(mn_page_t* page)
 {
-    assert(NULL != page);
+    mn_object_t* obj;
+    int i;
+    assert(page);
+
     // (Re)init objects.
-    { int i; mn_object_t* obj;
     for(i = 0, obj = page->objects; i < page->objectsCount; ++i, obj++)
     {
-        // Calculate real coordinates.
-        /*obj->x = UI_ScreenX(obj->relx);
-        obj->w = UI_ScreenW(obj->relw);
-        obj->y = UI_ScreenY(obj->rely);
-        obj->h = UI_ScreenH(obj->relh);*/
-
         switch(MNObject_Type(obj))
         {
         case MN_TEXT:
@@ -967,9 +945,7 @@ void MNPage_Initialize(mn_page_t* page)
             {
                 edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
             }
-            // Update text.
-            //memset(obj->text, 0, sizeof(obj->text));
-            //strncpy(obj->text, edit->ptr, 255);
+
             break;
           }
         case MN_LIST: {
@@ -985,7 +961,6 @@ void MNPage_Initialize(mn_page_t* page)
             }
 
             // Determine number of potentially visible items.
-            //list->numvis = (obj->h - 2 * UI_BORDER) / listItemHeight(list);
             list->numvis = list->count;
             if(list->selection >= 0)
             {
@@ -994,7 +969,6 @@ void MNPage_Initialize(mn_page_t* page)
                 if(list->selection > list->first + list->numvis - 1)
                     list->first = list->selection - list->numvis + 1;
             }
-            //UI_InitColumns(obj);
             break;
           }
         case MN_COLORBOX: {
@@ -1007,10 +981,9 @@ void MNPage_Initialize(mn_page_t* page)
                 cbox->height = MNDATA_COLORBOX_HEIGHT;
             break;
           }
-        default:
-            break;
+        default: break;
         }
-    }}
+    }
 
     if(0 == page->objectsCount)
     {
@@ -1023,6 +996,7 @@ void MNPage_Initialize(mn_page_t* page)
     if(0 > page->focus)
     {
         int i, giveFocus = -1;
+
         // First look for a default focus object. There should only be one
         // but find the last with this flag...
         for(i = 0; i < page->objectsCount; ++i)
@@ -1050,13 +1024,12 @@ void MNPage_Initialize(mn_page_t* page)
         {
             MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
         }
+#if _DEBUG
         else
         {
-#if _DEBUG
             Con_Message("Warning:MNPage::Initialize: No focusable object on page.\n");
-#endif
-            MNPage_CalcNumVisObjects(page);
         }
+#endif
     }
     else
     {
@@ -1067,7 +1040,7 @@ void MNPage_Initialize(mn_page_t* page)
 
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 {
-    assert(NULL != page);
+    assert(page);
     if(!VALID_MNPAGE_FONTID(id))
     {
 #if _DEBUG
@@ -1081,10 +1054,10 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
 
 void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
 {
-    assert(NULL != page);
-    {
     uint colorIndex;
-    if(NULL == rgb)
+    assert(page);
+
+    if(!rgb)
     {
 #if _DEBUG
         Con_Error("MNPage::PredefinedColor: Invalid 'rgb' reference.");
@@ -1101,11 +1074,11 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
         rgb[CR] = rgb[CG] = rgb[CB] = 1;
         return;
     }
+
     colorIndex = page->colors[id];
     rgb[CR] = cfg.menuTextColors[colorIndex][CR];
     rgb[CG] = cfg.menuTextColors[colorIndex][CG];
     rgb[CB] = cfg.menuTextColors[colorIndex][CB];
-    }
 }
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj)
@@ -1217,13 +1190,13 @@ const mn_actioninfo_t* MNObject_Action(mn_object_t* obj, mn_actionid_t id)
 boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t id)
 {
     mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
-    return (NULL != info && MNActionInfo_IsActionExecuteable(info));
+    return (info && MNActionInfo_IsActionExecuteable(info));
 }
 
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
 {
     mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
-    if(NULL != info && MNActionInfo_IsActionExecuteable(info))
+    if(info && MNActionInfo_IsActionExecuteable(info))
     {
         return info->callback(obj, id, paramaters);
     }
@@ -1413,9 +1386,9 @@ void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* _origin)
 
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
-    assert(NULL != obj && obj->_type == MN_EDIT);
-    {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
+    assert(obj->_type == MN_EDIT);
+
     switch(cmd)
     {
     case MCMD_SELECT:
@@ -1453,27 +1426,23 @@ int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e cmd)
             return true;
         }
         break;
-    default:
-        break;
+    default: break;
     }
     return false; // Not eaten.
-    }
 }
 
 const char* MNEdit_Text(mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_EDIT);
-    {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
+    assert(obj->_type == MN_EDIT);
     return edit->text;
-    }
 }
 
 void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
 {
-    assert(NULL != obj && obj->_type == MN_EDIT);
-    {
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
+    assert(obj && obj->_type == MN_EDIT);
+
     //strncpy(edit->ptr, Con_GetString(edit->data), edit->maxLen);
     dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
     if(flags & MNEDIT_STF_REPLACEOLD)
@@ -1484,7 +1453,6 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
     {
         MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
     }
-    }
 }
 
 /**
@@ -1492,11 +1460,10 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
  */
 int MNEdit_Responder(mn_object_t* obj, event_t* ev)
 {
-    assert(NULL != obj && obj->_type == MN_EDIT);
-    {
     mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
     int ch = -1;
     char* ptr;
+    assert(obj && obj->_type == MN_EDIT);
 
     if(!(obj->_flags & MNF_ACTIVE) || ev->type != EV_KEY)
         return false;
@@ -1548,7 +1515,6 @@ int MNEdit_Responder(mn_object_t* obj, event_t* ev)
     }
 
     return false;
-    }
 }
 
 void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
@@ -1691,28 +1657,24 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 
 int MNList_Selection(mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
-    {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    assert(obj && obj->_type == MN_LIST);
     return list->selection;
-    }
 }
 
 boolean MNList_SelectionIsVisible(mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
-    {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    assert(obj && obj->_type == MN_LIST);
     return (list->selection >= list->first && list->selection < list->first + list->numvis);
-    }
 }
 
 int MNList_FindItem(const mn_object_t* obj, int dataValue)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
-    {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int i;
+    assert(obj && obj->_type == MN_LIST);
+
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*) list->items)[i];
@@ -1727,15 +1689,14 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue)
         }
     }
     return -1;
-    }
 }
 
 boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
 {
-    assert(NULL != obj && obj->_type == MN_LIST);
-    {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int oldSelection = list->selection;
+    assert(obj && obj->_type == MN_LIST);
+
     if(0 > itemIndex || itemIndex >= list->count) return false;
 
     list->selection = itemIndex;
@@ -1746,7 +1707,6 @@ boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
         MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
     }
     return true;
-    }
 }
 
 boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
@@ -2038,65 +1998,54 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 
 void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
-    assert(obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
+
     obj->_geometry.size.width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
     obj->_geometry.size.height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
-    }
 }
 
 boolean MNColorBox_RGBAMode(mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
     return cbox->rgbaMode;
-    }
 }
 
 float MNColorBox_Redf(const mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
     return cbox->r;
-    }
 }
 
 float MNColorBox_Greenf(const mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
     return cbox->g;
-    }
 }
 
 float MNColorBox_Bluef(const mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
     return cbox->b;
-    }
 }
 
 float MNColorBox_Alphaf(const mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     const mndata_colorbox_t* cbox = (const mndata_colorbox_t*) obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
     return (cbox->rgbaMode? cbox->a : 1.0f);
-    }
 }
 
 boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldRed = cbox->r;
+    assert(obj->_type == MN_COLORBOX);
+
     cbox->r = red;
     if(cbox->r != oldRed)
     {
@@ -2107,15 +2056,14 @@ boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red)
         return true;
     }
     return false;
-    }
 }
 
 boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldGreen = cbox->g;
+    assert(obj->_type == MN_COLORBOX);
+
     cbox->g = green;
     if(cbox->g != oldGreen)
     {
@@ -2126,15 +2074,14 @@ boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green)
         return true;
     }
     return false;
-    }
 }
 
 boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     float oldBlue = cbox->b;
+    assert(obj->_type == MN_COLORBOX);
+
     cbox->b = blue;
     if(cbox->b != oldBlue)
     {
@@ -2145,14 +2092,13 @@ boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue)
         return true;
     }
     return false;
-    }
 }
 
 boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    assert(obj->_type == MN_COLORBOX);
+
     if(cbox->rgbaMode)
     {
         float oldAlpha = cbox->a;
@@ -2167,16 +2113,14 @@ boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha)
         }
     }
     return false;
-    }
 }
 
 boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
     float blue, float alpha)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    {
     //mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
     int setComps = 0, setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
+    assert(obj->_type == MN_COLORBOX);
 
     if(MNColorBox_SetRedf(  obj, setCompFlags, red))   setComps |= 0x1;
     if(MNColorBox_SetGreenf(obj, setCompFlags, green)) setComps |= 0x2;
@@ -2190,62 +2134,61 @@ boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float gree
         MNObject_ExecAction(obj, MNA_MODIFIED, NULL);
     }
     return true;
-    }
 }
 
 boolean MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4])
 {
-    if(NULL == rgba) return false;
+    if(!rgba) return false;
     return MNColorBox_SetColor4f(obj, flags, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 }
 
 boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* other)
 {
-    assert(NULL != obj && obj->_type == MN_COLORBOX);
-    if(other == NULL)
+    assert(obj->_type == MN_COLORBOX);
+    if(!other)
     {
 #if _DEBUG
         Con_Error("MNColorBox::CopyColor: Called with invalid 'other' argument.");
 #endif
         return false;
     }
-    return MNColorBox_SetColor4f(obj, flags, MNColorBox_Redf(other), MNColorBox_Greenf(other), MNColorBox_Bluef(other), MNColorBox_Alphaf(other));
+    return MNColorBox_SetColor4f(obj, flags, MNColorBox_Redf(other),
+                                             MNColorBox_Greenf(other),
+                                             MNColorBox_Bluef(other),
+                                             MNColorBox_Alphaf(other));
 }
 
 float MNSlider_Value(const mn_object_t* obj)
 {
-    assert(NULL != obj && obj->_type == MN_SLIDER);
-    {
     const mndata_slider_t* sldr = (const mndata_slider_t*)obj->_typedata;
+    assert(obj->_type == MN_SLIDER);
+
     if(sldr->floatMode)
     {
         return sldr->value;
     }
     return (int) (sldr->value + (sldr->value > 0? .5f : -.5f));
-    }
 }
 
 void MNSlider_SetValue(mn_object_t* obj, int flags, float value)
 {
-    assert(NULL != obj && obj->_type == MN_SLIDER);
-    {
     mndata_slider_t* sldr = (mndata_slider_t*)obj->_typedata;
+    assert(obj->_type == MN_SLIDER);
+
     if(sldr->floatMode)
         sldr->value = value;
     else
         sldr->value = (int) (value + (value > 0? + .5f : -.5f));
-    }
 }
 
 int MNSlider_ThumbPos(const mn_object_t* obj)
 {
 #define WIDTH           (middleInfo.geometry.size.width)
 
-    assert(obj && obj->_type == MN_SLIDER);
-    {
     mndata_slider_t* data = (mndata_slider_t*)obj->_typedata;
     float range = data->max - data->min, useVal;
     patchinfo_t middleInfo;
+    assert(obj->_type == MN_SLIDER);
 
     if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return 0;
 
@@ -2254,7 +2197,7 @@ int MNSlider_ThumbPos(const mn_object_t* obj)
     useVal = MNSlider_Value(obj) - data->min;
     //return obj->x + UI_BAR_BORDER + butw + useVal / range * (obj->w - UI_BAR_BORDER * 2 - butw * 3);
     return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
-    }
+
 #undef WIDTH
 }
 
@@ -2381,14 +2324,13 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     int precision, const char* defaultString, const char* templateString,
     const char* onethSuffix, const char* nthSuffix, size_t bufSize, char* buf)
 {
-    assert(0 != bufSize && NULL != buf);
-    {
-    boolean haveTemplateString = (NULL != templateString && templateString[0]);
-    boolean haveDefaultString  = (NULL != defaultString && defaultString[0]);
-    boolean haveOnethSuffix    = (NULL != onethSuffix && onethSuffix[0]);
-    boolean haveNthSuffix      = (NULL != nthSuffix && nthSuffix[0]);
+    const boolean haveTemplateString = (templateString && templateString[0]);
+    const boolean haveDefaultString  = (defaultString && defaultString[0]);
+    const boolean haveOnethSuffix    = (onethSuffix && onethSuffix[0]);
+    const boolean haveNthSuffix      = (nthSuffix && nthSuffix[0]);
     const char* suffix = NULL;
     char textualValue[11];
+    assert(0 != bufSize && buf);
 
     // Is the default-value-string in use?
     if(haveDefaultString && INRANGE_OF(value, defaultValue, .0001f))
@@ -2452,7 +2394,6 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
     }
 
     return buf;
-    }
 }
 
 void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page)

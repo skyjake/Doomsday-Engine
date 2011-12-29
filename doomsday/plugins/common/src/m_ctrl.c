@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * Common controls menu.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
@@ -46,8 +40,6 @@
 #include "hu_menu.h"
 #include "m_ctrl.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
 #define CCF_INVERSE             0x2
@@ -56,8 +48,6 @@
 #define CCF_SIDESTEP_MODIFIER   0x10
 
 #define SMALL_SCALE             .75f
-
-// TYPES -------------------------------------------------------------------
 
 // Binding iteration flags
 #define MIBF_IGNORE_REPEATS     0x1
@@ -72,14 +62,6 @@ typedef struct bindingdrawerdata_s {
     Point2Raw origin;
     float alpha;
 } bindingdrawerdata_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 static mn_object_t* ControlsMenuItems;
 static mndata_text_t* ControlsMenuTexts;
@@ -104,10 +86,6 @@ mn_page_t ControlsMenu = {
     //0, 16, { 16, 21 }
 #endif
 };
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mndata_bindings_t controlConfig[] =
 {
@@ -288,8 +266,6 @@ static mndata_bindings_t controlConfig[] =
     { "Cancel", "message", 0, "messagecancel" },
 };
 
-// CODE --------------------------------------------------------------------
-
 static void deleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void* data)
 {
     DD_Executef(true, "delbind %i", bid);
@@ -329,12 +305,12 @@ void Hu_MenuInitControlsPage(void)
     // Allocate the menu items array.
     totalItems = textCount + bindingsCount + 1/*terminator*/;
     ControlsMenuItems = (mn_object_t*)Z_Calloc(sizeof(*ControlsMenuItems) * totalItems, PU_GAMESTATIC, 0);
-    if(NULL == ControlsMenuItems)
+    if(!ControlsMenuItems)
         Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for items array.",
             (unsigned long) (sizeof(*ControlsMenuItems) * totalItems));
 
     ControlsMenuTexts = (mndata_text_t*)Z_Calloc(sizeof(*ControlsMenuTexts) * textCount, PU_GAMESTATIC, 0);
-    if(NULL == ControlsMenuTexts)
+    if(!ControlsMenuTexts)
         Con_Error("Hu_MenuInitControlsPage: Failed on allocation of %lu bytes for texts array.",
             (unsigned long) (sizeof(*ControlsMenuTexts) * textCount));
 
@@ -488,13 +464,12 @@ static const char* findInString(const char* str, const char* token, int n)
 static void iterateBindings(const mndata_bindings_t* binds, const char* bindings, int flags, void* data,
     void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
 {
-    assert(NULL != binds);
-    {
     const char* ptr = strchr(bindings, ':');
     const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     char buf[80], *b;
     boolean isInverse;
     int bid;
+    assert(binds);
 
     memset(buf, 0, sizeof(buf));
 
@@ -583,7 +558,6 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
 
         ptr = strchr(ptr, ':');
     }
-    }
 }
 
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
@@ -655,30 +629,13 @@ void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
  */
 void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin)
 {
-/*#if __JDOOM__ || __JDOOM64__
-    char buf[1024];
-#endif*/
+    Hu_MenuDrawPageTitle("Controls", SCREENWIDTH/2, origin->y - 28);
+    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
 
     DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][0], cfg.menuTextColors[0][1], cfg.menuTextColors[0][2], mnRendState->pageAlpha);
-    FR_DrawTextXY3("CONTROLS", SCREENWIDTH/2, origin->y-28, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-/*#if __JDOOM__ || __JDOOM64__
-    Hu_MenuComposeSubpageString(page, 1024, buf);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
-    FR_DrawTextXY3(buf, SCREENWIDTH/2, y - 12, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
-#else
-    // Draw the page arrows.
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatch(pInvPageLeft[!page->firstObject || (menuTime & 8)], x, y - 12);
-    GL_DrawPatch(pInvPageRight[page->firstObject + page->numVisObjects >= page->objectsCount || (menuTime & 8)], 312 - x, y - 12);
-#endif*/
 
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], mnRendState->pageAlpha);
     FR_DrawTextXY3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -703,11 +660,8 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
 
 const char* MNBindings_ControlName(mn_object_t* obj)
 {
-    assert(obj);
-    {
     mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
     return binds->text;
-    }
 }
 
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
@@ -764,7 +718,8 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
             }
         }
         else if(binds->controlName)
-        {   // Have to exclude the state part.
+        {
+            // Have to exclude the state part.
             boolean inv = (binds->flags & CCF_INVERSE) != 0;
             boolean isStaged = (binds->flags & CCF_STAGED) != 0;
             const char* end = strchr(symbol + 5, '-');
@@ -812,34 +767,6 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 
         VERBOSE( Con_Message("MNBindings_PrivilegedResponder: %s\n", cmd) );
         DD_Execute(true, cmd);
-
-        /*
-        // We shall issue a silent console command, but first we need
-        // a textual representation of the ev.
-        B_FormEventString(evname, ev->type, ev->state, ev->data1);
-
-        // If this binding already exists, remove it.
-        sprintf(cmd, "%s%s", binds->flags & CLF_ACTION ? "+" : "", binds->command);
-
-        memset(buff, 0, sizeof(buff));
-
-        // Check for bindings in this class only?
-        if(B_BindingsForCommand(cmd, buff, binds->bindContext, false))
-            if(findtoken(buff, evname, " ")) // Get rid of it?
-            {
-                del = true;
-                strcpy(buff, "");
-            }
-
-        if(!del)
-            sprintf(buff, "\"%s\"", binds->command);
-
-        sprintf(cmd, "%s bdc%d %s %s",
-                binds->flags & CLF_REPEAT ? "bindr" : "bind",
-                binds->bindContext, evname + 1, buff);
-
-        DD_Execute(false, cmd);
-         */
 
         // We've finished the grab.
         obj->_flags &= ~MNF_ACTIVE;

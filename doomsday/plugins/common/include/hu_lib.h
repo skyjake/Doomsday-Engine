@@ -270,11 +270,6 @@ typedef enum {
 
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
-/*typedef struct mn_page_unscaledstate_s {
-    uint numVisObjects;
-    int y;
-} mn_page_unscaledstate_t;*/
-
 typedef struct mn_page_s {
     mn_object_t* objects; // List of objects.
     Point2Raw origin;
@@ -284,10 +279,7 @@ typedef struct mn_page_s {
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
     struct mn_page_s* previous; // Pointer to the previous page, if any.
     void* data;
-    // For scrollable multi-pages.
-    //uint firstObject, numVisObjects;
-    // Scalable pages.
-    //mn_page_unscaledstate_t unscaled;
+
     // Auto-initialized.
     int objectsCount;
     int focus; // Index of the focus object.
