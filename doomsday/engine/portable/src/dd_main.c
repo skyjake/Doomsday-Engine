@@ -315,7 +315,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     const char* _names, void* params)
 {
     Game* game = findGameForId(gameId);
-    resourcerecord_t* rec;
+    AbstractResource* rec;
     ddstring_t name;
     ddstring_t str;
     const char* p;
@@ -326,8 +326,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
         Con_Error("DD_AddGameResource: Unknown resource class %i.", (int)rclass);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Invalid name argument.");
-    if(0 == (rec = ResourceRecord_New(rclass, rflags)))
-        Con_Error("DD_AddGameResource: Unknown error occured during ResourceRecord::Construct.");
+    if(0 == (rec = AbstractResource_New(rclass, rflags)))
+        Con_Error("DD_AddGameResource: Unknown error occured during AbstractResource::Construct.");
 
     // Add a name list to the game record.
     Str_Init(&str);
@@ -340,7 +340,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
     Str_Init(&name);
     while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
     {
-        ResourceRecord_AddName(rec, &name);
+        AbstractResource_AddName(rec, &name);
     }
     Str_Free(&name);
 
@@ -361,7 +361,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags,
         p = Str_Text(&str);
         while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
         {
-            ResourceRecord_AddIdentityKey(rec, &identityKey);
+            AbstractResource_AddIdentityKey(rec, &identityKey);
         }
 
         Str_Free(&identityKey);
@@ -491,21 +491,21 @@ static boolean recognizeZIP(const char* filePath, void* data)
     return F_FileExists(filePath);
 }
 
-static int validateResource(resourcerecord_t* rec, void* paramaters)
+static int validateResource(AbstractResource* rec, void* paramaters)
 {
     int validated = false;
-    const ddstring_t* path = ResourceRecord_ResolvedPath(rec, true/*can locate resources*/);
+    const ddstring_t* path = AbstractResource_ResolvedPath(rec, true/*can locate resources*/);
 
     if(path)
     {
-        switch(ResourceRecord_ResourceClass(rec))
+        switch(AbstractResource_ResourceClass(rec))
         {
         case RC_PACKAGE:
-            if(recognizeWAD(Str_Text(path), (void*)ResourceRecord_IdentityKeys(rec)))
+            if(recognizeWAD(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
             }
-            else if(recognizeZIP(Str_Text(path), (void*)ResourceRecord_IdentityKeys(rec)))
+            else if(recognizeZIP(Str_Text(path), (void*)AbstractResource_IdentityKeys(rec)))
             {
                 validated = true;
             }
@@ -519,10 +519,10 @@ static int validateResource(resourcerecord_t* rec, void* paramaters)
 
 static boolean isRequiredResource(Game* game, const char* absolutePath)
 {
-    resourcerecord_t* const* records = Game_Resources(game, RC_PACKAGE, 0);
+    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
     if(records)
     {
-        resourcerecord_t* const* recordIt;
+        AbstractResource* const* recordIt;
         // Is this resource from a container?
         abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
         if(file)
@@ -533,10 +533,10 @@ static boolean isRequiredResource(Game* game, const char* absolutePath)
 
         for(recordIt = records; *recordIt; recordIt++)
         {
-            resourcerecord_t* rec = *recordIt;
-            if(ResourceRecord_ResourceFlags(rec) & RF_STARTUP)
+            AbstractResource* rec = *recordIt;
+            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
             {
-                const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
+                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
                 if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
                 {
                     return true;
@@ -565,16 +565,16 @@ static void locateGameResources(Game* game)
 
     for(i = RESOURCECLASS_FIRST; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourcerecord_t* const* records = Game_Resources(game, (resourceclass_t)i, 0);
-        resourcerecord_t* const* recordIt;
+        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
+        AbstractResource* const* recordIt;
 
         if(records)
         for(recordIt = records; *recordIt; recordIt++)
         {
-            resourcerecord_t* rec = *recordIt;
+            AbstractResource* rec = *recordIt;
 
             // We are only interested in startup resources at this time.
-            if(!(ResourceRecord_ResourceFlags(rec) & RF_STARTUP)) continue;
+            if(!(AbstractResource_ResourceFlags(rec) & RF_STARTUP)) continue;
 
             validateResource(rec, 0);
         }
@@ -597,16 +597,16 @@ static boolean allGameResourcesFound(Game* game)
         uint i;
         for(i = 0; i < RESOURCECLASS_COUNT; ++i)
         {
-            resourcerecord_t* const* records = Game_Resources(game, (resourceclass_t)i, 0);
-            resourcerecord_t* const* recordIt;
+            AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
+            AbstractResource* const* recordIt;
 
             if(records)
             for(recordIt = records; *recordIt; recordIt++)
             {
-                resourcerecord_t* rec = *recordIt;
+                AbstractResource* rec = *recordIt;
 
-                if((ResourceRecord_ResourceFlags(rec) & RF_STARTUP) &&
-                   !ResourceRecord_ResolvedPath(rec, false))
+                if((AbstractResource_ResourceFlags(rec) & RF_STARTUP) &&
+                   !AbstractResource_ResolvedPath(rec, false))
                     return false;
             }
         }
@@ -616,8 +616,8 @@ static boolean allGameResourcesFound(Game* game)
 
 static void loadGameResources(Game* game, resourceclass_t rclass)
 {
-    resourcerecord_t* const* records;
-    resourcerecord_t* const* recordIt;
+    AbstractResource* const* records;
+    AbstractResource* const* recordIt;
 
     if(!game || !VALID_RESOURCE_CLASS(rclass)) return;
 
@@ -628,12 +628,12 @@ static void loadGameResources(Game* game, resourceclass_t rclass)
 
     for(recordIt = records; *recordIt; recordIt++)
     {
-        resourcerecord_t* rec = *recordIt;
+        AbstractResource* rec = *recordIt;
 
-        switch(ResourceRecord_ResourceClass(rec))
+        switch(AbstractResource_ResourceClass(rec))
         {
         case RC_PACKAGE: {
-            const ddstring_t* path = ResourceRecord_ResolvedPath(rec, false/*do not locate resource*/);
+            const ddstring_t* path = AbstractResource_ResolvedPath(rec, false/*do not locate resource*/);
             if(path)
             {
                 F_AddFile(Str_Text(path), 0, false);
@@ -642,7 +642,7 @@ static void loadGameResources(Game* game, resourceclass_t rclass)
           }
         default:
             Con_Error("loadGameResources: No resource loader found for %s.",
-                      F_ResourceClassStr(ResourceRecord_ResourceClass(rec)));
+                      F_ResourceClassStr(AbstractResource_ResourceClass(rec)));
         }
     }
 }
@@ -669,17 +669,17 @@ static void printGameResources(Game* game, boolean printStatus, int rflags)
 
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourcerecord_t* const* records = Game_Resources(game, (resourceclass_t)i, 0);
-        resourcerecord_t* const* recordIt;
+        AbstractResource* const* records = Game_Resources(game, (resourceclass_t)i, 0);
+        AbstractResource* const* recordIt;
 
         if(records)
         for(recordIt = records; *recordIt; recordIt++)
         {
-            resourcerecord_t* rec = *recordIt;
+            AbstractResource* rec = *recordIt;
 
-            if(ResourceRecord_ResourceFlags(rec) == rflags)
+            if(AbstractResource_ResourceFlags(rec) == rflags)
             {
-                ResourceRecord_Print(rec, printStatus);
+                AbstractResource_Print(rec, printStatus);
                 count += 1;
             }
         }

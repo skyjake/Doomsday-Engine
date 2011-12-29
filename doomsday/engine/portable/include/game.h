@@ -27,7 +27,7 @@
 #include "dd_plugin.h"
 #include "dd_string.h"
 
-struct resourcerecord_s;
+struct AbstractResource_s;
 struct GameDef;
 
 /**
@@ -64,8 +64,8 @@ void Game_Delete(Game* game);
  * @param rclass  Class of resource being added.
  * @param record  Resource record being added.
  */
-struct resourcerecord_s* Game_AddResource(Game* game, resourceclass_t rclass,
-    struct resourcerecord_s* record);
+struct AbstractResource_s* Game_AddResource(Game* game, resourceclass_t rclass,
+    struct AbstractResource_s* record);
 
 /**
  * Change the identfier of the plugin associated with this.
@@ -101,7 +101,7 @@ const ddstring_t* Game_BindingConfig(Game* game);
  * @param rclass  Class of resource to collect.
  * @return  Vector of selected resource records.
  */
-struct resourcerecord_s* const* Game_Resources(Game* game, resourceclass_t rclass,
+struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass,
     size_t* count);
 
 /**

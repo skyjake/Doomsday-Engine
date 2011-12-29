@@ -30,7 +30,7 @@
 #include "resourcerecord.h"
 
 typedef struct {
-    struct resourcerecord_s** records;
+    struct AbstractResource_s** records;
     size_t numRecords;
 } resourcerecordset_t;
 
@@ -131,13 +131,13 @@ void Game_Delete(Game* g)
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourcerecordset_t* rset = &g->requiredResources[i];
-        resourcerecord_t** rec;
+        AbstractResource** rec;
 
         if(!rset || rset->numRecords == 0) continue;
 
         for(rec = rset->records; *rec; rec++)
         {
-            ResourceRecord_Delete(*rec);
+            AbstractResource_Delete(*rec);
         }
         free(rset->records);
         rset->records = 0;
@@ -147,8 +147,8 @@ void Game_Delete(Game* g)
     free(g);
 }
 
-resourcerecord_t* Game_AddResource(Game* g, resourceclass_t rclass,
-    resourcerecord_t* record)
+AbstractResource* Game_AddResource(Game* g, resourceclass_t rclass,
+    AbstractResource* record)
 {
     resourcerecordset_t* rset;
     assert(g && record);
@@ -230,7 +230,7 @@ const ddstring_t* Game_Author(Game* g)
     return &g->author;
 }
 
-resourcerecord_t* const* Game_Resources(Game* g, resourceclass_t rclass, size_t* count)
+AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, size_t* count)
 {
     assert(g);
     if(!VALID_RESOURCE_CLASS(rclass))

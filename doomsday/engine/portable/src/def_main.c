@@ -830,18 +830,18 @@ static void readAllDefinitions(void)
     if(DD_GameLoaded())
     {
         Game* game = DD_CurrentGame();
-        resourcerecord_t* const* records = Game_Resources(game, RC_DEFINITION, 0);
-        resourcerecord_t* const* recordIt;
+        AbstractResource* const* records = Game_Resources(game, RC_DEFINITION, 0);
+        AbstractResource* const* recordIt;
 
         if(records)
         for(recordIt = records; *recordIt; recordIt++)
         {
-            resourcerecord_t* rec = *recordIt;
-            const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
+            AbstractResource* rec = *recordIt;
+            const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
 
             if(!resolvedPath)
             {
-                ddstring_t* names = ResourceRecord_NameStringList(rec);
+                ddstring_t* names = AbstractResource_NameStringList(rec);
                 Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
                 // Unreachable.
                 Str_Delete(names);

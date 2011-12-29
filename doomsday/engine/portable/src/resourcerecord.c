@@ -27,6 +27,30 @@
 
 #include "resourcerecord.h"
 
+struct AbstractResource_s {
+    /// Class of resource.
+    resourceclass_t rclass;
+
+    /// @see resourceFlags.
+    int flags;
+
+    /// Array of known potential names from lowest precedence to highest.
+    int namesCount;
+    ddstring_t** names;
+
+    /// Vector of resource identifier keys (e.g., file or lump names), used for identification purposes.
+    ddstring_t** identityKeys;
+
+    /// Paths to use when attempting to locate this resource.
+    Uri** searchPaths;
+
+    /// Id+1 of the search path used to locate this resource (in _searchPaths) if found. Set during resource location.
+    uint searchPathUsed;
+
+    /// Fully resolved absolute path to the located resource if found. Set during resource location.
+    ddstring_t foundPath;
+};
+
 static __inline size_t countElements(ddstring_t** list)
 {
     size_t n = 0;
@@ -37,18 +61,18 @@ static __inline size_t countElements(ddstring_t** list)
     return n;
 }
 
-static ddstring_t* buildNameStringList(resourcerecord_t* rec, char delimiter)
+static ddstring_t* buildNameStringList(AbstractResource* r, char delimiter)
 {
     int i, requiredLength = 0;
     ddstring_t* list;
 
-    assert(rec);
+    assert(r);
 
-    if(!rec->_namesCount) return 0;
+    if(!r->namesCount) return 0;
 
-    for(i = 0; i < rec->_namesCount; ++i)
-        requiredLength += Str_Length(rec->_names[i]);
-    requiredLength += rec->_namesCount - 1;
+    for(i = 0; i < r->namesCount; ++i)
+        requiredLength += Str_Length(r->names[i]);
+    requiredLength += r->namesCount - 1;
 
     if(!requiredLength) return 0;
 
@@ -57,171 +81,170 @@ static ddstring_t* buildNameStringList(resourcerecord_t* rec, char delimiter)
     Str_Reserve(list, requiredLength);
     Str_Clear(list);
 
-    i = rec->_namesCount-1;
-    Str_Set(list, Str_Text(rec->_names[i--]));
+    i = r->namesCount-1;
+    Str_Set(list, Str_Text(r->names[i--]));
     for(; i >= 0; i--)
-        Str_Appendf(list, "%c%s", delimiter, Str_Text(rec->_names[i]));
+        Str_Appendf(list, "%c%s", delimiter, Str_Text(r->names[i]));
 
     return list;
 }
 
-resourcerecord_t* ResourceRecord_NewWithName(resourceclass_t rclass, int rflags,
+AbstractResource* AbstractResource_NewWithName(resourceclass_t rclass, int flags,
     const ddstring_t* name)
 {
-    resourcerecord_t* rec = (resourcerecord_t*)malloc(sizeof *rec);
-    if(!rec)
-        Con_Error("ResourceRecord::NewWithName: Failed on allocation of %lu bytes.", (unsigned long) sizeof *rec);
+    AbstractResource* r = (AbstractResource*)malloc(sizeof(*r));
+    if(!r) Con_Error("AbstractResource::NewWithName: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*r));
 
-    rec->_rclass = rclass;
-    rec->_rflags = rflags;
-    rec->_names = 0;
-    rec->_namesCount = 0;
-    rec->_identityKeys = 0;
-    rec->_searchPaths = 0;
-    rec->_searchPathUsed = 0;
-    Str_Init(&rec->_foundPath);
+    r->rclass = rclass;
+    r->flags = flags;
+    r->names = 0;
+    r->namesCount = 0;
+    r->identityKeys = 0;
+    r->searchPaths = 0;
+    r->searchPathUsed = 0;
+    Str_Init(&r->foundPath);
 
-    ResourceRecord_AddName(rec, name);
-    return rec;
+    AbstractResource_AddName(r, name);
+    return r;
 }
 
-resourcerecord_t* ResourceRecord_New(resourceclass_t rclass, int rflags)
+AbstractResource* AbstractResource_New(resourceclass_t rclass, int rflags)
 {
-    return ResourceRecord_NewWithName(rclass, rflags, 0);
+    return AbstractResource_NewWithName(rclass, rflags, 0);
 }
 
-void ResourceRecord_Delete(resourcerecord_t* rec)
+void AbstractResource_Delete(AbstractResource* r)
 {
-    assert(rec);
-    if(rec->_namesCount != 0)
+    assert(r);
+    if(r->namesCount != 0)
     {
         int i;
-        for(i = 0; i < rec->_namesCount; ++i)
-            Str_Delete(rec->_names[i]);
-        free(rec->_names);
+        for(i = 0; i < r->namesCount; ++i)
+            Str_Delete(r->names[i]);
+        free(r->names);
     }
 
-    if(rec->_identityKeys)
+    if(r->identityKeys)
     {
         size_t i;
-        for(i = 0; rec->_identityKeys[i]; ++i)
-            Str_Delete(rec->_identityKeys[i]);
-        free(rec->_identityKeys);
+        for(i = 0; r->identityKeys[i]; ++i)
+            Str_Delete(r->identityKeys[i]);
+        free(r->identityKeys);
     }
 
-    F_DestroyUriList(rec->_searchPaths);
-    Str_Free(&rec->_foundPath);
-    free(rec);
+    F_DestroyUriList(r->searchPaths);
+    Str_Free(&r->foundPath);
+    free(r);
 }
 
-void ResourceRecord_AddName(resourcerecord_t* rec, const ddstring_t* name)
+void AbstractResource_AddName(AbstractResource* r, const ddstring_t* name)
 {
     int i;
-    assert(rec);
+    assert(r);
 
     if(name == 0 || Str_IsEmpty(name)) return;
 
     // Is this name unique? We don't want duplicates.
-    for(i = 0; i < rec->_namesCount; ++i)
+    for(i = 0; i < r->namesCount; ++i)
     {
-        if(!Str_CompareIgnoreCase(rec->_names[i], Str_Text(name)))
+        if(!Str_CompareIgnoreCase(r->names[i], Str_Text(name)))
             return;
     }
 
     // Add the new name.
-    rec->_names = (ddstring_t**)realloc(rec->_names, sizeof *rec->_names * ++rec->_namesCount);
-    if(!rec->_names)
-        Con_Error("ResourceRecord::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *rec->_names * rec->_namesCount);
+    r->names = (ddstring_t**)realloc(r->names, sizeof *r->names * ++r->namesCount);
+    if(!r->names)
+        Con_Error("AbstractResource::AddName: Failed on (re)allocation of %lu bytes for names list.", (unsigned long) sizeof *r->names * r->namesCount);
 
-    rec->_names[rec->_namesCount-1] = Str_New();
-    Str_Copy(rec->_names[rec->_namesCount-1], name);
+    r->names[r->namesCount-1] = Str_New();
+    Str_Copy(r->names[r->namesCount-1], name);
 
-    if(!rec->_searchPaths) return;
+    if(!r->searchPaths) return;
 
-    F_DestroyUriList(rec->_searchPaths);
-    rec->_searchPaths = 0;
-    rec->_searchPathUsed = 0;
-    Str_Free(&rec->_foundPath);
+    F_DestroyUriList(r->searchPaths);
+    r->searchPaths = 0;
+    r->searchPathUsed = 0;
+    Str_Free(&r->foundPath);
 }
 
-void ResourceRecord_AddIdentityKey(resourcerecord_t* rec, const ddstring_t* identityKey)
+void AbstractResource_AddIdentityKey(AbstractResource* r, const ddstring_t* identityKey)
 {
     size_t num;
-    assert(rec && identityKey);
+    assert(r && identityKey);
 
-    num = countElements(rec->_identityKeys);
-    rec->_identityKeys = (ddstring_t**)realloc(rec->_identityKeys, sizeof *rec->_identityKeys * MAX_OF(num+1, 2));
-    if(!rec->_identityKeys)
-        Con_Error("ResourceRecord::AddIdentityKey: Failed on (re)allocation of %lu bytes for identitykey list.", (unsigned long) sizeof *rec->_identityKeys * MAX_OF(num+1, 2));
+    num = countElements(r->identityKeys);
+    r->identityKeys = (ddstring_t**)realloc(r->identityKeys, sizeof *r->identityKeys * MAX_OF(num+1, 2));
+    if(!r->identityKeys)
+        Con_Error("AbstractResource::AddIdentityKey: Failed on (re)allocation of %lu bytes for identitykey list.", (unsigned long) sizeof *r->identityKeys * MAX_OF(num+1, 2));
 
     if(num) num -= 1;
-    rec->_identityKeys[num] = Str_New();
-    Str_Copy(rec->_identityKeys[num], identityKey);
-    rec->_identityKeys[num+1] = 0; // Terminate.
+    r->identityKeys[num] = Str_New();
+    Str_Copy(r->identityKeys[num], identityKey);
+    r->identityKeys[num+1] = 0; // Terminate.
 }
 
-Uri* const* ResourceRecord_SearchPaths(resourcerecord_t* rec)
+Uri* const* AbstractResource_SearchPaths(AbstractResource* r)
 {
-    assert(rec);
-    if(!rec->_searchPaths)
+    assert(r);
+    if(!r->searchPaths)
     {
-        ddstring_t* searchPaths = ResourceRecord_NameStringList(rec);
-        rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
+        ddstring_t* searchPaths = AbstractResource_NameStringList(r);
+        r->searchPaths = F_CreateUriListStr(r->rclass, searchPaths);
         if(searchPaths) Str_Delete(searchPaths);
     }
-    return (Uri* const*) rec->_searchPaths;
+    return (Uri* const*) r->searchPaths;
 }
 
-ddstring_t* ResourceRecord_NameStringList(resourcerecord_t* rec)
+ddstring_t* AbstractResource_NameStringList(AbstractResource* r)
 {
-    return buildNameStringList(rec, ';');
+    return buildNameStringList(r, ';');
 }
 
-const ddstring_t* ResourceRecord_ResolvedPath(resourcerecord_t* rec, boolean canLocate)
+const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean canLocate)
 {
-    assert(rec);
-    if(rec->_searchPathUsed == 0 && canLocate)
+    assert(r);
+    if(r->searchPathUsed == 0 && canLocate)
     {
-        rec->_searchPathUsed = F_FindResourceForRecord(rec, &rec->_foundPath);
+        r->searchPathUsed = F_FindResourceForRecord(r, &r->foundPath);
     }
-    if(rec->_searchPathUsed != 0)
+    if(r->searchPathUsed != 0)
     {
-        return &rec->_foundPath;
+        return &r->foundPath;
     }
     return 0;
 }
 
-resourceclass_t ResourceRecord_ResourceClass(resourcerecord_t* rec)
+resourceclass_t AbstractResource_ResourceClass(AbstractResource* r)
 {
-    assert(rec);
-    return rec->_rclass;
+    assert(r);
+    return r->rclass;
 }
 
-int ResourceRecord_ResourceFlags(resourcerecord_t* rec)
+int AbstractResource_ResourceFlags(AbstractResource* r)
 {
-    assert(rec);
-    return rec->_rflags;
+    assert(r);
+    return r->flags;
 }
 
-ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec)
+ddstring_t* const* AbstractResource_IdentityKeys(AbstractResource* r)
 {
-    assert(rec);
-    return (ddstring_t* const*) rec->_identityKeys;
+    assert(r);
+    return (ddstring_t* const*) r->identityKeys;
 }
 
-void ResourceRecord_Print(resourcerecord_t* rec, boolean printStatus)
+void AbstractResource_Print(AbstractResource* r, boolean printStatus)
 {
-    ddstring_t* searchPaths = ResourceRecord_NameStringList(rec);
+    ddstring_t* searchPaths = AbstractResource_NameStringList(r);
 
     if(printStatus)
-        Con_Printf("%s", rec->_searchPathUsed == 0? " ! ":"   ");
+        Con_Printf("%s", r->searchPathUsed == 0? " ! ":"   ");
 
     Con_PrintPathList4(Str_Text(searchPaths), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(printStatus)
     {
-        Con_Printf(" %s%s", rec->_searchPathUsed == 0? "- missing" : "- found ",
-                   rec->_searchPathUsed == 0? "" : F_PrettyPath(Str_Text(ResourceRecord_ResolvedPath(rec, false))));
+        Con_Printf(" %s%s", r->searchPathUsed == 0? "- missing" : "- found ",
+                   r->searchPathUsed == 0? "" : F_PrettyPath(Str_Text(AbstractResource_ResolvedPath(r, false))));
     }
     Con_Printf("\n");
     Str_Delete(searchPaths);
