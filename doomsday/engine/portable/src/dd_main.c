@@ -825,6 +825,7 @@ typedef struct {
 static int DD_ChangeGameWorker(void* paramaters)
 {
     ddchangegameworker_paramaters_t* p = (ddchangegameworker_paramaters_t*)paramaters;
+    uint i;
     assert(p);
 
     // Reset file Ids so previously seen files can be processed again.
@@ -955,8 +956,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
 
-    Rend_ParticleLoadExtraTextures();
-
     Def_PostInit();
 
     if(p->initiatedBusyMode)
@@ -979,7 +978,6 @@ static int DD_ChangeGameWorker(void* paramaters)
         Con_SetProgress(160);
 
     // Invalidate old cmds and init player values.
-    { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t* plr = &ddPlayers[i];
@@ -991,7 +989,7 @@ static int DD_ChangeGameWorker(void* paramaters)
         if(isServer && plr->shared.inGame)
             clients[i].runTime = SECONDS_TO_TICKS(gameTime);
          */
-    }}
+    }
 
     if(gx.PostInit)
     {
@@ -1182,6 +1180,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         DD_ChangeGameWorker(&p);
     }
     }
+
+    // Process any GL-related tasks we couldn't while Busy.
+    Rend_ParticleLoadExtraTextures();
 
     /**
      * Clear any input events we may have accumulated during this process.
