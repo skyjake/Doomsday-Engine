@@ -312,7 +312,6 @@ unix:!win32 {
     DENG_PLATFORM_HEADERS += \
         $$DENG_UNIX_INCLUDE_DIR/dd_uinit.h \
         $$DENG_UNIX_INCLUDE_DIR/sys_dylib.h \
-        $$DENG_UNIX_INCLUDE_DIR/sys_findfile.h \
         $$DENG_UNIX_INCLUDE_DIR/sys_path.h
 
     INCLUDEPATH += $$DENG_UNIX_INCLUDE_DIR
