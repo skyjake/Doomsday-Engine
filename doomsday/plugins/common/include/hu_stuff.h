@@ -63,7 +63,7 @@ enum {
     VG_XHAIR5,
     VG_XHAIR6,
     NUM_VECTOR_GRAPHICS
-}; /* vectorgraphicid_t*/
+}; /* svgid_t*/
 
 #define FID(idx) (fonts[idx])
 

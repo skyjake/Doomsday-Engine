@@ -148,7 +148,7 @@ void X_Drawer(int player)
         DGL_Color4fv(color);
     }
 
-    GL_DrawVectorGraphic2(VG_XHAIR1 + (xhair-1), centerX, centerY, scale);
+    GL_DrawSVG2(VG_XHAIR1 + (xhair-1), centerX, centerY, scale);
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

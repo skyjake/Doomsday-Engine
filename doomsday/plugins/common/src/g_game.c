@@ -673,7 +673,7 @@ void R_LoadColorPalettes(void)
 void R_LoadVectorGraphics(void)
 {
 #define R (1.0f)
-    const vgline_t keysquare[] = {
+    const svgline_t keysquare[] = {
         { {0, 0}, {R / 4, -R / 2} },
         { {R / 4, -R / 2}, {R / 2, -R / 2} },
         { {R / 2, -R / 2}, {R / 2, R / 2} },
@@ -683,13 +683,13 @@ void R_LoadVectorGraphics(void)
         { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
         { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
     };
-    const vgline_t thintriangle_guy[] = {
+    const svgline_t thintriangle_guy[] = {
         { {-R / 2, R - R / 2}, {R, 0} }, // >
         { {R, 0}, {-R / 2, -R + R / 2} },
         { {-R / 2, -R + R / 2}, {-R / 2, R - R / 2} } // |>
     };
 #if __JDOOM__ || __JDOOM64__
-    const vgline_t player_arrow[] = {
+    const svgline_t player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 4} }, // ----->
         { {R, 0}, {R - R / 2, -R / 4} },
@@ -698,7 +698,7 @@ void R_LoadVectorGraphics(void)
         { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 4} }, // >>--->
         { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4} }
     };
-    const vgline_t cheat_player_arrow[] = {
+    const svgline_t cheat_player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 6} }, // ----->
         { {R, 0}, {R - R / 2, -R / 6} },
@@ -717,7 +717,7 @@ void R_LoadVectorGraphics(void)
         { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
     };
 #elif __JHERETIC__
-    const vgline_t player_arrow[] = {
+    const svgline_t player_arrow[] = {
         { {-R + R / 4, 0}, {0, 0} }, // center line.
         { {-R + R / 4, R / 8}, {R, 0} }, // blade
         { {-R + R / 4, -R / 8}, {R, 0} },
@@ -729,7 +729,7 @@ void R_LoadVectorGraphics(void)
         { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
         { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
     };
-    const vgline_t cheat_player_arrow[] = {
+    const svgline_t cheat_player_arrow[] = {
         { {-R + R / 8, 0}, {R, 0} }, // -----
         { {R, 0}, {R - R / 2, R / 6} }, // ----->
         { {R, 0}, {R - R / 2, -R / 6} },
@@ -748,7 +748,7 @@ void R_LoadVectorGraphics(void)
         { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
     };
 #elif __JHEXEN__
-    const vgline_t player_arrow[] = {
+    const svgline_t player_arrow[] = {
         { {-R + R / 4, 0}, {0, 0} }, // center line.
         { {-R + R / 4, R / 8}, {R, 0} }, // blade
         { {-R + R / 4, -R / 8}, {R, 0} },
@@ -762,25 +762,25 @@ void R_LoadVectorGraphics(void)
     };
 #endif
 #undef R
-    const vgline_t crossHair1[] = { // + (open center)
+    const svgline_t crossHair1[] = { // + (open center)
         { {-1,  0}, {-.4f, 0} },
         { { 0, -1}, { 0,  -.4f} },
         { { 1,  0}, { .4f, 0} },
         { { 0,  1}, { 0,   .4f} }
     };
-    const vgline_t crossHair2[] = { // > <
+    const svgline_t crossHair2[] = { // > <
         { {-1, -.714f}, {-.286f, 0} },
         { {-1,  .714f}, {-.286f, 0} },
         { { 1, -.714f}, { .286f, 0} },
         { { 1,  .714f}, { .286f, 0} }
     };
-    const vgline_t crossHair3[] = { // square
+    const svgline_t crossHair3[] = { // square
         { {-1, -1}, {-1,  1} },
         { {-1,  1}, { 1,  1} },
         { { 1,  1}, { 1, -1} },
         { { 1, -1}, {-1, -1} }
     };
-    const vgline_t crossHair4[] = { // square (open center)
+    const svgline_t crossHair4[] = { // square (open center)
         { {-1, -1}, {-1, -.5f} },
         { {-1, .5f}, {-1, 1} },
         { {-1, 1}, {-.5f, 1} },
@@ -790,29 +790,29 @@ void R_LoadVectorGraphics(void)
         { { 1, -1}, {.5f, -1} },
         { {-.5f, -1}, {-1, -1} }
     };
-    const vgline_t crossHair5[] = { // diamond
+    const svgline_t crossHair5[] = { // diamond
         { { 0, -1}, { 1,  0} },
         { { 1,  0}, { 0,  1} },
         { { 0,  1}, {-1,  0} },
         { {-1,  0}, { 0, -1} }
     };
-    const vgline_t crossHair6[] = { // ^
+    const svgline_t crossHair6[] = { // ^
         { {-1, -1}, { 0,  0} },
         { { 0,  0}, { 1, -1} }
     };
 
-    R_NewVectorGraphic(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
-    R_NewVectorGraphic(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
-    R_NewVectorGraphic(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
+    R_NewSVG(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
+    R_NewSVG(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
+    R_NewSVG(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
 #if !__JHEXEN__
-    R_NewVectorGraphic(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
+    R_NewSVG(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
 #endif
-    R_NewVectorGraphic(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
-    R_NewVectorGraphic(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
-    R_NewVectorGraphic(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
-    R_NewVectorGraphic(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
-    R_NewVectorGraphic(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
-    R_NewVectorGraphic(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
+    R_NewSVG(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
+    R_NewSVG(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
+    R_NewSVG(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
+    R_NewSVG(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
+    R_NewSVG(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
+    R_NewSVG(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
 }
 
 /**

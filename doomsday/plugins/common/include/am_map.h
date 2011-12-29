@@ -188,8 +188,8 @@ typedef struct automapcfg_s {
     automapcfg_lineinfo_t lineInfo[AUTOMAPCFG_MAX_LINEINFO];
     uint lineInfoCount;
 
-    vectorgraphicid_t vectorGraphicForPlayer;
-    vectorgraphicid_t vectorGraphicForThing;
+    svgid_t vectorGraphicForPlayer;
+    svgid_t vectorGraphicForThing;
 
     automapcfg_lineinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
 } automapcfg_t;
@@ -205,7 +205,7 @@ const automapcfg_lineinfo_t* AM_GetInfoForSpecialLine(automapcfg_t* mcfg, int sp
 void AM_GetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float* r, float* g, float* b, float* a);
 void AM_SetColorAndOpacity(automapcfg_t* mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
 
-vectorgraphicid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name);
-void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name, vectorgraphicid_t svg);
+svgid_t AM_GetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name);
+void AM_SetVectorGraphic(automapcfg_t* mcfg, automapcfg_objectname_t name, svgid_t svg);
 
 #endif /* LIBCOMMON_AUTOMAP_CONFIG */

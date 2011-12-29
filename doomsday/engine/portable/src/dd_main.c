@@ -1082,7 +1082,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         P_ShutdownGameMapObjDefs();
         Cl_Reset();
 
-        R_ShutdownVectorGraphics();
+        R_ShutdownSVGs();
         R_DestroyColorPalettes();
 
         Fonts_ClearRuntime();
@@ -1100,7 +1100,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         DD_Register();
         I_InitVirtualInputDevices();
 
-        R_InitVectorGraphics();
+        R_InitSVGs();
         R_InitViewWindow();
 
         /// \fixme Assumes we only cache lumps from non-startup wads.

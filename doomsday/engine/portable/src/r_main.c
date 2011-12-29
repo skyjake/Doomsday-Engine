@@ -529,7 +529,7 @@ void R_Init(void)
     R_InitColorPalettes();
     R_InitTranslationTables();
     R_InitRawTexs();
-    R_InitVectorGraphics();
+    R_InitSVGs();
     R_InitViewWindow();
     R_SkyInit();
     Rend_Init();
@@ -623,7 +623,7 @@ void R_Shutdown(void)
     R_ClearAnimGroups();
     R_ShutdownSprites();
     R_ShutdownModels();
-    R_ShutdownVectorGraphics();
+    R_ShutdownSVGs();
     R_ShutdownViewWindow();
     Fonts_Shutdown();
     Rend_Shutdown();

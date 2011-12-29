@@ -628,11 +628,11 @@ EXPORTS
     FI_ScriptFlags              @235 NONAME
 
 ; SVG
-    R_NewVectorGraphic          @317 NONAME
+    R_NewSVG                    @317 NONAME
 
-    GL_DrawVectorGraphic        @318 NONAME
-    GL_DrawVectorGraphic2       @319 NONAME
-    GL_DrawVectorGraphic3       @320 NONAME
+    GL_DrawSVG                  @318 NONAME
+    GL_DrawSVG2                 @319 NONAME
+    GL_DrawSVG3                 @320 NONAME
 
 ; Graphics.
     GL_GrabScreen               @109 NONAME

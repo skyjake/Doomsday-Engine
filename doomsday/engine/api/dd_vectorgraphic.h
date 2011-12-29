@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_vectorgraphic.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,28 +23,22 @@
  */
 
 /**
- * dd_vectorgraphic.h: Vector graphics.
+ * SVG (Scalable Vector Graphic).
  */
 
-#ifndef LIBDENG_VECTORGRAPHIC_H
-#define LIBDENG_VECTORGRAPHIC_H
+#ifndef LIBDENG_API_VECTORGRAPHIC_H
+#define LIBDENG_API_VECTORGRAPHIC_H
 
-typedef uint32_t vectorgraphicid_t;
+typedef uint32_t svgid_t;
 
-// Used during vector graphic creation/registration.
-// \todo Refactor me away.
-typedef struct {
-    float pos[3];
-} mpoint_t;
+typedef struct svgline_s {
+    Point2Rawf from, to;
+} svgline_t;
 
-typedef struct vgline_s {
-    mpoint_t a, b;
-} vgline_t;
+void R_NewSVG(svgid_t svgId, const svgline_t* lines, size_t numLines);
 
-void            R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines);
+void GL_DrawSVG(svgid_t svgId, float x, float y);
+void GL_DrawSVG2(svgid_t svgId, float x, float y, float scale);
+void GL_DrawSVG3(svgid_t svgId, float x, float y, float scale, float angle);
 
-void            GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y);
-void            GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale);
-void            GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle);
-
-#endif /* LIBDENG_VECTORGRAPHIC_H */
+#endif /* LIBDENG_API_VECTORGRAPHIC_H */
