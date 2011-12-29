@@ -2377,7 +2377,7 @@ boolean G_SaveGame2(int slot, const char* name)
     if(!G_IsSaveGamePossible()) return false;
 
     gaSaveGameSlot = slot;
-    if(NULL != name && name[0])
+    if(name && name[0])
     {
         // A new name.
         strncpy(gaSaveGameName, name, GA_SAVEGAME_NAME_LASTINDEX);
@@ -2386,7 +2386,7 @@ boolean G_SaveGame2(int slot, const char* name)
     else
     {
         // Reusing the current name or generating a new one.
-        gaSaveGameGenerateName = (NULL != name && !name[0]);
+        gaSaveGameGenerateName = (name && !name[0]);
         memset(gaSaveGameName, 0, GA_SAVEGAME_NAME_LASTINDEX);
     }
     G_SetGameAction(GA_SAVEGAME);

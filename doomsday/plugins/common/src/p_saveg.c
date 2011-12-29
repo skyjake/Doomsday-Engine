@@ -4805,6 +4805,14 @@ static void P_UnArchiveMap(void)
     SV_AssertSegment(ASEG_END);
 }
 
+static boolean SV_IsValidSlot(int slot)
+{
+#if __JHEXEN__
+    if(slot == REBORN_SLOT) return true;
+#endif
+    return (slot >= 0  && slot < NUMSAVESLOTS);
+}
+
 /**
  * Compose the (possibly relative) path to the game-save associated
  * with the logical save @a slot. If the game-save path is unreachable
@@ -4816,7 +4824,7 @@ static void P_UnArchiveMap(void)
  */
 static boolean composeGameSavePathForSlot(int slot, ddstring_t* path)
 {
-    assert(inited && slot >= 0 && slot < NUMSAVESLOTS && NULL != path);
+    assert(inited && SV_IsValidSlot(slot) && path);
     // Do we have a valid path?
     if(!F_MakePath(Str_Text(&savePath))) return false;
     // Compose the full game-save path and filename.
@@ -4851,18 +4859,17 @@ static boolean composeClientGameSavePathForGameId(uint gameId, ddstring_t* path)
 
 static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* name)
 {
-    assert(inited && NULL != savePath && NULL != name);
-    {
     boolean found = false;
 #if __JHEXEN__
     LZFILE* fp;
 #endif
+    assert(inited && savePath && name);
 
     if(Str_IsEmpty(savePath)) return false;
 
 #if __JHEXEN__
     fp = lzOpen(Str_Text(savePath), "rp");
-    if(NULL != fp)
+    if(fp)
     {
         // Read the header.
         char versionText[HXS_VERSION_TEXT_LENGTH];
@@ -4882,7 +4889,7 @@ static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* 
     }
 #else
     savefile = lzOpen(Str_Text(savePath), "rp");
-    if(NULL != savefile)
+    if(savefile)
     {
         // Read the header.
         lzRead(&hdr, sizeof(hdr), savefile);
@@ -4900,7 +4907,7 @@ static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* 
     {
         // Perhaps a DOOM(2).EXE v19 saved game?
         savefile = lzOpen(Str_Text(savePath), "r");
-        if(NULL != savefile)
+        if(savefile)
         {
             char nameBuffer[SAVESTRINGSIZE];
             lzRead(nameBuffer, SAVESTRINGSIZE, savefile);
@@ -4920,35 +4927,35 @@ static boolean readGameSaveInfoFromFile(const ddstring_t* savePath, ddstring_t* 
     }
 
     return found;
-    }
 }
 
 /// Re-build game-save info by re-scanning the save paths and populating the list.
 static void buildGameSaveInfo(void)
 {
+    int i;
     assert(inited);
-    if(NULL == gameSaveInfo)
+
+    if(!gameSaveInfo)
     {
         // Not yet been here. We need to allocate and initialize the game-save info list.
         gameSaveInfo = (gamesaveinfo_t*) malloc(NUMSAVESLOTS * sizeof(*gameSaveInfo));
-        if(NULL == gameSaveInfo)
+        if(!gameSaveInfo)
             Con_Error("buildGameSaveInfo: Failed on allocation of %lu bytes for "
                 "game-save info list.", (unsigned long) (NUMSAVESLOTS * sizeof(*gameSaveInfo)));
+
         // Initialize.
-        { int i;
         for(i = 0; i < NUMSAVESLOTS; ++i)
         {
             gamesaveinfo_t* info = &gameSaveInfo[i];
             Str_Init(&info->filePath);
             Str_Init(&info->name);
             info->slot = i;
-        }}
+        }
     }
 
     /// Scan the save paths and populate the list.
     /// \todo We should look at all files on the save path and not just those
     /// which match the default game-save file naming convention.
-    { int i;
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         gamesaveinfo_t* info = &gameSaveInfo[i];
@@ -4967,25 +4974,24 @@ static void buildGameSaveInfo(void)
             // Not a valid save file.
             Str_Clear(&info->filePath);
         }
-    }}
+    }
 }
 
 /// Given a logical save slot identifier retrieve the assciated game-save info.
 static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
 {
-    assert(inited);
-    {
     static gamesaveinfo_t invalidInfo = { { "" }, { "" }, -1 };
+    assert(inited);
+
     if(slot >= 0 && slot < NUMSAVESLOTS)
     {
         // On first call - automatically build and populate game-save info.
-        if(NULL == gameSaveInfo)
+        if(!gameSaveInfo)
             buildGameSaveInfo();
         // Retrieve the info for this slot.
         return &gameSaveInfo[slot];
     }
     return &invalidInfo;
-    }
 }
 
 boolean SV_IsGameSaveSlotUsed(int slot)
@@ -5113,7 +5119,7 @@ void SV_Shutdown(void)
     Str_Free(&clientSavePath);
 #endif
     cvarQuickSlot = -1;
-    if(NULL != gameSaveInfo)
+    if(gameSaveInfo)
     {
         int i;
         for(i = 0; i < NUMSAVESLOTS; ++i)
@@ -5157,13 +5163,18 @@ int SV_ParseGameSaveSlot(const char* str)
 int SV_FindGameSaveSlotForName(const char* name)
 {
     int saveSlot = -1;
+
     errorIfNotInited("SV_FindGameSaveSlotForName");
-    if(NULL != name && name[0])
+
+    if(name && name[0])
     {
         int i = 0;
         // On first call - automatically build and populate game-save info.
-        if(NULL == gameSaveInfo)
+        if(!gameSaveInfo)
+        {
             buildGameSaveInfo();
+        }
+
         do
         {
             const gamesaveinfo_t* info = &gameSaveInfo[i];
@@ -5180,9 +5191,10 @@ int SV_FindGameSaveSlotForName(const char* name)
 boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
 {
     errorIfNotInited("SV_GetGameSavePathForSlot");
-    if(NULL == path) return false;
+    if(!path) return false;
+
     Str_Clear(path);
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(!SV_IsValidSlot(slot)) return false;
     return composeGameSavePathForSlot(slot, path);
 }
 
@@ -5190,7 +5202,7 @@ boolean SV_GetGameSavePathForSlot(int slot, ddstring_t* path)
 boolean SV_GetClientGameSavePathForGameId(uint gameId, ddstring_t* path)
 {
     errorIfNotInited("SV_GetGameSavePathForSlot");
-    if(NULL == path) return false;
+    if(!path) return false;
     Str_Clear(path);
     return composeClientGameSavePathForGameId(gameId, path);
 }
@@ -5354,15 +5366,14 @@ int SV_SaveGameWorker(void* ptr)
 
 boolean SV_SaveGame(int slot, const char* name)
 {
-    assert(NULL != name);
-    {
     savegameparam_t params;
     ddstring_t path;
     int result;
+    assert(name);
 
     errorIfNotInited("SV_SaveGame");
 
-    if(0 > slot || slot >= NUMSAVESLOTS)
+    if(!SV_IsValidSlot(slot))
     {
         Con_Message("Warning:SV_SaveGame: Invalid slot '%i' specified, game not saved.\n", slot);
         return false;
@@ -5399,7 +5410,6 @@ boolean SV_SaveGame(int slot, const char* name)
 
     Str_Free(&path);
     return (0 == result);
-    }
 }
 
 #if __JHEXEN__
@@ -5693,7 +5703,7 @@ boolean SV_LoadGame(int slot)
 
     errorIfNotInited("SV_LoadGame");
 
-    if(0 > slot || slot >= NUMSAVESLOTS) return false;
+    if(!SV_IsValidSlot(slot)) return false;
 
     VERBOSE( Con_Message("Attempting load of game-save slot #%i...\n", slot) )
 
