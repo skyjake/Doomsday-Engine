@@ -1432,21 +1432,34 @@ int DD_Main(void)
         GL_DoUpdate();
     }
 
-    // Add resources specified using -iwad options on the command line.
-#pragma message("!!!WARNING: Re-implement support for the -iwad option!!!")
-#if 0
-    {int p;
+    // Add paths to resources specified using -iwad options on the command line.
+    { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
+    int p;
+
     for(p = 0; p < Argc(); ++p)
     {
         if(!ArgRecognize("-iwad", Argv(p)))
             continue;
 
         while(++p != Argc() && !ArgIsOption(p))
-            addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+        {
+            const char* filePath = Argv(p);
+            directory_t* dir;
+            Uri* searchPath;
+
+            /// \todo Do not add these as search paths, publish them directly
+            /// to the FileDirectory owned by the "packages" ResourceNamespace.
+            dir = Dir_ConstructFromPathDir(filePath);
+            searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
+
+            F_AddSearchPathToResourceNamespace(rnId, searchPath, SPG_DEFAULT);
+
+            Uri_Delete(searchPath);
+            Dir_Delete(dir);
+        }
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
-#endif
 
     // Try to locate all required data files for all registered games.
     for(i = 0; i < gamesCount; ++i)
