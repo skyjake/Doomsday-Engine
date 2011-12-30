@@ -843,6 +843,7 @@ static void applyPageLayout(mn_page_t* page)
                (MNObject_Type(nextObj) == MN_BUTTON ||
                 MNObject_Type(nextObj) == MN_LISTINLINE ||
                 MNObject_Type(nextObj) == MN_COLORBOX ||
+                MNObject_Type(nextObj) == MN_BINDINGS ||
                 (MNObject_Type(nextObj) == MN_SLIDER && nextObj->drawer == MNSlider_TextualValueDrawer)))
             {
                 const int margin = lineOffset * 2;
