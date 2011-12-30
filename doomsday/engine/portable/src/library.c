@@ -173,7 +173,7 @@ static void reopenLibraryIfNeeded(Library* lib)
 Library* Library_New(const char *fileName)
 {
     Library* lib = 0;
-    handle_t handle;
+    handle_t handle = 0;
 #ifdef UNIX
     filename_t bundlePath; /// @todo Use ddstring_t
 #ifdef MACOSX
