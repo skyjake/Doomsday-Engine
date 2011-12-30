@@ -2371,14 +2371,38 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
 #endif
 }
 
-/**
- * \fixme This should be the job of the page-init logic.
- */
-static void updateObjectsLinkedWithCvars(mn_object_t* objs)
+static void initPage(mn_page_t* page)
 {
     mn_object_t* obj;
-    for(obj = objs; MNObject_Type(obj) != MN_NONE; obj++)
+    int i;
+    assert(page);
+
+    page->focus = -1; /// \fixme Make this a page flag.
+    page->objectsCount = MN_CountObjects(page->objects);
+
+    for(i = 0; i < (int)MENU_FONT_COUNT; ++i)
     {
+        if(0 == (gamefontid_t)page->fonts[i]) continue;
+        page->fonts[i] = FID((gamefontid_t)page->fonts[i]);
+    }
+
+    // Init objects.
+    for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
+    {
+        obj->_geometry.origin.x = 0;
+        obj->_geometry.origin.y = 0;
+        obj->_geometry.size.width  = 0;
+        obj->_geometry.size.height = 0;
+
+        MNObject_SetFlags(obj, FO_CLEAR, MNF_FOCUS);
+        if(0 != obj->_shortcut)
+        {
+            int shortcut = obj->_shortcut;
+            obj->_shortcut = 0; // Clear invalid defaults.
+            MNObject_SetShortcut(obj, shortcut);
+        }
+
+        // Update objects linked to cvars.
         switch(MNObject_Type(obj))
         {
         case MN_BUTTON: {
@@ -2460,43 +2484,9 @@ static void updateObjectsLinkedWithCvars(mn_object_t* objs)
             }
             break;
           }
-        default:
-            break;
+        default: break;
         }
     }
-}
-
-static void initPage(mn_page_t* page)
-{
-    mn_object_t* obj;
-    int i;
-    assert(page);
-
-    page->focus = -1; /// \fixme Make this a page flag.
-    page->objectsCount = MN_CountObjects(page->objects);
-
-    for(i = 0; i < (int)MENU_FONT_COUNT; ++i)
-    {
-        if(0 == (gamefontid_t)page->fonts[i]) continue;
-        page->fonts[i] = FID((gamefontid_t)page->fonts[i]);
-    }
-
-    // Init objects.
-    for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
-    {
-        obj->_geometry.origin.x = 0;
-        obj->_geometry.origin.y = 0;
-        obj->_geometry.size.width  = 0;
-        obj->_geometry.size.height = 0;
-        MNObject_SetFlags(obj, FO_CLEAR, MNF_FOCUS);
-        if(0 != obj->_shortcut)
-        {
-            int shortcut = obj->_shortcut;
-            obj->_shortcut = 0; // Clear invalid defaults.
-            MNObject_SetShortcut(obj, shortcut);
-        }
-    }
-    updateObjectsLinkedWithCvars(page->objects);
 }
 
 static void initAllObjectsOnAllPages(void)
