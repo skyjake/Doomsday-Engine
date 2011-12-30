@@ -1399,8 +1399,8 @@ mndata_button_t btn_multiplayer_join_game = { false, NULL, "Join Game" };
 mndata_button_t btn_multiplayer_player_setup = { false, NULL, "Player Setup" };
 
 mn_object_t MultiplayerMenuObjects[] = {
-    { MN_BUTTON,    0,  0,  'j',MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectJoinGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_join_game },
-    { MN_BUTTON,    0,  0,  's',MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_player_setup },
+    { MN_BUTTON,  0,  MNF_ID0,  'j',MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectJoinGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_join_game },
+    { MN_BUTTON,  0,  0,  's',MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_multiplayer_player_setup },
     { MN_NONE }
 };
 
@@ -3432,10 +3432,11 @@ int Hu_MenuSelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* para
 
 int Hu_MenuSelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
-    /// \fixme Find object by id.
-    mn_object_t* labelObj = &MultiplayerMenu.objects[0];
+    mn_object_t* labelObj = MN_MustFindObjectOnPage(&MultiplayerMenu, 0, MNF_ID0);
     mndata_button_t* btn = (mndata_button_t*)labelObj->_typedata;
+
     if(MNA_ACTIVEOUT != action) return 1;
+
     // Set the appropriate label.
     if(IS_NETGAME)
     {
