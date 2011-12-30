@@ -502,8 +502,6 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int itemIndex);
  */
 #define MNDATA_COLORBOX_WIDTH   4 // Default inner width in fixed 320x200 space.
 #define MNDATA_COLORBOX_HEIGHT  4 // Default inner height in fixed 320x200 space.
-#define MNDATA_COLORBOX_PADDING_X   3 // Inclusive of the outer border.
-#define MNDATA_COLORBOX_PADDING_Y   5 //
 
 typedef struct mndata_colorbox_s {
     /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default

@@ -86,6 +86,7 @@ extern char* endmsg[NUM_QUITMESSAGES + 1];
 
 extern boolean shiftdown;
 extern const char shiftXForm[];
+extern patchid_t borderPatches[8];
 
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);
@@ -176,13 +177,6 @@ void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y);
  * Misc specialised elements:
  */
 
-// Border drawing modes.
-typedef enum border_e {
-    BORDERUP = 1,
-    BORDERDOWN
-} border_t;
-
-void            M_DrawBackgroundBox(float x, float y, float w, float h, boolean background, int border, float red, float green, float blue, float alpha);
 void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
 
 #endif /* LIBCOMMON_HU_STUFF_H */

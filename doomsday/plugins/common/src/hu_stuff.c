@@ -162,12 +162,13 @@ const char shiftXForm[] = {
     '{', '|', '}', '~', 127
 };
 
+patchid_t borderPatches[8];
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static scoreboardstate_t scoreStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
-static patchid_t borderPatches[8];
 static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
@@ -1231,85 +1232,6 @@ void WI_DrawPatchXY2(patchid_t patchId, const char* replacement, int x, int y, i
 void WI_DrawPatchXY(patchid_t patchId, const char* replacement, int x, int y)
 {
     WI_DrawPatchXY2(patchId, replacement, x, y, ALIGN_TOPLEFT);
-}
-
-/**
- * Draws a box using the border patches, a border is drawn outside.
- */
-void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
-    int border, float red, float green, float blue, float alpha)
-{
-    patchinfo_t t, b, l, r, tl, tr, br, bl;
-    int up = -1;
-
-    switch(border)
-    {
-    case BORDERUP:
-        if(!R_GetPatchInfo(borderPatches[2], &t)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[0], &b)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[1], &l)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[3], &r)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[6], &tl)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[7], &tr)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[4], &br)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[5], &bl)) border = 0;
-
-        up = -1;
-        break;
-
-    case BORDERDOWN:
-        if(!R_GetPatchInfo(borderPatches[0], &t)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[2], &b)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[3], &l)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[1], &r)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[4], &tl)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[5], &tr)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[6], &br)) border = 0;
-        if(!R_GetPatchInfo(borderPatches[7], &bl)) border = 0;
-
-        up = 1;
-        break;
-
-    default:
-        Con_Error("M_DrawBackgroundBox: Invalid border type %i.", (int)border);
-    }
-
-    DGL_Color4f(red, green, blue, alpha);
-
-    if(background)
-    {
-        DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
-        DGL_DrawRectTiled(x, y, w, h, 64, 64);
-    }
-
-    if(border)
-    {
-        // Top
-        DGL_SetPatch(t.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
-        // Bottom
-        DGL_SetPatch(b.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
-        // Left
-        DGL_SetPatch(l.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
-        // Right
-        DGL_SetPatch(r.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
-
-        // Top Left
-        DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
-        // Top Right
-        DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
-        // Bottom Right
-        DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
-        // Bottom Left
-        DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
-    }
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)

@@ -2083,21 +2083,114 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     FR_TextSize(&obj->_geometry.size, text);
 }
 
-void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* _origin)
+void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
 {
     const mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
-    Point2Raw origin;
-    assert(obj->_type == MN_COLORBOX && _origin);
+    patchinfo_t t, b, l, r, tl, tr, br, bl;
+    const int up = 1;
+    int x, y, w, h;
+    assert(obj->_type == MN_COLORBOX && offset);
 
-    origin.x = _origin->x + MNDATA_COLORBOX_PADDING_X;
-    origin.y = _origin->y + MNDATA_COLORBOX_PADDING_Y;
+    R_GetPatchInfo(borderPatches[0], &t);
+    R_GetPatchInfo(borderPatches[2], &b);
+    R_GetPatchInfo(borderPatches[3], &l);
+    R_GetPatchInfo(borderPatches[1], &r);
+    R_GetPatchInfo(borderPatches[4], &tl);
+    R_GetPatchInfo(borderPatches[5], &tr);
+    R_GetPatchInfo(borderPatches[6], &br);
+    R_GetPatchInfo(borderPatches[7], &bl);
 
+    x = offset->x;
+    y = offset->y;
+    w = cbox->width;
+    h = cbox->height;
+
+    if(t.id || tl.id || tr.id)
+    {
+        int height = 0;
+        if(t.id)  height = t.geometry.size.height;
+        if(tl.id) height = MAX_OF(height, tl.geometry.size.height);
+        if(tr.id) height = MAX_OF(height, tr.geometry.size.height);
+
+        y += height;
+    }
+
+    if(l.id || tl.id || bl.id)
+    {
+        int width = 0;
+        if(l.id)  width = l.geometry.size.width;
+        if(tl.id) width = MAX_OF(width, tl.geometry.size.width);
+        if(bl.id) width = MAX_OF(width, bl.geometry.size.width);
+
+        x += width;
+    }
+
+    DGL_Color4f(1, 1, 1, rs.pageAlpha);
     DGL_Enable(DGL_TEXTURE_2D);
-    M_DrawBackgroundBox(origin.x, origin.y, cbox->width, cbox->height, true, BORDERDOWN, 1, 1, 1, rs.pageAlpha);
+
+    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
+    DGL_DrawRectTiled(x, y, w, h, 64, 64);
+
+    // Top
+    if(t.id)
+    {
+        DGL_SetPatch(t.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
+    }
+
+    // Bottom
+    if(b.id)
+    {
+        DGL_SetPatch(b.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
+    }
+
+    // Left
+    if(l.id)
+    {
+        DGL_SetPatch(l.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
+    }
+
+    // Right
+    if(r.id)
+    {
+        DGL_SetPatch(r.id, DGL_REPEAT, DGL_REPEAT);
+        DGL_DrawRectTiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
+    }
+
+    // Top Left
+    if(tl.id)
+    {
+        DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
+    }
+
+    // Top Right
+    if(tr.id)
+    {
+        DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
+    }
+
+    // Bottom Right
+    if(br.id)
+    {
+        DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
+    }
+
+    // Bottom Left
+    if(bl.id)
+    {
+        DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
+    }
+
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(origin.x, origin.y, cbox->width, cbox->height, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
+    DGL_DrawRectColor(x, y, w, h, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -2135,10 +2228,64 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
+    patchinfo_t t, b, l, r, tl, tr, br, bl;
     assert(obj->_type == MN_COLORBOX);
 
-    obj->_geometry.size.width  = cbox->width  + MNDATA_COLORBOX_PADDING_X*2;
-    obj->_geometry.size.height = cbox->height + MNDATA_COLORBOX_PADDING_Y*2;
+    obj->_geometry.size.width  = cbox->width;
+    obj->_geometry.size.height = cbox->height;
+
+    R_GetPatchInfo(borderPatches[0], &t);
+    R_GetPatchInfo(borderPatches[2], &b);
+    R_GetPatchInfo(borderPatches[3], &l);
+    R_GetPatchInfo(borderPatches[1], &r);
+    R_GetPatchInfo(borderPatches[4], &tl);
+    R_GetPatchInfo(borderPatches[5], &tr);
+    R_GetPatchInfo(borderPatches[6], &br);
+    R_GetPatchInfo(borderPatches[7], &bl);
+
+    // Add top border?
+    if(t.id || tl.id || tr.id)
+    {
+        int height = 0;
+        if(t.id)  height = t.geometry.size.height;
+        if(tl.id) height = MAX_OF(height, tl.geometry.size.height);
+        if(tr.id) height = MAX_OF(height, tr.geometry.size.height);
+
+        obj->_geometry.size.height += height;
+    }
+
+    // Add a bottom border?
+    if(b.id || bl.id || br.id)
+    {
+        int height = 0;
+        if(b.id)  height = b.geometry.size.height;
+        if(bl.id) height = MAX_OF(height, bl.geometry.size.height);
+        if(br.id) height = MAX_OF(height, br.geometry.size.height);
+
+        obj->_geometry.size.height += height;
+    }
+
+    // Add a left border?
+    if(l.id || tl.id || bl.id)
+    {
+        int width = 0;
+        if(l.id)  width = l.geometry.size.width;
+        if(tl.id) width = MAX_OF(width, tl.geometry.size.width);
+        if(bl.id) width = MAX_OF(width, bl.geometry.size.width);
+
+        obj->_geometry.size.width += width;
+    }
+
+    // Add a right border?
+    if(r.id || tr.id || br.id)
+    {
+        int width = 0;
+        if(r.id)  width = r.geometry.size.width;
+        if(tr.id) width = MAX_OF(width, tr.geometry.size.width);
+        if(br.id) width = MAX_OF(width, br.geometry.size.width);
+
+        obj->_geometry.size.width += width;
+    }
 }
 
 boolean MNColorBox_RGBAMode(mn_object_t* obj)
