@@ -800,25 +800,55 @@ static void updatePageObjectGeometries(mn_page_t* page)
     }
 }
 
+/// @return  @c true iff this object is drawable (potentially visible).
+boolean MNObject_IsDrawable(mn_object_t* obj)
+{
+    return !(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN));
+}
+
 static void applyPageLayout(mn_page_t* page)
 {
-    int i, yOffset;
+    int i, yOrigin = 0, lineOffset;
 
     if(!page) return;
 
+    // Calculate leading/line offset.
+    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
+    lineOffset = MIN_OF(1, .5f + FR_CharHeight('Q') * .08f);
+
     // Apply layout logic to this page.
-    yOffset = 0;
-    for(i = 0; i < page->objectsCount; ++i)
+    for(i = 0; i < page->objectsCount;)
     {
         mn_object_t* obj = &page->objects[i];
 
-        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
-            continue;
+        if(!MNObject_IsDrawable(obj)) continue;
 
         obj->_geometry.origin.x = 0;
-        obj->_geometry.origin.y = 0 + yOffset;
+        obj->_geometry.origin.y = yOrigin;
 
-        yOffset += obj->_geometry.size.height * (1.08f); // Leading.
+        // Orient label plus button pairs around a vertical dividing line,
+        // with the label on the left, button on the right.
+        if(MNObject_Type(obj) == MN_TEXT)
+        {
+            mn_object_t* nextObj = page->objects + (i+1);
+            if(MNObject_Type(nextObj) == MN_BUTTON && MNObject_IsDrawable(nextObj))
+            {
+                const int margin = lineOffset * 2;
+
+                nextObj->_geometry.origin.x = margin + obj->_geometry.size.width;
+                nextObj->_geometry.origin.y = yOrigin;
+
+                // Proceed to the next object!
+                yOrigin += MAX_OF(obj->_geometry.size.height,
+                                  nextObj->_geometry.size.height) + lineOffset;
+                i += 2;
+                continue;
+            }
+        }
+
+        // Proceed to the next object!
+        yOrigin += obj->_geometry.size.height + lineOffset;
+        i += 1;
     }
 }
 
@@ -877,7 +907,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
             // Determine the origin and dimensions of the cursor.
             // \todo Each object should define a focus origin...
-            cursorOrigin.x = geometry->origin.x;
+            cursorOrigin.x = 0;
             cursorOrigin.y = geometry->origin.y;
 
             /// \kludge
