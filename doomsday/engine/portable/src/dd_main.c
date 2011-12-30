@@ -1174,7 +1174,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     if(!DD_IsNullGame(theGame))
     {
-        // Tell the plugin it is being unloaded.
+        // Tell the plugin it is being loaded.
         void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
 #ifdef _DEBUG
         Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);

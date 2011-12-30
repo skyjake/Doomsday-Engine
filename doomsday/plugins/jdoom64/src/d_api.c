@@ -84,6 +84,25 @@ int G_RegisterGames(int hookType, int param, void* data)
 #undef DATAPATH
 }
 
+/**
+ * Called right after the game plugin is selected into use.
+ */
+void DP_Load(void)
+{
+    // We might've been freed from memory, so refresh the game ids.
+    gameIds[doom64] = DD_GameIdForKey("doom64");
+
+    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
+
+/**
+ * Called when the game plugin is freed from memory.
+ */
+void DP_Unload(void)
+{
+    Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
+
 void G_PreInit(gameid_t gameId)
 {
     /// \todo Refactor me away.
@@ -178,5 +197,4 @@ game_export_t* GetGameAPI(game_import_t* imports)
 void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
-    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
