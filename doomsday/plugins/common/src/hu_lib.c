@@ -814,7 +814,7 @@ static void applyPageLayout(mn_page_t* page)
 
     // Calculate leading/line offset.
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    lineOffset = MIN_OF(1, .5f + FR_CharHeight('Q') * .08f);
+    lineOffset = MAX_OF(1, .5f + FR_CharHeight('Q') * .08f);
 
     // Apply layout logic to this page.
     for(i = 0; i < page->objectsCount;)
