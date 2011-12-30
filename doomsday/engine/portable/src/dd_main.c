@@ -410,6 +410,19 @@ gameid_t DD_DefineGame(const GameDef* def)
     return 0; // Invalid id.
 }
 
+gameid_t DD_GameIdForKey(const char* identityKey)
+{
+    Game* game = findGameForIdentityKey(identityKey);
+    if(game)
+    {
+        return DD_GameId(game);
+    }
+#ifdef _DEBUG
+    Con_Message("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey);
+#endif
+    return 0; // Invalid id.
+}
+
 void DD_DestroyGames(void)
 {
     destroyPathList(&gameResourceFileList, &numGameResourceFileList);
@@ -1099,6 +1112,14 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         Con_ClearDatabases();
 
+        { // Tell the plugin it is being unloaded.
+            void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
+#ifdef _DEBUG
+            Con_Message("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader);
+#endif
+            if(unloader) ((pluginfunc_t)unloader)();
+        }
+
         // The current game is now the special "null-game".
         theGame = nullGame;
 
@@ -1133,6 +1154,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         }
     )
 
+    Library_ReleaseGames();
+
     if(!exchangeEntryPoints(Game_PluginId(game)))
     {
         DD_ComposeMainWindowTitle(buf);
@@ -1148,6 +1171,16 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     // This is now the current game.
     theGame = game;
+
+    if(!DD_IsNullGame(theGame))
+    {
+        // Tell the plugin it is being loaded.
+        void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
+#ifdef _DEBUG
+        Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
+#endif
+        if(loader) ((pluginfunc_t)loader)();
+    }
 
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);

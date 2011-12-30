@@ -170,6 +170,7 @@ static int linkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
     const texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_UserData(node);
     const texturenamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
     texturenamespace_t* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
+    assert(record->uniqueId - tn->uniqueIdBase >= 0 && (unsigned)(record->uniqueId - tn->uniqueIdBase) < tn->uniqueIdMapSize);
     tn->uniqueIdMap[record->uniqueId - tn->uniqueIdBase] = findBindIdForDirectoryNode(node);
     return 0; // Continue iteration.
 }
@@ -180,8 +181,11 @@ static int unlinkRecordInUniqueIdMap(PathDirectoryNode* node, void* paramaters)
     const texturerecord_t* record = (texturerecord_t*)PathDirectoryNode_UserData(node);
     const texturenamespaceid_t namespaceId = namespaceIdForDirectory(PathDirectoryNode_Directory(node));
     texturenamespace_t* tn = &namespaces[namespaceId-TEXTURENAMESPACE_FIRST];
-    if(tn->uniqueIdMap)
+
+    // If the map is already considered 'dirty' do not unlink.
+    if(tn->uniqueIdMap && !tn->uniqueIdMapDirty)
     {
+        assert(record->uniqueId - tn->uniqueIdBase >= 0 && (unsigned)(record->uniqueId - tn->uniqueIdBase) < tn->uniqueIdMapSize);
         tn->uniqueIdMap[record->uniqueId - tn->uniqueIdBase] = NOTEXTUREID;
     }
     return 0; // Continue iteration.
@@ -450,7 +454,8 @@ void Textures_Shutdown(void)
         namespaces[i].directory = NULL;
 
         if(!tn->uniqueIdMap) continue;
-        free(tn->uniqueIdMap), tn->uniqueIdMap = NULL;
+        free(tn->uniqueIdMap);
+        tn->uniqueIdMap = NULL;
         tn->uniqueIdBase = 0;
         tn->uniqueIdMapSize = 0;
         tn->uniqueIdMapDirty = false;
@@ -675,13 +680,13 @@ static void rebuildUniqueIdMap(texturenamespaceid_t namespaceId)
     }
 
     // Construct and (re)populate the LUT.
-    tn->uniqueIdMap = (textureid_t*)realloc(tn->uniqueIdMap, sizeof *tn->uniqueIdMap * tn->uniqueIdMapSize);
+    tn->uniqueIdMap = (textureid_t*)realloc(tn->uniqueIdMap, sizeof(*tn->uniqueIdMap) * tn->uniqueIdMapSize);
     if(!tn->uniqueIdMap && tn->uniqueIdMapSize)
         Con_Error("Textures::rebuildUniqueIdMap: Failed on (re)allocation of %lu bytes resizing the map.", (unsigned long) sizeof *tn->uniqueIdMap * tn->uniqueIdMapSize);
 
     if(tn->uniqueIdMapSize)
     {
-        memset(tn->uniqueIdMap, NOTEXTUREID, sizeof *tn->uniqueIdMap * tn->uniqueIdMapSize);
+        memset(tn->uniqueIdMap, NOTEXTUREID, sizeof(*tn->uniqueIdMap) * tn->uniqueIdMapSize);
         iterateDirectory(namespaceId, linkRecordInUniqueIdMap, (void*)&localNamespaceId);
     }
     tn->uniqueIdMapDirty = false;

@@ -30,10 +30,10 @@
 #define LIBDENG_UINIT_H
 
 #include "dd_pinit.h"
-#include "sys_dylib.h"
+#include "library.h"
 
 typedef struct {
-    lt_dlhandle hInstPlug[MAX_PLUGS];
+    Library* hInstPlug[MAX_PLUGS];
     GETGAMEAPI GetGameAPI;
 
     /// @c true = We are using a custom user dir specified on the command line.

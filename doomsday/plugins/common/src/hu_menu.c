@@ -1521,15 +1521,15 @@ mndata_text_t txt_colorwidget_blue  = { "Blue" };
 mndata_text_t txt_colorwidget_alpha = { "Alpha" };
 
 static mn_object_t ColorWidgetMenuObjects[] = {
-    { MN_COLORBOX,  0,  MNF_NO_FOCUS, 0, MENU_FONT1, MENU_COLOR1, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { NULL }, NULL, NULL, NULL, &cbox_colorwidget_mixcolor },
-    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_red },
-    { MN_SLIDER,    0,  0,  'r', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red,   NULL, CR },
-    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_green },
-    { MN_SLIDER,    0,  0,  'g', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, NULL, CG },
-    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_blue },
-    { MN_SLIDER,    0,  0,  'b', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue,  NULL, CB },
-    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_alpha },
-    { MN_SLIDER,    0,  0,  'a', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, NULL, CA },
+    { MN_COLORBOX,  0,  MNF_ID0|MNF_NO_FOCUS, 0, MENU_FONT1, MENU_COLOR1, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { NULL }, NULL, NULL, NULL, &cbox_colorwidget_mixcolor },
+    { MN_TEXT,      0,  0,  0,         MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_red },
+    { MN_SLIDER,    0,  MNF_ID1,  'r', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_red,   NULL, CR },
+    { MN_TEXT,      0,  0,  0,         MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_green },
+    { MN_SLIDER,    0,  MNF_ID2,  'g', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_green, NULL, CG },
+    { MN_TEXT,      0,  0,  0,         MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_blue },
+    { MN_SLIDER,    0,  MNF_ID3,  'b', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_blue,  NULL, CB },
+    { MN_TEXT,      0,  MNF_ID4,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_colorwidget_alpha },
+    { MN_SLIDER,    0,  MNF_ID5,  'a', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuUpdateColorWidgetColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_colorwidget_alpha, NULL, CA },
     { MN_NONE }
 };
 
@@ -3192,13 +3192,12 @@ int Hu_MenuActivateColorWidget(mn_object_t* obj, mn_actionid_t action, void* par
 
     if(action != MNA_ACTIVE) return 1;
 
-    /// \fixme Find the objects by id.
-    cboxMix   = &ColorWidgetMenu.objects[0];
-    sldrRed   = &ColorWidgetMenu.objects[2];
-    sldrGreen = &ColorWidgetMenu.objects[4];
-    sldrBlue  = &ColorWidgetMenu.objects[6];
-    textAlpha = &ColorWidgetMenu.objects[7];
-    sldrAlpha = &ColorWidgetMenu.objects[8];
+    cboxMix   = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID0);
+    sldrRed   = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID1);
+    sldrGreen = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID2);
+    sldrBlue  = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID3);
+    textAlpha = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID4);
+    sldrAlpha = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID5);
 
     colorWidgetActive = true;
 

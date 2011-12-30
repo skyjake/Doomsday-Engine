@@ -3,7 +3,7 @@
 ; Highest ordinal is currently: --> 702 <--
 ; Other free ordinals:
 ;
-; 7, 126
+; 126
 
 NAME                            "DOOMSDAY"
 
@@ -15,6 +15,7 @@ EXPORTS
 
 ; Base.
     DD_DefineGame               @4 NONAME
+    DD_GameIdForKey             @7 NONAME
     DD_AddGameResource          @5 NONAME
     DD_GameInfo                 @6 NONAME
     DD_GetInteger               @8 NONAME

@@ -96,6 +96,15 @@ struct font_s;
 gameid_t DD_DefineGame(const GameDef* definition);
 
 /**
+ * Retrieves the game identifier for a previously defined game.
+ * @see DD_DefineGame().
+ *
+ * @param identityKey  Identity key of the game.
+ * @return Game identifier.
+ */
+gameid_t DD_GameIdForKey(const char* identityKey);
+
+/**
  * Registers a new resource for the specified game.
  *
  * \note Resource registration order defines the load order of resources

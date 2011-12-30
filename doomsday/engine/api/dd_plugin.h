@@ -36,6 +36,7 @@
 #define MAX_HOOKS           16
 #define HOOKF_EXCLUSIVE     0x01000000
 
+typedef int     (*pluginfunc_t) (void);
 typedef int     (*hookfunc_t) (int type, int parm, void *data);
 
 // Hook types.
