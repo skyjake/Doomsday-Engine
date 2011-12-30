@@ -201,7 +201,27 @@ mn_obtype_e MNObject_Type(const mn_object_t* obj);
 
 int MNObject_Flags(const mn_object_t* obj);
 
+/**
+ * Retrieve the current geometry of object within the two-dimensioned
+ * coordinate space of the owning object.
+ *
+ * @return  Rectangluar region of the parent space.
+ */
 const RectRaw* MNObject_Geometry(const mn_object_t* obj);
+
+/**
+ * Retrieve the origin of the object within the two-dimensioned coordinate
+ * space of the owning object.
+ * @return  Origin point within the parent space.
+ */
+const Point2Raw* MNObject_Origin(const mn_object_t* obj);
+
+/**
+ * Retrieve the boundary dimensions of the object expressed as units of
+ * the coordinate space of the owning object.
+ * @return  Size of this object in units of the parent's coordinate space.
+ */
+const Size2Raw* MNObject_Size(const mn_object_t* obj);
 
 /// @return  Flags value post operation for caller convenience.
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);

@@ -744,18 +744,22 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
     return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
+static void MN_DrawObject(mn_object_t* obj, const Point2Raw* offset)
 {
-    Point2Raw origin = { 0, 0 };
+    if(!obj) return;
+    obj->drawer(obj, offset);
+}
+
+static void setupRenderStateForPageDrawing(mn_page_t* page, float alpha)
+{
     int i;
-    assert(page);
 
-    if(!(alpha > .0001f)) return;
+    if(!page) return; // Huh?
 
-    // Configure default render state:
     rs.pageAlpha = alpha;
     rs.textGlitter = cfg.menuTextGlitter;
     rs.textShadow = cfg.menuShadow;
+
     for(i = 0; i < MENU_FONT_COUNT; ++i)
     {
         rs.textFonts[i] = MNPage_PredefinedFont(page, i);
@@ -765,12 +769,84 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         MNPage_PredefinedColor(page, i, rs.textColors[i]);
         rs.textColors[i][CA] = alpha; // For convenience.
     }
+
+    // Configure the font renderer (assume state has already been pushed if necessary).
     FR_SetFont(rs.textFonts[0]);
     FR_LoadDefaultAttrib();
     FR_SetLeading(0);
     FR_SetShadowStrength(rs.textShadow);
     FR_SetGlitterStrength(rs.textGlitter);
+}
 
+static void updatePageObjectGeometries(mn_page_t* page)
+{
+    int i;
+
+    if(!page) return;
+
+    // Update objects.
+    for(i = 0; i < page->objectsCount; ++i)
+    {
+        mn_object_t* obj = &page->objects[i];
+
+        if(MNObject_Type(obj) == MN_NONE) continue;
+
+        FR_PushAttrib();
+        if(obj->updateGeometry)
+        {
+            obj->updateGeometry(obj, page);
+        }
+        FR_PopAttrib();
+    }
+}
+
+static void applyPageLayout(mn_page_t* page)
+{
+    int i, yOffset;
+
+    if(!page) return;
+
+    // Apply layout logic to this page.
+    yOffset = 0;
+    for(i = 0; i < page->objectsCount; ++i)
+    {
+        mn_object_t* obj = &page->objects[i];
+
+        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
+            continue;
+
+        obj->_geometry.origin.x = 0;
+        obj->_geometry.origin.y = 0 + yOffset;
+
+        yOffset += obj->_geometry.size.height * (1.08f); // Leading.
+    }
+}
+
+void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
+{
+    int i;
+
+    if(!page) return;
+
+    alpha = MINMAX_OF(0, alpha, 1);
+    if(alpha <= .0001f) return;
+
+    // Object geometry is determined from properties defined in the
+    // render state, so configure render state before we begin.
+    setupRenderStateForPageDrawing(page, alpha);
+
+    // Update object geometry. We'll push the font renderer state because
+    // updating geometry may require changing the current values.
+    FR_PushAttrib();
+    updatePageObjectGeometries(page);
+
+    // Back to default page render state.
+    FR_PopAttrib();
+
+    // We can now layout the widgets of this page.
+    applyPageLayout(page);
+
+    // Draw the page.
     if(page->drawer)
     {
         FR_PushAttrib();
@@ -789,31 +865,37 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
             continue;
 
         FR_PushAttrib();
-        obj->drawer(obj, &origin);
-        if(obj->updateGeometry)
-        {
-            obj->updateGeometry(obj, page);
-        }
+        MN_DrawObject(obj, MNObject_Origin(obj));
+        FR_PopAttrib();
 
-        /// \kludge
+        // Draw the focus cursor?
         if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
         {
-            int cursorY = origin.y, cursorItemHeight = MNObject_Geometry(obj)->size.height;
+            const RectRaw* geometry = MNObject_Geometry(obj);
+            int focusObjectHeight = geometry->size.height;
+            Point2Raw cursorOrigin;
+
+            // Determine the origin and dimensions of the cursor.
+            // \todo Each object should define a focus origin...
+            cursorOrigin.x = geometry->origin.x;
+            cursorOrigin.y = geometry->origin.y;
+
+            /// \kludge
+            /// We cannot yet query the subobjects of the list for these values
+            /// so we must calculate them ourselves, here.
             if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
                MNList_SelectionIsVisible(obj))
             {
                 const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+
                 FR_SetFont(MNPage_PredefinedFont(page, MNObject_Font(obj)));
-                cursorItemHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                cursorY += (list->selection - list->first) * cursorItemHeight;
+                focusObjectHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                cursorOrigin.y += (list->selection - list->first) * focusObjectHeight;
             }
-            Hu_MenuDrawFocusCursor(origin.x, cursorY, cursorItemHeight, alpha);
+            // kludge end
+
+            Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjectHeight, alpha);
         }
-        /// kludge end.
-
-        origin.y += MNObject_Geometry(obj)->size.height * (1.08f); // Leading.
-
-        FR_PopAttrib();
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1097,6 +1179,18 @@ const RectRaw* MNObject_Geometry(const mn_object_t* obj)
 {
     assert(obj);
     return &obj->_geometry;
+}
+
+const Point2Raw* MNObject_Origin(const mn_object_t* obj)
+{
+    assert(obj);
+    return &obj->_geometry.origin;
+}
+
+const Size2Raw* MNObject_Size(const mn_object_t* obj)
+{
+    assert(obj);
+    return &obj->_geometry.size;
 }
 
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
