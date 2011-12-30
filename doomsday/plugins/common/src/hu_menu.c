@@ -3362,8 +3362,7 @@ int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* par
 int Hu_MenuUpdateColorWidgetColor(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
     float value = MNSlider_Value(obj);
-    /// \fixme Find object by id.
-    mn_object_t* cboxMix = &ColorWidgetMenu.objects[0];
+    mn_object_t* cboxMix = MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID0);
 
     if(MNA_MODIFIED != action) return 1;
 
