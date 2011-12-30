@@ -808,18 +808,20 @@ boolean MNObject_IsDrawable(mn_object_t* obj)
 
 static void applyPageLayout(mn_page_t* page)
 {
-    int i, yOrigin = 0, lineOffset;
+    int i, yOrigin = 0, lineHeight, lineOffset;
 
     if(!page) return;
 
     // Calculate leading/line offset.
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    lineOffset = MAX_OF(1, .5f + FR_CharHeight('Q') * .08f);
+    lineHeight = FR_CharHeight('Q');
+    lineOffset = MAX_OF(1, .5f + lineHeight * .08f);
 
     // Apply layout logic to this page.
     for(i = 0; i < page->objectsCount;)
     {
         mn_object_t* obj = &page->objects[i];
+        mn_object_t* nextObj = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
 
         if(!MNObject_IsDrawable(obj))
         {
@@ -835,9 +837,8 @@ static void applyPageLayout(mn_page_t* page)
         // vertical dividing line, with the label on the left, other object
         // on the right.
         // \todo Do not assume pairing, an object should designate it's pair.
-        if(MNObject_Type(obj) == MN_TEXT)
+        if(MNObject_Type(obj) == MN_TEXT && nextObj)
         {
-            mn_object_t* nextObj = page->objects + (i+1);
             if(MNObject_IsDrawable(nextObj) &&
                (MNObject_Type(nextObj) == MN_BUTTON ||
                 MNObject_Type(nextObj) == MN_LISTINLINE ||
@@ -852,13 +853,24 @@ static void applyPageLayout(mn_page_t* page)
                 // Proceed to the next object!
                 yOrigin += MAX_OF(obj->_geometry.size.height,
                                   nextObj->_geometry.size.height) + lineOffset;
+
+                // Extra spacing between object groups.
+                if(i+2 < page->objectsCount &&
+                   nextObj->_group != page->objects[i+2]._group)
+                    yOrigin += lineHeight;
+
                 i += 2;
                 continue;
             }
         }
 
-        // Proceed to the next object!
         yOrigin += obj->_geometry.size.height + lineOffset;
+
+        // Extra spacing between object groups.
+        if(nextObj && nextObj->_group != obj->_group)
+            yOrigin += lineHeight;
+
+        // Proceed to the next object!
         i += 1;
     }
 }
