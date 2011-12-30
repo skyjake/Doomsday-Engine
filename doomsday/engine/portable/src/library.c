@@ -27,15 +27,26 @@
 #include "m_misc.h"
 #include "m_args.h"
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <dlfcn.h>
-#include <string.h>
+#ifdef WIN32
+#  include "de_platform.h"
+#endif
+
+#ifdef UNIX
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <dirent.h>
+#  include <dlfcn.h>
+#  include <string.h>
+#endif
 
 #define MAX_LIBRARIES   64  /// @todo  Replace with a dynamic list.
 
+#ifdef UNIX
 typedef void* handle_t;
+#endif
+#ifdef WIN32
+typedef HINSTANCE handle_t;
+#endif
 
 struct library_s {
     ddstring_t* path;
@@ -43,10 +54,14 @@ struct library_s {
     boolean isGamePlugin;
 };
 
+#ifdef UNIX
 static filename_t appDir; /// @todo  Use ddstring_t
+#endif
+
 static ddstring_t* lastError;
 static Library* loadedLibs[MAX_LIBRARIES];
 
+#ifdef UNIX
 static void getBundlePath(char* path, size_t len)
 {
     if(ArgCheckWith("-libdir", 1))
@@ -74,6 +89,7 @@ static void getBundlePath(char* path, size_t len)
 #endif
 #endif
 }
+#endif
 
 static void addToLoaded(Library* lib)
 {
@@ -106,7 +122,9 @@ static void removeFromLoaded(Library* lib)
 void Library_Init(void)
 {
     lastError = Str_NewStd();
+#ifdef UNIX
     getcwd(appDir, sizeof(appDir));
+#endif
 }
 
 void Library_Shutdown(void)
@@ -118,6 +136,7 @@ void Library_Shutdown(void)
 
 void Library_ReleaseGames(void)
 {
+#ifdef UNIX
     int i;
 
     for(i = 0; i < MAX_LIBRARIES; ++i)
@@ -133,8 +152,10 @@ void Library_ReleaseGames(void)
             lib->handle = 0;
         }
     }
+#endif
 }
 
+#ifdef UNIX
 static void reopenLibraryIfNeeded(Library* lib)
 {
     assert(lib);
@@ -147,11 +168,13 @@ static void reopenLibraryIfNeeded(Library* lib)
         assert(lib->handle);
     }
 }
+#endif
 
 Library* Library_New(const char *fileName)
 {
     Library* lib = 0;
     handle_t handle;
+#ifdef UNIX
     filename_t bundlePath; /// @todo Use ddstring_t
 #ifdef MACOSX
     char* ptr;
@@ -188,12 +211,15 @@ Library* Library_New(const char *fileName)
         printf("Library_New: Error opening \"%s\" (%s).\n", bundlePath, Library_LastError());
         return 0;
     }
+#endif
 
     // Create the Library instance.
     lib = calloc(1, sizeof(*lib));
     lib->handle = handle;
     lib->path = Str_NewStd();
+#ifdef UNIX
     Str_Set(lib->path, bundlePath);
+#endif
 
     addToLoaded(lib);
 
@@ -213,7 +239,9 @@ void Library_Delete(Library *lib)
     assert(lib);
     if(lib->handle)
     {
+#ifdef UNIX
         dlclose(lib->handle);
+#endif
     }
     Str_Delete(lib->path);
     removeFromLoaded(lib);
@@ -222,13 +250,17 @@ void Library_Delete(Library *lib)
 
 void* Library_Symbol(Library* lib, const char* symbolName)
 {
+    void* ptr = 0;
+
     assert(lib);
+#ifdef UNIX
     reopenLibraryIfNeeded(lib);
-    void* ptr = dlsym(lib->handle, symbolName);
+    ptr = dlsym(lib->handle, symbolName);
     if(!ptr)
     {
         Str_Set(lastError, dlerror());
     }
+#endif
     return ptr;
 }
 
@@ -244,6 +276,7 @@ void Library_AddSearchDir(const char *dir)
 
 int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *data)
 {
+#ifdef UNIX
     struct dirent* entry = NULL;
     filename_t bundlePath;
     DIR* dir = NULL;
@@ -272,5 +305,6 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
         if(func(entry->d_name, data)) break;
     }
     closedir(dir);
+#endif
     return 0;
 }
