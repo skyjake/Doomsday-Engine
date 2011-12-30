@@ -1781,13 +1781,26 @@ void Hu_MenuLoadResources(void)
 void Hu_MenuInitSkillMenu(void)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    struct skillbutton_s {
+        int pageObjectId;
+        int textDefId;
+    } skillButtons[NUM_SKILL_MODES] = {
+        { MNF_ID0, TXT_SKILL1 },
+        { MNF_ID1, TXT_SKILL2 },
+        { MNF_ID2, TXT_SKILL3 },
+        { MNF_ID3, TXT_SKILL4 },
+#  if !__JDOOM64__
+        { MNF_ID4, TXT_SKILL5 }
+#  endif
+    };
     int i;
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
-        /// \fixme Find objects by id.
-        mn_object_t* obj = &SkillMenu.objects[i];
+        const struct skillbutton_s* sb = &skillButtons[i];
+        mn_object_t* obj = MN_MustFindObjectOnPage(&SkillMenu, 0, sb->pageObjectId);
         mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-        btn->text = GET_TXT(TXT_SKILL1 + i);
+
+        btn->text = GET_TXT(sb->textDefId);
         MNObject_SetShortcut(obj, btn->text[0]);
     }
 #endif
