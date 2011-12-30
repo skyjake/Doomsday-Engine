@@ -2563,8 +2563,7 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd)
         MNObject_SetFlags(obj, FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        /// \fixme Find object by id.
-        MNColorBox_CopyColor(obj, 0, &ColorWidgetMenu.objects[0]);
+        MNColorBox_CopyColor(obj, 0, MN_MustFindObjectOnPage(&ColorWidgetMenu, 0, MNF_ID0));
 
         /// \kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
