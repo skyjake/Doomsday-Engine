@@ -280,7 +280,7 @@ int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* pa
 
 void Hu_MenuInitControlsPage(void)
 {
-    int i, textCount, bindingsCount, totalItems;
+    int i, textCount, bindingsCount, totalItems, group;
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     size_t objectIdx, textIdx;
 
@@ -316,12 +316,14 @@ void Hu_MenuInitControlsPage(void)
 
     objectIdx = 0;
     textIdx = 0;
+    group = 0;
     for(i = 0; i < configCount; ++i)
     {
         mndata_bindings_t* binds = &controlConfig[i];
 
         if(!binds->command && !binds->controlName)
-        {   // Inert.
+        {
+            // Inert.
             mn_object_t* obj   = &ControlsMenuItems[objectIdx++];
             mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
@@ -332,6 +334,9 @@ void Hu_MenuInitControlsPage(void)
             obj->_pageColorIdx = MENU_COLOR2; 
             obj->drawer = MNText_Drawer;
             obj->updateGeometry = MNText_UpdateGeometry;
+
+            // A new group begins;
+            obj->_group = ++group;
         }
         else 
         {
@@ -353,6 +358,7 @@ void Hu_MenuInitControlsPage(void)
             labelObj->updateGeometry = MNText_UpdateGeometry;
             labelObj->_pageFontIdx = MENU_FONT1;
             labelObj->_pageColorIdx = MENU_COLOR1; 
+            labelObj->_group = group;
 
             bindingsObj->_type = MN_BINDINGS;
             bindingsObj->drawer = MNBindings_Drawer;
@@ -362,6 +368,7 @@ void Hu_MenuInitControlsPage(void)
             bindingsObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             bindingsObj->_typedata = binds;
+            bindingsObj->_group = group;
 
             if(!ControlsMenu.focus)
                 ControlsMenu.focus = bindingsObj - ControlsMenuItems;
