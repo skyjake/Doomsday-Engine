@@ -2,7 +2,6 @@
 import os
 import utils
 from event import Event
-import build_version
 import config
 
 class Entry:
@@ -153,11 +152,13 @@ class Changes:
             out.close()
             
         elif format == 'deb':
+            import build_version
+            build_version.find_version()
+
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
-            build_version.find_version()
             debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + Event().tag()
 
             # Always make one entry.
