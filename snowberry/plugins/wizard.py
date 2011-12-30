@@ -180,7 +180,7 @@ def runWizard():
     deathKingsWad = None
 
     # We'll do this dynamically.
-    checkedProfiles = ['doom1', 'doom2', 'heretic', 'hexen', 'hacx', 'chex']
+    checkedProfiles = ['doom1', 'doom2', 'heretic', 'hexen']
     # Only display the system profiles in the wizard (not any user
     # profiles).
     profiles = pr.getProfiles(lambda p: p.isSystemProfile())

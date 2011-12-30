@@ -1,5 +1,6 @@
 name: Chex Quest
 game: game-jdoom
+game-mode: game-mode-chex
 banner: banner-default
 hidden: yes
 
