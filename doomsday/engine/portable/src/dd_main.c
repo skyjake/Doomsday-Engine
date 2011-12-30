@@ -410,6 +410,19 @@ gameid_t DD_DefineGame(const GameDef* def)
     return 0; // Invalid id.
 }
 
+gameid_t DD_GameIdForKey(const char* identityKey)
+{
+    Game* game = findGameForIdentityKey(identityKey);
+    if(game)
+    {
+        return DD_GameId(game);
+    }
+#ifdef _DEBUG
+    Con_Message("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey);
+#endif
+    return 0; // Invalid id.
+}
+
 void DD_DestroyGames(void)
 {
     destroyPathList(&gameResourceFileList, &numGameResourceFileList);
@@ -1159,7 +1172,9 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     // This is now the current game.
     theGame = game;
 
-    { // Tell the plugin it is being unloaded.
+    if(!DD_IsNullGame(theGame))
+    {
+        // Tell the plugin it is being unloaded.
         void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
 #ifdef _DEBUG
         Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);

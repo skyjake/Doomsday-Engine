@@ -151,6 +151,32 @@ int G_RegisterGames(int hookType, int param, void* data)
 #undef DATAPATH
 }
 
+/**
+ * Called right after the game plugin is selected into use.
+ */
+void DP_Load(void)
+{
+    // We might've been freed from memory, so refresh the game ids.
+    gameIds[doom_shareware] = DD_GameIdForKey("doom1-share");
+    gameIds[doom]           = DD_GameIdForKey("doom1");
+    gameIds[doom_ultimate]  = DD_GameIdForKey("doom1-ultimate");
+    gameIds[doom_chex]      = DD_GameIdForKey("chex");
+    gameIds[doom2]          = DD_GameIdForKey("doom2");
+    gameIds[doom2_tnt]      = DD_GameIdForKey("doom2-tnt");
+    gameIds[doom2_plut]     = DD_GameIdForKey("doom2-plut");
+    gameIds[doom2_hacx]     = DD_GameIdForKey("hacx");
+
+    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
+
+/**
+ * Called when the game plugin is freed from memory.
+ */
+void DP_Unload(void)
+{
+    Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
+
 void G_PreInit(gameid_t gameId)
 {
     /// \todo Refactor me away.
@@ -239,20 +265,10 @@ game_export_t* GetGameAPI(game_import_t* imports)
 }
 
 /**
- * This function is called automatically when the plugin is loaded.
+ * This function is called automatically when the plugin is loaded for the first time.
  * We let the engine know what we'd like to do.
  */
 void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
-}
-
-void DP_Load(void)
-{
-    Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
-}
-
-void DP_Unload(void)
-{
-    Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }

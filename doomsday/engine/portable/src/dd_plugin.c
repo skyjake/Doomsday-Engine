@@ -162,7 +162,10 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     }
     return adr;
 #elif UNIX
-    void* addr = Library_Symbol(app.hInstPlug[pluginId - 1], fn);
+    void* addr = 0;
+    int plugIndex = pluginId - 1;
+    assert(plugIndex >= 0 && plugIndex < MAX_PLUGS);
+    addr = Library_Symbol(app.hInstPlug[plugIndex], fn);
     if(!addr)
     {
         Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).\n", fn,
