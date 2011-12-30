@@ -821,19 +821,26 @@ static void applyPageLayout(mn_page_t* page)
     {
         mn_object_t* obj = &page->objects[i];
 
-        if(!MNObject_IsDrawable(obj)) continue;
+        if(!MNObject_IsDrawable(obj))
+        {
+            // Proceed to the next object!
+            i += 1;
+            continue;
+        }
 
         obj->_geometry.origin.x = 0;
         obj->_geometry.origin.y = yOrigin;
 
-        // Orient label plus button/inline list pairs around a vertical dividing line,
-        // with the label on the left, other object on the right.
+        // Orient label plus button/inline-list/textual-slider pairs about a
+        // vertical dividing line, with the label on the left, other object
+        // on the right.
         if(MNObject_Type(obj) == MN_TEXT)
         {
             mn_object_t* nextObj = page->objects + (i+1);
             if(MNObject_IsDrawable(nextObj) &&
                (MNObject_Type(nextObj) == MN_BUTTON ||
-                MNObject_Type(nextObj) == MN_LISTINLINE))
+                MNObject_Type(nextObj) == MN_LISTINLINE ||
+                (MNObject_Type(nextObj) == MN_SLIDER && obj->drawer == MNSlider_TextualValueDrawer)))
             {
                 const int margin = lineOffset * 2;
 
