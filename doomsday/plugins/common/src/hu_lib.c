@@ -1785,14 +1785,14 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 int MNList_Selection(mn_object_t* obj)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
     return list->selection;
 }
 
 boolean MNList_SelectionIsVisible(mn_object_t* obj)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
     return (list->selection >= list->first && list->selection < list->first + list->numvis);
 }
 
@@ -1800,7 +1800,7 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int i;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
 
     for(i = 0; i < list->count; ++i)
     {
@@ -1822,7 +1822,7 @@ boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int oldSelection = list->selection;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
 
     if(0 > itemIndex || itemIndex >= list->count) return false;
 
