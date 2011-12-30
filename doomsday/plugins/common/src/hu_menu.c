@@ -901,7 +901,7 @@ static mn_object_t HudMenuObjects[] = {
 
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_crosshair },
     { MN_TEXT,      0,  0,  'c',MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_symbol },
-    { MN_LIST,      0,  0,  0,  MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_hud_xhair_symbol },
+    { MN_LISTINLINE, 0, 0,  0,  MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_xhair_symbol },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_size },
     { MN_SLIDER,    0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_size },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_opacity },
@@ -921,11 +921,11 @@ static mn_object_t HudMenuObjects[] = {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_counters },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
-    { MN_LIST,      0,  0,  'k',MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_hud_cntr_kills },
+    { MN_LISTINLINE, 0, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_items },
-    { MN_LIST,      0,  0,  'i',MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_hud_cntr_items },
+    { MN_LISTINLINE, 0, 0,  'i',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_items },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_secrets },
-    { MN_LIST,      0,  0,  's',MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_hud_cntr_secrets },
+    { MN_LISTINLINE, 0, 0,  's',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_secrets },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_size },
     { MN_SLIDER,    0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_cntr_size },
 #endif
@@ -1121,11 +1121,11 @@ static mn_object_t WeaponMenuObjects[] = {
 
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_autoswitch },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_weapon },
-    { MN_LIST,      0,  0,  'w',MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_weapons_autoswitch_pickup },
+    { MN_LISTINLINE, 0, 0,  'w',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickup },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_weapon_ifnot_firing },
     { MN_BUTTON,    0,  0,  'f',MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_aswch_pickup_weapon_ifnot_firing },
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_ammo },
-    { MN_LIST,      0,  0,  'a',MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_weapons_autoswitch_pickupammo },
+    { MN_LISTINLINE, 0, 0,  'a',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_weapons_autoswitch_pickupammo },
 #if __JDOOM__ || __JDOOM64__
     { MN_TEXT,      0,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_weapons_aswch_pickup_berserk },
     { MN_BUTTON,    0,  0,  'b',MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_weapons_aswch_pickup_berserk },
@@ -1216,13 +1216,13 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
     { MN_SLIDER,    0,  0,  'l', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
-    { MN_LIST,      0,  0,  'h', MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_statusbar },
+    { MN_LISTINLINE, 0, 0,  'h', MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_statusbar },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },
     { MN_BUTTON,    0,  0,  'c', MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_map_door_colors },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_glow },
     { MN_SLIDER,    0,  0,  'g', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_doorglow },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_use_custom_colors },
-    { MN_LIST,      0,  0,  0,   MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &lst_map_customcolors },
+    { MN_LISTINLINE, 0, 0,  0,   MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_customcolors },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_wall },
     { MN_COLORBOX,  0,  0,  'w', MENU_FONT1, MENU_COLOR1, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, NULL, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_map_line_solid_color },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_color_floor_height_change },
@@ -1473,10 +1473,10 @@ mn_object_t PlayerSetupMenuObjects[] = {
     { MN_EDIT,      0,  MNF_ID1,    0,   MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_player_name },
 #if __JHEXEN__
     { MN_TEXT,      0,  0,          0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_player_class },
-    { MN_LIST,      0,  MNF_ID2,    'c', MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuSelectPlayerSetupPlayerClass, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_player_class },
+    { MN_LISTINLINE, 0, MNF_ID2,    'c', MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuSelectPlayerSetupPlayerClass, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_player_class },
 #endif
     { MN_TEXT,      0,  0,          0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_player_color },
-    { MN_LIST,      0,  MNF_ID3,    0,   MENU_FONT1, MENU_COLOR3, MNList_InlineUpdateGeometry, MNList_InlineDrawer, { Hu_MenuSelectPlayerColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNList_InlineCommandResponder, NULL, NULL, &list_player_color },
+    { MN_LISTINLINE,0,  MNF_ID3,    0,   MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuSelectPlayerColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_player_color },
     { MN_BUTTON,    0,  0,          's', MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectAcceptPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_player_save_changes },
     { MN_NONE }
 };
@@ -1665,8 +1665,7 @@ static boolean Hu_MenuHasCursorRotation(mn_object_t* obj)
 {
     assert(obj);
     return (!(MNObject_Flags(obj) & MNF_DISABLED) &&
-       ((MNObject_Type(obj) == MN_LIST && obj->cmdResponder == MNList_InlineCommandResponder) ||
-        MNObject_Type(obj) == MN_SLIDER));
+              (MNObject_Type(obj) == MN_LISTINLINE || MNObject_Type(obj) == MN_SLIDER));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).

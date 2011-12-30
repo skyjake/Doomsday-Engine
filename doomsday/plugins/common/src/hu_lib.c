@@ -1060,7 +1060,8 @@ void MNPage_Initialize(mn_page_t* page)
 
             break;
           }
-        case MN_LIST: {
+        case MN_LIST:
+        case MN_LISTINLINE: {
             mndata_list_t* list = obj->_typedata;
             int j;
             for(j = 0; j < list->count; ++j)
@@ -1838,11 +1839,11 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
     return MNList_SelectItem(obj, flags, MNList_FindItem(obj, dataValue));
 }
 
-void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin)
+void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     const mndata_listitem_t* item = ((const mndata_listitem_t*)list->items) + list->selection;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
@@ -1852,10 +1853,10 @@ void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     switch(cmd)
     {
@@ -1919,11 +1920,11 @@ void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     }
 }
 
-void MNList_InlineUpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextSize(&obj->_geometry.size, item->text);
