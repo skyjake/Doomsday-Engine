@@ -2991,6 +2991,12 @@ void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin)
 
 void Hu_MenuUpdateGameSaveWidgets(void)
 {
+    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+#if !__JHEXEN__
+        MNF_ID6, MNF_ID7
+#endif
+    };
     int i;
 
     if(!menuActive) return;
@@ -3003,8 +3009,7 @@ void Hu_MenuUpdateGameSaveWidgets(void)
     // Update widgets.
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        /// \fixme Find object by id.
-        mn_object_t* obj = &LoadMenu.objects[i];
+        mn_object_t* obj = MN_MustFindObjectOnPage(&LoadMenu, 0, saveSlotObjectIds[i]);
         mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
         const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(edit->data2);
         const char* text = "";
