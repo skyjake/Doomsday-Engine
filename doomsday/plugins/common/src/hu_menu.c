@@ -2239,8 +2239,8 @@ void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatchXY2( pInvPageLeft[!havePrevPage || (menuTime & 8)], x - 152, y, ALIGN_RIGHT);
-    GL_DrawPatchXY2(pInvPageRight[!haveNextPage || (menuTime & 8)], x + 152, y, ALIGN_LEFT);
+    GL_DrawPatchXY2( pInvPageLeft[!havePrevPage || (menuTime & 8)], x - 144, y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[!haveNextPage || (menuTime & 8)], x + 144, y, ALIGN_LEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
