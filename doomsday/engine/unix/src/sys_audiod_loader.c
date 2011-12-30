@@ -32,7 +32,7 @@
 #include <string.h>
 
 #ifdef UNIX
-#  include "sys_dylib.h"
+#  include "library.h"
 #endif
 
 #include "de_console.h"
@@ -64,13 +64,13 @@ audiointerface_cd_t audiodExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static lt_dlhandle handle = NULL;
+static Library* handle = NULL;
 
 // CODE --------------------------------------------------------------------
 
 static void* Imp(const char* fn)
 {
-    return lt_dlsym(handle, fn);
+    return Library_Symbol(handle, fn);
 }
 
 void Sys_ShutdownAudioDriver(void)
@@ -83,7 +83,7 @@ void Sys_ShutdownAudioDriver(void)
 
     if(audioDriver == &audiodExternal)
     {
-        lt_dlclose(handle);
+        Library_Delete(handle);
         handle = NULL;
     }
 }
@@ -168,7 +168,7 @@ audiodriver_t* Sys_LoadAudioDriver(const char* name)
 #endif
 
         // Load the audio driver library and import symbols.
-        handle = lt_dlopenext(Str_Text(&libPath));
+        handle = Library_New(Str_Text(&libPath));
         if(NULL != handle)
         {
             ad = importExternal();
