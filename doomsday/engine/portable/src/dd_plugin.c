@@ -30,7 +30,7 @@
 
 #ifdef UNIX
 #  include <SDL.h>
-#  include "sys_dylib.h"
+#  include "library.h"
 #endif
 
 #include "de_base.h"
@@ -162,12 +162,12 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
     }
     return adr;
 #elif UNIX
-    lt_dlhandle* handle = &app.hInstPlug[pluginId-1];
-    void* adr = (void*)lt_dlsym(*handle, fn);
-    if(!adr)
+    void* addr = Library_Symbol(app.hInstPlug[pluginId - 1], fn);
+    if(!addr)
     {
-        Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).\n", fn, lt_dlerror());
+        Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).\n", fn,
+                    Library_LastError());
     }
-    return adr;
+    return addr;
 #endif
 }

@@ -245,5 +245,14 @@ game_export_t* GetGameAPI(game_import_t* imports)
 void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
+}
+
+void DP_Load(void)
+{
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
+}
+
+void DP_Unload(void)
+{
+    Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
