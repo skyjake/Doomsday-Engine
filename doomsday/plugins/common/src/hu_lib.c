@@ -834,6 +834,7 @@ static void applyPageLayout(mn_page_t* page)
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other object
         // on the right.
+        // \todo Do not assume pairing, an object should designate it's pair.
         if(MNObject_Type(obj) == MN_TEXT)
         {
             mn_object_t* nextObj = page->objects + (i+1);
