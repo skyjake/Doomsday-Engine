@@ -800,25 +800,65 @@ static void updatePageObjectGeometries(mn_page_t* page)
     }
 }
 
+/// @return  @c true iff this object is drawable (potentially visible).
+boolean MNObject_IsDrawable(mn_object_t* obj)
+{
+    return !(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN));
+}
+
 static void applyPageLayout(mn_page_t* page)
 {
-    int i, yOffset;
+    int i, yOrigin = 0, lineOffset;
 
     if(!page) return;
 
+    // Calculate leading/line offset.
+    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
+    lineOffset = MAX_OF(1, .5f + FR_CharHeight('Q') * .08f);
+
     // Apply layout logic to this page.
-    yOffset = 0;
-    for(i = 0; i < page->objectsCount; ++i)
+    for(i = 0; i < page->objectsCount;)
     {
         mn_object_t* obj = &page->objects[i];
 
-        if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
+        if(!MNObject_IsDrawable(obj))
+        {
+            // Proceed to the next object!
+            i += 1;
             continue;
+        }
 
         obj->_geometry.origin.x = 0;
-        obj->_geometry.origin.y = 0 + yOffset;
+        obj->_geometry.origin.y = yOrigin;
 
-        yOffset += obj->_geometry.size.height * (1.08f); // Leading.
+        // Orient label plus button/inline-list/textual-slider pairs about a
+        // vertical dividing line, with the label on the left, other object
+        // on the right.
+        // \todo Do not assume pairing, an object should designate it's pair.
+        if(MNObject_Type(obj) == MN_TEXT)
+        {
+            mn_object_t* nextObj = page->objects + (i+1);
+            if(MNObject_IsDrawable(nextObj) &&
+               (MNObject_Type(nextObj) == MN_BUTTON ||
+                MNObject_Type(nextObj) == MN_LISTINLINE ||
+                (MNObject_Type(nextObj) == MN_SLIDER && nextObj->drawer == MNSlider_TextualValueDrawer)))
+            {
+                const int margin = lineOffset * 2;
+
+                nextObj->_geometry.origin.x = margin + obj->_geometry.size.width;
+                nextObj->_geometry.origin.y = yOrigin;
+
+                // Proceed to the next object!
+                yOrigin += MAX_OF(obj->_geometry.size.height,
+                                  nextObj->_geometry.size.height) + lineOffset;
+                i += 2;
+                continue;
+            }
+        }
+
+        // Proceed to the next object!
+        yOrigin += obj->_geometry.size.height + lineOffset;
+        i += 1;
     }
 }
 
@@ -877,7 +917,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
             // Determine the origin and dimensions of the cursor.
             // \todo Each object should define a focus origin...
-            cursorOrigin.x = geometry->origin.x;
+            cursorOrigin.x = 0;
             cursorOrigin.y = geometry->origin.y;
 
             /// \kludge
@@ -1030,7 +1070,8 @@ void MNPage_Initialize(mn_page_t* page)
 
             break;
           }
-        case MN_LIST: {
+        case MN_LIST:
+        case MN_LISTINLINE: {
             mndata_list_t* list = obj->_typedata;
             int j;
             for(j = 0; j < list->count; ++j)
@@ -1752,14 +1793,14 @@ int MNList_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 int MNList_Selection(mn_object_t* obj)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
     return list->selection;
 }
 
 boolean MNList_SelectionIsVisible(mn_object_t* obj)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
     return (list->selection >= list->first && list->selection < list->first + list->numvis);
 }
 
@@ -1767,7 +1808,7 @@ int MNList_FindItem(const mn_object_t* obj, int dataValue)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int i;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
 
     for(i = 0; i < list->count; ++i)
     {
@@ -1789,7 +1830,7 @@ boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     int oldSelection = list->selection;
-    assert(obj && obj->_type == MN_LIST);
+    assert(obj && (obj->_type == MN_LIST || obj->_type == MN_LISTINLINE));
 
     if(0 > itemIndex || itemIndex >= list->count) return false;
 
@@ -1808,11 +1849,11 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
     return MNList_SelectItem(obj, flags, MNList_FindItem(obj, dataValue));
 }
 
-void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin)
+void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     const mndata_listitem_t* item = ((const mndata_listitem_t*)list->items) + list->selection;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[obj->_pageFontIdx]);
@@ -1822,10 +1863,10 @@ void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     switch(cmd)
     {
@@ -1889,11 +1930,11 @@ void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     }
 }
 
-void MNList_InlineUpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
-    assert(obj->_type == MN_LIST);
+    assert(obj->_type == MN_LISTINLINE);
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextSize(&obj->_geometry.size, item->text);

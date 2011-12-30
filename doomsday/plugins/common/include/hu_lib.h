@@ -62,6 +62,7 @@ typedef enum {
     MN_BUTTON,
     MN_EDIT,
     MN_LIST,
+    MN_LISTINLINE,
     MN_SLIDER,
     MN_COLORBOX,
     MN_BINDINGS,
@@ -434,8 +435,8 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string);
 /**
  * List selection.
  */
-#define MNDATA_LIST_LEADING     .5f /// Inter-item leading factor (does not apply to MNList_InlineDrawer).
-#define MNDATA_LIST_NONSELECTION_LIGHT  .7f /// Light value multiplier for non-selected items (does not apply to MNList_InlineDrawer).
+#define MNDATA_LIST_LEADING     .5f /// Inter-item leading factor (does not apply to MNListInline_Drawer).
+#define MNDATA_LIST_NONSELECTION_LIGHT  .7f /// Light value multiplier for non-selected items (does not apply to MNListInline_Drawer).
 
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
@@ -444,6 +445,7 @@ typedef struct {
     int data;
 } mndata_listitem_t;
 
+/// \note Also used for MN_LISTINLINE!
 typedef struct mndata_list_s {
     void* items;
     int count; // Number of items.
@@ -455,13 +457,13 @@ typedef struct mndata_list_s {
 } mndata_list_t;
 
 void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNList_InlineDrawer(mn_object_t* obj, const Point2Raw* origin);
+void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
 
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNList_InlineCommandResponder(mn_object_t* obj, menucommand_e command);
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
 
 void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
-void MNList_InlineUpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* obj);
