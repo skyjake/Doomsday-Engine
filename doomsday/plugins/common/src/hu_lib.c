@@ -949,7 +949,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     if(focusObj && Rect_Height(page->geometry) > SCREENHEIGHT)
     {
         RectRaw geometry;
-        const int minY = -page->origin.x + SCREENHEIGHT/2;
+        const int minY = -page->origin.y + SCREENHEIGHT/2;
         Rect_Raw(page->geometry, &geometry);
 
         if(cursorOrigin.y > minY)
