@@ -98,9 +98,8 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
 
     changes = builder.Changes(fromTag, toTag)
 
+    import build_version
     if debChanges:
-        import build_version
-
         # Only update the Debian changelog.
         changes.generate('deb')
 
@@ -113,6 +112,11 @@ def update_changes(fromTag=None, toTag=None, debChanges=False):
         msg = 'New release: Doomsday Engine build %i.' % builder.Event().number()
         os.system('dch --check-dirname-level 0 -v %s "%s"' % (debVer, msg))
     else:
+        # Save the release type.
+        build_version.find_version(quiet=True)
+        print >> file(builder.Event(toTag).file_path('releaseType.txt'), 'wt'), \
+            build_version.DOOMSDAY_RELEASE_TYPE
+        
         changes.generate('html')
         changes.generate('xml')
            
