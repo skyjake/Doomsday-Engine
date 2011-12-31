@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_mobj.c: Client Map Objects
+ * Client Map Objects
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -721,8 +721,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
 
 #ifdef _DEBUG
     VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                         mo->thinker.id, mo->state,
-                         (int)(mo->state - states)) );
+                         mo->thinker.id, mo->state, (int)(mo->state - states)) );
 #endif
 
     return true;

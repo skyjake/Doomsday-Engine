@@ -1,4 +1,4 @@
-/**\file
+/**\file p_oldsvg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,10 +24,13 @@
  */
 
 /**
- * p_oldsvg.c:
+ * Original Heretic saved game loader.
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <stdio.h>
+#include <string.h>
 
 #include "jheretic.h"
 
@@ -138,7 +141,7 @@ static void SV_v13_ReadPlayer(player_t* pl)
     pl->powers[PT_INVISIBILITY] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_ALLMAP] = (SV_v13_ReadLong()? true : false);
     if(pl->powers[PT_ALLMAP])
-        AM_RevealMap(AM_MapForPlayer(pl - players), true);
+        ST_RevealAutomap(pl - players, true);
     pl->powers[PT_INFRARED] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_WEAPONLEVEL2] = (SV_v13_ReadLong()? true : false);
     pl->powers[PT_FLIGHT] = (SV_v13_ReadLong()? true : false);
@@ -333,11 +336,14 @@ static void SV_v13_ReadMobj(void)
     mo->spawnSpot.angle = (angle_t) (ANG45 * (SV_v13_ReadLong() / 45));
     /*mo->spawnSpot.type = (int)*/ SV_v13_ReadLong();
 
-    mo->spawnSpot.flags = (int) SV_v13_ReadLong();
-    mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
+    {
+    int spawnFlags = ((int) SV_v13_ReadLong()) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
-    mo->spawnSpot.flags |= MSF_Z_FLOOR;
+    spawnFlags |= MSF_Z_FLOOR;
+    mo->spawnSpot.flags = spawnFlags;
+    }
 
+    mo->info = info;
     SV_UpdateReadMobjFlags(mo, 0);
 
     mo->state = &STATES[PTR2INT(mo->state)];
@@ -349,7 +355,6 @@ static void SV_v13_ReadMobj(void)
         mo->player->plr->mo->dPlayer = mo->player->plr;
     }
     P_MobjSetPosition(mo);
-    mo->info = info;
     mo->floorZ = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
@@ -399,11 +404,11 @@ void P_v13_UnArchiveWorld(void)
 
         P_SetFixedp(sec, DMU_FLOOR_HEIGHT, *get++ << FRACBITS);
         P_SetFixedp(sec, DMU_CEILING_HEIGHT, *get++ << FRACBITS);
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
-        /*xsec->tag =*/ *get++; // needed?
+        /*xsec->tag = **/get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -416,7 +421,7 @@ void P_v13_UnArchiveWorld(void)
 
         xline->flags = *get++;
         xline->special = *get++;
-        /*xline->tag =*/ *get++;
+        /*xline->tag = **/get++;
 
         for(j = 0; j < 2; j++)
         {
@@ -438,15 +443,12 @@ void P_v13_UnArchiveWorld(void)
             P_SetFixedp(sdef, DMU_MIDDLE_MATERIAL_OFFSET_Y, offy);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_X, offx);
             P_SetFixedp(sdef, DMU_BOTTOM_MATERIAL_OFFSET_Y, offy);
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
         }
     }
-    save_p = (byte *) get;
+    save_p = (byte*) get;
 }
 
 static int removeThinker(thinker_t* th, void* context)
@@ -579,7 +581,7 @@ static int SV_ReadFloor(floor_t *floor)
 /* Original Heretic format:
 typedef struct {
     thinker_t   thinker;        // was 12 bytes
-    floortype_e     type;           // was 32bit int
+    floortype_e type;           // was 32bit int
     boolean     crush;
     sector_t    *sector;
     int         direction;
@@ -603,8 +605,7 @@ typedef struct {
 
     floor->state = (int) SV_v13_ReadLong();
     floor->newSpecial = SV_v13_ReadLong();
-    floor->material = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(W_LumpName(SV_v13_ReadShort()), MN_FLATS));
+    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, SV_v13_ReadShort()));
     floor->floorDestHeight = FIX2FLT(SV_v13_ReadLong());
     floor->speed = FIX2FLT(SV_v13_ReadLong());
 
@@ -864,7 +865,7 @@ boolean SV_v13_LoadGame(const char* savename)
     int                 i, a, b, c;
     char                vcheck[VERSIONSIZE];
 
-    if(!(length = M_ReadFile(savename, &savebuffer)))
+    if(!(length = M_ReadFile(savename, (char**)&savebuffer)))
         return false;
 
     save_p = savebuffer + V13_SAVESTRINGSIZE;

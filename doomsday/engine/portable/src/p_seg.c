@@ -1,4 +1,4 @@
-/**\file
+/**\file p_seg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,38 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * r_seg.c: World segs.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Update the seg, property is selected by DMU_* name.
- */
-boolean Seg_SetProperty(seg_t *seg, const setargs_t *args)
+int Seg_SetProperty(seg_t* seg, const setargs_t* args)
 {
     switch(args->prop)
     {
@@ -61,17 +35,13 @@ boolean Seg_SetProperty(seg_t *seg, const setargs_t *args)
         DMU_SetValue(DMT_SEG_FLAGS, &seg->flags, args, 0);
         break;
     default:
-        Con_Error("Seg_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Seg_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-/**
- * Get the value of a seg property, selected by DMU_* name.
- */
-boolean Seg_GetProperty(const seg_t *seg, setargs_t *args)
+int Seg_GetProperty(const seg_t* seg, setargs_t* args)
 {
     switch(args->prop)
     {
@@ -93,22 +63,20 @@ boolean Seg_GetProperty(const seg_t *seg, setargs_t *args)
     case DMU_LINEDEF:
         DMU_GetValue(DMT_SEG_LINEDEF, &seg->lineDef, args, 0);
         break;
-    case DMU_FRONT_SECTOR:
-    {
-        sector_t *sec = NULL;
+    case DMU_FRONT_SECTOR: {
+        sector_t* sec = NULL;
         if(seg->SG_frontsector && seg->lineDef)
             sec = seg->SG_frontsector;
         DMU_GetValue(DMT_SEG_SEC, &sec, args, 0);
         break;
-    }
-    case DMU_BACK_SECTOR:
-    {
-        sector_t *sec = NULL;
+      }
+    case DMU_BACK_SECTOR: {
+        sector_t* sec = NULL;
         if(seg->SG_backsector && seg->lineDef)
             sec = seg->SG_backsector;
         DMU_GetValue(DMT_SEG_SEC, &seg->SG_backsector, args, 0);
         break;
-    }
+      }
     case DMU_FLAGS:
         DMU_GetValue(DMT_SEG_FLAGS, &seg->flags, args, 0);
         break;
@@ -116,9 +84,8 @@ boolean Seg_GetProperty(const seg_t *seg, setargs_t *args)
         DMU_GetValue(DMT_SEG_ANGLE, &seg->angle, args, 0);
         break;
     default:
-        Con_Error("Seg_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Seg_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }

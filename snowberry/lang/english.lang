@@ -173,6 +173,21 @@ game-jhexen: jHexen
 game-jdoom-icon: orb-doom
 game-jheretic-icon: orb-heretic
 game-jhexen-icon: orb-hexen
+game-mode: Game mode
+game-mode-chex: Chex Quest
+game-mode-doom1: DOOM Registered
+game-mode-doom1-ultimate: DOOM Ultimate
+game-mode-doom1-share: DOOM Shareware
+game-mode-doom2: DOOM II
+game-mode-doom2-plut: Final Doom: Plutonia Experiment
+game-mode-doom2-tnt: Final Doom: TNT Evilution
+game-mode-hacx: HacX
+game-mode-heretic: Heretic Registered
+game-mode-heretic-share: Heretic Shareware
+game-mode-heretic-ext: Heretic: Shadow of the Serpent Riders
+game-mode-hexen: Hexen
+game-mode-hexen-demo: Hexen (4 level demo)
+game-mode-hexen-dk: Hexen: Death Kings of the Dark Citadel
 
 #
 # Button Labels
@@ -409,7 +424,6 @@ texture-depth-32: 32-bit
 texture-options: Texture Options
 extres-with-pwad: Allow external with PWADs
 disable-anisotropic-filter: Disable Anisotropic filtering
-paletted-textures: Use paletted (256-color) textures
 
 maximum-texture-size: Maximum size
 maximum-texture-size-unlimited: Hardware

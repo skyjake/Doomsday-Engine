@@ -1,4 +1,4 @@
-/**\file
+/**\file p_mobj.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_mobj.c: Map Objects
+ * Map Objects
  *
  * Contains various routines for moving mobjs, collision and Z checking.
  */
@@ -185,14 +185,14 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
         if(!(pg->flags & PGF_SPAWN_ONLY) || spawning)
         {
             // We are allowed to spawn the generator.
-            P_SpawnParticleGen(pg, mobj);
+            P_SpawnMobjParticleGen(pg, mobj);
         }
     }
 
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
         if(defs.states[statenum].execute)
-            Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
+            Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
     }
 }
 
@@ -206,8 +206,33 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
  */
 boolean P_MobjSetPos(struct mobj_s* mo, float x, float y, float z)
 {
-    assert(gx.MobjTryMove3f != 0);
+    if(!gx.MobjTryMove3f)
+    {
+        return false;
+    }
     return gx.MobjTryMove3f(mo, x, y, z);
+}
+
+void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
+{
+    if(!origin) return;
+
+    origin[VX] = origin[VY] = origin[VZ] = 0;
+
+    if(!mo) return;
+
+    origin[VX] = mo->pos[VX];
+    origin[VY] = mo->pos[VY];
+    origin[VZ] = mo->pos[VZ];
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVO && mo->state && mo->tics >= 0)
+    {
+        float mul = mo->tics / (float) mo->state->tics;
+        origin[VX] += mo->srvo[VX] * mul;
+        origin[VY] += mo->srvo[VY] * mul;
+        origin[VZ] += mo->srvo[VZ] * mul;
+    }
 }
 
 D_CMD(InspectMobj)

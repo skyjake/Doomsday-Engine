@@ -1,9 +1,10 @@
-/**\file
+/**\file gl_hq2x.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,15 +22,24 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * gl_hq2x.h: High-Quality 2x Graphics Resizing
+/**
+ * High-Quality 2x Graphics Resizing.
  */
 
-#ifndef __DOOMSDAY_HQ2X_H__
-#define __DOOMSDAY_HQ2X_H__
+#ifndef LIBDENG_GRAPHICS_HQ2X_H
+#define LIBDENG_GRAPHICS_HQ2X_H
 
-void            GL_InitSmartFilter(void);
-void            GL_SmartFilter2x(unsigned char *pIn, unsigned char *pOut,
-								 int Xres, int Yres, int BpL);
+/**
+ * Initialize the lookup tables used in the hq2x algorithm.
+ */
+void GL_InitSmartFilterHQ2x(void);
 
-#endif
+/**
+ * @param src  R8G8B8A8 source image to be scaled.
+ * @param width  Width of the source image in pixels.
+ * @param height  Height of the source image in pixels.
+ * @param flags  @see imageConversionFlags
+ */
+uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags);
+
+#endif /* LIBDENG_GRAPHICS_HQ2X_H */

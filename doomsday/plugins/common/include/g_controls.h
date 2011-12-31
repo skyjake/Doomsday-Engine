@@ -1,4 +1,4 @@
-/**\file
+/**\file g_controls.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * g_controls.h: Common code for game controls
+ * Common code for game controls
  */
 
-#ifndef __COMMON_CONTROLS_H__
-#define __COMMON_CONTROLS_H__
+#ifndef LIBCOMMON_CONTROLS_H
+#define LIBCOMMON_CONTROLS_H
 
 /*
 // Game registered bindContexts
@@ -151,10 +151,6 @@ void        G_ControlRegister(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
 
-int         G_PrivilegedResponder(event_t *event);
-
-boolean     G_AdjustControlState(event_t *ev);
-
 void        G_LookAround(int pnum);
 void        G_SetPause(boolean yes);
 
@@ -164,4 +160,4 @@ void        G_ControlReset(int pnum);
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
 
-#endif
+#endif /* LIBCOMMON_CONTROLS_H */

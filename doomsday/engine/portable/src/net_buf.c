@@ -24,7 +24,7 @@
  */
 
 /**
- * net_buf.c: Network Message Handling and Buffering
+ * Network Message Handling and Buffering
  */
 
 // HEADER FILES ------------------------------------------------------------

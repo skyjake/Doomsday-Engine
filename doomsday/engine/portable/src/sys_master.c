@@ -1,4 +1,4 @@
-/**\file
+/**\file sys_master.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /*
- * sys_master.c: Communication with the Master Server
+ * Communication with the Master Server.
  *
  * Communication with the master server, using TCP and HTTP.
  * The HTTP requests run in their own threads.
@@ -242,7 +242,7 @@ static size_t C_DECL MasterWorker_ReadCallback(void *ptr, size_t size, size_t nm
     size_t bytes = size * nmemb;
 
     // Don't copy too much.
-    bytes = MIN_OF(bytes, Str_Length(msg));
+    bytes = MIN_OF(bytes, (unsigned)Str_Length(msg));
     memcpy(ptr, msg->str, bytes);
 
     // Remove the sent portion from the buffer.
@@ -257,13 +257,13 @@ static size_t C_DECL MasterWorker_ReadCallback(void *ptr, size_t size, size_t nm
  */
 static size_t C_DECL MasterWorker_WriteCallback(void *ptr, size_t size, size_t nmemb, void *stream)
 {
-	ddstring_t* response = stream;
-	size_t bytes = size * nmemb;
+    ddstring_t* response = stream;
+    size_t bytes = size * nmemb;
 
-	// Append the new data to the response.
-	Str_PartAppend(response, ptr, 0, bytes);
+    // Append the new data to the response.
+    Str_PartAppend(response, ptr, 0, bytes);
 
-	return bytes;
+    return bytes;
 }
 
 static void MasterWorker_GetUrl(char* url)
@@ -444,7 +444,7 @@ static void MasterWorker_Init(void)
     memset(mwaQueue, 0, sizeof(mwaQueue));
     mwaHead = mwaTail = 0;
 
-    VERBOSE( Con_Message("MasterWorker_Init: Starting worker thread.\n") );
+    VERBOSE( Con_Message("MasterWorker_Init: Starting worker thread...\n") );
 
     // Start the worker thread.
     worker = Sys_StartThread(MasterWorker_Thread, NULL);
@@ -457,7 +457,7 @@ static void MasterWorker_Shutdown(void)
     // Wake up the worker.
     Sem_V(semPending);
 
-    VERBOSE( Con_Message("MasterWorker_Shutdown: Waiting for thread to stop.\n") );
+    VERBOSE( Con_Message("MasterWorker_Shutdown: Waiting for thread to stop...\n") );
     Sys_WaitThread(worker);
 
     Sys_DestroyMutex(mwaMutex);
@@ -471,13 +471,13 @@ static void MasterWorker_Shutdown(void)
  */
 void N_MasterInit(void)
 {
-	// Initialize libcurl.
-	curl_global_init(CURL_GLOBAL_WIN32);
+    // Initialize libcurl.
+    curl_global_init(CURL_GLOBAL_WIN32);
 
-	serversMutex = Sys_CreateMutex("serverListFromMaster");
+    serversMutex = Sys_CreateMutex("serverListFromMaster");
 
-	// The master worker.
-	MasterWorker_Init();
+    // The master worker.
+    MasterWorker_Init();
 }
 
 /**
@@ -490,11 +490,11 @@ void N_MasterShutdown(void)
     // Free the server list.
     Master_ClearList();
 
-	Sys_DestroyMutex(serversMutex);
-	serversMutex = 0;
+    Sys_DestroyMutex(serversMutex);
+    serversMutex = 0;
 
-	// Clean up libcurl.
-	curl_global_cleanup();
+    // Clean up libcurl.
+    curl_global_cleanup();
 }
 
 /**

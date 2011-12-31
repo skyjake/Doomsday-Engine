@@ -201,51 +201,38 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 static boolean crossSSec(uint ssecIdx, losdata_t* los)
 {
     const subsector_t*  ssec = &ssectors[ssecIdx];
-
     if(ssec->polyObj)
     {   // Check polyobj lines.
-        polyobj_t*          po = ssec->polyObj;
-        seg_t**             segPtr = po->segs;
-
+        polyobj_t* po = ssec->polyObj;
+        seg_t** segPtr = po->segs;
         while(*segPtr)
         {
-            seg_t*              seg = *segPtr;
-
+            seg_t* seg = *segPtr;
             if(seg->lineDef && seg->lineDef->validCount != validCount)
             {
-                linedef_t*          li = seg->lineDef;
-
+                linedef_t* li = seg->lineDef;
                 li->validCount = validCount;
-
                 if(!crossLineDef(li, seg->side, los))
                     return false; // Stop iteration.
             }
-
             segPtr++;
         }
     }
 
-    {
     // Check lines.
-    const seg_t** segPtr = (const seg_t**) ssec->segs;
-
+    { seg_t** segPtr = ssec->segs;
     while(*segPtr)
     {
-        const seg_t*        seg = *segPtr;
-
+        const seg_t* seg = *segPtr;
         if(seg->lineDef && seg->lineDef->validCount != validCount)
         {
-            linedef_t*          li = seg->lineDef;
-
+            linedef_t* li = seg->lineDef;
             li->validCount = validCount;
-
             if(!crossLineDef(li, seg->side, los))
                 return false;
         }
-
         segPtr++;
-    }
-    }
+    }}
 
     return true; // Continue iteration.
 }

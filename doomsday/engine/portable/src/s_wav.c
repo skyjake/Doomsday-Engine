@@ -33,6 +33,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 
 #include "m_misc.h"
 
@@ -98,12 +99,12 @@ int WAV_CheckFormat(const char* data)
  * channel! All parameters must be passed, no NULLs are allowed.
  */
 void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
-                     int* rate, int* samples)
+    int* rate, int* samples)
 {
-    const byte*     end = data + datalength;
-    byte*           sampledata = NULL;
-    chunk_hdr_t*    riff_chunk;
-    wav_format_t*   wave_format = NULL;
+    const byte* end = data + datalength;
+    byte* sampledata = NULL;
+    chunk_hdr_t* riff_chunk;
+    wav_format_t* wave_format = NULL;
 
     if(!WAV_CheckFormat((const char*)data))
     {
@@ -185,7 +186,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
             // Read data chunk.
             *samples = riff_chunk->len / wave_format->wBlockAlign;
             // Allocate the sample buffer.
-            sampledata = Z_Malloc(riff_chunk->len, PU_STATIC, 0);
+            sampledata = Z_Malloc(riff_chunk->len, PU_APPSTATIC, 0);
             memcpy(sampledata, data, riff_chunk->len);
 #ifdef __BIG_ENDIAN__
             // Correct endianness.
@@ -211,31 +212,29 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
 
 void* WAV_Load(const char* filename, int* bits, int* rate, int* samples)
 {
-    DFILE*          file;
-    byte*           data;
-    size_t          size;
-    void*           sampledata;
+    DFile* file = F_Open(filename, "b");
+    void* sampledata;
+    uint8_t* data;
+    size_t size;
 
-    // Try to open the file.
-    if((file = F_Open(filename, "b")) == NULL)
-        return NULL;
+    if(!file)return NULL;
 
     // Read in the whole thing.
-    F_Seek(file, 0, SEEK_END);
-    size = F_Tell(file);
-    F_Rewind(file);
-    data = M_Malloc(size);
-    F_Read(data, size, file);
-    F_Close(file);
+    size = DFile_Length(file);
+    data = (uint8_t*)malloc(size);
+    if(!data) Con_Error("WAV_Load: Failed on allocation of %lu bytes for sample load buffer.",
+                (unsigned long) size);
+
+    DFile_Read(file, data, size);
+    F_Delete(file);
 
     // Parse the RIFF data.
-    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate,
-                                samples);
+    sampledata = WAV_MemoryLoad((const byte*) data, size, bits, rate, samples);
     if(!sampledata)
     {
         Con_Message("WAV_Load: Failed to load %s.\n", filename);
     }
 
-    M_Free(data);
+    free(data);
     return sampledata;
 }

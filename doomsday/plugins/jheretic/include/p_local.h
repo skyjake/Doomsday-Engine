@@ -63,7 +63,6 @@
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
 #define MAXRADIUS       32
-#define MAXMOVE         30
 
 #define USERANGE        64
 #define MELEERANGE      64
@@ -107,11 +106,6 @@ void            P_FireWeapon(player_t* player);
 
 void            P_Thrust(player_t* player, angle_t angle, float move);
 boolean         P_UndoPlayerMorph(player_t* player);
-
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
-#define FRICTION_LOW        (0.97265625f)
 
 extern mobjtype_t puffType;
 extern mobj_t* missileMobj;

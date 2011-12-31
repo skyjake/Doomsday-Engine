@@ -23,24 +23,37 @@
  */
 
 /**
- * rend_particle.h: Particle Effects
+ * rend_particle.h: Particle effect renderer.
  */
 
-#ifndef __DOOMSDAY_RENDER_PARTICLES_H__
-#define __DOOMSDAY_RENDER_PARTICLES_H__
+#ifndef LIBDENG_REND_PARTICLE_H
+#define LIBDENG_REND_PARTICLE_H
 
 extern byte useParticles;
 extern int maxParticles;
 extern float particleSpawnRate;
 
-void            Rend_ParticleRegister(void);
-void            Rend_ParticleInitTextures(void);
-void            Rend_ParticleShutdownTextures(void);
+void Rend_ParticleRegister(void);
 
-void            Rend_ParticleInitForNewFrame(void);
-void            Rend_ParticleMarkInSectorVisible(sector_t* sector);
+/**
+ * Loads all system-level textures (i.e., those available by default)
+ * for a minimal resource set needed for particle rendering.
+ */
+void Rend_ParticleLoadSystemTextures(void);
+void Rend_ParticleReleaseSystemTextures(void);
 
-void            Rend_RenderParticles(void);
+/**
+ * Load any custom particle textures. They are loaded from the
+ * highres texture directory and are named "ParticleNN.(tga|png|pcx)".
+ * The first is "Particle00". (based on Leesz' textured particles mod)
+ */
+void Rend_ParticleLoadExtraTextures(void);
+void Rend_ParticleReleaseExtraTextures(void);
+
+void Rend_ParticleInitForNewFrame(void);
+void Rend_ParticleMarkInSectorVisible(sector_t* sector);
+
+void Rend_RenderParticles(void);
 // Debugging aid:
-void            Rend_RenderGenerators(void);
-#endif
+void Rend_RenderGenerators(void);
+#endif /* LIBDENG_REND_PARTICLE_H */

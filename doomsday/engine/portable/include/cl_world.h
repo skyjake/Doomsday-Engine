@@ -37,7 +37,7 @@ typedef enum {
 void            Cl_InitTranslations(void);
 void            Cl_InitMovers(void);
 void            Cl_RemoveMovers(void);
-lumpnum_t       Cl_TranslateLump(lumpnum_t lump);
+lumpnum_t       Cl_TranslateLump(lumpnum_t lumpNum);
 void            Cl_SetPolyMover(uint number, int move, int rotate);
 void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
                             float speed);

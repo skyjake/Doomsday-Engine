@@ -63,6 +63,7 @@ void P_RegisterMapObjs(void)
     P_RegisterMapObjProperty(MO_THING, MO_Z, "Z", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_ANGLE);
     P_RegisterMapObjProperty(MO_THING, MO_DOOMEDNUM, "DoomEdNum", DDVT_INT);
+    P_RegisterMapObjProperty(MO_THING, MO_SKILLMODES, "SkillModes", DDVT_INT);
     P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_INT);
 
     P_RegisterMapObj(MO_XLINEDEF, "XLinedef");
@@ -145,7 +146,7 @@ int P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data)
          * *data is a pointer to int, giving the player id which has seen it.
          * We'll utilize this to mark it as being visible in the automap.
          */
-        AM_UpdateLinedef(AM_MapForPlayer(*(int *) data), id, true);
+        P_SetLinedefAutomapVisibility(*(int*)data, id, true);
         break;
 
     default:

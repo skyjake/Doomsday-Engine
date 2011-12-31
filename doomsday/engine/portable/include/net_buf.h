@@ -23,11 +23,11 @@
  */
 
 /**
- * net_buf.h: Network Message Handling and Buffering
+ * Network Message Handling and Buffering.
  */
 
-#ifndef __DOOMSDAY_NETWORK_BUFFER_H__
-#define __DOOMSDAY_NETWORK_BUFFER_H__
+#ifndef LIBDENG_NETWORK_BUFFER_H
+#define LIBDENG_NETWORK_BUFFER_H
 
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
@@ -88,4 +88,4 @@ void            N_PrintBufferInfo(void);
 void            N_PrintHuffmanStats(void);
 void            N_PostMessage(netmessage_t *msg);
 
-#endif
+#endif /* LIBDENG_NETWORK_BUFFER_H */

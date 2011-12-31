@@ -540,7 +540,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -2166,9 +2166,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2178,9 +2176,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

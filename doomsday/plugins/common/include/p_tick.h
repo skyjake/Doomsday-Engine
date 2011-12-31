@@ -1,4 +1,4 @@
-/**\file
+/**\file p_tick.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,13 @@
  */
 
 /**
- * p_tick.h: (Common) Top-level tick stuff.
+ * Common top-level tick stuff.
  */
 
-#ifndef __P_TICK_H__
-#define __P_TICK_H__
+#ifndef LIBCOMMON_P_TICK_H
+#define LIBCOMMON_P_TICK_H
+
+#include "dd_types.h"
 
 extern int mapTime;
 extern int actualMapTime;
@@ -37,4 +39,4 @@ void    P_RunPlayers(timespan_t ticLength);
 boolean P_IsPaused(void);
 void    P_DoTick(void);
 
-#endif
+#endif /* LIBCOMMON_P_TICK_H */

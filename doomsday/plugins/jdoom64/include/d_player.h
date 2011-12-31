@@ -146,4 +146,33 @@ typedef struct player_s {
     int             flyHeight;
 } player_t;
 
+//
+// INTERMISSION
+// Structure passed e.g. to WI_Init(wb)
+//
+typedef struct {
+    boolean         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;
+
+typedef struct {
+    uint            episode;
+    boolean         didSecret; // If true, splash the secret level.
+    uint            currentMap, nextMap; // This and next maps.
+    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];
+} wbstartstruct_t;
+
 #endif

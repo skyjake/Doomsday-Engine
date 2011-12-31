@@ -1016,7 +1016,7 @@ void C_DECL A_MStaffAttack(player_t* plr, pspdef_t* psp)
         float           rgba[4];
 
         // $democam
-        R_GetFilterColor(rgba, pal);
+        R_ViewFilterColor(rgba, pal);
         GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         GL_SetFilter(true);
@@ -1040,7 +1040,7 @@ void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
             float           rgba[4];
 
             // $democam
-            R_GetFilterColor(rgba, pal);
+            R_ViewFilterColor(rgba, pal);
             GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
             GL_SetFilter(true);
@@ -1617,7 +1617,7 @@ void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
         float               rgba[4];
 
         // $democam
-        R_GetFilterColor(rgba, STARTHOLYPAL);
+        R_ViewFilterColor(rgba, STARTHOLYPAL);
         GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         GL_SetFilter(true);
@@ -1643,7 +1643,7 @@ void C_DECL A_CHolyPalette(player_t* plr, pspdef_t* psp)
             float               rgba[4];
 
             // $democam
-            R_GetFilterColor(rgba, pal);
+            R_ViewFilterColor(rgba, pal);
             GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
             GL_SetFilter(true);

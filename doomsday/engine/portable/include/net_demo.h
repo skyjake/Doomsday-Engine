@@ -23,13 +23,11 @@
  */
 
 /**
- * net_demo.h: Demos
+ * Demos.
  */
 
-#ifndef __DOOMSDAY_DEMO_H__
-#define __DOOMSDAY_DEMO_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_DEMO_H
+#define LIBDENG_DEMO_H
 
 extern int      playback;
 
@@ -50,4 +48,4 @@ boolean         Demo_BeginPlayback(const char* filename);
 boolean         Demo_ReadPacket(void);
 void            Demo_StopPlayback(void);
 
-#endif
+#endif /* LIBDENG_DEMO_H */

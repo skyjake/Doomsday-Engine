@@ -43,9 +43,4 @@
 #define DEVMAPS             "devmaps"
 #define DEVDATA             "devdata"
 
-// QuitDOOM messages:
-#define NUM_QUITMESSAGES    22
-
-extern char *endmsg[NUM_QUITMESSAGES + 1];
-
 #endif

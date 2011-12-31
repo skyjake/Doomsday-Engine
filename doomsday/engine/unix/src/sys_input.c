@@ -267,6 +267,12 @@ int I_TranslateKeyCode(SDLKey sym)
     case SDLK_PAGEDOWN:
         return DDKEY_PGDN;
 
+    case SDLK_PRINT:
+        return DDKEY_PRINT;
+
+    case SDLK_CAPSLOCK:
+        return DDKEY_CAPSLOCK;
+
     default:
         break;
     }

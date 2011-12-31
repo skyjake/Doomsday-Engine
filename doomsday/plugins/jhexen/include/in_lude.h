@@ -35,6 +35,9 @@
 extern boolean  intermission;
 extern int interState;
 
+/// To be called to register the console commands and variables of this module.
+void WI_Register(void);
+
 void            IN_Init(void);
 void            IN_Stop(void);
 void            IN_Ticker(void);

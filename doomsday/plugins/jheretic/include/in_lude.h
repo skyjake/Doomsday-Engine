@@ -38,6 +38,9 @@ extern boolean intermission;
 extern int interState;
 extern int interTime;
 
+/// To be called to register the console commands and variables of this module.
+void WI_Register(void);
+
 void            IN_Init(wbstartstruct_t* wbstartstruct);
 void            IN_SkipToNext(void);
 void            IN_Stop(void);

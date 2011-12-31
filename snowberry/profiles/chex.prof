@@ -1,0 +1,11 @@
+name: Chex Quest
+game: game-jdoom
+game-mode: game-mode-chex
+banner: banner-default
+hidden: yes
+
+story = "<i>Chex Quest</i> - is a commercial <i>Doom TC</i>.
+
+<p>Produced by Digital Café and originally released in 1996, <i>Chex Quest</i>
+is a promotional game for Chex Cereal. The game was distributed inside boxes
+of the cereal - the first time for such a promotion."

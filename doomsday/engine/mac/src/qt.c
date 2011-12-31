@@ -1,4 +1,4 @@
-/**\file
+/**\file qt.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,9 +23,9 @@
  */
 
 /**
- * qt.c: QuickTime implementation for Ext and Mus interfaces
+ * QuickTime implementation for Ext and Mus interfaces
  *
- * This is only used in the Mac OS X version of the plugin.
+ * This is only used on the Mac OS platform.
  */
 
 #if 0
@@ -137,7 +137,7 @@ static int DM_Ext_Get(int property, void *value)
     switch (property)
     {
     case MUSIP_ID:
-        strcpy(value, "QuickTime/Ext");
+        strcpy(value, "QuickTime::Ext");
         break;
 
     default:

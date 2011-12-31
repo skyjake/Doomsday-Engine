@@ -32,6 +32,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #ifdef MSVC
 #  pragma optimize("g", off)
@@ -1230,7 +1231,7 @@ void P_DSparilTeleport(mobj_t* actor)
 
         do
         {
-            dest = &bossSpots[++i % bossSpotCount];
+            dest = &mapSpots[bossSpots[++i % bossSpotCount]];
             if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
                                 actor->pos[VY] - dest->pos[VY]) >= 128)
             {   // A suitable teleport destination is available.
@@ -2109,7 +2110,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }

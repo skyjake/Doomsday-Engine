@@ -23,14 +23,12 @@
  */
 
 /**
- * de_console.h: Console Subsystem
+ * Console Subsystem.
  */
 
-#ifndef __DOOMSDAY_CONSOLE__
-#define __DOOMSDAY_CONSOLE__
+#ifndef LIBDENG_CONSOLE
+#define LIBDENG_CONSOLE
 
-#include "con_decl.h"
-#include "con_buffer.h"
 #include "con_main.h"
 #include "con_config.h"
 #include "con_busy.h"
@@ -38,4 +36,4 @@
 #include "b_main.h"
 #include "b_context.h"
 
-#endif
+#endif /* LIBDENG_CONSOLE */

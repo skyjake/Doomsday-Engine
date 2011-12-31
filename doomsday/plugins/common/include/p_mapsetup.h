@@ -1,4 +1,4 @@
-/**\file
+/**\file p_mapsetup.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_setup.c: Common map setup routines.
+ * Common map setup routines
  */
 
-#ifndef __COMMON_PLAYSETUP_H__
-#define __COMMON_PLAYSETUP_H__
+#ifndef LIBCOMMON_PLAYSETUP_H
+#define LIBCOMMON_PLAYSETUP_H
 
 #define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
 #define numsegs     (*(uint*) DD_GetVariable(DD_SEG_COUNT))
@@ -45,9 +45,12 @@
 // If true we are in the process of setting up a map.
 extern boolean mapSetup;
 
-void        P_SetupForMapData(int type, uint num);
+void P_SetupForMapData(int type, uint num);
 
-void        P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+void P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
+
 const char* P_GetMapNiceName(void);
-const char* P_GetMapAuthor(boolean surpressIWADAuthors);
-#endif
+patchid_t P_FindMapTitlePatch(uint episode, uint map);
+const char* P_GetMapAuthor(boolean supressGameAuthor);
+
+#endif /* LIBCOMMON_PLAYSETUP_H */

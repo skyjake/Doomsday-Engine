@@ -38,7 +38,9 @@ void            NetCl_UpdatePlayerState2(Reader* msg, int plrNum);
 void            NetCl_UpdatePSpriteState(Reader* msg);
 void            NetCl_UpdateJumpPower(Reader* msg);
 void            NetCl_Intermission(Reader* msg);
-void            NetCl_Finale(int packetType, Reader* msg);
+/*
+void            NetCl_Finale(int packetType, Reader* msg); // moved to engine
+*/
 void            NetCl_UpdatePlayerInfo(Reader* msg);
 void            NetCl_SaveGame(Reader* msg);
 void            NetCl_LoadGame(Reader* msg);

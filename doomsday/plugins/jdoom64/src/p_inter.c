@@ -330,7 +330,7 @@ boolean P_GivePower(player_t* player, int power)
     }
 
     if(power == PT_ALLMAP)
-        AM_RevealMap(AM_MapForPlayer(player - players), true);
+        ST_RevealAutomap(player - players, true);
 
     // Maybe unhide the HUD?
     ST_HUDUnHide(player - players, HUE_ON_PICKUP_POWER);
@@ -535,13 +535,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gameMode != commercial)
-            return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_GiveArmor(plr, armorClass[1],
-                    armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
+        P_GiveArmor(plr, armorClass[1], armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
         P_SetMessage(plr, GOTMSPHERE, false);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
 
@@ -949,7 +946,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
         P_DropWeapon(target->player);
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&

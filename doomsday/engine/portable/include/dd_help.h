@@ -26,8 +26,8 @@
  * dd_help.h: Help Text Strings
  */
 
-#ifndef __DOOMSDAY_HELP_H__
-#define __DOOMSDAY_HELP_H__
+#ifndef LIBDENG_HELP_H
+#define LIBDENG_HELP_H
 
 // Help string types.
 enum {
@@ -38,10 +38,13 @@ enum {
     NUM_HELPSTRING_TYPES
 };
 
-void            DH_Register(void);
-void            DD_InitHelp(void);
-void            DD_ShutdownHelp(void);
-void           *DH_Find(const char *id);
-char           *DH_GetString(void *found, int type);
+void DH_Register(void);
 
-#endif
+void DD_InitHelp(void);
+void DD_ReadGameHelp(void);
+void DD_ShutdownHelp(void);
+
+void* DH_Find(const char* id);
+char* DH_GetString(void* found, int type);
+
+#endif /* LIBDENG_HELP_H */

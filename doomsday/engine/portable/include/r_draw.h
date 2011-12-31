@@ -1,4 +1,4 @@
-/**\file
+/**\file r_draw.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,18 +23,24 @@
  */
 
 /**
- * r_draw.h: Drawing Routines
+ * Misc drawing routines.
  */
 
-#ifndef __DOOMSDAY_REFRESH_DRAW_H__
-#define __DOOMSDAY_REFRESH_DRAW_H__
+#ifndef LIBDENG_REFRESH_DRAW_H
+#define LIBDENG_REFRESH_DRAW_H
 
-extern byte    *translationTables;
+#include "texture.h"
 
-void            R_InitTranslationTables(void);
-void            R_UpdateTranslationTables(void);
-void            R_InitViewBorder(void);
-void            R_SetBorderGfx(char *gfx[9]);
-void            R_DrawViewBorder(void);
+void R_InitViewWindow(void);
+void R_ShutdownViewWindow(void);
 
-#endif
+void R_SetBorderGfx(const Uri* const* paths);
+void R_DrawViewBorder(void);
+
+void R_DrawPatch(texture_t* texture, int x, int y);
+void R_DrawPatch2(texture_t* texture, int x, int y, int w, int h);
+void R_DrawPatch3(texture_t* texture, int x, int y, int w, int h, boolean useOffsets);
+
+void R_DrawPatchTiled(texture_t* texture, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT);
+
+#endif /* LIBDENG_REFRESH_DRAW_H */

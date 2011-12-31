@@ -1,4 +1,4 @@
-/**\file
+/**\file hu_msg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +25,7 @@
  */
 
 /**
- * hu_msg.c: Important state change messages.
+ * Important state change messages.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,6 +46,7 @@
 
 #include "hu_msg.h"
 #include "hu_menu.h"
+#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,7 +56,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdMsgResponse);
+D_CMD(MsgResponse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -63,7 +64,7 @@ DEFCC(CCmdMsgResponse);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-ccmd_t msgCCmds[] = {
+ccmdtemplate_t msgCCmds[] = {
     {"messageyes",      "",     CCmdMsgResponse},
     {"messageno",       "",     CCmdMsgResponse},
     {"messagecancel",   "",     CCmdMsgResponse},
@@ -187,53 +188,38 @@ static void composeYesNoMessage(void)
 
 static void drawMessage(void)
 {
-    int                 x, y;
-    char*               p;
+#define LEADING             (0)
 
-    y = 100 - M_StringHeight(msgText, GF_FONTA) / 2;
-    p = msgText;
-    while(*p)
-    {
-        char*           string = p, c;
-
-        while((c = *p) && *p != '\n')
-            p++;
-
-        *p = 0;
-
-        x = 160 - M_StringWidth(string, GF_FONTA) / 2;
-        M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        y += M_StringHeight(string, GF_FONTA);
-
-        if(((*p) = c))
-            p++;
-    }
-
-    // An additional blank line between the message and response prompt.
-    y += M_StringHeight("A", GF_FONTA);
+    short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
+    Point2Raw origin = { SCREENWIDTH/2, SCREENHEIGHT/2 };
+    const char* questionString;
 
     switch(msgType)
     {
-    case MSG_ANYKEY:
-        x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
-        M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        break;
-
-    case MSG_YESNO:
-        x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
-        M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
-        break;
-
+    case MSG_ANYKEY: questionString = PRESSKEY;     break;
+    case MSG_YESNO:  questionString = yesNoMessage; break;
     default:
-        Con_Error("drawMessage: Internal error, unknown message type %i.\n",
-                  (int) msgType);
+        Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
+        exit(1); // Unreachable.
     }
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_LoadDefaultAttrib();
+    FR_SetLeading(LEADING);
+    FR_SetShadowStrength(cfg.menuTextGlitter);
+    FR_SetGlitterStrength(cfg.menuShadow);
+    FR_SetColorAndAlpha(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
+
+    FR_DrawText3(msgText, &origin, ALIGN_TOP, textFlags);
+    origin.y += FR_TextHeight(msgText);
+    // An additional blank line between the message and response prompt.
+    origin.y += FR_CharHeight('A') * (1+LEADING);
+
+    FR_DrawText3(questionString, &origin, ALIGN_TOP, textFlags);
+    DGL_Disable(DGL_TEXTURE_2D);
+
+#undef LEADING
 }
 
 /**
@@ -241,24 +227,25 @@ static void drawMessage(void)
  */
 void Hu_MsgDrawer(void)
 {
-    if(!messageToPrint)
-        return;
+    borderedprojectionstate_t bp;
 
-    // Scale by the hudScale.
+    if(!messageToPrint) return;
+
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
+    GL_BeginBorderedProjection(&bp);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(160, 100, 0);
+    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+    DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
+    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
-
-    DGL_Translatef(-160, -100, 0);
-
-    // Draw the message.
     drawMessage();
 
-    // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
+
+    GL_EndBorderedProjection(&bp);
 }
 
 /**
@@ -280,7 +267,7 @@ void Hu_MsgTicker(void)
 /**
  * If an "any key" message is active, respond to the event.
  */
-boolean Hu_MsgResponder(event_t* ev)
+int Hu_MsgResponder(event_t* ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
         return false;
@@ -305,8 +292,7 @@ boolean Hu_IsMessageActive(void)
 /**
  * Begin a new message.
  */
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
-                 void* context)
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* context)
 {
     assert(msg);
 
@@ -325,7 +311,10 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
 
-    typeInTime = 0;
+    if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
+    {
+        FR_ResetTypeinTimer();
+    }
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);
@@ -337,7 +326,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
 /**
  * Handles responses to messages requiring input.
  */
-DEFCC(CCmdMsgResponse)
+D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {

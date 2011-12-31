@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_gl.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,11 +24,13 @@
  */
 
 /**
- * dd_gl.h: Doomsday graphics library.
+ * Doomsday graphics library.
  */
 
-#ifndef __DOOMSDAY_GL_H__
-#define __DOOMSDAY_GL_H__
+#ifndef LIBDENG_DGL_H
+#define LIBDENG_DGL_H
+
+#include "rect.h"
 
 enum {
     // Values
@@ -51,7 +53,7 @@ enum {
     DGL_TEXTURE,
 
     // Caps
-    DGL_TEXTURING = 0x5000,
+    DGL_TEXTURE_2D = 0x5000,
     DGL_SCISSOR_TEST,
     DGL_FOG,
     DGL_MODULATE_ADD_COMBINE,
@@ -94,8 +96,11 @@ enum {
 
 // Types.
 typedef unsigned char DGLubyte;
+typedef int DGLint;
 typedef unsigned int DGLuint;
 typedef int DGLsizei;
+typedef double DGLdouble;
+typedef unsigned int DGLenum;
 
 // Texture formats:
 typedef enum dgltexformat_e {
@@ -104,7 +109,6 @@ typedef enum dgltexformat_e {
     DGL_COLOR_INDEX_8,
     DGL_COLOR_INDEX_8_PLUS_A8,
     DGL_LUMINANCE,
-    DGL_DEPTH_COMPONENT,
     DGL_LUMINANCE_PLUS_A8
 } dgltexformat_t;
 
@@ -132,6 +136,8 @@ typedef enum blendmode_e {
     BM_INVERSE_MUL,
     BM_ALPHA_SUBTRACT
 } blendmode_t;
+
+#define VALID_BLENDMODE(val) ((val) >= BM_ZEROALPHA && (val) <= BM_ALPHA_SUBTRACT)
 
 typedef struct dgl_vertex_s {
     float           xyz[4]; // The fourth is padding.
@@ -184,11 +190,11 @@ void            DGL_Disable(int cap);
 boolean         DGL_GetIntegerv(int name, int* vec);
 int             DGL_GetInteger(int name);
 boolean         DGL_SetInteger(int name, int value);
+boolean         DGL_GetFloatv(int name, float* vec);
 float           DGL_GetFloat(int name);
 boolean         DGL_SetFloat(int name, float value);
 
-void            DGL_Ortho(float left, float top, float right, float bottom, float znear,
-                          float zfar);
+void            DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar);
 void            DGL_Scissor(int x, int y, int width, int height);
 
 void            DGL_MatrixMode(int mode);
@@ -207,12 +213,12 @@ DGLuint         DGL_EndList(void);
 void            DGL_CallList(DGLuint list);
 void            DGL_DeleteLists(DGLuint list, int range);
 
-void            DGL_SetMaterial(struct material_s* mat);
+void            DGL_SetMaterialUI(struct material_s* mat);
 void            DGL_SetNoMaterial(void);
-void            DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
+void            DGL_SetPatch(patchid_t id, int wrapS, int wrapT);
 void            DGL_SetPSprite(struct material_s* mat);
-void            DGL_SetTranslatedSprite(struct material_s* mat, int tclass, int tmap);
-void            DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
+void            DGL_SetPSprite2(struct material_s* mat, int tclass, int tmap);
+void            DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
 
 void            DGL_BlendOp(int op);
 void            DGL_BlendFunc(int param1, int param2);
@@ -238,21 +244,26 @@ void            DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec);
 void            DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec);
 void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 
-void            DGL_DrawLine(float x1, float y1, float x2, float y2,
-                             float r, float g, float b, float a);
-void            DGL_DrawRect(float x, float y, float w, float h, float r,
-                             float g, float b, float a);
-void            DGL_DrawRectTiled(float x, float y, float w, float h,
-                                  int tw, int th);
-void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw,
-                                     int th, int txoff, int tyoff, float cx,
-                                     float cy, float cw, float ch);
+void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+
+void            DGL_DrawRect(const RectRaw* rect);
+void            DGL_DrawRect2(float x, float y, float w, float h);
+void            DGL_DrawRectf(const RectRawf* rect);
+
+void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
+void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
+
+void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
+
+DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
+    const uint8_t* pixels, int flags, int minFilter, int magFilter,
+    int anisoFilter, int wrapS, int wrapT);
+
 /**
  * \todo The following routines should not be necessary once materials can
  * be created dynamically.
  */
 int             DGL_Bind(DGLuint texture);
 void            DGL_DeleteTextures(int num, const DGLuint* names);
-void            DGL_EnableTexUnit(byte id);
-void            DGL_DisableTexUnit(byte id);
-#endif
+
+#endif /* LIBDENG_DGL_H */

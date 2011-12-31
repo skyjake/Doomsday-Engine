@@ -96,17 +96,6 @@ typedef unsigned int DWORD;
 
 #include "../../unix/include/sys_path.h"
 
-/*
- * Replacements for the Win32 findfirst/next routines.
- */
-#include "../../unix/include/sys_findfile.h"
-
-#define _A_SUBDIR   A_SUBDIR
-
-#define _findfirst  myfindfirst
-#define _findnext   myfindnext
-#define _findend    myfindend
-
 #endif                          // UNIX
 
 // Initialization code.

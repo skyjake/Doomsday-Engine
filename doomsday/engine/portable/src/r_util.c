@@ -1,4 +1,4 @@
-/**\file
+/**\file r_util.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_util.c: Refresh Utility Routines
+ * Refresh Utility Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,10 +31,9 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
-
-#include "p_dmu.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -415,6 +414,24 @@ boolean R_IsPointInSector2(const float x, const float y,
     return R_IsPointInSubsector(x, y, ssec);
 }
 
+void R_AmplifyColor(float rgb[3])
+{
+    float max = 0;
+    int i;
+
+    for(i = 0; i < 3; ++i)
+    {
+        if(rgb[i] > max)
+            max = rgb[i];
+    }
+    if(!max || max == 1) return;
+
+    for(i = 0; i < 3; ++i)
+    {
+        rgb[i] = rgb[i] / max;
+    }
+}
+
 void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 {
     int                 i;
@@ -502,6 +519,30 @@ void R_HSVToRGB(float* rgb, float h, float s, float v)
     }
 }
 
+boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xScale, float yScale,
+    const_pvec3_t v1, const_pvec3_t v2, const_pvec3_t tangent, const_pvec3_t bitangent)
+{
+    vec3_t vToPoint;
+
+    V3_Subtract(vToPoint, v1, point);
+    s[0] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[0] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the origin point visible?
+    if(s[0] >= 1 || t[0] >= 1)
+        return false; // Right on the X axis or below on the Y axis.
+
+    V3_Subtract(vToPoint, v2, point);
+    s[1] = V3_DotProduct(vToPoint, tangent)   * xScale + .5f;
+    t[1] = V3_DotProduct(vToPoint, bitangent) * yScale + .5f;
+
+    // Is the end point visible?
+    if(s[1] <= 0 || t[1] <= 0)
+        return false; // Left on the X axis or above on the Y axis.
+
+    return true;
+}
+
 /**
  * Returns a ptr to the sector which owns the given ddmobj_base_t.
  *
@@ -532,4 +573,72 @@ sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
         }
     }
     return NULL;
+}
+
+/// \note Part of the Doomsday public API.
+boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
+    int availWidth, int availHeight, scalemode_t scaleMode)
+{
+    if(SCALEMODE_STRETCH == scaleMode)
+    {
+        if(NULL != scale)
+            *scale = 1;
+        return true;
+    }
+    else
+    {
+        const float availRatio = (float)availWidth / availHeight;
+        const float origRatio  = (float)width  / height;
+        float sWidth, sHeight; // Scaled dimensions.
+
+        if(availWidth >= availHeight)
+        {
+            sWidth  = availWidth;
+            sHeight = sWidth  / availRatio;
+        }
+        else
+        {
+            sHeight = availHeight;
+            sWidth  = sHeight * availRatio;
+        }
+
+        if(origRatio > availRatio)
+        {
+            if(NULL != scale)
+                *scale = sWidth / width;
+            return false;
+        }
+        else
+        {
+            if(NULL != scale)
+                *scale = sHeight / height;
+            return true;
+        }
+    }
+}
+
+/// \note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode, float stretchEpsilon)
+{
+    const float availRatio = (float)availWidth / availHeight;
+    const float origRatio  = (float)width / height;
+
+    // Considered identical?
+    if(INRANGE_OF(availRatio, origRatio, .001f))
+        return SCALEMODE_STRETCH;
+
+    if(SCALEMODE_STRETCH == overrideMode || SCALEMODE_NO_STRETCH  == overrideMode)
+        return overrideMode;
+
+    // Within tolerable stretch range?
+    return INRANGE_OF(availRatio, origRatio, stretchEpsilon)? SCALEMODE_STRETCH : SCALEMODE_NO_STRETCH;
+}
+
+/// \note Part of the Doomsday public API.
+scalemode_t R_ChooseScaleMode(int width, int height, int availWidth, int availHeight,
+    scalemode_t overrideMode)
+{
+    return R_ChooseScaleMode2(availWidth, availHeight, width, height, overrideMode,
+        DEFAULT_SCALEMODE_STRETCH_EPSILON);
 }

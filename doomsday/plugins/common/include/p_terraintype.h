@@ -22,11 +22,11 @@
  */
 
 /**
- * p_terraintype.h:
+ * Material -> TerrainType xlat database.
  */
 
-#ifndef __COMMON_TERRAINTYPE_H__
-#define __COMMON_TERRAINTYPE_H__
+#ifndef LIBCOMMON_TERRAINTYPE_H
+#define LIBCOMMON_TERRAINTYPE_H
 
 #define TTF_NONSOLID        0x1 /* Various implications:
                                    1) Bouncing mobjs destroyed on contact.
@@ -51,8 +51,11 @@ typedef struct terraindef_s {
     short           flags; // TTF_* terrain type flags.
 } terraintype_t;
 
-void            P_InitTerrainTypes(void);
-const terraintype_t* P_TerrainTypeForMaterial(material_t* mat);
-const terraintype_t* P_GetPlaneMaterialType(sector_t* sec, int plane);
+void P_InitTerrainTypes(void);
+void P_ShutdownTerrainTypes(void);
+void P_ClearTerrainTypes(void);
 
-#endif
+const terraintype_t* P_TerrainTypeForMaterial(material_t* mat);
+const terraintype_t* P_PlaneMaterialTerrainType(sector_t* sec, int plane);
+
+#endif /* LIBCOMMON_TERRAINTYPE_H */

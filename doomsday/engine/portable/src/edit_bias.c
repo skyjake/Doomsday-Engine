@@ -1,4 +1,4 @@
-/**\file
+/**\file edit_bias.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * edit_bias.c: Bias light source editor.
+ * Bias light source editor.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -39,6 +39,7 @@
 #include "de_ui.h"
 #include "de_console.h"
 #include "de_play.h"
+#include "de_filesys.h"
 
 #include <math.h>
 
@@ -123,20 +124,20 @@ void SBE_Register(void)
     C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1);
 
     // Commands for light editing.
-    C_CMD_FLAGS("bledit", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blquit", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blclear", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blsave", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blnew", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bldel", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bllock", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blunlock", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blgrab", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bldup", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blc", "fff", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bli", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blhue", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bledit", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blquit", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blclear", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blsave", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blnew", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldel", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bllock", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blunlock", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blgrab", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldup", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blc", "fff", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bli", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blhue", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
 }
 
 /**
@@ -381,41 +382,51 @@ static void SBE_Dupe(int which)
     }
 }
 
-static boolean SBE_Save(const char *name)
+static boolean SBE_Save(const char* name)
 {
-    int                 i;
-    source_t           *s;
-    FILE               *file;
-    filename_t          fileName;
-    gamemap_t          *map = P_GetCurrentMap();
-    const char         *uid = P_GetUniqueMapID(map);
+    gamemap_t* map = P_GetCurrentMap();
+    const char* uid = P_GetUniqueMapId(map);
+    ddstring_t fileName;
+    source_t* s;
+    FILE* file;
 
-    if(!name)
+    Str_Init(&fileName);
+    if(!name || !name[0])
     {
-        sprintf(fileName, "%s.ded", P_GetMapID(map));
+        ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
+        Str_Delete(mapPath);
     }
     else
     {
-        strcpy(fileName, name);
-        if(!strchr(fileName, '.'))
+        Str_Set(&fileName, name);
+        F_ExpandBasePath(&fileName, &fileName);
+        // Do we need to append an extension?
+        if(!F_FindFileExtension(Str_Text(&fileName)))
         {
-            // Append the file name extension.
-            strcat(fileName, ".ded");
+            Str_Append(&fileName, ".ded");
         }
     }
 
-    Con_Printf("Saving to %s...\n", fileName);
-
-    if((file = fopen(fileName, "wt")) == NULL)
+    F_ToNativeSlashes(&fileName, &fileName);
+    file = fopen(Str_Text(&fileName), "wt");
+    if(!file)
+    {
+        Con_Message("Warning failed to open \"%s\" for writing. Bias Lights not saved.\n", F_PrettyPath(Str_Text(&fileName)));
+        Str_Free(&fileName);
         return false;
+    }
+
+    Con_Printf("Saving to \"%s\"...\n", F_PrettyPath(Str_Text(&fileName)));
 
     fprintf(file, "# %i Bias Lights for %s\n\n", numSources, uid);
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", (char *) gx.GetVariable(DD_GAME_MODE));
+    fprintf(file, "SkipIf Not %s\n", Str_Text(Game_IdentityKey(theGame)));
 
     s = SB_GetSource(0);
+    { int i;
     for(i = 0; i < numSources; ++i, ++s)
     {
         fprintf(file, "\nLight {\n");
@@ -428,9 +439,10 @@ static boolean SBE_Save(const char *name)
         fprintf(file, "  Sector levels { %g %g }\n", s->sectorLevel[0],
                 s->sectorLevel[1]);
         fprintf(file, "}\n");
-    }
+    }}
 
     fclose(file);
+    Str_Free(&fileName);
     return true;
 }
 
@@ -528,16 +540,12 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "menu"))
     {
-        //extern int consolePlayer;
+        Con_Open(false); // Close the console if open.
 
-        //P_ControlReset(-1); // clear the actions array
-        Con_Open(false); // close the console if open
-
-        // show the bias menu interface
+        // Show the bias menu interface.
         UI_InitPage(&page_bias, ob_bias);
-        sprintf(page_bias.title, "Doomsday BIAS Light Editor");
-        page_bias.background = false;  // we don't want a background
-        UI_Init(false, true, true, true, false);
+        page_bias.flags.showBackground = false; // We don't want a background.
+        UI_PageInit(false, true, true, true, false);
         UI_SetPage(&page_bias);
         return true;
     }
@@ -640,39 +648,47 @@ D_CMD(BLEditor)
     return false;
 }
 
-static void SBE_DrawBox(int x, int y, int w, int h, ui_color_t *c)
+static void SBE_DrawBox(const Point2Raw* origin, const Size2Raw* size, ui_color_t* c)
 {
-    UI_GradientEx(x, y, w, h, 6,
+    UI_GradientEx(origin, size, 6,
                   c ? c : UI_Color(UIC_BG_MEDIUM),
                   c ? c : UI_Color(UIC_BG_LIGHT),
                   .2f, .4f);
-    UI_DrawRectEx(x, y, w, h, 6, false, c ? c : UI_Color(UIC_BRD_HI),
+    UI_DrawRectEx(origin, size, 6, false, c ? c : UI_Color(UIC_BRD_HI),
                   NULL, .4f, -1);
 }
 
-static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
+static void SBE_InfoBox(source_t* s, int rightX, char* title, float alpha)
 {
-    float               eye[3];
-    int                 w = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
-    int                 th = FR_TextHeight("a"), h = th * 6 + 16;
-    int                 x, y;
-    char                buf[80];
-    ui_color_t          color;
+    ui_color_t color;
+    Point2Raw origin;
+    Size2Raw size;
+    char buf[80];
+    float eye[3];
+    int th;
 
-    x = theWindow->width - 10 - w - rightX;
-    y = theWindow->height - 10 - h;
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    size.width = 16 + FR_TextWidth("R:0.000 G:0.000 B:0.000");
+    th = FR_SingleLineHeight("Info");
+    size.height = 16 + th * 6;
+
+    origin.x = theWindow->geometry.size.width  - 10 - size.width - rightX;
+    origin.y = theWindow->geometry.size.height - 10 - size.height;
 
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
 
-    color.red = s->color[0];
-    color.green = s->color[1];
-    color.blue = s->color[2];
+    color.red   = s->color[CR];
+    color.green = s->color[CG];
+    color.blue  = s->color[CB];
 
-    SBE_DrawBox(x, y, w, h, &color);
-    x += 8;
-    y += 8 + th/2;
+    glEnable(GL_TEXTURE_2D);
+
+    SBE_DrawBox(&origin, &size, &color);
+    origin.x += 8;
+    origin.y += 8 + th/2;
 
     // - index #
     // - locked status
@@ -681,58 +697,64 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     // - intensity
     // - color
 
-    UI_TextOutEx(title, x, y, false, true, UI_Color(UIC_TITLE), alpha);
-    y += th;
+    FR_SetFont(fontFixed);
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    UI_TextOutEx2(title, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
-    sprintf(buf, "# %03i %s", SB_ToIndex(s),
-            s->flags & BLF_LOCKED ? "(lock)" : "");
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
-    y += th;
+    sprintf(buf, "# %03i %s", SB_ToIndex(s), (s->flags & BLF_LOCKED ? "(lock)" : ""));
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "(%+06.0f,%+06.0f,%+06.0f)", s->pos[0], s->pos[1], s->pos[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "Distance:%-.0f", M_Distance(eye, s->pos));
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     sprintf(buf, "Intens:%-5.0f L:%3i/%3i", s->primaryIntensity,
             (int) (255.0f * s->sectorLevel[0]),
             (int) (255.0f * s->sectorLevel[1]));
 
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
-    sprintf(buf, "R:%.3f G:%.3f B:%.3f",
-            s->color[0], s->color[1], s->color[2]);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), alpha);
-    y += th;
+    sprintf(buf, "R:%.3f G:%.3f B:%.3f", s->color[0], s->color[1], s->color[2]);
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
+    glDisable(GL_TEXTURE_2D);
 }
-
 
 /*
  * Editor HUD
  */
 
-static void SBE_DrawLevelGauge(int x, int y, int height)
+static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
 {
-    static sector_t    *lastSector = NULL;
-    static float        minLevel = 0, maxLevel = 0;
+    static sector_t* lastSector = NULL;
+    static float minLevel = 0, maxLevel = 0;
 
-    sector_t           *sector;
-    int                 off = FR_TextWidth("000");
-    int                 secY, maxY = 0, minY = 0, p;
-    char                buf[80];
-    source_t           *src;
+    int off, secY, p, minY = 0, maxY = 0;
+    Point2Raw labelOrigin;
+    subsector_t* ssec;
+    sector_t* sector;
+    source_t* src;
+    char buf[80];
+    assert(origin);
 
     if(SBE_GetGrabbed())
         src = SBE_GetGrabbed();
     else
         src = SBE_GetNearest();
 
-    sector = R_PointInSubsector(src->pos[VX], src->pos[VY])->sector;
+    ssec = R_PointInSubsector(src->pos[VX], src->pos[VY]);
+    if(!ssec) return;
+
+    sector = ssec->sector;
 
     if(lastSector != sector)
     {
@@ -745,86 +767,114 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     if(sector->lightLevel > maxLevel)
         maxLevel = sector->lightLevel;
 
-    glDisable(GL_TEXTURE_2D);
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    off = FR_TextWidth("000");
 
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
-    glVertex2f(x + off, y);
-    glVertex2f(x + off, y + height);
+    glVertex2f(origin->x + off, origin->y);
+    glVertex2f(origin->x + off, origin->y + height);
     // Normal lightlevel.
-    secY = y + height * (1.0f - sector->lightLevel);
-    glVertex2f(x + off - 4, secY);
-    glVertex2f(x + off, secY);
+    secY = origin->y + height * (1.0f - sector->lightLevel);
+    glVertex2f(origin->x + off - 4, secY);
+    glVertex2f(origin->x + off, secY);
     if(maxLevel != minLevel)
     {
         // Max lightlevel.
-        maxY = y + height * (1.0f - maxLevel);
-        glVertex2f(x + off + 4, maxY);
-        glVertex2f(x + off, maxY);
+        maxY = origin->y + height * (1.0f - maxLevel);
+        glVertex2f(origin->x + off + 4, maxY);
+        glVertex2f(origin->x + off, maxY);
+
         // Min lightlevel.
-        minY = y + height * (1.0f - minLevel);
-        glVertex2f(x + off + 4, minY);
-        glVertex2f(x + off, minY);
+        minY = origin->y + height * (1.0f - minLevel);
+        glVertex2f(origin->x + off + 4, minY);
+        glVertex2f(origin->x + off, minY);
     }
     // Current min/max bias sector level.
     if(src->sectorLevel[0] > 0 || src->sectorLevel[1] > 0)
     {
         glColor3f(1, 0, 0);
-        p = y + height * (1.0f - src->sectorLevel[0]);
-        glVertex2f(x + off + 2, p);
-        glVertex2f(x + off - 2, p);
+        p = origin->y + height * (1.0f - src->sectorLevel[0]);
+        glVertex2f(origin->x + off + 2, p);
+        glVertex2f(origin->x + off - 2, p);
 
         glColor3f(0, 1, 0);
-        p = y + height * (1.0f - src->sectorLevel[1]);
-        glVertex2f(x + off + 2, p);
-        glVertex2f(x + off - 2, p);
+        p = origin->y + height * (1.0f - src->sectorLevel[1]);
+        glVertex2f(origin->x + off + 2, p);
+        glVertex2f(origin->x + off - 2, p);
     }
     glEnd();
 
     glEnable(GL_TEXTURE_2D);
 
     // The number values.
+    labelOrigin.x = origin->x;
+    labelOrigin.y = secY;
     sprintf(buf, "%03i", (short) (255.0f * sector->lightLevel));
-    UI_TextOutEx(buf, x, secY, true, true, UI_Color(UIC_TITLE), .7f);
+    UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), .7f, 0, DTF_ONLY_SHADOW);
     if(maxLevel != minLevel)
     {
+        labelOrigin.x = origin->x + 2*off;
+        labelOrigin.y = maxY;
         sprintf(buf, "%03i", (short) (255.0f * maxLevel));
-        UI_TextOutEx(buf, x + 2*off, maxY, true, true, UI_Color(UIC_TEXT), .7f);
+        UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
+
+        labelOrigin.x = origin->x + 2*off;
+        labelOrigin.y = minY;
         sprintf(buf, "%03i", (short) (255.0f * minLevel));
-        UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_Color(UIC_TEXT), .7f);
+        UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TEXT), .7f, 0, DTF_ONLY_SHADOW);
     }
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 void SBE_DrawHUD(void)
 {
-    int                 w, h, y;
-    char                buf[80];
-    float               alpha = .8f;
-    gamemap_t          *map = P_GetCurrentMap();
-    source_t           *s;
+    float alpha = .8f;
+    Point2Raw origin;
+    Size2Raw size;
+    char buf[80];
+    gamemap_t* map = P_GetCurrentMap();
+    source_t* s;
+    int top;
 
-    if(!editActive || editHidden)
-        return;
+    if(!editActive || editHidden) return;
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+
+    glEnable(GL_TEXTURE_2D);
 
     // Overall stats: numSources / MAX (left)
-    sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
-            MAX_BIAS_LIGHTS - numSources);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
-    y = theWindow->height - 10 - h;
-    SBE_DrawBox(10, y, w, h, 0);
-    UI_TextOutEx(buf, 18, y + h / 2, false, true,
-                 UI_Color(UIC_TITLE), alpha);
+    sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS, MAX_BIAS_LIGHTS - numSources);
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    size.width  = FR_TextWidth(buf) + 16;
+    size.height = FR_SingleLineHeight(buf) + 16;
+    top = theWindow->geometry.size.height - 10 - size.height;
+
+    origin.x = 10;
+    origin.y = top;
+    SBE_DrawBox(&origin, &size, 0);
+
+    origin.x += 8;
+    origin.y += size.height / 2;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     // The map ID.
-    UI_TextOutEx(P_GetUniqueMapID(map), 18, y - h/2, false, true,
-                 UI_Color(UIC_TITLE), alpha);
+    origin.y = top - size.height / 2;
+    UI_TextOutEx2(P_GetUniqueMapId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
 
     // Stats for nearest & grabbed:
     if(numSources)
@@ -835,12 +885,17 @@ void SBE_DrawHUD(void)
 
     if((s = SBE_GetGrabbed()) != NULL)
     {
-        SBE_InfoBox(s, FR_TextWidth("0") * 26, "Grabbed", alpha);
+        int x;
+        FR_SetFont(fontFixed);
+        x = FR_TextWidth("0") * 26;
+        SBE_InfoBox(s, x, "Grabbed", alpha);
     }
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
-        SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
+        origin.x = 20;
+        origin.y = theWindow->geometry.size.height/2 - 255/2;
+        SBE_DrawLevelGauge(&origin, 255);
     }
 
     glMatrixMode(GL_PROJECTION);
@@ -849,7 +904,7 @@ void SBE_DrawHUD(void)
 
 void SBE_DrawStar(float pos[3], float size, float color[4])
 {
-    float               black[4] = { 0, 0, 0, 0 };
+    float black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -876,18 +931,18 @@ void SBE_DrawStar(float pos[3], float size, float color[4])
     glEnd();
 }
 
-static void SBE_DrawIndex(source_t *src)
+static void SBE_DrawIndex(source_t* src)
 {
-    char                buf[80];
-    float               eye[3], scale;
+    const Point2Raw origin = { 2, 2 };
+    float eye[3], scale;
+    char buf[80];
 
-    if(!editShowIndices)
-        return;
+    if(!editShowIndices) return;
 
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (theWindow->width / 2);
+    scale = M_Distance(src->pos, eye) / (theWindow->geometry.size.width / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -901,8 +956,11 @@ static void SBE_DrawIndex(source_t *src)
 
     // Show the index number of the source.
     sprintf(buf, "%i", SB_ToIndex(src));
-    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE),
-                 1 - M_Distance(src->pos, eye)/2000);
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), 1 - M_Distance(src->pos, eye)/2000);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -911,10 +969,9 @@ static void SBE_DrawIndex(source_t *src)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void SBE_DrawSource(source_t *src)
+static void SBE_DrawSource(source_t* src)
 {
-    float               col[4], d;
-    float               eye[3];
+    float col[4], d, eye[3];
 
     eye[0] = vx;
     eye[1] = vz;
@@ -953,7 +1010,6 @@ static void SBE_DrawHue(void)
     eye[2] = vz;
 
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
     glMatrixMode(GL_MODELVIEW);
@@ -1048,7 +1104,6 @@ static void SBE_DrawHue(void)
     glPopMatrix();
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
 }
 
@@ -1087,8 +1142,6 @@ void SBE_DrawCursor(void)
 
         s = SBE_GetNearest();
     }
-
-    glDisable(GL_TEXTURE_2D);
 
     SBE_GetHand(hand);
     if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
@@ -1156,7 +1209,6 @@ void SBE_DrawCursor(void)
         }
     }
 
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 
 #undef SET_COL

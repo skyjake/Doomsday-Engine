@@ -1,4 +1,4 @@
-/**\file
+/**\file de_misc.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,28 +22,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * de_misc.h: Miscellaneous Services
- */
+#ifndef LIBDENG_MISC_H
+#define LIBDENG_MISC_H
 
-#ifndef __DOOMSDAY_MISC__
-#define __DOOMSDAY_MISC__
+/**
+ * Miscellaneous Services.
+ */
 
 #include "m_misc.h"
 #include "m_args.h"
 #include "m_bams.h"
 #include "m_vector.h"
-#include "m_string.h"
 #include "m_nodepile.h"
-#include "m_filehash.h"
 #include "m_huffman.h"
-#include "m_vector.h"
 #include "m_profiler.h"
 #include "m_md5.h"
 #include "m_linkedlist.h"
+#include "m_stack.h"
 #include "m_binarytree.h"
 #include "m_gridmap.h"
 #include "m_decomp64.h"
 #include "smoother.h"
 
-#endif
+#endif /* LIBDENG_MISC_H */

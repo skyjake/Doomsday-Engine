@@ -22,20 +22,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * con_config.h: Config Files
+/**
+ * Config Files.
  */
 
-#ifndef __DOOMSDAY_CONSOLE_CONFIG_H__
-#define __DOOMSDAY_CONSOLE_CONFIG_H__
+#ifndef LIBDENG_CONSOLE_CONFIG_H
+#define LIBDENG_CONSOLE_CONFIG_H
 
-#include "con_decl.h"
-
-boolean     Con_ParseCommands(const char* fileName, boolean setdefault);
-void        Con_SaveDefaults(void);
-boolean     Con_WriteState(const char* fileName,
-                           const char* bindingsFileName);
+boolean Con_ParseCommands(const char* fileName, boolean setdefault);
+void Con_SaveDefaults(void);
+boolean Con_WriteState(const char* fileName, const char* bindingsFileName);
 
 D_CMD(WriteConsole);
 
-#endif
+#endif /* LIBDENG_CONSOLE_CONFIG_H */

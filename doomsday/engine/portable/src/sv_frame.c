@@ -502,9 +502,9 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -554,31 +554,6 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
         Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
     if(df & SDF_CEIL_COLOR_BLUE)
         Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
-
-    /*
-    if(df & SDF_FLOOR_GLOW_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
-    if(df & SDF_FLOOR_GLOW_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
-    if(df & SDF_FLOOR_GLOW_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
-
-    if(df & SDF_CEIL_GLOW_RED)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
-    if(df & SDF_CEIL_GLOW_GREEN)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
-    if(df & SDF_CEIL_GLOW_BLUE)
-        Writer_WriteByte(msgWriter, (byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
-
-    if(df & SDF_FLOOR_GLOW)
-        Msg_WriteShort(d->planes[PLN_FLOOR].glow < 0 ? 0 :
-                       d->planes[PLN_FLOOR].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_FLOOR].glow * DDMAXSHORT));
-    if(df & SDF_CEIL_GLOW)
-        Msg_WriteShort(d->planes[PLN_CEILING].glow < 0 ? 0 :
-                       d->planes[PLN_CEILING].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
-                       */
 }
 
 /**
@@ -597,11 +572,11 @@ void Sv_WriteSideDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->top.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->middle.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, P_ToMaterialNum(d->bottom.material));
+        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
         Writer_WriteByte(msgWriter, d->lineFlags);

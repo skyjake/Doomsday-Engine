@@ -504,11 +504,6 @@ void Sv_RegisterSector(dt_sector_t* reg, uint number)
         reg->planes[i].height = sec->planes[i]->height;
         reg->planes[i].target = sec->planes[i]->target;
         reg->planes[i].speed = sec->planes[i]->speed;
-        /*
-        reg->planes[i].glow = sec->planes[i]->glow;
-        memcpy(reg->planes[i].glowRGB, sec->planes[i]->glowRGB,
-               sizeof(reg->planes[i].glowRGB));
-               */
 
         // Surface properties.
         memcpy(reg->planes[i].surface.rgba, sec->planes[i]->surface.rgba,
@@ -819,7 +814,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     byte                sideFlags = s->flags & 0xff;
 
     if(r->top.material != s->SW_topmaterial &&
-       !(s->SW_topinflags & SUIF_MATERIAL_FIX))
+       !(s->SW_topinflags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_TOP_MATERIAL;
         if(doUpdate)
@@ -827,7 +822,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     }
 
     if(r->middle.material != s->SW_middlematerial &&
-       !(s->SW_middleinflags & SUIF_MATERIAL_FIX))
+       !(s->SW_middleinflags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_MID_MATERIAL;
         if(doUpdate)
@@ -835,7 +830,7 @@ boolean Sv_RegisterCompareSide(cregister_t* reg, uint number, sidedelta_t* d,
     }
 
     if(r->bottom.material != s->SW_bottommaterial &&
-       !(s->SW_bottominflags & SUIF_MATERIAL_FIX))
+       !(s->SW_bottominflags & SUIF_FIX_MISSING_MATERIAL))
     {
         df |= SIDF_BOTTOM_MATERIAL;
         if(doUpdate)
@@ -1379,27 +1374,6 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
         if(sf & SDF_CEIL_COLOR_BLUE)
             d->planes[PLN_CEILING].surface.rgba[2] =
                 s->planes[PLN_CEILING].surface.rgba[2];
-
-        /*
-        if(sf & SDF_FLOOR_GLOW_RED)
-            d->planes[PLN_FLOOR].glowRGB[0] = s->planes[PLN_FLOOR].glowRGB[0];
-        if(sf & SDF_FLOOR_GLOW_GREEN)
-            d->planes[PLN_FLOOR].glowRGB[1] = s->planes[PLN_FLOOR].glowRGB[1];
-        if(sf & SDF_FLOOR_GLOW_BLUE)
-            d->planes[PLN_FLOOR].glowRGB[2] = s->planes[PLN_FLOOR].glowRGB[2];
-
-        if(sf & SDF_CEIL_GLOW_RED)
-            d->planes[PLN_CEILING].glowRGB[0] = s->planes[PLN_CEILING].glowRGB[0];
-        if(sf & SDF_CEIL_GLOW_GREEN)
-            d->planes[PLN_CEILING].glowRGB[1] = s->planes[PLN_CEILING].glowRGB[1];
-        if(sf & SDF_CEIL_GLOW_BLUE)
-            d->planes[PLN_CEILING].glowRGB[2] = s->planes[PLN_CEILING].glowRGB[2];
-
-        if(sf & SDF_FLOOR_GLOW)
-            d->planes[PLN_FLOOR].glow = s->planes[PLN_FLOOR].glow;
-        if(sf & SDF_CEIL_GLOW)
-            d->planes[PLN_CEILING].glow = s->planes[PLN_CEILING].glow;
-            */
     }
     else if(src->type == DT_SIDE)
     {

@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_shadow.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,228 +22,290 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * rend_shadow.c: Map Object Shadows
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
-#include "de_refresh.h"
 #include "de_graphics.h"
-#include "de_render.h"
 #include "de_play.h"
-#include "de_misc.h"
+#include "de_refresh.h"
+#include "de_render.h"
+#include "de_system.h"
 
-// MACROS ------------------------------------------------------------------
+typedef struct {
+    rvertex_t vertices[4];
+    ColorRawf colors[4];
+    rtexcoord_t texCoords[4];
+} shadowprim_t;
 
-// TYPES -------------------------------------------------------------------
+/// \optimize This global shadow primitive is used to avoid repeated local
+/// instantiation in drawShadowPrimitive()
+static shadowprim_t rshadow, *rs = &rshadow;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int useShadows = true;
-static int shadowMaxRad = 80;
-static int shadowMaxDist = 1000;
-static float shadowFactor = 0.5f;
-
-// CODE --------------------------------------------------------------------
-
-void Rend_ShadowRegister(void)
+boolean Rend_MobjShadowsEnabled(void)
 {
-    // Cvars
-    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
-    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1);
-    C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0);
+    return (useShadows && !levelFullBright);
 }
 
-/**
- * This is called for each sector a shadow-caster is touching.
- * The highest floor height will be searched and if larger than the
- * value of 'data' it will be written back.
- *
- * @param sector        The sector to search the floor height of.
- * @param data          Ptr to plane_t for comparison.
- *
- * @return              @c true, if iteration should continue.
- */
-static int Rend_ShadowIterator(sector_t *sector, void *data)
+static void drawShadowPrimitive(const vectorcomp_t pos[3], float radius, float alpha)
 {
-    plane_t           **highest = (plane_t**) data;
-    plane_t            *compare = sector->SP_plane(PLN_FLOOR);
+    alpha = MINMAX_OF(0, alpha, 1);
+    if(alpha <= 0) return;
 
-    if(compare->visHeight > (*highest)->visHeight)
-        *highest = compare;
-    return false; // Continue iteration.
+    radius = MIN_OF(radius, (float) shadowMaxRadius);
+    if(radius <= 0) return;
+
+    rs->vertices[0].pos[VX] = pos[VX] - radius;
+    rs->vertices[0].pos[VY] = pos[VY] + radius;
+    rs->vertices[0].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->colors[0].alpha = alpha;
+
+    rs->vertices[1].pos[VX] = pos[VX] + radius;
+    rs->vertices[1].pos[VY] = pos[VY] + radius;
+    rs->vertices[1].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->colors[0].alpha = alpha;
+
+    rs->vertices[2].pos[VX] = pos[VX] + radius;
+    rs->vertices[2].pos[VY] = pos[VY] - radius;
+    rs->vertices[2].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->colors[2].alpha = alpha;
+
+    rs->vertices[3].pos[VX] = pos[VX] - radius;
+    rs->vertices[3].pos[VY] = pos[VY] - radius;
+    rs->vertices[3].pos[VZ] = pos[VZ] + SHADOW_ZOFFSET;
+    rs->colors[3].alpha = alpha;
+
+    RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW, 4,
+        rs->vertices, rs->colors, rs->texCoords, NULL);
 }
 
 static void processMobjShadow(mobj_t* mo)
 {
-#define SHADOWZOFFSET       (0.2f)
+    float moz, moh, halfmoh, heightFromSurface, distanceFromViewer = 0;
+    float mobjOrigin[3], shadowRadius, shadowStrength;
+    plane_t* plane;
 
-    float               moz;
-    float               height, moh, halfmoh, alpha, pos[2];
-    sector_t*           sec = mo->subsector->sector;
-    float               radius;
-    uint                i;
-    rvertex_t           rvertices[4];
-    rcolor_t            rcolors[4];
-    rtexcoord_t         rtexcoords[4];
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
-    plane_t*            plane;
-    float               distance;
+    Mobj_OriginSmoothed(mo, mobjOrigin);
 
     // Is this too far?
-    pos[VX] = mo->pos[VX];
-    pos[VY] = mo->pos[VY];
-    if((distance = Rend_PointDist2D(pos)) > shadowMaxDist)
-        return;
-
-    // Apply a Short Range Visual Offset?
-    if(useSRVO && mo->state && mo->tics >= 0)
+    if(shadowMaxDistance > 0)
     {
-        float               mul = mo->tics / (float) mo->state->tics;
-
-        pos[VX] += mo->srvo[VX] * mul;
-        pos[VY] += mo->srvo[VY] * mul;
+        distanceFromViewer = Rend_PointDist2D(mobjOrigin);
+        if(distanceFromViewer > shadowMaxDistance) return;
     }
+
+    shadowStrength = R_ShadowStrength(mo) * shadowFactor;
+    if(usingFog) shadowStrength /= 2;
+    if(shadowStrength <= 0) return;
+
+    shadowRadius = R_VisualRadius(mo);
+    if(shadowRadius <= 0) return;
 
     // Check the height.
     moz = mo->pos[VZ] - mo->floorClip;
     if(mo->ddFlags & DDMF_BOB)
         moz -= R_GetBobOffset(mo);
-
-    height = moz - mo->floorZ;
+    heightFromSurface = moz - mo->floorZ;
     moh = mo->height;
-    if(!moh)
-        moh = 1;
-    if(height > moh)
-        return; // Too far.
-    if(moz + mo->height < mo->floorZ)
-        return;
+    if(!moh) moh = 1;
 
-    // Calculate the strength of the shadow.
-    // Simplified version, no light diminishing or range compression.
-    alpha = shadowFactor * sec->lightLevel *
-        (1 - mo->translucency * reciprocal255);
+    // Too far above or below the shadow plane?
+    if(heightFromSurface > moh) return;
+    if(moz + mo->height < mo->floorZ) return;
 
+    // Calculate the final strength of the shadow's attribution to the surface.
     halfmoh = moh / 2;
-    if(height > halfmoh)
-        alpha *= 1 - (height - halfmoh) / (moh - halfmoh);
-    if(usingFog)
-        alpha /= 2;
-    if(distance > 3 * shadowMaxDist / 4)
+    if(heightFromSurface > halfmoh)
     {
-        // Fade when nearing the maximum distance.
-        alpha *= (shadowMaxDist - distance) / (shadowMaxDist / 4);
+        shadowStrength *= 1 - (heightFromSurface - halfmoh) / (moh - halfmoh);
     }
-    if(alpha <= 0)
-        return; // Can't be seen.
-    if(alpha > 1)
-        alpha = 1;
 
-    // Calculate the radius of the shadow.
-    radius = R_VisualRadius(mo);
-    if(!(radius > 0))
-        return;
-    if(radius > (float) shadowMaxRad)
-        radius = (float) shadowMaxRad;
+    // Fade when nearing the maximum distance?
+    shadowStrength *= R_ShadowAttenuationFactor(distanceFromViewer);
 
-    // Figure out the visible floor height.
-    plane = mo->subsector->sector->SP_plane(PLN_FLOOR);
-    P_MobjSectorsIterator(mo, Rend_ShadowIterator, &plane);
+    // Figure out the visible floor height...
+    plane = R_FindShadowPlane(mo);
+    if(!plane) return;
 
-    if(plane->visHeight >= moz + mo->height)
-        return; // Can't have a shadow above the object!
+    // Do not draw shadows above the shadow caster.
+    if(plane->visHeight >= moz + mo->height) return; 
 
     // View height might prevent us from seeing the shadow.
-    if(vy < plane->visHeight)
-        return;
+    if(vy < plane->visHeight) return;
 
-    // Don't render mobj shadows on sky floors or glowing surfaces.
-    if(R_IsGlowingPlane(plane))
-        return;
+    // Glowing planes inversely diminish shadow strength.
+    shadowStrength *= (1 - R_GlowStrength(plane));
 
-    // Prepare the poly.
-    memset(rTU, 0, sizeof(rTU));
-    rTU[TU_PRIMARY].tex = GL_PrepareLSTexture(LST_DYNAMIC);
-    rTU[TU_PRIMARY].magMode = GL_LINEAR;
-    rTU[TU_PRIMARY].blend = 1;
+    // Would this shadow be seen?
+    if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
 
-    rvertices[0].pos[VX] = pos[VX] - radius;
-    rvertices[0].pos[VY] = pos[VY] + radius;
-    rvertices[0].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    rtexcoords[0].st[0] = 0;
-    rtexcoords[0].st[1] = 1;
-
-    rvertices[1].pos[VX] = pos[VX] + radius;
-    rvertices[1].pos[VY] = pos[VY] + radius;
-    rvertices[1].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    rtexcoords[1].st[0] = 1;
-    rtexcoords[1].st[1] = 1;
-
-    rvertices[2].pos[VX] = pos[VX] + radius;
-    rvertices[2].pos[VY] = pos[VY] - radius;
-    rvertices[2].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    rtexcoords[2].st[0] = 1;
-    rtexcoords[2].st[1] = 0;
-
-    rvertices[3].pos[VX] = pos[VX] - radius;
-    rvertices[3].pos[VY] = pos[VY] - radius;
-    rvertices[3].pos[VZ] = plane->visHeight + SHADOWZOFFSET;
-    rtexcoords[3].st[0] = 0;
-    rtexcoords[3].st[1] = 0;
-
-    // Shadows are black.
-    for(i = 0; i < 4; ++i)
-    {
-        rcolors[i].rgba[CR] = rcolors[i].rgba[CG] = rcolors[i].rgba[CB] = 0;
-        rcolors[i].rgba[CA] = alpha;
-    }
-
-    RL_AddPoly(PT_FAN, RPT_SHADOW, rvertices, rtexcoords, NULL, NULL,
-               rcolors, 4, 0, 0, NULL, rTU);
-
-#undef SHADOWZOFFSET
+    mobjOrigin[VZ] = plane->visHeight;
+    drawShadowPrimitive(mobjOrigin, shadowRadius, shadowStrength);
 }
 
-void Rend_RenderShadows(void)
+static void initShadowPrimitive(void)
 {
-    sector_t               *sec;
-    mobj_t                 *mo;
-    uint                    i;
+#define SETCOLOR_BLACK(c) ((c).rgba[CR] = (c).rgba[CG] = (c).rgba[CB] = 0)
 
-    if(!useShadows || levelFullBright)
-        return;
+    rs->texCoords[0].st[0] = 0;
+    rs->texCoords[0].st[1] = 1;
+    SETCOLOR_BLACK(rs->colors[0]);
 
-    // Check all mobjs in all visible sectors.
+    rs->texCoords[1].st[0] = 1;
+    rs->texCoords[1].st[1] = 1;
+    SETCOLOR_BLACK(rs->colors[1]);
+
+    rs->texCoords[2].st[0] = 1;
+    rs->texCoords[2].st[1] = 0;
+    SETCOLOR_BLACK(rs->colors[2]);
+
+    rs->texCoords[3].st[0] = 0;
+    rs->texCoords[3].st[1] = 0;
+    SETCOLOR_BLACK(rs->colors[3]);
+
+#undef SETCOLOR_BLACK
+}
+
+void Rend_RenderMobjShadows(void)
+{
+    const sector_t* sec;
+    mobj_t* mo;
+    uint i;
+
+    // Disabled for now, awaiting a heuristic analyser to enable it on selective mobjs.
+    return;
+
+    // Configure the render list primitive writer's texture unit state now.
+    RL_LoadDefaultRtus();
+    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+
+    // Initialize the invariant parts of our shadow primitive now.
+    initShadowPrimitive();
+
+    // Process all sectors:
     for(i = 0; i < numSectors; ++i)
     {
-        sec = SECTOR_PTR(i);
-        if(!(sec->frameFlags & SIF_VISIBLE))
-            continue;
+        sec = sectors + i;
 
+        // We are only interested in those mobjs within sectors marked as
+        // 'visible' for the current render frame (viewer dependent).
+        if(!(sec->frameFlags & SIF_VISIBLE)) continue;
+
+        // Process all mobjs linked to this sector:
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            if(!mo->state)
-                continue;
-
-            // Should this mobj have a shadow?
-            if((mo->state->flags & STF_FULLBRIGHT) || (mo->ddFlags & DDMF_DONTDRAW) ||
-               (mo->ddFlags & DDMF_ALWAYSLIT))
-                continue;
-
             processMobjShadow(mo);
         }
     }
+}
+
+/// Generates a new primitive for each shadow projection.
+int RIT_RenderShadowProjectionIterator(const shadowprojection_t* sp, void* paramaters)
+{
+    static const float black[3] = { 0, 0, 0 };
+    rendershadowprojectionparams_t* p = (rendershadowprojectionparams_t*)paramaters;
+    rvertex_t* rvertices;
+    rtexcoord_t* rtexcoords;
+    ColorRawf* rcolors;
+    uint i, c;
+
+    // Allocate enough for the divisions too.
+    rvertices = R_AllocRendVertices(p->realNumVertices);
+    rtexcoords = R_AllocRendTexCoords(p->realNumVertices);
+    rcolors = R_AllocRendColors(p->realNumVertices);
+
+    for(i = 0; i < p->numVertices; ++i)
+    {
+        ColorRawf* col = &rcolors[i];
+        // Shadows are black.
+        for(c = 0; c < 3; ++c) col->rgba[c] = black[c];
+        // Blend factor.
+        col->alpha = sp->alpha;
+    }
+
+    if(p->isWall)
+    {
+        rtexcoords[1].st[0] = rtexcoords[0].st[0] = sp->s[0];
+        rtexcoords[1].st[1] = rtexcoords[3].st[1] = sp->t[0];
+        rtexcoords[3].st[0] = rtexcoords[2].st[0] = sp->s[1];
+        rtexcoords[2].st[1] = rtexcoords[0].st[1] = sp->t[1];
+
+        if(p->divs)
+        {
+            // We need to subdivide the projection quad.
+            float bL, tL, bR, tR;
+            rvertex_t origVerts[4];
+            ColorRawf origColors[4];
+            rtexcoord_t origTexCoords[4];
+
+            /**
+             * Need to swap indices around into fans set the position
+             * of the division vertices, interpolate texcoords and
+             * color.
+             */
+
+            memcpy(origVerts, p->rvertices, sizeof(rvertex_t) * 4);
+            memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
+            memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
+
+            bL = p->rvertices[0].pos[VZ];
+            tL = p->rvertices[1].pos[VZ];
+            bR = p->rvertices[2].pos[VZ];
+            tR = p->rvertices[3].pos[VZ];
+
+            R_DivVerts(rvertices, origVerts, p->divs);
+            R_DivTexCoords(rtexcoords, origTexCoords, p->divs, bL, tL, bR, tR);
+            R_DivVertColors(rcolors, origColors, p->divs, bL, tL, bR, tR);
+        }
+        else
+        {
+            memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+        }
+    }
+    else
+    {
+        // It's a flat.
+        float width, height;
+
+        width  = p->texBR[VX] - p->texTL[VX];
+        height = p->texBR[VY] - p->texTL[VY];
+
+        for(i = 0; i < p->numVertices; ++i)
+        {
+            rtexcoords[i].st[0] = ((p->texBR[VX] - p->rvertices[i].pos[VX]) / width * sp->s[0]) +
+                ((p->rvertices[i].pos[VX] - p->texTL[VX]) / width * sp->s[1]);
+
+            rtexcoords[i].st[1] = ((p->texBR[VY] - p->rvertices[i].pos[VY]) / height * sp->t[0]) +
+                ((p->rvertices[i].pos[VY] - p->texTL[VY]) / height * sp->t[1]);
+        }
+
+        memcpy(rvertices, p->rvertices, sizeof(rvertex_t) * p->numVertices);
+    }
+
+    if(p->isWall && p->divs)
+    {
+        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            3 + p->divs[1].num, rvertices + 3 + p->divs[0].num,
+            rcolors + 3 + p->divs[0].num, rtexcoords + 3 + p->divs[0].num, NULL);
+        RL_AddPolyWithCoords(PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            3 + p->divs[0].num, rvertices, rcolors, rtexcoords, NULL);
+    }
+    else
+    {
+        RL_AddPolyWithCoords(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPF_DEFAULT|RPF_SHADOW,
+            p->numVertices, rvertices, rcolors, rtexcoords, NULL);
+    }
+
+    R_FreeRendVertices(rvertices);
+    R_FreeRendTexCoords(rtexcoords);
+    R_FreeRendColors(rcolors);
+
+    return 0; // Continue iteration.
+}
+
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* p)
+{
+    // Configure the render list primitive writer's texture unit state now.
+    RL_LoadDefaultRtus();
+    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+
+    // Write shadows to the render lists.
+    R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void*)p);
 }

@@ -1,4 +1,4 @@
-/**\file
+/**\file p_xgsec.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_xgsec.c: Extended Generalized Sector Types.
+ * Extended Generalized Sector Types.
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -230,11 +230,11 @@ void XF_Init(sector_t *sec, function_t *fn, char *func, int min, int max,
             break;
 
         case 'f':
-            offset += xsec->SP_floororigheight * FRACUNIT;
+            offset += xsec->SP_floororigheight;
             break;
 
         case 'c':
-            offset += xsec->SP_ceilorigheight * FRACUNIT;
+            offset += xsec->SP_ceilorigheight;
             break;
 
         default:
@@ -1947,7 +1947,7 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
 {
     linedef_t*          line = (linedef_t *) context;
     linetype_t*         info = context2;
-    int                 num, i = 0;
+    int                 num;
     float               usergb[3];
     float               lightLevel;
 
@@ -1986,6 +1986,10 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
 
         case LIGHTREF_ORIGINAL:
             lightLevel = P_ToXSector(sector)->origLight;
+            break;
+
+        case LIGHTREF_CURRENT:
+            lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
             break;
 
         case LIGHTREF_HIGHEST:
@@ -2050,6 +2054,11 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
 
             if(sector)
                 P_GetFloatpv(sector, DMU_COLOR, usergb);
+            else
+            {
+                XG_Dev("XSTrav_SectorLight: Warning, the referenced LineDef has no back sector. Using default color.");
+                memset(usergb, 0, sizeof(usergb));
+            }
             break;
             }
         case LIGHTREF_ORIGINAL:
@@ -2601,14 +2610,15 @@ void XS_UpdateLight(sector_t* sec)
     }
 }
 
-void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
+void XS_DoChain(sector_t* sec, int ch, int activating, void* act_thing)
 {
-    xgsector_t         *xg;
-    sectortype_t       *info;
-    float               flevtime = TIC2FLT(mapTime);
-    linedef_t          *dummyLine;
-    xline_t            *xdummyLine;
-    linetype_t         *ltype;
+    xgsector_t* xg;
+    sectortype_t* info;
+    float flevtime = TIC2FLT(mapTime);
+    linedef_t* dummyLine;
+    xline_t* xdummyLine;
+    linetype_t* ltype;
+    sidedef_t* dummySideDef;
 
     xg = P_ToXSector(sec)->xg;
     info = &xg->info;
@@ -2630,15 +2640,17 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
                          FLT2TIC(info->interval[ch][1]));
     }
 
-    // Prepare the dummy line to use for the event.
+    // Prepare the dummies to use for the event.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
     xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
+    dummySideDef = P_AllocDummySideDef();
 
+    P_SetPtrp(dummyLine, DMU_SIDEDEF0, dummySideDef);
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
+    P_SetPtrp(dummySideDef, DMU_LINEDEF, dummyLine);
 
-    xdummyLine->special =
-        (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
+    xdummyLine->special = (ch == XSCE_FUNCTION ? activating : info->chain[ch]);
 
     xdummyLine->tag = P_ToXSector(sec)->tag;
 
@@ -2687,9 +2699,10 @@ void XS_DoChain(sector_t *sec, int ch, int activating, void *act_thing)
         }
     }
 
-    // We're done, free the dummy.
+    // We're done, free the dummies.
     Z_Free(xdummyLine->xg);
     P_FreeDummyLine(dummyLine);
+    P_FreeDummySideDef(dummySideDef);
 }
 
 static boolean checkChainRequirements(sector_t* sec, mobj_t* mo, int ch,
@@ -3004,7 +3017,7 @@ float XS_Gravity(struct sector_s* sec)
         float               gravity = xsec->xg->info.gravity;
 
         // Apply gravity modifier.
-        if(IS_NETGAME && cfg.netGravity != -1)
+        if(cfg.netGravity != -1)
             gravity *= (float) cfg.netGravity / 100;
 
         return gravity;
@@ -3062,7 +3075,7 @@ void XS_Update(void)
 /*
  * Write XG types into a binary file.
  */
-DEFCC(CCmdDumpXG)
+D_CMD(DumpXG)
 {
     FILE   *file;
 
@@ -3088,7 +3101,7 @@ DEFCC(CCmdDumpXG)
 /**
  * $moveplane: Command line interface to the plane mover.
  */
-DEFCC(CCmdMovePlane)
+D_CMD(MovePlane)
 {
     boolean     isCeiling = !stricmp(argv[0], "moveceil");
     boolean     isBoth = !stricmp(argv[0], "movesec");
@@ -3121,25 +3134,20 @@ DEFCC(CCmdMovePlane)
         p = 2;
         if(!players[CONSOLEPLAYER].plr->mo)
             return false;
-        sector =
-            P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
+        sector = P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {
         p = 4;
-        sector =
-            P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0),
-                                         (float) strtol(argv[3], 0, 0)),
-                      DMU_SECTOR);
+        sector = P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
-        int         tag = (short) strtol(argv[2], 0, 0);
-        sector_t   *sec = NULL;
-        iterlist_t *list;
+        int tag = (short) strtol(argv[2], 0, 0);
+        sector_t* sec = NULL;
+        iterlist_t* list;
 
         p = 3;
-
         list = P_GetSectorIterListForTag(tag, false);
         if(list)
         {   // Find the first sector with the tag.
@@ -3164,8 +3172,7 @@ DEFCC(CCmdMovePlane)
     // No more arguments?
     if(argc == p)
     {
-        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight,
-                   floorheight);
+        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
         return true;
     }
 
@@ -3210,20 +3217,7 @@ DEFCC(CCmdMovePlane)
     mover = XS_GetPlaneMover(sector, isCeiling);
 
     // Setup the thinker and add it to the list.
-    mover->destination =
-        units +
-        (isOffset ? (isCeiling ? ceilingheight : floorheight) : 0);
-
-    // Check that the destination is valid.
-    if(!isBoth)
-    {
-        if(isCeiling &&
-           mover->destination < floorheight + 4)
-            mover->destination = floorheight + 4;
-        if(!isCeiling &&
-           mover->destination > ceilingheight - 4)
-            mover->destination = ceilingheight - 4;
-    }
+    mover->destination = units + (isOffset ? (isCeiling ? ceilingheight : floorheight) : 0);
 
     mover->speed = speed;
     if(isCrusher)

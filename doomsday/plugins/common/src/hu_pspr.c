@@ -1,4 +1,4 @@
-/**\file
+/**\file hu_pspr.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * hu_pspr.c: Common HUD psprite handling.
+ * Common HUD psprite handling.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,11 +37,10 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "g_controls.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -89,21 +88,30 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
  */
 float HU_PSpriteYOffset(player_t* pl)
 {
-    int viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
+    Size2Raw winSize, portSize;
     float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
 
+    R_ViewWindowSize(pl - players, &winSize);
+    R_ViewPortSize(pl - players, &portSize);
+
 #if __JHERETIC__ 
-    if(viewWindowHeight == SCREENHEIGHT)
+    if(winSize.height == portSize.height)
         offy += PSpriteSY[pl->morphTics? PCLASS_CHICKEN : pl->class_][pl->readyWeapon];
 #elif __JHEXEN__
-    if(viewWindowHeight == SCREENHEIGHT)
+    if(winSize.height == portSize.height)
         offy += PSpriteSY[pl->morphTics? PCLASS_PIG : pl->class_][pl->readyWeapon];
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     // If the status bar is visible, the sprite is moved up a bit.
-    if(viewWindowHeight < SCREENHEIGHT)
-        offy -= (float) (ST_HEIGHT - 2) * (cfg.statusbarScale / 20.f) - 20;
+    if(winSize.height < portSize.height)
+    {
+# if __JDOOM__
+        offy -= (float) (ST_HEIGHT) * cfg.statusbarScale - 16;
+# else
+        offy -= (float) (ST_HEIGHT-1) * cfg.statusbarScale - 20;
+# endif
+    }
 #endif
 
     return offy;
@@ -118,7 +126,7 @@ void HU_UpdatePlayerSprite(int pnum)
     int         i;
     pspdef_t   *psp;
     ddpsprite_t *ddpsp;
-    float       fov = 90; //*(float*) Con_GetVariable("r_fov")->ptr;
+    float       fov = 90; //*(float*) Con_FindVariable("r_fov")->ptr;
     player_t   *pl = players + pnum;
 
     for(i = 0; i < NUMPSPRITES; ++i)
@@ -137,7 +145,7 @@ void HU_UpdatePlayerSprite(int pnum)
         ddpsp->flags = 0;
 
         // Fullbright?
-        if((psp->state->flags & STF_FULLBRIGHT) ||
+        if((psp->state && (psp->state->flags & STF_FULLBRIGHT)) ||
             (pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
 # if __JDOOM__ || __JDOOM64__
             || (pl->powers[PT_INVULNERABILITY] > 30)

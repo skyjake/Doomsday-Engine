@@ -1,4 +1,4 @@
-/**\file
+/**\file b_command.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,14 +23,16 @@
  */
 
 /**
- * b_command.c: Event-Command Bindings
+ * Event-Command Bindings.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 #include "de_play.h"
+
 #include "b_main.h"
 #include "b_command.h"
 
@@ -504,7 +506,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
     // Do the command.
-    Con_Executef(CMDS_BIND, false, Str_Text(&command));
+    Con_Executef(CMDS_BIND, false, "%s", Str_Text(&command));
 
     Str_Free(&command);
     return true;

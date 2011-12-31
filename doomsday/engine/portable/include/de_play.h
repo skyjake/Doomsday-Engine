@@ -31,7 +31,7 @@
 
 #include "p_mapdata.h"
 #include "p_vertex.h"
-#include "p_material.h"
+#include "material.h"
 #include "p_surface.h"
 #include "p_sidedef.h"
 #include "p_linedef.h"

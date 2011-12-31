@@ -1,4 +1,4 @@
-/**\file
+/**\file p_linedef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,18 +23,96 @@
  */
 
 /**
- * r_lindef.h: World linedefs.
+ * Map LineDef
  */
 
-#ifndef __DOOMSDAY_WORLD_LINEDEF_H__
-#define __DOOMSDAY_WORLD_LINEDEF_H__
+#ifndef LIBDENG_MAP_LINEDEF_H
+#define LIBDENG_MAP_LINEDEF_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-void            Linedef_LightLevelDelta(const linedef_t* lineDef, byte side, float* deltaL, float* deltaR);
+/**
+ * @return  Minimal floor Plane which interfaces with this LineDef's face.
+ *     If both front and back floor Plane interfaces exist and are equal,
+ *     the front Plane is returned. May return @c NULL if no interfaces.
+ */
+plane_t* LineDef_FloorMin(const linedef_t* lineDef);
 
-boolean         Linedef_GetProperty(const linedef_t *lin, setargs_t *args);
-boolean         Linedef_SetProperty(linedef_t *lin, const setargs_t *args);
+/**
+ * @return  Maximal floor Plane which interfaces with this LineDef's face.
+ *     If both front and back floor Plane interfaces exist and are equal,
+ *     the front Plane is returned. May return @c NULL if no interfaces.
+ */
+plane_t* LineDef_FloorMax(const linedef_t* lineDef);
 
-#endif
+/**
+ * @return  Minimal ceiling Plane which interfaces with this LineDef's face.
+ *     If both front and back ceiling Plane interfaces exist and are equal,
+ *     the front Plane is returned. May return @c NULL if no interfaces.
+ */
+plane_t* LineDef_CeilingMin(const linedef_t* lineDef);
+
+/**
+ * @return  Maximal ceiling Plane which interfaces with this LineDef's face.
+ *     If both front and back ceiling Plane interfaces exist and are equal,
+ *     the front Plane is returned. May return @c NULL if no interfaces.
+ */
+plane_t* LineDef_CeilingMax(const linedef_t* lineDef);
+
+/**
+ * @param ignoreOpacity  @c true= do not consider Material opacity.
+ * @return  @c true if this LineDef's side is considered "closed" (i.e.,
+ *     there is no opening through which the back Sector can be seen).
+ *     Tests consider all Planes which interface with this and the "middle"
+ *     Material used on the relative front side (if any).
+ */
+boolean LineDef_BackClosed(const linedef_t* lineDef, int side, boolean ignoreOpacity);
+
+/**
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * Segs based on their 2D world angle.
+ *
+ * @param lineDef  LineDef to calculate delta for.
+ * @param side  Side of the LineDef we are interested in.
+ * @param deltaL  Light delta for the left edge written here.
+ * @param deltaR  Light delta for the right edge written here.
+ */
+void LineDef_LightLevelDelta(const linedef_t* lineDef, int side, float* deltaL, float* deltaR);
+
+/**
+ * @param lineDef  LineDef being tested.
+ * @param side  Side of LineDef to test. Non-zero values signify the BACK side.
+ * @return  @c true iff the SideDef on the referenced @a lineDef @a side has
+ *     a "middle" Material which completely covers any opening (gap between
+ *     floor and ceiling planes) on that side of the line.
+ */
+boolean LineDef_MiddleMaterialCoversOpening(const linedef_t* lineDef, int side, boolean ignoreAlpha);
+
+/**
+ * Calculate coordinates for a "middle" Material if present.
+ *
+ * @param lineDef  LineDef to calculate for.
+ * @param side  Side of the LineDef we are interested in.
+ * @param bottomLeft  Z map space coordinate of the bottom left of the Material written here.
+ * @param bottomRight  Z map space coordinate of the bottom right of the Material written here.
+ * @param topLeft  Z map space coordinate of the top left of the Material written here.
+ * @param topRight Z map space coordinate of the top right of the Material written here.
+ * @param texOffY  Offset to the top of the Material written here.
+ * @return  @c true iff the middle Material is visible (in the opening).
+ */
+int LineDef_MiddleMaterialCoords(const linedef_t* lineDef, int side,
+    float* bottomLeft, float* bottomRight, float* topLeft, float* topRight, float* texOffY,
+    boolean lowerUnpeg, boolean clipTop, boolean clipBottom);
+
+/**
+ * Get the value of a linedef property, selected by DMU_* name.
+ */
+int LineDef_GetProperty(const linedef_t* lineDef, setargs_t* args);
+
+/**
+ * Update the linedef, property is selected by DMU_* name.
+ */
+int LineDef_SetProperty(linedef_t* lineDef, const setargs_t* args);
+
+#endif /* LIBDENG_MAP_LINEDEF_H */

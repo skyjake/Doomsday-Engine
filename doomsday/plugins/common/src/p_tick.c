@@ -36,8 +36,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "p_actor.h"
@@ -48,6 +46,7 @@
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "d_netsv.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -186,10 +186,10 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 
         mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-        // Don't move for a bit.
-        if(mo->player)
+        // $voodoodolls Must be the real player.
+        if(mo->player && mo->player->plr->mo == mo)
         {
-            mo->reactionTime = 18;
+            mo->reactionTime = 18; // Don't move for a bit.
             if(mo->player->powers[PT_FLIGHT] && aboveFloor > 0)
             {
                 mo->pos[VZ] = mo->floorZ + aboveFloor;
@@ -206,10 +206,11 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
             mo->player->viewHeight = (float) cfg.plrViewHeight;
             mo->player->viewHeightDelta = 0;
             mo->player->viewZ = mo->pos[VZ] + mo->player->viewHeight;
+            mo->player->viewOffset[VX] = mo->player->viewOffset[VY] = mo->player->viewOffset[VZ] = 0;
+            mo->player->bob = 0;
 
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
-            mo->dPlayer->flags |=
-                DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+            mo->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         }
 
         return 1;

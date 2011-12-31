@@ -42,9 +42,15 @@
 #include "d_think.h"
 #include "info.h"
 
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
+#define NOMOM_THRESHOLD     (0.00000001f) // (integer) 0
+#define DROPOFFMOM_THRESHOLD (0.25f) // FRACUNIT/4
+#define MAXMOM              (30) // 30*FRACUNIT
+#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
+
+#define FRICTION_LOW        (0.97265625f) // 0xf900
+#define FRICTION_FLY        (0.91796875f) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000f) // 0xe800
+#define FRICTION_HIGH       (0.41992187f) // 0xd700/2
 
 // Player radius for movement checking.
 #define PLAYERRADIUS        (25)
@@ -52,7 +58,6 @@
 // MAXRADIUS is for precalculated sector block boxes the spider demon is
 // larger, but we do not have any moving sectors nearby.
 #define MAXRADIUS           (32)
-#define MAXMOVE             (30)
 
 #define USERANGE            (64)
 #define MELEERANGE          (64)

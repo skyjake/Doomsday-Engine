@@ -1,4 +1,4 @@
-/**\file
+/**\file p_setup.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_setup.h: Map setup routines
+ * Map setup routines.
  */
 
-#ifndef __P_SETUP_H__
-#define __P_SETUP_H__
+#ifndef LIBDOOM64_SETUP_H
+#define LIBDOOM64_SETUP_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -47,6 +47,7 @@ enum {
     MO_ANGLE,
     MO_TYPE,
     MO_DOOMEDNUM,
+    MO_SKILLMODES,
     MO_USETYPE,
     MO_FLAGS,
     MO_TAG,
@@ -65,11 +66,10 @@ enum {
     MO_XX2
 };
 
-void            P_Init(void);
 void            P_RegisterMapObjs(void);
 
 int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                              valuetype_t type, void* data);
 int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
                                               void* data);
-#endif
+#endif /* LIBDOOM64_SETUP_H */

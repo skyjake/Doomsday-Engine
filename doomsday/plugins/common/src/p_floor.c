@@ -1,4 +1,4 @@
-/**\file
+/**\file p_floors.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -28,7 +28,7 @@
  */
 
 /**
- * p_floors.c: Moving floors.
+ * Moving floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -459,7 +459,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
          * present, the height is taken from the very first texture.
          */
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, 0));
 
         if(mat)
         {
@@ -475,7 +475,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, 0));
 
         if(mat)
         {

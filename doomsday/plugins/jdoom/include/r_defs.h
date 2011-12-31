@@ -90,6 +90,15 @@ xline_t*        P_ToXLine(linedef_t* line);
 xsector_t*      P_ToXSector(sector_t* sector);
 xsector_t*      P_ToXSectorOfSubsector(subsector_t* sub);
 
+/**
+ * Update the specified player's automap.
+ *
+ * @param player  Local player number whose map is to change.
+ * @param line  Line to change.
+ * @param visible  @c true= mark the line as visible.
+ */
+void P_SetLinedefAutomapVisibility(int player, uint line, boolean visible);
+
 xline_t*        P_GetXLine(uint idx);
 xsector_t*      P_GetXSector(uint idx);
 #endif

@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "dmu_lib.h"
@@ -75,8 +77,8 @@ void P_TeleportToPlayerStarts(mobj_t* mo)
     // Get a random player start.
     if((start = P_GetPlayerStart(0, -1, false)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
     }
 }
 
@@ -90,8 +92,8 @@ void P_TeleportToDeathmatchStarts(mobj_t* mo)
     // First, try a random deathmatch start.
     if((start = P_GetPlayerStart(0, -1, true)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
     }
     else
     {
@@ -104,14 +106,12 @@ mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
     return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
-                   boolean useFog)
+boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean useFog)
 {
-    float               oldpos[3], aboveFloor, fogDelta;
-    player_t*           player;
-    unsigned int        an;
-    angle_t             oldAngle;
-    mobj_t*             fog;
+    float oldpos[3], aboveFloor, fogDelta;
+    unsigned int an;
+    angle_t oldAngle;
+    mobj_t* fog;
 
     memcpy(oldpos, mo->pos, sizeof(oldpos));
     oldAngle = mo->angle;
@@ -120,9 +120,11 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
     if(!P_TeleportMove(mo, x, y, false))
         return false;
 
-    if(mo->player)
+    // $voodoodolls Must be the real player.
+    if(mo->player && mo->player->plr->mo == mo)
     {
-        player = mo->player;
+        player_t* player = mo->player;
+
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
@@ -131,19 +133,18 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
             {
                 mo->pos[VZ] = mo->ceilingZ - mo->height;
             }
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
         }
         else
         {
             mo->pos[VZ] = mo->floorZ;
-            player->viewHeight = (float) cfg.plrViewHeight;
-            player->viewHeightDelta = 0;
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
             if(useFog)
-            {
                 player->plr->lookDir = 0;
-            }
         }
+        player->viewHeight = (float) cfg.plrViewHeight;
+        player->viewHeightDelta = 0;
+        player->viewZ = mo->pos[VZ] + player->viewHeight;
+        player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;
+        player->bob = 0;
     }
     else if(mo->flags & MF_MISSILE)
     {
@@ -254,8 +255,8 @@ void P_ArtiTele(player_t* player)
 
     if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(player->plr->mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)

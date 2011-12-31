@@ -22,17 +22,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * de_system.h: Operating System Dependent Subsystems
- */
-
-#ifndef __DOOMSDAY_SYSTEM__
-#define __DOOMSDAY_SYSTEM__
+#ifndef LIBDENG_SYSTEM_H
+#define LIBDENG_SYSTEM_H
 
 #include "sys_system.h"
 #include "sys_console.h"
-#include "sys_direc.h"
-#include "sys_file.h"
 #include "sys_input.h"
 #include "sys_network.h"
 #include "sys_sock.h"
@@ -48,4 +42,4 @@
 
 #include "sys_window.h"
 
-#endif
+#endif /* LIBDENG_SYSTEM_H */

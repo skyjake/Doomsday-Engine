@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_pinit.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_pinit.c: Portable Engine Initialization
+ * Portable Engine Initialization
  *
  * Platform independent routines for initializing the engine.
  */
@@ -41,10 +41,11 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_network.h"
-#include "de_misc.h"
+#include "de_ui.h"
+#include "de_filesys.h"
 
+#include "m_args.h"
 #include "def_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -85,8 +86,8 @@ int DD_CheckArg(char* tag, const char** value)
 
 void DD_ErrorBox(boolean error, char* format, ...)
 {
-    char                buff[200];
-    va_list             args;
+    char buff[200];
+    va_list args;
 
     va_start(args, format);
     dd_vsnprintf(buff, sizeof(buff), format, args);
@@ -95,7 +96,7 @@ void DD_ErrorBox(boolean error, char* format, ...)
 #ifdef WIN32
     suspendMsgPump = true;
     MessageBox(NULL, WIN_STRING(buff),
-               TEXT("Doomsday ") DOOMSDAY_VERSION_TEXT_WSTR,
+               TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
     suspendMsgPump = false;
 #endif
@@ -110,16 +111,15 @@ void DD_ErrorBox(boolean error, char* format, ...)
  */
 void DD_ComposeMainWindowTitle(char* title)
 {
-    if(__gx.GetVariable)
+    if(DD_GameLoaded() && gx.GetVariable)
     {
-        char*               gameName = (char*) __gx.GetVariable(DD_GAME_ID);
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
-                (isDedicated? " (Dedicated)" : ""), gameName);
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s - %s (%s %s)",
+            (isDedicated? " (Dedicated)" : ""), Str_Text(Game_Title(theGame)),
+            (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     }
     else
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s",
-                (isDedicated? " (Dedicated)" : ""));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
     }
 }
 
@@ -140,17 +140,17 @@ void SetGameImports(game_import_t* imp)
 
 void DD_InitAPI(void)
 {
-    GETGAMEAPI          GetGameAPI = app.GetGameAPI;
-
-    game_export_t*      gameExPtr;
+    GETGAMEAPI GetGameAPI = app.GetGameAPI;
 
     // Put the imported stuff into the imports.
     SetGameImports(&__gi);
 
     memset(&__gx, 0, sizeof(__gx));
-    gameExPtr = GetGameAPI(&__gi);
-    memcpy(&__gx, gameExPtr,
-           MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    if(GetGameAPI)
+    {
+        game_export_t* gameExPtr = GetGameAPI(&__gi);
+        memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    }
 }
 
 void DD_InitCommandLine(const char* cmdLine)
@@ -159,7 +159,6 @@ void DD_InitCommandLine(const char* cmdLine)
 
     // Register some abbreviations for command line options.
     ArgAbbreviate("-game", "-g");
-    ArgAbbreviate("-gl", "-r"); // As in (R)enderer...
     ArgAbbreviate("-defs", "-d");
     ArgAbbreviate("-width", "-w");
     ArgAbbreviate("-height", "-h");
@@ -167,9 +166,7 @@ void DD_InitCommandLine(const char* cmdLine)
     ArgAbbreviate("-bpp", "-b");
     ArgAbbreviate("-window", "-wnd");
     ArgAbbreviate("-nocenter", "-noc");
-    ArgAbbreviate("-paltex", "-ptx");
     ArgAbbreviate("-file", "-f");
-    ArgAbbreviate("-maxZone", "-mem");
     ArgAbbreviate("-config", "-cfg");
     ArgAbbreviate("-parse", "-p");
     ArgAbbreviate("-cparse", "-cp");
@@ -186,25 +183,21 @@ void DD_InitCommandLine(const char* cmdLine)
 }
 
 /**
- * Sets the level of verbosity that was requested using the -verbose
- * option(s).
- */
-void DD_Verbosity(void)
-{
-    verbose = ArgExists("-verbose");
-}
-
-/**
  * Called early on during the startup process so that we can get the console
  * online ready for printing ASAP.
  */
-boolean DD_EarlyInit(void)
+void DD_ConsoleInit(void)
 {
-    const char*         outFileName = "doomsday.out";
+    const char* outFileName = "doomsday.out";
+    ddstring_t nativePath;
+
+    DD_CheckArg("-out", &outFileName);
+    Str_Init(&nativePath); Str_Set(&nativePath, outFileName);
+    F_ToNativeSlashes(&nativePath, &nativePath);
 
     // We'll redirect stdout to a log file.
-    DD_CheckArg("-out", &outFileName);
-    outFile = fopen(outFileName, "w");
+    outFile = fopen(Str_Text(&nativePath), "w");
+    Str_Free(&nativePath);
     if(!outFile)
     {
         DD_ErrorBox(false, "Couldn't open message output file.");
@@ -213,9 +206,6 @@ boolean DD_EarlyInit(void)
     {
         setbuf(outFile, NULL); // Don't buffer much.
 
-        // Determine the requested degree of verbosity.
-        DD_Verbosity();
-
         // Get the console online ASAP.
         if(!Con_Init())
         {
@@ -223,24 +213,18 @@ boolean DD_EarlyInit(void)
         }
         else
         {
-            Con_Message("Executable: " DOOMSDAY_VERSION_FULLTEXT ".\n");
+            Con_Message("Executable: " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_FULLTEXT ".\n");
 
             // Print the used command line.
             if(verbose)
             {
-                int         p;
-
+                int p;
                 Con_Message("Command line (%i strings):\n", Argc());
                 for(p = 0; p < Argc(); ++p)
                     Con_Message("  %i: %s\n", p, Argv(p));
             }
         }
     }
-
-    // Bring the window manager online.
-    Sys_InitWindowManager();
-
-    return true;
 }
 
 /**
@@ -248,11 +232,12 @@ boolean DD_EarlyInit(void)
  */
 void DD_ShutdownAll(void)
 {
-    int                 i;
+    int i;
 
+    FI_Shutdown();
+    UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
-    Zip_Shutdown();
 
 #ifdef WIN32
     // Enables Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
@@ -266,8 +251,10 @@ void DD_ShutdownAll(void)
     P_ControlShutdown();
     Sv_Shutdown();
     R_Shutdown();
+    Materials_Shutdown();
     Def_Destroy();
-    F_ShutdownDirec();
+    F_ShutdownResourceLocator();
+    F_Shutdown();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

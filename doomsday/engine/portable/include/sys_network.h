@@ -23,11 +23,11 @@
  */
 
 /**
- * sys_network.h: Low-Level Network Services
+ * Low-Level Network Services.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_NETWORK_H__
-#define __DOOMSDAY_SYSTEM_NETWORK_H__
+#ifndef LIBDENG_SYSTEM_NETWORK_H
+#define LIBDENG_SYSTEM_NETWORK_H
 
 #include "dd_share.h"
 #include "net_buf.h"
@@ -35,8 +35,6 @@
 #ifdef __cplusplus
 extern          "C" {
 #endif
-
-#include "con_decl.h"
 
 #define DEFAULT_TCP_PORT    13209
 #define DEFAULT_UDP_PORT    13209
@@ -103,4 +101,4 @@ extern          "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* LIBDENG_SYSTEM_NETWORK_H */

@@ -1,4 +1,4 @@
-/**\file
+/**\file net_demo.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -20,13 +20,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * \bug - Demo playback is broken -> http://sourceforge.net/tracker/index.php?func=detail&aid=1693198&group_id=74815&atid=542099
  */
 
 /**
- * net_demo.c: Demos
- *
  * Handling of demo recording and playback.
  * Opening of, writing to, reading from and closing of demo files.
  */
@@ -36,6 +32,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_render.h"
 #include "de_misc.h"
@@ -56,19 +53,15 @@
 // TYPES -------------------------------------------------------------------
 
 #pragma pack(1)
-
 typedef struct {
-    //ushort        angle;
-    //short         lookdir;
     ushort          length;
 } demopacket_header_t;
-
 #pragma pack()
 
 typedef struct {
     boolean         first;
     int             begintime;
-    boolean         canwrite;           // False until Handshake packet.
+    boolean         canwrite; /// @c false until Handshake packet.
     int             cameratimer;
     int             pausetime;
     float           fov;
@@ -94,10 +87,9 @@ extern float netConnectTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demoPath[128] = "demo\\";
+filename_t demoPath = "demo/";
 
-//int demotic = 0;
-LZFILE *playdemo = 0;
+LZFILE* playdemo = 0;
 int playback = false;
 int viewangleDelta = 0;
 float lookdirDelta = 0;
@@ -116,18 +108,17 @@ static int demoStartTic;
 
 void Demo_Register(void)
 {
-    // Ccmds
-    C_CMD("demolump", "ss", DemoLump);
-    C_CMD("pausedemo", NULL, PauseDemo);
-    C_CMD("playdemo", "s", PlayDemo);
-    C_CMD("recorddemo", NULL, RecordDemo);
-    C_CMD("stopdemo", NULL, StopDemo);
+    C_CMD_FLAGS("demolump", "ss", DemoLump, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("pausedemo", NULL, PauseDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("playdemo", "s", PlayDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("recorddemo", NULL, RecordDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("stopdemo", NULL, StopDemo, CMDF_NO_NULLGAME);
 }
 
 void Demo_Init(void)
 {
     // Make sure the demo path is there.
-    M_CheckPath(demoPath);
+    F_MakePath(demoPath);
 }
 
 /**
@@ -136,24 +127,27 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
-    filename_t          buf;
-    client_t*           cl = &clients[plrNum];
-    player_t*           plr = &ddPlayers[plrNum];
+    client_t* cl = &clients[plrNum];
+    player_t* plr = &ddPlayers[plrNum];
+    ddstring_t buf;
 
     // Is a demo already being recorded for this client?
-    if(cl->recording || playback || (isDedicated && !plrNum) ||
-       !plr->shared.inGame)
+    if(cl->recording || playback || (isDedicated && !plrNum) || !plr->shared.inGame)
         return false;
 
     // Compose the real file name.
-    strncpy(buf, demoPath, FILENAME_T_MAXLEN);
-    strncat(buf, fileName, FILENAME_T_MAXLEN);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
+    Str_Init(&buf);
+    Str_Appendf(&buf, "%s%s", demoPath, fileName);
+    F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
-    cl->demo = lzOpen(buf, "wp");
+    cl->demo = lzOpen(Str_Text(&buf), "wp");
+    Str_Free(&buf);
     if(!cl->demo)
+    {
         return false; // Couldn't open it!
+    }
 
     cl->recording = true;
     cl->recordPaused = false;
@@ -315,8 +309,7 @@ void Demo_BroadcastPacket(void)
 
 boolean Demo_BeginPlayback(const char* fileName)
 {
-    filename_t          buf;
-    int                 i;
+    ddstring_t buf;
 
     if(playback)
         return false; // Already in playback.
@@ -324,15 +317,26 @@ boolean Demo_BeginPlayback(const char* fileName)
         return false; // Can't do it.
 
     // Check that we aren't recording anything.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
         if(clients[i].recording)
             return false;
+    }}
+
+    // Compose the real file name.
+    Str_Init(&buf);
+    Str_Set(&buf, fileName);
+    if(!F_IsAbsolute(&buf))
+    {
+        Str_Prepend(&buf, demoPath);
+    }
+    F_ExpandBasePath(&buf, &buf);
+    F_ToNativeSlashes(&buf, &buf);
 
     // Open the demo file.
-    dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s",
-             Dir_IsAbsolute(fileName) ? "" : demoPath, fileName);
-    M_TranslatePath(buf, buf, FILENAME_T_MAXLEN);
-    playdemo = lzOpen(buf, "rp");
+    playdemo = lzOpen(Str_Text(&buf), "rp");
+    Str_Free(&buf);
     if(!playdemo)
         return false; // Failed to open the file.
 
@@ -401,9 +405,8 @@ boolean Demo_ReadPacket(void)
     if(lzEOF(playdemo))
     {
         Demo_StopPlayback();
-        // Tell the Game the demo has ended.
-        if(gx.NetWorldEvent)
-            gx.NetWorldEvent(DDWE_DEMO_END, 0, 0);
+        // Any interested parties?
+        DD_CallHooks(HOOK_DEMO_STOP, false, 0);
         return false;
     }
 
@@ -691,7 +694,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    int         plnum = consolePlayer;
+    int plnum = consolePlayer;
 
     if(argc > 2)
     {
@@ -708,10 +711,10 @@ D_CMD(StopDemo)
                clients[plnum].recording ? "recording" : "playback", plnum);
 
     if(playback)
-    {
+    {   // Aborted.
         Demo_StopPlayback();
-        // Tell the Game DLL that the playback was aborted.
-        gx.NetWorldEvent(DDWE_DEMO_END, true, 0);
+        // Any interested parties?
+        DD_CallHooks(HOOK_DEMO_STOP, true, 0);
     }
     else
         Demo_StopRecording(plnum);
@@ -723,8 +726,7 @@ D_CMD(StopDemo)
  */
 D_CMD(DemoLump)
 {
-    char        buf[64];
-
+    char buf[64];
     memset(buf, 0, sizeof(buf));
     strncpy(buf, argv[1], 64);
     return M_WriteFile(argv[2], buf, 64);

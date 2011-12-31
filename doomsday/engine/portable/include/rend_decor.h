@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_decor.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,21 +23,23 @@
  */
 
 /**
- * rend_decor.h: Decorations
+ * Surface Decorations.
  */
 
-#ifndef __DOOMSDAY_RENDER_DECOR_H__
-#define __DOOMSDAY_RENDER_DECOR_H__
+#ifndef LIBDENG_RENDER_DECOR_H
+#define LIBDENG_RENDER_DECOR_H
 
-extern byte     useDecorations;
+extern byte     useLightDecorations;
 extern float    decorMaxDist;  // No decorations are visible beyond this.
-extern float    decorFactor;
-extern float    decorFadeAngle;
+extern float    decorLightBrightFactor;
+extern float    decorLightFadeAngle;
 
 void            Rend_DecorRegister(void);
+
+void            Rend_DecorInit(void);
 
 void            Rend_InitDecorationsForFrame(void);
 void            Rend_AddLuminousDecorations(void);
 void            Rend_ProjectDecorations(void);
 
-#endif
+#endif /* LIBDENG_RENDER_DECOR_H */

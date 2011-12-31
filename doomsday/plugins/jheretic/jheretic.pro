@@ -51,9 +51,7 @@ HEADERS += \
     include/info.h \
     include/jheretic.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/p_enemy.h \
     include/p_inter.h \
     include/p_lights.h \

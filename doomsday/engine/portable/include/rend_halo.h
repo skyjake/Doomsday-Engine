@@ -23,13 +23,11 @@
  */
 
 /**
- * rend_halo.h: Halos and Flares
+ * Halos and Lens Flares.
  */
 
-#ifndef __DOOMSDAY_RENDER_HALO_H__
-#define __DOOMSDAY_RENDER_HALO_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_RENDER_HALO_H
+#define LIBDENG_RENDER_HALO_H
 
 extern int      haloOccludeSpeed;
 extern int      haloMode, haloRealistic, haloBright, haloSize;
@@ -46,4 +44,4 @@ boolean         H_RenderHalo(float x, float y, float z, float size,
 // Console commands.
 D_CMD(FlareConfig);
 
-#endif
+#endif /* LIBDENG_RENDER_HALO_H */

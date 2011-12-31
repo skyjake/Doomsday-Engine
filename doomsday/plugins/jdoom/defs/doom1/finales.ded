@@ -1,0 +1,206 @@
+# DOOM - Intermissions and Finales
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
+
+Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
+
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Patch back 0 0 "TITLEPIC"
+    MusicOnce "intro"
+    Wait 4.857 # Original wait is 170 tics.
+        
+    # Step 2.
+    IF MODE:doom1-share     PlayDemo "sdemo1.cdm"
+    IF MODE:doom1           PlayDemo "rdemo1.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo1.cdm"
+
+    # Step 3.
+    Set back "CREDIT"
+    Wait 5.714 # Original is 200 tics.
+      
+    # Step 4.
+    IF MODE:doom1-share     PlayDemo "sdemo2.cdm"
+    IF MODE:doom1           PlayDemo "rdemo2.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo2.cdm"
+    
+    # Step 5.
+    IF MODE:doom1-ultimate Set back "CREDIT" ELSE Set back "HELP2"
+    Wait 5.714 # 200 tics.
+      
+    # Step 6.
+    IF MODE:doom1-share     PlayDemo "sdemo3.cdm"
+    IF MODE:doom1           PlayDemo "rdemo3.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo3.cdm"
+
+    # Step 7.
+    IF MODE:doom1-ultimate  PlayDemo "udemo4.cdm"
+      
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    IF MODE:doom1-share DO
+      Patch back 0 0 "HELP2"
+      Patch cursor 248 180 M_SKULL1
+    ;
+    ELSE DO
+      Patch back 0 0 "HELP1"
+      Patch cursor 298 160 M_SKULL1
+    ;
+
+    # Configure the animating cursor
+    Clranim cursor
+    Anim cursor M_SKULL1 0.223857
+    Anim cursor M_SKULL2 0.223857
+    Repeat cursor
+
+    Pause
+
+    IF MODE:doom1-ultimate DO
+      Set back "CREDIT"
+    ;
+    ELSE DO
+      IF MODE:doom1-share DO
+        Set back "HELP1"
+        X cursor 298
+        Y cursor 160
+      ;
+      ELSE DO
+        Set back "HELP2"
+      ;
+    ;
+    Pause
+  };
+}
+
+# Episode I: Knee-Deep In The Dead
+Finale
+{
+  After = "E1M8";
+  Script {
+    NoSkip # This is the end, no more levels after this.
+    Music "victor"
+    Flat FLOOR4_8
+    Wait 0.5
+    TextDef msg 10 10 "E1TEXT"
+    WaitText msg
+    Wait 7 # The original TEXTWAIT is 250 tics.
+    
+    # Show shareware/registered or credits.
+    NoFlat DelText msg
+    IF ultimate 
+      Patch back 0 0 CREDIT
+    ELSE
+      Patch back 0 0 HELP2
+  };
+}
+
+# The rest of this file is skipped if DOOM - shareware.
+SkipIf doom1-share;
+
+# Episode II: The Shores Of Hell
+Finale
+{
+  After = "E2M8";
+  Script {
+    noskip; # This is the end, no more levels after this.
+    music "victor";
+    flat SFLR6_1;
+    wait 0.5;
+    textdef msg 10 10 "E2TEXT";
+    waittext msg;
+    wait 7; # The original TEXTWAIT is 250 tics.
+    # Fade to the Deimos picture.
+    patch back 0 0 VICTORY2;
+    alpha back 0;
+    in 2 alpha back 1; textalpha msg 0;
+    wait 2;
+    deltext msg;
+    noflat;
+  };
+}
+
+# Episode III: Inferno
+Finale
+{
+  After = "E3M8";
+  Script {
+    noskip # This is the end, no more levels after this.
+    music "victor"
+    flat MFLR8_4
+    wait 0.5
+    textdef msg 10 10 "E3TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+    deltext msg
+
+    # The bunny scroll.
+    noflat; music "bunny"
+    patch b1 320 0 PFUB1
+    patch b2 0 0 PFUB2
+    offx 320
+    wait 6.5
+    # Start scrolling to the left.
+    in 18.3 offx 0; wait 18.3
+    # The End.
+    wait 7
+    patch theend 108 68 END0
+    wait 1.43 # 50 tics.
+    sound "pistol"; set theend END1; wait 0.14
+    sound "pistol"; set theend END2; wait 0.14
+    sound "pistol"; set theend END3; wait 0.14
+    sound "pistol"; set theend END4; wait 0.14
+    sound "pistol"; set theend END5; wait 0.14
+    sound "pistol"; set theend END6
+  };
+}
+
+# The rest of this file is skipped if not DOOM - ultimate.
+SkipIf Not doom1-ultimate;
+
+# Episode IV: Thy Flesh Consumed
+Finale
+{
+  After = "E4M8";
+  Script {
+    noskip # This is the end, no more levels after this.
+    music "victor"
+    flat MFLR8_3
+    wait 0.5
+    textdef msg 10 10 "E4TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+    # Fade to the Deimos picture.
+    patch back 0 0 ENDPIC
+    alpha back 0
+    in 2 alpha back 1; textalpha msg 0
+    wait 2
+    deltext msg
+    noflat
+  };
+}

@@ -1,4 +1,4 @@
-/**\file
+/**\file sys_dylib.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,28 +23,31 @@
  */
 
 /**
- * sys_dylib.h: Dynamic Libraries
+ * Dynamic Libraries.
  *
  * These functions provide roughly the same functionality as the ltdl
  * library.  Since the ltdl library appears to be broken on Mac OS X,
  * these will be used instead when loading plugin libraries.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_DYNAMIC_LIBRARY_H__
-#define __DOOMSDAY_SYSTEM_DYNAMIC_LIBRARY_H__
+#ifndef LIBDENG_SYSTEM_UTILS_UDYNAMIC_LIBRARY_H
+#define LIBDENG_SYSTEM_UTILS_UDYNAMIC_LIBRARY_H
 
 typedef void* lt_dlhandle;
 typedef void* lt_ptr;
 
-void        lt_dlinit(void);
-void        lt_dlexit(void);
-const char *lt_dlerror(void);
-void        lt_dladdsearchdir(const char *searchPath);
-int         lt_dlforeachfile(const char *searchPath,
-                             int (*func) (const char *fileName, lt_ptr data),
-                             lt_ptr data);
-lt_dlhandle lt_dlopenext(const char *baseFileName);
-void       *lt_dlsym(lt_dlhandle module, const char *symbolName);
-void        lt_dlclose(lt_dlhandle module);
+void lt_dlinit(void);
+void lt_dlexit(void);
+const char* lt_dlerror(void);
+void lt_dladdsearchdir(const char* searchPath);
+int lt_dlforeachfile(const char* searchPath, int (*func) (const char* fileName, lt_ptr data), lt_ptr data);
 
-#endif
+/**
+ * @param libraryName  Name of the library to open (should have the ".bundle" extension).
+ */
+lt_dlhandle lt_dlopenext(const char* baseFileName);
+
+void* lt_dlsym(lt_dlhandle module, const char* symbolName);
+int lt_dlclose(lt_dlhandle module);
+
+#endif /* LIBDENG_SYSTEM_UTILS_UDYNAMIC_LIBRARY_H */

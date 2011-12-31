@@ -1,5 +1,6 @@
 name: Heretic
 game: game-jheretic
+game-mode: game-mode-heretic
 banner: banner-heretic
 hidden: yes
 

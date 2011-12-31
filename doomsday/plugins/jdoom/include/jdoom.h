@@ -1,4 +1,4 @@
-/**\file
+/**\file jdoom.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * jdoom.h: All jDoom Headers
+ * All jDoom Headers
  *
  * A convenience header for including all jDoom headers.
  */
@@ -46,8 +46,6 @@
 #include "../../jdoom/include/info.h"
 #include "../../jdoom/include/m_cheat.h"
 #include "../../jdoom/include/m_random.h"
-#include "../../jdoom/include/m_menu.h"
-#include "../../jdoom/include/mn_def.h"
 #include "../../jdoom/include/p_enemy.h"
 #include "../../jdoom/include/p_inter.h"
 #include "../../jdoom/include/p_lights.h"

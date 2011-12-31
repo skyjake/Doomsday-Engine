@@ -62,7 +62,7 @@ void            Hu_MsgInit(void);
 void            Hu_MsgShutdown(void);
 
 void            Hu_MsgTicker(void);
-boolean         Hu_MsgResponder(event_t* ev);
+int             Hu_MsgResponder(event_t* ev);
 void            Hu_MsgDrawer(void);
 
 boolean         Hu_IsMessageActive(void);

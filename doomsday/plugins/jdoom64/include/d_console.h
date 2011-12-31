@@ -1,4 +1,4 @@
-/**\file
+/**\file d_console.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,17 +23,16 @@
  */
 
 /**
- * d_console.h: Console settings and commands jDoom64 - specific.
+ * Console settings and commands - DOOM64 specific.
  */
 
-#ifndef __D_CONSOLE_H__
-#define __D_CONSOLE_H__
+#ifndef LIBDOOM64_CONSOLE_H
+#define LIBDOOM64_CONSOLE_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-void            G_ConsoleRegistration(void);
-void            D_ConsoleBg(int *width, int *height);
+void G_ConsoleRegistration(void);
 
-#endif
+#endif /* LIBDOOM64_CONSOLE_H */

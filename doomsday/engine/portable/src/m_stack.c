@@ -22,12 +22,16 @@
  */
 
 /**
- * m_stack.c: A standard, basic stack.
+ * A standard, basic stack.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#if _DEBUG
+# include "de_console.h"
+#endif
+
 #include "m_stack.h"
 
 // MACROS ------------------------------------------------------------------

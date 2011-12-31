@@ -23,6 +23,7 @@
  */
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 
 #define MININTERCEPTS       128
@@ -58,14 +59,14 @@ static InterceptNode* newInterceptNode(void)
         interceptFirst = node->next;
         return node;
     }
-    return Z_BlockNewElement(interceptNodeSet);
+    return ZBlockSet_Allocate(interceptNodeSet);
 }
 
 void P_ClearIntercepts(void)
 {
     if(!interceptNodeSet)
     {
-        interceptNodeSet = Z_BlockCreate(sizeof(InterceptNode), MININTERCEPTS, PU_STATIC);
+        interceptNodeSet = ZBlockSet_New(sizeof(InterceptNode), MININTERCEPTS, PU_APPSTATIC);
 
         // Configure the static head and tail.
         head.intercept.distance = 0.0f;

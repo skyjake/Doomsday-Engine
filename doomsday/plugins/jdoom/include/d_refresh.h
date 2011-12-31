@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_refresh.h:
- */
-
-#ifndef __D_REFRESH_H__
-#define __D_REFRESH_H__
+#ifndef JDOOM_REFRESH_H
+#define JDOOM_REFRESH_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -36,15 +32,12 @@
 
 extern float quitDarkenOpacity;
 
-void            D_Display(int layer);
-void            D_Display2(void);
+void D_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
+void D_DrawWindow(const Size2Raw* windowSize);
 
-void            R_SetViewSize(int blocks);
+void P_SetDoomsdayFlags(mobj_t* mo);
+void R_SetAllDoomsdayFlags(void);
+boolean R_ViewFilterColor(float rgba[4], int filter);
+void R_UpdateViewFilter(int player);
 
-void            R_DrawSpecialFilter(int pnum);
-void            R_DrawMapTitle(void);
-
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+#endif /* JDOOM_REFRESH_H */

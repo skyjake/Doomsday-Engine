@@ -23,13 +23,11 @@
  */
 
 /**
- * dd_input.h: Input Subsystem
+ * Input Subsystem.
  */
 
-#ifndef __DOOMSDAY_BASEINPUT_H__
-#define __DOOMSDAY_BASEINPUT_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_CORE_INPUT_H
+#define LIBDENG_CORE_INPUT_H
 
 #define NUMKKEYS            256
 
@@ -193,7 +191,7 @@ void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
-boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, int *axis);
+boolean     I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
 int         I_GetAxisByName(inputdev_t *device, const char *name);
 int         I_GetKeyByName(inputdev_t* device, const char* name);
@@ -202,4 +200,4 @@ boolean     I_IsDeviceKeyDown(uint ident, uint code);
 void        I_SetUIMouseMode(boolean on);
 void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 
-#endif
+#endif /* LIBDENG_CORE_INPUT_H */

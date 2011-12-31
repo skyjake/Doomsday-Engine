@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_uinit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,26 +23,30 @@
  */
 
 /**
- * dd_uinit.h: Unix Initialization.
+ * Unix Initialization.
  */
 
-#ifndef __DOOMSDAY_UINIT_H__
-#define __DOOMSDAY_UINIT_H__
+#ifndef LIBDENG_UINIT_H
+#define LIBDENG_UINIT_H
 
 #include "dd_pinit.h"
-#include "sys_dylib.h"
+#include "library.h"
 
 typedef struct {
-    boolean         userDirOk;
+    Library* hInstPlug[MAX_PLUGS];
+    GETGAMEAPI GetGameAPI;
 
-    lt_dlhandle     hInstGame; // Instance handle to the game library.
-    lt_dlhandle     hInstPlug[MAX_PLUGS]; // Instance handle to all other libs.
-    GETGAMEAPI      GetGameAPI;
+    /// @c true = We are using a custom user dir specified on the command line.
+    boolean usingUserDir;
+#ifndef MACOSX
+    /// @c true = We are using the user dir defined in the HOME environment.
+    boolean usingHomeDir;
+#endif
 } application_t;
 
 extern uint windowIDX; // Main window.
 extern application_t app;
 
-void            DD_Shutdown(void);
+void DD_Shutdown(void);
 
-#endif
+#endif /* LIBDENG_UINIT_H */

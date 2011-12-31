@@ -40,8 +40,7 @@ boolean         Hu_InventoryIsOpen(int player);
 boolean         Hu_InventorySelect(int player, inventoryitemtype_t type);
 boolean         Hu_InventoryMove(int player, int dir, boolean canWrap,
                                  boolean silent);
-void            Hu_InventoryDraw(int player, int x, int y, float alpha,
-                                 float textAlpha, float iconAlpha);
+void            Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha);
 void            Hu_InventoryDraw2(int player, int x, int y, float alpha);
 
 /// \todo refactor this away.

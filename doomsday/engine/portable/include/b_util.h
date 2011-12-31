@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,6 @@
 #define __DOOMSDAY_BIND_UTIL_H__
 
 #include "de_base.h"
-#include "m_string.h"
 
 // Event Binding Toggle State
 typedef enum ebstate_e {

@@ -35,6 +35,17 @@
 
 #include "p_terraintype.h"
 
+#define NOMOM_THRESHOLD     (0.00000001f) // (integer) 0
+#define WALKSTOP_THRESHOLD  (0.062484741f) // FIX2FLT(0x1000-1)
+#define DROPOFFMOM_THRESHOLD (0.25f) // FRACUNIT/4
+#define MAXMOM              (30) // 30*FRACUNIT
+#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
+
+#define FRICTION_LOW        (0.97265625f) // 0xf900
+#define FRICTION_FLY        (0.91796875f) // 0xeb00
+#define FRICTION_NORMAL     (0.90625000f) // 0xe800
+#define FRICTION_HIGH       (0.41992187f) // 0xd700/2
+
 /**
  * Mobj flags
  *
@@ -180,7 +191,10 @@ typedef struct mobj_s {
     int             lastLook; // player number last looked for
     short           tid; // thing identifier
     byte            special; // special
-    byte            args[5]; // special arguments
+    union {
+        byte        args[5]; // special arguments
+        uint        argsUInt; // used with minotaur
+    };
     int             turnTime; // $visangle-facetarget
     int             alpha; // $mobjalpha
 

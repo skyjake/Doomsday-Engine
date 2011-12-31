@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_input.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_input.c: Game Controllers
+ * Input subsystem - Windows specfic.
  *
  * Keyboard, mouse and joystick input using DirectInput.
  */
@@ -36,7 +36,6 @@
 #include <windows.h>
 #include <dinput.h>
 #include <assert.h>
-#include <strsafe.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -83,7 +82,6 @@ static DIDEVICEINSTANCE firstJoystick;
 static int counter;
 
 // A customizable mapping of the scantokey array.
-//static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
 static byte* keymap = NULL;
 
 // CODE --------------------------------------------------------------------
@@ -134,7 +132,7 @@ static void initDIKeyToDDKeyTlat(void)
     keymap[DIK_BACKSLASH] = DDKEY_BACKSLASH;
     keymap[DIK_C] = 'c';
     //keymap[DIK_CALCULATOR] = ;
-    //keymap[DIK_CAPITAL] = ;
+    keymap[DIK_CAPITAL] = DDKEY_CAPSLOCK;
     //keymap[DIK_COLON] = ; // On Japanese keyboard
     keymap[DIK_COMMA] = ',';
     //keymap[DIK_CONVERT] = ;
@@ -163,6 +161,7 @@ static void initDIKeyToDDKeyTlat(void)
     //keymap[DIK_F13] = ;
     //keymap[DIK_F14] = ;
     //keymap[DIK_F15] = ;
+    keymap[DIK_SYSRQ] = DDKEY_PRINT;
     keymap[DIK_G] = 'g';
     keymap[DIK_GRAVE] = '`';
     keymap[DIK_H] = 'h';
@@ -264,169 +263,6 @@ static byte dIKeyToDDKey(byte dIKey)
 {
     return keymap[dIKey];
 }
-
-#if 0 // Currently unused.
-static DFILE *openKeymapFile(const char* fileName)
-{
-    filename_t          path;
-
-    // Try with and without .DKM.
-    strncpy(path, fileName, FILENAME_T_MAXLEN);
-    if(!F_Access(path))
-    {
-        // Try the path.
-        M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
-        strncat(path, fileName, FILENAME_T_MAXLEN);
-        if(!F_Access(path))
-        {
-            strncpy(path, fileName, FILENAME_T_MAXLEN);
-            strncat(path, ".dkm", FILENAME_T_MAXLEN);
-            if(!F_Access(path))
-            {
-                M_TranslatePath(path, keyMapPath, FILENAME_T_MAXLEN);
-                strncat(path, fileName, FILENAME_T_MAXLEN);
-                strncat(path, ".dkm", FILENAME_T_MAXLEN);
-            }
-        }
-    }
-
-    return F_Open(path, "rt");
-}
-
-static boolean closeKeymapFile(DFILE *file)
-{
-    if(file)
-        F_Close(file);
-
-    return true;
-}
-
-static int parseKeymapFile(DFILE *file, const char *fileName)
-{
-    int         warnCount = 0;
-    char        buf[512], *ptr;
-    boolean     shiftMode = false, altMode = false;
-    int         key, mapTo, lineNumber = 0;
-
-    VERBOSE(Con_Message("parseKeymapFile: Parsing \"%s\"...\n", fileName));
-
-    do
-    {
-        lineNumber++;
-        M_ReadLine(buf, sizeof(buf), file);
-        ptr = M_SkipWhite(buf);
-        if(!*ptr || M_IsComment(ptr))
-            continue;
-
-        // Modifiers?
-        if(!strnicmp(ptr + 1, "shift", 5))
-        {
-            shiftMode = (*ptr == '+');
-            continue;
-        }
-        else if(!strnicmp(ptr + 1, "alt", 3))
-        {
-            altMode = (*ptr == '+');
-            continue;
-        }
-
-        key = DD_KeyOrCode(ptr);
-        if(key < 0 || key > 255)
-        {
-            Con_Message("  #%i: Invalid key %i.\n", lineNumber, key);
-            warnCount++;
-        }
-
-        ptr = M_SkipWhite(M_FindWhite(ptr));
-        mapTo = DD_KeyOrCode(ptr);
-        // Check the mapping.
-        if(mapTo < 0 || mapTo > 255)
-        {
-            Con_Message("  #%i: Invalid mapping %i.\n", lineNumber, mapTo);
-            warnCount++;
-        }
-
-        if(shiftMode)
-            shiftKeyMappings[key] = mapTo;
-        else if(altMode)
-            altKeyMappings[key] = mapTo;
-        else
-            keyMappings[key] = mapTo;
-    } while(!deof(file));
-
-    return warnCount;
-}
-
-boolean DD_LoadKeymap(const char *fileName)
-{
-    DFILE      *file;
-    int         warnCount;
-
-    if(!(file = openKeymapFile(fileName)))
-    {
-        Con_Message("DD_LoadKeymap: A keymap file by the name \"%s\" could "
-                    "not be found.\n", fileName);
-        return false;
-    }
-
-    // Any missing entries are set to the default.
-    DD_DefaultKeyMapping();
-
-    Con_Message("DD_LoadKeymap: Loading \"%s\"...\n", fileName);
-
-    warnCount = parseKeymapFile(file, fileName);
-    if(warnCount > 0)
-        Con_Message("  %i: Warnings.\n", warnCount);
-    closeKeymapFile(file);
-
-    Con_Message("  Loaded keymap \"%s\" successfully.\n", fileName);
-
-    return true;
-}
-
-/**
- * Dumps the key mapping table to filename.
- */
-void DD_DumpKeymap(const char *fileName)
-{
-    int             i;
-    FILE           *file;
-
-    file = fopen(fileName, "wt");
-    for(i = 0; i < 256; ++i)
-    {
-        fprintf(file, "%03i\t", i);
-        fprintf(file, !isspace(keyMappings[i]) &&
-                isprint(keyMappings[i]) ? "%c\n" : "%03i\n", keyMappings[i]);
-    }
-
-    fprintf(file, "\n+Shift\n");
-    for(i = 0; i < 256; ++i)
-    {
-        if(shiftKeyMappings[i] == i)
-            continue;
-        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-        fprintf(file, !isspace(shiftKeyMappings[i]) &&
-                isprint(shiftKeyMappings[i]) ? "%c\n" : "%03i\n",
-                shiftKeyMappings[i]);
-    }
-
-    fprintf(file, "-Shift\n\n+Alt\n");
-    for(i = 0; i < 256; ++i)
-    {
-        if(altKeyMappings[i] == i)
-            continue;
-        fprintf(file, !isspace(i) && isprint(i) ? "%c\t" : "%03i\t", i);
-        fprintf(file, !isspace(altKeyMappings[i]) &&
-                isprint(altKeyMappings[i]) ? "%c\n" : "%03i\n",
-                altKeyMappings[i]);
-    }
-    fclose(file);
-
-    Con_Message("DD_DumpKeymap: Current keymap was dumped to \"%s\".\n",
-                fileName);
-}
-#endif
 
 HRESULT I_SetProperty(void *dev, REFGUID property, DWORD how, DWORD obj,
                       DWORD data)
@@ -717,6 +553,13 @@ boolean I_Init(void)
 
     if(initIOk)
         return true; // Already initialized.
+
+    if(ArgCheck("-nowsk")) // No Windows system keys?
+    {
+        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack...
+        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
+        Con_Message("Windows system keys disabled.\n");
+    }
 
     // We'll create the DirectInput object. The only required input device
     // is the keyboard. The others are optional.

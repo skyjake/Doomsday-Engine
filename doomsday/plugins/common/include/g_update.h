@@ -22,14 +22,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * g_update.h:
- */
+#ifndef LIBCOMMON_UPDATE_H
+#define LIBCOMMON_UPDATE_H
 
-#ifndef __GAME_UPDATE_H__
-#define __GAME_UPDATE_H__
+void G_UpdateState(int step);
 
-void            G_SetGlowing(void);
-void            G_UpdateState(int step);
-
-#endif
+#endif /* LIBCOMMON_UPDATE_H */

@@ -23,13 +23,12 @@
  */
 
 /**
- * s_main.h: Sound Subsystem
+ * Sound Subsystem.
  */
 
-#ifndef __DOOMSDAY_SOUND_MAIN_H__
-#define __DOOMSDAY_SOUND_MAIN_H__
+#ifndef LIBDENG_SOUND_MAIN_H
+#define LIBDENG_SOUND_MAIN_H
 
-#include "con_decl.h"
 #include "p_object.h"
 #include "def_main.h"
 #include "sys_audiod.h"
@@ -75,4 +74,4 @@ void            S_StopMusic(void);
 void            S_PauseMusic(boolean paused);
 void            S_Drawer(void);
 
-#endif
+#endif /* LIBDENG_SOUND_MAIN_H */

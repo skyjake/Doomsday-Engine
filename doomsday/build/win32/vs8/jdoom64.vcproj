@@ -76,6 +76,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -276,6 +277,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -457,6 +459,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -652,6 +655,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -821,7 +825,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\f_infine.h"
+				RelativePath="..\..\..\plugins\common\include\fi_lib.h"
 				>
 			</File>
 			<File
@@ -837,7 +841,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\g_eventsequence.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\g_update.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\gl_drawpatch.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\hu_automap.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\include\hu_chat.h"
 				>
 			</File>
 			<File
@@ -869,15 +889,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\m_defs.h"
+				RelativePath="..\..\..\plugins\common\include\m_ctrl.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\include\p_actor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\include\p_automap.h"
 				>
 			</File>
 			<File
@@ -969,14 +985,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\rend_automap.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\include\st_lib.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\x_hair.h"
 				>
 			</File>
@@ -1009,7 +1017,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\f_infine.c"
+				RelativePath="..\..\..\plugins\common\src\fi_lib.c"
 				>
 			</File>
 			<File
@@ -1021,11 +1029,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\src\g_eventsequence.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\src\g_game.c"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\g_update.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\gl_drawpatch.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\hu_automap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\hu_chat.c"
 				>
 			</File>
 			<File
@@ -1061,15 +1085,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\m_multi.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\src\p_actor.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\p_automap.c"
 				>
 			</File>
 			<File
@@ -1165,14 +1181,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\rend_automap.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\st_lib.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\src\x_hair.c"
 				>
 			</File>
@@ -1253,15 +1261,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom64\include\m_menu.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom64\include\m_random.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\jdoom64\include\mn_def.h"
 				>
 			</File>
 			<File
@@ -1499,6 +1499,18 @@
 					/>
 				</FileConfiguration>
 			</File>
+		</Filter>
+		<Filter
+			Name="API"
+			>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\jdoom64\api\jdoom64.def"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

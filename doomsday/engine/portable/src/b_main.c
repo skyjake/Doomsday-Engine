@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -130,6 +130,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_F9,          "f9"},
     {'`',               "tilde"},
     {DDKEY_NUMLOCK,     "numlock"},
+    {DDKEY_CAPSLOCK,    "capslock"},
     {DDKEY_SCROLL,      "scrlock"},
     {DDKEY_NUMPAD0,     "pad0"},
     {DDKEY_NUMPAD1,     "pad1"},
@@ -144,7 +145,8 @@ static const keyname_t keyNames[] = {
     {DDKEY_DECIMAL,     "padcomma"},
     {DDKEY_SUBTRACT,    "padminus"}, // not really used
     {DDKEY_ADD,         "padplus"}, // not really used
-
+    {DDKEY_PRINT,       "print"},
+    {DDKEY_PRINT,       "prtsc"},
     {0, NULL} // The terminator
 };
 
@@ -226,8 +228,8 @@ void B_Init(void)
     B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
     */
 
-    // Bind all the defaults (of engine & game, everything).
-    Con_Executef(CMDS_DDAY, false, "defaultbindings");
+    // Bind all the defaults for the engine only.
+    B_BindDefaults();
 
     // Enable the contexts for the initial state.
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
@@ -240,6 +242,12 @@ void B_BindDefaults(void)
     // Console bindings (when open).
 
     // Bias editor.
+}
+
+void B_BindGameDefaults(void)
+{
+    if(!DD_GameLoaded()) return;
+    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 
 /**
@@ -487,12 +495,11 @@ D_CMD(ClearBindingContexts)
 
 D_CMD(ClearBindings)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < B_ContextCount(); ++i)
     {
-        Con_Printf("Clearing binding context \"%s\"...\n",
-                   B_ContextByPos(i)->name);
+        Con_Printf("Clearing binding context '%s'...\n", B_ContextByPos(i)->name);
         B_ClearContext(B_ContextByPos(i));
     }
 
@@ -523,16 +530,15 @@ D_CMD(DefaultBindings)
         return false;
 
     B_BindDefaults();
+    B_BindGameDefaults();
 
-    // Set the game's default bindings.
-    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
 }
 
 D_CMD(ActivateBindingContext)
 {
-    boolean             doActivate = !stricmp(argv[0], "activatebcontext");
-    bcontext_t*         bc = B_ContextByName(argv[1]);
+    boolean doActivate = !stricmp(argv[0], "activatebcontext");
+    bcontext_t* bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
@@ -542,8 +548,7 @@ D_CMD(ActivateBindingContext)
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. "
-                    "It can not be manually %s.\n", bc->name,
+        Con_Message("Binding Context '%s' is protected. It can not be manually %s.\n", bc->name,
                     doActivate? "activated" : "deactivated");
         return false;
     }

@@ -1,4 +1,4 @@
-/**\file
+/**\file jheretic.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * jheretic.h: All jHeretic Headers
+ * All jHeretic Headers
  *
  * A convenience header for including all jHeretic headers.
  */
@@ -47,8 +47,6 @@
 #include "../../jheretic/include/in_lude.h"
 #include "../../jheretic/include/m_cheat.h"
 #include "../../jheretic/include/m_random.h"
-#include "../../jheretic/include/m_menu.h"
-#include "../../jheretic/include/mn_def.h"
 #include "../../jheretic/include/p_enemy.h"
 #include "../../jheretic/include/p_inter.h"
 #include "../../jheretic/include/p_lights.h"

@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_console.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,28 +23,43 @@
  */
 
 /*
- * rend_console.h: Console Rendering.
+ * Console Rendering.
  */
 
-#ifndef __DOOMSDAY_CONSOLE_RENDER_H__
-#define __DOOMSDAY_CONSOLE_RENDER_H__
+#ifndef LIBDENG_CONSOLE_RENDER_H
+#define LIBDENG_CONSOLE_RENDER_H
 
-extern int      consoleAlpha, consoleLight;
-extern byte     consoleShowFPS, consoleShadowText;
+#include "point.h"
 
-void    Rend_ConsoleRegister(void);
+extern byte consoleShowFPS;
 
-void    Rend_ConsoleInit(void);
-void    Rend_ConsoleTicker(timespan_t time);
-void    Rend_Console(void);
+void Rend_ConsoleRegister(void);
 
-void    Rend_ConsoleFPS(int x, int y);
-void    Rend_ConsoleOpen(int yes);
-void    Rend_ConsoleMove(int numLines);
-void    Con_DrawRuler(int y, int lineHeight, float alpha);
-void    Con_InitUI(void);
+/**
+ * Initialize the console renderer (allows re-init).
+ */
+void Rend_ConsoleInit(void);
 
-void    Rend_ConsoleToggleFullscreen(void);
-void    Rend_ConsoleCursorResetBlink(void);
+void Rend_ConsoleTicker(timespan_t time);
 
-#endif
+/**
+ * Try to fulfill any pending console resize request.
+ * To be called after a resolution change to resize the console.
+ *
+ * @param force  @c true= Force a new resize request.
+ * @return  @c true= A resize is still pending.
+ */
+boolean Rend_ConsoleResize(boolean force);
+
+void Rend_ConsoleOpen(int yes);
+void Rend_ConsoleMove(int numLines);
+void Rend_ConsoleToggleFullscreen(void);
+void Rend_ConsoleCursorResetBlink(void);
+void Rend_ConsoleUpdateTitle(void);
+
+void Rend_Console(void);
+
+/// @param origin  Origin of the display (top right) in screen-space coordinates.
+void Rend_ConsoleFPS(const Point2Raw* origin);
+
+#endif /* LIBDENG_CONSOLE_RENDER_H */

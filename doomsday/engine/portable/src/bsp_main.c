@@ -1,4 +1,4 @@
-/**\file
+/**\file bsp_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -26,7 +26,7 @@
  */
 
 /**
- * bsp_main.c: GL-friendly BSP node builder.
+ * GL-friendly BSP node builder.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -34,14 +34,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_bsp.h"
 #include "de_play.h"
 #include "de_misc.h"
 
 #include "p_mapdata.h"
-
-#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -117,9 +118,9 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     // Find maximal vertexes.
     findMapLimits(map, mapBounds);
 
-    VERBOSE(Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
+    VERBOSE2( Con_Message("Map goes from (%d,%d) to (%d,%d)\n",
                         mapBounds[BOXLEFT], mapBounds[BOXBOTTOM],
-                        mapBounds[BOXRIGHT], mapBounds[BOXTOP]));
+                        mapBounds[BOXRIGHT], mapBounds[BOXTOP]) )
 
     block = BSP_SuperBlockCreate();
 
@@ -152,7 +153,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                    M_Length(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX],
                             line->v[0]->buildData.pos[VY] - line->v[1]->buildData.pos[VY]))
                 {
-                    Con_Message("Linedef #%d is VERY long, it may cause problems\n",
+                    Con_Message("Warning: Linedef #%d is VERY long, it may cause problems\n",
                                 line->buildData.index);
                 }
             }
@@ -161,27 +162,22 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
             {
                 sidedef_t     *side = line->sideDefs[FRONT];
 
-                // Check for a bad sidedef.
                 if(!side->sector)
-                    Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 front = HEdge_Create(line, line, line->v[0], line->v[1],
                                      side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
             else
-                Con_Message("Linedef #%d has no front sidedef!\n",
-                            line->buildData.index);
+                Con_Message("Warning: Linedef #%d has no front sidedef!\n", line->buildData.index);
 
             if(line->sideDefs[BACK])
             {
                 sidedef_t     *side = line->sideDefs[BACK];
 
-                // Check for a bad sidedef.
                 if(!side->sector)
-                    Con_Message("Bad sidedef on linedef #%d (Z_CheckHeap error)\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
                 back = HEdge_Create(line, line, line->v[1], line->v[0],
                                     side->sector, true);
@@ -200,8 +196,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
             {
                 if(line->buildData.mlFlags & MLF_TWOSIDED)
                 {
-                    Con_Message("Linedef #%d is 2s but has no back sidedef\n",
-                                line->buildData.index);
+                    Con_Message("Warning: Linedef #%d is 2s but has no back sidedef\n", line->buildData.index);
                     line->buildData.mlFlags &= ~MLF_TWOSIDED;
                 }
 
@@ -237,9 +232,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     }
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("createInitialHEdges: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("createInitialHEdges: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return block;
 }
@@ -276,11 +269,7 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     superblock_t*       hEdgeList;
     binarytree_t*       rootNode;
 
-    if(verbose >= 1)
-    {
-        Con_Message("BSP_Build: Processing map using tunable "
-                    "factor of %d...\n", bspFactor);
-    }
+    VERBOSE( Con_Message("BSP_Build: Processing map using tunable factor of %d...\n", bspFactor) )
 
     // It begins...
     startTime = Sys_GetRealTime();
@@ -309,35 +298,31 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     BSP_CutListDestroy(cutList);
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("BuildNodes: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - buildStartTime) / 1000.0f));
+    VERBOSE2( Con_Message("BuildNodes: Done in %.2f seconds.\n", (Sys_GetRealTime() - buildStartTime) / 1000.0f));
     }
 
     BSP_SuperBlockDestroy(hEdgeList);
 
     if(builtOK)
     {   // Success!
+        long rHeight, lHeight;
+
         // Wind the BSP tree and link to the map.
         ClockwiseBspTree(rootNode);
         SaveMap(map, rootNode, vertexes, numVertexes);
 
-        Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    map->numNodes, map->numSSectors, map->numSegs,
-                    map->numVertexes);
-
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
-            long            rHeight, lHeight;
-
-            rHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
-            lHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
-
-            Con_Message("  Balance %+ld (l%ld - r%ld).\n", lHeight - rHeight,
-                        lHeight, rHeight);
+            rHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
+            lHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
         }
+        else
+            rHeight = lHeight = 0;
+
+        VERBOSE( Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
+                   "  Balance %+ld (l%ld - r%ld).\n",
+                   map->numNodes, map->numSSectors, map->numSegs, map->numVertexes,
+                   lHeight - rHeight, lHeight, rHeight) )
     }
 
     // We are finished with the BSP build data.
@@ -354,8 +339,7 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
     BSP_ShutdownSuperBlockAllocator();
 
     // How much time did we spend?
-    VERBOSE(Con_Message("  Done in %.2f seconds.\n",
-                        (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 
     return builtOK;
 }

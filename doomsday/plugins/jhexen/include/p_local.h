@@ -68,7 +68,6 @@
 
 // MAXRADIUS is for precalculated sector bounding boxes.
 #define MAXRADIUS           32
-#define MAXMOVE             30
 
 #define USERANGE            64
 #define MELEERANGE          64
@@ -100,11 +99,6 @@ void        P_TeleportOther(mobj_t* victim);
 void        P_ArtiTeleportOther(player_t* plr);
 void        ResetBlasted(mobj_t* mo);
 boolean     P_UndoPlayerMorph(player_t* plr);
-
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
-#define FRICTION_LOW        (0.97265625f)
 
 // Time interval for item respawning.
 #define SPAWNQUEUE_MAX         128
@@ -144,7 +138,8 @@ boolean     P_HitFloor(mobj_t* mo);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t* mo);
-void        P_InitCreatureCorpseQueue(boolean corpseScan);
+void        P_InitCorpseQueue(void);
+void        P_AddCorpsesToQueue(void);
 
 mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 

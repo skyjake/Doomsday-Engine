@@ -1,4 +1,4 @@
-/**\file
+/**\file edit_map.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,21 +24,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * edit_map.c:
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_bsp.h"
 #include "de_refresh.h"
 #include "de_misc.h"
 #include "de_edit.h"
 #include "de_dam.h"
+#include "de_filesys.h"
 
 #include "s_environ.h"
 
@@ -63,10 +61,12 @@ void MPE_PrintMapErrors(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+editmap_t editMap;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean editMapInited = false;
-static editmap_t editMap, *map = &editMap;
+static editmap_t* map = &editMap;
 
 static gamemap_t *lastBuiltMap = NULL;
 
@@ -123,6 +123,8 @@ static sidedef_t* createSide(void)
 
     side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
     side->SW_bottomsurface.owner = (void*) side;
+    side->SW_middlesurface.owner = (void*) side;
+    side->SW_topsurface.owner = (void*) side;
     return side;
 }
 
@@ -274,13 +276,12 @@ static void destroyMap(void)
     destroyEditablePolyObjs(map);
 }
 
-static int C_DECL vertexCompare(const void *p1, const void *p2)
+static int C_DECL vertexCompare(const void* p1, const void* p2)
 {
-    const vertex_t     *a = *((const void **) p1);
-    const vertex_t     *b = *((const void **) p2);
+    const vertex_t* a = *((const void**) p1);
+    const vertex_t* b = *((const void**) p2);
 
-    if(a == b)
-        return 0;
+    if(a == b) return 0;
 
     if((int) a->buildData.pos[VX] != (int) b->buildData.pos[VX])
         return (int) a->buildData.pos[VX] - (int) b->buildData.pos[VX];
@@ -587,7 +588,7 @@ void MPE_FreeUnclosedSectorList(void)
 /**
  * Called to begin the map building process.
  */
-boolean MPE_Begin(const char *name)
+boolean MPE_Begin(const char* mapUri)
 {
     if(editMapInited)
         return true; // Already been here.
@@ -601,36 +602,34 @@ boolean MPE_Begin(const char *name)
 
     destroyMap();
 
-    if(name && name[0])
-    {
-        strncpy(map->name, name, 8);
-    }
-
     editMapInited = true;
     return true;
 }
 
-static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
+static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
 {
-    uint                i, n, count;
-    sector_t           *sec = &map->sectors[secIDX];
+    assert(map && secIDX < map->numSectors);
+    {
+    sector_t* sec = &map->sectors[secIDX];
+    uint i, n, count;
 
     count = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
         subsector_t *ssec = &map->ssectors[i];
         if(ssec->sector == sec)
-            count++;
+            ++count;
     }
 
-    sec->ssectors =
-        Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
+    if(0 == count)
+        return;
+
+    sec->ssectors = Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
 
     n = 0;
     for(i = 0; i < map->numSSectors; ++i)
     {
-        subsector_t        *ssec = &map->ssectors[i];
-
+        subsector_t* ssec = &map->ssectors[i];
         if(ssec->sector == sec)
         {
             ssec->inSectorID = n;
@@ -639,6 +638,7 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
     }
     sec->ssectors[n] = NULL; // Terminate.
     sec->ssectorCount = count;
+    }
 }
 
 /**
@@ -646,14 +646,12 @@ static void hardenSectorSSecList(gamemap_t *map, uint secIDX)
  */
 static void buildSectorSSecLists(gamemap_t *map)
 {
-    uint                i;
-
-    Con_Message(" Build subsector tables...\n");
-
+    VERBOSE( Con_Message(" Build subsector tables...\n") )
+    { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
         hardenSectorSSecList(map, i);
-    }
+    }}
 }
 
 static void buildSectorLineLists(gamemap_t* map)
@@ -671,10 +669,10 @@ static void buildSectorLineLists(gamemap_t* map)
     linelink_t** sectorLineLinks;
     uint totallinks;
 
-    Con_Message(" Build line tables...\n");
+    VERBOSE( Con_Message(" Build line tables...\n") )
 
     // build line tables for each sector.
-    lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
+    lineLinksBlockSet = ZBlockSet_New(sizeof(linelink_t), 512, PU_APPSTATIC);
     sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
     for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)
@@ -684,7 +682,7 @@ static void buildSectorLineLists(gamemap_t* map)
 
         if(li->L_frontside)
         {
-            link = Z_BlockNewElement(lineLinksBlockSet);
+            link = ZBlockSet_Allocate(lineLinksBlockSet);
 
             secIDX = li->L_frontsector - map->sectors;
             link->line = li;
@@ -697,7 +695,7 @@ static void buildSectorLineLists(gamemap_t* map)
 
         if(li->L_backside && li->L_backsector != li->L_frontsector)
         {
-            link = Z_BlockNewElement(lineLinksBlockSet);
+            link = ZBlockSet_Allocate(lineLinksBlockSet);
 
             secIDX = li->L_backsector - map->sectors;
             link->line = li;
@@ -761,7 +759,7 @@ static void buildSectorLineLists(gamemap_t* map)
     }
 
     // Free temporary storage.
-    Z_BlockDestroy(lineLinksBlockSet);
+    ZBlockSet_Delete(lineLinksBlockSet);
     M_Free(sectorLineLinks);
 }
 
@@ -865,7 +863,7 @@ static void finishLineDefs(gamemap_t* map)
     vertex_t           *v[2];
     seg_t              *startSeg, *endSeg;
 
-    VERBOSE2(Con_Message("Finalizing Linedefs...\n"));
+    VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
 
     for(i = 0; i < map->numLineDefs; ++i)
     {
@@ -922,25 +920,28 @@ static void finishLineDefs(gamemap_t* map)
     }
 }
 
-static void updateMapBounds(gamemap_t *map)
+static void updateMapBounds(gamemap_t* map)
 {
-    uint                i;
-
+    assert(map);
+    {
+    boolean isFirst = true;
     memset(map->bBox, 0, sizeof(map->bBox));
+    { uint i;
     for(i = 0; i < map->numSectors; ++i)
     {
-        sector_t   *sec = &map->sectors[i];
-
-        if(i == 0)
-        {
-            // The first sector is used as is.
+        sector_t* sec = &map->sectors[i];
+        if(0 == sec->lineDefCount)
+            continue;
+        if(isFirst)
+        {   // The first sector is used as is.
             memcpy(map->bBox, sec->bBox, sizeof(map->bBox));
         }
         else
-        {
-            // Expand the bounding box.
+        {   // Expand the bounding box.
             M_JoinBoxes(map->bBox, sec->bBox);
         }
+        isFirst = false;
+    }}
     }
 }
 
@@ -1359,16 +1360,13 @@ static void hardenPlanes(gamemap_t* dest, editmap_t* src)
             plane_t*            destP = R_NewPlaneForSector(destS);
             plane_t*            srcP = srcS->planes[j];
 
-            destP->glow = srcP->glow;
-            destP->glowRGB[CR] = srcP->glowRGB[CR];
-            destP->glowRGB[CG] = srcP->glowRGB[CG];
-            destP->glowRGB[CB] = srcP->glowRGB[CB];
             destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
                 destP->visHeight = srcP->height;
             destP->visHeightDelta = 0;
             memcpy(&destP->surface, &srcP->surface, sizeof(destP->surface));
             destP->type = srcP->type;
             destP->sector = destS;
+            destP->surface.owner = destP;
         }
     }
 }
@@ -1731,8 +1729,9 @@ void MPE_DetectOverlappingLines(gamemap_t* map)
     Blockmap_Size(map->lineDefBlockmap, bmapDimensions);
 
     numOverlaps = 0;
-    for(y = 0; y < bmapDimensions[VY]; ++y)
-        for(x = 0; x < bmapDimensions[VX]; ++x)
+
+    for(y = 0; y < bmapSize[VY]; ++y)
+        for(x = 0; x < bmapSize[VX]; ++x)
         {
             params.map = map;
             params.coords[VX] = x;
@@ -1803,7 +1802,7 @@ boolean MPE_End(void)
     if(!editMapInited)
         return false;
 
-    gamemap = Z_Calloc(sizeof *gamemap, PU_MAPSTATIC, 0);
+    gamemap = Z_Calloc(sizeof(*gamemap), PU_MAPSTATIC, 0);
 
     // Pass on the game map obj database. The game will want to query it
     // once we have finished constructing the map.
@@ -1934,25 +1933,24 @@ boolean MPE_End(void)
     /**
      * Are we caching this map?
      */
-    if(gamemap->mapID && gamemap->mapID[0])
+    if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
     {   // Yes, write the cached map data file.
-        filename_t              cachedMapDir;
-        filename_t              cachedMapDataFile;
-        int                     markerLumpNum;
+        lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
+        ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
+        ddstring_t cachedMapPath;
 
-        markerLumpNum = W_GetNumForName(gamemap->mapID);
-        DAM_GetCachedMapDir(cachedMapDir, markerLumpNum, FILENAME_T_MAXLEN);
+        Str_Init(&cachedMapPath);
+        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), F_LumpName(markerLumpNum));
+        F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
 
-        // Ensure the destination path exists.
-        M_CheckPath(cachedMapDir);
+        // Ensure the destination directory exists.
+        F_MakePath(Str_Text(cachedMapDir));
 
-        sprintf(cachedMapDataFile, "%s%s", cachedMapDir,
-                                   W_LumpName(markerLumpNum));
-        M_TranslatePath(cachedMapDataFile, cachedMapDataFile,
-                        FILENAME_T_MAXLEN);
-        strncat(cachedMapDataFile, ".dcm", FILENAME_T_MAXLEN);
+        // Archive this map!
+        DAM_MapWrite(gamemap, Str_Text(&cachedMapPath));
 
-        DAM_MapWrite(gamemap, cachedMapDataFile);
+        Str_Delete(cachedMapDir);
+        Str_Free(&cachedMapPath);
     }
 
     lastBuiltMap = gamemap;
@@ -2038,14 +2036,14 @@ boolean MPE_VertexCreatev(size_t num, float* values, uint* indices)
 }
 
 uint MPE_SidedefCreate(uint sector, short flags,
-                       materialnum_t topMaterial,
+                       materialid_t topMaterial,
                        float topOffsetX, float topOffsetY, float topRed,
                        float topGreen, float topBlue,
-                       materialnum_t middleMaterial,
+                       materialid_t middleMaterial,
                        float middleOffsetX, float middleOffsetY,
                        float middleRed, float middleGreen,
                        float middleBlue, float middleAlpha,
-                       materialnum_t bottomMaterial,
+                       materialid_t bottomMaterial,
                        float bottomOffsetX, float bottomOffsetY,
                        float bottomRed, float bottomGreen,
                        float bottomBlue)
@@ -2062,17 +2060,17 @@ uint MPE_SidedefCreate(uint sector, short flags,
     s->flags = flags;
     s->sector = (sector == 0? NULL: map->sectors[sector-1]);
 
-    Surface_SetMaterial(&s->SW_topsurface, P_ToMaterial(topMaterial));
-    Surface_SetMaterialOffsetXY(&s->SW_topsurface, topOffsetX, topOffsetY);
-    Surface_SetColorRGBA(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
+    Surface_SetMaterial(&s->SW_topsurface, Materials_ToMaterial(topMaterial));
+    Surface_SetMaterialOrigin(&s->SW_topsurface, topOffsetX, topOffsetY);
+    Surface_SetColorAndAlpha(&s->SW_topsurface, topRed, topGreen, topBlue, 1);
 
-    Surface_SetMaterial(&s->SW_middlesurface, P_ToMaterial(middleMaterial));
-    Surface_SetMaterialOffsetXY(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
-    Surface_SetColorRGBA(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
+    Surface_SetMaterial(&s->SW_middlesurface, Materials_ToMaterial(middleMaterial));
+    Surface_SetMaterialOrigin(&s->SW_middlesurface, middleOffsetX, middleOffsetY);
+    Surface_SetColorAndAlpha(&s->SW_middlesurface, middleRed, middleGreen, middleBlue, middleAlpha);
 
-    Surface_SetMaterial(&s->SW_bottomsurface, P_ToMaterial(bottomMaterial));
-    Surface_SetMaterialOffsetXY(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
-    Surface_SetColorRGBA(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
+    Surface_SetMaterial(&s->SW_bottomsurface, Materials_ToMaterial(bottomMaterial));
+    Surface_SetMaterialOrigin(&s->SW_bottomsurface, bottomOffsetX, bottomOffsetY);
+    Surface_SetColorAndAlpha(&s->SW_bottomsurface, bottomRed, bottomGreen, bottomBlue, 1);
 
     return s->buildData.index;
 }
@@ -2084,7 +2082,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
  * @param v2            Idx of the end vertex.
  * @param frontSide     Idx of the front sidedef.
  * @param backSide      Idx of the back sidedef.
- * @param flags         Currently unused.
+ * @param flags         DDLF_* flags.
  *
  * @return              Idx of the newly created linedef else @c 0 if there
  *                      was an error.
@@ -2199,14 +2197,14 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     l->inFlags = 0;
 
     // Determine the default linedef flags.
-    l->flags = 0;
+    l->flags = flags;
     if(!front || !back)
         l->flags |= DDLF_BLOCKING;
 
     return l->buildData.index;
 }
 
-uint MPE_PlaneCreate(uint sector, float height, materialnum_t material,
+uint MPE_PlaneCreate(uint sector, float height, materialid_t material,
                      float matOffsetX, float matOffsetY,
                      float r, float g, float b, float a,
                      float normalX, float normalY, float normalZ)
@@ -2224,20 +2222,18 @@ uint MPE_PlaneCreate(uint sector, float height, materialnum_t material,
     s = map->sectors[sector - 1];
 
     pln = M_Calloc(sizeof(plane_t));
+    pln->surface.owner = (void*) pln;
     pln->height = height;
-    Surface_SetMaterial(&pln->surface, P_ToMaterial(material));
-    Surface_SetColorRGBA(&pln->surface, r, g, b, a);
-    Surface_SetMaterialOffsetXY(&pln->surface, matOffsetX, matOffsetY);
-    pln->PS_normal[VX] = normalX;
-    pln->PS_normal[VY] = normalY;
-    pln->PS_normal[VZ] = normalZ;
-    if(pln->PS_normal[VZ] < 0)
-        pln->type = PLN_CEILING;
-    else
-        pln->type = PLN_FLOOR;
-    M_Normalize(pln->PS_normal);
-    pln->sector = s;
+    Surface_SetMaterial(&pln->surface, Materials_ToMaterial(material));
+    Surface_SetColorAndAlpha(&pln->surface, r, g, b, a);
+    Surface_SetMaterialOrigin(&pln->surface, matOffsetX, matOffsetY);
+    V3_Set(pln->PS_normal, normalX, normalY, normalZ);
+    V3_Normalize(pln->PS_normal);
+    V3_BuildTangents(pln->PS_tangent, pln->PS_bitangent, pln->PS_normal);
 
+    pln->type = (pln->PS_normal[VZ] < 0? PLN_CEILING : PLN_FLOOR);
+
+    pln->sector = s;
     newList = M_Malloc(sizeof(plane_t*) * (++s->planeCount + 1));
     for(i = 0; i < s->planeCount - 1; ++i)
     {

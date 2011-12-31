@@ -1,4 +1,4 @@
-/**\file
+/**\file de_render.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +23,15 @@
  */
 
 /**
- * de_render.h: Rendering Subsystem
+ * Rendering Subsystem
  */
 
-#ifndef __DOOMSDAY_RENDERER__
-#define __DOOMSDAY_RENDERER__
+#ifndef LIBDENG_RENDERER
+#define LIBDENG_RENDERER
 
 #include "rend_main.h"
 #include "rend_clip.h"
 #include "rend_halo.h"
-#include "rend_dyn.h"
 #include "rend_list.h"
 #include "rend_particle.h"
 #include "rend_sky.h"
@@ -40,8 +39,9 @@
 #include "rend_model.h"
 #include "rend_shadow.h"
 #include "rend_fakeradio.h"
+#include "rend_font.h"
 #include "rend_bias.h"
 #include "rend_decor.h"
 #include "rend_console.h"
 
-#endif
+#endif /* LIBDENG_RENDERER */

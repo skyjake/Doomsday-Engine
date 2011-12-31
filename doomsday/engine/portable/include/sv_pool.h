@@ -32,7 +32,7 @@
 #include "dd_share.h"
 #include "p_object.h"
 #include "r_data.h"
-#include "p_materialmanager.h"
+#include "materials.h"
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {
@@ -152,16 +152,6 @@ typedef enum {
 #define SDF_CEIL_COLOR_RED      0x00080000
 #define SDF_CEIL_COLOR_GREEN    0x00100000
 #define SDF_CEIL_COLOR_BLUE     0x00200000
-/*
-#define SDF_FLOOR_GLOW_RED      0x00400000
-#define SDF_FLOOR_GLOW_GREEN    0x00800000
-#define SDF_FLOOR_GLOW_BLUE     0x01000000
-#define SDF_CEIL_GLOW_RED       0x02000000
-#define SDF_CEIL_GLOW_GREEN     0x04000000
-#define SDF_CEIL_GLOW_BLUE      0x08000000
-#define SDF_FLOOR_GLOW          0x10000000
-#define SDF_CEIL_GLOW           0x20000000
-*/
 
 #define SIDF_TOP_MATERIAL       0x0001
 #define SIDF_MID_MATERIAL       0x0002
@@ -271,8 +261,6 @@ typedef struct {
     float           height;
     float           target; // Target height.
     float           speed; // Move speed.
-    //float           glow; // Glow amount.
-    //float           glowRGB[3]; // Glow color.
 } dt_plane_t;
 
 typedef struct {

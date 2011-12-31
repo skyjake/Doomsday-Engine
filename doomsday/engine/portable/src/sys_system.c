@@ -1,4 +1,4 @@
-/**\file
+/**\file sys_system.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_system.c:
+ * Abstract interfaces to platform-level services.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,17 +85,32 @@ static void C_DECL handler(int s)
 #endif
 
 /**
- * Initialize machine state.
+ * Initialize platform level services.
+ *
+ * \note This must be called from the main thread due to issues with the devices
+ * we use via the WINAPI, MCI (cdaudio, mixer etc) on the WIN32 platform.
  */
 void Sys_Init(void)
 {
+    uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
+
+    Con_Message("Setting up platform state...\n");
+
+    VERBOSE( Con_Message("Initializing Timing subsystem...\n") )
+    Sys_InitTimer();
+
     if(!isDedicated)
     {
-        Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
-
+        VERBOSE( Con_Message("Initializing Input subsystem...\n") )
         if(!I_Init())
-            Con_Error("Sys_Init: Failed to initialize input.\n");
+            Con_Error("Failed to initialize Input subsystem.\n");
     }
+
+    // Virtual devices need to be created even in dedicated mode.
+    I_InitVirtualInputDevices();
+
+    VERBOSE( Con_Message("Initializing Audio subsystem...\n") )
+    S_Init();
 
 #if defined(WIN32) && !defined(_DEBUG)
     // Register handler for abnormal situations (in release build).
@@ -113,12 +128,11 @@ void Sys_Init(void)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    // Virtual devices need to be created even in dedicated mode.
-    I_InitVirtualInputDevices();
-    Sys_InitTimer();
-    S_Init();
+    VERBOSE( Con_Message("Initializing Network subsystem...\n") )
     Huff_Init();
     N_Init();
+
+    VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -126,10 +140,12 @@ void Sys_Init(void)
  */
 void Sys_Shutdown(void)
 {
-    Sys_ShutdownTimer();
+    // Time to unload *everything*.
+    if(DD_GameLoaded())
+        Con_Execute(CMDS_DDAY, "unload", true, false);
 
-    if(gx.Shutdown)
-        gx.Shutdown();
+    B_Shutdown();
+    Sys_ShutdownTimer();
 
     Net_Shutdown();
     Huff_Shutdown();
@@ -140,25 +156,26 @@ void Sys_Shutdown(void)
     DD_ClearEvents();
     I_ShutdownInputDevices();
     I_Shutdown();
+
+    DD_DestroyGames();
 }
 
-int Sys_CriticalMessage(char *msg)
+static int showCriticalMessage(const char* msg)
 {
 #ifdef WIN32
 #ifdef UNICODE
-    wchar_t     buf[256];
+    wchar_t buf[256];
 #else
-    char        buf[256];
+    char buf[256];
 #endif
-    int         ret;
-    HWND        hWnd = Sys_GetWindowHandle(windowIDX);
+    int ret;
+    HWND hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBox(HWND_DESKTOP,
-                   TEXT("Sys_CriticalMessage: Main window not available."), NULL,
-                   MB_ICONERROR | MB_OK);
+        MessageBox(HWND_DESKTOP, TEXT("Sys_CriticalMessage: Main window not available."),
+                   NULL, MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return false;
     }
@@ -176,6 +193,39 @@ int Sys_CriticalMessage(char *msg)
     fprintf(stderr, "--- %s\n", msg);
     return 0;
 #endif
+}
+
+int Sys_CriticalMessage(const char* msg)
+{
+    return showCriticalMessage(msg);
+}
+
+int Sys_CriticalMessagef(const char* format, ...)
+{
+    static const char* unknownMsg = "Unknown critical issue occured.";
+    const size_t BUF_SIZE = 655365;
+    const char* msg;
+    char* buf = 0;
+    va_list args;
+    int result;
+
+    if(format && format[0])
+    {
+        va_start(args, format);
+        buf = (char*) calloc(1, BUF_SIZE);
+        dd_vsnprintf(buf, BUF_SIZE, format, args);
+        msg = buf;
+        va_end(args);
+    }
+    else
+    {
+        msg = unknownMsg;
+    }
+
+    result = showCriticalMessage(msg);
+
+    if(buf) free(buf);
+    return result;
 }
 
 void Sys_Sleep(int millisecs)
@@ -334,11 +384,6 @@ void Sys_Unlock(mutex_t handle)
     SDL_mutexV((SDL_mutex *) handle);
 }
 
-/**
- * Create a new semaphore.
- *
- * @return              New handle.
- */
 sem_t Sem_Create(uint32_t initialValue)
 {
     return (sem_t) SDL_CreateSemaphore(initialValue);
@@ -352,9 +397,6 @@ void Sem_Destroy(sem_t semaphore)
     }
 }
 
-/**
- * "Proberen" a semaphore. Blocks until the successful.
- */
 void Sem_P(sem_t semaphore)
 {
     if(semaphore)
@@ -363,13 +405,19 @@ void Sem_P(sem_t semaphore)
     }
 }
 
-/**
- * "Verhogen" a semaphore. Returns immediately.
- */
 void Sem_V(sem_t semaphore)
 {
     if(semaphore)
     {
         SDL_SemPost((SDL_sem *) semaphore);
     }
+}
+
+uint32_t Sem_Value(sem_t semaphore)
+{
+    if(semaphore)
+    {
+        return (uint32_t)SDL_SemValue((SDL_sem*)semaphore);
+    }
+    return 0;
 }

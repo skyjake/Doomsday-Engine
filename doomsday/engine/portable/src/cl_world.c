@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_world.c: Clientside World Management
+ * Clientside World Management
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -36,6 +36,7 @@
 #include "de_play.h"
 #include "de_refresh.h"
 #include "dd_world.h"
+#include "de_filesys.h"
 
 #include "r_util.h"
 
@@ -84,7 +85,7 @@ void Cl_PolyMoverThinker(polymover_t* mover);
 
 static mover_t *activemovers[MAX_MOVERS];
 static polymover_t *activepolys[MAX_MOVERS];
-short *xlat_lump; // obsolete
+static short *xlat_lump; // obsolete
 
 // CODE --------------------------------------------------------------------
 
@@ -101,35 +102,35 @@ short *xlat_lump; // obsolete
  */
 void Cl_InitTranslations(void)
 {
-    int                 i;
-
-    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
+    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_APPSTATIC, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
+    { int i, numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
         xlat_lump[i] = i; // Identity translation.
+    }
 }
 
-void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
+void Cl_SetLumpTranslation(lumpnum_t lumpNum, char *name)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
         return; // Can't do it, sir! We just don't have the power!!
 
-    xlat_lump[lump] = W_CheckNumForName(name);
-    if(xlat_lump[lump] < 0)
+    xlat_lump[lumpNum] = F_CheckLumpNumForName2(name, true);
+    if(xlat_lump[lumpNum] < 0)
     {
         VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lump] = 0;
+        xlat_lump[lumpNum] = 0;
     }
 }
 
 /**
  * This is a fail-safe operation.
  */
-lumpnum_t Cl_TranslateLump(lumpnum_t lump)
+lumpnum_t Cl_TranslateLump(lumpnum_t lumpNum)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
         return 0;
-    return xlat_lump[lump];
+    return xlat_lump[lumpNum];
 }
 
 static boolean Cl_IsMoverValid(int i)
@@ -561,12 +562,12 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
+        material_t* mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL, mat);
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
+        material_t* mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
         P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL, mat);
     }
 
@@ -594,18 +595,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -713,57 +714,57 @@ if(num >= numSideDefs)
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = P_ToMaterial(topMat);
+        mat = Materials_ToMaterial(topMat);
         Surface_SetMaterial(&sid->SW_topsurface, mat);
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = P_ToMaterial(midMat);
+        mat = Materials_ToMaterial(midMat);
         Surface_SetMaterial(&sid->SW_middlesurface, mat);
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t*         mat;
+        material_t* mat;
         /**
          * The delta is a server-side materialnum.
          * \fixme What if client and server materialnums differ?
          */
-        mat = P_ToMaterial(botMat);
+        mat = Materials_ToMaterial(botMat);
         Surface_SetMaterial(&sid->SW_bottomsurface, mat);
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
+        Surface_SetColorRed(&sid->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_topsurface, toprgb[CG]);
+        Surface_SetColorGreen(&sid->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_topsurface, toprgb[CB]);
+        Surface_SetColorBlue(&sid->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorR(&sid->SW_middlesurface, midrgba[CR]);
+        Surface_SetColorRed(&sid->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_middlesurface, midrgba[CG]);
+        Surface_SetColorGreen(&sid->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_middlesurface, midrgba[CB]);
+        Surface_SetColorBlue(&sid->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetColorA(&sid->SW_middlesurface, midrgba[CA]);
+        Surface_SetAlpha(&sid->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorR(&sid->SW_bottomsurface, bottomrgb[CR]);
+        Surface_SetColorRed(&sid->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_bottomsurface, bottomrgb[CG]);
+        Surface_SetColorGreen(&sid->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_bottomsurface, bottomrgb[CB]);
+        Surface_SetColorBlue(&sid->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
         Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);
@@ -784,6 +785,9 @@ if(num >= numSideDefs)
             // The delta includes the entire lowest byte.
             line->flags &= ~0xff;
             line->flags |= lineFlags;
+#if _DEBUG
+Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n", GET_LINE_IDX(line), lineFlags);
+#endif
         }
     }
 }

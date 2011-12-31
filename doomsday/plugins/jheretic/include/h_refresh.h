@@ -1,4 +1,4 @@
-/**\file
+/**\file h_refresh.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -21,33 +21,24 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * h_refresh.h:
- */
-
-#ifndef __JHERETIC_REFRESH_H__
-#define __JHERETIC_REFRESH_H__
+#ifndef JHERETIC_REFRESH_H
+#define JHERETIC_REFRESH_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "hu_stuff.h" // For gamefontid_t
-
+#include "hu_stuff.h"
 #include "p_mobj.h"
 
 extern float quitDarkenOpacity;
 
-void            H_Display(int layer);
-void            H_Display2(void);
+void H_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
+void H_DrawWindow(const Size2Raw* windowSize);
 
-void            R_SetViewSize(int blocks);
+void P_SetDoomsdayFlags(mobj_t* mo);
+void R_SetAllDoomsdayFlags(void);
+boolean R_ViewFilterColor(float rgba[4], int filter);
+void R_UpdateViewFilter(int player);
 
-void            R_DrawSpecialFilter(int pnum);
-void            R_DrawMapTitle(int x, int y, float alpha,
-                               gamefontid_t font, boolean center);
-
-void            P_SetDoomsdayFlags(mobj_t* mo);
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+#endif /* JHERETIC_REFRESH_H */

@@ -24,11 +24,17 @@
  */
 
 /**
- * dd_version.h: Version Information
+ * Version Information
  */
 
-#ifndef __DOOMSDAY_VERSION_H__
-#define __DOOMSDAY_VERSION_H__
+#ifndef LIBDENG_VERSION_H
+#define LIBDENG_VERSION_H
+
+#define DOOMSDAY_NICENAME       "Doomsday Engine"
+
+#define DOOMSDAY_HOMEURL        "http://dengine.net"
+#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
+#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release name)
@@ -56,14 +62,6 @@
 //#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
- * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
- * will be marked accordingly, indicating that this is a special build,
- * for example, an alpha/beta/release candidate/etc and the SpecialBuild
- * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
- */
-#define DOOMSDAY_RELEASE_FULL   1
-
-/**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
  * verify that the engine is new enough.  Don't change
  * DOOMSDAY_VERSION unless you wish to break compatibility.
@@ -73,9 +71,9 @@
 #if defined(DOOMSDAY_BUILD_TEXT)
 /** The build number is included only for non-Stable builds. */
 #  if defined(WIN32) && defined(UNICODE)
-#    define DOOMSDAY_VERSION_TEXT_WSTR  TEXT(DOOMSDAY_VERSION_BASE) TEXT(" (#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT(")")
+#    define DOOMSDAY_VERSION_TEXT_WSTR  TEXT(DOOMSDAY_VERSION_BASE) TEXT(" [#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT("]")
 #  endif
-#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " (#" DOOMSDAY_BUILD_TEXT ")"
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
 #elif defined(DOOMSDAY_RELEASE_NAME)
 #  define DOOMSDAY_VERSION_TEXT (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
 #else
@@ -85,6 +83,4 @@
 #  endif
 #endif
 
-#define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
-
-#endif
+#endif /* LIBDENG_VERSION_H */

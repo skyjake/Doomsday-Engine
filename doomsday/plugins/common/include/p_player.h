@@ -1,4 +1,4 @@
-/**\file
+/**\file p_player.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_player.h: Common playsim routines relating to players.
+ * Common playsim routines relating to players.
  */
 
-#ifndef __COMMON_PLAYER_H__
-#define __COMMON_PLAYER_H__
+#ifndef LIBCOMMON_PLAYER_H
+#define LIBCOMMON_PLAYER_H
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -57,14 +57,14 @@ void            P_FreeWeaponSlots(void);
 boolean         P_SetWeaponSlot(weapontype_t type, byte slot);
 byte            P_GetWeaponSlot(weapontype_t type);
 
-int             P_IterateWeaponsInSlot(byte slot, boolean reverse,
+int             P_IterateWeaponsBySlot(byte slot, boolean reverse,
                                        int (*callback) (weapontype_t, void* context),
                                         void* context);
 // A specialized iterator for weapon slot cycling.
 weapontype_t    P_WeaponSlotCycle(weapontype_t type, boolean prev);
 
 int             P_GetPlayerNum(player_t* plr);
-int             P_GetPlayerCheats(player_t* plr);
+int             P_GetPlayerCheats(const player_t* plr);
 
 boolean         P_PlayerInWalkState(player_t* plr);
 
@@ -80,7 +80,7 @@ void            P_PlayerChangeClass(player_t* plr, playerclass_t newClass);
 
 void            P_SetMessage(player_t* plr, const char* msg, boolean noHide);
 #if __JHEXEN__
-void            P_SetYellowMessage(player_t* plr, char* msg, boolean noHide);
+void            P_SetYellowMessage(player_t* plr, const char* msg, boolean noHide);
 #endif
 
 void            P_PlayerThinkCamera(player_t* plr);
@@ -92,4 +92,4 @@ int             P_PlayerGiveArmorBonus(player_t* plr, int points);
 int             P_PlayerGiveArmorBonus(player_t* plr, armortype_t type, int points);
 #endif
 
-#endif
+#endif /* LIBCOMMON_PLAYER_H */

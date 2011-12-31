@@ -33,16 +33,16 @@
 #include <assert.h>
 
 #include "common.h"
-#include "am_map.h"
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
-#include "f_infine.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
+#include "st_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -108,26 +108,6 @@ void NetCl_Read(byte *buf, int len)
 }
 */
 
-#if __JDOOM__
-int NetCl_IsCompatible(int other, int us)
-{
-    char                comp[5][5] =        // [other][us]
-    {
-        {1, 1, 0, 1, 0},
-        {0, 1, 0, 1, 0},
-        {0, 0, 1, 0, 0},
-        {0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0}
-    };
-    /*  shareware,  // DOOM 1 shareware, E1, M9
-       registered,  // DOOM 1 registered, E3, M27
-       commercial,  // DOOM 2 retail, E1 M34
-       retail,      // DOOM 1 retail, E4, M36
-     */
-    return comp[other][us];
-}
-#endif
-
 void NetCl_UpdateGameState(Reader* msg)
 {
     byte gsGameMode = 0;
@@ -151,27 +131,32 @@ void NetCl_UpdateGameState(Reader* msg)
     gsMonsters = (flags & 0x4? true : false);
     gsRespawn = (flags & 0x8? true : false);
     gsJumping = (flags & 0x10? true : false);
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//    gsSkill = (flags >> 5);
-//#else
     gsSkill = Reader_ReadByte(msg);
-//#endif
     gsGravity = Reader_ReadFloat(msg);
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#if __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gameMode))
-    {
-        // Wrong game mode! This is highly irregular!
+#pragma message("!!!WARNING: NetCl_UpdateGameState presently overrides gameMode mismatches.")
+    /**
+     * \kludge
+     * djs: 2010-09-20 23:31 GMT
+     * Dedicated servers are presently built from the master branch and as such
+     * our gameMode will never match that returned by the server. However, this
+     * is now protected against at a much higher level during game initialization
+     * so we don't really need to be worrying about that here.
+     *
+     * For now we'll override it using our local gameMode value.
+     */
+    gsGameMode = gameMode;
+    /*if(gsGameMode != gameMode)
+    {   // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
         // Stop the demo if one is being played.
         DD_Execute(false, "stopdemo");
         return;
-    }
-#endif
+    } kludge end */
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
@@ -199,15 +184,6 @@ void NetCl_UpdateGameState(Reader* msg)
                 !noMonstersParm ? "yes" : "no",
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
-
-    /*
-    // Start reading after the GS packet.
-#if __JHEXEN__ || __JSTRIFE__
-    NetCl_SetReadBuffer(data + 16);
-#else
-    NetCl_SetReadBuffer(data + 8);
-#endif
-    */
 
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
@@ -450,7 +426,16 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
             ST_HUDUnHide(plrNum, HUE_ON_DAMAGE);
 
         pl->health = health;
-        pl->plr->mo->health = pl->health;
+        if(pl->plr->mo)
+        {
+            pl->plr->mo->health = pl->health;
+        }
+        else
+        {
+#if _DEBUG
+            Con_Message("FIXME: NetCl_UpdatePlayerState: Player mobj not yet allocated at this time, ignoring.\n");
+#endif
+        }
     }
 
     if(flags & PSF_ARMOR_POINTS)
@@ -548,7 +533,7 @@ void NetCl_UpdatePlayerState(Reader *msg, int plrNum)
 #ifdef _DEBUG
                     Con_Message("NetCl_UpdatePlayerState: Revealing automap.\n");
 #endif
-                    AM_RevealMap(AM_MapForPlayer(plrNum), true);
+                    ST_RevealAutomap(plrNum, true);
                 }
             }
         }
@@ -732,9 +717,14 @@ void NetCl_Intermission(Reader* msg)
     {
         uint i;
 
-        // Close any automaps left open at the end of the previous map.
+        // Close any HUDs left open at the end of the previous map.
         for(i = 0; i < MAXPLAYERS; ++i)
-            AM_Open(AM_MapForPlayer(i), false, true);
+        {
+            ST_AutomapOpen(i, false, true);
+#if __JHERETIC__ || __JHEXEN__
+            Hu_InventoryOpen(i, false);
+#endif
+        }
 
         GL_SetFilter(false);
 
@@ -770,7 +760,7 @@ void NetCl_Intermission(Reader* msg)
 #if __JDOOM64__
         S_StartMusic("dm2int", true);
 #elif __JDOOM__
-        S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+        S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
 #elif __JHERETIC__
         S_StartMusic("intr", true);
 #elif __JHEXEN__
@@ -803,6 +793,7 @@ void NetCl_Intermission(Reader* msg)
 #endif
 }
 
+#if 0 // MOVED INTO THE ENGINE
 /**
  * This is where clients start their InFine interludes.
  */
@@ -850,6 +841,7 @@ void NetCl_Finale(int packetType, Reader* msg)
         FI_SkipRequest();
     }
 }
+#endif
 
 /**
  * Clients have other players' info, but it's only "FYI"; they don't really need it.
@@ -901,7 +893,10 @@ void NetCl_SaveGame(Reader* msg)
     if(Get(DD_PLAYBACK))
         return;
 
+    /// @todo: Why not Hexen?
+#if !__JHEXEN__
     SV_SaveClient(Reader_ReadUInt32(msg));
+#endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 #endif
@@ -914,8 +909,9 @@ void NetCl_LoadGame(Reader* msg)
     if(Get(DD_PLAYBACK))
         return;
 
+#if !__JHEXEN__
     SV_LoadClient(Reader_ReadUInt32(msg));
-    //  Net_SendPacket(DDSP_RELIABLE, GPT_LOAD, &con, 1);
+#endif
 #if __JDOOM__ || __JDOOM64__
     P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD), false);
 #endif
@@ -1008,7 +1004,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     Writer_WriteInt32(msg, actionType);
 
     // Position of the action.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         Writer_WriteFloat(msg, player->plr->mo->pos[VX]);
         Writer_WriteFloat(msg, player->plr->mo->pos[VY]);

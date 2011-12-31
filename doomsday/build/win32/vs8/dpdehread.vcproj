@@ -89,6 +89,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\dehread\api\dpdehread.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -287,6 +288,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\dehread\api\dpdehread.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
@@ -463,6 +465,7 @@
 				OutputFile="$(OutDir)$(ProjectName).dll"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\dehread\api\dpdehread.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				ImportLibrary=""
 			/>
@@ -659,6 +662,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\dehread\api\dpdehread.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -823,6 +827,18 @@
 				RelativePath="..\..\..\plugins\dehread\res\dehread.rc"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="API"
+			>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\dehread\api\dpdehread.def"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

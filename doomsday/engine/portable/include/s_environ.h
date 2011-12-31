@@ -1,4 +1,4 @@
-/**\file
+/**\file s_environ.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,17 +23,22 @@
  */
 
 /**
- * s_environ.h: Environmental Sound Effects
+ * Sound Environment.
  */
 
-#ifndef __DOOMSDAY_SOUND_ENVIRON_H__
-#define __DOOMSDAY_SOUND_ENVIRON_H__
+#ifndef LIBDENG_SOUND_ENVIRON_H
+#define LIBDENG_SOUND_ENVIRON_H
 
 #include "p_mapdata.h"
 
-void            S_CalcSectorReverb(sector_t* sec);
-void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
-material_env_class_t S_MaterialClassForName(const char* name,
-                                            material_namespace_t mnamespace);
+void S_CalcSectorReverb(sector_t* sec);
+void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
 
-#endif
+/// @return  Environment class name for identifier @a mclass.
+const char* S_MaterialEnvClassName(material_env_class_t mclass);
+
+/// @return  Environment class associated with material @a uri else @c MEC_UNKNOWN.
+material_env_class_t S_MaterialEnvClassForUri(const Uri* uri);
+
+#endif /* LIBDENG_SOUND_ENVIRON_H */
+

@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_misc.h"
@@ -718,7 +719,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
                               player->mo->pos[VY],
                               player->mo->subsector->sector) &&
            (player->mo->pos[VZ] < player->mo->subsector->sector->SP_ceilvisheight + 4 &&
-            player->mo->pos[VZ] > player->mo->subsector->sector->SP_floorvisheight + 4))
+            player->mo->pos[VZ] >= player->mo->subsector->sector->SP_floorvisheight))
             player->inVoid = false;
     }
 }

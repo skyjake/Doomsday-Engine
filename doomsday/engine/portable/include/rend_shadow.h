@@ -1,9 +1,10 @@
-/**\file
+/**\file rend_shadow.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,17 +22,40 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * rend_shadow.h: Map Object Shadows
+#ifndef LIBDENG_RENDER_MOBJ_SHADOW_H
+#define LIBDENG_RENDER_MOBJ_SHADOW_H
+
+/**
+ * This value defines the offset from the shadowed surface applied to
+ * shadows rendered with the simple drop-to-highest-floor method.
+ * As such shadows are drawn using additional primitives on top of the map
+ * surface they touch; a small visual offset is used to avoid z-fighting.
  */
+#define SHADOW_ZOFFSET              (.8f)
 
-#ifndef __DOOMSDAY_RENDER_SHADOW_H__
-#define __DOOMSDAY_RENDER_SHADOW_H__
+/// @return  @c true if rendering of mobj shadows is currently enabled.
+boolean Rend_MobjShadowsEnabled(void);
 
-//extern int      useShadows, shadowMaxRad, shadowMaxDist;
-//extern float    shadowFactor;
+/**
+ * Use the simple, drop-to-highest-floor algorithm for rendering mobj shadows
+ * selected for this method. Rendering lists are not used.
+ */
+void Rend_RenderMobjShadows(void);
 
-void            Rend_ShadowRegister(void);
-void            Rend_RenderShadows(void);
+/// Paramaters for Rend_RenderShadowProjections (POD).
+typedef struct {
+    uint lastIdx;
+    const rvertex_t* rvertices;
+    uint numVertices, realNumVertices;
+    const float* texTL, *texBR;
+    boolean isWall;
+    const walldiv_t* divs;
+} rendershadowprojectionparams_t;
 
-#endif
+/**
+ * Render all shadows in projection list @a listIdx according to @a paramaters
+ * writing them to the renderering lists for the current frame.
+ */
+void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* paramaters);
+
+#endif /* LIBDENG_RENDER_MOBJ_SHADOW_H */

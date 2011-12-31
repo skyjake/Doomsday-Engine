@@ -1,4 +1,4 @@
-/**\file
+/**\file gl_png.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,83 +22,70 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * gl_png.c: PNG Images
- *
- * Portable Network Graphics high-level handling.
- * You'll need libpng and zlib.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <png.h>
 #include <setjmp.h>
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
-#include "de_misc.h"
+#include "m_misc.h"
 
-// MACROS ------------------------------------------------------------------
+static char* lastErrorMsg = 0; /// \fixme potentially never free'd
 
-// TYPES -------------------------------------------------------------------
+static void setLastError(const char* msg)
+{
+    size_t len;
+    if(0 == msg || 0 == (len = strlen(msg)))
+    {
+        if(lastErrorMsg != 0)
+            free(lastErrorMsg);
+        lastErrorMsg = 0;
+        return;
+    }
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+    lastErrorMsg = (char*) realloc(lastErrorMsg, len+1);
+    if(NULL == lastErrorMsg)
+        Con_Error("setLastError: Failed on (re)allocation of %lu bytes for last error buffer.", (unsigned long) (len+1));
+    strcpy(lastErrorMsg, msg);
+}
 
 void PNGAPI user_error_fn(png_structp png_ptr, png_const_charp error_msg)
 {
-    Con_Message("PNG-Error: %s\n", error_msg);
+    setLastError(error_msg);
 }
 
 void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
 {
-    VERBOSE(Con_Message("PNG-Warning: %s\n", warning_msg));
+    VERBOSE( Con_Message("PNG-Warning: %s\n", warning_msg) );
 }
 
-/**
- * libpng calls this to read from files.
- */
-void PNGAPI my_read_data(png_structp read_ptr, png_bytep data,
-                         png_size_t length)
+void PNGAPI my_read_data(png_structp read_ptr, png_bytep data, png_size_t length)
 {
-    F_Read(data, length, png_get_io_ptr(read_ptr));
+    DFile_Read(png_get_io_ptr(read_ptr), (uint8_t*)data, length);
 }
 
-/**
- * Reads the given PNG image and returns a pointer to a planar RGB or
- * RGBA buffer. Width and height are set, and pixelSize is either 3 (RGB)
- * or 4 (RGBA). The caller must free the allocated buffer with Z_Free.
- * width, height and pixelSize can't be NULL. Handles 1-4 channels.
- */
-unsigned char *PNG_Load(const char *fileName, int *width, int *height,
-                        int *pixelSize)
+const char* PNG_LastError(void)
 {
-    DFILE      *file;
+    if(lastErrorMsg)
+        return lastErrorMsg;
+    return 0;
+}
+
+uint8_t* PNG_Load(DFile* file, int* width, int* height, int* pixelSize)
+{
+    assert(file && width && height && pixelSize);
+    {
+    size_t initPos = DFile_Tell(file);
     png_structp png_ptr = 0;
-    png_infop   png_info = 0, end_info = 0;
-    png_bytep  *rows, pixel;
-    unsigned char *retbuf = 0;  // The return buffer.
-    int         i, k, off;
-
-    if((file = F_Open(fileName, "rb")) == NULL)
-        return NULL;
+    png_infop png_info = 0, end_info = 0;
+    png_bytep* rows, pixel;
+    uint8_t* retbuf = 0; // The return buffer.
+    int i, k, off;
 
     // Init libpng.
-    png_ptr =
-        png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, user_error_fn,
-                               user_warning_fn);
+    setLastError(0);
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, user_error_fn, user_warning_fn);
     if(png_ptr)
     {
         png_info = png_create_info_struct(png_ptr);
@@ -113,26 +100,25 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
 
                     png_set_read_fn(png_ptr, file, my_read_data);
 
-                    png_read_png(png_ptr, png_info,
-                                 PNG_TRANSFORM_IDENTITY, NULL);
+                    png_read_png(png_ptr, png_info, PNG_TRANSFORM_IDENTITY, NULL);
 
                     // Check if it can be used.
                     canLoad = true;
                     if(png_get_bit_depth(png_ptr, png_info) != 8)
                     {
-                        Con_Message("PNG_Load: \"%s\": Bit depth must be 8.\n", fileName);
+                        setLastError("Bit depth must be 8.");
                         canLoad = false;
                     }
                     else if(!png_get_image_width(png_ptr, png_info) || !png_get_image_height(png_ptr, png_info))
                     {
-                        Con_Message("PNG_Load: \"%s\": Bad file? Size is zero.\n", fileName);
+                        setLastError("Size is zero.");
                         canLoad = false;
                     }
                     else if(png_get_channels(png_ptr, png_info) <= 2 &&
                             png_get_color_type(png_ptr, png_info) == PNG_COLOR_TYPE_PALETTE &&
                             !png_get_valid(png_ptr, png_info, PNG_INFO_PLTE))
                     {
-                        Con_Message("PNG_Load: \"%s\": Palette is invalid.\n", fileName);
+                        setLastError("Palette is invalid.");
                         canLoad = false;
                     }
 
@@ -148,7 +134,7 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                         if(*pixelSize == 1)
                             *pixelSize = 3;
                         if(*pixelSize == 2)
-                            *pixelSize = 4;       // With alpha channel.
+                            *pixelSize = 4; // With alpha channel.
 
                         // OK, let's copy it into Doomsday's buffer.
                         // \fixme Why not load directly into it?
@@ -187,6 +173,8 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                                         // Grayscale.
                                         pixel[0] = pixel[1] = pixel[2] = rows[i][off];
                                     }
+
+                                    // Has an alpha channel?
                                     if(png_get_channels(png_ptr, png_info) == 2) // Alpha data.
                                     {
                                         pixel[3] = rows[i][off + 1];
@@ -194,14 +182,16 @@ unsigned char *PNG_Load(const char *fileName, int *width, int *height,
                                 }
                             }
                         }
+
+                        setLastError(0); // Success.
                     }
                 }
             }
         }
     }
 
-    // Shutdown.
     png_destroy_read_struct(&png_ptr, &png_info, &end_info);
-    F_Close(file);
+    DFile_Seek(file, initPos, SEEK_SET);
     return retbuf;
+    }
 }

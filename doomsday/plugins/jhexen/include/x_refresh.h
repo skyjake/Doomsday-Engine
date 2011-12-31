@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * x_refresh.h:
- */
-
-#ifndef __X_REFRESH_H__
-#define __X_REFRESH_H__
+#ifndef JHEXEN_REFRESH_H
+#define JHEXEN_REFRESH_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -34,10 +30,11 @@
 
 extern float quitDarkenOpacity;
 
-void            G_Display(int layer);
-void            G_Display2(void);
+void X_DrawViewPort(int port, const RectRaw* portGeometry, const RectRaw* windowGeometry, int player, int layer);
+void X_DrawWindow(const Size2Raw* windowSize);
 
-void            R_SetViewSize(int blocks);
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+void R_SetAllDoomsdayFlags(void);
+boolean R_ViewFilterColor(float rgba[4], int filter);
+void R_UpdateViewFilter(int player);
+
+#endif /* JHEXEN_REFRESH_H */

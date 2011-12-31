@@ -1,4 +1,4 @@
-/**\file
+/**\file jhexen.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * jhexen.h: All jHexen Headers
+ * All jHexen Headers
  *
  * A convenience header for including all jHexen headers.
  */
@@ -38,9 +38,7 @@
 #include "../../jhexen/include/g_game.h"
 #include "../../jhexen/include/in_lude.h"
 #include "../../jhexen/include/m_cheat.h"
-#include "../../jhexen/include/m_menu.h"
 #include "../../jhexen/include/m_random.h"
-#include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_acs.h"
 #include "../../jhexen/include/p_anim.h"
 #include "../../jhexen/include/p_enemy.h"

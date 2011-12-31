@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_sky.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,98 +22,87 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * rend_sky.c: Sky Sphere and 3D Models
- *
- * This version supports only two sky layers.
- * (More would be a waste of resources?)
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_refresh.h"
-#include "de_render.h"
 #include "de_graphics.h"
-#include "de_misc.h"
-#include "de_play.h"
+#include "de_render.h"
 
-// MACROS ------------------------------------------------------------------
+#include "texture.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
+#include "r_sky.h"
 
-#define MAXSKYLAYERS        2
+/**
+ * @defgroup skySphereRenderFlags  Sky Render Flags
+ * @{
+ */
+#define SKYHEMI_UPPER       0x1
+#define SKYHEMI_LOWER       0x2
+#define SKYHEMI_JUST_CAP    0x4 // Just draw the top or bottom cap.
+/**@}*/
 
-#define SKYVTX_IDX(c, r)    ( (r)*skyColumns + (c)%skyColumns )
-
-// TYPES -------------------------------------------------------------------
-
-typedef struct skyvertex_s {
-    float           pos[3];
+typedef struct {
+    float pos[3];
 } skyvertex_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+typedef struct {
+    boolean fadeout, texXFlip;
+    Size2Raw texSize;
+    float texOffset;
+    ColorRawf capColor;
+} renderhemispherestate_t;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+int skyDetail = 6, skyColumns = 4*6, skyRows = 3;
+float skyDistance = 1600;
 
-D_CMD(SkyDetail);
+static void constructSphere(void);
+static void destroySphere(void);
+// CVar callback function which marks the sphere as needing to be rebuilt.
+static void updateSphere(void);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+static void rebuildHemisphere(void);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+// @c true iff this module has been initialized.
+static boolean initedOk = false;
 
-extern float vx, vy, vz;
-extern byte topLineRGB[3];
+// Hemisphere geometry used with the sky sphere.
+static skyvertex_t* skyVerts; // Crest is up.
+static int numSkyVerts;
+static boolean needRebuildHemisphere = true;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-skylayer_t skyLayers[MAXSKYLAYERS];
-int firstLayer, activeLayers;
-
-skyvertex_t *skyVerts = NULL; // Vertices for the upper hemisphere.
-int numSkyVerts = 0;
-
-int skyDetail = 6, simpleSky;
-int skyColumns, skyRows = 3;
-int skyhemispheres;
-float skyDist = 1600;
-int r_fullsky = false;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// The texture offset to be applied to the texture coordinates in SkyVertex().
-static float maxSideAngle = (float) PI / 3;
-static float horizonOffset = 0;
-static float skyTexOff;
-static int skyTexWidth, skyTexHeight;
-static boolean yflip;
-static fadeout_t *currentFO;
-
-// CODE --------------------------------------------------------------------
+// Sphere render state paramaters. Global for performance reasons.
+static renderhemispherestate_t rs;
 
 void Rend_SkyRegister(void)
 {
-    // Cvars
-    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
-    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1);
-    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
-
-    // Ccmds
-    C_CMD_FLAGS("skydetail", "i", SkyDetail, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("skyrows", "i", SkyDetail, CMDF_NO_DEDICATED);
+    C_VAR_INT2("rend-sky-detail", &skyDetail, 0, 3, 7, updateSphere);
+    C_VAR_INT2("rend-sky-rows", &skyRows, 0, 1, 8, updateSphere);
+    C_VAR_FLOAT("rend-sky-distance", &skyDistance, CVF_NO_MAX, 1, 0);
 }
 
-void Rend_RenderSkyModels(void)
+void Rend_SkyInit(void)
 {
-    int                 i, c;
-    float               inter;
-    skymodel_t         *sky;
-    rendmodelparams_t   params;
-    float               pos[3];
+    if(novideo || isDedicated || initedOk) return;
+    initedOk = true;
+}
 
+void Rend_SkyShutdown(void)
+{
+    if(novideo || isDedicated || !initedOk) return;
+    destroySphere();
+    initedOk = false;
+}
+
+static void renderSkyModels(void)
+{
+    rendmodelparams_t params;
+    skymodel_t* sky;
+    float pos[3];
+    float inter;
+
+    int i, c;
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 
@@ -125,8 +114,7 @@ void Rend_RenderSkyModels(void)
         if(!sky->def)
             continue;
 
-        if(sky->def->layer > 0 && sky->def->layer <= MAXSKYLAYERS &&
-           !(skyLayers[sky->def->layer - 1].flags & SLF_ENABLED))
+        if(!R_SkyLayerActive(sky->def->layer))
         {
             // The model has been assigned to a layer, but the layer is
             // not visible.
@@ -164,256 +152,239 @@ void Rend_RenderSkyModels(void)
     }
 
     // We don't want that anything interferes with what was drawn.
-    glClear(GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }
 
-/**
- * Calculate the vertex and texture coordinates.
- */
-static void SkyVertex(int r, int c)
+// Look up the precalculated vertex.
+static __inline skyvertex_t* skyVertex(int r, int c)
 {
-    // The direction must be clockwise.
-    skyvertex_t *svtx = skyVerts + SKYVTX_IDX(c, r);
-
-    // And the texture coordinates.
-    if(!yflip)                  // Flipped Y is for the lower hemisphere.
-    {
-        glTexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                     skyTexOff / skyTexWidth, r / (float) skyRows);
-    }
-    else
-    {
-        glTexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                     skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
-    }
-
-    // Also the color.
-    if(currentFO->use)
-    {
-        if(r == 0)
-            glColor4f(1, 1, 1, 0);
-        else
-            glColor3f(1, 1, 1);
-    }
-    else
-    {
-        if(r == 0)
-            glColor3f(0, 0, 0);
-        else
-            glColor3f(1, 1, 1);
-    }
-
-    // And finally the vertex itself.
-    glVertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
+    return skyVerts + (r*skyColumns + c%skyColumns);
 }
 
-static void CapSideVertex(int r, int c)
-{   // Look up the precalculated vertex.
-    skyvertex_t *svtx = skyVerts + SKYVTX_IDX(c, r);
+static void renderHemisphereCap(void)
+{
+    int c;
 
-    glVertex3f(svtx->pos[VX], svtx->pos[VY] * (yflip ? -1 : 1), svtx->pos[VZ]);
+    // Use the appropriate color.
+    glColor3fv(rs.capColor.rgb);
+
+    // Draw the cap.
+    glBegin(GL_TRIANGLE_FAN);
+    for(c = 0; c < skyColumns; ++c)
+    {
+        glVertex3fv((const GLfloat*)skyVertex(0, c)->pos);
+    }
+    glEnd();
+
+    // Are we doing a colored fadeout?
+    if(!rs.fadeout) return;
+
+    // We must fill the background for the top row since it'll be
+    // partially translucent.
+    glBegin(GL_TRIANGLE_STRIP);
+    glVertex3fv((const GLfloat*)skyVertex(0, 0)->pos);
+    for(c = 0; c < skyColumns; ++c)
+    {
+        // One step down.
+        glVertex3fv((const GLfloat*)skyVertex(1, c)->pos);
+        // And one step right.
+        glVertex3fv((const GLfloat*)skyVertex(0, c + 1)->pos);
+    }
+    glVertex3fv((const GLfloat*)skyVertex(1, c)->pos);
+    glEnd();
 }
 
-/**
- * \note                    The current texture is used.
-* @param hemi               Upper or Lower. Zero is not acceptable.
- *                          SKYHEMI_JUST_CAP can be used.
- */
-void Rend_SkyRenderer(int hemi)
+static void renderHemisphere(void)
 {
-    int                 r, c;
+#define WRITESKYVERTEX(r_, c_) { \
+    svtx = skyVertex(r_, c_); \
+    if(rs.texSize.width != 0) \
+       glTexCoord2f((c_) / (float) skyColumns, (r_) / (float) skyRows); \
+    if(rs.fadeout) \
+    { \
+        if((r_) == 0) glColor4f(1, 1, 1, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    else \
+    { \
+        if((r_) == 0) glColor3f(0, 0, 0); \
+        else          glColor3f(1, 1, 1); \
+    } \
+    glVertex3fv((const GLfloat*)svtx->pos); \
+}
 
-    if(hemi & SKYHEMI_LOWER)
-        yflip = true;
-    else
-        yflip = false;
-
-    // The top row (row 0) is the one that's faded out.
-    // There must be at least 4 columns. The preferable number is 4n, where
-    // n is 1, 2, 3... There should be at least two rows because the first
-    // one is always faded.
-    if(hemi & SKYHEMI_JUST_CAP)
-    {
-        glDisable(GL_TEXTURE_2D);
-        // Use the appropriate color.
-        if(currentFO->use)
-            glColor3fv(currentFO->rgb);
-        else
-            glColor3f(0, 0, 0);
-
-        // Draw the cap.
-        glBegin(GL_TRIANGLE_FAN);
-        for(c = 0; c < skyColumns; ++c)
-            CapSideVertex(0, c);
-        glEnd();
-
-        // If we are doing a colored fadeout...
-        if(hemi & SKYHEMI_FADEOUT_BG)
-        {
-            // We must fill the background for the top row since it'll
-            // be partially translucent.
-            glBegin(GL_TRIANGLE_STRIP);
-            CapSideVertex(0, 0);
-            for(c = 0; c < skyColumns; ++c)
-            {
-                CapSideVertex(1, c); // One step down.
-                CapSideVertex(0, c + 1); // And one step right.
-            }
-            CapSideVertex(1, c);
-            glEnd();
-        }
-
-        glEnable(GL_TEXTURE_2D);
-        return;
-    }
-
-    // The total number of triangles per hemisphere can be calculated
-    // as follows: rows * columns * 2 + 2 (for the top cap).
+    const skyvertex_t* svtx;
+    int r, c;
     for(r = 0; r < skyRows; ++r)
     {
-        if(simpleSky)
+        glBegin(GL_TRIANGLE_STRIP);
+        WRITESKYVERTEX(r, 0);
+        WRITESKYVERTEX(r + 1, 0);
+        for(c = 1; c <= skyColumns; ++c)
         {
-            glBegin(GL_QUADS);
-            for(c = 0; c < skyColumns; ++c)
-            {
-                SkyVertex(r, c);
-                SkyVertex(r + 1, c);
-                SkyVertex(r + 1, c + 1);
-                SkyVertex(r, c + 1);
-            }
-            glEnd();
+            WRITESKYVERTEX(r, c);
+            WRITESKYVERTEX(r + 1, c);
+        }
+        glEnd();
+    }
+}
+
+typedef enum {
+    HC_NONE = 0,
+    HC_TOP,
+    HC_BOTTOM
+} hemispherecap_t;
+
+static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t setupCap)
+{
+    int magMode = GL_LINEAR;
+    DGLuint tex = 0;
+
+    // Default state is no texture and no fadeout.
+    rs.texSize.width = rs.texSize.height = 0;
+    if(setupCap != HC_NONE)
+        rs.fadeout = false;
+    rs.texXFlip = true;
+
+    if(renderTextures != 0)
+    {
+        const materialvariantspecification_t* spec;
+        const materialsnapshot_t* ms;
+        material_t* mat;
+
+        if(renderTextures == 2)
+        {
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
         }
         else
         {
-            glBegin(GL_TRIANGLE_STRIP);
-            SkyVertex(r, 0);
-            SkyVertex(r + 1, 0);
-            for(c = 1; c <= skyColumns; ++c)
+            mat = R_SkyLayerMaterial(layer);
+            if(!mat)
             {
-                SkyVertex(r, c);
-                SkyVertex(r + 1, c);
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+                rs.texXFlip = false;
             }
-            glEnd();
+        }
+        assert(mat);
+
+        spec = Materials_VariantSpecificationForContext(MC_SKYSPHERE,
+            TSF_NO_COMPRESSION | (R_SkyLayerMasked(layer)? TSF_ZEROMASK : 0),
+            0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
+        ms = Materials_Prepare(mat, spec, true);
+
+        tex     = MSU_gltexture(ms, MTU_PRIMARY);
+        magMode = MSU(ms, MTU_PRIMARY).magMode;
+        rs.texSize.width = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
+        rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
+        if(rs.texSize.width == 0 || rs.texSize.height == 0)
+        {
+            // Disable texturing.
+            rs.texSize.width = rs.texSize.height = 0;
+            tex = 0;
+        }
+
+        if(setupCap != HC_NONE)
+        {
+            const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
+                    Texture_Analysis(MSU_texture(ms, MTU_PRIMARY),
+                        (setupCap == HC_TOP? TA_LINE_TOP_COLOR : TA_LINE_BOTTOM_COLOR));
+            const float fadeoutLimit = R_SkyLayerFadeoutLimit(layer);
+            if(!avgLineColor)
+                Con_Error("configureRenderHemisphereStateForLayer: Texture id:%u has no %s analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)), (setupCap == HC_TOP? "TA_LINE_TOP_COLOR" : "TA_LINE_BOTTOM_COLOR"));
+
+            V3_Copy(rs.capColor.rgb, avgLineColor->color.rgb);
+            // Is the colored fadeout in use?
+            rs.fadeout = (rs.capColor.red   >= fadeoutLimit ||
+                          rs.capColor.green >= fadeoutLimit ||
+                          rs.capColor.blue  >= fadeoutLimit);
         }
     }
-}
 
-static void setupFadeout(skylayer_t* slayer)
-{
-    if(slayer->mat)
+    if(setupCap != HC_NONE && !rs.fadeout)
     {
-        int             i;
-        material_load_params_t params;
-        material_snapshot_t ms;
-
-        // Ensure we have up to date info on the material.
-        memset(&params, 0, sizeof(params));
-        params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
-        if(slayer->flags & SLF_MASKED)
-            params.flags |= MLF_ZEROMASK;
-
-        Material_Prepare(&ms, slayer->mat, true, &params);
-        slayer->fadeout.rgb[CR] = ms.topColor[CR];
-        slayer->fadeout.rgb[CG] = ms.topColor[CG];
-        slayer->fadeout.rgb[CB] = ms.topColor[CB];
-
-        // Determine if it should be used.
-        for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
-            if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
-            {
-                // Colored fadeout is needed.
-                slayer->fadeout.use = true;
-                break;
-            }
-
-        return;
+        // Default color is black.
+        V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
 
-    // An invalid texture, default to black.
-    slayer->fadeout.rgb[CR] = slayer->fadeout.rgb[CG] =
-        slayer->fadeout.rgb[CB] = 0;
-    slayer->fadeout.use = true;
+    GL_BindTexture(tex, magMode);
 }
 
-void Rend_RenderSkyHemisphere(int whichHemi)
+/// @param flags  @see skySphereRenderFlags
+static void renderSkyHemisphere(int flags)
 {
-    int                 i;
-    skylayer_t*         slayer;
+    int firstSkyLayer = R_SkyFirstActiveLayer();
+    const boolean yflip = !!(flags & SKYHEMI_LOWER);
+    hemispherecap_t cap = !!(flags & SKYHEMI_LOWER)? HC_BOTTOM : HC_TOP;
 
-    // The current fadeout is the first layer's fadeout.
-    currentFO = &skyLayers[firstLayer].fadeout;
+    // Rebuild the hemisphere model if necessary.
+    rebuildHemisphere();
+
+    if(yflip)
+    {
+        // The lower hemisphere must be flipped.
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glScalef(1.0f, -1.0f, 1.0f);
+    }
 
     // First render the cap and the background for fadeouts, if needed.
-    // The color for both is the current fadeout color.
-    Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP |
-                     (currentFO->use ? SKYHEMI_FADEOUT_BG : 0));
+    configureRenderHemisphereStateForLayer(firstSkyLayer, cap);
+    renderHemisphereCap();
 
-    for(i = firstLayer, slayer = &skyLayers[firstLayer]; i < MAXSKYLAYERS;
-        ++i, slayer++)
+    if(!(flags & SKYHEMI_JUST_CAP))
     {
-        if(slayer->flags & SLF_ENABLED)
+        int i;
+
+        for(i = firstSkyLayer; i <= MAX_SKY_LAYERS; ++i)
         {
-            byte            result = 0;
-
-            if(!slayer->mat)
-                Con_Error("Rend_RenderSkyHemisphere: Sky layer "
-                          "without a material!\n");
-
-            // The texture is actually loaded when an update is done.
-            if(renderTextures)
+            if(!R_SkyLayerActive(i)) continue;
+            if(i != firstSkyLayer)
             {
-                material_load_params_t params;
-                material_snapshot_t ms;
-
-                memset(&params, 0, sizeof(params));
-                params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
-                if(slayer->flags & SLF_MASKED)
-                    params.flags |= MLF_ZEROMASK;
-
-                result = Material_Prepare(&ms, slayer->mat, true, &params);
-                skyTexWidth =
-                    GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
-                skyTexHeight =
-                    GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
-
-                if(result)
-                {   // Texture was reloaded.
-                    setupFadeout(slayer);
-                }
-
-                GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                               ms.units[MTU_PRIMARY].magMode);
-            }
-            else
-            {
-                glBindTexture(GL_TEXTURE_2D, 0);
-                skyTexWidth = skyTexHeight = 64;
+                configureRenderHemisphereStateForLayer(i, HC_NONE);
             }
 
-            skyTexOff = slayer->offset;
+            if(rs.texSize.width != 0)
+            {
+                glEnable(GL_TEXTURE_2D);
+                glMatrixMode(GL_TEXTURE);
+                glPushMatrix();
+                glLoadIdentity();
+                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1.0f : -1.0f), yflip? -1.0f : 1.0f, 1.0f);
+                glTranslatef(rs.texOffset / rs.texSize.width, yflip? -1.0f : 0.0f, 0.0f);
+            }
 
-            Rend_SkyRenderer(whichHemi);
+            renderHemisphere();
+
+            if(rs.texSize.width != 0)
+            {
+                glMatrixMode(GL_TEXTURE);
+                glPopMatrix();
+                glDisable(GL_TEXTURE_2D);
+            }
         }
+    }
+
+    if(yflip)
+    {
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
     }
 }
 
-void Rend_RenderSky(int hemis)
+void Rend_RenderSky(void)
 {
-    // IS there a sky to be rendered?
-    if(!hemis || firstLayer == -1)
-        return;
+    if(novideo || isDedicated || !initedOk) return;
+
+    // Is there a sky to be rendered?
+    if(!R_SkyFirstActiveLayer()) return;
 
     // If sky models have been inited, they will be used.
     if(!skyModelsInited || alwaysDrawSphere)
     {
-        // Always render the full sky?
-        if(r_fullsky)
-            hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
-
-        // We don't want anything written in the depth buffer, not yet.
+        // We don't want anything written in the depth buffer.
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
         // Disable culling, all triangles face the viewer.
@@ -424,18 +395,16 @@ void Rend_RenderSky(int hemis)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glTranslatef(vx, vy, vz);
-        glScalef(skyDist, skyDist, skyDist);
+        glScalef(skyDistance, skyDistance, skyDistance);
 
-        // Draw the possibly visible hemispheres.
-        if(hemis & SKYHEMI_LOWER)
-            Rend_RenderSkyHemisphere(SKYHEMI_LOWER);
-        if(hemis & SKYHEMI_UPPER)
-            Rend_RenderSkyHemisphere(SKYHEMI_UPPER);
+        // Always draw both hemispheres.
+        renderSkyHemisphere(SKYHEMI_LOWER);
+        renderSkyHemisphere(SKYHEMI_UPPER);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        // Enable the disabled things.
+        // Restore assumed default GL state.
         glEnable(GL_CULL_FACE);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -444,211 +413,94 @@ void Rend_RenderSky(int hemis)
     // How about some 3D models?
     if(skyModelsInited)
     {
-        Rend_RenderSkyModels();
+        renderSkyModels();
     }
 }
 
-/**
- * Calculate sky vertices.
- */
-void Rend_InitSky(void)
+static void destroySphere(void)
 {
-    int                 i;
-
-    firstLayer = 0;
-
-    Rend_SkyDetail(skyDetail, skyRows);
-
-    // Initialize the layers.
-    for(i = 0; i < MAXSKYLAYERS; ++i)
+    if(skyVerts)
     {
-        skylayer_t*         slayer = &skyLayers[i];
-
-        slayer->mat = NULL; // No material.
-        slayer->fadeout.limit = .3f;
+        free(skyVerts);
+        skyVerts = NULL;
     }
-}
-
-void Rend_ShutdownSky(void)
-{
-    M_Free(skyVerts);
-    skyVerts = NULL;
     numSkyVerts = 0;
 }
 
-void Rend_SkyDetail(int quarterDivs, int rows)
+/**
+ * The top row (row 0) is the one that's faded out.
+ * There must be at least 4 columns. The preferable number is 4n, where
+ * n is 1, 2, 3... There should be at least two rows because the first
+ * one is always faded.
+ *
+ * The total number of triangles per hemisphere can be calculated thus:
+ *
+ * Sum: rows * columns * 2 + (hemisphere)
+ *      rows * 2 + (fadeout)
+ *      rows - 2 (cap)
+ */
+static void constructSphere(void)
 {
-    float               topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
-    int                 c, r;
-    skyvertex_t        *svtx;
+    const float maxSideAngle  = (float) PI / 2 * R_SkyHeight();
+    const float horizonOffset = (float) PI / 2 * R_SkyHorizonOffset();
+    const float scale = 1;
+    float realRadius, topAngle, sideAngle;
+    int c, r;
 
-    if(quarterDivs < 1)
-        quarterDivs = 1;
-    if(rows < 1)
-        rows = 1;
+    if(skyDetail < 1) skyDetail = 1;
+    if(skyRows < 1) skyRows = 1;
 
-    skyDetail = quarterDivs;
     skyColumns = 4 * skyDetail;
-    skyRows = rows;
 
-    // Calculate the sky vertices.
     numSkyVerts = skyColumns * (skyRows + 1);
-
-    // Allocate memory for it.
-    skyVerts = M_Realloc(skyVerts, sizeof(*skyVerts) * numSkyVerts);
+    skyVerts = (skyvertex_t*)realloc(skyVerts, sizeof *skyVerts * numSkyVerts);
+    if(!skyVerts)
+        Con_Error("constructSphere: Failed (re)allocation of %lu bytes for SkyVertex list.", (unsigned long) sizeof *skyVerts * numSkyVerts);
 
     // Calculate the vertices.
-    for(r = 0; r <= skyRows; ++r)
+    for(r = 0; r < skyRows + 1; ++r)
         for(c = 0; c < skyColumns; ++c)
         {
-            svtx = skyVerts + SKYVTX_IDX(c, r);
+            skyvertex_t* svtx = skyVertex(r, c);
+
             topAngle = ((c / (float) skyColumns) *2) * PI;
-            sideAngle =
-                horizonOffset + maxSideAngle * (skyRows - r) / (float) skyRows;
+            sideAngle = horizonOffset + maxSideAngle * (skyRows - r) / (float) skyRows;
             realRadius = scale * cos(sideAngle);
             svtx->pos[VX] = realRadius * cos(topAngle);
-            svtx->pos[VY] = scale * sin(sideAngle);   // The height.
+            svtx->pos[VY] = scale * sin(sideAngle); // The height.
             svtx->pos[VZ] = realRadius * sin(topAngle);
         }
 }
 
-static void updateLayerStats(void)
+static void rebuildHemisphere(void)
 {
-    int                 i = 0;
+    static boolean firstBuild = true;
+    static float oldHorizonOffset;
+    static float oldHeight;
 
-    // -1 denotes 'no active layers'.
-    firstLayer = -1;
-    activeLayers = 0;
-    for(i = 0; i < MAXSKYLAYERS; ++i)
+    // Rebuild our hemisphere model if any paramaters have changed.
+    if(firstBuild || R_SkyHorizonOffset() != oldHorizonOffset)
     {
-        if(skyLayers[i].flags & SLF_ENABLED)
-        {
-            activeLayers++;
-            if(firstLayer == -1)
-                firstLayer = i;
-        }
+        oldHorizonOffset = R_SkyHorizonOffset();
+        needRebuildHemisphere = true;
     }
+    if(firstBuild || R_SkyHeight() != oldHeight)
+    {
+        oldHeight = R_SkyHeight();
+        needRebuildHemisphere = true;
+    }
+    firstBuild = false;
+
+    if(!needRebuildHemisphere) return;
+
+    // We have work to do...
+    constructSphere();
+    needRebuildHemisphere = false;
 }
 
-static void internalSkyParams(skylayer_t* slayer, int param, void* data)
+/// \note A CVar callback.
+static void updateSphere(void)
 {
-    switch(param)
-    {
-    case DD_ENABLE:
-        slayer->flags |= SLF_ENABLED;
-        updateLayerStats();
-        break;
-
-    case DD_DISABLE:
-        slayer->flags &= ~SLF_ENABLED;
-        updateLayerStats();
-        break;
-
-    case DD_MASK:
-        {
-        boolean             deleteTextures = false;
-        if(*((int*)data) == DD_YES)
-        {
-            // Invalidate the loaded texture, if necessary.
-            if(slayer->mat && !(slayer->flags & SLF_MASKED))
-                deleteTextures = true;
-            slayer->flags |= SLF_MASKED;
-        }
-        else
-        {
-            // Invalidate the loaded texture, if necessary.
-            if(slayer->mat && (slayer->flags & SLF_MASKED))
-                deleteTextures = true;
-            slayer->flags &= ~SLF_MASKED;
-        }
-
-        if(deleteTextures)
-            Material_DeleteTextures(slayer->mat);
-        }
-        break;
-
-    case DD_MATERIAL:
-        if((slayer->mat = P_ToMaterial(*(materialnum_t*) data)))
-        {
-            material_load_params_t params;
-
-            memset(&params, 0, sizeof(params));
-            params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
-            if(slayer->flags & SLF_MASKED)
-                params.flags |= MLF_ZEROMASK;
-
-            Material_Prepare(NULL, slayer->mat, true, &params);
-        }
-
-        setupFadeout(slayer);
-        break;
-
-    case DD_OFFSET:
-        slayer->offset = *((float*) data);
-        break;
-
-    case DD_COLOR_LIMIT:
-        slayer->fadeout.limit = *((float*) data);
-        setupFadeout(slayer);
-        break;
-
-    default:
-        Con_Error("R_SkyParams: Bad parameter (%d).\n", param);
-        break;
-    }
-}
-
-void Rend_SkyParams(int layer, int param, void* data)
-{
-    int                 i;
-
-    if(isDedicated)
-        return;
-
-    if(layer == DD_SKY) // The whole sky?
-    {
-        switch(param)
-        {
-        case DD_COLUMNS:
-            Rend_SkyDetail(*((int*) data), skyRows);
-            break;
-
-        case DD_ROWS:
-            Rend_SkyDetail(skyDetail, *((int*) data));
-            break;
-
-        case DD_HEIGHT:
-            maxSideAngle = PI / 2 * *((float*) data);
-            // Recalculate the vertices.
-            Rend_SkyDetail(skyDetail, skyRows);
-            break;
-
-        case DD_HORIZON:        // horizon offset angle
-            horizonOffset = PI / 2 * *((float*) data);
-            // Recalculate the vertices.
-            Rend_SkyDetail(skyDetail, skyRows);
-            break;
-
-        default:
-            // Operate on all layers.
-            for(i = 0; i < MAXSKYLAYERS; ++i)
-                internalSkyParams(&skyLayers[i], param, data);
-        }
-    }
-    // This is for a specific layer.
-    else if(layer >= 0 && layer < MAXSKYLAYERS)
-        internalSkyParams(&skyLayers[layer], param, data);
-}
-
-D_CMD(SkyDetail)
-{
-    if(!stricmp(argv[0], "skydetail"))
-    {
-        Rend_SkyDetail(strtol(argv[1], NULL, 0), skyRows);
-    }
-    else if(!stricmp(argv[0], "skyrows"))
-    {
-        Rend_SkyDetail(skyDetail, strtol(argv[1], NULL, 0));
-    }
-    return true;
+    // Defer this task until render time, when we can be sure we are in correct thread.
+    needRebuildHemisphere = true;
 }

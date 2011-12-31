@@ -134,7 +134,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+    strncpy(buf, Str_Text(Game_IdentityKey(theGame)), sizeof(buf) - 1);
 
 #ifdef _DEBUG
     Con_Message("Cl_SendHello: game mode = %s\n", buf);
@@ -178,6 +178,8 @@ void Cl_AnswerHandshake(void)
         ddPlayers[i].shared.inGame = (playersInGame & (1 << i)) != 0;
     }
     consolePlayer = displayPlayer = myConsole;
+
+    Net_AllocClientBuffers(consolePlayer);
 
     isClient = true;
     isServer = false;
@@ -365,6 +367,11 @@ void Cl_GetPackets(void)
             // Server responds to our login request. Let's see if we
             // were successful.
             netLoggedIn = Reader_ReadByte(msgReader);
+            break;
+
+        case PSV_FINALE:
+        case PSV_FINALE2:
+            Cl_Finale(netBuffer.msg.type, netBuffer.msg.data);
             break;
 
         default:

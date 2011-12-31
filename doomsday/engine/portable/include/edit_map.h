@@ -30,40 +30,41 @@
 
 #include "p_mapdata.h"
 #include "m_binarytree.h"
-#include "p_materialmanager.h"
+#include "materials.h"
 
 // Editable map.
 typedef struct editmap_s {
-    char            name[9];
-    uint            numVertexes;
-    vertex_t**      vertexes;
-    uint            numLineDefs;
-    linedef_t**     lineDefs;
-    uint            numSideDefs;
-    sidedef_t**     sideDefs;
-    uint            numSectors;
-    sector_t**      sectors;
-    uint            numPolyObjs;
-    polyobj_t**     polyObjs;
+    uint numVertexes;
+    vertex_t** vertexes;
+    uint numLineDefs;
+    linedef_t** lineDefs;
+    uint numSideDefs;
+    sidedef_t** sideDefs;
+    uint numSectors;
+    sector_t** sectors;
+    uint numPolyObjs;
+    polyobj_t** polyObjs;
 
     // The following is for game-specific map object data.
-    gameobjdata_t   gameObjData;
+    gameobjdata_t gameObjData;
 } editmap_t;
 
-boolean         MPE_Begin(const char *name);
+editmap_t editMap;
+
+boolean         MPE_Begin(const char* mapUri);
 boolean         MPE_End(void);
 
 uint            MPE_VertexCreate(float x, float y);
 boolean         MPE_VertexCreatev(size_t num, float *values, uint *indices);
 uint            MPE_SidedefCreate(uint sector, short flags,
-                                  materialnum_t topMaterial,
+                                  materialid_t topMaterial,
                                   float topOffsetX, float topOffsetY, float topRed,
                                   float topGreen, float topBlue,
-                                  materialnum_t middleMaterial,
+                                  materialid_t middleMaterial,
                                   float middleOffsetX, float middleOffsetY,
                                   float middleRed, float middleGreen,
                                   float middleBlue, float middleAlpha,
-                                  materialnum_t bottomMaterial,
+                                  materialid_t bottomMaterial,
                                   float bottomOffsetX, float bottomOffsetY,
                                   float bottomRed, float bottomGreen,
                                   float bottomBlue);
@@ -71,7 +72,7 @@ uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSid
                                   int flags);
 uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
 uint            MPE_PlaneCreate(uint sector, float height,
-                                materialnum_t material,
+                                materialid_t material,
                                 float matOffsetX, float matOffsetY,
                                 float r, float g, float b, float a,
                                 float normalX, float normalY, float normalZ);
@@ -90,12 +91,12 @@ boolean         MPE_GameObjProperty(const char *objName, uint idx,
 #define PRUNE_SECTORS       0x8
 #define PRUNE_ALL           (PRUNE_LINEDEFS|PRUNE_VERTEXES|PRUNE_SIDEDEFS|PRUNE_SECTORS)
 
-void            MPE_PruneRedundantMapData(editmap_t *map, int flags);
+void            MPE_PruneRedundantMapData(editmap_t* map, int flags);
 
-boolean         MPE_RegisterUnclosedSectorNear(sector_t *sec, double x, double y);
+boolean         MPE_RegisterUnclosedSectorNear(sector_t* sec, double x, double y);
 void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
 
-gamemap_t      *MPE_GetLastBuiltMap(void);
-vertex_t       *createVertex(void);
+gamemap_t*     MPE_GetLastBuiltMap(void);
+vertex_t*      createVertex(void);
 #endif

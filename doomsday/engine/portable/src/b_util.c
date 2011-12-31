@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,7 @@
  */
 
 /**
- * b_util.c: Bindings-related Utility Functions
+ * Bindings-related Utility Functions.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 
 #include "b_main.h"

@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,29 +23,51 @@
  */
 
 /**
- * rend_main.h: Rendering Subsystem
+ * Core of the rendering subsystem.
  */
 
-#ifndef __DOOMSDAY_REND_MAIN_H__
-#define __DOOMSDAY_REND_MAIN_H__
+#ifndef LIBDENG_REND_MAIN_H
+#define LIBDENG_REND_MAIN_H
 
 #include <math.h>
 #include "rend_list.h"
 #include "r_things.h"
 
+#define GLOW_HEIGHT_MAX                     (1024.f) /// Absolute maximum
+
+#define OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
+
+#define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
+
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
-extern byte smoothTexAnim;
+extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
-extern int missileBlend;
 extern boolean usingFog;
 extern float fogColor[4];
 extern int rAmbient;
 extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
+extern int devRendSkyMode;
 
-void            Rend_Register(void);
-void            Rend_Init(void);
-void            Rend_Reset(void);
+extern int useDynlights;
+extern float dynlightFactor, dynlightFogBright;
+
+extern int useWallGlow;
+extern float glowFactor, glowHeightFactor;
+extern int glowHeightMax;
+
+extern int useShadows;
+extern float shadowFactor;
+extern int shadowMaxRadius;
+extern int shadowMaxDistance;
+
+extern int useShinySurfaces;
+
+void Rend_Register(void);
+
+void Rend_Init(void);
+void Rend_Shutdown(void);
+void Rend_Reset(void);
 
 void            Rend_RenderMap(void);
 void            Rend_ModelViewMatrix(boolean use_angles);
@@ -53,17 +75,17 @@ void            Rend_ModelViewMatrix(boolean use_angles);
 #define Rend_PointDist2D(c) (fabs((vz-c[VY])*viewsidex - (vx-c[VX])*viewsidey))
 
 float           Rend_PointDist3D(const float c[3]);
-float           Rend_SectorLight(sector_t* sec);
 void            Rend_ApplyTorchLight(float* color, float distance);
-int             Rend_MidMaterialPos(float* bottomleft, float* bottomright,
-                                    float* topleft, float* topright,
-                                    float* texoffy, float tcyoff, float texHeight,
-                                    boolean lower_unpeg, boolean clipTop,
-                                    boolean clipBottom);
-boolean         Rend_DoesMidTextureFillGap(linedef_t* line, int backside);
 
-void            Rend_ApplyLightAdaptation(float* lightvalue);
-float           Rend_GetLightAdaptVal(float lightvalue);
+/**
+ * Apply range compression delta to @a lightValue.
+ * @param lightValue  Address of the value for adaptation.
+ */
+void Rend_ApplyLightAdaptation(float* lightValue);
 
-void            Rend_CalcLightModRange(struct cvar_s* unused);
-#endif
+/// Same as Rend_ApplyLightAdaptation except the delta is returned.
+float Rend_LightAdaptationDelta(float lightvalue);
+
+void            Rend_CalcLightModRange(void);
+
+#endif /* LIBDENG_REND_MAIN_H */

@@ -1,4 +1,4 @@
-/**\file
+/**\file s_sfx.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_sfx.c: Sound Effects
+ * Sound Effects.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,6 +37,8 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+#include "de_render.h"
+
 #include "sys_audio.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1004,7 +1006,7 @@ void Sfx_InitChannels(void)
     }
 
     // Allocate and init the channels.
-    channels = Z_Calloc(sizeof(*channels) * numChannels, PU_STATIC, 0);
+    channels = Z_Calloc(sizeof(*channels) * numChannels, PU_APPSTATIC, 0);
 
     // Create channels according to the current mode.
     Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits,
@@ -1065,11 +1067,11 @@ boolean Sfx_Init(void)
     // Check if sound has been disabled with a command line option.
     if(ArgExists("-nosfx"))
     {
-        Con_Message("Sfx_Init: Disabled.\n");
+        Con_Message("Sound Effects disabled.\n");
         return true;
     }
 
-    Con_Message("Sfx_Init: Initializing...\n");
+    VERBOSE( Con_Message("Initializing Sound Effects subsystem...\n") )
 
     // Use the external SFX playback facilities, if available.
     if(audioDriver == &audiod_dummy)
@@ -1231,44 +1233,55 @@ void Sfx_MapChange(void)
 
 void Sfx_DebugInfo(void)
 {
-    int                 i, lh = FR_TextHeight("W") - 3;
-    sfxchannel_t*       ch;
-    char                buf[200];
-    uint                cachesize, ccnt;
+    int i, lh;
+    sfxchannel_t* ch;
+    char buf[200];
+    uint cachesize, ccnt;
 
-    glColor3f(1, 1, 0);
+    glEnable(GL_TEXTURE_2D);
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 0, 1);
+
+    lh = FR_SingleLineHeight("Q");
     if(!sfxAvail)
     {
-        FR_ShadowTextOut("Sfx disabled", 0, 0);
+        FR_DrawTextXY("Sfx disabled", 0, 0);
+        glDisable(GL_TEXTURE_2D);
         return;
     }
 
     if(refMonitor)
-        FR_ShadowTextOut("!", 0, 0);
+        FR_DrawTextXY("!", 0, 0);
 
     // Sample cache information.
     Sfx_GetCacheInfo(&cachesize, &ccnt);
     sprintf(buf, "Cached:%i (%i)", cachesize, ccnt);
-    glColor3f(1, 1, 1);
-    FR_ShadowTextOut(buf, 10, 0);
+    FR_SetColor(1, 1, 1);
+    FR_DrawTextXY(buf, 10, 0);
 
     // Print a line of info about each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
         if(ch->buffer && (ch->buffer->flags & SFXBF_PLAYING))
-            glColor3f(1, 1, 1);
+        {
+            FR_SetColor(1, 1, 1);
+        }
         else
-            glColor3f(1, 1, 0);
+        {
+            FR_SetColor(1, 1, 0);
+        }
 
         sprintf(buf, "%02i: %c%c%c v=%3.1f f=%3.3f st=%i et=%u", i,
                 !(ch->flags & SFXCF_NO_ORIGIN) ? 'O' : '.',
                 !(ch->flags & SFXCF_NO_ATTENUATION) ? 'A' : '.',
                 ch->emitter ? 'E' : '.', ch->volume, ch->frequency,
                 ch->startTime, ch->buffer ? ch->buffer->endTime : 0);
-        FR_ShadowTextOut(buf, 5, lh * (1 + i * 2));
+        FR_DrawTextXY(buf, 5, lh * (1 + i * 2));
 
-        if(!ch->buffer)
-            continue;
+        if(!ch->buffer) continue;
+
         sprintf(buf,
                 "    %c%c%c%c id=%03i/%-8s ln=%05i b=%i rt=%2i bs=%05i "
                 "(C%05i/W%05i)", (ch->buffer->flags & SFXBF_3D) ? '3' : '.',
@@ -1280,6 +1293,8 @@ void Sfx_DebugInfo(void)
                 id : "", ch->buffer->sample ? ch->buffer->sample->size : 0,
                 ch->buffer->bytes, ch->buffer->rate / 1000, ch->buffer->length,
                 ch->buffer->cursor, ch->buffer->written);
-        FR_ShadowTextOut(buf, 5, lh * (2 + i * 2));
+        FR_DrawTextXY(buf, 5, lh * (2 + i * 2));
     }
+
+    glDisable(GL_TEXTURE_2D);
 }

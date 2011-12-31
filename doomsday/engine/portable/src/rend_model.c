@@ -1,4 +1,4 @@
-/**\file
+/**\file rend_model.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,14 +23,13 @@
  */
 
 /**
- * rend_model.c: 3D Model Renderer v2.0
+ * 3D Model Renderer v2.0
  *
- * Note: Light vectors and triangle normals are considered to be
- * in a totally independent, right-handed coordinate system.
+ * Note: Light vectors and triangle normals are in an entirely independent,
+ * right-handed coordinate system.
  *
- * There is some more confusion with Y and Z axes as the game uses
- * Z as the vertical axis and the rendering code and model definitions
- * use the Y axis.
+ * There is some more confusion with Y and Z axes as the game uses Z as the
+ * vertical axis and the rendering code and model definitions use the Y axis.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,7 +45,10 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "net_main.h"           // for gametic
+#include "net_main.h" // for gametic
+#include "texture.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -449,67 +451,43 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t *nextFrame = NULL;
 
-    //int mainFlags = mf->flags;
     int         subFlags = smf->flags;
     int         numVerts;
     int         useSkin;
     int         i, c;
     float       endPos, offset;
-    float       alpha, customAlpha;
+    float       alpha;
     float       delta[3], color[4];
     float       ambient[4];
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
-    blendmode_t blending = mf->def->sub[number].blendMode;
+    blendmode_t blending;
     DGLuint     skinTexture = 0, shinyTexture = 0;
     int         zSign = (params->mirror? -1 : 1);
 
-    if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
+    // Do not bother with infinitely small models...
+    if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
+ 
+    alpha = params->ambientColor[CA];
+    // Is the submodel-defined alpha multiplier in effect?
+    if(!(params->flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        // Why bother? It's infinitely small...
-        return;
+        alpha *= smf->alpha * reciprocal255;
     }
 
-    // Submodel can define a custom Transparency level.
-    customAlpha = 1 - smf->alpha / 255.0f;
+    // Would this be visible?
+    if(alpha <= 0) return;
 
-    if(missileBlend &&
-       ((params->flags & DDMF_BRIGHTSHADOW) || (subFlags & MFF_BRIGHTSHADOW)))
+    // Is the submodel-defined blend mode in effect?
+    if(params->flags & DDMF_BRIGHTSHADOW)
     {
-        alpha = .80f;
         blending = BM_ADD;
     }
-    else if(subFlags & MFF_BRIGHTSHADOW2)
-    {
-        alpha = customAlpha;
-        blending = BM_ADD;
-    }
-    else if(subFlags & MFF_DARKSHADOW)
-    {
-        alpha = customAlpha;
-        blending = BM_DARK;
-    }
-    else if((params->flags & DDMF_SHADOW) || (subFlags & MFF_SHADOW2))
-        alpha = .2f;
-    else if((params->flags & DDMF_ALTSHADOW) || (subFlags & MFF_SHADOW1))
-        alpha = .62f;
     else
-        alpha = customAlpha;
-
-    // More custom alpha?
-    if(params->ambientColor[CA] >= 0)
-        alpha *= params->ambientColor[CA];
-    if(alpha <= 0)
-        return; // Fully transparent.
-    if(alpha > 1)
-        alpha = 1;
-
-    // Extra blending modes.
-    if(subFlags & MFF_SUBTRACT)
-        blending = BM_SUBTRACT;
-    if(subFlags & MFF_REVERSE_SUBTRACT)
-        blending = BM_REVERSE_SUBTRACT;
+    {
+        blending = smf->blendMode;
+    }
 
     useSkin = smf->skin;
 
@@ -633,7 +611,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         float   lodFactor;
 
-        lodFactor = rend_model_lod * theWindow->width / 640.0f / (fieldOfView / 90.0f);
+        lodFactor = rend_model_lod * theWindow->geometry.size.width / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 
@@ -695,17 +673,27 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                          -params->yaw, -params->pitch);
     }
 
-    // Calculate shiny coordinates.
-    shininess = mf->def->sub[number].shiny * modelShinyFactor;
-    if(shininess < 0)
-        shininess = 0;
-    if(shininess > 1)
-        shininess = 1;
-
+    shininess = MINMAX_OF(0, mf->def->sub[number].shiny * modelShinyFactor, 1);
+    // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        const skinname_t*       sn;
+        texture_t* tex = mf->sub[number].shinySkin;
+        if(tex)
+        {
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                    false, false, false, false);
+            shinyTexture = GL_PrepareTexture(tex, texSpec);
+        }
+        else
+        {
+            shininess = 0;
+        }
+    }
 
+    if(shininess > 0)
+    {   // Calculate shiny coordinates.
         shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
@@ -764,28 +752,18 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 color[c] = shinyColor[c];
         }
         color[3] = shininess;
-
-        // Ensure we've prepared the shiny skin.
-        shinyTexture = 0;
-        if((sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
-        {
-            const gltexture_inst_t* texInst;
-
-            if((texInst = GL_PrepareGLTexture(sn->id, NULL, NULL)))
-                shinyTexture = texInst->id;
-        }
     }
 
     if(renderTextures == 2)
     {   // For lighting debug, render all surfaces using the gray texture.
-        material_t*         mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
-
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
         if(mat)
         {
-            material_snapshot_t ms;
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-            Material_Prepare(&ms, mat, true, NULL);
-            skinTexture = ms.units[MTU_PRIMARY].texInst->id;
+            skinTexture = MSU_gltexture(ms, MTU_PRIMARY);
         }
         else
         {
@@ -794,24 +772,20 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        const skinname_t*       sn;
+        texture_t* tex;
 
-
+        skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;
 
-        skinTexture = 0;
-
-        if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
+        tex = mdl->skins[useSkin].texture;
+        if(tex)
         {
-            const gltexture_inst_t* texInst;
-            material_load_params_t params;
-
-            memset(&params, 0, sizeof(params));
-            params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
-
-            if((texInst = GL_PrepareGLTexture(sn->id, &params, NULL)))
-                skinTexture = texInst->id;
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
+                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
+                    GL_REPEAT, 1, -2, -1, true, true, false, false);
+            skinTexture = GL_PrepareTexture(tex, texSpec);
         }
     }
 
@@ -862,10 +836,10 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_SelectTexUnits(2);
                 GL_ModulateTexture(11);
 
-                GL_ActiveTexture(GL_TEXTURE1);
+                glActiveTexture(GL_TEXTURE1);
                 GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
-                GL_ActiveTexture(GL_TEXTURE0);
+                glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
@@ -896,7 +870,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
 
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
         // Multiply by shininess.
@@ -904,7 +878,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
@@ -935,14 +909,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(const rendmodelparams_t *params)
+void Rend_RenderModel(const rendmodelparams_t* params)
 {
-    int         i;
-
     if(!params || !params->mf)
         return;
 
     // Render all the submodels of this model.
+    {uint i;
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
         if(params->mf->sub[i].model)
@@ -959,5 +932,24 @@ void Rend_RenderModel(const rendmodelparams_t *params)
             if(disableZ)
                 glDepthMask(GL_TRUE);
         }
+    }}
+
+    if(devMobjVLights && params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+
+        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
     }
 }

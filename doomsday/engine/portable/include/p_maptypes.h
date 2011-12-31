@@ -73,7 +73,6 @@ typedef struct vertex_s {
 
 // Seg frame flags
 #define SEGINF_FACINGFRONT      0x0001
-#define SEGINF_BACKSECSKYFIX    0x0002
 
 typedef struct seg_s {
     runtime_mapdata_header_t header;
@@ -113,45 +112,44 @@ typedef struct subsector_s {
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
 } subsector_t;
 
-typedef struct materiallayer_s {
-    int             stage; // -1 => layer not in use.
-    short           tics;
-    gltextureid_t   tex;
-} material_layer_t;
-
 typedef enum {
     MEC_UNKNOWN = -1,
-    MEC_METAL = 0,
+    MEC_FIRST = 0,
+    MEC_METAL = MEC_FIRST,
     MEC_ROCK,
     MEC_WOOD,
     MEC_CLOTH,
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
 
+#define VALID_MATERIAL_ENV_CLASS(v) ((v) >= MEC_FIRST && (v) < NUM_MATERIAL_ENV_CLASSES)
+
+struct material_variantlist_node_s;
+
 typedef struct material_s {
     runtime_mapdata_header_t header;
-    material_namespace_t mnamespace;
-    struct ded_material_s* def;        // Can be NULL (was generated automatically).
-    short               flags;         // MATF_* flags
-    short               width;         // Defined width & height of the material (not texture!).
-    short               height;
-    material_layer_t    layers[DDMAX_MATERIAL_LAYERS];
-    unsigned int        numLayers;
-    material_env_class_t envClass;     // Used for environmental sound properties.
-    struct ded_detailtexture_s* detail;
-    struct ded_decor_s* decoration;
-    struct ded_ptcgen_s* ptcGen;
-    struct ded_reflection_s* reflection;
-    boolean             inAnimGroup;   // True if belongs to some animgroup.
-    struct material_s*  current;
-    struct material_s*  next;
-    float               inter;
-    struct material_s*  globalNext;    // Linear list linking all materials.
+    struct ded_material_s* _def;
+    struct material_variantlist_node_s* _variants;
+    material_env_class_t _envClass;    // Environmental sound class.
+    materialid_t        _primaryBind;  // Unique identifier of the MaterialBind associated with this Material or @c NULL if not bound.
+    Size2*              _size;         // Logical dimensions in world-space units.
+    short               _flags;        // @see materialFlags
+    boolean             _inAnimGroup;  // @c true if belongs to some animgroup.
+    boolean             _isCustom;
+    struct texture_s*   _detailTex;
+    float               _detailScale;
+    float               _detailStrength;
+    struct texture_s*   _shinyTex;
+    blendmode_t         _shinyBlendmode;
+    float               _shinyMinColor[3];
+    float               _shinyStrength;
+    struct texture_s*   _shinyMaskTex;
+    byte                _prepared;
 } material_t;
 
 // Internal surface flags:
 #define SUIF_PVIS             0x0001
-#define SUIF_MATERIAL_FIX     0x0002 // Current texture is a fix replacement
+#define SUIF_FIX_MISSING_MATERIAL 0x0002 // Current texture is a fix replacement
                                      // (not sent to clients, returned via DMU etc).
 #define SUIF_BLEND            0x0004 // Surface possibly has a blended texture.
 #define SUIF_NO_RADIO         0x0008 // No fakeradio for this surface.
@@ -159,31 +157,10 @@ typedef struct material_s {
 #define SUIF_UPDATE_FLAG_MASK 0xff00
 #define SUIF_UPDATE_DECORATIONS 0x8000
 
-// Decoration types.
-typedef enum {
-    DT_LIGHT,
-    DT_MODEL,
-    NUM_DECORTYPES
-} decortype_t;
-
-// Helper macros for accessing decor data.
-#define DEC_LIGHT(x)         (&((x)->data.light))
-#define DEC_MODEL(x)         (&((x)->data.model))
-
 typedef struct surfacedecor_s {
     float               pos[3]; // World coordinates of the decoration.
-    decortype_t         type;
     subsector_t*		subsector;
-    union surfacedecor_data_u {
-        struct surfacedecor_light_s {
-            const struct ded_decorlight_s* def;
-        } light;
-        struct surfacedecor_model_s {
-            const struct ded_decormodel_s* def;
-            struct modeldef_s* mf;
-            float               pitch, yaw;
-        } model;
-    } data;
+    const struct ded_decorlight_s* def;
 } surfacedecor_t;
 
 typedef struct surface_s {
@@ -193,8 +170,9 @@ typedef struct surface_s {
     int                 oldFlags;
     material_t*         material;
     blendmode_t         blendMode;
-    float               normal[3];     // Surface normal
-    float               oldNormal[3];
+    float               tangent[3];
+    float               bitangent[3];
+    float               normal[3];
     float               offset[2];     // [X, Y] Planar offset to surface material origin.
     float               oldOffset[2][2];
     float               visOffset[2];
@@ -212,6 +190,8 @@ typedef enum {
     NUM_PLANE_TYPES
 } planetype_t;
 
+#define PS_tangent              surface.tangent
+#define PS_bitangent            surface.bitangent
 #define PS_normal               surface.normal
 #define PS_material             surface.material
 #define PS_offset               surface.offset
@@ -227,8 +207,6 @@ typedef struct plane_s {
     surface_t           surface;
     float               height;        // Current height
     float               oldHeight[2];
-    float               glow;          // Glow amount
-    float               glowRGB[3];    // Glow color
     float               target;        // Target height
     float               speed;         // Move speed
     float               visHeight;     // Visible plane height (smoothed)
@@ -242,12 +220,12 @@ typedef struct plane_s {
 
 #define SP_planesurface(n)      SP_plane(n)->surface
 #define SP_planeheight(n)       SP_plane(n)->height
+#define SP_planetangent(n)      SP_plane(n)->surface.tangent
+#define SP_planebitangent(n)    SP_plane(n)->surface.bitangent
 #define SP_planenormal(n)       SP_plane(n)->surface.normal
 #define SP_planematerial(n)     SP_plane(n)->surface.material
 #define SP_planeoffset(n)       SP_plane(n)->surface.offset
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
-#define SP_planeglow(n)         SP_plane(n)->glow
-#define SP_planeglowrgb(n)      SP_plane(n)->glowRGB
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
 #define SP_planesoundorg(n)     SP_plane(n)->soundOrg
@@ -255,12 +233,12 @@ typedef struct plane_s {
 
 #define SP_ceilsurface          SP_planesurface(PLN_CEILING)
 #define SP_ceilheight           SP_planeheight(PLN_CEILING)
+#define SP_ceiltangent          SP_planetangent(PLN_CEILING)
+#define SP_ceilbitangent        SP_planebitangent(PLN_CEILING)
 #define SP_ceilnormal           SP_planenormal(PLN_CEILING)
 #define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
 #define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
-#define SP_ceilglow             SP_planeglow(PLN_CEILING)
-#define SP_ceilglowrgb          SP_planeglowrgb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
 #define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
@@ -268,12 +246,12 @@ typedef struct plane_s {
 
 #define SP_floorsurface         SP_planesurface(PLN_FLOOR)
 #define SP_floorheight          SP_planeheight(PLN_FLOOR)
+#define SP_floortangent         SP_planetangent(PLN_FLOOR)
+#define SP_floorbitangent       SP_planebitangent(PLN_FLOOR)
 #define SP_floornormal          SP_planenormal(PLN_FLOOR)
 #define SP_floormaterial        SP_planematerial(PLN_FLOOR)
 #define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
-#define SP_floorglow            SP_planeglow(PLN_FLOOR)
-#define SP_floorglowrgb         SP_planeglowrgb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
 #define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)
@@ -321,7 +299,6 @@ typedef struct sector_s {
     ddmobj_base_t       soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
-    struct sector_s*    lightSource;   // Main sky light source.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.
@@ -341,6 +318,8 @@ typedef enum segsection_e {
 #define SW_surfaceflags(n)      SW_surface(n).flags
 #define SW_surfaceinflags(n)    SW_surface(n).inFlags
 #define SW_surfacematerial(n)   SW_surface(n).material
+#define SW_surfacetangent(n)    SW_surface(n).tangent
+#define SW_surfacebitangent(n)  SW_surface(n).bitangent
 #define SW_surfacenormal(n)     SW_surface(n).normal
 #define SW_surfaceoffset(n)     SW_surface(n).offset
 #define SW_surfacevisoffset(n)  SW_surface(n).visOffset
@@ -348,9 +327,11 @@ typedef enum segsection_e {
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
 #define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)0
+#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
 #define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
 #define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
+#define SW_middletangent        SW_surfacetangent(SEG_MIDDLE)
+#define SW_middlebitangent      SW_surfacebitangent(SEG_MIDDLE)
 #define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
 #define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
 #define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
@@ -362,6 +343,8 @@ typedef enum segsection_e {
 #define SW_topflags             SW_surfaceflags(SEG_TOP)
 #define SW_topinflags           SW_surfaceinflags(SEG_TOP)
 #define SW_topmaterial          SW_surfacematerial(SEG_TOP)
+#define SW_toptangent           SW_surfacetangent(SEG_TOP)
+#define SW_topbitangent         SW_surfacebitangent(SEG_TOP)
 #define SW_topnormal            SW_surfacenormal(SEG_TOP)
 #define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
 #define SW_topoffset            SW_surfaceoffset(SEG_TOP)
@@ -372,6 +355,8 @@ typedef enum segsection_e {
 #define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
 #define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
 #define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
+#define SW_bottomtangent        SW_surfacetangent(SEG_BOTTOM)
+#define SW_bottombitangent      SW_surfacebitangent(SEG_BOTTOM)
 #define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
 #define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
 #define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
@@ -404,8 +389,8 @@ typedef struct sidedef_s {
 } sidedef_t;
 
 // Helper macros for accessing linedef data elements.
-#define L_v(n)                  v[(n)]
-#define L_vpos(n)               v[(n)]->V_pos
+#define L_v(n)                  v[(n)? 1:0]
+#define L_vpos(n)               v[(n)? 1:0]->V_pos
 
 #define L_v1                    L_v(0)
 #define L_v1pos                 L_v(0)->V_pos
@@ -413,14 +398,14 @@ typedef struct sidedef_s {
 #define L_v2                    L_v(1)
 #define L_v2pos                 L_v(1)->V_pos
 
-#define L_vo(n)                 vo[(n)]
+#define L_vo(n)                 vo[(n)? 1:0]
 #define L_vo1                   L_vo(0)
 #define L_vo2                   L_vo(1)
 
-#define L_side(n)               sideDefs[(n)]
+#define L_side(n)               sideDefs[(n)? 1:0]
 #define L_frontside             L_side(FRONT)
 #define L_backside              L_side(BACK)
-#define L_sector(n)             sideDefs[(n)]->sector
+#define L_sector(n)             sideDefs[(n)? 1:0]->sector
 #define L_frontsector           L_sector(FRONT)
 #define L_backsector            L_sector(BACK)
 

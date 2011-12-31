@@ -32,7 +32,7 @@
 #include <string.h>
 
 #ifdef UNIX
-#  include "sys_dylib.h"
+#  include "library.h"
 #endif
 
 #include "de_console.h"
@@ -64,13 +64,13 @@ audiointerface_cd_t audiodExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static lt_dlhandle handle = NULL;
+static Library* handle = NULL;
 
 // CODE --------------------------------------------------------------------
 
 static void* Imp(const char* fn)
 {
-    return lt_dlsym(handle, fn);
+    return Library_Symbol(handle, fn);
 }
 
 void Sys_ShutdownAudioDriver(void)
@@ -83,7 +83,7 @@ void Sys_ShutdownAudioDriver(void)
 
     if(audioDriver == &audiodExternal)
     {
-        lt_dlclose(handle);
+        Library_Delete(handle);
         handle = NULL;
     }
 }
@@ -153,31 +153,31 @@ static audiodriver_t* importExternal(void)
     return d;
 }
 
-/**
- * Attempt to load the specified audio driver, import the entry points and
- * add to the available audio drivers.
- *
- * @param name          Name of the driver to be loaded e.g., "openal".
- * @return              Ptr to the audio driver interface if successful,
- *                      else @c NULL.
- */
 audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {
-    filename_t          fn;
-
+    audiodriver_t* ad = NULL;
+    if(NULL != name && name[0])
+    {
+        ddstring_t libPath;
+        // Compose the name using the prefix "ds".
+        Str_Init(&libPath);
 #ifdef MACOSX
-    sprintf(fn, "ds%s.bundle", name);
+        Str_Appendf(&libPath, "ds%s.bundle", name);
 #else
-    // Compose the name, use the prefix "ds".
-    sprintf(fn, "libds%s", name);
-    strcat(fn, ".so");
+        Str_Appendf(&libPath, "libds%s.so", name);
 #endif
 
-    if((handle = lt_dlopenext(fn)) == NULL)
-    {
-        Con_Message("Sys_LoadAudioDriver: Loading of %s failed.\n", fn);
-        return NULL;
+        // Load the audio driver library and import symbols.
+        handle = Library_New(Str_Text(&libPath));
+        if(NULL != handle)
+        {
+            ad = importExternal();
+        }
+        if(NULL == ad)
+        {
+            Con_Message("Warning: Sys_LoadAudioDriver: Loading of \"%s\" failed.\n", Str_Text(&libPath));
+        }
+        Str_Free(&libPath);
     }
-
-    return importExternal();
+    return ad;
 }

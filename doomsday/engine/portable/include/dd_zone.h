@@ -1,4 +1,4 @@
-/**\file
+/**\file dd_zone.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,11 +22,11 @@
  */
 
 /**
- * dd_zone.h: Memory Zone
+ * Memory Zone
  */
 
-#ifndef __DOOMSDAY_ZONE_H__
-#define __DOOMSDAY_ZONE_H__
+#ifndef LIBDENG_ZONE_H
+#define LIBDENG_ZONE_H
 
 /**
  * Define this to force all memory blocks to be allocated from
@@ -34,13 +34,8 @@
  */
 //#define FAKE_MEMORY_ZONE 1
 
-#define PU_REFRESHTEX   11 // Textures/Flats/refresh.
-#define PU_REFRESHCM    12 // Colormap.
-#define PU_REFRESHTRANS 13
-#define PU_REFRESHSPR   14
-#define PU_PATCH        15
-#define PU_MODEL        16
-#define PU_SPRITE       20
+#define PU_REFRESHTRANS     13
+#define PU_REFRESHRAW       17
 
 int             Z_Init(void);
 void            Z_Shutdown(void);
@@ -79,17 +74,56 @@ typedef struct {
     memblock_t*     rover;
 } memzone_t;
 
+struct zblockset_block_s;
+
+/**
+ * ZBlockSet. Block memory allocator.
+ *
+ * These are used instead of many calls to Z_Malloc when the number of
+ * required elements is unknown and when linear allocation would be too
+ * slow.
+ *
+ * Memory is allocated as needed in blocks of "batchSize" elements. When
+ * a new element is required we simply reserve a ptr in the previously
+ * allocated block of elements or create a new block just in time.
+ *
+ * The internal state of a blockset is managed automatically.
+ */
 typedef struct zblockset_s {
-    unsigned int    elementsPerBlock;
-    size_t          elementSize;
-    int             tag; // All blocks in a blockset have the same tag.
-    unsigned int    count;
-    struct zblock_s* blocks;
+    unsigned int _elementsPerBlock;
+    size_t _elementSize;
+    int _tag; /// All blocks in a blockset have the same tag.
+    unsigned int _blockCount;
+    struct zblockset_block_s* _blocks;
 } zblockset_t;
 
-zblockset_t*    Z_BlockCreate(size_t sizeOfElement, uint batchSize, int tag);
-void            Z_BlockDestroy(zblockset_t* set);
-void*           Z_BlockNewElement(zblockset_t* set);
+/**
+ * Creates a new block memory allocator in the Zone.
+ *
+ * @param sizeOfElement  Required size of each element.
+ * @param batchSize  Number of elements in each block of the set.
+ *
+ * @return  Ptr to the newly created blockset.
+ */
+zblockset_t* ZBlockSet_New(size_t sizeOfElement, uint batchSize, int tag);
+
+/**
+ * Destroy the entire blockset.
+ * All memory allocated is released for all elements in all blocks and any
+ * used for the blockset itself.
+ *
+ * @param set  The blockset to be freed.
+ */
+void ZBlockSet_Delete(zblockset_t* set);
+
+/**
+ * Return a ptr to the next unused element in the blockset.
+ *
+ * @param blockset  The blockset to return the next element from.
+ *
+ * @return  Ptr to the next unused element in the blockset.
+ */
+void* ZBlockSet_Allocate(zblockset_t* set);
 
 #ifdef FAKE_MEMORY_ZONE
 // Fake memory zone allocates memory from the real heap.
@@ -109,4 +143,4 @@ Z_ChangeTag2(p,t); \
 #endif
 
 
-#endif
+#endif /* LIBDENG_ZONE_H */

@@ -48,12 +48,12 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdSetColor);
-DEFCC(CCmdSetMap);
-
+D_CMD(SetColor);
+D_CMD(SetMap);
 #if __JHEXEN__
-DEFCC(CCmdSetClass);
+D_CMD(SetClass);
 #endif
+D_CMD(LocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -69,28 +69,29 @@ char msgBuff[NETBUFFER_MAXMESSAGE];
 float netJumpPower = 9;
 
 // Net code related console commands
-ccmd_t netCCmds[] = {
-    {"setcolor", "i", CCmdSetColor},
+ccmdtemplate_t netCCmds[] = {
+    { "setcolor", "i", CCmdSetColor },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {"setmap", "ii", CCmdSetMap},
+    { "setmap", "ii", CCmdSetMap },
 #else
-    {"setmap", "i", CCmdSetMap},
+    { "setmap", "i", CCmdSetMap },
 #endif
 #if __JHEXEN__
-    {"setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED},
+    { "setclass", "i", CCmdSetClass, CMDF_NO_DEDICATED },
 #endif
-    {"startcycle", "", CCmdMapCycle},
-    {"endcycle", "", CCmdMapCycle},
-    {NULL}
+    { "startcycle", "", CCmdMapCycle },
+    { "endcycle", "", CCmdMapCycle },
+    { "message", "s", CCmdLocalMessage },
+    { NULL }
 };
 
 // Net code related console variables
-cvar_t netCVars[] = {
-    {"MapCycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle},
-    {"server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle},
-    {"server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1},
-    {"server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1},
-    {NULL}
+cvartemplate_t netCVars[] = {
+    { "mapcycle", CVF_HIDE | CVF_NO_ARCHIVE, CVT_CHARPTR, &mapCycle },
+    { "server-game-mapcycle", 0, CVT_CHARPTR, &mapCycle },
+    { "server-game-mapcycle-noexit", 0, CVT_BYTE, &mapCycleNoExit, 0, 1 },
+    { "server-game-cheat", 0, CVT_INT, &netSvAllowCheats, 0, 1 },
+    { NULL }
 };
 
 // PRIVATE DATA -------------------------------------------------------------
@@ -105,11 +106,10 @@ static Reader* netReader;
  */
 void D_NetConsoleRegistration(void)
 {
-    int         i;
-
+    int i;
     for(i = 0; netCCmds[i].name; ++i)
         Con_AddCommand(netCCmds + i);
-    for(i = 0; netCVars[i].name; ++i)
+    for(i = 0; netCVars[i].path; ++i)
         Con_AddVariable(netCVars + i);
 }
 
@@ -339,18 +339,18 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     return true;
 }
 
-int D_NetWorldEvent(int type, int parm, void *data)
+int D_NetWorldEvent(int type, int parm, void* data)
 {
-    int         i;
+    int i;
 
-    switch (type)
+    switch(type)
     {
-        //
-        // Server events:
-        //
+    //
+    // Server events:
+    //
     case DDWE_HANDSHAKE:
         {
-        boolean             newPlayer = *((boolean*) data);
+        boolean newPlayer = *((boolean*) data);
 
         // A new player is entering the game. We as a server should send him
         // the handshake packet(s) to update his world.
@@ -363,8 +363,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         players[parm].update |= PSF_REBORN;
 
         // First, the game state.
-        NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT |
-                            (newPlayer ? 0 : GSF_DEMO), parm);
+        NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT | (newPlayer ? 0 : GSF_DEMO), parm);
 
         // Send info about all players to the new one.
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -377,22 +376,19 @@ int D_NetWorldEvent(int type, int parm, void *data)
         break;
         }
 
-        //
-        // Client events:
-        //
+    //
+    // Client events:
+    //
 #if 0
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
-            S_StartSound(parm & 0xffff,
-                         (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
-                                             DMU_SOUND_ORIGIN));
+            S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
         else
             S_StopSound(0, (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
                                                DMU_SOUND_ORIGIN));
 
         break;
-#endif
 
     case DDWE_DEMO_END:
         // Demo playback has ended. Advance demo sequence.
@@ -412,6 +408,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         randomClassParm = false;
 #endif
         break;
+#endif
 
     default:
         return false;
@@ -488,7 +485,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         Con_Message("D_HandlePacket: GPT_MESSAGE\n");
 #endif
         len = Reader_ReadUInt16(reader);
-        msg = Z_Malloc(len + 1, PU_STATIC, 0);
+        msg = Z_Malloc(len + 1, PU_GAMESTATIC, 0);
         Reader_Read(reader, msg, len);
         msg[len] = 0;
 
@@ -539,10 +536,12 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_Intermission(reader);
         break;
 
+/*
     case GPT_FINALE:
     case GPT_FINALE2:
         NetCl_Finale(type, reader);
         break;
+*/
 
     case GPT_PLAYER_INFO:
         NetCl_UpdatePlayerInfo(reader);
@@ -616,7 +615,7 @@ void D_ChatSound(void)
     S_LocalSound(SFX_CHAT, NULL);
 #else
 # if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         S_LocalSound(SFX_RADIO, NULL);
     else
 # endif
@@ -725,12 +724,8 @@ boolean D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source,
 /**
  * Console command to change the players' colors.
  */
-DEFCC(CCmdSetColor)
+D_CMD(SetColor)
 {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    int     numColors = 4;
-#endif
-
     cfg.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
     {
@@ -781,7 +776,7 @@ DEFCC(CCmdSetColor)
  * Console command to change the players' class.
  */
 #if __JHEXEN__
-DEFCC(CCmdSetClass)
+D_CMD(SetClass)
 {
     playerclass_t       newClass = atoi(argv[1]);
 
@@ -809,7 +804,7 @@ DEFCC(CCmdSetClass)
 /**
  * Console command to change the current map.
  */
-DEFCC(CCmdSetMap)
+D_CMD(SetMap)
 {
     uint ep, map;
 
@@ -859,5 +854,14 @@ DEFCC(CCmdSetMap)
 
     // Use the configured network skill level for the new map.
     G_DeferedInitNew(cfg.netSkill, ep, map);
+    return true;
+}
+
+/**
+ * Post a local game message.
+ */
+D_CMD(LocalMessage)
+{
+    D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
 }

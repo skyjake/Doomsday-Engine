@@ -1,4 +1,4 @@
-/**\file
+/**\file m_string.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -22,48 +22,76 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * m_string.c: Dynamic Strings
- *
- * Simple dynamic string management.
- * Uses either normal mallocs or the memory zone for memory allocation
- * (chosen with the Init function).
- */
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdarg.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 
-#define MAX_LENGTH  0x4000
-
 static void* zoneAlloc(size_t n) {
-    return Z_Malloc(n, PU_STATIC, 0);
+    return Z_Malloc(n, PU_APPSTATIC, 0);
 }
 
 static void* zoneCalloc(size_t n) {
-    return Z_Calloc(n, PU_STATIC, 0);
+    return Z_Calloc(n, PU_APPSTATIC, 0);
 }
 
 static void* stdCalloc(size_t n) {
     return calloc(1, n);
 }
 
-static void Str_AutoInit(ddstring_t* ds)
+static void autoselectMemoryManagement(ddstring_t* str)
 {
-    if(!ds->memFree && !ds->memAlloc && !ds->memCalloc)
+    if(!str->memFree && !str->memAlloc && !str->memCalloc)
     {
         // If the memory model is unspecified, default to the standard,
         // it is safer for threading.
-        ds->memFree = free;
-        ds->memAlloc = malloc;
-        ds->memCalloc = stdCalloc;
+        str->memFree = free;
+        str->memAlloc = malloc;
+        str->memCalloc = stdCalloc;
     }
-    assert(ds->memFree);
-    assert(ds->memAlloc);
-    assert(ds->memCalloc);
+    assert(str->memFree);
+    assert(str->memAlloc);
+    assert(str->memCalloc);
+}
+
+static void allocateString(ddstring_t *str, size_t for_length, int preserve)
+{
+    boolean old_data = false;
+    char   *buf;
+
+    // Include the terminating null character.
+    for_length++;
+
+    if(str->size >= for_length)
+        return; // We're OK.
+
+    autoselectMemoryManagement(str);
+
+    // Already some memory allocated?
+    if(str->size)
+        old_data = true;
+    else
+        str->size = 1;
+
+    while(str->size < for_length)
+        str->size *= 2;
+
+    assert(str->memCalloc);
+    buf = str->memCalloc(str->size);
+
+    if(preserve && str->str)
+        strncpy(buf, str->str, str->size - 1);
+
+    // Replace the old string with the new buffer.
+    if(old_data)
+    {
+        assert(str->memFree);
+        str->memFree(str->str);
+    }
+    str->str = buf;
 }
 
 /**
@@ -71,62 +99,54 @@ static void Str_AutoInit(ddstring_t* ds)
  * automatically cleared, so they don't need initialization.
  * The string will use the memory zone.
  */
-void Str_Init(ddstring_t *ds)
+void Str_Init(ddstring_t *str)
 {
-    memset(ds, 0, sizeof(*ds));
+    if(!str)
+    {
+        Con_Error("Attempted String::Init with invalid reference (this==0).");
+        return; // Unreachable.
+    }
+    memset(str, 0, sizeof(*str));
 
     // Init the memory management.
-    ds->memFree = Z_Free;
-    ds->memAlloc = zoneAlloc;
-    ds->memCalloc = zoneCalloc;
+    str->memFree = Z_Free;
+    str->memAlloc = zoneAlloc;
+    str->memCalloc = zoneCalloc;
 }
 
 /**
  * The string will use standard memory allocation.
  */
-void Str_InitStd(ddstring_t *ds)
+void Str_InitStd(ddstring_t *str)
 {
-    memset(ds, 0, sizeof(*ds));
+    memset(str, 0, sizeof(*str));
 
     // Init the memory management.
-    ds->memFree = free;
-    ds->memAlloc = malloc;
-    ds->memCalloc = stdCalloc;
+    str->memFree = free;
+    str->memAlloc = malloc;
+    str->memCalloc = stdCalloc;
 }
 
-/**
- * Empty an existing string. After this the string is in the same
- * state as just after being initialized.
- */
-void Str_Free(ddstring_t *ds)
+void Str_Free(ddstring_t* str)
 {
-    Str_AutoInit(ds);
+    if(!str)
+    {
+        Con_Error("Attempted String::Free with invalid reference (this==0).");
+        return; // Unreachable.
+    }
 
-    if(ds->size)
+    autoselectMemoryManagement(str);
+
+    if(str->size)
     {
         // The string has memory allocated, free it.
-        ds->memFree(ds->str);
+        str->memFree(str->str);
     }
 
     // Memory model left unchanged.
-    ds->length = 0;
-    ds->size = 0;
-    ds->str = 0;
-}
-
-/**
- * Allocate a new uninitialized string. Use Str_Delete() to destroy
- * the returned string.
- *
- * @return New ddstring_t instance.
- *
- * @see Str_Delete
- */
-ddstring_t *Str_New(void)
-{
-    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
-    Str_Init(str);
-    return str;
+    str->length = 0;
+    str->size = 0;
+    str->str = 0;
 }
 
 ddstring_t *Str_NewStd(void)
@@ -136,217 +156,260 @@ ddstring_t *Str_NewStd(void)
     return str;
 }
 
-/**
- * Destroy a string allocated with Str_New(). In addition to freeing
- * the contents of the string, it also unallocates the string instance
- * that was created by Str_New().
- *
- * @param ds  String to delete (that was returned by Str_New()).
- */
-void Str_Delete(ddstring_t *ds)
+ddstring_t* Str_New(void)
 {
-    Str_Free(ds);
-    M_Free(ds);
+    ddstring_t* str = (ddstring_t*) M_Calloc(sizeof(ddstring_t));
+    Str_Init(str);
+    return str;
 }
 
-/**
- * Empties a string, but does not free its memory.
- */
-void Str_Clear(ddstring_t *ds)
+void Str_Delete(ddstring_t* str)
 {
-    Str_Set(ds, "");
-}
-
-/**
- * Allocates so much memory that for_length characters will fit.
- */
-void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
-{
-    boolean old_data = false;
-    char   *buf;
-
-    // Include the terminating null character.
-    for_length++;
-
-    if(ds->size >= for_length)
-        return;                 // We're OK.
-
-    Str_AutoInit(ds);
-
-    // Already some memory allocated?
-    if(ds->size)
-        old_data = true;
-    else
-        ds->size = 1;
-
-    while(ds->size < for_length)
-        ds->size *= 2;
-
-    assert(ds->memCalloc);
-    buf = ds->memCalloc(ds->size);
-
-    if(preserve && ds->str)
-        strncpy(buf, ds->str, ds->size - 1);
-
-    // Replace the old string with the new buffer.
-    if(old_data)
+    if(!str)
     {
-        assert(ds->memFree);
-        ds->memFree(ds->str);
+        Con_Error("Attempted String::Delete with invalid reference (this==0).");
+        return; // Unreachable.
     }
-    ds->str = buf;
+    Str_Free(str);
+    M_Free(str);
 }
 
-void Str_Reserve(ddstring_t *ds, size_t length)
+void Str_Clear(ddstring_t* str)
 {
-    Str_Alloc(ds, length, true);
+    Str_Set(str, "");
 }
 
-void Str_Set(ddstring_t *ds, const char *text)
+void Str_Reserve(ddstring_t* str, int length)
 {
+    if(!str)
+    {
+        Con_Error("Attempted String::Reserve with invalid reference (this==0).");
+        return; // Unreachable.
+    }
+    if(length <= 0)
+        return;
+    allocateString(str, length, true);
+}
+
+ddstring_t* Str_Set(ddstring_t* str, const char* text)
+{
+    if(!str)
+    {
+        Con_Error("Attempted String::Set with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
+
+    {
     size_t incoming = strlen(text);
-    char* copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) ds->str
-
+    char* copied = M_Malloc(incoming + 1); // take a copy in case text points to (a part of) str->str
     strcpy(copied, text);
-    Str_Alloc(ds, incoming, false);
-    strcpy(ds->str, copied);
-    ds->length = incoming;
+    allocateString(str, incoming, false);
+    strcpy(str->str, copied);
+    str->length = incoming;
     M_Free(copied);
+    return str;
+    }
 }
 
-void Str_Append(ddstring_t *ds, const char *append_text)
+ddstring_t* Str_Append(ddstring_t* str, const char* append)
 {
-    size_t incoming = strlen(append_text);
+    size_t incoming;
     char* copied;
 
-    // Don't allow extremely long strings.
-    if(ds->length > MAX_LENGTH)
-        return;
+    if(!str)
+    {
+        Con_Error("Attempted String::Append with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
 
-    // Take a copy in case append_text points to (a part of) ds->str, which may be invalidated
-    // by Str_Alloc.
+    incoming = strlen(append);
+
+    // Take a copy in case append_text points to (a part of) ds->str, which may
+    // be invalidated by allocateString.
     copied = M_Malloc(incoming + 1);
-    strcpy(copied, append_text);
 
-    Str_Alloc(ds, ds->length + incoming, true);
-    strcpy(ds->str + ds->length, copied);
-    ds->length += incoming;
+    strcpy(copied, append);
+    allocateString(str, str->length + incoming, true);
+    strcpy(str->str + str->length, copied);
+    str->length += incoming;
 
     M_Free(copied);
+    return str;
 }
 
-void Str_AppendChar(ddstring_t* ds, char ch)
+ddstring_t* Str_AppendChar(ddstring_t* str, char ch)
 {
-    char str[2] = { ch, 0 };
-    Str_Append(ds, str);
+    char append[2];
+    append[0] = ch;
+    append[1] = '\0';
+    return Str_Append(str, append);
 }
 
-/**
- * Append formated text.
- */
-void Str_Appendf(ddstring_t *ds, const char *format, ...)
+ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 {
-    char buf[1024];
+    if(!str)
+    {
+        Con_Error("Attempted String::Appendf with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
+
+    { char buf[4096];
     va_list args;
 
     // Print the message into the buffer.
     va_start(args, format);
     dd_vsnprintf(buf, sizeof(buf), format, args);
     va_end(args);
-    Str_Append(ds, buf);
+    Str_Append(str, buf);
+    return str;
+    }
 }
 
-/**
- * Appends a portion of a string.
- */
-void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
+ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
-    char* copied = M_Malloc(count);
-
-    memcpy(copied, src + start, count);
-
-    Str_Alloc(dest, dest->length + count + 1, true);
-    memcpy(dest->str + dest->length, copied, count);
-    dest->length += count;
-
-    // Terminate the appended part.
-    dest->str[dest->length] = 0;
-
-    M_Free(copied);
-}
-
-/**
- * Prepend is not even a word, is it? It should be 'prefix'?
- */
-void Str_Prepend(ddstring_t *ds, const char *prepend_text)
-{
-    size_t incoming = strlen(prepend_text);
     char* copied;
 
-    // Don't allow extremely long strings.
-    if(ds->length > MAX_LENGTH)
-        return;
+    if(!str)
+    {
+        Con_Error("Attempted String::PartAppend with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
+    if(!append)
+    {
+#if _DEBUG
+        Con_Message("Attempted String::PartAppend with invalid reference (@a append==0).\n");
+#endif
+        return str;
+    }
+    if(start < 0 || count <= 0)
+        return str;
 
-    copied = M_Malloc(incoming);
-    memcpy(copied, prepend_text, incoming);
+    copied = M_Malloc(count);
 
-    Str_Alloc(ds, ds->length + incoming, true);
-    memmove(ds->str + incoming, ds->str, ds->length + 1);
-    memcpy(ds->str, copied, incoming);
-    ds->length += incoming;
+    memcpy(copied, append + start, count);
+
+    allocateString(str, str->length + count + 1, true);
+    memcpy(str->str + str->length, copied, count);
+    str->length += count;
+
+    // Terminate the appended part.
+    str->str[str->length] = 0;
 
     M_Free(copied);
+    return str;
 }
 
-/**
- * This is safe for all strings.
- */
-char *Str_Text(ddstring_t *ds)
+ddstring_t* Str_Prepend(ddstring_t* str, const char* prepend)
 {
-    return ds->str ? ds->str : "";
+    char* copied;
+    size_t incoming;
+    if(!str)
+    {
+        Con_Error("Attempted String::Prepend with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
+    if(!prepend)
+    {
+#if _DEBUG
+        Con_Message("Attempted String::PartAppend with invalid reference (@a prepend==0).\n");
+#endif
+        return str;
+    }
+    incoming = strlen(prepend);
+    if(incoming == 0)
+        return str;
+
+    copied = M_Malloc(incoming);
+    memcpy(copied, prepend, incoming);
+
+    allocateString(str, str->length + incoming, true);
+    memmove(str->str + incoming, str->str, str->length + 1);
+    memcpy(str->str, copied, incoming);
+    str->length += incoming;
+
+    M_Free(copied);
+    return str;
 }
 
-/**
- * This is safe for all strings.
- */
-size_t Str_Length(ddstring_t *ds)
+ddstring_t* Str_PrependChar(ddstring_t* str, char ch)
 {
-    if(ds->length)
-        return ds->length;
-    return strlen(Str_Text(ds));
+    char prepend[2];
+    prepend[0] = ch;
+    prepend[1] = '\0';
+    return Str_Prepend(str, prepend);
 }
 
-/**
- * Makes a true copy.
- */
-void Str_Copy(ddstring_t *dest, ddstring_t *src)
+char* Str_Text(const ddstring_t* str)
 {
-    Str_Free(dest);
-    dest->size = src->size;
-    dest->length = src->length;
-    assert(dest->memAlloc);
-    dest->str = dest->memAlloc(src->size);
-    memcpy(dest->str, src->str, src->size);
+    if(!str)
+    {
+        Con_Error("Attempted String::Text with invalid reference (this==0).");
+        return 0; // Unreachable.
+    }
+    return str->str ? str->str : "";
 }
 
-/**
- * Strip whitespace from beginning.
- */
-void Str_StripLeft(ddstring_t *ds)
+int Str_Length(const ddstring_t* str)
 {
-    size_t      i, num;
-    boolean     isDone;
+    if(!str)
+    {
+        Con_Error("Attempted String::Length with invalid reference (this==0).");
+        return 0; // Unreachable.
+    }
+    if(str->length)
+        return str->length;
+    return (int)strlen(Str_Text(str));
+}
 
-    if(!ds->length)
-        return;
+boolean Str_IsEmpty(const ddstring_t* str)
+{
+    return Str_Length(str) == 0;
+}
+
+ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
+{
+    if(!str)
+    {
+        Con_Error("Attempted String::Copy with invalid reference (this==0).");
+        return str; // Unreachable.
+    }
+    Str_Free(str);
+    if(!other)
+    {
+#if _DEBUG
+        Con_Message("Attempted String::Copy with invalid reference (@a other==0).\n");
+#endif
+        return str;
+    }
+    str->size = other->size;
+    str->length = other->length;
+    assert(str->memAlloc);
+    str->str = str->memAlloc(other->size);
+    memcpy(str->str, other->str, other->size);
+    return str;
+}
+
+int Str_StripLeft(ddstring_t* str)
+{
+    int i, num;
+    boolean isDone;
+
+    if(!str)
+    {
+        Con_Error("Attempted String::StripLeft with invalid reference (this==0).");
+        return 0; // Unreachable.
+    }
+
+    if(!str->length)
+        return 0;
 
     // Find out how many whitespace chars are at the beginning.
     isDone = false;
     i = 0;
     num = 0;
-    while(i < ds->length && !isDone)
+    while(i < str->length && !isDone)
     {
-        if(isspace(ds->str[i]))
+        if(isspace(str->str[i]))
         {
             num++;
             i++;
@@ -358,147 +421,147 @@ void Str_StripLeft(ddstring_t *ds)
     if(num)
     {
         // Remove 'num' chars.
-        memmove(ds->str, ds->str + num, ds->length - num);
-        ds->length -= num;
-        ds->str[ds->length] = 0;
+        memmove(str->str, str->str + num, str->length - num);
+        str->length -= num;
+        str->str[str->length] = 0;
     }
+    return num;
 }
 
-/**
- * Strip whitespace from end.
- */
-void Str_StripRight(ddstring_t *ds)
+int Str_StripRight(ddstring_t* str)
 {
-    int             i;
-    boolean         isDone;
-
-    if(ds->length == 0)
-        return;
-
-    i = ds->length - 1;
-    isDone = false;
-    while(i >= 0 && !isDone)
+    if(!str)
     {
-        if(isspace(ds->str[i]))
-        {
-            // Remove this char.
-            ds->str[i] = 0;
-            ds->length--;
-            i--;
-        }
-        else
-        {
-            isDone = true;
-        }
+        Con_Error("Attempted String::StripRight with invalid reference (this==0).");
+        return 0; // Unreachable.
     }
-}
 
-/**
- * Strip whitespace from beginning and end.
- */
-void Str_Strip(ddstring_t *ds)
-{
-    Str_StripLeft(ds);
-    Str_StripRight(ds);
-}
+    if(str->length == 0)
+        return 0;
 
-/**
- * Extract a line of text from the source.
- */
-const char *Str_GetLine(ddstring_t *ds, const char *src)
-{
-    char    buf[2];
-
-    // We'll append the chars one by one.
-    memset(buf, 0, sizeof(buf));
-
-    for(Str_Clear(ds); *src && *src != '\n'; src++)
+    { int i = str->length - 1, num = 0;
+    if(isspace(str->str[i]))
+    do
     {
-        if(*src != '\r')
-        {
-            buf[0] = *src;
-            Str_Append(ds, buf);
-        }
+        // Remove this char.
+        num++;
+        str->str[i] = '\0';
+        str->length--;
+    } while(i != 0 && isspace(str->str[--i]));
+    return num;
     }
+}
 
-    // Strip whitespace around the line.
-    Str_Strip(ds);
+int Str_Strip(ddstring_t* str)
+{
+    return Str_StripLeft(str) + Str_StripRight(str);
+}
 
-    // The newline is excluded.
-    if(*src == '\n')
-        src++;
+const char* Str_GetLine(ddstring_t* str, const char* src)
+{
+    if(!str)
+    {
+        Con_Error("Attempted String::GetLine with invalid reference (this==0).");
+        return 0; // Unreachable.
+    }
+    if(src != 0)
+    {
+        // We'll append the chars one by one.
+        char buf[2];
+        memset(buf, 0, sizeof(buf));
+        for(Str_Clear(str); *src && *src != '\n'; src++)
+        {
+            if(*src != '\r')
+            {
+                buf[0] = *src;
+                Str_Append(str, buf);
+            }
+        }
+
+        // Strip whitespace around the line.
+        Str_Strip(str);
+
+        // The newline is excluded.
+        if(*src == '\n')
+            src++;
+    }
     return src;
 }
 
-/**
- * Performs a string comparison, ignoring differences in case.
- */
-int Str_CompareIgnoreCase(ddstring_t *ds, const char *text)
+int Str_CompareIgnoreCase(const ddstring_t* str, const char* text)
 {
-    return strcasecmp(Str_Text(ds), text);
+    return strcasecmp(Str_Text(str), text);
 }
 
-/**
- * Copies characters from @c to @dest until a @c delim character is encountered.
- * Also ignores all whitespace characters.
- *
- * @param dest  Destination string.
- * @param src   Source string.
- * @param delim  Delimiter character, where copying will stop.
- *
- * @return  Pointer to the character within @c src past the delimiter, or NULL if the
- *          source data ended.
- */
-const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
+const char* Str_CopyDelim2(ddstring_t* str, const char* src, char delimiter, int cdflags)
 {
-    Str_Clear(dest);
-
-    if(!src)
-        return NULL;
-
-    for(; *src && *src != delim; ++src)
+    if(!str)
     {
-        if(!isspace(*src))
-            Str_PartAppend(dest, src, 0, 1);
+        Con_Error("Attempted String::CopyDelim2 with invalid reference (this==0).");
+        return 0; // Unreachable.
     }
+    Str_Clear(str);
+    if(!src)
+        return 0;
 
-    if(!*src)
-        return NULL; // It ended.
+    { const char* cursor;
+    ddstring_t buf; Str_Init(&buf);
+    for(cursor = src; *cursor && *cursor != delimiter; ++cursor)
+    {
+        if((cdflags & CDF_OMIT_WHITESPACE) && isspace(*cursor))
+            continue;
+        Str_PartAppend(&buf, cursor, 0, 1);
+    }
+    if(!Str_IsEmpty(&buf))
+        Str_Copy(str, &buf);
+    Str_Free(&buf);
+
+    if(!*cursor)
+        return 0; // It ended.
+
+    if(!(cdflags & CDF_OMIT_DELIMITER))
+        Str_PartAppend(str, cursor, 0, 1);
 
     // Skip past the delimiter.
-    return src + 1;
+    return cursor + 1;
+    }
 }
 
-/**
- * Retrieves a character in the string.
- *
- * @param str    String to get the character from.
- * @param index  Index of the character.
- *
- * @return The character at @c index, or 0 if the index is not in range.
- */
-char Str_At(ddstring_t* str, int index)
+const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter)
 {
-    if(index < 0 || (uint)index >= str->length)
+    return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER|CDF_OMIT_WHITESPACE);
+}
+
+char Str_At(const ddstring_t* str, int index)
+{
+    if(!str)
     {
-        return 0;
+        Con_Error("Attempted String::At with invalid reference (this==0).");
+        return 0; // Unreachable.
     }
+    if(index < 0 || index >= str->length)
+        return 0;
     return str->str[index];
 }
 
-/**
- * Retrieves a character in the string. Indices start from the end of the string.
- *
- * @param str    String to get the character from.
- * @param reverseIndex  Index of the character, where 0 is the last character of the string.
- *
- * @return The character at @c index, or 0 if the index is not in range.
- */
-char Str_RAt(ddstring_t* str, int reverseIndex)
+char Str_RAt(const ddstring_t* str, int reverseIndex)
 {
-    if(reverseIndex < 0 || (uint)reverseIndex >= str->length)
+    if(!str)
     {
-        return 0;
+        Con_Error("Attempted String::RAt with invalid reference (this==0).");
+        return 0; // Unreachable.
     }
+    if(reverseIndex < 0 || reverseIndex >= str->length)
+        return 0;
     return str->str[str->length - 1 - reverseIndex];
+}
+
+void Str_Truncate(ddstring_t* str, int position)
+{
+    if(position < 0)
+        position = 0;
+    if(!(position < Str_Length(str)))
+        return;
+    str->length = position;
+    str->str[str->length] = '\0';
 }

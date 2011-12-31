@@ -1,4 +1,4 @@
-/**\file
+/**\file net_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * net_main.c: Client/server networking.
+ * Client/server networking.
  *
  * Player number zero is always the server.
  * In single-player games there is only the server present.
@@ -157,20 +157,20 @@ void Net_Register(void)
     C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, DDMAXPLAYERS);
 
     // Ccmds
-    C_CMD("chat", NULL, Chat);
-    C_CMD("chatnum", NULL, Chat);
-    C_CMD("chatto", NULL, Chat);
-    C_CMD("conlocp", "i", MakeCamera);
-    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_DEDICATED);
-    C_CMD("huffman", "", HuffmanStats);
-    C_CMD("kick", "i", Kick);
-    C_CMD("login", NULL, Login);
-    C_CMD("logout", "", Logout);
-    C_CMD("net", NULL, Net);
-    C_CMD("ping", NULL, Ping);
-    C_CMD("say", NULL, Chat);
-    C_CMD("saynum", NULL, Chat);
-    C_CMD("sayto", NULL, Chat);
+    C_CMD_FLAGS("chat", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("chatnum", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("huffman", "", HuffmanStats, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("ping", NULL, Ping, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("say", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("saynum", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("sayto", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD("setname", "s", SetName);
     C_CMD("setcon", "i", SetConsole);
     C_CMD("settics", "i", SetTicks);
@@ -180,7 +180,21 @@ void Net_Register(void)
 
 void Net_Init(void)
 {
-    Net_AllocArrays();
+    int i;
+
+#if 0
+    // Local ticcmds are stored into this array before they're copied
+    // to netplayer[0]'s ticcmds buffer.
+    localticcmds = M_Calloc(LOCALTICS * TICCMD_SIZE);
+    numlocal = 0; // Nothing in the buffer.
+#endif
+
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        memset(clients + i, 0, sizeof(clients[i]));
+        clients[i].viewConsole = -1;
+    }
+
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
@@ -336,7 +350,7 @@ void Net_SendPlayerInfo(int srcPlrNum, int destPlrNum)
 /**
  * This is the public interface of the message sender.
  */
-void Net_SendPacket(int to_player, int type, const void *data, size_t length)
+void Net_SendPacket(int to_player, int type, const void* data, size_t length)
 {
     unsigned int flags = 0;
 
@@ -368,7 +382,7 @@ void Net_SendPacket(int to_player, int type, const void *data, size_t length)
  */
 void Net_ShowChatMessage(int plrNum, const char* message)
 {
-    Con_FPrintf(CBLF_GREEN, "%s: %s\n", clients[plrNum].name, message);
+    Con_FPrintf(CPF_GREEN, "%s: %s\n", clients[plrNum].name, message);
 }
 
 /**
@@ -383,6 +397,7 @@ void Net_ResetTimer(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
+        if(/*!clients[i].connected ||*/ !clients[i].smoother) continue;
         Smoother_Clear(clients[i].smoother);
     }
 }
@@ -502,20 +517,12 @@ void Net_BuildLocalCommands(timespan_t time)
 {
 }
 
-/**
- * Called from Net_Init to initialize the ticcmd arrays.
- */
-void Net_AllocArrays(void)
+void Net_AllocClientBuffers(int clientId)
 {
-    int i;
+    if(clientId < 0 || clientId >= DDMAXPLAYERS) return;
 
-    memset(clients, 0, sizeof(clients));
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        // Movement smoother.
-        clients[i].smoother = Smoother_New();
-    }
+    // Movement smoother.
+    clients[clientId].smoother = Smoother_New();
 }
 
 void Net_DestroyArrays(void)
@@ -524,7 +531,10 @@ void Net_DestroyArrays(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        Smoother_Delete(clients[i].smoother);
+        if(clients[i].smoother)
+        {
+            Smoother_Delete(clients[i].smoother);
+        }
     }
 
     memset(clients, 0, sizeof(clients));
@@ -604,6 +614,7 @@ void Net_StopGame(void)
         plr->shared.inGame = false;
         cl->ready = cl->connected = false;
         cl->nodeID = 0;
+        cl->viewConsole = -1;
         plr->shared.flags &= ~(DDPF_CAMERA | DDPF_CHASECAM | DDPF_LOCAL);
     }
 
@@ -695,21 +706,67 @@ int Net_GetTicCmd(void *pCmd, int player)
 #endif
 }
 
+/// @return  @c true iff a demo is currently being recorded.
+static boolean recordingDemo(void)
+{
+    int i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(ddPlayers[i].shared.inGame && clients[i].recording)
+            return true;
+    }
+    return false;
+}
+
+void Net_DrawDemoOverlay(void)
+{
+    char buf[160], tmp[40];
+    int x = theWindow->geometry.size.width - 10, y = 10;
+
+    if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
+        return;
+
+    strcpy(buf, "[");
+    { int i, c;
+    for(i = c = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
+        {
+            // This is a "real" player (or camera).
+            if(c++)
+                strcat(buf, ",");
+
+            sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
+            strcat(buf, tmp);
+        }
+    }}
+    strcat(buf, "]");
+
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+
+    glEnable(GL_TEXTURE_2D);
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+
+    glDisable(GL_TEXTURE_2D);
+
+    // Restore original matrix.
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+}
+
 /**
  * Does drawing for the engine's HUD, not just the net.
  */
 void Net_Drawer(void)
 {
-    char                buf[160], tmp[40];
-    int                 i, c;
-    boolean             showBlinkR = false;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(ddPlayers[i].shared.inGame && clients[i].recording)
-            showBlinkR = true;
-    }
-
     // Draw the Shadow Bias Editor HUD (if it is active).
     SBE_DrawHUD();
 
@@ -722,58 +779,8 @@ void Net_Drawer(void)
     // Draw the light range debug display.
     R_DrawLightRange();
 
-    if(!netDev && !showBlinkR && !consoleShowFPS)
-        return;
-
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
-    if(showBlinkR && SECONDS_TO_TICKS(gameTime) & 8)
-    {
-        strcpy(buf, "[");
-        for(i = c = 0; i < DDMAXPLAYERS; ++i)
-        {
-            if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
-            {
-                // This is a "real" player (or camera).
-                if(c++)
-                    strcat(buf, ",");
-
-                sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
-                strcat(buf, tmp);
-            }
-        }
-
-        strcat(buf, "]");
-        i = theWindow->width - FR_TextWidth(buf);
-        //glColor3f(0, 0, 0);
-        //FR_TextOut(buf, i - 8, 12);
-        glColor3f(1, 1, 1);
-        FR_ShadowTextOut(buf, i - 10, 10);
-    }
-
-    if(netDev)
-    {
-        /*      glColor3f(1, 1, 1);
-           sprintf(buf, "G%i", gametic);
-           FR_TextOut(buf, 10, 10);
-           for(i = 0, cl = clients; i<DDMAXPLAYERS; ++i, cl++)
-           if(ddPlayers[i].inGame)
-           {
-           sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
-           cl->lagStress, cl->numtics, cl->runTime,
-           ddPlayers[i].flags);
-           FR_TextOut(buf, 10, 10+10*(i+1));
-           } */
-    }
-    Rend_ConsoleFPS(theWindow->width - 10, 30);
-
-    // Restore original matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    // Draw the demo recording overlay.
+    Net_DrawDemoOverlay();
 }
 
 /**
@@ -944,12 +951,10 @@ void Net_PrintServerInfo(int index, serverinfo_t *info)
     {
         Con_Printf("%-2i: %-20s %i/%-2i %c %-5i %-16s %s:%i\n", index,
                    info->name, info->numPlayers, info->maxPlayers,
-                   info->canJoin ? ' ' : '*', info->version, info->game,
+                   info->canJoin ? ' ' : '*', info->version, info->plugin,
                    info->address, info->port);
-        Con_Printf("    %s (%s:%x) p:%ims %-40s\n", info->map, info->iwad,
-                   info->wadNumber, info->ping, info->description);
-
-        Con_Printf("    %s %s\n", info->gameMode, info->gameConfig);
+        Con_Printf("    %s p:%ims %-40s\n", info->map, info->ping, info->description);
+        Con_Printf("    %s (crc:%x) %s\n", info->gameIdentityKey, info->wadNumber, info->gameConfig);
 
         // Optional: PWADs in use.
         if(info->pwads[0])
@@ -1115,7 +1120,8 @@ D_CMD(Kick)
 
 D_CMD(SetName)
 {    
-    Con_SetString("net-name", argv[1], false);
+    Con_SetString("net-name", argv[1]);
+
     if(!netGame)
         return true;
 
@@ -1163,7 +1169,7 @@ D_CMD(MakeCamera)
        displayPlayer = cp; */
 
     // Create a new local player.
-    int                 cp;
+    int cp;
 
     cp = atoi(argv[1]);
     if(cp < 0 || cp >= DDMAXPLAYERS)
@@ -1177,10 +1183,12 @@ D_CMD(MakeCamera)
 
     clients[cp].connected = true;
     clients[cp].ready = true;
-    //clients[cp].updateCount = UPDATECOUNT;
+    clients[cp].viewConsole = cp;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
+    Net_AllocClientBuffers(cp);
     Sv_InitPoolForClient(cp);
 
+    R_SetupDefaultViewWindow(cp);
     // Update the viewports.
     R_SetViewGrid(0, 0);
 
@@ -1189,7 +1197,7 @@ D_CMD(MakeCamera)
 
 D_CMD(SetConsole)
 {
-    int                 cp;
+    int cp;
 
     cp = atoi(argv[1]);
     if(ddPlayers[cp].shared.inGame)
@@ -1287,8 +1295,7 @@ D_CMD(Connect)
         param.port = strtol(argv[2], 0, 0);
     }
 
-    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                    NULL, Net_ConnectWorker, &param);
+    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), NULL, Net_ConnectWorker, &param);
 }
 
 /**

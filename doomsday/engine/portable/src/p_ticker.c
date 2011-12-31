@@ -1,4 +1,4 @@
-/**\file
+/**\file p_ticker.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_ticker.c: Timed Playsim Events
+ * Timed Playsim Events.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -119,16 +119,13 @@ int P_MobjTicker(thinker_t* th, void* context)
 void P_Ticker(timespan_t time)
 {
     P_ControlTicker(time);
-    P_MaterialManagerTicker(time);
+    Materials_Ticker(time);
 
     if(!P_ThinkerListInited())
         return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
-        // New ptcgens for planes?
-        P_CheckPtcPlanes();
-
         R_SkyTicker();
 
         // Check all mobjs (always public).

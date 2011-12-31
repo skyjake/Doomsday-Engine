@@ -40,11 +40,12 @@ enum { VX, VY, VZ };
 #define RIGHT                   0
 #define LEFT                    1
 
-#define VERBOSE(code)   { if(verbose) { code; } }
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
 typedef struct materialref_s {
     char            name[9];
-    materialnum_t   num; // Doomsday's unique identifier for this.
+    materialid_t    id; // Doomsday's unique identifier for this.
 } materialref_t;
 
 typedef struct mside_s {
@@ -81,6 +82,7 @@ typedef struct mline_s {
     byte            d64useType;
     int16_t         d64tag;
 
+    int             ddFlags;
     uint            validCount; // Used for Polyobj LineDef collection.
 } mline_t;
 
@@ -107,6 +109,7 @@ typedef struct mthing_s {
     angle_t         angle;
     int16_t         doomEdNum;
     int32_t         flags;
+    int32_t         skillModes;
 
     // Hexen format members:
     int16_t         xTID;
@@ -140,7 +143,6 @@ typedef enum {
 } mapformatid_t;
 
 typedef struct map_s {
-    char            name[9];
     uint            numVertexes;
     uint            numSectors;
     uint            numLines;
@@ -171,10 +173,10 @@ typedef struct map_s {
 extern map_t* map;
 extern boolean verbose;
 
-boolean         IsSupportedFormat(const int* lumpList, int numLumps);
+boolean IsSupportedFormat(const lumpnum_t* lumpList, int numLumps);
 
-boolean         LoadMap(const int* lumpList, int numLumps);
-void            AnalyzeMap(void);
-boolean         TransferMap();
+boolean LoadMap(const lumpnum_t* lumpList, int numLumps);
+void AnalyzeMap(void);
+boolean TransferMap();
 
 #endif

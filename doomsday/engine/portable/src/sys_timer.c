@@ -77,7 +77,6 @@ void Sys_ShutdownTimer(void)
 
 void Sys_InitTimer(void)
 {
-    Con_Message("Sys_InitTimer.\n");
     timer_Mutex = Sys_CreateMutex("TIMER_MUTEX");
 #ifdef WIN32
     timeBeginPeriod(1);

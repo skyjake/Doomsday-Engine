@@ -165,9 +165,9 @@ static thinkerlist_t* listForThinkFunc(think_t func, boolean isPublic,
     thinkerlist_t*      list;
 
     thinkerLists = Z_Realloc(thinkerLists, sizeof(thinkerlist_t*) *
-                             ++numThinkerLists, PU_STATIC);
+                             ++numThinkerLists, PU_APPSTATIC);
     thinkerLists[numThinkerLists-1] = list =
-        Z_Calloc(sizeof(thinkerlist_t), PU_STATIC, 0);
+        Z_Calloc(sizeof(thinkerlist_t), PU_APPSTATIC, 0);
 
     initThinkerList(list);
     list->isPublic = isPublic;

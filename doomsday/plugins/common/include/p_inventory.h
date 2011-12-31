@@ -48,7 +48,7 @@ typedef struct {
     textenum_t      niceName;
     acfnptr_t       action;
     sfxenum_t       useSnd;
-    lumpnum_t       patchLump;
+    patchid_t       patchId;
 } invitem_t;
 
 extern int didUseItem;

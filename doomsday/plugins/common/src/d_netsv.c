@@ -35,7 +35,6 @@
 
 #include "common.h"
 #include "d_net.h"
-#include "p_svtexarc.h"
 #include "p_player.h"
 #include "p_user.h"
 #include "p_map.h"
@@ -237,7 +236,7 @@ void NetSv_Ticker(void)
         // $democam
         if(oldPals[i] != palette)
         {   // The filter changes.
-            R_GetFilterColor(plr->plr->filterColor, palette);
+            R_ViewFilterColor(plr->plr->filterColor, palette);
             // If we are the server, we'll need inform the client.
             //plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;
@@ -316,7 +315,7 @@ void NetSv_CycleToMapNum(uint map)
 #if __JDOOM64__
     sprintf(cmd, "setmap 1 %u", map);
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         sprintf(cmd, "setmap 1 %u", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -438,7 +437,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                             tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
                             map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
 #elif __JDOOM__
-                    if(gameMode == commercial)
+                    if(gameModeBits & GM_ANY_DOOM2)
                     {
                         sprintf(lump, "MAP%u%u", episode =
                                 tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
@@ -471,7 +470,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                         continue;
                     sprintf(lump, "MAP%02u", m);
 #endif
-                    if(W_CheckNumForName(lump) >= 0)
+                    if(W_CheckLumpNumForName(lump) >= 0)
                     {
                         tmp[0] = episode + '0';
                         tmp[1] = map + '0';
@@ -713,8 +712,9 @@ void NetSv_NewPlayerEnters(int plrNum)
 
         if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
         {
-            P_SpawnPlayer(plrNum, pClass, start->pos[VX], start->pos[VY],
-                          start->pos[VZ], start->angle, start->spawnFlags,
+            const mapspot_t* spot = &mapSpots[start->spot];
+            P_SpawnPlayer(plrNum, pClass, spot->pos[VX], spot->pos[VY],
+                          spot->pos[VZ], spot->angle, spot->flags,
                           false, true);
         }
         else
@@ -767,10 +767,10 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_TIME)
         Writer_WriteUInt16(msg, time);
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION,
-                   Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_INTERMISSION, Writer_Data(msg), Writer_Size(msg));
 }
 
+#if 0
 /**
  * The actual script is sent to the clients. 'script' can be NULL.
  */
@@ -812,6 +812,7 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
 
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, Writer_Data(writer), Writer_Size(writer));
 }
+#endif
 
 void NetSv_SendGameState(int flags, int to)
 {
@@ -909,10 +910,9 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     if(!IS_SERVER) return;
 
 #ifdef _DEBUG
-    Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
-                plrNum, x, y, z, angle);
+    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x\n",
+        plrNum, x, y, z, angle);
 #endif
-
     writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
     Writer_WriteFloat(writer, y);
@@ -920,7 +920,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     Writer_WriteUInt32(writer, angle);
 
     Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
-                   Writer_Data(writer), Writer_Size(writer));
+        Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1383,7 +1383,7 @@ void NetSv_ExecuteCheat(int player, const char* command)
 void NetSv_DoCheat(int player, Reader* msg)
 {
     size_t len = Reader_ReadUInt16(msg);
-    char* command = Z_Calloc(len + 1, PU_STATIC, 0);
+    char* command = Z_Calloc(len + 1, PU_GAMESTATIC, 0);
 
     Reader_Read(msg, command, len);
     NetSv_ExecuteCheat(player, command);
@@ -1498,9 +1498,9 @@ void NetSv_DoAction(int player, Reader* msg)
                 angle, lookDir, actionParam);
 #endif
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
-        if(G_GetGameState() == GS_INTERMISSION)
+        if(G_GameState() == GS_INTERMISSION)
         {
             if(type == GPA_USE || type == GPA_FIRE)
             {
@@ -1663,12 +1663,12 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessage(int plrNum, const char *msg)
+void NetSv_SendMessage(int plrNum, const char* msg)
 {
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, const char *msg)
+void NetSv_SendYellowMessage(int plrNum, const char* msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
 }
@@ -1701,7 +1701,7 @@ void P_Telefrag(mobj_t *thing)
 /**
  * Handles the console commands "startcycle" and "endcycle".
  */
-DEFCC(CCmdMapCycle)
+D_CMD(MapCycle)
 {
     int map;
     int i;

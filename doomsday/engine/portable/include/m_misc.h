@@ -1,4 +1,4 @@
-/**\file
+/**\file m_misc.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,16 +23,17 @@
  */
 
 /**
- * m_misc.h: Miscellanous Routines
+ * Miscellanous Routines.
  */
 
-#ifndef __DOOMSDAY_MISCELLAN_H__
-#define __DOOMSDAY_MISCELLAN_H__
+#ifndef LIBDENG_M_MISC_H
+#define LIBDENG_M_MISC_H
+
+#include <stdio.h>
 
 #include "dd_types.h"
-#include "sys_file.h"
+#include "dfile.h"
 
-#define MAX_READ    8192
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
 
@@ -42,28 +43,21 @@ void*           M_Calloc(size_t size);
 void*           M_Realloc(void* ptr, size_t size);
 void            M_Free(void* ptr);
 
-// File system routines.
-void            M_ResetFileIDs(void);
-boolean         M_CheckFileID(const char* path);
-size_t          M_ReadFile(char const* name, byte** buffer);
-size_t          M_ReadFileCLib(char const* name, byte** buffer);
-boolean         M_WriteFile(char const* name, void* source, size_t length);
-void            M_ExtractFileBase(char* dest, const char* path, size_t len);
-void            M_ExtractFileBase2(char* dest, const char* path, size_t len,
-                                   int ignore);
-char*           M_FindFileExtension(char* path);
-void            M_ReplaceFileExt(char* path, const char* newext,
-                                 size_t len);
-boolean         M_CheckPath(const char* path);
-int             M_FileExists(const char* file);
-void            M_TranslatePath(char* translated, const char* path,
-                                size_t len);
-void            M_PrependBasePath(char* newpath, const char* path,
-                                  size_t len);
-void            M_RemoveBasePath(char* newPath, const char* absPath,
-                                 size_t len);
-const char*     M_PrettyPath(const char* path);
-void            M_ReadLine(char* buffer, size_t len, DFILE* file);
+// File system utility routines.
+size_t M_ReadFile(char const* path, char** buffer);
+boolean M_WriteFile(char const* path, const char* source, size_t length);
+
+/**
+ * Reads x bits from the source stream and writes them to out.
+ *
+ * \warning Output buffer must be large enough to hold at least @a numBits!
+ *
+ * @param numBits  Number of bits to be read.
+ * @param src  Current position in the source stream.
+ * @param cb  Current byte. Used for tracking the current byte being read.
+ * @param out  Read bits are ouput here.
+ */
+void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out);
 
 // Bounding boxes.
 void            M_ClearBox(fixed_t* box);
@@ -75,17 +69,30 @@ void            M_JoinBoxes(float box[4], const float other[4]);
 // Text utilities.
 char*           M_SkipWhite(char* str);
 char*           M_FindWhite(char* str);
+void            M_StripLeft(char* str);
+void            M_StripRight(char* str, size_t len);
+void            M_Strip(char* str, size_t len);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
+void            M_ReadLine(char* buffer, size_t len, DFile* file);
+
 boolean         M_IsComment(const char* text);
-boolean         M_IsStringValidInt(const char* str);
-boolean         M_IsStringValidByte(const char* str);
-boolean         M_IsStringValidFloat(const char* str);
+
+/// @return  @c true if @a string can be interpreted as a valid integer.
+boolean M_IsStringValidInt(const char* string);
+
+/// @return  @c true if @a string can be interpreted as a valid byte.
+boolean M_IsStringValidByte(const char* string);
+
+/// @return  @c true if @a string can be interpreted as a valid floating-point value.
+boolean M_IsStringValidFloat(const char* string);
+
 char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                                 char separator, size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src, size_t len);
 char*           M_StrTok(char** cursor, char* delimiters);
+char*           M_TrimmedFloat(float val);
 
 // Random numbers.
 byte            RNG_RandByte(void);
@@ -124,6 +131,16 @@ int             M_FloorPow2(int num);
 int             M_RoundPow2(int num);
 int             M_WeightPow2(int num, float weight);
 float           M_CycleIntoRange(float value, float length);
+
+/**
+ * Using Euclid's Algorithm reduce the given numerator and denominator by
+ * their greatest common integer divisor.
+ * @param numerator  Input and output numerator.
+ * @param denominator  Input and output denominator.
+ * @return  Greatest common divisor.
+ */
+int M_RatioReduce(int* numerator, int* denominator);
+
 double          M_SlopeToAngle(double dx, double dy);
 double          M_Length(double x, double y);
 int             M_NumDigits(int num);
@@ -133,7 +150,14 @@ uint            M_CRC32(byte* data, uint length);
 boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
 boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
 
-// Other utilities.
-int             M_ScreenShot(const char* filename, int bits);
+// Other utilities:
 
-#endif
+/**
+ * Grabs the current contents of the frame buffer and outputs a Targa file.
+ * Will create/overwrite as necessary.
+ *
+ * @param filePath      Local file path to write to.
+ */
+int M_ScreenShot(const char* filePath, int bits);
+
+#endif /* LIBDENG_M_MISC_H */

@@ -1,4 +1,4 @@
-/**\file
+/**\file h_api.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,20 +23,19 @@
  */
 
 /**
- * h_api.h:
+ * Doomsday API exchange - jHeretic specific.
  */
 
-#ifndef __JHERETIC_API_H__
-#define __JHERETIC_API_H__
+#ifndef LIBJHERETIC_API_H
+#define LIBJHERETIC_API_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "doomsday.h"
+#include "dd_api.h"
 
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-game_export_t  *GetGameAPI(game_import_t *imports);
+extern game_import_t gi;
+extern game_export_t gx;
 
-#endif
+#endif /* LIBJHERETIC_API_H */

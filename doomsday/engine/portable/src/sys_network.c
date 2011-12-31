@@ -1,4 +1,4 @@
-/**\file
+/**\file sys_network.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_network.c: Low-Level Sockets Networking
+ * Low-Level Sockets Networking.
  *
  * TCP sockets are periodically polled for activity (Net_Update ->
  * N_Listen).
@@ -552,8 +552,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
                           (unsigned long) (size + 2), result) );
 #endif
-
-    if((size_t)result != size + 2)
+    if(result < 0 || (size_t) result != size + 2)
     {
         perror("Socket error");
     }
