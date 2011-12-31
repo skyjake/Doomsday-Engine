@@ -66,7 +66,7 @@ Rect* Rect_NewFromRaw(const RectRaw* rawRect)
 {
     assert(rawRect);
     return Rect_NewWithOriginSize2(rawRect->origin.x, rawRect->origin.y,
-                                    rawRect->size.width, rawRect->size.height);
+                                   rawRect->size.width, rawRect->size.height);
 }
 
 void Rect_Delete(Rect* r)
@@ -143,9 +143,93 @@ void Rect_SetSize2(Rect* r, int width, int height)
     Size2_SetWidthHeight(r->size, width, height);
 }
 
+Point2Raw* Rect_TopLeft(const Rect* r, Point2Raw* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2_X(r->origin);
+    point->y = Point2_Y(r->origin);
+    return point;
+}
+
+Point2Raw* Rect_TopRight(const Rect* r, Point2Raw* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2_X(r->origin) + Size2_Width(r->size);
+    point->y = Point2_Y(r->origin);
+    return point;
+}
+
+Point2Raw* Rect_BottomLeft(const Rect* r, Point2Raw* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2_X(r->origin);
+    point->y = Point2_Y(r->origin) + Size2_Height(r->size);
+    return point;
+}
+
+Point2Raw* Rect_BottomRight(const Rect* r, Point2Raw* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2_X(r->origin) + Size2_Width(r->size);
+    point->y = Point2_Y(r->origin) + Size2_Height(r->size);
+    return point;
+}
+
+RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized)
+{
+    assert(r);
+    if(!normalized) return NULL;
+
+    normalized->origin.x = Point2_X(r->origin);
+    normalized->origin.y = Point2_Y(r->origin);
+    normalized->size.width  = Size2_Width(r->size);
+    normalized->size.height = Size2_Height(r->size);
+    if(normalized->size.width < 0)
+        normalized->origin.x -= normalized->size.width;
+    if(normalized->size.height < 0)
+        normalized->origin.y -= normalized->size.height;
+
+    return normalized;
+}
+
+RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united)
+{
+    RectRaw normA, normB;
+    assert(r);
+
+    if(!united) return NULL;
+
+    if(!other)
+    {
+        united->origin.x = Point2_X(r->origin);
+        united->origin.y = Point2_Y(r->origin);
+        united->size.width  = Size2_Width(r->size);
+        united->size.height = Size2_Height(r->size);
+        return united;
+    }
+
+    Rect_Normalized(r, &normA);
+    Rect_Normalized(r, &normB);
+
+    united->origin.x = MIN_OF(normA.origin.x, normB.origin.x);
+    united->origin.y = MIN_OF(normA.origin.y, normB.origin.y);
+
+    united->size.width  = MAX_OF(normA.origin.x + normA.size.width,
+                                 normB.origin.x + normB.size.width)  - united->origin.x;
+    united->size.height = MAX_OF(normA.origin.y + normA.size.height,
+                                 normB.origin.y + normB.size.height) - united->origin.y;
+
+    return united;
+}
+
 boolean Rect_Equality(const Rect* r, const Rect* other)
 {
-    assert(r && other);
+    assert(r);
+    if(!other) return false;
     return r == other || Point2_Equality(r->origin, Rect_Origin(other)) &&
                          Size2_Equality(r->size, Rect_Size(other));
 }
@@ -255,9 +339,93 @@ void Rectf_SetSize2(Rectf* r, double width, double height)
     Size2f_SetWidthHeight(r->size, width, height);
 }
 
+Point2Rawf* Rectf_TopLeft(const Rectf* r, Point2Rawf* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2f_X(r->origin);
+    point->y = Point2f_Y(r->origin);
+    return point;
+}
+
+Point2Rawf* Rectf_TopRight(const Rectf* r, Point2Rawf* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2f_X(r->origin) + Size2f_Width(r->size);
+    point->y = Point2f_Y(r->origin);
+    return point;
+}
+
+Point2Rawf* Rectf_BottomLeft(const Rectf* r, Point2Rawf* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2f_X(r->origin);
+    point->y = Point2f_Y(r->origin) + Size2f_Height(r->size);
+    return point;
+}
+
+Point2Rawf* Rectf_BottomRight(const Rectf* r, Point2Rawf* point)
+{
+    assert(r);
+    if(!point) return NULL;
+    point->x = Point2f_X(r->origin) + Size2f_Width(r->size);
+    point->y = Point2f_Y(r->origin) + Size2f_Height(r->size);
+    return point;
+}
+
+RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized)
+{
+    assert(r);
+    if(!normalized) return NULL;
+
+    normalized->origin.x = Point2f_X(r->origin);
+    normalized->origin.y = Point2f_Y(r->origin);
+    normalized->size.width  = Size2f_Width(r->size);
+    normalized->size.height = Size2f_Height(r->size);
+    if(normalized->size.width < 0)
+        normalized->origin.x -= normalized->size.width;
+    if(normalized->size.height < 0)
+        normalized->origin.y -= normalized->size.height;
+
+    return normalized;
+}
+
+RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united)
+{
+    RectRawf normA, normB;
+    assert(r);
+
+    if(!united) return NULL;
+
+    if(!other)
+    {
+        united->origin.x = Point2f_X(r->origin);
+        united->origin.y = Point2f_Y(r->origin);
+        united->size.width  = Size2f_Width(r->size);
+        united->size.height = Size2f_Height(r->size);
+        return united;
+    }
+
+    Rectf_Normalized(r, &normA);
+    Rectf_Normalized(r, &normB);
+
+    united->origin.x = MIN_OF(normA.origin.x, normB.origin.x);
+    united->origin.y = MIN_OF(normA.origin.y, normB.origin.y);
+
+    united->size.width  = MAX_OF(normA.origin.x + normA.size.width,
+                                 normB.origin.x + normB.size.width)  - united->origin.x;
+    united->size.height = MAX_OF(normA.origin.y + normA.size.height,
+                                 normB.origin.y + normB.size.height) - united->origin.y;
+
+    return united;
+}
+
 boolean Rectf_Equality(const Rectf* r, const Rectf* other)
 {
-    assert(r && other);
+    assert(r);
+    if(!other) return false;
     return r == other || Point2f_Equality(r->origin, Rectf_Origin(other)) &&
                          Size2f_Equality(r->size, Rectf_Size(other));
 }

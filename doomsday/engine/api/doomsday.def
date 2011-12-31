@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 702 <--
+; Highest ordinal is currently: --> 714 <--
 ; Other free ordinals:
 ;
 ; 126
@@ -129,25 +129,37 @@ EXPORTS
     Rect_Size                   @668 NONAME
     Rect_SetSize                @669 NONAME
     Rect_SetSize2               @670 NONAME
-    Rect_Equality               @671 NONAME
+    Rect_TopLeft                @671 NONAME
+    Rect_TopRight               @672 NONAME
+    Rect_BottomLeft             @673 NONAME
+    Rect_BottomRight            @674 NONAME
+    Rect_Normalized             @675 NONAME
+    Rect_United                 @676 NONAME
+    Rect_Equality               @677 NONAME
 
-    Rectf_New                   @672 NONAME
-    Rectf_NewWithOriginSize     @673 NONAME
-    Rectf_NewWithOriginSize2    @674 NONAME
-    Rectf_NewFromRaw            @675 NONAME
-    Rectf_Delete                @676 NONAME
-    Rectf_IsNull                @677 NONAME
-    Rectf_Width                 @678 NONAME
-    Rectf_Height                @679 NONAME
-    Rectf_SetWidth              @680 NONAME
-    Rectf_SetHeight             @681 NONAME
-    Rectf_Origin                @682 NONAME
-    Rectf_SetOrigin             @683 NONAME
-    Rectf_SetOrigin2            @684 NONAME
-    Rectf_Size                  @685 NONAME
-    Rectf_SetSize               @686 NONAME
-    Rectf_SetSize2              @687 NONAME
-    Rectf_Equality              @688 NONAME
+    Rectf_New                   @678 NONAME
+    Rectf_NewWithOriginSize     @679 NONAME
+    Rectf_NewWithOriginSize2    @680 NONAME
+    Rectf_NewFromRaw            @681 NONAME
+    Rectf_Delete                @682 NONAME
+    Rectf_IsNull                @683 NONAME
+    Rectf_Width                 @684 NONAME
+    Rectf_Height                @685 NONAME
+    Rectf_SetWidth              @686 NONAME
+    Rectf_SetHeight             @687 NONAME
+    Rectf_Origin                @688 NONAME
+    Rectf_SetOrigin             @703 NONAME
+    Rectf_SetOrigin2            @704 NONAME
+    Rectf_Size                  @705 NONAME
+    Rectf_SetSize               @706 NONAME
+    Rectf_SetSize2              @707 NONAME
+    Rectf_TopLeft               @708 NONAME
+    Rectf_TopRight              @709 NONAME
+    Rectf_BottomLeft            @710 NONAME
+    Rectf_BottomRight           @711 NONAME
+    Rectf_Normalized            @712 NONAME
+    Rectf_United                @713 NONAME
+    Rectf_Equality              @714 NONAME
 
     ; String.
     Str_New                     @461 NONAME

@@ -64,6 +64,14 @@ const Size2* Rect_Size(const Rect* rect);
 void Rect_SetSize(Rect* rect, const Size2* size);
 void Rect_SetSize2(Rect* rect, int width, int height);
 
+Point2Raw* Rect_TopLeft(const Rect* rect, Point2Raw* point);
+Point2Raw* Rect_TopRight(const Rect* rect, Point2Raw* point);
+Point2Raw* Rect_BottomLeft(const Rect* rect, Point2Raw* point);
+Point2Raw* Rect_BottomRight(const Rect* rect, Point2Raw* point);
+
+RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized);
+RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united);
+
 boolean Rect_Equality(const Rect* rect, const Rect* other);
 
 /**
@@ -107,6 +115,14 @@ const Size2f* Rectf_Size(const Rectf* rect);
 void Rectf_SetSize2(Rectf* rect, double width, double height);
 
 void Rectf_SetSize(Rectf* rect, const Size2f* size);
+
+Point2Rawf* Rectf_TopLeft(const Rectf* rect, Point2Rawf* point);
+Point2Rawf* Rectf_TopRight(const Rectf* rect, Point2Rawf* point);
+Point2Rawf* Rectf_BottomLeft(const Rectf* rect, Point2Rawf* point);
+Point2Rawf* Rectf_BottomRight(const Rectf* rect, Point2Rawf* point);
+
+RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized);
+RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united);
 
 boolean Rectf_Equality(const Rectf* rect, const Rectf* other);
 
