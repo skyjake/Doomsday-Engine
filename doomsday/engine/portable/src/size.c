@@ -27,14 +27,12 @@
 #include "size.h"
 
 struct size2_s {
-    /// Use a "raw" size natively so that we can return immutable references
-    /// to this directly (no dynamic allocation).
+    /// Use a "raw" Size natively so that we can simply copy when called upon.
     Size2Raw raw;
 };
 
 struct size2f_s {
-    /// Use a "raw" size natively so that we can return immutable references
-    /// to this directly (no dynamic allocation).
+    /// Use a "raw" Size natively so that we can simply copy when called upon.
     Size2Rawf raw;
 };
 
@@ -69,10 +67,12 @@ boolean Size2_IsNull(const Size2* s)
     return s->raw.width == 0 && s->raw.height == 0;
 }
 
-const Size2Raw* Size2_ToRaw(const Size2* s)
+Size2Raw* Size2_Raw(const Size2* s, Size2Raw* rawSize)
 {
     assert(s);
-    return &s->raw;
+    if(!rawSize) return NULL;
+    memcpy(rawSize, &s->raw, sizeof(*rawSize));
+    return rawSize;
 }
 
 int Size2_Width(const Size2* s)
@@ -157,10 +157,12 @@ boolean Size2f_IsNull(const Size2f* s)
     return s->raw.width == 0 && s->raw.height == 0;
 }
 
-const Size2Rawf* Size2f_ToRaw(const Size2f* s)
+Size2Rawf* Size2f_Raw(const Size2f* s, Size2Rawf* rawSize)
 {
     assert(s);
-    return &s->raw;
+    if(!rawSize) return NULL;
+    memcpy(rawSize, &s->raw, sizeof(*rawSize));
+    return rawSize;
 }
 
 double Size2f_Width(const Size2f* s)

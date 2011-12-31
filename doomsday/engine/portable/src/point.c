@@ -27,14 +27,12 @@
 #include "point.h"
 
 struct point2_s {
-    /// Use a "raw" point natively so that we can return immutable references
-    /// to this directly (no dynamic allocation).
+    /// Use a "raw" Point natively so that we can simply copy when called upon.
     Point2Raw raw;
 };
 
 struct point2f_s {
-    /// Use a "raw" point natively so that we can return immutable references
-    /// to this directly (no dynamic allocation).
+    /// Use a "raw" Point natively so that we can simply copy when called upon.
     Point2Rawf raw;
 };
 
@@ -69,10 +67,12 @@ boolean Point2_IsNull(const Point2* p)
     return p->raw.x == 0 && p->raw.y == 0;
 }
 
-const Point2Raw* Point2_ToRaw(const Point2* p)
+Point2Raw* Point2_Raw(const Point2* p, Point2Raw* rawPoint)
 {
     assert(p);
-    return &p->raw;
+    if(!rawPoint) return NULL;
+    memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
+    return rawPoint;
 }
 
 int Point2_X(const Point2* p)
@@ -175,9 +175,12 @@ boolean Point2f_IsNull(const Point2f* p)
     return p->raw.x == 0 && p->raw.y == 0;
 }
 
-const Point2Rawf* Point2f_ToRaw(const Point2f* p)
+Point2Rawf* Point2f_Raw(const Point2f* p, Point2Rawf* rawPoint)
 {
-    return &p->raw;
+    assert(p);
+    if(!rawPoint) return NULL;
+    memcpy(rawPoint, &p->raw, sizeof(*rawPoint));
+    return rawPoint;
 }
 
 double Point2f_X(const Point2f* p)

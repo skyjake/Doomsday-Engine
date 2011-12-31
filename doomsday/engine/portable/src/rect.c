@@ -77,6 +77,15 @@ void Rect_Delete(Rect* r)
     free(r);
 }
 
+RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
+{
+    assert(r);
+    if(!rawRect) return NULL;
+    Point2_Raw(r->origin, &rawRect->origin);
+    Size2_Raw(r->size, &rawRect->size);
+    return rawRect;
+}
+
 boolean Rect_IsNull(const Rect* r)
 {
     assert(r);
@@ -201,14 +210,17 @@ Rect* Rect_Normalize(Rect* r)
     return r;
 }
 
-RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized)
+RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
 {
-    assert(r);
     if(!normalized) return NULL;
 
-    memcpy(&normalized->origin, Point2_ToRaw(Rect_Origin(r)), sizeof(normalized->origin));
-    memcpy(&normalized->size,   Size2_ToRaw(Rect_Size(r)), sizeof(normalized->size));
+    if(!rect)
+    {
+        memset(normalized, 0, sizeof(*normalized));
+        return normalized;
+    }
 
+    Rect_Raw(rect, normalized);
     if(normalized->size.width < 0)
         normalized->origin.x -= normalized->size.width;
     if(normalized->size.height < 0)
@@ -217,45 +229,60 @@ RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized)
     return normalized;
 }
 
-Rect* Rect_Unite(Rect* r, const Rect* other)
+/// \assume  This and @a other have been normalized.
+static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
 {
-    RectRaw otherNormalized;
-    assert(r);
+    assert(r && other);
 
-    if(!other) return r;
-
-    Rect_Normalize(r);
-    Rect_Normalized(other, &otherNormalized);
-
-    Rect_SetXY(r, MIN_OF(Point2_X(r->origin), otherNormalized.origin.x),
-                  MIN_OF(Point2_Y(r->origin), otherNormalized.origin.y));
+    Rect_SetXY(r, MIN_OF(Point2_X(r->origin), other->origin.x),
+                  MIN_OF(Point2_Y(r->origin), other->origin.y));
 
     Rect_SetWidthHeight(r, MAX_OF(Point2_X(r->origin) + Size2_Width(r->size),
-                                  otherNormalized.origin.x + otherNormalized.size.width)  - Point2_X(r->origin),
+                                  other->origin.x + other->size.width)  - Point2_X(r->origin),
                            MAX_OF(Point2_Y(r->origin) + Size2_Height(r->size),
-                                  otherNormalized.origin.y + otherNormalized.size.height) - Point2_Y(r->origin));
+                                  other->origin.y + other->size.height) - Point2_Y(r->origin));
 
     return r;
 }
 
-RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united)
+Rect* Rect_UniteRaw(Rect* r, const RectRaw* other)
+{
+    RectRaw otherNormalized;
+
+    if(!other) return r;
+
+    memcpy(&otherNormalized, other, sizeof(otherNormalized));
+    if(otherNormalized.size.width < 0)
+        otherNormalized.origin.x -= otherNormalized.size.width;
+    if(otherNormalized.size.height < 0)
+        otherNormalized.origin.y -= otherNormalized.size.height;
+
+    return Rect_UniteRaw2(Rect_Normalize(r), &otherNormalized);
+}
+
+Rect* Rect_Unite(Rect* r, const Rect* other)
+{
+    RectRaw rawOther;
+    return Rect_UniteRaw2(Rect_Normalize(r), Rect_Normalized(other, &rawOther));
+}
+
+RectRaw* Rect_United(const Rect* rect, const Rect* other, RectRaw* united)
 {
     RectRaw normA, normB;
-    assert(r);
 
     if(!united) return NULL;
 
     if(!other)
     {
-        united->origin.x = Point2_X(r->origin);
-        united->origin.y = Point2_Y(r->origin);
-        united->size.width  = Size2_Width(r->size);
-        united->size.height = Size2_Height(r->size);
+        united->origin.x = Point2_X(rect->origin);
+        united->origin.y = Point2_Y(rect->origin);
+        united->size.width  = Size2_Width(rect->size);
+        united->size.height = Size2_Height(rect->size);
         return united;
     }
 
-    Rect_Normalized(r, &normA);
-    Rect_Normalized(r, &normB);
+    Rect_Normalized(rect, &normA);
+    Rect_Normalized(other, &normB);
 
     united->origin.x = MIN_OF(normA.origin.x, normB.origin.x);
     united->origin.y = MIN_OF(normA.origin.y, normB.origin.y);
@@ -313,6 +340,15 @@ void Rectf_Delete(Rectf* r)
     Point2f_Delete(r->origin);
     Size2f_Delete(r->size);
     free(r);
+}
+
+RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)
+{
+    assert(r);
+    if(!rawRect) return NULL;
+    Point2f_Raw(r->origin, &rawRect->origin);
+    Size2f_Raw(r->size, &rawRect->size);
+    return rawRect;
 }
 
 boolean Rectf_IsNull(const Rectf* r)
@@ -439,14 +475,17 @@ Rectf* Rectf_Normalize(Rectf* r)
     return r;
 }
 
-RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized)
+RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
 {
-    assert(r);
     if(!normalized) return NULL;
 
-    memcpy(&normalized->origin, Point2f_ToRaw(Rectf_Origin(r)), sizeof(normalized->origin));
-    memcpy(&normalized->size,   Size2f_ToRaw(Rectf_Size(r)), sizeof(normalized->size));
+    if(!rect)
+    {
+        memset(normalized, 0, sizeof(*normalized));
+        return normalized;
+    }
 
+    Rectf_Raw(rect, normalized);
     if(normalized->size.width < 0)
         normalized->origin.x -= normalized->size.width;
     if(normalized->size.height < 0)
@@ -455,45 +494,60 @@ RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized)
     return normalized;
 }
 
-Rectf* Rectf_Unite(Rectf* r, const Rectf* other)
+/// \assume  This and @a other have been normalized.
+static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
 {
-    RectRawf otherNormalized;
-    assert(r);
+    assert(r && other);
 
-    if(!other) return r;
-
-    Rectf_Normalize(r);
-    Rectf_Normalized(other, &otherNormalized);
-
-    Rectf_SetXY(r, MIN_OF(Point2f_X(r->origin), otherNormalized.origin.x),
-                   MIN_OF(Point2f_Y(r->origin), otherNormalized.origin.y));
+    Rectf_SetXY(r, MIN_OF(Point2f_X(r->origin), other->origin.x),
+                   MIN_OF(Point2f_Y(r->origin), other->origin.y));
 
     Rectf_SetWidthHeight(r, MAX_OF(Point2f_X(r->origin) + Size2f_Width(r->size),
-                                   otherNormalized.origin.x + otherNormalized.size.width)  - Point2f_X(r->origin),
+                                   other->origin.x + other->size.width)  - Point2f_X(r->origin),
                             MAX_OF(Point2f_Y(r->origin) + Size2f_Height(r->size),
-                                   otherNormalized.origin.y + otherNormalized.size.height) - Point2f_Y(r->origin));
+                                   other->origin.y + other->size.height) - Point2f_Y(r->origin));
 
     return r;
 }
 
-RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united)
+Rectf* Rectf_UniteRaw(Rectf* r, const RectRawf* other)
+{
+    RectRawf otherNormalized;
+
+    if(!other) return r;
+
+    memcpy(&otherNormalized, other, sizeof(otherNormalized));
+    if(otherNormalized.size.width < 0)
+        otherNormalized.origin.x -= otherNormalized.size.width;
+    if(otherNormalized.size.height < 0)
+        otherNormalized.origin.y -= otherNormalized.size.height;
+
+    return Rectf_UniteRaw2(Rectf_Normalize(r), &otherNormalized);
+}
+
+Rectf* Rectf_Unite(Rectf* r, const Rectf* other)
+{
+    RectRawf rawOther;
+    return Rectf_UniteRaw2(Rectf_Normalize(r), Rectf_Normalized(other, &rawOther));
+}
+
+RectRawf* Rectf_United(const Rectf* rect, const Rectf* other, RectRawf* united)
 {
     RectRawf normA, normB;
-    assert(r);
 
     if(!united) return NULL;
 
     if(!other)
     {
-        united->origin.x = Point2f_X(r->origin);
-        united->origin.y = Point2f_Y(r->origin);
-        united->size.width  = Size2f_Width(r->size);
-        united->size.height = Size2f_Height(r->size);
+        united->origin.x = Point2f_X(rect->origin);
+        united->origin.y = Point2f_Y(rect->origin);
+        united->size.width  = Size2f_Width(rect->size);
+        united->size.height = Size2f_Height(rect->size);
         return united;
     }
 
-    Rectf_Normalized(r, &normA);
-    Rectf_Normalized(r, &normB);
+    Rectf_Normalized(rect, &normA);
+    Rectf_Normalized(other, &normB);
 
     united->origin.x = MIN_OF(normA.origin.x, normB.origin.x);
     united->origin.y = MIN_OF(normA.origin.y, normB.origin.y);

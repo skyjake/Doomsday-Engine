@@ -54,9 +54,9 @@ Size2* Size2_NewWithDimensions(int width, int height);
 Size2* Size2_NewFromRaw(const Size2Raw* rawSize);
 void Size2_Delete(Size2* size);
 
-boolean Size2_IsNull(const Size2* size);
+Size2Raw* Size2_Raw(const Size2* size, Size2Raw* rawSize);
 
-const Size2Raw* Size2_ToRaw(const Size2* size);
+boolean Size2_IsNull(const Size2* size);
 
 int Size2_Width(const Size2* size);
 int Size2_Height(const Size2* size);
@@ -98,9 +98,9 @@ Size2f* Size2f_NewWithDimensions(double width, double height);
 Size2f* Size2f_NewFromRaw(const Size2Rawf* rawSize);
 void Size2f_Delete(Size2f* size);
 
-boolean Size2f_IsNull(const Size2f* size);
+Size2Rawf* Size2f_Raw(const Size2f* size, Size2Rawf* rawSize);
 
-const Size2Rawf* Size2f_ToRaw(const Size2f* size);
+boolean Size2f_IsNull(const Size2f* size);
 
 double Size2f_Width(const Size2f* size);
 double Size2f_Height(const Size2f* size);

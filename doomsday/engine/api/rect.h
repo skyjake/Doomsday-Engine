@@ -53,6 +53,8 @@ Rect* Rect_NewFromRaw(const RectRaw* rawRect);
 
 void Rect_Delete(Rect* rect);
 
+RectRaw* Rect_Raw(const Rect* rect, RectRaw* rawRect);
+
 boolean Rect_IsNull(const Rect* rect);
 
 const Point2* Rect_Origin(const Rect* rect);
@@ -79,14 +81,15 @@ Point2Raw* Rect_BottomRight(const Rect* rect, Point2Raw* point);
 
 Rect* Rect_Normalize(Rect* r);
 Rect* Rect_Unite(Rect* r, const Rect* other);
+Rect* Rect_UniteRaw(Rect* r, const RectRaw* other);
 
 boolean Rect_Equality(const Rect* rect, const Rect* other);
 
 /**
  * Static non-members.
  */
-RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized);
-RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united);
+RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized);
+RectRaw* Rect_United(const Rect* rect, const Rect* other, RectRaw* united);
 
 /**
  * RectRawf. Rectangle Raw (f)loating point. Is intended as a handy
@@ -109,6 +112,8 @@ Rectf* Rectf_NewWithOriginSize(const Point2f* origin, const Size2f* size);
 Rectf* Rectf_NewFromRaw(const RectRawf* rawRect);
 
 void Rectf_Delete(Rectf* rect);
+
+RectRawf* Rectf_Raw(const Rectf* rect, RectRawf* rawRect);
 
 boolean Rectf_IsNull(const Rectf* rect);
 
@@ -136,14 +141,15 @@ Point2Rawf* Rectf_BottomRight(const Rectf* rect, Point2Rawf* point);
 
 Rectf* Rectf_Normalize(Rectf* r);
 Rectf* Rectf_Unite(Rectf* r, const Rectf* other);
+Rectf* Rectf_UniteRaw(Rectf* r, const RectRawf* other);
 
 boolean Rectf_Equality(const Rectf* rect, const Rectf* other);
 
 /**
  * Static non-members:
  */
-RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized);
-RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united);
+RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized);
+RectRawf* Rectf_United(const Rectf* rect, const Rectf* other, RectRawf* united);
 
 #ifdef __cplusplus
 } // extern "C"

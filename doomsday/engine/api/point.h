@@ -54,9 +54,9 @@ Point2* Point2_NewWithCoords(int x, int y);
 Point2* Point2_NewFromRaw(const Point2Raw* rawPoint);
 void Point2_Delete(Point2* point);
 
-boolean Point2_IsNull(const Point2* point);
+Point2Raw* Point2_Raw(const Point2* point, Point2Raw* rawPoint);
 
-const Point2Raw* Point2_ToRaw(const Point2* point);
+boolean Point2_IsNull(const Point2* point);
 
 int Point2_X(const Point2* point);
 int Point2_Y(const Point2* point);
@@ -101,9 +101,9 @@ Point2f* Point2f_NewWithCoords(double x, double y);
 Point2f* Point2f_NewFromRaw(const Point2Rawf* rawPoint);
 void Point2f_Delete(Point2f* point);
 
-boolean Point2f_IsNull(const Point2f* point);
+Point2Rawf* Point2f_Raw(const Point2f* point, Point2Rawf* rawPoint);
 
-const Point2Rawf* Point2f_ToRaw(const Point2f* point);
+boolean Point2f_IsNull(const Point2f* point);
 
 double Point2f_X(const Point2f* point);
 double Point2f_Y(const Point2f* point);
