@@ -217,8 +217,6 @@ static int initTimingSystem(void)
 
 static int initPluginSystem(void)
 {
-    // Initialize libtool's dynamic library routines.
-    Library_Init();
 #ifdef DENG_LIBRARY_DIR
     // The default directory is defined in the Makefile. For instance, "/usr/local/lib".
     Library_AddSearchDir(DENG_LIBRARY_DIR);
@@ -359,6 +357,8 @@ int main(int argc, char** argv)
         // First order of business: are we running in dedicated mode?
         isDedicated = ArgCheck("-dedicated");
         novideo = ArgCheck("-novideo") || isDedicated;
+
+        Library_Init();
 
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);
