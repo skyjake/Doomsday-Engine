@@ -818,6 +818,9 @@ static void applyPageLayout(mn_page_t* page)
     lineHeight = FR_CharHeight('Q');
     lineOffset = MAX_OF(1, .5f + lineHeight * .08f);
 
+    Rect_SetXY(page->geometry, 0, 0);
+    Rect_SetWidthHeight(page->geometry, 0, 0);
+
     // Apply layout logic to this page.
     for(i = 0; i < page->objectsCount;)
     {
@@ -854,6 +857,8 @@ static void applyPageLayout(mn_page_t* page)
                 origin.y += Rect_United(obj->_geometry, nextObj->_geometry, &united)
                           ->size.height + lineOffset;
 
+                Rect_UniteRaw(page->geometry, &united);
+
                 // Extra spacing between object groups.
                 if(i+2 < page->objectsCount &&
                    nextObj->_group != page->objects[i+2]._group)
@@ -864,6 +869,8 @@ static void applyPageLayout(mn_page_t* page)
                 continue;
             }
         }
+
+        Rect_Unite(page->geometry, obj->_geometry);
 
         origin.y += Rect_Height(obj->_geometry) + lineOffset;
 

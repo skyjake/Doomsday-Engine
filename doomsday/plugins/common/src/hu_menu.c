@@ -2433,6 +2433,8 @@ static void initPage(mn_page_t* page)
     int i;
     assert(page);
 
+    page->geometry = Rect_New();
+
     page->focus = -1; /// \fixme Make this a page flag.
     page->objectsCount = MN_CountObjects(page->objects);
 
@@ -2562,6 +2564,11 @@ static void destroyPage(mn_page_t* page)
             Rect_Delete(obj->_geometry);
             obj->_geometry = NULL;
         }
+    }
+    if(page->geometry)
+    {
+        Rect_Delete(page->geometry);
+        page->geometry = NULL;
     }
 }
 

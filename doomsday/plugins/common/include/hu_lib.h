@@ -304,6 +304,7 @@ typedef struct mn_page_s {
     // Auto-initialized.
     int objectsCount;
     int focus; // Index of the focus object.
+    Rect* geometry;
 } mn_page_t;
 
 void MNPage_Initialize(mn_page_t* page);
