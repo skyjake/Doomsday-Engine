@@ -4,6 +4,18 @@ import utils
 from event import Event
 import config
 
+def encodedText(logText):
+    logText = logText.replace('&', '&amp;')
+    logText = logText.replace(u'ä', u'&auml;')
+    logText = logText.replace(u'ö', u'&ouml;')
+    logText = logText.replace(u'Ä', u'&Auml;')
+    logText = logText.replace(u'Ö', u'&Ouml;')
+    logText = logText.encode('utf-8')
+    logText = logText.replace('<', '&lt;')
+    logText = logText.replace('>', '&gt;')
+    return logText
+
+
 class Entry:
     def __init__(self):
         self.subject = ''
@@ -25,12 +37,13 @@ class Entry:
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
-        self.subject = subject
+        self.subject = encodedText(subject)
         
     def setMessage(self, message):
         self.message = message.strip()
         if self.extra:
             self.message = self.extra + ' ' + self.message
+        self.message = encodedText(self.message)
         self.message = self.message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
         
 
@@ -59,14 +72,6 @@ class Changes:
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
         logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
-        logText = logText.replace('&', '&amp;')
-        logText = logText.replace(u'ä', u'&auml;')
-        logText = logText.replace(u'ö', u'&ouml;')
-        logText = logText.replace(u'Ä', u'&Auml;')
-        logText = logText.replace(u'Ö', u'&Ouml;')
-        logText = logText.encode('utf-8')
-        logText = logText.replace('<', '&lt;')
-        logText = logText.replace('>', '&gt;')
         
         os.remove(tmpName)        
 
