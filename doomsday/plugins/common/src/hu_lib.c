@@ -878,7 +878,9 @@ static void applyPageLayout(mn_page_t* page)
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 {
-    int i;
+    mn_object_t* focusObj;
+    int i, focusObjHeight;
+    Point2Raw cursorOrigin;
 
     if(!page) return;
 
@@ -899,6 +901,38 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
     // We can now layout the widgets of this page.
     applyPageLayout(page);
+
+    // Determine the origin of the focus object (this dictates the page scroll location).
+    focusObj = MNPage_FocusObject(page);
+    if(focusObj && !MNObject_IsDrawable(focusObj))
+        focusObj = NULL;
+
+    // Are we focusing?
+    if(focusObj)
+    {
+        focusObjHeight = Size2_Height(MNObject_Size(focusObj));
+
+        // Determine the origin and dimensions of the cursor.
+        // \todo Each object should define a focus origin...
+        cursorOrigin.x = 0;
+        cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
+
+        /// \kludge
+        /// We cannot yet query the subobjects of the list for these values
+        /// so we must calculate them ourselves, here.
+        if(MN_LIST == MNObject_Type(focusObj) && (MNObject_Flags(focusObj) & MNF_ACTIVE) &&
+           MNList_SelectionIsVisible(focusObj))
+        {
+            const mndata_list_t* list = (mndata_list_t*)focusObj->_typedata;
+
+            FR_PushAttrib();
+            FR_SetFont(MNPage_PredefinedFont(page, MNObject_Font(focusObj)));
+            focusObjHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+            cursorOrigin.y += (list->selection - list->first) * focusObjHeight;
+            FR_PopAttrib();
+        }
+        // kludge end
+    }
 
     // Draw the page.
     if(page->drawer)
@@ -924,34 +958,12 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PushAttrib();
         MN_DrawObject(obj, &geometry.origin);
         FR_PopAttrib();
+    }
 
-        // Draw the focus cursor?
-        if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
-        {
-            int focusObjectHeight = geometry.size.height;
-            Point2Raw cursorOrigin;
-
-            // Determine the origin and dimensions of the cursor.
-            // \todo Each object should define a focus origin...
-            cursorOrigin.x = 0;
-            cursorOrigin.y = geometry.origin.y;
-
-            /// \kludge
-            /// We cannot yet query the subobjects of the list for these values
-            /// so we must calculate them ourselves, here.
-            if(MN_LIST == MNObject_Type(obj) && (MNObject_Flags(obj) & MNF_ACTIVE) &&
-               MNList_SelectionIsVisible(obj))
-            {
-                const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
-
-                FR_SetFont(MNPage_PredefinedFont(page, MNObject_Font(obj)));
-                focusObjectHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                cursorOrigin.y += (list->selection - list->first) * focusObjectHeight;
-            }
-            // kludge end
-
-            Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjectHeight, alpha);
-        }
+    // Draw the focus cursor?
+    if(showFocusCursor && focusObj)
+    {
+        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
