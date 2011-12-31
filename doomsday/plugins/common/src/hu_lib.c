@@ -942,8 +942,23 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
+    // Apply page scroll?
+    if(focusObj && Rect_Height(page->geometry) > SCREENHEIGHT)
+    {
+        RectRaw geometry;
+        const int minY = -page->origin.x + SCREENHEIGHT/2;
+        Rect_Raw(page->geometry, &geometry);
+
+        if(cursorOrigin.y > minY)
+        {
+            DGL_Translatef(0, -(cursorOrigin.y - minY), 0);
+        }
+    }
+
+    // Draw child objects.
     for(i = 0; i < page->objectsCount; ++i)
     {
         mn_object_t* obj = &page->objects[i];
@@ -959,8 +974,15 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PopAttrib();
     }
 
+    // Finally, the focus cursor?
+    /// \todo cursor should be drawn on top of the page drawer.
+    if(showFocusCursor && focusObj)
+    {
+        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
+    }
+
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-page->origin.x, -page->origin.y, 0);
+    DGL_PopMatrix();
 
     // The page has its own drawer.
     if(page->drawer)
@@ -968,18 +990,6 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PushAttrib();
         page->drawer(page, &page->origin);
         FR_PopAttrib();
-    }
-
-    // Finally, the focus cursor?
-    if(showFocusCursor && focusObj)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(page->origin.x, page->origin.y, 0);
-
-        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-page->origin.x, -page->origin.y, 0);
     }
 }
 
