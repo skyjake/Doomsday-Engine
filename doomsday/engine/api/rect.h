@@ -66,22 +66,28 @@ void Rect_SetHeight(Rect* rect, int height);
 const Point2* Rect_Origin(const Rect* rect);
 
 void Rect_SetOrigin(Rect* r, const Point2* origin);
-void Rect_SetOrigin2(Rect* r, int x, int y);
+void Rect_SetXY(Rect* r, int x, int y);
 
 const Size2* Rect_Size(const Rect* rect);
 
 void Rect_SetSize(Rect* rect, const Size2* size);
-void Rect_SetSize2(Rect* rect, int width, int height);
+void Rect_SetWidthHeight(Rect* rect, int width, int height);
 
 Point2Raw* Rect_TopLeft(const Rect* rect, Point2Raw* point);
 Point2Raw* Rect_TopRight(const Rect* rect, Point2Raw* point);
 Point2Raw* Rect_BottomLeft(const Rect* rect, Point2Raw* point);
 Point2Raw* Rect_BottomRight(const Rect* rect, Point2Raw* point);
 
-RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized);
-RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united);
+Rect* Rect_Normalize(Rect* r);
+Rect* Rect_Unite(Rect* r, const Rect* other);
 
 boolean Rect_Equality(const Rect* rect, const Rect* other);
+
+/**
+ * Static non-members.
+ */
+RectRaw* Rect_Normalized(const Rect* r, RectRaw* normalized);
+RectRaw* Rect_United(const Rect* r, const Rect* other, RectRaw* united);
 
 /**
  * RectRawf. Rectangle Raw (f)loating point. Is intended as a handy
@@ -118,10 +124,10 @@ void Rectf_SetHeight(Rectf* rect, double height);
 const Point2f* Rectf_Origin(const Rectf* rect);
 
 void Rectf_SetOrigin(Rectf* rect, const Point2f* origin);
-void Rectf_SetOrigin2(Rectf* r, double x, double y);
+void Rectf_SetXY(Rectf* r, double x, double y);
 
 const Size2f* Rectf_Size(const Rectf* rect);
-void Rectf_SetSize2(Rectf* rect, double width, double height);
+void Rectf_SetWidthHeight(Rectf* rect, double width, double height);
 
 void Rectf_SetSize(Rectf* rect, const Size2f* size);
 
@@ -130,10 +136,16 @@ Point2Rawf* Rectf_TopRight(const Rectf* rect, Point2Rawf* point);
 Point2Rawf* Rectf_BottomLeft(const Rectf* rect, Point2Rawf* point);
 Point2Rawf* Rectf_BottomRight(const Rectf* rect, Point2Rawf* point);
 
-RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized);
-RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united);
+Rectf* Rectf_Normalize(Rectf* r);
+Rectf* Rectf_Unite(Rectf* r, const Rectf* other);
 
 boolean Rectf_Equality(const Rectf* rect, const Rectf* other);
+
+/**
+ * Static non-members:
+ */
+RectRawf* Rectf_Normalized(const Rectf* r, RectRawf* normalized);
+RectRawf* Rectf_United(const Rectf* r, const Rectf* other, RectRawf* united);
 
 #ifdef __cplusplus
 } // extern "C"

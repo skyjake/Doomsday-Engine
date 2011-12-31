@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 714 <--
+; Highest ordinal is currently: --> 722 <--
 ; Other free ordinals:
 ;
 ; 126
@@ -62,104 +62,114 @@ EXPORTS
     Point2_XY                   @607 NONAME
     Point2_SetXY                @608 NONAME
     Point2_Translate            @609 NONAME
-    Point2_Sum                  @610 NONAME
-    Point2_Equality             @611 NONAME
+    Point2_TranslateX           @610 NONAME
+    Point2_TranslateY           @611 NONAME
+    Point2_Sum                  @612 NONAME
+    Point2_Equality             @613 NONAME
 
-    Point2f_New                 @612 NONAME
-    Point2f_NewWithCoords       @613 NONAME
-    Point2f_NewFromRaw          @614 NONAME
-    Point2f_Delete              @615 NONAME
-    Point2f_IsNull              @616 NONAME
-    Point2f_ToRaw               @617 NONAME
-    Point2f_X                   @618 NONAME
-    Point2f_Y                   @619 NONAME
-    Point2f_SetX                @620 NONAME
-    Point2f_SetY                @621 NONAME
-    Point2f_XY                  @622 NONAME
-    Point2f_SetXY               @623 NONAME
-    Point2f_Translate           @624 NONAME
-    Point2f_Sum                 @625 NONAME
-    Point2f_Equality            @626 NONAME
+    Point2f_New                 @614 NONAME
+    Point2f_NewWithCoords       @615 NONAME
+    Point2f_NewFromRaw          @616 NONAME
+    Point2f_Delete              @617 NONAME
+    Point2f_IsNull              @618 NONAME
+    Point2f_ToRaw               @619 NONAME
+    Point2f_X                   @620 NONAME
+    Point2f_Y                   @621 NONAME
+    Point2f_SetX                @622 NONAME
+    Point2f_SetY                @623 NONAME
+    Point2f_XY                  @624 NONAME
+    Point2f_SetXY               @625 NONAME
+    Point2f_Translate           @626 NONAME
+    Point2f_TranslateX          @627 NONAME
+    Point2f_TranslateY          @628 NONAME
+    Point2f_Sum                 @629 NONAME
+    Point2f_Equality            @630 NONAME
 
     ; 2D Size.
-    Size2_New                   @627 NONAME
-    Size2_NewWithDimensions     @628 NONAME
-    Size2_NewFromRaw            @629 NONAME
-    Size2_Delete                @630 NONAME
-    Size2_IsNull                @631 NONAME
-    Size2_ToRaw                 @632 NONAME
-    Size2_Width                 @633 NONAME
-    Size2_Height                @634 NONAME
-    Size2_SetWidth              @635 NONAME
-    Size2_SetHeight             @636 NONAME
-    Size2_WidthHeight           @637 NONAME
-    Size2_SetWidthHeight        @638 NONAME
-    Size2_Sum                   @639 NONAME
-    Size2_Equality              @640 NONAME
+    Size2_New                   @631 NONAME
+    Size2_NewWithDimensions     @632 NONAME
+    Size2_NewFromRaw            @633 NONAME
+    Size2_Delete                @634 NONAME
+    Size2_IsNull                @635 NONAME
+    Size2_ToRaw                 @636 NONAME
+    Size2_Width                 @637 NONAME
+    Size2_Height                @638 NONAME
+    Size2_SetWidth              @639 NONAME
+    Size2_SetHeight             @640 NONAME
+    Size2_WidthHeight           @641 NONAME
+    Size2_SetWidthHeight        @642 NONAME
+    Size2_Sum                   @643 NONAME
+    Size2_Equality              @644 NONAME
 
-    Size2f_New                  @641 NONAME
-    Size2f_NewWithDimensions    @642 NONAME
-    Size2f_NewFromRaw           @643 NONAME
-    Size2f_Delete               @644 NONAME
-    Size2f_IsNull               @645 NONAME
-    Size2f_ToRaw                @646 NONAME
-    Size2f_Width                @647 NONAME
-    Size2f_Height               @648 NONAME
-    Size2f_SetWidth             @649 NONAME
-    Size2f_SetHeight            @650 NONAME
-    Size2f_WidthHeight          @651 NONAME
-    Size2f_SetWidthHeight       @652 NONAME
-    Size2f_Sum                  @653 NONAME
-    Size2f_Equality             @654 NONAME
+    Size2f_New                  @645 NONAME
+    Size2f_NewWithDimensions    @646 NONAME
+    Size2f_NewFromRaw           @647 NONAME
+    Size2f_Delete               @648 NONAME
+    Size2f_IsNull               @649 NONAME
+    Size2f_ToRaw                @650 NONAME
+    Size2f_Width                @651 NONAME
+    Size2f_Height               @652 NONAME
+    Size2f_SetWidth             @653 NONAME
+    Size2f_SetHeight            @654 NONAME
+    Size2f_WidthHeight          @655 NONAME
+    Size2f_SetWidthHeight       @656 NONAME
+    Size2f_Sum                  @657 NONAME
+    Size2f_Equality             @658 NONAME
 
     ; Rectangle.
-    Rect_New                    @655 NONAME
-    Rect_NewWithOriginSize      @656 NONAME
-    Rect_NewWithOriginSize2     @657 NONAME
-    Rect_NewFromRaw             @658 NONAME
-    Rect_Delete                 @659 NONAME
-    Rect_IsNull                 @660 NONAME
-    Rect_Width                  @661 NONAME
-    Rect_Height                 @662 NONAME
-    Rect_SetWidth               @663 NONAME
-    Rect_SetHeight              @664 NONAME
-    Rect_Origin                 @665 NONAME
-    Rect_SetOrigin              @666 NONAME
-    Rect_SetOrigin2             @667 NONAME
-    Rect_Size                   @668 NONAME
-    Rect_SetSize                @669 NONAME
-    Rect_SetSize2               @670 NONAME
-    Rect_TopLeft                @671 NONAME
-    Rect_TopRight               @672 NONAME
-    Rect_BottomLeft             @673 NONAME
-    Rect_BottomRight            @674 NONAME
-    Rect_Normalized             @675 NONAME
-    Rect_United                 @676 NONAME
-    Rect_Equality               @677 NONAME
+    Rect_New                    @659 NONAME
+    Rect_NewWithOriginSize      @660 NONAME
+    Rect_NewWithOriginSize2     @661 NONAME
+    Rect_NewFromRaw             @662 NONAME
+    Rect_Delete                 @663 NONAME
+    Rect_IsNull                 @664 NONAME
+    Rect_Width                  @665 NONAME
+    Rect_Height                 @666 NONAME
+    Rect_SetWidth               @667 NONAME
+    Rect_SetHeight              @668 NONAME
+    Rect_Origin                 @669 NONAME
+    Rect_SetOrigin              @670 NONAME
+    Rect_SetXY                  @671 NONAME
+    Rect_Size                   @672 NONAME
+    Rect_SetSize                @673 NONAME
+    Rect_SetWidthHeight         @674 NONAME
+    Rect_TopLeft                @675 NONAME
+    Rect_TopRight               @676 NONAME
+    Rect_BottomLeft             @677 NONAME
+    Rect_BottomRight            @678 NONAME
+    Rect_Normalize              @679 NONAME
+    Rect_Unite                  @680 NONAME
+    Rect_Equality               @681 NONAME
 
-    Rectf_New                   @678 NONAME
-    Rectf_NewWithOriginSize     @679 NONAME
-    Rectf_NewWithOriginSize2    @680 NONAME
-    Rectf_NewFromRaw            @681 NONAME
-    Rectf_Delete                @682 NONAME
-    Rectf_IsNull                @683 NONAME
-    Rectf_Width                 @684 NONAME
-    Rectf_Height                @685 NONAME
-    Rectf_SetWidth              @686 NONAME
-    Rectf_SetHeight             @687 NONAME
-    Rectf_Origin                @688 NONAME
-    Rectf_SetOrigin             @703 NONAME
-    Rectf_SetOrigin2            @704 NONAME
-    Rectf_Size                  @705 NONAME
-    Rectf_SetSize               @706 NONAME
-    Rectf_SetSize2              @707 NONAME
-    Rectf_TopLeft               @708 NONAME
-    Rectf_TopRight              @709 NONAME
-    Rectf_BottomLeft            @710 NONAME
-    Rectf_BottomRight           @711 NONAME
-    Rectf_Normalized            @712 NONAME
-    Rectf_United                @713 NONAME
-    Rectf_Equality              @714 NONAME
+    Rect_Normalized             @682 NONAME
+    Rect_United                 @683 NONAME
+
+    Rectf_New                   @684 NONAME
+    Rectf_NewWithOriginSize     @685 NONAME
+    Rectf_NewWithOriginSize2    @686 NONAME
+    Rectf_NewFromRaw            @687 NONAME
+    Rectf_Delete                @688 NONAME
+    Rectf_IsNull                @703 NONAME
+    Rectf_Width                 @704 NONAME
+    Rectf_Height                @705 NONAME
+    Rectf_SetWidth              @706 NONAME
+    Rectf_SetHeight             @707 NONAME
+    Rectf_Origin                @708 NONAME
+    Rectf_SetOrigin             @709 NONAME
+    Rectf_SetXY                 @710 NONAME
+    Rectf_Size                  @711 NONAME
+    Rectf_SetSize               @712 NONAME
+    Rectf_SetWidthHeight        @713 NONAME
+    Rectf_TopLeft               @714 NONAME
+    Rectf_TopRight              @715 NONAME
+    Rectf_BottomLeft            @716 NONAME
+    Rectf_BottomRight           @717 NONAME
+    Rectf_Normalize             @718 NONAME
+    Rectf_Unite                 @719 NONAME
+    Rectf_Equality              @720 NONAME
+
+    Rectf_Normalized            @721 NONAME
+    Rectf_United                @722 NONAME
 
     ; String.
     Str_New                     @461 NONAME

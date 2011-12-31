@@ -119,6 +119,18 @@ void Point2_Translate(Point2* p, int x, int y)
     p->raw.y += y;
 }
 
+void Point2_TranslateX(Point2* p, int x)
+{
+    assert(p);
+    p->raw.x += x;
+}
+
+void Point2_TranslateY(Point2* p, int y)
+{
+    assert(p);
+    p->raw.y += y;
+}
+
 void Point2_Sum(Point2* p, const Point2* other)
 {
     assert(p && other);
@@ -205,10 +217,22 @@ void Point2f_SetXY(Point2f* p, double x, double y)
     p->raw.y = y;
 }
 
-void Point2f_Translate(Point2* p, double x, double y)
+void Point2f_Translate(Point2f* p, double x, double y)
 {
     assert(p);
     p->raw.x += x;
+    p->raw.y += y;
+}
+
+void Point2f_TranslateX(Point2f* p, double x)
+{
+    assert(p);
+    p->raw.x += x;
+}
+
+void Point2f_TranslateY(Point2f* p, double y)
+{
+    assert(p);
     p->raw.y += y;
 }
 
