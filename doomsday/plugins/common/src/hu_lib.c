@@ -941,14 +941,6 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         // kludge end
     }
 
-    // Draw the page.
-    if(page->drawer)
-    {
-        FR_PushAttrib();
-        page->drawer(page, &page->origin);
-        FR_PopAttrib();
-    }
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
@@ -967,14 +959,28 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PopAttrib();
     }
 
-    // Draw the focus cursor?
-    if(showFocusCursor && focusObj)
-    {
-        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
-    }
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(-page->origin.x, -page->origin.y, 0);
+
+    // The page has its own drawer.
+    if(page->drawer)
+    {
+        FR_PushAttrib();
+        page->drawer(page, &page->origin);
+        FR_PopAttrib();
+    }
+
+    // Finally, the focus cursor?
+    if(showFocusCursor && focusObj)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(page->origin.x, page->origin.y, 0);
+
+        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-page->origin.x, -page->origin.y, 0);
+    }
 }
 
 static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
