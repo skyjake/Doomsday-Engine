@@ -55,22 +55,21 @@ void Rect_Delete(Rect* rect);
 
 boolean Rect_IsNull(const Rect* rect);
 
-int Rect_Width(const Rect* rect);
-
-int Rect_Height(const Rect* rect);
-
-void Rect_SetWidth(Rect* rect, int width);
-
-void Rect_SetHeight(Rect* rect, int height);
-
 const Point2* Rect_Origin(const Rect* rect);
+int Rect_X(const Rect* r);
+int Rect_Y(const Rect* r);
 
 void Rect_SetOrigin(Rect* r, const Point2* origin);
 void Rect_SetXY(Rect* r, int x, int y);
 
 const Size2* Rect_Size(const Rect* rect);
+int Rect_Width(const Rect* rect);
+int Rect_Height(const Rect* rect);
 
 void Rect_SetSize(Rect* rect, const Size2* size);
+void Rect_SetWidth(Rect* rect, int width);
+void Rect_SetHeight(Rect* rect, int height);
+
 void Rect_SetWidthHeight(Rect* rect, int width, int height);
 
 Point2Raw* Rect_TopLeft(const Rect* rect, Point2Raw* point);
@@ -113,23 +112,22 @@ void Rectf_Delete(Rectf* rect);
 
 boolean Rectf_IsNull(const Rectf* rect);
 
-double Rectf_Width(const Rectf* rect);
-
-double Rectf_Height(const Rectf* rect);
-
-void Rectf_SetWidth(Rectf* rect, double width);
-
-void Rectf_SetHeight(Rectf* rect, double height);
-
 const Point2f* Rectf_Origin(const Rectf* rect);
+int Rectf_X(const Rectf* r);
+int Rectf_Y(const Rectf* r);
 
 void Rectf_SetOrigin(Rectf* rect, const Point2f* origin);
 void Rectf_SetXY(Rectf* r, double x, double y);
 
 const Size2f* Rectf_Size(const Rectf* rect);
-void Rectf_SetWidthHeight(Rectf* rect, double width, double height);
+double Rectf_Width(const Rectf* rect);
+double Rectf_Height(const Rectf* rect);
 
 void Rectf_SetSize(Rectf* rect, const Size2f* size);
+void Rectf_SetWidth(Rectf* rect, double width);
+void Rectf_SetHeight(Rectf* rect, double height);
+
+void Rectf_SetWidthHeight(Rectf* rect, double width, double height);
 
 Point2Rawf* Rectf_TopLeft(const Rectf* rect, Point2Rawf* point);
 Point2Rawf* Rectf_TopRight(const Rectf* rect, Point2Rawf* point);

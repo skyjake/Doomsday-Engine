@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 722 <--
+; Highest ordinal is currently: --> 726 <--
 ; Other free ordinals:
 ;
 ; 126
@@ -128,48 +128,52 @@ EXPORTS
     Rect_SetWidth               @667 NONAME
     Rect_SetHeight              @668 NONAME
     Rect_Origin                 @669 NONAME
-    Rect_SetOrigin              @670 NONAME
-    Rect_SetXY                  @671 NONAME
-    Rect_Size                   @672 NONAME
-    Rect_SetSize                @673 NONAME
-    Rect_SetWidthHeight         @674 NONAME
-    Rect_TopLeft                @675 NONAME
-    Rect_TopRight               @676 NONAME
-    Rect_BottomLeft             @677 NONAME
-    Rect_BottomRight            @678 NONAME
-    Rect_Normalize              @679 NONAME
-    Rect_Unite                  @680 NONAME
-    Rect_Equality               @681 NONAME
+    Rect_X                      @670 NONAME
+    Rect_Y                      @671 NONAME
+    Rect_SetOrigin              @672 NONAME
+    Rect_SetXY                  @673 NONAME
+    Rect_Size                   @674 NONAME
+    Rect_SetSize                @675 NONAME
+    Rect_SetWidthHeight         @676 NONAME
+    Rect_TopLeft                @677 NONAME
+    Rect_TopRight               @678 NONAME
+    Rect_BottomLeft             @679 NONAME
+    Rect_BottomRight            @680 NONAME
+    Rect_Normalize              @681 NONAME
+    Rect_Unite                  @682 NONAME
+    Rect_Equality               @683 NONAME
 
-    Rect_Normalized             @682 NONAME
-    Rect_United                 @683 NONAME
+    Rect_Normalized             @684 NONAME
+    Rect_United                 @685 NONAME
 
-    Rectf_New                   @684 NONAME
-    Rectf_NewWithOriginSize     @685 NONAME
-    Rectf_NewWithOriginSize2    @686 NONAME
-    Rectf_NewFromRaw            @687 NONAME
-    Rectf_Delete                @688 NONAME
-    Rectf_IsNull                @703 NONAME
-    Rectf_Width                 @704 NONAME
-    Rectf_Height                @705 NONAME
-    Rectf_SetWidth              @706 NONAME
-    Rectf_SetHeight             @707 NONAME
-    Rectf_Origin                @708 NONAME
-    Rectf_SetOrigin             @709 NONAME
-    Rectf_SetXY                 @710 NONAME
-    Rectf_Size                  @711 NONAME
-    Rectf_SetSize               @712 NONAME
-    Rectf_SetWidthHeight        @713 NONAME
-    Rectf_TopLeft               @714 NONAME
-    Rectf_TopRight              @715 NONAME
-    Rectf_BottomLeft            @716 NONAME
-    Rectf_BottomRight           @717 NONAME
-    Rectf_Normalize             @718 NONAME
-    Rectf_Unite                 @719 NONAME
-    Rectf_Equality              @720 NONAME
+    Rectf_New                   @686 NONAME
+    Rectf_NewWithOriginSize     @687 NONAME
+    Rectf_NewWithOriginSize2    @688 NONAME
+    Rectf_NewFromRaw            @703 NONAME
+    Rectf_Delete                @704 NONAME
+    Rectf_IsNull                @705 NONAME
+    Rectf_Width                 @706 NONAME
+    Rectf_Height                @707 NONAME
+    Rectf_SetWidth              @708 NONAME
+    Rectf_SetHeight             @709 NONAME
+    Rectf_Origin                @710 NONAME
+    Rectf_X                     @711 NONAME
+    Rectf_Y                     @712 NONAME
+    Rectf_SetOrigin             @713 NONAME
+    Rectf_SetXY                 @714 NONAME
+    Rectf_Size                  @715 NONAME
+    Rectf_SetSize               @716 NONAME
+    Rectf_SetWidthHeight        @717 NONAME
+    Rectf_TopLeft               @718 NONAME
+    Rectf_TopRight              @719 NONAME
+    Rectf_BottomLeft            @720 NONAME
+    Rectf_BottomRight           @721 NONAME
+    Rectf_Normalize             @722 NONAME
+    Rectf_Unite                 @723 NONAME
+    Rectf_Equality              @724 NONAME
 
-    Rectf_Normalized            @721 NONAME
-    Rectf_United                @722 NONAME
+    Rectf_Normalized            @725 NONAME
+    Rectf_United                @726 NONAME
 
     ; String.
     Str_New                     @461 NONAME

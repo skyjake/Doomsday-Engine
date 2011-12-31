@@ -113,6 +113,18 @@ const Point2* Rect_Origin(const Rect* r)
     return r->origin;
 }
 
+int Rect_X(const Rect* r)
+{
+    assert(r);
+    return Point2_X(r->origin);
+}
+
+int Rect_Y(const Rect* r)
+{
+    assert(r);
+    return Point2_Y(r->origin);
+}
+
 void Rect_SetOrigin(Rect* r, const Point2* origin)
 {
     assert(r);
@@ -325,6 +337,18 @@ const Point2f* Rectf_Origin(const Rectf* r)
 {
     assert(r);
     return r->origin;
+}
+
+int Rectf_X(const Rectf* r)
+{
+    assert(r);
+    return Point2f_X(r->origin);
+}
+
+int Rectf_Y(const Rectf* r)
+{
+    assert(r);
+    return Point2f_Y(r->origin);
 }
 
 void Rectf_SetOrigin(Rectf* r, const Point2f* origin)
