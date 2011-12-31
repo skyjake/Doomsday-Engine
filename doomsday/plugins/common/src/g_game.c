@@ -939,8 +939,10 @@ void G_CommonShutdown(void)
     P_Shutdown();
     G_ShutdownEventSequences();
 
+    Hu_MenuShutdown();
     ST_Shutdown();
     GUI_Shutdown();
+
     FI_StackShutdown();
 }
 

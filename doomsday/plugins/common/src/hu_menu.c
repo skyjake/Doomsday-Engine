@@ -129,6 +129,7 @@ void Hu_MenuDrawAutomapPage(mn_page_t* page, const Point2Raw* origin);
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd);
 
 static void initAllObjectsOnAllPages(void);
+static void destroyAllObjectsOnAllPages(void);
 
 static void Hu_MenuUpdateCursorState(void);
 
@@ -1548,6 +1549,39 @@ static mn_page_t ColorWidgetMenu = {
     //0, 8
 };
 
+static boolean inited = false;
+
+static mn_page_t* pages[] = {
+    &MainMenu,
+    &GameTypeMenu,
+#if __JHEXEN__
+    &PlayerClassMenu,
+#endif
+#if __JDOOM__ || __JHERETIC__
+    &EpisodeMenu,
+#endif
+    &SkillMenu,
+    &MultiplayerMenu,
+    &PlayerSetupMenu,
+#if __JHERETIC__ || __JHEXEN__
+    &FilesMenu,
+#endif
+    &LoadMenu,
+    &SaveMenu,
+    &OptionsMenu,
+    &ControlsMenu,
+    &GameplayMenu,
+    &HudMenu,
+    &AutomapMenu,
+    &WeaponMenu,
+#if __JHERETIC__ || __JHEXEN__
+    &InventoryMenu,
+#endif
+    &SoundMenu,
+    &ColorWidgetMenu,
+    NULL
+};
+
 // Cvars for the menu:
 cvartemplate_t menuCVars[] = {
     { "menu-scale",     0,  CVT_FLOAT,  &cfg.menuScale, .1f, 1 },
@@ -1992,6 +2026,10 @@ void Hu_MenuInitPlayerClassMenu(void)
 
 void Hu_MenuInit(void)
 {
+    cvarbutton_t* cvb;
+
+    if(inited) return;
+
     mnAlpha = mnTargetAlpha = 0;
     menuActivePage = NULL;
     menuActive = false;
@@ -2014,6 +2052,13 @@ void Hu_MenuInit(void)
     Hu_MenuInitControlsPage();
     Hu_MenuInitWeaponsMenu();
 
+    // Set default Yes/No strings.
+    for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
+    {
+        if(!cvb->yes) cvb->yes = "Yes";
+        if(!cvb->no) cvb->no = "No";
+    }
+
     initAllObjectsOnAllPages();
 
 #if __JDOOM__
@@ -2028,6 +2073,16 @@ void Hu_MenuInit(void)
         SkillMenu.previous = &GameTypeMenu;
     }
 #endif
+
+    inited = true;
+}
+
+void Hu_MenuShutdown(void)
+{
+    if(!inited) return;
+
+    destroyAllObjectsOnAllPages();
+    inited = false;
 }
 
 boolean Hu_MenuIsActive(void)
@@ -2390,10 +2445,7 @@ static void initPage(mn_page_t* page)
     // Init objects.
     for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
     {
-        obj->_geometry.origin.x = 0;
-        obj->_geometry.origin.y = 0;
-        obj->_geometry.size.width  = 0;
-        obj->_geometry.size.height = 0;
+        obj->_geometry = Rect_New();
 
         MNObject_SetFlags(obj, FO_CLEAR, MNF_FOCUS);
         if(0 != obj->_shortcut)
@@ -2492,46 +2544,39 @@ static void initPage(mn_page_t* page)
 
 static void initAllObjectsOnAllPages(void)
 {
-    // Set default Yes/No strings.
-    cvarbutton_t* cvb;
-    for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
+    mn_page_t** pageIt;
+    for(pageIt = pages; *pageIt; pageIt++)
     {
-        if(!cvb->yes) cvb->yes = "Yes";
-        if(!cvb->no) cvb->no = "No";
+        initPage(*pageIt);
     }
+}
 
-    initPage(&MainMenu);
-    initPage(&GameTypeMenu);
-#if __JHEXEN__
-    initPage(&PlayerClassMenu);
-#endif
-#if __JDOOM__ || __JHERETIC__
-    initPage(&EpisodeMenu);
-#endif
-    initPage(&SkillMenu);
-    initPage(&MultiplayerMenu);
-    initPage(&PlayerSetupMenu);
-#if __JHERETIC__ || __JHEXEN__
-    initPage(&FilesMenu);
-#endif
-    initPage(&LoadMenu);
-    initPage(&SaveMenu);
-    initPage(&OptionsMenu);
-    initPage(&ControlsMenu);
-    initPage(&GameplayMenu);
-    initPage(&HudMenu);
-    initPage(&AutomapMenu);
-    initPage(&WeaponMenu);
-#if __JHERETIC__ || __JHEXEN__
-    initPage(&InventoryMenu);
-#endif
-    initPage(&SoundMenu);
-    initPage(&ColorWidgetMenu);
+static void destroyPage(mn_page_t* page)
+{
+    mn_object_t* obj;
+    if(!page) return;
+    for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
+    {
+        if(obj->_geometry)
+        {
+            Rect_Delete(obj->_geometry);
+            obj->_geometry = NULL;
+        }
+    }
+}
+
+static void destroyAllObjectsOnAllPages(void)
+{
+    mn_page_t** pageIt;
+    for(pageIt = pages; *pageIt; pageIt++)
+    {
+        destroyPage(*pageIt);
+    }
 }
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t* page, menucommand_e cmd)
 {
-    assert(NULL != page);
+    assert(page);
     switch(cmd)
     {
     case MCMD_NAV_OUT: {

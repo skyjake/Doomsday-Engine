@@ -627,8 +627,7 @@ void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
     assert(obj);
-    obj->_geometry.size.width  = 60;
-    obj->_geometry.size.height = 10 * SMALL_SCALE;
+    Rect_SetWidthHeight(obj->_geometry, 60, 10 * SMALL_SCALE);
 }
 
 /**

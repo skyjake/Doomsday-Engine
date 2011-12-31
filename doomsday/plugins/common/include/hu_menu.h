@@ -120,6 +120,11 @@ void Hu_MenuRegister(void);
 void Hu_MenuInit(void);
 
 /**
+ * Menu shutdown, to be called when the game menu is no longer needed.
+ */
+void Hu_MenuShutdown(void);
+
+/**
  * Load any resources the menu needs.
  */
 void Hu_MenuLoadResources(void);

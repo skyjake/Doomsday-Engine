@@ -808,7 +808,8 @@ boolean MNObject_IsDrawable(mn_object_t* obj)
 
 static void applyPageLayout(mn_page_t* page)
 {
-    int i, yOrigin = 0, lineHeight, lineOffset;
+    int i, lineHeight, lineOffset;
+    Point2Raw origin = { 0, 0 };
 
     if(!page) return;
 
@@ -830,8 +831,7 @@ static void applyPageLayout(mn_page_t* page)
             continue;
         }
 
-        obj->_geometry.origin.x = 0;
-        obj->_geometry.origin.y = yOrigin;
+        Rect_SetXY(obj->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other object
@@ -847,29 +847,29 @@ static void applyPageLayout(mn_page_t* page)
                 (MNObject_Type(nextObj) == MN_SLIDER && nextObj->drawer == MNSlider_TextualValueDrawer)))
             {
                 const int margin = lineOffset * 2;
+                RectRaw united;
 
-                nextObj->_geometry.origin.x = margin + obj->_geometry.size.width;
-                nextObj->_geometry.origin.y = yOrigin;
+                Rect_SetXY(nextObj->_geometry, margin + Rect_Width(obj->_geometry), origin.y);
 
-                // Proceed to the next object!
-                yOrigin += MAX_OF(obj->_geometry.size.height,
-                                  nextObj->_geometry.size.height) + lineOffset;
+                origin.y += Rect_United(obj->_geometry, nextObj->_geometry, &united)
+                          ->size.height + lineOffset;
 
                 // Extra spacing between object groups.
                 if(i+2 < page->objectsCount &&
                    nextObj->_group != page->objects[i+2]._group)
-                    yOrigin += lineHeight;
+                    origin.y += lineHeight;
 
+                // Proceed to the next object!
                 i += 2;
                 continue;
             }
         }
 
-        yOrigin += obj->_geometry.size.height + lineOffset;
+        origin.y += Rect_Height(obj->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
         if(nextObj && nextObj->_group != obj->_group)
-            yOrigin += lineHeight;
+            origin.y += lineHeight;
 
         // Proceed to the next object!
         i += 1;
@@ -914,25 +914,27 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     for(i = 0; i < page->objectsCount; ++i)
     {
         mn_object_t* obj = &page->objects[i];
+        RectRaw geometry;
 
         if(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN))
             continue;
 
+        Rect_Raw(MNObject_Geometry(obj), &geometry);
+
         FR_PushAttrib();
-        MN_DrawObject(obj, MNObject_Origin(obj));
+        MN_DrawObject(obj, &geometry.origin);
         FR_PopAttrib();
 
         // Draw the focus cursor?
         if(showFocusCursor && (MNObject_Flags(obj) & MNF_FOCUS))
         {
-            const RectRaw* geometry = MNObject_Geometry(obj);
-            int focusObjectHeight = geometry->size.height;
+            int focusObjectHeight = geometry.size.height;
             Point2Raw cursorOrigin;
 
             // Determine the origin and dimensions of the cursor.
             // \todo Each object should define a focus origin...
             cursorOrigin.x = 0;
-            cursorOrigin.y = geometry->origin.y;
+            cursorOrigin.y = geometry.origin.y;
 
             /// \kludge
             /// We cannot yet query the subobjects of the list for these values
@@ -1230,22 +1232,22 @@ int MNObject_Flags(const mn_object_t* obj)
     return obj->_flags;
 }
 
-const RectRaw* MNObject_Geometry(const mn_object_t* obj)
+const Rect* MNObject_Geometry(const mn_object_t* obj)
 {
     assert(obj);
-    return &obj->_geometry;
+    return obj->_geometry;
 }
 
-const Point2Raw* MNObject_Origin(const mn_object_t* obj)
+const Point2* MNObject_Origin(const mn_object_t* obj)
 {
     assert(obj);
-    return &obj->_geometry.origin;
+    return Rect_Origin(obj->_geometry);
 }
 
-const Size2Raw* MNObject_Size(const mn_object_t* obj)
+const Size2* MNObject_Size(const mn_object_t* obj)
 {
     assert(obj);
-    return &obj->_geometry.size;
+    return Rect_Size(obj->_geometry);
 }
 
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
@@ -1400,18 +1402,19 @@ void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin)
 void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
+    Size2Raw size;
     assert(obj->_type == MN_TEXT);
     // @fixme What if patch replacement is disabled?
     if(txt->patch != 0)
     {
         patchinfo_t info;
         R_GetPatchInfo(*txt->patch, &info);
-        obj->_geometry.size.width  = info.geometry.size.width;
-        obj->_geometry.size.height = info.geometry.size.height;
+        Rect_SetWidthHeight(obj->_geometry, info.geometry.size.width, info.geometry.size.height);
         return;
     }
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextSize(&obj->_geometry.size, txt->text);
+    FR_TextSize(&size, txt->text);
+    Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
 static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, float alpha)
@@ -1670,8 +1673,7 @@ void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly.
     assert(obj);
-    obj->_geometry.size.width  = 170;
-    obj->_geometry.size.height = 14;
+    Rect_SetWidthHeight(obj->_geometry, 170, 14);
 }
 
 void MNList_Drawer(mn_object_t* obj, const Point2Raw* _origin)
@@ -1925,22 +1927,24 @@ int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
+    RectRaw itemGeometry = { 0, 0 };
     int i;
     assert(obj->_type == MN_LIST);
 
-    obj->_geometry.size.width  = 0;
-    obj->_geometry.size.height = 0;
+    Rect_SetWidthHeight(obj->_geometry, 0, 0);
+
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     for(i = 0; i < list->count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
-        Size2Raw size;
-        FR_TextSize(&size, item->text);
-        if(size.width > obj->_geometry.size.width)
-            obj->_geometry.size.width = size.width;
-        obj->_geometry.size.height += size.height;
+
+        FR_TextSize(&itemGeometry.size, item->text);
         if(i != list->count-1)
-            obj->_geometry.size.height += size.height * MNDATA_LIST_LEADING;
+            itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
+
+        Rect_UniteRaw(obj->_geometry, &itemGeometry);
+
+        itemGeometry.origin.y += itemGeometry.size.height;
     }
 }
 
@@ -1948,10 +1952,12 @@ void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_list_t* list = (mndata_list_t*)obj->_typedata;
     mndata_listitem_t* item = ((mndata_listitem_t*) list->items) + list->selection;
+    Size2Raw size;
     assert(obj->_type == MN_LISTINLINE);
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextSize(&obj->_geometry.size, item->text);
+    FR_TextSize(&size, item->text);
+    Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
 void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin)
@@ -2071,6 +2077,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     //int click = (obj->_flags & MNF_CLICKED) != 0;
     //boolean down = act || click;
     const char* text = btn->text;
+    Size2Raw size;
 
     // @fixme What if patch replacement is disabled?
     if(btn->patch)
@@ -2086,14 +2093,16 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
             // Use the original patch.
             patchinfo_t info;
             R_GetPatchInfo(*btn->patch, &info);
-            obj->_geometry.size.width  = info.geometry.size.width;
-            obj->_geometry.size.height = info.geometry.size.height;
+            Rect_SetWidthHeight(obj->_geometry, info.geometry.size.width,
+                                                info.geometry.size.height);
             return;
         }
     }
 
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
-    FR_TextSize(&obj->_geometry.size, text);
+    FR_TextSize(&size, text);
+
+    Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
 void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
@@ -2241,63 +2250,73 @@ int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
 void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
-    patchinfo_t t, b, l, r, tl, tr, br, bl;
+    patchinfo_t info;
     assert(obj->_type == MN_COLORBOX);
 
-    obj->_geometry.size.width  = cbox->width;
-    obj->_geometry.size.height = cbox->height;
+    Rect_SetWidthHeight(obj->_geometry, cbox->width, cbox->height);
 
-    R_GetPatchInfo(borderPatches[0], &t);
-    R_GetPatchInfo(borderPatches[2], &b);
-    R_GetPatchInfo(borderPatches[3], &l);
-    R_GetPatchInfo(borderPatches[1], &r);
-    R_GetPatchInfo(borderPatches[4], &tl);
-    R_GetPatchInfo(borderPatches[5], &tr);
-    R_GetPatchInfo(borderPatches[6], &br);
-    R_GetPatchInfo(borderPatches[7], &bl);
+    // Add bottom border?
+    if(R_GetPatchInfo(borderPatches[2], &info))
+    {
+        info.geometry.size.width = cbox->width;
+        info.geometry.origin.y = cbox->height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
+
+    // Add right border?
+    if(R_GetPatchInfo(borderPatches[1], &info))
+    {
+        info.geometry.size.height = cbox->height;
+        info.geometry.origin.x = cbox->width;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
 
     // Add top border?
-    if(t.id || tl.id || tr.id)
+    if(R_GetPatchInfo(borderPatches[0], &info))
     {
-        int height = 0;
-        if(t.id)  height = t.geometry.size.height;
-        if(tl.id) height = MAX_OF(height, tl.geometry.size.height);
-        if(tr.id) height = MAX_OF(height, tr.geometry.size.height);
-
-        obj->_geometry.size.height += height;
+        info.geometry.size.width = cbox->width;
+        info.geometry.origin.y = -info.geometry.size.height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 
-    // Add a bottom border?
-    if(b.id || bl.id || br.id)
+    // Add left border?
+    if(R_GetPatchInfo(borderPatches[3], &info))
     {
-        int height = 0;
-        if(b.id)  height = b.geometry.size.height;
-        if(bl.id) height = MAX_OF(height, bl.geometry.size.height);
-        if(br.id) height = MAX_OF(height, br.geometry.size.height);
-
-        obj->_geometry.size.height += height;
+        info.geometry.size.height = cbox->height;
+        info.geometry.origin.x = -info.geometry.size.width;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 
-    // Add a left border?
-    if(l.id || tl.id || bl.id)
+    // Add top-left corner?
+    if(R_GetPatchInfo(borderPatches[4], &info))
     {
-        int width = 0;
-        if(l.id)  width = l.geometry.size.width;
-        if(tl.id) width = MAX_OF(width, tl.geometry.size.width);
-        if(bl.id) width = MAX_OF(width, bl.geometry.size.width);
-
-        obj->_geometry.size.width += width;
+        info.geometry.origin.x = -info.geometry.size.width;
+        info.geometry.origin.y = -info.geometry.size.height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 
-    // Add a right border?
-    if(r.id || tr.id || br.id)
+    // Add top-right corner?
+    if(R_GetPatchInfo(borderPatches[5], &info))
     {
-        int width = 0;
-        if(r.id)  width = r.geometry.size.width;
-        if(tr.id) width = MAX_OF(width, tr.geometry.size.width);
-        if(br.id) width = MAX_OF(width, br.geometry.size.width);
+        info.geometry.origin.x = cbox->width;
+        info.geometry.origin.y = -info.geometry.size.height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
 
-        obj->_geometry.size.width += width;
+    // Add bottom-right corner?
+    if(R_GetPatchInfo(borderPatches[6], &info))
+    {
+        info.geometry.origin.x = cbox->width;
+        info.geometry.origin.y = cbox->height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
+
+    // Add bottom-left corner?
+    if(R_GetPatchInfo(borderPatches[7], &info))
+    {
+        info.geometry.origin.x = -info.geometry.size.width;
+        info.geometry.origin.y = cbox->height;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 }
 
@@ -2511,8 +2530,8 @@ void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin)
     if(!R_GetPatchInfo(pSliderLeft, &leftInfo)) return;
     if(WIDTH <= 0 || HEIGHT <= 0) return;
 
-    x = origin->x + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_PADDING_X + MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width);
-    y = origin->y + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_PADDING_Y + MNDATA_SLIDER_OFFSET_Y);
+    x = origin->x + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width);
+    y = origin->y + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_OFFSET_Y);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2694,18 +2713,27 @@ static char* composeValueString(float value, float defaultValue, boolean floatMo
 
 void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
+    int middleWidth;
     patchinfo_t info;
-    int max;
     if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
 
-    obj->_geometry.size.width = (int) (info.geometry.size.width * MNDATA_SLIDER_SLOTS * MNDATA_SLIDER_SCALE + .5f);
-    max = info.geometry.size.height;
-    if(R_GetPatchInfo(pSliderLeft, &info))
-        max = MAX_OF(max, info.geometry.size.height);
-    if(R_GetPatchInfo(pSliderRight, &info))
-        max = MAX_OF(max, info.geometry.size.height);
+    middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
+    Rect_SetWidthHeight(obj->_geometry, middleWidth, info.geometry.size.height);
 
-    obj->_geometry.size.height = (int) ((max + MNDATA_SLIDER_PADDING_Y * 2) * MNDATA_SLIDER_SCALE + .5f);
+    if(R_GetPatchInfo(pSliderLeft, &info))
+    {
+        info.geometry.origin.x = -info.geometry.size.width;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
+
+    if(R_GetPatchInfo(pSliderRight, &info))
+    {
+        info.geometry.origin.x = -info.geometry.size.width;
+        Rect_UniteRaw(obj->_geometry, &info.geometry);
+    }
+
+    Rect_SetWidthHeight(obj->_geometry, .5f + Rect_Width(obj->_geometry)  * MNDATA_SLIDER_SCALE,
+                                        .5f + Rect_Height(obj->_geometry) * MNDATA_SLIDER_SCALE);
 }
 
 void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin)
@@ -2739,9 +2767,12 @@ void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page)
     char textualValue[41];
     const char* str = composeValueString(value, 0, sldr->floatMode, 0,
         sldr->data2, sldr->data3, sldr->data4, sldr->data5, 40, textualValue);
+    Size2Raw size;
 
     FR_SetFont(font);
-    FR_TextSize(&obj->_geometry.size, str);
+    FR_TextSize(&size, str);
+
+    Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
 static void findSpriteForMobjType(int mobjType, spritetype_e* sprite, int* frame)
@@ -2852,6 +2883,5 @@ void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
     assert(obj && obj->_type == MN_MOBJPREVIEW);
-    obj->_geometry.size.width  = MNDATA_MOBJPREVIEW_WIDTH;
-    obj->_geometry.size.height = MNDATA_MOBJPREVIEW_HEIGHT;
+    Rect_SetWidthHeight(obj->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }

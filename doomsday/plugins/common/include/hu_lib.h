@@ -195,7 +195,7 @@ typedef struct mn_object_s {
     int data2;
 
     /// Current geometry.
-    RectRaw _geometry;
+    Rect* _geometry;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
@@ -208,21 +208,21 @@ int MNObject_Flags(const mn_object_t* obj);
  *
  * @return  Rectangluar region of the parent space.
  */
-const RectRaw* MNObject_Geometry(const mn_object_t* obj);
+const Rect* MNObject_Geometry(const mn_object_t* obj);
 
 /**
  * Retrieve the origin of the object within the two-dimensioned coordinate
  * space of the owning object.
  * @return  Origin point within the parent space.
  */
-const Point2Raw* MNObject_Origin(const mn_object_t* obj);
+const Point2* MNObject_Origin(const mn_object_t* obj);
 
 /**
  * Retrieve the boundary dimensions of the object expressed as units of
  * the coordinate space of the owning object.
  * @return  Size of this object in units of the parent's coordinate space.
  */
-const Size2Raw* MNObject_Size(const mn_object_t* obj);
+const Size2* MNObject_Size(const mn_object_t* obj);
 
 /// @return  Flags value post operation for caller convenience.
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
@@ -585,8 +585,6 @@ boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* oth
 #if __JDOOM__ || __JDOOM64__
 #  define MNDATA_SLIDER_OFFSET_X        (0)
 #  define MNDATA_SLIDER_OFFSET_Y        (0)
-#  define MNDATA_SLIDER_PADDING_X       (0)
-#  define MNDATA_SLIDER_PADDING_Y       (2)
 #  define MNDATA_SLIDER_PATCH_LEFT      ("M_THERML")
 #  define MNDATA_SLIDER_PATCH_RIGHT     ("M_THERMR")
 #  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_THERM2")
@@ -594,8 +592,6 @@ boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* oth
 #elif __JHERETIC__ || __JHEXEN__
 #  define MNDATA_SLIDER_OFFSET_X        (0)
 #  define MNDATA_SLIDER_OFFSET_Y        (1)
-#  define MNDATA_SLIDER_PADDING_X       (0)
-#  define MNDATA_SLIDER_PADDING_Y       (0)
 #  define MNDATA_SLIDER_PATCH_LEFT      ("M_SLDLT")
 #  define MNDATA_SLIDER_PATCH_RIGHT     ("M_SLDRT")
 #  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_SLDMD1")
