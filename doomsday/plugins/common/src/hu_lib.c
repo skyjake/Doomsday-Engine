@@ -946,15 +946,27 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     DGL_Translatef(page->origin.x, page->origin.y, 0);
 
     // Apply page scroll?
-    if(focusObj && Rect_Height(page->geometry) > SCREENHEIGHT)
+    if(focusObj)
     {
-        RectRaw geometry;
-        const int minY = -page->origin.y + SCREENHEIGHT/2;
-        Rect_Raw(page->geometry, &geometry);
+        RectRaw pageGeometry, viewRegion;
+        Rect_Raw(page->geometry, &pageGeometry);
 
-        if(cursorOrigin.y > minY)
+        // Determine available screen region for the page.
+        viewRegion.origin.x = 0;
+        viewRegion.origin.y = page->origin.y;
+        viewRegion.size.width  = SCREENWIDTH;
+        viewRegion.size.height = SCREENHEIGHT - 40/*arbitrary but enough for the help message*/;
+
+        // Is scrolling in effect?
+        if(pageGeometry.size.height > viewRegion.size.height)
         {
-            DGL_Translatef(0, -(cursorOrigin.y - minY), 0);
+            const int minY = -viewRegion.origin.y/2 + viewRegion.size.height/2;
+            if(cursorOrigin.y > minY)
+            {
+                const int scrollLimitY = pageGeometry.size.height - viewRegion.size.height/2;
+                const int scrollOriginY = MIN_OF(cursorOrigin.y, scrollLimitY) - minY;
+                DGL_Translatef(0, -scrollOriginY, 0);
+            }
         }
     }
 
