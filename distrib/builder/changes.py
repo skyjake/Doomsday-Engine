@@ -30,7 +30,7 @@ class Entry:
     def setMessage(self, message):
         self.message = message.strip()
         if self.extra:
-            self.message = extra + ' ' + self.message
+            self.message = self.extra + ' ' + self.message
         self.message = self.message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
         
 
