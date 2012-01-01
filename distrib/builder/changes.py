@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+import string
 import utils
 from event import Event
 import config
@@ -31,8 +32,11 @@ class Entry:
         # Check that the subject lines are not too long.
         MAX_SUBJECT = 100
         if len(utils.collated(subject)) > MAX_SUBJECT:
-            self.extra = '...' + subject[MAX_SUBJECT:] + ' '
-            subject = subject[:MAX_SUBJECT] + '...'
+            # Find a suitable spot the break the subject line.
+            pos = MAX_SUBJECT
+            while subject[pos] not in string.whitespace: pos -= 1
+            self.extra = '...' + subject[pos+1:] + ' '
+            subject = subject[:pos] + '...'
         else:
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
@@ -127,10 +131,19 @@ class Changes:
         
         if format == 'html':
             out = file(Event(toTag).file_path('changes.html'), 'wt')
+            
+            MAX_COMMITS = 100
+            entries = self.entries[:MAX_COMMITS]
+            
+            if len(self.entries) > MAX_COMMITS:
+                print >> out, '<p>Showing %i of %i commits.' % (MAX_COMMITS, len(self.entries))
+                print >> out, 'The <a href="%s">oldest commit</a> is dated %s.</p>' % \
+                    (self.entries[-1].link, self.entries[-1].date)                
+            
             print >> out, '<ol>'
 
             # Write a list entry for each commit.
-            for entry in self.entries:
+            for entry in entries:
                 print >> out, '<li><b>%s</b><br/>' % entry.subject
                 print >> out, 'by <i>%s</i> on %s' % (entry.author, entry.date)
                 print >> out, '<a href="%s">(show in repository)</a>' % entry.link

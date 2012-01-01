@@ -135,7 +135,9 @@ class Event:
         if os.path.exists(changesName):
             commitCount = utils.count_word('<li>', file(changesName).read())
         if commitCount:
-            msg += " contains %i commits and" % commitCount
+            moreThan = ''
+            if commitCount == 100: moreThan = 'more than '
+            msg += " contains %s%i commits and" % (moreThan, commitCount)
 
         msg += " produced %i installable binary package%s." % \
             (pkgCount, 's' if (pkgCount != 1) else '')
