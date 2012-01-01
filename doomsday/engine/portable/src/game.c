@@ -53,7 +53,7 @@ struct Game_s {
     /// The base directory for all defs-class resources.
     ddstring_t defsPath;
 
-    /// Name of the main config file (e.g., "jdoom.cfg").
+    /// Name of the main config file (e.g., "configs/doom/game.cfg").
     ddstring_t mainConfig;
 
     /// Name of the file used for control bindings, set automatically at creation time.
