@@ -2527,19 +2527,17 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
 
     const int playerNum = plr - players;
-    const int fullscreenMode = headupDisplayMode(playerNum);
+    const int displayMode = headupDisplayMode(playerNum);
     hudstate_t* hud = hudStates + playerNum;
     Size2Raw size, portSize;
     uiwidget_t* obj;
     float scale;
     assert(plr);
 
+    // Scale from viewport space to fixed 320x200 space.
     R_ViewPortSize(playerNum, &portSize);
-
-    if(portSize.width >= portSize.height)
-        scale = (float)portSize.height/SCREENHEIGHT;
-    else
-        scale = (float)portSize.width/SCREENWIDTH;
+    R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
+        portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2552,7 +2550,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     GUI_DrawWidgetXY(obj, 0, 0);
 
-    if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
+    if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
     {
         float opacity = /**\kludge: clamp*/MIN_OF(1.0f, hud->alpha)/**kludge end*/ * (1-hud->hideAmount);
         Size2Raw drawnSize = { 0, 0 };
@@ -2603,7 +2601,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         GUI_DrawWidget(obj, &displayRegion.origin);
 
         // The other displays are always visible except when using the "no-hud" mode.
-        if(hud->statusbarActive || fullscreenMode < 3)
+        if(hud->statusbarActive || displayMode < 3)
             opacity = 1.0f;
 
         obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]);
