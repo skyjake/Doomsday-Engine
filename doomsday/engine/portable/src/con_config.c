@@ -72,11 +72,10 @@ static void writeHeaderComment(FILE* file)
 
 static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
 {
-    assert(word && paramaters);
-    {
     FILE* file = (FILE*)paramaters;
     cvar_t* var = (cvar_t*)word->data;
     ddstring_t* path;
+    assert(file && var);
 
     if(var->flags & CVF_NO_ARCHIVE)
         return 0; // Continue iteration.
@@ -124,7 +123,6 @@ static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
 
     Str_Delete(path);
     return 0; // Continue iteration.
-    }
 }
 
 static __inline void writeVariablesToFile(FILE* file)
@@ -134,10 +132,9 @@ static __inline void writeVariablesToFile(FILE* file)
 
 static int writeAliasToFileWorker(const knownword_t* word, void* paramaters)
 {
-    assert(word && paramaters);
-    {
     FILE* file = (FILE*) paramaters;
     calias_t* cal = (calias_t*) word->data;
+    assert(file && cal);
 
     fprintf(file, "alias \"");
     M_WriteTextEsc(file, cal->name);
@@ -145,7 +142,6 @@ static int writeAliasToFileWorker(const knownword_t* word, void* paramaters)
     M_WriteTextEsc(file, cal->command);
     fprintf(file, "\"\n");
     return 0; // Continue iteration.
-    }
 }
 
 static __inline void writeAliasesToFile(FILE* file)
@@ -155,13 +151,22 @@ static __inline void writeAliasesToFile(FILE* file)
 
 static boolean writeConsoleState(const char* fileName)
 {
-    ddstring_t nativePath;
+    ddstring_t nativePath, fileDir;
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
+
+    // Ensure the destination directory exists.
+    Str_Init(&fileDir);
+    F_FileDir(&fileDir, &nativePath);
+    if(Str_Length(&fileDir))
+    {
+        F_MakePath(Str_Text(&fileDir));
+    }
+    Str_Free(&fileDir);
 
     file = fopen(Str_Text(&nativePath), "wt");
     Str_Free(&nativePath);
@@ -182,13 +187,22 @@ static boolean writeConsoleState(const char* fileName)
 
 static boolean writeBindingsState(const char* fileName)
 {
-    ddstring_t nativePath;
+    ddstring_t nativePath, fileDir;
     FILE* file;
     if(!fileName || !fileName[0]) return false;
 
     Str_Init(&nativePath);
     Str_Set(&nativePath, fileName);
     F_ToNativeSlashes(&nativePath, &nativePath);
+
+    // Ensure the destination directory exists.
+    Str_Init(&fileDir);
+    F_FileDir(&fileDir, &nativePath);
+    if(Str_Length(&fileDir))
+    {
+        F_MakePath(Str_Text(&fileDir));
+    }
+    Str_Free(&fileDir);
 
     file = fopen(Str_Text(&nativePath), "wt");
     Str_Free(&nativePath);

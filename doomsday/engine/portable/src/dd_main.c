@@ -1347,7 +1347,7 @@ int DD_EarlyInit(void)
     if(Str_RAt(&defsPath, 0) != '/')
         Str_AppendChar(&defsPath, '/');
 
-    theGame = nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0);
+    theGame = nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday", 0, 0);
 
     Str_Free(&defsPath);
     Str_Free(&dataPath);

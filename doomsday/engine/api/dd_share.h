@@ -337,8 +337,8 @@ typedef struct gamedef_s {
     /// The base directory for all defs-class resources.
     const char* defsPath;
 
-    /// The name of the main config file. Can be @c NULL
-    const char* mainConfig;
+    /// Name of the config directory.
+    const char* configDir;
 
     /// Default title. May be overridden later.
     const char* defaultTitle;

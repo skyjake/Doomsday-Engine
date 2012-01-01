@@ -64,7 +64,7 @@ struct Game_s {
 };
 
 Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const ddstring_t* defsPath, const char* configDir, const char* title,
     const char* author)
 {
     int i;
@@ -85,15 +85,20 @@ Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
         Str_Set(&g->defsPath, Str_Text(defsPath));
 
     Str_Init(&g->mainConfig);
+    Str_Appendf(&g->mainConfig, "configs/%s", configDir);
+    Str_Strip(&g->mainConfig);
+    F_FixSlashes(&g->mainConfig, &g->mainConfig);
+    if(Str_RAt(&g->mainConfig, 0) != '/')
+        Str_AppendChar(&g->mainConfig, '/');
+    Str_Append(&g->mainConfig, "game.cfg");
+
     Str_Init(&g->bindingConfig);
-    if(mainConfig)
-    {
-        Str_Set(&g->mainConfig, mainConfig);
-        Str_Strip(&g->mainConfig);
-        F_FixSlashes(&g->mainConfig, &g->mainConfig);
-        Str_PartAppend(&g->bindingConfig, Str_Text(&g->mainConfig), 0, Str_Length(&g->mainConfig)-4);
-        Str_Append(&g->bindingConfig, "-bindings.cfg");
-    }
+    Str_Appendf(&g->bindingConfig, "configs/%s", configDir);
+    Str_Strip(&g->bindingConfig);
+    F_FixSlashes(&g->bindingConfig, &g->bindingConfig);
+    if(Str_RAt(&g->bindingConfig, 0) != '/')
+        Str_AppendChar(&g->bindingConfig, '/');
+    Str_Append(&g->bindingConfig, "player/bindings.cfg");
 
     Str_Init(&g->title);
     if(title)
@@ -264,7 +269,7 @@ Game* Game_FromDef(const GameDef* def)
     if(Str_RAt(&defsPath, 0) != '/')
         Str_AppendChar(&defsPath, '/');
 
-    game = Game_New(def->identityKey, &dataPath, &defsPath, def->mainConfig,
+    game = Game_New(def->identityKey, &dataPath, &defsPath, def->configDir,
                     def->defaultTitle, def->defaultAuthor);
 
     Str_Free(&defsPath);

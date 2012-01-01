@@ -66,11 +66,11 @@ int G_RegisterGames(int hookType, int param, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
+#define CONFIGDIR       "doom64"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     const GameDef doom64Def = {
-        "doom64", DATAPATH, DEFSPATH, MAINCONFIG, "Doom 64", "Midway Software"
+        "doom64", DATAPATH, DEFSPATH, CONFIGDIR, "Doom 64", "Midway Software"
     };
     gameIds[doom64] = DD_DefineGame(&doom64Def);
     DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
@@ -79,7 +79,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     return true;
 
 #undef STARTUPPK3
-#undef MAINCONFIG
+#undef CONFIGDIR
 #undef DEFSPATH
 #undef DATAPATH
 }

@@ -45,12 +45,12 @@ typedef struct Game_s Game;
  * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
- * @param mainConfig    The main config file. Can be @c NULL.
+ * @param configDir     Name of the config directory.
  * @param title         Default game title.
  * @param author        Default game author.
  */
 Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const ddstring_t* defsPath, const char* configDir, const char* title,
     const char* author);
 
 void Game_Delete(Game* game);
