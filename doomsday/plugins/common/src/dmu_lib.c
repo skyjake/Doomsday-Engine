@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -249,7 +249,7 @@ void P_DestroyLineTagLists(void)
     if(numLineTagLists == 0)
         return;
 
-    { uint i; 
+    { uint i;
     for(i = 0; i < numLineTagLists; ++i)
     {
         IterList_Empty(lineTagLists[i].list);

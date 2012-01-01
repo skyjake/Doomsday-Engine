@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2002 Graham Jackson <no contact email published>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1907,7 +1907,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         localBuffer = (uint8_t*) malloc(2 * numPixels);
         if(!localBuffer)
             Con_Error("GL_UploadTextureContent: Failed on allocation of %lu bytes for luminance conversion buffer.", (unsigned long) (2 * numPixels));
-        
+
         pixel = localBuffer;
         for(i = 0; i < numPixels; ++i)
         {
@@ -2490,7 +2490,7 @@ byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
         int lumpIdx;
         abstractfile_t* fsObject = F_FindFileForLumpNum2(patchDef->lumpNum, &lumpIdx);
         const uint8_t* patch = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-        
+
         if(validPatch(patch, F_LumpInfo(fsObject, lumpIdx)->size))
         {
             // Draw the patch in the buffer.
@@ -3141,7 +3141,7 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
 
             Str_Init(&searchPath);
             Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", Str_Text(&texDef->name));
-            loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true); 
+            loadResult = GL_LoadExtTextureEX(&image, Str_Text(&searchPath), Str_Text(&suffix), true);
             Str_Free(&searchPath);
         }
 

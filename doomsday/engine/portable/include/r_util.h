@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,8 +80,8 @@ boolean R_GenerateTexCoords(pvec2_t s, pvec2_t t, const_pvec3_t point, float xSc
  * The aspect ratio of the element is respected.
  *
  * @param scale  If not @c NULL the calculated scale factor is written here.
- * @param width  Width of the element to fit into the available region. 
- * @param height  Height of the element to fit into the available region. 
+ * @param width  Width of the element to fit into the available region.
+ * @param height  Height of the element to fit into the available region.
  * @param availWidth  Width of the available region.
  * @param availHeight  Height of the available region.
  * @param scaleMode  @see scaleModes
@@ -96,8 +96,8 @@ boolean R_ChooseAlignModeAndScaleFactor(float* scale, int width, int height,
  * regions. The aspect ratio is respected when fitting to the bounds of the
  * "available" region.
  *
- * @param width  Width of the element to fit into the available region. 
- * @param height  Height of the element to fit into the available region. 
+ * @param width  Width of the element to fit into the available region.
+ * @param height  Height of the element to fit into the available region.
  * @param availWidth  Width of the available region.
  * @param availHeight  Height of the available region.
  * @param overrideMode  Scale mode override, for caller-convenience. @see scaleModes

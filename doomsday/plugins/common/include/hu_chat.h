@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -117,7 +117,7 @@ void UIChat_Clear(uiwidget_t* obj);
 /// @return  A pointer to an immutable copy of the current contents of the input buffer.
 const char* UIChat_Text(uiwidget_t* obj);
 
-/// @return  Current length of the input buffer in characters including terminating '\0'. 
+/// @return  Current length of the input buffer in characters including terminating '\0'.
 size_t UIChat_TextLength(uiwidget_t* obj);
 
 /// @return  @c true= Current input buffer is empty.

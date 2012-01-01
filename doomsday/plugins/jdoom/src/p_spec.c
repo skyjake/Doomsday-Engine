@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -168,7 +168,7 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         }
         Uri_SetPath(startPath, animDefs[i].startname);
         Uri_SetPath(endPath, animDefs[i].endname);
-        
+
         startFrame = R_TextureUniqueId2(startPath, !isCustom);
         endFrame   = R_TextureUniqueId2(endPath, !isCustom);
         if(-1 == startFrame || -1 == endFrame) continue;

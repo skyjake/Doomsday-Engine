@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1211,7 +1211,7 @@ void SBarReadyItem_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     if(item->patchId != 0)
     {
         int x, y;
-       
+
         if(hud->readyItemFlashCounter > 0)
         {
             x = ORIGINX+ST_INVITEMX + 2;
@@ -1336,7 +1336,7 @@ void Flight_Ticker(uiwidget_t* obj, timespan_t ticLength)
         {
             if(flht->hitCenterFrame && (frame != 15 && frame != 0))
                 frame = 15;
-            else               
+            else
                 flht->hitCenterFrame = false;
         }
         else
@@ -1809,7 +1809,7 @@ void Keys_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     guidata_keys_t* keys = (guidata_keys_t*)obj->typedata;
     const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     patchinfo_t pInfo;
-    int x = 0; 
+    int x = 0;
 
     if(!cfg.hudShown[HUD_KEYS]) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
@@ -2980,7 +2980,7 @@ int ST_ChatResponder(int player, event_t* ev)
 }
 
 boolean ST_ChatIsActive(int player)
-{    
+{
     uiwidget_t* obj = ST_UIChatForPlayer(player);
     if(!obj) return false;
     return UIChat_IsActive(obj);

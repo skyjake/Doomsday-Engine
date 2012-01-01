@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,7 @@
 #define LOG_MAX_MESSAGES            (8)
 
 /// When a message is first added to the log it may flash depending on
-/// the user's configuration. This is the number of tics it takes for 
+/// the user's configuration. This is the number of tics it takes for
 /// each message to animate from flashing to non-flashing.
 #define LOG_MESSAGE_FLASHFADETICS   (35)
 

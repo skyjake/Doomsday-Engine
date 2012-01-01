@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1949,7 +1949,7 @@ void Con_PrintPathList4(const char* pathList, char delimiter, const char* separa
     const char* p = pathList;
     ddstring_t path;
     int n = 0;
-    Str_Init(&path);   
+    Str_Init(&path);
     while((p = Str_CopyDelim2(&path, p, delimiter, CDF_OMIT_DELIMITER)))
     {
         printListPath(&path, flags, n++);
@@ -2435,7 +2435,7 @@ D_CMD(If)
                   oper == IF_GREATER   ? value >  test :
                   oper == IF_LESS      ? value <  test :
                   oper == IF_GEQUAL    ? value >= test :
-                                         value <= test);           
+                                         value <= test);
         break;
         }
     case CVT_FLOAT:

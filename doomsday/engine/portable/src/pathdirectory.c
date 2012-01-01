@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -904,7 +904,7 @@ static void printDistributionOverview(PathDirectory* pd,
         Con_PrintRuler();
     }
 
-    printDistributionOverviewElement(colWidths, "total", 
+    printDistributionOverviewElement(colWidths, "total",
         nodeBucketEmptyTotal, nodeBucketHeight,
         nodeBucketCollisionsTotal, collisionsMax,
         countSum / PATHDIRECTORYNODE_TYPE_COUNT, countTotal);
@@ -1021,7 +1021,7 @@ void printDistributionHistogram(PathDirectory* pd, ushort size,
         {
             size_t max = MAX_OF(1, ROUND(total/(float)size/10));
             size_t scale = totalForRange / (float)max;
-            
+
             scale = MAX_OF(scale, 1);
             Con_Printf(" ");
             for(n = 0; n < scale; ++n)
@@ -1138,7 +1138,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
             max += nodeCount[j];
         }
         if(max > nodeBucketCollisionsMaxTotal)
-            nodeBucketCollisionsMaxTotal = max;        
+            nodeBucketCollisionsMaxTotal = max;
         }
 
         if(totalForRange != 0)

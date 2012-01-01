@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -629,7 +629,7 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
 
 lumpnum_t F_CheckLumpNumForName(const char* name)
 {
-    return F_CheckLumpNumForName2(name, false); 
+    return F_CheckLumpNumForName2(name, false);
 }
 
 const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx_)
@@ -967,7 +967,7 @@ uint F_CRCNumber(void)
 }
 
 typedef struct {
-    filetype_t type; // Only 
+    filetype_t type; // Only
     boolean includeIWAD;
     boolean includeOther;
 } compositepathpredicateparamaters_t;
@@ -1321,7 +1321,7 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
         // We must have an absolute path, so prepend the current working directory if necessary.
         Str_Set(&absSearchPath, path);
         F_PrependWorkPath(&absSearchPath, &absSearchPath);
-        
+
         for(i = 0; i < ldMappingsCount; ++i)
         {
             ldmapping_t* rec = &ldMappings[i];

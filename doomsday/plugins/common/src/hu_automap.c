@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -278,7 +278,7 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
             thickness = cfg.automapDoorGlow * 2.5f + 3;
         else
             thickness = glowSize;
-    
+
         tex = Get(DD_DYNLIGHT_TEXTURE);
 
         if(caps)
@@ -1511,7 +1511,7 @@ DGL_End();
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
     }
-    
+
     // Draw glows?
     if(cfg.automapShowDoors)
     {   // \optimize Hugely inefficent. Need a new approach.

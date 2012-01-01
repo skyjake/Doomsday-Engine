@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -180,7 +180,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, f
         M_DrawTextFragmentShadowed(buf, x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
         x -= FR_TextWidth(buf) + FR_Tracking() * 3;
     }
-   
+
     if(h)
     {
         dd_snprintf(buf, 20, "%02d", h);

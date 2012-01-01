@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -319,7 +319,7 @@ static void sanityCheckClosed(const bspleafdata_t *leaf)
 
     if(gaps > 0)
     {
-        VERBOSE( Con_Message("HEdge list for leaf #%p is not closed (%d gaps, %d half-edges)\n", 
+        VERBOSE( Con_Message("HEdge list for leaf #%p is not closed (%d gaps, %d half-edges)\n",
                              leaf, gaps, total) );
 
 /*#if _DEBUG
