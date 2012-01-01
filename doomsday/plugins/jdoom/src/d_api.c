@@ -98,7 +98,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     /* HacX */
     gameIds[doom2_hacx] = DD_DefineGame(&hacxDef);
-    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, "hacx.wad", "HACX-R");
+    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
     DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(doom2_hacx), RC_DEFINITION, 0, "hacx.ded", 0);
 
