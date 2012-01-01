@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -1494,7 +1494,7 @@ void R_ProjectSprite(mobj_t* mo)
         // Determine the exact center of the flare.
         V3_Sum(vis->center, moPos, visOff);
         vis->center[VZ] += LUM_OMNI(lum)->zOff;
-        
+
         flareSize = pl->brightMul;
         // X offset to the flare position.
         xOffset = ms->size.width * pl->originX - -pTex->offX;

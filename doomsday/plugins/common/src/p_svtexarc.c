@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 #define MATERIALARCHIVE_VERSION (2)
 
 // Used to denote unknown Material references in records. Written to disk.
-#define UNKNOWN_MATERIALNAME    "DD_BADTX"  
+#define UNKNOWN_MATERIALNAME    "DD_BADTX"
 
 typedef struct materialarchive_record_s {
     Uri* uri;
@@ -303,7 +303,7 @@ materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(materialarchive_t*
     assert(materialArchive);
     if(material)
         return getSerialIdForMaterial(materialArchive, material);
-    return 0; // Invalid.   
+    return 0; // Invalid.
 }
 
 material_t* MaterialArchive_Find(materialarchive_t* materialArchive,

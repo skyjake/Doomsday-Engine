@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -94,7 +94,7 @@ static wadfile_lumprecord_t* WadFile_ReadArchiveLumpDirectory(wadfile_t* wad,
     if(NULL == lumpRecords)
         Con_Error("WadFile::readArchiveLumpDirectory: Failed on allocation of %lu bytes for "
             "lump record list.\n", (unsigned long) (lumpDirRecordCount * sizeof *lumpRecords));
-    
+
     src = lumpDir;
     dst = lumpRecords;
     for(i = 0; i < lumpDirRecordCount; ++i, src++, dst++)

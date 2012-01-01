@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -315,7 +315,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         // There is possibly fewer potentially-visible messages now.
         pvisMsgCount -= firstMsg - firstPVisMsg;
-    } 
+    }
 
     lastMsg = firstMsg + pvisMsgCount-1;
     if(lastMsg > LOG_MAX_MESSAGES-1)
@@ -452,7 +452,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
 
         // There is possibly fewer potentially-visible messages now.
         pvisMsgCount -= firstMsg - firstPVisMsg;
-    } 
+    }
 
     lastMsg = firstMsg + pvisMsgCount-1;
     if(lastMsg > LOG_MAX_MESSAGES-1)

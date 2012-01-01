@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -402,7 +402,7 @@ void DFile_Print(const DFile* file)
     errorIfNotValid(file, "DFile::Print");
     {
     byte id[16];
-    F_GenerateFileId(Str_Text(AbstractFile_Path(DFile_File_Const(file))), id);               
+    F_GenerateFileId(Str_Text(AbstractFile_Path(DFile_File_Const(file))), id);
     F_PrintFileId(id);
     Con_Printf(" - \"%s\" [%p]\n", F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), (void*)file);
     }

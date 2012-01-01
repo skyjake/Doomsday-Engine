@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ typedef struct pos_s {
 #define SM_NUM_POINTS 2
 
 /**
- * The smoother contains the data necessary to determine the 
+ * The smoother contains the data necessary to determine the
  * coordinates on the smooth path at a certain point in time.
  * It is assumed that time always moves forward.
  */
@@ -271,7 +271,7 @@ void Smoother_Advance(Smoother* sm, float period)
 
     if(period <= 0) return;
 
-    sm->at += period;  
+    sm->at += period;
 
     // Did we go past the present?
     while(sm->at > sm->now.time)

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1129,7 +1129,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 
     if(!uri) return NULL; // Invalid id?
 
-    Str_Init(&valueStr); 
+    Str_Init(&valueStr);
     Str_Appendf(&valueStr, "Patch Replacement|%s", Str_Text(Uri_Path(uri)));
     result = Def_Get(DD_DEF_VALUE, Str_Text(&valueStr), (void*)&replacement);
     Str_Free(&valueStr);

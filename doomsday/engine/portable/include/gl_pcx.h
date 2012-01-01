@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 #include "dfile.h"
 
 /**
- * Reads the given PCX image and returns a pointer to a planar 
+ * Reads the given PCX image and returns a pointer to a planar
  * RGBA buffer. Width and height are set, and pixelSize is 4 (RGBA).
  * The caller must free the allocated buffer with Z_Free.
  * Width, height and pixelSize can't be NULL.

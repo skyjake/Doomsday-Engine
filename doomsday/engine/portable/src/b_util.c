@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -273,7 +273,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     {
         cond->device = 0; // not used
         cond->type = SCT_MODIFIER_STATE;
-        
+
         // Parse the modifier number.
         desc = Str_CopyDelim(str, desc, '-');
         if(!B_ParseModifierId(Str_Text(str), &cond->id))
@@ -459,7 +459,7 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
                 return fulfilled;
         }
         break;
-        
+
     case SCT_TOGGLE_STATE:
     {
         int isDown = (dev->keys[cond->id].isDown != 0);
@@ -468,7 +468,7 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
             return fulfilled;
         break;
     }
-    
+
     case SCT_AXIS_BEYOND:
         if(B_CheckAxisPos(cond->state, cond->pos, dev->axes[cond->id].position))
             return fulfilled;

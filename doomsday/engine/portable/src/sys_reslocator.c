@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -606,7 +606,7 @@ static void createPackagesResourceNamespace(void)
 }
 
         ddstring_t fullString; Str_Init(&fullString);
-        
+
         Str_Set(&fullString, getenv("DOOMWADPATH"));
         Str_Strip(&fullString);
         if(!Str_IsEmpty(&fullString))
@@ -654,7 +654,7 @@ static void createPackagesResourceNamespace(void)
     searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
     if((searchPaths = malloc(sizeof(*searchPaths) * searchPathsCount)) == 0)
         Con_Error("createPackagesResourceNamespace: Failed on allocation of %lu bytes.",
-                  (unsigned long) (sizeof(*searchPaths) * searchPathsCount)); 
+                  (unsigned long) (sizeof(*searchPaths) * searchPathsCount));
 
     idx = 0;
     // Add the default paths.
@@ -1030,7 +1030,7 @@ ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
             if(Uri_Resolved(*ptr) != 0) // Ignore incomplete paths.
                 ++numResolvedPaths;
         }}
-    
+
         if(numResolvedPaths != 0)
         {
             uint n = 0;

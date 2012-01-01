@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -331,14 +331,14 @@ void Hu_MenuInitControlsPage(void)
             txt->text = (char*) binds->text;
             obj->_typedata = txt;
             obj->_pageFontIdx = MENU_FONT1;
-            obj->_pageColorIdx = MENU_COLOR2; 
+            obj->_pageColorIdx = MENU_COLOR2;
             obj->drawer = MNText_Drawer;
             obj->updateGeometry = MNText_UpdateGeometry;
 
             // A new group begins;
             obj->_group = ++group;
         }
-        else 
+        else
         {
             mn_object_t* labelObj    = &ControlsMenuItems[objectIdx++];
             mn_object_t* bindingsObj = &ControlsMenuItems[objectIdx++];
@@ -357,7 +357,7 @@ void Hu_MenuInitControlsPage(void)
             labelObj->drawer = MNText_Drawer;
             labelObj->updateGeometry = MNText_UpdateGeometry;
             labelObj->_pageFontIdx = MENU_FONT1;
-            labelObj->_pageColorIdx = MENU_COLOR1; 
+            labelObj->_pageColorIdx = MENU_COLOR1;
             labelObj->_group = group;
 
             bindingsObj->_type = MN_BINDINGS;

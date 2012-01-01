@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -270,7 +270,7 @@ void UI_LoadTextures(void)
         image_t image;
         if(uiTextures[i])
             continue;
-        
+
         if(GL_LoadExtTexture(&image, picNames[i], (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
         {   // Loaded successfully and converted accordingly.
             // Upload the image to GL.

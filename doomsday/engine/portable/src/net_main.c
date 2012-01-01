@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -198,7 +198,7 @@ void Net_Init(void)
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
-    netGame = false;   
+    netGame = false;
 }
 
 void Net_Shutdown(void)
@@ -1119,7 +1119,7 @@ D_CMD(Kick)
 }
 
 D_CMD(SetName)
-{    
+{
     Con_SetString("net-name", argv[1]);
 
     if(!netGame)

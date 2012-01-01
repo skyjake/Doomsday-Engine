@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -835,7 +835,7 @@ void R_InitRefresh(void)
 
     R_LoadColorPalettes();
     R_LoadVectorGraphics();
- 
+
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
     { Uri* paths[9];
@@ -3253,7 +3253,7 @@ static ddstring_t* composeScreenshotFileName(void)
         Con_Error("composeScreenshotFileName: Failed retrieving Game.");
         return NULL; // Unreachable.
     }
-   
+
     name = Str_Appendf(Str_New(), "%s-", gameInfo.identityKey);
     numPos = Str_Length(name);
     { int i;
@@ -3455,7 +3455,7 @@ D_CMD(SaveGameName)
 {
     int slot;
     if(!G_IsSaveGamePossible()) return false;
-    
+
     slot = SV_ParseGameSaveSlot(argv[1]);
     if(slot >= 0)
     {

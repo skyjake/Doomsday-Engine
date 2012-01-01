@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 
     /* HacX */
     gameIds[doom2_hacx] = DD_DefineGame(&hacxDef);
-    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, "hacx.wad", "HACX-R");
+    DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, "hacx.wad", "HACX-R;PLAYPAL");
     DD_AddGameResource(GID(doom2_hacx), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(doom2_hacx), RC_DEFINITION, 0, "hacx.ded", 0);
 

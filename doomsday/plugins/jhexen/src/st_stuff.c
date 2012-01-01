@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -326,7 +326,7 @@ void Boots_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(P_IsPaused() || !DD_IsSharpTick()) return;
 
     boots->patchId = 0;
-    if(0 != plr->powers[PT_SPEED] && 
+    if(0 != plr->powers[PT_SPEED] &&
        (plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16)))
     {
         boots->patchId = pSpinSpeed[(mapTime / 3) & 15];
@@ -939,7 +939,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         }
         else
         {   // INVBAR
-            
+
             DGL_SetPatch(pInventoryBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -3277,7 +3277,7 @@ int ST_ChatResponder(int player, event_t* ev)
 }
 
 boolean ST_ChatIsActive(int player)
-{    
+{
     uiwidget_t* obj = ST_UIChatForPlayer(player);
     if(!obj) return false;
     return UIChat_IsActive(obj);

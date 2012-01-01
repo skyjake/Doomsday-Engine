@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1232,16 +1232,27 @@ void Def_Read(void)
     // Music.
     for(i = 0; i < defs.count.music.num; ++i)
     {
-        ded_music_t*        mus = defs.music + i;
+        ded_music_t* mus = defs.music + i;
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t*        earliest = defs.music + Def_GetMusicNum(mus->id);
+        ded_music_t* earliest = defs.music + Def_GetMusicNum(mus->id);
 
-        if(earliest == mus)
-            continue;
+        if(earliest == mus) continue;
 
         strcpy(earliest->lumpName, mus->lumpName);
-        Uri_Copy(earliest->path, mus->path);
         earliest->cdTrack = mus->cdTrack;
+
+        if(mus->path)
+        {
+            if(earliest->path)
+                Uri_Copy(earliest->path, mus->path);
+            else
+                earliest->path = Uri_NewCopy(mus->path);
+        }
+        else if(earliest->path)
+        {
+            Uri_Delete(earliest->path);
+            earliest->path = NULL;
+        }
     }
 
     // Text.

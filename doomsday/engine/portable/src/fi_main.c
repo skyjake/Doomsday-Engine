@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -291,9 +291,9 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
         // Setup commands are included. We must prepend these to the script
         // in a special control block that will be executed immediately.
         size_t setupCmdsLen = strlen(setupCmds);
-        size_t scriptLen = strlen(script); 
+        size_t scriptLen = strlen(script);
         char* p;
-        
+
         p = tempScript = malloc(scriptLen + setupCmdsLen + 9 + 2 + 1);
         strcpy(p, "OnLoad {\n"); p += 9;
         memcpy(p, setupCmds, setupCmdsLen); p += setupCmdsLen;
@@ -349,7 +349,7 @@ void FI_Ticker(void)
         return;
 
     // A new 'sharp' tick has begun.
-    
+
     // All finales tic unless inactive.
     { uint i;
     for(i = 0; i < finalesSize; ++i)
