@@ -12,6 +12,7 @@ Include "doom2/anim.ded";
 Include "doom2/skies.ded";
 Include "doom2-tnt/maps.ded";
 Include "doom2-tnt/finales.ded";
+Include "doom1/fonts.ded";
 Include "doom1/materials.ded";
 Include "doom1/particles.ded";
 Include "doom2/particles.ded";
