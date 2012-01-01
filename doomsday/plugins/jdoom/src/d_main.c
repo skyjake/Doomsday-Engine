@@ -70,9 +70,9 @@ gamemode_t gameMode;
 int gameModeBits;
 
 // Default font colors.
-const float defFontRGB[]  = { 1, 1, 1 };
-const float defFontRGB2[] = { .85f, 0, 0 };
-const float defFontRGB3[] = { 1, .9f, .4f };
+float defFontRGB[3];
+float defFontRGB2[3];
+float defFontRGB3[3];
 
 // The patches used in drawing the view border.
 char* borderGraphics[] = {
@@ -174,6 +174,54 @@ void* D_GetVariable(int id)
  */
 void D_PreInit(void)
 {
+    int i;
+
+    // Configure default colors:
+    switch(gameMode)
+    {
+    case doom2_hacx:
+        defFontRGB[CR] = .85f;
+        defFontRGB[CG] = 0;
+        defFontRGB[CB] = 0;
+
+        defFontRGB2[CR] = .2f;
+        defFontRGB2[CG] = .9f;
+        defFontRGB2[CB] = .2f;
+
+        defFontRGB3[CR] = .2f;
+        defFontRGB3[CG] = .9f;
+        defFontRGB3[CB] = .2f;
+        break;
+
+    case doom_chex:
+        defFontRGB[CR] = 1;
+        defFontRGB[CG] = 1;
+        defFontRGB[CB] = 1;
+
+        defFontRGB2[CR] = .85f;
+        defFontRGB2[CG] = 0;
+        defFontRGB2[CB] = 0;
+
+        defFontRGB3[CR] = .2f;
+        defFontRGB3[CG] = .2f;
+        defFontRGB3[CB] = .9f;
+        break;
+
+    default:
+        defFontRGB[CR] = 1;
+        defFontRGB[CG] = 1;
+        defFontRGB[CB] = 1;
+
+        defFontRGB2[CR] = .85f;
+        defFontRGB2[CG] = 0;
+        defFontRGB2[CB] = 0;
+
+        defFontRGB3[CR] = 1;
+        defFontRGB3[CG] = .9f;
+        defFontRGB3[CB] = .4f;
+        break;
+    }
+
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -206,14 +254,15 @@ void D_PreInit(void)
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_FACE] = false;
     cfg.hudShown[HUD_LOG] = true;
-    { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
+    {
         cfg.hudUnHide[i] = 1;
     }
     cfg.hudScale = .6f;
-    cfg.hudColor[0] = .85f;
-    cfg.hudColor[1] = cfg.hudColor[2] = 0;
-    cfg.hudColor[3] = 1;
+
+    memcpy(cfg.hudColor, defFontRGB2, sizeof(cfg.hudColor));
+    cfg.hudColor[CA] = 1;
+
     cfg.hudFog = 1;
     cfg.hudIconAlpha = 1;
     cfg.xhairSize = .5f;
@@ -244,18 +293,24 @@ void D_PreInit(void)
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuTextColors[0][CR] = .85f;
-    cfg.menuTextColors[0][CG] = 0;
-    cfg.menuTextColors[0][CB] = 0;
-    cfg.menuTextColors[1][CR] = 1;
-    cfg.menuTextColors[1][CG] = .7f;
-    cfg.menuTextColors[1][CB] = .3f;
-    cfg.menuTextColors[2][CR] = 1;
-    cfg.menuTextColors[2][CG] = 1;
-    cfg.menuTextColors[2][CB] = 1;
-    cfg.menuTextColors[3][CR] = .85f;
-    cfg.menuTextColors[3][CG] = 0;
-    cfg.menuTextColors[3][CB] = 0;
+
+    if(gameMode == doom2_hacx)
+    {
+        cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
+        memcpy(cfg.menuTextColors[1], defFontRGB, sizeof(cfg.menuTextColors[1]));
+        cfg.menuTextColors[2][CR] = .2f;
+        cfg.menuTextColors[2][CG] = .2f;
+        cfg.menuTextColors[2][CB] = .9f;
+        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+    }
+    else
+    {
+        memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
+        memcpy(cfg.menuTextColors[1], defFontRGB3, sizeof(cfg.menuTextColors[1]));
+        memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
+        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+    }
+
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestName = true;
@@ -319,8 +374,16 @@ void D_PreInit(void)
     cfg.msgAlign = 0; // Left.
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = .85f;
-    cfg.msgColor[1] = cfg.msgColor[2] = 0;
+    if(gameMode == doom2_hacx)
+    {
+        cfg.msgColor[CR] = .2f;
+        cfg.msgColor[CG] = .2f;
+        cfg.msgColor[CB] = .9f;
+    }
+    else
+    {
+        memcpy(cfg.msgColor, defFontRGB2, sizeof(cfg.msgColor));
+    }
 
     cfg.chatBeep = true;
 

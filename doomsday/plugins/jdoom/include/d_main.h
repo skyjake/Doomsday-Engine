@@ -47,9 +47,9 @@ extern int gameModeBits;
 
 extern char* borderGraphics[];
 
-extern const float defFontRGB[];
-extern const float defFontRGB2[];
-extern const float defFontRGB3[];
+extern float defFontRGB[];
+extern float defFontRGB2[];
+extern float defFontRGB3[];
 
 extern boolean monsterInfight;
 
