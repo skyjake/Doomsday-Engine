@@ -46,7 +46,7 @@
 #define PLUGIN_DETAILS      "Deh Reader is based on ZDoom's Deh patch reader."
 
 #define PLUGIN_VERSION_TEXT "1.2.6"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DEHREAD_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DEHREAD_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,6,0 // For WIN32 version info.
 
 #endif

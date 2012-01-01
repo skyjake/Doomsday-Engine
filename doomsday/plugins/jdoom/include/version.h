@@ -57,7 +57,7 @@
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
 #define PLUGIN_VERSION_TEXT "1.15.9"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" JDOOM_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,15,9,0 // For WIN32 version info.
 
 // For WIN32 version info:

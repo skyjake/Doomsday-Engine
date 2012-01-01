@@ -46,7 +46,7 @@
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via OpenAL"
 
 #define PLUGIN_VERSION_TEXT "1.2.4"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSOPENAL_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,2,4,0 // For WIN32 version info.
 
 #endif
