@@ -46,7 +46,7 @@
 #define PLUGIN_DETAILS      "Doomsday plugin for loading WAD format maps."
 
 #define PLUGIN_VERSION_TEXT "1.0.5"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,0,5,0 // For WIN32 version info.
 
 #endif

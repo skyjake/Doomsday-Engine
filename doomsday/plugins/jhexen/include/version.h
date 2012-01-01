@@ -57,7 +57,7 @@
 #define PLUGIN_DOCSURL      DOOMSDAY_DOCSURL
 
 #define PLUGIN_VERSION_TEXT "1.3.8"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" JHEXEN_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" JHEXEN_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,3,8,0 // For WIN32 version info.
 
 // For WIN32 version info:
