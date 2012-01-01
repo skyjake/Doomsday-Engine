@@ -1232,16 +1232,27 @@ void Def_Read(void)
     // Music.
     for(i = 0; i < defs.count.music.num; ++i)
     {
-        ded_music_t*        mus = defs.music + i;
+        ded_music_t* mus = defs.music + i;
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t*        earliest = defs.music + Def_GetMusicNum(mus->id);
+        ded_music_t* earliest = defs.music + Def_GetMusicNum(mus->id);
 
-        if(earliest == mus)
-            continue;
+        if(earliest == mus) continue;
 
         strcpy(earliest->lumpName, mus->lumpName);
-        Uri_Copy(earliest->path, mus->path);
         earliest->cdTrack = mus->cdTrack;
+
+        if(mus->path)
+        {
+            if(earliest->path)
+                Uri_Copy(earliest->path, mus->path);
+            else
+                earliest->path = Uri_NewCopy(mus->path);
+        }
+        else if(earliest->path)
+        {
+            Uri_Delete(earliest->path);
+            earliest->path = NULL;
+        }
     }
 
     // Text.
