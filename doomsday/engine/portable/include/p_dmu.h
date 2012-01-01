@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -55,10 +55,17 @@ void       *P_DummyExtraData(void* dummy);
 uint        P_ToIndex(const void* ptr);
 
 const char *DMU_Str(uint prop);
+int         DMU_GetType(const void* ptr);
 void        DMU_SetValue(valuetype_t valueType, void* dst,
                          const setargs_t* args, uint index);
 void        DMU_GetValue(valuetype_t valueType, const void* src,
                          setargs_t* args, uint index);
+
+/// To be called to update in response to a DMU property change event.
+int DMU_SetMaterialProperty(struct material_s* material, const setargs_t* args);
+
+/// Get the current value of a Material property.
+int DMU_GetMaterialProperty(struct material_s* material, setargs_t* args);
 
 #ifndef NDEBUG
 # define ASSERT_DMU_TYPE(ptr, dmuType) \

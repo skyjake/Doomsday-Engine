@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -860,7 +861,7 @@ static int rendLineDef(linedef_t* line, void* paramaters)
 static int rendSubsector(subsector_t* ssec, void* paramaters)
 {
     const float scale = MAX_OF(bmapDebugSize, 1);
-    const float width = (theWindow->width / 16) / scale;
+    const float width = (theWindow->geometry.size.width / 16) / scale;
     float length, dx, dy, normal[2], unit[2];
     seg_t** segIter, *seg;
     vec2_t start, end;
@@ -937,11 +938,9 @@ int rendCellLineDefs(void* cellPtr, void* paramaters)
         biParams.func = rendLineDef;
         biParams.param = paramaters;
 
-        glDisable(GL_TEXTURE_2D);
         glBegin(GL_LINES);
             blockmapCellLinesIterator(cell, (void*)&biParams);
         glEnd();
-        glEnable(GL_TEXTURE_2D);
     }
     return false; // Continue iteration.
 }
@@ -961,11 +960,9 @@ int rendCellPolyobjs(void* cellPtr, void* paramaters)
         bpiParams.func = PTR_PolyobjLines;
         bpiParams.param = &piParams;
 
-        glDisable(GL_TEXTURE_2D);
         glBegin(GL_LINES);
             blockmapCellPolyobjsIterator(cell, (void*)&bpiParams);
         glEnd();
-        glEnable(GL_TEXTURE_2D);
     }
     return false; // Continue iteration.
 }
@@ -980,11 +977,9 @@ int rendCellMobjs(void* cellPtr, void* paramaters)
         bmiParams.func = rendMobj;
         bmiParams.param = paramaters;
 
-        glDisable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
             blockmapCellMobjsIterator(cell, (void*)&bmiParams);
         glEnd();
-        glEnable(GL_TEXTURE_2D);
     }
     return false; // Continue iteration.
 }
@@ -1001,9 +996,7 @@ int rendCellSubsectors(void* cellPtr, void* paramaters)
         bsiParams.sector = NULL;
         bsiParams.box = NULL;
 
-        glDisable(GL_TEXTURE_2D);
-            blockmapCellSubsectorsIterator(cell, (void*)&bsiParams);
-        glEnable(GL_TEXTURE_2D);
+        blockmapCellSubsectorsIterator(cell, (void*)&bsiParams);
     }
     return false; // Continue iteration.
 }
@@ -1021,8 +1014,6 @@ void rendBlockmapBackground(Blockmap* blockmap)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glScalef(blockmap->cellSize[VX], blockmap->cellSize[VY], 1);
-
-    glDisable(GL_TEXTURE_2D);
 
     /**
      * Draw the translucent quad which represents the "used" cells.
@@ -1056,58 +1047,89 @@ void rendBlockmapBackground(Blockmap* blockmap)
     }
 
     // Restore previous GL state.
-    glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 }
 
-static void drawCellInfo(int x, int y, const char* info)
+static void drawCellInfo(const Point2Raw* _origin, const char* info)
 {
-    const int w = FR_TextWidth(info)  + 16;
-    const int h = FR_TextHeight(info) + 16;
+    Point2Raw origin;
+    Size2Raw size;
+    assert(_origin);
 
-    x -= w / 2;
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    glEnable(GL_TEXTURE_2D);
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    size.width  = FR_TextWidth(info)  + 16;
+    size.height = FR_SingleLineHeight(info) + 16;
+
+    origin.x = _origin->x;
+    origin.y = _origin->y;
+
+    origin.x -= size.width / 2;
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+
+    origin.x += 8;
+    origin.y += size.height / 2;
     UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx(info, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
+    UI_TextOutEx2(info, &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(int x, int y, Blockmap* blockmap)
+static void drawBlockmapInfo(const Point2Raw* _origin, Blockmap* blockmap)
 {
-    const int w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
-    const int th = FR_TextHeight("a"), h = th * 4 + 16;
     uint bmapSize[2];
+    Point2Raw origin;
+    Size2Raw size;
     char buf[80];
+    int th;
     assert(blockmap);
 
-    // Align to the bottom right.
-    x -= w;
-    y -= h;
+    glEnable(GL_TEXTURE_2D);
 
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
-    x += 8;
-    y += 8 + th/2;
+    origin.x = _origin->x;
+    origin.y = _origin->y;
 
-    UI_TextOutEx("Blockmap", x, y, false, true, UI_Color(UIC_TITLE), 1);
-    y += th;
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    size.width = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
+    th = FR_SingleLineHeight("Info");
+    size.height = th * 4 + 16;
+
+    origin.x -= size.width;
+    origin.y -= size.height;
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+
+    origin.x += 8;
+    origin.y += 8 + th/2;
+
+    UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     Blockmap_Size(blockmap, bmapSize);
     dd_snprintf(buf, 80, "Dimensions:[%u,%u] #%li", bmapSize[VX], bmapSize[VY],
         (long) bmapSize[VY] * bmapSize[VX]);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     dd_snprintf(buf, 80, "Cellsize:[%.3f,%.3f]", Blockmap_CellWidth(blockmap), Blockmap_CellHeight(blockmap));
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
 
     dd_snprintf(buf, 80, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
         Blockmap_Bounds(blockmap)->minX, Blockmap_Bounds(blockmap)->minY,
         Blockmap_Bounds(blockmap)->maxX, Blockmap_Bounds(blockmap)->maxY);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 static int countLineDefLink(linedef_t* lineDef, void* paramaters)
@@ -1138,7 +1160,7 @@ static int countSubsectorLink(subsector_t* subsector, void* paramaters)
     return false; // Continue iteration.
 }
 
-static void drawLineDefCellInfoBox(int x, int y, uint coords[2])
+static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
     gamemap_t* map = P_GetCurrentMap();
     uint count = 0;
@@ -1146,10 +1168,10 @@ static void drawLineDefCellInfoBox(int x, int y, uint coords[2])
     validCount++;
     Map_IterateCellLineDefs(map, coords, countLineDefLink, (void*)&count);
     dd_snprintf(info, 160, "Cell:[%u,%u] LineDefs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(x, y, info);
+    drawCellInfo(origin, info);
 }
 
-static void drawMobjCellInfoBox(int x, int y, uint coords[2])
+static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
     gamemap_t* map = P_GetCurrentMap();
     uint count = 0;
@@ -1157,10 +1179,10 @@ static void drawMobjCellInfoBox(int x, int y, uint coords[2])
     validCount++;
     Map_IterateCellMobjs(map, coords, countMobjLink, (void*)&count);
     dd_snprintf(info, 160, "Cell:[%u,%u] Mobjs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(x, y, info);
+    drawCellInfo(origin, info);
 }
 
-static void drawPolyobjCellInfoBox(int x, int y, uint coords[2])
+static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
     gamemap_t* map = P_GetCurrentMap();
     uint count = 0;
@@ -1168,10 +1190,10 @@ static void drawPolyobjCellInfoBox(int x, int y, uint coords[2])
     validCount++;
     Map_IterateCellPolyobjs(map, coords, countPolyobjLink, (void*)&count);
     dd_snprintf(info, 160, "Cell:[%u,%u] Polyobjs:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(x, y, info);
+    drawCellInfo(origin, info);
 }
 
-static void drawSubsectorCellInfoBox(int x, int y, uint coords[2])
+static void drawSubsectorCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
     gamemap_t* map = P_GetCurrentMap();
     uint count = 0;
@@ -1180,7 +1202,7 @@ static void drawSubsectorCellInfoBox(int x, int y, uint coords[2])
     Map_IterateCellSubsectors(map, coords, NULL/*no sector requirement*/,
         NULL/*no subregion requirement*/, validCount, countSubsectorLink, (void*)&count);
     dd_snprintf(info, 160, "Cell:[%u,%u] Subsectors:#%u", coords[VX], coords[VY], count);
-    drawCellInfo(x, y, info);
+    drawCellInfo(origin, info);
 }
 
 /**
@@ -1237,7 +1259,6 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         // Highlight cells the followed Mobj "touches".
-        glDisable(GL_TEXTURE_2D);
 
         for(y = vBlockCoords.minY; y <= vBlockCoords.maxY; ++y)
         for(x = vBlockCoords.minX; x <= vBlockCoords.maxX; ++x)
@@ -1265,7 +1286,6 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
             glEnd();
         }
 
-        glEnable(GL_TEXTURE_2D);
     }
 
     /**
@@ -1356,27 +1376,23 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     if(followMobj)
     {
         glColor3f(0, 1, 0);
-        glDisable(GL_TEXTURE_2D);
         glBegin(GL_QUADS);
             rendMobj(followMobj, NULL/*no params*/);
         glEnd();
-        glEnable(GL_TEXTURE_2D);
     }
 
     // Undo the map coordinate space translation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
-    // Restore previous GL state.
-    glEnable(GL_TEXTURE_2D);
 }
 
 void Rend_BlockmapDebug(void)
 {
     int (*cellDrawer) (void* cellPtr, void* paramaters);
-    void (*cellInfoDrawer) (int x, int y, uint coords[2]);
+    void (*cellInfoDrawer) (const Point2Raw* origin, uint coords[2]);
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
+    Point2Raw origin;
     gamemap_t* map;
     float scale;
 
@@ -1427,12 +1443,12 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
     // Orient on the center of the window.
-    glTranslatef((theWindow->width / 2), (theWindow->height / 2), 0);
+    glTranslatef((theWindow->geometry.size.width / 2), (theWindow->geometry.size.height / 2), 0);
 
     // Uniform scaling factor for this visual.
-    scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
+    scale = bmapDebugSize / MAX_OF(theWindow->geometry.size.height / 100, 1);
     glScalef(scale, -scale, 1);
 
     // If possible we'll tailor what we draw relative to the viewPlayer.
@@ -1451,7 +1467,7 @@ void Rend_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     if(followMobj)
     {
@@ -1459,14 +1475,16 @@ void Rend_BlockmapDebug(void)
         uint coords[2];
         if(!Blockmap_CellCoords(blockmap, coords, followMobj->pos))
         {
-            const int x = theWindow->width / 2;
-            const int y = 30;
-            cellInfoDrawer(x, y, coords);
+            origin.x = theWindow->geometry.size.width / 2;
+            origin.y = 30;
+            cellInfoDrawer(&origin, coords);
         }
     }
 
     // About the Blockmap itself.
-    drawBlockmapInfo(theWindow->width - 10, theWindow->height - 10, blockmap);
+    origin.x = theWindow->geometry.size.width  - 10;
+    origin.y = theWindow->geometry.size.height - 10;
+    drawBlockmapInfo(&origin, blockmap);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

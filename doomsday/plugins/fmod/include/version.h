@@ -44,7 +44,7 @@
 #define PLUGIN_DETAILS      "Doomsday plugin for audio playback via Firelight Technologies' FMOD Ex "
 
 #define PLUGIN_VERSION_TEXT "1.0.0"
-#define PLUGIN_VERSION_TEXTLONG "Version" PLUGIN_VERSION_TEXT " " __DATE__ " (" DSFMOD_VER_ID ")"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" DSFMOD_VER_ID ")"
 #define PLUGIN_VERSION_NUMBER 1,0,0,0 // For WIN32 version info.
 
 #endif

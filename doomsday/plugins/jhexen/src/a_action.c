@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
 #include <math.h>
 
 #include "jhexen.h"
@@ -68,15 +69,15 @@ void X_CreateLUTs(void)
 
     uint                i;
 
-    orbitTableX = Z_Malloc(sizeof(float) * ORBITRES, PU_STATIC, 0);
+    orbitTableX = Z_Malloc(sizeof(float) * ORBITRES, PU_GAMESTATIC, 0);
     for(i = 0; i < ORBITRES; ++i)
         orbitTableX[i] = cos(((float) i) / 40.74f) * 15;
 
-    orbitTableY = Z_Malloc(sizeof(float) * ORBITRES, PU_STATIC, 0);
+    orbitTableY = Z_Malloc(sizeof(float) * ORBITRES, PU_GAMESTATIC, 0);
     for(i = 0; i < ORBITRES; ++i)
         orbitTableY[i] = sin(((float) i) / 40.74f) * 15;
 
-    FloatBobOffset = Z_Malloc(sizeof(float) * FLOATBOBRES, PU_STATIC, 0);
+    FloatBobOffset = Z_Malloc(sizeof(float) * FLOATBOBRES, PU_GAMESTATIC, 0);
     for(i = 0; i < FLOATBOBRES; ++i)
         FloatBobOffset[i] = sin(((float) i) / 10.186f) * 8;
 

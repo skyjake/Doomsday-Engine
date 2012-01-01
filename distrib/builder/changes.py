@@ -1,9 +1,21 @@
 # coding=utf-8
 import os
+import string
 import utils
 from event import Event
-import build_version
 import config
+
+def encodedText(logText):
+    logText = logText.replace('&', '&amp;')
+    logText = logText.replace(u'ä', u'&auml;')
+    logText = logText.replace(u'ö', u'&ouml;')
+    logText = logText.replace(u'Ä', u'&Auml;')
+    logText = logText.replace(u'Ö', u'&Ouml;')
+    logText = logText.encode('utf-8')
+    logText = logText.replace('<', '&lt;')
+    logText = logText.replace('>', '&gt;')
+    return logText
+
 
 class Entry:
     def __init__(self):
@@ -20,18 +32,22 @@ class Entry:
         # Check that the subject lines are not too long.
         MAX_SUBJECT = 100
         if len(utils.collated(subject)) > MAX_SUBJECT:
-            self.extra = '...' + subject[MAX_SUBJECT:] + ' '
-            subject = subject[:MAX_SUBJECT] + '...'
+            # Find a suitable spot the break the subject line.
+            pos = MAX_SUBJECT
+            while subject[pos] not in string.whitespace: pos -= 1
+            self.extra = '...' + subject[pos+1:] + ' '
+            subject = subject[:pos] + '...'
         else:
             # If there is a single dot at the end of the subject, remove it.
             if subject[-1] == '.' and subject[-2] != '.':
                 subject = subject[:-1]
-        self.subject = subject
+        self.subject = encodedText(subject)
         
     def setMessage(self, message):
         self.message = message.strip()
         if self.extra:
-            self.message = extra + ' ' + self.message
+            self.message = self.extra + ' ' + self.message
+        self.message = encodedText(self.message)
         self.message = self.message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
         
 
@@ -60,14 +76,6 @@ class Changes:
         os.system("git log %s..%s --format=\"%s\" >> %s" % (self.fromTag, self.toTag, format, tmpName))
 
         logText = unicode(file(tmpName, 'rt').read(), 'utf-8')
-        logText = logText.replace('&', '&amp;')
-        logText = logText.replace(u'ä', u'&auml;')
-        logText = logText.replace(u'ö', u'&ouml;')
-        logText = logText.replace(u'Ä', u'&Auml;')
-        logText = logText.replace(u'Ö', u'&Ouml;')
-        logText = logText.encode('utf-8')
-        logText = logText.replace('<', '&lt;')
-        logText = logText.replace('>', '&gt;')
         
         os.remove(tmpName)        
 
@@ -123,10 +131,19 @@ class Changes:
         
         if format == 'html':
             out = file(Event(toTag).file_path('changes.html'), 'wt')
+            
+            MAX_COMMITS = 100
+            entries = self.entries[:MAX_COMMITS]
+            
+            if len(self.entries) > MAX_COMMITS:
+                print >> out, '<p>Showing %i of %i commits.' % (MAX_COMMITS, len(self.entries))
+                print >> out, 'The <a href="%s">oldest commit</a> is dated %s.</p>' % \
+                    (self.entries[-1].link, self.entries[-1].date)                
+            
             print >> out, '<ol>'
 
             # Write a list entry for each commit.
-            for entry in self.entries:
+            for entry in entries:
                 print >> out, '<li><b>%s</b><br/>' % entry.subject
                 print >> out, 'by <i>%s</i> on %s' % (entry.author, entry.date)
                 print >> out, '<a href="%s">(show in repository)</a>' % entry.link
@@ -153,11 +170,13 @@ class Changes:
             out.close()
             
         elif format == 'deb':
+            import build_version
+            build_version.find_version()
+
             # Append the changes to the debian package changelog.
             os.chdir(os.path.join(config.DISTRIB_DIR, 'linux'))
 
             # First we need to update the version.
-            build_version.find_version()
             debVersion = build_version.DOOMSDAY_VERSION_FULL_PLAIN + '-' + Event().tag()
 
             # Always make one entry.

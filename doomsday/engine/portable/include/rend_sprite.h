@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_sprite.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * rend_sprite.h: Rendering Map Objects as 2D Sprites
+ * Rendering Map Objects as 2D Sprites.
  */
 
-#ifndef __DOOMSDAY_RENDER_SPRITE_H__
-#define __DOOMSDAY_RENDER_SPRITE_H__
+#ifndef LIBDENG_RENDER_SPRITE_H
+#define LIBDENG_RENDER_SPRITE_H
 
 typedef struct rendpspriteparams_s {
 // Position/Orientation/Scale
@@ -36,7 +36,7 @@ typedef struct rendpspriteparams_s {
 
 // Appearance
     // Texture:
-    material_t*     mat;
+    struct material_s* mat;
     float           texOffset[2];
     boolean         texFlip[2]; // {X, Y} Flip along the specified axis.
 
@@ -45,7 +45,7 @@ typedef struct rendpspriteparams_s {
     uint            vLightListIdx;
 } rendpspriteparams_t;
 
-extern int spriteLight, useSpriteAlpha;
+extern int spriteLight, useSpriteAlpha, useSpriteBlend;
 extern byte noSpriteTrans;
 extern byte devNoSprites;
 
@@ -56,4 +56,4 @@ void            Rend_Draw3DPlayerSprites(void);
 void            Rend_SpriteTexCoord(int pnum, int x, int y);
 void            Rend_RenderSprite(const rendspriteparams_t* params);
 
-#endif
+#endif /* LIBDENG_RENDER_SPRITE_H */

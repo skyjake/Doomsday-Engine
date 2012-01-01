@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -42,8 +42,8 @@ uint            P_TranslateMap(uint map);
 int             P_GetMapCDTrack(uint map);
 uint            P_GetMapWarpTrans(uint map);
 uint            P_GetMapNextMap(uint map);
-materialnum_t   P_GetMapSky1Material(uint map);
-materialnum_t   P_GetMapSky2Material(uint map);
+materialid_t    P_GetMapSky1Material(uint map);
+materialid_t    P_GetMapSky2Material(uint map);
 char*           P_GetMapName(uint map);
 float           P_GetMapSky1ScrollDelta(uint map);
 float           P_GetMapSky2ScrollDelta(uint map);

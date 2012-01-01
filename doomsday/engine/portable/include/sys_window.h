@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_window.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * sys_window.h: Window management.
  */
 
-#ifndef __DOOMSDAY_SYS_WINDOW_H__
-#define __DOOMSDAY_SYS_WINDOW_H__
+#ifndef LIBDENG_SYS_WINDOW_H
+#define LIBDENG_SYS_WINDOW_H
 
 #include "de_base.h"
 
@@ -54,14 +54,18 @@ typedef enum {
     WT_CONSOLE
 } ddwindowtype_t;
 
-// Console commandline flags:
+/**
+ * @defgroup consoleCommandlineFlags Console Commandline flags
+ * @{
+ */
 #define CLF_CURSOR_LARGE        0x1 // Use the large command line cursor.
+/**@}*/
 
 typedef struct {
     ddwindowtype_t  type;
     boolean         inited;
-    int             x, y; // SDL cannot move windows; these are ignored.
-    int             width, height;
+    /// \note SDL cannot move windows; thus origin is ignored.
+    RectRaw        geometry;
     int             flags;
 #if defined(WIN32)
     HWND            hWnd; // Needed for input (among other things).
@@ -113,37 +117,81 @@ typedef struct {
  */
 extern const ddwindow_t* theWindow;
 
-boolean         Sys_InitWindowManager(void);
-boolean         Sys_ShutdownWindowManager(void);
-boolean         Sys_GetWindowManagerInfo(wminfo_t *info);
+// A helpful macro that changes the origin of the screen
+// coordinate system.
+#define FLIP(y) (theWindow->geometry.size.height - (y+1))
 
-boolean         Sys_ChangeVideoMode(int width, int height, int bpp);
-boolean         Sys_GetDesktopBPP(int *bpp);
+boolean Sys_InitWindowManager(void);
+boolean Sys_ShutdownWindowManager(void);
+boolean Sys_GetWindowManagerInfo(wminfo_t* info);
+
+boolean Sys_ChangeVideoMode(int width, int height, int bpp);
+boolean Sys_GetDesktopBPP(int* bpp);
 
 /**
  * Window management.
  */
-uint            Sys_CreateWindow(application_t *app, uint parentIDX,
-                                 int x, int y, int w, int h, int bpp, int flags,
-                                 ddwindowtype_t type, const char *title, void *data);
-boolean         Sys_DestroyWindow(uint idx);
 
-void            Sys_UpdateWindow(uint idx);
+/**
+ * Create a new window.
+ *
+ * @param app           Ptr to the application structure holding our globals.
+ * @param parentIdx     Index number of the window that is to be the parent
+ *                      of the new window. If @c 0, window has no parent.
+ * @param origin        Origin of the window in desktop-space.
+ * @param size          Size of the window (client area) in desktop-space.
+ * @param bpp           BPP (bits-per-pixel)
+ * @param flags         DDWF_* flags, control appearance/behavior.
+ * @param type          Type of window to be created (WT_*)
+ * @param title         Window title string, ELSE @c NULL,.
+ * @param data          Platform specific data.
+ *
+ * @return              If @c 0, window creation was unsuccessful,
+ *                      ELSE 1-based index identifier of the new window.
+ */
+uint Sys_CreateWindow(application_t* app, uint parentIDX, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title, void* data);
+boolean Sys_DestroyWindow(uint idx);
 
-boolean         Sys_GetWindowDimensions(uint idx, int *x, int *y, int *w, int *h);
-boolean         Sys_GetWindowBPP(uint idx, int *bpp);
-boolean         Sys_GetWindowFullscreen(uint idx, boolean *fullscreen);
-boolean         Sys_GetWindowVisibility(uint idx, boolean *show);
+void Sys_UpdateWindow(uint idx);
 
-boolean         Sys_SetActiveWindow(uint idx);
-boolean         Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp,
-                              uint wflags, uint uflags);
-boolean         Sys_SetWindowTitle(uint idx, const char *title);
+/**
+ * Attempt to get the dimensions (and position) of the given window
+ * (client area) in screen-space.
+ *
+ * @param idx  Unique identifier (1-based) to the window.
+ * @return  Geometry of the window else @c NULL if @a idx is not valid.
+ */
+const RectRaw* Sys_GetWindowGeometry(uint idx);
+const Point2Raw* Sys_GetWindowOrigin(uint idx);
+const Size2Raw* Sys_GetWindowSize(uint idx);
 
-// Console window routines.
-void            Sys_ConPrint(uint idx, const char *text, int flags);
-void            Sys_SetConWindowCmdLine(uint idx, const char *text,
-                                        unsigned int cursorPos, int clflags);
+boolean Sys_GetWindowBPP(uint idx, int* bpp);
+boolean Sys_GetWindowFullscreen(uint idx, boolean* fullscreen);
+boolean Sys_GetWindowVisibility(uint idx, boolean* show);
+
+boolean Sys_SetActiveWindow(uint idx);
+boolean Sys_SetWindow(uint idx, int x, int y, int w, int h, int bpp, uint wflags, uint uflags);
+boolean Sys_SetWindowTitle(uint idx, const char* title);
+
+/**
+ * Console window routines.
+ */
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void Sys_ConPrint(uint idx, const char* text, int flags);
+
+/**
+ * Set the command line display of the specified console window.
+ *
+ * @param idx  Console window identifier.
+ * @param text  Text string to copy.
+ * @param cursorPos  Position to set the cursor on the command line.
+ * @param flags  @see consoleCommandlineFlags
+ */
+void Sys_SetConWindowCmdLine(uint idx, const char* text, unsigned int cursorPos, int flags);
 
 /**
  *\todo This is a compromise to prevent having to refactor half the
@@ -151,7 +199,7 @@ void            Sys_SetConWindowCmdLine(uint idx, const char *text,
  * into the engine.
  */
 #if defined(WIN32)
-HWND            Sys_GetWindowHandle(uint idx);
+HWND Sys_GetWindowHandle(uint idx);
 #endif
 
-#endif
+#endif /* LIBDENG_SYS_WINDOW_H */

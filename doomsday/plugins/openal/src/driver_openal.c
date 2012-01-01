@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -241,7 +241,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Create the buffer object.
-    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->ptr = (void *) bufName;
     buf->ptr3D = (void *) srcName;

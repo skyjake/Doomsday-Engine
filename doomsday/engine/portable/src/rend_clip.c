@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
  */
 
 /**
- * rend_clip.c: Clipper
- *
- * Clipnodes and oranges.
+ * Angle Clipper (clipnodes and oranges).
  *
  * The idea is to keep track of occluded angles around the camera.
  * Since subsectors are rendered front-to-back, the occlusion lists
@@ -245,7 +243,7 @@ static clipnode_t *C_NewRange(binangle_t stAng, binangle_t endAng)
     if((node = C_RoverGet(&clipNodes)) == NULL)
     {
         // Allocate a new node and add it to head the list.
-        node = Z_Malloc(sizeof(clipnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(clipnode_t), PU_APPSTATIC, NULL);
         C_RoverAdd(&clipNodes, node);
     }
 
@@ -459,7 +457,7 @@ occnode_t *C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
     if((node = C_RoverGet(&occNodes)) == NULL)
     {
         // Allocate a new node.
-        node = Z_Malloc(sizeof(occnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(occnode_t), PU_APPSTATIC, NULL);
         C_RoverAdd(&occNodes, node);
     }
 
@@ -1290,7 +1288,7 @@ int C_CheckSubsector(subsector_t *ssec)
             anglistSize = 64;
 
         anglist =
-         Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_STATIC);
+         Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_APPSTATIC);
     }
 
     ptr = ssec->segs;

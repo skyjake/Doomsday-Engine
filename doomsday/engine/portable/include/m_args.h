@@ -1,10 +1,10 @@
-/**\file
+/**\file m_args.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * m_args.h: Command Line Arguments
+/**
+ * Command Line Arguments
  */
 
-#ifndef __COMMAND_LINE_ARGS_H__
-#define __COMMAND_LINE_ARGS_H__
+#ifndef LIBDENG_LINE_ARGS_H
+#define LIBDENG_LINE_ARGS_H
 
 void            ArgInit(const char* cmdline);
 void            ArgShutdown(void);
@@ -43,4 +43,4 @@ int             ArgExists(const char* check);
 int             ArgIsOption(int i);
 int             ArgRecognize(const char* first, const char* second);
 
-#endif							//__COMMAND_LINE_ARGS_H__
+#endif /* LIBDENG_LINE_ARGS_H */

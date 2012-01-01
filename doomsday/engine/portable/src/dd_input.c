@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_infine.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -183,9 +184,12 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
  */
 void I_InitVirtualInputDevices(void)
 {
-    int         i;
-    inputdev_t *dev;
-    inputdevaxis_t *axis;
+    inputdev_t* dev;
+    inputdevaxis_t* axis;
+    int i;
+
+    // Allow re-init.
+    I_ShutdownInputDevices();
 
     memset(inputDevices, 0, sizeof(inputDevices));
 
@@ -434,12 +438,12 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
  * Check through the axes registered for the given device, see if there is
  * one identified by the given name.
  *
- * @return              @c false, if the string is invalid.
+ * @return  @c false, if the string is invalid.
  */
-boolean I_ParseDeviceAxis(const char* str, uint* deviceID, int* axis)
+boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
 {
-    char                name[30], *ptr;
-    inputdev_t*         device;
+    char name[30], *ptr;
+    inputdev_t* device;
 
     ptr = strchr(str, '-');
     if(!ptr)
@@ -451,16 +455,18 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, int* axis)
     device = I_GetDeviceByName(name, false);
     if(device == NULL)
         return false;
-    if(*deviceID)
+    if(deviceID)
         *deviceID = device - inputDevices;
 
     // The axis name.
-    if(*axis)
+    if(axis)
     {
         int a = I_GetAxisByName(device, ptr + 1);
-        if((*axis = a) < 0)
+        if(a < 0)
+        {
+            *axis = 0;
             return false;
-
+        }
         *axis = a + 1; // Axis indices are base 1.
     }
 
@@ -687,12 +693,13 @@ int DD_KeyOrCode(char *token)
  */
 void DD_InitInput(void)
 {
-    int     i;
-
+    int i;
     for(i = 0; i < 256; ++i)
     {
-        shiftKeyMappings[i] = i >= 32 && i <= 127 &&
-            defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+        if(i >= 32 && i <= 127)
+            shiftKeyMappings[i] = defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+        else
+            shiftKeyMappings[i] = i;
         altKeyMappings[i] = i;
     }
 }
@@ -863,11 +870,13 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
  */
 static void dispatchEvents(timespan_t ticLength)
 {
-    ddevent_t *ddev;
-    event_t     ev;
+    const boolean callGameResponders = DD_GameLoaded();
+    ddevent_t* ddev;
 
-    while((ddev = DD_GetEvent()) != NULL)
+    while((ddev = DD_GetEvent()))
     {
+        event_t ev;
+
         if(ignoreInput)
             continue;
 
@@ -876,29 +885,33 @@ static void dispatchEvents(timespan_t ticLength)
 
         DD_ConvertEvent(ddev, &ev);
 
-        // Does the special responder use this event?
-        if(gx.PrivilegedResponder)
-            if(gx.PrivilegedResponder(&ev))
-                continue;
+        if(callGameResponders)
+        {
+            // Does the game's special responder use this event?
+            if(gx.PrivilegedResponder)
+                if(gx.PrivilegedResponder(&ev))
+                    continue;
+
+            if(gx.FinaleResponder)
+                if(gx.FinaleResponder((void*)ddev))
+                    continue;
+        }
 
         if(UI_Responder(ddev))
             continue;
-        // The console.
         if(Con_Responder(ddev))
             continue;
 
-        // The game responder only returns true if the bindings
-        // can't be used (like when chatting).
-        if(gx.G_Responder(&ev))
+        // The game's normal responder only returns true if the bindings can't be used (like when chatting).
+        if(callGameResponders && gx.Responder(&ev))
             continue;
 
         // The bindings responder.
         if(B_Responder(ddev))
             continue;
 
-        // The "fallback" responder. Gets the event if no one else is
-        // interested.
-        if(gx.FallbackResponder)
+        // The "fallback" responder. Gets the event if no one else is interested.
+        if(callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
 }
@@ -1175,8 +1188,8 @@ void DD_ReadMouse(timespan_t ticLength)
     if(uiMouseMode)
     {
         // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->height / 600.0f);
+        xpos *= MAX_OF(1, theWindow->geometry.size.width / 800.0f);
+        ypos *= MAX_OF(1, theWindow->geometry.size.height / 600.0f);
     }
     else
     {
@@ -1325,7 +1338,7 @@ static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
 D_CMD(AxisPrintConfig)
 {
     uint        deviceID;
-    int         axisID;
+    uint        axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1345,7 +1358,7 @@ D_CMD(AxisPrintConfig)
 D_CMD(AxisChangeOption)
 {
     uint        deviceID;
-    int         axisID;
+    uint        axisID;
     inputdev_t *device;
     inputdevaxis_t *axis;
 
@@ -1378,11 +1391,9 @@ D_CMD(AxisChangeOption)
 
 D_CMD(AxisChangeValue)
 {
-    uint        deviceID;
-    int         axisID;
-    inputdev_t *device;
-    inputdevaxis_t *axis;
-
+    uint deviceID, axisID;
+    inputdevaxis_t* axis;
+    inputdev_t* device;
     if(!I_ParseDeviceAxis(argv[1], &deviceID, &axisID))
     {
         Con_Printf("'%s' is not a valid device or device axis.\n", argv[1]);
@@ -1391,22 +1402,24 @@ D_CMD(AxisChangeValue)
 
     device = I_GetDevice(deviceID, false);
     axis   = I_GetAxisByID(device, axisID);
+    if(NULL != axis)
+    {
+        // Values:
+        if(!stricmp(argv[2], "filter"))
+        {
+            axis->filter = strtod(argv[3], 0);
+        }
+        else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
+        {
+            axis->deadZone = strtod(argv[3], 0);
+        }
+        else if(!stricmp(argv[2], "scale"))
+        {
+            axis->scale = strtod(argv[3], 0);
+        }
+    }
 
-    // Values:
-    if(!stricmp(argv[2], "filter"))
-    {
-        axis->filter = strtod(argv[3], 0);
-    }
-    else if(!stricmp(argv[2], "deadzone") || !stricmp(argv[2], "dead zone"))
-    {
-        axis->deadZone = strtod(argv[3], 0);
-    }
-    else if(!stricmp(argv[2], "scale"))
-    {
-        axis->scale = strtod(argv[3], 0);
-    }
-
-    // Unknown value name.
+    // Unknown value name?
     return true;
 }
 

@@ -1,0 +1,41 @@
+# Chex Quest - Music tracks
+#
+# For further information on Music definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Music
+#
+
+Header { Version = 5; }
+
+Music { ID = "e1m1";   Lump = "D_E1M1";   }
+Music { ID = "e1m2";   Lump = "D_E1M2";   }
+Music { ID = "e1m3";   Lump = "D_E1M3";   }
+Music { ID = "e1m4";   Lump = "D_E1M4";   }
+Music { ID = "e1m5";   Lump = "D_E1M5";   }
+Music { ID = "e1m6";   Lump = "D_E1M6";   }
+Music { ID = "e1m7";   Lump = "D_E1M7";   }
+Music { ID = "e1m8";   Lump = "D_E1M8";   }
+Music { ID = "e1m9";   Lump = "D_E1M9";   }
+Music { ID = "e2m1";   Lump = "D_E2M1";   }
+Music { ID = "e2m2";   Lump = "D_E2M2";   }
+Music { ID = "e2m3";   Lump = "D_E2M3";   }
+Music { ID = "e2m4";   Lump = "D_E2M4";   }
+Music { ID = "e2m5";   Lump = "D_E2M5";   }
+Music { ID = "e2m6";   Lump = "D_E2M6";   }
+Music { ID = "e2m7";   Lump = "D_E2M7";   }
+Music { ID = "e2m8";   Lump = "D_E2M8";   }
+Music { ID = "e2m9";   Lump = "D_E2M9";   }
+Music { ID = "e3m1";   Lump = "D_E3M1";   }
+Music { ID = "e3m2";   Lump = "D_E3M2";   }
+Music { ID = "e3m3";   Lump = "D_E3M3";   }
+Music { ID = "e3m4";   Lump = "D_E3M4";   }
+Music { ID = "e3m5";   Lump = "D_E3M5";   }
+Music { ID = "e3m6";   Lump = "D_E3M6";   }
+Music { ID = "e3m7";   Lump = "D_E3M7";   }
+Music { ID = "e3m8";   Lump = "D_E3M8";   }
+Music { ID = "e3m9";   Lump = "D_E3M9";   }
+Music { ID = "inter";  Lump = "D_INTER";  }
+Music { ID = "intro";  Lump = "D_INTRO";  }
+Music { ID = "bunny";  Lump = "D_BUNNY";  }
+Music { ID = "victor"; Lump = "D_VICTOR"; }
+Music { ID = "introa"; Lump = "D_INTROA"; }

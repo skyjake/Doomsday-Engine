@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mapdata.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@
  */
 
 /**
- * p_mapdata.h: Playsim Data Structures, Macros and Constants
+ * Playsim Data Structures, Macros and Constants.
  *
  * These are internal to Doomsday. The games have no direct access to
  * this data.
  */
 
-#ifndef __DOOMSDAY_PLAY_DATA_H__
-#define __DOOMSDAY_PLAY_DATA_H__
+#ifndef LIBDENG_PLAY_DATA_H
+#define LIBDENG_PLAY_DATA_H
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error "Attempted to include internal Doomsday p_mapdata.h from a game"
@@ -71,8 +71,6 @@
 typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
-
-typedef unsigned int gltextureid_t; /// \todo Does not belong here.
 
 typedef struct fvertex_s {
     float           pos[2];
@@ -266,7 +264,7 @@ typedef struct {
 /**
  * The map data arrays are accessible globally inside the engine.
  */
-extern char mapID[9];
+extern Uri* mapUri;
 extern uint numVertexes;
 extern vertex_t* vertexes;
 
@@ -291,12 +289,13 @@ extern sidedef_t* sideDefs;
 extern watchedplanelist_t* watchedPlaneList;
 extern surfacelist_t* movingSurfaceList;
 extern surfacelist_t* decoratedSurfaceList;
+extern surfacelist_t* glowingSurfaceList;
 
 extern float mapGravity;
 
 typedef struct gamemap_s {
-    char            mapID[9];
-    char            uniqueID[256];
+    Uri* uri;
+    char            uniqueId[256];
 
     float           bBox[4];
 
@@ -329,6 +328,7 @@ typedef struct gamemap_s {
     watchedplanelist_t watchedPlaneList;
     surfacelist_t   movingSurfaceList;
     surfacelist_t   decoratedSurfaceList;
+    surfacelist_t   glowingSurfaceList;
 
     Blockmap*       mobjBlockmap;
     Blockmap*       polyobjBlockmap;
@@ -342,22 +342,58 @@ typedef struct gamemap_s {
     int             ambientLightLevel; // Ambient lightlevel for the current map.
 } gamemap_t;
 
-void            P_InitData(void);
-
 gamemap_t*      P_GetCurrentMap(void);
 void            P_SetCurrentMap(gamemap_t* map);
 
-const char*     P_GetMapID(gamemap_t* map);
-const char*     P_GetUniqueMapID(gamemap_t* map);
+/**
+ * This ID is the name of the lump tag that marks the beginning of map
+ * data, e.g. "MAP03" or "E2M8".
+ */
+const Uri* P_MapUri(gamemap_t* map);
+
+/// @return  The 'unique' identifier of the map.
+const char* P_GetUniqueMapId(gamemap_t* map);
+
 void            P_GetMapBounds(gamemap_t* map, float* min, float* max);
 int             P_GetMapAmbientLightLevel(gamemap_t* map);
 
-const char*     P_GenerateUniqueMapID(const char* mapID);
+const char*     P_GenerateUniqueMapId(const char* mapId);
+
+/**
+ * Is there a known map referenced by @a uri and if so, is it available for loading?
+ *
+ * @param  Uri identifying the map to be searched for.
+ * @return  @c true= A known and loadable map.
+ */
+boolean P_MapExists(const char* uri);
+
+/**
+ * Retrieve the name of the source file containing the map referenced by @a uri
+ * if known and available for loading.
+ *
+ * @param  Uri identifying the map to be searched for.
+ * @return  Fully qualified (i.e., absolute) path to the source file.
+ */
+const char* P_MapSourceFile(const char* uri);
+
+/**
+ * Begin the process of loading a new map.
+ *
+ * @param uri  Uri identifying the map to be loaded.
+ * @return @c true, if the map was loaded successfully.
+ */
+boolean P_LoadMap(const char* uri);
 
 void            P_PolyobjChanged(polyobj_t* po);
 void            P_RegisterUnknownTexture(const char* name, boolean planeTex);
 void            P_PrintMissingTextureList(void);
 void            P_FreeBadTexList(void);
+
+/// To be called to initialize the game map object defs.
+void P_InitGameMapObjDefs(void);
+
+/// To be called to free all memory allocated for the map obj defs.
+void P_ShutdownGameMapObjDefs(void);
 
 void            P_InitGameMapObjDefs(void);
 void            P_ShutdownGameMapObjDefs(void);
@@ -382,4 +418,4 @@ int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
 fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
 angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
 float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
-#endif
+#endif /* LIBDENG_PLAY_DATA_H */

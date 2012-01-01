@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_audiod_sdlmixer.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_audiod_sdlmixer.h: SDL_mixer, for SFX, Ext and Mus interfaces.
+ * SDL_mixer, for SFX, Ext and Mus interfaces.
  */
 
 #ifndef DENG_DISABLE_SDLMIXER
@@ -179,7 +179,7 @@ int DS_SDLMixerInit(void)
 
     if(SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
-        Con_Message("DS_SDLMixerInit: Error initializing SDL AUDIO\n %s\n", SDL_GetError());
+        Con_Message("Warning:DS_SDLMixerInit: Error initializing SDL AUDIO\n %s\n", SDL_GetError());
         return false;
     }
 
@@ -189,25 +189,27 @@ int DS_SDLMixerInit(void)
     if(SDL_VERSIONNUM(linkVer->major, linkVer->minor, linkVer->patch) >
        SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
-        Con_Message("DS_SDLMixerInit: Warning, linked version of SDLMixer (%u.%u.%u) is "
+        Con_Message("Warning:DS_SDLMixerInit: Linked version of SDLMixer (%u.%u.%u) is "
                     "newer than expected (%u.%u.%u)\n", linkVer->major, linkVer->minor,
                     linkVer->patch, compVer.major, compVer.minor, compVer.patch);
     }
 
     if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
     {
-        Con_Message("DS_SDLMixerInit: Failed opening mixer %s.\n", Mix_GetError());
+        Con_Message("Warning:DS_SDLMixerInit: Failed opening mixer %s.\n", Mix_GetError());
         return false;
     }
 
     Mix_QuerySpec(&freq, &format, &channels);
 
-    // Announce capabilites:
-    Con_Printf("SDLMixer Configuration:\n");
-    Con_Printf("  Output: %s\n", channels > 1? "stereo" : "mono");
-    Con_Printf("  Format: %#x (%#x)\n", format, (uint16_t) AUDIO_S16LSB);
-    Con_Printf("  Frequency: %iHz (%iHz)\n", freq, (int) MIX_DEFAULT_FREQUENCY);
-    Con_Printf("  Initial Channels: %i\n", MIX_CHANNELS);
+    if(verbose)
+    {   // Announce capabilites.
+        Con_Printf("SDLMixer configuration:\n");
+        Con_Printf("  Output: %s\n", channels > 1? "stereo" : "mono");
+        Con_Printf("  Format: %#x (%#x)\n", format, (uint16_t) AUDIO_S16LSB);
+        Con_Printf("  Frequency: %iHz (%iHz)\n", freq, (int) MIX_DEFAULT_FREQUENCY);
+        Con_Printf("  Initial Channels: %i\n", MIX_CHANNELS);
+    }
 
     // Prepare to play simultaneous sounds.
     /*numChannels =*/ Mix_AllocateChannels(MIX_CHANNELS);
@@ -255,7 +257,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     sfxbuffer_t*        buf;
 
     // Create the buffer.
-    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
     buf->rate = rate;
@@ -512,7 +514,7 @@ int DS_SDLMixer_Music_Get(int prop, void* value)
     switch(prop)
     {
     case MUSIP_ID:
-        strcpy(value, "SDLMixer/Music");
+        strcpy(value, "SDLMixer::Music");
         break;
 
     case MUSIP_PLAYING:

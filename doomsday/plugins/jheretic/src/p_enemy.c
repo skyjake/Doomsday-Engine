@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #ifdef MSVC
 #  pragma optimize("g", off)
@@ -1230,7 +1231,7 @@ void P_DSparilTeleport(mobj_t* actor)
 
         do
         {
-            dest = &bossSpots[++i % bossSpotCount];
+            dest = &mapSpots[bossSpots[++i % bossSpotCount]];
             if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
                                 actor->pos[VY] - dest->pos[VY]) >= 128)
             {   // A suitable teleport destination is available.
@@ -2109,7 +2110,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }

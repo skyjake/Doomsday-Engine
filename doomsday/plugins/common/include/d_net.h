@@ -1,10 +1,10 @@
-/**\file
+/**\file d_net.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,16 +22,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_net.h:
- */
-
-#ifndef __GAME_NETWORK_DEF_H__
-#define __GAME_NETWORK_DEF_H__
+#ifndef LIBCOMMON_NETWORK_DEF_H
+#define LIBCOMMON_NETWORK_DEF_H
 
 #include "dd_share.h"
 #include "reader.h"
 #include "writer.h"
+
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
 
 #define NETBUFFER_MAXMESSAGE 255
 
@@ -61,7 +67,7 @@ enum {
     GPT_FLOOR_MOVE_SOUND,
     GPT_CEILING_MOVE_SOUND,
     GPT_INTERMISSION,
-    GPT_FINALE,
+    GPT_RESERVED1,                 // Old GPT_FINALE, now handled by the engine.
     GPT_PLAYER_INFO,
     GPT_SAVE,
     GPT_LOAD,
@@ -70,7 +76,7 @@ enum {
     GPT_PLAYER_STATE2,
     GPT_YELLOW_MESSAGE,            // jHexen: yellow message.
     GPT_PAUSE,
-    GPT_FINALE2,
+    GPT_RESERVED2,                 // Old GPT_FINALE2, now handled by the engine.
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
@@ -169,14 +175,6 @@ enum {
 #define IMF_STATE           0x04
 #define IMF_TIME            0x08
 
-// Finale flags.
-#define FINF_BEGIN          0x01
-#define FINF_END            0x02
-#define FINF_SCRIPT         0x04   // Script included.
-#define FINF_AFTER          0x08   // Otherwise before.
-#define FINF_SKIP           0x10
-#define FINF_OVERLAY        0x20   // Otherwise before (or after).
-
 // Ticcmd flags.
 #define CMDF_FORWARDMOVE    0x01
 #define CMDF_SIDEMOVE       0x02
@@ -216,11 +214,11 @@ void            D_NetMessage(int player, const char *msg);
 void            D_NetMessageNoSound(int player, const char *msg);
 
 // Console commands.
-extern ccmd_t   netCCmds[];
+extern ccmdtemplate_t   netCCmds[];
 
 extern float    netJumpPower;
 
 #include "d_netsv.h"
 #include "d_netcl.h"
 
-#endif
+#endif /* LIBCOMMON_NETWORK_DEF_H */

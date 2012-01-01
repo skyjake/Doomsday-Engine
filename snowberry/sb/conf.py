@@ -56,7 +56,7 @@ class Component:
 
     def getOption(self):
         """Returns extra options to be used with the Component."""
-        return self.option
+        return ex.evaluate(self.option, None)
 
 
 class Setting:

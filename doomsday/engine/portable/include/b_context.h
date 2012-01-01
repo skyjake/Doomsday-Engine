@@ -1,10 +1,10 @@
-/**\file
+/**\file b_context.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * b_context.h: Bindings Contexts.
+ * Bindings Contexts.
  */
 
-#ifndef __DOOMSDAY_BIND_CONTEXT_H__
-#define __DOOMSDAY_BIND_CONTEXT_H__
+#ifndef LIBDENG_BIND_CONTEXT_H
+#define LIBDENG_BIND_CONTEXT_H
 
 #include "de_base.h"
 #include "b_command.h"
@@ -43,7 +43,7 @@ typedef struct controlbinding_s {
 
 // Binding Context Flags:
 #define BCF_ACTIVE              0x01 // Context is only used when it is active.
-#define BCF_PROTECTED           0x02 // Context cannot be
+#define BCF_PROTECTED           0x02 // Context cannot be (de)activated by plugins.
 #define BCF_ACQUIRE_KEYBOARD    0x04 // Context has acquired all keyboard states, unless
                                      // higher-priority contexts override it.
 #define BCF_ACQUIRE_ALL         0x08 // Context will acquire all unacquired states.
@@ -83,4 +83,4 @@ void            B_PrintContexts(void);
 void            B_PrintAllBindings(void);
 void            B_WriteContextToFile(const bcontext_t* bc, FILE* file);
 
-#endif // __DOOMSDAY_BIND_CONTEXT_H__
+#endif /* LIBDENG_BIND_CONTEXT_H */

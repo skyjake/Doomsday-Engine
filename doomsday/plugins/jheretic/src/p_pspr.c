@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 
@@ -271,7 +273,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Skull rod
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_1, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -281,7 +283,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_2, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -319,7 +321,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Phoenix rod
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_1, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
@@ -329,7 +331,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_2, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
@@ -367,7 +369,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Mace
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_1}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -377,7 +379,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_2}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held

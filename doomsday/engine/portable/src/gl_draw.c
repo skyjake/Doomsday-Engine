@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_draw.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_draw.c: Basic (Generic) Drawing Routines
+ * Basic (Generic) Drawing Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,10 +33,14 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_misc.h"
+#include "de_play.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -54,227 +58,104 @@
 
 static boolean drawFilter = false;
 static float filterColor[4] = { 0, 0, 0, 0 };
-static boolean usePatchOffset = true;   // A bit of a hack...
 
 // CODE --------------------------------------------------------------------
 
-void GL_UsePatchOffset(boolean enable)
+void GL_DrawRectd(const RectRawf* rect)
 {
-    usePatchOffset = enable;
+    assert(rect);
+    glBegin(GL_QUADS);
+        glTexCoord2d(0, 0);
+        glVertex2d(rect->origin.x, rect->origin.y);
+        glTexCoord2d(1, 0);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2d(1, 1);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+        glTexCoord2d(0, 1);
+        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
+    glEnd();
 }
 
-void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-                         float scalex, float scaley)
+void GL_DrawRecti(const RectRaw* rect)
 {
-    boolean             isTwoPart;
-    float               pixelBorder = 0;
-    float               tcb = 0;
-    rawtex_t*           raw;
+    assert(rect);
+    glBegin(GL_QUADS);
+        glTexCoord2i(0, 0);
+        glVertex2i(rect->origin.x, rect->origin.y);
+        glTexCoord2i(1, 0);
+        glVertex2i(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2i(1, 1);
+        glVertex2i(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+        glTexCoord2i(0, 1);
+        glVertex2i(rect->origin.x, rect->origin.y + rect->size.height);
+    glEnd();
+}
 
-    if(lump < 0 || lump >= numLumps)
+void GL_DrawRect(float x, float y, float w, float h)
+{
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+    glEnd();
+}
+
+void GL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a)
+{
+    glColor4f(r, g, b, a);
+    GL_DrawRect(x, y, w, h);
+}
+
+void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuint tex,
+    int texW, int texH, const float topColor[3], float topAlpha,
+    const float bottomColor[3], float bottomAlpha)
+{
+    if(!(topAlpha > 0 || bottomAlpha > 0))
         return;
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // Setup offset and scale.
-    // Scale the offsets to match the resolution.
-    glTranslatef(offx * theWindow->width / 320.0f,
-                 offy * theWindow->height / 200.0f, 0);
-    glScalef(scalex, scaley, 1);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
-    GL_SetRawImage(lump, false, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    raw = R_GetRawTex(lump);
-    isTwoPart = (raw->tex2 != 0);
-
-    if(isTwoPart)
+    if(tex)
     {
-        tcb = raw->height / 256.0f;
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glEnable(GL_TEXTURE_2D);
+    }
+
+    if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
+    {
+        GL_BlendMode(BM_NORMAL);
     }
     else
     {
-        // Bottom texture coordinate.
-        tcb = 1;
-    }
-    pixelBorder = raw->width * theWindow->width / 320;
-
-    // The first part is rendered in any case.
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
-        glTexCoord2f(1, 0);
-        glVertex2f(pixelBorder, 0);
-        glTexCoord2f(1, tcb);
-        glVertex2f(pixelBorder, theWindow->height);
-        glTexCoord2f(0, tcb);
-        glVertex2f(0, theWindow->height);
-    glEnd();
-
-    if(isTwoPart)
-    {
-        // And the other part.
-        GL_SetRawImage(lump, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(pixelBorder, 0);
-            glTexCoord2f(1, 0);
-            glVertex2f(theWindow->width, 0);
-            glTexCoord2f(1, tcb);
-            glVertex2f(theWindow->width, theWindow->height);
-            glTexCoord2f(0, tcb);
-            glVertex2f(pixelBorder, theWindow->height);
-        glEnd();
-    }
-
-    // Restore the old projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-/**
- * Raw screens are 320 x 200.
- */
-void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
-{
-    glColor3f(1, 1, 1);
-    GL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
-}
-
-/**
- * Drawing with the Current State.
- */
-void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
-{
-    float               x = posX;
-    float               y = posY;
-    float               w, h;
-    patchtex_t*         p = R_GetPatchTex(lump);
-
-    if(!p)
-        return;
-
-    // Set the texture.
-    GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
-
-    w = (float) p->width;
-    h = (float) p->height;
-
-    if(usePatchOffset)
-    {
-        x += (float) p->offX;
-        y += (float) p->offY;
-    }
-
-    if(p->extraOffset[VX])
-    {
-        // This offset is used only for the extra borders in the
-        // "upscaled and sharpened" patches, so we can tweak the values
-        // to our liking a bit more.
-        x += p->extraOffset[VX] * .75f;
-        y += p->extraOffset[VY] * .75f;
-        w -= fabs(p->extraOffset[VX]) / 2;
-        h -= fabs(p->extraOffset[VY]) / 2;
+        glDisable(GL_BLEND);
     }
 
     glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(topColor[0], topColor[1], topColor[2], topAlpha);
         glTexCoord2f(0, 0);
         glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
+        glTexCoord2f(width / (float) texW, 0);
+        glVertex2f(x + width, y);
+
+        // Bottom color.
+        glColor4f(bottomColor[0], bottomColor[1], bottomColor[2], bottomAlpha);
+        glTexCoord2f(width / (float) texW, height / (float) texH);
+        glVertex2f(x + width, y + height);
+        glTexCoord2f(0, height / (float) texH);
+        glVertex2f(x, y + height);
     glEnd();
 
-    // Is there a second part?
-    if(GL_PreparePatchOtherPart(p))
-    {
-        x += (float) p->width2;
-
-        GL_BindTexture(GL_PreparePatchOtherPart(p), glmode[texMagMode]);
-        w = (float) p->width2;
-
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + w, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + w, y + h);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + h);
-        glEnd();
-    }
-}
-
-void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
-                          lumpnum_t lump)
-{
-    glColor4f(light, light, light, alpha);
-    GL_DrawPatch_CS(x, y, lump);
-}
-
-void GL_DrawPatch(int x, int y, lumpnum_t lump)
-{
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
-}
-
-void GL_DrawFuzzPatch(int x, int y, lumpnum_t lump)
-{
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, .333f, lump);
-}
-
-void GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump)
-{
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x, y, 1, .666f, lump);
-}
-
-void GL_DrawShadowedPatch(int x, int y, lumpnum_t lump)
-{
-    if(lump < 0)
-        return;
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, lump);
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
-}
-
-void GL_DrawRect(float x, float y, float w, float h, float r, float g,
-                 float b, float a)
-{
-    glColor4f(r, g, b, a);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
-    glEnd();
+    if(tex)
+        glDisable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
 }
 
 void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 {
-    // Make sure the current texture will be tiled.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2f(x, y);
@@ -378,6 +259,11 @@ void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
     glEnd();
 }
 
+boolean GL_FilterIsVisible(void)
+{
+    return (0 != drawFilter && filterColor[CA] > 0);
+}
+
 void GL_SetFilter(boolean enabled)
 {
     drawFilter = enabled;
@@ -394,23 +280,150 @@ void GL_SetFilterColor(float r, float g, float b, float a)
 /**
  * @return              Non-zero if the filter was drawn.
  */
-int GL_DrawFilter(void)
+void GL_DrawFilter(void)
 {
-    if(!drawFilter)
-        return 0; // No filter needed.
-
-    // No texture, please.
-    glDisable(GL_TEXTURE_2D);
-
+    const viewdata_t* vd = R_ViewData(displayPlayer);
+    assert(NULL != vd);
     glColor4fv(filterColor);
-
     glBegin(GL_QUADS);
-        glVertex2f(viewwindowx, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy);
-        glVertex2f(viewwindowx + viewwidth, viewwindowy + viewheight);
-        glVertex2f(viewwindowx, viewwindowy + viewheight);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y);
+        glVertex2f(vd->window.origin.x + vd->window.size.width, vd->window.origin.y + vd->window.size.height);
+        glVertex2f(vd->window.origin.x, vd->window.origin.y + vd->window.size.height);
     glEnd();
+}
 
-    glEnable(GL_TEXTURE_2D);
-    return 1;
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection2(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode,
+    float stretchEpsilon)
+{
+    if(!bp) Con_Error("GL_ConfigureBorderedProjection2: Invalid 'bp' argument.");
+
+    bp->flags  = flags;
+    bp->width  = width;
+    bp->height = height;
+    bp->availWidth  = availWidth;
+    bp->availHeight = availHeight;
+
+    bp->scaleMode = R_ChooseScaleMode2(bp->width, bp->height, bp->availWidth,
+        bp->availHeight, overrideMode, stretchEpsilon);
+    bp->alignHorizontal = R_ChooseAlignModeAndScaleFactor(&bp->scaleFactor,
+        bp->width, bp->height, bp->availWidth, bp->availHeight, bp->scaleMode);
+
+    memset(bp->scissorState, 0, sizeof(bp->scissorState));
+}
+
+/// \note Part of the Doomsday public API.
+void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
+    int width, int height, int availWidth, int availHeight, scalemode_t overrideMode)
+{
+    GL_ConfigureBorderedProjection2(bp, flags, width, height, availWidth,
+        availHeight, overrideMode, DEFAULT_SCALEMODE_STRETCH_EPSILON);
+}
+
+/// \note Part of the Doomsday public API.
+void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(NULL == bp)
+        Con_Error("GL_BeginBorderedProjection: Invalid 'bp' argument.");
+
+    if(SCALEMODE_STRETCH == bp->scaleMode)
+        return;
+
+    /**
+     * Use an orthographic projection in screenspace, translating and
+     * scaling the coordinate space using the modelview matrix producing
+     * an aspect-corrected space of availWidth x availHeight and centered
+     * on the larger of the horizontal and vertical axes.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    DGL_Ortho(0, 0, bp->availWidth, bp->availHeight, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    if(bp->alignHorizontal)
+    {
+        // "Pillarbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int w = (bp->availWidth - bp->width * bp->scaleFactor) / 2;
+            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
+            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
+            DGL_Scissor(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef((float)bp->availWidth/2, 0, 0);
+        //glScalef(1/1.2f, 1, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(-bp->width/2, 0, 0);
+    }
+    else
+    {
+        // "Letterbox":
+        if(bp->flags & BPF_OVERDRAW_CLIP)
+        {
+            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
+            DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
+            DGL_Scissor(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            DGL_Enable(DGL_SCISSOR_TEST);
+        }
+
+        glTranslatef(0, (float)bp->availHeight/2, 0);
+        //glScalef(1, 1.2f, 1); // Aspect correction.
+        glScalef(bp->scaleFactor, bp->scaleFactor, 1);
+        glTranslatef(0, -bp->height/2, 0);
+    }
+}
+
+/// \note Part of the Doomsday public API.
+void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
+{
+    if(NULL == bp)
+        Con_Error("GL_EndBorderedProjection: Invalid 'bp' argument.");
+
+    if(SCALEMODE_STRETCH == bp->scaleMode)
+        return;
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    if(bp->flags & BPF_OVERDRAW_CLIP)
+    {
+        if(!bp->scissorState[0])
+            DGL_Disable(DGL_SCISSOR_TEST);
+        DGL_Scissor(bp->scissorState[1], bp->scissorState[2], bp->scissorState[3], bp->scissorState[4]);
+    }
+
+    if(bp->flags & BPF_OVERDRAW_MASK)
+    {
+        // It shouldn't be necessary to bind the "not-texture" but the game
+        // may have left whatever GL texture state it was using on. As this
+        // isn't cleaned up until drawing control returns to the engine we
+        // must explicitly disable it here.
+        GL_SetNoTexture();
+        glColor4f(0, 0, 0, 1);
+
+        if(bp->alignHorizontal)
+        {
+            // "Pillarbox":
+            int w = (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
+            GL_DrawRect(0, 0, w, bp->availHeight);
+            GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight);
+        }
+        else
+        {
+            // "Letterbox":
+            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            GL_DrawRect(0, 0, bp->availWidth, h);
+            GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h);
+        }
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }

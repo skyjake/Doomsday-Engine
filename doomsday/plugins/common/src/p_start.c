@@ -1,10 +1,10 @@
-/**\file
+/**\file p_start.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * p_start.c
+ * Common player (re)spawning logic.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,16 +37,10 @@
 
 #if __JDOOM__
 #  include "jdoom.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "r_common.h"
-#  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
 #endif
@@ -54,8 +48,10 @@
 #include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
+#include "p_player.h"
 #include "d_net.h"
 #include "p_map.h"
+#include "am_map.h"
 #include "p_terraintype.h"
 #include "g_common.h"
 #include "p_start.h"
@@ -63,6 +59,11 @@
 #include "p_switch.h"
 #include "g_defs.h"
 #include "p_inventory.h"
+#include "p_mapspec.h"
+#include "dmu_lib.h"
+#include "hu_stuff.h"
+#include "hu_chat.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -93,10 +94,10 @@ uint numMapSpots;
 mapspot_t* mapSpots;
 
 #if __JHERETIC__
-int maceSpotCount;
-mapspot_t* maceSpots;
-int bossSpotCount;
-mapspot_t* bossSpots;
+uint maceSpotCount;
+mapspotid_t* maceSpots;
+uint bossSpotCount;
+mapspotid_t* bossSpots;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -169,26 +170,32 @@ mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
     return MT_NONE;
 }
 
-/**
- * Initializes various playsim related data
- */
 void P_Init(void)
+{
+    // Create the various line lists (spechits, anims, buttons etc).
+    spechit = IterList_ConstructDefault();
+    linespecials = IterList_ConstructDefault();
+
+#if __JHEXEN__
+    X_CreateLUTs();
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    P_InitLava();
+#endif
+
+    P_Update();
+}
+
+void P_Update(void)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InitInventory();
 #endif
-
 #if __JHEXEN__
     P_InitMapInfo();
 #endif
-
     P_InitSwitchList();
-    P_InitPicAnims();
-
     P_InitTerrainTypes();
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    P_InitLava();
-#endif
 
     maxHealth = 100;
     GetDefInt("Player|Max Health", &maxHealth);
@@ -225,11 +232,30 @@ void P_Init(void)
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                         boolean deathmatch, float x, float y, float z,
-                         angle_t angle, int spawnFlags)
+void P_Shutdown(void)
 {
-    playerstart_t*      start;
+    if(spechit)
+        IterList_Destruct(spechit);
+    spechit = 0;
+
+    if(linespecials)
+        IterList_Destruct(linespecials);
+    linespecials = 0;
+
+    P_DestroyPlayerStarts();
+    P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
+    P_ShutdownTerrainTypes();
+    P_FreeWeaponSlots();
+#if __JDOOM__
+    P_BrainShutdown();
+#endif
+}
+
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
+    mapspotid_t spot)
+{
+    playerstart_t* start;
 
     if(deathmatch)
     {
@@ -246,11 +272,7 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
 
     start->plrNum = defaultPlrNum;
     start->entryPoint = entryPoint;
-    start->pos[VX] = x;
-    start->pos[VY] = y;
-    start->pos[VZ] = z;
-    start->angle = angle;
-    start->spawnFlags = spawnFlags;
+    start->spot = spot;
 }
 
 void P_DestroyPlayerStarts(void)
@@ -323,19 +345,19 @@ uint P_GetNumPlayerStarts(boolean deathmatch)
  */
 void P_DealPlayerStarts(uint entryPoint)
 {
-    int                 i;
+    int i;
 
     if(!numPlayerStarts)
     {
-        Con_Message("P_DealPlayerStarts: Warning, no player starts!\n");
+        Con_Message("Warning: Zero player starts found, players will spawn as cameras.\n");
         return;
     }
 
     // First assign one start per player, only accepting perfect matches.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        int                 k, spotNumber;
-        player_t*           pl = &players[i];
+        int k, spotNumber;
+        player_t* pl = &players[i];
 
         if(!pl->plr->inGame)
             continue;
@@ -388,8 +410,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                    float z, angle_t angle, int spawnFlags,
                    boolean makeCamera, boolean pickupItems)
 {
-    player_t*           p;
-    mobj_t*             mo;
+    player_t* p;
+    mobj_t* mo;
 
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
@@ -406,8 +428,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                   x, y, z, angle);
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: player %i spawned at (%f,%f,%f) floorz=%f\n",
-                plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
+    Con_Message("P_SpawnPlayer: Player #%i spawned pos:[%g, %g, %g] floorz:%g\n",
+        plrNum, mo->pos[VX], mo->pos[VY], mo->pos[VZ], mo->floorZ);
 #endif
 
     p = &players[plrNum];
@@ -448,7 +470,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #endif
 
 #ifdef _DEBUG
-    Con_Message("P_SpawnPlayer: Player %i spawning with translation %i.\n",
+    Con_Message("P_SpawnPlayer: Player #%i spawning with translation %i.\n",
                 plrNum, (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT);
 #endif
 
@@ -484,15 +506,19 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     if(p->plr->flags & DDPF_CAMERA)
     {
-        VERBOSE(Con_Message("P_SpawnPlayer: Player %i is a camera.\n", plrNum));
+        VERBOSE( Con_Message("Player #%i spawned as a camera.\n", plrNum) )
 
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
         p->viewHeight = 0;
     }
     else
+    {
         p->viewHeight = (float) cfg.plrViewHeight;
+    }
+    p->viewHeightDelta = 0;
 
     p->viewZ = p->plr->mo->pos[VZ] + p->viewHeight;
+    p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
     if(deathmatch)
@@ -500,8 +526,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #if __JHEXEN__
         p->keys = 2047;
 #else
-        int                 i;
-
+        int i;
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             p->keys[i] = true;
 #endif
@@ -527,9 +552,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    // Wake up the status bar.
+    // Wake up HUD widgets.
     ST_Start(p - players);
-    // Wake up the heads up text.
     HU_Start(p - players);
 
 #if __JHEXEN__
@@ -661,10 +685,10 @@ void P_RebornPlayer(int plrNum)
         p->plr->mo->dPlayer = NULL;
     }
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
 #ifdef _DEBUG
-        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GetGameState());
+        Con_Message("P_RebornPlayer: Game state is %i, won't spawn.\n", G_GameState());
 #endif
         return; // Nothing else to do.
     }
@@ -712,31 +736,38 @@ void P_RebornPlayer(int plrNum)
         boolean foundSpot = false;
         const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
-        if(assigned && P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
+        if(assigned)
         {
-            // Appropriate player start spot is open.
-            Con_Message("- spawning at assigned spot\n");
+            const mapspot_t* spot = &mapSpots[assigned->spot];
 
-            pos[VX] = assigned->pos[VX];
-            pos[VY] = assigned->pos[VY];
-            pos[VZ] = assigned->pos[VZ];
-            angle = assigned->angle;
-            spawnFlags = assigned->spawnFlags;
+            if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
+            {   // Appropriate player start spot is open.
+                Con_Printf("- spawning at assigned spot\n");
 
-            foundSpot = true;
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
+
+                foundSpot = true;
+            }
         }
+
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        else
+        if(!foundSpot)
         {
             Con_Message("- force spawning at %i.\n", p->startSpot);
 
             if(assigned)
             {
-                pos[VX] = assigned->pos[VX];
-                pos[VY] = assigned->pos[VY];
-                pos[VZ] = assigned->pos[VZ];
-                angle = assigned->angle;
-                spawnFlags = assigned->spawnFlags;
+                const mapspot_t* spot = &mapSpots[assigned->spot];
+
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
 
                 // "Fuzz" the spawn position looking for room nearby.
                 makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -752,7 +783,7 @@ void P_RebornPlayer(int plrNum)
             }
         }
 #else
-        else
+        if(!foundSpot)
         {
             int                 i;
 
@@ -767,24 +798,26 @@ void P_RebornPlayer(int plrNum)
 
                 if((start = P_GetPlayerStart(rebornPosition, i, false)))
                 {
-                    if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
                     {
                         // Found an open start spot.
-                        pos[VX] = start->pos[VX];
-                        pos[VY] = start->pos[VY];
-                        pos[VZ] = start->pos[VZ];
-                        angle = start->angle;
-                        spawnFlags = start->spawnFlags;
+                        pos[VX] = spot->pos[VX];
+                        pos[VY] = spot->pos[VY];
+                        pos[VZ] = spot->pos[VZ];
+                        angle = spot->angle;
+                        spawnFlags = spot->flags;
 
                         foundSpot = true;
 
 #ifdef _DEBUG
-                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", start->pos[VX], start->pos[VY]);
+                        Con_Message("P_RebornPlayer: Spot (%f,%f) selected.\n", spot->pos[VX], spot->pos[VY]);
 #endif
                         break;
                     }
 #ifdef _DEBUG
-                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", start->pos[VX], start->pos[VY]);
+                    Con_Message("P_RebornPlayer: Spot (%f,%f) is not available.\n", spot->pos[VX], spot->pos[VY]);
 #endif
                 }
             }
@@ -797,11 +830,13 @@ void P_RebornPlayer(int plrNum)
 
             if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
             {
-                pos[VX] = start->pos[VX];
-                pos[VY] = start->pos[VY];
-                pos[VZ] = start->pos[VZ];
-                angle = start->angle;
-                spawnFlags = start->spawnFlags;
+                const mapspot_t* spot = &mapSpots[start->spot];
+
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
             }
             else
             {
@@ -886,30 +921,16 @@ boolean P_CheckSpot(float x, float y)
 }
 
 #if __JHERETIC__
-void P_AddMaceSpot(float x, float y, angle_t angle)
+void P_AddMaceSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    maceSpots = Z_Realloc(maceSpots, sizeof(mapspot_t) * ++maceSpotCount,
-                          PU_MAP);
-    spot = &maceSpots[maceSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    maceSpots = Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
+    maceSpots[maceSpotCount-1] = id;
 }
 
-void P_AddBossSpot(float x, float y, angle_t angle)
+void P_AddBossSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    bossSpots = Z_Realloc(bossSpots, sizeof(mapspot_t) * ++bossSpotCount,
-                          PU_MAP);
-    spot = &bossSpots[bossSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    bossSpots = Z_Realloc(bossSpots, sizeof(mapspotid_t) * ++bossSpotCount, PU_MAP);
+    bossSpots[bossSpotCount-1] = id;
 }
 #endif
 
@@ -952,11 +973,11 @@ void P_SpawnPlayers(void)
             {
                 if(players[0].startSpot != i && playerStarts[i].plrNum == 1)
                 {
-                    const playerstart_t* start = &playerStarts[i];
+                    const mapspot_t* spot = &mapSpots[playerStarts[i].spot];
 
-                    spawnPlayer(-1, PCLASS_PLAYER, start->pos[VX],
-                                start->pos[VY], start->pos[VZ],
-                                start->angle, start->spawnFlags, false,
+                    spawnPlayer(-1, PCLASS_PLAYER, spot->pos[VX],
+                                spot->pos[VY], spot->pos[VZ],
+                                spot->angle, spot->flags, false,
                                 false, false);
                 }
             }
@@ -983,11 +1004,13 @@ void P_SpawnPlayers(void)
 
                 if(start)
                 {
-                    pos[VX] = start->pos[VX];
-                    pos[VY] = start->pos[VY];
-                    pos[VZ] = start->pos[VZ];
-                    angle = start->angle;
-                    spawnFlags = start->spawnFlags;
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    pos[VX] = spot->pos[VX];
+                    pos[VY] = spot->pos[VY];
+                    pos[VZ] = spot->pos[VZ];
+                    angle = spot->angle;
+                    spawnFlags = spot->flags;
 
                     // "Fuzz" the spawn position looking for room nearby.
                     makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -1048,7 +1071,7 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     if(IS_CLIENT)
     {
-        if(G_GetGameState() == GS_MAP)
+        if(G_GameState() == GS_MAP)
         {
             // Anywhere will do, for now.
             spawnPlayer(playerNum, pClass, -30000, -30000, 0, 0, MSF_Z_FLOOR, false,
@@ -1066,14 +1089,13 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 #define NUM_TRIES 20
     for(i = 0; i < NUM_TRIES; ++i)
     {
-        const playerstart_t* start =
-            &deathmatchStarts[P_Random() % numPlayerDMStarts];
+        const mapspot_t* spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
 
         // Last attempt will succeed even though blocked.
-        if(P_CheckSpot(start->pos[VX], start->pos[VY]) || i == NUM_TRIES-1)
+        if(P_CheckSpot(spot->pos[VX], spot->pos[VY]) || i == NUM_TRIES-1)
         {
-            spawnPlayer(playerNum, pClass, start->pos[VX], start->pos[VY],
-                        start->pos[VZ], start->angle, start->spawnFlags, false,
+            spawnPlayer(playerNum, pClass, spot->pos[VX], spot->pos[VY],
+                        spot->pos[VZ], spot->angle, spot->flags, false,
                         true, true);
             return;
         }
@@ -1235,10 +1257,10 @@ static int turnMobjToNearestLine(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-static int iterateLinedefsNearMobj(thinker_t* th, void* context)
+static int moveMobjOutOfNearbyLines(thinker_t* th, void* paramaters)
 {
-    mobj_t*             mo = (mobj_t*) th;
-    mobjtype_t          type = *((mobjtype_t*) context);
+    mobj_t* mo = (mobj_t*) th;
+    mobjtype_t type = *((mobjtype_t*)paramaters);
     unstuckmobjinlinedefparams_t params;
     AABoxf aaBox;
 
@@ -1287,12 +1309,12 @@ void P_MoveThingsOutOfWalls(void)
 #endif
         NUMMOBJTYPES // terminate.
     };
-    uint                i;
+    uint i;
 
     for(i = 0; types[i] != NUMMOBJTYPES; ++i)
     {
         mobjtype_t type = types[i];
-        DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+        DD_IterateThinkers(P_MobjThinker, moveMobjOutOfNearbyLines, &type);
         DD_IterateThinkers(P_MobjThinker, turnMobjToNearestLine, &type);
     }
 }

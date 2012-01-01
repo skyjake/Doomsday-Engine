@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -26,7 +26,7 @@
  */
 
 /**
- * p_mobj.c: Moving object handling. Spawn functions.
+ * Moving object handling. Spawn functions.
  */
 
 #ifdef MSVC
@@ -53,10 +53,6 @@
 
 #define MAX_BOB_OFFSET          (8)
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-#define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -77,7 +73,7 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
     sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
-    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
 
 /**
@@ -160,6 +156,11 @@ float P_MobjGetFriction(mobj_t *mo)
     return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
+static __inline boolean isInWalkState(player_t* pl)
+{
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+}
+
 static float getFriction(mobj_t* mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
@@ -178,18 +179,18 @@ static float getFriction(mobj_t* mo)
     return P_MobjGetFriction(mo);
 }
 
-void P_MobjMoveXY(mobj_t *mo)
+void P_MobjMoveXY(mobj_t* mo)
 {
-    float               pos[3], mom[3];
-    player_t           *player;
-    boolean             largeNegative;
+    float pos[3], mom[3];
+    player_t* player;
+    boolean largeNegative;
 
     // $democam: cameramen have their own movement code.
     if(P_CameraXYMovement(mo))
         return;
 
-    if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
+    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // The skull slammed into something.
@@ -202,8 +203,8 @@ void P_MobjMoveXY(mobj_t *mo)
         return;
     }
 
-    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
-    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
@@ -218,15 +219,14 @@ void P_MobjMoveXY(mobj_t *mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
-           (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
+        if(!cfg.moveBlock && (mom[MX] < -MAXMOMSTEP || mom[MY] < -MAXMOMSTEP))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
-        if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
+        if(largeNegative || mom[MX] > MAXMOMSTEP || mom[MY] > MAXMOMSTEP)
         {
             pos[VX] = mo->pos[VX] + mom[MX] / 2;
             pos[VY] = mo->pos[VY] + mom[MY] / 2;
@@ -253,14 +253,13 @@ void P_MobjMoveXY(mobj_t *mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
                    (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
-                        P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
+                    material_t* mat = P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
@@ -273,8 +272,7 @@ void P_MobjMoveXY(mobj_t *mo)
                 if(floorLine &&
                    (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
-                        P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
+                    material_t* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
@@ -292,8 +290,8 @@ void P_MobjMoveXY(mobj_t *mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Slow down.
     Mobj_XYMoveStopping(mo);
@@ -402,9 +400,7 @@ void P_MobjMoveZ(mobj_t* mo)
         //
         // So we need to check that this is either retail or commercial
         // (but not doom2)
-        int correctLostSoulBounce =
-            (gameMode == retail || gameMode == commercial) &&
-                    gameMission != GM_DOOM2;
+        int correctLostSoulBounce = (gameMode == GM_DOOM2_PLUT || gameMode == GM_DOOM2_TNT);
 
         if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
@@ -412,7 +408,7 @@ void P_MobjMoveZ(mobj_t* mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(movingDown = (mo->mom[MZ] < 0))
+        if((movingDown = (mo->mom[MZ] < 0)))
         {
             if(mo->player && mo->player->plr->mo == mo &&
                mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
@@ -615,8 +611,8 @@ void P_MobjThinker(mobj_t* mo)
 #endif
 
     // Handle X and Y momentums.
-    if(!INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-       !INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD) ||
+    if(!INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) ||
+       !INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD) ||
        (mo->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mo);
@@ -645,7 +641,7 @@ void P_MobjThinker(mobj_t* mo)
         }
     }
     else if(mo->pos[VZ] != floorZ ||
-            !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
+            !INRANGE_OF(mo->mom[MZ], 0, NOMOM_THRESHOLD))
     {
         P_MobjMoveZ(mo);
 
@@ -655,8 +651,8 @@ void P_MobjThinker(mobj_t* mo)
     }
     // Non-sentient objects at rest.
     else if(!sentient(mo) && !mo->player &&
-            !(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-              INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD)))
+            !(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
+              INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD)))
     {
         // Objects fall off ledges if they are hanging off. Slightly push
         // off of ledge if hanging more than halfway off.
@@ -791,7 +787,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     case MT_CHAINGUY: // 65, Former Human Commando
     case MT_UNDEAD: // 66, Revenant
     case MT_WOLFSS: // 84, Wolf SS
-        if(gameMode != commercial)
+        if(!(gameModeBits & GM_ANY_DOOM2))
             return NULL;
         break;
 
@@ -874,6 +870,9 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
             mo->floorClip = 10;
         }
     }
+
+    if(type == MT_BOSSTARGET)
+        P_BrainAddTarget(mo);
 
     // Copy spawn attributes to the new mobj.
     mo->spawnSpot.pos[VX] = x;

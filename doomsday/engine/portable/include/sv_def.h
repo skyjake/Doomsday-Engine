@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,13 @@
  */
 
 /**
- * sv_def.h: Server Definitions
+ * Server Definitions.
  */
 
 #ifndef __DOOMSDAY_SERVER_H__
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
-#include "m_string.h"
 
 #define SV_VERSION          16
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R16)"
@@ -54,7 +53,12 @@ boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
 void            Sv_PlayerLeaves(unsigned int nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
-void            Sv_SendText(int to, int conFlags, char* text);
+
+/**
+ * @param flags  @see consolePrintFlags
+ */
+void            Sv_SendText(int to, int flags, const char* text);
+
 void            Sv_Ticker(timespan_t ticLength);
 int             Sv_Latency(byte cmdTime);
 void            Sv_Kick(int who);

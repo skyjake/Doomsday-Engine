@@ -1,0 +1,46 @@
+/**\file dd_vectorgraphic.h
+ *\section License
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+/**
+ * SVG (Scalable Vector Graphic).
+ */
+
+#ifndef LIBDENG_API_VECTORGRAPHIC_H
+#define LIBDENG_API_VECTORGRAPHIC_H
+
+typedef uint32_t svgid_t;
+
+#include "point.h"
+
+typedef struct SvgLine_s {
+    Point2Rawf from, to;
+} SvgLine;
+
+void R_NewSvg(svgid_t svgId, const SvgLine* lines, size_t numLines);
+
+void GL_DrawSvg(svgid_t svgId, const Point2Rawf* origin);
+void GL_DrawSvg2(svgid_t svgId, const Point2Rawf* origin, float scale);
+void GL_DrawSvg3(svgid_t svgId, const Point2Rawf* origin, float scale, float angle);
+
+#endif /* LIBDENG_API_VECTORGRAPHIC_H */

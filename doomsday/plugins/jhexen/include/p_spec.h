@@ -1,10 +1,10 @@
-/**\file
+/**\file p_spec.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_spec.h:
- */
-
-#ifndef __P_SPEC_H__
-#define __P_SPEC_H__
+#ifndef LIBHEXEN_P_SPEC_H
+#define LIBHEXEN_P_SPEC_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -50,7 +46,12 @@ void        P_PlayerInSpecialSector(player_t *plr);
 void        P_PlayerOnSpecialFloor(player_t *plr);
 
 void        P_AnimateSurfaces(void);
-void        P_InitPicAnims(void);
+
+/**
+ * Parse an ANIMDEFS definition for flat/texture animations.
+ */
+void P_InitPicAnims(void);
+
 void        P_InitLightning(void);
 void        P_ForceLightning(void);
 
@@ -91,4 +92,4 @@ boolean     EV_ThingDestroy(int tid);
 
 void        P_InitSky(uint map);
 
-#endif
+#endif /* LIBHEXEN_P_SPEC_H */

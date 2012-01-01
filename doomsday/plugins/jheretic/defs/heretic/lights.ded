@@ -1,0 +1,99 @@
+# Heretic - Lights and Light Decorations
+#
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+#####====--- LIGHT SOURCES ---====#####
+#
+# The default properties of all light-emitting objects are determined
+# automatically by the engine. Here we make a couple of minor tweaks.
+#
+# For further information on Light definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Light
+
+# A halo would look bad for the chandelier because it wouldn't be rendered around the candle flames.
+Light { State = "CHANDELIER1"; Size = 0.8; Flags = "lgf_nohalo"; }
+Copy Light { State = "CHANDELIER2"; }
+Copy Light { State = "CHANDELIER3"; }
+
+# The Yellow Key shouldn't blink so much.
+Light {
+  State = "CKYY1";
+  Size = 0.5;
+  X Offset = 0.1; Y Offset = 15;
+  Color { 1 .7 0 }
+}
+
+Copy Light { State = "CKYY2"; }
+Copy Light { State = "CKYY3"; }
+Copy Light { State = "CKYY4"; }
+Copy Light { State = "CKYY5"; }
+Copy Light { State = "CKYY6"; }
+Copy Light { State = "CKYY7"; }
+Copy Light { State = "CKYY8"; }
+Copy Light { State = "CKYY9"; }
+
+#####====--- LIGHT DECORATIONS ---====#####
+#
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones.
+#
+# One decoration can specify up to 16 lights.
+#
+# For further information on Decoration definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Decoration
+
+Decoration {
+  Material = "textures:GRSKULL3";
+  Light {
+    Color { .7 0 0 }
+    Offset { 54 32 }
+    Halo radius = .1;
+    Radius = .05;
+  }
+  Light {
+    Color { .7 0 0 }
+    Offset { 72 32 }
+    Halo radius = .1;
+    Radius = .05;
+  }
+}
+
+Decoration {
+  Material = "textures:SW1ON";
+  Light {
+    Color { .6 .6 1 }
+    Offset { 32 64 }
+    Halo radius = .22;
+    Radius = .08;
+  }
+}
+
+Decoration {
+  Material = "textures:SW2ON";
+  Light {
+    Color { 0 0 .6 }
+    Offset { 31.5 64 }
+    Halo radius = .25;
+    Radius = .1;
+    Flare texture = 1;
+  }
+}
+
+Decoration {
+  Material = "textures:GRSTNPBW";
+  Light {
+    Color { .72 .5 .11 }
+    Offset { 31.5 74 }
+    Halo radius = .3;
+    Radius = .2;
+  }
+}

@@ -1,10 +1,10 @@
-/**\file
+/**\file dehmain.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 
 
 /**
- * dehmain.c: Dehacked Reader Plugin for Doomsday
+ * Dehacked Reader Plugin for Doomsday.
  *
  * Much of this has been taken from or is based on ZDoom's DEH reader.
  * Unsupported Dehacked features have been commented out.
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <ctype.h>
+#include <assert.h>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -57,6 +58,7 @@
 // should be removed entirely, either by making the plugin modify the
 // definitions via an API or by integrating the plugin into the engine.
 #include "../../../engine/portable/include/def_data.h"
+struct font_s;
 
 #define __INTERNAL_MAP_DATA_ACCESS__
 #include <doomsday.h>
@@ -77,6 +79,10 @@
 #define NUMSTATES   968
 
 #define CHECKKEY(a,b)       if (!stricmp (Line1, (a))) (b) = atoi(Line2);
+
+// Verbose messages.
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
 // TYPES -------------------------------------------------------------------
 
@@ -966,9 +972,11 @@ static boolean HandleKey(const struct Key *keys, void *structure,
     return true;
 }
 
-static boolean ReadChars(char **stuff, int size, boolean skipJunk)
+static boolean ReadChars(char** stuff, int size, boolean skipJunk)
 {
-    char   *str = *stuff;
+    assert(stuff);
+    {
+    char* str = *stuff;
 
     if(!size)
     {
@@ -978,7 +986,7 @@ static boolean ReadChars(char **stuff, int size, boolean skipJunk)
 
     do
     {
-        // Ignore carriage returns
+        // Ignore carriage returns.
         if(*PatchPt != '\r')
             *str++ = *PatchPt;
         else
@@ -997,6 +1005,7 @@ static boolean ReadChars(char **stuff, int size, boolean skipJunk)
     }
 
     return true;
+    }
 }
 
 void ReplaceSpecialChars(char *str)
@@ -1314,14 +1323,11 @@ int PatchThing(int thingy)
     if(thingNum < (unsigned) ded->count.mobjs.num)
     {
         info = ded->mobjs + thingNum;
-        if(verbose)
-            LPrintf("Thing %lu\n", (unsigned long) thingNum);
     }
     else
     {
         info = &dummy;
-        LPrintf("Thing %lu out of range. Create more Thing defs!\n",
-                (unsigned long) (thingNum + 1));
+        LPrintf("Thing %lu out of range. Create more Thing defs!\n", (unsigned long) (thingNum + 1));
     }
 
     while((result = GetLine()) == 1)
@@ -1422,10 +1428,6 @@ int PatchThing(int thingy)
 
                 if(v2changed)
                     info->flags[1] = value2;
-
-                if(verbose)
-                    LPrintf("Bits: %d,%d (0x%08x,0x%08x)\n", value, value2,
-                            value, value2);
             }
             else
                 LPrintf(unknown_str, Line1, "Thing", thingNum);
@@ -1511,18 +1513,16 @@ int PatchState(int stateNum)
         {"Unknown 2", 0 /*myoffsetof(ded_state_t,misc[1],0) */ },
         {NULL,}
     };
-    int     result;
+    int result;
     ded_state_t *info, dummy;
 
     // C doesn't allow non-constant initializers.
     keys[2].offset = myoffsetof(ded_state_t, misc[0], 0);
-    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);   
-     
+    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);
+
     if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
         info = ded->states + stateNum;
-        if(verbose)
-            LPrintf("State %d\n", stateNum);
     }
     else
     {
@@ -1550,15 +1550,9 @@ int PatchState(int stateNum)
 
 int PatchSprite(int sprNum)
 {
-    int     result;
-    int     offset = 0;
+    int result, offset = 0;
 
-    if(sprNum >= 0 && sprNum < NUMSPRITES)
-    {
-        if(verbose)
-            LPrintf("Sprite %d\n", sprNum);
-    }
-    else
+    if(sprNum < 0 || sprNum >= NUMSPRITES)
     {
         LPrintf("Sprite %d out of range. Create more Sprite defs!\n", sprNum);
         sprNum = -1;
@@ -1633,24 +1627,21 @@ void SetValueStr(const char *path, const char *id, char *str)
 
 void SetValueInt(const char *path, const char *id, int val)
 {
-    char    buf[80];
-
+    char buf[80];
     sprintf(buf, "%i", val);
     SetValueStr(path, id, buf);
 }
 
 int PatchAmmo(int ammoNum)
 {
-    int     result, max, per;
-    char   *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-    char   *theAmmo = NULL;
+    int result, max, per;
+    char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+    char* theAmmo = 0;
 
     //  CString str;
 
     if(ammoNum >= 0 && ammoNum < 4)
     {
-        if(verbose)
-            LPrintf("Ammo %d.\n", ammoNum);
         theAmmo = ammostr[ammoNum];
     }
     else
@@ -1702,19 +1693,12 @@ int PatchNothing()
 
 int PatchWeapon(int weapNum)
 {
-    //  LPrintf("Weapon patches not supported.\n");
-    //  return PatchNothing();
-
-    char   *ammotypes[] =
-        { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
-    char    buf[80];
-    int     val;
-    int     result;
+    char* ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
+    char buf[80];
+    int val, result;
 
     if(weapNum >= 0)
     {
-        if(verbose)
-            LPrintf("Weapon %d\n", weapNum);
         sprintf(buf, "Weapon Info|%d", weapNum);
     }
     else
@@ -1723,34 +1707,8 @@ int PatchWeapon(int weapNum)
         return PatchNothing();
     }
 
-    /*  static const struct Key keys[] = {
-       { "Ammo type",           myoffsetof(weaponinfo_t,ammo) },
-       { "Deselect frame",      myoffsetof(weaponinfo_t,upstate) },
-       { "Select frame",        myoffsetof(weaponinfo_t,downstate) },
-       { "Bobbing frame",       myoffsetof(weaponinfo_t,readystate) },
-       { "Shooting frame",      myoffsetof(weaponinfo_t,atkstate) },
-       { "Firing frame",        myoffsetof(weaponinfo_t,flashstate) },
-       { NULL, }
-       };
-
-       weaponinfo_t *info, dummy;
-
-       if (weapNum >= 0 && weapNum < NUM_WEAPON_TYPES) {
-       info = &weaponinfo[weapNum];
-       DPrintf ("Weapon %d\n", weapNum);
-       } else {
-       info = &dummy;
-       Printf (PRINT_HIGH, "Weapon %d out of range.\n", weapNum);
-       }
-     */
     while((result = GetLine()) == 1)
     {
-        /*
-           if (HandleKey (keys, info, Line1, atoi (Line2)))
-           Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum); */
-
-        //#define CHECKKEY2(a,b)        if (!stricmp (Line1, (a))) { (b) = atoi(Line2);
-
         val = atoi(Line2);
 
         if(!stricmp(Line1, "Ammo type"))
@@ -1775,14 +1733,9 @@ int PatchWeapon(int weapNum)
 
 int PatchPointer(int ptrNum)
 {
-    int     result;
+    int result;
 
-    if(ptrNum >= 0 && ptrNum < 448)
-    {
-        if(verbose)
-            LPrintf("Pointer %d\n", ptrNum);
-    }
-    else
+    if(ptrNum < 0 || ptrNum >= 448)
     {
         LPrintf("Pointer %d out of range.\n", ptrNum);
         ptrNum = -1;
@@ -1874,9 +1827,6 @@ int PatchMisc(int dummy)
     int     result;
     int     val;
 
-    if(verbose)
-        LPrintf("Misc\n");
-
     while((result = GetLine()) == 1)
     {
         val = atoi(Line2);
@@ -1937,12 +1887,10 @@ int PatchMisc(int dummy)
 
 int PatchPars(int dummy)
 {
-    char   *space, mapname[8], *moredata;
+    char* space, *moredata;
     ded_mapinfo_t *info;
-    int     result, par, i;
-
-    if(verbose)
-        LPrintf("[Pars]\n");
+    int result, par, i;
+    Uri* uri;
 
     while((result = GetLine()))
     {
@@ -1969,36 +1917,42 @@ int PatchPars(int dummy)
             space++;
 
         moredata = strchr(space, ' ');
-
         if(moredata)
         {
             // At least 3 items on this line, must be E?M? format
-            sprintf(mapname, "E%cM%c", *Line2, *space);
+            char mapId[8];
+            sprintf(mapId, "E%cM%c", *Line2, *space);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(moredata + 1);
         }
         else
         {
             // Only 2 items, must be MAP?? format
-            sprintf(mapname, "MAP%02d", atoi(Line2) % 100);
+            char mapId[8];
+            sprintf(mapId, "MAP%02d", atoi(Line2) % 100);
+            uri = Uri_NewWithPath2(mapId, RC_NULL);
             par = atoi(space);
         }
 
         info = NULL;
-        /*if (!(info = FindLevelInfo (mapname)) ) {
-           Printf (PRINT_HIGH, "No map %s\n", mapname);
-           continue;
-           } */
         for(i = 0; i < ded->count.mapInfo.num; i++)
-            if(!stricmp(ded->mapInfo[i].id, mapname))
-            {
-                info = ded->mapInfo + i;
-                break;
-            }
+        {
+            if(!ded->mapInfo[i].uri || !Uri_Equality(ded->mapInfo[i].uri, uri)) continue;
+            info = ded->mapInfo + i;
+            break;
+        }
 
         if(info)
+        {
+            ddstring_t* path = Uri_ToString(uri);
+
             info->parTime = (float) par;
 
-        LPrintf("Par for %s changed to %d\n", mapname, par);
+            LPrintf("Par for %s changed to %d\n", Str_Text(path), par);
+            Str_Delete(path);
+        }
+
+        Uri_Delete(uri);
     }
     return result;
 }
@@ -2166,9 +2120,9 @@ static void patchText(const char* origStr, const char* newStr)
 
 int PatchText(int oldSize)
 {
-    int                 newSize;
-    char*               oldStr, *newStr, *temp;
-    boolean             parseError = false;
+    int newSize;
+    char* oldStr, *newStr, *temp;
+    boolean parseError = false;
 
     temp = COM_Parse(Line2); // Skip old size, since we already have it
     if(!COM_Parse(temp))
@@ -2183,7 +2137,7 @@ int PatchText(int oldSize)
 
     if(oldStr && newStr)
     {
-        boolean             good;
+        boolean good;
 
         good = ReadChars(&oldStr, oldSize, false);
         good += ReadChars(&newStr, newSize, true);
@@ -2192,11 +2146,7 @@ int PatchText(int oldSize)
         {
             if(!includenotext)
             {
-                if(verbose)
-                {
-                    LPrintf("Searching for text:\n%s\n", oldStr);
-                    LPrintf("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
-                }
+                stripwhite(newStr);
 
                 patchSpriteNames(oldStr, newStr);
                 patchMusicLumpNames(oldStr, newStr);
@@ -2317,6 +2267,7 @@ int DoInclude(int dummy)
 
     if(verbose)
         LPrintf("Including %s\n", com_token);
+
     savepatchfile = PatchFile;
     savepatchpt = PatchPt;
     savedversion = dversion;
@@ -2424,16 +2375,32 @@ void ApplyDEH(char *patch, int length)
 /**
  * Reads and applies the given lump as a DEH patch.
  */
-void ReadDehackedLump(int lumpnum)
+void ReadDehackedLump(lumpnum_t lumpNum)
 {
-    size_t      len;
-    byte       *lump;
+    uint8_t* lump;
+    size_t len;
 
-    Con_Message("Applying Dehacked: lump %i...\n", lumpnum);
-    len = W_LumpLength(lumpnum);
-    lump = calloc(len + 1, 1);
-    memcpy(lump, W_CacheLumpNum(lumpnum, PU_CACHE), len);
+    if(0 > lumpNum || lumpNum >= DD_GetInteger(DD_NUMLUMPS))
+    {
+        LPrintf("Warning:ReadDehackedLump: Invalid lump index #%i given, ignoring.\n", lumpNum);
+        return;
+    }
+
+    len = W_LumpLength(lumpNum);
+    lump = (uint8_t*) malloc(len + 1);
+    if(NULL == lump)
+    {
+        LPrintf("Warning:ReadDehackedLump: Failed on allocation of %lu bytes when attempting to "
+            "cache a copy of '%s(#%i)', aborting.\n", (unsigned long) (len + 1),
+            W_LumpName(lumpNum), lumpNum);
+        return;
+    }
+    W_ReadLump(lumpNum, lump);
+    lump[len] = '\0';
+
+    VERBOSE( Con_Message("Applying Dehacked patch '%s(#%i)'...\n", W_LumpName(lumpNum), lumpNum) );
     ApplyDEH((char*)lump, len);
+
     free(lump);
 }
 
@@ -2469,14 +2436,13 @@ void ReadDehacked(char *filename)
  * This will be called after the engine has loaded all definitions but
  * before the data they contain has been initialized.
  */
-int DefsHook(int hook_type, int parm, void *data)
+int DefsHook(int hook_type, int parm, void* data)
 {
-    int                 i;
-
     verbose = ArgExists("-verbose");
     ded = (ded_t *) data;
 
     // Check for a DEHACKED lumps.
+    { int i;
     for(i = DD_GetInteger(DD_NUMLUMPS) - 1; i >= 0; i--)
         if(!strnicmp(W_LumpName(i), "DEHACKED", 8))
         {
@@ -2485,22 +2451,27 @@ int DefsHook(int hook_type, int parm, void *data)
             if(!ArgCheck("-alldehs"))
                 break;
         }
+    }
 
     // How about the -deh option?
     if(ArgCheckWith("-deh", 1))
     {
-        filename_t          temp;
-        const char*         fn;
+        ddstring_t buf;
+        const char* fn;
 
         // Aha! At least one DEH specified. Let's read all of 'em.
-        while((fn = ArgNext()) != NULL && fn[0] != '-')
+        Str_Init(&buf);
+        while(NULL != (fn = ArgNext()) && '-' != fn[0])
         {
-            M_TranslatePath(temp, fn, FILENAME_T_MAXLEN);
-            if(!M_FileExists(temp))
+            Str_Set(&buf, fn);
+            Str_Strip(&buf);
+            F_TranslatePath(&buf, &buf);
+            if(!F_FileExists(Str_Text(&buf)))
                 continue;
 
-            ReadDehacked(temp);
+            ReadDehacked(Str_Text(&buf));
         }
+        Str_Free(&buf);
     }
     return true;
 }
@@ -2513,23 +2484,6 @@ void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
-
-#ifdef WIN32
-/**
- * Windows calls this when the DLL is loaded.
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        // Register our hooks.
-        DP_Initialize();
-        break;
-    }
-    return TRUE;
-}
-#endif
 
 #if 0
 /**
@@ -3005,12 +2959,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 "W_Reload: couldn't open %s"
 "W_InitFiles: no files found"
 "Couldn't allocate lumpcache"
-"W_GetNumForName: %s not found!"
+"W_GetLumpNumForName: %s not found!"
 "W_LumpLength: %i >= numlumps"
 "W_ReadLump: %i >= numlumps"
 "W_ReadLump: couldn't open %s"
 "W_ReadLump: only read %i of %i on lump %i"
-"W_CacheLumpNum: %i >= numlumps"
+"W_CacheLump: %i >= numlumps"
 "Z_CT at w_wad.c:%i"
 "w"
 "waddump.txt"

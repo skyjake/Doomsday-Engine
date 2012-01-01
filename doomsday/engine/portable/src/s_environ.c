@@ -1,10 +1,10 @@
-/**\file
+/**\file s_environ.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * s_environ.c: Environmental Sound Effects
+ * Environmental Sound Effects.
  *
  * Calculation of the aural properties of sectors.
  */
@@ -35,11 +35,13 @@
 #include <string.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_audio.h"
-
 #include "de_misc.h"
+
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -75,49 +77,45 @@ static ownernode_t *unusedNodeList = NULL;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Given a texture/flat name, look up the associated material type.
- *
- * @param name          Name of the texture/flat to look up.
- * @param mnamespace    Material namespace (MG_* e.g. MN_FLATS).
- *
- * @return              If found; material type associated to the texture,
- *                      else @c MEC_UNKNOWN.
- */
-material_env_class_t S_MaterialClassForName(const char* name,
-                                            material_namespace_t mnamespace)
+const char* S_MaterialEnvClassName(material_env_class_t mclass)
 {
-    int                 i;
-    ded_tenviron_t*     env;
+    if(VALID_MATERIAL_ENV_CLASS(mclass))
+        return matInfo[mclass - MEC_FIRST].name;
+    return "";
+}
 
+material_env_class_t S_MaterialEnvClassForUri(const Uri* uri)
+{
+    ded_tenviron_t* env;
+    int i;
     for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
-        int                 j;
-
+        int j;
         for(j = 0; j < env->count.num; ++j)
         {
-            ded_materialid_t*   mid = &env->materials[j];
+            Uri* ref = env->materials[j];
 
-            if(mid->mnamespace == mnamespace && !stricmp(mid->name, name))
+            if(!ref) continue;
+
+            if(Uri_Equality(ref, uri))
             {   // A match!
-                material_env_class_t     k;
-
                 // See if we recognise the material name.
+                int k;
                 for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
+                {
                     if(!stricmp(env->id, matInfo[k].name))
-                        return k;
-
+                        return MEC_FIRST + k;
+                }
                 return MEC_UNKNOWN;
             }
         }
     }
-
     return MEC_UNKNOWN;
 }
 
 static ownernode_t* newOwnerNode(void)
 {
-    ownernode_t*        node;
+    ownernode_t* node;
 
     if(unusedNodeList)
     {   // An existing node is available for re-use.
@@ -154,12 +152,17 @@ static void setSubSecSectorOwner(ownerlist_t* ownerList, subsector_t* ssec)
 
 static void findSSecsAffectingSector(gamemap_t* map, uint secIDX)
 {
-    uint                i;
-    subsector_t*        sub;
-    ownernode_t*        node, *p;
-    float               bbox[4];
-    ownerlist_t         subSecOwnerList;
-    sector_t*           sec = &map->sectors[secIDX];
+    assert(map && secIDX < map->numSectors);
+    {
+    sector_t* sec = &map->sectors[secIDX];
+    ownerlist_t subSecOwnerList;
+    ownernode_t* node, *p;
+    subsector_t* sub;
+    float bbox[4];
+    uint i;
+
+    if(0 == sec->lineDefCount)
+        return;
 
     memset(&subSecOwnerList, 0, sizeof(subSecOwnerList));
 
@@ -168,12 +171,12 @@ static void findSSecsAffectingSector(gamemap_t* map, uint secIDX)
     bbox[BOXRIGHT]  += 128;
     bbox[BOXTOP]    += 128;
     bbox[BOXBOTTOM] -= 128;
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
             bbox[BOXLEFT], bbox[BOXTOP], bbox[BOXRIGHT], bbox[BOXBOTTOM]);
-#endif
-*/
+#endif*/
+
     for(i = 0; i < map->numSSectors; ++i)
     {
         sub = &map->ssectors[i];
@@ -219,6 +222,7 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
         }
         *ptr = NULL; // terminate.
     }
+    }
 }
 
 /**
@@ -257,11 +261,11 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map)
 
 static boolean calcSSecReverb(subsector_t* ssec)
 {
-    uint                i, v;
-    seg_t**             ptr;
-    float               total = 0;
-    material_env_class_t     mclass;
-    float               materials[NUM_MATERIAL_ENV_CLASSES];
+    float materials[NUM_MATERIAL_ENV_CLASSES];
+    material_env_class_t mclass;
+    float total = 0;
+    uint i, v;
+    seg_t** ptr;
 
     if(!ssec->sector)
     {
@@ -283,21 +287,17 @@ static boolean calcSSecReverb(subsector_t* ssec)
     ptr = ssec->segs;
     while(*ptr)
     {
-        seg_t*              seg = *ptr;
-
-        if(seg->lineDef && SEG_SIDEDEF(seg) &&
-           SEG_SIDEDEF(seg)->SW_middlematerial)
+        seg_t* seg = *ptr;
+        if(seg->lineDef && SEG_SIDEDEF(seg) && SEG_SIDEDEF(seg)->SW_middlematerial)
         {
-            material_t*         mat = SEG_SIDEDEF(seg)->SW_middlematerial;
+            material_t* mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
-            // The material determines its type.
-            mclass = Material_GetEnvClass(mat);
+            mclass = Material_EnvironmentClass(mat);
             total += seg->length;
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
             materials[mclass] += seg->length;
         }
-
         ptr++;
     }
 
@@ -351,26 +351,29 @@ Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
  *
  * PRE: Subsector attributors must have been determined first.
  *
- * @param sec           Ptr to the sector to calculate reverb properties of.
+ * @param sec  Ptr to the sector to calculate reverb properties of.
  */
 void S_CalcSectorReverb(sector_t* sec)
 {
-    uint                i;
-    subsector_t*        sub;
-    float               spaceScatter;
-    uint                sectorSpace;
+    subsector_t* sub;
+    float spaceScatter;
+    uint sectorSpace;
 
-    if(!sec)
-        return; // Wha?
+    if(!sec || 0 == sec->lineDefCount)
+        return;
 
     sectorSpace = (int) (sec->SP_ceilheight - sec->SP_floorheight) *
         (sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]) *
         (sec->bBox[BOXTOP] - sec->bBox[BOXBOTTOM]);
-/*
-#if _DEBUG
+
+/*#if _DEBUG
 Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
-#endif
-*/
+#endif*/
+
+    sec->reverb[SRD_SPACE] = sec->reverb[SRD_VOLUME] =
+        sec->reverb[SRD_DECAY] = sec->reverb[SRD_DAMPING] = 0;
+
+    { uint i;
     for(i = 0; i < sec->numReverbSSecAttributors; ++i)
     {
         sub = sec->reverbSSecs[i];
@@ -386,7 +389,7 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
             sec->reverb[SRD_DAMPING] +=
                 sub->reverb[SRD_DAMPING] / 255.0f * sub->reverb[SRD_SPACE];
         }
-    }
+    }}
 
     if(sec->reverb[SRD_SPACE])
     {

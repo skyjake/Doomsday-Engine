@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -182,7 +183,7 @@ static objcontact_t* allocObjContact(void)
     objcontact_t* con;
     if(!contCursor)
     {
-        con = Z_Malloc(sizeof *con, PU_STATIC, NULL);
+        con = Z_Malloc(sizeof *con, PU_APPSTATIC, NULL);
 
         // Link to the list of objcontact nodes.
         con->nextUsed = contFirst;
@@ -202,7 +203,7 @@ static objlink_t* allocObjlink(void)
     objlink_t* link;
     if(!objlinkCursor)
     {
-        link = Z_Malloc(sizeof *link, PU_STATIC, NULL);
+        link = Z_Malloc(sizeof *link, PU_APPSTATIC, NULL);
 
         // Link the link to the global list.
         link->nextUsed = objlinkFirst;
@@ -291,7 +292,7 @@ void R_ObjlinkCreate(void* obj, objtype_t type)
     link->type = type;
 }
 
-boolean RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
+int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
 {
     const linkobjtossecparams_t* p = (linkobjtossecparams_t*) paramaters;
     objcontact_t* con = allocObjContact();
@@ -300,7 +301,7 @@ boolean RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
     // Link the contact list for this subsector.
     linkContactToSubSector(con, p->type, GET_SUBSECTOR_IDX(subsector));
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -369,8 +370,8 @@ static void processSeg(seg_t* seg, void* paramaters)
 
         // Don't spread if the middle material completely fills the gap between
         // floor and ceiling (direction is from dest to source).
-        if(Rend_DoesMidTextureFillGap(seg->lineDef,
-            dest == seg->backSeg->subsector? false : true))
+        if(LineDef_MiddleMaterialCoversOpening(seg->lineDef,
+            dest == seg->backSeg->subsector? false : true, false))
             return;
     }
 
@@ -594,14 +595,22 @@ void R_InitForNewFrame(void)
         memset(ssecContacts, 0, numSSectors * sizeof *ssecContacts);
 }
 
-boolean R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
-    boolean (*callback) (void* object, void* paramaters), void* paramaters)
+int R_IterateSubsectorContacts2(subsector_t* ssec, objtype_t type,
+    int (*callback) (void* object, void* paramaters), void* paramaters)
 {
     objcontact_t* con = ssecContacts[GET_SUBSECTOR_IDX(ssec)].head[type];
+    int result = false; // Continue iteration.
     while(con)
     {
-        if(!callback(con->obj, paramaters)) return false;
+        result = callback(con->obj, paramaters);
+        if(result) break;
         con = con->next;
     }
-    return true;
+    return result;
+}
+
+int R_IterateSubsectorContacts(subsector_t* ssec, objtype_t type,
+    int (*callback) (void* object, void* paramaters))
+{
+    return R_IterateSubsectorContacts2(ssec, type, callback, NULL/*no paramaters*/);
 }

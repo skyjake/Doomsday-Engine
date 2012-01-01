@@ -1,10 +1,10 @@
-/**\file
+/**\file wi_stuff.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,13 @@
  */
 
 /**
- * wi_stuff.h: Intermission screens
+ * Intermission screens - DOOM specific.
+ *
+ * \note WI_Ticker is used to detect keys because of timing issues in netgames.
  */
 
-#ifndef __WI_STUFF__
-#define __WI_STUFF__
+#ifndef LIBDOOM_WI_STUFF_H
+#define LIBDOOM_WI_STUFF_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -36,29 +38,82 @@
 
 #include "d_player.h"
 
-// States for the intermission
+// Global locations
+#define WI_TITLEY               (2)
+#define WI_SPACINGY             (33)
 
+// Single-player stuff
+#define SP_STATSX               (50)
+#define SP_STATSY               (50)
+#define SP_TIMEX                (16)
+#define SP_TIMEY                (SCREENHEIGHT-32)
+
+// Net game stuff
+#define NG_STATSY               (50)
+#define NG_STATSX               (32)
+#define NG_SPACINGX             (64)
+
+// Deathmatch stuff
+#define DM_MATRIXX              (42)
+#define DM_MATRIXY              (68)
+#define DM_SPACINGX             (40)
+#define DM_TOTALSX              (269)
+#define DM_KILLERSX             (10)
+#define DM_KILLERSY             (100)
+#define DM_VICTIMSX             (5)
+#define DM_VICTIMSY             (50)
+
+// States for single-player
+#define SP_KILLS                (0)
+#define SP_ITEMS                (2)
+#define SP_SECRET               (4)
+#define SP_FRAGS                (6)
+#define SP_TIME                 (8)
+#define SP_PAR                  (ST_TIME)
+#define SP_PAUSE                (1)
+
+#define SHOWNEXTLOCDELAY        (4) // In seconds.
+
+// States for the intermission
 typedef enum {
     ILS_NONE = -1,
     ILS_SHOW_STATS,
     ILS_SHOW_NEXTMAP
 } interludestate_t;
 
-// Setup for an intermission screen.
-void            WI_Init(wbstartstruct_t *wbstartstruct);
+/// To be called to register the console commands and variables of this module.
+void WI_Register(void);
 
-void            WI_SetState(interludestate_t st);
-void            WI_End(void);
+/**
+ * Perform setup for an intermission.
+ */
+void WI_Init(wbstartstruct_t* wbstartstruct);
 
-// Called by main loop, animate the intermission.
-void            WI_Ticker(void);
+void WI_Shutdown(void);
 
-// Draw the intermission screen.
-void            WI_Drawer(void);
+/**
+ * Process game tic for the intermission.
+ */
+void WI_Ticker(void);
+
+/**
+ * Draw the intermission.
+ */
+void WI_Drawer(void);
+
+/**
+ * Change the current intermission state.
+ */
+void WI_SetState(interludestate_t st);
+
+/**
+ * End the current intermission.
+ */
+void WI_End(void);
 
 /**
  * Skip to the next state in the intermission.
  */
 void IN_SkipToNext(void);
 
-#endif
+#endif /* LIBDOOM_WI_STUFF_H */

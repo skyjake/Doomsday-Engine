@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * net_main.h: Network Subsystem
+ * Network Subsystem.
  */
 
-#ifndef __DOOMSDAY_NETWORK_H__
-#define __DOOMSDAY_NETWORK_H__
+#ifndef LIBDENG_NETWORK_H
+#define LIBDENG_NETWORK_H
 
 #include <stdio.h>
 #include "lzss.h"
@@ -35,7 +35,6 @@
 #include "sys_network.h"
 #include "net_msg.h"
 #include "p_mapdata.h"
-#include "con_decl.h"
 #include "smoother.h"
 
 #define BIT(x)              (1 << (x))
@@ -44,7 +43,7 @@
 
 // Flags for console text from the server.
 // Change with server version?
-#define SV_CONSOLE_FLAGS    (CBLF_WHITE|CBLF_LIGHT|CBLF_GREEN)
+#define SV_CONSOLE_PRINT_FLAGS    (CPF_WHITE|CPF_LIGHT|CPF_GREEN)
 
 #define PING_TIMEOUT        1000   // Ping timeout (ms).
 #define MAX_PINGS           10
@@ -106,7 +105,12 @@ enum {
     //PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
 
     // Game specific events.
-    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT // 64
+    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
+
+    // Older versions put the task of interpreting InFine packet types in
+    // the hands of the game, hence their type ids being >= 64
+    PSV_FINALE = 76,
+    PSV_FINALE2 = 85
 };
 
 // Use the number defined in dd_share.h for sound packets.
@@ -127,10 +131,6 @@ enum {
 // The consolePlayer's camera position is written to the demo file
 // every 3rd tic.
 #define LOCALCAM_WRITE_TICS 3
-
-//---------------------------------------------------------------------------
-// Types
-//---------------------------------------------------------------------------
 
 typedef struct {
     // High tics when ping was sent (0 if pinger not used).
@@ -252,9 +252,6 @@ typedef struct {
 } playerinfo_packet_t;
 */
 
-//---------------------------------------------------------------------------
-// Variables
-//---------------------------------------------------------------------------
 extern boolean  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics
 extern int      resendCount;
@@ -269,14 +266,11 @@ extern byte     netDontSleep, netTicSync;
 extern float    netSimulatedLatencySeconds;
 extern client_t clients[DDMAXPLAYERS];
 
-//---------------------------------------------------------------------------
-// Functions
-//---------------------------------------------------------------------------
 void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
-void            Net_AllocArrays(void);
 void            Net_DestroyArrays(void);
+void            Net_AllocClientBuffers(int clientId);
 void            Net_SendPacket(int to_player, int type, const void *data, size_t length);
 boolean         Net_GetPacket(void);
 void            Net_SendBuffer(int to_player, int sp_flags);
@@ -305,4 +299,4 @@ ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
 
-#endif
+#endif /* LIBDENG_NETWORK_H */

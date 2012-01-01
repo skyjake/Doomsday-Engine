@@ -1,10 +1,10 @@
-/**\file
+/**\file p_spec.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_spec.c: Implements special effects.
+ * Implements special effects.
  *
  * Texture animation, height or lighting changes according to adjacent
  * sectors, respective utility functions, etc.
@@ -36,6 +36,8 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <string.h>
 
 #include "jheretic.h"
 
@@ -275,137 +277,89 @@ static animdef_t anims[] = {
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
-static void loadAnimDefs(animdef_t* animDefs)
+static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
-    int                 i;
+    boolean lastIsTexture = false; // Shut up compiler!
+    Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
+    Uri* startPath = Uri_New();
+    Uri* endPath = Uri_New();
+    ddstring_t framePath;
+    int i;
+
+    Str_Init(&framePath);
 
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
-        int                 groupNum, ticsPerFrame, numFrames;
-        material_namespace_t     mnamespace =
-            (animDefs[i].istexture? MN_TEXTURES : MN_FLATS);
+        boolean isTexture = animDefs[i].istexture != 0;
+        int groupNum, ticsPerFrame, numFrames;
+        int startFrame, endFrame, n;
 
-        switch(mnamespace)
+        if(i == 0 || isTexture != lastIsTexture)
         {
-        case MN_FLATS:
-            {
-            lumpnum_t           startFrame, endFrame, n;
+            Uri_SetScheme(startPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            Uri_SetScheme(endPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            lastIsTexture = isTexture;
+        }
+        Uri_SetPath(startPath, animDefs[i].startname);
+        Uri_SetPath(endPath, animDefs[i].endname);
 
-            if((startFrame = W_CheckNumForName(animDefs[i].startname)) == -1 ||
-               (endFrame = W_CheckNumForName(animDefs[i].endname)) == -1)
-                continue;
+        startFrame = R_TextureUniqueId2(startPath, !isCustom);
+        endFrame   = R_TextureUniqueId2(endPath, !isCustom);
+        if(-1 == startFrame || -1 == endFrame) continue;
 
-            numFrames = endFrame - startFrame + 1;
-            ticsPerFrame = LONG(animDefs[i].speed);
+        numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
+        if(numFrames < 2)
+        {
+            Con_Message("Warning:loadAnimDefs: Bad cycle from '%s' to '%s' in sequence #%i, ignoring.\n", animDefs[i].startname, animDefs[i].endname, i);
+            continue;
+        }
 
-            if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
+        /**
+         * A valid animation.
+         *
+         * Doomsday's group animation needs to know the texture/flat
+         * numbers of ALL frames in the animation group so we'll
+         * have to step through the directory adding frames as we
+         * go. (DOOM only required the start/end texture/flat
+         * numbers and would animate all textures/flats inbetween).
+         */
+        ticsPerFrame = LONG(animDefs[i].speed);
 
-            if(startFrame && endFrame)
-            {   // We have a valid animation.
-                // Create a new animation group for it.
-                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
+        if(verbose > (isCustom? 1 : 2))
+        {
+            ddstring_t* from = Uri_ToString(startPath);
+            ddstring_t* to = Uri_ToString(endPath);
+            Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, Str_Text(from), Str_Text(to), ticsPerFrame);
+            Str_Delete(from);
+            Str_Delete(to);
+        }
 
-                /**
-                 * Doomsday's group animation needs to know the texture/flat
-                 * numbers of ALL frames in the animation group so we'll
-                 * have to step through the directory adding frames as we
-                 * go. (DOOM only required the start/end texture/flat
-                 * numbers and would animate all textures/flats inbetween).
-                 */
+        // Find an animation group for this.
+        groupNum = R_CreateAnimGroup(AGF_SMOOTH);
 
-                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animDefs[i].startname, animDefs[i].endname,
-                                    ticsPerFrame));
+        // Add all frames to the group.
+        for(n = startFrame; n <= endFrame; ++n)
+        {
+            Str_Clear(&framePath);
+            Str_Appendf(&framePath, "%s:%i", isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME, n);
+            Uri_SetPath(frameUrn, Str_Text(&framePath));
 
-                // Add all frames from start to end to the group.
-                if(endFrame > startFrame)
-                {
-                    for(n = startFrame; n <= endFrame; n++)
-                    {
-                        materialnum_t       frame =
-                            P_MaterialCheckNumForName(W_LumpName(n),
-                                                      MN_FLATS);
-
-                        if(frame != 0)
-                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
-                else
-                {
-                    for(n = endFrame; n >= startFrame; n--)
-                    {
-                        materialnum_t       frame =
-                            P_MaterialCheckNumForName(W_LumpName(n),
-                                                      MN_FLATS);
-
-                        if(frame != 0)
-                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
-                    }
-                }
-            }
-            break;
-            }
-        case MN_TEXTURES:
-            {   // Same as above but for texture groups.
-            materialnum_t       startFrame, endFrame, n;
-
-            if((startFrame = P_MaterialCheckNumForName(animDefs[i].startname,
-                                                       MN_TEXTURES)) == 0 ||
-               (endFrame = P_MaterialCheckNumForName(animDefs[i].endname,
-                                                     MN_TEXTURES)) == 0)
-                continue;
-
-            numFrames = endFrame - startFrame + 1;
-            ticsPerFrame = LONG(animDefs[i].speed);
-
-            if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
-
-            if(startFrame && endFrame)
-            {
-                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
-
-                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animDefs[i].startname, animDefs[i].endname,
-                                    ticsPerFrame));
-                /**
-                 * \fixme Here an assumption is made that MN_TEXTURES type
-                 * materials are registered in the same order as they are
-                 * defined in the TEXTURE(1...) lump(s).
-                 */
-                if(endFrame > startFrame)
-                {
-                    for(n = startFrame; n <= endFrame; n++)
-                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
-                }
-                else
-                {
-                    for(n = endFrame; n >= startFrame; n--)
-                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
-                }
-            }
-            break;
-            }
-        default:
-            Con_Error("loadAnimDefs: Internal Error, invalid namespace %i.",
-                      (int) mnamespace);
+            R_AddAnimGroupFrame(groupNum, frameUrn, ticsPerFrame, 0);
         }
     }
+
+    Str_Free(&framePath);
+    Uri_Delete(startPath);
+    Uri_Delete(endPath);
+    Uri_Delete(frameUrn);
 }
 
 void P_InitPicAnims(void)
 {
-    int                 lump;
-
-    // Is there an ANIMATED lump?
-    if((lump = W_CheckNumForName("ANIMATED")) > 0)
+    { lumpnum_t lumpNum;
+    if((lumpNum = W_CheckLumpNumForName2("ANIMATED", true)) > 0)
     {
-        animdef_t*          animDefs;
-
         /**
          * We'll support this BOOM extension by reading the data and then
          * registering the new animations into Doomsday using the animation
@@ -414,20 +368,14 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. "
-                    "Reading animations...\n");
+        VERBOSE( Con_Message("Processing lump %s::ANIMATED...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))));
+        loadAnimDefs((animdef_t*)W_CacheLump(lumpNum, PU_GAMESTATIC), true);
+        W_CacheChangeTag(lumpNum, PU_CACHE);
+        return;
+    }}
 
-        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
-        loadAnimDefs(animDefs);
-        Z_Free(animDefs);
-    }
-    else
-    {
-        Con_Message("P_InitPicAnims: Registering default animations...\n");
-        loadAnimDefs(anims);
-    }
-
-    VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
+    VERBOSE( Con_Message("Registering default texture animations...\n") );
+    loadAnimDefs(anims, false);
 }
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
@@ -1368,58 +1316,53 @@ void P_InitLava(void)
     LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-/**
- * Handles sector specials 25 - 39.
- */
-void P_PlayerInWindSector(player_t *player)
+void P_PlayerInWindSector(player_t* player)
 {
-    sector_t *sector =
-        P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
-
-    static int pushTab[5] = {
-        2048 * 5,
-        2048 * 10,
-        2048 * 25,
-        2048 * 30,
-        2048 * 35
+    static const float pushTab[5] = {
+        2048.0 / FRACUNIT * 5,
+        2048.0 / FRACUNIT * 10,
+        2048.0 / FRACUNIT * 25,
+        2048.0 / FRACUNIT * 30,
+        2048.0 / FRACUNIT * 35
     };
+    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    xsector_t* xsector = P_ToXSector(sector);
 
-    switch(P_ToXSector(sector)->special)
+    switch(xsector->special)
     {
-    case 25:
-    case 26:
-    case 27:
-    case 28:
-    case 29:
-        // Scroll_North
-        P_Thrust(player, ANG90, FIX2FLT(pushTab[P_ToXSector(sector)->special - 25]));
-        break;
-
     case 20:
     case 21:
     case 22:
     case 23:
-    case 24:
-        // Scroll_East
-        P_Thrust(player, 0, FIX2FLT(pushTab[P_ToXSector(sector)->special - 20]));
+    case 24: // Scroll_East
+        P_Thrust(player, 0, pushTab[xsector->special - 20]);
+        break;
+
+    case 25:
+    case 26:
+    case 27:
+    case 28:
+    case 29: // Scroll_North
+        P_Thrust(player, ANG90, pushTab[xsector->special - 25]);
         break;
 
     case 30:
     case 31:
     case 32:
     case 33:
-    case 34:
-        // Scroll_South
-        P_Thrust(player, ANG270, FIX2FLT(pushTab[P_ToXSector(sector)->special - 30]));
+    case 34: // Scroll_South
+        P_Thrust(player, ANG270, pushTab[xsector->special - 30]);
         break;
 
     case 35:
     case 36:
     case 37:
     case 38:
-    case 39:
-        // Scroll_West
-        P_Thrust(player, ANG180, FIX2FLT(pushTab[P_ToXSector(sector)->special - 35]));
+    case 39: // Scroll_West
+        P_Thrust(player, ANG180, pushTab[xsector->special - 35]);
+        break;
+
+    default:
         break;
     }
 

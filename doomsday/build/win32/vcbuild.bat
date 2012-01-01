@@ -155,6 +155,8 @@ ECHO Processing wadmapconverter.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\wadmapconverter\res\wadmapconverter.rc"
 ECHO Processing winmm.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\winmm\res\winmm.rc"
+ECHO Processing example.rc...
+rc /D "__EXAMPLE_PLUGIN__" /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\exampleplugin\res\example.rc"
 
 
 ECHO ***************************************************************************
@@ -189,6 +191,9 @@ cvtres /out:"%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" /MACHINE:X86
 ECHO Processing winmm.res...
 md %OBJ_DIR%\dswinmm
 cvtres /out:"%OBJ_DIR%\dswinmm\dswinmm_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\winmm\res\winmm.res"
+ECHO Processing example.res...
+md %OBJ_DIR%\dpexample
+cvtres /out:"%OBJ_DIR%\exampleplugin\dpexample_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\exampleplugin\res\example.res"
 
 
 IF %ERRORLEVEL% == 0 GOTO Done
@@ -254,7 +259,7 @@ ECHO ***************************************************************************
 ECHO ***********   Compiling dpDehRead.dll (Dehacked Reader Plugin)   **********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpDehRead
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %BUILDDEFS% %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd "%OBJ_DIR%\dpdehread\dpdehread_res.obj" @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %BUILDDEFS% %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd "%OBJ_DIR%\dpdehread\dpdehread_res.obj" @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\dehread\api\dpdehread.def" /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -298,7 +303,7 @@ ECHO ***************************************************************************
 ECHO *****   Compiling dpWadMapConverter.dll (WAD Map converter plugin)   ******
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpWadMapConverter
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\wadmapconverter\include" %BUILDDEFS% %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpwadmapconverter\\" /Fd"%OBJ_DIR%\dpWadMapConverter\\" /W3 /Gd "%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" @dpwadmapconverter_cl.rsp  /link /out:"%BIN_DIR%\dpWadMapConverter.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpwadmapconverter.lib" %LIBS% %BIN_DIR%\doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\wadmapconverter\include" %BUILDDEFS% %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpwadmapconverter\\" /Fd"%OBJ_DIR%\dpWadMapConverter\\" /W3 /Gd "%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" @dpwadmapconverter_cl.rsp  /link /out:"%BIN_DIR%\dpWadMapConverter.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\wadmapconverter\api\dpwadmapconverter.def" /implib:"%BIN_DIR%\dpwadmapconverter.lib" %LIBS% %BIN_DIR%\doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -353,7 +358,7 @@ ECHO ***************************************************************************
 ECHO **********   Compiling dpExample.dll (Doomsday Example Plugin)   **********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpExample
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %BUILDDEFS% %DLLDEFINES% /D "EXAMPLE_PLUGIN" /D "DPEXAMPLE_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpExample\\" /Fd"%OBJ_DIR%\dpExample\\" /W3 /Gd  @dpexample_cl.rsp  /link /out:"%BIN_DIR%\dpExample.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpExample.lib" %LIBS% %BIN_DIR%\Doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\exampleplugin\include" %BUILDDEFS% %DLLDEFINES% /D "__EXAMPLE_PLUGIN__" /D "DPEXAMPLE_EXPORTS" /GF /FD /EHsc /Gy /Fo"%OBJ_DIR%\dpExample\\" /Fd"%OBJ_DIR%\dpExample\\" /W3 /Gd  @dpexample_cl.rsp  /link /out:"%BIN_DIR%\dpExample.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\exampleplugin\api\dpExample.def" /implib:"%BIN_DIR%\dpExample.lib" %LIBS% %BIN_DIR%\Doomsday.lib %LIBS%
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

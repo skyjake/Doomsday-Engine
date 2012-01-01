@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_network.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_network.c: Low-Level Sockets Networking
+ * Low-Level Sockets Networking.
  *
  * TCP sockets are periodically polled for activity (Net_Update ->
  * N_Listen).
@@ -480,7 +480,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         if(received == -1)
         {
             //int number = errno;
-            M_Free(packet); 
+            M_Free(packet);
             packet = 0;
             /*Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
                         SDLNet_GetError(), strerror(number));*/
@@ -552,8 +552,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
                           (unsigned long) (size + 2), result) );
 #endif
-
-    if((size_t)result != size + 2)
+    if(result < 0 || (size_t) result != size + 2)
     {
         perror("Socket error");
     }

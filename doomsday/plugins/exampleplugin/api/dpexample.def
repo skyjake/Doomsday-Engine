@@ -1,0 +1,4 @@
+LIBRARY			DPEXAMPLE
+
+EXPORTS
+    DP_Initialize   @1

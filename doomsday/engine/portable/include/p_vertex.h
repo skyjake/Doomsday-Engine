@@ -1,10 +1,10 @@
-/**\file
+/**\file p_vertex.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,23 @@
  */
 
 /**
- * r_vertex.h: World vertexes.
+ * Map vertex
  */
 
-#ifndef __DOOMSDAY_WORLD_VERTEX_H__
-#define __DOOMSDAY_WORLD_VERTEX_H__
+#ifndef LIBDENG_MAP_VERTEX_H
+#define LIBDENG_MAP_VERTEX_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Vertex_GetProperty(const vertex_t *vtx, setargs_t *args);
-boolean         Vertex_SetProperty(vertex_t *vtx, const setargs_t *args);
+/**
+ * Get the value of a vertex property, selected by DMU_* name.
+ */
+int Vertex_GetProperty(const vertex_t* vtx, setargs_t* args);
 
-#endif
+/**
+ * Update the vertex, property is selected by DMU_* name.
+ */
+int Vertex_SetProperty(vertex_t* vtx, const setargs_t* args);
+
+#endif /* LIBDENG_MAP_VERTEX_H */

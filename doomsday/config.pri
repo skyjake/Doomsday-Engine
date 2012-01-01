@@ -160,7 +160,7 @@ exists(config_user.pri) {
     include(config_user.pri)
 }
 
-# Apply Configuration --------------------------------------------------------
+# Apply deng_* Configuration -------------------------------------------------
 
 deng_nofixedasm {
     DEFINES += NO_FIXED_ASM

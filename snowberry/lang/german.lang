@@ -311,7 +311,6 @@ texture-depth-32: 32-bit
 texture-options: Texturoptionen
 extres-with-pwad: Erlaube externe Texturen in PWADs
 disable-anisotropic-filter: Anisotropische Filterung abschalten
-paletted-textures: Texturen mit eigener Palette
 
 maximum-texture-size: Maximle Größe
 maximum-texture-size-unlimited: Hardware

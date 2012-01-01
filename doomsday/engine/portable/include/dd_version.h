@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,17 @@
  */
 
 /**
- * dd_version.h: Version Information
+ * Version Information
  */
 
-#ifndef __DOOMSDAY_VERSION_H__
-#define __DOOMSDAY_VERSION_H__
+#ifndef LIBDENG_VERSION_H
+#define LIBDENG_VERSION_H
+
+#define DOOMSDAY_NICENAME       "Doomsday Engine"
+
+#define DOOMSDAY_HOMEURL        "http://dengine.net"
+#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
+#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release name)
@@ -51,17 +57,9 @@
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+//#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+#define DOOMSDAY_RELEASE_TYPE   "Candidate"
 //#define DOOMSDAY_RELEASE_TYPE   "Stable"
-
-/**
- * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
- * will be marked accordingly, indicating that this is a special build,
- * for example, an alpha/beta/release candidate/etc and the SpecialBuild
- * string will be populated with the content of DOOMSDAY_RELEASE_NAME.
- */
-#define DOOMSDAY_RELEASE_FULL   1
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
@@ -73,9 +71,9 @@
 #if defined(DOOMSDAY_BUILD_TEXT)
 /** The build number is included only for non-Stable builds. */
 #  if defined(WIN32) && defined(UNICODE)
-#    define DOOMSDAY_VERSION_TEXT_WSTR  TEXT(DOOMSDAY_VERSION_BASE) TEXT(" (#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT(")")
+#    define DOOMSDAY_VERSION_TEXT_WSTR  TEXT(DOOMSDAY_VERSION_BASE) TEXT(" [#") TEXT(DOOMSDAY_BUILD_TEXT) TEXT("]")
 #  endif
-#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " (#" DOOMSDAY_BUILD_TEXT ")"
+#  define DOOMSDAY_VERSION_TEXT DOOMSDAY_VERSION_BASE " [#" DOOMSDAY_BUILD_TEXT "]"
 #elif defined(DOOMSDAY_RELEASE_NAME)
 #  define DOOMSDAY_VERSION_TEXT (DOOMSDAY_VERSION_BASE "-" DOOMSDAY_RELEASE_NAME)
 #else
@@ -85,6 +83,4 @@
 #  endif
 #endif
 
-#define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
-
-#endif
+#endif /* LIBDENG_VERSION_H */

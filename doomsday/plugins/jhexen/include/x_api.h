@@ -1,9 +1,10 @@
-/**\file
+/**\file x_api.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,20 +23,19 @@
  */
 
 /**
- * x_api.h: Doomsday API setup and interaction - jHexen specific
+ * Doomsday API exchange - jHexen specific.
  */
 
-#ifndef __X_API_H__
-#define __X_API_H__
+#ifndef LIBJHEXEN_API_H
+#define LIBJHEXEN_API_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "doomsday.h"
+#include "dd_api.h"
 
-int             G_GetInteger(int id);
-void*           G_GetVariable(int id);
-game_export_t*  GetGameAPI(game_import_t* imports);
+extern game_import_t gi;
+extern game_export_t gx;
 
-#endif
+#endif /* LIBJHEXEN_API_H */

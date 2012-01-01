@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_api.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,17 @@
  */
 
 /**
- * dd_api.h: Data Structures for the Engine/Game Interface
+ * Data Structures for the Engine/Plugin Interfaces.
  */
 
-#ifndef __DOOMSDAY_GAME_API_H__
-#define __DOOMSDAY_GAME_API_H__
+#ifndef LIBDENG_API_H
+#define LIBDENG_API_H
 
 #include "dd_share.h"
 
 /**
- * The routines/data exported out of the Doomsday engine:
- *
- * This structure contains pointers to routines that can have alternative
- * handlers in the engine. Also, some select global variables are exported
- * using this structure (most importantly the map data).
+ * The data exported out of the Doomsday engine.
+ * \todo Refactor away - there should be no need for an ABI in this direction.
  */
 typedef struct game_import_s {
     size_t          apiSize; // sizeof(game_import_t)
@@ -62,8 +59,9 @@ typedef struct {
     size_t          apiSize; // sizeof(game_export_t)
 
     // Base-level.
-    void          (*PreInit) (void);
+    void          (*PreInit) (gameid_t gameId);
     void          (*PostInit) (void);
+    boolean       (*TryShutdown) (void);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);
@@ -83,16 +81,59 @@ typedef struct {
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
-    boolean       (*PrivilegedResponder) (event_t* ev);
-    boolean       (*G_Responder) (event_t* ev);
-    boolean       (*FallbackResponder) (event_t* ev);
+    int           (*FinaleResponder) (const void* ddev);
+    int           (*PrivilegedResponder) (event_t* ev);
+    int           (*Responder) (event_t* ev);
+    int           (*FallbackResponder) (event_t* ev);
 
     // Refresh.
     void          (*BeginFrame) (void);
     void          (*EndFrame) (void);
-    void          (*G_Drawer) (int layer);
-    void          (*G_Drawer2) (void);
-    void          (*ConsoleBackground) (int* width, int* height);
+
+    /**
+     * Draw the view port display of the identified console @a player.
+     * The engine will configure a orthographic GL projection in real pixel
+     * dimensions prior to calling this.
+     *
+     * Example subdivision of the game window into four view ports:
+     *
+     *     (0,0)-----------------------. X
+     *       | .--------. |            |
+     *       | | window | |            |
+     *       | '--------' |            |
+     *       |    port #0 |    port #1 |
+     *       |-------------------------|
+     *       |            |            |
+     *       |            |            |
+     *       |            |            |
+     *       |    port #2 |    port #3 |
+     *       '--------------------(xn-1, yn-1)
+     *       Y               Game Window
+     *
+     * @param port  Logical number of this view port.
+     * @param portGeometry  Geometry of the view port in real screen pixels.
+     * @param windowGeometry  Geometry of the view window within the port,
+     *     in real screen pixels.
+     *
+     * @param player  Console player number associated with the view port.
+     * @param layer  Logical layer identifier for the content to be drawn:
+     *
+     *     0: The bottom-most layer and the one which generally contains the
+     *        call to R_RenderPlayerView.
+     *
+     *     1: Displays to be drawn on top of view window (after bordering),
+     *        such as the player HUD.
+     */
+    void          (*DrawViewPort) (int port, const RectRaw* portGeometry,
+                        const RectRaw* windowGeometry, int player, int layer);
+
+    /**
+     * Draw over-viewport displays covering the whole game window. Typically
+     * graphical user interfaces such as game menus are done here.
+     *
+     * @param windowSize  Dimensions of the game window in real screen pixels.
+     */
+    void          (*DrawWindow) (const Size2Raw* windowSize);
 
     // Miscellaneous.
     void          (*MobjThinker) ();
@@ -126,10 +167,9 @@ typedef struct {
     // The engine calls this to inform the game of any changes it is
     // making to map data object to which the game might want to
     // take further action.
-    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype,
-                                                  void* data);
+    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void* data);
 } game_export_t;
 
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 
-#endif
+#endif /* LIBDENG_API_H */

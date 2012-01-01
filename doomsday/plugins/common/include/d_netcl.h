@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,9 @@ void            NetCl_UpdatePlayerState2(Reader* msg, int plrNum);
 void            NetCl_UpdatePSpriteState(Reader* msg);
 void            NetCl_UpdateJumpPower(Reader* msg);
 void            NetCl_Intermission(Reader* msg);
-void            NetCl_Finale(int packetType, Reader* msg);
+/*
+void            NetCl_Finale(int packetType, Reader* msg); // moved to engine
+*/
 void            NetCl_UpdatePlayerInfo(Reader* msg);
 void            NetCl_SaveGame(Reader* msg);
 void            NetCl_LoadGame(Reader* msg);

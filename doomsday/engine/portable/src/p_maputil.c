@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_misc.h"
@@ -718,7 +719,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
                               player->mo->pos[VY],
                               player->mo->subsector->sector) &&
            (player->mo->pos[VZ] < player->mo->subsector->sector->SP_ceilvisheight + 4 &&
-            player->mo->pos[VZ] > player->mo->subsector->sector->SP_floorvisheight + 4))
+            player->mo->pos[VZ] >= player->mo->subsector->sector->SP_floorvisheight))
             player->inVoid = false;
     }
 }

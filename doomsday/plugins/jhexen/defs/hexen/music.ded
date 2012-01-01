@@ -1,0 +1,47 @@
+# Hexen - Music tracks
+#
+# For further information on Music definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Music
+#
+
+Header { Version = 5; }
+
+Music { ID = "startup"; }
+Music { ID = "winnowr"; Lump = "WINNOWR"; }
+Music { ID = "jachr"; 	Lump = "JACHR";   }
+Music { ID = "simonr";	Lump = "SIMONR";  }
+Music { ID = "wutzitr"; Lump = "WUTZITR"; }
+Music { ID = "falconr"; Lump = "FALCONR"; }
+Music { ID = "levelr";  Lump = "LEVELR";  }
+Music { ID = "chartr";  Lump = "CHARTR";  }
+Music { ID = "swampr";  Lump = "SWAMPR";  }
+Music { ID = "deepr"; 	Lump = "DEEPR";   }
+Music { ID = "fubasr"; 	Lump = "FUBASR";  }
+Music { ID = "grover"; 	Lump = "GROVER";  }
+Music { ID = "fortr"; 	Lump = "FORTR";   }
+Music { ID = "foojar";	Lump = "FOOJAR";  }
+Music { ID = "sixater"; Lump = "SIXATER"; }
+Music { ID = "wobabyr"; Lump = "WOBABYR"; }
+Music { ID = "cryptr"; 	Lump = "CRYPTR";  }
+Music { ID = "fantar"; 	Lump = "FANTAR";  }
+Music { ID = "belchr"; 	Lump = "BELCHR";  }
+Music { ID = "voidr"; 	Lump = "VOIDR";   }
+Music { ID = "chap_1r"; Lump = "CHAP_1R"; }
+Music { ID = "chap_2r"; Lump = "CHAP_2R"; }
+Music { ID = "chap_3r"; Lump = "CHAP_3R"; }
+Music { ID = "chap_4r"; Lump = "CHAP_4R"; }
+Music { ID = "chippyr"; Lump = "CHIPPYR"; }
+Music { ID = "percr"; 	Lump = "PERCR";   }
+Music { ID = "secretr"; Lump = "SECRETR"; }
+Music { ID = "bonesr"; 	Lump = "BONESR";  }
+Music { ID = "octor"; 	Lump = "OCTOR";   }
+Music { ID = "rithmr"; 	Lump = "RITHMR";  }
+Music { ID = "stalkr"; 	Lump = "STALKR";  }
+Music { ID = "borkr"; 	Lump = "BORKR";   }
+Music { ID = "crucibr"; Lump = "CRUCIBR"; }
+Music { ID = "hexen"; 	Lump = "HEXEN";   }
+Music { ID = "hub"; 	Lump = "HUB"; 	  }
+Music { ID = "hall"; 	Lump = "HALL";	  }
+Music { ID = "orb"; 	Lump = "ORB"; 	  }
+Music { ID = "chess"; 	Lump = "CHESS";   }

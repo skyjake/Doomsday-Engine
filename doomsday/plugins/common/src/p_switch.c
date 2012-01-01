@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -163,8 +163,9 @@ static int numswitches;
 #if __JHEXEN__
 void P_InitSwitchList(void)
 {
-    int     i;
-    int     index;
+    int i, index;
+    Uri* uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
 
     for(index = 0, i = 0; ; ++i)
     {
@@ -177,14 +178,16 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name1, MN_TEXTURES));
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name2, MN_TEXTURES));
+        Uri_SetPath(uri, switchInfo[i].name1);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+
+        Uri_SetPath(uri, switchInfo[i].name2);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
+    Uri_Delete(uri);
 
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #else
 
@@ -211,20 +214,21 @@ void P_InitSwitchList(void)
  */
 void P_InitSwitchList(void)
 {
-    int         i, index, episode;
-    int         lump = W_CheckNumForName("SWITCHES");
-    switchlist_t *sList = switchInfo;
+    int i, index, episode;
+    lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
+    switchlist_t* sList = switchInfo;
+    Uri* uri;
 
 # if __JHERETIC__
-    if(gameMode == shareware)
+    if(gameMode == heretic_shareware)
         episode = 1;
     else
         episode = 2;
 # else
 #  if __JDOOM__
-    if(gameMode == registered || gameMode == retail)
+    if(gameModeBits & (GM_ANY_DOOM^GM_DOOM_SHAREWARE))
         episode = 2;
-    else if(gameMode == commercial)
+    else if(gameModeBits & GM_DOOM)
         episode = 3;
     else
 #  endif
@@ -232,37 +236,48 @@ void P_InitSwitchList(void)
 # endif
 
     // Has a custom SWITCHES lump been loaded?
-    if(lump > 0)
+    if(lumpNum > 0)
     {
-        Con_Message("P_InitSwitchList: \"SWITCHES\" lump found. Reading switches...\n");
-        sList = (switchlist_t *) W_CacheLumpNum(lump, PU_STATIC);
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
+        sList = (switchlist_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+    }
+    else
+    {
+        VERBOSE( Con_Message("Registering default switches...\n") );
     }
 
+    uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) *
-                (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
+            switchlist = realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(SHORT(sList[i].episode) <= episode)
         {
-            if(!SHORT(sList[i].episode))
-                break;
+            if(!SHORT(sList[i].episode)) break;
 
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                P_MaterialNumForName(sList[i].name1, MN_TEXTURES));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                P_MaterialNumForName(sList[i].name2, MN_TEXTURES));
-            VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
-                                sList[i].name1, sList[i].name2,
-                                SHORT(sList[i].episode)));
+            Uri_SetPath(uri, sList[i].name1);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+
+            Uri_SetPath(uri, sList[i].name2);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            if(verbose > (lumpNum > 0? 1 : 2))
+            {
+                Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
+            }
         }
     }
 
+    Uri_Delete(uri);
+
+    if(lumpNum > 0)
+        W_CacheChangeTag(lumpNum, PU_CACHE);
+
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #endif
 

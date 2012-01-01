@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -540,7 +540,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -2166,9 +2166,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2178,9 +2176,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

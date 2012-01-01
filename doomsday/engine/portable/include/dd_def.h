@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,6 +91,8 @@
 #define SBARHEIGHT      39         // status bar height at bottom of screen
 #define PI              3.14159265359
 #define PI_D            3.14159265358979323846
+#define DEG2RAD(a)      (a * PI_D) / 180.0
+#define RAD2DEG(a)      (a / PI_D) * 180.0
 
 #define SECONDS_TO_TICKS(sec) ((int)(sec*35))
 

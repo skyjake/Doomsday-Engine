@@ -1,0 +1,187 @@
+# DOOM2 - Default Particle Effects
+#
+# For further information on Generator definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Generator
+#
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx; 
+
+# Baby Spider plasma sparks (yellow-green).
+Generator {
+  State = "ARACH_PLEX";
+  Flags = "gnf_blend";
+  Speed = 3;
+  Speed rnd = 0.8;
+  Spawn age = 3;
+  Spawn radius = 20;
+  Max age = 50;
+  Particles = 30;
+  Spawn rate = 10;
+  Spawn rnd = 1;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 5; Rnd = 0.5;
+    Radius = 15; Color { 1 1 1 .7 };
+    Resistance = 0.3;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 20; Rnd = 0.5;
+    Radius = 13; Color { 1 .9 .5 .4 };
+    Resistance = 0.3;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 10; Rnd = 0.5;
+    Radius = 12; Color { .5 1 .2 .4 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Color { 0 .6 0 0 };
+    Radius = 10;
+  };
+}
+
+# Mancubus rocket explosion.
+Generator {
+  State = "FATSHOTX1";
+  Center { 0 0 5 };
+  Flags = "gnf_blend";
+  Speed = 8;
+  Speed rnd = 0.5;
+  Spawn age = 2;
+  Spawn radius = 15;
+  Max age = 200;
+  Particles = 100;
+  Spawn rate = 15;
+  Spawn Rnd = 0.1;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 20; Rnd = .5;
+    Radius = 18; Color { 1 1 1 1 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 13; Rnd = .5;
+    Radius = 17; Color { 1 .9 .5 .7 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 7; Rnd = 0.2;
+    Radius = 10; Color { 1 .5 .2 .5 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 20; Rnd = .8;
+    Radius = 12; Color { .4 .4 .42 .3 };
+    Resistance = 0.5;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 5; Color { .2 .2 .2 0 };
+  };
+}
+
+# Revenant tracer missile explosion.
+Generator {
+  State = "TRACEEXP1"; 
+  Flags = "gnf_blend";
+  Center { 0 0 8 };
+  Speed = 5;
+  Speed rnd = 0.6;
+  Spawn age = 2;
+  Spawn radius = 12;
+  Max age = 200;
+  Particles = 50;
+  Spawn rate = 20;
+  Spawn Rnd = 0.2;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 12; Rnd = .5;
+    Radius = 15; Color { 1 .9 .5 .8 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 10; Rnd = .5;
+    Radius = 13; Color { 1 .7 .5 .7 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Flags = "ptf_bright";
+    Tics = 15; Rnd = 0.2;
+    Radius = 10; Color { 1 .2 .1 .5 };
+    Resistance = 0.2;
+  };
+  Stage {
+    Type = "pt_point";
+    Radius = 10; Color { .5 0 0 0 };
+  };
+}
+
+# Pain Elemental death explosion.
+Copy Generator { State = "PAIN_DIE3"; }
+
+######=====---- DAMAGE ----=====######
+# Gibbed blood spurt.
+Generator {
+  State = "CPOS_XDIE2";
+  Flags = "gnf_srcvel";
+  Center { 0 0 30 };
+  Speed = 6;
+  Speed rnd = 0.7;
+  Spawn age = 4;
+  Max age = 300;
+  Particles = 200;
+  Spawn rate = 30;
+  Spawn Rnd = 0.1;
+  Vector rnd = 1;
+  Stage {
+    Type = "pt_point"; Flags = "ptf_flat ptf_stagetouch";
+    Radius = 1.5; Color { .7 0 0 1 };
+    Tics = 300;
+    Resistance = 0.01; Gravity = 0.15;
+  };
+  Stage {
+    Type = "pt_point"; Flags = "ptf_flat";
+    Radius = 16; Radius rnd = 0.8; Color { .7 0 0 1 };
+    Tics = 200;
+    Resistance = 1;
+  };
+  Stage { 
+    Type = "pt_point"; 
+    Radius = 9; Radius rnd = 0.8; Color { .45 0 0 0 };
+  };
+}
+
+Copy Generator { State = "FATT_DIE2"; }
+Copy Generator { State = "SSWV_XDIE2"; }
+
+# Arachnotron death.
+Copy Generator {
+  State = "BSPI_DIE2";
+  Speed = 3;
+  Spawn age = 2;
+  Spawn rate = 15;
+}

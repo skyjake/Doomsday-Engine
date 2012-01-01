@@ -1,5 +1,6 @@
 name: Hexen 4-level demo
 game: game-jhexen
+game-mode: game-mode-hexen-demo
 banner: banner-hexen-demo
 hidden: yes
 

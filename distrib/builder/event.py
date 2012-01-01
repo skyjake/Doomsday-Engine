@@ -135,7 +135,9 @@ class Event:
         if os.path.exists(changesName):
             commitCount = utils.count_word('<li>', file(changesName).read())
         if commitCount:
-            msg += " contains %i commits and" % commitCount
+            moreThan = ''
+            if commitCount == 100: moreThan = 'more than '
+            msg += " contains %s%i commits and" % (moreThan, commitCount)
 
         msg += " produced %i installable binary package%s." % \
             (pkgCount, 's' if (pkgCount != 1) else '')
@@ -253,12 +255,19 @@ class Event:
         if encoded: return '<![CDATA[' + msg + ']]>'    
         return msg
         
+    def release_type(self):
+        fn = self.file_path('releaseType.txt')
+        if os.path.exists(fn):
+            return file(fn).read().lower().strip()
+        return 'unstable' # Default assumption.
+        
     def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
         msg += '<startDate>%s</startDate>' % self.text_timestamp()
         msg += '<authorName>%s</authorName>' % config.BUILD_AUTHOR_NAME
-        msg += '<authorEmail>%s</authorEmail>' % config.BUILD_AUTHOR_EMAIL        
+        msg += '<authorEmail>%s</authorEmail>' % config.BUILD_AUTHOR_EMAIL
+        msg += '<releaseType>%s</releaseType>' % self.release_type()
         files = self.list_package_files()
         msg += '<packageCount>%i</packageCount>' % len(files)
         

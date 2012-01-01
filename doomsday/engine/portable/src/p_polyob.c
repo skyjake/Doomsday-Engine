@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -216,13 +216,19 @@ void P_MapInitPolyobjs(void)
             avg.pos[VX] += seg->SG_v1pos[VX];
             avg.pos[VY] += seg->SG_v1pos[VY];
 
-            // Set the surface normal.
+            // Calculate the tangent space surface vectors.
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
             segPtr++;
         }
@@ -236,8 +242,8 @@ void P_MapInitPolyobjs(void)
             if(ssec->polyObj)
             {
                 Con_Message("P_MapInitPolyobjs: Warning: Multiple polyobjs in a single subsector\n"
-                            "  (ssec %i, sector %i). Previous polyobj overridden.\n",
-                            GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
+                            "  (ssec %ld, sector %ld). Previous polyobj overridden.\n",
+                            (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
             }
             ssec->polyObj = po;
             po->subsector = ssec;
@@ -413,13 +419,19 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         seg->angle += angle;
         seg->lineDef->angle += angle >> FRACBITS;
 
-        // Now update the surface normal.
+        // Now update the tangent space surface vectors.
         surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
         surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
         surface->normal[VZ] = 0;
+        V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-        // All surfaces of a sidedef have the same normal.
+        // All surfaces of a sidedef have the same vectors.
+        memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+        memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
         memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+        memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+        memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
         memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
     }
 
@@ -463,9 +475,15 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
 

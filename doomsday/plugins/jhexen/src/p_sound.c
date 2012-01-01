@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,12 +26,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
+
 #include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define DEFAULT_ARCHIVEPATH     "o:\\sound\\archive\\"
 
 // TYPES -------------------------------------------------------------------
 
@@ -46,8 +46,6 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static char ArchivePath[128];
 
 // CODE --------------------------------------------------------------------
 
@@ -75,6 +73,8 @@ void S_MapMusic(uint episode, uint map)
 
     // Update the 'currentmap' music definition.
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
+    // @fixme  Convert @a map to the "logical" map number. -s
+    Con_Message("S_MapMusic: Map %i, lump %s\n", map, P_GetMapSongLump(map));
     cdTrack = P_GetMapCDTrack(map);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     if(S_StartMusic("currentmap", true))
@@ -88,9 +88,7 @@ void S_ParseSndInfoLump(void)
 {
     int                 i;
     char                buf[80];
-    lumpnum_t           lump = W_CheckNumForName("SNDINFO");
-
-    strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
+    lumpnum_t           lump = W_CheckLumpNumForName("SNDINFO");
 
     if(lump != -1)
     {
@@ -103,7 +101,7 @@ void S_ParseSndInfoLump(void)
                 if(!stricmp(sc_String, "$ARCHIVEPATH"))
                 {
                     SC_MustGetString();
-                    strcpy(ArchivePath, sc_String);
+                    // Presently unused.
                 }
                 else if(!stricmp(sc_String, "$MAP"))
                 {

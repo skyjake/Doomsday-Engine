@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_opengl.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,19 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * sys_opengl.c: OpenGL interface, low-level.
- *
- * Get OpenGL header files from:
- * http://oss.sgi.com/projects/ogl-sample/
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_platform.h"
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -54,20 +50,20 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 gl_state_t GL_state;
-gl_state_ext_t GL_state_ext;
 
 #ifdef WIN32
-PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 
-PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTextureARB;
-PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
-PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
-PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
-PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
-PFNGLCOLORTABLEEXTPROC glColorTableEXT;
+PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture = NULL;
+PFNGLACTIVETEXTUREPROC glActiveTexture = NULL;
+
+PFNGLMULTITEXCOORD2FPROC glMultiTexCoord2f = NULL;
+PFNGLMULTITEXCOORD2FVPROC glMultiTexCoord2fv = NULL;
+
+PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT = NULL;
+PFNGLLOCKARRAYSEXTPROC glLockArraysEXT = NULL;
+PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT = NULL;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -81,118 +77,177 @@ static PROC wglGetExtString;
 
 // CODE --------------------------------------------------------------------
 
-static void checkExtensions(void)
+static int query(const char* ext)
 {
-    Sys_InitGLExtensions();
-#ifdef WIN32
-    Sys_InitWGLExtensions();
+    assert(ext);
+    {
+    int result = 0;
+#if WIN32
+    // Prefer the wgl-specific extensions.
+    if(wglGetExtString)
+    {
+        const GLubyte* extensions =
+            ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
+        result = (Sys_GLQueryExtension(ext, extensions)? 1 : 0);
+    }
 #endif
+    if(!result)
+        result = (Sys_GLQueryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
+    return result;
+    }
+}
 
-    // Get the maximum texture size.
+static void initialize(void)
+{
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*) &GL_state.maxTexSize);
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
-#ifndef USE_MULTITEXTURE
-    GL_state.maxTexUnits = 1;
+#ifdef WIN32
+    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
 #endif
-    // But sir, we are simple people; two units is enough.
-    if(GL_state.maxTexUnits > 2)
-        GL_state.maxTexUnits = 2;
 
-    if(GL_state_ext.aniso)
-        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxAniso);
+    if(0 != (GL_state.extensions.lockArray = query("GL_EXT_compiled_vertex_array")))
+    {
+#ifdef WIN32
+        GETPROC(glLockArraysEXT);
+        GETPROC(glUnlockArraysEXT);
+        if(NULL == glLockArraysEXT || NULL == glUnlockArraysEXT)
+            GL_state.features.elementArrays = false;
+#endif
+    }
+    if(ArgExists("-vtxar") && !ArgExists("-novtxar"))
+        GL_state.features.elementArrays = true;
+
+    if(0 != (GL_state.extensions.texFilterAniso = query("GL_EXT_texture_filter_anisotropic")))
+    {
+        glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, (GLint*) &GL_state.maxTexFilterAniso);
+    }
+    if(ArgExists("-noanifilter"))
+        GL_state.features.texFilterAniso = false;
+
+    GL_state.extensions.texNonPowTwo = query("GL_ARB_texture_non_power_of_two");
+    if(ArgExists("-notexnonpow2") || ArgExists("-notexnonpowtwo"))
+        GL_state.features.texNonPowTwo = false;
+
+    if(0 != (GL_state.extensions.blendSub = query("GL_EXT_blend_subtract")))
+    {
+#ifdef WIN32
+        GETPROC(glBlendEquationEXT);
+        if(NULL == glBlendEquationEXT)
+            GL_state.features.blendSubtract = false;
+#endif
+    }
     else
-        GL_state.maxAniso = 1;
+    {
+        GL_state.features.blendSubtract = false;
+    }
 
-    // Decide whether vertex arrays should be done manually or with real
-    // OpenGL calls.
-    GL_InitArrays();
+    // ARB_texture_env_combine
+    if(0 == (GL_state.extensions.texEnvComb = query("GL_ARB_texture_env_combine")))
+    {
+        // Try the older EXT_texture_env_combine (identical to ARB).
+        GL_state.extensions.texEnvComb = query("GL_EXT_texture_env_combine");
+    }
 
-    GL_state.useAnisotropic =
-        ((GL_state_ext.aniso && !ArgExists("-noanifilter"))? true : false);
+    GL_state.extensions.texEnvCombNV = query("GL_NV_texture_env_combine4");
+    GL_state.extensions.texEnvCombATI = query("GL_ATI_texture_env_combine3");
 
-    GL_state.allowCompression = true;
+#ifdef USE_TEXTURE_COMPRESSION_S3
+    // Enabled by default if available.
+    if(0 != (GL_state.extensions.texCompressionS3 = query("GL_EXT_texture_compression_s3tc")))
+    {
+        GLint iVal;
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        if(iVal == 0 || glGetError() != GL_NO_ERROR)
+            GL_state.features.texCompression = false;
+    }
+#else
+    GL_state.features.texCompression = false;
+#endif
+    if(ArgExists("-notexcomp"))
+        GL_state.features.texCompression = false;
+
+#ifdef WIN32
+    GETPROC(glActiveTexture);
+    GETPROC(glClientActiveTexture);
+    GETPROC(glMultiTexCoord2f);
+    GETPROC(glMultiTexCoord2fv);
+#endif
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint*) &GL_state.maxTexUnits);
+
+    // Automatic mipmap generation.
+    GL_state.extensions.genMipmapSGIS = query("GL_SGIS_generate_mipmap");
+    if(0 == GL_state.extensions.genMipmapSGIS || ArgExists("-nosgm"))
+        GL_state.features.genMipmap = false;
+
+#ifdef WIN32
+    if(0 != (GL_state.extensions.wglSwapIntervalEXT = query("WGL_EXT_swap_control")))
+    {
+        GETPROC(wglSwapIntervalEXT);
+    }
+    if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
+        GL_state.features.vsync = false;
+#else
+    GL_state.features.vsync = false;
+#endif
 }
 
 static void printGLUInfo(void)
 {
-    GLint           iVal;
-    GLfloat         fVals[2];
+    GLfloat fVals[2];
+    GLint iVal;
 
-    // Print some OpenGL information (console must be initialized by now).
     Con_Message("OpenGL information:\n");
     Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
     Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
     Con_Message("  Version: %s\n", glGetString(GL_VERSION));
-    Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
+
+#ifdef USE_TEXTURE_COMPRESSION_S3
+    if(GL_state.extensions.texCompressionS3)
+    {
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        Con_Message("  Available Compressed Texture Formats: %i\n", iVal);
+    }
+#endif
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    Con_Message("  Available Texture units: %i\n", iVal);
+    Con_Message("  Available Texture Units: %i\n", iVal);
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    Con_Message("  Maximum Texture Size: %i\n", iVal);
-    if(GL_state_ext.aniso)
+    if(GL_state.extensions.texFilterAniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        Con_Message("  Maximum Anisotropy: %i\n", iVal);
+        Con_Message("  Maximum Texture Anisotropy: %i\n", iVal);
     }
     else
     {
         Con_Message("  Variable Texture Anisotropy Unavailable.\n");
     }
 
-    if(GL_state_ext.s3TC)
-    {
-        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        Con_Message("  Num Texture Formats: %i\n", iVal);
-    }
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
+    Con_Message("  Maximum Texture Size: %i\n", iVal);
 
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    Con_Message("  Line Width Granularity: %3.1f\n",
-                fVals[0]);
+    Con_Message("  Line Width Granularity: %3.1f\n", fVals[0]);
+
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    Con_Message("  Line Width Range: %3.1f...%3.1f\n",
-                fVals[0], fVals[1]);
+    Con_Message("  Line Width Range: %3.1f...%3.1f\n", fVals[0], fVals[1]);
 
-    Sys_PrintGLExtensions();
-}
-
-static void printDGLConfiguration(void)
-{
-    static const char *yesNo[] = {"Disabled", "Enabled"};
-
-    Con_Message("DGL Configuration:\n");
-
-    Con_Message("  NPOT Textures: %s\n", yesNo[GL_state.textureNonPow2? 1:0]);
-    Con_Message("  Texture Compression: %s\n", yesNo[GL_state_texture.useCompr? 1:0]);
-    Con_Message("  Variable Texture Anisotropy: %s\n", yesNo[GL_state.useAnisotropic? 1:0]);
-    Con_Message("  Utilized Texture Units: %i\n", GL_state.maxTexUnits);
-#ifdef WIN32
-    Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
-    if(GL_state_ext.wglMultisampleARB)
-        Con_Message(" (%i)\n", GL_state.multisampleFormat);
-    else
-        Con_Message("\n");
-#endif
+    Sys_GLPrintExtensions();
 }
 
 #ifdef WIN32
 static void testMultisampling(HDC hDC)
 {
-    int             pixelFormat;
-    int             valid;
-    uint            numFormats;
-    float           fAttributes[] = {0,0};
-
-    int iAttributes[] =
-    {
+    int pixelFormat, valid;
+    uint numFormats;
+    float fAttributes[] = {0,0};
+    int iAttributes[] = {
         WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
         WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
         WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
         WGL_COLOR_BITS_ARB,24,
         WGL_ALPHA_BITS_ARB,8,
         WGL_DEPTH_BITS_ARB,16,
-        WGL_STENCIL_BITS_ARB,0,
+        WGL_STENCIL_BITS_ARB,8,
         WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
         WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
         WGL_SAMPLES_ARB,4,
@@ -200,24 +255,21 @@ static void testMultisampling(HDC hDC)
     };
 
     // First, see if we can get a pixel format using four samples.
-    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
-                                    &pixelFormat, &numFormats);
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
 
     if(valid && numFormats >= 1)
-    {
-        // This will do nicely.
-        GL_state_ext.wglMultisampleARB = 1;
+    {   // This will do nicely.
         GL_state.multisampleFormat = pixelFormat;
+        GL_state.features.multisample = true;
     }
     else
     {   // Failed. Try a pixel format using two samples.
         iAttributes[19] = 2;
-        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1,
-                                        &pixelFormat, &numFormats);
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
         if(valid && numFormats >= 1)
         {
-            GL_state_ext.wglMultisampleARB = 1;
             GL_state.multisampleFormat = pixelFormat;
+            GL_state.features.multisample = true;
         }
     }
 }
@@ -229,7 +281,7 @@ static void createDummyWindow(application_t* app)
     boolean             ok = true;
 
     // Create the window.
-    hWnd = CreateWindowEx(WS_EX_APPWINDOW, MAINWCLASS, TEXT("dummy"),
+    hWnd = CreateWindowEx(WS_EX_APPWINDOW, TEXT(MAINWCLASS), TEXT("dummy"),
                           (WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
                           CW_USEDEFAULT, CW_USEDEFAULT,
                           CW_USEDEFAULT, CW_USEDEFAULT,
@@ -248,10 +300,10 @@ static void createDummyWindow(application_t* app)
         pfd.iPixelType = PFD_TYPE_RGBA;
         pfd.iLayerType = PFD_MAIN_PLANE;
 #ifndef DRMESA
-        pfd.dwFlags =
-            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
         pfd.cColorBits = 32;
         pfd.cDepthBits = 16;
+        pfd.cStencilBits = 8;
 #else /* Double Buffer, no alpha */
         pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
             PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
@@ -262,7 +314,7 @@ static void createDummyWindow(application_t* app)
         pfd.cBlueBits = 8;
         pfd.cBlueShift = 16;
         pfd.cDepthBits = 16;
-        pfd.cStencilBits = 8;
+        pfd.cStencilBits = 2;
 #endif
 
         if(ok)
@@ -304,8 +356,7 @@ static void createDummyWindow(application_t* app)
             // (unless we release the context and acquire another).
             if(!SetPixelFormat(hDC, pixForm, &pfd))
             {
-                Sys_CriticalMessage("DD_CreateWindow: Warning, setting of pixel "
-                                    "format failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed setting pixel format.");
             }
         }
 
@@ -314,26 +365,27 @@ static void createDummyWindow(application_t* app)
         {
             if(!(hGLRC = wglCreateContext(hDC)))
             {
-                Sys_CriticalMessage("createContext: Creation of rendering context "
-                                    "failed.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed creating render context.");
                 ok = false;
             }
             // Make the context current.
             else if(!wglMakeCurrent(hDC, hGLRC))
             {
-                Sys_CriticalMessage("createContext: Couldn't make the rendering "
-                                    "context current.");
+                Sys_CriticalMessage("DD_CreateWindow: Failed making render context current.");
                 ok = false;
             }
         }
 
         if(ok)
         {
-            PROC            getExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-            const GLubyte* extensions =
-            ((const GLubyte*(__stdcall*)(HDC))getExtString)(hDC);
+            PROC wglGetExtensionsStringARB;
+            const GLubyte* exts;
 
-            if(Sys_QueryGLExtension("WGL_ARB_multisample", extensions))
+            GETPROC(wglGetExtensionsStringARB);
+            exts = ((const GLubyte*(__stdcall*)(HDC))wglGetExtensionsStringARB)(hDC);
+
+            GL_state.extensions.wglMultisampleARB = Sys_GLQueryExtension("WGL_ARB_multisample", exts);
+            if(GL_state.extensions.wglMultisampleARB)
             {
                 GETPROC(wglChoosePixelFormatARB);
                 if(wglChoosePixelFormatARB)
@@ -359,7 +411,7 @@ static void createDummyWindow(application_t* app)
 }
 #endif
 
-boolean Sys_PreInitGL(void)
+boolean Sys_GLPreInit(void)
 {
     if(isDedicated)
         return true;
@@ -367,39 +419,42 @@ boolean Sys_PreInitGL(void)
     if(initedGL)
         return true; // Already inited.
 
-    memset(&GL_state, 0, sizeof(GL_state));
-    memset(&GL_state_ext, 0, sizeof(GL_state_ext));
-    memset(&GL_state_texture, 0, sizeof(GL_state_texture));
+    memset(&GL_state.extensions, 0, sizeof(GL_state.extensions));
+    // Init assuming ideal configuration.
+    GL_state.forceFinishBeforeSwap = ArgExists("-glfinish");
+    GL_state.maxTexFilterAniso = 4;
+    GL_state.maxTexSize = 4096;
+    GL_state.maxTexUnits = 1;
+    GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
+
+    GL_state.features.blendSubtract = true;
+    GL_state.features.genMipmap = true;
+    GL_state.features.multisample = false; // We'll test for availability...
+    GL_state.features.texCompression = true;
+    GL_state.features.texFilterAniso = true;
+    GL_state.features.texNonPowTwo = true;
+    GL_state.features.vsync = true;
+    GL_state.features.elementArrays = false;
+
+    GL_state.currentLineWidth = 1.5f;
+    GL_state.currentPointSize = 1.5f;
+    GL_state.currentUseFog = false;
 
 #ifdef WIN32
-    if(!ArgCheck("-noaa"))
-    {
-        // We want to be able to use multisampling if available so lets create a
-        // dummy window and see what pixel formats we have.
-        createDummyWindow(&app);
-    }
+    // We prefer to use  multisampling if available so create a dummy window
+    // and see what pixel formats are present.
+    createDummyWindow(&app);
+
+    // User disabled?
+    if(ArgCheck("-noaa"))
+        GL_state.features.multisample = false;
 #endif
-
-    GL_state_texture.dumpTextures =
-        (ArgCheck("-dumptextures")? true : false);
-
-    if(GL_state_texture.dumpTextures)
-        Con_Message("  Dumping textures (mipmap level zero).\n");
-
-    GL_state.forceFinishBeforeSwap =
-        (ArgExists("-glfinish")? true : false);
-
-    if(GL_state.forceFinishBeforeSwap)
-        Con_Message("  glFinish() forced before swapping buffers.\n");
 
     initedGL = true;
     return true;
 }
 
-/**
- * Initializes OpenGL.
- */
-boolean Sys_InitGL(void)
+boolean Sys_GLInitialize(void)
 {
     if(isDedicated)
         return true;
@@ -409,10 +464,16 @@ boolean Sys_InitGL(void)
 
     if(firstTimeInit)
     {
-        checkExtensions();
+        double version = strtod((const char*) glGetString(GL_VERSION), NULL);
+        if(version < 1.4)
+        {
+            Sys_CriticalMessagef("OpenGL implementation reports version %.1f\n"
+                "The minimum supported version is 1.4", version);
+            return false;
+        }
 
+        initialize();
         printGLUInfo();
-        printDGLConfiguration();
 
         firstTimeInit = false;
     }
@@ -420,7 +481,7 @@ boolean Sys_InitGL(void)
     return true;
 }
 
-void Sys_ShutdownGL(void)
+void Sys_GLShutdown(void)
 {
     if(!initedGL)
         return;
@@ -428,29 +489,19 @@ void Sys_ShutdownGL(void)
     initedGL = false;
 }
 
-void Sys_InitGLState(void)
+void Sys_GLConfigureDefaultState(void)
 {
-    GLfloat         fogcol[4] = { .54f, .54f, .54f, 1 };
+    GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
-    GL_state.nearClip = 5;
-    GL_state.farClip = 8000;
-    polyCounter = 0;
-
-    GL_state_texture.usePalTex = false;
-    GL_state_texture.dumpTextures = false;
-    GL_state_texture.useCompr = false;
-
-    // Here we configure the OpenGL state and set projection matrix.
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-#ifndef DRMESA
-    glEnable(GL_TEXTURE_2D);
-#else
+
+    glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-#endif
+    glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -475,16 +526,18 @@ void Sys_InitGLState(void)
     // Setup for antialiased lines/points.
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    GL_state.currentLineWidth = 1.5f;
     glLineWidth(GL_state.currentLineWidth);
 
     glEnable(GL_POINT_SMOOTH);
     glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-    GL_state.currentPointSize = 1.5f;
     glPointSize(GL_state.currentPointSize);
 
     glShadeModel(GL_SMOOTH);
 #endif
+
+    // Use nice quality for mipmaps please.
+    if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
+        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
 
     // Alpha blending is a go!
     glEnable(GL_BLEND);
@@ -493,21 +546,14 @@ void Sys_InitGLState(void)
     glAlphaFunc(GL_GREATER, 0);
 
     // Default state for the white fog is off.
-    GL_state.useFog = 0;
     glDisable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogi(GL_FOG_END, 2100);   // This should be tweaked a bit.
+    glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
 
 #ifdef WIN32
-    // Default state for vsync is on.
-    GL_state.useVSync = true;
-    if(wglSwapIntervalEXT != NULL)
-    {
+    if(GL_state.features.vsync && wglSwapIntervalEXT != NULL)
         wglSwapIntervalEXT(1);
-    }
-#else
-    GL_state.useVSync = false;
 #endif
 
 #if DRMESA
@@ -524,15 +570,13 @@ void Sys_InitGLState(void)
 }
 
 /**
- * @return          Non-zero iff the extension string is found. This
- *                  function is based on the method used by David Blythe
- *                  and Tom McReynolds in the book "Advanced Graphics
- *                  Programming Using OpenGL" ISBN: 1-55860-659-9.
+ * This routine is based on the method used by David Blythe and Tom McReynolds
+ * in the book "Advanced Graphics Programming Using OpenGL" ISBN: 1-55860-659-9.
  */
-boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
+boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions)
 {
-    const GLubyte  *start;
-    GLubyte        *c, *terminator;
+    const GLubyte* start;
+    GLubyte* c, *terminator;
 
     // Extension names should not have spaces.
     c = (GLubyte *) strchr(name, ' ');
@@ -547,7 +591,7 @@ boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
     start = extensions;
     for(;;)
     {
-        c = (GLubyte *) strstr((const char *) start, name);
+        c = (GLubyte*) strstr((const char*) start, name);
         if(!c)
             break;
 
@@ -563,136 +607,20 @@ boolean Sys_QueryGLExtension(const char* name, const GLubyte* extensions)
     return false;
 }
 
-static int query(const char *ext, int *var)
-{
-    int         result = 0;
-
-    if(ext)
-    {
-#if WIN32
-        // Preference the wgl-specific extensions.
-        if(wglGetExtString)
-        {
-            const GLubyte* extensions =
-            ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC());
-
-            result = (Sys_QueryGLExtension(ext, extensions)? 1 : 0);
-        }
-#endif
-        if(!result)
-            result = (Sys_QueryGLExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
-
-        if(var)
-            *var = result;
-    }
-
-    return result;
-}
-
-#ifdef WIN32
-void Sys_InitWGLExtensions(void)
-{
-    wglGetExtString = wglGetProcAddress("wglGetExtensionsStringARB");
-
-    if(query("WGL_EXT_swap_control", &GL_state_ext.wglSwapIntervalEXT))
-    {
-        GETPROC(wglSwapIntervalEXT);
-    }
-
-    if(!ArgCheck("-noaa") && query("WGL_ARB_multisample", NULL))
-    {
-        GETPROC(wglChoosePixelFormatARB);
-        if(wglChoosePixelFormatARB)
-            GL_state_ext.wglMultisampleARB = 1;
-    }
-}
-#endif
-
-/**
- * Pre: A rendering context must be aquired and made current before this is
- * called.
- */
-void Sys_InitGLExtensions(void)
-{
-    GLint           iVal;
-
-    if(query("GL_EXT_compiled_vertex_array", &GL_state_ext.lockArray))
-    {
-#ifdef WIN32
-        GETPROC(glLockArraysEXT);
-        GETPROC(glUnlockArraysEXT);
-#endif
-    }
-
-    query("GL_EXT_paletted_texture", &GL_state.palExtAvailable);
-    query("GL_EXT_texture_filter_anisotropic", &GL_state_ext.aniso);
-    if(ArgExists("-texnonpow2"))
-       query("GL_ARB_texture_non_power_of_two", &GL_state.textureNonPow2);
-
-    // EXT_blend_subtract
-    if(query("GL_EXT_blend_subtract", &GL_state_ext.blendSub))
-    {
-#ifdef WIN32
-        GETPROC(glBlendEquationEXT);
-#endif
-    }
-
-    // ARB_texture_env_combine
-    if(!query("GL_ARB_texture_env_combine", &GL_state_ext.texEnvComb))
-    {
-        // Try the older EXT_texture_env_combine (identical to ARB).
-        query("GL_EXT_texture_env_combine", &GL_state_ext.texEnvComb);
-    }
-
-    // NV_texture_env_combine4
-    query("GL_NV_texture_env_combine4", &GL_state_ext.nvTexEnvComb);
-
-    // ATI_texture_env_combine3
-    query("GL_ATI_texture_env_combine3", &GL_state_ext.atiTexEnvComb);
-
-    // Texture compression.
-    query("GL_EXT_texture_compression_s3tc", &GL_state_ext.s3TC);
-    // On by default if we have it.
-    glGetError();
-    glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-    if(iVal && glGetError() == GL_NO_ERROR)
-        GL_state_texture.useCompr = true;
-
-    if(ArgExists("-notexcomp"))
-        GL_state_texture.useCompr = false;
-
-#ifdef USE_MULTITEXTURE
-    // ARB_multitexture
-    if(query("GL_ARB_multitexture", &GL_state_ext.multiTex))
-    {
-#  ifdef WIN32
-        // Get the function pointers.
-        GETPROC(glClientActiveTextureARB);
-        GETPROC(glActiveTextureARB);
-        GETPROC(glMultiTexCoord2fARB);
-        GETPROC(glMultiTexCoord2fvARB);
-#  endif
-    }
-#endif
-
-    // Automatic mipmap generation.
-    if(!ArgExists("-nosgm") && query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip))
-    {
-        // Use nice quality, please.
-        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-    }
-}
-
-/**
- * Show the list of GL extensions.
- */
 static void printExtensions(const GLubyte* extensions)
 {
-    char           *token, *extbuf;
+    char* token, *extbuf;
+    size_t len;
 
-    extbuf = M_Malloc(strlen((const char*) extensions) + 1);
-    strcpy(extbuf, (const char *) extensions);
+    if(!extensions || !extensions[0])
+        return;
+    len = strlen((const char*) extensions);
 
+    if(0 == (extbuf = malloc(len+1)))
+        Con_Error("printExtensions: Failed on allocation of %lu bytes for print buffer.",
+                  (unsigned long) (len+1));
+
+    strcpy(extbuf, (const char*) extensions);
     token = strtok(extbuf, " ");
     while(token)
     {
@@ -713,32 +641,29 @@ static void printExtensions(const GLubyte* extensions)
         }
         token = strtok(NULL, " ");
     }
-    M_Free(extbuf);
+    free(extbuf);
 }
 
-void Sys_PrintGLExtensions(void)
+void Sys_GLPrintExtensions(void)
 {
     Con_Message("  Extensions:\n");
     printExtensions(glGetString(GL_EXTENSIONS));
-
 #if WIN32
     // List the WGL extensions too.
     if(wglGetExtString)
     {
         Con_Message("  Extensions (WGL):\n");
-
-        printExtensions(
-        ((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
+        printExtensions(((const GLubyte*(__stdcall*)(HDC))wglGetExtString)(wglGetCurrentDC()));
     }
 #endif
 }
 
-void Sys_CheckGLError(void)
+boolean Sys_GLCheckError(void)
 {
 #ifdef _DEBUG
-    GLenum  error;
-
-    if((error = glGetError()) != GL_NO_ERROR)
+    GLenum error = glGetError();
+    if(error != GL_NO_ERROR)
         Con_Error("OpenGL error: %i\n", error);
 #endif
+    return false;
 }

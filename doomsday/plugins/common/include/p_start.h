@@ -1,10 +1,10 @@
-/**\file
+/**\file p_start.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_start.h: Common playsim code relating to the (re)spawn of map objects.
+ * Common playsim code relating to the (re)spawn of map objects.
  */
 
-#ifndef __COMMON_PLAYSTART_H__
-#define __COMMON_PLAYSTART_H__
+#ifndef LIBCOMMON_PLAYSTART_H
+#define LIBCOMMON_PLAYSTART_H
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # include "r_defs.h"
@@ -39,9 +39,9 @@
  * Map Spot Flags (MSF):
  * \todo Commonize these flags and introduce translations where needed.
  */
-#define MSF_EASY            0x00000001 // Appears in easy skill modes.
-#define MSF_MEDIUM          0x00000002 // Appears in medium skill modes.
-#define MSF_HARD            0x00000004 // Appears in hard skill modes.
+#define MSF_UNUSED1         0x00000001 // Appears in easy skill modes.
+#define MSF_UNUSED2         0x00000002 // Appears in medium skill modes.
+#define MSF_UNUSED3         0x00000004 // Appears in hard skill modes.
 
 #if __JDOOM__ || __JDOOM64__
 # define MSF_DEAF           0x00000008 // Thing is deaf.
@@ -89,16 +89,16 @@
 // Unknown flag mask:
 #if __JDOOM__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_DEAF|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_DEAF|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 #elif __JDOOM64__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_DEAF|MSF_NOTSINGLE|MSF_DONTSPAWNATSTART|MSF_SCRIPT_TOUCH|MSF_SCRIPT_DEATH|MSF_SECRET|MSF_NOTARGET|MSF_NOTDM|MSF_NOTCOOP))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_DEAF|MSF_NOTSINGLE|MSF_DONTSPAWNATSTART|MSF_SCRIPT_TOUCH|MSF_SCRIPT_DEATH|MSF_SECRET|MSF_NOTARGET|MSF_NOTDM|MSF_NOTCOOP))
 #elif __JHERETIC__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 #elif __JHEXEN__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MSF_FIGHTER|MSF_CLERIC|MSF_MAGE|MSF_GSINGLE|MSF_GCOOP|MSF_GDEATHMATCH|MSF_SHADOW|MSF_INVISIBLE|MSF_FRIENDLY|MSF_STILL))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_AMBUSH|MSF_DORMANT|MSF_FIGHTER|MSF_CLERIC|MSF_MAGE|MSF_GSINGLE|MSF_GCOOP|MSF_GDEATHMATCH|MSF_SHADOW|MSF_INVISIBLE|MSF_FRIENDLY|MSF_STILL))
 #endif
 
 typedef struct {
@@ -108,6 +108,7 @@ typedef struct {
     float           pos[3];
     angle_t         angle;
     int             doomEdNum;
+    int             skillModes;
     int             flags;
 #if __JHEXEN__
     byte            special;
@@ -119,25 +120,37 @@ typedef struct {
 #endif
 } mapspot_t;
 
+typedef uint mapspotid_t;
+
 typedef struct {
     int             plrNum;
     uint            entryPoint;
-    float           pos[3];
-    angle_t         angle;
-    int             spawnFlags; // MSF_* flags.
+    mapspotid_t     spot;
 } playerstart_t;
 
 extern uint numMapSpots;
 extern mapspot_t* mapSpots;
 
 #if __JHERETIC__
-extern mapspot_t* maceSpots;
-extern int maceSpotCount;
-extern mapspot_t* bossSpots;
-extern int bossSpotCount;
+extern mapspotid_t* maceSpots;
+extern uint maceSpotCount;
+extern mapspotid_t* bossSpots;
+extern uint bossSpotCount;
 #endif
 
-void            P_Init(void);
+/**
+ * Initialize various playsim related data and structures.
+ */
+void P_Init(void);
+
+/**
+ * Update playsim related data and structures. Should be called after
+ * an engine/renderer reset.
+ */
+void P_Update(void);
+
+void P_Shutdown(void);
+
 mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
 void            P_SpawnPlayers(void);
 
@@ -150,13 +163,12 @@ void            P_TurnGizmosAwayFromDoors(void);
 #endif
 
 #if __JHERETIC__
-void            P_AddMaceSpot(float x, float y, angle_t angle);
-void            P_AddBossSpot(float x, float y, angle_t angle);
+void            P_AddMaceSpot(mapspotid_t id);
+void            P_AddBossSpot(mapspotid_t id);
 #endif
 
 void            P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                                    boolean deathmatch, float x, float y,
-                                    float z, angle_t angle, int spawnFlags);
+                                    boolean deathmatch, mapspotid_t spot);
 void            P_DestroyPlayerStarts(void);
 uint            P_GetNumPlayerStarts(boolean deathmatch);
 
@@ -171,4 +183,4 @@ void            G_DeathMatchSpawnPlayer(int playernum);
 void            P_RebornPlayer(int plrNum);
 
 boolean         P_CheckSpot(float x, float y);
-#endif
+#endif /* LIBCOMMON_PLAYSTART_H */

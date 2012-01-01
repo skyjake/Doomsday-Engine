@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -154,4 +154,19 @@ void Mobj_XYMoveStopping(mobj_t* mo)
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
+}
+
+/**
+ * Checks if @a thing is a clmobj of one of the players.
+ */
+boolean Mobj_IsPlayerClMobj(mobj_t* thing)
+{
+    int i;
+
+    for(i = 0; i < MAXPLAYERS; i++)
+    {
+        if(ClPlayer_ClMobj(i) == thing)
+            return true;
+    }
+    return false;
 }

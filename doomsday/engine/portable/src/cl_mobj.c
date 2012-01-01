@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_mobj.c: Client Map Objects
+ * Client Map Objects
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -721,8 +721,7 @@ boolean ClMobj_Reveal(mobj_t *mo)
 
 #ifdef _DEBUG
     VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                         mo->thinker.id, mo->state,
-                         (int)(mo->state - states)) );
+                         mo->thinker.id, mo->state, (int)(mo->state - states)) );
 #endif
 
     return true;

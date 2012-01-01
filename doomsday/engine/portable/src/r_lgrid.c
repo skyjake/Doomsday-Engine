@@ -1,10 +1,10 @@
-/**\file
+/**\file r_lgrid.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,23 +24,25 @@
  */
 
 /**
- * r_lgrid.c: Light Grid (Large-Scale FakeRadio)
+ * Light Grid (Large-Scale FakeRadio).
  *
- * Very simple global illumination method utilizing a 2D grid of light
- * levels.
+ * Very simple global illumination method utilizing a 2D grid of light levels.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+#include <assert.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
 
-#include <math.h>
-#include <assert.h>
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -107,7 +109,7 @@ void LG_Register(void)
 {
     C_VAR_INT("rend-bias-grid", &lgEnabled, 0, 0, 1);
 
-    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, 0, 0, 1);
+    C_VAR_INT("rend-bias-grid-debug", &lgShowDebug, CVF_NO_ARCHIVE, 0, 1);
 
     C_VAR_FLOAT("rend-bias-grid-debug-size", &lgDebugSize, 0, .1f, 100);
 
@@ -146,7 +148,7 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
 /**
  * Initialize the light grid for the current map.
  */
-void LG_Init(void)
+void LG_InitForMap(void)
 {
     uint        startTime = Sys_GetRealTime();
 
@@ -377,9 +379,9 @@ void LG_Init(void)
 
     // Allocate memory for the entire grid.
     grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
-                    PU_MAP, NULL);
+                    PU_MAPSTATIC, NULL);
 
-    Con_Message("LG_Init: %i x %i grid (%lu bytes).\n",
+    Con_Message("LG_InitForMap: %i x %i grid (%lu bytes).\n",
                 lgBlockWidth, lgBlockHeight,
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
@@ -451,20 +453,51 @@ void LG_Init(void)
     // Find the blocks of all sectors.
     for(s = 0; s < numSectors; ++s)
     {
-        sector_t *sector = SECTOR_PTR(s);
+        sector_t* sector = SECTOR_PTR(s);
 
-        // Clear the bitfields.
-        memset(indexBitfield, 0, bitfieldSize);
-        memset(contributorBitfield, 0, bitfieldSize);
         count = changedCount = 0;
 
-        for(block = grid, y = 0; y < lgBlockHeight; ++y)
+        if(0 != sector->lineDefCount)
         {
-            for(x = 0; x < lgBlockWidth; ++x, ++block)
+            // Clear the bitfields.
+            memset(indexBitfield, 0, bitfieldSize);
+            memset(contributorBitfield, 0, bitfieldSize);
+
+            for(block = grid, y = 0; y < lgBlockHeight; ++y)
             {
-                if(block->sector == sector)
+                for(x = 0; x < lgBlockWidth; ++x, ++block)
                 {
-                    // \todo Determine min/max a/b before going into the loop.
+                    if(block->sector == sector)
+                    {
+                        // \todo Determine min/max a/b before going into the loop.
+                        for(b = -2; b <= 2; ++b)
+                        {
+                            if(y + b < 0 || y + b >= lgBlockHeight)
+                                continue;
+
+                            for(a = -2; a <= 2; ++a)
+                            {
+                                if(x + a < 0 || x + a >= lgBlockWidth)
+                                    continue;
+
+                                AddIndexBit(x + a, y + b, indexBitfield,
+                                            &changedCount);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Determine contributor blocks. Contributors are the blocks that are
+            // close enough to contribute light to affected blocks.
+            for(y = 0; y < lgBlockHeight; ++y)
+            {
+                for(x = 0; x < lgBlockWidth; ++x)
+                {
+                    if(!HasIndexBit(x, y, indexBitfield))
+                        continue;
+
+                    // Add the contributor blocks.
                     for(b = -2; b <= 2; ++b)
                     {
                         if(y + b < 0 || y + b >= lgBlockHeight)
@@ -475,38 +508,11 @@ void LG_Init(void)
                             if(x + a < 0 || x + a >= lgBlockWidth)
                                 continue;
 
-                            AddIndexBit(x + a, y + b, indexBitfield,
-                                        &changedCount);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Determine contributor blocks. Contributors are the blocks that are
-        // close enough to contribute light to affected blocks.
-        for(y = 0; y < lgBlockHeight; ++y)
-        {
-            for(x = 0; x < lgBlockWidth; ++x)
-            {
-                if(!HasIndexBit(x, y, indexBitfield))
-                    continue;
-
-                // Add the contributor blocks.
-                for(b = -2; b <= 2; ++b)
-                {
-                    if(y + b < 0 || y + b >= lgBlockHeight)
-                        continue;
-
-                    for(a = -2; a <= 2; ++a)
-                    {
-                        if(x + a < 0 || x + a >= lgBlockWidth)
-                            continue;
-
-                        if(!HasIndexBit(x + a, y + b, indexBitfield))
-                        {
-                            AddIndexBit(x + a, y + b, contributorBitfield,
-                                        &count);
+                            if(!HasIndexBit(x + a, y + b, indexBitfield))
+                            {
+                                AddIndexBit(x + a, y + b, contributorBitfield,
+                                            &count);
+                            }
                         }
                     }
                 }
@@ -536,10 +542,6 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
             assert(a == changedCount);
             //assert(b == info->blockCount);
         }
-        else
-        {
-            sector->blocks = NULL;
-        }
     }
 
     M_Free(indexBitfield);
@@ -547,7 +549,7 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("LG_Init: Done in %.2f seconds.\n",
+            ("LG_InitForMap: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
@@ -594,51 +596,51 @@ static void LG_ApplySector(gridblock_t *block, const float *color, float level,
 /**
  * Called when a sector has changed its light level.
  */
-void LG_SectorChanged(sector_t *sector)
+void LG_SectorChanged(sector_t* sector)
 {
-    uint                i, j;
-    unsigned short      n;
-
     if(!lgInited)
         return;
 
+    if(0 == sector->changedBlockCount && 0 == sector->blockCount)
+        return;
+
     // Mark changed blocks and contributors.
+    { uint i;
     for(i = 0; i < sector->changedBlockCount; ++i)
     {
-        n = sector->blocks[i];
+        ushort n = sector->blocks[i];
         // The color will be recalculated.
         if(!(grid[n].flags & GBF_CHANGED))
             memcpy(grid[n].oldRGB, grid[n].rgb, sizeof(grid[n].oldRGB));
 
+        { int j;
         for(j = 0; j < 3; ++j)
             grid[n].rgb[j] = 0;
+        }
 
         grid[n].flags |= GBF_CHANGED | GBF_CONTRIBUTOR;
-    }
+    }}
 
-    for(; i < sector->blockCount; ++i)
+    { uint i;
+    for(i = 0; i < sector->blockCount; ++i)
     {
         grid[sector->blocks[i]].flags |= GBF_CONTRIBUTOR;
-    }
+    }}
 
     needsUpdate = true;
 }
 
-/**
- * Called when a setting is changed which affects the lightgrid.
- */
-void LG_MarkAllForUpdate(cvar_t *unused)
+void LG_MarkAllForUpdate(void)
 {
-    uint                i;
-
     if(!lgInited)
         return;
 
     // Mark all blocks and contributors.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         LG_SectorChanged(&sectors[i]);
-    }
+    }}
 }
 
 #if 0
@@ -868,17 +870,11 @@ BEGIN_PROF( PROF_GRID_UPDATE );
 END_PROF( PROF_GRID_UPDATE );
 }
 
-/**
- * Calculate the light level for a 3D point in the world.
- *
- * @param point         3D point.
- * @param color         Evaluated color of the point (return value).
- */
-void LG_Evaluate(const float *point, float *color)
+void LG_Evaluate(const vectorcomp_t point[3], float color[3])
 {
-    int                 x, y, i;
-    float               dz = 0, dimming;
-    gridblock_t        *block;
+    int x, y, i;
+    //float dz = 0, dimming;
+    gridblock_t* block;
 
     if(!lgInited)
     {
@@ -893,9 +889,19 @@ void LG_Evaluate(const float *point, float *color)
 
     block = &grid[y * lgBlockWidth + x];
 
+    /**
+     * danij: Biased light dimming disabled because this does not work
+     * well enough. The problem is that two points on a given surface
+     * may be determined to be in different blocks and as the height is
+     * taken from the block-linked sector this results in very uneven
+     * lighting.
+     *
+     * Biasing the dimming is a good idea but the heights must be taken
+     * from the subsector which contains the surface and not the block.
+     */
     if(block->sector)
     {
-        if(block->bias < 0)
+        /*if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
             dz = block->sector->SP_ceilheight - point[VZ];
@@ -908,7 +914,7 @@ void LG_Evaluate(const float *point, float *color)
 
         dz -= 50;
         if(dz < 0)
-            dz = 0;
+            dz = 0;*/
 
         if(block->flags & GBF_CHANGED)
         {   // We are waiting for an updated value, for now use the old.
@@ -931,7 +937,7 @@ void LG_Evaluate(const float *point, float *color)
     }
 
     // Biased ambient light causes a dimming in the Z direction.
-    if(dz && block->bias)
+    /*if(dz && block->bias)
     {
         if(block->bias < 0)
             dimming = 1 - (dz * (float) -block->bias) / 35000.0f;
@@ -947,15 +953,23 @@ void LG_Evaluate(const float *point, float *color)
             color[i] *= dimming;
 
             // Add the light range compression factor
-            color[i] += Rend_GetLightAdaptVal(color[i]);
+            color[i] += Rend_LightAdaptationDelta(color[i]);
         }
     }
-    else
+    else*/
     {
         // Just add the light range compression factor
         for(i = 0; i < 3; ++i)
-            color[i] += Rend_GetLightAdaptVal(color[i]);
+            color[i] += Rend_LightAdaptationDelta(color[i]);
     }
+}
+
+float LG_EvaluateLightLevel(const vectorcomp_t point[3])
+{
+    float color[3];
+    LG_Evaluate(point, color);
+    /// \todo Do not do this at evaluation time; store into another grid.
+    return (color[CR] + color[CG] + color[CB]) / 3;
 }
 
 /**
@@ -968,7 +982,7 @@ void LG_Debug(void)
     gridblock_t*        block;
     int                 x, y;
     int                 vx, vy;
-    size_t              vIdx, blockIdx;
+    size_t              vIdx = 0, blockIdx;
     ddplayer_t*         ddpl = (viewPlayer? &viewPlayer->shared : NULL);
 
     if(!lgInited || !lgShowDebug)
@@ -988,9 +1002,7 @@ void LG_Debug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
-    glDisable(GL_TEXTURE_2D);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     for(y = 0; y < lgBlockHeight; ++y)
     {
@@ -1021,7 +1033,6 @@ void LG_Debug(void)
         glEnd();
     }
 
-    glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }

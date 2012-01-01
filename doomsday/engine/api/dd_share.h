@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_share.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@
  */
 
 /**
- * dd_share.h: Shared Macros and Constants
+ * Shared Macros and Constants
  *
  * Macros and constants used by the engine and games.
  */
 
-#ifndef __DOOMSDAY_SHARED_H__
-#define __DOOMSDAY_SHARED_H__
+#ifndef LIBDENG_SHARED_H
+#define LIBDENG_SHARED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,10 +48,15 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
+
+#include "dengproject.h"
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
+#include "dd_wad.h"
 #include "dd_gl.h"
+#include "dd_ui.h"
+#include "dd_infine.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
@@ -62,6 +67,10 @@ extern "C" {
 //------------------------------------------------------------------------
 
 #define DDMAXPLAYERS        16
+
+// Base default paths for data and definition files.
+#define DD_BASEPATH_DATA    "}data/"
+#define DD_BASEPATH_DEFS    "}defs/"
 
 // The case-independent strcmps have different names.
 #if WIN32
@@ -135,6 +144,8 @@ float           FloatSwap(float);
 #define FEQUAL(x, y)        (INRANGE_OF(x, y, .000001f))
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
+/// Ceiling of integer quotient of A divided by B
+#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
 
 // Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
 // Note that this should err on the side of being < 1/255 to prevent result
@@ -165,19 +176,13 @@ enum {
     DD_SERVER,
     DD_CLIENT,
     DD_ALLOW_FRAMES,
-    DD_VIEWWINDOW_X,
-    DD_VIEWWINDOW_Y,
-    DD_VIEWWINDOW_WIDTH,
-    DD_VIEWWINDOW_HEIGHT,
     DD_CONSOLEPLAYER,
     DD_DISPLAYPLAYER,
     DD_MIPMAPPING,
     DD_SMOOTH_IMAGES,
     DD_DEFAULT_RES_X,
     DD_DEFAULT_RES_Y,
-    DD_SKY_DETAIL,
-    DD_SFX_VOLUME,
-    DD_MUSIC_VOLUME,
+    DD_UNUSED1,
     DD_MOUSE_INVERSE_Y,
     DD_FULLBRIGHT, // Render everything fullbright?
     DD_CCMD_RETURN,
@@ -211,15 +216,15 @@ enum {
     DD_MATERIAL,
     DD_OFFSET,
     DD_HEIGHT,
-    DD_COLUMNS,
-    DD_ROWS,
+    DD_UNUSED2,
+    DD_UNUSED3,
     DD_COLOR_LIMIT,
     DD_PRE,
     DD_POST,
-    DD_VERSION_SHORT,
-    DD_VERSION_LONG,
+    DD_PLUGIN_VERSION_SHORT,
+    DD_PLUGIN_VERSION_LONG,
     DD_HORIZON,
-    DD_GAME_ID,
+    DD_OLD_GAME_ID,
     DD_DEF_MOBJ,
     DD_DEF_MOBJ_BY_NAME,
     DD_DEF_STATE,
@@ -235,6 +240,7 @@ enum {
     DD_PSPRITE_BOB_Y,
     DD_DEF_FINALE_AFTER,
     DD_DEF_FINALE_BEFORE,
+    DD_DEF_FINALE,
     DD_RENDER_RESTART_PRE,
     DD_RENDER_RESTART_POST,
     DD_DEF_SOUND_BY_NAME,
@@ -244,12 +250,12 @@ enum {
     DD_CD_TRACK,
     DD_SPRITE,
     DD_FRAME,
-    DD_GAME_MODE, // 16 chars max (swdoom, doom1, udoom, tnt, heretic...)
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
-    DD_DEF_FINALE,
-    DD_GAME_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
-    DD_GAME_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
-    DD_GAME_DMUAPI_VER, // Version of the DMU API the game is using.
+    DD_PLUGIN_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
+    DD_PLUGIN_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
+    DD_PLUGIN_HOMEURL,
+    DD_PLUGIN_DOCSURL,
+    DD_DMU_VERSION, // Used in the exchange of DMU API versions.
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
@@ -306,6 +312,58 @@ enum {
     BOXFLOOR    = 4,
     BOXCEILING  = 5
 };
+
+//------------------------------------------------------------------------
+//
+// Games
+//
+//------------------------------------------------------------------------
+
+/**
+ * GameDef. Record (POD) structure for use with DD_DefineGame, to define
+ * the numerous high-level properties of a logical game component.
+ */
+typedef struct gamedef_s {
+   /**
+    * Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+    * - Used during resource location for mode-specific assets.
+    * - Sent out in netgames (a client can't connect unless mode strings match).
+    */
+    const char* identityKey;
+
+    /// The base directory for all data-class resources.
+    const char* dataPath;
+
+    /// The base directory for all defs-class resources.
+    const char* defsPath;
+
+    /// Name of the config directory.
+    const char* configDir;
+
+    /// Default title. May be overridden later.
+    const char* defaultTitle;
+
+    /// Default author. May be overridden later.
+    /// Used for (e.g.) the map author name if not specified in a Map Info definition.
+    const char* defaultAuthor;
+} GameDef;
+
+/**
+ * Extended info about a registered game component.
+ * Used with DD_GameInfo.
+ */
+typedef struct gameinfo_s {
+    const char* title;
+    const char* author;
+    const char* identityKey;
+} GameInfo;
+
+/**
+ * @defgroup resourceFlags ResourceFlags
+ */
+/*{@*/
+#define RF_STARTUP          0x1 // A required resource needed for and loaded during game start up (can't be a virtual file).
+/*}@*/
 
 //------------------------------------------------------------------------
 //
@@ -410,6 +468,7 @@ enum {
     DDKEY_F11,
     DDKEY_F12,
     DDKEY_NUMLOCK,
+    DDKEY_CAPSLOCK,
     DDKEY_SCROLL,
     DDKEY_NUMPAD7,
     DDKEY_NUMPAD8,
@@ -437,6 +496,7 @@ enum {
     DDKEY_END,
     DDKEY_SUBTRACT, // '-' on numeric keypad.
     DDKEY_ADD, // '+' on numeric keypad.
+    DDKEY_PRINT,
     DD_HIGHEST_KEYCODE
 };
 
@@ -465,7 +525,7 @@ typedef enum {
     NUM_EVENT_STATES
 } evstate_t;
 
-typedef struct {
+typedef struct event_s {
     evtype_t        type;
     evstate_t       state; // Only used with digital controls.
     int             data1; // Keys/mouse/joystick buttons.
@@ -496,31 +556,16 @@ typedef enum
 //
 //------------------------------------------------------------------------
 
-#define PU_STATIC           1 // Static entire execution time.
-#define PU_SOUND            2 // Static while playing.
-#define PU_MUSIC            3 // Static while playing.
+#define PU_APPSTATIC         1 // Static entire execution time.
 
-#define PU_USER1            40
-#define PU_USER2            41
-#define PU_USER3            42
-#define PU_USER4            43
-#define PU_USER5            44
-#define PU_USER6            45
-#define PU_USER7            46
-#define PU_USER8            47
-#define PU_USER9            48
-#define PU_USER10           49
+#define PU_GAMESTATIC       40 // Static until the game plugin which allocated it is unloaded.
 
-#define PU_MAP              50 // Static until map exited (may still be
-                               // freed during the map, though).
+#define PU_MAP              50 // Static until map exited (may still be freed during the map, though).
 #define PU_MAPSTATIC        52 // Not freed until map exited.
 
 // Tags >= 100 are purgable whenever needed.
 #define PU_PURGELEVEL       100
 #define PU_CACHE            101
-
-// Special purgelevel.
-#define PU_GETNAME          100000L
 
 //------------------------------------------------------------------------
 //
@@ -569,6 +614,16 @@ enum /* Do not change the numerical values of the constants! */
     DMU_Y,
     DMU_XY,
 
+    DMU_TANGENT_X,
+    DMU_TANGENT_Y,
+    DMU_TANGENT_Z,
+    DMU_TANGENT_XYZ,
+
+    DMU_BITANGENT_X,
+    DMU_BITANGENT_Y,
+    DMU_BITANGENT_Z,
+    DMU_BITANGENT_XYZ,
+
     DMU_NORMAL_X,
     DMU_NORMAL_Y,
     DMU_NORMAL_Z,
@@ -610,8 +665,7 @@ enum /* Do not change the numerical values of the constants! */
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT,
-    DMU_NAMESPACE
+    DMU_SEG_COUNT
 };
 
 // Linedef flags:
@@ -630,9 +684,8 @@ enum /* Do not change the numerical values of the constants! */
 
 // Surface flags:
 // For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
-#define DDSUF_GLOW              0x00000001 // Surface glows (fully bright).
-#define DDSUF_MATERIAL_FLIPH    0x00000002 // Surface material is flipped horizontally.
-#define DDSUF_MATERIAL_FLIPV    0x00000004 // Surface material is flipped vertically.
+#define DDSUF_MATERIAL_FLIPH    0x00000001 // Surface material is flipped horizontally.
+#define DDSUF_MATERIAL_FLIPV    0x00000002 // Surface material is flipped vertically.
 
 // Map Update status code constants.
 // Sent to the game when various map update events occur.
@@ -680,8 +733,6 @@ enum // Sector reverb data indices.
     SRD_DAMPING,
     NUM_REVERB_DATA
 };
-
-#define DD_MAX_MATERIAL_LAYERS     1 //// \temp
 
 typedef struct {
     fixed_t         pos[2], dX, dY;
@@ -941,6 +992,55 @@ typedef struct aaboxf_s {
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
 
+/**
+ * @defgroup alignmentFlags  Alignment Flags.
+ */
+/*@{*/
+#define ALIGN_LEFT          (0x1)
+#define ALIGN_RIGHT         (0x2)
+#define ALIGN_TOP           (0x4)
+#define ALIGN_BOTTOM        (0x8)
+
+#define ALIGN_TOPLEFT       (ALIGN_TOP|ALIGN_LEFT)
+#define ALIGN_TOPRIGHT      (ALIGN_TOP|ALIGN_RIGHT)
+#define ALIGN_BOTTOMLEFT    (ALIGN_BOTTOM|ALIGN_LEFT)
+#define ALIGN_BOTTOMRIGHT   (ALIGN_BOTTOM|ALIGN_RIGHT)
+
+#define ALL_ALIGN_FLAGS     (ALIGN_LEFT|ALIGN_RIGHT|ALIGN_TOP|ALIGN_BOTTOM)
+/*@}*/
+
+typedef enum {
+    SCALEMODE_FIRST = 0,
+    SCALEMODE_SMART_STRETCH = SCALEMODE_FIRST,
+    SCALEMODE_NO_STRETCH, // Never.
+    SCALEMODE_STRETCH, // Always.
+    SCALEMODE_LAST = SCALEMODE_STRETCH,
+    SCALEMODE_COUNT
+} scalemode_t;
+
+/// Can the value be interpreted as a valid scale mode identifier?
+#define VALID_SCALEMODE(val)    ((val) >= SCALEMODE_FIRST && (val) <= SCALEMODE_LAST)
+
+#define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.38f)
+
+/**
+ * @defgroup borderedProjectionFlags  Bordered Projection Flags.
+ * @{
+ */
+#define BPF_OVERDRAW_MASK   0x1
+#define BPF_OVERDRAW_CLIP   0x2
+/**@}*/
+
+typedef struct {
+    int flags;
+    scalemode_t scaleMode;
+    int width, height;
+    int availWidth, availHeight;
+    boolean alignHorizontal; /// @c false= align vertically instead.
+    float scaleFactor;
+    int scissorState[5];
+} borderedprojectionstate_t;
+
 //------------------------------------------------------------------------
 //
 // Sound
@@ -967,33 +1067,148 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
-/**
- * Resource classes. Each has its own subdir under Data\Game\.
- */
-typedef enum ddresourceclass_e {
-    DDRC_NONE = -1,
-    DDRC_FIRST = 0,
-    DDRC_TEXTURE = DDRC_FIRST,
-    DDRC_FLAT,
-    DDRC_PATCH, // Not sprites, mind you. Names == lumpnames.
-    DDRC_LIGHTMAP,
-    DDRC_FLAREMAP,
-    DDRC_MUSIC, // Names == lumpnames.
-    DDRC_SFX, // Names == lumpnames.
-    DDRC_GRAPHICS, // Doomsday graphics.
-    DDRC_MODEL,
-    NUM_RESOURCE_CLASSES
-} ddresourceclass_t;
+/// Special value used to signify an invalid material id.
+#define NOMATERIALID            0
 
-typedef enum resourcetype_e {
-    RT_UNKNOWN = -1,
-    RT_FIRST = 0,
-    RT_GRAPHIC = RT_FIRST,
-    RT_MODEL,
-    RT_SOUND,
-    RT_MUSIC,
-    NUM_RESOURCE_TYPES
-} resourcetype_t;
+/**
+ * @defgroup materialFlags  Material Flags
+ * @{
+ */
+//#define MATF_UNUSED1            0x1
+#define MATF_NO_DRAW            0x2 // Material should never be drawn.
+#define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
+/**@}*/
+
+#define DDMAX_MATERIAL_LAYERS   1
+
+/**
+ * @defgroup animationGroupFlags  Animation Group Flags
+ * @{
+ */
+#define AGF_SMOOTH              0x1
+#define AGF_FIRST_ONLY          0x2
+#define AGF_PRECACHE            0x4000 // Group is just for precaching.
+/**@}*/
+
+/**
+ * Material Namespaces
+ */
+
+/**
+ * @defgroup materialNamespaceNames  Material Namespace Names
+ * @{
+ */
+#define MN_SYSTEM_NAME          "System"
+#define MN_FLATS_NAME           "Flats"
+#define MN_TEXTURES_NAME        "Textures"
+#define MN_SPRITES_NAME         "Sprites"
+/**@}*/
+
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACE_FIRST = 1000,
+    MN_SYSTEM = MATERIALNAMESPACE_FIRST,
+    MN_FLATS,
+    MN_TEXTURES,
+    MN_SPRITES,
+    MATERIALNAMESPACE_LAST = MN_SPRITES,
+    MN_INVALID /// Special value used to signify an invalid namespace identifier.
+} materialnamespaceid_t;
+
+#define MATERIALNAMESPACE_COUNT  (MATERIALNAMESPACE_LAST - MATERIALNAMESPACE_FIRST + 1)
+
+/// @c true= val can be interpreted as a valid material namespace identifier.
+#define VALID_MATERIALNAMESPACEID(val) ((val) >= MATERIALNAMESPACE_FIRST && (val) <= MATERIALNAMESPACE_LAST)
+
+/**
+ * Texture Namespaces
+ */
+
+/**
+ * @defgroup textureNamespaceNames  Texture Namespace Names
+ * @{
+ */
+#define TN_SYSTEM_NAME          "System"
+#define TN_FLATS_NAME           "Flats"
+#define TN_TEXTURES_NAME        "Textures"
+#define TN_SPRITES_NAME         "Sprites"
+#define TN_PATCHES_NAME         "Patches"
+#define TN_DETAILS_NAME         "Details"
+#define TN_REFLECTIONS_NAME     "Reflections"
+#define TN_MASKS_NAME           "Masks"
+#define TN_MODELSKINS_NAME      "ModelSkins"
+#define TN_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
+#define TN_LIGHTMAPS_NAME       "Lightmaps"
+#define TN_FLAREMAPS_NAME       "Flaremaps"
+/**@{*/
+
+typedef enum {
+    TN_ANY = -1,
+    TEXTURENAMESPACE_FIRST = 2000,
+    TN_SYSTEM = TEXTURENAMESPACE_FIRST,
+    TN_FLATS,
+    TN_TEXTURES,
+    TN_SPRITES,
+    TN_PATCHES,
+    TN_DETAILS,
+    TN_REFLECTIONS,
+    TN_MASKS,
+    TN_MODELSKINS,
+    TN_MODELREFLECTIONSKINS,
+    TN_LIGHTMAPS,
+    TN_FLAREMAPS,
+    TEXTURENAMESPACE_LAST = TN_FLAREMAPS,
+    TN_INVALID /// Special value used to signify an invalid namespace identifier.
+} texturenamespaceid_t;
+
+#define TEXTURENAMESPACE_COUNT  (TEXTURENAMESPACE_LAST - TEXTURENAMESPACE_FIRST + 1)
+
+/// @c true= val can be interpreted as a valid texture namespace identifier.
+#define VALID_TEXTURENAMESPACEID(val) ((val) >= TEXTURENAMESPACE_FIRST && (val) <= TEXTURENAMESPACE_LAST)
+
+/**
+ * Font Namespaces
+ */
+
+/**
+ * @defgroup fontNamespaceNames  Font Namespace Names
+ * @{
+ */
+#define FN_SYSTEM_NAME          "System"
+#define FN_GAME_NAME            "Game"
+/**@}*/
+
+typedef enum {
+    FN_ANY = -1,
+    FONTNAMESPACE_FIRST = 3000,
+    FN_SYSTEM = FONTNAMESPACE_FIRST,
+    FN_GAME,
+    FONTNAMESPACE_LAST = FN_GAME,
+    FN_INVALID /// Special value used to signify an invalid namespace identifier.
+} fontnamespaceid_t;
+
+#define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST - FONTNAMESPACE_FIRST + 1)
+
+/// @c true= val can be interpreted as a valid texture namespace identifier.
+#define VALID_FONTNAMESPACEID(val)  ((val) >= FONTNAMESPACE_FIRST && (val) <= FONTNAMESPACE_LAST)
+
+/// Patch Info
+typedef struct {
+    patchid_t id;
+    boolean isCustom; // @c true if the patch does not originate from the current game.
+    RectRaw geometry;
+    // Temporary until the big DGL drawing rewrite.
+    short extraOffset[2]; // Only used with upscaled and sharpened patches.
+} patchinfo_t;
+
+/// Sprite Info
+typedef struct {
+    struct material_s* material;
+    int flip;
+    RectRaw geometry;
+    float texCoord[2]; // Prepared texture coordinates.
+    int numFrames; // Number of frames the sprite has.
+} spriteinfo_t;
 
 /**
  * Processing modes for GL_LoadGraphics.
@@ -1004,60 +1219,6 @@ typedef enum gfxmode_e {
     LGM_GRAYSCALE_ALPHA = 2,
     LGM_WHITE_ALPHA = 3
 } gfxmode_t;
-
-#define DDMAX_MATERIAL_LAYERS   1
-
-typedef enum material_namespace_e {
-    MN_ANY = -1,
-    MN_FIRST,
-    MN_TEXTURES = MN_FIRST,
-    MN_FLATS,
-    MN_SPRITES,
-    MN_SYSTEM,
-    NUM_MATERIAL_NAMESPACES
-} material_namespace_t;
-
-// Material flags:
-#define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
-#define MATF_NO_DRAW            0x0002 // Material should never be drawn.
-#define MATF_GLOW               0x0004 // Glowing material.
-#define MATF_SKYMASK            0x0008 // Sky-mask surfaces using this material.
-
-// Animation group flags.
-#define AGF_SMOOTH          0x1
-#define AGF_FIRST_ONLY      0x2
-#define AGF_PRECACHE        0x4000 // Group is just for precaching.
-
-typedef struct lumppatch_s {
-    short           width; // Bounding box size.
-    short           height;
-    short           leftOffset; // Pixels to the left of origin.
-    short           topOffset; // Pixels below the origin.
-    int             columnOfs[8]; /* Only [width] used the [0] is
-                                   &columnofs[width] */
-} lumppatch_t;
-
-typedef struct {
-    int             lump; // Lump number.
-    int             realLump; // Real lump number.
-    int             flip;
-    int             offset;
-    int             topOffset;
-    int             width;
-    int             height;
-    int             numFrames; // Number of frames the sprite has.
-} patchinfo_t;
-
-typedef struct {
-    struct material_s* material;
-    int             realLump; // Real lump number.
-    int             flip;
-    int             offset;
-    int             topOffset;
-    int             width;
-    int             height;
-    int             numFrames; // Number of frames the sprite has.
-} spriteinfo_t;
 
 typedef unsigned int colorpaletteid_t;
 
@@ -1076,32 +1237,24 @@ typedef unsigned int colorpaletteid_t;
 #define BUSYF_STARTUP       0x20 // Startup mode: normal fonts, texman not available.
 #define BUSYF_TRANSITION    0x40 // Do a transition effect when busy mode ends.
 
+/**
+ * @defgroup consolePrintFlags Console Print Flags.
+ */
+/*@{*/
 // These correspond the good old text mode VGA colors.
-#define CBLF_BLACK          0x00000001
-#define CBLF_BLUE           0x00000002
-#define CBLF_GREEN          0x00000004
-#define CBLF_CYAN           0x00000008
-#define CBLF_RED            0x00000010
-#define CBLF_MAGENTA        0x00000020
-#define CBLF_YELLOW         0x00000040
-#define CBLF_WHITE          0x00000080
-#define CBLF_LIGHT          0x00000100
-#define CBLF_RULER          0x00000200
-#define CBLF_CENTER         0x00000400
-#define CBLF_TRANSMIT       0x80000000 // If server, sent to all clients.
-
-// Font flags.
-#define DDFONT_WHITE            0x1 // The font data is white, can be colored.
-
-typedef struct {
-    int             flags;
-    float           sizeX, sizeY;   // The scale.
-    int             height;
-    int           (*drawText) (const char* text, int x, int y);
-    int           (*getWidth) (const char* text);
-    void          (*filterText) (char* text); // Maybe alters text.
-} ddfont_t;
-
+#define CPF_BLACK           0x00000001
+#define CPF_BLUE            0x00000002
+#define CPF_GREEN           0x00000004
+#define CPF_CYAN            0x00000008
+#define CPF_RED             0x00000010
+#define CPF_MAGENTA         0x00000020
+#define CPF_YELLOW          0x00000040
+#define CPF_WHITE           0x00000080
+#define CPF_LIGHT           0x00000100
+#define CPF_UNUSED1         0x00000200
+#define CPF_CENTER          0x00000400
+#define CPF_TRANSMIT        0x80000000 /// If server, sent to all clients.
+/*@}*/
 
 /// Argument type for B_BindingsForControl().
 typedef enum bfcinverse_e {
@@ -1110,33 +1263,13 @@ typedef enum bfcinverse_e {
     BFCI_ONLY_INVERSE
 } bfcinverse_t;
 
-// Console command.
-typedef struct ccmd_s {
-    const char*     name;
-    const char*     params;
-    int           (*func) (byte src, int argc, char **argv);
-    int             flags;
-} ccmd_t;
-
-// Command sources (where the console command originated from)
-// These are sent with every (sub)ccmd so we can decide whether or not to execute.
-enum {
-    CMDS_UNKNOWN,
-    CMDS_DDAY, // Sent by the engine
-    CMDS_GAME, // Sent by the game dll
-    CMDS_CONSOLE, // Sent via direct console input
-    CMDS_BIND, // Sent from a binding/alias
-    CMDS_CONFIG, // Sent via config file
-    CMDS_PROFILE, // Sent via player profile
-    CMDS_CMDLINE, // Sent via the command line
-    CMDS_DED // Sent based on a def in a DED file eg (state->execute)
-};
-
-// Helper macro for defining console command functions.
-#define DEFCC(name)         int name(byte src, int argc, char** argv)
-
-// Console command flags.
-#define CMDF_NO_DEDICATED   0x00000001 // Not available in dedicated server mode.
+/**
+ * @defgroup consoleCommandFlags Console command flags.
+ */
+/*@{*/
+#define CMDF_NO_NULLGAME    0x00000001 // Not available unless a game is loaded.
+#define CMDF_NO_DEDICATED   0x00000002 // Not available in dedicated server mode.
+/*@}*/
 
 // Console command usage flags.
 // (what method(s) CAN NOT be used to invoke a ccmd (used with the CMDS codes above)).
@@ -1150,36 +1283,149 @@ enum {
 #define CMDF_DED            0x40000000
 #define CMDF_CLIENT         0x80000000 // sent over the net from a client.
 
-    // Console variable flags.
+/**
+ * @defgroup commandSource Command Sources
+ *
+ * Where a console command originated.
+ */
+/*@{*/
+#define CMDS_UNKNOWN        0
+#define CMDS_DDAY           1 /// Sent by the engine.
+#define CMDS_GAME           2 /// Sent by a game library.
+#define CMDS_CONSOLE        3 /// Sent via direct console input.
+#define CMDS_BIND           4 /// Sent from a binding/alias.
+#define CMDS_CONFIG         5 /// Sent via config file.
+#define CMDS_PROFILE        6 /// Sent via player profile.
+#define CMDS_CMDLINE        7 /// Sent via the command line.
+#define CMDS_SCRIPT         8 /// Sent based on a def in a DED file eg (state->execute).
+/*@}*/
+
+/**
+ * Console command template. Used with Con_AddCommand.
+ */
+typedef struct ccmdtemplate_s {
+    /// Name of the command.
+    const char* name;
+
+    /// Argument template.
+    const char* argTemplate;
+
+    /// Execute function.
+    int (*execFunc) (byte src, int argc, char** argv);
+
+    /// @see consoleCommandFlags
+    int flags;
+} ccmdtemplate_t;
+
+// Helper macro for declaring console command functions.
+#define D_CMD(x)            int CCmd##x(byte src, int argc, char** argv)
+
+/**
+ * Helper macros for registering new console commands.
+ */
+#define C_CMD(name, argTemplate, fn) \
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_template); }
+
+#define C_CMD_FLAGS(name, argTemplate, fn, flags) \
+    { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_template); }
+
+/**
+ * @defgroup consoleVariableFlags Console Variable flags.
+ */
+/*@{*/
 #define CVF_NO_ARCHIVE      0x1 // Not written in/read from the defaults file.
 #define CVF_PROTECTED       0x2 // Can't be changed unless forced.
-#define CVF_NO_MIN          0x4 // Don't use the minimum.
-#define CVF_NO_MAX          0x8 // Don't use the maximum.
+#define CVF_NO_MIN          0x4 // Minimum is not in affect.
+#define CVF_NO_MAX          0x8 // Maximum is not in affect.
 #define CVF_CAN_FREE        0x10 // The string can be freed.
-#define CVF_HIDE            0x20
-#define CVF_READ_ONLY       0x40 // Can't be changed manually at all
+#define CVF_HIDE            0x20 // Do not include in listings or add to known words.
+#define CVF_READ_ONLY       0x40 // Can't be changed manually at all.
+/*@}*/
 
-    // Console variable types.
-    typedef enum {
-        CVT_NULL,
-        CVT_BYTE,
-        CVT_INT,
-        CVT_FLOAT,
-        CVT_CHARPTR // ptr points to a char*, which points to the string.
-    } cvartype_t;
+/**
+ * @defgroup setVariableFlags Set Variable Flags.
+ *
+ * Use with the various Con_Set* routines (e.g., Con_SetInteger2).
+ */
+/*@{*/
+#define SVF_WRITE_OVERRIDE  0x1 /// Override a read-only restriction.
+/*@}*/
 
-    // Console variable.
-    typedef struct cvar_s {
-        char*           name;
-        int             flags;
-        cvartype_t      type;
-        void*           ptr; // Pointer to the data.
-        float           min, max; /* Minimum and maximum values
-                                     (for ints and floats). */
-        void          (*notifyChanged)(struct cvar_s* cvar);
-    } cvar_t;
+// Console variable types.
+typedef enum {
+    CVT_NULL,
+    CVT_BYTE,
+    CVT_INT,
+    CVT_FLOAT,
+    CVT_CHARPTR, // ptr points to a char*, which points to the string.
+    CVT_URIPTR, // ptr points to a Uri*, which points to the uri.
+    CVARTYPE_COUNT
+} cvartype_t;
 
-    //------------------------------------------------------------------------
+#define VALID_CVARTYPE(val) ((val) >= CVT_NULL && (val) < CVARTYPE_COUNT)
+
+/**
+ * Console variable template. Used with Con_AddVariable.
+ */
+typedef struct cvartemplate_s {
+    /// Path of the variable.
+    const char* path;
+
+    /// @see consoleVariableFlags
+    int flags;
+
+    /// Type of variable.
+    cvartype_t type;
+
+    /// Pointer to the user data.
+    void* ptr;
+
+    /// Minimum and maximum values (for ints and floats).
+    float min, max;
+
+    /// On-change notification callback.
+    void (*notifyChanged)(void);
+} cvartemplate_t;
+
+/**
+ * Helper macros for registering new console variables.
+ */
+#define C_VAR(path, ptr, type, flags, min, max, notifyChanged)            \
+    { cvartemplate_t _template = { path, flags, type, ptr, min, max, notifyChanged };    \
+        Con_AddVariable(&_template); }
+
+#define C_VAR_BYTE(path, ptr, flags, min, max)    \
+    C_VAR(path, ptr, CVT_BYTE, flags, min, max, NULL)
+
+#define C_VAR_INT(path, ptr, flags, min, max)     \
+    C_VAR(path, ptr, CVT_INT, flags, min, max, NULL)
+
+#define C_VAR_FLOAT(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_FLOAT, flags, min, max, NULL)
+
+#define C_VAR_CHARPTR(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, NULL)
+
+#define C_VAR_URIPTR(path, ptr, flags, min, max) \
+    C_VAR(path, ptr, CVT_URIPTR, flags, min, max, NULL)
+
+// Same as above but allow for a change notification callback func
+#define C_VAR_BYTE2(path, ptr, flags, min, max, notifyChanged)    \
+    C_VAR(path, ptr, CVT_BYTE, flags, min, max, notifyChanged)
+
+#define C_VAR_INT2(path, ptr, flags, min, max, notifyChanged)     \
+    C_VAR(path, ptr, CVT_INT, flags, min, max, notifyChanged)
+
+#define C_VAR_FLOAT2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_FLOAT, flags, min, max, notifyChanged)
+
+#define C_VAR_CHARPTR2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
+
+#define C_VAR_URIPTR2(path, ptr, flags, min, max, notifyChanged) \
+    C_VAR(path, ptr, CVT_URIPTR, flags, min, max, notifyChanged)
+
+//------------------------------------------------------------------------
     //
     // Networking
     //
@@ -1213,8 +1459,6 @@ typedef struct ticcmd_s {
     // World events (handled by clients)
     enum {
         DDWE_HANDSHAKE, // Shake hands with a new player.
-        //DDWE_PROJECTILE, // Spawn a projectile.
-        //DDWE_SECTOR_SOUND, // Play a sector sound.
         DDWE_DEMO_END // Demo playback ends.
     };
 
@@ -1231,13 +1475,13 @@ typedef struct ticcmd_s {
         char            address[64];
         int             port;
         unsigned short  ping; // Milliseconds.
-        char            game[32]; // DLL and version.
-        char            gameMode[17];
+        char            plugin[32]; // DLL and version.
+        char            gameIdentityKey[17];
         char            gameConfig[40];
         char            map[20];
         char            clientNames[128];
         unsigned int    wadNumber;
-        char            iwad[32];
+        char            iwad[32]; /// No longer necessary post ringzero
         char            pwads[128];
         int             data[3];
     } serverinfo_t;
@@ -1412,4 +1656,5 @@ typedef struct ticcmd_s {
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* LIBDENG_SHARED_H */

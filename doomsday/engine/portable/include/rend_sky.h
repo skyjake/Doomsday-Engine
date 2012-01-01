@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_sky.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,45 +23,25 @@
  */
 
 /**
- * rend_sky.h: Sky Sphere and 3D Models
+ * Sky Sphere and 3D Models.
+ *
+ * This version supports only two sky layers.
+ * (More would be a waste of resources?)
  */
 
-#ifndef __DOOMSDAY_SKY_H__
-#define __DOOMSDAY_SKY_H__
+#ifndef LIBDENG_RENDER_SKY_H
+#define LIBDENG_RENDER_SKY_H
 
-// Sky hemispheres.
-#define SKYHEMI_UPPER       0x1
-#define SKYHEMI_LOWER       0x2
-#define SKYHEMI_JUST_CAP    0x4 // Just draw the top or bottom cap.
-#define SKYHEMI_FADEOUT_BG  0x8 // Draw the fadeout bg when drawing the cap.
+/// Register the console commands, variables, etc..., of this module.
+void Rend_SkyRegister(void);
 
-typedef struct {
-    float           rgb[3]; // The RGB values.
-    short           set, use; // Is this set? Should be used?
-    float           limit; // .3 by default.
-} fadeout_t;
+/// Initialize this module.
+void Rend_SkyInit(void);
 
-// Sky layer flags.
-#define SLF_ENABLED         0x1 // Layer enabled.
-#define SLF_MASKED          0x2 // Mask the layer texture.
+/// Shutdown this module.
+void Rend_SkyShutdown(void);
 
-typedef struct {
-    int             flags;
-    material_t*     mat;
-    float           offset;
-    fadeout_t       fadeout;
-} skylayer_t;
+/// Render the current sky.
+void Rend_RenderSky(void);
 
-extern int      skyDetail;
-
-// Initialization:
-void            Rend_SkyRegister(void);
-
-// Functions:
-void            Rend_InitSky(void);
-void            Rend_ShutdownSky(void);
-void            Rend_SkyDetail(int quarterDivs, int rows);
-void            Rend_SkyParams(int layer, int param, void* data);
-void            Rend_RenderSky(int hemis);
-
-#endif
+#endif /* LIBDENG_RENDER_SKY_H */

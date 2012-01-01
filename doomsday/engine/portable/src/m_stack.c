@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,16 @@
  */
 
 /**
- * m_stack.c: A standard, basic stack.
+ * A standard, basic stack.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#if _DEBUG
+# include "de_console.h"
+#endif
+
 #include "m_stack.h"
 
 // MACROS ------------------------------------------------------------------

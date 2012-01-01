@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
 #include <math.h>
 
 #include "jhexen.h"
@@ -972,12 +973,10 @@ void C_DECL A_MinotaurFade2(mobj_t *actor)
 
 void C_DECL A_MinotaurRoam(mobj_t *actor)
 {
-    unsigned int *startTime = (unsigned int *) actor->args;
-
     actor->flags &= ~MF_SHADOW; // In case pain caused him to
     actor->flags &= ~MF_ALTSHADOW; // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1126,13 +1125,12 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
 void C_DECL A_MinotaurChase(mobj_t* actor)
 {
-    unsigned int*       startTime = (unsigned int *) actor->args;
-    statenum_t          state;
+    statenum_t state;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1593,7 +1591,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a map.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -1755,16 +1753,20 @@ static int addMobjToCorpseQueue(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void P_InitCreatureCorpseQueue(boolean corpseScan)
+/**
+ * Initialize queue.
+ */
+void P_InitCorpseQueue(void)
 {
-    // Initialize queue
     corpseQueueSlot = 0;
     memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
+}
 
-    if(!corpseScan)
-        return;
-
-    // Search the thinker list for corpses and place them in this queue.
+/**
+ * Search the thinker list for corpses and place them in this queue.
+ */
+void P_AddCorpsesToQueue(void)
+{
     DD_IterateThinkers(P_MobjThinker, addMobjToCorpseQueue, NULL);
 }
 
@@ -4179,16 +4181,17 @@ void C_DECL A_FreezeDeath(mobj_t* mo)
 
     if(mo->player)
     {
-        player_t*           plr = mo->player;
+        player_t* plr = mo->player;
 
         plr->damageCount = 0;
         plr->poisonCount = 0;
         plr->bonusCount = 0;
 
-        ST_doPaletteStuff(plr - players, false);
+        R_UpdateViewFilter(plr - players);
     }
     else if(mo->flags & MF_COUNTKILL && mo->special)
-    {   // Initiate monster death actions.
+    {
+        // Initiate monster death actions.
         P_ExecuteLineSpecial(mo->special, mo->args, NULL, 0, mo);
     }
 }

@@ -1,10 +1,10 @@
-/**\file
+/**\file p_oldsvg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_oldsvg.c:
+ * Original DOOM saved game loader.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -121,7 +121,7 @@ static void SV_ReadPlayer(player_t* pl)
     pl->powers[PT_IRONFEET] = (SV_ReadLong()? true : false);
     pl->powers[PT_ALLMAP] = (SV_ReadLong()? true : false);
     if(pl->powers[PT_ALLMAP])
-        AM_RevealMap(AM_MapForPlayer(pl - players), true);
+        ST_RevealAutomap(pl - players, true);
     pl->powers[PT_INFRARED] = (SV_ReadLong()? true : false);
 
     memset(pl->keys, 0, sizeof(pl->keys));
@@ -312,14 +312,17 @@ static void SV_ReadMobj(void)
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
     /* mo->spawnSpot.type = (int) */ SV_ReadShort();
 
-    mo->spawnSpot.flags = (int) SV_ReadShort();
-    mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
+    {
+    int spawnFlags = ((int) SV_ReadShort()) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
-    mo->spawnSpot.flags |= MSF_Z_FLOOR;
+    spawnFlags |= MSF_Z_FLOOR;
+    mo->spawnSpot.flags = spawnFlags;
+    }
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();
 
+    mo->info = info;
     SV_UpdateReadMobjFlags(mo, 0);
 
     mo->state = &STATES[PTR2INT(mo->state)];
@@ -335,11 +338,8 @@ static void SV_ReadMobj(void)
         mo->dPlayer->lookDir = 0; /* $unifiedangles */
     }
     P_MobjSetPosition(mo);
-    mo->info = info;
-    mo->floorZ =
-        P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
-    mo->ceilingZ =
-        P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+    mo->floorZ   = P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
+    mo->ceilingZ = P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
 }
 
 void P_v19_UnArchivePlayers(void)
@@ -390,14 +390,12 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
         P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
-                  P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL,
-                  P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_FLATS)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, *get++)));
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
-        /*xsec->tag =*/ *get++; // needed?
+        /*xsec->tag = **/get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -410,7 +408,7 @@ void P_v19_UnArchiveWorld(void)
 
         xline->flags = *get++;
         xline->special = *get++;
-        /*xline->tag =*/ *get++;
+        /*xline->tag = **/get++;
 
         for(j = 0; j < 2; ++j)
         {
@@ -425,12 +423,9 @@ void P_v19_UnArchiveWorld(void)
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, P_MaterialNumForIndex(*get++, MN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, *get++)));
         }
     }
 
@@ -591,8 +586,7 @@ typedef struct {
 
     floor->state = (int) SV_ReadLong();
     floor->newSpecial = SV_ReadLong();
-    floor->material = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+    floor->material = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_FLATS, SV_ReadShort()));
     floor->floorDestHeight = FIX2FLT(SV_ReadLong());
     floor->speed = FIX2FLT(SV_ReadLong());
 
@@ -860,7 +854,7 @@ boolean SV_v19_LoadGame(const char* savename)
     size_t              length;
     char                vcheck[VERSIONSIZE];
 
-    if(!(length = M_ReadFile(savename, &saveBuffer)))
+    if(!(length = M_ReadFile(savename, (char**)&saveBuffer)))
         return false;
 
     // Skip the description field.
@@ -871,13 +865,16 @@ boolean SV_v19_LoadGame(const char* savename)
     sprintf(vcheck, "version %i", SAVE_VERSION);
     if(strcmp((const char*) savePtr, vcheck))
     {
-        int                 saveVer;
+        int saveVer;
 
         sscanf((const char*) savePtr, "version %i", &saveVer);
         if(saveVer >= SAVE_VERSION_BASE)
         {
             // Must be from the wrong game.
             Con_Message("Bad savegame version.\n");
+            Z_Free(saveBuffer);
+            saveBuffer = NULL;
+            savePtr = NULL;
             return false;
         }
 
@@ -911,7 +908,6 @@ boolean SV_v19_LoadGame(const char* savename)
         Con_Error
             ("SV_v19_LoadGame: Bad savegame (consistency test failed!)\n");
 
-    // Success!
     Z_Free(saveBuffer);
     saveBuffer = NULL;
 

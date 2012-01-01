@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_file.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * dam_file.c: Doomsday Archived Map (DAM) reader/writer.
+ * Doomsday Archived Map (DAM) reader/writer.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,10 +31,12 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_dam.h"
 #include "de_defs.h"
 #include "de_misc.h"
 #include "de_refresh.h"
+#include "de_filesys.h"
 
 #include "p_mapdata.h"
 
@@ -71,8 +73,7 @@ typedef enum damsegment_e {
 } damsegment_t;
 
 typedef struct {
-    char            name[9];
-    material_namespace_t mnamespace;
+    ddstring_t path;
 } dictentry_t;
 
 typedef struct {
@@ -107,25 +108,22 @@ static materialdict_t *materialDict;
 static void addMaterialToDict(materialdict_t* dict, material_t* mat)
 {
 #if 0
-    int                 c;
-    dictentry_t*        e;
+    dictentry_t* e;
 
     // Has this already been registered?
+    { int c;
     for(c = 0; c < dict->count; c++)
     {
         if(dict->table[c].mnamespace == mat->mnamespace &&
-           !stricmp(dict->table[c].name, mat->name))
+           !stricmp(Str_Text(&dict->table[c].path), mat->name))
         {   // Yes. skip it...
             return;
         }
-    }
+    }}
 
-    e = &dict->table[dict->count];
-    dict->count++;
+    e = &dict->table[dict->count]; dict->count++;
 
-    strncpy(e->name, mat->name, 8);
-    e->name[8] = '\0';
-    e->mnamespace = mat->mnamespace;
+    Str_Init(&e->path); Str_Set(&e->path, mat->name);
 #endif
 }
 
@@ -179,19 +177,17 @@ static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
 
 static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 {
-    dictentry_t*        e = &dict->table[idx];
-
-    if(!strncmp(e->name, BADTEXNAME, 8))
+//    dictentry_t*e = &dict->table[idx];
+//    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
         return NULL;
-
-    return P_ToMaterial(P_MaterialNumForName(e->name, e->mnamespace));
+//    return Materials_ResolveUriCString(Str_Text(&e->path), e->mnamespace);
 }
 
-static boolean openMapFile(char* path, boolean write)
+static boolean openMapFile(const char* path, boolean write)
 {
     mapFile = NULL;
     mapFileVersion = 0;
-    mapFile = lzOpen(path, (write? F_WRITE_PACKED : F_READ_PACKED));
+    mapFile = lzOpen((char*)path, (write? F_WRITE_PACKED : F_READ_PACKED));
 
     return ((mapFile)? true : false);
 }
@@ -493,12 +489,12 @@ static void readSide(const gamemap_t *map, uint idx)
         suf->normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOffsetXY(suf, offset[VX], offset[VY]);
+        Surface_SetMaterialOrigin(suf, offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorRGBA(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        Surface_SetColorAndAlpha(suf, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
         suf->decorations = NULL;
         suf->numDecorations = 0;
     }
@@ -555,10 +551,6 @@ static void writeSector(const gamemap_t *map, uint idx)
         plane_t            *p = s->planes[i];
 
         writeFloat(p->height);
-        writeFloat(p->glow);
-        writeFloat(p->glowRGB[CR]);
-        writeFloat(p->glowRGB[CG]);
-        writeFloat(p->glowRGB[CB]);
         writeFloat(p->target);
         writeFloat(p->speed);
         writeFloat(p->visHeight);
@@ -587,7 +579,6 @@ static void writeSector(const gamemap_t *map, uint idx)
     writeFloat(s->bBox[BOXRIGHT]);
     writeFloat(s->bBox[BOXBOTTOM]);
     writeFloat(s->bBox[BOXTOP]);
-    writeLong(s->lightSource? ((s->lightSource - map->sectors) + 1) : 0);
     writeFloat(s->soundOrg.pos[VX]);
     writeFloat(s->soundOrg.pos[VY]);
     writeFloat(s->soundOrg.pos[VZ]);
@@ -634,10 +625,6 @@ static void readSector(const gamemap_t *map, uint idx)
         plane_t            *p = R_NewPlaneForSector(s);
 
         p->height = readFloat();
-        p->glow = readFloat();
-        p->glowRGB[CR] = readFloat();
-        p->glowRGB[CG] = readFloat();
-        p->glowRGB[CB] = readFloat();
         p->target = readFloat();
         p->speed = readFloat();
         p->visHeight = readFloat();
@@ -651,12 +638,12 @@ static void readSector(const gamemap_t *map, uint idx)
         p->surface.normal[VZ] = readFloat();
         offset[VX] = readFloat();
         offset[VY] = readFloat();
-        Surface_SetMaterialOffsetXY(&p->surface, offset[VX], offset[VY]);
+        Surface_SetMaterialOrigin(&p->surface, offset[VX], offset[VY]);
         rgba[CR] = readFloat();
         rgba[CG] = readFloat();
         rgba[CB] = readFloat();
         rgba[CA] = readFloat();
-        Surface_SetColorRGBA(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        Surface_SetColorAndAlpha(&p->surface, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         p->soundOrg.pos[VX] = readFloat();
         p->soundOrg.pos[VY] = readFloat();
@@ -673,7 +660,6 @@ static void readSector(const gamemap_t *map, uint idx)
     s->bBox[BOXBOTTOM] = readFloat();
     s->bBox[BOXTOP] = readFloat();
     secIdx = readLong();
-    s->lightSource = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
     s->soundOrg.pos[VX] = readFloat();
     s->soundOrg.pos[VY] = readFloat();
     s->soundOrg.pos[VZ] = readFloat();
@@ -752,7 +738,6 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     writeFloat(s->aaBox.maxY);
     writeFloat(s->midPoint.pos[VX]);
     writeFloat(s->midPoint.pos[VY]);
-    writeFloat(s->midPoint.pos[VZ]);
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeLong(s->polyObj? (s->polyObj->idx + 1) : 0);
 
@@ -779,7 +764,6 @@ static void readSubsector(const gamemap_t *map, uint idx)
     s->aaBox.maxY = readFloat();
     s->midPoint.pos[VX] = readFloat();
     s->midPoint.pos[VY] = readFloat();
-    s->midPoint.pos[VZ] = readFloat();
     obIdx = readLong();
     s->sector = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
@@ -1155,14 +1139,15 @@ static void archiveMap(gamemap_t *map, boolean write)
 
 static void archiveMaterialDict(materialdict_t *dict, boolean write)
 {
-    int                 i;
+    int i;
 
     if(write)
     {
         writeLong((long) dict->count);
         for(i = 0; i < dict->count; ++i)
         {
-            writeNBytes(dict->table[i].name, 8);
+            writeLong(Str_Length(&dict->table[i].path));
+            writeNBytes(Str_Text(&dict->table[i].path), Str_Length(&dict->table[i].path));
         }
     }
     else
@@ -1170,8 +1155,10 @@ static void archiveMaterialDict(materialdict_t *dict, boolean write)
         dict->count = readLong();
         for(i = 0; i < dict->count; ++i)
         {
-            readNBytes(dict->table[i].name, 8);
-            dict->table[i].name[8] = 0;
+            int len = readLong();
+            Str_Clear(&dict->table[i].path);
+            Str_Reserve(&dict->table[i].path, len);
+            readNBytes(Str_Text(&dict->table[i].path), len);
         }
     }
 }
@@ -1225,18 +1212,18 @@ static void archiveHeader(boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static boolean doArchiveMap(gamemap_t *map, filename_t path,
-                            boolean write)
+static boolean doArchiveMap(gamemap_t* map, const char* path, boolean write)
 {
-    if(!path)
+    if(NULL == path || !path[0])
         return false;
 
     // Open the file.
     if(!openMapFile(path, write))
         return false; // Hmm, invalid path?
 
-    materialDict = M_Calloc(sizeof(*materialDict));
+    Con_Message("DAM_MapRead: %s cached map %s.\n", write? "Saving" : "Loading", path);
 
+    materialDict = M_Calloc(sizeof(*materialDict));
     if(write)
         initMaterialDict(map, materialDict);
 
@@ -1253,45 +1240,33 @@ static boolean doArchiveMap(gamemap_t *map, filename_t path,
     return true;
 }
 
-/**
- * Load data from a Doomsday archived map file.
- */
-boolean DAM_MapWrite(gamemap_t *map, filename_t path)
+boolean DAM_MapWrite(gamemap_t* map, const char* path)
 {
     return doArchiveMap(map, path, true);
 }
 
-/**
- * Write the current state of a map into a Doomsday archived map file.
- */
-boolean DAM_MapRead(gamemap_t *map, filename_t path)
+boolean DAM_MapRead(gamemap_t* map, const char* path)
 {
-    Con_Message("DAM_MapRead: Loading cached map. %s\n", path);
     return doArchiveMap(map, path, false);
 }
 
-/**
- * Check if archived map file is current.
- */
-boolean DAM_MapIsValid(filename_t cachedMapDataFile, int markerLumpNum)
+boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
 {
-    uint                sourceTime, buildTime;
+    if(NULL != cachedMapPath && !cachedMapPath[0] && markerLumpNum >= 0)
+    {
+        uint sourceTime = F_GetLastModified(F_LumpSourceFile(markerLumpNum));
+        uint buildTime = F_GetLastModified(cachedMapPath);
 
-    // The source data must not be newer than the cached map data.
-    sourceTime = F_LastModified(W_LumpSourceFile(markerLumpNum));
-    buildTime = F_LastModified(cachedMapDataFile);
-
-    if(F_Access(cachedMapDataFile) && !(buildTime < sourceTime))
-    {   // Ok, lets check the header.
-        if(openMapFile(cachedMapDataFile, false))
-        {
-            archiveHeader(false);
-            closeMapFile();
-
-            if(mapFileVersion == DAM_VERSION)
-                return true; // Its good.
+        if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
+        {   // Ok, lets check the header.
+            if(openMapFile(cachedMapPath, false))
+            {
+                archiveHeader(false);
+                closeMapFile();
+                if(mapFileVersion == DAM_VERSION)
+                    return true; // Its good.
+            }
         }
     }
-
     return false;
 }

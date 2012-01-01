@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -67,9 +67,6 @@
 
 boolean bossKilled;
 
-mobj_t **brainTargets;
-int numBrainTargets;
-int numBrainTargetsAlloc;
 braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -548,7 +545,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a map.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -556,49 +553,6 @@ int P_Massacre(void)
     return count;
 }
 
-static int findBrainTarget(thinker_t* th, void* context)
-{
-    mobj_t*             mo = (mobj_t *) th;
-
-    if(mo->type == MT_BOSSTARGET)
-    {
-        if(numBrainTargets >= numBrainTargetsAlloc)
-        {
-            // Do we need to alloc more targets?
-            if(numBrainTargets == numBrainTargetsAlloc)
-            {
-                numBrainTargetsAlloc *= 2;
-                brainTargets =
-                    Z_Realloc(brainTargets,
-                              numBrainTargetsAlloc * sizeof(*brainTargets),
-                              PU_MAP);
-            }
-            else
-            {
-                numBrainTargetsAlloc = 32;
-                brainTargets =
-                    Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
-                             PU_MAP, NULL);
-            }
-        }
-
-        brainTargets[numBrainTargets++] = mo;
-    }
-
-    return false; // Continue iteration.
-}
-
-/**
- * Initialize boss brain targets at map startup, rather than at boss
- * wakeup, to prevent savegame-related crashes.
- *
- * \todo Does not belong in this file, find it a better home.
- */
-void P_SpawnBrainTargets(void)
-{
-    // Find all the target spots.
-    DD_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
-}
 
 typedef struct {
     mobjtype_t          type;
@@ -1619,7 +1573,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap != 6)
             return;
@@ -1714,7 +1668,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
 
     // Victory!
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap == 6)
         {
@@ -1791,7 +1745,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1803,7 +1757,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_METAL |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1812,6 +1766,49 @@ void C_DECL A_BabyMetal(mobj_t *mo)
 {
     S_StartSound(SFX_BSPWLK, mo);
     A_Chase(mo);
+}
+
+void P_BrainInitForMap(void)
+{
+    brain.easy = 0; // Always init easy to 0.
+    // Calling shutdown rather than clear allows us to free up memory.
+    P_BrainShutdown();
+}
+
+void P_BrainClearTargets(void)
+{
+    brain.numTargets = 0;
+    brain.targetOn = 0;
+}
+
+void P_BrainShutdown(void)
+{
+    if(brain.targets)
+        Z_Free(brain.targets);
+    brain.targets = 0;
+    brain.numTargets = 0;
+    brain.maxTargets = -1;
+    brain.targetOn = 0;
+}
+
+void P_BrainAddTarget(mobj_t* mo)
+{
+    if(brain.numTargets >= brain.maxTargets)
+    {
+        // Do we need to alloc more targets?
+        if(brain.numTargets == brain.maxTargets)
+        {
+            brain.maxTargets *= 2;
+            brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC);
+        }
+        else
+        {
+            brain.maxTargets = 32;
+            brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC, NULL);
+        }
+    }
+
+    brain.targets[brain.numTargets++] = mo;
 }
 
 void C_DECL A_BrainAwake(mobj_t* mo)
@@ -1883,7 +1880,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     mobj_t             *targ;
     mobj_t             *newmobj;
 
-    if(!numBrainTargets)
+    if(!brain.numTargets)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
@@ -1891,8 +1888,8 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return;
 
     // Shoot a cube at current target.
-    targ = brainTargets[brain.targetOn++];
-    brain.targetOn %= numBrainTargets;
+    targ = brain.targets[brain.targetOn++];
+    brain.targetOn %= brain.numTargets;
 
     // Spawn brain missile.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
@@ -1974,9 +1971,9 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
 void C_DECL A_PlayerScream(mobj_t *mo)
 {
-    int                 sound = SFX_PLDETH; // Default death sound.
+    int sound = SFX_PLDETH; // Default death sound.
 
-    if((gameMode == commercial) && (mo->health < -50))
+    if((gameModeBits & GM_ANY_DOOM2) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
         sound = SFX_PDIEHI;

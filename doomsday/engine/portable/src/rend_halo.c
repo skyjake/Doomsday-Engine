@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_halo.c: Halos and Flares
+ * Halos and Lens Flares.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -85,7 +85,7 @@ flare_t flares[NUM_FLARES] = {
 
 void H_Register(void)
 {
-    cvar_t          cvars[] = {
+    cvartemplate_t cvars[] = {
         {"rend-halo", 0, CVT_INT, &haloMode, 0, 5},
         {"rend-halo-realistic", 0, CVT_INT, &haloRealistic, 0, 1},
         {"rend-halo-bright", 0, CVT_INT, &haloBright, 0, 100},
@@ -115,9 +115,9 @@ void H_SetupState(boolean dosetup)
     }
     else
     {
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
         GL_BlendMode(BM_NORMAL);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
     }
 }
 
@@ -127,6 +127,7 @@ void H_SetupState(boolean dosetup)
  * @param x         X coordinate of the center of the halo.
  * @param y         Y coordinate of the center of the halo.
  * @param z         Z coordinate of the center of the halo.
+ * @param size      The precalculated radius of the primary halo.
  * @param primary   @c true = we'll draw the primary halo, otherwise the
  *                  secondary ones (which won't be clipped or occluded
  *                  by anything; they're drawn after everything else,
@@ -165,8 +166,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     if(haloFadeMax && haloFadeMax != haloFadeMin &&
        distanceToViewer < haloFadeMax && distanceToViewer >= haloFadeMin)
     {
-        fadeFactor = (distanceToViewer - haloFadeMin) /
-            (haloFadeMax - haloFadeMin);
+        fadeFactor = (distanceToViewer - haloFadeMin) / (haloFadeMax - haloFadeMin);
     }
 
     // viewSideVec is to the left.
@@ -181,10 +181,6 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     rgba[CB] = color[CB];
     rgba[CA] = 1; // Real alpha is set later.
 
-    // Setup the proper DGL state.
-    if(primary)
-        H_SetupState(true);
-
     center[VX] = x;
     center[VZ] = y;
     center[VY] = z;
@@ -198,19 +194,18 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     viewPos[VX] = vx;
     viewPos[VY] = vy;
     viewPos[VZ] = vz;
-    for(i = 0; i < 3; i++)
+
+    for(i = 0; i < 3; ++i)
         normalViewToCenter[i] = viewToCenter[i] = center[i] - viewPos[i];
+    M_Normalize(normalViewToCenter);
 
     // Calculate the dimming factor for secondary flares.
-    M_Normalize(normalViewToCenter);
     secDimFactor = M_DotProduct(normalViewToCenter, viewData->frontVec);
 
-    scale = M_DotProduct(viewToCenter, viewData->frontVec) /
-                M_DotProduct(viewData->frontVec, viewData->frontVec);
+    scale = M_DotProduct(viewToCenter, viewData->frontVec) / M_DotProduct(viewData->frontVec, viewData->frontVec);
 
-    for(i = 0; i < 3; i++)
-        haloPos[i] = mirror[i] =
-            (viewData->frontVec[i] * scale - viewToCenter[i]) * 2;
+    for(i = 0; i < 3; ++i)
+        haloPos[i] = mirror[i] = (viewData->frontVec[i] * scale - viewToCenter[i]) * 2;
     // Now adding 'mirror' to a position will mirror it.
 
     // Calculate texture turn angle.
@@ -243,18 +238,6 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         }
     }
 
-    // Radius is affected by the precalculated 'flaresize' and the
-    // distance to the source.
-
-    // Prepare the texture rotation matrix.
-    glMatrixMode(GL_TEXTURE);
-    glPushMatrix();
-    glLoadIdentity();
-    // Rotate around the center of the texture.
-    glTranslatef(0.5f, 0.5f, 0);
-    glRotatef(turnAngle / PI * 180, 0, 0, 1);
-    glTranslatef(-0.5f, -0.5f, 0);
-
     // The overall brightness of the flare.
     colorAverage = (rgba[CR] + rgba[CG] + rgba[CB] + 1) / 4;
 
@@ -265,29 +248,38 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     else
         distanceDim = 1;
 
-    for(i = 0, fl = flares; i < haloMode && i < NUM_FLARES; i++, fl++)
+    // Setup GL state.
+    if(primary)
+        H_SetupState(true);
+
+    // Prepare the texture rotation matrix.
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+    glLoadIdentity();
+    // Rotate around the center of the texture.
+    glTranslatef(0.5f, 0.5f, 0);
+    glRotatef(turnAngle / PI * 180, 0, 0, 1);
+    glTranslatef(-0.5f, -0.5f, 0);
+
+    for(i = 0, fl = flares; i < haloMode && i < NUM_FLARES; ++i, fl++)
     {
         if(primary && i)
             break;
         if(!primary && !i)
             continue;
 
-        f = 1;
-        if(i)
-        {
-            // Secondary flare dimming?
-            f = minHaloSize * size / distanceToViewer;
-            if(f > 1)
-                f = 1;
-        }
+        // Calculate the dimming factor.
+        if(i > 0)
+            // Secondary flares receive additional dimming.
+            f = MAX_OF(minHaloSize * size / distanceToViewer, 1);
+        else
+            f = 1;
         f *= distanceDim * brightnessFactor;
 
         // The rgba & alpha of the flare.
-        rgba[CA] = f * (fl->alpha * occlusionFactor * fadeFactor +
-                 colorAverage * colorAverage / 5);
+        rgba[CA] = f * (fl->alpha * occlusionFactor * fadeFactor + colorAverage * colorAverage / 5);
 
-        radius = size * (1 - colorAverage / 3) +
-            distanceToViewer / haloZMagDiv;
+        radius = size * (1 - colorAverage / 3) + distanceToViewer / haloZMagDiv;
         if(radius < haloMinRadius)
             radius = haloMinRadius;
         radius *= occlusionFactor;
@@ -360,18 +352,14 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        if(renderTextures)
-            GL_BindTexture(tex, GL_LINEAR);
-        else
-            glBindTexture(GL_TEXTURE_2D, 0);
+        GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
+        glEnable(GL_TEXTURE_2D);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
         // mode inadvertently)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                        GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glColor4fv(rgba);
 
@@ -393,12 +381,14 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                        haloPos[VY] - radY * rightOff[VY],
                        haloPos[VZ] - radX * rightOff[VZ]);
         glEnd();
+
+        glDisable(GL_TEXTURE_2D);
     }
 
     glMatrixMode(GL_TEXTURE);
     glPopMatrix();
 
-    // Undo the changes to the DGL state.
+    // Restore previous GL state.
     if(primary)
         H_SetupState(false);
 

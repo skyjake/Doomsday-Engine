@@ -38,6 +38,7 @@ import sb.widget.button as wg
 import sb.profdb as pr
 import sb.confdb as st
 import sb.aodb as ao
+import sb.expressions as ex
 
 
 class MessageTimer (ui.Timer):
@@ -304,7 +305,7 @@ def generateOptions(profile):
 
     # Are there any system-specific options defined?
     if st.isDefined('common-options'):
-        cmdLine.append(st.getSystemString('common-options'))
+        cmdLine.append(ex.evaluate(st.getSystemString('common-options'), None))
 
     # All profiles use the same runtime directory.
     if st.isDefined('doomsday-base'):

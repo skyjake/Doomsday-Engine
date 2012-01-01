@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ enum {
     MO_ANGLE,
     MO_TYPE,
     MO_DOOMEDNUM,
+    MO_SKILLMODES,
     MO_FLAGS,
     MO_TAG
 };
@@ -52,8 +53,6 @@ enum {
 void            P_Init(void);
 void            P_RegisterMapObjs(void);
 
-int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
-                                             valuetype_t type, void *data);
-int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
-                                              void *data);
+int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop, valuetype_t type, void *data);
+int             P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data);
 #endif

@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_loop.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_loop.c: Main Loop
+ * Main Loop.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -207,27 +207,34 @@ void DD_DrawAndBlit(void)
 
     if(drawGame)
     {
-        // Interpolate the world ready for drawing view(s) of it.
-        R_BeginWorldFrame();
-
-        // Set up the basic 320x200 legacy projection for the game.
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, 320, 200, 0, -1, 1);
-
-        R_RenderViewPorts();
-
-        // Draw any over/outside view window game graphics (e.g. fullscreen
-        // menus and other displays).
-        if(gx.G_Drawer2 && !(UI_IsActive() && UI_Alpha() >= 1.0))
+        if(DD_GameLoaded())
         {
-            gx.G_Drawer2();
+            // Interpolate the world ready for drawing view(s) of it.
+            R_BeginWorldFrame();
+            R_RenderViewPorts();
+        }
+        else if(titleFinale == 0)
+        {
+            // Title finale is not playing. Lets do it manually.
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+
+            R_RenderBlankView();
+
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
         }
 
-        // Restore the projection mode that was previously in effect.
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
+        if(!(UI_IsActive() && UI_Alpha() >= 1.0))
+        {
+            UI2_Drawer();
+
+            // Draw any full window game graphics.
+            if(DD_GameLoaded() && gx.DrawWindow)
+                gx.DrawWindow(&theWindow->geometry.size);
+        }
     }
 
     if(Con_TransitionInProgress())
@@ -263,7 +270,7 @@ void DD_DrawAndBlit(void)
 void DD_StartFrame(void)
 {
     if(!isDedicated)
-        GL_UploadDeferredContent(FRAME_DEFERRED_UPLOAD_TIMEOUT);
+        GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     frameStartTime = Sys_GetTimef();
 
@@ -343,9 +350,19 @@ void DD_Ticker(timespan_t time)
         // Demo ticker. Does stuff like smoothing of view angles.
         Demo_Ticker(time);
         P_Ticker(time);
+        UI2_Ticker(time);
+
+        // InFine ticks whenever it's active.
+        FI_Ticker();
 
         // Game logic.
-        gx.Ticker(time);
+        if(DD_GameLoaded() && gx.Ticker)
+        {
+            gx.Ticker(time);
+        }
+
+        // Windowing system ticks.
+        R_Ticker(time);
 
         if(isClient)
             Cl_Ticker(time);
@@ -378,7 +395,7 @@ void DD_Ticker(timespan_t time)
     }
 
     // Plugins tick always.
-    Plug_DoHook(HOOK_TICKER, 0, &time);
+    DD_CallHooks(HOOK_TICKER, 0, &time);
 
     // The netcode gets to tick, too.
     Net_Ticker(time);
@@ -410,8 +427,8 @@ void DD_AdvanceTime(timespan_t time)
             if(oldGameTic == SECONDS_TO_TICKS(gameTime))
             {
 #ifdef _DEBUG
-                VERBOSE( Con_Message("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
-                                     oldGameTic, frameTimePos) );
+                VERBOSE2( Con_Message("DD_AdvanceTime: Syncing gameTime with sharp ticks (tic=%i pos=%f)\n",
+                                      oldGameTic, frameTimePos) );
 #endif
                 // Realign.
                 gameTime = (SECONDS_TO_TICKS(gameTime) + 1) / 35.f;

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@
 #include <string.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h" // For debug display
 #include "de_refresh.h" // For debug display
+#include "de_render.h" // For debug display
 #include "m_vector.h" // For debug display
 
 #include "m_gridmap.h"
@@ -482,7 +484,6 @@ void Gridmap_Debug(Gridmap* gm)
     vec2_t start, end;
     assert(gm);
 
-    glDisable(GL_TEXTURE_2D);
     // We'll be changing the color, so query the current and restore later.
     glGetFloatv(GL_CURRENT_COLOR, oldColor);
 
@@ -515,5 +516,4 @@ void Gridmap_Debug(Gridmap* gm)
 
     // Restore GL state.
     glColor4fv(oldColor);
-    glEnable(GL_TEXTURE_2D);
 }

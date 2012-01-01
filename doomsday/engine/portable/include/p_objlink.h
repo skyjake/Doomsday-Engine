@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,15 +83,17 @@ typedef struct {
  * Can be used as an iterator.
  *
  * @params paramaters  @see linkobjtossecparams_t
- * @return  @c true (always).
+ * @return  @c false (always).
  */
-boolean RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);
+int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);
 
 /**
  * Traverse the list of objects of the specified @a type which have been linked
  * with @a subsector for the current render frame.
  */
-boolean R_IterateSubsectorContacts(subsector_t* subsector, objtype_t type,
-    boolean (*func) (void* object, void* paramaters), void* paramaters);
+int R_IterateSubsectorContacts2(subsector_t* subsector, objtype_t type,
+    int (*func) (void* object, void* paramaters), void* paramaters);
+int R_IterateSubsectorContacts(subsector_t* subsector, objtype_t type,
+    int (*func) (void* object, void* paramaters)); /*paramaters=NULL*/
 
 #endif /* LIBDENG_OBJLINK_BLOCKMAP_H */

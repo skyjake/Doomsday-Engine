@@ -141,15 +141,24 @@
 		</VirtualTargets>
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
+		<Unit filename="..\..\engine\api\dd_animator.h" />
+		<Unit filename="..\..\engine\api\dd_fontrenderer.h" />
 		<Unit filename="..\..\engine\api\dd_gl.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
 		<Unit filename="..\..\engine\api\dd_share.h" />
+		<Unit filename="..\..\engine\api\dd_string.h" />
 		<Unit filename="..\..\engine\api\dd_types.h" />
+		<Unit filename="..\..\engine\api\dd_ui.h" />
+		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
+		<Unit filename="..\..\engine\api\dd_wad.h" />
+		<Unit filename="..\..\engine\api\dfile.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
+		<Unit filename="..\..\engine\api\stringpool.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_mus.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_sfx.h" />
+		<Unit filename="..\..\engine\api\uri.h" />
 		<Unit filename="..\..\engine\mac\include\DoomsdayRunner.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -176,27 +185,30 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\include\abstractfile.h" />
 		<Unit filename="..\..\engine\portable\include\b_command.h" />
 		<Unit filename="..\..\engine\portable\include\b_context.h" />
 		<Unit filename="..\..\engine\portable\include\b_device.h" />
 		<Unit filename="..\..\engine\portable\include\b_main.h" />
+		<Unit filename="..\..\engine\portable\include\bitmapfont.h" />
+		<Unit filename="..\..\engine\portable\include\blockset.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_edge.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_intersection.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_map.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_main.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_node.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_superblock.h" />
+		<Unit filename="..\..\engine\portable\include\cbuffer.h" />
 		<Unit filename="..\..\engine\portable\include\cl_def.h" />
 		<Unit filename="..\..\engine\portable\include\cl_frame.h" />
+		<Unit filename="..\..\engine\portable\include\cl_infine.h" />
 		<Unit filename="..\..\engine\portable\include\cl_mobj.h" />
 		<Unit filename="..\..\engine\portable\include\cl_player.h" />
 		<Unit filename="..\..\engine\portable\include\cl_sound.h" />
 		<Unit filename="..\..\engine\portable\include\cl_world.h" />
 		<Unit filename="..\..\engine\portable\include\con_bar.h" />
-		<Unit filename="..\..\engine\portable\include\con_buffer.h" />
 		<Unit filename="..\..\engine\portable\include\con_busy.h" />
 		<Unit filename="..\..\engine\portable\include\con_config.h" />
-		<Unit filename="..\..\engine\portable\include\con_decl.h" />
 		<Unit filename="..\..\engine\portable\include\con_main.h" />
 		<Unit filename="..\..\engine\portable\include\dam_blockmap.h" />
 		<Unit filename="..\..\engine\portable\include\dam_file.h" />
@@ -210,8 +222,6 @@
 		<Unit filename="..\..\engine\portable\include\dd_main.h" />
 		<Unit filename="..\..\engine\portable\include\dd_pinit.h" />
 		<Unit filename="..\..\engine\portable\include\dd_version.h" />
-		<Unit filename="..\..\engine\portable\include\dd_wad.h" />
-		<Unit filename="..\..\engine\portable\include\dd_zip.h" />
 		<Unit filename="..\..\engine\portable\include\dd_zone.h" />
 		<Unit filename="..\..\engine\portable\include\de_audio.h" />
 		<Unit filename="..\..\engine\portable\include\de_base.h" />
@@ -220,7 +230,9 @@
 		<Unit filename="..\..\engine\portable\include\de_dam.h" />
 		<Unit filename="..\..\engine\portable\include\de_defs.h" />
 		<Unit filename="..\..\engine\portable\include\de_edit.h" />
+		<Unit filename="..\..\engine\portable\include\de_filesys.h" />
 		<Unit filename="..\..\engine\portable\include\de_graphics.h" />
+		<Unit filename="..\..\engine\portable\include\de_infine.h" />
 		<Unit filename="..\..\engine\portable\include\de_misc.h" />
 		<Unit filename="..\..\engine\portable\include\de_network.h" />
 		<Unit filename="..\..\engine\portable\include\de_platform.h" />
@@ -234,9 +246,17 @@
 		<Unit filename="..\..\engine\portable\include\def_share.h" />
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
+		<Unit filename="..\..\engine\portable\include\fi_main.h" />
+		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
+		<Unit filename="..\..\engine\portable\include\filelist.h" />
+		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
+		<Unit filename="..\..\engine\portable\include\font.h" />
+		<Unit filename="..\..\engine\portable\include\fonts.h" />
+		<Unit filename="..\..\engine\portable\include\fs_main.h" />
+		<Unit filename="..\..\engine\portable\include\fs_util.h" />
+		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
-		<Unit filename="..\..\engine\portable\include\gl_font.h" />
 		<Unit filename="..\..\engine\portable\include\gl_hq2x.h" />
 		<Unit filename="..\..\engine\portable\include\gl_main.h" />
 		<Unit filename="..\..\engine\portable\include\gl_model.h" />
@@ -245,11 +265,14 @@
 		<Unit filename="..\..\engine\portable\include\gl_tex.h" />
 		<Unit filename="..\..\engine\portable\include\gl_texmanager.h" />
 		<Unit filename="..\..\engine\portable\include\gl_tga.h" />
+		<Unit filename="..\..\engine\portable\include\image.h" />
+		<Unit filename="..\..\engine\portable\include\lumpdirectory.h" />
+		<Unit filename="..\..\engine\portable\include\lumpfile.h" />
+		<Unit filename="..\..\engine\portable\include\lumpinfo.h" />
 		<Unit filename="..\..\engine\portable\include\m_args.h" />
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
 		<Unit filename="..\..\engine\portable\include\m_decomp64.h" />
-		<Unit filename="..\..\engine\portable\include\m_filehash.h" />
 		<Unit filename="..\..\engine\portable\include\m_gridmap.h" />
 		<Unit filename="..\..\engine\portable\include\m_huffman.h" />
 		<Unit filename="..\..\engine\portable\include\m_linkedlist.h" />
@@ -259,9 +282,9 @@
 		<Unit filename="..\..\engine\portable\include\m_nodepile.h" />
 		<Unit filename="..\..\engine\portable\include\m_profiler.h" />
 		<Unit filename="..\..\engine\portable\include\m_stack.h" />
-		<Unit filename="..\..\engine\portable\include\m_string.h" />
 		<Unit filename="..\..\engine\portable\include\m_vector.h" />
 		<Unit filename="..\..\engine\portable\include\mapdata.hs" />
+		<Unit filename="..\..\engine\portable\include\materialvariant" />
 		<Unit filename="..\..\engine\portable\include\net_buf.h" />
 		<Unit filename="..\..\engine\portable\include\net_demo.h" />
 		<Unit filename="..\..\engine\portable\include\net_event.h" />
@@ -276,7 +299,7 @@
 		<Unit filename="..\..\engine\portable\include\p_mapdata.h" />
 		<Unit filename="..\..\engine\portable\include\p_maptypes.h" />
 		<Unit filename="..\..\engine\portable\include\p_maputil.h" />
-		<Unit filename="..\..\engine\portable\include\p_material.h" />
+		<Unit filename="..\..\engine\portable\include\material.h" />
 		<Unit filename="..\..\engine\portable\include\p_materialmanager.h" />
 		<Unit filename="..\..\engine\portable\include\p_object.h" />
 		<Unit filename="..\..\engine\portable\include\p_objlink.h" />
@@ -293,9 +316,10 @@
 		<Unit filename="..\..\engine\portable\include\p_think.h" />
 		<Unit filename="..\..\engine\portable\include\p_ticker.h" />
 		<Unit filename="..\..\engine\portable\include\p_vertex.h" />
+		<Unit filename="..\..\engine\portable\include\pathdirectory.h" />
 		<Unit filename="..\..\engine\portable\include\r_data.h" />
 		<Unit filename="..\..\engine\portable\include\r_draw.h" />
-		<Unit filename="..\..\engine\portable\include\r_extres.h" />
+		<Unit filename="..\..\engine\portable\include\r_fakeradio.h" />
 		<Unit filename="..\..\engine\portable\include\r_lgrid.h" />
 		<Unit filename="..\..\engine\portable\include\r_lumobjs.h" />
 		<Unit filename="..\..\engine\portable\include\r_main.h" />
@@ -309,8 +333,9 @@
 		<Unit filename="..\..\engine\portable\include\rend_clip.h" />
 		<Unit filename="..\..\engine\portable\include\rend_console.h" />
 		<Unit filename="..\..\engine\portable\include\rend_decor.h" />
-		<Unit filename="..\..\engine\portable\include\rend_dyn.h" />
+		<Unit filename="..\..\engine\portable\include\rend_dynlight.h" />
 		<Unit filename="..\..\engine\portable\include\rend_fakeradio.h" />
+		<Unit filename="..\..\engine\portable\include\rend_font.h" />
 		<Unit filename="..\..\engine\portable\include\rend_halo.h" />
 		<Unit filename="..\..\engine\portable\include\rend_list.h" />
 		<Unit filename="..\..\engine\portable\include\rend_main.h" />
@@ -319,6 +344,8 @@
 		<Unit filename="..\..\engine\portable\include\rend_shadow.h" />
 		<Unit filename="..\..\engine\portable\include\rend_sky.h" />
 		<Unit filename="..\..\engine\portable\include\rend_sprite.h" />
+		<Unit filename="..\..\engine\portable\include\resourcenamespace.h" />
+		<Unit filename="..\..\engine\portable\include\resourcerecord.h" />
 		<Unit filename="..\..\engine\portable\include\s_cache.h" />
 		<Unit filename="..\..\engine\portable\include\s_environ.h" />
 		<Unit filename="..\..\engine\portable\include\s_logic.h" />
@@ -328,6 +355,7 @@
 		<Unit filename="..\..\engine\portable\include\s_wav.h" />
 		<Unit filename="..\..\engine\portable\include\sv_def.h" />
 		<Unit filename="..\..\engine\portable\include\sv_frame.h" />
+		<Unit filename="..\..\engine\portable\include\sv_infine.h" />
 		<Unit filename="..\..\engine\portable\include\sv_missile.h" />
 		<Unit filename="..\..\engine\portable\include\sv_pool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_sound.h" />
@@ -337,20 +365,29 @@
 		<Unit filename="..\..\engine\portable\include\sys_audiod_sdlmixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_console.h" />
 		<Unit filename="..\..\engine\portable\include\sys_direc.h" />
-		<Unit filename="..\..\engine\portable\include\sys_file.h" />
 		<Unit filename="..\..\engine\portable\include\sys_findfile.h" />
 		<Unit filename="..\..\engine\portable\include\sys_input.h" />
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
 		<Unit filename="..\..\engine\portable\include\sys_opengl.h" />
+		<Unit filename="..\..\engine\portable\include\sys_reslocator.h" />
 		<Unit filename="..\..\engine\portable\include\sys_sock.h" />
 		<Unit filename="..\..\engine\portable\include\sys_system.h" />
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_window.h" />
 		<Unit filename="..\..\engine\portable\include\tab_anorms.h" />
+		<Unit filename="..\..\engine\portable\include\texture.h" />
+		<Unit filename="..\..\engine\portable\include\texturecontent.h" />
+		<Unit filename="..\..\engine\portable\include\texturevariant.h" />
+		<Unit filename="..\..\engine\portable\include\texturespecification.h" />
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
+		<Unit filename="..\..\engine\portable\include\ui2_main.h" />
+		<Unit filename="..\..\engine\portable\include\wadfile.h" />
+		<Unit filename="..\..\engine\portable\include\zipfile.h" />
+		<Unit filename="..\..\engine\portable\src\abstractfile.c" />
+		<Unit filename="..\..\engine\portable\src\animator.c" />
 		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -366,6 +403,8 @@
 		<Unit filename="..\..\engine\portable\src\b_util.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\bitmapfont.c" />
+		<Unit filename="..\..\engine\portable\src\blockset.c" />
 		<Unit filename="..\..\engine\portable\src\bsp_edge.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -384,6 +423,7 @@
 		<Unit filename="..\..\engine\portable\src\bsp_superblock.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\cbuffer.c" />
 		<Unit filename="..\..\engine\portable\src\cl_frame.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -408,10 +448,10 @@
 		<Unit filename="..\..\engine\portable\src\cl_world.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\con_bar.c">
+		<Unit filename="..\..\engine\portable\src\colorpalette.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\con_buffer.c">
+		<Unit filename="..\..\engine\portable\src\con_bar.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\con_busy.c">
@@ -459,13 +499,10 @@
 		<Unit filename="..\..\engine\portable\src\dd_plugin.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_wad.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\dd_zip.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\dd_zone.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="..\..\engine\portable\src\dd_wad.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\def_data.c">
@@ -477,13 +514,11 @@
 		<Unit filename="..\..\engine\portable\src\def_read.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\dfile.c" />
 		<Unit filename="..\..\engine\portable\src\dgl_common.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\dgl_draw.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\dgl_texture.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\edit_bias.c">
@@ -492,15 +527,17 @@
 		<Unit filename="..\..\engine\portable\src\edit_map.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\gl_defer.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\gl_draw.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\gl_font.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\fi_main.c" />
+		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
+		<Unit filename="..\..\engine\portable\src\filelist.c" />
+		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
+		<Unit filename="..\..\engine\portable\src\fonts.c" />
+		<Unit filename="..\..\engine\portable\src\fs_main.c" />
+		<Unit filename="..\..\engine\portable\src\fs_util.c" />
+		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
+		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
+		<Unit filename="..\..\engine\portable\src\gl_draw.c" />
+		<Unit filename="..\..\engine\portable\src\gl_drawvectorgraphic.c" />
 		<Unit filename="..\..\engine\portable\src\gl_hq2x.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -522,6 +559,9 @@
 		<Unit filename="..\..\engine\portable\src\gl_tga.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\image.c" />
+		<Unit filename="..\..\engine\portable\src\lumpdirectory.c" />
+		<Unit filename="..\..\engine\portable\src\lumpfile.c" />
 		<Unit filename="..\..\engine\portable\src\m_args.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -532,9 +572,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_decomp64.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\m_filehash.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_gridmap.c">
@@ -567,6 +604,7 @@
 		<Unit filename="..\..\engine\portable\src\m_vector.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\materialvariant.c" />
 		<Unit filename="..\..\engine\portable\src\net_buf.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -609,7 +647,7 @@
 		<Unit filename="..\..\engine\portable\src\p_maputil.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\p_material.c">
+		<Unit filename="..\..\engine\portable\src\material.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\p_materialmanager.c">
@@ -657,16 +695,15 @@
 		<Unit filename="..\..\engine\portable\src\p_ticker.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\p_vertex.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\p_vertex.c"/>
+		<Unit filename="..\..\engine\portable\src\pathdirectory.c" />
 		<Unit filename="..\..\engine\portable\src\r_data.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_draw.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\r_extres.c">
+		<Unit filename="..\..\engine\portable\src\r_fakeradio.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_lgrid.c">
@@ -708,12 +745,13 @@
 		<Unit filename="..\..\engine\portable\src\rend_decor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\rend_dyn.c">
+		<Unit filename="..\..\engine\portable\src\rend_dynlight.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\rend_fakeradio.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\rend_font.c" />
 		<Unit filename="..\..\engine\portable\src\rend_halo.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -738,6 +776,8 @@
 		<Unit filename="..\..\engine\portable\src\rend_sprite.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\resourcenamespace.c" />
+		<Unit filename="..\..\engine\portable\src\resourcerecord.c" />
 		<Unit filename="..\..\engine\portable\src\s_cache.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -759,9 +799,9 @@
 		<Unit filename="..\..\engine\portable\src\s_wav.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\sv_frame.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\stringpool.c" />
+		<Unit filename="..\..\engine\portable\src\sv_frame.c" />
+		<Unit filename="..\..\engine\portable\src\sv_infine.c" />
 		<Unit filename="..\..\engine\portable\src\sv_main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -783,9 +823,6 @@
 		<Unit filename="..\..\engine\portable\src\sys_audiod_sdlmixer.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\sys_filein.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\sys_master.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -795,6 +832,7 @@
 		<Unit filename="..\..\engine\portable\src\sys_opengl.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_reslocator.c" />
 		<Unit filename="..\..\engine\portable\src\sys_sdl_window.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
@@ -811,6 +849,8 @@
 		<Unit filename="..\..\engine\portable\src\tab_tables.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\texture.c" />
+		<Unit filename="..\..\engine\portable\src\texturevariant.c" />
 		<Unit filename="..\..\engine\portable\src\ui_main.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -820,6 +860,10 @@
 		<Unit filename="..\..\engine\portable\src\ui_panel.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\ui2_main.c" />
+		<Unit filename="..\..\engine\portable\src\uri.c" />
+		<Unit filename="..\..\engine\portable\src\wadfile.c" />
+		<Unit filename="..\..\engine\portable\src\zipfile.c" />
 		<Unit filename="..\..\engine\unix\include\dd_uinit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

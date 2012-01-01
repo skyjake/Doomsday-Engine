@@ -1,10 +1,10 @@
-/**\file
+/**\file h_config.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * h_config.h: jHeretic configuration.
+ * jHeretic configuration.
  *
  * Global settings. Most of these are console variables.
  */
@@ -36,13 +36,16 @@
 #endif
 
 #include "doomdef.h"
+#include "hu_lib.h"
 
 enum {
     HUD_AMMO,
     HUD_ARMOR,
     HUD_KEYS,
     HUD_HEALTH,
-    HUD_CURRENTITEM
+    HUD_READYITEM,
+    HUD_LOG,
+    NUMHUDDISPLAYS
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).
@@ -58,6 +61,14 @@ typedef enum {
     HUE_ON_PICKUP_INVITEM,
     NUMHUDUNHIDEEVENTS
 } hueevent_t;
+
+// Counter Cheat flags.
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRETS         0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRETS_PRCNT   0x20
 
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
@@ -83,37 +94,44 @@ typedef struct jheretic_config_s {
 
     byte            slidingCorpses;
     int             echoMsg;
-    float           menuScale;
-    int             menuEffects;
     int             hudFog;
-    float           menuGlitter;
+
+    float           menuScale;
+    int             menuEffectFlags;
     float           menuShadow;
 
     byte            menuSlam;
-    byte            menuHotkeys;
-    byte            askQuickSaveLoad;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
+    byte            menuShortcutsEnabled;
+    byte            menuScaleMode;
+    int             menuPatchReplaceMode;
+    byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
+
+    byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
+
+    byte            confirmQuickGameSave;
     byte            hudShown[6];   // HUD data visibility.
     float           hudScale;      // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            usePatchReplacement;
     byte            moveCheckZ;    // if true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColor[3];
-    float           menuColor2[3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            respawnMonstersNightmare;
@@ -123,7 +141,7 @@ typedef struct jheretic_config_s {
 
 
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
@@ -141,8 +159,8 @@ typedef struct jheretic_config_s {
     byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
     byte            fixPlaneScrollMaterialsEastOnly; // Fix Heretic bug; plane materials would only scroll east.
 
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
 
     // Automap stuff.
 /*  int             automapPos;
@@ -172,7 +190,6 @@ typedef struct jheretic_config_s {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
 
     char*           chatMacros[10];
@@ -195,7 +212,7 @@ typedef struct jheretic_config_s {
 
     byte            netMobDamageModifier;    // multiplier for non-player mobj damage
     byte            netMobHealthModifier;    // health modifier for non-player mobjs
-    int             netGravity;              // multiplayer custom gravity
+    int             netGravity;              // Custom gravity multiplier.
     byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
     byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
     byte            netNoMonsters;

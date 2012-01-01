@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include "doomsday.h"
+#include "fs_util.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -254,20 +255,26 @@ static boolean getNextEvent(midi_event_t* ev)
  */
 boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
 {
-    FILE*               file;
-    unsigned char       buffer[80];
-    int                 i, trackSizeOffset, trackSize;
-    midi_event_t        ev;
-    struct mus_header*  header;
+    unsigned char buffer[80];
+    int i, trackSizeOffset, trackSize;
+    struct mus_header* header;
+    ddstring_t nativePath;
+    midi_event_t ev;
+    FILE* file;
 
-    if(!outFile || !outFile[0])
-        return false;
+    if(!outFile || !outFile[0]) return false;
 
-    if((file = fopen(outFile, "wb")) == NULL)
+    Str_Init(&nativePath); Str_Set(&nativePath, outFile);
+    F_ToNativeSlashes(&nativePath, &nativePath);
+
+    file = fopen(Str_Text(&nativePath), "wb");
+    if(!file)
     {
-        Con_Message("M_Mus2Midi: Failed opening output file %s.\n", outFile);
+        Con_Message("Warning:M_Mus2Midi: Failed opening output file \"%s\".\n", F_PrettyPath(Str_Text(&nativePath)));
+        Str_Free(&nativePath);
         return false;
     }
+    Str_Free(&nativePath);
 
     // Start with the MIDI header.
     strcpy((char*)buffer, "MThd");

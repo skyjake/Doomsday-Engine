@@ -123,7 +123,9 @@ def runWizard():
         'heretic': 'HERETIC.WAD',
         'hexen': 'HEXEN.WAD',
         'hexen-demo': 'HEXEN.WAD',
-        'hexen-dk': 'HEXEN.WAD'
+        'hexen-dk': 'HEXEN.WAD',
+        'hacx': 'HACX.WAD',
+        'chex': 'CHEX.WAD'
     }
     
     events.mute()

@@ -1,0 +1,35 @@
+# DOOM2 - Light Decorations
+#
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+#####====--- LIGHT DECORATIONS ---====#####
+#
+# The default flags allow using these only with the original textures.
+# Use "dcf_pwad" and "dcf_ext" to allow using with PWAD and external
+# resources.
+#
+# There can only be one decoration per texture/flat. Newer decorations
+# override older ones.
+#
+# One decoration can specify up to 16 lights.
+#
+# For further information on Decoration definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Decoration
+
+Decoration {
+  Material = "textures:BSTONE3";
+  Light {
+    Color { 1 .98 .9 }
+    Offset { 33 40 }
+    Radius = .4;
+    Halo radius = .1;
+  }
+}
+
+Copy Decoration {
+  Material = "textures:BRICKLIT";
+}
