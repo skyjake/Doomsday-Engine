@@ -2477,7 +2477,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Scalef(scale, scale, 1);
+    DGL_Scalef(scale, scale * 1.2f /*aspect correct*/, 1);
 
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
     UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
@@ -2495,7 +2495,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
         displayRegion.origin.x = displayRegion.origin.y = 0;
         displayRegion.size.width  = .5f + portSize.width  / scale;
-        displayRegion.size.height = .5f + portSize.height / scale;
+        displayRegion.size.height = .5f + portSize.height / (scale * 1.2f /*aspect correct*/);
 
         if(hud->statusbarActive)
         {
