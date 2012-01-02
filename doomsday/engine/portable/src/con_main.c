@@ -1854,8 +1854,6 @@ static void conPrintf(int flags, const char* format, va_list args)
     {
         if(prbuff == NULL)
             prbuff = M_Malloc(PRBUFF_SIZE);
-        else
-            memset(prbuff, 0, PRBUFF_SIZE);
 
         // Format the message to prbuff.
         dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);

@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 730 <--
+; Highest ordinal is currently: --> 734 <--
 ; Other free ordinals:
 ;
 ; 126
@@ -133,6 +133,8 @@ EXPORTS
     Rect_Y                      @672 NONAME
     Rect_SetOrigin              @673 NONAME
     Rect_SetXY                  @674 NONAME
+    Rect_SetX                   @731 NONAME
+    Rect_SetY                   @732 NONAME
     Rect_Size                   @675 NONAME
     Rect_SetSize                @676 NONAME
     Rect_SetWidthHeight         @677 NONAME
@@ -164,6 +166,8 @@ EXPORTS
     Rectf_Y                     @715 NONAME
     Rectf_SetOrigin             @716 NONAME
     Rectf_SetXY                 @717 NONAME
+    Rectf_SetX                  @733 NONAME
+    Rectf_SetY                  @734 NONAME
     Rectf_Size                  @718 NONAME
     Rectf_SetSize               @719 NONAME
     Rectf_SetWidthHeight        @720 NONAME

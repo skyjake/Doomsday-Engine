@@ -306,7 +306,9 @@ void D_PreInit(void)
     else
     {
         memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
-        memcpy(cfg.menuTextColors[1], defFontRGB3, sizeof(cfg.menuTextColors[1]));
+        cfg.menuTextColors[1][CR] = 1.f;
+        cfg.menuTextColors[1][CG] = .7f;
+        cfg.menuTextColors[1][CB] = .3f;
         memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
         memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
     }

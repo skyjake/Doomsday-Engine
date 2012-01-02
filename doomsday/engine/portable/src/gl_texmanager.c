@@ -1451,33 +1451,54 @@ static boolean isColorKeyed(const char* path)
 uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 {
     const imagehandler_t* hdlr;
+    const char* fileName;
     int n = 0;
     assert(img && file);
 
     GL_InitImage(img);
 
     // Firstly try the expected format given the file name.
-    hdlr = findHandlerFromFileName(Str_Text(AbstractFile_Path(DFile_File_Const(file))));
+    switch(AbstractFile_Type(DFile_File_Const(file)))
+    {
+    case FT_LUMPFILE: {
+        const lumpinfo_t* info = AbstractFile_Info(DFile_File_Const(file));
+        fileName = (char*)info->name;
+        break;
+      }
+    default:
+        fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
+        break;
+    }
+
+    hdlr = findHandlerFromFileName(fileName);
     if(hdlr)
     {
         hdlr->loadFunc(img, file);
     }
 
-    // If not loaded. Try each recognisable format.
-    /// \todo Order here should be determined by the resource locator.
-    for(n = 0; 0 == img->pixels && 0 != handlers[n].name; ++n)
+    if(!img->pixels)
     {
-        if(&handlers[n] == hdlr) continue; // We already know its not in this format.
-        handlers[n].loadFunc(img, file);
+        // Try each recognisable format instead.
+        /// \todo Order here should be determined by the resource locator.
+        for(n = 0; handlers[n].name && !img->pixels; ++n)
+        {
+            if(&handlers[n] == hdlr) continue; // We already know its not in this format.
+            handlers[n].loadFunc(img, file);
+        }
     }
 
-    if(!img->pixels) return NULL; // Not a recogniseable format.
+    if(!img->pixels)
+    {
+        VERBOSE2( Con_Message("GL_LoadImageFromFile: \"%s\" unrecognized, trying fallback loader...\n",
+                              F_PrettyPath(fileName)) )
+        return NULL; // Not a recognised format. It may still be loadable, however.
+    }
 
-    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n",
-        F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->size.width, img->size.height) );
+    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
+                         F_PrettyPath(fileName), img->size.width, img->size.height) )
 
     // How about some color-keying?
-    if(isColorKeyed(Str_Text(AbstractFile_Path(DFile_File_Const(file)))))
+    if(isColorKeyed(fileName))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
         if(out != img->pixels)

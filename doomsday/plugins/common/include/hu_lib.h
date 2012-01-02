@@ -757,7 +757,7 @@ typedef struct uiwidget_s {
     Size2Raw maxSize;
 
     /// Geometry of this widget in pixels.
-    RectRaw geometry;
+    Rect* geometry;
 
     /// Local player number associated with this widget.
     /// \todo refactor away.
@@ -784,7 +784,7 @@ int UIWidget_Alignment(uiwidget_t* obj);
 
 float UIWidget_Opacity(uiwidget_t* obj);
 
-const RectRaw* UIWidget_Geometry(uiwidget_t* obj);
+const Rect* UIWidget_Geometry(uiwidget_t* obj);
 
 int UIWidget_MaximumHeight(uiwidget_t* obj);
 
@@ -792,7 +792,7 @@ const Size2Raw* UIWidget_MaximumSize(uiwidget_t* obj);
 
 int UIWidget_MaximumWidth(uiwidget_t* obj);
 
-const Point2Raw* UIWidget_Origin(uiwidget_t* obj);
+const Point2* UIWidget_Origin(uiwidget_t* obj);
 
 /// @return  Local player number of the owner of this widget.
 int UIWidget_Player(uiwidget_t* obj);

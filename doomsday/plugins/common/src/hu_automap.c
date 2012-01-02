@@ -159,11 +159,11 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     if(dist < 0)
         dist = -dist;
 
-    a = UIWidget_Geometry(obj)->size.width  / dist;
-    b = UIWidget_Geometry(obj)->size.height / dist;
+    a = Rect_Width(UIWidget_Geometry(obj))  / dist;
+    b = Rect_Height(UIWidget_Geometry(obj)) / dist;
 
     am->minScaleMTOF = (a < b ? a : b);
-    am->maxScaleMTOF = UIWidget_Geometry(obj)->size.height / am->minScale;
+    am->maxScaleMTOF = Rect_Height(UIWidget_Geometry(obj)) / am->minScale;
 
     am->updateViewScale = false;
 }
@@ -1146,10 +1146,13 @@ static void setupGLStateForMap(uiwidget_t* obj)
     const float alpha = uiRendState->pageAlpha;
     int player = UIWidget_Player(obj);
     float angle, plx, ply, bgColor[3];
+    RectRaw geometry;
     assert(obj->type == GUI_AUTOMAP);
 
     UIAutomap_ParallaxLayerOrigin(obj, &plx, &ply);
     angle = UIAutomap_CameraAngle(obj);
+
+    Rect_Raw(obj->geometry, &geometry);
 
     // Check for scissor box (to clip the map lines and stuff).
     // Store the old scissor state.
@@ -1189,17 +1192,17 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
 
-        DGL_Translatef(UIWidget_Geometry(obj)->origin.x, UIWidget_Geometry(obj)->origin.y, 0);
+        DGL_Translatef(geometry.origin.x, geometry.origin.y, 0);
 
         // Apply the parallax scrolling, map rotation and counteract the
         // aspect of the quad (sized to map window dimensions).
         DGL_Translatef(UIAutomap_MapToFrame(obj, plx) + .5f,
                        UIAutomap_MapToFrame(obj, ply) + .5f, 0);
         DGL_Rotatef(360-angle, 0, 0, 1);
-        DGL_Scalef(1, (float)UIWidget_Geometry(obj)->size.height / UIWidget_Geometry(obj)->size.width, 1);
+        DGL_Scalef(1, (float)geometry.size.height / geometry.size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_DrawRect2(0, 0, obj->geometry.size.width, obj->geometry.size.height);
+        DGL_DrawRect2(0, 0, geometry.size.width, geometry.size.height);
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1211,7 +1214,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
-        DGL_DrawRect2(0, 0, obj->geometry.size.width, obj->geometry.size.height);
+        DGL_DrawRect2(0, 0, geometry.size.width, geometry.size.height);
     }
 
 #if __JDOOM64__
@@ -1240,7 +1243,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
 
             iconAlpha = MINMAX_OF(.0f, alpha, .5f);
 
-            spacing = UIWidget_Geometry(obj)->size.height / num;
+            spacing = geometry.size.height / num;
             y = 0;
 
             for(i = 0; i < 3; ++i)
@@ -1251,8 +1254,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
                     DGL_SetPSprite(sprInfo.material);
                     DGL_Enable(DGL_TEXTURE_2D);
 
-                    scale = UIWidget_Geometry(obj)->size.height / (sprInfo.geometry.size.height * num);
-                    x = UIWidget_Geometry(obj)->size.width - sprInfo.geometry.size.width * scale;
+                    scale = geometry.size.height / (sprInfo.geometry.size.height * num);
+                    x = geometry.size.width - sprInfo.geometry.size.width * scale;
                     w = sprInfo.geometry.size.width;
                     h = sprInfo.geometry.size.height;
 
@@ -1288,10 +1291,10 @@ static void setupGLStateForMap(uiwidget_t* obj)
     Size2Raw portSize;
 
     R_ViewPortSize(obj->player, &portSize);
-    clipRegion.origin.x = .5f + FIXXTOSCREENX(obj->geometry.origin.x  + am->border);
-    clipRegion.origin.y = .5f + FIXYTOSCREENY(obj->geometry.origin.y  + am->border);
-    clipRegion.size.width  = .5f + FIXXTOSCREENX(obj->geometry.size.width  - am->border*2);
-    clipRegion.size.height = .5f + FIXYTOSCREENY(obj->geometry.size.height - am->border*2);
+    clipRegion.origin.x = .5f + FIXXTOSCREENX(geometry.origin.x  + am->border);
+    clipRegion.origin.y = .5f + FIXYTOSCREENY(geometry.origin.y  + am->border);
+    clipRegion.size.width  = .5f + FIXXTOSCREENX(geometry.size.width  - am->border*2);
+    clipRegion.size.height = .5f + FIXYTOSCREENY(geometry.size.height - am->border*2);
 
     DGL_Scissor(clipRegion.origin.x, clipRegion.origin.y,
                 clipRegion.size.width, clipRegion.size.height);
@@ -1388,6 +1391,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     const float alpha = uiRendState->pageAlpha;
     player_t* plr = &players[UIWidget_Player(obj)];
     float vx, vy, angle, oldLineWidth;
+    RectRaw geometry;
     int i;
     assert(obj->type == GUI_AUTOMAP);
 
@@ -1397,6 +1401,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     rs.plr = plr;
     UIAutomap_CameraOrigin(obj, &vx, &vy);
     angle = UIAutomap_CameraAngle(obj);
+    Rect_Raw(obj->geometry, &geometry);
 
     // Freeze the lists if the map is fading out from being open, or for debug.
     if((++updateWait % 10) && am->constructMap && !freezeMapRLs && UIAutomap_Active(obj))
@@ -1410,8 +1415,8 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Translatef(obj->geometry.size.width  / 2,
-                   obj->geometry.size.height / 2, 0);
+    DGL_Translatef(geometry.size.width  / 2,
+                   geometry.size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1);
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
@@ -1454,10 +1459,10 @@ DGL_End();
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / (obj->geometry.size.width  - am->border*2),
-                   1.f / (obj->geometry.size.height - am->border*2), 1);
-        DGL_Translatef(obj->geometry.size.width  /2 - am->border,
-                       obj->geometry.size.height /2 - am->border, 0);
+        DGL_Scalef(1.f / (geometry.size.width  - am->border*2),
+                   1.f / (geometry.size.height - am->border*2), 1);
+        DGL_Translatef(geometry.size.width  /2 - am->border,
+                       geometry.size.height /2 - am->border, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
         DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
@@ -1749,8 +1754,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     float viewPoint[2], rads, viewWidth, viewHeight;
 
     // Determine the dimensions of the view window in am coordinates.
-    viewWidth  = UIAutomap_FrameToMap(obj, obj->geometry.size.width  - (am->border*2));
-    viewHeight = UIAutomap_FrameToMap(obj, obj->geometry.size.height - (am->border*2));
+    viewWidth  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry)  - (am->border*2));
+    viewHeight = UIAutomap_FrameToMap(obj, Rect_Height(obj->geometry) - (am->border*2));
     am->topLeft[0]     = am->bottomLeft[0] = -viewWidth/2;
     am->topLeft[1]     = am->topRight[1]   =  viewHeight/2;
     am->bottomRight[0] = am->topRight[0]   =  viewWidth/2;
@@ -1771,8 +1776,8 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->topRight[0]    += viewPoint[0]; am->topRight[1]    += viewPoint[1];
     }
 
-    width  = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.width);
-    height = UIAutomap_FrameToMap(obj, UIWidget_Geometry(obj)->size.height);
+    width  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry));
+    height = UIAutomap_FrameToMap(obj, Rect_Height(obj->geometry));
 
     // Calculate the in-view, AABB.
     {   // Rotation-aware.
@@ -1859,12 +1864,13 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     newGeom.size.width  = .5f + newGeom.size.width  * scaleX;
     newGeom.size.height = .5f + newGeom.size.height * scaleY;
 
-    if(newGeom.origin.x != obj->geometry.origin.x ||
-       newGeom.origin.y != obj->geometry.origin.y ||
-       newGeom.size.width != obj->geometry.size.width ||
-       newGeom.size.height != obj->geometry.size.height)
+    if(newGeom.origin.x != Rect_X(obj->geometry) ||
+       newGeom.origin.y != Rect_Y(obj->geometry) ||
+       newGeom.size.width != Rect_Width(obj->geometry) ||
+       newGeom.size.height != Rect_Height(obj->geometry))
     {
-        memcpy(&obj->geometry, &newGeom, sizeof obj->geometry);
+        Rect_SetXY(obj->geometry, newGeom.origin.x, newGeom.origin.y);
+        Rect_SetWidthHeight(obj->geometry, newGeom.size.width, newGeom.size.height);
 
         // Now the screen dimensions have changed we have to update scaling
         // factors accordingly.

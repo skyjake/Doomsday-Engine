@@ -179,7 +179,7 @@ void Cl_AnswerHandshake(void)
     }
     consolePlayer = displayPlayer = myConsole;
 
-    Net_AllocClientBuffers(consolePlayer);
+    Smoother_Clear(clients[consolePlayer].smoother);
 
     isClient = true;
     isServer = false;

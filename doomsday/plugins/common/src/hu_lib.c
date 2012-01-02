@@ -107,6 +107,7 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
 
     obj = &widgets[numWidgets-1];
     memset(obj, 0, sizeof(*obj));
+    obj->geometry = Rect_New();
     obj->type = type;
     obj->id = id;
     obj->player = player;
@@ -130,17 +131,11 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
     {
     case GUI_AUTOMAP: {
         guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-        const int winWidth  = Get(DD_WINDOW_WIDTH);
-        const int winHeight = Get(DD_WINDOW_HEIGHT);
         am->mcfg = ST_AutomapConfig();
         am->followPlayer = player;
         am->oldViewScale = 1;
         am->maxViewPositionDelta = 128;
         am->alpha = am->targetAlpha = am->oldAlpha = 0;
-        obj->geometry.origin.x = 0;
-        obj->geometry.origin.y = 0;
-        obj->geometry.size.width  = winWidth;
-        obj->geometry.size.height = winHeight;
         break;
       }
     default: break;
@@ -180,6 +175,7 @@ static void clearWidgets(void)
                 free(grp->widgetIds);
             free(grp);
         }
+        Rect_Delete(obj->geometry);
     }
     free(widgets);
     widgets = NULL;
@@ -344,29 +340,29 @@ static void applyAlignmentOffset(uiwidget_t* obj, int* x, int* y)
 
 static void updateWidgetGeometry(uiwidget_t* obj)
 {
-    obj->geometry.origin.x = obj->geometry.origin.y = 0;
+    Rect_SetXY(obj->geometry, 0, 0);
     obj->updateGeometry(obj);
 
-    if(obj->geometry.size.width <= 0 || obj->geometry.size.height <= 0) return;
+    if(Rect_Width(obj->geometry) <= 0 || Rect_Height(obj->geometry) <= 0) return;
 
     if(obj->alignFlags & ALIGN_RIGHT)
-        obj->geometry.origin.x -= obj->geometry.size.width;
+        Rect_SetX(obj->geometry, Rect_X(obj->geometry) - Rect_Width(obj->geometry));
     else if(!(obj->alignFlags & ALIGN_LEFT))
-        obj->geometry.origin.x -= obj->geometry.size.width/2;
+        Rect_SetX(obj->geometry, Rect_X(obj->geometry) - Rect_Width(obj->geometry)/2);
 
     if(obj->alignFlags & ALIGN_BOTTOM)
-        obj->geometry.origin.y -= obj->geometry.size.height;
+        Rect_SetY(obj->geometry, Rect_Y(obj->geometry) - Rect_Height(obj->geometry));
     else if(!(obj->alignFlags & ALIGN_TOP))
-        obj->geometry.origin.y -= obj->geometry.size.height/2;
+        Rect_SetY(obj->geometry, Rect_Y(obj->geometry) - Rect_Height(obj->geometry)/2);
 }
 
 void UIGroup_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_group_t* grp = (guidata_group_t*)obj->typedata;
-    int i, x, y, numVisibleChildren = 0;
+    int i, x, y;
     assert(obj && obj->type == GUI_GROUP);
 
-    obj->geometry.size.width = obj->geometry.size.height = 0;
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(!grp->widgetIdCount) return;
 
@@ -376,86 +372,57 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
     for(i = 0; i < grp->widgetIdCount; ++i)
     {
         uiwidget_t* child = GUI_MustFindObjectById(grp->widgetIds[i]);
-        const RectRaw* childGeometry;
+        const Rect* childGeometry;
 
         if(UIWidget_MaximumWidth(child) > 0 && UIWidget_MaximumHeight(child) > 0 &&
            UIWidget_Opacity(child) > 0)
         {
             updateWidgetGeometry(child);
-            child->geometry.origin.x += x;
-            child->geometry.origin.y += y;
+
+            Rect_SetX(child->geometry, Rect_X(child->geometry) + x);
+            Rect_SetY(child->geometry, Rect_Y(child->geometry) + y);
 
             childGeometry = UIWidget_Geometry(child);
-
-            if(childGeometry->size.width > 0 && childGeometry->size.height > 0)
+            if(Rect_Width(childGeometry) > 0 && Rect_Height(childGeometry) > 0)
             {
-                numVisibleChildren++;
-
                 if(grp->flags & UWGF_RIGHTTOLEFT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
-                        x -= childGeometry->size.width  + grp->padding;
+                        x -= Rect_Width(childGeometry)  + grp->padding;
                     else
-                        y -= childGeometry->size.height + grp->padding;
+                        y -= Rect_Height(childGeometry) + grp->padding;
                 }
                 else if(grp->flags & UWGF_LEFTTORIGHT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
-                        x += childGeometry->size.width  + grp->padding;
+                        x += Rect_Width(childGeometry)  + grp->padding;
                     else
-                        y += childGeometry->size.height + grp->padding;
+                        y += Rect_Height(childGeometry) + grp->padding;
                 }
 
-                if(grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT))
-                {
-                    if(!(grp->flags & UWGF_VERTICAL))
-                    {
-                        obj->geometry.size.width  += childGeometry->size.width;
-                        if(childGeometry->size.height > obj->geometry.size.height)
-                            obj->geometry.size.height = childGeometry->size.height;
-                    }
-                    else
-                    {
-                        if(childGeometry->size.width  > obj->geometry.size.width)
-                            obj->geometry.size.width  = childGeometry->size.width;
-                        obj->geometry.size.height += childGeometry->size.height;
-                    }
-                }
-                else
-                {
-                    if(childGeometry->size.width  > obj->geometry.size.width)
-                        obj->geometry.size.width  = childGeometry->size.width;
-
-                    if(childGeometry->size.height > obj->geometry.size.height)
-                        obj->geometry.size.height = childGeometry->size.height;
-                }
+                Rect_Unite(obj->geometry, childGeometry);
             }
         }
-    }
-
-    if(0 != numVisibleChildren && (grp->flags & (UWGF_LEFTTORIGHT|UWGF_RIGHTTOLEFT)))
-    {
-        if(!(grp->flags & UWGF_VERTICAL))
-            obj->geometry.size.width  += (numVisibleChildren-1) * grp->padding;
-        else
-            obj->geometry.size.height += (numVisibleChildren-1) * grp->padding;
     }
 }
 
 #if _DEBUG
 static void drawWidgetGeometry(uiwidget_t* obj)
 {
+    RectRaw geometry;
     assert(obj);
+    Rect_Raw(obj->geometry, &geometry);
+
     DGL_Color3f(1, 1, 1);
     DGL_Begin(DGL_LINES);
-        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y);
-        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y);
-        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y);
-        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y + obj->geometry.size.height);
-        DGL_Vertex2f(obj->geometry.origin.x + obj->geometry.size.width, obj->geometry.origin.y + obj->geometry.size.height);
-        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y + obj->geometry.size.height);
-        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y + obj->geometry.size.height);
-        DGL_Vertex2f(obj->geometry.origin.x, obj->geometry.origin.y);
+        DGL_Vertex2f(geometry.origin.x, geometry.origin.y);
+        DGL_Vertex2f(geometry.origin.x + geometry.size.width, geometry.origin.y);
+        DGL_Vertex2f(geometry.origin.x + geometry.size.width, geometry.origin.y);
+        DGL_Vertex2f(geometry.origin.x + geometry.size.width, geometry.origin.y + geometry.size.height);
+        DGL_Vertex2f(geometry.origin.x + geometry.size.width, geometry.origin.y + geometry.size.height);
+        DGL_Vertex2f(geometry.origin.x, geometry.origin.y + geometry.size.height);
+        DGL_Vertex2f(geometry.origin.x, geometry.origin.y + geometry.size.height);
+        DGL_Vertex2f(geometry.origin.x, geometry.origin.y);
     DGL_End();
 }
 
@@ -463,7 +430,7 @@ static void drawWidgetAvailableSpace(uiwidget_t* obj)
 {
     assert(obj);
     DGL_Color4f(0, .4f, 0, .1f);
-    DGL_DrawRect2(obj->geometry.origin.x, obj->geometry.origin.y, obj->maxSize.width, obj->maxSize.height);
+    DGL_DrawRect2(Rect_X(obj->geometry), Rect_Y(obj->geometry), obj->maxSize.width, obj->maxSize.height);
 }
 #endif
 
@@ -477,18 +444,21 @@ static void drawWidget2(uiwidget_t* obj, const Point2Raw* offset)
 
     if(obj->drawer && obj->opacity > .0001f)
     {
+        Point2Raw origin;
+        Point2_Raw(Rect_Origin(obj->geometry), &origin);
+
         // Configure the page render state.
         /// \todo Initial font renderer setup.
         uiRS.pageAlpha = obj->opacity;
 
         DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(obj->geometry.origin.x, obj->geometry.origin.y, 0);
+        DGL_Translatef(origin.x, origin.y, 0);
 
         // Do not pass a zero length offset.
         obj->drawer(obj, ((offset && (offset->x || offset->y))? offset : NULL));
 
         DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-obj->geometry.origin.x, -obj->geometry.origin.y, 0);
+        DGL_Translatef(-origin.x, -origin.y, 0);
     }
 
 /*#if _DEBUG
@@ -584,16 +554,16 @@ int UIWidget_Player(uiwidget_t* obj)
     return obj->player;
 }
 
-const Point2Raw* UIWidget_Origin(uiwidget_t* obj)
+const Point2* UIWidget_Origin(uiwidget_t* obj)
 {
     assert(obj);
-    return &obj->geometry.origin;
+    return Rect_Origin(obj->geometry);
 }
 
-const RectRaw* UIWidget_Geometry(uiwidget_t* obj)
+const Rect* UIWidget_Geometry(uiwidget_t* obj)
 {
     assert(obj);
-    return &obj->geometry;
+    return obj->geometry;
 }
 
 int UIWidget_MaximumHeight(uiwidget_t* obj)

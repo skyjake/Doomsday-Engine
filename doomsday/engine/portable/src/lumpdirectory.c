@@ -259,7 +259,7 @@ static void LumpDirectory_BuildHash(lumpdirectory_t* ld)
 
 void LumpDirectory_Clear(lumpdirectory_t* ld)
 {
-    assert(NULL != ld);
+    assert(ld);
     if(ld->_numRecords)
     {
         free(ld->_records), ld->_records = NULL;
@@ -271,25 +271,26 @@ void LumpDirectory_Clear(lumpdirectory_t* ld)
 int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
     int (*callback) (const lumpinfo_t*, void*), void* paramaters)
 {
-    assert(NULL != ld && callback);
+    int result = 0;
+    assert(ld);
+    if(callback)
     {
-    lumpdirectory_lumprecord_t* record;
-    const lumpinfo_t* info;
-    int i, result = 0;
-    for(i = 0; i < ld->_numRecords; ++i)
-    {
-        record = ld->_records + i;
+        lumpdirectory_lumprecord_t* record;
+        const lumpinfo_t* info;
+        int i;
+        for(i = 0; i < ld->_numRecords; ++i)
+        {
+            record = ld->_records + i;
 
-        // Are we only interested in the lumps from a particular file?
-        if(NULL != fsObject && record->fsObject != fsObject)
-            continue;
+            // Are we only interested in the lumps from a particular file?
+            if(fsObject && record->fsObject != fsObject) continue;
 
-        info = F_LumpInfo(record->fsObject, record->fsLumpIdx);
-        if(0 != (result = callback(info, paramaters)))
-            break;
+            info = F_LumpInfo(record->fsObject, record->fsLumpIdx);
+            result = callback(info, paramaters);
+            if(result) break;
+        }
     }
     return result;
-    }
 }
 
 int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,

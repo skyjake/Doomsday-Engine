@@ -325,11 +325,15 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags,
 /// \note Part of the Doomsday public API.
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
 {
-    if(NULL == bp)
-        Con_Error("GL_BeginBorderedProjection: Invalid 'bp' argument.");
-
-    if(SCALEMODE_STRETCH == bp->scaleMode)
+    if(!bp)
+    {
+#if _DEBUG
+        Con_Message("Warning: GL_BeginBorderedProjection: Invalid 'bp' argument, ignoring.\n");
+#endif
         return;
+    }
+
+    if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
     /**
      * Use an orthographic projection in screenspace, translating and
@@ -349,7 +353,7 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
         // "Pillarbox":
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            int w = (bp->availWidth - bp->width * bp->scaleFactor) / 2;
+            int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
             DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
             DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
             DGL_Scissor(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
@@ -366,7 +370,7 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
         // "Letterbox":
         if(bp->flags & BPF_OVERDRAW_CLIP)
         {
-            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
             DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
             DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
             DGL_Scissor(0, h, bp->availWidth, bp->height * bp->scaleFactor);
@@ -383,11 +387,15 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
 /// \note Part of the Doomsday public API.
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
 {
-    if(NULL == bp)
-        Con_Error("GL_EndBorderedProjection: Invalid 'bp' argument.");
-
-    if(SCALEMODE_STRETCH == bp->scaleMode)
+    if(!bp)
+    {
+#if _DEBUG
+        Con_Message("Warning: GL_EndBorderedProjection: Invalid 'bp' argument, ignoring.\n");
+#endif
         return;
+    }
+
+    if(SCALEMODE_STRETCH == bp->scaleMode) return;
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -411,14 +419,14 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
         if(bp->alignHorizontal)
         {
             // "Pillarbox":
-            int w = (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
+            int w = .5f + (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
             GL_DrawRect(0, 0, w, bp->availHeight);
             GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight);
         }
         else
         {
             // "Letterbox":
-            int h = (bp->availHeight - bp->height * bp->scaleFactor) / 2;
+            int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
             GL_DrawRect(0, 0, bp->availWidth, h);
             GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h);
         }

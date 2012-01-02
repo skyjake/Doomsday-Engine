@@ -3404,6 +3404,8 @@ void Rend_CalcLightModRange(void)
     int j, mapAmbient;
     float f;
 
+    if(novideo) return;
+
     memset(lightModRange, 0, sizeof(float) * 255);
 
     mapAmbient = P_GetMapAmbientLightLevel(map);

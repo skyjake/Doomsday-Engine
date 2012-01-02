@@ -278,7 +278,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 typedef struct {
     const char* path;
     char delimiter;
-    pathdirectorysearch_t search;
+    PathMap searchPattern;
     boolean searchInited;
     PathDirectoryNode* foundNode;
 } findresourceinnamespaceworker_params_t;
@@ -290,11 +290,11 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathDirectory_InitSearch(&p->search, PCF_NO_BRANCH, p->path, p->delimiter);
+        PathMap_Initialize(&p->searchPattern, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
-    if(PathDirectoryNode_MatchDirectory(node, &p->search, NULL))
+    if(PathDirectoryNode_MatchDirectory(node, PCF_NO_BRANCH, &p->searchPattern, NULL))
     {
         p->foundNode = node;
         return 1;
@@ -326,7 +326,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         rebuildResourceNamespace(rnInfo);
 
         // There may not be any matching named resources, so we defer initialization
-        // of the PathDirectorySearch until the first name-match is found.
+        // of the PathMap until the first name-match is found.
         p.path = Str_Text(searchPath);
         p.delimiter = delimiter;
         p.searchInited = false;
@@ -344,7 +344,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         }
 
         // Cleanup.
-        if(p.searchInited) PathDirectory_DestroySearch(&p.search);
+        if(p.searchInited) PathMap_Destroy(&p.searchPattern);
     }
     return found;
 }

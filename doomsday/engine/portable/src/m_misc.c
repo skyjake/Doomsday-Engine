@@ -338,12 +338,17 @@ void RNG_Reset(void)
 
 int M_RatioReduce(int* numerator, int* denominator)
 {
-    assert(numerator && denominator);
-    {
     int n, d, temp;
 
-    if(*numerator == *denominator)
-        return 1; // 1:1
+    if(!numerator || !denominator)
+    {
+#if _DEBUG
+        Con_Message("Warning: M_RatioReduce: Invalid arguments, returning 1:1.\n");
+#endif
+        return 1;
+    }
+
+    if(*numerator == *denominator) return 1; // 1:1
 
     n = abs(*numerator);
     d = abs(*denominator);
@@ -367,7 +372,6 @@ int M_RatioReduce(int* numerator, int* denominator)
     *numerator   /= n;
     *denominator /= n;
     return n;
-    }
 }
 
 /**
