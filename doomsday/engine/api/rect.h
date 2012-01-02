@@ -62,6 +62,8 @@ int Rect_X(const Rect* r);
 int Rect_Y(const Rect* r);
 
 void Rect_SetOrigin(Rect* r, const Point2* origin);
+void Rect_SetX(Rect* r, int x);
+void Rect_SetY(Rect* r, int y);
 void Rect_SetXY(Rect* r, int x, int y);
 
 const Size2* Rect_Size(const Rect* rect);
@@ -122,6 +124,8 @@ int Rectf_X(const Rectf* r);
 int Rectf_Y(const Rectf* r);
 
 void Rectf_SetOrigin(Rectf* rect, const Point2f* origin);
+void Rectf_SetX(Rectf* r, double x);
+void Rectf_SetY(Rectf* r, double y);
 void Rectf_SetXY(Rectf* r, double x, double y);
 
 const Size2f* Rectf_Size(const Rectf* rect);

@@ -563,23 +563,24 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     patchinfo_t info;
     assert(obj && obj->type == GUI_MAPNAME);
 
-    obj->geometry.size.width  = 0;
-    obj->geometry.size.height = 0;
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(!text && 0 == patch) return;
 
     if(text)
     {
+        Size2Raw textSize;
         FR_SetFont(obj->font);
-        FR_TextSize(&obj->geometry.size, text);
-        obj->geometry.size.width  *= scale;
-        obj->geometry.size.height *= scale;
+        FR_TextSize(&textSize, text);
+        textSize.width  *= scale;
+        textSize.height *= scale;
+        Rect_SetWidthHeight(obj->geometry, textSize.width, textSize.height);
         return;
     }
 
     R_GetPatchInfo(patch, &info);
-    obj->geometry.size.width  = info.geometry.size.width  * scale;
-    obj->geometry.size.height = info.geometry.size.height * scale;
+    Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
+                                       info.geometry.size.height * scale);
 }
 
 typedef struct {

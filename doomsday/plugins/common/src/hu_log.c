@@ -341,8 +341,10 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     {
         Size2Raw portSize;
         float scale;
+
         R_ViewPortSize(UIWidget_Player(obj), &portSize);
-        scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;
+        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
+            portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
         yOffset = -lineHeight * scrollFactor * cfg.msgScale * scale;
@@ -425,15 +427,15 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void UILog_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    int lineHeight, lineWidth;
+    guidata_log_message_t* msg;
+    int lineHeight;
     int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float scrollFactor;
-    guidata_log_message_t* msg;
+    RectRaw lineGeometry;
     assert(obj->type == GUI_LOG);
 
-    obj->geometry.size.width  = 0;
-    obj->geometry.size.height = 0;
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(0 == pvisMsgCount) return;
 
@@ -478,8 +480,10 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     {
         Size2Raw portSize;
         float scale;
+
         R_ViewPortSize(UIWidget_Player(obj), &portSize);
-        scale = portSize.width >= portSize.height? (float)portSize.height/SCREENHEIGHT : (float)portSize.width/SCREENWIDTH;
+        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
+            portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
     }
@@ -491,27 +495,27 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     n = firstMsg;
     drawnMsgCount = 0;
 
+    lineGeometry.origin.x = lineGeometry.origin.y = 0;
+
     for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
     {
         msg = &log->_msgs[n];
-        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE))
-            continue;
+        if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NOHIDE)) continue;
 
         ++drawnMsgCount;
 
-        lineWidth = FR_TextWidth(msg->text);
-        if(lineWidth > obj->geometry.size.width)
-        {
-            obj->geometry.size.width = lineWidth;
-        }
+        FR_TextSize(&lineGeometry.size, msg->text);
+        Rect_UniteRaw(obj->geometry, &lineGeometry);
+
+        lineGeometry.origin.y += lineHeight;
     }
 
     if(0 != drawnMsgCount)
     {
-        obj->geometry.size.height = /*first line*/ lineHeight * (1.f - scrollFactor) +
-                                   /*other lines*/ (drawnMsgCount != 1? lineHeight * (drawnMsgCount-1) : 0);
+        // Subtract the scroll offset.
+        Rect_SetHeight(obj->geometry, Rect_Height(obj->geometry) - lineHeight * scrollFactor);
     }
 
-    obj->geometry.size.width  *= cfg.msgScale;
-    obj->geometry.size.height *= cfg.msgScale;
+    Rect_SetWidthHeight(obj->geometry, Rect_Width(obj->geometry)  * cfg.msgScale,
+                                       Rect_Height(obj->geometry) * cfg.msgScale);
 }

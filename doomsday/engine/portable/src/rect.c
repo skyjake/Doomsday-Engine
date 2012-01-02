@@ -140,6 +140,18 @@ void Rect_SetOrigin(Rect* r, const Point2* origin)
     Point2_SetXY(r->origin, Point2_X(origin), Point2_Y(origin));
 }
 
+void Rect_SetX(Rect* r, int x)
+{
+    assert(r);
+    Point2_SetX(r->origin, x);
+}
+
+void Rect_SetY(Rect* r, int y)
+{
+    assert(r);
+    Point2_SetY(r->origin, y);
+}
+
 void Rect_SetXY(Rect* r, int x, int y)
 {
     assert(r);
@@ -391,6 +403,18 @@ void Rectf_SetOrigin(Rectf* r, const Point2f* origin)
 {
     assert(r);
     Point2f_SetXY(r->origin, Point2f_X(origin), Point2f_Y(origin));
+}
+
+void Rectf_SetX(Rectf* r, double x)
+{
+    assert(r);
+    Point2f_SetX(r->origin, x);
+}
+
+void Rectf_SetY(Rectf* r, double y)
+{
+    assert(r);
+    Point2f_SetY(r->origin, y);
 }
 
 void Rectf_SetXY(Rectf* r, double x, double y)
