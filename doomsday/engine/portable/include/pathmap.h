@@ -47,17 +47,19 @@ typedef struct {
     char* _path; // The long version.
     char _delimiter;
 
-    /// Total number of fragments in the search term.
+    /// Total number of fragments in the path.
     uint _fragmentCount;
 
     /**
-     * Fragment map of the search term. The map is split into two components.
-     * The first PATHMAP_FRAGMENTBUFFER_SIZE elements are placed
-     * into a fixed-size buffer allocated along with "this". Any additional fragments
-     * are attached to "this" using a linked list.
+     * Fragment map of the path. The map is composed of two
+     * components; the first PATHMAP_FRAGMENTBUFFER_SIZE elements
+     * are placed into a fixed-size buffer allocated along with
+     * the map (perhaps on the stack). Any additional fragments
+     * are attached to "this" using a linked list of nodes.
      *
-     * This optimized representation hopefully means that the majority of searches
-     * can be fulfilled without dynamically allocating memory.
+     * This optimized representation hopefully means that the
+     * majority of paths can be represented without dynamically
+     * allocating memory from the heap.
      */
     PathMapFragment _fragmentBuffer[PATHMAP_FRAGMENTBUFFER_SIZE];
 
@@ -68,9 +70,9 @@ typedef struct {
 /**
  * Initialize the specified PathMap from the given path.
  *
- * \post The path will have been subdivided into a fragment map and some or
- * all of the fragment hashes will have been calculated (dependant on the
- * number of discreet fragments).
+ * \post The path will have been subdivided into a fragment map
+ * and some or all of the fragment hashes will have been calculated
+ * (dependant on the number of discreet fragments).
  *
  * @param path  Relative or absolute path to be mapped.
  * @param delimiter  Fragments of @a path are delimited by this character.
@@ -87,12 +89,14 @@ void PathMap_Destroy(PathMap* pathMap);
 uint PathMap_Size(PathMap* pathMap);
 
 /**
- * Retrieve the info for fragment @a idx within the path. Note that fragments
- * are indexed in reverse order (compared to the logical, left-to-right
- * order of the original path).
+ * Retrieve the info for fragment @a idx within the path. Note that
+ * fragments are indexed in reverse order (compared to the logical,
+ * left-to-right order of the original path).
  *
- * For example, if the path is "c:/mystuff/myaddon.addon" the corresponding
- * fragment map will be: [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
+ * For example, if the mapped path is "c:/mystuff/myaddon.addon"
+ * the corresponding fragment map will be arranged as follows:
+ *
+ *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
  *
  * \post Hash may have been calculated for the referenced fragment.
  *
