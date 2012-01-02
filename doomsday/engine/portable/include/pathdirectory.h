@@ -57,75 +57,64 @@ typedef struct pathdirectorynode_s PathDirectoryNode;
 /**
  * Path fragment info.
  */
-typedef struct pathdirectorysearch_fragment_s {
+typedef struct pathmapfragment_s {
     ushort hash;
     const char* from, *to;
-    struct pathdirectorysearch_fragment_s* next;
-} pathdirectorysearch_fragment_t;
+    struct pathmapfragment_s* next;
+} PathMapFragment;
 
 /**
- * PathDirectorySearch. Can be allocated on the stack.
+ * PathMap. Can be allocated on the stack.
  */
-/// Size of the fixed-length "small" search path (in characters) allocated with the search.
-#define PATHDIRECTORYSEARCH_SMALL_PATH 256
+/// Size of the fixed-length "short" path (in characters) allocated with the map.
+#define PATHMAP_SHORT_PATH 256
 
-/// Size of the fixed-length "small" fragment buffer allocated with the search.
-#define PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE 8
+/// Size of the fixed-length "short" fragment buffer allocated with the map.
+#define PATHMAP_FRAGMENTBUFFER_SIZE 8
 
 typedef struct {
-    /// The search term.
-    char _smallSearchPath[PATHDIRECTORYSEARCH_SMALL_PATH+1];
-    char* _searchPath; // The long version.
+    char _shortPath[PATHMAP_SHORT_PATH+1];
+    char* _path; // The long version.
     char _delimiter;
-
-    /// @see pathComparisonFlags
-    int _flags;
 
     /// Total number of fragments in the search term.
     uint _fragmentCount;
 
     /**
      * Fragment map of the search term. The map is split into two components.
-     * The first PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE elements are placed
+     * The first PATHMAP_FRAGMENTBUFFER_SIZE elements are placed
      * into a fixed-size buffer allocated along with "this". Any additional fragments
      * are attached to "this" using a linked list.
      *
      * This optimized representation hopefully means that the majority of searches
      * can be fulfilled without dynamically allocating memory.
      */
-    pathdirectorysearch_fragment_t _smallFragmentBuffer[PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE];
+    PathMapFragment _fragmentBuffer[PATHMAP_FRAGMENTBUFFER_SIZE];
 
     /// Head of the linked list of "extra" fragments, in reverse order.
-    pathdirectorysearch_fragment_t* _extraFragments;
-} pathdirectorysearch_t;
+    PathMapFragment* _extraFragments;
+} PathMap;
 
 /**
- * Initialize the specified search from the given search term.
- * \note On C++ rewrite make this PathDirectory static
+ * Initialize the specified PathMap from the given path.
  *
- * \post The search term will have been subdivided into a fragment map and some or
- * all of the fragment hashes will have been calculated (dependant on the number of
- * discreet fragments).
+ * \post The path will have been subdivided into a fragment map and some or
+ * all of the fragment hashes will have been calculated (dependant on the
+ * number of discreet fragments).
  *
- * @param flags  @see pathComparisonFlags
- * @param path  Relative or absolute path to be searched for.
+ * @param path  Relative or absolute path to be mapped.
  * @param delimiter  Fragments of @a path are delimited by this character.
  * @return  Pointer to "this" instance for caller convenience.
  */
-pathdirectorysearch_t* PathDirectory_InitSearch(pathdirectorysearch_t* search, int flags,
-    const char* path, char delimiter);
+PathMap* PathMap_Initialize(PathMap* search, const char* path, char delimiter);
 
 /**
- * Destroy @a search releasing any resources acquired for it.
- * \note On C++ rewrite make this PathDirectory static.
+ * Destroy @a pathMap releasing any resources acquired for it.
  */
-void PathDirectory_DestroySearch(pathdirectorysearch_t* search);
+void PathMap_Destroy(PathMap* pathMap);
 
-/// @return  @see pathComparisonFlags
-int PathDirectorySearch_Flags(pathdirectorysearch_t* search);
-
-/// @return  Number of path fragments in the search term.
-uint PathDirectorySearch_Size(pathdirectorysearch_t* search);
+/// @return  Number of fragments in the mapped path.
+uint PathMap_Size(PathMap* pathMap);
 
 /**
  * Retrieve the info for fragment @a idx within the search term. Note that
@@ -140,7 +129,7 @@ uint PathDirectorySearch_Size(pathdirectorysearch_t* search);
  * @param idx  Reverse-index of the fragment to be retrieved.
  * @return  Processed fragment info else @c NULL if @a idx is invalid.
  */
-const pathdirectorysearch_fragment_t* PathDirectorySearch_GetFragment(pathdirectorysearch_t* search, uint idx);
+const PathMapFragment* PathMap_Fragment(PathMap* search, uint idx);
 
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship tree of
@@ -175,11 +164,13 @@ typedef int (*pathdirectory_iterateconstcallback_t) (const PathDirectoryNode* no
  * Callback function type for PathDirectory::Search
  *
  * @param node  Right-most node in path.
- * @param search  Pre-initialized search term @see PathDirectory::InitSearch
+ * @param flags  @see pathComparisonFlags
+ * @param mappedSearchPath  Fragment mapped search path.
  * @param paramaters  User data passed to this when used as a search callback.
  * @return  @c true iff the directory matched this.
  */
-typedef int (*pathdirectory_searchcallback_t) (PathDirectoryNode* node, pathdirectorysearch_t* search, void* paramaters);
+typedef int (*pathdirectory_searchcallback_t) (PathDirectoryNode* node, int flags,
+    PathMap* mappedSearchPath, void* paramaters);
 
 struct pathdirectory_s; // The pathdirectory instance (opaque).
 typedef struct pathdirectory_s PathDirectory;
@@ -215,17 +206,18 @@ PathDirectoryNode* PathDirectory_Insert(PathDirectory* pd, const char* path, cha
  * directory can be performed using nodes pre-selected by the caller or via the
  * PathDirectory::Iterate method.
  *
- * @param search  Pre-initialized search term @see PathDirectory::InitSearch
+ * @param flags  @see pathComparisonFlags
+ * @param mappedSearchPath  Fragment mapped search path.
  * @param callback  Callback function ptr. The callback should only return a
  *     non-zero value when the desired node has been found.
  * @param paramaters  Passed to the callback.
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, pathdirectorysearch_t* search,
-    pathdirectory_searchcallback_t callback, void* paramaters);
-PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, pathdirectorysearch_t* search,
-    pathdirectory_searchcallback_t callback); /*paramaters=NULL*/
+PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
+    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback, void* paramaters);
+PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, int flags,
+    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback); /*paramaters=NULL*/
 
 /**
  * Find a node in the directory.
@@ -233,11 +225,11 @@ PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, pathdirectorysearch_t
  * \note This method essentially amounts to "interface sugar". A convenient
  *     shorthand of the call tree:
  *
- *    pathdirectorysearch_t search
- *    PathDirectory_InitSearch(&search, @a flags, @a searchPath, @a delimiter)
- *    foundNode = PathDirectory_Search("this", &search, PathDirectoryNode_MatchDirectory)
- *    PathDirectory_DestroySearch(&search)
- *    return foundNode
+ *    PathMap search;
+ *    PathMap_Initialize(&search, @a flags, @a searchPath, @a delimiter);
+ *    foundNode = PathDirectory_Search("this", &search, PathDirectoryNode_MatchDirectory);
+ *    PathMap_Destroy(&search);
+ *    return foundNode;
  *
  * @param flags  @see pathComparisonFlags
  * @param path  Relative or absolute path to be searched for.
@@ -318,11 +310,13 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
 
 /**
  * @param node  Right-most node in path.
- * @param search  Pre-initialized search term @see PathDirectory::InitSearch
+ * @param flags  @see pathComparisonFlags
+ * @param searchPattern  Fragment mapped search pattern (path).
  * @param paramaters  User data passed to this when used as a search callback.
  * @return  @c true iff the directory matched this.
  */
-int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, pathdirectorysearch_t* search, void* paramaters);
+int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
+    PathMap* candidatePath, void* paramaters);
 
 /**
  * Attach user data to this. PathDirectoryNode is given ownership of @a data

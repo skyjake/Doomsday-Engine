@@ -580,9 +580,10 @@ int PathDirectory_Iterate_Const(const PathDirectory* pd, int flags, const PathDi
 }
 
 typedef struct {
-    pathdirectorysearch_t* search;
+    int flags; /// @see pathComparisonFlags
+    PathMap* mappedSearchPath;
     void* paramaters;
-    int (*callback)(PathDirectoryNode*, pathdirectorysearch_t*, void*);
+    pathdirectory_searchcallback_t callback;
     PathDirectoryNode* foundNode;
 } pathdirectorysearchworker_params_t;
 
@@ -590,7 +591,7 @@ static int PathDirectory_SearchWorker(PathDirectoryNode* node, void* paramaters)
 {
     pathdirectorysearchworker_params_t* p = (pathdirectorysearchworker_params_t*)paramaters;
     assert(node && paramaters);
-    if(p->callback(node, p->search, p->paramaters))
+    if(p->callback(node, p->flags, p->mappedSearchPath, p->paramaters))
     {
         p->foundNode = node;
         return 1; // Stop iteration.
@@ -598,25 +599,25 @@ static int PathDirectory_SearchWorker(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
-PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, pathdirectorysearch_t* search,
-    pathdirectory_searchcallback_t callback, void* paramaters)
+PathDirectoryNode* PathDirectory_Search2(PathDirectory* pd, int flags,
+    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback, void* paramaters)
 {
     pathdirectorysearchworker_params_t p;
     int result;
-    p.search = search;
+    p.flags = flags;
+    p.mappedSearchPath = mappedSearchPath;
     p.paramaters = paramaters;
     p.callback = callback;
     p.foundNode = NULL;
-    result = iteratePaths(pd, PathDirectorySearch_Flags(search), NULL,
-                 PathDirectorySearch_GetFragment(search, 0)->hash,
+    result = iteratePaths(pd, flags, NULL, PathMap_Fragment(mappedSearchPath, 0)->hash,
                  PathDirectory_SearchWorker, (void*)&p);
     return (result? p.foundNode : NULL);
 }
 
-PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, pathdirectorysearch_t* search,
-    pathdirectory_searchcallback_t callback)
+PathDirectoryNode* PathDirectory_Search(PathDirectory* pd, int flags,
+    PathMap* mappedSearchPath, pathdirectory_searchcallback_t callback)
 {
-    return PathDirectory_Search2(pd, search, callback, NULL);
+    return PathDirectory_Search2(pd, flags, mappedSearchPath, callback, NULL);
 }
 
 PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
@@ -625,10 +626,10 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
     PathDirectoryNode* foundNode = NULL;
     if(searchPath && searchPath[0] && PathDirectory_Size(pd))
     {
-        pathdirectorysearch_t search;
-        PathDirectory_InitSearch(&search, flags, searchPath, delimiter);
-        foundNode = PathDirectory_Search(pd, &search, PathDirectoryNode_MatchDirectory);
-        PathDirectory_DestroySearch(&search);
+        PathMap mappedSearchPath;
+        PathMap_Initialize(&mappedSearchPath, searchPath, delimiter);
+        foundNode = PathDirectory_Search(pd, flags, &mappedSearchPath, PathDirectoryNode_MatchDirectory);
+        PathMap_Destroy(&mappedSearchPath);
     }
     return foundNode;
 }
@@ -1227,24 +1228,23 @@ StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 
 /// \note This routine is also used as an iteration callback, so only return
 /// a non-zero value when the node is a match for the search term.
-int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, pathdirectorysearch_t* s, void* paramaters)
+int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
+    PathMap* searchPattern, void* paramaters)
 {
     PathDirectory* pd = PathDirectoryNode_Directory(node);
-    const pathdirectorysearch_fragment_t* sfragment;
+    const PathMapFragment* sfragment;
     const ddstring_t* fragment;
     uint i, fragmentCount;
-    int sflags;
 
-    sflags = PathDirectorySearch_Flags(s);
-    if(((sflags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
-       ((sflags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
+    if(((flags & PCF_NO_LEAF)   && PT_LEAF   == PathDirectoryNode_Type(node)) ||
+       ((flags & PCF_NO_BRANCH) && PT_BRANCH == PathDirectoryNode_Type(node)))
         return false;
 
-    sfragment = PathDirectorySearch_GetFragment(s, 0);
+    sfragment = PathMap_Fragment(searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
     // In reverse order, compare path fragments in the search term.
-    fragmentCount = PathDirectorySearch_Size(s);
+    fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
     {
         // If the hashes don't match it can't possibly be this.
@@ -1259,7 +1259,7 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, pathdirectorysearc
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)
-            return (!(sflags & PCF_MATCH_FULL) || !PathDirectoryNode_Parent(node));
+            return (!(flags & PCF_MATCH_FULL) || !PathDirectoryNode_Parent(node));
 
         // Are there no more parent directories?
         if(!PathDirectoryNode_Parent(node))
@@ -1267,7 +1267,7 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, pathdirectorysearc
 
         // So far so good. Move one directory level upwards.
         node = PathDirectoryNode_Parent(node);
-        sfragment = PathDirectorySearch_GetFragment(s, i+1);
+        sfragment = PathMap_Fragment(searchPattern, i+1);
     }
     return false;
 }
@@ -1300,54 +1300,52 @@ void* PathDirectoryNode_UserData(const PathDirectoryNode* node)
     return node->_pair.data;
 }
 
-static ushort PathDirectorySearch_HashFragment(pathdirectorysearch_t* s,
-    pathdirectorysearch_fragment_t* fragment)
+static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
 {
-    assert(s && fragment);
+    assert(pm && fragment);
     // Is it time to compute the hash for this fragment?
     if(fragment->hash == PATHDIRECTORY_NOHASH)
     {
-        fragment->hash = hashName(fragment->from, (fragment->to - fragment->from) + 1, s->_delimiter);
+        fragment->hash = hashName(fragment->from, (fragment->to - fragment->from) + 1, pm->_delimiter);
     }
     return fragment->hash;
 }
 
-static void PathDirectorySearch_BuildFragmentMap(pathdirectorysearch_t* s,
-    const char* searchPath, size_t searchPathLen)
+static void PathMap_FindFragments(PathMap* pm, const char* path, size_t pathLen)
 {
-    pathdirectorysearch_fragment_t* fragment = NULL;
-    const char* begin = searchPath;
-    const char* to = begin + searchPathLen - 1;
+    PathMapFragment* fragment = NULL;
+    const char* begin = path;
+    const char* to = begin + pathLen - 1;
     const char* from;
     size_t i;
-    assert(s && searchPath && searchPath[0] && searchPathLen != 0);
+    assert(pm && path && path[0] && pathLen != 0);
 
     // Skip over any trailing delimiters.
-    for(i = searchPathLen; *to && *to == s->_delimiter && i-- > 0; to--) {}
+    for(i = pathLen; *to && *to == pm->_delimiter && i-- > 0; to--) {}
 
-    s->_fragmentCount = 0;
-    s->_extraFragments = NULL;
+    pm->_fragmentCount = 0;
+    pm->_extraFragments = NULL;
 
-    // In reverse order scan for distinct fragments in the search term.
+    // In reverse order scan for distinct fragments in the path.
     for(;;)
     {
         // Find the start of the next path fragment.
-        for(from = to; from > begin && !(*from == s->_delimiter); from--) {}
+        for(from = to; from > begin && !(*from == pm->_delimiter); from--) {}
 
         // Retrieve another fragment.
-        if(s->_fragmentCount < PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE)
+        if(pm->_fragmentCount < PATHMAP_FRAGMENTBUFFER_SIZE)
         {
-            fragment = s->_smallFragmentBuffer + s->_fragmentCount;
+            fragment = pm->_fragmentBuffer + pm->_fragmentCount;
         }
         else
         {
             // Allocate another "extra" fragment.
-            pathdirectorysearch_fragment_t* f = (pathdirectorysearch_fragment_t*)malloc(sizeof *f);
-            if(!f) Con_Error("PathDirectorySearch::BuildFragmentMap: Failed on allocation of %lu bytes for new PathDirectorySearch::Fragment.", (unsigned long) sizeof *f);
+            PathMapFragment* f = (PathMapFragment*)malloc(sizeof *f);
+            if(!f) Con_Error("PathMap::BuildFragmentMap: Failed on allocation of %lu bytes for new PathMap::Fragment.", (unsigned long) sizeof *f);
 
-            if(!s->_extraFragments)
+            if(!pm->_extraFragments)
             {
-                s->_extraFragments = fragment = f;
+                pm->_extraFragments = fragment = f;
             }
             else
             {
@@ -1356,14 +1354,14 @@ static void PathDirectorySearch_BuildFragmentMap(pathdirectorysearch_t* s,
             }
         }
 
-        fragment->from = (*from == s->_delimiter? from + 1 : from);
+        fragment->from = (*from == pm->_delimiter? from + 1 : from);
         fragment->to   = to;
         // Hashing is deferred; means not-hashed yet.
         fragment->hash = PATHDIRECTORY_NOHASH;
         fragment->next = NULL;
 
         // There is now one more fragment in the map.
-        s->_fragmentCount += 1;
+        pm->_fragmentCount += 1;
 
         // Are there no more parent directories?
         if(from == begin) break;
@@ -1374,43 +1372,42 @@ static void PathDirectorySearch_BuildFragmentMap(pathdirectorysearch_t* s,
     }
 }
 
-static void PathDirectorySearch_ClearFragmentMap(pathdirectorysearch_t* s)
+static void PathMap_ClearFragments(PathMap* pm)
 {
-    assert(s);
-    while(s->_extraFragments)
+    assert(pm);
+    while(pm->_extraFragments)
     {
-        pathdirectorysearch_fragment_t* next = s->_extraFragments->next;
-        free(s->_extraFragments);
-        s->_extraFragments = next;
+        PathMapFragment* next = pm->_extraFragments->next;
+        free(pm->_extraFragments);
+        pm->_extraFragments = next;
     }
 }
 
-static void PathDirectorySearch_ClearSearchPath(pathdirectorysearch_t* s)
+static void PathMap_ClearPath(PathMap* pm)
 {
-    assert(s);
-    if(s->_searchPath) free(s->_searchPath), s->_searchPath = NULL;
+    assert(pm);
+    if(pm->_path) free(pm->_path), pm->_path = NULL;
 }
 
-pathdirectorysearch_t* PathDirectory_InitSearch(pathdirectorysearch_t* s, int flags,
-    const char* path, char delimiter)
+PathMap* PathMap_Initialize(PathMap* pm, const char* path, char delimiter)
 {
     char* pathBuffer;
     size_t pathLen;
-    assert(s);
+    assert(pm);
 
      // Take a copy of the search term.
     pathLen = (path? strlen(path) : 0);
-    if(pathLen <= PATHDIRECTORYSEARCH_SMALL_PATH)
+    if(pathLen <= PATHMAP_SHORT_PATH)
     {
         // Use the small search path buffer.
-        s->_searchPath = NULL;
-        pathBuffer = s->_smallSearchPath;
+        pm->_path = NULL;
+        pathBuffer = pm->_shortPath;
     }
     else
     {
         // Allocate a buffer large enough to hold the whole path.
-        s->_searchPath = (char*)malloc(pathLen+1);
-        pathBuffer = s->_searchPath;
+        pm->_path = (char*)malloc(pathLen+1);
+        pathBuffer = pm->_path;
     }
     if(pathLen)
     {
@@ -1418,54 +1415,47 @@ pathdirectorysearch_t* PathDirectory_InitSearch(pathdirectorysearch_t* s, int fl
     }
     pathBuffer[pathLen] = '\0';
 
-    s->_flags = flags;
-    s->_delimiter = delimiter;
+    pm->_delimiter = delimiter;
 
-    // Create the fragment map of the search term.
-    PathDirectorySearch_BuildFragmentMap(s, pathBuffer, pathLen);
+    // Create the fragment map of the path.
+    PathMap_FindFragments(pm, pathBuffer, pathLen);
 
     // Hash the first (i.e., rightmost) fragment right away.
-    PathDirectorySearch_GetFragment(s, 0);
+    PathMap_Fragment(pm, 0);
 
-    return s;
+    return pm;
 }
 
-void PathDirectory_DestroySearch(pathdirectorysearch_t* s)
+void PathMap_Destroy(PathMap* pm)
 {
-    assert(s);
-    PathDirectorySearch_ClearFragmentMap(s);
-    PathDirectorySearch_ClearSearchPath(s);
+    assert(pm);
+    PathMap_ClearFragments(pm);
+    PathMap_ClearPath(pm);
 }
 
-int PathDirectorySearch_Flags(pathdirectorysearch_t* s)
+uint PathMap_Size(PathMap* pm)
 {
-    assert(s);
-    return s->_flags;
+    assert(pm);
+    return pm->_fragmentCount;
 }
 
-uint PathDirectorySearch_Size(pathdirectorysearch_t* s)
+const PathMapFragment* PathMap_Fragment(PathMap* pm, uint idx)
 {
-    assert(s);
-    return s->_fragmentCount;
-}
-
-const pathdirectorysearch_fragment_t* PathDirectorySearch_GetFragment(pathdirectorysearch_t* s, uint idx)
-{
-    pathdirectorysearch_fragment_t* fragment;
-    if(!s || idx >= s->_fragmentCount) return NULL;
-    if(idx < PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE)
+    PathMapFragment* fragment;
+    if(!pm || idx >= pm->_fragmentCount) return NULL;
+    if(idx < PATHMAP_FRAGMENTBUFFER_SIZE)
     {
-        fragment = s->_smallFragmentBuffer + idx;
+        fragment = pm->_fragmentBuffer + idx;
     }
     else
     {
-        uint n = PATHDIRECTORYSEARCH_SMALL_FRAGMENTBUFFER_SIZE;
-        fragment = s->_extraFragments;
+        uint n = PATHMAP_FRAGMENTBUFFER_SIZE;
+        fragment = pm->_extraFragments;
         while(n++ < idx)
         {
             fragment = fragment->next;
         }
     }
-    PathDirectorySearch_HashFragment(s, fragment);
+    PathMap_HashFragment(pm, fragment);
     return fragment;
 }
