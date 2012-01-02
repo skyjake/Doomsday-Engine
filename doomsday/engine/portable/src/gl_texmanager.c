@@ -1451,13 +1451,26 @@ static boolean isColorKeyed(const char* path)
 uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 {
     const imagehandler_t* hdlr;
+    const char* fileName;
     int n = 0;
     assert(img && file);
 
     GL_InitImage(img);
 
     // Firstly try the expected format given the file name.
-    hdlr = findHandlerFromFileName(Str_Text(AbstractFile_Path(DFile_File_Const(file))));
+    switch(AbstractFile_Type(DFile_File_Const(file)))
+    {
+    case FT_LUMPFILE: {
+        const lumpinfo_t* info = AbstractFile_Info(DFile_File_Const(file));
+        fileName = (char*)info->name;
+        break;
+      }
+    default:
+        fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
+        break;
+    }
+
+    hdlr = findHandlerFromFileName(fileName);
     if(hdlr)
     {
         hdlr->loadFunc(img, file);
@@ -1476,9 +1489,9 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 
     if(!img->pixels)
     {
-        Con_Message("GL_LoadImageFromFile: \"%s\" unrecognizable, could not load.\n",
-                    F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))));
-        return NULL; // Not a recogniseable format.
+        VERBOSE2( Con_Message("GL_LoadImageFromFile: \"%s\" unrecognized, trying fallback loader...\n",
+                              F_PrettyPath(fileName) )
+        return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
     VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
