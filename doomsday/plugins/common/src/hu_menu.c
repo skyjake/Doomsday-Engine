@@ -2981,7 +2981,8 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JHERETIC__
     // Inform the user episode 6 is designed for deathmatch only.
-    if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
+    mn_object_t* obj = MNPage_FindObject(page, 0, MNF_ID0);
+    if(obj && obj == MNPage_FocusObject(page))
     {
         const char* str = notDesignedForMessage;
 
