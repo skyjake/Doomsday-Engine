@@ -2331,15 +2331,14 @@ void Hu_MenuDrawer(void)
 {
 #define OVERLAY_DARKEN          .7f
 
-    const int winWidth  = Get(DD_WINDOW_WIDTH);
-    const int winHeight = Get(DD_WINDOW_HEIGHT);
     borderedprojectionstate_t bp;
     boolean showFocusCursor = true;
     mn_object_t* focusObj;
 
     if(!Hu_MenuIsVisible()) return;
 
-    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, winWidth, winHeight, cfg.menuScaleMode);
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
+        Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
     GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
@@ -2982,7 +2981,8 @@ void Hu_MenuDrawEpisodePage(mn_page_t* page, const Point2Raw* origin)
 {
 #if __JHERETIC__
     // Inform the user episode 6 is designed for deathmatch only.
-    if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
+    mn_object_t* obj = MNPage_FindObject(page, 0, MNF_ID0);
+    if(obj && obj == MNPage_FocusObject(page))
     {
         const char* str = notDesignedForMessage;
 
