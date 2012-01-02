@@ -339,15 +339,8 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        Size2Raw portSize;
-        float scale;
-
-        R_ViewPortSize(UIWidget_Player(obj), &portSize);
-        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
-            portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
-
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
-        yOffset = -lineHeight * scrollFactor * cfg.msgScale * scale;
+        yOffset = -lineHeight * scrollFactor;
     }
     else
     {
@@ -355,7 +348,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         yOffset = 0;
     }
 
-    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -416,10 +409,6 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_Translatef(0, -yOffset, 0);
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
@@ -478,13 +467,6 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     msg = &log->_msgs[firstMsg];
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
     {
-        Size2Raw portSize;
-        float scale;
-
-        R_ViewPortSize(UIWidget_Player(obj), &portSize);
-        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
-            portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
-
         scrollFactor = 1.0f - (((float)msg->ticsRemain)/lineHeight);
     }
     else
