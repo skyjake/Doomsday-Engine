@@ -1495,10 +1495,10 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     }
 
     VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
-        F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->size.width, img->size.height) );
+                         F_PrettyPath(fileName), img->size.width, img->size.height) )
 
     // How about some color-keying?
-    if(isColorKeyed(Str_Text(AbstractFile_Path(DFile_File_Const(file)))))
+    if(isColorKeyed(fileName))
     {
         uint8_t* out = ApplyColorKeying(img->pixels, img->size.width, img->size.height, img->pixelSize);
         if(out != img->pixels)
