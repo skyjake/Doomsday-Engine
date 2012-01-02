@@ -182,17 +182,11 @@ void Net_Init(void)
 {
     int i;
 
-#if 0
-    // Local ticcmds are stored into this array before they're copied
-    // to netplayer[0]'s ticcmds buffer.
-    localticcmds = M_Calloc(LOCALTICS * TICCMD_SIZE);
-    numlocal = 0; // Nothing in the buffer.
-#endif
-
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         memset(clients + i, 0, sizeof(clients[i]));
         clients[i].viewConsole = -1;
+        Net_AllocClientBuffers(i);
     }
 
     memset(&netBuffer, 0, sizeof(netBuffer));
@@ -520,6 +514,8 @@ void Net_BuildLocalCommands(timespan_t time)
 void Net_AllocClientBuffers(int clientId)
 {
     if(clientId < 0 || clientId >= DDMAXPLAYERS) return;
+
+    assert(!clients[clientId].smoother);
 
     // Movement smoother.
     clients[clientId].smoother = Smoother_New();
@@ -1185,7 +1181,7 @@ D_CMD(MakeCamera)
     clients[cp].ready = true;
     clients[cp].viewConsole = cp;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
-    Net_AllocClientBuffers(cp);
+    Smoother_Clear(clients[cp].smoother);
     Sv_InitPoolForClient(cp);
 
     R_SetupDefaultViewWindow(cp);

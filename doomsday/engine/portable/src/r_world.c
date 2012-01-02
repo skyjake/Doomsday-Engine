@@ -1282,6 +1282,8 @@ static __inline void initSurfaceMaterialOffset(surface_t* suf)
  */
 void R_MapInitSurfaces(boolean forceUpdate)
 {
+    if(novideo) return;
+
     { uint i;
     for(i = 0; i < numSectors; ++i)
     {
@@ -1319,6 +1321,8 @@ static void addToSurfaceLists(surface_t* suf, material_t* mat)
 
 void R_MapInitSurfaceLists(void)
 {
+    if(novideo) return;
+
     R_SurfaceListClear(decoratedSurfaceList);
     R_SurfaceListClear(glowingSurfaceList);
 
