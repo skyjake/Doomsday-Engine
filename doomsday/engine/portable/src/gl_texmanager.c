@@ -1463,12 +1463,15 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
         hdlr->loadFunc(img, file);
     }
 
-    // If not loaded. Try each recognisable format.
-    /// \todo Order here should be determined by the resource locator.
-    for(n = 0; 0 == img->pixels && 0 != handlers[n].name; ++n)
+    if(!img->pixels)
     {
-        if(&handlers[n] == hdlr) continue; // We already know its not in this format.
-        handlers[n].loadFunc(img, file);
+        // Try each recognisable format instead.
+        /// \todo Order here should be determined by the resource locator.
+        for(n = 0; handlers[n].name && !img->pixels; ++n)
+        {
+            if(&handlers[n] == hdlr) continue; // We already know its not in this format.
+            handlers[n].loadFunc(img, file);
+        }
     }
 
     if(!img->pixels) return NULL; // Not a recogniseable format.
