@@ -3643,8 +3643,8 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         int posX, posY, availWidth, availHeight;
 
         displayRegion.origin.x = displayRegion.origin.y = 0;
-        displayRegion.size.width  = portSize.width  / scale;
-        displayRegion.size.height = portSize.height / scale;
+        displayRegion.size.width  = .5f + portSize.width  / scale;
+        displayRegion.size.height = .5f + portSize.height / scale;
 
         if(hud->statusbarActive)
         {
