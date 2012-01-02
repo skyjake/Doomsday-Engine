@@ -105,6 +105,7 @@ DENG_API_HEADERS = \
 
 DENG_HEADERS = \
     portable/include/abstractfile.h \
+    portable/include/abstractresource.h \
     portable/include/bitmapfont.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
@@ -212,6 +213,7 @@ DENG_HEADERS = \
     portable/include/net_main.h \
     portable/include/net_msg.h \
     portable/include/pathdirectory.h \
+    portable/include/pathmap.h \
     portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
@@ -253,7 +255,6 @@ DENG_HEADERS = \
     portable/include/rend_sky.h \
     portable/include/rend_sprite.h \
     portable/include/resourcenamespace.h \
-    portable/include/abstractresource.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
@@ -459,6 +460,7 @@ SOURCES += \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
     portable/src/pathdirectory.c \
+    portable/src/pathmap.c \
     portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
