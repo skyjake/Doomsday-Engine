@@ -1474,9 +1474,14 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
         }
     }
 
-    if(!img->pixels) return NULL; // Not a recogniseable format.
+    if(!img->pixels)
+    {
+        Con_Message("GL_LoadImageFromFile: \"%s\" unrecognizable, could not load.\n",
+                    F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))));
+        return NULL; // Not a recogniseable format.
+    }
 
-    VERBOSE( Con_Message("GL_LoadImage: \"%s\" (%ix%i)\n",
+    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
         F_PrettyPath(Str_Text(AbstractFile_Path(DFile_File_Const(file)))), img->size.width, img->size.height) );
 
     // How about some color-keying?
