@@ -53,6 +53,19 @@ static void setLastError(const char* msg)
 void PNGAPI user_error_fn(png_structp png_ptr, png_const_charp error_msg)
 {
     setLastError(error_msg);
+
+    // From libpng manual:
+    // "Errors handled through png_error() are fatal, meaning that png_error()
+    // should never return to its caller."
+
+    // Longjump out of the png loader (avoids libpng's default error message to stderr).
+#if PNG_LIBPNG_VER_MAJOR > 1 || PNG_LIBPNG_VER_MINOR >= 5
+    png_longjmp(png_ptr, 1);
+#else
+    jmp_buf jmpbuf;
+    memcpy(jmpbuf, png_ptr->jmpbuf, sizeof(jmp_buf));
+    longjmp(jmpbuf, 1);
+#endif
 }
 
 void PNGAPI user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)

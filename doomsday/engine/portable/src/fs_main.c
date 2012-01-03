@@ -1060,8 +1060,10 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
                     Str_Init(&found[count].path);
                     Str_Set(&found[count].path, fd.name);
                     F_FixSlashes(&found[count].path, &found[count].path);
-                    if((fd.attrib & A_SUBDIR) && '/' != Str_RAt(&found[count].path, 0))
-                        Str_AppendChar(&found[count].path, '/');
+                    if(fd.attrib & A_SUBDIR)
+                    {
+                        F_AppendMissingSlash(&found[count].path);
+                    }
                     found[count].attrib = fd.attrib;
                     ++count;
                 }
@@ -1988,8 +1990,7 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Init(&src); Str_Set(&src, source);
     Str_Strip(&src);
     F_FixSlashes(&src, &src);
-    if(Str_RAt(&src, 0) != '/')
-        Str_AppendChar(&src, '/');
+    F_AppendMissingSlash(&src);
     F_ExpandBasePath(&src, &src);
     F_PrependWorkPath(&src, &src);
 
@@ -2020,8 +2021,7 @@ void F_AddVirtualDirectoryMapping(const char* source, const char* destination)
     Str_Set(&vdm->destination, destination);
     Str_Strip(&vdm->destination);
     F_FixSlashes(&vdm->destination, &vdm->destination);
-    if(Str_RAt(&vdm->destination, 0) != '/')
-        Str_AppendChar(&vdm->destination, '/');
+    F_AppendMissingSlash(&vdm->destination);
     F_ExpandBasePath(&vdm->destination, &vdm->destination);
     F_PrependWorkPath(&vdm->destination, &vdm->destination);
 
@@ -2076,8 +2076,7 @@ static void printVFDirectory(const ddstring_t* path)
     Str_Init(&dir); Str_Set(&dir, Str_Text(path));
     Str_Strip(&dir);
     // Make sure it ends in a directory separator character.
-    if(Str_RAt(&dir, 0) != '/')
-        Str_AppendChar(&dir, '/');
+    F_AppendMissingSlash(&dir);
     if(!F_ExpandBasePath(&dir, &dir))
         F_PrependBasePath(&dir, &dir);
 

@@ -598,8 +598,7 @@ static void createPackagesResourceNamespace(void)
         char last = Str_RAt(path, 0); \
         ddstring_t* pathCopy = Str_New(); \
         F_FixSlashes(pathCopy, path); \
-        if(Str_RAt(pathCopy, 0) != '/') \
-            Str_AppendChar(pathCopy, '/'); \
+        F_AppendMissingSlash(pathCopy); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -645,8 +644,7 @@ static void createPackagesResourceNamespace(void)
         }
         else
         {
-            if(Str_RAt(doomWadDir, 0) != '/')
-                Str_AppendChar(doomWadDir, '/');
+            F_AppendMissingSlash(doomWadDir);
         }
     }
 

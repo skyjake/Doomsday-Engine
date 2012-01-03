@@ -121,7 +121,7 @@ void Dir_SetPath(directory_t* dir, const char* path)
 
     setPathFromPathDir(dir, path);
     Dir_FileName(fileName, path, FILENAME_T_MAXLEN);
-    strncat(dir->path, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(dir->path, fileName, FILENAME_T_MAXLEN);
     // Ensure we've a well-formed path.
     Dir_CleanPath(dir->path, FILENAME_T_MAXLEN);
 }
@@ -136,7 +136,7 @@ static void setPathFromPathDir(directory_t* dir, const char* path)
 
     _fullpath(temp, transPath, FILENAME_T_MAXLEN);
     _splitpath(temp, dir->path, transPath, 0, 0);
-    strncat(dir->path, transPath, FILENAME_T_MAXLEN);
+    M_StrCat(dir->path, transPath, FILENAME_T_MAXLEN);
 #if defined(WIN32)
     dir->drive = toupper(dir->path[0]) - 'A' + 1;
 #endif
@@ -194,10 +194,10 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
         // Replace it with the HOME environment variable.
         strncpy(buf, getenv("HOME"), FILENAME_T_MAXLEN);
         if(LAST_CHAR(buf) != '/')
-            strncat(buf, "/", FILENAME_T_MAXLEN);
+            M_StrCat(buf, "/", FILENAME_T_MAXLEN);
 
         // Append the rest of the original path.
-        strncat(buf, path + 2, FILENAME_T_MAXLEN);
+        M_StrCat(buf, path + 2, FILENAME_T_MAXLEN);
     }
     else
     {
@@ -213,10 +213,10 @@ static void resolveHomeRelativeDirectives(char* path, size_t maxLen)
         {
             strncpy(buf, pw->pw_dir, FILENAME_T_MAXLEN);
             if(LAST_CHAR(buf) != '/')
-                strncat(buf, "/", FILENAME_T_MAXLEN);
+                M_StrCat(buf, "/", FILENAME_T_MAXLEN);
         }
 
-        strncat(buf, path + 1, FILENAME_T_MAXLEN);
+        M_StrCat(buf, path + 1, FILENAME_T_MAXLEN);
     }
 
     // Replace the original.
@@ -301,10 +301,10 @@ char* Dir_CurrentPath(void)
 
 void Dir_FileName(char* name, const char* path, size_t len)
 {
-    char ext[100];
+    char ext[100]; /// @todo  Use dynamic string.
     if(!path || !name || 0 == len) return;
     _splitpath(path, 0, 0, name, ext);
-    strncat(name, ext, len);
+    M_StrCat(name, ext, len);
 }
 
 int Dir_IsAbsolutePath(const char* path)
@@ -345,9 +345,9 @@ boolean Dir_mkpath(const char* path)
     {
         endptr = strchr(ptr, DIR_SEP_CHAR);
         if(!endptr)
-            strncat(buf, ptr, FILENAME_T_MAXLEN);
+            M_StrCat(buf, ptr, FILENAME_T_MAXLEN);
         else
-            strncat(buf, ptr, endptr - ptr);
+            M_StrnCat(buf, ptr, endptr - ptr, FILENAME_T_MAXLEN);
         if(access(buf, 0))
         {
             // Path doesn't exist, create it.
@@ -357,7 +357,7 @@ boolean Dir_mkpath(const char* path)
             mkdir(buf, 0775);
 #endif
         }
-        strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
+        M_StrCat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
         ptr = endptr + 1;
 
     } while(endptr);

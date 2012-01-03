@@ -54,6 +54,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "fs_util.h"
 #include "dd_winit.h"
 
 // MACROS ------------------------------------------------------------------
@@ -337,8 +338,7 @@ static void determineGlobalPaths(application_t* app)
 
     dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
     // Ensure it ends with a directory separator.
-    if(path[strlen(path)-1] != '/')
-        strncat(path, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(path);
     temp = Dir_ConstructFromPathDir(path);
     strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
@@ -370,8 +370,7 @@ static void determineGlobalPaths(application_t* app)
         strncpy(runtimePath, ArgNext(), FILENAME_T_MAXLEN);
         Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
         // Ensure the path is closed with a directory separator.
-        if(runtimePath[strlen(runtimePath)-1] != '/')
-            strncat(runtimePath, "/", FILENAME_T_MAXLEN);
+        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
 
         temp = Dir_New(runtimePath);
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
@@ -403,8 +402,7 @@ static void determineGlobalPaths(application_t* app)
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
     // Ensure it ends with a directory separator.
-    if(ddBasePath[strlen(ddBasePath)-1] != '/')
-        strncat(ddBasePath, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 static BOOL createMainWindow(int lnCmdShow)

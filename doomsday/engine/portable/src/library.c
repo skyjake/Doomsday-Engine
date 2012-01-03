@@ -123,7 +123,10 @@ void Library_Init(void)
 {
     lastError = Str_NewStd();
 #ifdef UNIX
-    getcwd(appDir, sizeof(appDir));
+    if(!getcwd(appDir, sizeof(appDir)))
+    {
+        strcpy(appDir, "");
+    }
 #endif
 }
 
@@ -182,14 +185,14 @@ Library* Library_New(const char *fileName)
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
     if(bundlePath[strlen(bundlePath) - 1] != '/')
-        strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+        M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN);
-    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 #endif
 
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     { const char* ext = F_FindFileExtension(bundlePath);

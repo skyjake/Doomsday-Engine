@@ -198,6 +198,26 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
     return result;
 }
 
+boolean F_AppendMissingSlash(ddstring_t* pathStr)
+{
+    if(Str_RAt(pathStr, 0) != '/')
+    {
+        Str_AppendChar(pathStr, '/');
+        return true;
+    }
+    return false;
+}
+
+boolean F_AppendMissingSlashCString(char* path, size_t maxLen)
+{
+    if(path[strlen(path) - 1] != '/')
+    {
+        M_StrCat(path, "/", maxLen);
+        return true;
+    }
+    return false;
+}
+
 boolean F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 {
     boolean result = false;
@@ -400,8 +420,10 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
 
     if(!F_IsAbsolute(src))
     {
-        Str_Prepend(dst, Dir_CurrentPath());
+        char* curPath = Dir_CurrentPath();
+        Str_Prepend(dst, curPath);
         Dir_CleanPathStr(dst);
+        free(curPath);
         return true;
     }
 
@@ -453,8 +475,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 
             Str_Set(&homeStr, getenv("HOME"));
             F_FixSlashes(&buf, &homeStr);
-            if(Str_RAt(&buf, 0) != '/')
-                Str_AppendChar(&buf, '/');
+            F_AppendMissingSlash(&buf);
 
             // Append the rest of the original path.
             Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
@@ -483,8 +504,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
                 Str_Init(&pwStr);
                 Str_Set(&pwStr, pw->pw_dir);
                 F_FixSlashes(&buf, &pwStr);
-                if(Str_RAt(&buf, 0) != '/')
-                    Str_AppendChar(&buf, '/');
+                F_AppendMissingSlash(&buf);
                 result = true;
                 Str_Free(&pwStr);
             }

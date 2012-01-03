@@ -161,6 +161,25 @@ char* M_SkipLine(char* str)
     return str;
 }
 
+char* M_StrCat(char* buf, const char* str, size_t bufSize)
+{
+    return M_StrnCat(buf, str, strlen(str), bufSize);
+}
+
+char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
+{
+    int n = nChars;
+    int destLen = strlen(buf);
+    if(bufSize - destLen - 1 > n)
+    {
+        // Cannot copy more than fits in the buffer.
+        // The 1 is for the null character.
+        n = bufSize - destLen - 1;
+    }
+    if(n <= 0) return buf; // No space left.
+    return strncat(buf, str, n);
+}
+
 char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                       char separator, size_t bufLength)
 {
