@@ -696,6 +696,9 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
                  * The new sound can't be played because we were unable to
                  * stop enough channels to accommodate the limitation.
                  */
+#ifdef _DEBUG
+                Con_Message("Sfx_StartSound: Not playing %i because channels are busy.\n", sample->id);
+#endif
                 return false;
             }
 
@@ -782,6 +785,9 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     if(!selCh)
     {   // A suitable channel was not found.
         END_COP;
+#ifdef _DEBUG
+        Con_Message("Sfx_StartSound: Failed to find suitable channel for sample %i.\n", sample->id);
+#endif
         return false;
     }
 
@@ -804,8 +810,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
         selCh->buffer->flags |= SFXBF_DONT_STOP;
 
     // Init the channel information.
-    selCh->flags &=
-        ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE);
+    selCh->flags &= ~(SFXCF_NO_ORIGIN | SFXCF_NO_ATTENUATION | SFXCF_NO_UPDATE);
     selCh->volume = volume;
     selCh->frequency = freq;
     if(!emitter && !fixedPos)
@@ -824,7 +829,6 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {   // The sound can be heard from any distance.
         selCh->flags |= SFXCF_NO_ATTENUATION;
     }
-
 
     /**
      * Load in the sample. Must load prior to setting properties, because
