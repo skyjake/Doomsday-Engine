@@ -420,8 +420,10 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
 
     if(!F_IsAbsolute(src))
     {
-        Str_Prepend(dst, Dir_CurrentPath());
+        char* curPath = Dir_CurrentPath();
+        Str_Prepend(dst, curPath);
         Dir_CleanPathStr(dst);
+        free(curPath);
         return true;
     }
 
