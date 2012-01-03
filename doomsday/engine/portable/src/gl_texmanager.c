@@ -876,7 +876,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     }
     else if(0 != image->paletteId)
     {
-        if(fillOutlines && 0 != image->paletteId && (image->flags & IMGF_IS_MASKED))
+        if(fillOutlines && (image->flags & IMGF_IS_MASKED))
             ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
 
         if(monochrome && !scaleSharp)
