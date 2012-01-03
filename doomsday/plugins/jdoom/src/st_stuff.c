@@ -1496,7 +1496,11 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, textAlpha);
 
-    GL_DrawPatch(wpns->patchId, element);
+    FR_SetFont(obj->font);
+    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+
+    WI_DrawPatch3(wpns->patchId, Hu_ChoosePatchReplacement(cfg.hudPatchReplaceMode, wpns->patchId),
+                  element, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1509,6 +1513,7 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void WeaponSlot_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_weaponslot_t* wpns = (guidata_weaponslot_t*)obj->typedata;
+    const char* text = Hu_ChoosePatchReplacement(cfg.hudPatchReplaceMode, wpns->patchId);
     patchinfo_t info;
 
     Rect_SetWidthHeight(obj->geometry, 0, 0);
@@ -1516,8 +1521,19 @@ void WeaponSlot_UpdateGeometry(uiwidget_t* obj)
     if(deathmatch) return;
     if(ST_AutomapIsActive(obj->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[obj->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(!R_GetPatchInfo(wpns->patchId, &info)) return;
+    if(!text && !R_GetPatchInfo(wpns->patchId, &info)) return;
 
+    if(text)
+    {
+        Size2Raw textSize;
+        FR_SetFont(obj->font);
+        FR_TextSize(&textSize, text);
+        Rect_SetWidthHeight(obj->geometry, textSize.width  * cfg.statusbarScale,
+                                           textSize.height * cfg.statusbarScale);
+        return;
+    }
+
+    R_GetPatchInfo(wpns->patchId, &info);
     Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * cfg.statusbarScale,
                                        info.geometry.size.height * cfg.statusbarScale);
 }
