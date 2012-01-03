@@ -212,7 +212,7 @@ boolean F_AppendMissingSlashCString(char* path, size_t maxLen)
 {
     if(path[strlen(path) - 1] != '/')
     {
-        strncat(path, "/", maxLen);
+        strncat(path, "/", maxLen - 1);
         return true;
     }
     return false;

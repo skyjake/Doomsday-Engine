@@ -306,8 +306,7 @@ static void determineGlobalPaths(application_t* app)
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
     // Ensure it ends with a directory separator.
-    if(ddBasePath[strlen(ddBasePath)-1] != '/')
-        strncat(ddBasePath, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 static char* buildCommandLineString(int argc, char** argv)
