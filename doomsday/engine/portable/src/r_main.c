@@ -95,14 +95,14 @@ static int rendCameraSmooth = true; // Smoothed by default.
 
 static boolean resetNextViewer = true;
 
-static viewdata_t viewData[DDMAXPLAYERS]; // Indexed by console number.
+static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
 
 static byte showFrameTimePos = false;
 static byte showViewAngleDeltas = false;
 static byte showViewPosDeltas = false;
 
 static int gridCols, gridRows;
-static viewport_t viewports[DDMAXPLAYERS], *currentViewport;
+static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS], *currentViewport;
 
 // CODE --------------------------------------------------------------------
 
@@ -216,7 +216,7 @@ boolean R_IsSkySurface(const surface_t* suf)
 void R_SetViewOrigin(int consoleNum, float const origin[3])
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    V3_Copy(viewData[consoleNum].latest.pos, origin);
+    V3_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
 }
 
 /**
@@ -229,7 +229,7 @@ void R_SetViewOrigin(int consoleNum, float const origin[3])
 void R_SetViewAngle(int consoleNum, angle_t angle)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewData[consoleNum].latest.angle = angle;
+    viewDataOfConsole[consoleNum].latest.angle = angle;
 }
 
 /**
@@ -242,48 +242,43 @@ void R_SetViewAngle(int consoleNum, angle_t angle)
 void R_SetViewPitch(int consoleNum, float pitch)
 {
     if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
-    viewData[consoleNum].latest.pitch = pitch;
+    viewDataOfConsole[consoleNum].latest.pitch = pitch;
 }
 
-void R_SetupDefaultViewWindow(int player)
-{
-    int p = P_ConsoleToLocal(player);
-    if(p != -1)
-    {
-        viewdata_t* vd = &viewData[p];
-        vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
-        vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
-        vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
-        vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
-        vd->windowInter = 1;
-    }
+void R_SetupDefaultViewWindow(int consoleNum)
+{    
+    viewdata_t* vd = &viewDataOfConsole[consoleNum];
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+
+    vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
+    vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
+    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
+    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
+    vd->windowInter = 1;
 }
 
-void R_ViewWindowTicker(int player, timespan_t ticLength)
+void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
 {
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-    int p = P_ConsoleToLocal(player);
-    if(p != -1)
-    {
-        viewdata_t* vd = &viewData[p];
+    viewdata_t* vd = &viewDataOfConsole[consoleNum];
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
 
-        vd->windowInter += (float)(.4 * ticLength * TICRATE);
-        if(vd->windowInter >= 1)
-        {
-            memcpy(&vd->window, &vd->windowTarget, sizeof(vd->window));
-        }
-        else
-        {
-            const float x = LERP(vd->windowOld.origin.x, vd->windowTarget.origin.x, vd->windowInter);
-            const float y = LERP(vd->windowOld.origin.y, vd->windowTarget.origin.y, vd->windowInter);
-            const float w = LERP(vd->windowOld.size.width,  vd->windowTarget.size.width,  vd->windowInter);
-            const float h = LERP(vd->windowOld.size.height, vd->windowTarget.size.height, vd->windowInter);
-            vd->window.origin.x = ROUND(x);
-            vd->window.origin.y = ROUND(y);
-            vd->window.size.width  = ROUND(w);
-            vd->window.size.height = ROUND(h);
-        }
+    vd->windowInter += (float)(.4 * ticLength * TICRATE);
+    if(vd->windowInter >= 1)
+    {
+        memcpy(&vd->window, &vd->windowTarget, sizeof(vd->window));
+    }
+    else
+    {
+        const float x = LERP(vd->windowOld.origin.x, vd->windowTarget.origin.x, vd->windowInter);
+        const float y = LERP(vd->windowOld.origin.y, vd->windowTarget.origin.y, vd->windowInter);
+        const float w = LERP(vd->windowOld.size.width,  vd->windowTarget.size.width,  vd->windowInter);
+        const float h = LERP(vd->windowOld.size.height, vd->windowTarget.size.height, vd->windowInter);
+        vd->window.origin.x = ROUND(x);
+        vd->window.origin.y = ROUND(y);
+        vd->window.size.width  = ROUND(w);
+        vd->window.size.height = ROUND(h);
     }
 
 #undef LERP
@@ -295,10 +290,9 @@ int R_ViewWindowGeometry(int player, RectRaw* geometry)
     const viewdata_t* vd;
     int p;
     if(!geometry) return false;
-    p = P_ConsoleToLocal(player);
-    if(p == -1) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    vd = &viewData[p];
+    vd = &viewDataOfConsole[player];
     memcpy(geometry, &vd->window, sizeof *geometry);
     return true;
 }
@@ -309,10 +303,9 @@ int R_ViewWindowOrigin(int player, Point2Raw* origin)
     const viewdata_t* vd;
     int p;
     if(!origin) return false;
-    p = P_ConsoleToLocal(player);
-    if(p == -1) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    vd = &viewData[p];
+    vd = &viewDataOfConsole[player];
     memcpy(origin, &vd->window.origin, sizeof *origin);
     return true;
 }
@@ -323,10 +316,9 @@ int R_ViewWindowSize(int player, Size2Raw* size)
     const viewdata_t* vd;
     int p;
     if(!size) return false;
-    p = P_ConsoleToLocal(player);
-    if(p == -1) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    vd = &viewData[p];
+    vd = &viewDataOfConsole[player];
     memcpy(size, &vd->window.size, sizeof *size);
     return true;
 }
@@ -341,10 +333,11 @@ int R_ViewWindowSize(int player, Size2Raw* size)
 void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate)
 {
     int p = P_ConsoleToLocal(player);
-    if(p != -1)
+    if(p < 0) return;
+
     {
-        const viewport_t* vp = &viewports[p];
-        viewdata_t* vd = &viewData[p];
+        const viewport_t* vp = &viewportOfLocalPlayer[p];
+        viewdata_t* vd = &viewDataOfConsole[player];
         RectRaw newGeom;
 
         // Clamp to valid range.
@@ -390,7 +383,7 @@ int R_ViewPortGeometry(int player, RectRaw* geometry)
     if(!geometry) return false;
     p = P_ConsoleToLocal(player);
     if(p == -1) return false;
-    vp = &viewports[p];
+    vp = &viewportOfLocalPlayer[p];
 
     memcpy(geometry, &vp->geometry, sizeof *geometry);
     return true;
@@ -404,7 +397,7 @@ int R_ViewPortOrigin(int player, Point2Raw* origin)
     if(!origin) return false;
     p = P_ConsoleToLocal(player);
     if(p == -1) return false;
-    vp = &viewports[p];
+    vp = &viewportOfLocalPlayer[p];
 
     memcpy(origin, &vp->geometry.origin, sizeof *origin);
     return true;
@@ -418,7 +411,7 @@ int R_ViewPortSize(int player, Size2Raw* size)
     if(!size) return false;
     p = P_ConsoleToLocal(player);
     if(p == -1) return false;
-    vp = &viewports[p];
+    vp = &viewportOfLocalPlayer[p];
 
     memcpy(size, &vp->geometry.size, sizeof *size);
     return true;
@@ -430,7 +423,7 @@ void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
     int p = P_ConsoleToLocal(consoleNum);
     if(p != -1)
     {
-        viewports[p].console = viewPlayer;
+        viewportOfLocalPlayer[p].console = viewPlayer;
     }
 }
 
@@ -500,10 +493,10 @@ boolean R_SetViewGrid(int numCols, int numRows)
         for(x = 0; x < gridCols; ++x)
         {
             // The console number is -1 if the viewport belongs to no one.
-            viewport_t* vp = viewports + p;
+            viewport_t* vp = viewportOfLocalPlayer + p;
 
             console = P_LocalToConsole(p);
-            if(-1 != console)
+            if(console != -1)
             {
                 vp->console = clients[console].viewConsole;
             }
@@ -669,7 +662,7 @@ void R_CopyViewer(viewer_t* dst, const viewer_t* src)
 const viewdata_t* R_ViewData(int consoleNum)
 {
     assert(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
-    return &viewData[consoleNum];
+    return &viewDataOfConsole[consoleNum];
 }
 
 /**
@@ -702,7 +695,7 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
  */
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
-    viewdata_t* vd = &viewData[player - ddPlayers];
+    viewdata_t* vd = &viewDataOfConsole[player - ddPlayers];
     ddplayer_t* ddpl;
 
     if(!player || !player->shared.mo) return;
@@ -760,7 +753,7 @@ void R_NewSharpWorld(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         viewer_t sharpView;
-        viewdata_t* vd = &viewData[i];
+        viewdata_t* vd = &viewDataOfConsole[i];
         player_t* plr = &ddPlayers[i];
 
         if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
@@ -886,7 +879,7 @@ void R_SetupFrame(player_t* player)
     //polyCounter = 0;
 
     viewPlayer = player;
-    vd = &viewData[viewPlayer - ddPlayers];
+    vd = &viewDataOfConsole[viewPlayer - ddPlayers];
 
     R_GetSharpView(&sharpView, viewPlayer);
 
@@ -1108,7 +1101,7 @@ void R_RenderPlayerView(int num)
         DD_ResetTimer();
     }
 
-    vd = &viewData[num];
+    vd = &viewDataOfConsole[num];
     if(vd->window.size.width == 0 || vd->window.size.height == 0)
         return; // Too early? Game has not configured the view window?
 
@@ -1245,8 +1238,8 @@ void R_RenderViewPorts(void)
     for(p = 0, y = 0; y < gridRows; ++y)
         for(x = 0; x < gridCols; x++, ++p)
         {
-            viewport_t* vp = &viewports[p];
-            viewdata_t* vd = &viewData[p];
+            viewport_t* vp = &viewportOfLocalPlayer[p];
+            viewdata_t* vd = 0;
 
             displayPlayer = vp->console;
             R_UseViewPort(vp);
@@ -1256,6 +1249,8 @@ void R_RenderViewPorts(void)
                 R_RenderBlankView();
                 continue;
             }
+
+            vd = &viewDataOfConsole[vp->console];
 
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
