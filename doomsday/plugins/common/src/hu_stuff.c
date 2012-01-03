@@ -1520,7 +1520,7 @@ void Hu_DrawMapTitle(int x, int y, float scale)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
+    DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
 
     drawMapTitle();
 
