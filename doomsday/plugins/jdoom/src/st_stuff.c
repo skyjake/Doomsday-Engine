@@ -2493,9 +2493,12 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         RectRaw displayRegion;
         int availHeight;
 
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Scalef(1, 1.2f/*aspect correct*/, 1);
+
         displayRegion.origin.x = displayRegion.origin.y = 0;
         displayRegion.size.width  = .5f + portSize.width  / scale;
-        displayRegion.size.height = .5f + portSize.height / scale;
+        displayRegion.size.height = .5f + portSize.height / (scale * 1.2f /*aspect correct*/);
 
         if(hud->statusbarActive)
         {
