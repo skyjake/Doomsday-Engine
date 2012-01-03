@@ -288,7 +288,6 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
 int R_ViewWindowGeometry(int player, RectRaw* geometry)
 {
     const viewdata_t* vd;
-    int p;
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
@@ -301,7 +300,6 @@ int R_ViewWindowGeometry(int player, RectRaw* geometry)
 int R_ViewWindowOrigin(int player, Point2Raw* origin)
 {
     const viewdata_t* vd;
-    int p;
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
@@ -314,7 +312,6 @@ int R_ViewWindowOrigin(int player, Point2Raw* origin)
 int R_ViewWindowSize(int player, Size2Raw* size)
 {
     const viewdata_t* vd;
-    int p;
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
