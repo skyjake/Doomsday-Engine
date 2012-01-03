@@ -42,16 +42,14 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
+#include "de_misc.h"
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(NULL != dst && NULL != src);
-    {
     /// \fixme Potentially truncates @a src to FILENAME_T_MAXLEN
     directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
     Str_Set(dst, Dir_Path(dir));
     Dir_Delete(dir);
-    }
 }
 
 void F_FileName(ddstring_t* dst, const char* src)
