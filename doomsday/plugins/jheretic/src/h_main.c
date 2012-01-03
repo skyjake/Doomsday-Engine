@@ -203,6 +203,7 @@ void H_PreInit(void)
 
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudShown[HUD_AMMO] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_KEYS] = true;

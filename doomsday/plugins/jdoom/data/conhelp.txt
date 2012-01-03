@@ -665,6 +665,9 @@ desc = 1=Show deathmatch frags in HUD.
 [hud-frags-all]
 desc = Debug: HUD shows all frags of all players.
 
+[hud-patch-replacement]
+desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
+
 [hud-timer]
 desc = Number of seconds before the hud auto-hides.
 

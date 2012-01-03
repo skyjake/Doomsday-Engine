@@ -116,6 +116,8 @@ typedef struct jdoom64_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     float           hudScale; // How to scale HUD data?
     float           hudColor[4];

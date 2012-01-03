@@ -69,6 +69,8 @@ typedef struct {
     int             useMLook, useJLook;
     int             screenBlocks;
     int             setBlocks;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[4]; // HUD data visibility.
     float           hudScale;
     float           hudColor[4];

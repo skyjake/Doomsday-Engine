@@ -232,6 +232,7 @@ void D_PreInit(void)
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
+
     cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .9f;
     cfg.menuTextGlitter = .5f;
@@ -246,6 +247,7 @@ void D_PreInit(void)
 
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudKeysCombine = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -271,6 +273,7 @@ void D_PreInit(void)
     cfg.xhairColor[1] = 1;
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
+
     cfg.filterStrength = .8f;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;

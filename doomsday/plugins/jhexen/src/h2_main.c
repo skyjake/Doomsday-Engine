@@ -252,6 +252,8 @@ void X_PreInit(void)
     cfg.menuTextFlashColor[2] = .5f;
     cfg.menuTextFlashSpeed = 4;
     cfg.menuCursorRotate = false;
+
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudScale = .7f;
     cfg.hudColor[0] = defFontRGB[0];
     cfg.hudColor[1] = defFontRGB[1];
