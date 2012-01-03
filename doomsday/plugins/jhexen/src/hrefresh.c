@@ -254,32 +254,7 @@ static void rendHUD(int player, const RectRaw* portGeometry)
 
     ST_Drawer(player);
     HU_DrawScoreBoard(player);
-
-    // Level information is shown for a few seconds in the beginning of a level.
-    if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
-    {
-        int needWidth;
-        float scale;
-
-        if(portGeometry->size.width >= portGeometry->size.height)
-        {
-            needWidth = (float)portGeometry->size.height/SCREENHEIGHT * SCREENWIDTH;
-            scale = (float)portGeometry->size.height/SCREENHEIGHT;
-        }
-        else
-        {
-            needWidth = (float)portGeometry->size.width/SCREENWIDTH * SCREENWIDTH;
-            scale = (float)portGeometry->size.width/SCREENWIDTH;
-        }
-        if(needWidth > portGeometry->size.width)
-            scale *= (float)portGeometry->size.width/needWidth;
-
-        scale *= (1+cfg.hudScale)/2;
-        // Make the title 3/4 smaller.
-        scale *= .75f;
-
-        Hu_DrawMapTitle(portGeometry->size.width/2, (float)portGeometry->size.height/SCREENHEIGHT * 6, scale);
-    }
+    Hu_MapTitleDrawer(portGeometry);
 }
 
 void X_DrawViewPort(int port, const RectRaw* portGeometry,
