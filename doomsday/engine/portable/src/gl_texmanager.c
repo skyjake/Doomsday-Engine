@@ -876,6 +876,9 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     }
     else if(0 != image->paletteId)
     {
+        if(fillOutlines && 0 != image->paletteId && (image->flags & IMGF_IS_MASKED))
+            ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
+
         if(monochrome && !scaleSharp)
             GL_DeSaturatePalettedImage(image->pixels, R_ToColorPalette(image->paletteId), image->size.width, image->size.height);
 
@@ -914,7 +917,8 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
 
             // Back to paletted+alpha?
             if(monochrome)
-            {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
+            {
+                // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
                 // Replace the old buffer.
                 GL_ConvertToLuminance(image, true);
                 AmplifyLuma(image->pixels, image->size.width, image->size.height, image->pixelSize == 2);
@@ -937,9 +941,6 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
             // Lets not do this again.
             noSmartFilter = true;
         }
-
-        if(fillOutlines && 0 != image->paletteId && (image->flags & IMGF_IS_MASKED))
-            ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
     }
     else if(image->pixelSize > 2)
     {
