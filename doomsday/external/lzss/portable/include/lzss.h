@@ -54,8 +54,6 @@ typedef int     int32_t;
 	void LZSSEXPORT lzPassword(char *password);
 	LZFILE         *LZSSEXPORT lzOpen(char *filename, char *mode);
 	int LZSSEXPORT  lzClose(LZFILE * f);
-	LZFILE         *LZSSEXPORT lzOpenChunk(LZFILE * f, int pack);
-	LZFILE         *LZSSEXPORT lzCloseChunk(LZFILE * f);
 	int LZSSEXPORT  lzSeek(LZFILE * f, int offset);
         int16_t LZSSEXPORT  lzGetW(LZFILE * f);
         int32_t LZSSEXPORT lzGetL(LZFILE * f);
