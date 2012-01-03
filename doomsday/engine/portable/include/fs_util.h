@@ -67,6 +67,18 @@ boolean F_MakePath(const char* path);
 boolean F_FixSlashes(ddstring_t* dst, const ddstring_t* src);
 
 /**
+ * Appends a slash at the end of @a pathStr if there isn't one.
+ * @return @c true if a slash was appended, @c false otherwise.
+ */
+boolean F_AppendMissingSlash(ddstring_t* pathStr);
+
+/**
+ * Appends a slash at the end of @a path if there isn't one.
+ * @return @c true if a slash was appended, @c false otherwise.
+ */
+boolean F_AppendMissingSlashCString(char* path, size_t maxLen);
+
+/**
  * Converts directory slashes to tha used by the host file system.
  * @return  @c true iff the path was modified.
  */

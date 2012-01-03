@@ -88,16 +88,14 @@ Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
     Str_Appendf(&g->mainConfig, "configs/%s", configDir);
     Str_Strip(&g->mainConfig);
     F_FixSlashes(&g->mainConfig, &g->mainConfig);
-    if(Str_RAt(&g->mainConfig, 0) != '/')
-        Str_AppendChar(&g->mainConfig, '/');
+    F_AppendMissingSlash(&g->mainConfig);
     Str_Append(&g->mainConfig, "game.cfg");
 
     Str_Init(&g->bindingConfig);
     Str_Appendf(&g->bindingConfig, "configs/%s", configDir);
     Str_Strip(&g->bindingConfig);
     F_FixSlashes(&g->bindingConfig, &g->bindingConfig);
-    if(Str_RAt(&g->bindingConfig, 0) != '/')
-        Str_AppendChar(&g->bindingConfig, '/');
+    F_AppendMissingSlash(&g->bindingConfig);
     Str_Append(&g->bindingConfig, "player/bindings.cfg");
 
     Str_Init(&g->title);
@@ -259,15 +257,13 @@ Game* Game_FromDef(const GameDef* def)
     Str_Strip(&dataPath);
     F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != '/')
-        Str_AppendChar(&dataPath, '/');
+    F_AppendMissingSlash(&dataPath);
 
     Str_Init(&defsPath); Str_Set(&defsPath, def->defsPath);
     Str_Strip(&defsPath);
     F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != '/')
-        Str_AppendChar(&defsPath, '/');
+    F_AppendMissingSlash(&defsPath);
 
     game = Game_New(def->identityKey, &dataPath, &defsPath, def->configDir,
                     def->defaultTitle, def->defaultAuthor);

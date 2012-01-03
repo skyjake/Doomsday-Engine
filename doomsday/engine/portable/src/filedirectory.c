@@ -222,8 +222,7 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
 
         // Let's try to make it a relative path.
         F_RemoveBasePath(searchPath, searchPath);
-        if(Str_RAt(searchPath, 0) != '/')
-            Str_AppendChar(searchPath, '/');
+        F_AppendMissingSlash(searchPath);
 
         addPaths(fd, (const ddstring_t**)&searchPath, 1, callback, paramaters);
         Str_Delete(searchPath);

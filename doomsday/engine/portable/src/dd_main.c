@@ -1336,16 +1336,14 @@ int DD_EarlyInit(void)
     Str_Strip(&dataPath);
     F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != '/')
-        Str_AppendChar(&dataPath, '/');
+    F_AppendMissingSlash(&dataPath);
 
     Str_Init(&defsPath);
     Str_Set(&defsPath, DD_BASEPATH_DEFS);
     Str_Strip(&defsPath);
     F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != '/')
-        Str_AppendChar(&defsPath, '/');
+    F_AppendMissingSlash(&defsPath);
 
     theGame = nullGame = Game_New("null-game", &dataPath, &defsPath, "doomsday", 0, 0);
 
