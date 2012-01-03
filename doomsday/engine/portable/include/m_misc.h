@@ -88,6 +88,8 @@ boolean M_IsStringValidByte(const char* string);
 /// @return  @c true if @a string can be interpreted as a valid floating-point value.
 boolean M_IsStringValidFloat(const char* string);
 
+char*           M_StrCat(char* buf, const char* str, size_t bufSize);
+char*           M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize);
 char*           M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                                 char separator, size_t bufLength);
 char*           M_StrCatQuoted(char* dest, const char* src, size_t len);

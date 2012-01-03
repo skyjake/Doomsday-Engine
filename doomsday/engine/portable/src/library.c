@@ -185,14 +185,14 @@ Library* Library_New(const char *fileName)
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
     if(bundlePath[strlen(bundlePath) - 1] != '/')
-        strncat(bundlePath, "/", FILENAME_T_MAXLEN - 1);
+        M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN - 1);
-    strncat(bundlePath, "/", FILENAME_T_MAXLEN - 1);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 #endif
 
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN - 1);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     { const char* ext = F_FindFileExtension(bundlePath);
