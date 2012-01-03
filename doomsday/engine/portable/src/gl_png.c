@@ -63,7 +63,7 @@ void PNGAPI user_error_fn(png_structp png_ptr, png_const_charp error_msg)
     png_longjmp(png_ptr, 1);
 #else
     jmp_buf jmpbuf;
-    png_memcpy(jmpbuf, png_ptr->jmpbuf, png_sizeof(jmp_buf));
+    memcpy(jmpbuf, png_ptr->jmpbuf, sizeof(jmp_buf));
     longjmp(jmpbuf, 1);
 #endif
 }
