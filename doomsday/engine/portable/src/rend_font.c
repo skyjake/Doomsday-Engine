@@ -949,13 +949,49 @@ static float parseFloat(char** str)
     char* end;
 
     *str = M_SkipWhite(*str);
-    if(**str != '=')
-        return 0; // Now I'm confused!
+    if(**str != '=') return 0; // Now I'm confused!
 
     *str = M_SkipWhite(*str + 1);
     value = (float) strtod(*str, &end);
     *str = end;
     return value;
+}
+
+/**
+ * Expected: <whitespace> = <whitespace> [|"]<string>[|"]
+ */
+ static boolean parseString(char** str, char* buf, size_t bufLen)
+{
+    size_t len;
+    char* end;
+
+    if(!buf || bufLen == 0) return false;
+
+    *str = M_SkipWhite(*str);
+    if(**str != '=') return false; // Now I'm confused!
+
+    // Skip over any leading whitespace.
+    *str = M_SkipWhite(*str + 1);
+
+    // Skip over any opening '"' character.
+    if(**str == '"') (*str)++;
+
+    // Find the end of the string.
+    end = *str;
+    while(*end && *end != '}' && *end != ',' && *end !='"') { end++; }
+
+    len = end - *str;
+    if(len != 0)
+    {
+        dd_snprintf(buf, MIN_OF(len+1, bufLen), "%s", *str);
+        *str = end;
+    }
+
+    // Skip over any closing '"' character.
+    if(**str == '"')
+        (*str)++;
+
+    return true;
 }
 
 static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numBreaks)
@@ -1082,20 +1118,24 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
             fontid_t fontId;
             if(!strnicmp((*strPtr), "font", 4))
             {
-                Uri* uri;
+                char buf[80];
+
                 (*strPtr) += 4;
-                uri = Uri_NewWithPath2(*strPtr, RC_NULL);
-                fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
-                Uri_Delete(uri);
-                if(fontId != NOFONTID)
+                if(parseString(&(*strPtr), buf, 80))
                 {
-                    (*strPtr) += strlen(*strPtr);
-                    state->fontNum = fontId;
-                    continue;
+                    Uri* uri = Uri_NewWithPath2(buf, RC_NULL);
+
+                    fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
+                    Uri_Delete(uri);
+
+                    if(fontId != NOFONTID)
+                    {
+                        state->fontNum = fontId;
+                        continue;
+                    }
                 }
 
                 Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.\n", (*strPtr));
-                (*strPtr) = M_FindWhite((*strPtr));
                 continue;
             }
 
