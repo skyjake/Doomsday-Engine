@@ -485,89 +485,19 @@ boolean P_LookForMonsters(mobj_t* mo)
  *
  * @return              @c true, if a player was targeted.
  */
-boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
+boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 {
-    int         c, stop;
-    player_t   *player;
-    sector_t   *sector;
-    angle_t     angle;
-    float       dist;
-
+    // If in single player and player is dead, look for monsters.
     if(!IS_NETGAME && players[0].health <= 0)
-    {   // Single player game and player is dead, look for monsters
         return P_LookForMonsters(actor);
-    }
 
-    sector = P_GetPtrp(actor->subsector, DMU_SECTOR);
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(actor->lastLook == stop)
-            return false; // Time to stop looking.
-
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2)
-            return false; // Done looking.
-
-        player = &players[actor->lastLook];
-        if(player->health <= 0)
-            continue; // Dead.
-
-        if(!P_CheckSight(actor, player->plr->mo))
-            continue; // Out of sight.
-
-        if(!allaround)
-        {
-            angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                                    player->plr->mo->pos[VX], player->plr->mo->pos[VY]) -
-                                    actor->angle;
-            if(angle > ANG90 && angle < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(player->plr->mo->pos[VX] - actor->pos[VX],
-                                     player->plr->mo->pos[VY] - actor->pos[VY]);
-
-                // If real close, react anyway.
-                if(dist > MELEERANGE)
-                    continue; // Behind back.
-            }
-        }
-
-        if(player->plr->mo->flags & MF_SHADOW)
-        {   // Player is invisible.
-            if((P_ApproxDistance
-                (player->plr->mo->pos[VX] - actor->pos[VX],
-                 player->plr->mo->pos[VY] - actor->pos[VY]) > 2 * MELEERANGE) &&
-               P_ApproxDistance(player->plr->mo->mom[MX],
-                                player->plr->mo->mom[MY]) < 5)
-            {   // Player is sneaking - can't detect.
-                return false;
-            }
-
-            if(P_Random() < 225)
-            {   // Player isn't sneaking, but still didn't detect.
-                return false;
-            }
-        }
-
-        if(actor->type == MT_MINOTAUR)
-        {
-            if(((player_t *) (actor->tracer)) == player)
-                continue; // Don't target master.
-        }
-
-        actor->target = player->plr->mo;
-        return true;
-    }
+    return Mobj_LookForPlayers(actor, allAround);
 }
 
 /**
  * Stay in state until a player is sighted.
  */
-void C_DECL A_Look(mobj_t *actor)
+void C_DECL A_Look(mobj_t* actor)
 {
     mobj_t         *targ;
 

@@ -458,7 +458,7 @@ static void newChaseDir(mobj_t *actor)
  *
  * @return              @c true, if a player is targeted.
  */
-static boolean lookForPlayers(mobj_t *actor, boolean allAround)
+static boolean Mobj_LookForPlayers(mobj_t *actor, boolean allAround)
 {
     int                 c, stop, playerCount;
     player_t           *player;
@@ -952,7 +952,7 @@ void C_DECL A_Look(mobj_t *actor)
             goto seeyou;
     }
 
-    if(!lookForPlayers(actor, false))
+    if(!Mobj_LookForPlayers(actor, false))
         return;
 
     // Go into chase state.
@@ -1064,7 +1064,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(!actor->target || !(actor->target->flags & MF_SHOOTABLE))
     {
         // Look for a new target.
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
         {   // Got a new target.
         }
         else
@@ -1114,7 +1114,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(IS_NETGAME && !actor->threshold &&
        !P_CheckSight(actor, actor->target))
     {
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
             return; // Got a new target.
     }
 

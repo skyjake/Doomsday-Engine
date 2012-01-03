@@ -28,7 +28,14 @@
 
 #include "g_common.h"
 
-void    Mobj_XYMoveStopping(mobj_t* mo);
+void Mobj_XYMoveStopping(mobj_t* mo);
+
 boolean Mobj_IsPlayerClMobj(mobj_t* thing);
+
+/**
+ * @param allAround  @c false= only look 180 degrees in front.
+ * @return  @c true iff a player was targeted.
+ */
+boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround);
 
 #endif // __LIBCOMMON_MOBJ__
