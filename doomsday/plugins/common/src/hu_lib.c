@@ -136,6 +136,9 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
         am->oldViewScale = 1;
         am->maxViewPositionDelta = 128;
         am->alpha = am->targetAlpha = am->oldAlpha = 0;
+        /// Set initial geometry size.
+        /// \todo Should not be necessary...
+        Rect_SetWidthHeight(obj->geometry, SCREENWIDTH, SCREENHEIGHT);
         break;
       }
     default: break;
