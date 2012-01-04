@@ -783,7 +783,7 @@ static void applyPageLayout(mn_page_t* page)
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
     /// \kludge We cannot yet query line height from the font.
     lineHeight = FR_TextHeight("{case}WyQ");
-    lineOffset = MAX_OF(1, .5f + lineHeight * .4f);
+    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
 
     Rect_SetXY(page->geometry, 0, 0);
     Rect_SetWidthHeight(page->geometry, 0, 0);
