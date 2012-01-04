@@ -781,7 +781,8 @@ static void applyPageLayout(mn_page_t* page)
 
     // Calculate leading/line offset.
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    lineHeight = FR_CharHeight('Q');
+    /// \kludge We cannot yet query line height from the font.
+    lineHeight = FR_TextHeight("WyQ");
     lineOffset = MAX_OF(1, .5f + lineHeight * .08f);
 
     Rect_SetXY(page->geometry, 0, 0);
