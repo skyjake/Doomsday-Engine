@@ -599,6 +599,8 @@ static void createPackagesResourceNamespace(void)
         ddstring_t* pathCopy = Str_New(); \
         F_FixSlashes(pathCopy, path); \
         F_AppendMissingSlash(pathCopy); \
+        if(verbose >= 1) \
+            Con_Message(" %n: %s\n", n, Str_Text(pathCopy)); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -610,13 +612,20 @@ static void createPackagesResourceNamespace(void)
         Str_Strip(&fullString);
         if(!Str_IsEmpty(&fullString))
         {
-            ddstring_t path; Str_Init(&path);
+            ddstring_t path;
             // Split into paths.
-            { const char* c = Str_Text(&fullString);
+            const char* c = Str_Text(&fullString);
+            int n;
+
+            VERBOSE( Con_Message("Using DOOMWADPATH:\n") )
+
+            Str_Init(&path);
+            n = 0;
             while((c = Str_CopyDelim2(&path, c, PATH_DELIMITER_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
             {
                 ADDDOOMWADPATH(&path)
-            }}
+                n++;
+            }
             // Add the last path.
             if(!Str_IsEmpty(&path))
             {
@@ -645,6 +654,7 @@ static void createPackagesResourceNamespace(void)
         else
         {
             F_AppendMissingSlash(doomWadDir);
+            VERBOSE( Con_Message("Using DOOMWADDIR: %s\n", Str_Text(doomWadDir)) )
         }
     }
 
