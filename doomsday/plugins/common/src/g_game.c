@@ -3289,7 +3289,7 @@ static void openLoadMenu(void)
     /// \fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
-    Hu_MenuSetActivePage(&LoadMenu);
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
 }
 
 static void openSaveMenu(void)
@@ -3298,7 +3298,7 @@ static void openSaveMenu(void)
     /// \fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
-    Hu_MenuSetActivePage(&SaveMenu);
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
 }
 
 int G_QuickLoadGameResponse(msgresponse_t response, void* context)
@@ -3385,7 +3385,7 @@ void G_QuickSaveGame(void)
     {
         Hu_MenuCommand(MCMD_OPEN);
         Hu_MenuUpdateGameSaveWidgets();
-        Hu_MenuSetActivePage(&SaveMenu);
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
         menuNominatingQuickSaveSlot = true;
         return;
     }

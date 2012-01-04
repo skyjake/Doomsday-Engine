@@ -697,13 +697,6 @@ static void MNEdit_LoadResources(void)
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-int MN_CountObjects(mn_object_t* list)
-{
-    int count;
-    for(count = 0; MNObject_Type(list) != MN_NONE; list++, count++);
-    return count;
-}
-
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags)
 {
     mn_object_t* obj = MNPage_FindObject(page, group, flags);
@@ -856,6 +849,68 @@ static void applyPageLayout(mn_page_t* page)
     }
 }
 
+static void composeSubpageString(mn_page_t* page, char* buf, size_t bufSize)
+{
+    assert(page);
+    if(!buf || 0 == bufSize) return;
+    dd_snprintf(buf, bufSize, "Page %i/%i", 0, 0);
+}
+
+static void drawPageNavigation(mn_page_t* page, int x, int y)
+{
+    const int currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
+    const int totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
+#if __JDOOM__ || __JDOOM64__
+    char buf[1024];
+#endif
+
+    if(!page || totalPages <= 1) return;
+
+#if __JDOOM__ || __JDOOM64__
+    composeSubpageString(page, buf, 1024);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetAlpha(mnRendState->pageAlpha);
+
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#else
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+
+    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], x - 144, y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], x + 144, y, ALIGN_LEFT);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#endif
+}
+
+static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
+{
+    Point2Raw origin;
+
+    if(!page) return;
+
+    /// \kludge no title = no heading.
+    if(Str_IsEmpty(&page->title)) return;
+
+    origin.x = SCREENWIDTH/2;
+    origin.y = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    if(offset)
+    {
+        origin.x += offset->x;
+        origin.y += offset->y;
+    }
+
+    FR_PushAttrib();
+      Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
+      drawPageNavigation(page, origin.x, origin.y);
+    FR_PopAttrib();
+}
+
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 {
     mn_object_t* focusObj;
@@ -959,7 +1014,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PopAttrib();
     }
 
-    // Finally, the focus cursor?
+    // How about a focus cursor?
     /// \todo cursor should be drawn on top of the page drawer.
     if(showFocusCursor && focusObj)
     {
@@ -968,6 +1023,8 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
+
+    drawPageHeading(page, NULL/*no offset*/);
 
     // The page has its own drawer.
     if(page->drawer)
@@ -982,6 +1039,30 @@ static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
 {
     assert(info);
     return (info->callback != 0);
+}
+
+void MNPage_SetTitle(mn_page_t* page, const char* title)
+{
+    assert(page);
+    Str_Set(&page->title, title? title : "");
+}
+
+void MNPage_SetX(mn_page_t* page, int x)
+{
+    assert(page);
+    page->origin.x = x;
+}
+
+void MNPage_SetY(mn_page_t* page, int y)
+{
+    assert(page);
+    page->origin.y = y;
+}
+
+void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage)
+{
+    assert(page);
+    page->previous = prevPage;
 }
 
 mn_object_t* MNPage_FocusObject(mn_page_t* page)
@@ -1244,6 +1325,12 @@ mn_obtype_e MNObject_Type(const mn_object_t* obj)
 {
     assert(obj);
     return obj->_type;
+}
+
+mn_page_t* MNObject_Page(const mn_object_t* obj)
+{
+    assert(obj);
+    return obj->_page;
 }
 
 int MNObject_Flags(const mn_object_t* obj)
