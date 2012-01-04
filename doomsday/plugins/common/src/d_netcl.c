@@ -60,53 +60,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-//static byte *readbuffer;
-
 // CODE --------------------------------------------------------------------
-
-/*
-// Mini-Msg routines.
-void NetCl_SetReadBuffer(byte *data)
-{
-    readbuffer = data;
-}
-
-byte NetCl_ReadByte(void)
-{
-    return *readbuffer++;
-}
-
-short NetCl_ReadShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(short*) (readbuffer - 2) );
-}
-
-unsigned short NetCl_ReadUShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(unsigned short*) (readbuffer - 2) );
-}
-
-int NetCl_ReadLong(void)
-{
-    readbuffer += 4;
-    return LONG( *(int*) (readbuffer - 4) );
-}
-
-float NetCl_ReadFloat(void)
-{
-    int value = LONG( *(int*) readbuffer );
-    readbuffer += 4;
-    return *(float*) &value;
-}
-
-void NetCl_Read(byte *buf, int len)
-{
-    memcpy(buf, readbuffer, len);
-    readbuffer += len;
-}
-*/
 
 void NetCl_UpdateGameState(Reader* msg)
 {

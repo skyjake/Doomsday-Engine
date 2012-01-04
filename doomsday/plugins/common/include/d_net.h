@@ -29,15 +29,7 @@
 #include "reader.h"
 #include "writer.h"
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
+#include "common.h"
 
 #define NETBUFFER_MAXMESSAGE 255
 
@@ -81,10 +73,11 @@ enum {
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
     GPT_PLAYER_SPAWN_POSITION,
-    GPT_DAMAGE_REQUEST,                    // Client requests damage on a target.
+    GPT_DAMAGE_REQUEST,            // Client requests damage on a target.
     GPT_MOBJ_IMPULSE,              // Momenum to apply on a mobj.
     GPT_FLOOR_HIT_REQUEST,
-    GPT_MAYBE_CHANGE_WEAPON         // Server suggests weapon change.
+    GPT_MAYBE_CHANGE_WEAPON,       // Server suggests weapon change.
+    GPT_FINALE_STATE               // State of the InFine script.
 };
 
 #if 0

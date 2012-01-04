@@ -30,6 +30,8 @@
 #ifndef LIBCOMMON_INFINE_LIB
 #define LIBCOMMON_INFINE_LIB
 
+#include "d_net.h"
+
 /**
  * @defgroup finaleMode Finale Mode.
  */
@@ -45,7 +47,7 @@ typedef enum {
 /**
  * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
  *
- * Packet: PSV_FINALE Finale flags. Used with GPT_FINALE and GPT_FINALE2
+ * Packet: PSV_FINALE Finale flags.
  */
 /*@{*/
 #define FINF_AFTER          0x08  // Otherwise before.
@@ -94,5 +96,7 @@ boolean FI_RequestSkip(void);
 boolean FI_IsMenuTrigger(void);
 
 int FI_PrivilegedResponder(const void* ev);
+
+void NetCl_FinaleState(Reader* msg);
 
 #endif /* LIBCOMMON_INFINE_LIB */
