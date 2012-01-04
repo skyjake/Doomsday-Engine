@@ -267,7 +267,7 @@ boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 typedef enum {
-    MENU_COLOR1,
+    MENU_COLOR1 = 0,
     MENU_COLOR2,
     MENU_COLOR3,
     MENU_COLOR4,
@@ -283,7 +283,7 @@ typedef enum {
 #define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
 
 typedef enum {
-    MENU_FONT1,
+    MENU_FONT1 = 0,
     MENU_FONT2,
     MENU_FONT3,
     MENU_FONT4,
@@ -379,6 +379,8 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
  * @return  Identifier of the found font else @c 0
  */
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
+
+void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
 
 /**
  * Text objects.

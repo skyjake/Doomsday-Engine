@@ -363,6 +363,7 @@ void Hu_MenuInitControlsPage(void)
     page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuDrawControlsPage, NULL, NULL);
     page->objects = ControlsMenuItems;
     MNPage_SetTitle(page, "Controls");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
 }
 

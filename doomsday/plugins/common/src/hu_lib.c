@@ -782,8 +782,8 @@ static void applyPageLayout(mn_page_t* page)
     // Calculate leading/line offset.
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
     /// \kludge We cannot yet query line height from the font.
-    lineHeight = FR_TextHeight("WyQ");
-    lineOffset = MAX_OF(1, .5f + lineHeight * .08f);
+    lineHeight = FR_TextHeight("{case}WyQ");
+    lineOffset = MAX_OF(1, .5f + lineHeight * .4f);
 
     Rect_SetXY(page->geometry, 0, 0);
     Rect_SetWidthHeight(page->geometry, 0, 0);
@@ -1285,12 +1285,25 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
     if(!VALID_MNPAGE_FONTID(id))
     {
 #if _DEBUG
-        Con_Error("MNPage::PredefinedFont: Invalid font id '%i'.", (int)id);
+        Con_Error("MNPage::PredefinedFont: Invalid font id #%i.", (int)id);
         exit(1); // Unreachable.
 #endif
         return 0; // Not a valid font id.
     }
     return page->fonts[id];
+}
+
+void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId)
+{
+    assert(page);
+    if(!VALID_MNPAGE_FONTID(id))
+    {
+#if _DEBUG
+        Con_Message("MNPage::SetPredefinedFont: Invalid font id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    page->fonts[id] = fontId;
 }
 
 void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
