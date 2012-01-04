@@ -1241,7 +1241,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     if(!initedOk)
-        Con_Error("GL_TextureVariantSpecificationForContext: Textures collection not yet initialized.");
+        Con_Error("GL_TextureVariantSpecificationForContext: GL texture manager not yet initialized.");
     return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
         wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
@@ -1250,7 +1250,7 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast)
 {
     if(!initedOk)
-        Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection not yet initialized.");
+        Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");
     return getDetailVariantSpecificationForContext(contrast);
 }
 
