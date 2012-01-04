@@ -1162,9 +1162,6 @@ static void setupGLStateForMap(uiwidget_t* obj)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
 #if __JHERETIC__ || __JHEXEN__
     if(W_CheckLumpNumForName("AUTOPAGE") == -1)
     {
@@ -1528,9 +1525,6 @@ DGL_End();
     restoreGLStateFromMap(obj);
 
     drawMarkedPoints(obj);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
 
     // Return to the normal GL state.
     DGL_MatrixMode(DGL_MODELVIEW);
