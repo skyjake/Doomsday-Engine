@@ -1229,7 +1229,7 @@ mn_object_t PlayerSetupMenuObjects[] = {
 #endif
     { MN_TEXT,      0,  0,          0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_player_color },
     { MN_LISTINLINE,0,  MNF_ID3,    0,   MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuSelectPlayerColor, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_player_color },
-    { MN_BUTTON,    0,  0,          's', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectAcceptPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_player_save_changes },
+    { MN_BUTTON,    0,  0,          's', MENU_FONT2, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectAcceptPlayerSetup, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_player_save_changes },
     { MN_NONE }
 };
 
@@ -2402,6 +2402,7 @@ static void initAllPages(void)
 
     page = Hu_MenuNewPage("PlayerSetup", &origin, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPredefinedFont(page, MENU_FONT2, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Multiplayer"));
     page->objects = PlayerSetupMenuObjects;
     }
