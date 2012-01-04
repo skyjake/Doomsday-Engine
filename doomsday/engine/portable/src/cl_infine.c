@@ -26,6 +26,7 @@
  * Client-side InFine.
  */
 #include "de_base.h"
+#include "de_console.h"
 #include "de_network.h"
 #include "de_infine.h"
 
