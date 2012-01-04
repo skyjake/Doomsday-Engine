@@ -29,62 +29,46 @@
 #include "de_network.h"
 #include "de_infine.h"
 
-static const byte* readbuffer;
-
-// Mini-Msg routines.
-static void SetReadBuffer(const byte* data)
-{
-    readbuffer = data;
-}
-
-static byte ReadByte(void)
-{
-    return *readbuffer++;
-}
-
-static short ReadShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(const short*) (readbuffer - 2) );
-}
-
-static int ReadLong(void)
-{
-    readbuffer += 4;
-    return LONG( *(const int*) (readbuffer - 4) );
-}
-
-static void Read(byte* buf, size_t len)
-{
-    memcpy(buf, readbuffer, len);
-    readbuffer += len;
-}
+static finaleid_t currentFinale = 0;
 
 /**
  * This is where clients start their InFine sequences.
  */
-void Cl_Finale(int packetType, const byte* data)
+void Cl_Finale(Reader* msg)
 {
-    byte flags;
+    int flags = Reader_ReadByte(msg);
+    byte* script = 0;
+    int len;
 
-    SetReadBuffer(data);
-    flags = ReadByte();
-
-    if(flags & (FINF_SCRIPT|FINF_BEGIN))
-    {   // Start the script.
-#pragma message("WARNING: Cl_Finale does not presently read the state condition flags")
-        FI_Execute((const char*)readbuffer, FF_LOCAL);
-    }
-
-    if(flags & FINF_END)
+    if(flags & FINF_SCRIPT)
     {
-#pragma message("WARNING: Cl_Finale does not presently respond to FINF_END")
-        //FI_ScriptTerminate();
+        // Read the script into map-scope memory. It will be freed
+        // when the next map is loaded.
+        len = Reader_ReadUInt32(msg);
+        script = malloc(len + 1);
+        Reader_Read(msg, script, len);
+        script[len] = 0;
     }
 
-    if(flags & FINF_SKIP)
+    if((flags & FINF_SCRIPT) && (flags & FINF_BEGIN))
     {
-#pragma message("WARNING: Cl_Finale does not presently respond to FINF_SKIP")
-        //FI_ScriptRequestSkip();
+        // Start the script.
+        currentFinale = FI_Execute(script, FF_LOCAL);
+#ifdef _DEBUG
+        Con_Message("Cl_Finale: Started finale %i.\n", currentFinale);
+#endif
     }
+
+    if((flags & FINF_END) && currentFinale)
+    {
+        FI_ScriptTerminate(currentFinale);
+        currentFinale = 0;
+    }
+
+    if((flags & FINF_SKIP) && currentFinale)
+    {       
+        FI_ScriptRequestSkip(currentFinale);
+    }
+
+    if(script) free(script);
 }

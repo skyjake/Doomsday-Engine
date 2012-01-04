@@ -32,21 +32,13 @@
 #include <string.h>
 #include <assert.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "p_tick.h"
 #include "hu_log.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
+#include "d_net.h"
 
 #include "fi_lib.h"
 
@@ -112,8 +104,9 @@ void FI_StackRegister(void)
 static void initStateConditions(fi_state_t* s)
 {
     // Only the server is able to figure out the truth values of all the conditions.
-    if(!IS_SERVER)
-    {   // Set the presets.
+    if(IS_CLIENT)
+    {
+        // Set the presets.
         s->conditions.secret = false;
         s->conditions.leave_hub = false;
         return;
@@ -163,23 +156,51 @@ static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_
     return s;
 }
 
-static void Sv_SendFinaleState(fi_state_t* s)
+static void NetSv_SendFinaleState(fi_state_t* s)
 {
-#define BUF_SIZE            4
-
-    byte buffer[BUF_SIZE], *ptr = buffer;
+    Writer* writer = D_NetWrite();
 
     // First the flags.
-    *ptr++ = (s->mode == FIMODE_AFTER ? FINF_AFTER : (s->mode == FIMODE_OVERLAY) ? FINF_OVERLAY : 0);
+    Writer_WriteByte(writer, s->mode);
 
     // Then the conditions.
-    *ptr++ = 2; // Number of conditions.
-    *ptr++ = s->conditions.secret;
-    *ptr++ = s->conditions.leave_hub;
+    Writer_WriteByte(writer, 2); // Number of conditions.
+    Writer_WriteByte(writer, s->conditions.secret);
+    Writer_WriteByte(writer, s->conditions.leave_hub);
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, 85 /*GPT_FINALE2*/, buffer, BUF_SIZE);
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_FINALE_STATE, Writer_Data(writer), Writer_Size(writer));
+}
 
-#undef BUF_SIZE
+void NetCl_FinaleState(Reader* msg)
+{
+    int i, numConds;
+    fi_state_t dummy;
+    fi_state_t* s = stackTop();
+    if(!s) s = &dummy;
+
+    // Flags.
+    s->mode = Reader_ReadByte(msg);
+
+    // Conditions.
+    numConds = Reader_ReadByte(msg);
+    for(i = 0; i < numConds; ++i)
+    {
+        byte cond = Reader_ReadByte(msg);
+        if(i == 0) s->conditions.secret = cond;
+        if(i == 1) s->conditions.leave_hub = cond;
+    }
+
+#ifdef _DEBUG
+    if(s == &dummy)
+    {
+        Con_Message("NetCl_FinaleState: Ignoring received finale state.\n");
+    }
+    else
+    {
+        Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i\n",
+                    s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
+    }
+#endif
 }
 
 void FI_StackInit(void)
@@ -291,7 +312,7 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
     // Do we need to transmit the state conditions to clients?
     if(IS_SERVER && !(flags & FF_LOCAL))
     {
-        Sv_SendFinaleState(s);
+        NetSv_SendFinaleState(s);
     }
 }
 

@@ -1195,7 +1195,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     if(!IS_TOGGLE_DOWN(ev))
         return false;
 
-    // Servers tell clients to skip.
+    // Tell clients to skip.
     Sv_Finale(FINF_SKIP, 0);
     return FinaleInterpreter_Skip(fi);
 }

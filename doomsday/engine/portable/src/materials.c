@@ -1722,6 +1722,8 @@ boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
 
 boolean Materials_HasDecorations(material_t* mat)
 {
+    if(novideo) return false;
+
     assert(mat);
     /// \fixme We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.

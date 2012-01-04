@@ -64,9 +64,9 @@
 #define MAX_CLMOBJS         80
 
 // Packet types.
-// PKT = sent by anybody
-// PSV = sent by server
-// PCL = sent by client
+// PKT = sent by anyone
+// PSV = only sent by server
+// PCL = only sent by client
 enum {
     // Messages and responses.
     PCL_HELLO = 0,
@@ -74,7 +74,7 @@ enum {
     PKT_CANCEL = 2,                 // unused?
     PKT_PLAYER_INFO = 3,
     PKT_CHAT = 4,
-    PKT_TICCMD = 5,                 // unused?
+    PSV_FINALE = 5,
     PKT_PING = 6,
     PSV_HANDSHAKE = 7,
     PSV_SERVER_CLOSE = 8,
@@ -83,8 +83,6 @@ enum {
     PSV_CONSOLE_TEXT = 11,
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
-    //PSV_FILTER = 14,                // unused?
-    //PKT_COMMAND = 15,               // obsolete
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
     PKT_COORDS = 18,
@@ -102,15 +100,8 @@ enum {
     PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
     PCL_GOODBYE = 31,
 
-    //PCL_COMMANDS_OBSOLETE = DDPT_COMMANDS_OBSOLETE,   // 32; ticcmds (handled by game)
-
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
-
-    // Older versions put the task of interpreting InFine packet types in
-    // the hands of the game, hence their type ids being >= 64
-    PSV_FINALE = 76,
-    PSV_FINALE2 = 85
 };
 
 // Use the number defined in dd_share.h for sound packets.

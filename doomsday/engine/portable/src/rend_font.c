@@ -813,7 +813,6 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP: {
-        bitmapfont_t* bf = (bitmapfont_t*)font;
         int s[2], t[2], x = 0, y = 0, w, h;
 
         if(0 != BitmapFont_GLTextureName(font))

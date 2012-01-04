@@ -26,9 +26,21 @@ class Entry:
         self.link = ''
         self.hash = ''
         self.message = ''
+        self.tags = []
+        self.guessedTags = []
         
     def setSubject(self, subject):
         self.extra = ''
+        
+        # Remote tags from the subject.
+        pos = subject.find(':')
+        if subject[pos + 1] in string.whitespace:
+            for tag in subject[:pos].split('|'):
+                self.tags.append(tag.strip())
+            subject = subject[pos + 1:].strip()
+        
+        if len(subject) == 0: subject = "Commit"
+        
         # Check that the subject lines are not too long.
         MAX_SUBJECT = 100
         if len(utils.collated(subject)) > MAX_SUBJECT:
@@ -123,7 +135,26 @@ class Changes:
             
             if not self.should_ignore(entry.subject):
                 self.entries.append(entry)
-        
+
+        self.deduce_tags()
+                
+    def all_tags(self):
+        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize']
+        for e in self.entries:
+            for t in e.tags + e.guessedTags:
+                if t not in tags: 
+                    tags.append(t)
+        return tags
+                
+    def deduce_tags(self):
+        # Look for known tags in untagged titles.
+        allTags = self.all_tags()
+        for entry in self.entries:
+            if entry.tags: continue
+            # This entry has no tags yet.    
+            for tag in allTags:
+                if tag.lower() in entry.subject.lower():
+                    entry.guessedTags.append(tag)
         
     def generate(self, format):
         fromTag = self.fromTag
@@ -131,7 +162,7 @@ class Changes:
         
         if format == 'html':
             out = file(Event(toTag).file_path('changes.html'), 'wt')
-            
+
             MAX_COMMITS = 100
             entries = self.entries[:MAX_COMMITS]
             
@@ -140,16 +171,53 @@ class Changes:
                 print >> out, 'The <a href="%s">oldest commit</a> is dated %s.</p>' % \
                     (self.entries[-1].link, self.entries[-1].date)                
             
-            print >> out, '<ol>'
+            # Form groups.
+            groups = {}
+            for tag in self.all_tags():
+                groups[tag] = []
+                for e in entries:
+                    if tag in e.tags:
+                        groups[tag].append(e)
+                for e in entries:
+                    if tag in e.guessedTags:
+                        groups[tag].append(e)
+                
+                for e in groups[tag]:
+                    entries.remove(e)
+            
+            groups['Other'] = []
+            for e in entries:
+                groups['Other'].append(e)
 
-            # Write a list entry for each commit.
-            for entry in entries:
-                print >> out, '<li><b>%s</b><br/>' % entry.subject
-                print >> out, 'by <i>%s</i> on %s' % (entry.author, entry.date)
-                print >> out, '<a href="%s">(show in repository)</a>' % entry.link
-                print >> out, '<blockquote>%s</blockquote>' % entry.message
+            keys = groups.keys()
+            keys.sort(cmp=lambda a, b: cmp(str(a).lower(), str(b).lower()))
+            for group in keys:
+                if not len(groups[group]): continue
+                
+                print >> out, '<h3>%s</h3>' % group                                
+                print >> out, '<ul>'
+
+                # Write a list entry for each commit.
+                for entry in groups[group]:
+                    otherGroups = []
+                    for tag in entry.tags + entry.guessedTags:
+                        if tag != group:
+                            otherGroups.append(tag)
+                    others = ''
+                    if len(otherGroups) > 1:
+                        others = string.join(otherGroups[:-1], ', ')
+                        others += ' and ' + otherGroups[-1]
+                    elif len(otherGroups) == 1:
+                        others = otherGroups[0]
+                        
+                    if others: others = ' <i>(also %s)</i>' % others
+                        
+                    print >> out, '<li><b>%s</b>%s<br/>' % (entry.subject, others)
+                    print >> out, 'by <i>%s</i> on ' % entry.author
+                    print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date)
+                    print >> out, '<blockquote style="color:#808080;">%s</blockquote>' % entry.message
                     
-            print >> out, '</ol>'
+                print >> out, '</ul>'
             out.close()
             
         elif format == 'xml':
@@ -162,6 +230,13 @@ class Changes:
                 print >> out, '<author>%s</author>' % entry.author
                 print >> out, '<repositoryUrl>%s</repositoryUrl>' % entry.link
                 print >> out, '<sha1>%s</sha1>' % entry.hash
+                if entry.tags or entry.guessedTags:
+                    print >> out, '<tags>'
+                    for t in entry.tags:
+                        print >> out, '<tag>%s</tag>' % t
+                    for t in entry.guessedTags:
+                        print >> out, '<tag guessed="true">%s</tag>' % t
+                    print >> out, '</tags>'
                 print >> out, '<title>%s</title>' % entry.subject
                 if len(entry.message):
                     print >> out, '<message>%s</message>' % entry.message

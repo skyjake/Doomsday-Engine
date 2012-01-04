@@ -370,8 +370,7 @@ void Cl_GetPackets(void)
             break;
 
         case PSV_FINALE:
-        case PSV_FINALE2:
-            Cl_Finale(netBuffer.msg.type, netBuffer.msg.data);
+            Cl_Finale(msgReader);
             break;
 
         default:

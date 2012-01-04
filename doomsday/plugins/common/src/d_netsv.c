@@ -763,9 +763,10 @@ void NetSv_Intermission(int flags, int state, int time)
 #endif
 
     if(flags & IMF_STATE)
-        Writer_WriteByte(msg, state);
+        Writer_WriteInt16(msg, state);
+
     if(flags & IMF_TIME)
-        Writer_WriteUInt16(msg, time);
+        Writer_WriteInt16(msg, time);
 
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_INTERMISSION, Writer_Data(msg), Writer_Size(msg));
 }

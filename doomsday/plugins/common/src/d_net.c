@@ -38,6 +38,7 @@
 #include "p_player.h"
 #include "hu_menu.h"
 #include "p_start.h"
+#include "fi_lib.h"
 #include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
@@ -536,12 +537,9 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_Intermission(reader);
         break;
 
-/*
-    case GPT_FINALE:
-    case GPT_FINALE2:
-        NetCl_Finale(type, reader);
+    case GPT_FINALE_STATE:
+        NetCl_FinaleState(reader);
         break;
-*/
 
     case GPT_PLAYER_INFO:
         NetCl_UpdatePlayerInfo(reader);
