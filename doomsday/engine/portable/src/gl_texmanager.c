@@ -3372,7 +3372,6 @@ static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramater
 
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId)
 {
-    colorpaletteid_t localPaletteId = paletteId;
     Textures_Iterate2(TN_ANY, releaseGLTexturesByColorPaletteWorker, (void*)&paletteId);
 }
 
