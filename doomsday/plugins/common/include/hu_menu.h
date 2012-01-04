@@ -76,35 +76,7 @@
 #define MENU_CURSOR_FRAMECOUNT      2
 #define MENU_CURSOR_TICSPERFRAME    8
 
-extern mn_page_t MainMenu;
-extern mn_page_t GameTypeMenu;
-#if __JHEXEN__
-extern mn_page_t PlayerClassMenu;
-#endif
-#if __JDOOM__ || __JHERETIC__
-extern mn_page_t EpisodeMenu;
-#endif
-//extern mn_page_t SkillMenu;
-extern mn_page_t OptionsMenu;
-extern mn_page_t SoundMenu;
-extern mn_page_t GameplayMenu;
-extern mn_page_t HudMenu;
-extern mn_page_t AutomapMenu;
-extern mn_object_t AutomapMenuObjects[];
-#if __JHERETIC__ || __JHEXEN__
-extern mn_page_t FilesMenu;
-#endif
-extern mn_page_t LoadMenu;
-extern mn_page_t SaveMenu;
-extern mn_page_t MultiplayerMenu;
-extern mn_page_t PlayerSetupMenu;
-#if __JHERETIC__ || __JHEXEN__
-extern mn_page_t InventoryMenu;
-#endif
-extern mn_page_t WeaponMenu;
-
 extern int menuTime;
-
 extern boolean menuNominatingQuickSaveSlot;
 
 /// Register the console commands, variables, etc..., of this module.
@@ -137,6 +109,13 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 boolean Hu_MenuIsVisible(void);
 
+mn_page_t* Hu_MenuFindPageByName(const char* name);
+
+mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin,
+    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin),
+    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd),
+    void* userData);
+
 /**
  * This is the main menu drawing routine (called every tic by the drawing
  * loop) Draws the current menu 'page' by calling the funcs attached to
@@ -147,8 +126,7 @@ void Hu_MenuDrawer(void);
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
 void Hu_MenuDrawPageTitle(const char* title, int x, int y);
-
-void Hu_MenuDrawPageNavigation(mn_page_t* page, int x, int y);
+void Hu_MenuDrawPageHelp(const char* help, int x, int y);
 
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuPrivilegedResponder(event_t* ev);
@@ -188,8 +166,6 @@ mn_page_t* Hu_MenuActivePage(void);
  * Change the current active page.
  */
 void Hu_MenuSetActivePage(mn_page_t* page);
-
-void Hu_MenuComposeSubpageString(mn_page_t* page, size_t bufSize, char* buf);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.

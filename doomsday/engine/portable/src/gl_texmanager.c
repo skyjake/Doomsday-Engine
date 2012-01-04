@@ -876,7 +876,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     }
     else if(0 != image->paletteId)
     {
-        if(fillOutlines && 0 != image->paletteId && (image->flags & IMGF_IS_MASKED))
+        if(fillOutlines && (image->flags & IMGF_IS_MASKED))
             ColorOutlinesIdx(image->pixels, image->size.width, image->size.height);
 
         if(monochrome && !scaleSharp)
@@ -1241,7 +1241,7 @@ texturevariantspecification_t* GL_TextureVariantSpecificationForContext(
     boolean mipmapped, boolean gammaCorrection, boolean noStretch, boolean toAlpha)
 {
     if(!initedOk)
-        Con_Error("GL_TextureVariantSpecificationForContext: Textures collection not yet initialized.");
+        Con_Error("GL_TextureVariantSpecificationForContext: GL texture manager not yet initialized.");
     return getVariantSpecificationForContext(tc, flags, border, tClass, tMap, wrapS,
         wrapT, minFilter, magFilter, anisoFilter, mipmapped, gammaCorrection, noStretch, toAlpha);
 }
@@ -1250,7 +1250,7 @@ texturevariantspecification_t* GL_DetailTextureVariantSpecificationForContext(
     float contrast)
 {
     if(!initedOk)
-        Con_Error("GL_DetailTextureVariantSpecificationForContext: Textures collection not yet initialized.");
+        Con_Error("GL_DetailTextureVariantSpecificationForContext: GL texture manager not yet initialized.");
     return getDetailVariantSpecificationForContext(contrast);
 }
 
