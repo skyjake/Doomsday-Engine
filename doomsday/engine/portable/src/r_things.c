@@ -547,22 +547,26 @@ void R_InitSprites(void)
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
-    { int max = MAX_OF(numSpriteRecords, countSprNames.num);
-    if(max > 0)
+    if(numSpriteRecords)
     {
-        spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
-        int n = max-1;
-        rec = spriteRecords;
-        do
+        int max = MAX_OF(numSpriteRecords, countSprNames.num);
+        if(max > 0)
         {
-            int idx = Def_GetSpriteNum(rec->name);
-            list[idx == -1? n-- : idx] = rec;
-        } while((rec = rec->next));
+            spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
+            int n = max-1;
 
-        // Create sprite definitions from the located sprite patch lumps.
-        initSpriteDefs(list, max);
-        M_Free(list);
-    }}
+            rec = spriteRecords;
+            do
+            {
+                int idx = Def_GetSpriteNum(rec->name);
+                list[idx == -1? n-- : idx] = rec;
+            } while((rec = rec->next));
+
+            // Create sprite definitions from the located sprite patch lumps.
+            initSpriteDefs(list, max);
+            M_Free(list);
+        }
+    }
     /// \kludge end
 
     // We are now done with the sprite records.
