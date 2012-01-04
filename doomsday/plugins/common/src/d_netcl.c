@@ -735,9 +735,9 @@ void NetCl_Intermission(Reader* msg)
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(Reader_ReadByte(msg));
+        WI_SetState(Reader_ReadInt16(msg));
 #elif __JHERETIC__ || __JHEXEN__
-        interState = (int) Reader_ReadByte(msg);
+        interState = Reader_ReadInt16(msg);
 #endif
     }
 

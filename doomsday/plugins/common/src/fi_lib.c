@@ -161,8 +161,7 @@ static void NetSv_SendFinaleState(fi_state_t* s)
     Writer* writer = D_NetWrite();
 
     // First the flags.
-    Writer_WriteByte(writer, s->mode == FIMODE_AFTER? FINF_AFTER :
-                             s->mode == FIMODE_OVERLAY? FINF_OVERLAY : 0);
+    Writer_WriteByte(writer, s->mode);
 
     // Then the conditions.
     Writer_WriteByte(writer, 2); // Number of conditions.
@@ -174,7 +173,34 @@ static void NetSv_SendFinaleState(fi_state_t* s)
 
 void NetCl_FinaleState(Reader* msg)
 {
-    // read and handle
+    int i, numConds;
+    fi_state_t dummy;
+    fi_state_t* s = stackTop();
+    if(!s) s = &dummy;
+
+    // Flags.
+    s->mode = Reader_ReadByte(msg);
+
+    // Conditions.
+    numConds = Reader_ReadByte(msg);
+    for(i = 0; i < numConds; ++i)
+    {
+        byte cond = Reader_ReadByte(msg);
+        if(i == 0) s->conditions.secret = cond;
+        if(i == 1) s->conditions.leave_hub = cond;
+    }
+
+#ifdef _DEBUG
+    if(s == &dummy)
+    {
+        Con_Message("NetCl_FinaleState: Ignoring received finale state.\n");
+    }
+    else
+    {
+        Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i\n",
+                    s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
+    }
+#endif
 }
 
 void FI_StackInit(void)

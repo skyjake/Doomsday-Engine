@@ -31,8 +31,8 @@
 
 #include "dd_def.h"
 
-#define SV_VERSION          17
-#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R17)"
+#define SV_VERSION          18
+#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R18)"
 
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.

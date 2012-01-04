@@ -45,16 +45,6 @@ typedef enum {
 /*@}*/
 
 /**
- * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
- *
- * Packet: PSV_FINALE Finale flags.
- */
-/*@{*/
-#define FINF_AFTER          0x08  // Otherwise before.
-#define FINF_OVERLAY        0x20  // Otherwise before (or after).
-/*@}*/
-
-/**
  * Called during engine initialization to register any ccmds and cvars
  * used by this library.
  */
