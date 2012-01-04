@@ -2195,7 +2195,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
             text = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
         }
 
-        if(!text || text[0])
+        if(!text || !text[0])
         {
             // Use the original patch.
             patchinfo_t info;
