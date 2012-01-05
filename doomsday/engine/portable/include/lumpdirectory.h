@@ -28,18 +28,13 @@
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
-struct lumpdirectory_lumprecord_s;
-
 /**
  * LumpDirectory.
  *
  * @ingroup fs
  */
-typedef struct lumpdirectory_s {
-    int _flags; /// @see lumpDirectoryFlags
-    int _numRecords;
-    struct lumpdirectory_lumprecord_s* _records;
-} lumpdirectory_t;
+struct lumpdirectory_s; // The lumpdirectory instance (opaque)
+typedef struct lumpdirectory_s lumpdirectory_t;
 
 lumpdirectory_t* LumpDirectory_New(void);
 void LumpDirectory_Delete(lumpdirectory_t* ld);
