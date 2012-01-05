@@ -1636,9 +1636,9 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
     case FT_LUMPFILE:
         LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
         break;
-    default:
-        Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
-        exit(1); // Unreachable.
+    default: break;
+        /*Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
+        exit(1); // Unreachable.*/
     }
     return true;
 }
