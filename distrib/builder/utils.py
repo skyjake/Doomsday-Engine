@@ -62,7 +62,7 @@ def count_log_word(fn, word):
     while True:
         pos = txt.find(unicode(word), pos)
         if pos < 0: break 
-        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's' and \
+        if txt[pos-1] not in '/\\_' and txt[pos+len(word)] != 's' and \
             txt[pos-11:pos] != 'shlibdeps: ':
             count += 1            
         pos += len(word)
