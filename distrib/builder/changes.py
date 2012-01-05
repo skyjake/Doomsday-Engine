@@ -139,13 +139,14 @@ class Changes:
         self.deduce_tags()
                 
     def all_tags(self):
-        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize']
+        # These words are always considered to be valid tags.
+        tags = ['Cleanup', 'Fixed', 'Added', 'Refactor', 'Performance', 'Optimize', 'merge branch']
         for e in self.entries:
             for t in e.tags + e.guessedTags:
                 if t not in tags: 
                     tags.append(t)
         return tags
-                
+
     def deduce_tags(self):
         # Look for known tags in untagged titles.
         allTags = self.all_tags()
@@ -153,9 +154,40 @@ class Changes:
             if entry.tags: continue
             # This entry has no tags yet.    
             for tag in allTags:
-                if tag.lower() in entry.subject.lower():
+                p = entry.subject.lower().find(tag.lower())
+                if p < 0: continue
+                if p == 0 or entry.subject[p - 1] not in string.ascii_letters + '-_':
                     entry.guessedTags.append(tag)
         
+    def form_groups(self, allEntries):
+        groups = {}
+        for tag in self.all_tags():
+            groups[tag] = []
+            for e in allEntries:
+                if tag in e.tags:
+                    groups[tag].append(e)
+            for e in allEntries:
+                if tag in e.guessedTags:
+                    groups[tag].append(e)
+            
+            for e in groups[tag]:
+                allEntries.remove(e)
+        
+        groups['Miscellaneous'] = []
+        for e in allEntries:
+            groups['Miscellaneous'].append(e)
+            
+        return groups
+    
+    def pretty_group_list(self, tags):
+        listed = ''
+        if len(tags) > 1:
+            listed = string.join(tags[:-1], ', ')
+            listed += ' and ' + tags[-1]
+        elif len(tags) == 1:
+            listed = tags[0]
+        return listed
+            
     def generate(self, format):
         fromTag = self.fromTag
         toTag = self.toTag
@@ -172,24 +204,9 @@ class Changes:
                     (self.entries[-1].link, self.entries[-1].date)                
             
             # Form groups.
-            groups = {}
-            for tag in self.all_tags():
-                groups[tag] = []
-                for e in entries:
-                    if tag in e.tags:
-                        groups[tag].append(e)
-                for e in entries:
-                    if tag in e.guessedTags:
-                        groups[tag].append(e)
-                
-                for e in groups[tag]:
-                    entries.remove(e)
-            
-            groups['Other'] = []
-            for e in entries:
-                groups['Other'].append(e)
-
+            groups = self.form_groups(entries)
             keys = groups.keys()
+            # Sort case-insensitively by group name.
             keys.sort(cmp=lambda a, b: cmp(str(a).lower(), str(b).lower()))
             for group in keys:
                 if not len(groups[group]): continue
@@ -203,19 +220,14 @@ class Changes:
                     for tag in entry.tags + entry.guessedTags:
                         if tag != group:
                             otherGroups.append(tag)
-                    others = ''
-                    if len(otherGroups) > 1:
-                        others = string.join(otherGroups[:-1], ', ')
-                        others += ' and ' + otherGroups[-1]
-                    elif len(otherGroups) == 1:
-                        others = otherGroups[0]
-                        
+                            
+                    others = self.pretty_group_list(otherGroups)
                     if others: others = ' <i>(also %s)</i>' % others
                         
-                    print >> out, '<li><b>%s</b>%s<br/>' % (entry.subject, others)
+                    print >> out, '<li><b>%s</b>%s' % (entry.subject, others)
                     print >> out, 'by <i>%s</i> on ' % entry.author
                     print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date)
-                    print >> out, '<blockquote style="color:#808080;">%s</blockquote>' % entry.message
+                    print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message
                     
                 print >> out, '</ul>'
             out.close()
@@ -233,7 +245,7 @@ class Changes:
                 if entry.tags or entry.guessedTags:
                     print >> out, '<tags>'
                     for t in entry.tags:
-                        print >> out, '<tag>%s</tag>' % t
+                        print >> out, '<tag guessed="false">%s</tag>' % t
                     for t in entry.guessedTags:
                         print >> out, '<tag guessed="true">%s</tag>' % t
                     print >> out, '</tags>'
