@@ -1020,10 +1020,11 @@ static int C_DECL compareFoundEntryByPath(const void* a, const void* b)
 }
 
 /// Collect a list of paths including those which have been mapped.
-static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCount)
+static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCount,
+    boolean includeSearchPath)
 {
     ddstring_t wildPath, origWildPath;
-    foundentry_t* found = NULL;
+    foundentry_t* foundEntries = NULL;
     int i, count = 0, max = 0;
     finddata_t fd;
 
@@ -1040,31 +1041,37 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
             continue; // Not mapped.
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
-        {   // First path found.
+        {
+            // First path found.
             do
             {
                 // Ignore relative directory symbolics.
-                if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
+                if(Str_Compare(&fd.name, ".") && Str_Compare(&fd.name, ".."))
                 {
+                    foundentry_t* found;
+
                     if(count >= max)
                     {
                         if(0 == max)
                             max = 16;
                         else
                             max *= 2;
-                        found = (foundentry_t*)realloc(found, max * sizeof *found);
-                        if(!found)
+
+                        foundEntries = (foundentry_t*)realloc(foundEntries, max * sizeof(*foundEntries));
+                        if(!foundEntries)
                             Con_Error("collectLocalPaths: Failed on (re)allocation of %lu bytes while "
-                                "resizing found path collection.", (unsigned long) (max * sizeof *found));
+                                "resizing found path collection.", (unsigned long) (max * sizeof(*foundEntries)));
                     }
-                    Str_Init(&found[count].path);
-                    Str_Set(&found[count].path, fd.name);
-                    F_FixSlashes(&found[count].path, &found[count].path);
-                    if(fd.attrib & A_SUBDIR)
-                    {
-                        F_AppendMissingSlash(&found[count].path);
-                    }
-                    found[count].attrib = fd.attrib;
+
+                    found = &foundEntries[count];
+
+                    Str_Init(&found->path);
+                    if(includeSearchPath)
+                        Str_Append(&found->path, Str_Text(searchPath));
+                    Str_Append(&found->path, Str_Text(&fd.name));
+
+                    found->attrib = fd.attrib;
+
                     ++count;
                 }
             } while(!myfindnext(&fd));
@@ -1075,10 +1082,10 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
     Str_Free(&origWildPath);
     Str_Free(&wildPath);
 
-    if(retCount)
-        *retCount = count;
+    if(retCount) *retCount = count;
+
     if(0 != count)
-        return found;
+        return foundEntries;
     return NULL;
 }
 
@@ -1091,40 +1098,37 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
 
     if(!callback || !searchDirectory || Str_IsEmpty(searchDirectory)) return 0;
 
-    foundPaths = collectLocalPaths(searchDirectory, &count);
+    foundPaths = collectLocalPaths(searchDirectory, &count, true/*include the searchDirectory in paths*/);
     if(foundPaths)
     {
-        ddstring_t path, localPattern;
+        ddstring_t localPattern;
         int i;
 
         // Sort all the foundPaths entries.
-        qsort(foundPaths, count, sizeof *foundPaths, compareFoundEntryByPath);
+        qsort(foundPaths, count, sizeof(*foundPaths), compareFoundEntryByPath);
 
         Str_Init(&localPattern);
         Str_Appendf(&localPattern, "%s%s", Str_Text(searchDirectory), pattern? Str_Text(pattern) : "");
 
-        Str_Init(&path);
         for(i = 0; i < count; ++i)
         {
+            foundentry_t* found = &foundPaths[i];
+
             // Is the caller's iteration still in progress?
             if(0 == result)
             {
-                // Compose the full path to the found file/directory.
-                Str_Clear(&path);
-                Str_Appendf(&path, "%s%s", Str_Text(searchDirectory), Str_Text(&foundPaths[i].path));
-
                 // Does this match the pattern?
-                if(F_MatchFileName(Str_Text(&path), Str_Text(&localPattern)))
+                if(F_MatchFileName(Str_Text(&found->path), Str_Text(&localPattern)))
                 {
                     // Pass this path to the caller.
-                    result = callback(&path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, paramaters);
+                    result = callback(&found->path, (foundPaths[i].attrib & A_SUBDIR)? PT_BRANCH : PT_LEAF, paramaters);
                 }
             }
 
             // We're done with this path.
-            Str_Free(&foundPaths[i].path);
+            Str_Free(&found->path);
         }
-        Str_Free(&path);
+
         Str_Free(&localPattern);
         free(foundPaths);
     }

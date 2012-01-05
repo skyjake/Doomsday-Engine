@@ -197,7 +197,12 @@ const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, in
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter);
 
 /**
- * Performs a string comparison, ignoring differences in case.
+ * Case sensitive comparison.
+ */
+int Str_Compare(const ddstring_t* str, const char* text);
+
+/**
+ * Non case sensitive comparison.
  */
 int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
 

@@ -488,6 +488,11 @@ const char* Str_GetLine(ddstring_t* str, const char* src)
     return src;
 }
 
+int Str_Compare(const ddstring_t* str, const char* text)
+{
+    return strcmp(Str_Text(str), text);
+}
+
 int Str_CompareIgnoreCase(const ddstring_t* str, const char* text)
 {
     return strcasecmp(Str_Text(str), text);

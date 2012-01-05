@@ -26,37 +26,20 @@
  * Wrappers for File Finding (Win32)
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <io.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "sys_findfile.h"
+#include "de_base.h"
+#include "de_filesys.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
+#include "dd_string.h"
 
 typedef struct winfinddata_s {
     struct _finddata_t data;
     intptr_t handle;
 } winfinddata_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 static void setdata(finddata_t* dta)
 {
@@ -64,39 +47,45 @@ static void setdata(finddata_t* dta)
     dta->date = fd->data.time_write;
     dta->time = fd->data.time_write;
     dta->size = fd->data.size;
-    dta->name = fd->data.name;
+    Str_Set(&dta->name, fd->data.name);
+    Dir_FixSeparators(Str_Text(&dta->name), Str_Length(&dta->name));
     dta->attrib = 0;
     if(fd->data.attrib & _A_SUBDIR)
+    {
+        if(Str_Compare(&dta->name, ".") && Str_Compare(&dta->name, ".."))
+            F_AppendMissingSlash(&dta->name);
         dta->attrib |= A_SUBDIR;
+    }
 }
 
 int myfindfirst(const char* filename, finddata_t* dta)
 {
-    assert(filename && dta);
-    {
     winfinddata_t* fd;
+    assert(filename && dta);
 
     // Allocate a new private finddata struct.
     dta->finddata = fd = calloc(1, sizeof(*fd));
+    Str_InitStd(&dta->name);
 
     // Begin the search.
     fd->handle = _findfirst(filename, &fd->data);
 
     setdata(dta);
     return (fd->handle == (long) (-1));
-    }
 }
 
 int myfindnext(finddata_t* dta)
 {
-    assert(dta);
-    {
-    winfinddata_t* fd = dta->finddata;
-    int result = _findnext(fd->handle, &fd->data);
+    winfinddata_t* fd;
+    int result;
+
+    if(!dta) return 0;
+
+    fd = dta->finddata;
+    result = _findnext(fd->handle, &fd->data);
     if(!result)
         setdata(dta);
     return result != 0;
-    }
 }
 
 void myfindend(finddata_t* dta)
@@ -104,5 +93,6 @@ void myfindend(finddata_t* dta)
     assert(dta);
     _findclose(((winfinddata_t*) dta->finddata)->handle);
     free(dta->finddata);
+    Str_Free(&dta->name);
     memset(dta, 0, sizeof(finddata_t));
 }
