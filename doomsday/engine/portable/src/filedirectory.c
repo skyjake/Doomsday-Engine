@@ -220,9 +220,9 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
         ddstring_t* searchPath = Uri_Resolved(searchPaths[i]);
         if(!searchPath) continue;
 
+        F_AppendMissingSlash(searchPath);
         // Let's try to make it a relative path.
         F_RemoveBasePath(searchPath, searchPath);
-        F_AppendMissingSlash(searchPath);
 
         addPaths(fd, (const ddstring_t**)&searchPath, 1, callback, paramaters);
         Str_Delete(searchPath);
