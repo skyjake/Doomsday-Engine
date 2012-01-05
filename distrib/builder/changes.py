@@ -226,7 +226,7 @@ class Changes:
                         
                     print >> out, '<li><b>%s</b>%s' % (entry.subject, others)
                     print >> out, 'by <i>%s</i> on ' % entry.author
-                    print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date)
+                    print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date[:10])
                     print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message
                     
                 print >> out, '</ul>'
