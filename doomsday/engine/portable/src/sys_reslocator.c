@@ -510,7 +510,7 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
 
         // Ignore incomplete paths.
         resolvedPath = Uri_Resolved(searchPath);
-        if(!resolvedPath || Str_IsEmpty(resolvedPath)) continue;
+        if(!resolvedPath) continue;
 
         // If this is an absolute path, locate using it.
         if(F_IsAbsolute(resolvedPath))
@@ -1026,43 +1026,47 @@ void F_DestroyUriList(Uri** list)
 ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
     const ddstring_t* pathList, size_t* count, char delimiter)
 {
-    {Uri** uris;
-    if((uris = F_CreateUriListStr(RC_NULL, pathList)) != 0)
+    Uri** uriList = F_CreateUriListStr(RC_NULL, pathList);
+    size_t resolvedPathCount = 0;
+    ddstring_t** paths = NULL;
+
+    if(uriList)
     {
-        ddstring_t** paths = 0;
-        size_t numResolvedPaths = 0;
-
-        { Uri** ptr;
-        for(ptr = uris; *ptr; ++ptr)
+        Uri** uriIt;
+        for(uriIt = uriList; *uriIt; ++uriIt)
         {
-            if(Uri_Resolved(*ptr) != 0) // Ignore incomplete paths.
-                ++numResolvedPaths;
-        }}
+            // Ignore incomplete paths.
+            ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+            if(!resolvedPath) continue;
 
-        if(numResolvedPaths != 0)
+            ++resolvedPathCount;
+            Str_Delete(resolvedPath);
+        }
+
+        if(resolvedPathCount)
         {
             uint n = 0;
-            paths = malloc(sizeof(*paths) * (numResolvedPaths+1));
-            { Uri** ptr;
-            for(ptr = uris; *ptr; ++ptr)
+
+            paths = (ddstring_t**)malloc(sizeof(*paths) * (resolvedPathCount+1));
+            if(!paths) Con_Error("F_ResolvePathList: Failed on allocation of %lu bytes for new path list.", (unsigned long) sizeof(*paths) * (resolvedPathCount+1));
+
+            for(uriIt = uriList; *uriIt; ++uriIt)
             {
-                ddstring_t* resolvedPath;
-                if((resolvedPath = Uri_Resolved(*ptr)) == 0)
-                    continue; // Incomplete path; ignore it.
-                // Let's try to make it a relative path.
-                F_RemoveBasePath(resolvedPath, resolvedPath);
+                // Ignore incomplete paths.
+                ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+                if(!resolvedPath) continue;
+
                 paths[n++] = resolvedPath;
-            }}
-            paths[n] = 0; // Terminate.
+            }
+
+            paths[n] = NULL; // Terminate.
         }
-        F_DestroyUriList(uris);
-        if(count)
-            *count = numResolvedPaths;
-        return paths;
-    }}
-    if(count)
-        *count = 0;
-    return 0;
+
+        F_DestroyUriList(uriList);
+    }
+
+    if(count) *count = resolvedPathCount;
+    return paths;
 }
 
 ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,

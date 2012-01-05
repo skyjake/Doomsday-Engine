@@ -41,6 +41,14 @@ void Uri_Delete(Uri* uri);
 void Uri_Clear(Uri* uri);
 Uri* Uri_Copy(Uri* uri, const Uri* other);
 
+/**
+ * Attempt to compose a resolved copy of this Uri. Substitutes known symbolics
+ * in the possibly templated path. Resulting path is a well-formed, filesys
+ * compatible path (perhaps base-relative).
+ *
+ * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
+ *     to Str_Delete when no longer needed.
+ */
 ddstring_t* Uri_Resolved(const Uri* uri);
 
 const ddstring_t* Uri_Scheme(const Uri* uri);

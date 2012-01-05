@@ -83,11 +83,6 @@ static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
     }
 }
 
-
-/**
- * Substitute known symbols in the possibly templated path.
- * Resulting path is a well-formed, sys_filein-compatible file path (perhaps base-relative).
- */
 static ddstring_t* resolveUri(const Uri* uri)
 {
     ddstring_t part, *dest = Str_New();
@@ -178,9 +173,6 @@ static ddstring_t* resolveUri(const Uri* uri)
         // Copy anything remaining.
         Str_Append(dest, Str_Text(&part));
     }
-
-    // Expand any old-style base-relative path directives.
-    F_ExpandBasePath(dest, dest);
 
     // No errors detected.
     successful = true;
