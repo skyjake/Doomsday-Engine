@@ -78,7 +78,8 @@ typedef struct {
  * @param delimiter  Fragments of @a path are delimited by this character.
  * @return  Pointer to "this" instance for caller convenience.
  */
-PathMap* PathMap_Initialize(PathMap* pathMap, const char* path, char delimiter);
+PathMap* PathMap_Initialize2(PathMap* pathMap, const char* path, char delimiter);
+PathMap* PathMap_Initialize(PathMap* pathMap, const char* path); /*delimiter='/'*/
 
 /**
  * Destroy @a pathMap releasing any resources acquired for it.

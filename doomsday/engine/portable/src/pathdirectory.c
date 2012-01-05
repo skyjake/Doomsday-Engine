@@ -621,7 +621,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
     if(searchPath && searchPath[0] && PathDirectory_Size(pd))
     {
         PathMap mappedSearchPath;
-        PathMap_Initialize(&mappedSearchPath, searchPath, delimiter);
+        PathMap_Initialize2(&mappedSearchPath, searchPath, delimiter);
         foundNode = PathDirectory_Search(pd, flags, &mappedSearchPath, PathDirectoryNode_MatchDirectory);
         PathMap_Destroy(&mappedSearchPath);
     }

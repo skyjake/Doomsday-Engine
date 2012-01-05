@@ -116,7 +116,7 @@ static void PathMap_ClearPath(PathMap* pm)
     if(pm->_path) free(pm->_path), pm->_path = NULL;
 }
 
-PathMap* PathMap_Initialize(PathMap* pm, const char* path, char delimiter)
+PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
 {
     char* pathBuffer;
     size_t pathLen;
@@ -151,6 +151,11 @@ PathMap* PathMap_Initialize(PathMap* pm, const char* path, char delimiter)
     PathMap_Fragment(pm, 0);
 
     return pm;
+}
+
+PathMap* PathMap_Initialize(PathMap* pm, const char* path)
+{
+    return PathMap_Initialize2(pm, path, '/');
 }
 
 void PathMap_Destroy(PathMap* pm)
