@@ -600,7 +600,7 @@ static void createPackagesResourceNamespace(void)
         F_FixSlashes(pathCopy, path); \
         F_AppendMissingSlash(pathCopy); \
         if(verbose >= 1) \
-            Con_Message(" %i: %s\n", n, Str_Text(pathCopy)); \
+            Con_Message(" %i: %s\n", n, F_PrettyPath(Str_Text(pathCopy))); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -654,7 +654,7 @@ static void createPackagesResourceNamespace(void)
         else
         {
             F_AppendMissingSlash(doomWadDir);
-            VERBOSE( Con_Message("Using DOOMWADDIR: %s\n", Str_Text(doomWadDir)) )
+            VERBOSE( Con_Message("Using DOOMWADDIR: %s\n", F_PrettyPath(Str_Text(doomWadDir))) )
         }
     }
 
