@@ -30,11 +30,6 @@
 
 struct lumpdirectory_s;
 
-typedef struct {
-    size_t baseOffset;
-    lumpinfo_t info;
-} zipfile_lumprecord_t;
-
 /**
  * ZipFile. Runtime representation of Zip files.
  *
@@ -42,13 +37,8 @@ typedef struct {
  *
  * @ingroup FS
  */
-typedef struct {
-    // Base file.
-    abstractfile_t _base;
-    int _lumpCount;
-    zipfile_lumprecord_t* _lumpRecords;
-    void** _lumpCache;
-} zipfile_t;
+struct zipfile_s; // The zipfile instance (opaque)
+typedef struct zipfile_s zipfile_t;
 
 zipfile_t* ZipFile_New(DFile* file, const lumpinfo_t* info);
 void ZipFile_Delete(zipfile_t* zip);

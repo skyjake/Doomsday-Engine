@@ -32,6 +32,19 @@
 #include "lumpdirectory.h"
 #include "zipfile.h"
 
+typedef struct {
+    size_t baseOffset;
+    lumpinfo_t info;
+} zipfile_lumprecord_t;
+
+struct zipfile_s {
+    // Base file.
+    abstractfile_t _base;
+    int _lumpCount;
+    zipfile_lumprecord_t* _lumpRecords;
+    void** _lumpCache;
+};
+
 #define SIG_LOCAL_FILE_HEADER   0x04034b50
 #define SIG_CENTRAL_FILE_HEADER 0x02014b50
 #define SIG_END_OF_CENTRAL_DIR  0x06054b50
