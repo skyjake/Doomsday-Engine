@@ -407,7 +407,7 @@ int Str_StripLeft(ddstring_t* str)
     isDone = false;
     i = 0;
     num = 0;
-    while(i < str->length && !isDone)
+    while(i < (int)str->length && !isDone)
     {
         if(isspace(str->str[i]))
         {
@@ -539,7 +539,7 @@ char Str_At(const ddstring_t* str, int index)
         Con_Error("Attempted String::At with invalid reference (this==0).");
         return 0; // Unreachable.
     }
-    if(index < 0 || index >= str->length)
+    if(index < 0 || index >= (int)str->length)
         return 0;
     return str->str[index];
 }
@@ -551,7 +551,7 @@ char Str_RAt(const ddstring_t* str, int reverseIndex)
         Con_Error("Attempted String::RAt with invalid reference (this==0).");
         return 0; // Unreachable.
     }
-    if(reverseIndex < 0 || reverseIndex >= str->length)
+    if(reverseIndex < 0 || reverseIndex >= (int)str->length)
         return 0;
     return str->str[str->length - 1 - reverseIndex];
 }
