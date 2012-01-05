@@ -30,24 +30,13 @@
 
 struct lumpdirectory_s;
 
-typedef struct {
-    size_t baseOffset;
-    lumpinfo_t info;
-} wadfile_lumprecord_t;
-
 /**
  * WadFile. Runtime representation of a WAD file.
  *
  * @ingroup FS
  */
-typedef struct wadfile_s {
-    // Base file.
-    abstractfile_t _base;
-    int _lumpCount;
-    size_t _lumpRecordsOffset;
-    wadfile_lumprecord_t* _lumpRecords;
-    void** _lumpCache;
-} wadfile_t;
+struct wadfile_s; // The wadfile instance (opaque)
+typedef struct wadfile_s wadfile_t;
 
 wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info);
 void WadFile_Delete(wadfile_t* wad);

@@ -31,6 +31,20 @@
 #include "lumpdirectory.h"
 #include "wadfile.h"
 
+typedef struct {
+    size_t baseOffset;
+    lumpinfo_t info;
+} wadfile_lumprecord_t;
+
+struct wadfile_s {
+    // Base file.
+    abstractfile_t _base;
+    int _lumpCount;
+    size_t _lumpRecordsOffset;
+    wadfile_lumprecord_t* _lumpRecords;
+    void** _lumpCache;
+};
+
 /// The following structures are used to read data directly from WAD files.
 #pragma pack(1)
 typedef struct {
