@@ -26,6 +26,8 @@
 #define LIBDENG_API_STRING_H
 
 #include <stddef.h>
+#include "reader.h"
+#include "writer.h"
 
 /**
  * Dynamic String. Simple dynamic string management.
@@ -227,5 +229,9 @@ char Str_At(const ddstring_t* str, int index);
 char Str_RAt(const ddstring_t* str, int reverseIndex);
 
 void Str_Truncate(ddstring_t* str, int position);
+
+void Str_Write(const ddstring_t* str, Writer* writer);
+
+void Str_Read(ddstring_t* str, Reader* reader);
 
 #endif /* LIBDENG_API_STRING_H */

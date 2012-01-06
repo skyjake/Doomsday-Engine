@@ -570,3 +570,20 @@ void Str_Truncate(ddstring_t* str, int position)
     str->length = position;
     str->str[str->length] = '\0';
 }
+
+void Str_Write(const ddstring_t* str, Writer* writer)
+{
+    size_t len = Str_Length(str);
+    Writer_WriteUInt32(writer, len);
+    Writer_Write(writer, Str_Text(str), len);
+}
+
+void Str_Read(ddstring_t* str, Reader* reader)
+{
+    size_t len = Reader_ReadUInt32(reader);
+    char* buf = malloc(len + 1);
+    Reader_Read(reader, buf, len);
+    buf[len] = 0;
+    Str_Set(str, buf);
+    free(buf);
+}

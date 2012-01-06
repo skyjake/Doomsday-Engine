@@ -228,6 +228,13 @@ Uri* Uri_NewCopy(const Uri* other)
     return uri;
 }
 
+Uri* Uri_NewFromReader(Reader* reader)
+{
+    Uri* uri = Uri_New();
+    Uri_Read(uri, reader);
+    return uri;
+}
+
 void Uri_Delete(Uri* uri)
 {
     if(!uri)
@@ -399,4 +406,22 @@ boolean Uri_Equality(const Uri* uri, const Uri* other)
 
     return (result == 0);
     }
+}
+
+void Uri_Write(const Uri* uri, Writer* writer)
+{
+    assert(uri);
+    assert(writer);
+
+    Str_Write(&uri->_scheme, writer);
+    Str_Write(&uri->_path, writer);
+}
+
+void Uri_Read(Uri* uri, Reader* reader)
+{
+    assert(uri);
+    assert(reader);
+
+    Str_Read(&uri->_scheme, reader);
+    Str_Read(&uri->_path, reader);
 }
