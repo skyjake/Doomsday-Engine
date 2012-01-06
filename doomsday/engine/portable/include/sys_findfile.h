@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include "dd_types.h"
+
 /**
  * Win32-Style File Finding.
  */
