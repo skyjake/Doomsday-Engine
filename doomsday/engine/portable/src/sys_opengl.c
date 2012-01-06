@@ -465,11 +465,26 @@ boolean Sys_GLInitialize(void)
     if(firstTimeInit)
     {
         double version = strtod((const char*) glGetString(GL_VERSION), NULL);
-        if(version < 1.4)
+        if(version == 0)
         {
-            Sys_CriticalMessagef("OpenGL implementation reports version %.1f\n"
-                "The minimum supported version is 1.4", version);
-            return false;
+            Con_Message("Sys_GLInitialize: Failed to determine OpenGL version.\n");
+            Con_Message("  OpenGL version: %s\n", glGetString(GL_VERSION));
+        }
+        else if(version < 1.4)
+        {
+            if(!ArgExists("-noglcheck"))
+            {
+                Sys_CriticalMessagef("OpenGL implementation is too old!\n"
+                                     "  Driver version: %s\n"
+                                     "  The minimum supported version is 1.4",
+                                     glGetString(GL_VERSION));
+                return false;
+            }
+            else
+            {
+                Con_Message("Sys_GLInitialize: Warning: OpenGL implementation may be too old (1.4+ required).\n");
+                Con_Message("  OpenGL version: %s\n", glGetString(GL_VERSION));
+            }
         }
 
         initialize();
