@@ -101,6 +101,7 @@ void Str_InitStd(ddstring_t* ds);
 /**
  * Initializes @a ds with a static const C string. No memory allocation
  * model is selected; use this for strings that remain constant.
+ * If the string is never modified calling Str_Free() is not needed.
  */
 void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
 
