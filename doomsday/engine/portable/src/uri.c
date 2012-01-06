@@ -408,13 +408,27 @@ boolean Uri_Equality(const Uri* uri, const Uri* other)
     }
 }
 
+static writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer)
+{
+    Str_Write(scheme, writer);
+    Str_Write(path, writer);
+}
+
 void Uri_Write(const Uri* uri, Writer* writer)
 {
     assert(uri);
-    assert(writer);
+    assert(writer);    
+    writeUri(&uri->_scheme, &uri->_path, writer);
+}
 
-    Str_Write(&uri->_scheme, writer);
-    Str_Write(&uri->_path, writer);
+void Uri_WriteOmitScheme(const Uri* uri, Writer* writer)
+{
+    ddstring_t emptyScheme;
+    Str_InitStatic(&emptyScheme, "");
+
+    assert(uri);
+    assert(writer);
+    writeUri(&emptyScheme, &uri->_path, writer);
 }
 
 void Uri_Read(Uri* uri, Reader* reader)
@@ -424,4 +438,13 @@ void Uri_Read(Uri* uri, Reader* reader)
 
     Str_Read(&uri->_scheme, reader);
     Str_Read(&uri->_path, reader);
+}
+
+void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultScheme)
+{
+    Uri_Read(uri, reader);
+    if(Str_IsEmpty(&uri->_scheme) && defaultScheme)
+    {
+        Str_Set(&uri->_scheme, defaultScheme);
+    }
 }

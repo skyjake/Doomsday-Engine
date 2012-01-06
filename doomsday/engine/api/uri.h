@@ -75,7 +75,20 @@ ddstring_t* Uri_ToString(const Uri* uri);
 boolean Uri_Equality(const Uri* uri, const Uri* other);
 
 void Uri_Write(const Uri* uri, Writer* writer);
+
+/**
+ * Serialize @a uri without a scheme using @a writer. Use this only when the
+ * scheme can be deduced from context without ambiguity.
+ */
+void Uri_WriteOmitScheme(const Uri* uri, Writer* writer);
+
 void Uri_Read(Uri* uri, Reader* reader);
+
+/**
+ * Deserializes @a uri using @a reader. If the deserialized Uri lacks a scheme,
+ * @a defaultScheme will be used instead.
+ */
+void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultScheme);
 
 #ifdef __cplusplus
 } // extern "C"

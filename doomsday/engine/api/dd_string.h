@@ -99,6 +99,12 @@ void Str_Init(ddstring_t* ds);
 void Str_InitStd(ddstring_t* ds);
 
 /**
+ * Initializes @a ds with a static const C string. No memory allocation
+ * model is selected; use this for strings that remain constant.
+ */
+void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
+
+/**
  * Empty an existing string. After this the string is in the same
  * state as just after being initialized.
  */

@@ -127,6 +127,12 @@ void Str_InitStd(ddstring_t *str)
     str->memCalloc = stdCalloc;
 }
 
+void Str_InitStatic(ddstring_t* str, const char* staticConstStr)
+{
+    memset(str, 0, sizeof(*str));
+    str->str = (char*) staticConstStr;
+}
+
 void Str_Free(ddstring_t* str)
 {
     if(!str)
