@@ -62,7 +62,7 @@ FileDirectory* FileDirectory_New(void);
 
 /**
  * Construct a new FileDirectory instance, populating it with nodes
- * for given the search paths.
+ * for the given search paths.
  *
  * @param searchPathList  List of search paths. @c NULL terminated.
  * @param flags  @see searchPathFlags

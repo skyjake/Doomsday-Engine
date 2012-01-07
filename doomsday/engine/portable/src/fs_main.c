@@ -209,7 +209,7 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
     {
     case FT_UNKNOWNFILE: break;
 
-    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( zipfile_t*)af); break;
+    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( ZipFile*)af); break;
     case FT_WADFILE:  WadFile_ClearLumpCache( ( wadfile_t*)af); break;
     case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)af); break;
 
@@ -832,7 +832,7 @@ void F_Delete(DFile* file)
         free(af);
         break;
 
-    case FT_ZIPFILE:  ZipFile_Delete( ( zipfile_t*)af); break;
+    case FT_ZIPFILE:  ZipFile_Delete( ( ZipFile*)af); break;
     case FT_WADFILE:  WadFile_Delete( ( wadfile_t*)af); break;
     case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)af); break;
     default:
@@ -847,7 +847,7 @@ const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:    return  ZipFile_LumpInfo( (zipfile_t*)fsObject, lumpIdx);
+    case FT_ZIPFILE:    return  ZipFile_LumpInfo( (ZipFile*)fsObject, lumpIdx);
     case FT_WADFILE:    return  WadFile_LumpInfo( (wadfile_t*)fsObject, lumpIdx);
     case FT_LUMPFILE:   return LumpFile_LumpInfo((lumpfile_t*)fsObject, lumpIdx);
     default:
@@ -862,7 +862,7 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:  return  ZipFile_ReadLumpSection( (zipfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_ZIPFILE:  return  ZipFile_ReadLumpSection( (ZipFile*)fsObject, lumpIdx, buffer, startOffset, length);
     case FT_WADFILE:  return  WadFile_ReadLumpSection( (wadfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
     case FT_LUMPFILE: return LumpFile_ReadLumpSection((lumpfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
     default:
@@ -876,7 +876,7 @@ const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:    return  ZipFile_CacheLump( (zipfile_t*)fsObject, lumpIdx, tag);
+    case FT_ZIPFILE:    return  ZipFile_CacheLump( (ZipFile*)fsObject, lumpIdx, tag);
     case FT_WADFILE:    return  WadFile_CacheLump( (wadfile_t*)fsObject, lumpIdx, tag);
     case FT_LUMPFILE:   return LumpFile_CacheLump((lumpfile_t*)fsObject, lumpIdx, tag);
     default:
@@ -890,7 +890,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (zipfile_t*)fsObject, lumpIdx, tag); break;
+    case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (ZipFile*)fsObject, lumpIdx, tag); break;
     case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (wadfile_t*)fsObject, lumpIdx, tag); break;
     case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((lumpfile_t*)fsObject, lumpIdx, tag); break;
     default:
@@ -1141,7 +1141,7 @@ static PathDirectoryNode* directoryNodeForLump(const lumpinfo_t* lumpInfo)
     if(!lumpInfo || !lumpInfo->container) return NULL;
     switch(AbstractFile_Type(lumpInfo->container))
     {
-    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((zipfile_t*)lumpInfo->container, lumpInfo->lumpIdx);
+    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((ZipFile*)lumpInfo->container, lumpInfo->lumpIdx);
     case FT_WADFILE: return WadFile_DirectoryNodeForLump((wadfile_t*)lumpInfo->container, lumpInfo->lumpIdx);
     default: return NULL;
     }
@@ -1658,7 +1658,7 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
     switch(AbstractFile_Type(fsObject))
     {
     case FT_ZIPFILE:
-        ZipFile_PublishLumpsToDirectory((zipfile_t*)fsObject, zipLumpDirectory);
+        ZipFile_PublishLumpsToDirectory((ZipFile*)fsObject, zipLumpDirectory);
         break;
     case FT_WADFILE: {
         wadfile_t* wad = (wadfile_t*)fsObject;
@@ -2193,7 +2193,7 @@ D_CMD(ListFiles)
                 crc = 0;
                 break;
             case FT_ZIPFILE:
-                fileCount = ZipFile_LumpCount((zipfile_t*)*ptr);
+                fileCount = ZipFile_LumpCount((ZipFile*)*ptr);
                 crc = 0;
                 break;
             case FT_WADFILE: {

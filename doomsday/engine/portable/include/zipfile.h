@@ -39,16 +39,16 @@ struct pathdirectorynode_s;
  * @ingroup FS
  */
 struct zipfile_s; // The zipfile instance (opaque)
-typedef struct zipfile_s zipfile_t;
+typedef struct zipfile_s ZipFile;
 
-zipfile_t* ZipFile_New(DFile* file, const lumpinfo_t* info);
-void ZipFile_Delete(zipfile_t* zip);
+ZipFile* ZipFile_New(DFile* file, const lumpinfo_t* info);
+void ZipFile_Delete(ZipFile* zip);
 
-int ZipFile_PublishLumpsToDirectory(zipfile_t* zip, struct lumpdirectory_s* directory);
+int ZipFile_PublishLumpsToDirectory(ZipFile* zip, struct lumpdirectory_s* directory);
 
-struct pathdirectorynode_s* ZipFile_DirectoryNodeForLump(zipfile_t* zip, int lumpIdx);
+struct pathdirectorynode_s* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx);
 
-const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* zip, int lumpIdx);
+const lumpinfo_t* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
@@ -58,8 +58,8 @@ const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* zip, int lumpIdx);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t ZipFile_ReadLump2(zipfile_t* zip, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t ZipFile_ReadLump(zipfile_t* zip, int lumpIdx, uint8_t* buffer);
+size_t ZipFile_ReadLump2(ZipFile* zip, int lumpIdx, uint8_t* buffer, boolean tryCache);
+size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with the specified lump index into @a buffer.
@@ -71,9 +71,9 @@ size_t ZipFile_ReadLump(zipfile_t* zip, int lumpIdx, uint8_t* buffer);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t ZipFile_ReadLumpSection2(zipfile_t* zip, int lumpIdx, uint8_t* buffer,
+size_t ZipFile_ReadLumpSection2(ZipFile* zip, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-size_t ZipFile_ReadLumpSection(zipfile_t* zip, int lumpIdx, uint8_t* buffer,
+size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -83,7 +83,7 @@ size_t ZipFile_ReadLumpSection(zipfile_t* zip, int lumpIdx, uint8_t* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const uint8_t* ZipFile_CacheLump(zipfile_t* zip, int lumpIdx, int tag);
+const uint8_t* ZipFile_CacheLump(ZipFile* zip, int lumpIdx, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.
@@ -91,16 +91,16 @@ const uint8_t* ZipFile_CacheLump(zipfile_t* zip, int lumpIdx, int tag);
  * @param lumpIdx  Lump index associated with the cached data being changed.
  * @param tag  Zone purge level/cache tag to use.
  */
-void ZipFile_ChangeLumpCacheTag(zipfile_t* zip, int lumpIdx, int tag);
+void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag);
 
-void ZipFile_ClearLumpCache(zipfile_t* zip);
+void ZipFile_ClearLumpCache(ZipFile* zip);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of lumps contained within this file.
-int ZipFile_LumpCount(zipfile_t* zip);
+int ZipFile_LumpCount(ZipFile* zip);
 
 /**
  * Static members:
