@@ -231,6 +231,7 @@ EXPORTS
     Uri_NewWithPath2            @497 NONAME
     Uri_NewWithPath             @244 NONAME
     Uri_NewCopy                 @249 NONAME
+    Uri_NewFromReader           @741 NONAME
     Uri_Copy                    @250 NONAME
     Uri_Delete                  @255 NONAME
     Uri_SetUri                  @326 NONAME
