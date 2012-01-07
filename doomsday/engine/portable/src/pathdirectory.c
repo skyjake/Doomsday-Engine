@@ -1253,15 +1253,31 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
     {
-        // If the hashes don't match it can't possibly be this.
-        if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
-            return false;
+        if(i == 0 && PathDirectoryNode_Type(node) == PT_LEAF)
+        {
+            char buf[256];
+            dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
+            fragment = PathDirectory_GetFragment(pd, node);
+            if(!F_MatchFileName(Str_Text(fragment), buf))
+                return false;
+        }
+        else
+        {
+            const boolean isWild = sfragment->to == sfragment->from && *sfragment->from == '*';
 
-        // Compare the path fragment to that of the search term.
-        fragment = PathDirectory_GetFragment(pd, node);
-        if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
-           strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
-            return false;
+            if(!isWild)
+            {
+                // If the hashes don't match it can't possibly be this.
+                if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+                    return false;
+
+                // Compare the path fragment to that of the search term.
+                fragment = PathDirectory_GetFragment(pd, node);
+                if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
+                   strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
+                    return false;
+            }
+        }
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)

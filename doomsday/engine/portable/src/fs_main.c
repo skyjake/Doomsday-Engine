@@ -1136,6 +1136,17 @@ static int iterateLocalPaths(const ddstring_t* searchDirectory, const ddstring_t
     return result;
 }
 
+static PathDirectoryNode* directoryNodeForLump(const lumpinfo_t* lumpInfo)
+{
+    if(!lumpInfo || !lumpInfo->container) return NULL;
+    switch(AbstractFile_Type(lumpInfo->container))
+    {
+    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((zipfile_t*)lumpInfo->container, lumpInfo->lumpIdx);
+    case FT_WADFILE: return WadFile_DirectoryNodeForLump((wadfile_t*)lumpInfo->container, lumpInfo->lumpIdx);
+    default: return NULL;
+    }
+}
+
 typedef struct {
     /// Callback to make for each processed file.
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters);
@@ -1143,19 +1154,35 @@ typedef struct {
     /// Data passed to the callback.
     void* paramaters;
 
+    int flags; /// @see searchPathFlags
+
     /// Current search pattern.
-    const ddstring_t* pattern;
+    ddstring_t pattern;
+    PathMap patternMap;
 } findlumpworker_paramaters_t;
 
 static int findLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
 {
     findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
+    PathDirectoryNode* node = directoryNodeForLump(lumpInfo);
+    boolean patternMatched;
     assert(lumpInfo && p);
-    if(F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(p->pattern)))
+
+    if(!node || !(p->flags & SPF_NO_DECEND))
     {
-        return p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
+        patternMatched = F_MatchFileName(Str_Text(&lumpInfo->path), Str_Text(&p->pattern));
     }
-    return 0; // Continue search.
+    else
+    {
+        patternMatched = PathDirectoryNode_MatchDirectory(node, PCF_MATCH_FULL, &p->patternMap, NULL);
+    }
+
+    if(patternMatched)
+    {
+        int result = p->callback(&lumpInfo->path, PT_LEAF, p->paramaters);
+        if(result) return result;
+    }
+    return 0; // Continue iteration.
 }
 
 int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
@@ -1179,9 +1206,14 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     { findlumpworker_paramaters_t p;
     p.callback = callback;
     p.paramaters = paramaters;
-    p.pattern = &searchPattern;
+    p.flags = flags;
+    Str_Init(&p.pattern); Str_Set(&p.pattern, Str_Text(&searchPattern));
+    PathMap_Initialize(&p.patternMap, Str_Text(&searchPattern));
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
+    Str_Free(&p.pattern);
+    PathMap_Destroy(&p.patternMap);
+
     if(result) goto searchEnded;
     }
 
