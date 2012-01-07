@@ -33,7 +33,6 @@
 #include "wadfile.h"
 
 typedef struct {
-    int lumpIdx;
     size_t baseOffset;
     lumpinfo_t info;
 } wadfile_lumprecord_t;
@@ -129,9 +128,9 @@ static void WadFile_ReadLumpDirectory(wadfile_t* wad)
     for(i = 0; i < wad->lumpRecordsCount; ++i, src++, record++)
     {
         record->baseOffset = (size_t)LONG(src->filePos);
-        record->lumpIdx = i;
 
         F_InitLumpInfo(&record->info);
+        record->info.lumpIdx = i;
 
         /**
          * The Hexen demo on Mac uses the 0x80 on some lumps, maybe has
@@ -169,8 +168,8 @@ static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* paramater
 {
     wadfile_t* wad = (wadfile_t*)paramaters;
     wadfile_lumprecord_t* lumpRecord = (wadfile_lumprecord_t*)PathDirectoryNode_UserData(node);
-    assert(lumpRecord && lumpRecord->lumpIdx >= 0 && lumpRecord->lumpIdx < WadFile_LumpCount(wad));
-    wad->lumpDirectoryMap[lumpRecord->lumpIdx] = node;
+    assert(lumpRecord && lumpRecord->info.lumpIdx >= 0 && lumpRecord->info.lumpIdx < WadFile_LumpCount(wad));
+    wad->lumpDirectoryMap[lumpRecord->info.lumpIdx] = node;
     return 0; // Continue iteration.
 }
 

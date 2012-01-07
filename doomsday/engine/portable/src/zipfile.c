@@ -34,7 +34,6 @@
 #include "zipfile.h"
 
 typedef struct {
-    int lumpIdx;
     size_t baseOffset;
     lumpinfo_t info;
 } zipfile_lumprecord_t;
@@ -410,6 +409,8 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
             node = PathDirectory_Insert(zip->lumpDirectory, Str_Text(&entryPath), '/');
             PathDirectoryNode_AttachUserData(node, record);
 
+            record->info.lumpIdx = lumpIdx++;
+
             // Take a copy of the name.
             Str_Init(&record->info.path); Str_Set(&record->info.path, Str_Text(&entryPath));
 
@@ -432,7 +433,6 @@ static void ZipFile_ReadLumpDirectory(zipfile_t* zip)
             DFile_Seek(zip->base._file, ULONG(header->relOffset), SEEK_SET);
             DFile_Read(zip->base._file, (uint8_t*)&localHeader, sizeof(localHeader));
 
-            record->lumpIdx = lumpIdx++;
             record->baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t) + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
 
             // Next record please!
@@ -449,8 +449,8 @@ static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* paramater
 {
     zipfile_t* zip = (zipfile_t*)paramaters;
     zipfile_lumprecord_t* lumpRecord = (zipfile_lumprecord_t*)PathDirectoryNode_UserData(node);
-    assert(lumpRecord && lumpRecord->lumpIdx >= 0 && lumpRecord->lumpIdx < ZipFile_LumpCount(zip));
-    zip->lumpDirectoryMap[lumpRecord->lumpIdx] = node;
+    assert(lumpRecord && lumpRecord->info.lumpIdx >= 0 && lumpRecord->info.lumpIdx < ZipFile_LumpCount(zip));
+    zip->lumpDirectoryMap[lumpRecord->info.lumpIdx] = node;
     return 0; // Continue iteration.
 }
 
