@@ -217,6 +217,8 @@ void Writer_WriteFloat(Writer* writer, float v)
 
 void Writer_Write(Writer* writer, const void* buffer, size_t len)
 {
+    if(!len) return;
+
     if(Writer_Check(writer, len))
     {
         Writer_TypeCheck(writer, WTCC_BLOCK);

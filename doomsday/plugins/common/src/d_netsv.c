@@ -819,13 +819,21 @@ void NetSv_SendGameState(int flags, int to)
 {
     int i;
     Writer* writer;
+    GameInfo gameInfo;
+    Uri* mapUri;
+    ddstring_t* str;
 
     if(IS_CLIENT)
         return;
 
+    DD_GameInfo(&gameInfo);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+
     // Print a short message that describes the game state.
-    Con_Message("NetSv_SendGameState: Game setup: ep%u map%u %s\n",
-                gameEpisode+1, gameMap+1, gameConfigString);
+    str = Uri_Resolved(mapUri);
+    Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
+                gameInfo.identityKey, Str_Text(str), gameConfigString);
+    Str_Delete(str);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -834,15 +842,19 @@ void NetSv_SendGameState(int flags, int to)
             continue;
 
         writer = D_NetWrite();
-
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteByte(writer, gameMode);
-#else
-        Writer_WriteByte(writer, 0);
-#endif
         Writer_WriteByte(writer, flags);
-        Writer_WriteByte(writer, gameEpisode + 1);
-        Writer_WriteByte(writer, gameMap + 1);
+
+        // Game identity key.
+        Writer_WriteByte(writer, strlen(gameInfo.identityKey));
+        Writer_Write(writer, gameInfo.identityKey, strlen(gameInfo.identityKey));
+
+        // The current map.
+        Uri_Write(mapUri, writer);
+
+        // Also include the episode and map numbers.
+        Writer_WriteByte(writer, gameEpisode);
+        Writer_WriteByte(writer, gameMap);
+
         Writer_WriteByte(writer, (deathmatch & 0x3)
             | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
@@ -850,17 +862,9 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-                         | (cfg.jumpEnabled? 0x10 : 0));
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//            | (gameSkill << 5));
-//#else
-//            );
-//#endif
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//        Writer_WriteByte(writer, 0);
-//#else
+            | (cfg.jumpEnabled? 0x10 : 0));
+
         Writer_WriteByte(writer, gameSkill & 0x7);
-//#endif
         Writer_WriteFloat(writer, P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -873,8 +877,10 @@ void NetSv_SendGameState(int flags, int to)
         }
 
         // Send the packet.
-        Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
+        Net_SendPacket(i, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
     }
+
+    Uri_Delete(mapUri);
 }
 
 /**

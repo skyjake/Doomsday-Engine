@@ -26,6 +26,8 @@
 #define LIBDENG_API_STRING_H
 
 #include <stddef.h>
+#include "reader.h"
+#include "writer.h"
 
 /**
  * Dynamic String. Simple dynamic string management.
@@ -95,6 +97,13 @@ void Str_Init(ddstring_t* ds);
  * malloc for memory allocations.
  */
 void Str_InitStd(ddstring_t* ds);
+
+/**
+ * Initializes @a ds with a static const C string. No memory allocation
+ * model is selected; use this for strings that remain constant.
+ * If the string is never modified calling Str_Free() is not needed.
+ */
+void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same
@@ -227,5 +236,9 @@ char Str_At(const ddstring_t* str, int index);
 char Str_RAt(const ddstring_t* str, int reverseIndex);
 
 void Str_Truncate(ddstring_t* str, int position);
+
+void Str_Write(const ddstring_t* str, Writer* writer);
+
+void Str_Read(ddstring_t* str, Reader* reader);
 
 #endif /* LIBDENG_API_STRING_H */

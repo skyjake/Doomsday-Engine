@@ -187,6 +187,8 @@ float Reader_ReadFloat(Reader* reader)
 
 void Reader_Read(Reader* reader, void* buffer, size_t len)
 {
+    if(!len) return;
+
     if(Reader_Check(reader, len))
     {
         Reader_TypeCheck(reader, WTCC_BLOCK);
