@@ -25,11 +25,11 @@ class Entry:
         self.date = ''
         self.link = ''
         self.hash = ''
-        self.message = ''
+        self._message = ''
         self.tags = []
         self.guessedTags = []
         
-    def setSubject(self, subject):
+    def set_subject(self, subject):
         self.extra = ''
         
         # Remote tags from the subject.
@@ -55,12 +55,16 @@ class Entry:
                 subject = subject[:-1]
         self.subject = encodedText(subject)
         
-    def setMessage(self, message):
-        self.message = message.strip()
+    def set_message(self, message):
+        self._message = message.strip()
         if self.extra:
-            self.message = self.extra + ' ' + self.message
-        self.message = encodedText(self.message)
-        self.message = self.message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
+            self._message = self.extra + ' ' + self._message
+        self._message = encodedText(self._message)
+        
+    def message(self, encodeHtml=False):
+        if encodeHtml:
+            return self._message.replace('\n\n', '<br/><br/>').replace('\n', ' ').strip()
+        return self._message.strip()
         
 
 class Changes:
@@ -101,7 +105,7 @@ class Changes:
             if pos < 0: break # No more.
             end = logText.find('[[/Subject]]', pos)
             
-            entry.setSubject(logText[pos+11:end])
+            entry.set_subject(logText[pos+11:end])
 
             # Debian changelog just gets the subjects.
             if entry.subject not in self.debChangeEntries and not \
@@ -131,7 +135,7 @@ class Changes:
             # Message.
             pos = logText.find('[[Message]]', pos)
             end = logText.find('[[/Message]]', pos)
-            entry.setMessage(logText[pos+11:end])            
+            entry.set_message(logText[pos+11:end])            
             
             if not self.should_ignore(entry.subject):
                 self.entries.append(entry)
@@ -227,7 +231,7 @@ class Changes:
                     print >> out, '<li><b>%s</b>%s' % (entry.subject, others)
                     print >> out, 'by <i>%s</i> on ' % entry.author
                     print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date[:10])
-                    print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message
+                    print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message(encodeHtml=True)
                     
                 print >> out, '</ul>'
             out.close()
@@ -250,8 +254,8 @@ class Changes:
                         print >> out, '<tag guessed="true">%s</tag>' % t
                     print >> out, '</tags>'
                 print >> out, '<title>%s</title>' % entry.subject
-                if len(entry.message):
-                    print >> out, '<message>%s</message>' % entry.message
+                if len(entry.message()):
+                    print >> out, '<message>%s</message>' % entry.message()
                 print >> out, '</commit>'                
             print >> out, '</commits>'
             out.close()
