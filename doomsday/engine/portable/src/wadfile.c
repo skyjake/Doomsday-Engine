@@ -97,7 +97,7 @@ static boolean WadFile_ReadArchiveHeader(DFile* file, wadheader_t* hdr)
 
 // We'll load the lump directory using one continous read into a temporary
 // local buffer before we process it into our runtime representation.
-static void WadFile_ReadLumpDirectory(wadfile_t* wad)
+static void WadFile_ReadLumpDirectory(WadFile* wad)
 {
     size_t lumpDirSize;
     wadlumprecord_t* lumpDir;
@@ -166,14 +166,14 @@ static void WadFile_ReadLumpDirectory(wadfile_t* wad)
 
 static int insertNodeInLumpDirectoryMap(PathDirectoryNode* node, void* paramaters)
 {
-    wadfile_t* wad = (wadfile_t*)paramaters;
+    WadFile* wad = (WadFile*)paramaters;
     wadfile_lumprecord_t* lumpRecord = (wadfile_lumprecord_t*)PathDirectoryNode_UserData(node);
     assert(lumpRecord && lumpRecord->info.lumpIdx >= 0 && lumpRecord->info.lumpIdx < WadFile_LumpCount(wad));
     wad->lumpDirectoryMap[lumpRecord->info.lumpIdx] = node;
     return 0; // Continue iteration.
 }
 
-static void buildLumpDirectoryMap(wadfile_t* wad)
+static void buildLumpDirectoryMap(WadFile* wad)
 {
     assert(wad);
     // Time to build the lump directory map?
@@ -190,7 +190,7 @@ static void buildLumpDirectoryMap(wadfile_t* wad)
     }
 }
 
-static wadfile_lumprecord_t* WadFile_LumpRecord(wadfile_t* wad, int lumpIdx)
+static wadfile_lumprecord_t* WadFile_LumpRecord(WadFile* wad, int lumpIdx)
 {
     assert(wad);
     if(lumpIdx < 0 || lumpIdx >= WadFile_LumpCount(wad)) return NULL;
@@ -198,9 +198,9 @@ static wadfile_lumprecord_t* WadFile_LumpRecord(wadfile_t* wad, int lumpIdx)
     return (wadfile_lumprecord_t*)PathDirectoryNode_UserData(wad->lumpDirectoryMap[lumpIdx]);
 }
 
-wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info)
+WadFile* WadFile_New(DFile* file, const lumpinfo_t* info)
 {
-    wadfile_t* wad;
+    WadFile* wad;
     wadheader_t hdr;
 
     if(!info)
@@ -210,7 +210,7 @@ wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info)
         Con_Error("WadFile::New: File %s does not appear to be of WAD format."
             " Missing a call to WadFile::Recognise?", Str_Text(&info->path));
 
-    wad = (wadfile_t*)malloc(sizeof *wad);
+    wad = (WadFile*)malloc(sizeof *wad);
     if(!wad) Con_Error("WadFile::Construct:: Failed on allocation of %lu bytes for new WadFile.",
                 (unsigned long) sizeof *wad);
 
@@ -228,7 +228,7 @@ wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info)
     return wad;
 }
 
-int WadFile_PublishLumpsToDirectory(wadfile_t* wad, lumpdirectory_t* directory)
+int WadFile_PublishLumpsToDirectory(WadFile* wad, lumpdirectory_t* directory)
 {
     int numPublished = 0;
     assert(wad);
@@ -246,14 +246,14 @@ int WadFile_PublishLumpsToDirectory(wadfile_t* wad, lumpdirectory_t* directory)
     return numPublished;
 }
 
-PathDirectoryNode* WadFile_DirectoryNodeForLump(wadfile_t* wad, int lumpIdx)
+PathDirectoryNode* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx)
 {
     if(lumpIdx < 0 || lumpIdx >= WadFile_LumpCount(wad)) return NULL;
     buildLumpDirectoryMap(wad);
     return wad->lumpDirectoryMap[lumpIdx];
 }
 
-const lumpinfo_t* WadFile_LumpInfo(wadfile_t* wad, int lumpIdx)
+const lumpinfo_t* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
 {
     wadfile_lumprecord_t* lumpRecord = WadFile_LumpRecord(wad, lumpIdx);
     if(!lumpRecord)
@@ -275,7 +275,7 @@ static int destroyRecord(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue iteration.
 }
 
-void WadFile_Delete(wadfile_t* wad)
+void WadFile_Delete(WadFile* wad)
 {
     assert(wad);
 
@@ -300,7 +300,7 @@ void WadFile_Delete(wadfile_t* wad)
     free(wad);
 }
 
-void WadFile_ClearLumpCache(wadfile_t* wad)
+void WadFile_ClearLumpCache(WadFile* wad)
 {
     int i, lumpCount = WadFile_LumpCount(wad);
     assert(wad);
@@ -332,7 +332,7 @@ void WadFile_ClearLumpCache(wadfile_t* wad)
     }
 }
 
-uint WadFile_CalculateCRC(wadfile_t* wad)
+uint WadFile_CalculateCRC(WadFile* wad)
 {
     int i, k, lumpCount = WadFile_LumpCount(wad);
     uint crc = 0;
@@ -349,7 +349,7 @@ uint WadFile_CalculateCRC(wadfile_t* wad)
     return crc;
 }
 
-size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
+size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
     const wadfile_lumprecord_t* lumpRecord = WadFile_LumpRecord(wad, lumpIdx);
@@ -403,25 +403,25 @@ size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
     return readBytes;
 }
 
-size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx, uint8_t* buffer,
+size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length)
 {
     return WadFile_ReadLumpSection2(wad, lumpIdx, buffer, startOffset, length, true);
 }
 
-size_t WadFile_ReadLump2(wadfile_t* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
+size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
     const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
     if(!info) return 0;
     return WadFile_ReadLumpSection2(wad, lumpIdx, buffer, 0, info->size, tryCache);
 }
 
-size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* buffer)
+size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
 {
     return WadFile_ReadLump2(wad, lumpIdx, buffer, true);
 }
 
-const uint8_t* WadFile_CacheLump(wadfile_t* wad, int lumpIdx, int tag)
+const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag)
 {
     const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
     const uint cacheIdx = lumpIdx;
@@ -466,7 +466,7 @@ const uint8_t* WadFile_CacheLump(wadfile_t* wad, int lumpIdx, int tag)
     return (uint8_t*)(*cachePtr);
 }
 
-void WadFile_ChangeLumpCacheTag(wadfile_t* wad, int lumpIdx, int tag)
+void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag)
 {
     boolean isCached;
     void** cachePtr;
@@ -498,7 +498,7 @@ void WadFile_ChangeLumpCacheTag(wadfile_t* wad, int lumpIdx, int tag)
     }
 }
 
-int WadFile_LumpCount(wadfile_t* wad)
+int WadFile_LumpCount(WadFile* wad)
 {
     assert(wad);
     return wad->lumpDirectory? PathDirectory_Size(wad->lumpDirectory) : 0;

@@ -210,7 +210,7 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
     case FT_UNKNOWNFILE: break;
 
     case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( ZipFile*)af); break;
-    case FT_WADFILE:  WadFile_ClearLumpCache( ( wadfile_t*)af); break;
+    case FT_WADFILE:  WadFile_ClearLumpCache( ( WadFile*)af); break;
     case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)af); break;
 
     default:
@@ -759,7 +759,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
         dfile = DFileBuilder_NewFromAbstractFile(newWadFile(dfile, &info));
         FileList_AddBack(openFiles, dfile);
         FileList_AddBack(loadedFiles, DFileBuilder_NewCopy(dfile));
-        WadFile_PublishLumpsToDirectory((wadfile_t*)DFile_File(dfile), ActiveWadLumpDirectory);
+        WadFile_PublishLumpsToDirectory((WadFile*)DFile_File(dfile), ActiveWadLumpDirectory);
 
         // We're done with the descriptor.
         F_DestroyLumpInfo(&info);
@@ -833,7 +833,7 @@ void F_Delete(DFile* file)
         break;
 
     case FT_ZIPFILE:  ZipFile_Delete( ( ZipFile*)af); break;
-    case FT_WADFILE:  WadFile_Delete( ( wadfile_t*)af); break;
+    case FT_WADFILE:  WadFile_Delete( ( WadFile*)af); break;
     case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)af); break;
     default:
         Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(af));
@@ -848,7 +848,7 @@ const lumpinfo_t* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
     switch(AbstractFile_Type(fsObject))
     {
     case FT_ZIPFILE:    return  ZipFile_LumpInfo( (ZipFile*)fsObject, lumpIdx);
-    case FT_WADFILE:    return  WadFile_LumpInfo( (wadfile_t*)fsObject, lumpIdx);
+    case FT_WADFILE:    return  WadFile_LumpInfo( (WadFile*)fsObject, lumpIdx);
     case FT_LUMPFILE:   return LumpFile_LumpInfo((lumpfile_t*)fsObject, lumpIdx);
     default:
         Con_Error("F_LumpInfo: Invalid file type %i.", AbstractFile_Type(fsObject));
@@ -863,7 +863,7 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     switch(AbstractFile_Type(fsObject))
     {
     case FT_ZIPFILE:  return  ZipFile_ReadLumpSection( (ZipFile*)fsObject, lumpIdx, buffer, startOffset, length);
-    case FT_WADFILE:  return  WadFile_ReadLumpSection( (wadfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_WADFILE:  return  WadFile_ReadLumpSection( (WadFile*)fsObject, lumpIdx, buffer, startOffset, length);
     case FT_LUMPFILE: return LumpFile_ReadLumpSection((lumpfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
     default:
         Con_Error("F_ReadLumpSection: Invalid file type %i.", AbstractFile_Type(fsObject));
@@ -877,7 +877,7 @@ const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag)
     switch(AbstractFile_Type(fsObject))
     {
     case FT_ZIPFILE:    return  ZipFile_CacheLump( (ZipFile*)fsObject, lumpIdx, tag);
-    case FT_WADFILE:    return  WadFile_CacheLump( (wadfile_t*)fsObject, lumpIdx, tag);
+    case FT_WADFILE:    return  WadFile_CacheLump( (WadFile*)fsObject, lumpIdx, tag);
     case FT_LUMPFILE:   return LumpFile_CacheLump((lumpfile_t*)fsObject, lumpIdx, tag);
     default:
         Con_Error("F_CacheLump: Invalid file type %i.", AbstractFile_Type(fsObject));
@@ -891,7 +891,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
     switch(AbstractFile_Type(fsObject))
     {
     case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (ZipFile*)fsObject, lumpIdx, tag); break;
-    case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (wadfile_t*)fsObject, lumpIdx, tag); break;
+    case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (WadFile*)fsObject, lumpIdx, tag); break;
     case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((lumpfile_t*)fsObject, lumpIdx, tag); break;
     default:
         Con_Error("F_CacheChangeTag: Invalid file type %i.", AbstractFile_Type(fsObject));
@@ -960,7 +960,7 @@ uint F_CRCNumber(void)
         } while(!found && ++i < FileList_Size(loadedFiles));
         if(found)
         {
-            return WadFile_CalculateCRC((wadfile_t*)found);
+            return WadFile_CalculateCRC((WadFile*)found);
         }
     }
     return 0;
@@ -1142,7 +1142,7 @@ static PathDirectoryNode* directoryNodeForLump(const lumpinfo_t* lumpInfo)
     switch(AbstractFile_Type(lumpInfo->container))
     {
     case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((ZipFile*)lumpInfo->container, lumpInfo->lumpIdx);
-    case FT_WADFILE: return WadFile_DirectoryNodeForLump((wadfile_t*)lumpInfo->container, lumpInfo->lumpIdx);
+    case FT_WADFILE: return WadFile_DirectoryNodeForLump((WadFile*)lumpInfo->container, lumpInfo->lumpIdx);
     default: return NULL;
     }
 }
@@ -1661,8 +1661,8 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         ZipFile_PublishLumpsToDirectory((ZipFile*)fsObject, zipLumpDirectory);
         break;
     case FT_WADFILE: {
-        wadfile_t* wad = (wadfile_t*)fsObject;
-        WadFile_PublishLumpsToDirectory(  (wadfile_t*)fsObject, ActiveWadLumpDirectory);
+        WadFile* wad = (WadFile*)fsObject;
+        WadFile_PublishLumpsToDirectory(  (WadFile*)fsObject, ActiveWadLumpDirectory);
         // Print the 'CRC' number of the IWAD, so it can be identified.
         /// \todo Do not do this here.
         if(AbstractFile_HasIWAD(fsObject))
@@ -2197,7 +2197,7 @@ D_CMD(ListFiles)
                 crc = 0;
                 break;
             case FT_WADFILE: {
-                wadfile_t* wad = (wadfile_t*)*ptr;
+                WadFile* wad = (WadFile*)*ptr;
                 crc = (AbstractFile_HasIWAD(*ptr)? WadFile_CalculateCRC(wad) : 0);
                 fileCount = WadFile_LumpCount(wad);
                 break;
