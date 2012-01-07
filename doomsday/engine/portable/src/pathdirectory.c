@@ -41,16 +41,16 @@ struct pathdirectorynode_s {
     PathDirectoryNode* next;
 
     /// Parent node in the user's logical hierarchy.
-    PathDirectoryNode* _parent;
+    PathDirectoryNode* parent;
 
     /// Symbolic node type.
-    pathdirectorynode_type_t _type;
+    pathdirectorynode_type_t type;
 
     /// PathDirectory which owns this node.
-    PathDirectory* _directory;
+    PathDirectory* directory;
 
     /// User data present at this node.
-    pathdirectorynode_userdatapair_t _pair;
+    pathdirectorynode_userdatapair_t pair;
 };
 
 static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
@@ -72,16 +72,16 @@ struct pathdirectory_s {
     struct pathdirectory_internpool_s {
         StringPool* strings;
         ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } _internPool;
+    } internPool;
 
-    int _flags; /// @see pathDirectoryFlags
+    int flags; /// @see pathDirectoryFlags
 
     /// Path hash map.
-    pathdirectory_pathhash_t* _pathLeafHash;
-    pathdirectory_pathhash_t* _pathBranchHash;
+    pathdirectory_pathhash_t* pathLeafHash;
+    pathdirectory_pathhash_t* pathBranchHash;
 
     /// Number of unique paths in the directory.
-    uint _size;
+    uint size;
 };
 
 ushort PathDirectory_HashName(const char* path, size_t len, char delimiter)
@@ -113,7 +113,7 @@ static __inline pathdirectory_pathhash_t** hashAddressForNodeType(PathDirectory*
     pathdirectorynode_type_t type)
 {
     assert(pd && VALID_PATHDIRECTORYNODE_TYPE(type));
-    return (type == PT_LEAF? &pd->_pathLeafHash : &pd->_pathBranchHash);
+    return (type == PT_LEAF? &pd->pathLeafHash : &pd->pathBranchHash);
 }
 
 static __inline const pathdirectory_pathhash_t** hashAddressForNodeType_Const(const PathDirectory* pd,
@@ -140,10 +140,10 @@ static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 static void clearInternPool(PathDirectory* pd)
 {
     assert(pd);
-    if(pd->_internPool.strings)
+    if(pd->internPool.strings)
     {
-        StringPool_Delete(pd->_internPool.strings), pd->_internPool.strings = NULL;
-        free(pd->_internPool.idHashMap), pd->_internPool.idHashMap = NULL;
+        StringPool_Delete(pd->internPool.strings), pd->internPool.strings = NULL;
+        free(pd->internPool.idHashMap), pd->internPool.idHashMap = NULL;
     }
 }
 
@@ -206,7 +206,7 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     PathDirectoryNode* node = NULL;
     if(ph)
     {
-        ushort hash = pd->_internPool.idHashMap[internId-1];
+        ushort hash = pd->internPool.idHashMap[internId-1];
         for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
@@ -222,7 +222,7 @@ static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
     assert(pd);
     if(0 == internId)
         Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
-    return pd->_internPool.idHashMap[internId-1];
+    return pd->internPool.idHashMap[internId-1];
 }
 
 static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
@@ -233,10 +233,10 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     uint oldSize;
     assert(pd);
 
-    pool = pd->_internPool.strings;
+    pool = pd->internPool.strings;
     if(!pool)
     {
-        pool = pd->_internPool.strings = StringPool_New();
+        pool = pd->internPool.strings = StringPool_New();
     }
     oldSize = StringPool_Size(pool);
 
@@ -244,15 +244,15 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
-        pd->_internPool.idHashMap = (ushort*) realloc(pd->_internPool.idHashMap, sizeof *pd->_internPool.idHashMap * StringPool_Size(pool));
-        if(!pd->_internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->_internPool.idHashMap * StringPool_Size(pool)));
+        pd->internPool.idHashMap = (ushort*) realloc(pd->internPool.idHashMap, sizeof *pd->internPool.idHashMap * StringPool_Size(pool));
+        if(!pd->internPool.idHashMap)
+            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->internPool.idHashMap * StringPool_Size(pool)));
 
         if(internId < StringPool_Size(pool))
         {
-            memmove(pd->_internPool.idHashMap + internId, pd->_internPool.idHashMap + (internId-1), sizeof *pd->_internPool.idHashMap * (StringPool_Size(pool) - internId));
+            memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
         }
-        pd->_internPool.idHashMap[internId-1] = hash;
+        pd->internPool.idHashMap[internId-1] = hash;
     }
     return internId;
 }
@@ -271,16 +271,16 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     assert(pd && name);
 
     // Have we already encountered this?
-    if(pd->_internPool.strings)
+    if(pd->internPool.strings)
     {
-        internId = StringPool_IsInterned(pd->_internPool.strings, name);
+        internId = StringPool_IsInterned(pd->internPool.strings, name);
         if(0 != internId)
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
             if(node)
             {
-                if(nodeType == PT_BRANCH || !(pd->_flags & PDF_ALLOW_DUPLICATE_LEAF))
+                if(nodeType == PT_BRANCH || !(pd->flags & PDF_ALLOW_DUPLICATE_LEAF))
                     return node;
             }
         }
@@ -364,7 +364,7 @@ static PathDirectoryNode* addPath(PathDirectory* pd, const char* path,
     if(node)
     {
         // There is now one more unique path in the directory.
-        ++pd->_size;
+        ++pd->size;
         if(userData)
             PathDirectoryNode_AttachUserData(node, userData);
     }
@@ -505,12 +505,12 @@ PathDirectory* PathDirectory_NewWithFlags(int flags)
     if(!pd)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
-    pd->_flags = flags;
-    pd->_internPool.strings = NULL;
-    pd->_internPool.idHashMap = NULL;
-    pd->_pathLeafHash = NULL;
-    pd->_pathBranchHash = NULL;
-    pd->_size = 0;
+    pd->flags = flags;
+    pd->internPool.strings = NULL;
+    pd->internPool.idHashMap = NULL;
+    pd->pathLeafHash = NULL;
+    pd->pathBranchHash = NULL;
+    pd->size = 0;
     return pd;
 }
 
@@ -536,7 +536,7 @@ void PathDirectory_Delete(PathDirectory* pd)
 uint PathDirectory_Size(PathDirectory* pd)
 {
     assert(pd);
-    return pd->_size;
+    return pd->size;
 }
 
 void PathDirectory_Clear(PathDirectory* pd)
@@ -545,7 +545,7 @@ void PathDirectory_Clear(PathDirectory* pd)
     clearPathHash(*hashAddressForNodeType(pd, PT_LEAF));
     clearPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
     clearInternPool(pd);
-    pd->_size = 0;
+    pd->size = 0;
 }
 
 PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter,
@@ -643,7 +643,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     assert(pd);
-    return StringPool_String(pd->_internPool.strings, PathDirectoryNode_InternId(node));
+    return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
 }
 
 /// Calculate the total length of the final composed path.
@@ -1183,11 +1183,11 @@ static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
         Con_Error("PathDirectory::direcNode: Failed on allocation of %lu bytes for "
             "new PathDirectory::Node.", (unsigned long) sizeof *node);
 
-    node->_directory = directory;
-    node->_type = type;
-    node->_parent = parent;
-    node->_pair.internId = internId;
-    node->_pair.data = userData;
+    node->directory = directory;
+    node->type = type;
+    node->parent = parent;
+    node->pair.internId = internId;
+    node->pair.data = userData;
     return node;
 }
 
@@ -1200,19 +1200,19 @@ static void PathDirectoryNode_Delete(PathDirectoryNode* node)
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_directory;
+    return node->directory;
 }
 
 PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_parent;
+    return node->parent;
 }
 
 pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_type;
+    return node->type;
 }
 
 const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
@@ -1229,7 +1229,7 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
 StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_pair.internId;
+    return node->pair.internId;
 }
 
 /// \note This routine is also used as an iteration callback, so only return
@@ -1298,26 +1298,26 @@ void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)
 {
     assert(node);
 #if _DEBUG
-    if(node->_pair.data)
+    if(node->pair.data)
     {
         Con_Message("Warning:PathDirectoryNode::AttachUserData: Data is already associated "
             "with this node, will be replaced.\n");
     }
 #endif
-    node->_pair.data = userData;
+    node->pair.data = userData;
 }
 
 void* PathDirectoryNode_DetachUserData(PathDirectoryNode* node)
 {
     void* userData;
     assert(node);
-    userData = node->_pair.data;
-    node->_pair.data = NULL;
+    userData = node->pair.data;
+    node->pair.data = NULL;
     return userData;
 }
 
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_pair.data;
+    return node->pair.data;
 }
