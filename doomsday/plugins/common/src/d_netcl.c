@@ -64,11 +64,13 @@
 
 void NetCl_UpdateGameState(Reader* msg)
 {
-    byte gsGameMode = 0;
+    byte len;
     byte gsFlags = 0;
+    char gsGameIdentity[256];
+    Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
-    byte flags = 0;
+    byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
     byte gsRespawn = 0;
@@ -76,41 +78,52 @@ void NetCl_UpdateGameState(Reader* msg)
     byte gsSkill = 0;
     float gsGravity = 0;
 
-    gsGameMode = Reader_ReadByte(msg);
     gsFlags = Reader_ReadByte(msg);
-    gsEpisode = Reader_ReadByte(msg) - 1;
-    gsMap = Reader_ReadByte(msg) - 1;
-    flags = Reader_ReadByte(msg);
-    gsDeathmatch = flags & 0x3;
-    gsMonsters = (flags & 0x4? true : false);
-    gsRespawn = (flags & 0x8? true : false);
-    gsJumping = (flags & 0x10? true : false);
+
+    // Game identity key.
+    len = Reader_ReadByte(msg);
+    Reader_Read(msg, gsGameIdentity, len);
+    gsGameIdentity[len] = 0;
+
+    // Current map.
+    mapUri = Uri_NewFromReader(msg);
+
+    gsEpisode = Reader_ReadByte(msg);
+    gsMap = Reader_ReadByte(msg);
+
+    configFlags = Reader_ReadByte(msg);
+    gsDeathmatch = configFlags & 0x3;
+    gsMonsters = (configFlags & 0x4? true : false);
+    gsRespawn = (configFlags & 0x8? true : false);
+    gsJumping = (configFlags & 0x10? true : false);
     gsSkill = Reader_ReadByte(msg);
     gsGravity = Reader_ReadFloat(msg);
+
+    VERBOSE(
+        ddstring_t* str = Uri_ToString(mapUri);
+        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
+        Str_Delete(str);
+    )
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#pragma message("!!!WARNING: NetCl_UpdateGameState presently overrides gameMode mismatches.")
-    /**
-     * \kludge
-     * djs: 2010-09-20 23:31 GMT
-     * Dedicated servers are presently built from the master branch and as such
-     * our gameMode will never match that returned by the server. However, this
-     * is now protected against at a much higher level during game initialization
-     * so we don't really need to be worrying about that here.
-     *
-     * For now we'll override it using our local gameMode value.
-     */
-    gsGameMode = gameMode;
-    /*if(gsGameMode != gameMode)
-    {   // Wrong game mode! This is highly irregular!
-        Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
-        // Stop the demo if one is being played.
-        DD_Execute(false, "stopdemo");
-        return;
-    } kludge end */
+    // Check for a game mode mismatch.
+    /// @todo  Automatically load the server's game if it is available.
+    /// However, note that this can only occur if the server changes its game
+    /// while a netgame is running (which currently will end the netgame).
+    {
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(strcmp(gameInfo.identityKey, gsGameIdentity))
+        {
+            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).\n",
+                        gsGameIdentity, gameInfo.identityKey);
+            DD_Execute(false, "net disconnect");
+            return;
+        }
+    }
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
