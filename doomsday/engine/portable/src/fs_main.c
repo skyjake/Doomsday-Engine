@@ -211,7 +211,7 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
 
     case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( ZipFile*)af); break;
     case FT_WADFILE:  WadFile_ClearLumpCache( ( WadFile*)af); break;
-    case FT_LUMPFILE: LumpFile_ClearLumpCache((lumpfile_t*)af); break;
+    case FT_LUMPFILE: LumpFile_ClearLumpCache((LumpFile*)af); break;
 
     default:
         Con_Error("WadCollection::removeLoadedFile: Invalid file type %i.", AbstractFile_Type(af));
@@ -834,7 +834,7 @@ void F_Delete(DFile* file)
 
     case FT_ZIPFILE:  ZipFile_Delete( ( ZipFile*)af); break;
     case FT_WADFILE:  WadFile_Delete( ( WadFile*)af); break;
-    case FT_LUMPFILE: LumpFile_Delete((lumpfile_t*)af); break;
+    case FT_LUMPFILE: LumpFile_Delete((LumpFile*)af); break;
     default:
         Con_Error("F_Delete: Invalid file type %i.", AbstractFile_Type(af));
         exit(1); // Unreachable.
@@ -849,7 +849,7 @@ const LumpInfo* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
     {
     case FT_ZIPFILE:    return  ZipFile_LumpInfo( (ZipFile*)fsObject, lumpIdx);
     case FT_WADFILE:    return  WadFile_LumpInfo( (WadFile*)fsObject, lumpIdx);
-    case FT_LUMPFILE:   return LumpFile_LumpInfo((lumpfile_t*)fsObject, lumpIdx);
+    case FT_LUMPFILE:   return LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx);
     default:
         Con_Error("F_LumpInfo: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -864,7 +864,7 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     {
     case FT_ZIPFILE:  return  ZipFile_ReadLumpSection( (ZipFile*)fsObject, lumpIdx, buffer, startOffset, length);
     case FT_WADFILE:  return  WadFile_ReadLumpSection( (WadFile*)fsObject, lumpIdx, buffer, startOffset, length);
-    case FT_LUMPFILE: return LumpFile_ReadLumpSection((lumpfile_t*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_LUMPFILE: return LumpFile_ReadLumpSection((LumpFile*)fsObject, lumpIdx, buffer, startOffset, length);
     default:
         Con_Error("F_ReadLumpSection: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -878,7 +878,7 @@ const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag)
     {
     case FT_ZIPFILE:    return  ZipFile_CacheLump( (ZipFile*)fsObject, lumpIdx, tag);
     case FT_WADFILE:    return  WadFile_CacheLump( (WadFile*)fsObject, lumpIdx, tag);
-    case FT_LUMPFILE:   return LumpFile_CacheLump((lumpfile_t*)fsObject, lumpIdx, tag);
+    case FT_LUMPFILE:   return LumpFile_CacheLump((LumpFile*)fsObject, lumpIdx, tag);
     default:
         Con_Error("F_CacheLump: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -892,7 +892,7 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
     {
     case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (ZipFile*)fsObject, lumpIdx, tag); break;
     case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (WadFile*)fsObject, lumpIdx, tag); break;
-    case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((lumpfile_t*)fsObject, lumpIdx, tag); break;
+    case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((LumpFile*)fsObject, lumpIdx, tag); break;
     default:
         Con_Error("F_CacheChangeTag: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -1670,7 +1670,7 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         break;
       }
     case FT_LUMPFILE:
-        LumpFile_PublishLumpsToDirectory((lumpfile_t*)fsObject, ActiveWadLumpDirectory);
+        LumpFile_PublishLumpsToDirectory((LumpFile*)fsObject, ActiveWadLumpDirectory);
         break;
     default: break;
         /*Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
@@ -2203,7 +2203,7 @@ D_CMD(ListFiles)
                 break;
               }
             case FT_LUMPFILE:
-                fileCount = LumpFile_LumpCount((lumpfile_t*)*ptr);
+                fileCount = LumpFile_LumpCount((LumpFile*)*ptr);
                 crc = 0;
                 break;
             default:
