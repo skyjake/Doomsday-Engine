@@ -29,6 +29,7 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
+struct pathdirectorynode_s;
 
 /**
  * ZipFile. Runtime representation of Zip files.
@@ -44,6 +45,8 @@ zipfile_t* ZipFile_New(DFile* file, const lumpinfo_t* info);
 void ZipFile_Delete(zipfile_t* zip);
 
 int ZipFile_PublishLumpsToDirectory(zipfile_t* zip, struct lumpdirectory_s* directory);
+
+struct pathdirectorynode_s* ZipFile_DirectoryNodeForLump(zipfile_t* zip, int lumpIdx);
 
 const lumpinfo_t* ZipFile_LumpInfo(zipfile_t* zip, int lumpIdx);
 
