@@ -29,6 +29,7 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
+struct pathdirectorynode_s;
 
 /**
  * WadFile. Runtime representation of a WAD file.
@@ -42,6 +43,8 @@ wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info);
 void WadFile_Delete(wadfile_t* wad);
 
 int WadFile_PublishLumpsToDirectory(wadfile_t* file, struct lumpdirectory_s* directory);
+
+struct pathdirectorynode_s* WadFile_DirectoryNodeForLump(wadfile_t* wad, int lumpIdx);
 
 const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx);
 
@@ -94,7 +97,7 @@ void WadFile_ClearLumpCache(wadfile_t* wad);
  * An extremely simple formula. Does not conform to any CRC standard.
  * (So why's it called CRC, then?)
  */
-uint WadFile_CalculateCRC(const wadfile_t* wad);
+uint WadFile_CalculateCRC(wadfile_t* wad);
 
 /**
  * Accessors:
