@@ -105,7 +105,7 @@ void DFileBuilder_Shutdown(void)
 
 DFile* DFileBuilder_NewFromAbstractFileLump(abstractfile_t* container, int lumpIdx, boolean dontBuffer)
 {
-    const lumpinfo_t* info = F_LumpInfo(container, lumpIdx);
+    const LumpInfo* info = F_LumpInfo(container, lumpIdx);
     DFile* file;
     if(!info) return NULL;
 

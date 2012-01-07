@@ -58,7 +58,7 @@ typedef struct abstractfile_s {
     DFile* _file;
 
     /// Info descriptor (file metadata).
-    lumpinfo_t _info;
+    LumpInfo _info;
 
     /// Load order depth index.
     uint _order;
@@ -73,7 +73,7 @@ typedef struct abstractfile_s {
  * @return  Same as @a af for convenience (chaining).
  */
 abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
-    DFile* file, const lumpinfo_t* info);
+    DFile* file, const LumpInfo* info);
 
 /**
  * Release all memory acquired for objects linked with this resource.
@@ -84,7 +84,7 @@ void AbstractFile_Destroy(abstractfile_t* af);
 filetype_t AbstractFile_Type(const abstractfile_t* af);
 
 /// @return  Immutable copy of the info descriptor for this resource.
-const lumpinfo_t* AbstractFile_Info(abstractfile_t* af);
+const LumpInfo* AbstractFile_Info(abstractfile_t* af);
 
 /// @return  Owning package else @c NULL if not contained.
 abstractfile_t* AbstractFile_Container(const abstractfile_t* af);

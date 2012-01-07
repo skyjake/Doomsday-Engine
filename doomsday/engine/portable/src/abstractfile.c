@@ -28,7 +28,7 @@
 #include "abstractfile.h"
 
 abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
-    DFile* file, const lumpinfo_t* info)
+    DFile* file, const LumpInfo* info)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
@@ -58,7 +58,7 @@ filetype_t AbstractFile_Type(const abstractfile_t* af)
     return af->_type;
 }
 
-const lumpinfo_t* AbstractFile_Info(abstractfile_t* af)
+const LumpInfo* AbstractFile_Info(abstractfile_t* af)
 {
     assert(af);
     return &af->_info;

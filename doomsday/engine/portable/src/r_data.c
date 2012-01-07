@@ -1804,7 +1804,7 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
     numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        const lumpinfo_t* info;
+        const LumpInfo* info;
 
         // Will this be processed anyway?
         if(i == firstTexLump || i == secondTexLump) continue;
@@ -2063,7 +2063,7 @@ void R_InitPatchComposites(void)
 
 static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
 {
-    const lumpinfo_t* info = F_FindInfoForLumpNum(lumpNum);
+    const LumpInfo* info = F_FindInfoForLumpNum(lumpNum);
     Uri* uri, *resourcePath;
     textureid_t texId;
     texture_t* tex;
@@ -2156,7 +2156,7 @@ void R_InitFlatTextures(void)
         numLumps = F_LumpCount();
         for(i = 0; i < numLumps; ++i)
         {
-            const lumpinfo_t* info = F_FindInfoForLumpNum(i);
+            const LumpInfo* info = F_FindInfoForLumpNum(i);
             assert(info);
 
             if(info->name[0] == 'F')
@@ -2226,7 +2226,7 @@ void R_InitSpriteTextures(void)
     /// \fixme Load order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
-        const lumpinfo_t* info = F_FindInfoForLumpNum((lumpnum_t)i);
+        const LumpInfo* info = F_FindInfoForLumpNum((lumpnum_t)i);
         patchtex_t* pTex;
         textureid_t texId;
         texture_t* tex;

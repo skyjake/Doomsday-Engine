@@ -41,12 +41,12 @@ typedef struct lumpfile_s {
     void** _cacheData;
 } lumpfile_t;
 
-lumpfile_t* LumpFile_New(DFile* file, const lumpinfo_t* info);
+lumpfile_t* LumpFile_New(DFile* file, const LumpInfo* info);
 void LumpFile_Delete(lumpfile_t* lf);
 
 int LumpFile_PublishLumpsToDirectory(lumpfile_t* lf, struct lumpdirectory_s* directory);
 
-const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx);
+const LumpInfo* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.

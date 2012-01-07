@@ -127,8 +127,8 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 
-const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
+const LumpInfo* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+const LumpInfo* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent);
 lumpnum_t F_CheckLumpNumForName(const char* name);
@@ -256,7 +256,7 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
-const lumpinfo_t* F_LumpInfo(abstractfile_t* file, int lumpIdx);
+const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 
 size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);

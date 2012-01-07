@@ -1462,7 +1462,7 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     switch(AbstractFile_Type(DFile_File_Const(file)))
     {
     case FT_LUMPFILE: {
-        const lumpinfo_t* info = AbstractFile_Info(DFile_File_Const(file));
+        const LumpInfo* info = AbstractFile_Info(DFile_File_Const(file));
         fileName = (char*)info->name;
         break;
       }

@@ -41,14 +41,14 @@ struct pathdirectorynode_s;
 struct zipfile_s; // The zipfile instance (opaque)
 typedef struct zipfile_s ZipFile;
 
-ZipFile* ZipFile_New(DFile* file, const lumpinfo_t* info);
+ZipFile* ZipFile_New(DFile* file, const LumpInfo* info);
 void ZipFile_Delete(ZipFile* zip);
 
 int ZipFile_PublishLumpsToDirectory(ZipFile* zip, struct lumpdirectory_s* directory);
 
 struct pathdirectorynode_s* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx);
 
-const lumpinfo_t* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
+const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.

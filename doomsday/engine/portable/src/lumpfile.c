@@ -29,7 +29,7 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-lumpfile_t* LumpFile_New(DFile* file, const lumpinfo_t* info)
+lumpfile_t* LumpFile_New(DFile* file, const LumpInfo* info)
 {
     lumpfile_t* lf = (lumpfile_t*)malloc(sizeof *lf);
     if(!lf) Con_Error("LumpFile::Construct: Failed on allocation of %lu bytes for new LumpFile.",
@@ -57,7 +57,7 @@ int LumpFile_PublishLumpsToDirectory(lumpfile_t* lf, lumpdirectory_t* directory)
     return 1;
 }
 
-const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx)
+const LumpInfo* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx)
 {
     assert(lf);
     /// Lump files are special cases for this *is* the lump.
@@ -82,7 +82,7 @@ size_t LumpFile_ReadLumpSection2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
 {
     assert(lf);
     {
-    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+    const LumpInfo* info = LumpFile_LumpInfo(lf, lumpIdx);
     size_t readBytes;
 
     VERBOSE2(
@@ -127,7 +127,7 @@ size_t LumpFile_ReadLumpSection(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
 
 size_t LumpFile_ReadLump2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
-    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+    const LumpInfo* info = LumpFile_LumpInfo(lf, lumpIdx);
     if(!info) return 0;
     return LumpFile_ReadLumpSection2(lf, lumpIdx, buffer, 0, info->size, tryCache);
 }
@@ -141,7 +141,7 @@ const uint8_t* LumpFile_CacheLump(lumpfile_t* lf, int lumpIdx, int tag)
 {
     assert(lf);
     {
-    const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+    const LumpInfo* info = LumpFile_LumpInfo(lf, lumpIdx);
     boolean isCached = (NULL != lf->_cacheData);
     void** cachePtr = (void**)&lf->_cacheData;
 
@@ -180,7 +180,7 @@ void LumpFile_ChangeLumpCacheTag(lumpfile_t* lf, int lumpIdx, int tag)
     if(isCached)
     {
         VERBOSE2(
-            const lumpinfo_t* info = LumpFile_LumpInfo(lf, lumpIdx);
+            const LumpInfo* info = LumpFile_LumpInfo(lf, lumpIdx);
             Con_Printf("LumpFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
                     F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lf))),
                     (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )

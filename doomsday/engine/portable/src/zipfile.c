@@ -35,7 +35,7 @@
 
 typedef struct {
     size_t baseOffset;
-    lumpinfo_t info;
+    LumpInfo info;
 } zipfile_lumprecord_t;
 
 struct zipfile_s {
@@ -479,7 +479,7 @@ static zipfile_lumprecord_t* ZipFile_LumpRecord(ZipFile* zip, int lumpIdx)
     return (zipfile_lumprecord_t*)PathDirectoryNode_UserData(zip->lumpDirectoryMap[lumpIdx]);
 }
 
-ZipFile* ZipFile_New(DFile* file, const lumpinfo_t* info)
+ZipFile* ZipFile_New(DFile* file, const LumpInfo* info)
 {
     ZipFile* zip;
 
@@ -523,7 +523,7 @@ PathDirectoryNode* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx)
     return zip->lumpDirectoryMap[lumpIdx];
 }
 
-const lumpinfo_t* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx)
+const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx)
 {
     zipfile_lumprecord_t* lumpRecord = ZipFile_LumpRecord(zip, lumpIdx);
     if(!lumpRecord)
@@ -717,7 +717,7 @@ size_t ZipFile_ReadLumpSection(ZipFile* zip, int lumpIdx, uint8_t* buffer,
 
 size_t ZipFile_ReadLump2(ZipFile* zip, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
-    const lumpinfo_t* info = ZipFile_LumpInfo(zip, lumpIdx);
+    const LumpInfo* info = ZipFile_LumpInfo(zip, lumpIdx);
     if(!info) return 0;
     return ZipFile_ReadLumpSection2(zip, lumpIdx, buffer, 0, info->size, tryCache);
 }
@@ -729,7 +729,7 @@ size_t ZipFile_ReadLump(ZipFile* zip, int lumpIdx, uint8_t* buffer)
 
 const uint8_t* ZipFile_CacheLump(ZipFile* zip, int lumpIdx, int tag)
 {
-    const lumpinfo_t* info = ZipFile_LumpInfo(zip, lumpIdx);
+    const LumpInfo* info = ZipFile_LumpInfo(zip, lumpIdx);
     const uint cacheIdx = lumpIdx;
     boolean isCached;
     void** cachePtr;
@@ -795,7 +795,7 @@ void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag)
     if(isCached)
     {
         VERBOSE2(
-            const lumpinfo_t* info = ZipFile_LumpInfo(zip, lumpIdx);
+            const LumpInfo* info = ZipFile_LumpInfo(zip, lumpIdx);
             Con_Printf("ZipFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
                     F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)zip))),
                     (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )

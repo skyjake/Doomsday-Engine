@@ -56,9 +56,9 @@ void LumpDirectory_Clear(lumpdirectory_t* ld);
  * @return  @c 0 iff iteration completed wholly.
  */
 int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
-    int (*callback) (const lumpinfo_t*, void*), void* paramaters);
+    int (*callback) (const LumpInfo*, void*), void* paramaters);
 int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,
-    int (*callback) (const lumpinfo_t*, void*));
+    int (*callback) (const LumpInfo*, void*));
 
 /// @return  Index associated with the last lump with @a name if found else @c -1
 lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name);
@@ -94,7 +94,7 @@ int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject);
 void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpName);
 
 /// @return  Info associated to the lump with id @a lumpNum.
-const lumpinfo_t* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum);
+const LumpInfo* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum);
 
 /// @return  File system object associated to the lump with id @a lumpNum.
 abstractfile_t* LumpDirectory_SourceFile(lumpdirectory_t* ld, lumpnum_t lumpNum);

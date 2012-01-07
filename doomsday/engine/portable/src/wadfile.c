@@ -34,7 +34,7 @@
 
 typedef struct {
     size_t baseOffset;
-    lumpinfo_t info;
+    LumpInfo info;
 } wadfile_lumprecord_t;
 
 struct wadfile_s {
@@ -198,7 +198,7 @@ static wadfile_lumprecord_t* WadFile_LumpRecord(WadFile* wad, int lumpIdx)
     return (wadfile_lumprecord_t*)PathDirectoryNode_UserData(wad->lumpDirectoryMap[lumpIdx]);
 }
 
-WadFile* WadFile_New(DFile* file, const lumpinfo_t* info)
+WadFile* WadFile_New(DFile* file, const LumpInfo* info)
 {
     WadFile* wad;
     wadheader_t hdr;
@@ -253,7 +253,7 @@ PathDirectoryNode* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx)
     return wad->lumpDirectoryMap[lumpIdx];
 }
 
-const lumpinfo_t* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
+const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx)
 {
     wadfile_lumprecord_t* lumpRecord = WadFile_LumpRecord(wad, lumpIdx);
     if(!lumpRecord)
@@ -340,7 +340,7 @@ uint WadFile_CalculateCRC(WadFile* wad)
 
     for(i = 0; i < lumpCount; ++i)
     {
-        const lumpinfo_t* info = WadFile_LumpInfo(wad, i);
+        const LumpInfo* info = WadFile_LumpInfo(wad, i);
 
         crc += (uint) info->size;
         for(k = 0; k < LUMPNAME_T_LASTINDEX; ++k)
@@ -411,7 +411,7 @@ size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx, uint8_t* buffer,
 
 size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache)
 {
-    const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+    const LumpInfo* info = WadFile_LumpInfo(wad, lumpIdx);
     if(!info) return 0;
     return WadFile_ReadLumpSection2(wad, lumpIdx, buffer, 0, info->size, tryCache);
 }
@@ -423,7 +423,7 @@ size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer)
 
 const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag)
 {
-    const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+    const LumpInfo* info = WadFile_LumpInfo(wad, lumpIdx);
     const uint cacheIdx = lumpIdx;
     boolean isCached;
     void** cachePtr;
@@ -489,7 +489,7 @@ void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag)
     if(isCached)
     {
         VERBOSE2(
-            const lumpinfo_t* info = WadFile_LumpInfo(wad, lumpIdx);
+            const LumpInfo* info = WadFile_LumpInfo(wad, lumpIdx);
             Con_Printf("WadFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
                     F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)wad))),
                     (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
