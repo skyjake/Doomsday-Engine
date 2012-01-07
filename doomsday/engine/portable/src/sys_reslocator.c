@@ -204,7 +204,8 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, PathDirectoryNode* node)
+static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo,
+    PathDirectoryNode* node)
 {
     ddstring_t* name;
     assert(rnInfo && node);
@@ -697,7 +698,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < searchPathsCount; ++i)
         {
-            ResourceNamespace_AddSearchPath(rnamespace, searchPaths[i], SPG_DEFAULT);
+            ResourceNamespace_AddSearchPath(rnamespace, 0, searchPaths[i], SPG_DEFAULT);
         }
     }
 
@@ -714,29 +715,40 @@ void F_CreateNamespacesForFileResourcePaths(void)
         const char* name;
         const char* optOverridePath;
         const char* optFallbackPath;
-        byte flags;
-        const char* defaultPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
+        byte flags; /// @see resourceNamespaceFlags
+        int searchPathFlags; /// @see searchPathFlags
+        const char* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0,
-            { "$(Game.DefsPath)/$(Game.IdentityKey)/", "$(Game.DefsPath)/", "$(App.DefsPath)/" } },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0,
-            { "$(App.DataPath)/graphics/" } },
-        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP,
-            { "$(Game.DataPath)/models/$(Game.IdentityKey)/", "$(Game.DataPath)/models/" } },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/sfx/$(Game.IdentityKey)/", "$(Game.DataPath)/sfx/" } },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/music/$(Game.IdentityKey)/", "$(Game.DataPath)/music/" } },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/textures/$(Game.IdentityKey)/", "$(Game.DataPath)/textures/" } },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP,
-            { "$(Game.DataPath)/flats/$(Game.IdentityKey)/", "$(Game.DataPath)/flats/" } },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/patches/$(Game.IdentityKey)/", "$(Game.DataPath)/patches/" } },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP,
-            { "$(Game.DataPath)/lightmaps/$(Game.IdentityKey)/", "$(Game.DataPath)/lightmaps/" } },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP,
-            { "$(Game.DataPath)/fonts/$(Game.IdentityKey)/", "$(Game.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
+        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
+            { "$(Game.DefsPath)/$(Game.IdentityKey)/", "$(Game.DefsPath)/", "$(App.DefsPath)/" }
+        },
+        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
+            { "$(App.DataPath)/graphics/" }
+        },
+        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
+            { "$(Game.DataPath)/models/$(Game.IdentityKey)/", "$(Game.DataPath)/models/" }
+        },
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/sfx/$(Game.IdentityKey)/", "$(Game.DataPath)/sfx/" }
+        },
+        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/music/$(Game.IdentityKey)/", "$(Game.DataPath)/music/" }
+        },
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/textures/$(Game.IdentityKey)/", "$(Game.DataPath)/textures/" }
+        },
+        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/flats/$(Game.IdentityKey)/", "$(Game.DataPath)/flats/" }
+        },
+        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/patches/$(Game.IdentityKey)/", "$(Game.DataPath)/patches/" }
+        },
+        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
+            { "$(Game.DataPath)/lightmaps/" }
+        },
+        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/fonts/$(Game.IdentityKey)/", "$(Game.DataPath)/fonts/", "$(App.DataPath)/fonts/" }
+        },
         { NULL }
     };
     Uri* uri = Uri_New();
@@ -748,20 +760,20 @@ void F_CreateNamespacesForFileResourcePaths(void)
     { size_t i;
     for(i = 0; defs[i].name; ++i)
     {
-        uint j, defaultPathCount;
+        uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
         FileDirectory* directory = FileDirectory_New();
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 
-        defaultPathCount = 0;
-        while(def->defaultPaths[defaultPathCount] && ++defaultPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
+        searchPathCount = 0;
+        while(def->searchPaths[searchPathCount] && ++searchPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
         {}
 
-        for(j = 0; j < defaultPathCount; ++j)
+        for(j = 0; j < searchPathCount; ++j)
         {
-            Uri_SetUri3(uri, def->defaultPaths[j], RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_DEFAULT);
+            Uri_SetUri3(uri, def->searchPaths[j], RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_DEFAULT);
         }
 
         if(def->optOverridePath && ArgCheckWith(def->optOverridePath, 1))
@@ -773,10 +785,10 @@ void F_CreateNamespacesForFileResourcePaths(void)
             Str_Init(&path2);
             Str_Appendf(&path2, "%s/$(Game.IdentityKey)", path);
             Uri_SetUri3(uri, Str_Text(&path2), RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_OVERRIDE);
 
             Uri_SetUri3(uri, path, RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_OVERRIDE);
 
             Str_Free(&path2);
         }
@@ -784,7 +796,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         if(def->optFallbackPath && ArgCheckWith(def->optFallbackPath, 1))
         {
             Uri_SetUri3(uri, ArgNext(), RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_FALLBACK);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_FALLBACK);
         }
     }}
 
@@ -892,24 +904,18 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name, FileDirectory* 
     return rn;
 }
 
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,
-    resourcenamespace_searchpathgroup_t group)
+boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    const Uri* searchPath, resourcenamespace_searchpathgroup_t group)
 {
     resourcenamespaceinfo_t* info;
     errorIfNotInited("F_AddSearchPathToResourceNamespace");
     info = getNamespaceInfoForId(rni);
-    if(ResourceNamespace_AddSearchPath(info->rnamespace, uri, group))
+    if(ResourceNamespace_AddSearchPath(info->rnamespace, flags, searchPath, group))
     {
         info->flags |= RNF_IS_DIRTY;
         return true;
     }
     return false;
-}
-
-void F_AddResourceToNamespace(resourcenamespaceid_t rni, PathDirectoryNode* node)
-{
-    errorIfNotInited("F_AddResourceToNamespace");
-    addResourceToNamespace(getNamespaceInfoForId(rni), node);
 }
 
 const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni)

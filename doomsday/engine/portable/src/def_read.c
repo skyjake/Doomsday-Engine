@@ -815,12 +815,15 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("ModelPath"))
         {
+            Uri* newSearchPath;
+
             READSTR(label);
             CHECKSC;
-            { Uri* newUri = Uri_NewWithPath2(label, RC_NULL);
-            F_AddSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL), newUri, SPG_EXTRA);
-            Uri_Delete(newUri);
-            }
+
+            newSearchPath = Uri_NewWithPath2(label, RC_NULL);
+            F_AddSearchPathToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL),
+                                               0, newSearchPath, SPG_EXTRA);
+            Uri_Delete(newSearchPath);
         }
 
         if(ISTOKEN("Header"))
