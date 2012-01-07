@@ -846,6 +846,23 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
+    if(!DD_IsNullGame(p->game))
+    {
+        ddstring_t temp;
+
+        // Create default Auto mappings in the runtime directory.
+        // Data class resources.
+        Str_Init(&temp);
+        Str_Appendf(&temp, "%sauto", Str_Text(Game_DataPath(p->game)));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
+
+        // Definition class resources.
+        Str_Clear(&temp);
+        Str_Appendf(&temp, "%sauto", Str_Text(Game_DefsPath(p->game)));
+        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
+        Str_Free(&temp);
+    }
+
     if(p->initiatedBusyMode)
         Con_SetProgress(10);
 
@@ -869,25 +886,10 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     if(!DD_IsNullGame(p->game))
     {
-        ddstring_t temp;
-
         /**
          * Phase 3: Add real files from the Auto directory.
          * First ZIPs then WADs (they may contain WAD files).
          */
-
-        // Create default Auto mappings in the runtime directory.
-        // Data class resources.
-        Str_Init(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DataPath(p->game)));
-        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
-
-        // Definition class resources.
-        Str_Clear(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DefsPath(p->game)));
-        F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
-        Str_Free(&temp);
-
         addFilesFromAutoData(false);
         if(numGameResourceFileList > 0)
         {
