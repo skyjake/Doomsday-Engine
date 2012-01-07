@@ -156,7 +156,7 @@ static void WadFile_ReadLumpDirectory(wadfile_t* wad)
         // Have we yet to intialize the directory?
         if(!wad->lumpDirectory)
         {
-            wad->lumpDirectory = PathDirectory_NewWithFlags(PDF_ALLOW_DUPLICATE_LEAFS);
+            wad->lumpDirectory = PathDirectory_NewWithFlags(PDF_ALLOW_DUPLICATE_LEAF);
         }
         node = PathDirectory_Insert(wad->lumpDirectory, Str_Text(&record->info.path), '/');
         PathDirectoryNode_AttachUserData(node, record);

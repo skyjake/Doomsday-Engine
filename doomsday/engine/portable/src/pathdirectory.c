@@ -74,6 +74,8 @@ struct pathdirectory_s {
         ushort* idHashMap; // Index by @c StringPoolInternId-1
     } _internPool;
 
+    int _flags; /// @see pathDirectoryFlags
+
     /// Path hash map.
     pathdirectory_pathhash_t* _pathLeafHash;
     pathdirectory_pathhash_t* _pathBranchHash;
@@ -276,7 +278,11 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
-            if(node) return node;
+            if(node)
+            {
+                if(nodeType == PT_BRANCH || !(pd->_flags & PDF_ALLOW_DUPLICATE_LEAF))
+                    return node;
+            }
         }
     }
 
@@ -493,18 +499,24 @@ static int iteratePaths_Const(const PathDirectory* pd, int flags, const PathDire
     return result;
 }
 
-PathDirectory* PathDirectory_New(void)
+PathDirectory* PathDirectory_NewWithFlags(int flags)
 {
     PathDirectory* pd = (PathDirectory*) malloc(sizeof *pd);
     if(!pd)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
+    pd->_flags = flags;
     pd->_internPool.strings = NULL;
     pd->_internPool.idHashMap = NULL;
     pd->_pathLeafHash = NULL;
     pd->_pathBranchHash = NULL;
     pd->_size = 0;
     return pd;
+}
+
+PathDirectory* PathDirectory_New(void)
+{
+    return PathDirectory_NewWithFlags(0);
 }
 
 void PathDirectory_Delete(PathDirectory* pd)
