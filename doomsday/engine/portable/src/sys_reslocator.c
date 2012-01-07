@@ -231,12 +231,20 @@ static int addFileResourceWorker(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue adding.
 }
 
+static int rebuildResourceNamespaceWorker(const Uri* searchPath, int flags,
+    void* paramaters)
+{
+    resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*)paramaters;
+    FileDirectory_AddPaths3(rnInfo->directory, &searchPath, 1,
+                            addFileResourceWorker, (void*)rnInfo);
+    return 0; // Continue iteration.
+}
+
 static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 {
 /*#if _DEBUG
     uint startTime;
 #endif*/
-    ddstring_t* searchPaths;
 
     assert(rnInfo);
     if(!(rnInfo->flags & RNF_IS_DIRTY)) return;
@@ -246,31 +254,25 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
     VERBOSE2( startTime = Sys_GetRealTime() )
 #endif*/
 
+    // (Re)populate the directory and insert found paths into the resource namespace.
+    // \todo It should not be necessary for a unique directory per namespace.
+
     ResourceNamespace_Clear(rnInfo->rnamespace);
     FileDirectory_Clear(rnInfo->directory);
 
-    searchPaths = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
-    if(searchPaths)
-    {
-        if(!Str_IsEmpty(searchPaths))
-        {
 /*#if _DEBUG
-            VERBOSE2( Con_PrintPathList(Str_Text(searchPaths)) )
+    VERBOSE2(
+        ddstring_t* searchPathList = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
+        Con_PrintPathList(Str_Text(searchPathList));
+        Str_Delete(searchPathList)
+        )
 #endif*/
 
-            // (Re)populate the directory and insert found paths into the resource namespace.
-            // \todo It should not be necessary for a unique directory per namespace.
-            FileDirectory_AddPathList3(rnInfo->directory, Str_Text(searchPaths), addFileResourceWorker, (void*)rnInfo);
-
-/*#if _DEBUG
-            VERBOSE2( FileDirectory_Print(rnInfo->directory) )
-#endif*/
-        }
-        Str_Delete(searchPaths);
-    }
+    ResourceNamespace_IterateSearchPaths2(rnInfo->rnamespace, rebuildResourceNamespaceWorker, (void*)rnInfo);
     rnInfo->flags &= ~RNF_IS_DIRTY;
 
 /*#if _DEBUG
+    VERBOSE2( FileDirectory_Print(rnInfo->directory) )
     VERBOSE2( ResourceNamespace_Print(rnInfo->rnamespace) )
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 #endif*/
