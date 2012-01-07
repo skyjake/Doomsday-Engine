@@ -1354,6 +1354,24 @@ int DD_EarlyInit(void)
     return true;
 }
 
+static int DD_LocateAllGameResourcesWorker(void* paramaters)
+{
+    int i;
+    for(i = 0; i < gamesCount; ++i)
+    {
+        Game* game = games[i];
+
+        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
+
+        locateGameResources(game);
+        Con_SetProgress((i+1) * 200/gamesCount -1);
+
+        VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
+    }
+    Con_BusyWorkerEnd();
+    return 0;
+}
+
 /**
  * Engine initialization. When complete, starts the "game loop".
  */
@@ -1458,8 +1476,7 @@ int DD_Main(void)
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Buffering...", DD_DummyWorker, 0);
 
-    // Unless we reenter busy-mode due to automatic game selection, we won't be
-    // drawing anything further until DD_GameLoop; so lets clean up.
+    // Clean up.
     if(!novideo)
     {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -1496,12 +1513,16 @@ int DD_Main(void)
     }}
 
     // Try to locate all required data files for all registered games.
-    for(i = 0; i < gamesCount; ++i)
+    Con_InitProgress(200);
+    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+             "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
+
+    // Unless we reenter busy-mode due to automatic game selection, we won't be
+    // drawing anything further until DD_GameLoop; so lets clean up.
+    if(!novideo)
     {
-        Game* game = games[i];
-        VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) );
-        locateGameResources(game);
-        VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) );
+        glClear(GL_COLOR_BUFFER_BIT);
+        GL_DoUpdate();
     }
 
     // Attempt automatic game selection.
