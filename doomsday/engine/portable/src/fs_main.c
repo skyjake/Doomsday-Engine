@@ -1158,7 +1158,7 @@ static int findLumpWorker(const lumpinfo_t* lumpInfo, void* paramaters)
     return 0; // Continue search.
 }
 
-int F_AllResourcePaths2(const char* rawSearchPattern,
+int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters)
 {
@@ -1224,10 +1224,10 @@ searchEnded:
     return result;
 }
 
-int F_AllResourcePaths(const char* searchPath,
+int F_AllResourcePaths(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters))
 {
-    return F_AllResourcePaths2(searchPath, callback, 0);
+    return F_AllResourcePaths2(searchPath, flags, callback, 0);
 }
 
 static FILE* findRealFile(const char* path, const char* mymode, ddstring_t** foundPath)
@@ -2088,7 +2088,7 @@ static void printVFDirectory(const ddstring_t* path)
 
     // Make the pattern.
     Str_AppendChar(&dir, '*');
-    F_AllResourcePaths(Str_Text(&dir), printResourcePath);
+    F_AllResourcePaths(Str_Text(&dir), 0, printResourcePath);
 
     Str_Free(&dir);
 }

@@ -859,7 +859,7 @@ static void readAllDefinitions(void)
         ddstring_t pattern;
         Str_Init(&pattern);
         Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
-        F_AllResourcePaths(Str_Text(&pattern), autoDefsReader);
+        F_AllResourcePaths(Str_Text(&pattern), 0, autoDefsReader);
         Str_Free(&pattern);
     }
 

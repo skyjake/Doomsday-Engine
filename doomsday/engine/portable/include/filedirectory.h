@@ -59,8 +59,16 @@ struct filedirectory_s; // The filedirectory instance (opaque).
 typedef struct filedirectory_s FileDirectory;
 
 FileDirectory* FileDirectory_New(void);
-FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList);
-FileDirectory* FileDirectory_NewWithPathList(const char* pathList);
+
+/**
+ * Construct a new FileDirectory instance, populating it with nodes
+ * for given the search paths.
+ *
+ * @param searchPathList  List of search paths. @c NULL terminated.
+ * @param flags  @see searchPathFlags
+ */
+FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* searchPathList, int flags);
+FileDirectory* FileDirectory_NewWithPathList(const char* searchPathList, int flags);
 
 void FileDirectory_Delete(FileDirectory* fd);
 
@@ -83,29 +91,31 @@ ddstring_t* FileDirectory_AllPaths(FileDirectory* fd, pathdirectorynode_type_t t
 /**
  * Add a new set of paths. Duplicates are automatically pruned.
  *
+ * @param flags  @see searchPathFlags
  * @param paths  One or more paths.
  * @param pathsCount  Number of elements in @a paths.
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  */
-void FileDirectory_AddPaths3(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
+void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
     int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPaths2(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
+void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths, uint pathsCount,
     int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
-void FileDirectory_AddPaths(FileDirectory* fd, const Uri* const* paths, uint pathsCount); /*callback=NULL*/
+void FileDirectory_AddPaths(FileDirectory* fd,  int flags, const Uri* const* paths, uint pathsCount); /*callback=NULL*/
 
 /**
  * Add a new set of paths from a path list. Duplicates are automatically pruned.
  *
+ * @param flags  @see searchPathFlags
  * @param pathList  One or more paths separated by semicolons.
  * @param callback  Callback function ptr.
  * @param paramaters  Passed to the callback.
  */
-void FileDirectory_AddPathList3(FileDirectory* fd, const char* pathList,
+void FileDirectory_AddPathList3(FileDirectory* fd, int flags, const char* pathList,
     int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPathList2(FileDirectory* fd, const char* pathList,
+void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathList,
     int (*callback) (PathDirectoryNode* node, void* paramaters)); /*paramaters=NULL*/
-void FileDirectory_AddPathList(FileDirectory* fd, const char* pathList); /*callback=NULL*/
+void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList); /*callback=NULL*/
 
 /**
  * Find a path in the directory.

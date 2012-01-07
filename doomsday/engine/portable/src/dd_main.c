@@ -802,7 +802,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     {
         Str_Clear(&pattern);
         Str_Appendf(&pattern, "%sauto/*.%s", Str_Text(Game_DataPath(theGame)), extensions[i]);
-        F_AllResourcePaths2(Str_Text(&pattern), autoDataAdder, (void*)&data);
+        F_AllResourcePaths2(Str_Text(&pattern), 0, autoDataAdder, (void*)&data);
     }
     Str_Free(&pattern);
     return data.count;

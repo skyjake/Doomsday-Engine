@@ -235,7 +235,7 @@ static int rebuildResourceNamespaceWorker(const Uri* searchPath, int flags,
     void* paramaters)
 {
     resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*)paramaters;
-    FileDirectory_AddPaths3(rnInfo->directory, &searchPath, 1,
+    FileDirectory_AddPaths3(rnInfo->directory, flags, &searchPath, 1,
                             addFileResourceWorker, (void*)rnInfo);
     return 0; // Continue iteration.
 }

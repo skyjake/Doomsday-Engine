@@ -279,11 +279,13 @@ boolean F_DumpLump(abstractfile_t* file, int lumpIdx, const char* fileName);
  * Parm is passed on to the callback, which is called for each file
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
+ *
+ * @param flags  @see searchPathFlags
  */
-int F_AllResourcePaths2(const char* searchPath,
+int F_AllResourcePaths2(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters);
-int F_AllResourcePaths(const char* searchPath,
+int F_AllResourcePaths(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters));
 
 #endif /* LIBDENG_FILESYS_MAIN_H */
