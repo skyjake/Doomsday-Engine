@@ -25,9 +25,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
+#include "de_system.h"
+#include "m_misc.h" // For M_NumDigits
 
 #include "stringpool.h"
-#include "m_misc.h"
+#include "blockset.h"
 
 #include "pathdirectory.h"
 
@@ -53,11 +55,11 @@ struct pathdirectorynode_s {
     pathdirectorynode_userdatapair_t pair;
 };
 
-static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
+static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
     StringPoolInternId internId, void* userData);
 
-static void PathDirectoryNode_Delete(PathDirectoryNode* node);
+static void deleteNode(PathDirectoryNode* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
 StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
@@ -83,6 +85,17 @@ struct pathdirectory_s {
     /// Number of unique paths in the directory.
     uint size;
 };
+
+static volatile uint pathDirectoryInstanceCount;
+
+/// A mutex is used to prevent Data races in the node allocator.
+static mutex_t nodeAllocator_Mutex;
+
+/// Threaded access to the following Data is protected by nodeAllocator_Mutex:
+/// Nodes are block-allocated from this set.
+static blockset_t* NodeBlockSet;
+/// Linked list of used directory nodes for re-use. Linked with PathDirectoryNode::next
+static PathDirectoryNode* UsedNodes;
 
 ushort PathDirectory_HashName(const char* path, size_t len, char delimiter)
 {
@@ -162,7 +175,7 @@ static void clearNodeList(PathDirectoryNode** list)
             exit(1); // Unreachable.
         }
 #endif
-        PathDirectoryNode_Delete(*list);
+        deleteNode(*list);
     } while(NULL != (*list = next));
 }
 
@@ -304,7 +317,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     // Are we out of name indices?
     if(!internId) return NULL;
 
-    node = PathDirectoryNode_New(pd, nodeType, parent, internId, userData);
+    node = newNode(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
     phAdr = hashAddressForNodeType(pd, nodeType);
@@ -511,6 +524,21 @@ PathDirectory* PathDirectory_NewWithFlags(int flags)
     pd->pathLeafHash = NULL;
     pd->pathBranchHash = NULL;
     pd->size = 0;
+
+    // We'll block-allocate nodes and maintain a list of unused ones
+    // to accelerate directory construction/population.
+    if(!nodeAllocator_Mutex)
+    {
+        nodeAllocator_Mutex = Sys_CreateMutex("PathDirectoryNodeAllocator_MUTEX");
+
+        Sys_Lock(nodeAllocator_Mutex);
+        NodeBlockSet = BlockSet_New(sizeof(struct pathdirectorynode_s), 128);
+        UsedNodes = NULL;
+        Sys_Unlock(nodeAllocator_Mutex);
+    }
+
+    pathDirectoryInstanceCount += 1;
+
     return pd;
 }
 
@@ -531,6 +559,16 @@ void PathDirectory_Delete(PathDirectory* pd)
 
     clearInternPool(pd);
     free(pd);
+
+    if(--pathDirectoryInstanceCount == 0)
+    {
+        Sys_Lock(nodeAllocator_Mutex);
+        BlockSet_Delete(NodeBlockSet);
+        NodeBlockSet = NULL;
+        UsedNodes = NULL;
+        Sys_DestroyMutex(nodeAllocator_Mutex);
+        nodeAllocator_Mutex = 0;
+    }
 }
 
 uint PathDirectory_Size(PathDirectory* pd)
@@ -1077,6 +1115,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     pathdirectory_pathhash_t** phAdr;
     size_t totalForRange;
     PathDirectoryNode* node;
+    ushort i;
     int j;
     assert(pd);
 
@@ -1088,7 +1127,6 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    { ushort i;
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
     {
         phAdr = hashAddressForNodeType(pd, PT_BRANCH);
@@ -1159,7 +1197,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
         }
         if(totalForRange > nodeBucketCollisionsMaxTotal)
             nodeBucketCollisionsMaxTotal = totalForRange;
-    }}
+    }
 
     printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
         nodeBucketCollisions,    nodeBucketCollisionsTotal,
@@ -1171,30 +1209,45 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 }
 #endif
 
-static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
+static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
     StringPoolInternId internId, void* userData)
 {
     PathDirectoryNode* node;
-    assert(directory);
 
-    node = (PathDirectoryNode*) malloc(sizeof *node);
-    if(!node)
-        Con_Error("PathDirectory::direcNode: Failed on allocation of %lu bytes for "
-            "new PathDirectory::Node.", (unsigned long) sizeof *node);
+    // Acquire a new node, either from the used list or the block allocator.
+    Sys_Lock(nodeAllocator_Mutex);
+    if(UsedNodes)
+    {
+        node = UsedNodes;
+        UsedNodes = node->next;
+    }
+    else
+    {
+        node = BlockSet_Allocate(NodeBlockSet);
+    }
+    Sys_Unlock(nodeAllocator_Mutex);
 
+    // Initialize the new node.
+    node->next = NULL;
     node->directory = directory;
     node->type = type;
     node->parent = parent;
     node->pair.internId = internId;
     node->pair.data = userData;
+
     return node;
 }
 
-static void PathDirectoryNode_Delete(PathDirectoryNode* node)
+static void deleteNode(PathDirectoryNode* node)
 {
-    assert(node);
-    free(node);
+    if(!node) return;
+
+    // Add this node to the list of used nodes for re-use.
+    Sys_Lock(nodeAllocator_Mutex);
+    node->next = UsedNodes;
+    UsedNodes = node;
+    Sys_Unlock(nodeAllocator_Mutex);
 }
 
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node)
