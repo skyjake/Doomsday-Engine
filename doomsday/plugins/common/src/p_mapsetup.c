@@ -877,6 +877,7 @@ int P_SetupMapWorker(void* paramaters)
 void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
 {
     setupmapparams_t param;
+    int i;
 
     param.episode = episode;
     param.map = map;
@@ -887,6 +888,14 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
     // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Loading map...", P_SetupMapWorker, &param);
+
+    // Wake up HUD widgets for players in the game.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame) continue;
+        ST_Start(i);
+        HU_Start(i);
+    }
 
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 

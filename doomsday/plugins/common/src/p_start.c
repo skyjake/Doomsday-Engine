@@ -552,10 +552,6 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    // Wake up HUD widgets.
-    ST_Start(p - players);
-    HU_Start(p - players);
-
 #if __JHEXEN__
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);
