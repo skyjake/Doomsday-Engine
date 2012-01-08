@@ -29,9 +29,6 @@
 
 #include "stringpool.h"
 
-// Symbolic value used as identifier for an invalid index in the pool (private).
-#define STRINGPOOL_INVALIDINDEX ((uint)-1)
-
 /**
  * @todo Performance is presently suboptimal due to the representation of the
  * intern list. A better implementation would use a binary search tree.
@@ -54,8 +51,8 @@ struct stringpool_s
 
 // Intern string record.
 typedef struct stringpool_intern_s {
-    ddstring_t string;
     boolean used; // @c true= this intern is currently in use (i.e., it has not been "removed").
+    ddstring_t string;
 } stringpool_intern_t;
 
 static ddstring_t nullString = {"(nullptr)"};
@@ -127,21 +124,20 @@ static StringPoolInternId findNextUnusedId(StringPool* pool, StringPoolInternId 
     return (StringPoolInternId) (pool->_internsCount+1);
 }
 
-static uint findStringSortedInternIdx(StringPool* pool, const ddstring_t* string)
+static boolean findStringSortedInternIdx(StringPool* pool, const ddstring_t* string, uint* result)
 {
     assert(pool && string);
-    {
-    uint sortedIdx = STRINGPOOL_INVALIDINDEX; // Not found.
     if(pool->_numStrings)
     {
-        uint bottomIdx = 0, topIdx = pool->_numStrings-1;
+        uint pivot, bottomIdx = 0, topIdx = pool->_numStrings-1;
         stringpool_intern_t* intern;
         boolean found = false;
         int delta;
+
         while(bottomIdx <= topIdx)
         {
-            sortedIdx = bottomIdx + (topIdx - bottomIdx)/2;
-            intern = getInternByIdx(pool, pool->_stringSortedInternTable[sortedIdx]);
+            pivot = bottomIdx + (topIdx - bottomIdx)/2;
+            intern = getInternByIdx(pool, pool->_stringSortedInternTable[pivot]);
 
             delta = Str_CompareIgnoreCase(&intern->string, Str_Text(string));
             if(delta == 0)
@@ -152,48 +148,44 @@ static uint findStringSortedInternIdx(StringPool* pool, const ddstring_t* string
             }
             else if(delta > 0)
             {
-                if(sortedIdx == 0)
+                if(pivot == 0)
                 {
                     // Not present.
                     bottomIdx = topIdx+1;
                 }
                 else
                 {
-                    topIdx = sortedIdx - 1;
+                    topIdx = pivot - 1;
                 }
             }
             else
             {
-                bottomIdx = sortedIdx + 1;
+                bottomIdx = pivot + 1;
             }
         }
 
-        if(!found) sortedIdx = STRINGPOOL_INVALIDINDEX; // Not found.
+        if(found && result) *result = pivot;
+        return found;
     }
-    return sortedIdx;
-    }
+    return false;
 }
 
 static stringpool_intern_t* findIntern(StringPool* pool, const ddstring_t* string)
 {
-    assert(pool && string);
-    {
-    uint sortedIdx = findStringSortedInternIdx(pool, string);
-    if(sortedIdx == STRINGPOOL_INVALIDINDEX) return NULL;
+    uint sortedIdx;
+    if(!findStringSortedInternIdx(pool, string, &sortedIdx)) return NULL;
     return getInternByIdx(pool, pool->_stringSortedInternTable[sortedIdx]);
-    }
 }
 
 static StringPoolInternId internString(StringPool* pool, const ddstring_t* string)
 {
-    assert(NULL != pool && NULL != string);
-    {
     uint stringSortedMapIdx, idx;
     boolean isNewIntern = true; // @c true= A new intern was allocated.
     stringpool_intern_t* intern;
     StringPoolInternId id;
+    assert(pool && string);
 
-    if(STRINGPOOL_INVALIDINDEX == pool->_numStrings)
+    if(((uint)-1) == pool->_numStrings)
         return 0; // No can do sir, we're out of indices!
 
     // Obtain a new identifier for this string.
@@ -246,17 +238,19 @@ static StringPoolInternId internString(StringPool* pool, const ddstring_t* strin
     stringSortedMapIdx = 0;
     if(pool->_numStrings)
     {
-        uint i;
-        for(i = 0; i < pool->_numStrings; ++i)
+        findStringSortedInternIdx(pool, &intern->string, &stringSortedMapIdx);
+        /// \var stringSortedMapIdx is now the left-most insertion point.
+        /// Scan forward to find the actual point.
+        for(; stringSortedMapIdx < pool->_numStrings; ++stringSortedMapIdx)
         {
-            const stringpool_intern_t* other = getInternByIdx(pool, pool->_stringSortedInternTable[i]);
+            const stringpool_intern_t* other = getInternByIdx(pool, pool->_stringSortedInternTable[stringSortedMapIdx]);
             if(Str_CompareIgnoreCase(&other->string, Str_Text(&intern->string)) > 0)
                 break;
         }
-        if(i != pool->_numStrings)
-            memmove(pool->_stringSortedInternTable + i + 1, pool->_stringSortedInternTable + i,
-                sizeof(*pool->_stringSortedInternTable) * (pool->_numStrings - i));
-        stringSortedMapIdx = i;
+
+        if(stringSortedMapIdx != pool->_numStrings)
+            memmove(pool->_stringSortedInternTable + stringSortedMapIdx + 1, pool->_stringSortedInternTable + stringSortedMapIdx,
+                sizeof(*pool->_stringSortedInternTable) * (pool->_numStrings - stringSortedMapIdx));
     }
     pool->_stringSortedInternTable[stringSortedMapIdx] = idx;
 
@@ -264,13 +258,10 @@ static StringPoolInternId internString(StringPool* pool, const ddstring_t* strin
     pool->_numStrings += 1;
 
     return id;
-    }
 }
 
 static void removeIntern(StringPool* pool, uint sortedIdx)
 {
-    assert(pool && sortedIdx < pool->_numStrings);
-    {
     uint internIdx = pool->_stringSortedInternTable[sortedIdx];
     stringpool_intern_t* intern = getInternByIdx(pool, internIdx);
     StringPoolInternId id = internId(pool, intern);
@@ -287,7 +278,6 @@ static void removeIntern(StringPool* pool, uint sortedIdx)
 
     // There is now one less string in the pool.
     pool->_numStrings -= 1;
-    }
 }
 
 StringPool* StringPool_New(void)
@@ -402,10 +392,9 @@ boolean StringPool_Remove(StringPool* pool, ddstring_t* str)
     if(!pool) Con_Error("StringPool::Remove: Invalid StringPool");
     if(!str) return false;
 
-    sortedIdx = findStringSortedInternIdx(pool, str);
-    if(sortedIdx == STRINGPOOL_INVALIDINDEX) return false;
-    // We are removing an intern.
+    if(!findStringSortedInternIdx(pool, str, &sortedIdx)) return false;
 
+    // We are removing an intern.
     if(pool->_numStrings == 1)
     {
         // Removing the only string - take this opportunity to cleanse the whole pool,
