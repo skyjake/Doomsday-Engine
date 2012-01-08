@@ -1073,7 +1073,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Con_SaveDefaults();
 
         LO_Clear();
-        //R_DestroyObjlinks();
+        R_DestroyObjlinkBlockmap();
         R_ClearAnimGroups();
 
         P_PtcShutdown();
@@ -1514,7 +1514,7 @@ int DD_Main(void)
 
     // Try to locate all required data files for all registered games.
     Con_InitProgress(200);
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
     // Unless we reenter busy-mode due to automatic game selection, we won't be

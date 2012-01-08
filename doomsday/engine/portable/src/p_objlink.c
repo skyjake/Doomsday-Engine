@@ -249,6 +249,23 @@ void R_InitObjlinkBlockmapForMap(void)
     ssecContacts = Z_Calloc(sizeof *ssecContacts * numSSectors, PU_MAPSTATIC, 0);
 }
 
+void R_DestroyObjlinkBlockmap(void)
+{
+    int i;
+    for(i = 0; i < NUM_OBJ_TYPES; ++i)
+    {
+        objlinkblockmap_t* obm = chooseObjlinkBlockmap((objtype_t)i);
+        if(!obm->gridmap) continue;
+        Gridmap_Delete(obm->gridmap);
+        obm->gridmap = NULL;
+    }
+    if(ssecContacts)
+    {
+        Z_Free(ssecContacts);
+        ssecContacts = NULL;
+    }
+}
+
 int clearObjlinkBlock(void* obj, void* paramaters)
 {
     objlinkblock_t* block = (objlinkblock_t*)obj;
