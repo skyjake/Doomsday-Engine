@@ -1551,6 +1551,7 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     if(!allowDuplicate && !F_CheckFileId(Str_Text(foundPath)))
     {
         fclose(file);
+        Str_Delete(foundPath);
         Str_Free(&searchPath);
         return NULL;
     }
