@@ -31,15 +31,19 @@
 #include "de_infine.h"
 
 static finaleid_t currentFinale = 0;
+static finaleid_t remoteFinale = 0;
 
-/**
- * This is where clients start their InFine sequences.
- */
+finaleid_t Cl_CurrentFinale(void)
+{
+    return currentFinale;
+}
+
 void Cl_Finale(Reader* msg)
 {
     int flags = Reader_ReadByte(msg);
     byte* script = 0;
     int len;
+    finaleid_t finaleId = Reader_ReadUInt32(msg);
 
     if(flags & FINF_SCRIPT)
     {
@@ -55,15 +59,20 @@ void Cl_Finale(Reader* msg)
     {
         // Start the script.
         currentFinale = FI_Execute(script, FF_LOCAL);
+        remoteFinale = finaleId;
 #ifdef _DEBUG
-        Con_Message("Cl_Finale: Started finale %i.\n", currentFinale);
+        Con_Message("Cl_Finale: Started finale %i (remote id %i).\n", currentFinale, remoteFinale);
 #endif
     }
+
+    /// @todo Wouldn't hurt to make sure that the server is talking about the
+    /// same finale as before... (check remoteFinale)
 
     if((flags & FINF_END) && currentFinale)
     {
         FI_ScriptTerminate(currentFinale);
         currentFinale = 0;
+        remoteFinale = 0;
     }
 
     if((flags & FINF_SKIP) && currentFinale)
@@ -72,4 +81,19 @@ void Cl_Finale(Reader* msg)
     }
 
     if(script) free(script);
+}
+
+void Cl_RequestFinaleSkip(void)
+{
+    // First the flags.
+    Msg_Begin(PCL_FINALE_REQUEST);
+    Writer_WriteUInt32(msgWriter, remoteFinale);
+    Writer_WriteUInt16(msgWriter, 1); // skip
+    Msg_End();
+
+#ifdef _DEBUG
+    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.\n", remoteFinale);
+#endif
+
+    Net_SendBuffer(0, 0);
 }

@@ -167,7 +167,10 @@ boolean FI_ScriptRequestSkip(finaleid_t id)
         Con_Error("FI_ScriptRequestSkip: Not initialized yet!");
     f = finalesById(id);
     if(!f)
-        Con_Error("FI_ScriptRequestSkip: Unknown finaleid %u.", id);
+    {
+        Con_Message("FI_ScriptRequestSkip: Unknown finaleid %u.", id);
+        return false;
+    }
     return FinaleInterpreter_Skip(f->_interpreter);
 }
 
@@ -308,7 +311,7 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
     FinaleInterpreter_LoadScript(f->_interpreter, script);
     if(!(flags & FF_LOCAL) && isServer)
     {   // Instruct clients to start playing this Finale.
-        Sv_Finale(FINF_BEGIN|FINF_SCRIPT, script);
+        Sv_Finale(f->id, FINF_BEGIN|FINF_SCRIPT, script);
     }
 #ifdef _DEBUG
     Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, _script);
@@ -336,7 +339,7 @@ void FI_ScriptTerminate(finaleid_t id)
     f = finalesById(id);
     if(!f)
     {
-        Con_Message("FI_ScriptTerminate: Unknown finale %u.", id);
+        Con_Message("FI_ScriptTerminate: Unknown finale %u.\n", id);
         return;
     }
     if(f->active)
@@ -410,7 +413,10 @@ int FI_ScriptResponder(finaleid_t id, const void* ev)
         Con_Error("FI_ScriptResponder: Not initialized yet!");
     f = finalesById(id);
     if(!f)
-        Con_Error("FI_ScriptResponder: Unknown finaleid %u.", id);
+    {
+        Con_Message("FI_ScriptResponder: Unknown finaleid %u.\n", id);
+        return false;
+    }
     if(f->active)
         return FinaleInterpreter_Responder(f->_interpreter, (const ddevent_t*)ev);
     return false;

@@ -83,6 +83,7 @@ enum {
     PSV_CONSOLE_TEXT = 11,
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
+    PCL_FINALE_REQUEST = 15,
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
     PKT_COORDS = 18,

@@ -375,13 +375,6 @@ void Sv_HandlePacket(void)
     char                buf[17];
     size_t              len;
 
-    /*
-#ifdef _DEBUG
-    Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
-    Con_Message("Sv_HandlePacket: length=%li\n", netBuffer.length);
-#endif
-    */
-
     switch(netBuffer.msg.type)
     {
     case PCL_HELLO:
@@ -500,6 +493,19 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
             }
         M_Free(msg);
         break;
+
+    case PCL_FINALE_REQUEST: {
+        finaleid_t fid = Reader_ReadUInt32(msgReader);
+        uint16_t params = Reader_ReadUInt16(msgReader);
+#ifdef _DEBUG
+        Con_Message("PCL_FINALE_REQUEST: fid=%i params=%i\n", fid, params);
+#endif
+        if(params == 1)
+        {
+            // Skip.
+            FI_ScriptRequestSkip(fid);
+        }
+        break; }
 
     case PKT_PLAYER_INFO:
         Sv_HandlePlayerInfoFromClient(sender);
@@ -668,6 +674,7 @@ void Sv_GetPackets(void)
         case PKT_OK:
         case PKT_CHAT:
         case PKT_PLAYER_INFO:
+        case PCL_FINALE_REQUEST:
             Sv_HandlePacket();
             break;
 

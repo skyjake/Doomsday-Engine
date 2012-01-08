@@ -1974,6 +1974,9 @@ int DD_GetInteger(int ddvalue)
     case DD_NUMLUMPS:
         return F_LumpCount();
 
+    case DD_CURRENT_CLIENT_FINALE_ID:
+        return Cl_CurrentFinale();
+
     case DD_MAP_MUSIC: {
         gamemap_t* map = P_GetCurrentMap();
         ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));

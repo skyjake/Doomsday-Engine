@@ -33,7 +33,7 @@
 /**
  * The actual script is sent to the clients. @a script can be NULL.
  */
-void Sv_Finale(int flags, const char* script)
+void Sv_Finale(finaleid_t id, int flags, const char* script)
 {
     size_t scriptLen = 0;
 
@@ -49,6 +49,7 @@ void Sv_Finale(int flags, const char* script)
     // First the flags.
     Msg_Begin(PSV_FINALE);
     Writer_WriteByte(msgWriter, flags);
+    Writer_WriteUInt32(msgWriter, id); // serverside Id
 
     if(script)
     {

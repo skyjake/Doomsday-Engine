@@ -203,6 +203,7 @@ enum {
     DD_UPSCALE_AND_SHARPEN_PATCHES,
     DD_SYMBOLIC_ECHO,
     DD_MAX_TEXTURE_UNITS,
+    DD_CURRENT_CLIENT_FINALE_ID,
     DD_LAST_VALUE,
 
     // General constants (not to be used with Get/Set).

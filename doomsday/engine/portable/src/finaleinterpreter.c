@@ -846,7 +846,7 @@ static void stopScript(finaleinterpreter_t* fi)
     fi->flags.stopped = true;
     if(isServer && !(FI_ScriptFlags(fi->_id) & FF_LOCAL))
     {   // Tell clients to stop the finale.
-        Sv_Finale(FINF_END, 0);
+        Sv_Finale(fi->_id, FINF_END, 0);
     }
     // Any hooks?
     DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
@@ -1163,8 +1163,12 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
+#ifdef _DEBUG
     if(isClient)
-        return false;
+    {
+        Con_Message("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type);
+    }
+#endif
 
     if(fi->flags.suspended)
         return false;
@@ -1173,17 +1177,20 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     if(fi->_timer < 20)
         return false;
 
-    // Any handlers for this event?
-    if(IS_KEY_DOWN(ev))
+    if(!isClient)
     {
-        fi_handler_t* h;
-        if((h = findEventHandler(fi, ev)))
+        // Any handlers for this event?
+        if(IS_KEY_DOWN(ev))
         {
-            FinaleInterpreter_SkipToMarker(fi, h->marker);
-            // We'll never eat up events.
-            if(IS_TOGGLE_UP(ev))
-                return false;
-            return (fi->flags.eat_events != 0);
+            fi_handler_t* h;
+            if((h = findEventHandler(fi, ev)))
+            {
+                FinaleInterpreter_SkipToMarker(fi, h->marker);
+                // We'll never eat up events.
+                if(IS_TOGGLE_UP(ev))
+                    return false;
+                return (fi->flags.eat_events != 0);
+            }
         }
     }
 
@@ -1195,9 +1202,18 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
     if(!IS_TOGGLE_DOWN(ev))
         return false;
 
-    // Tell clients to skip.
-    Sv_Finale(FINF_SKIP, 0);
-    return FinaleInterpreter_Skip(fi);
+    if(isClient)
+    {
+        // Request skip from the server.
+        Cl_RequestFinaleSkip();
+        return true;
+    }
+    else
+    {
+        // Tell clients to skip.
+        Sv_Finale(fi->_id, FINF_SKIP, 0);
+        return FinaleInterpreter_Skip(fi);
+    }
 }
 
 DEFFC(Do)
