@@ -139,8 +139,16 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
          * range isn't normally used in lump names, right??
          */
         for(j = 0; j < 8; ++j)
+        {
             record->info.name[j] = src->name[j] & 0x7f;
-        record->info.name[j] = '\0';
+        }
+
+        // We do not consider zero-length names to be valid, so replace with
+        // with _something_.
+        /// \todo Handle this more elegantly...
+        if(!record->info.name[0])
+            strcpy(record->info.name, "________");
+
         Str_Init(&record->info.path); Str_Set(&record->info.path, record->info.name);
 
         // Make it absolute.
