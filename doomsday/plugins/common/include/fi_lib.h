@@ -87,6 +87,6 @@ boolean FI_IsMenuTrigger(void);
 
 int FI_PrivilegedResponder(const void* ev);
 
-void NetCl_FinaleState(Reader* msg);
+void NetCl_UpdateFinaleState(Reader* msg);
 
 #endif /* LIBCOMMON_INFINE_LIB */

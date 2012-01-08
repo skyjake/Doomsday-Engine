@@ -335,7 +335,10 @@ void FI_ScriptTerminate(finaleid_t id)
     }
     f = finalesById(id);
     if(!f)
-        Con_Error("FI_ScriptTerminate: Unknown finaleid %u.", id);
+    {
+        Con_Message("FI_ScriptTerminate: Unknown finale %u.", id);
+        return;
+    }
     if(f->active)
     {
         stopFinale(f);
