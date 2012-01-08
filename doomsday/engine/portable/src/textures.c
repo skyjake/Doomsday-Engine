@@ -315,12 +315,13 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
             TN_MODELREFLECTIONSKINS,
             TN_LIGHTMAPS,
             TN_FLAREMAPS,
+            TN_ANY
         };
         int n = 0;
         do
         {
             node = findDirectoryNodeForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!node && order[++n] != MN_ANY);
+        } while(!node && order[++n] != TN_ANY);
     }
     return node;
 }

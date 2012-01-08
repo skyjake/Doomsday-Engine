@@ -300,7 +300,7 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
         // Caller does not care which namespace.
         // Check for the font in these namespaces in priority order.
         static const fontnamespaceid_t order[] = {
-            FN_GAME, FN_SYSTEM, MN_ANY
+            FN_GAME, FN_SYSTEM, FN_ANY
         };
         int n = 0;
         do
