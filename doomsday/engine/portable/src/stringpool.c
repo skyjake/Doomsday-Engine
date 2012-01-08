@@ -170,16 +170,20 @@ static boolean findStringSortedInternIdx(StringPool* pool, const ddstring_t* str
     return false;
 }
 
-static stringpool_intern_t* findIntern(StringPool* pool, const ddstring_t* string)
+static stringpool_intern_t* findIntern(StringPool* pool, const ddstring_t* string,
+    uint* _sortedIdx)
 {
-    uint sortedIdx;
-    if(!findStringSortedInternIdx(pool, string, &sortedIdx)) return NULL;
+    uint sortedIdx = 0;
+    boolean found = findStringSortedInternIdx(pool, string, &sortedIdx);
+    if(_sortedIdx) *_sortedIdx = sortedIdx;
+    if(!found) return NULL;
     return getInternByIdx(pool, pool->_stringSortedInternTable[sortedIdx]);
 }
 
-static StringPoolInternId internString(StringPool* pool, const ddstring_t* string)
+static StringPoolInternId internString(StringPool* pool, const ddstring_t* string,
+    uint stringSortedMapIdx)
 {
-    uint stringSortedMapIdx, idx;
+    uint idx;
     boolean isNewIntern = true; // @c true= A new intern was allocated.
     stringpool_intern_t* intern;
     StringPoolInternId id;
@@ -234,22 +238,10 @@ static StringPoolInternId internString(StringPool* pool, const ddstring_t* strin
         pool->_nextUnusedId = findNextUnusedId(pool, id+1); // Begin from the next id.
     }
 
-    // Find the insertion point in the string-sorted intern index table.
-    stringSortedMapIdx = 0;
-    if(pool->_numStrings)
+    if(pool->_numStrings && stringSortedMapIdx != pool->_numStrings)
     {
-        findStringSortedInternIdx(pool, &intern->string, &stringSortedMapIdx);
-        /// \var stringSortedMapIdx is now the left-most insertion point.
-        /// Scan forward to find the actual point.
-        for(; stringSortedMapIdx < pool->_numStrings; ++stringSortedMapIdx)
-        {
-            const stringpool_intern_t* other = getInternByIdx(pool, pool->_stringSortedInternTable[stringSortedMapIdx]);
-            if(Str_CompareIgnoreCase(&other->string, Str_Text(&intern->string)) > 0)
-                break;
-        }
-
-        if(stringSortedMapIdx != pool->_numStrings)
-            memmove(pool->_stringSortedInternTable + stringSortedMapIdx + 1, pool->_stringSortedInternTable + stringSortedMapIdx,
+        memmove(pool->_stringSortedInternTable + stringSortedMapIdx + 1,
+                pool->_stringSortedInternTable + stringSortedMapIdx,
                 sizeof(*pool->_stringSortedInternTable) * (pool->_numStrings - stringSortedMapIdx));
     }
     pool->_stringSortedInternTable[stringSortedMapIdx] = idx;
@@ -348,7 +340,7 @@ StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str
 {
     stringpool_intern_t* intern;
     if(!pool) Con_Error("StringPool::isInterned: Invalid StringPool");
-    intern = findIntern(pool, str);
+    intern = findIntern(pool, str, NULL);
     if(!intern) return 0; // Not found.
     return internId(pool, intern);
 }
@@ -367,13 +359,28 @@ StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str)
     if(!pool) Con_Error("StringPool::Intern: Invalid StringPool");
     if(str)
     {
-        stringpool_intern_t* intern = findIntern(pool, str);
-        if(!intern)
+        uint stringSortedMapIdx = 0;
+        stringpool_intern_t* intern = findIntern(pool, str, &stringSortedMapIdx);
+
+        /// \var stringSortedMapIdx is now either the index of the found intern
+        /// or the left-most insertion point candidate.
+
+        if(intern)
         {
-            // A new string - intern it.
-            return internString(pool, str);
+            return internId(pool, intern);
         }
-        return internId(pool, intern);
+
+        // A new string - intern it.
+        // Find the actual insertion point; scan forward.
+        for(; stringSortedMapIdx < pool->_numStrings; ++stringSortedMapIdx)
+        {
+            const stringpool_intern_t* other = getInternByIdx(pool,
+                pool->_stringSortedInternTable[stringSortedMapIdx]);
+
+            if(Str_CompareIgnoreCase(&other->string, Str_Text(str)) > 0) break;
+        }
+
+        return internString(pool, str, stringSortedMapIdx);
     }
     Con_Error("StringPool::Intern: Attempted with null string.");
     exit(1); // Unreachable.
