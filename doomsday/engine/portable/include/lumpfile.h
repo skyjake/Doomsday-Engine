@@ -41,10 +41,12 @@ typedef struct lumpfile_s {
     void** _cacheData;
 } LumpFile;
 
-LumpFile* LumpFile_New(DFile* file, const LumpInfo* info);
+LumpFile* LumpFile_New(DFile* file, const char* path, const LumpInfo* info);
 void LumpFile_Delete(LumpFile* lump);
 
 int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
+
+ddstring_t* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter);
 
 const LumpInfo* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
 

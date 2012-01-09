@@ -1556,9 +1556,7 @@ int DD_Main(void)
         lumpnum_t absoluteLumpNum = F_CheckLumpNumForName(name);
         if(absoluteLumpNum >= 0)
         {
-            int lumpIdx;
-            abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-            F_DumpLump(fsObject, lumpIdx, NULL);
+            F_DumpLump(absoluteLumpNum, NULL);
         }
     }
 

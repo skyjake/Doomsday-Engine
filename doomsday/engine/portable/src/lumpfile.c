@@ -29,13 +29,13 @@
 #include "lumpdirectory.h"
 #include "lumpfile.h"
 
-LumpFile* LumpFile_New(DFile* file, const LumpInfo* info)
+LumpFile* LumpFile_New(DFile* file, const char* path, const LumpInfo* info)
 {
     LumpFile* lump = (LumpFile*)malloc(sizeof *lump);
     if(!lump) Con_Error("LumpFile::Construct: Failed on allocation of %lu bytes for new LumpFile.",
                 (unsigned long) sizeof *lump);
 
-    AbstractFile_Init((abstractfile_t*)lump, FT_LUMPFILE, file, info);
+    AbstractFile_Init((abstractfile_t*)lump, FT_LUMPFILE, path, file, info);
     lump->_cacheData = NULL;
     return lump;
 }
@@ -55,6 +55,13 @@ int LumpFile_PublishLumpsToDirectory(LumpFile* lump, lumpdirectory_t* directory)
     // Insert the lumps into their rightful places in the directory.
     LumpDirectory_Append(directory, (abstractfile_t*)lump, 0, 1);
     return 1;
+}
+
+ddstring_t* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter)
+{
+    const LumpInfo* info = AbstractFile_Info((abstractfile_t*)lump);
+    // Our container knows our path.
+    return F_ComposeLumpPath2(info->container, info->lumpIdx, delimiter);
 }
 
 const LumpInfo* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx)
@@ -80,17 +87,16 @@ void LumpFile_ClearLumpCache(LumpFile* lump)
 size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache)
 {
-    assert(lump);
-    {
     const LumpInfo* info = LumpFile_LumpInfo(lump, lumpIdx);
     size_t readBytes;
 
     VERBOSE2(
-        Con_Printf("LumpFile::ReadLumpSection: \"%s:%s\" (%lu bytes%s) [%lu +%lu]",
+        Con_Printf("LumpFile::ReadLumpSection: \"%s\" (%lu bytes%s) [%lu +%lu]",
                 F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lump))),
-                (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), (unsigned long) info->size,
+                (unsigned long) info->size,
                 (info->compressedSize != info->size? ", compressed" : ""),
-                (unsigned long) startOffset, (unsigned long)length) )
+                (unsigned long) startOffset, (unsigned long)length)
+    )
 
     // Try to avoid a file system read by checking for a cached copy.
     if(tryCache && lump->_cacheData)
@@ -116,7 +122,6 @@ size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer,
                   (unsigned long) readBytes, (unsigned long) length, lumpIdx);
     }
     return readBytes;
-    }
 }
 
 size_t LumpFile_ReadLumpSection(LumpFile* lump, int lumpIdx, uint8_t* buffer,
@@ -139,25 +144,23 @@ size_t LumpFile_ReadLump(LumpFile* lump, int lumpIdx, uint8_t* buffer)
 
 const uint8_t* LumpFile_CacheLump(LumpFile* lump, int lumpIdx, int tag)
 {
-    assert(lump);
-    {
     const LumpInfo* info = LumpFile_LumpInfo(lump, lumpIdx);
     boolean isCached = (NULL != lump->_cacheData);
     void** cachePtr = (void**)&lump->_cacheData;
 
     VERBOSE2(
-        Con_Printf("LumpFile::CacheLump: \"%s:%s\" (%lu bytes%s) %s\n",
+        Con_Printf("LumpFile::CacheLump: \"%s\" (%lu bytes%s) %s\n",
                 F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lump))),
-                (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))),
                 (unsigned long) info->size, (info->compressedSize != info->size? ", compressed" : ""),
-                isCached? "hit":"miss") )
+                isCached? "hit":"miss")
+    )
 
     if(!isCached)
     {
         uint8_t* ptr;
-        assert(NULL != info);
+        assert(info);
         ptr = (uint8_t*)Z_Malloc(info->size, tag, cachePtr);
-        if(NULL == ptr)
+        if(!ptr)
             Con_Error("LumpFile::CacheLump: Failed on allocation of %lu bytes for "
                 "cache copy of lump #%i.", (unsigned long) info->size, lumpIdx);
         LumpFile_ReadLump2(lump, lumpIdx, ptr, false);
@@ -168,25 +171,22 @@ const uint8_t* LumpFile_CacheLump(LumpFile* lump, int lumpIdx, int tag)
     }
 
     return (uint8_t*)(*cachePtr);
-    }
 }
 
 void LumpFile_ChangeLumpCacheTag(LumpFile* lump, int lumpIdx, int tag)
 {
-    assert(lump);
-    {
     boolean isCached = (NULL != lump->_cacheData);
     void** cachePtr = (void**)&lump->_cacheData;
+
     if(isCached)
     {
         VERBOSE2(
             const LumpInfo* info = LumpFile_LumpInfo(lump, lumpIdx);
-            Con_Printf("LumpFile::ChangeLumpCacheTag: \"%s:%s\" tag=%i\n",
-                    F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lump))),
-                    (info->name[0]? info->name : F_PrettyPath(Str_Text(&info->path))), tag) )
+            Con_Printf("LumpFile::ChangeLumpCacheTag: \"%s\" tag=%i\n",
+                       F_PrettyPath(Str_Text(AbstractFile_Path((abstractfile_t*)lump))), tag)
+        )
 
         Z_ChangeTag2(*cachePtr, tag);
-    }
     }
 }
 

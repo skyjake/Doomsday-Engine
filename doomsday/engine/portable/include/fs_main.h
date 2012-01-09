@@ -209,6 +209,16 @@ DFile* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
 DFile* F_OpenLump(lumpnum_t lumpNum);
 
 /**
+ * Write the data associated with the specified lump index to @a fileName.
+ *
+ * @param lumpNum  Absolute index of the lump to open.
+ * @param fileName  If not @c NULL write the associated data to this path.
+ *      Can be @c NULL in which case the fileName will be chosen automatically.
+ * @return  @c true iff successful.
+ */
+boolean F_DumpLump(lumpnum_t lumpNum, const char* fileName);
+
+/**
  * @return  The time when the file was last modified, as seconds since
  * the Epoch else zero if the file is not found.
  */
@@ -256,6 +266,12 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
+/// @return  Must be free'd with Str_Delete
+ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter);
+ddstring_t* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx); /*delimiter='/'*/
+
+struct pathdirectorynode_s* F_LumpDirectoryNode(const LumpInfo* lumpInfo);
+
 const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 
 size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
@@ -264,16 +280,6 @@ size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
 const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx, int tag);
 
 void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
-
-/**
- * Write the data associated with the specified lump index to @a fileName.
- *
- * @param lumpIdx  Index of the lump data being dumped.
- * @param fileName  If not @c NULL write the associated data to this path.
- *      Can be @c NULL in which case the fileName will be chosen automatically.
- * @return  @c true iff successful.
- */
-boolean F_DumpLump(abstractfile_t* file, int lumpIdx, const char* fileName);
 
 /**
  * Parm is passed on to the callback, which is called for each file
