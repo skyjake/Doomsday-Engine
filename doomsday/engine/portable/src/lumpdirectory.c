@@ -332,8 +332,7 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
         for(idx = ld->_numRecords; idx-- > 0; )
         {
             const lumpdirectory_lumprecord_t* rec = ld->_records + idx;
-            const LumpInfo* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
-            PathDirectoryNode* node = F_LumpDirectoryNode(info);
+            PathDirectoryNode* node = F_LumpDirectoryNode(rec->fsObject, rec->fsLumpIdx);
 
             if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
             {

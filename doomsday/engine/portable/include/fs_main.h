@@ -267,10 +267,10 @@ void F_Close(DFile* file);
 void F_Delete(DFile* file);
 
 /// @return  Must be free'd with Str_Delete
-ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delimiter);
-ddstring_t* F_ComposeLumpPath(abstractfile_t* fsObject, int lumpIdx); /*delimiter='/'*/
+ddstring_t* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
+ddstring_t* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
 
-struct pathdirectorynode_s* F_LumpDirectoryNode(const LumpInfo* lumpInfo);
+struct pathdirectorynode_s* F_LumpDirectoryNode(abstractfile_t* file, int lumpIdx);
 
 const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 

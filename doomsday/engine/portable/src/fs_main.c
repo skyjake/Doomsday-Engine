@@ -850,13 +850,13 @@ const LumpInfo* F_LumpInfo(abstractfile_t* fsObject, int lumpIdx)
     }
 }
 
-PathDirectoryNode* F_LumpDirectoryNode(const LumpInfo* lumpInfo)
+PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
 {
-    if(!lumpInfo || !lumpInfo->container) return NULL;
-    switch(AbstractFile_Type(lumpInfo->container))
+    assert(fsObject);
+    switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((ZipFile*)lumpInfo->container, lumpInfo->lumpIdx);
-    case FT_WADFILE: return WadFile_DirectoryNodeForLump((WadFile*)lumpInfo->container, lumpInfo->lumpIdx);
+    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((ZipFile*)fsObject, lumpIdx);
+    case FT_WADFILE: return WadFile_DirectoryNodeForLump((WadFile*)fsObject, lumpIdx);
     default: return NULL;
     }
 }
@@ -1185,7 +1185,7 @@ typedef struct {
 static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
 {
     findlumpworker_paramaters_t* p = (findlumpworker_paramaters_t*)paramaters;
-    PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo);
+    PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
     ddstring_t* filePath = NULL;
     boolean patternMatched;
     int result = 0; // Continue iteration.
