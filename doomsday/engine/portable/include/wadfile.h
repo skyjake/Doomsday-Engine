@@ -44,7 +44,7 @@ void WadFile_Delete(WadFile* wad);
 
 int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory);
 
-struct pathdirectorynode_s* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx);
+struct pathdirectorynode_s* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx);
 
 ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
 

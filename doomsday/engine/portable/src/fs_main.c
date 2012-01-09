@@ -855,8 +855,8 @@ PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE: return ZipFile_DirectoryNodeForLump((ZipFile*)fsObject, lumpIdx);
-    case FT_WADFILE: return WadFile_DirectoryNodeForLump((WadFile*)fsObject, lumpIdx);
+    case FT_ZIPFILE: return ZipFile_LumpDirectoryNode((ZipFile*)fsObject, lumpIdx);
+    case FT_WADFILE: return WadFile_LumpDirectoryNode((WadFile*)fsObject, lumpIdx);
     default: return NULL;
     }
 }

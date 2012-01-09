@@ -259,7 +259,7 @@ int WadFile_PublishLumpsToDirectory(WadFile* wad, lumpdirectory_t* directory)
     return numPublished;
 }
 
-PathDirectoryNode* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx)
+PathDirectoryNode* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx)
 {
     if(lumpIdx < 0 || lumpIdx >= WadFile_LumpCount(wad)) return NULL;
     buildLumpDirectoryMap(wad);
@@ -268,7 +268,7 @@ PathDirectoryNode* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx)
 
 ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter)
 {
-    PathDirectoryNode* node = WadFile_DirectoryNodeForLump(wad, lumpIdx);
+    PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, lumpIdx);
     if(node)
     {
         return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);

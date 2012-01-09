@@ -46,7 +46,7 @@ void ZipFile_Delete(ZipFile* zip);
 
 int ZipFile_PublishLumpsToDirectory(ZipFile* zip, struct lumpdirectory_s* directory);
 
-struct pathdirectorynode_s* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx);
+struct pathdirectorynode_s* ZipFile_LumpDirectoryNode(ZipFile* zip, int lumpIdx);
 
 ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter);
 

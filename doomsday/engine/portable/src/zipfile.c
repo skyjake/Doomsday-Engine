@@ -512,7 +512,7 @@ int ZipFile_PublishLumpsToDirectory(ZipFile* zip, lumpdirectory_t* directory)
     return numPublished;
 }
 
-PathDirectoryNode* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx)
+PathDirectoryNode* ZipFile_LumpDirectoryNode(ZipFile* zip, int lumpIdx)
 {
     if(lumpIdx < 0 || lumpIdx >= ZipFile_LumpCount(zip)) return NULL;
     buildLumpDirectoryMap(zip);
@@ -521,7 +521,7 @@ PathDirectoryNode* ZipFile_DirectoryNodeForLump(ZipFile* zip, int lumpIdx)
 
 ddstring_t* ZipFile_ComposeLumpPath(ZipFile* zip, int lumpIdx, char delimiter)
 {
-    PathDirectoryNode* node = ZipFile_DirectoryNodeForLump(zip, lumpIdx);
+    PathDirectoryNode* node = ZipFile_LumpDirectoryNode(zip, lumpIdx);
     if(node)
     {
         return PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, Str_New(), NULL, delimiter);
