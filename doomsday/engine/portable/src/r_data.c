@@ -1804,14 +1804,13 @@ static patchcompositetex_t** loadPatchCompositeDefs(int* numDefs)
     numLumps = F_LumpCount();
     for(i = 0; i < numLumps; ++i)
     {
-        const LumpInfo* info;
+        const char* lumpName;
 
         // Will this be processed anyway?
         if(i == firstTexLump || i == secondTexLump) continue;
 
-        info = F_FindInfoForLumpNum(i);
-        assert(info);
-        if(strnicmp(info->name, "TEXTURE1", 8) && strnicmp(info->name, "TEXTURE2", 8)) continue;
+        lumpName = F_LumpName(i);
+        if(strnicmp(lumpName, "TEXTURE1", 8) && strnicmp(lumpName, "TEXTURE2", 8)) continue;
 
         defLumps = (lumpnum_t*)realloc(defLumps, sizeof *defLumps * ++defLumpsSize);
         if(!defLumps)
@@ -2063,7 +2062,6 @@ void R_InitPatchComposites(void)
 
 static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
 {
-    const LumpInfo* info = F_FindInfoForLumpNum(lumpNum);
     Uri* uri, *resourcePath;
     textureid_t texId;
     texture_t* tex;
@@ -2072,11 +2070,11 @@ static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     int flags;
 
     // We can only perform some basic filtering of lumps at this time.
-    if(!info || info->size == 0) return NULL;
+    if(F_LumpLength(lumpNum) == 0) return NULL;
 
     // Compose the resource name.
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, info->name);
+    Uri_SetPath(uri, F_LumpName(lumpNum));
 
     // Compose the path to the data resource.
     // Note that we do not use the lump name and instead use the logical lump index
@@ -2156,20 +2154,19 @@ void R_InitFlatTextures(void)
         numLumps = F_LumpCount();
         for(i = 0; i < numLumps; ++i)
         {
-            const LumpInfo* info = F_FindInfoForLumpNum(i);
-            assert(info);
+            const char* lumpName = F_LumpName(i);
 
-            if(info->name[0] == 'F')
+            if(lumpName[0] == 'F')
             {
-                if(!strnicmp(info->name + 1, "_START", 6) ||
-                   !strnicmp(info->name + 2, "_START", 6))
+                if(!strnicmp(lumpName + 1, "_START", 6) ||
+                   !strnicmp(lumpName + 2, "_START", 6))
                 {
                     // We've arrived at *a* sprite block.
                     Stack_Push(stack, NULL);
                     continue;
                 }
-                else if(!strnicmp(info->name + 1, "_END", 4) ||
-                        !strnicmp(info->name + 2, "_END", 4))
+                else if(!strnicmp(lumpName + 1, "_END", 4) ||
+                        !strnicmp(lumpName + 2, "_END", 4))
                 {
                     // The sprite block ends.
                     Stack_Pop(stack);
@@ -2226,23 +2223,23 @@ void R_InitSpriteTextures(void)
     /// \fixme Load order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
-        const LumpInfo* info = F_FindInfoForLumpNum((lumpnum_t)i);
+        const char* lumpName = F_LumpName((lumpnum_t)i);
         patchtex_t* pTex;
         textureid_t texId;
         texture_t* tex;
         int flags;
 
-        if(info->name[0] == 'S')
+        if(lumpName[0] == 'S')
         {
-            if(!strnicmp(info->name + 1, "_START", 6) ||
-               !strnicmp(info->name + 2, "_START", 6))
+            if(!strnicmp(lumpName + 1, "_START", 6) ||
+               !strnicmp(lumpName + 2, "_START", 6))
             {
                 // We've arrived at *a* sprite block.
                 Stack_Push(stack, NULL);
                 continue;
             }
-            else if(!strnicmp(info->name + 1, "_END", 4) ||
-                    !strnicmp(info->name + 2, "_END", 4))
+            else if(!strnicmp(lumpName + 1, "_END", 4) ||
+                    !strnicmp(lumpName + 2, "_END", 4))
             {
                 // The sprite block ends.
                 Stack_Pop(stack);
@@ -2251,13 +2248,13 @@ void R_InitSpriteTextures(void)
         }
 
         if(!Stack_Height(stack)) continue;
-        if(!validSpriteName(info->name)) continue;
+        if(!validSpriteName(lumpName)) continue;
 
         // Compose the resource name.
-        Uri_SetPath(uri, info->name);
+        Uri_SetPath(uri, lumpName);
 
         // Compose the data resource path.
-        Uri_SetPath(resourcePath, info->name);
+        Uri_SetPath(resourcePath, lumpName);
 
         texId = Textures_Declare(uri, uniqueId, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?

@@ -311,6 +311,7 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
     assert(ld);
     if(!(!name || !name[0]) && ld->_numRecords != 0)
     {
+        PathMap searchPattern;
         register int idx;
 
         // Do we need to rebuild the name hash chains?
@@ -327,20 +328,20 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
         }
 
         /// \todo Do not resort to a linear search.
-        for(idx = ld->_numRecords; idx-- > 0 ; )
+        PathMap_Initialize(&searchPattern, name);
+        for(idx = ld->_numRecords; idx-- > 0; )
         {
-            const LumpInfo* info = F_LumpInfo(ld->_records[idx].fsObject, ld->_records[idx].fsLumpIdx);
-            if(matchLumpName)
+            const lumpdirectory_lumprecord_t* rec = ld->_records + idx;
+            const LumpInfo* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
+            PathDirectoryNode* node = F_LumpDirectoryNode(info);
+
+            if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
             {
-                if(!strnicmp(name, info->name, LUMPNAME_T_LASTINDEX))
-                    return idx;
-            }
-            else
-            {
-                if(!stricmp(name, Str_Text(&info->path)))
-                    return idx;
+                // This is the lump we are looking for.
+                break;
             }
         }
+        PathMap_Destroy(&searchPattern);
         return idx;
     }
     return -1;
@@ -364,9 +365,11 @@ int C_DECL LumpDirectory_CompareRecordName(const void* a, const void* b)
     const LumpInfo* infoB = F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx);
     int result = strnicmp(infoA->name, infoB->name, LUMPNAME_T_LASTINDEX);
     if(0 != result) return result;
+
     // Still matched; try the file load order indexes.
     result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
     if(0 != result) return result;
+
     // Still matched (i.e., present in the same package); use the pre-sort indexes.
     return (recordB->presortIndex > recordA->presortIndex);
 }
@@ -375,15 +378,45 @@ int C_DECL LumpDirectory_CompareRecordPath(const void* a, const void* b)
 {
     const lumpdirectory_lumprecord_t* recordA = (const lumpdirectory_lumprecord_t*)a;
     const lumpdirectory_lumprecord_t* recordB = (const lumpdirectory_lumprecord_t*)b;
-    const LumpInfo* infoA = F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx);
-    const LumpInfo* infoB = F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx);
-    int result = Str_CompareIgnoreCase(&infoA->path, Str_Text(&infoB->path));
+    ddstring_t* pathA = F_ComposeLumpPath(recordA->fsObject, recordA->fsLumpIdx);
+    ddstring_t* pathB = F_ComposeLumpPath(recordB->fsObject, recordB->fsLumpIdx);
+    int result;
+
+    result = Str_CompareIgnoreCase(pathA, Str_Text(pathB));
+
+    Str_Delete(pathA);
+    Str_Delete(pathB);
     if(0 != result) return result;
+
     // Still matched; try the file load order indexes.
     result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
     if(0 != result) return result;
+
     // Still matched (i.e., present in the same package); use the pre-sort indexes.
     return (recordB->presortIndex > recordA->presortIndex);
+}
+
+static int LumpDirectory_CompareRecords(const lumpdirectory_lumprecord_t* recordA,
+    const lumpdirectory_lumprecord_t* recordB, boolean matchLumpName)
+{
+    ddstring_t* pathA, *pathB;
+    int result;
+    assert(recordA && recordB);
+
+    if(matchLumpName)
+    {
+        return strnicmp(F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx)->name,
+                        F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx)->name, LUMPNAME_T_MAXLEN);
+    }
+
+    pathA = F_ComposeLumpPath(recordA->fsObject, recordA->fsLumpIdx);
+    pathB = F_ComposeLumpPath(recordB->fsObject, recordB->fsLumpIdx);
+
+    result = Str_CompareIgnoreCase(pathA, Str_Text(pathB));
+
+    Str_Delete(pathA);
+    Str_Delete(pathB);
+    return result;
 }
 
 void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpName)
@@ -409,10 +442,8 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
         // Is this entry equal to one or more of the next?
         j = i;
         while(j < sortedNumRecords &&
-              (matchLumpName? !strnicmp(F_LumpInfo(ld->_records[j-1].fsObject, ld->_records[j-1].fsLumpIdx)->name,
-                                        F_LumpInfo(ld->_records[j  ].fsObject, ld->_records[j  ].fsLumpIdx)->name, LUMPNAME_T_MAXLEN) :
-                              !Str_CompareIgnoreCase(         &F_LumpInfo(ld->_records[j-1].fsObject, ld->_records[j-1].fsLumpIdx)->path,
-                                                     Str_Text(&F_LumpInfo(ld->_records[j  ].fsObject, ld->_records[j  ].fsLumpIdx)->path))))
+              !LumpDirectory_CompareRecords(ld->_records + (j-1),
+                                            ld->_records + (j), matchLumpName))
         { ++j; }
         if(j == i) continue; // No.
 
@@ -456,10 +487,9 @@ void LumpDirectory_Print(lumpdirectory_t* ld)
     {
         lumpdirectory_lumprecord_t* rec = ld->_records + i;
         const LumpInfo* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
-        printf("%04i - \"%s:(%-8s | %s)\" (size: %lu bytes%s)\n", i,
-            F_PrettyPath(Str_Text(AbstractFile_Path(rec->fsObject))),
-            (info->name[0]? info->name : "N/A"), F_PrettyPath(Str_Text(&info->path)),
-            (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
+        printf("%04i - \"%s\" (size: %lu bytes%s)\n", i,
+               F_PrettyPath(Str_Text(AbstractFile_Path(rec->fsObject))),
+               (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
     }
     printf("---End of lumps---\n");
 }

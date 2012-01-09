@@ -1453,24 +1453,13 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
 {
     const imagehandler_t* hdlr;
     const char* fileName;
-    int n = 0;
     assert(img && file);
 
     GL_InitImage(img);
 
-    // Firstly try the expected format given the file name.
-    switch(AbstractFile_Type(DFile_File_Const(file)))
-    {
-    case FT_LUMPFILE: {
-        const LumpInfo* info = AbstractFile_Info(DFile_File_Const(file));
-        fileName = (char*)info->name;
-        break;
-      }
-    default:
-        fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
-        break;
-    }
+    fileName = Str_Text(AbstractFile_Path(DFile_File_Const(file)));
 
+    // Firstly try the expected format given the file name.
     hdlr = findHandlerFromFileName(fileName);
     if(hdlr)
     {
@@ -1481,10 +1470,11 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     {
         // Try each recognisable format instead.
         /// \todo Order here should be determined by the resource locator.
-        for(n = 0; handlers[n].name && !img->pixels; ++n)
+        int i;
+        for(i = 0; handlers[i].name && !img->pixels; ++i)
         {
-            if(&handlers[n] == hdlr) continue; // We already know its not in this format.
-            handlers[n].loadFunc(img, file);
+            if(&handlers[i] == hdlr) continue; // We already know its not in this format.
+            handlers[i].loadFunc(img, file);
         }
     }
 
@@ -1882,8 +1872,10 @@ void GL_UploadTextureContent(const texturecontent_t* content)
                 dst[CR] = gammaTable[src[CR]];
                 dst[CG] = gammaTable[src[CG]];
                 dst[CB] = gammaTable[src[CB]];
-                src += comps;
+                if(comps == 4)
+                    dst[CA] = src[CA];
                 dst += comps;
+                src += comps;
             }
 
             if(localBuffer)

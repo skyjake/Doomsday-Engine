@@ -39,14 +39,16 @@ struct pathdirectorynode_s;
 struct wadfile_s; // The wadfile instance (opaque)
 typedef struct wadfile_s WadFile;
 
-WadFile* WadFile_New(DFile* file, const LumpInfo* info);
+WadFile* WadFile_New(DFile* file, const char* path, const LumpInfo* info);
 void WadFile_Delete(WadFile* wad);
 
-int WadFile_PublishLumpsToDirectory(WadFile* file, struct lumpdirectory_s* directory);
+int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory);
 
 struct pathdirectorynode_s* WadFile_DirectoryNodeForLump(WadFile* wad, int lumpIdx);
 
-const LumpInfo* WadFile_LumpInfo(WadFile* file, int lumpIdx);
+ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
+
+const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.

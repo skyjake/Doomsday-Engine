@@ -426,9 +426,8 @@ int Mus_StartLump(lumpnum_t lump, boolean looped, boolean canPlayMUS)
     {
         // Music interface does not offer buffer playback.
         // Write this lump to disk and play from there.
-        fsObject = F_FindFileForLumpNum2(lump, &lumpIdx);
         srcFile = composeBufferedMusicFilename(currentBufFile ^= 1, 0);
-        if(!F_DumpLump(fsObject, lumpIdx, Str_Text(srcFile)))
+        if(!F_DumpLump(lump, Str_Text(srcFile)))
         {
             Str_Delete(srcFile);
             return 0;

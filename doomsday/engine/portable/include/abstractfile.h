@@ -57,6 +57,9 @@ typedef struct abstractfile_s {
     /// protected: File stream handle/wrapper.
     DFile* _file;
 
+    /// Absolute variable-length path in the vfs.
+    ddstring_t _path;
+
     /// Info descriptor (file metadata).
     LumpInfo _info;
 
@@ -68,12 +71,13 @@ typedef struct abstractfile_s {
  * Initialize this resource.
  *
  * @param type  File type identifier.
+ * @param path  Path to this file in the virtual file system.
  * @param file  Handle to the file. AbstractFile takes ownership of the handle.
  * @param info  Lump info descriptor for the file. A copy is made.
  * @return  Same as @a af for convenience (chaining).
  */
 abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
-    DFile* file, const LumpInfo* info);
+    const char* path, DFile* file, const LumpInfo* info);
 
 /**
  * Release all memory acquired for objects linked with this resource.
