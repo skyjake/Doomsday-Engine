@@ -1882,8 +1882,10 @@ void GL_UploadTextureContent(const texturecontent_t* content)
                 dst[CR] = gammaTable[src[CR]];
                 dst[CG] = gammaTable[src[CG]];
                 dst[CB] = gammaTable[src[CB]];
-                src += comps;
+                if(comps == 4)
+                    dst[CA] = src[CA];
                 dst += comps;
+                src += comps;
             }
 
             if(localBuffer)
