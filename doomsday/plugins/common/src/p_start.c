@@ -552,6 +552,14 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
+    if(!Con_IsBusy())
+    {
+        /// @todo Is this really necessary after every time a player spawns?
+        /// During map setup there are called after the busy mode ends.
+        ST_Start(p - players);
+        HU_Start(p - players);
+    }
+
 #if __JHEXEN__
     cfg.playerClass[plrNum] = pClass;
     NetSv_SendPlayerInfo(plrNum, DDSP_ALL_PLAYERS);

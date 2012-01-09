@@ -2,8 +2,7 @@
 ;
 ; Highest ordinal is currently: --> 740 <--
 ; Other free ordinals:
-;
-; 126
+;   none
 
 NAME                            "DOOMSDAY"
 
@@ -334,6 +333,7 @@ EXPORTS
     Con_Busy                    @330 NONAME
     Con_BusyWorkerEnd           @331 NONAME
     Con_SetPrintFilter          @536 NONAME
+    Con_IsBusy                  @126 NONAME
 
 ; Console: Bindings.
     B_BindingsForCommand        @428 NONAME
