@@ -87,6 +87,12 @@ ddstring_t* Str_New(void);
 ddstring_t* Str_NewStd(void);
 
 /**
+ * Constructs a new string by reading it from @a reader.
+ * Memory for the string is allocated with de::Zone.
+ */
+ddstring_t* Str_NewFromReader(Reader* reader);
+
+/**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
