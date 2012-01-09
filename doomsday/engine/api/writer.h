@@ -21,8 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __DOOMSDAY_WRITER_H__
-#define __DOOMSDAY_WRITER_H__
+#ifndef LIBDENG_WRITER_H
+#define LIBDENG_WRITER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,6 +48,12 @@ enum
 struct writer_s; // The writer instance (opaque).
 typedef struct writer_s Writer;
 
+typedef void (*Writer_Callback_WriteInt8)(Writer* w, char v);
+typedef void (*Writer_Callback_WriteInt16)(Writer* w, short v);
+typedef void (*Writer_Callback_WriteInt32)(Writer* w, int v);
+typedef void (*Writer_Callback_WriteFloat)(Writer* w, float v);
+typedef void (*Writer_Callback_WriteData)(Writer* w, const char* data, int len);
+
 /**
  * Constructs a new writer. The writer will use the engine's netBuffer
  * as the writing buffer. The writer has to be destroyed with Writer_Delete()
@@ -57,7 +63,7 @@ Writer* Writer_New(void);
 
 /**
  * Constructs a new writer. The writer will use @a buffer as the writing buffer.
- * The buffer will use network byte order. The writer has to be destroyed
+ * The buffer will use small endian byte order. The writer has to be destroyed
  * with Writer_Delete() after it is not needed any more.
  *
  * @param buffer  Buffer to use for reading.
@@ -72,6 +78,16 @@ Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen);
  * @param maxLen  Maximum size for the buffer. Use zero for unlimited size.
  */
 Writer* Writer_NewWithDynamicBuffer(size_t maxLen);
+
+/**
+ * Constructs a new writer that has no memory buffer of its own. Instead, all the
+ * write operations will get routed to user-provided callbacks.
+ */
+Writer* Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
+                                Writer_Callback_WriteInt16 writeInt16,
+                                Writer_Callback_WriteInt32 writeInt32,
+                                Writer_Callback_WriteFloat writeFloat,
+                                Writer_Callback_WriteData  writeData);
 
 /**
  * Destroys the writer.
@@ -133,4 +149,4 @@ void Writer_WritePackedUInt32(Writer* writer, uint32_t v);
 } // extern "C"
 #endif
 
-#endif // __DOOMSDAY_WRITER_H__
+#endif // LIBDENG_WRITER_H
