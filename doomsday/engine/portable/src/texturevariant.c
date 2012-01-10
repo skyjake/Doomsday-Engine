@@ -57,8 +57,8 @@ TextureVariant* TextureVariant_New(texture_t* generalCase,
 
     tex = (TextureVariant*) malloc(sizeof(*tex));
     if(!tex)
-        Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
-            "new TextureVariant.", (unsigned long) sizeof(*tex));
+        Con_Error("TextureVariant::New: Failed on allocation of %lu bytes for new TextureVariant.",
+                  (unsigned long) sizeof(*tex));
 
     tex->generalCase = generalCase;
     tex->spec = spec;
