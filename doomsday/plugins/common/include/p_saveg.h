@@ -191,7 +191,7 @@ unsigned short  SV_ThingArchiveNum(mobj_t* mo);
 #endif
 mobj_t*         SV_GetArchiveThing(int thingid, void* address);
 
-materialarchive_t* SV_MaterialArchive(void);
+MaterialArchive* SV_MaterialArchive(void);
 material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
 
 /**

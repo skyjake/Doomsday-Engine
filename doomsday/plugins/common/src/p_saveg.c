@@ -64,6 +64,7 @@
 #include "hu_inventory.h"
 #endif
 #include "r_common.h"
+#include "materialarchive.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -295,7 +296,7 @@ static boolean savingPlayers;
 static int numSoundTargets;
 #endif
 
-static materialarchive_t* materialArchive;
+static MaterialArchive* materialArchive;
 
 static byte* junkbuffer; // Old save data is read into here.
 
@@ -2776,7 +2777,7 @@ static void P_ArchiveWorld(void)
 {
     uint i;
 
-    MaterialArchive_Write(materialArchive);
+    SV_MaterialArchive_Write(materialArchive);
 
     SV_BeginSegment(ASEG_WORLD);
     for(i = 0; i < numsectors; ++i)
@@ -2809,11 +2810,7 @@ static void P_UnArchiveWorld(void)
 #if !__JHEXEN__
     if(hdr.version >= 4)
 #endif
-        MaterialArchive_Read(materialArchive, matArchiveVer);
-
-/*#if _DEBUG
-    MaterialArchive_Print(materialArchive);
-#endif*/
+        SV_MaterialArchive_Read(materialArchive, matArchiveVer);
 
     SV_AssertSegment(ASEG_WORLD);
     // Load sectors.
@@ -5017,7 +5014,7 @@ void SV_UpdateGameSaveInfo(void)
 /**
  * @return  Pointer to the (currently in-use) material archive.
  */
-materialarchive_t* SV_MaterialArchive(void)
+MaterialArchive* SV_MaterialArchive(void)
 {
     errorIfNotInited("SV_MaterialArchive");
     return materialArchive;
@@ -5308,7 +5305,11 @@ int SV_SaveGameWorker(void* ptr)
 #endif
 
     // Create and populate the MaterialArchive.
-    materialArchive = P_CreateMaterialArchive();
+#ifdef __JHEXEN__
+    materialArchive = MaterialArchive_New(true /* segment check */);
+#else
+    materialArchive = MaterialArchive_New(false);
+#endif
 
     P_ArchivePlayerHeader();
     P_ArchivePlayers();
@@ -5341,7 +5342,7 @@ int SV_SaveGameWorker(void* ptr)
 #endif
 
     // We are done with the MaterialArchive.
-    P_DestroyMaterialArchive(materialArchive);
+    MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
 #if!__JHEXEN__
@@ -5573,8 +5574,11 @@ static boolean SV_LoadGame2(void)
 #endif
 
     // Create and populate the MaterialArchive.
-    materialArchive = P_CreateEmptyMaterialArchive();
-
+#ifdef __JHEXEN__
+    materialArchive = MaterialArchive_NewEmpty(true /* segment checks */);
+#else
+    materialArchive = MaterialArchive_NewEmpty(false);
+#endif
 
     P_UnArchivePlayerHeader();
     // Read the player structures
@@ -5617,7 +5621,7 @@ static boolean SV_LoadGame2(void)
 #endif
 
     // We are done with the MaterialArchive.
-    P_DestroyMaterialArchive(materialArchive);
+    MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
 #if !__JHEXEN__
@@ -5798,12 +5802,12 @@ void SV_SaveClient(uint gameId)
     SV_WritePlayer(CONSOLEPLAYER);
 
     // Create and populate the MaterialArchive.
-    materialArchive = P_CreateMaterialArchive();
+    materialArchive = MaterialArchive_New(false);
 
     P_ArchiveMap(true);
 
     // We are done with the MaterialArchive.
-    P_DestroyMaterialArchive(materialArchive);
+    MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
     lzClose(savefile);
@@ -5884,12 +5888,12 @@ void SV_LoadClient(uint gameId)
      * When the client connects to the server it should send a copy
      * of the map upon joining, so why are we reading it here?
      */
-    materialArchive = P_CreateMaterialArchive();
+    materialArchive = MaterialArchive_New(false);
 
     P_UnArchiveMap();
 
     // We are done with the MaterialArchive.
-    P_DestroyMaterialArchive(materialArchive);
+    MaterialArchive_Delete(materialArchive);
     materialArchive = NULL;
 
     lzClose(savefile);
@@ -5977,7 +5981,7 @@ void SV_MapTeleport(uint map, uint position)
             SV_InitThingArchive(false, false);
 
             // Create and populate the MaterialArchive.
-            materialArchive = P_CreateMaterialArchive();
+            materialArchive = MaterialArchive_New(true);
 
             // Compose the full path name to the saved map file.
             Str_Init(&otherFileName);
@@ -5988,7 +5992,7 @@ void SV_MapTeleport(uint map, uint position)
             P_ArchiveMap(false);
 
             // We are done with the MaterialArchive.
-            P_DestroyMaterialArchive(materialArchive);
+            MaterialArchive_Delete(materialArchive);
             materialArchive = NULL;
 
             // Close the output file
@@ -6028,12 +6032,12 @@ void SV_MapTeleport(uint map, uint position)
     if(revisit)
     {   // Been here before, load the previous map state.
         // Create the MaterialArchive.
-        materialArchive = P_CreateEmptyMaterialArchive();
+        materialArchive = MaterialArchive_NewEmpty(true);
 
         unarchiveMap();
 
         // We are done with the MaterialArchive.
-        P_DestroyMaterialArchive(materialArchive);
+        MaterialArchive_Delete(materialArchive);
         materialArchive = NULL;
     }
     else

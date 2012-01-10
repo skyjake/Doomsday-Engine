@@ -25,31 +25,9 @@
 #ifndef LIBCOMMON_MATERIALARCHIVE_H
 #define LIBCOMMON_MATERIALARCHIVE_H
 
-typedef struct {
-    int version;
+#include "materialarchive.h"
 
-    uint count;
-    struct materialarchive_record_s* table;
-
-    /// Used with older versions.
-    uint numFlats;
-} materialarchive_t;
-
-typedef unsigned short materialarchive_serialid_t;
-
-materialarchive_t* P_CreateMaterialArchive(void);
-materialarchive_t* P_CreateEmptyMaterialArchive(void);
-void P_DestroyMaterialArchive(materialarchive_t* materialArchive);
-
-materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(materialarchive_t* mArc, material_t* mat);
-
-material_t* MaterialArchive_Find(materialarchive_t* mArc, materialarchive_serialid_t serialId, int group);
-
-void MaterialArchive_Write(materialarchive_t* mArc);
-void MaterialArchive_Read(materialarchive_t* mArc, int version);
-
-#if _DEBUG
-void MaterialArchive_Print(const materialarchive_t* mArc);
-#endif
+void SV_MaterialArchive_Write(MaterialArchive* mArc);
+void SV_MaterialArchive_Read(MaterialArchive* mArc, int version);
 
 #endif /* LIBCOMMON_MATERIALARCHIVE_H */

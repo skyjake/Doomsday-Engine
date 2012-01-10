@@ -92,6 +92,7 @@ DENG_API_HEADERS = \
     api/dengproject.h \
     api/dfile.h \
     api/doomsday.h \
+    api/materialarchive.h \
     api/point.h \
     api/reader.h \
     api/rect.h \
@@ -437,6 +438,7 @@ SOURCES += \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
+    portable/src/materialarchive.c \
     portable/src/materials.c \
     portable/src/materialvariant.c \
     portable/src/m_args.c \
