@@ -2272,16 +2272,28 @@ void R_InitSpriteTextures(void)
         }
         else
         {
+            abstractfile_t* fsObject;
+            const doompatch_header_t* patch;
+            Size2Raw size;
+            int lumpIdx;
+
             // A new sprite texture.
             pTex = (patchtex_t*)malloc(sizeof *pTex);
             if(!pTex)
                 Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *pTex);
             pTex->offX = pTex->offY = 0; // Deferred until texture load time.
 
+            fsObject = F_FindFileForLumpNum2((lumpnum_t)i, &lumpIdx);
+            patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
+            size.width  = SHORT(patch->width);
+            size.height = SHORT(patch->height);
+
             flags = 0;
             if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
 
-            tex = Textures_Create(texId, flags, (void*)pTex);
+            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+
+            tex = Textures_CreateWithSize(texId, flags, &size, (void*)pTex);
             if(!tex)
             {
                 ddstring_t* path = Uri_ComposePath(uri);
