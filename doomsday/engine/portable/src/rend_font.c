@@ -813,42 +813,27 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP: {
-        int s[2], t[2], x = 0, y = 0, w, h;
+        Point2Raw coords[4];
+        RectRaw geometry;
 
         if(0 != BitmapFont_GLTextureName(font))
             GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
 
-        BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-        w = s[1] - s[0];
-        h = t[1] - t[0];
+        BitmapFont_CharCoords(font, ch, coords);
 
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
+        geometry.origin.x = -font->_marginWidth;
+        geometry.origin.y = -font->_marginHeight;
+        geometry.size.width  = coords[2].x - coords[0].x;
+        geometry.size.height = coords[2].y - coords[0].y;
 
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
-
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
-
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
-
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+        GL_DrawRectWithCoords(&geometry, coords);
         break;
       }
     case FT_BITMAPCOMPOSITE: {
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
         uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
         DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
-        int s[2], t[2], x = 0, y = 0, w, h;
+        int x = 0, y = 0, w, h;
         Point2Raw coords[4];
         RectRaw geometry;
 
@@ -862,8 +847,6 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         {
             GL_SetNoTexture();
         }
-
-        BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
 
         x = cf->_chars[ch].geometry.origin.x;
         y = cf->_chars[ch].geometry.origin.y;
@@ -886,17 +869,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         geometry.size.width  = w;
         geometry.size.height = h;
 
-        coords[0].x = s[0];
-        coords[0].y = t[0];
-        coords[2].x = s[1];
-        coords[2].y = t[1];
-
-        coords[1].x = s[1];
-        coords[1].y = t[0];
-
-        coords[3].x = s[0];
-        coords[3].y = t[1];
-
+        BitmapCompositeFont_CharCoords(font, ch, coords);
         GL_DrawRectWithCoords(&geometry, coords);
         break;
       }

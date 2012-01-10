@@ -420,17 +420,29 @@ int BitmapFont_TextureHeight(const font_t* font)
     return bf->_texSize.height;
 }
 
-void BitmapFont_CharCoords(font_t* font, int* s0, int* s1,
-    int* t0, int* t1, unsigned char ch)
+void BitmapFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4])
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
-    if(!s0 && !s1 && !t0 && !t1) return;
+    if(!coords) return;
+
     BitmapFont_Prepare(font);
-    if(s0) *s0 = bf->_chars[ch].geometry.origin.x;
-    if(s0) *s1 = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
-    if(t0) *t0 = bf->_chars[ch].geometry.origin.y;
-    if(t1) *t1 = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
+
+    // Top left.
+    coords[0].x = bf->_chars[ch].geometry.origin.x;
+    coords[0].y = bf->_chars[ch].geometry.origin.y;
+
+    // Bottom right.
+    coords[2].x = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
+    coords[2].y = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
+
+    // Top right.
+    coords[1].x = coords[2].x;
+    coords[1].y = coords[0].y;
+
+    // Bottom left.
+    coords[3].x = coords[0].x;
+    coords[3].y = coords[2].y;
 }
 
 font_t* BitmapCompositeFont_New(fontid_t bindId)
@@ -605,13 +617,26 @@ uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr)
     return ch->border;
 }
 
-void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,
-    int* t0, int* t1, unsigned char ch)
+void BitmapCompositeFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4])
 {
-    if(!s0 && !s1 && !t0 && !t1) return;
+    assert(font);
+    if(!coords) return;
+
     BitmapCompositeFont_Prepare(font);
-    if(s0) *s0 = 0;
-    if(s0) *s1 = 1;
-    if(t0) *t0 = 0;
-    if(t1) *t1 = 1;
+
+    // Top left.
+    coords[0].x = 0;
+    coords[0].y = 0;
+
+    // Bottom right.
+    coords[2].x = 1;
+    coords[2].y = 1;
+
+    // Top right.
+    coords[1].x = 1;
+    coords[1].y = 0;
+
+    // Bottom left.
+    coords[3].x = 0;
+    coords[3].y = 1;
 }

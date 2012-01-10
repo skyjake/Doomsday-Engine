@@ -70,7 +70,7 @@ int BitmapFont_CharHeight(font_t* font, unsigned char ch);
 /**
  * Query the texture coordinates of a character in this font.
  */
-void BitmapFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, unsigned char ch);
+void BitmapFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4]);
 
 // Data for a character.
 typedef struct {
@@ -113,6 +113,6 @@ uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);
 /**
  * Query the texture coordinates of a character in this font.
  */
-void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1, int* t0, int* t1, unsigned char ch);
+void BitmapCompositeFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4]);
 
 #endif /* LIBDENG_BITMAPFONT_H */
