@@ -58,7 +58,7 @@ void Cl_Finale(Reader* msg)
     if((flags & FINF_SCRIPT) && (flags & FINF_BEGIN))
     {
         // Start the script.
-        currentFinale = FI_Execute(script, FF_LOCAL);
+        currentFinale = FI_Execute((const char*)script, FF_LOCAL);
         remoteFinale = finaleId;
 #ifdef _DEBUG
         Con_Message("Cl_Finale: Started finale %i (remote id %i).\n", currentFinale, remoteFinale);
