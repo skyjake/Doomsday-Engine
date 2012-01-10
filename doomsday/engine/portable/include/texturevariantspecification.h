@@ -24,6 +24,15 @@
 #ifndef LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 #define LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 
+/**
+ * Texture (content) Source.
+ */
+typedef enum {
+    TEXS_NONE,                    /// Not a valid source.
+    TEXS_ORIGINAL,                /// An "original".
+    TEXS_EXTERNAL                 /// An "external" replacement.
+} TexSource;
+
 typedef enum {
     TC_UNKNOWN = -1,
     TEXTUREVARIANTUSAGECONTEXT_FIRST = 0,
