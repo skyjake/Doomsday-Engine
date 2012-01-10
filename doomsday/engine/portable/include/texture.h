@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_GL_TEXTURE_H
-#define LIBDENG_GL_TEXTURE_H
+#ifndef LIBDENG_REFRESH_TEXTURE_H
+#define LIBDENG_REFRESH_TEXTURE_H
 
 #include "size.h"
 #include "textures.h"
@@ -57,26 +57,8 @@ typedef enum {
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */
-typedef struct texture_s {
-    /// @see textureFlags
-    int _flags;
-
-    /// Size in logical pixels (not necessarily the same as pixel dimensions).
-    Size2* _size;
-
-    /// Unique identifier of the primary binding in the owning collection.
-    textureid_t _primaryBind;
-
-    /// List of variants (e.g., color translations).
-    struct texture_variantlist_node_s* _variants;
-
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void* _analyses[TEXTURE_ANALYSIS_COUNT];
-
-    /// User data associated with this texture.
-    void* _userData;
-} texture_t;
+struct texture_s; // The texture instance (opaque).
+typedef struct texture_s texture_t;
 
 /**
  * Construct a new Texture.
@@ -199,4 +181,4 @@ int Texture_Height(const texture_t* tex);
  */
 void Texture_SetHeight(texture_t* tex, int height);
 
-#endif /* LIBDENG_GL_TEXTURE_H */
+#endif /* LIBDENG_REFRESH_TEXTURE_H */

@@ -38,11 +38,33 @@ typedef struct texture_variantlist_node_s {
     TextureVariant* variant;
 } texture_variantlist_node_t;
 
+struct texture_s {
+    /// @see textureFlags
+    int _flags;
+
+    /// Size in logical pixels (not necessarily the same as pixel dimensions).
+    Size2* _size;
+
+    /// Unique identifier of the primary binding in the owning collection.
+    textureid_t _primaryBind;
+
+    /// List of variants (e.g., color translations).
+    struct texture_variantlist_node_s* _variants;
+
+    /// Table of analyses object ptrs, used for various purposes depending
+    /// on the variant specification.
+    void* _analyses[TEXTURE_ANALYSIS_COUNT];
+
+    /// User data associated with this texture.
+    void* _userData;
+};
+
 texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
 {
     texture_t* tex = (texture_t*)malloc(sizeof *tex);
     if(!tex)
-        Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
+        Con_Error("Texture::New: Failed on allocation of %lu bytes for new Texture.",
+                  (unsigned long) sizeof *tex);
 
     tex->_flags = flags;
     tex->_size = Size2_New();
