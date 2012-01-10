@@ -157,7 +157,7 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets)
+void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!tex) return;
     if(Textures_Namespace(Textures_Id(tex)) != TN_PATCHES)
@@ -184,17 +184,17 @@ void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets
     GL_DrawRectColor(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch2(texture_t* tex, int x, int y, int w, int h)
+void R_DrawPatch2(Texture* tex, int x, int y, int w, int h)
 {
     R_DrawPatch3(tex, x, y, w, h, true);
 }
 
-void R_DrawPatch(texture_t* tex, int x, int y)
+void R_DrawPatch(Texture* tex, int x, int y)
 {
     R_DrawPatch2(tex, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
-void R_DrawPatchTiled(texture_t* tex, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
+void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
 {
     if(!tex) return;
 

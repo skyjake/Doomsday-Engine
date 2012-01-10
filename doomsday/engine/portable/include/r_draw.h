@@ -37,10 +37,10 @@ void R_ShutdownViewWindow(void);
 void R_SetBorderGfx(const Uri* const* paths);
 void R_DrawViewBorder(void);
 
-void R_DrawPatch(texture_t* texture, int x, int y);
-void R_DrawPatch2(texture_t* texture, int x, int y, int w, int h);
-void R_DrawPatch3(texture_t* texture, int x, int y, int w, int h, boolean useOffsets);
+void R_DrawPatch(Texture* texture, int x, int y);
+void R_DrawPatch2(Texture* texture, int x, int y, int w, int h);
+void R_DrawPatch3(Texture* texture, int x, int y, int w, int h, boolean useOffsets);
 
-void R_DrawPatchTiled(texture_t* texture, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT);
+void R_DrawPatchTiled(Texture* texture, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT);
 
 #endif /* LIBDENG_REFRESH_DRAW_H */

@@ -681,7 +681,7 @@ void DGL_SetNoMaterial(void)
 
 void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
 {
-    texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
+    Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(!tex) return;
 
     GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));

@@ -479,13 +479,13 @@ static void emptyVariantSpecificationList(variantspecificationlist_t* list)
     }
 }
 
-static int compareTextureVariantWithVariantSpecification(texturevariant_t* tex, void* paramaters)
+static int compareTextureVariantWithVariantSpecification(TextureVariant* tex, void* paramaters)
 {
     texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
     return (TextureVariant_Spec(tex) == spec? 1 : 0);
 }
 
-static int findTextureUsingVariantSpecificationWorker(texture_t* tex, void* paramaters)
+static int findTextureUsingVariantSpecificationWorker(Texture* tex, void* paramaters)
 {
     if(Texture_IterateVariants(tex, compareTextureVariantWithVariantSpecification, paramaters))
     {
@@ -560,10 +560,10 @@ typedef enum {
 typedef struct {
     choosevariantmethod_t method;
     const texturevariantspecification_t* spec;
-    texturevariant_t* chosen;
+    TextureVariant* chosen;
 } choosevariantworker_paramaters_t;
 
-static int chooseVariantWorker(texturevariant_t* variant, void* context)
+static int chooseVariantWorker(TextureVariant* variant, void* context)
 {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
@@ -589,7 +589,7 @@ static int chooseVariantWorker(texturevariant_t* variant, void* context)
     return 0; // Continue iteration.
 }
 
-static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* tex,
+static TextureVariant* chooseVariant(choosevariantmethod_t method, Texture* tex,
     const texturevariantspecification_t* spec)
 {
     choosevariantworker_paramaters_t params;
@@ -602,7 +602,7 @@ static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* 
     return params.chosen;
 }
 
-static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
+static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
 {
     texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
     if(!spec || spec == TextureVariant_Spec(variant))
@@ -634,7 +634,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, const textureconte
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
-    const texturecontent_t* content, texturevariant_t* variant)
+    const texturecontent_t* content, TextureVariant* variant)
 {
     assert(content && variant);
     if(!novideo)
@@ -660,7 +660,7 @@ static void uploadContentUnmanaged(uploadcontentmethod_t uploadMethod,
     uploadContent(uploadMethod, content);
 }
 
-static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t* baseSpec,
+static byte loadSourceImage(Texture* tex, const texturevariantspecification_t* baseSpec,
     image_t* image)
 {
     const variantspecification_t* spec;
@@ -838,7 +838,7 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
     return loadResult;
 }
 
-static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareVariant(TextureVariant* tex, image_t* image)
 {
     const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(tex));
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
@@ -1041,7 +1041,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
 }
 
-static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareDetailVariant(TextureVariant* tex, image_t* image)
 {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
     float baMul, hiMul, loMul, s, t;
@@ -1485,9 +1485,6 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
-    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
-                         F_PrettyPath(fileName), img->size.width, img->size.height) )
-
     // How about some color-keying?
     if(isColorKeyed(fileName))
     {
@@ -1505,6 +1502,9 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     // Any alpha pixels?
     if(GL_ImageHasAlpha(img))
         img->flags |= IMGF_IS_MASKED;
+
+    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
+                         F_PrettyPath(fileName), img->size.width, img->size.height) )
 
     return img->pixels;
 }
@@ -2429,7 +2429,7 @@ static byte loadPatchLump(image_t* image, DFile* file, int tclass, int tmap, int
 }
 
 byte GL_LoadPatchLumpAsPatch(image_t* image, DFile* file, int tclass, int tmap, int border,
-    texture_t* tex)
+    Texture* tex)
 {
     byte result = loadPatchLump(image, file, tclass, tmap, border);
     if(1 == result && tex)
@@ -2475,7 +2475,7 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
     return texture;
 }
 
-byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
+byte GL_LoadPatchComposite(image_t* image, Texture* tex)
 {
     patchcompositetex_t* texDef;
     int i;
@@ -2520,7 +2520,7 @@ byte GL_LoadPatchComposite(image_t* image, texture_t* tex)
     return 1;
 }
 
-byte GL_LoadPatchCompositeAsSky(image_t* image, texture_t* tex, boolean zeroMask)
+byte GL_LoadPatchCompositeAsSky(image_t* image, Texture* tex, boolean zeroMask)
 {
     patchcompositetex_t* texDef;
     int i, width, height, offX, offY;
@@ -2696,7 +2696,7 @@ DGLuint GL_PrepareLightMap(const Uri* filePath)
 {
     if(filePath)
     {
-        texture_t* tex;
+        Texture* tex;
         if(!Str_CompareIgnoreCase(Uri_Path(filePath), "-")) return 0;
 
         tex = R_FindLightMapForResourcePath(filePath);
@@ -2717,7 +2717,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
     if(uri)
     {
         const ddstring_t* path = Uri_Path(uri);
-        texture_t* tex;
+        Texture* tex;
 
         if(Str_At(path, 0) == '-' || (Str_At(path, 0) == '0' && !Str_At(path, 1)))
             return 0; // Use the automatic selection logic.
@@ -2742,7 +2742,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
     return 0; // Use the automatic selection logic.
 }
 
-DGLuint GL_PreparePatchTexture(texture_t* tex)
+DGLuint GL_PreparePatchTexture(Texture* tex)
 {
     texturevariantspecification_t* texSpec;
     patchtex_t* pTex;
@@ -2949,7 +2949,7 @@ void GL_ReleaseTexturesForRawImages(void)
     Z_Free(rawTexs);
 }
 
-static int setVariantMinFilter(texturevariant_t* tex, void* paramaters)
+static int setVariantMinFilter(TextureVariant* tex, void* paramaters)
 {
     DGLuint glName = TextureVariant_GLName(tex);
     if(glName)
@@ -2961,7 +2961,7 @@ static int setVariantMinFilter(texturevariant_t* tex, void* paramaters)
     return 0; // Continue iteration.
 }
 
-static int setVariantMinFilterWorker(texture_t* tex, void* paramaters)
+static int setVariantMinFilterWorker(Texture* tex, void* paramaters)
 {
     Texture_IterateVariants(tex, setVariantMinFilter, paramaters);
     return 0; // Continue iteration.
@@ -2973,7 +2973,7 @@ void GL_SetAllTexturesMinFilter(int minFilter)
     Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
 }
 
-static void performImageAnalyses(texture_t* tex, const image_t* image,
+static void performImageAnalyses(Texture* tex, const image_t* image,
     const texturevariantspecification_t* spec, boolean forceUpdate)
 {
     assert(spec && image);
@@ -3133,8 +3133,8 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     }
 }
 
-static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
-    texturevariantspecification_t* spec, texturevariant_t* variant,
+static TextureVariant* tryLoadImageAndPrepareVariant(Texture* tex,
+    texturevariantspecification_t* spec, TextureVariant* variant,
     byte* result)
 {
     uploadcontentmethod_t uploadMethod;
@@ -3207,7 +3207,8 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(!variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        variant = TextureVariant_New(tex, newGLName, spec);
+        variant = TextureVariant_New(tex, spec);
+        TextureVariant_SetGLName(variant, newGLName);
         Texture_AddVariant(tex, variant);
     }
     // Are we re-preparing a released texture?
@@ -3251,11 +3252,11 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     return variant;
 }
 
-static texturevariant_t* findVariantForSpec(texture_t* tex,
+static TextureVariant* findVariantForSpec(Texture* tex,
     const texturevariantspecification_t* spec)
 {
     // Look for an exact match.
-    texturevariant_t* variant = chooseVariant(METHOD_MATCH, tex, spec);
+    TextureVariant* variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
@@ -3272,11 +3273,11 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
     return variant;
 }
 
-const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
+const TextureVariant* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     // Have we already prepared something suitable?
-    texturevariant_t* variant = findVariantForSpec(tex, spec);
+    TextureVariant* variant = findVariantForSpec(tex, spec);
 
     if(variant && TextureVariant_IsPrepared(variant))
     {
@@ -3300,7 +3301,7 @@ const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariant
     return variant;
 }
 
-const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec)
+const TextureVariant* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTextureVariant2(tex, spec, NULL);
 }
@@ -3308,7 +3309,7 @@ const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariants
 DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
-    const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
+    const TextureVariant* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
     if(!variant) return 0;
     return TextureVariant_GLName(variant);
 }
@@ -3318,7 +3319,7 @@ DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* 
     return GL_PrepareTexture2(tex, spec, NULL);
 }
 
-int GL_ReleaseGLTexturesByTexture2(texture_t* tex, void* paramaters)
+int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* paramaters)
 {
     if(tex)
     {
@@ -3333,7 +3334,7 @@ int GL_ReleaseGLTexturesByTexture2(texture_t* tex, void* paramaters)
     return 0; // Continue iteration.
 }
 
-int GL_ReleaseGLTexturesByTexture(texture_t* tex)
+int GL_ReleaseGLTexturesByTexture(Texture* tex)
 {
     return GL_ReleaseGLTexturesByTexture2(tex, NULL);
 }
@@ -3343,13 +3344,13 @@ void GL_ReleaseTexturesByNamespace(texturenamespaceid_t texNamespace)
     Textures_Iterate(texNamespace, GL_ReleaseGLTexturesByTexture2);
 }
 
-void GL_ReleaseVariantTexturesBySpec(texture_t* tex, texturevariantspecification_t* spec)
+void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t* spec)
 {
     if(!tex) return;
     Texture_IterateVariants(tex, releaseVariantGLTexture, (void*)spec);
 }
 
-static int releaseGLTexturesByColorPaletteWorker(texture_t* tex, void* paramaters)
+static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)
 {
     colorpalette_analysis_t* cp = (colorpalette_analysis_t*) Texture_Analysis(tex, TA_COLORPALETTE);
     colorpaletteid_t paletteId = *(colorpaletteid_t*)paramaters;

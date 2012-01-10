@@ -147,6 +147,9 @@ typedef struct centralend_s {
 /**
  * The path inside the zip might be mapped to another virtual location.
  *
+ * \todo This is clearly implemented in the wrong place. Path mapping
+ *       should be done at LumpDirectory level.
+ *
  * Data files (pk3, zip, lmp, wad, deh) in the root are mapped to Data/Game/Auto.
  * Definition files (ded) in the root are mapped to Defs/Game/Auto.
  * Paths that begin with a '@' are mapped to Defs/Game/Auto.
@@ -402,7 +405,7 @@ static void ZipFile_ReadLumpDirectory(ZipFile* zip)
             // Have we yet to intialize the directory?
             if(!zip->lumpDirectory)
             {
-                zip->lumpDirectory = PathDirectory_New();
+                zip->lumpDirectory = PathDirectory_NewWithFlags(PDF_ALLOW_DUPLICATE_LEAF);
             }
 
             F_InitLumpInfo(&record->info);

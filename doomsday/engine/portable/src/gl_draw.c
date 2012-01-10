@@ -61,21 +61,6 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
-void GL_DrawRectd(const RectRawf* rect)
-{
-    assert(rect);
-    glBegin(GL_QUADS);
-        glTexCoord2d(0, 0);
-        glVertex2d(rect->origin.x, rect->origin.y);
-        glTexCoord2d(1, 0);
-        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
-        glTexCoord2d(1, 1);
-        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
-        glTexCoord2d(0, 1);
-        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
-    glEnd();
-}
-
 void GL_DrawRecti(const RectRaw* rect)
 {
     assert(rect);
@@ -88,6 +73,44 @@ void GL_DrawRecti(const RectRaw* rect)
         glVertex2i(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
         glTexCoord2i(0, 1);
         glVertex2i(rect->origin.x, rect->origin.y + rect->size.height);
+    glEnd();
+}
+
+void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
+{
+    if(!rect) return;
+
+    glBegin(GL_QUADS);
+        // Upper left.
+        if(coords) glTexCoord2iv((GLint*)coords[0].xy);
+        glVertex2f(rect->origin.x, rect->origin.y);
+
+        // Upper Right.
+        if(coords) glTexCoord2iv((GLint*)coords[1].xy);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+
+        // Lower right.
+        if(coords) glTexCoord2iv((GLint*)coords[2].xy);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+
+        // Lower left.
+        if(coords) glTexCoord2iv((GLint*)coords[3].xy);
+        glVertex2f(rect->origin.x, rect->origin.y + rect->size.height);
+    glEnd();
+}
+
+void GL_DrawRectd(const RectRawf* rect)
+{
+    assert(rect);
+    glBegin(GL_QUADS);
+        glTexCoord2d(0, 0);
+        glVertex2d(rect->origin.x, rect->origin.y);
+        glTexCoord2d(1, 0);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2d(1, 1);
+        glVertex2d(rect->origin.x + rect->size.width, rect->origin.y + rect->size.height);
+        glTexCoord2d(0, 1);
+        glVertex2d(rect->origin.x, rect->origin.y + rect->size.height);
     glEnd();
 }
 
