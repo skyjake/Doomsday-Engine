@@ -188,30 +188,22 @@ void GL_UploadTextureContent(const struct texturecontent_s* content);
 uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
 uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
 
-/**
- * Image loading routines:
- * @return  The outcome:
- *     0 = not prepared
- *     1 = found and prepared a lump resource.
- *     2 = found and prepared an external resource.
- */
+TexSource GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
 
-byte GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
+TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
+TexSource GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
+    const char* optionalSuffix, boolean quiet);
 
-byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
-byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath, const char* optionalSuffix,
-    boolean quiet);
+TexSource GL_LoadFlatLump(struct image_s* image, DFile* file);
 
-byte GL_LoadFlatLump(struct image_s* image, DFile* file);
+TexSource GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass,
+    int tmap, int border, Texture* tex);
 
-byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass, int tmap,
-    int border, Texture* tex);
+TexSource GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
+TexSource GL_LoadPatchComposite(struct image_s* image, Texture* tex);
 
-byte GL_LoadPatchComposite(struct image_s* image, Texture* tex);
-
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
+TexSource GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
