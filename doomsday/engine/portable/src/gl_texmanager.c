@@ -3207,7 +3207,8 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     if(!variant)
     {
         DGLuint newGLName = GL_GetReservedTextureName();
-        variant = TextureVariant_New(tex, newGLName, spec);
+        variant = TextureVariant_New(tex, spec);
+        TextureVariant_SetGLName(variant, newGLName);
         Texture_AddVariant(tex, variant);
     }
     // Are we re-preparing a released texture?

@@ -21,8 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_GL_TEXTUREVARIANT_H
-#define LIBDENG_GL_TEXTUREVARIANT_H
+#ifndef LIBDENG_REFRESH_TEXTUREVARIANT_H
+#define LIBDENG_REFRESH_TEXTUREVARIANT_H
 
 #include "texturevariantspecification.h"
 
@@ -36,31 +36,16 @@ struct texture_s;
 #define TVF_IS_UPLOADED         0x2 /// Texture has been uploaded to GL.
 /**@}*/
 
-typedef struct texturevariant_s {
-    /// Superior Texture of which this is a derivative.
-    struct texture_s* _generalCase;
-
-    /// @see textureVariantFlags
-    int _flags;
-
-    /// Name of the associated GL texture object.
-    DGLuint _glName;
-
-    /// Prepared coordinates for the bottom right of the texture minus border.
-    float _s, _t;
-
-    /// Specification used to derive this variant.
-    texturevariantspecification_t* _spec;
-} texturevariant_t;
+struct texturevariant_s; // The texturevariant instance (opaque).
+typedef struct texturevariant_s texturevariant_t;
 
 /**
  * @param generalCase  Texture from which this variant is derived.
- * @param glName  GL-name of the associated texture object.
  * @param spec  Specification used to derive this variant. Ownership of
  *      specifcation is NOT given to the resultant TextureVariant
  */
 texturevariant_t* TextureVariant_New(struct texture_s* generalCase,
-    DGLuint glName, texturevariantspecification_t* spec);
+    texturevariantspecification_t* spec);
 
 void TextureVariant_Delete(texturevariant_t* tex);
 
@@ -84,4 +69,4 @@ void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
 DGLuint TextureVariant_GLName(const texturevariant_t* tex);
 void TextureVariant_SetGLName(texturevariant_t* tex, DGLuint glName);
 
-#endif /* LIBDENG_GL_TEXTUREVARIANT_H */
+#endif /* LIBDENG_REFRESH_TEXTUREVARIANT_H */

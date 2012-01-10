@@ -28,22 +28,44 @@
 #include "texture.h"
 #include "texturevariant.h"
 
+struct texturevariant_s {
+    /// Superior Texture of which this is a derivative.
+    struct texture_s* _generalCase;
+
+    /// @see textureVariantFlags
+    int _flags;
+
+    /// Name of the associated GL texture object.
+    DGLuint _glName;
+
+    /// Prepared coordinates for the bottom right of the texture minus border.
+    float _s, _t;
+
+    /// Specification used to derive this variant.
+    texturevariantspecification_t* _spec;
+};
+
 texturevariant_t* TextureVariant_New(texture_t* generalCase,
-    DGLuint glName, texturevariantspecification_t* spec)
+    texturevariantspecification_t* spec)
 {
-    assert(generalCase && spec);
-    {
-    texturevariant_t* tex = tex = (texturevariant_t*) malloc(sizeof(*tex));
-    if(NULL == tex)
+    texturevariant_t* tex;
+
+    if(!generalCase)
+        Con_Error("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
+    if(!spec)
+        Con_Error("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
+
+    tex = (texturevariant_t*) malloc(sizeof(*tex));
+    if(!tex)
         Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
             "new TextureVariant.", (unsigned long) sizeof(*tex));
+
     tex->_generalCase = generalCase;
     tex->_spec = spec;
     tex->_flags = 0;
     tex->_s = tex->_t = 0;
-    tex->_glName = glName;
+    tex->_glName = 0;
     return tex;
-    }
 }
 
 void TextureVariant_Delete(texturevariant_t* tex)
