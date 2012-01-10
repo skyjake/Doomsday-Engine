@@ -35,6 +35,7 @@
 #include "m_misc.h"
 #include "fonts.h"
 
+#include "texturevariant.h"
 #include "bitmapfont.h"
 
 void Font_Init(font_t* font, fonttype_t type, fontid_t bindId)
@@ -545,8 +546,9 @@ void BitmapCompositeFont_Prepare(font_t* font)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
         patchid_t patch = ch->patch;
+        const TextureVariant* tex;
+        textureid_t texId;
         patchinfo_t info;
-        Texture* tex;
 
         if(0 == patch) continue;
 
@@ -557,13 +559,20 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ch->geometry.origin.y -= font->_marginHeight;
         ch->geometry.size.width  += font->_marginWidth  * 2;
         ch->geometry.size.height += font->_marginHeight * 2;
+        ch->border = 0;
+        ch->tex = 0;
 
-        tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
-        ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
-        /// \todo Border is determined according to what we uploaded:
-        /// original texture (thus applied Upscale & Sharpen +=1)
-        /// custom (=0).
-        ch->border = 1;
+        texId = Textures_TextureForUniqueId(TN_PATCHES, patch);
+        tex = GL_PrepareTextureVariant(Textures_ToTexture(texId), BitmapCompositeFont_CharSpec());
+        if(tex)
+        {
+            ch->tex = TextureVariant_GLName(tex);
+            if(TextureVariant_Source(tex) == TEXS_ORIGINAL)
+            {
+                // Upscale & Sharpen will have been applied.
+                ch->border = 1;
+            }
+        }
 
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;
