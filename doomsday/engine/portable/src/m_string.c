@@ -169,6 +169,13 @@ ddstring_t* Str_New(void)
     return str;
 }
 
+ddstring_t* Str_NewFromReader(Reader* reader)
+{
+    ddstring_t* str = Str_New();
+    Str_Read(str, reader);
+    return str;
+}
+
 void Str_Delete(ddstring_t* str)
 {
     if(!str)

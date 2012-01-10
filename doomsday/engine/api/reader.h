@@ -21,8 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __DOOMSDAY_READER_H__
-#define __DOOMSDAY_READER_H__
+#ifndef LIBDENG_READER_H
+#define LIBDENG_READER_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +32,12 @@ extern "C" {
 
 struct reader_s; // The reader instance (opaque).
 typedef struct reader_s Reader;
+
+typedef char  (*Reader_Callback_ReadInt8)(Reader*);
+typedef short (*Reader_Callback_ReadInt16)(Reader*);
+typedef int   (*Reader_Callback_ReadInt32)(Reader*);
+typedef float (*Reader_Callback_ReadFloat)(Reader*);
+typedef void  (*Reader_Callback_ReadData)(Reader*, char* data, int len);
 
 /**
  * Constructs a new reader. The reader will use the engine's netBuffer
@@ -49,6 +55,16 @@ Reader* Reader_New(void);
  * @param len     Length of the buffer.
  */
 Reader* Reader_NewWithBuffer(const byte* buffer, size_t len);
+
+/**
+ * Constructs a new reader that has no memory buffer of its own. Instead, all the
+ * read operations will get routed to user-provided callbacks.
+ */
+Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+                                Reader_Callback_ReadInt16 readInt16,
+                                Reader_Callback_ReadInt32 readInt32,
+                                Reader_Callback_ReadFloat readFloat,
+                                Reader_Callback_ReadData  readData);
 
 /**
  * Destroys the reader.
@@ -104,4 +120,4 @@ uint32_t Reader_ReadPackedUInt32(Reader* reader);
 } // extern "C"
 #endif
 
-#endif // __DOOMSDAY_READER_H__
+#endif // LIBDENG_READER_H

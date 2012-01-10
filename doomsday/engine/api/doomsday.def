@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 740 <--
+; Highest ordinal is currently: --> 750 <--
 ; Other free ordinals:
 ;   none
 
@@ -849,6 +849,7 @@ EXPORTS
     
 ; Reader.
     Reader_NewWithBuffer        @547 NONAME
+    Reader_NewWithCallbacks     @743 NONAME
     Reader_Delete               @548 NONAME
     Reader_ReadChar             @549 NONAME
     Reader_ReadByte             @550 NONAME
@@ -868,6 +869,7 @@ EXPORTS
 ; Writer.
     Writer_NewWithBuffer        @563 NONAME
     Writer_NewWithDynamicBuffer @564 NONAME
+    Writer_NewWithCallbacks     @742 NONAME
     Writer_Delete               @565 NONAME
     Writer_Size                 @566 NONAME
     Writer_Data                 @567 NONAME
@@ -889,3 +891,12 @@ EXPORTS
     Smoother_IsOnFloor          @581 NONAME
     Smoother_Evaluate           @582 NONAME
     Smoother_Clear              @583 NONAME
+
+; MaterialArchive.
+    MaterialArchive_New         @744 NONAME
+    MaterialArchive_NewEmpty    @745 NONAME
+    MaterialArchive_Delete      @746 NONAME
+    MaterialArchive_Read        @747 NONAME
+    MaterialArchive_Write       @748 NONAME
+    MaterialArchive_Find        @749 NONAME
+    MaterialArchive_FindUniqueSerialId @750 NONAME
