@@ -846,9 +846,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
       }
     case FT_BITMAPCOMPOSITE: {
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+        uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
         DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
         int s[2], t[2], x = 0, y = 0, w, h;
-        const uint8_t border = 1;
         Point2Raw coords[4];
         RectRaw geometry;
 

@@ -77,6 +77,7 @@ typedef struct {
     RectRaw geometry;
     patchid_t patch;
     DGLuint tex;
+    uint8_t border;
 } bitmapcompositefont_char_t;
 
 typedef struct bitmapcompositefont_s {
@@ -106,6 +107,8 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char ch, const char
 
 DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch);
 void BitmapCompositeFont_DeleteGLTextures(font_t* font);
+
+uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr);
 
 /**
  * Query the texture coordinates of a character in this font.

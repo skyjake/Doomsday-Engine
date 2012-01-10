@@ -517,6 +517,10 @@ void BitmapCompositeFont_Prepare(font_t* font)
 
         tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
         ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
+        /// \todo Border is determined according to what we uploaded:
+        /// original texture (thus applied Upscale & Sharpen +=1)
+        /// custom (=0).
+        ch->border = 1;
     }
 
     font->_noCharSize.width  = avgSize.width  / numPatches;
@@ -590,6 +594,15 @@ void BitmapCompositeFont_CharSetPatch(font_t* font, unsigned char chr, const cha
 
     ch->patch = R_DeclarePatch(patchName);
     font->_isDirty = true;
+}
+
+uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr)
+{
+    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    bitmapcompositefont_char_t* ch = &cf->_chars[chr];
+    assert(font && font->_type == FT_BITMAPCOMPOSITE);
+    BitmapCompositeFont_Prepare(font);
+    return ch->border;
 }
 
 void BitmapCompositeFont_CharCoords(font_t* font, int* s0, int* s1,
