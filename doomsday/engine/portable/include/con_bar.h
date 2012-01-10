@@ -29,8 +29,11 @@
 #ifndef __DOOMSDAY_CONSOLE_BAR_H__
 #define __DOOMSDAY_CONSOLE_BAR_H__
 
-void            Con_InitProgress(int maxProgress);
-void            Con_SetProgress(int progress);
-float           Con_GetProgress(void);
+#include "dd_types.h"
+
+void Con_InitProgress(int maxProgress);
+void Con_SetProgress(int progress);
+float Con_GetProgress(void);
+boolean Con_IsProgressAnimationCompleted(void);
 
 #endif

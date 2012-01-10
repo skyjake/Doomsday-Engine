@@ -376,7 +376,8 @@ static void Con_BusyLoop(void)
     busyDoneCopy = busyDone;
     Sys_Unlock(busy_Mutex);
 
-    while(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0))
+    while(!busyDoneCopy || (canUpload && GL_DeferredTaskCount() > 0) ||
+          !Con_IsProgressAnimationCompleted())
     {
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
@@ -445,7 +446,7 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
  */
 static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 {
-    float               col[4] = {1.f, 1.f, 1.f, .2f};
+    float               col[4] = {1.f, 1.f, 1.f, .25f};
     int                 i = 0;
     int                 edgeCount = 0;
     int                 backW, backH;
@@ -489,7 +490,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     glTranslatef(-.5f, -.5f, 0.f);
 
     // Draw a fan.
-    glColor4f(col[0], col[1], col[2], .66f);
+    glColor4f(col[0], col[1], col[2], .5f);
     glBindTexture(GL_TEXTURE_2D, texLoading[1]);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
@@ -498,11 +499,9 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     // Vertices along the edge.
     for(i = 0; i <= edgeCount; ++i)
     {
-        float               angle = 2 * PI * pos *
-            (i / (float)edgeCount) + PI/2;
-
+        float angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
         glTexCoord2f(.5f + cos(angle)*.5f, .5f + sin(angle)*.5f);
-        glVertex2f(x + cos(angle)*radius*1.105f, y + sin(angle)*radius*1.105f);
+        glVertex2f(x + cos(angle)*radius*1.05f, y + sin(angle)*radius*1.05f);
     }
     glEnd();
 
@@ -515,7 +514,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         FR_SetFont(busyFont);
         FR_LoadDefaultAttrib();
         FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
-        FR_DrawTextXY3(busyTaskName, x+radius, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(busyTaskName, x+radius+10, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);
