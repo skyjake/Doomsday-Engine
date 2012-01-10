@@ -290,7 +290,7 @@ void Reader_Read(Reader* reader, void* buffer, size_t len)
         else
         {
             assert(reader->func.readData);
-            return reader->func.readData(reader, buffer, len);
+            reader->func.readData(reader, buffer, len);
         }
     }
 }
