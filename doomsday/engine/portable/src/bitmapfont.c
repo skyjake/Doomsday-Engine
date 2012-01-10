@@ -142,10 +142,10 @@ static void* readFormat0(font_t* font, DFile* file)
         ushort w = inByte(file);
         ushort h = inByte(file);
 
-        ch->geometry.origin.x = -font->_marginWidth;
-        ch->geometry.origin.y = -font->_marginHeight;
-        ch->geometry.size.width  = w;
-        ch->geometry.size.height = h;
+        ch->geometry.origin.x = 0;
+        ch->geometry.origin.y = 0;
+        ch->geometry.size.width  = w - font->_marginWidth *2;
+        ch->geometry.size.height = h - font->_marginHeight*2;
 
         // Top left.
         ch->coords[0].x = x;
@@ -241,10 +241,10 @@ static void* readFormat2(font_t* font, DFile* file)
         ushort h = inShort(file);
         bitmapfont_char_t* ch = &bf->_chars[code];
 
-        ch->geometry.origin.x = -font->_marginWidth;
-        ch->geometry.origin.y = -font->_marginHeight;
-        ch->geometry.size.width  = w;
-        ch->geometry.size.height = h;
+        ch->geometry.origin.x = 0;
+        ch->geometry.origin.y = 0;
+        ch->geometry.size.width  = w - font->_marginWidth *2;
+        ch->geometry.size.height = h - font->_marginHeight*2;
 
         // Top left.
         ch->coords[0].x = x;
@@ -334,7 +334,7 @@ int BitmapFont_CharWidth(font_t* font, unsigned char ch)
     bitmapfont_t* bf = (bitmapfont_t*)font;
     assert(font && font->_type == FT_BITMAP);
     if(bf->_chars[ch].geometry.size.width == 0) return font->_noCharSize.width;
-    return bf->_chars[ch].geometry.size.width - font->_marginWidth * 2;
+    return bf->_chars[ch].geometry.size.width;
 }
 
 int BitmapFont_CharHeight(font_t* font, unsigned char ch)
@@ -343,7 +343,7 @@ int BitmapFont_CharHeight(font_t* font, unsigned char ch)
     assert(font && font->_type == FT_BITMAP);
     BitmapFont_Prepare(font);
     if(bf->_chars[ch].geometry.size.height == 0) return font->_noCharSize.height;
-    return bf->_chars[ch].geometry.size.height - font->_marginHeight * 2;
+    return bf->_chars[ch].geometry.size.height;
 }
 
 void BitmapFont_Prepare(font_t* font)
@@ -507,7 +507,7 @@ int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch)
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].geometry.size.width == 0) return font->_noCharSize.width;
-    return cf->_chars[ch].geometry.size.width - font->_marginWidth * 2;
+    return cf->_chars[ch].geometry.size.width;
 }
 
 int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
@@ -515,7 +515,7 @@ int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].geometry.size.height == 0) return font->_noCharSize.height;
-    return cf->_chars[ch].geometry.size.height - font->_marginHeight * 2;
+    return cf->_chars[ch].geometry.size.height;
 }
 
 static __inline texturevariantspecification_t* BitmapCompositeFont_CharSpec(void)
