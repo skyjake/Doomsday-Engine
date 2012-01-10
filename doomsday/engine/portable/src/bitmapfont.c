@@ -546,7 +546,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
         patchid_t patch = ch->patch;
         patchinfo_t info;
-        texture_t* tex;
+        Texture* tex;
 
         if(0 == patch) continue;
 
@@ -591,7 +591,7 @@ void BitmapCompositeFont_DeleteGLTextures(font_t* font)
     for(i = 0; i < 256; ++i)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        texture_t* tex;
+        Texture* tex;
 
         if(!ch->patch) continue;
         tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, ch->patch));

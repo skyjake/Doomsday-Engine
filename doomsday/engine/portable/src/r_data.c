@@ -1062,7 +1062,7 @@ void R_InitSystemTextures(void)
     };
     Uri* uri = Uri_New(), *resourcePath = Uri_New();
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     uint i;
 
     VERBOSE( Con_Message("Initializing System textures...\n") )
@@ -1111,7 +1111,7 @@ patchid_t R_DeclarePatch(const char* name)
     int lumpIdx, flags;
     lumpnum_t lumpNum;
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     int uniqueId;
     patchtex_t* p;
 
@@ -1214,7 +1214,7 @@ patchid_t R_DeclarePatch(const char* name)
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
-    texture_t* tex;
+    Texture* tex;
     if(!info)
         Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
 
@@ -1999,7 +1999,7 @@ static void createTexturesForPatchCompositeDefs(patchcompositetex_t** defs, int 
 {
     Uri* uri = Uri_New();
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     int i;
     assert(defs);
 
@@ -2060,11 +2060,11 @@ void R_InitPatchComposites(void)
     VERBOSE2( Con_Message("R_InitPatchComposites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-static texture_t* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
+static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
 {
     Uri* uri, *resourcePath;
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     Size2Raw size;
     char name[9];
     int flags;
@@ -2144,7 +2144,7 @@ void R_InitFlatTextures(void)
     {
         int i, numLumps, origIndexBase = 0;
         ddstack_t* stack;
-        texture_t* tex;
+        Texture* tex;
         lumpnum_t n;
 
         // First add all flats between all flat marker lumps exclusive of the
@@ -2226,7 +2226,7 @@ void R_InitSpriteTextures(void)
         const char* lumpName = F_LumpName((lumpnum_t)i);
         patchtex_t* pTex;
         textureid_t texId;
-        texture_t* tex;
+        Texture* tex;
         int flags;
 
         if(lumpName[0] == 'S')
@@ -2314,10 +2314,10 @@ void R_InitSpriteTextures(void)
     VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
-texture_t* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
+Texture* R_CreateSkinTex(const Uri* filePath, boolean isShinySkin)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2395,9 +2395,9 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
     return found;
 }
 
-texture_t* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
+Texture* R_RegisterModelSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
 {
-    texture_t* tex = NULL;
+    Texture* tex = NULL;
     if(skin && skin[0])
     {
         ddstring_t buf;
@@ -2427,7 +2427,7 @@ static int findModelSkinForResourcePathWorker(textureid_t texId, void* paramater
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindModelSkinForResourcePath(const Uri* path)
+Texture* R_FindModelSkinForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
@@ -2436,7 +2436,7 @@ texture_t* R_FindModelSkinForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_FindModelReflectionSkinForResourcePath(const Uri* path)
+Texture* R_FindModelReflectionSkinForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
@@ -2648,10 +2648,10 @@ void R_PrecacheForMap(void)
     }
 }
 
-texture_t* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
+Texture* R_CreateDetailTextureFromDef(const ded_detailtexture_t* def)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2695,7 +2695,7 @@ static int findDetailTextureForResourcePathWorker(textureid_t texId, void* param
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindDetailTextureForResourcePath(const Uri* path)
+Texture* R_FindDetailTextureForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
@@ -2704,10 +2704,10 @@ texture_t* R_FindDetailTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateLightMap(const Uri* resourcePath)
+Texture* R_CreateLightMap(const Uri* resourcePath)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2758,7 +2758,7 @@ static int findLightMapTextureForResourcePathWorker(textureid_t texId, void* par
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindLightMapForResourcePath(const Uri* path)
+Texture* R_FindLightMapForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
@@ -2768,10 +2768,10 @@ texture_t* R_FindLightMapForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateFlareTexture(const Uri* resourcePath)
+Texture* R_CreateFlareTexture(const Uri* resourcePath)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2827,7 +2827,7 @@ static int findFlareTextureForResourcePathWorker(textureid_t texId, void* parama
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindFlareTextureForResourcePath(const Uri* path)
+Texture* R_FindFlareTextureForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path)) || !Str_CompareIgnoreCase(Uri_Path(path), "-")) return NULL;
@@ -2837,10 +2837,10 @@ texture_t* R_FindFlareTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateReflectionTexture(const Uri* resourcePath)
+Texture* R_CreateReflectionTexture(const Uri* resourcePath)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2889,7 +2889,7 @@ static int findReflectionTextureForResourcePathWorker(textureid_t texId, void* p
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
+Texture* R_FindReflectionTextureForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;
@@ -2899,10 +2899,10 @@ texture_t* R_FindReflectionTextureForResourcePath(const Uri* path)
     return Textures_ToTexture((textureid_t)result);
 }
 
-texture_t* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
+Texture* R_CreateMaskTexture(const Uri* resourcePath, const Size2Raw* size)
 {
     textureid_t texId;
-    texture_t* tex;
+    Texture* tex;
     char name[9];
     int uniqueId;
     Uri* uri;
@@ -2957,7 +2957,7 @@ static int findMaskTextureForResourcePathWorker(textureid_t texId, void* paramat
     return 0; // Continue iteration.
 }
 
-texture_t* R_FindMaskTextureForResourcePath(const Uri* path)
+Texture* R_FindMaskTextureForResourcePath(const Uri* path)
 {
     int result;
     if(!path || Str_IsEmpty(Uri_Path(path))) return NULL;

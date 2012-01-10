@@ -1099,19 +1099,19 @@ void Materials_Ticker(timespan_t time)
     }
 }
 
-static texture_t* findDetailTextureForDef(const ded_detailtexture_t* def)
+static Texture* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
     assert(def);
     return R_FindDetailTextureForResourcePath(def->detailTex);
 }
 
-static texture_t* findShinyTextureForDef(const ded_reflection_t* def)
+static Texture* findShinyTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
     return R_FindReflectionTextureForResourcePath(def->shinyMap);
 }
 
-static texture_t* findShinyMaskTextureForDef(const ded_reflection_t* def)
+static Texture* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
     return R_FindMaskTextureForResourcePath(def->maskMap);
@@ -1186,7 +1186,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     int i, layerCount;
-    texture_t* tex;
+    Texture* tex;
     assert(snapshot);
 
     memset(texUnits, 0, sizeof texUnits);

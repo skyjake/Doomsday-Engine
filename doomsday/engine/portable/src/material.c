@@ -238,13 +238,13 @@ void Material_SetEnvironmentClass(material_t* mat, material_env_class_t envClass
     mat->_envClass = envClass;
 }
 
-texture_t* Material_DetailTexture(material_t* mat)
+Texture* Material_DetailTexture(material_t* mat)
 {
     assert(mat);
     return mat->_detailTex;
 }
 
-void Material_SetDetailTexture(material_t* mat, texture_t* tex)
+void Material_SetDetailTexture(material_t* mat, Texture* tex)
 {
     assert(mat);
     mat->_detailTex = tex;
@@ -274,13 +274,13 @@ void Material_SetDetailScale(material_t* mat, float scale)
     mat->_detailScale = MINMAX_OF(0, scale, 1);
 }
 
-texture_t* Material_ShinyTexture(material_t* mat)
+Texture* Material_ShinyTexture(material_t* mat)
 {
     assert(mat);
     return mat->_shinyTex;
 }
 
-void Material_SetShinyTexture(material_t* mat, texture_t* tex)
+void Material_SetShinyTexture(material_t* mat, Texture* tex)
 {
     assert(mat);
     mat->_shinyTex = tex;
@@ -324,13 +324,13 @@ void Material_SetShinyStrength(material_t* mat, float strength)
     mat->_shinyStrength = MINMAX_OF(0, strength, 1);
 }
 
-texture_t* Material_ShinyMaskTexture(material_t* mat)
+Texture* Material_ShinyMaskTexture(material_t* mat)
 {
     assert(mat);
     return mat->_shinyMaskTex;
 }
 
-void Material_SetShinyMaskTexture(material_t* mat, texture_t* tex)
+void Material_SetShinyMaskTexture(material_t* mat, Texture* tex)
 {
     assert(mat);
     mat->_shinyMaskTex = tex;

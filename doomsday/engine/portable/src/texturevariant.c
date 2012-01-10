@@ -45,7 +45,7 @@ struct texturevariant_s {
     texturevariantspecification_t* spec;
 };
 
-TextureVariant* TextureVariant_New(texture_t* generalCase,
+TextureVariant* TextureVariant_New(Texture* generalCase,
     texturevariantspecification_t* spec)
 {
     TextureVariant* tex;

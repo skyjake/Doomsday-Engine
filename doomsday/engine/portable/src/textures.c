@@ -48,7 +48,7 @@ typedef struct {
     Uri* resourcePath;
 
     /// The defined texture instance (if any).
-    texture_t* texture;
+    Texture* texture;
 } texturerecord_t;
 
 typedef struct {
@@ -326,7 +326,7 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
     return node;
 }
 
-static void destroyTexture(texture_t* tex)
+static void destroyTexture(Texture* tex)
 {
     assert(tex);
 
@@ -617,14 +617,14 @@ void Textures_ClearNamespace(texturenamespaceid_t namespaceId)
     }
 }
 
-void Textures_Release(texture_t* tex)
+void Textures_Release(Texture* tex)
 {
     /// Stub.
     GL_ReleaseGLTexturesByTexture(tex);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-texture_t* Textures_ToTexture(textureid_t id)
+Texture* Textures_ToTexture(textureid_t id)
 {
     PathDirectoryNode* node = directoryNodeForBindId(id);
     texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
@@ -885,7 +885,7 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     return id;
 }
 
-texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
+Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
     void* userData)
 {
     PathDirectoryNode* node = directoryNodeForBindId(id);
@@ -906,7 +906,7 @@ texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* si
         /// \todo Do not update textures here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
-        texture_t* tex = record->texture;
+        Texture* tex = record->texture;
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
         ddstring_t* path = Uri_ToString(uri);
@@ -925,7 +925,7 @@ texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* si
     return record->texture = Texture_NewWithSize(flags, id, size, userData);
 }
 
-texture_t* Textures_Create(textureid_t id, int flags, void* userData)
+Texture* Textures_Create(textureid_t id, int flags, void* userData)
 {
     Size2Raw size = { 0, 0 };
     return Textures_CreateWithSize(id, flags, &size, userData);
@@ -966,7 +966,7 @@ const Uri* Textures_ResourcePath(textureid_t id)
     return emptyUri;
 }
 
-textureid_t Textures_Id(texture_t* tex)
+textureid_t Textures_Id(Texture* tex)
 {
     if(tex)
     {
@@ -1049,7 +1049,7 @@ Uri* Textures_ComposeUrn(textureid_t id)
 }
 
 typedef struct {
-    int (*definedCallback)(texture_t* tex, void* paramaters);
+    int (*definedCallback)(Texture* tex, void* paramaters);
     int (*declaredCallback)(textureid_t id, void* paramaters);
     void* paramaters;
 } iteratedirectoryworker_params_t;
@@ -1110,7 +1110,7 @@ static int iterateDirectory(texturenamespaceid_t namespaceId,
 }
 
 int Textures_Iterate2(texturenamespaceid_t namespaceId,
-    int (*callback)(texture_t* tex, void* paramaters), void* paramaters)
+    int (*callback)(Texture* tex, void* paramaters), void* paramaters)
 {
     iteratedirectoryworker_params_t p;
     if(!callback) return 0;
@@ -1121,7 +1121,7 @@ int Textures_Iterate2(texturenamespaceid_t namespaceId,
 }
 
 int Textures_Iterate(texturenamespaceid_t namespaceId,
-    int (*callback)(texture_t* tex, void* paramaters))
+    int (*callback)(Texture* tex, void* paramaters))
 {
     return Textures_Iterate2(namespaceId, callback, NULL/*no paramaters*/);
 }
@@ -1143,7 +1143,7 @@ int Textures_IterateDeclared(texturenamespaceid_t namespaceId,
     return Textures_IterateDeclared2(namespaceId, callback, NULL/*no paramaters*/);
 }
 
-static void printTextureInfo(texture_t* tex)
+static void printTextureInfo(Texture* tex)
 {
     Uri* uri = Textures_ComposeUri(Textures_Id(tex));
     ddstring_t* path = Uri_ToString(uri);
@@ -1430,7 +1430,7 @@ D_CMD(ListTextures)
 D_CMD(InspectTexture)
 {
     Uri* search = Uri_NewWithPath2(argv[1], RC_NULL);
-    texture_t* tex;
+    Texture* tex;
 
     if(!Str_IsEmpty(Uri_Scheme(search)))
     {

@@ -59,9 +59,9 @@ struct texture_s {
     void* _userData;
 };
 
-texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
+Texture* Texture_New(int flags, textureid_t bindId, void* userData)
 {
-    texture_t* tex = (texture_t*)malloc(sizeof *tex);
+    Texture* tex = (Texture*)malloc(sizeof *tex);
     if(!tex)
         Con_Error("Texture::New: Failed on allocation of %lu bytes for new Texture.",
                   (unsigned long) sizeof *tex);
@@ -76,15 +76,15 @@ texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
     return tex;
 }
 
-texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size,
+Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size,
     void* userData)
 {
-    texture_t* tex = Texture_New(flags, bindId, userData);
+    Texture* tex = Texture_New(flags, bindId, userData);
     Texture_SetSize(tex, size);
     return tex;
 }
 
-static void destroyVariants(texture_t* tex)
+static void destroyVariants(Texture* tex)
 {
     assert(tex);
     while(tex->_variants)
@@ -111,7 +111,7 @@ static void destroyVariants(texture_t* tex)
     }
 }
 
-static void destroyAnalyses(texture_t* tex)
+static void destroyAnalyses(Texture* tex)
 {
     int i;
     assert(tex);
@@ -121,7 +121,7 @@ static void destroyAnalyses(texture_t* tex)
     }
 }
 
-void Texture_Delete(texture_t* tex)
+void Texture_Delete(Texture* tex)
 {
     assert(tex);
     destroyVariants(tex);
@@ -130,19 +130,19 @@ void Texture_Delete(texture_t* tex)
     free(tex);
 }
 
-textureid_t Texture_PrimaryBind(const texture_t* tex)
+textureid_t Texture_PrimaryBind(const Texture* tex)
 {
     assert(tex);
     return tex->_primaryBind;
 }
 
-void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId)
+void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId)
 {
     assert(tex);
     tex->_primaryBind = bindId;
 }
 
-void Texture_AttachUserData(texture_t* tex, void* userData)
+void Texture_AttachUserData(Texture* tex, void* userData)
 {
     assert(tex);
 #if _DEBUG
@@ -154,7 +154,7 @@ void Texture_AttachUserData(texture_t* tex, void* userData)
     tex->_userData = userData;
 }
 
-void* Texture_DetachUserData(texture_t* tex)
+void* Texture_DetachUserData(Texture* tex)
 {
     void* data;
     assert(tex);
@@ -163,19 +163,19 @@ void* Texture_DetachUserData(texture_t* tex)
     return data;
 }
 
-void* Texture_UserData(const texture_t* tex)
+void* Texture_UserData(const Texture* tex)
 {
     assert(tex);
     return tex->_userData;
 }
 
-void Texture_ClearVariants(texture_t* tex)
+void Texture_ClearVariants(Texture* tex)
 {
     assert(tex);
     destroyVariants(tex);
 }
 
-TextureVariant* Texture_AddVariant(texture_t* tex, TextureVariant* variant)
+TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
 {
     texture_variantlist_node_t* node;
     assert(tex);
@@ -198,65 +198,65 @@ TextureVariant* Texture_AddVariant(texture_t* tex, TextureVariant* variant)
     return variant;
 }
 
-boolean Texture_IsCustom(const texture_t* tex)
+boolean Texture_IsCustom(const Texture* tex)
 {
     assert(tex);
     return (tex->_flags & TXF_CUSTOM) != 0;
 }
 
-int Texture_Flags(const texture_t* tex)
+int Texture_Flags(const Texture* tex)
 {
     assert(tex);
     return tex->_flags;
 }
 
-void Texture_SetFlags(texture_t* tex, int flags)
+void Texture_SetFlags(Texture* tex, int flags)
 {
     assert(tex);
     tex->_flags = flags;
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_Width(const texture_t* tex)
+int Texture_Width(const Texture* tex)
 {
     assert(tex);
     return Size2_Width(tex->_size);
 }
 
-void Texture_SetWidth(texture_t* tex, int width)
+void Texture_SetWidth(Texture* tex, int width)
 {
     assert(tex);
     Size2_SetWidth(tex->_size, width);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_Height(const texture_t* tex)
+int Texture_Height(const Texture* tex)
 {
     assert(tex);
     return Size2_Height(tex->_size);
 }
 
-void Texture_SetHeight(texture_t* tex, int height)
+void Texture_SetHeight(Texture* tex, int height)
 {
     assert(tex);
     Size2_SetHeight(tex->_size, height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-const Size2* Texture_Size(const texture_t* tex)
+const Size2* Texture_Size(const Texture* tex)
 {
     assert(tex);
     return tex->_size;
 }
 
-void Texture_SetSize(texture_t* tex, const Size2Raw* size)
+void Texture_SetSize(Texture* tex, const Size2Raw* size)
 {
     assert(tex && size);
     Size2_SetWidthHeight(tex->_size, size->width, size->height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_IterateVariants(texture_t* tex,
+int Texture_IterateVariants(Texture* tex,
     int (*callback)(TextureVariant* variant, void* paramaters), void* paramaters)
 {
     int result = 0;
@@ -276,13 +276,13 @@ int Texture_IterateVariants(texture_t* tex,
     return result;
 }
 
-void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis)
+void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis)
 {
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
     return tex->_analyses[analysis];
 }
 
-void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
+void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis,
     void* data)
 {
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
@@ -300,7 +300,7 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
     tex->_analyses[analysis] = data;
 }
 
-void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis)
+void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis)
 {
     void* data;
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));

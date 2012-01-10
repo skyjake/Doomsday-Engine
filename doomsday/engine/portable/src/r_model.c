@@ -1312,7 +1312,7 @@ void R_PrecacheModelSkins(modeldef_t* modef)
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
-        texture_t* tex;
+        Texture* tex;
 
         if(!modef->sub[sub].model) continue;
 

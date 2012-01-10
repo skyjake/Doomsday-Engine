@@ -1060,7 +1060,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             break;
           }
         case PFT_PATCH: {
-            texture_t* texture = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
+            Texture* texture = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
             if(texture)
             {
                 patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);

@@ -140,7 +140,7 @@ static void calculateSkyAmbientColor(void)
 
             if(i == firstSkyLayer)
             {
-                const texture_t* tex = MSU_texture(ms, MTU_PRIMARY);
+                const Texture* tex = MSU_texture(ms, MTU_PRIMARY);
                 const averagecolor_analysis_t* avgLineColor = (const averagecolor_analysis_t*)
                     Texture_Analysis(tex, TA_LINE_TOP_COLOR);
                 if(!avgLineColor)

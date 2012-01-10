@@ -677,7 +677,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        texture_t* tex = mf->sub[number].shinySkin;
+        Texture* tex = mf->sub[number].shinySkin;
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -772,7 +772,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        texture_t* tex;
+        Texture* tex;
 
         skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
