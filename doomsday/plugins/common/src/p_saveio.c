@@ -63,11 +63,14 @@ void SV_InitIO(void)
 #endif
     gameSaveInfo = NULL;
     inited = true;
+    savefile = 0;
 }
 
 void SV_ShutdownIO(void)
 {
     inited = false;
+
+    SV_CloseFile();
 
     if(gameSaveInfo)
     {

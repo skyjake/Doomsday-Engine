@@ -4499,11 +4499,12 @@ void SV_Init(void)
 {
     static boolean firstInit = true;
 
+    SV_InitIO();
+
     inited = true;
     if(firstInit)
     {
         firstInit = false;
-        SV_InitIO();
         playerHeaderOK = false;
         thingArchive = NULL;
         thingArchiveSize = 0;
@@ -4514,7 +4515,6 @@ void SV_Init(void)
 #else
         numSoundTargets = 0;
 #endif
-
         // -1 = Not yet chosen/determined.
         cvarQuickSlot = -1;
     }
@@ -4735,7 +4735,7 @@ static boolean SV_LoadGame2(void)
 #endif
 
 #if !__JHEXEN__
-    lzClose(SV_File());
+    SV_CloseFile();
 #endif
 
     // We are done with the MaterialArchive.
