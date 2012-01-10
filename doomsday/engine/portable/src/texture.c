@@ -35,7 +35,7 @@
 
 typedef struct texture_variantlist_node_s {
     struct texture_variantlist_node_s* next;
-    texturevariant_t* variant;
+    TextureVariant* variant;
 } texture_variantlist_node_t;
 
 texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
@@ -67,7 +67,7 @@ static void destroyVariants(texture_t* tex)
     assert(tex);
     while(tex->_variants)
     {
-        texturevariant_t* variant = tex->_variants->variant;
+        TextureVariant* variant = tex->_variants->variant;
         texture_variantlist_node_t* next = tex->_variants->next;
 #if _DEBUG
         DGLuint glName = TextureVariant_GLName(variant);
@@ -153,7 +153,7 @@ void Texture_ClearVariants(texture_t* tex)
     destroyVariants(tex);
 }
 
-texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
+TextureVariant* Texture_AddVariant(texture_t* tex, TextureVariant* variant)
 {
     texture_variantlist_node_t* node;
     assert(tex);
@@ -235,7 +235,7 @@ void Texture_SetSize(texture_t* tex, const Size2Raw* size)
 }
 
 int Texture_IterateVariants(texture_t* tex,
-    int (*callback)(texturevariant_t* variant, void* paramaters), void* paramaters)
+    int (*callback)(TextureVariant* variant, void* paramaters), void* paramaters)
 {
     int result = 0;
     assert(tex);

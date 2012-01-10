@@ -1142,7 +1142,7 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ms, byte unit, const texturevariant_t* texture,
+static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* texture,
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
     float tOffset, float opacity)
 {
@@ -1181,7 +1181,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
-        const texturevariant_t* tex;
+        const TextureVariant* tex;
     } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
@@ -1267,7 +1267,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     // Setup the primary texture unit.
     if(texUnits[MTU_PRIMARY].tex)
     {
-        const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
+        const TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
         int magMode = glmode[texMagMode];
         float sScale, tScale;
 
@@ -1291,7 +1291,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the detail texture unit?
         if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
         {
-            const texturevariant_t* tex = texUnits[MTU_DETAIL].tex;
+            const TextureVariant* tex = texUnits[MTU_DETAIL].tex;
             const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
             const float height = Texture_Height(TextureVariant_GeneralCase(tex));
             float scale = Material_DetailScale(mat);
@@ -1307,7 +1307,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the shiny texture units?
         if(texUnits[MTU_REFLECTION].tex)
         {
-            const texturevariant_t* tex = texUnits[MTU_REFLECTION].tex;
+            const TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
             const blendmode_t blendmode = Material_ShinyBlendmode(mat);
             const float strength = Material_ShinyStrength(mat);
 
@@ -1316,7 +1316,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
 
         if(texUnits[MTU_REFLECTION_MASK].tex)
         {
-            const texturevariant_t* tex = texUnits[MTU_REFLECTION_MASK].tex;
+            const TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
             setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
                 snapshot->units[MTU_PRIMARY].magMode,

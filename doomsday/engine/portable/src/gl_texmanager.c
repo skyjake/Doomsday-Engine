@@ -479,7 +479,7 @@ static void emptyVariantSpecificationList(variantspecificationlist_t* list)
     }
 }
 
-static int compareTextureVariantWithVariantSpecification(texturevariant_t* tex, void* paramaters)
+static int compareTextureVariantWithVariantSpecification(TextureVariant* tex, void* paramaters)
 {
     texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
     return (TextureVariant_Spec(tex) == spec? 1 : 0);
@@ -560,10 +560,10 @@ typedef enum {
 typedef struct {
     choosevariantmethod_t method;
     const texturevariantspecification_t* spec;
-    texturevariant_t* chosen;
+    TextureVariant* chosen;
 } choosevariantworker_paramaters_t;
 
-static int chooseVariantWorker(texturevariant_t* variant, void* context)
+static int chooseVariantWorker(TextureVariant* variant, void* context)
 {
     choosevariantworker_paramaters_t* p = (choosevariantworker_paramaters_t*) context;
     const texturevariantspecification_t* cand = TextureVariant_Spec(variant);
@@ -589,7 +589,7 @@ static int chooseVariantWorker(texturevariant_t* variant, void* context)
     return 0; // Continue iteration.
 }
 
-static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* tex,
+static TextureVariant* chooseVariant(choosevariantmethod_t method, texture_t* tex,
     const texturevariantspecification_t* spec)
 {
     choosevariantworker_paramaters_t params;
@@ -602,7 +602,7 @@ static texturevariant_t* chooseVariant(choosevariantmethod_t method, texture_t* 
     return params.chosen;
 }
 
-static int releaseVariantGLTexture(texturevariant_t* variant, void* paramaters)
+static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
 {
     texturevariantspecification_t* spec = (texturevariantspecification_t*)paramaters;
     if(!spec || spec == TextureVariant_Spec(variant))
@@ -634,7 +634,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, const textureconte
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
-    const texturecontent_t* content, texturevariant_t* variant)
+    const texturecontent_t* content, TextureVariant* variant)
 {
     assert(content && variant);
     if(!novideo)
@@ -838,7 +838,7 @@ static byte loadSourceImage(texture_t* tex, const texturevariantspecification_t*
     return loadResult;
 }
 
-static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareVariant(TextureVariant* tex, image_t* image)
 {
     const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(tex));
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
@@ -1041,7 +1041,7 @@ static uploadcontentmethod_t prepareVariant(texturevariant_t* tex, image_t* imag
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
 }
 
-static uploadcontentmethod_t prepareDetailVariant(texturevariant_t* tex, image_t* image)
+static uploadcontentmethod_t prepareDetailVariant(TextureVariant* tex, image_t* image)
 {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
     float baMul, hiMul, loMul, s, t;
@@ -2949,7 +2949,7 @@ void GL_ReleaseTexturesForRawImages(void)
     Z_Free(rawTexs);
 }
 
-static int setVariantMinFilter(texturevariant_t* tex, void* paramaters)
+static int setVariantMinFilter(TextureVariant* tex, void* paramaters)
 {
     DGLuint glName = TextureVariant_GLName(tex);
     if(glName)
@@ -3133,8 +3133,8 @@ static void performImageAnalyses(texture_t* tex, const image_t* image,
     }
 }
 
-static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
-    texturevariantspecification_t* spec, texturevariant_t* variant,
+static TextureVariant* tryLoadImageAndPrepareVariant(texture_t* tex,
+    texturevariantspecification_t* spec, TextureVariant* variant,
     byte* result)
 {
     uploadcontentmethod_t uploadMethod;
@@ -3252,11 +3252,11 @@ static texturevariant_t* tryLoadImageAndPrepareVariant(texture_t* tex,
     return variant;
 }
 
-static texturevariant_t* findVariantForSpec(texture_t* tex,
+static TextureVariant* findVariantForSpec(texture_t* tex,
     const texturevariantspecification_t* spec)
 {
     // Look for an exact match.
-    texturevariant_t* variant = chooseVariant(METHOD_MATCH, tex, spec);
+    TextureVariant* variant = chooseVariant(METHOD_MATCH, tex, spec);
 #if _DEBUG
     // 07/04/2011 dj: The "fuzzy selection" features are yet to be implemented.
     // As such, the following should NOT return a valid variant iff the rest of
@@ -3273,11 +3273,11 @@ static texturevariant_t* findVariantForSpec(texture_t* tex,
     return variant;
 }
 
-const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
+const TextureVariant* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
     // Have we already prepared something suitable?
-    texturevariant_t* variant = findVariantForSpec(tex, spec);
+    TextureVariant* variant = findVariantForSpec(tex, spec);
 
     if(variant && TextureVariant_IsPrepared(variant))
     {
@@ -3301,7 +3301,7 @@ const texturevariant_t* GL_PrepareTextureVariant2(texture_t* tex, texturevariant
     return variant;
 }
 
-const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec)
+const TextureVariant* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTextureVariant2(tex, spec, NULL);
 }
@@ -3309,7 +3309,7 @@ const texturevariant_t* GL_PrepareTextureVariant(texture_t* tex, texturevariants
 DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* returnOutcome)
 {
-    const texturevariant_t* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
+    const TextureVariant* variant = GL_PrepareTextureVariant2(tex, spec, returnOutcome);
     if(!variant) return 0;
     return TextureVariant_GLName(variant);
 }

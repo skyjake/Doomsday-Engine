@@ -45,17 +45,17 @@ struct texturevariant_s {
     texturevariantspecification_t* _spec;
 };
 
-texturevariant_t* TextureVariant_New(texture_t* generalCase,
+TextureVariant* TextureVariant_New(texture_t* generalCase,
     texturevariantspecification_t* spec)
 {
-    texturevariant_t* tex;
+    TextureVariant* tex;
 
     if(!generalCase)
         Con_Error("TextureVariant::New: Attempted with invalid generalCase reference (=NULL).");
     if(!spec)
         Con_Error("TextureVariant::New: Attempted with invalid spec reference (=NULL).");
 
-    tex = (texturevariant_t*) malloc(sizeof(*tex));
+    tex = (TextureVariant*) malloc(sizeof(*tex));
     if(!tex)
         Con_Error("TextureVariant::Construct: Failed on allocation of %lu bytes for "
             "new TextureVariant.", (unsigned long) sizeof(*tex));
@@ -68,76 +68,76 @@ texturevariant_t* TextureVariant_New(texture_t* generalCase,
     return tex;
 }
 
-void TextureVariant_Delete(texturevariant_t* tex)
+void TextureVariant_Delete(TextureVariant* tex)
 {
     assert(tex);
     free(tex);
 }
 
-struct texture_s* TextureVariant_GeneralCase(const texturevariant_t* tex)
+struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex)
 {
     assert(tex);
     return tex->_generalCase;
 }
 
-boolean TextureVariant_IsMasked(const texturevariant_t* tex)
+boolean TextureVariant_IsMasked(const TextureVariant* tex)
 {
     assert(tex);
     return (tex->_flags & TVF_IS_MASKED) != 0;
 }
 
-void TextureVariant_FlagMasked(texturevariant_t* tex, boolean yes)
+void TextureVariant_FlagMasked(TextureVariant* tex, boolean yes)
 {
     assert(tex);
     // if(yes) tex->_flags |= TVF_IS_MASKED; else tex->_flags &= ~TVF_IS_MASKED;
     tex->_flags ^= (-yes ^ tex->_flags) & TVF_IS_MASKED;
 }
 
-boolean TextureVariant_IsUploaded(const texturevariant_t* tex)
+boolean TextureVariant_IsUploaded(const TextureVariant* tex)
 {
     assert(tex);
     return (tex->_flags & TVF_IS_UPLOADED) != 0;
 }
 
-void TextureVariant_FlagUploaded(texturevariant_t* tex, boolean yes)
+void TextureVariant_FlagUploaded(TextureVariant* tex, boolean yes)
 {
     assert(tex);
     // if(yes) tex->_flags |= TVF_IS_UPLOADED; else tex->_flags &= ~TVF_IS_UPLOADED;
     tex->_flags ^= (-yes ^ tex->_flags) & TVF_IS_UPLOADED;
 }
 
-boolean TextureVariant_IsPrepared(const texturevariant_t* tex)
+boolean TextureVariant_IsPrepared(const TextureVariant* tex)
 {
     return TextureVariant_IsUploaded(tex) && 0 != TextureVariant_GLName(tex);
 }
 
-void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t)
+void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t)
 {
     assert(tex);
     if(s) *s = tex->_s;
     if(t) *t = tex->_t;
 }
 
-void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t)
+void TextureVariant_SetCoords(TextureVariant* tex, float s, float t)
 {
     assert(tex);
     tex->_s = s;
     tex->_t = t;
 }
 
-texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex)
+texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex)
 {
     assert(tex);
     return tex->_spec;
 }
 
-DGLuint TextureVariant_GLName(const texturevariant_t* tex)
+DGLuint TextureVariant_GLName(const TextureVariant* tex)
 {
     assert(tex);
     return tex->_glName;
 }
 
-void TextureVariant_SetGLName(texturevariant_t* tex, DGLuint glName)
+void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName)
 {
     assert(tex);
     tex->_glName = glName;

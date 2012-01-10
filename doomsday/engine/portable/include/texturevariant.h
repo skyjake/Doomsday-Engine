@@ -37,36 +37,36 @@ struct texture_s;
 /**@}*/
 
 struct texturevariant_s; // The texturevariant instance (opaque).
-typedef struct texturevariant_s texturevariant_t;
+typedef struct texturevariant_s TextureVariant;
 
 /**
  * @param generalCase  Texture from which this variant is derived.
  * @param spec  Specification used to derive this variant. Ownership of
  *      specifcation is NOT given to the resultant TextureVariant
  */
-texturevariant_t* TextureVariant_New(struct texture_s* generalCase,
+TextureVariant* TextureVariant_New(struct texture_s* generalCase,
     texturevariantspecification_t* spec);
 
-void TextureVariant_Delete(texturevariant_t* tex);
+void TextureVariant_Delete(TextureVariant* tex);
 
 /// @return  Superior Texture of which this is a derivative.
-struct texture_s* TextureVariant_GeneralCase(const texturevariant_t* tex);
+struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex);
 
 /// @return  TextureVariantSpecification used to derive this variant.
-texturevariantspecification_t* TextureVariant_Spec(const texturevariant_t* tex);
+texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex);
 
-boolean TextureVariant_IsMasked(const texturevariant_t* tex);
-void TextureVariant_FlagMasked(texturevariant_t* tex, boolean yes);
+boolean TextureVariant_IsMasked(const TextureVariant* tex);
+void TextureVariant_FlagMasked(TextureVariant* tex, boolean yes);
 
-boolean TextureVariant_IsUploaded(const texturevariant_t* tex);
-void TextureVariant_FlagUploaded(texturevariant_t* tex, boolean yes);
+boolean TextureVariant_IsUploaded(const TextureVariant* tex);
+void TextureVariant_FlagUploaded(TextureVariant* tex, boolean yes);
 
-boolean TextureVariant_IsPrepared(const texturevariant_t* tex);
+boolean TextureVariant_IsPrepared(const TextureVariant* tex);
 
-void TextureVariant_Coords(const texturevariant_t* tex, float* s, float* t);
-void TextureVariant_SetCoords(texturevariant_t* tex, float s, float t);
+void TextureVariant_Coords(const TextureVariant* tex, float* s, float* t);
+void TextureVariant_SetCoords(TextureVariant* tex, float s, float t);
 
-DGLuint TextureVariant_GLName(const texturevariant_t* tex);
-void TextureVariant_SetGLName(texturevariant_t* tex, DGLuint glName);
+DGLuint TextureVariant_GLName(const TextureVariant* tex);
+void TextureVariant_SetGLName(TextureVariant* tex, DGLuint glName);
 
 #endif /* LIBDENG_REFRESH_TEXTUREVARIANT_H */
