@@ -1485,9 +1485,6 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
         return NULL; // Not a recognised format. It may still be loadable, however.
     }
 
-    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
-                         F_PrettyPath(fileName), img->size.width, img->size.height) )
-
     // How about some color-keying?
     if(isColorKeyed(fileName))
     {
@@ -1505,6 +1502,9 @@ uint8_t* GL_LoadImageFromFile(image_t* img, DFile* file)
     // Any alpha pixels?
     if(GL_ImageHasAlpha(img))
         img->flags |= IMGF_IS_MASKED;
+
+    VERBOSE( Con_Message("GL_LoadImageFromFile: \"%s\" (%ix%i)\n",
+                         F_PrettyPath(fileName), img->size.width, img->size.height) )
 
     return img->pixels;
 }

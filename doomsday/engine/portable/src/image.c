@@ -29,23 +29,21 @@
 
 void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
 {
+    uint8_t* alphaChannel = NULL, *ptr = NULL;
+    long p, numPels;
     assert(image);
-    {
-    long p, numPels = image->size.width * image->size.height;
-    uint8_t* alphaChannel = NULL;
-    uint8_t* ptr = image->pixels;
 
-    if(0 != image->paletteId || (image->flags & IMGF_IS_MASKED))
+    // Is this suitable?
+    if(0 != image->paletteId || (image->pixelSize < 3 && (image->flags & IMGF_IS_MASKED)))
     {
 #if _DEBUG
         Con_Message("Warning:GL_ConvertToLuminance: Attempt to convert "
-            "paletted/masked image. I don't know this format!");
+                    "paletted/masked image. I don't know this format!");
 #endif
         return;
     }
 
-    if(image->pixelSize < 3)
-        return; // No conversion necessary.
+    numPels = image->size.width * image->size.height;
 
     // Do we need to relocate the alpha data?
     if(retainAlpha && image->pixelSize == 4)
@@ -78,7 +76,6 @@ void GL_ConvertToLuminance(image_t* image, boolean retainAlpha)
     }
 
     image->pixelSize = 1;
-    }
 }
 
 void GL_ConvertToAlpha(image_t* image, boolean makeWhite)
