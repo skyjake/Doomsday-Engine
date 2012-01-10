@@ -29,7 +29,7 @@
 #ifndef LIBCOMMON_SAVESTATE_H
 #define LIBCOMMON_SAVESTATE_H
 
-#include "p_svtexarc.h"
+#include "p_saveio.h"
 
 typedef struct gamesaveinfo_s {
     ddstring_t filePath;
@@ -46,31 +46,12 @@ void SV_Init(void);
 /// Shutdown this module.
 void SV_Shutdown(void);
 
-/**
- * Parse the given string and determine whether it references a logical
- * game-save slot.
- *
- * @param str  String to be parsed. Parse is divided into three passes.
- *   Pass 1: Check for a known game-save name which matches this.
- *      Search is in ascending logical slot order 0...N (where N is
- *      the number of available save slots in the current game).
- *   Pass 2: Check for keyword identifiers.
- *      <quick> = The currently nominated "quick save" slot.
- *   Pass 3: Check for a logical save slot identifier.
- *
- * @return  Save slot identifier of the slot else @c -1
- */
-int SV_ParseGameSaveSlot(const char* str);
-
-/**
- * Force an update of the cached game-save info. To be called (sparingly)
- * at strategic points when an update is necessary (e.g., the game-save
- * paths have changed).
- *
- * \note It is not necessary to call this after a game-save is made,
- * this module will do so automatically.
- */
-void SV_UpdateGameSaveInfo(void);
+#ifdef __JHEXEN__
+void SV_SetSaveVersion(int version);
+int SV_SaveVersion(void);
+#else
+saveheader_t* SV_SaveHeader(void);
+#endif
 
 /**
  * Lookup a save slot by searching for a match on game-save name.
@@ -112,11 +93,6 @@ boolean SV_LoadGame(int slot);
 
 #if __JHEXEN__
 void            SV_MapTeleport(uint map, uint position);
-void            SV_HxInitBaseSlot(void);
-void            SV_HxUpdateRebornSlot(void);
-void            SV_HxClearRebornSlot(void);
-boolean         SV_HxRebornSlotAvailable(void);
-int             SV_HxGetRebornSlot(void);
 #else
 /**
  * Saves a snapshot of the world, a still image.
@@ -202,26 +178,7 @@ material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int g
  */
 void SV_AssertSegment(int segType);
 
-void            SV_BeginSegment(int segType);
-
-void            SV_Write(const void* data, int len);
-void            SV_WriteByte(byte val);
-#if __JHEXEN__
-void            SV_WriteShort(unsigned short val);
-#else
-void            SV_WriteShort(short val);
-#endif
-#if __JHEXEN__
-void            SV_WriteLong(unsigned int val);
-#else
-void            SV_WriteLong(long val);
-#endif
-void            SV_WriteFloat(float val);
-void            SV_Read(void* data, int len);
-byte            SV_ReadByte(void);
-short           SV_ReadShort(void);
-long            SV_ReadLong(void);
-float           SV_ReadFloat(void);
+void SV_BeginSegment(int segType);
 
 /**
  * Update mobj flag values from those used in legacy game-save formats

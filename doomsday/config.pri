@@ -102,6 +102,7 @@ unix {
     # Ease up on the warnings. (The old C code is a bit messy.)
     QMAKE_CFLAGS_WARN_ON -= -Wall
     QMAKE_CFLAGS_WARN_ON -= -W
+    QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration
 }
 unix:!macx {
     # Generic Unix build options.

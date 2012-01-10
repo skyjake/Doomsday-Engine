@@ -23,6 +23,7 @@
  */
 
 #include "de_base.h"
+#include "de_console.h"
 #include "materials.h"
 #include "materialarchive.h"
 
