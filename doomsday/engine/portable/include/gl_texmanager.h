@@ -128,8 +128,8 @@ void GL_ReleaseTexturesByNamespace(texturenamespaceid_t namespaceId);
  *
  * \note Can also be used as an iterator callback.
  */
-int GL_ReleaseGLTexturesByTexture2(texture_t* texture, void* paramaters);
-int GL_ReleaseGLTexturesByTexture(texture_t* texture); /*paramaters=NULL*/
+int GL_ReleaseGLTexturesByTexture2(Texture* texture, void* paramaters);
+int GL_ReleaseGLTexturesByTexture(Texture* texture); /*paramaters=NULL*/
 
 /**
  * Release all variants of @a tex which match @a spec.
@@ -137,7 +137,7 @@ int GL_ReleaseGLTexturesByTexture(texture_t* texture); /*paramaters=NULL*/
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
  * @param spec  Specification to match. Comparision mode is exact and not fuzzy.
  */
-void GL_ReleaseVariantTexturesBySpec(texture_t* tex, texturevariantspecification_t* spec);
+void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t* spec);
 
 /// Release all textures associated with the identified colorpalette @a paletteId.
 void GL_ReleaseTexturesByColorPalette(colorpaletteid_t paletteId);
@@ -205,13 +205,13 @@ byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath, const ch
 byte GL_LoadFlatLump(struct image_s* image, DFile* file);
 
 byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass, int tmap,
-    int border, texture_t* tex);
+    int border, Texture* tex);
 
 byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 
-byte GL_LoadPatchComposite(struct image_s* image, texture_t* tex);
+byte GL_LoadPatchComposite(struct image_s* image, Texture* tex);
 
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, texture_t* tex, boolean zeroMask);
+byte GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
@@ -280,15 +280,15 @@ typedef enum {
  *
  * @return  GL-name of the prepared texture if successful else @c 0
  */
-DGLuint GL_PrepareTexture2(texture_t* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-DGLuint GL_PrepareTexture(texture_t* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
+DGLuint GL_PrepareTexture2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+DGLuint GL_PrepareTexture(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL */
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
  * \todo Should not need to be public.
  */
-const struct texturevariant_s* GL_PrepareTextureVariant2(texture_t* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTextureVariant(texture_t* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+const struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+const struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
 
 /**
  * Here follows miscellaneous routines currently awaiting refactoring into the
@@ -305,7 +305,7 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
 DGLuint GL_PrepareLightMap(const Uri* path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PreparePatchTexture(texture_t* tex);
+DGLuint GL_PreparePatchTexture(Texture* tex);
 DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
 
 /**

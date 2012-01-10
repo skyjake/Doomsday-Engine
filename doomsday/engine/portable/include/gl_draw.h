@@ -34,8 +34,11 @@
 // 2D drawing routines:
 void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
-void GL_DrawRectd(const RectRawf* rect);
 void GL_DrawRecti(const RectRaw* rect);
+
+void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4]);
+
+void GL_DrawRectd(const RectRawf* rect);
 void GL_DrawRect(float x, float y, float w, float h);
 void GL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
 void GL_DrawRectTextureColor(float x, float y, float w, float h, DGLuint tex, int texW, int texH, const float topColor[3], float topAlpha, const float bottomColor[3], float bottomAlpha);

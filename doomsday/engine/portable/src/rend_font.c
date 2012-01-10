@@ -796,6 +796,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     int alignFlags, short textFlags)
 {
     float x = (float) posX, y = (float) posY;
+    Point2Raw coords[4];
+    RectRaw geometry;
+    DGLuint glTex;
 
     if(alignFlags & ALIGN_RIGHT)
         x -= Fonts_CharWidth(font, ch);
@@ -812,92 +815,54 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
     switch(Font_Type(font))
     {
-    case FT_BITMAP: {
-        int s[2], t[2], x = 0, y = 0, w, h;
-
-        if(0 != BitmapFont_GLTextureName(font))
-            GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
-
-        BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-        w = s[1] - s[0];
-        h = t[1] - t[0];
-
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
-
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
-
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
-
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
-
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+    case FT_BITMAP:
+        glTex = BitmapFont_GLTextureName(font);
+        memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
+        BitmapFont_CharCoords(font, ch, coords);
         break;
-      }
+
     case FT_BITMAPCOMPOSITE: {
-        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-        DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
-        int s[2], t[2], x = 0, y = 0, w, h;
+        const uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
 
-        if(glTex)
+        glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
+
+        if(border)
         {
-            GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            geometry.origin.x -= border;
+            geometry.origin.y -= border;
+            geometry.size.width += border*2;
+            geometry.size.height += border*2;
         }
-        else
-        {
-            GL_SetNoTexture();
-        }
-
-        BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-
-        x = cf->_chars[ch].geometry.origin.x;
-        y = cf->_chars[ch].geometry.origin.y;
-        w = BitmapCompositeFont_CharWidth(font, ch);
-        h = BitmapCompositeFont_CharHeight(font, ch);
-        if(glTex)
-        {
-            w += 2;
-            h += 2;
-        }
-
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
-
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
-
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
-
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
-
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+        BitmapCompositeFont_CharCoords(font, ch, coords);
         break;
       }
     default:
         Con_Error("FR_DrawChar: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.
     }
+
+    if(font->_marginWidth)
+    {
+        geometry.origin.x -= font->_marginWidth;
+        geometry.size.width += font->_marginWidth*2;
+    }
+    if(font->_marginHeight)
+    {
+        geometry.origin.y -= font->_marginHeight;
+        geometry.size.height += font->_marginHeight*2;
+    }
+
+    if(glTex)
+    {
+        /// \fixme Filtering should be determined at a higher level.
+        GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
+    }
+    else
+    {
+        GL_SetNoTexture();
+    }
+    GL_DrawRectWithCoords(&geometry, coords);
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(-x, -y, 0);

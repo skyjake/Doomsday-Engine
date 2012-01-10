@@ -933,7 +933,7 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];
@@ -972,7 +972,7 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];
@@ -1009,7 +1009,7 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramate
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];

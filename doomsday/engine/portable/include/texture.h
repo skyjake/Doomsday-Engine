@@ -22,8 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_GL_TEXTURE_H
-#define LIBDENG_GL_TEXTURE_H
+#ifndef LIBDENG_REFRESH_TEXTURE_H
+#define LIBDENG_REFRESH_TEXTURE_H
 
 #include "size.h"
 #include "textures.h"
@@ -57,26 +57,8 @@ typedef enum {
  * Presents an abstract interface to all supported texture types so that
  * they may be managed transparently.
  */
-typedef struct texture_s {
-    /// @see textureFlags
-    int _flags;
-
-    /// Size in logical pixels (not necessarily the same as pixel dimensions).
-    Size2* _size;
-
-    /// Unique identifier of the primary binding in the owning collection.
-    textureid_t _primaryBind;
-
-    /// List of variants (e.g., color translations).
-    struct texture_variantlist_node_s* _variants;
-
-    /// Table of analyses object ptrs, used for various purposes depending
-    /// on the variant specification.
-    void* _analyses[TEXTURE_ANALYSIS_COUNT];
-
-    /// User data associated with this texture.
-    void* _userData;
-} texture_t;
+struct texture_s; // The texture instance (opaque).
+typedef struct texture_s Texture;
 
 /**
  * Construct a new Texture.
@@ -90,14 +72,14 @@ typedef struct texture_s {
  *    texture at load time.
  * @param userData  User data to associate with the resultant texture.
  */
-texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size, void* userData);
-texture_t* Texture_New(int flags, textureid_t bindId, void* userData);
+Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size, void* userData);
+Texture* Texture_New(int flags, textureid_t bindId, void* userData);
 
-void Texture_Delete(texture_t* tex);
+void Texture_Delete(Texture* tex);
 
-textureid_t Texture_PrimaryBind(const texture_t* tex);
+textureid_t Texture_PrimaryBind(const Texture* tex);
 
-void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId);
+void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId);
 
 /**
  * Attach new user data. If data is already present it will be replaced.
@@ -105,19 +87,19 @@ void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId);
  *
  * @param userData  Data to be attached.
  */
-void Texture_AttachUserData(texture_t* tex, void* userData);
+void Texture_AttachUserData(Texture* tex, void* userData);
 
 /**
  * Detach any associated user data. Ownership is relinquished to caller.
  * @return  Associated user data.
  */
-void* Texture_DetachUserData(texture_t* tex);
+void* Texture_DetachUserData(Texture* tex);
 
 /// @return  Associated user data if any else @c NULL.
-void* Texture_UserData(const texture_t* tex);
+void* Texture_UserData(const Texture* tex);
 
 /// Destroy all prepared variants owned by this texture.
-void Texture_ClearVariants(texture_t* tex);
+void Texture_ClearVariants(Texture* tex);
 
 /**
  * Add a new prepared variant to the list of resources for this Texture.
@@ -125,7 +107,7 @@ void Texture_ClearVariants(texture_t* tex);
  *
  * @param variant  Variant instance to add to the resource list.
  */
-struct texturevariant_s* Texture_AddVariant(texture_t* tex, struct texturevariant_s* variant);
+struct texturevariant_s* Texture_AddVariant(Texture* tex, struct texturevariant_s* variant);
 
 /**
  * Iterate over all derived TextureVariants, making a callback for each.
@@ -137,7 +119,7 @@ struct texturevariant_s* Texture_AddVariant(texture_t* tex, struct texturevarian
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Texture_IterateVariants(texture_t* tex,
+int Texture_IterateVariants(Texture* tex,
     int (*callback)(struct texturevariant_s* instance, void* paramaters),
     void* paramaters);
 
@@ -148,55 +130,55 @@ int Texture_IterateVariants(texture_t* tex,
  * @param analysis  Identifier of the data being attached.
  * @param data  Data to be attached.
  */
-void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis, void* data);
+void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis, void* data);
 
 /**
  * Detach any associated analysis data. Ownership is relinquished to caller.
  *
  * @return  Associated data for the specified analysis identifier.
  */
-void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis);
+void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis);
 
 /// @return  Associated data for the specified analysis identifier.
-void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis);
+void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis);
 
 /// @return  @c true iff the data associated with @a tex does not originate from the current game.
-boolean Texture_IsCustom(const texture_t* tex);
+boolean Texture_IsCustom(const Texture* tex);
 
 /// @return  @see textureFlags
-int Texture_Flags(const texture_t* tex);
+int Texture_Flags(const Texture* tex);
 
 /**
  * Change the value of the flags property.
  * @param flags  @see textureFlags
  */
-void Texture_SetFlags(texture_t* tex, int flags);
+void Texture_SetFlags(Texture* tex, int flags);
 
 /// Retrieve logical dimensions (not necessarily the same as pixel dimensions).
-const Size2* Texture_Size(const texture_t* tex);
+const Size2* Texture_Size(const Texture* tex);
 
 /**
  * Change logical pixel dimensions.
  * @param size  New size.
  */
-void Texture_SetSize(texture_t* tex, const Size2Raw* size);
+void Texture_SetSize(Texture* tex, const Size2Raw* size);
 
 /// @return  Logical width (not necessarily the same as pixel width).
-int Texture_Width(const texture_t* tex);
+int Texture_Width(const Texture* tex);
 
 /**
  * Change logical width.
  * @param width  Width in logical pixels.
  */
-void Texture_SetWidth(texture_t* tex, int width);
+void Texture_SetWidth(Texture* tex, int width);
 
 /// @return  Logical height (not necessarily the same as pixel height).
-int Texture_Height(const texture_t* tex);
+int Texture_Height(const Texture* tex);
 
 /**
  * Change logical height.
  * @param height  Height in logical pixels.
  */
-void Texture_SetHeight(texture_t* tex, int height);
+void Texture_SetHeight(Texture* tex, int height);
 
-#endif /* LIBDENG_GL_TEXTURE_H */
+#endif /* LIBDENG_REFRESH_TEXTURE_H */
