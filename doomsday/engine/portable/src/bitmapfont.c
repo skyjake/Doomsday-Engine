@@ -461,7 +461,7 @@ int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch)
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].geometry.size.width == 0) return font->_noCharSize.width;
-    return cf->_chars[ch].geometry.size.width - font->_marginWidth * 2 - 2;
+    return cf->_chars[ch].geometry.size.width - font->_marginWidth * 2;
 }
 
 int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
@@ -469,7 +469,7 @@ int BitmapCompositeFont_CharHeight(font_t* font, unsigned char ch)
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font && font->_type == FT_BITMAPCOMPOSITE);
     if(cf->_chars[ch].geometry.size.height == 0) return font->_noCharSize.height;
-    return cf->_chars[ch].geometry.size.height - font->_marginHeight * 2 - 2;
+    return cf->_chars[ch].geometry.size.height - font->_marginHeight * 2;
 }
 
 static __inline texturevariantspecification_t* BitmapCompositeFont_CharSpec(void)
@@ -509,10 +509,8 @@ void BitmapCompositeFont_Prepare(font_t* font)
         R_GetPatchInfo(patch, &info);
         memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
-        ch->geometry.origin.x += -1 + font->_marginWidth;
-        ch->geometry.origin.y += -1 + font->_marginHeight;
-        ch->geometry.size.width  += 2;
-        ch->geometry.size.height += 2;
+        ch->geometry.origin.x += font->_marginWidth;
+        ch->geometry.origin.y += font->_marginHeight;
 
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;

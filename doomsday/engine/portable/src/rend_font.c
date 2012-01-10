@@ -848,6 +848,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
         DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
         int s[2], t[2], x = 0, y = 0, w, h;
+        const uint8_t border = 1;
+        Point2Raw coords[4];
+        RectRaw geometry;
 
         if(glTex)
         {
@@ -866,32 +869,35 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         y = cf->_chars[ch].geometry.origin.y;
         w = BitmapCompositeFont_CharWidth(font, ch);
         h = BitmapCompositeFont_CharHeight(font, ch);
-        if(glTex)
-        {
-            w += 2;
-            h += 2;
-        }
 
         x -= font->_marginWidth;
         y -= font->_marginHeight;
 
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
+        if(border)
+        {
+            x -= border;
+            y -= border;
+            w += border*2;
+            h += border*2;
+        }
 
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
+        geometry.origin.x = x;
+        geometry.origin.y = y;
+        geometry.size.width  = w;
+        geometry.size.height = h;
 
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
+        coords[0].x = s[0];
+        coords[0].y = t[0];
+        coords[2].x = s[1];
+        coords[2].y = t[1];
 
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+        coords[1].x = s[1];
+        coords[1].y = t[0];
+
+        coords[3].x = s[0];
+        coords[3].y = t[1];
+
+        GL_DrawRectWithCoords(&geometry, coords);
         break;
       }
     default:
