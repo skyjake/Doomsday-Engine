@@ -813,63 +813,49 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP: {
+        DGLuint glTex = BitmapFont_GLTextureName(font);
         Point2Raw coords[4];
-        RectRaw geometry;
-
-        if(0 != BitmapFont_GLTextureName(font))
-            GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
-
-        BitmapFont_CharCoords(font, ch, coords);
-
-        geometry.origin.x = -font->_marginWidth;
-        geometry.origin.y = -font->_marginHeight;
-        geometry.size.width  = coords[2].x - coords[0].x;
-        geometry.size.height = coords[2].y - coords[0].y;
-
-        GL_DrawRectWithCoords(&geometry, coords);
-        break;
-      }
-    case FT_BITMAPCOMPOSITE: {
-        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-        uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
-        DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
-        int x = 0, y = 0, w, h;
-        Point2Raw coords[4];
-        RectRaw geometry;
 
         if(glTex)
         {
-            GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            GL_BindTexture(glTex, GL_NEAREST);
         }
         else
         {
             GL_SetNoTexture();
         }
 
-        x = cf->_chars[ch].geometry.origin.x;
-        y = cf->_chars[ch].geometry.origin.y;
-        w = BitmapCompositeFont_CharWidth(font, ch);
-        h = BitmapCompositeFont_CharHeight(font, ch);
+        BitmapFont_CharCoords(font, ch, coords);
+        GL_DrawRectWithCoords(BitmapFont_CharGeometry(font, ch), coords);
+        break;
+      }
+    case FT_BITMAPCOMPOSITE: {
+        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+        uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
+        DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        Point2Raw coords[4];
+        RectRaw geometry;
 
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
-
-        if(border)
+        if(glTex)
         {
-            x -= border;
-            y -= border;
-            w += border*2;
-            h += border*2;
+            /// \fixme Filtering determined should be determined at a higher level.
+            GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
+        }
+        else
+        {
+            GL_SetNoTexture();
         }
 
-        geometry.origin.x = x;
-        geometry.origin.y = y;
-        geometry.size.width  = w;
-        geometry.size.height = h;
-
+        memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
+        if(border)
+        {
+            geometry.origin.x -= border;
+            geometry.origin.y -= border;
+            geometry.size.width += border*2;
+            geometry.size.height += border*2;
+        }
         BitmapCompositeFont_CharCoords(font, ch, coords);
+
         GL_DrawRectWithCoords(&geometry, coords);
         break;
       }

@@ -137,11 +137,31 @@ static void* readFormat0(font_t* font, DFile* file)
     for(i = 0; i < glyphCount; ++i)
     {
         bitmapfont_char_t* ch = &bf->_chars[i < MAX_CHARS ? i : MAX_CHARS - 1];
+        ushort x = inShort(file);
+        ushort y = inShort(file);
+        ushort w = inByte(file);
+        ushort h = inByte(file);
 
-        ch->geometry.origin.x = inShort(file);
-        ch->geometry.origin.y = inShort(file);
-        ch->geometry.size.width  = inByte(file);
-        ch->geometry.size.height = inByte(file);
+        ch->geometry.origin.x = -font->_marginWidth;
+        ch->geometry.origin.y = -font->_marginHeight;
+        ch->geometry.size.width  = w;
+        ch->geometry.size.height = h;
+
+        // Top left.
+        ch->coords[0].x = x;
+        ch->coords[0].y = y;
+
+        // Bottom right.
+        ch->coords[2].x = x + w;
+        ch->coords[2].y = y + h;
+
+        // Top right.
+        ch->coords[1].x = ch->coords[2].x;
+        ch->coords[1].y = ch->coords[0].y;
+
+        // Bottom left.
+        ch->coords[3].x = ch->coords[0].x;
+        ch->coords[3].y = ch->coords[2].y;
 
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;
@@ -219,18 +239,31 @@ static void* readFormat2(font_t* font, DFile* file)
         ushort y = inShort(file);
         ushort w = inShort(file);
         ushort h = inShort(file);
+        bitmapfont_char_t* ch = &bf->_chars[code];
 
-        if(code < MAX_CHARS)
-        {
-            bf->_chars[code].geometry.origin.x = x;
-            bf->_chars[code].geometry.origin.y = y;
-            bf->_chars[code].geometry.size.width  = w;
-            bf->_chars[code].geometry.size.height = h;
-        }
+        ch->geometry.origin.x = -font->_marginWidth;
+        ch->geometry.origin.y = -font->_marginHeight;
+        ch->geometry.size.width  = w;
+        ch->geometry.size.height = h;
 
+        // Top left.
+        ch->coords[0].x = x;
+        ch->coords[0].y = y;
 
-        avgSize.width  += bf->_chars[code].geometry.size.width;
-        avgSize.height += bf->_chars[code].geometry.size.height;
+        // Bottom right.
+        ch->coords[2].x = x + w;
+        ch->coords[2].y = y + h;
+
+        // Top right.
+        ch->coords[1].x = ch->coords[2].x;
+        ch->coords[1].y = ch->coords[0].y;
+
+        // Bottom left.
+        ch->coords[3].x = ch->coords[0].x;
+        ch->coords[3].y = ch->coords[2].y;
+
+        avgSize.width  += ch->geometry.size.width;
+        avgSize.height += ch->geometry.size.height;
     }
 
     font->_noCharSize.width  = avgSize.width  / glyphCount;
@@ -286,6 +319,14 @@ void BitmapFont_Delete(font_t* font)
 {
     BitmapFont_DeleteGLTexture(font);
     free(font);
+}
+
+const RectRaw* BitmapFont_CharGeometry(font_t* font, unsigned char chr)
+{
+    bitmapfont_t* bf = (bitmapfont_t*)font;
+    bitmapfont_char_t* ch = &bf->_chars[chr];
+    assert(font->_type == FT_BITMAP);
+    return &ch->geometry;
 }
 
 int BitmapFont_CharWidth(font_t* font, unsigned char ch)
@@ -420,29 +461,14 @@ int BitmapFont_TextureHeight(const font_t* font)
     return bf->_texSize.height;
 }
 
-void BitmapFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4])
+void BitmapFont_CharCoords(font_t* font, unsigned char chr, Point2Raw coords[4])
 {
     bitmapfont_t* bf = (bitmapfont_t*)font;
-    assert(font && font->_type == FT_BITMAP);
+    bitmapfont_char_t* ch = &bf->_chars[chr];
+    assert(font->_type == FT_BITMAP);
     if(!coords) return;
-
     BitmapFont_Prepare(font);
-
-    // Top left.
-    coords[0].x = bf->_chars[ch].geometry.origin.x;
-    coords[0].y = bf->_chars[ch].geometry.origin.y;
-
-    // Bottom right.
-    coords[2].x = bf->_chars[ch].geometry.origin.x + bf->_chars[ch].geometry.size.width;
-    coords[2].y = bf->_chars[ch].geometry.origin.y + bf->_chars[ch].geometry.size.height;
-
-    // Top right.
-    coords[1].x = coords[2].x;
-    coords[1].y = coords[0].y;
-
-    // Bottom left.
-    coords[3].x = coords[0].x;
-    coords[3].y = coords[2].y;
+    memcpy(coords, ch->coords, sizeof(Point2Raw) * 4);
 }
 
 font_t* BitmapCompositeFont_New(fontid_t bindId)
@@ -466,6 +492,14 @@ void BitmapCompositeFont_Delete(font_t* font)
 {
     BitmapCompositeFont_DeleteGLTextures(font);
     free(font);
+}
+
+const RectRaw* BitmapCompositeFont_CharGeometry(font_t* font, unsigned char chr)
+{
+    bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
+    bitmapcompositefont_char_t* ch = &cf->_chars[chr];
+    assert(font->_type == FT_BITMAPCOMPOSITE);
+    return &ch->geometry;
 }
 
 int BitmapCompositeFont_CharWidth(font_t* font, unsigned char ch)
@@ -516,16 +550,13 @@ void BitmapCompositeFont_Prepare(font_t* font)
 
         if(0 == patch) continue;
 
-        ++numPatches;
-
         R_GetPatchInfo(patch, &info);
         memcpy(&ch->geometry, &info.geometry, sizeof ch->geometry);
 
-        ch->geometry.origin.x += font->_marginWidth;
-        ch->geometry.origin.y += font->_marginHeight;
-
-        avgSize.width  += ch->geometry.size.width;
-        avgSize.height += ch->geometry.size.height;
+        ch->geometry.origin.x -= font->_marginWidth;
+        ch->geometry.origin.y -= font->_marginHeight;
+        ch->geometry.size.width  += font->_marginWidth  * 2;
+        ch->geometry.size.height += font->_marginHeight * 2;
 
         tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
         ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
@@ -533,6 +564,10 @@ void BitmapCompositeFont_Prepare(font_t* font)
         /// original texture (thus applied Upscale & Sharpen +=1)
         /// custom (=0).
         ch->border = 1;
+
+        avgSize.width  += ch->geometry.size.width;
+        avgSize.height += ch->geometry.size.height;
+        ++numPatches;
     }
 
     font->_noCharSize.width  = avgSize.width  / numPatches;
@@ -617,7 +652,7 @@ uint8_t BitmapCompositeFont_CharBorder(font_t* font, unsigned char chr)
     return ch->border;
 }
 
-void BitmapCompositeFont_CharCoords(font_t* font, unsigned char ch, Point2Raw coords[4])
+void BitmapCompositeFont_CharCoords(font_t* font, unsigned char chr, Point2Raw coords[4])
 {
     assert(font);
     if(!coords) return;
