@@ -195,7 +195,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
-    *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
+    *list = realloc(*list, sizeof(**list) * ++(*listSize));
     (*list)[(*listSize)-1] = newPath;
 }
 
@@ -539,37 +539,6 @@ static int validateResource(AbstractResource* rec, void* paramaters)
     return validated;
 }
 
-static boolean isRequiredResource(Game* game, const char* absolutePath)
-{
-    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
-    if(records)
-    {
-        AbstractResource* const* recordIt;
-        // Is this resource from a container?
-        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
-        if(file)
-        {
-            // Yes; use the container's path instead.
-            absolutePath = Str_Text(AbstractFile_Path(file));
-        }
-
-        for(recordIt = records; *recordIt; recordIt++)
-        {
-            AbstractResource* rec = *recordIt;
-            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
-            {
-                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
-                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    // Not found, so no.
-    return false;
-}
-
 static void locateGameResources(Game* game)
 {
     Game* oldGame = theGame;
@@ -843,8 +812,9 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
-    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
+
+    F_InitVirtualDirectoryMappings();
 
     if(!DD_IsNullGame(p->game))
     {
@@ -1261,45 +1231,43 @@ static int countPlayableGames(void)
     return count;
 }
 
-/**
- * Attempt automatic game selection.
- */
-void DD_AutoselectGame(void)
+static Game* findFirstPlayableGame(void)
 {
-    int numPlayableGames = countPlayableGames();
-
-    if(0 >= numPlayableGames) return;
-
-    if(1 == numPlayableGames)
+    int i;
+    for(i = 0; i < gamesCount; ++i)
     {
-        // Find this game and select it.
-        Game* game;
-        int i;
-        for(i = 0; i < gamesCount; ++i)
-        {
-            Game* cand = games[i];
-            if(!allGameResourcesFound(cand)) continue;
-
-            game = cand;
-            break;
-        }
-
-        if(game)
-        {
-            DD_ChangeGame(game);
-        }
-        return;
+        Game* game = games[i];
+        if(allGameResourcesFound(game)) return game;
     }
+    return NULL;
+}
 
+/**
+ * Attempt to determine which game is to be played.
+ *
+ * \todo Logic here could be much more elaborate but is it necessary?
+ */
+Game* DD_AutoselectGame(void)
+{
     if(ArgCheckWith("-game", 1))
     {
         const char* identityKey = ArgNext();
         Game* game = findGameForIdentityKey(identityKey);
+
         if(game && allGameResourcesFound(game))
         {
-            DD_ChangeGame(game);
+            return game;
         }
     }
+
+    // If but one lonely game; select it.
+    if(countPlayableGames() == 1)
+    {
+        return findFirstPlayableGame();
+    }
+
+    // We don't know what to do.
+    return NULL;
 }
 
 int DD_EarlyInit(void)
@@ -1483,7 +1451,7 @@ int DD_Main(void)
         GL_DoUpdate();
     }
 
-    // Add paths to resources specified using -iwad options on the command line.
+    // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
     int p;
 
@@ -1528,21 +1496,34 @@ int DD_Main(void)
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
     {
-        DD_AutoselectGame();
+        Game* game = DD_AutoselectGame();
+
+        if(game)
+        {
+            // An implicit game session has been defined.
+            int p;
+
+            // Add all resources specified using -file options on the command line
+            // to the list for this session.
+            for(p = 0; p < Argc(); ++p)
+            {
+                if(!ArgRecognize("-file", Argv(p))) continue;
+
+                while(++p != Argc() && !ArgIsOption(p))
+                {
+                    addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+                }
+
+                p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
+            }
+
+            // Begin the game session.
+            DD_ChangeGame(game);
+
+            // We do not want to load these resources again on next game change.
+            destroyPathList(&gameResourceFileList, &numGameResourceFileList);
+        }
     }
-
-    // Load resources specified using -file options on the command line.
-    {int p;
-    for(p = 0; p < Argc(); ++p)
-    {
-        if(!ArgRecognize("-file", Argv(p)))
-            continue;
-
-        while(++p != Argc() && !ArgIsOption(p))
-            F_AddFile(Argv(p), 0, false);
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }}
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
@@ -1634,7 +1615,7 @@ int DD_Main(void)
     else
     {
         // No game loaded.
-        // Ok, lets get most of everything else initialized.
+        // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
         F_InitLumpDirectoryMappings();
@@ -2384,9 +2365,10 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
-    ddstring_t foundPath, searchPath;
-    int i, result = 0;
+    boolean didUnloadFiles = false;
+    ddstring_t searchPath;
     Game* game;
+    int i;
 
     // No arguments; unload the current game if loaded.
     if(argc == 1)
@@ -2430,34 +2412,21 @@ D_CMD(Unload)
         return true;
     }
 
-    /// Try the resource locator.
-    Str_Init(&foundPath);
+    // Try the resource locator.
     for(i = 1; i < argc; ++i)
     {
-        Str_Set(&searchPath, argv[i]);
-        Str_Strip(&searchPath);
-
-        if(!F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath))
-            continue;
-
-        // Do not attempt to unload a resource required by the current game.
-        if(isRequiredResource(theGame, Str_Text(&foundPath)))
+        if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath) ||
+           !F_RemoveFile(Str_Text(&searchPath), false/*not required game resources*/))
         {
-            Con_Message("\"%s\" is required by the current game and cannot be unloaded in isolation.\n",
-                F_PrettyPath(Str_Text(&foundPath)));
             continue;
         }
 
-        // We can safely remove this file.
-        if(F_RemoveFile(Str_Text(&foundPath)))
-        {
-            result = 1;
-        }
+        // Success!
+        didUnloadFiles = true;
     }
 
-    Str_Free(&foundPath);
     Str_Free(&searchPath);
-    return result != 0;
+    return didUnloadFiles;
 }
 
 D_CMD(Reset)

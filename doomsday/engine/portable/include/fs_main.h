@@ -157,7 +157,7 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
  * other files are single lumps whose base filename will become the lump name.
  *
  * @param path  Path to the file to be opened. Either a "real" file in the local
- *      file system, or a "virtual" file in the virtual file system.
+ *              file system, or a "virtual" file in the virtual file system.
  * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
  * @return  @c true, if the operation is successful.
@@ -165,14 +165,16 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
 boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate);
 
 /**
- * Remove a file from the virtual file system.
+ * Attempt to remove a file from the virtual file system.
  *
+ * @param permitRequired  @c true= allow removal of resources marked as "required"
+ *                        by the currently loaded Game.
  * @return @c true if the operation is successful.
  */
-boolean F_RemoveFile(const char* path);
+boolean F_RemoveFile(const char* path, boolean permitRequired);
 
 boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate);
-boolean F_RemoveFiles(const char* const* paths, size_t num);
+boolean F_RemoveFiles(const char* const* paths, size_t num, boolean permitRequired);
 
 /**
  * @return  @c true if the file can be opened for reading.
