@@ -262,30 +262,53 @@ def doTask(task):
     """Throws an exception if the task fails."""
 
     if task == 'tag_build':
+        print "TASK: TAG NEW BUILD"
         return autobuild('create')
 
     elif task == 'deb_changes':
+        print "TASK: UPDATE .DEB CHANGELOG"
         return autobuild('debchanges')
 
     elif task == 'build':
+        print "TASK: BUILD RELEASE"
         return autobuild('platform_release')
 
     elif task == 'publish':
+        print "TASK: PUBLISH"
         systemCommand('deng_copy_build_to_sourceforge.sh')
 
     elif task == 'apt_refresh':
+        print "TASK: APT REPOSITORY REFRESH"
         return autobuild('apt')
         
     elif task == 'update_feed':
+        print "TASK: UPDATE FEED"
         autobuild('feed')
         autobuild('xmlfeed')
         
     elif task == 'purge':
+        print "TASK: PURGE"
         return autobuild('purge')
         
     elif task == 'generate_apidoc':
+        print "TASK: GENERATE API DOCUMENTATION"
         os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/engine'))
-        systemCommand('doxygen api.doxy')                 
+        systemCommand('git pull')
+        print "\nPUBLIC API DOCS"
+        systemCommand('doxygen api.doxy >/dev/null')
+        print "\nINTERNAL WIN32 DOCS"
+        systemCommand('doxygen engine-win32.doxy >/dev/null')
+        print "\nINTERNAL MAC/UNIX DOCS"
+        systemCommand('doxygen engine-mac.doxy >/dev/null')        
+        print "\nJDOOM DOCS"
+        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
+        systemCommand('doxygen jdoom.doxy >/dev/null')
+        print "\nJHERETIC DOCS"
+        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
+        systemCommand('doxygen jheretic.doxy >/dev/null')
+        print "\nJHEXEN DOCS"
+        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
+        systemCommand('doxygen jhexen.doxy >/dev/null')
 
     return True
     
