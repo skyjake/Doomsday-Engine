@@ -539,37 +539,6 @@ static int validateResource(AbstractResource* rec, void* paramaters)
     return validated;
 }
 
-static boolean isRequiredResource(Game* game, const char* absolutePath)
-{
-    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
-    if(records)
-    {
-        AbstractResource* const* recordIt;
-        // Is this resource from a container?
-        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
-        if(file)
-        {
-            // Yes; use the container's path instead.
-            absolutePath = Str_Text(AbstractFile_Path(file));
-        }
-
-        for(recordIt = records; *recordIt; recordIt++)
-        {
-            AbstractResource* rec = *recordIt;
-            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
-            {
-                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
-                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    // Not found, so no.
-    return false;
-}
-
 static void locateGameResources(Game* game)
 {
     Game* oldGame = theGame;
@@ -2395,9 +2364,10 @@ D_CMD(Load)
 
 D_CMD(Unload)
 {
-    ddstring_t foundPath, searchPath;
-    int i, result = 0;
+    boolean didUnloadFiles = false;
+    ddstring_t searchPath;
     Game* game;
+    int i;
 
     // No arguments; unload the current game if loaded.
     if(argc == 1)
@@ -2441,34 +2411,21 @@ D_CMD(Unload)
         return true;
     }
 
-    /// Try the resource locator.
-    Str_Init(&foundPath);
+    // Try the resource locator.
     for(i = 1; i < argc; ++i)
     {
-        Str_Set(&searchPath, argv[i]);
-        Str_Strip(&searchPath);
-
-        if(!F_FindResource2(RC_PACKAGE, Str_Text(&searchPath), &foundPath))
-            continue;
-
-        // Do not attempt to unload a resource required by the current game.
-        if(isRequiredResource(theGame, Str_Text(&foundPath)))
+        if(!F_FindResource2(RC_PACKAGE, argv[i], &searchPath) ||
+           !F_RemoveFile(Str_Text(&searchPath), false/*not required game resources*/))
         {
-            Con_Message("\"%s\" is required by the current game and cannot be unloaded in isolation.\n",
-                F_PrettyPath(Str_Text(&foundPath)));
             continue;
         }
 
-        // We can safely remove this file.
-        if(F_RemoveFile(Str_Text(&foundPath)))
-        {
-            result = 1;
-        }
+        // Success!
+        didUnloadFiles = true;
     }
 
-    Str_Free(&foundPath);
     Str_Free(&searchPath);
-    return result != 0;
+    return didUnloadFiles;
 }
 
 D_CMD(Reset)
