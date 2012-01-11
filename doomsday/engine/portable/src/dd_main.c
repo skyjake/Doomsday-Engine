@@ -1431,7 +1431,7 @@ int DD_Main(void)
     FR_Init();
 
     // Enter busy mode until startup complete.
-    Con_InitProgress(200);
+    Con_InitProgress2(200, 0, .25f); // First half.
     Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
             "Starting up...", DD_StartupWorker, 0);
 
@@ -1440,8 +1440,8 @@ int DD_Main(void)
     GL_InitRefresh();
 
     // Do deferred uploads.
-    Con_InitProgress(200);
-    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    Con_InitProgress2(200, .25f, .25f); // Stop here for a while.
+    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Buffering...", DD_DummyWorker, 0);
 
     // Clean up.
@@ -1481,7 +1481,7 @@ int DD_Main(void)
     }}
 
     // Try to locate all required data files for all registered games.
-    Con_InitProgress(200);
+    Con_InitProgress2(200, .25f, 1); // Second half.
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Locating game resources...", DD_LocateAllGameResourcesWorker, 0);
 
