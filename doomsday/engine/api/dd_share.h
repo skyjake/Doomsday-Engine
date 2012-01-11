@@ -1141,7 +1141,7 @@ typedef enum {
 #define TN_MODELREFLECTIONSKINS_NAME "ModelReflectionSkins"
 #define TN_LIGHTMAPS_NAME       "Lightmaps"
 #define TN_FLAREMAPS_NAME       "Flaremaps"
-/**@{*/
+/**@}*/
 
 typedef enum {
     TN_ANY = -1,
