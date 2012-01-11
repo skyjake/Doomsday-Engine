@@ -53,6 +53,7 @@ pilotcfg.py contains information such as (global variables):
 - DISTRIB_DIR: distrib directory path
 - EVENTS_DIR: events directory path
 - APT_DIR: apt repository path (for Linux systems)
+- DOC_DIR: apidoc destination path
 
 The function 'postTaskHook(task)' can be defined for actions to be carried out 
 after a successful execution of a task."""
@@ -281,6 +282,10 @@ def doTask(task):
     elif task == 'purge':
         return autobuild('purge')
         
+    elif task == 'generate_apidoc':
+        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/engine'))
+        systemCommand('doxygen api.doxy')                 
+
     return True
     
 
