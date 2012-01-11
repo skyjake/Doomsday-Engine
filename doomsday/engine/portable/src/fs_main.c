@@ -1085,11 +1085,19 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
     Str_Init(&wildPath);
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
-        Str_Copy(&wildPath, &origWildPath);
+        if(i == -1)
+        {
+            Str_Copy(&wildPath, &origWildPath);
+        }
+        else
+        {
+            // Possible mapping?
+            Str_Copy(&wildPath, searchPath);
+            if(!applyVDMapping(&wildPath, &vdMappings[i]))
+                continue; // No.
 
-        // Possible mapping?
-        if(i >= 0 && !applyVDMapping(&wildPath, &vdMappings[i]))
-            continue; // Not mapped.
+            Str_AppendChar(&wildPath, '*');
+        }
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
         {
@@ -2041,11 +2049,10 @@ static void clearVDMappings(void)
     vdMappingsCount = vdMappingsMax = 0;
 }
 
-/// @return  @c true, if the mapping matched the path.
+/// @return  @c true iff the mapping matched the path.
 static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm)
 {
-    assert(NULL != path && NULL != vdm);
-    if(!strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
+    if(path && vdm && !strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
     {
         // Replace the beginning with the source path.
         ddstring_t temp;

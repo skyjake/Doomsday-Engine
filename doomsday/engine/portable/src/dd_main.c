@@ -812,8 +812,9 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Reset file Ids so previously seen files can be processed again.
     F_ResetFileIds();
-    F_InitVirtualDirectoryMappings();
     F_ResetAllResourceNamespaces();
+
+    F_InitVirtualDirectoryMappings();
 
     if(!DD_IsNullGame(p->game))
     {
