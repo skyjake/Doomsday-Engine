@@ -3140,7 +3140,7 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     texturevariantspecification_t* spec, TextureVariant** variant)
 {
     uploadcontentmethod_t uploadMethod;
-    TexSource source;
+    TexSource source = TEXS_NONE;
     image_t image;
     assert(initedOk && spec);
 
