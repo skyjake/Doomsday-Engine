@@ -195,7 +195,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     F_FixSlashes(newPath, newPath);
     F_ExpandBasePath(newPath, newPath);
 
-    *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
+    *list = realloc(*list, sizeof(**list) * ++(*listSize));
     (*list)[(*listSize)-1] = newPath;
 }
 
@@ -1261,45 +1261,43 @@ static int countPlayableGames(void)
     return count;
 }
 
-/**
- * Attempt automatic game selection.
- */
-void DD_AutoselectGame(void)
+static Game* findFirstPlayableGame(void)
 {
-    int numPlayableGames = countPlayableGames();
-
-    if(0 >= numPlayableGames) return;
-
-    if(1 == numPlayableGames)
+    int i;
+    for(i = 0; i < gamesCount; ++i)
     {
-        // Find this game and select it.
-        Game* game;
-        int i;
-        for(i = 0; i < gamesCount; ++i)
-        {
-            Game* cand = games[i];
-            if(!allGameResourcesFound(cand)) continue;
-
-            game = cand;
-            break;
-        }
-
-        if(game)
-        {
-            DD_ChangeGame(game);
-        }
-        return;
+        Game* game = games[i];
+        if(allGameResourcesFound(game)) return game;
     }
+    return NULL;
+}
 
+/**
+ * Attempt to determine which game is to be played.
+ *
+ * \todo Logic here could be much more elaborate but is it necessary?
+ */
+Game* DD_AutoselectGame(void)
+{
     if(ArgCheckWith("-game", 1))
     {
         const char* identityKey = ArgNext();
         Game* game = findGameForIdentityKey(identityKey);
+
         if(game && allGameResourcesFound(game))
         {
-            DD_ChangeGame(game);
+            return game;
         }
     }
+
+    // If but one lonely game; select it.
+    if(countPlayableGames() == 1)
+    {
+        return findFirstPlayableGame();
+    }
+
+    // We don't know what to do.
+    return NULL;
 }
 
 int DD_EarlyInit(void)
@@ -1483,7 +1481,7 @@ int DD_Main(void)
         GL_DoUpdate();
     }
 
-    // Add paths to resources specified using -iwad options on the command line.
+    // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
     int p;
 
@@ -1528,21 +1526,34 @@ int DD_Main(void)
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
     {
-        DD_AutoselectGame();
+        Game* game = DD_AutoselectGame();
+
+        if(game)
+        {
+            // An implicit game session has been defined.
+            int p;
+
+            // Add all resources specified using -file options on the command line
+            // to the list for this session.
+            for(p = 0; p < Argc(); ++p)
+            {
+                if(!ArgRecognize("-file", Argv(p))) continue;
+
+                while(++p != Argc() && !ArgIsOption(p))
+                {
+                    addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+                }
+
+                p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
+            }
+
+            // Begin the game session.
+            DD_ChangeGame(game);
+
+            // We do not want to load these resources again on next game change.
+            destroyPathList(&gameResourceFileList, &numGameResourceFileList);
+        }
     }
-
-    // Load resources specified using -file options on the command line.
-    {int p;
-    for(p = 0; p < Argc(); ++p)
-    {
-        if(!ArgRecognize("-file", Argv(p)))
-            continue;
-
-        while(++p != Argc() && !ArgIsOption(p))
-            F_AddFile(Argv(p), 0, false);
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }}
 
     /// Re-initialize the resource locator as there are now new resources to be found
     /// on existing search paths (probably that is).
@@ -1634,7 +1645,7 @@ int DD_Main(void)
     else
     {
         // No game loaded.
-        // Ok, lets get most of everything else initialized.
+        // Lets get most of everything else initialized.
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIds();
         F_InitLumpDirectoryMappings();
