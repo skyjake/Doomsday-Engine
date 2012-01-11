@@ -446,10 +446,9 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
  */
 static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 {
-    float               col[4] = {1.f, 1.f, 1.f, .25f};
-    int                 i = 0;
-    int                 edgeCount = 0;
-    int                 backW, backH;
+    const float col[4] = {1.f, 1.f, 1.f, .25f};
+    int i = 0, edgeCount = 0;
+    int backW, backH;
 
     backW = backH = (radius * 2);
 
@@ -460,17 +459,23 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     GL_BlendMode(BM_NORMAL);
 
     glBegin(GL_TRIANGLE_FAN);
+        // Center.
         glColor4ub(0, 0, 0, 140);
         glVertex2f(x, y);
         glColor4ub(0, 0, 0, 0);
+        // Vertices along the edge.
         glVertex2f(x, y - backH);
-        glVertex2f(x + backW*.8f, y - backH*.8f);
+        glVertex2f(x + backW*.5f, y - backH*.8f);
+        glVertex2f(x + backW*.8f, y - backH*.5f);
         glVertex2f(x + backW, y);
-        glVertex2f(x + backW*.8f, y + backH*.8f);
+        glVertex2f(x + backW*.8f, y + backH*.5f);
+        glVertex2f(x + backW*.5f, y + backH*.8f);
         glVertex2f(x, y + backH);
-        glVertex2f(x - backW*.8f, y + backH*.8f);
+        glVertex2f(x - backW*.5f, y + backH*.8f);
+        glVertex2f(x - backW*.8f, y + backH*.5f);
         glVertex2f(x - backW, y);
-        glVertex2f(x - backW*.8f, y - backH*.8f);
+        glVertex2f(x - backW*.8f, y - backH*.5f);
+        glVertex2f(x - backW*.5f, y - backH*.8f);
         glVertex2f(x, y - backH);
     glEnd();
 
