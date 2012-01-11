@@ -1076,16 +1076,24 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
 const char* P_GetMapAuthor(boolean supressGameAuthor)
 {
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
+    boolean mapIsCustom;
+    GameInfo gameInfo;
+    ddstring_t* path;
+    Uri* uri;
+
     if(!author || !author[0]) return NULL;
-    if(supressGameAuthor)
-    {
-        Uri* uri = G_ComposeMapUri(gameEpisode, gameMap);
-        ddstring_t* path = Uri_ComposePath(uri);
-        boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
-        Str_Delete(path);
-        Uri_Delete(uri);
-        if(!mapIsCustom) return NULL;
-    }
+
+    uri = G_ComposeMapUri(gameEpisode, gameMap);
+    path = Uri_Resolved(uri);
+
+    mapIsCustom = P_MapIsCustom(Str_Text(path));
+
+    Str_Delete(path);
+    Uri_Delete(uri);
+
+    DD_GameInfo(&gameInfo);
+    if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
+        return NULL;
     return author;
 }
 
