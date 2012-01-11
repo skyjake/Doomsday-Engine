@@ -1444,13 +1444,6 @@ int DD_Main(void)
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Buffering...", DD_DummyWorker, 0);
 
-    // Clean up.
-    if(!novideo)
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-        GL_DoUpdate();
-    }
-
     // Add resource paths specified using -iwad on the command line.
     { resourcenamespaceid_t rnId = F_DefaultResourceNamespaceForClass(RC_PACKAGE);
     int p;
