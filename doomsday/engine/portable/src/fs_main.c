@@ -304,20 +304,37 @@ static lumpnum_t chooseWadLumpDirectory(lumpnum_t lumpNum)
     return lumpNum;
 }
 
-static boolean unloadFile2(const char* path)
+static boolean unloadFile2(const char* path, boolean permitRequired, boolean quiet)
 {
     int idx;
     errorIfNotInited("unloadFile2");
     idx = findFileNodeIndexForPath(loadedFiles, path);
     if(idx >= 0)
+    {
+        // Do not attempt to unload a resource required by the current game.
+        if(!permitRequired && Game_IsRequiredResource(theGame, path))
+        {
+            if(!quiet)
+            {
+                Con_Message("\"%s\" is required by the current game.\n"
+                            "Required game files cannot be unloaded in isolation.\n", F_PrettyPath(path));
+            }
+            return false;
+        }
+
+        if(!quiet && verbose >= 1)
+        {
+            Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path));
+        }
+
         return removeLoadedFile(idx);
+    }
     return false; // No such file loaded.
 }
 
-static boolean unloadFile(const char* path)
+static boolean unloadFile(const char* path, boolean permitRequired)
 {
-    VERBOSE( Con_Message("Unloading \"%s\"...\n", F_PrettyPath(path)) )
-    return unloadFile2(path);
+    return unloadFile2(path, permitRequired, false/*do log issues*/);
 }
 
 static void clearFileIds(void)
@@ -334,9 +351,10 @@ static void clearFileIds(void)
 
 void F_PrintFileId(byte identifier[16])
 {
-    assert(identifier);
-    { uint i;
+    uint i;
+    if(!identifier) return;
     for(i = 0; i < 16; ++i)
+    {
         Con_Printf("%02x", identifier[i]);
     }
 }
@@ -529,7 +547,8 @@ static int unloadListFiles(FileList* list, boolean nonStartup)
         file = FileList_GetFile(list, i);
         if(!nonStartup || !AbstractFile_HasStartup(file))
         {
-            if(unloadFile2(Str_Text(AbstractFile_Path(file))))
+            if(unloadFile2(Str_Text(AbstractFile_Path(file)),
+                           true/*allow unloading game resources*/, true/*quiet please*/))
             {
                 ++unloaded;
             }
@@ -1066,11 +1085,19 @@ static foundentry_t* collectLocalPaths(const ddstring_t* searchPath, int* retCou
     Str_Init(&wildPath);
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
-        Str_Copy(&wildPath, &origWildPath);
+        if(i == -1)
+        {
+            Str_Copy(&wildPath, &origWildPath);
+        }
+        else
+        {
+            // Possible mapping?
+            Str_Copy(&wildPath, searchPath);
+            if(!applyVDMapping(&wildPath, &vdMappings[i]))
+                continue; // No.
 
-        // Possible mapping?
-        if(i >= 0 && !applyVDMapping(&wildPath, &vdMappings[i]))
-            continue; // Not mapped.
+            Str_AppendChar(&wildPath, '*');
+        }
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
         {
@@ -1717,7 +1744,8 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
 {
     boolean succeeded = false;
-    { size_t i;
+    size_t i;
+
     for(i = 0; i < num; ++i)
     {
         if(F_AddFile(paths[i], 0, allowDuplicate))
@@ -1726,8 +1754,10 @@ boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
             succeeded = true; // At least one has been loaded.
         }
         else
+        {
             Con_Message("Warning: Errors occured while loading %s\n", paths[i]);
-    }}
+        }
+    }
 
     // A changed file list may alter the main lump directory.
     if(succeeded)
@@ -1737,29 +1767,25 @@ boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
     return succeeded;
 }
 
-boolean F_RemoveFile(const char* path)
+boolean F_RemoveFile(const char* path, boolean permitRequired)
 {
-    boolean unloadedResources = unloadFile(path);
+    boolean unloadedResources = unloadFile(path, permitRequired);
     if(unloadedResources)
         DD_UpdateEngineState();
     return unloadedResources;
 }
 
-boolean F_RemoveFiles(const char* const* filenames, size_t num)
+boolean F_RemoveFiles(const char* const* filenames, size_t num, boolean permitRequired)
 {
     boolean succeeded = false;
     size_t i;
 
     for(i = 0; i < num; ++i)
     {
-        if(unloadFile(filenames[i]))
+        if(unloadFile(filenames[i], permitRequired))
         {
             VERBOSE2( Con_Message("Done unloading %s\n", F_PrettyPath(filenames[i])) )
             succeeded = true; // At least one has been unloaded.
-        }
-        else
-        {
-            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
         }
     }
 
@@ -2023,11 +2049,10 @@ static void clearVDMappings(void)
     vdMappingsCount = vdMappingsMax = 0;
 }
 
-/// @return  @c true, if the mapping matched the path.
+/// @return  @c true iff the mapping matched the path.
 static boolean applyVDMapping(ddstring_t* path, vdmapping_t* vdm)
 {
-    assert(NULL != path && NULL != vdm);
-    if(!strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
+    if(path && vdm && !strnicmp(Str_Text(path), Str_Text(&vdm->destination), Str_Length(&vdm->destination)))
     {
         // Replace the beginning with the source path.
         ddstring_t temp;

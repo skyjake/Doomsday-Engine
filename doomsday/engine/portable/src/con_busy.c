@@ -85,6 +85,7 @@ static int busyMode;
 static char* busyTaskName;
 static thread_t busyThread;
 static timespan_t busyTime;
+static timespan_t accumulatedBusyTime; // Never cleared.
 static volatile boolean busyDone;
 static volatile boolean busyDoneCopy;
 static volatile const char* busyError = NULL;
@@ -363,6 +364,7 @@ static void Con_BusyLoop(void)
     boolean canDraw = !(isDedicated || novideo);
     boolean canUpload = (canDraw && !(busyMode & BUSYF_NO_UPLOADS));
     timespan_t startTime = Sys_GetRealSeconds();
+    timespan_t oldTime;
 
     if(canDraw)
     {
@@ -391,7 +393,12 @@ static void Con_BusyLoop(void)
         }
 
         // Update the time.
+        oldTime = busyTime;
         busyTime = Sys_GetRealSeconds() - startTime;
+        if(busyTime > oldTime)
+        {
+            accumulatedBusyTime += busyTime - oldTime;
+        }
 
         // Time for an update?
         if(canDraw)
@@ -446,10 +453,9 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
  */
 static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 {
-    float               col[4] = {1.f, 1.f, 1.f, .25f};
-    int                 i = 0;
-    int                 edgeCount = 0;
-    int                 backW, backH;
+    const float col[4] = {1.f, 1.f, 1.f, .25f};
+    int i = 0, edgeCount = 0;
+    int backW, backH;
 
     backW = backH = (radius * 2);
 
@@ -460,17 +466,23 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     GL_BlendMode(BM_NORMAL);
 
     glBegin(GL_TRIANGLE_FAN);
+        // Center.
         glColor4ub(0, 0, 0, 140);
         glVertex2f(x, y);
         glColor4ub(0, 0, 0, 0);
+        // Vertices along the edge.
         glVertex2f(x, y - backH);
-        glVertex2f(x + backW*.8f, y - backH*.8f);
+        glVertex2f(x + backW*.5f, y - backH*.8f);
+        glVertex2f(x + backW*.8f, y - backH*.5f);
         glVertex2f(x + backW, y);
-        glVertex2f(x + backW*.8f, y + backH*.8f);
+        glVertex2f(x + backW*.8f, y + backH*.5f);
+        glVertex2f(x + backW*.5f, y + backH*.8f);
         glVertex2f(x, y + backH);
-        glVertex2f(x - backW*.8f, y + backH*.8f);
+        glVertex2f(x - backW*.5f, y + backH*.8f);
+        glVertex2f(x - backW*.8f, y + backH*.5f);
         glVertex2f(x - backW, y);
-        glVertex2f(x - backW*.8f, y - backH*.8f);
+        glVertex2f(x - backW*.8f, y - backH*.5f);
+        glVertex2f(x - backW*.5f, y - backH*.8f);
         glVertex2f(x, y - backH);
     glEnd();
 
@@ -486,7 +498,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     glPushMatrix();
     glLoadIdentity();
     glTranslatef(.5f, .5f, 0.f);
-    glRotatef(-busyTime * 20, 0.f, 0.f, 1.f);
+    glRotatef(-accumulatedBusyTime * 20, 0.f, 0.f, 1.f);
     glTranslatef(-.5f, -.5f, 0.f);
 
     // Draw a fan.
@@ -514,7 +526,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         FR_SetFont(busyFont);
         FR_LoadDefaultAttrib();
         FR_SetColorAndAlpha(1.f, 1.f, 1.f, .66f);
-        FR_DrawTextXY3(busyTaskName, x+radius+10, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(busyTaskName, x+radius*1.15f, y, ALIGN_LEFT, DTF_ONLY_SHADOW);
     }
 
     glDisable(GL_TEXTURE_2D);

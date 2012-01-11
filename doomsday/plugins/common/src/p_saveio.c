@@ -346,7 +346,7 @@ static boolean composeGameSavePathForSlot(int slot, ddstring_t* path)
 }
 
 /// Re-build game-save info by re-scanning the save paths and populating the list.
-static void SV_BuildGameSaveInfo(void)
+static void buildGameSaveInfo(void)
 {
     int i;
     assert(inited);
@@ -403,7 +403,7 @@ static gamesaveinfo_t* findGameSaveInfoForSlot(int slot)
     {
         // On first call - automatically build and populate game-save info.
         if(!gameSaveInfo)
-            SV_BuildGameSaveInfo();
+            buildGameSaveInfo();
         // Retrieve the info for this slot.
         return &gameSaveInfo[slot];
     }
@@ -427,7 +427,7 @@ const gamesaveinfo_t* SV_GetGameSaveInfoForSlot(int slot)
 void SV_UpdateGameSaveInfo(void)
 {
     errorIfNotInited("SV_UpdateGameSaveInfo");
-    SV_BuildGameSaveInfo();
+    buildGameSaveInfo();
 }
 
 int SV_ParseGameSaveSlot(const char* str)
@@ -469,7 +469,7 @@ int SV_FindGameSaveSlotForName(const char* name)
         // On first call - automatically build and populate game-save info.
         if(!gameSaveInfo)
         {
-            SV_BuildGameSaveInfo();
+            buildGameSaveInfo();
         }
 
         do

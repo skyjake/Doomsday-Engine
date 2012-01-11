@@ -59,6 +59,7 @@ typedef struct tval_s {
 } tval_t;
 
 static int progressMax;
+static float progressStart, progressEnd;
 static tval_t target, last;
 static mutex_t progressMutex;
 
@@ -76,14 +77,21 @@ static void lockProgress(boolean lock)
     }
 }
 
-void Con_InitProgress(int maxProgress)
+void Con_InitProgress2(int maxProgress, float start, float end)
 {
+    progressStart = start;
+    progressEnd = end;
     memset(&target, 0, sizeof(target));
     memset(&last, 0, sizeof(last));
 
     progressMax = maxProgress;
     if(!progressMutex)
         progressMutex = Sys_CreateMutex("ConBarProgressMutex");
+}
+
+void Con_InitProgress(int maxProgress)
+{
+    Con_InitProgress2(maxProgress, 0, 1);
 }
 
 void Con_ShutdownProgress(void)
@@ -155,5 +163,8 @@ float Con_GetProgress(void)
     prog = currentProgress();
     lockProgress(false);
 
-    return prog / (float) progressMax;
+    prog /= (float) progressMax;
+
+    // Scale to the progress range.
+    return progressStart + prog * (progressEnd - progressStart);
 }

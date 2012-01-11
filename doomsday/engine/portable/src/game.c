@@ -179,6 +179,37 @@ AbstractResource* Game_AddResource(Game* g, resourceclass_t rclass,
     return record;
 }
 
+boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
+{
+    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
+    if(records)
+    {
+        AbstractResource* const* recordIt;
+        // Is this resource from a container?
+        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        if(file)
+        {
+            // Yes; use the container's path instead.
+            absolutePath = Str_Text(AbstractFile_Path(file));
+        }
+
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
+            {
+                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    // Not found, so no.
+    return false;
+}
+
 pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)
 {
     assert(g);

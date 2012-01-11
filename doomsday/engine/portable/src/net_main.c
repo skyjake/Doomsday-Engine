@@ -450,9 +450,13 @@ static void Net_DoUpdate(void)
      * entirely local.
      */
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("Net_DoUpdate: coordTimer=%i cl:%i af:%i shmo:%p\n", coordTimer,
-                          isClient, allowFrames, ddPlayers[consolePlayer].shared.mo) );
+    if(netGame && verbose >= 2)
+    {
+        Con_Message("Net_DoUpdate: coordTimer=%i cl:%i af:%i shmo:%p\n", coordTimer,
+                    isClient, allowFrames, ddPlayers[consolePlayer].shared.mo);
+    }
 #endif
+
     coordTimer -= newTics;
     if(isClient /*&& allowFrames*/ && coordTimer <= 0 &&
        ddPlayers[consolePlayer].shared.mo)

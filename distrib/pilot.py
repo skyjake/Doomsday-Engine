@@ -143,6 +143,7 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
 
     for name in os.listdir(homeDir()):
         fn = os.path.join(homeDir(), name)
+        if fn == '.' or fn == '..': continue
 
         # All tasks are specific to a client.
         if os.path.isdir(fn) and (name == clientId or allClients):
@@ -157,7 +158,7 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
         tasks = filter(lambda n: not n.endswith('.done'), tasks)
         
     if onlyCompleted:
-        tasks = filter(lambda n: n.endswith('.done'), tasks)
+        tasks = filter(lambda n: isTaskComplete(n), tasks)
 
     tasks.sort()
     return tasks
@@ -297,7 +298,7 @@ def handleCompletedTasks():
         if len(tasks) == 0: break
 
         task = tasks[0][:-5] # Remove '.done'
-        if not isTaskComplete(task): continue
+        assert isTaskComplete(task)
         
         clearTask(task)
         
@@ -371,6 +372,9 @@ def clearTask(name, direc=None):
 
 
 def isTaskComplete(name):
+    # Remote the possible '.done' suffix.
+    if name[-5:] == '.done': name = name[:-5]
+    # Check that everyone has completed it.
     for task in listTasks(allClients=True):
         if task.startswith(name) and not task.endswith('.done'):
             # This one is not complete.
