@@ -167,8 +167,8 @@ void FR_SetCaseScale(boolean value);
  *
  * @param text  Block of text to be drawn.
  * @param origin  Orient drawing about this offset (topleft:[0,0]).
- * @param alignFlags  @see alignmentFlags
- * @param flags  @see drawTextFlags
+ * @param alignFlags  @ref alignmentFlags
+ * @param flags  @ref drawTextFlags
  */
 void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, short flags);
 void FR_DrawText2(const char* text, const Point2Raw* origin, int alignFlags);
@@ -195,8 +195,8 @@ int FR_TextHeight(const char* text);
  * @param ch  Character to be drawn.
  * @param x  X origin/offset at which to begin drawing.
  * @param y  Y origin/offset at which to begin drawing.
- * @param alignFlags  @see alignmentFlags
- * @param flags  @see drawTextFlags
+ * @param alignFlags  @ref alignmentFlags
+ * @param flags  @ref drawTextFlags
  */
 void FR_DrawChar3(unsigned char ch, const Point2Raw* origin, int alignFlags, short flags);
 void FR_DrawChar2(unsigned char ch, const Point2Raw* origin, int alignFlags);

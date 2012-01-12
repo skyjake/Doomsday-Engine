@@ -272,8 +272,8 @@ typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
     uint pageColor; /// Identifier of the owning page's predefined color. Zero means use our own color.
-    int alignFlags; /// @see alignmentFlags
-    short textFlags; /// @see drawTextFlags
+    int alignFlags; /// @ref alignmentFlags
+    short textFlags; /// @ref drawTextFlags
     int scrollWait, scrollTimer; /// Automatic scrolling upwards.
     size_t cursorPos;
     int wait, timer;

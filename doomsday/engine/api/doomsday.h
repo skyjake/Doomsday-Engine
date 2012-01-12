@@ -107,15 +107,15 @@ gameid_t DD_GameIdForKey(const char* identityKey);
 /**
  * Registers a new resource for the specified game.
  *
- * \note Resource registration order defines the load order of resources
- * (among those of the same type).
- *
  * @param game          Unique identifier/name of the game.
  * @param rclass        Class of resource being added.
- * @param rflags        @see resourceFlags
+ * @param rflags        Resource flags (see @ref resourceFlags).
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+ *
+ * \note Resource registration order defines the load order of resources
+ * (among those of the same type).
  */
 void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
 

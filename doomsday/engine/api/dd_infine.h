@@ -35,7 +35,8 @@
 typedef ident_t finaleid_t;
 
 /**
- * @defgroup finaleFlags Finale Flags.
+ * @defgroup finaleFlags Finale Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 #define FF_LOCAL            0x1 /// Local scripts are executed client-side.
@@ -44,7 +45,7 @@ typedef ident_t finaleid_t;
 /**
  * Execute a set of Finale commands.
  * @param script        One or more commands to be executed.
- * @param flags         @see finaleFlags.
+ * @param flags         @ref finaleFlags.
  * @param setupCmds     One or more commands to be executed immediately during
  *                      finale setup. Can be used to configure the default page
  *                      state.
@@ -58,7 +59,7 @@ finaleid_t FI_Execute(const char* script, int flags);
 boolean FI_ScriptActive(finaleid_t id);
 
 /**
- * @return  @see finaleFlags.
+ * @return  @ref finaleFlags.
  */
 int FI_ScriptFlags(finaleid_t id);
 
