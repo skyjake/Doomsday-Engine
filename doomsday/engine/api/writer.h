@@ -1,24 +1,36 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file writer.h
+ * Serializer for writing values and data into a byte array.
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Writer instances ensure that all values written into the array are stored in
+ * little-endian (Intel) byte order. All write operations are also checked
+ * against the buffer boundaries; writing too much data into the buffer results
+ * in an error.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * If @c DENG_WRITER_TYPECHECK is defined, all written data is preceded by a type
+ * check code, which is checked when the values are read by Reader. This
+ * guarantees that data is interpreted as written.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @see reader.h
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @section License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * @author Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  */
 
 #ifndef LIBDENG_WRITER_H
@@ -124,6 +136,10 @@ size_t Writer_BytesLeft(const Writer* writer);
  */
 void Writer_SetPos(Writer* writer, size_t newPos);
 
+/**
+ * Writes value @a v to the destination buffer using little-endian byte order.
+ */
+///@{
 void Writer_WriteChar(Writer* writer, char v);
 void Writer_WriteByte(Writer* writer, byte v);
 void Writer_WriteInt16(Writer* writer, int16_t v);
@@ -131,6 +147,7 @@ void Writer_WriteUInt16(Writer* writer, uint16_t v);
 void Writer_WriteInt32(Writer* writer, int32_t v);
 void Writer_WriteUInt32(Writer* writer, uint32_t v);
 void Writer_WriteFloat(Writer* writer, float v);
+///@}
 
 /**
  * Writes @a len bytes from @a buffer.

@@ -1,24 +1,36 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file reader.h
+ * Deserializer for reading values and data from a byte array.
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Reader instances assume that all values stored in the source array are in
+ * little-endian (Intel) byte order. All read operations are checked
+ * against the buffer boundaries; reading too much data from the buffer results
+ * in an error.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * If @c DENG_WRITER_TYPECHECK is defined, the type check codes preceding
+ * the data values are checked for validity. The assumption is that the source
+ * data buffer has been created using a Writer.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @see writer.h
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @section License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ * @author Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  */
 
 #ifndef LIBDENG_READER_H
@@ -95,6 +107,10 @@ boolean Reader_AtEnd(const Reader* reader);
  */
 void Reader_SetPos(Reader* reader, size_t newPos);
 
+/**
+ * Reads a value from the source buffer.
+ */
+///@{
 int8_t      Reader_ReadChar(Reader* reader);
 byte        Reader_ReadByte(Reader* reader);
 int16_t     Reader_ReadInt16(Reader* reader);
@@ -102,6 +118,7 @@ uint16_t    Reader_ReadUInt16(Reader* reader);
 int32_t     Reader_ReadInt32(Reader* reader);
 uint32_t    Reader_ReadUInt32(Reader* reader);
 float       Reader_ReadFloat(Reader* reader);
+///@}
 
 /**
  * Reads @a len bytes into @a buffer.
