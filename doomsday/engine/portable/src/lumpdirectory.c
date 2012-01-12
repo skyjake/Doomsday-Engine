@@ -124,17 +124,7 @@ const LumpInfo* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum)
     return F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
 }
 
-abstractfile_t* LumpDirectory_SourceFile(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    return LumpDirectory_Record(ld, lumpNum)->fsObject;
-}
-
-int LumpDirectory_LumpIndex(lumpdirectory_t* ld, lumpnum_t lumpNum)
-{
-    return LumpDirectory_Record(ld, lumpNum)->fsLumpIdx;
-}
-
-int LumpDirectory_NumLumps(lumpdirectory_t* ld)
+int LumpDirectory_Size(lumpdirectory_t* ld)
 {
     assert(ld);
     return ld->numRecords;
@@ -272,6 +262,17 @@ void LumpDirectory_Clear(lumpdirectory_t* ld)
     }
     ld->numRecords = 0;
     ld->flags &= ~LDF_RECORDS_HASHDIRTY;
+}
+
+static int directoryContainsLumpsFromFile(const LumpInfo* info, void* paramaters)
+{
+    return 1; // Stop iteration we need go no further.
+}
+
+boolean LumpDirectory_Catalogues(lumpdirectory_t* ld, abstractfile_t* file)
+{
+    if(!file) return false;
+    return LumpDirectory_Iterate(ld, file, directoryContainsLumpsFromFile);
 }
 
 int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
@@ -486,9 +487,12 @@ void LumpDirectory_Print(lumpdirectory_t* ld)
     {
         lumpdirectory_lumprecord_t* rec = ld->records + i;
         const LumpInfo* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
-        printf("%04i - \"%s\" (size: %lu bytes%s)\n", i,
+        ddstring_t* path = F_ComposeLumpPath(rec->fsObject, rec->fsLumpIdx);
+        printf("%04i - \"%s:%s\" (size: %lu bytes%s)\n", i,
                F_PrettyPath(Str_Text(AbstractFile_Path(rec->fsObject))),
+               F_PrettyPath(Str_Text(path)),
                (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
+        Str_Delete(path);
     }
     printf("---End of lumps---\n");
 }

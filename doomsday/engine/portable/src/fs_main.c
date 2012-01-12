@@ -225,11 +225,6 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
     return true;
 }
 
-static int directoryContainsLumpsFromFile(const LumpInfo* info, void* paramaters)
-{
-    return 1; // Stop iteration we need go no further.
-}
-
 static void clearLoadedFiles(lumpdirectory_t* directory)
 {
     abstractfile_t* file;
@@ -237,7 +232,7 @@ static void clearLoadedFiles(lumpdirectory_t* directory)
     for(i = FileList_Size(loadedFiles) - 1; i >= 0; i--)
     {
         file = FileList_GetFile(loadedFiles, i);
-        if(!directory || LumpDirectory_Iterate(directory, file, directoryContainsLumpsFromFile))
+        if(!directory || LumpDirectory_Catalogues(directory, file))
         {
             removeLoadedFile(i);
         }
@@ -646,14 +641,12 @@ lumpnum_t F_CheckLumpNumForName(const char* name)
     return F_CheckLumpNumForName2(name, false);
 }
 
-const LumpInfo* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx_)
+const LumpInfo* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
-    int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(absoluteLumpNum, &lumpIdx);
-    if(!fsObject) return NULL;
-    // Does caller whant to know the lump index?
-    if(lumpIdx_) *lumpIdx_ = lumpIdx;
-    return F_LumpInfo(fsObject, lumpIdx);
+    lumpnum_t translated = chooseWadLumpDirectory(absoluteLumpNum);
+    const LumpInfo* lumpInfo = LumpDirectory_LumpInfo(ActiveWadLumpDirectory, translated);
+    if(lumpIdx) *lumpIdx = (lumpInfo? lumpInfo->lumpIdx : -1);
+    return lumpInfo;
 }
 
 const LumpInfo* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum)
@@ -684,11 +677,9 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum)
 
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx)
 {
-    lumpnum_t translated;
-    errorIfNotInited("F_FindFileForLumpNum2");
-    translated = chooseWadLumpDirectory(absoluteLumpNum);
-    if(lumpIdx) *lumpIdx = LumpDirectory_LumpIndex(ActiveWadLumpDirectory, translated);
-    return LumpDirectory_SourceFile(ActiveWadLumpDirectory, translated);
+    const LumpInfo* lumpInfo = F_FindInfoForLumpNum2(absoluteLumpNum, lumpIdx);
+    if(!lumpInfo) return NULL;
+    return lumpInfo->container;
 }
 
 abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum)
@@ -713,7 +704,7 @@ boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 int F_LumpCount(void)
 {
     if(inited)
-        return LumpDirectory_NumLumps(ActiveWadLumpDirectory);
+        return LumpDirectory_Size(ActiveWadLumpDirectory);
     return 0;
 }
 
@@ -876,6 +867,8 @@ PathDirectoryNode* F_LumpDirectoryNode(abstractfile_t* fsObject, int lumpIdx)
     {
     case FT_ZIPFILE: return ZipFile_LumpDirectoryNode((ZipFile*)fsObject, lumpIdx);
     case FT_WADFILE: return WadFile_LumpDirectoryNode((WadFile*)fsObject, lumpIdx);
+    case FT_LUMPFILE: return F_LumpDirectoryNode(AbstractFile_Container(fsObject),
+                                                 LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx);
     default: return NULL;
     }
 }
@@ -1400,11 +1393,11 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
     lumpNum = LumpDirectory_IndexForPath(zipLumpDirectory, Str_Text(&absSearchPath));
     if(lumpNum >= 0)
     {
-        abstractfile_t* fsObject = LumpDirectory_SourceFile(zipLumpDirectory, lumpNum);
-        if(lumpIdx)
-            *lumpIdx = LumpDirectory_LumpIndex(zipLumpDirectory, lumpNum);
+        const LumpInfo* lumpInfo = LumpDirectory_LumpInfo(zipLumpDirectory, lumpNum);
+        assert(lumpInfo);
+        if(lumpIdx) *lumpIdx = lumpInfo->lumpIdx;
         Str_Free(&absSearchPath);
-        return fsObject;
+        return lumpInfo->container;
     }
 
     /**
