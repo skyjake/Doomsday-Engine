@@ -165,6 +165,9 @@ void    H2_AdvanceDemo(void);
 
 void    G_StopDemo(void);
 
+void R_LoadColorPalettes(void);
+void R_LoadVectorGraphics(void);
+
 int Hook_DemoStop(int hookType, int val, void* paramaters);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -470,6 +473,8 @@ gameaction_t G_GameAction(void)
  */
 void G_CommonPreInit(void)
 {
+    int i, j;
+
     quitInProgress = false;
     verbose = ArgExists("-verbose");
 
@@ -477,7 +482,6 @@ void G_CommonPreInit(void)
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     // Setup the players.
-    { int i, j;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* pl = players + i;
@@ -493,11 +497,15 @@ void G_CommonPreInit(void)
             pl->pSprites[j].state = NULL;
             pl->plr->pSprites[j].statePtr = NULL;
         }
-    }}
+    }
 
     G_RegisterBindClasses();
     G_RegisterPlayerControls();
     P_RegisterMapObjs();
+
+    R_LoadVectorGraphics();
+    R_LoadColorPalettes();
+
     P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
@@ -832,9 +840,6 @@ fontid_t R_MustFindFontForName(const char* name)
 void R_InitRefresh(void)
 {
     VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
-
-    R_LoadColorPalettes();
-    R_LoadVectorGraphics();
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
