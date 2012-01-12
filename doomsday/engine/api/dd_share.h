@@ -359,12 +359,15 @@ typedef struct gameinfo_s {
     const char* identityKey;
 } GameInfo;
 
+/// @defgroup apiFlags Flags
+
 /**
- * @defgroup resourceFlags ResourceFlags
+ * @defgroup resourceFlags Resource Flags
+ * @ingroup apiFlags
  */
-/*{@*/
+///@{
 #define RF_STARTUP          0x1 // A required resource needed for and loaded during game start up (can't be a virtual file).
-/*}@*/
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -744,7 +747,8 @@ typedef struct {
 } fdivline_t;
 
 /**
- * @defgroup pathTraverseFlags  Path Traverse Flags.
+ * @defgroup pathTraverseFlags  Path Traverse Flags
+ * @ingroup apiFlags
  * @{
  */
 #define PT_ADDLINES            1 /// Intercept with LineDefs.
@@ -761,6 +765,7 @@ typedef enum {
 /**
  * @defgroup lineSightFlags Line Sight Flags
  * Flags used to dictate logic within P_CheckLineSight.
+ * @ingroup apiFlags
  */
 /*@{*/
 #define LS_PASSLEFT            0x1 // Ray may cross one-sided linedefs from left to right.
@@ -994,7 +999,8 @@ typedef struct aaboxf_s {
 #define SCREENHEIGHT        200
 
 /**
- * @defgroup alignmentFlags  Alignment Flags.
+ * @defgroup alignmentFlags  Alignment Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 #define ALIGN_LEFT          (0x1)
@@ -1025,7 +1031,8 @@ typedef enum {
 #define DEFAULT_SCALEMODE_STRETCH_EPSILON   (.38f)
 
 /**
- * @defgroup borderedProjectionFlags  Bordered Projection Flags.
+ * @defgroup borderedProjectionFlags  Bordered Projection Flags
+ * @ingroup apiFlags
  * @{
  */
 #define BPF_OVERDRAW_MASK   0x1
@@ -1073,6 +1080,7 @@ typedef struct {
 
 /**
  * @defgroup materialFlags  Material Flags
+ * @ingroup apiFlags
  * @{
  */
 //#define MATF_UNUSED1            0x1
@@ -1084,6 +1092,7 @@ typedef struct {
 
 /**
  * @defgroup animationGroupFlags  Animation Group Flags
+ * @ingroup apiFlags
  * @{
  */
 #define AGF_SMOOTH              0x1
@@ -1239,7 +1248,8 @@ typedef unsigned int colorpaletteid_t;
 #define BUSYF_TRANSITION    0x40 // Do a transition effect when busy mode ends.
 
 /**
- * @defgroup consolePrintFlags Console Print Flags.
+ * @defgroup consolePrintFlags Console Print Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 // These correspond the good old text mode VGA colors.
@@ -1265,7 +1275,8 @@ typedef enum bfcinverse_e {
 } bfcinverse_t;
 
 /**
- * @defgroup consoleCommandFlags Console command flags.
+ * @defgroup consoleCommandFlags Console Command Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 #define CMDF_NO_NULLGAME    0x00000001 // Not available unless a game is loaded.
@@ -1314,7 +1325,7 @@ typedef struct ccmdtemplate_s {
     /// Execute function.
     int (*execFunc) (byte src, int argc, char** argv);
 
-    /// @see consoleCommandFlags
+    /// @ref consoleCommandFlags
     int flags;
 } ccmdtemplate_t;
 
@@ -1331,7 +1342,8 @@ typedef struct ccmdtemplate_s {
     { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_template); }
 
 /**
- * @defgroup consoleVariableFlags Console Variable flags.
+ * @defgroup consoleVariableFlags Console Variable Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 #define CVF_NO_ARCHIVE      0x1 // Not written in/read from the defaults file.
@@ -1344,7 +1356,7 @@ typedef struct ccmdtemplate_s {
 /*@}*/
 
 /**
- * @defgroup setVariableFlags Set Variable Flags.
+ * @defgroup setVariableFlags Set Variable Flags
  *
  * Use with the various Con_Set* routines (e.g., Con_SetInteger2).
  */
@@ -1372,7 +1384,7 @@ typedef struct cvartemplate_s {
     /// Path of the variable.
     const char* path;
 
-    /// @see consoleVariableFlags
+    /// @ref consoleVariableFlags
     int flags;
 
     /// Type of variable.
@@ -1616,7 +1628,7 @@ typedef struct ticcmd_s {
         int             tics;
         float           alpha;
         float           pos[2];
-        byte            flags; // @see pspriteFlags
+        byte            flags; /// @ref pspriteFlags
         int             state;
         float           offset[2];
     } ddpsprite_t;
