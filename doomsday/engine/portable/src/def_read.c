@@ -1202,8 +1202,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
 
         if(ISTOKEN("Model"))
         {
-            uint                sub = 0;
-            ded_model_t*        mdl, *prevModel = NULL;
+            ded_model_t* mdl, *prevModel = NULL;
+            uint sub = 0;
 
             // A new model.
             idx = DED_AddModel(ded, "");
@@ -1219,8 +1219,11 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     memcpy(mdl, prevModel, sizeof(*mdl));
                     for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                     {
-                        mdl->sub[i].filename = 0;
-                        mdl->sub[i].skinFilename = 0;
+                        if(mdl->sub[i].filename)
+                            mdl->sub[i].filename = Uri_NewCopy(mdl->sub[i].filename);
+
+                        if(mdl->sub[i].skinFilename)
+                            mdl->sub[i].skinFilename = Uri_NewCopy(mdl->sub[i].skinFilename);
                     }
                 }
             }
@@ -1294,6 +1297,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
             // the whole reader will be rewritten sooner or later...
             if(prevModel)
             {
+                uint i;
+
                 if(!strcmp(mdl->state, "-"))
                     strcpy(mdl->state, prevModel->state);
                 if(!strcmp(mdl->sprite.id, "-"))
@@ -1301,20 +1306,23 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 //if(!strcmp(mdl->group, "-"))      strcpy(mdl->group,      prevModel->group);
                 //if(!strcmp(mdl->flags, "-"))      strcpy(mdl->flags,      prevModel->flags);
 
-                { int i;
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
-                    if(prevModel->sub[i].filename &&
-                       !(mdl->sub[i].filename && Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-")))
-                        mdl->sub[i].filename = Uri_NewCopy(prevModel->sub[i].filename);
+                    if(mdl->sub[i].filename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-"))
+                    {
+                        Uri_Delete(mdl->sub[i].filename);
+                        mdl->sub[i].filename = NULL;
+                    }
 
-                    if(prevModel->sub[i].skinFilename &&
-                       !(mdl->sub[i].skinFilename && Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].skinFilename), "-")))
-                        mdl->sub[i].skinFilename = Uri_NewCopy(prevModel->sub[i].skinFilename);
+                    if(mdl->sub[i].skinFilename && !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].skinFilename), "-"))
+                    {
+                        Uri_Delete(mdl->sub[i].skinFilename);
+                        mdl->sub[i].skinFilename = NULL;
+                    }
 
                     if(!strcmp(mdl->sub[i].frame, "-"))
-                        strcpy(mdl->sub[i].frame, prevModel->sub[i].frame);
-                }}
+                        memset(mdl->sub[i].frame, 0, sizeof(ded_string_t));
+                }
             }
 
             prevModelDefIdx = idx;
