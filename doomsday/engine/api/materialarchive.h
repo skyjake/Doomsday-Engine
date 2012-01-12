@@ -56,12 +56,21 @@ void MaterialArchive_Delete(MaterialArchive* arc);
  */
 materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive* arc, struct material_s* mat);
 
+/**
+ * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
+ */
 struct material_s* MaterialArchive_Find(MaterialArchive* arc, materialarchive_serialid_t serialId, int group);
+
+/**
+ * Returns the number of materials in the archive.
+ */
+size_t MaterialArchive_Count(MaterialArchive* arc);
 
 void MaterialArchive_Write(MaterialArchive* arc, Writer* writer);
 
 /**
- * @param forcedVersion  Version to interpret as, not actual format version.
+ * @param forcedVersion  Version to interpret as, not actual format version. Use -1 to use whatever
+ *                       version is encountered.
  */
 void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reader);
 

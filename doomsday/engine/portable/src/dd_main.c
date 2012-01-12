@@ -888,7 +888,6 @@ static int DD_ChangeGameWorker(void* paramaters)
     // on existing search paths (probably that is).
     F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
-    Cl_InitTranslations();
 
     // Texture resources are located now, prior to initializing the game.
     R_InitPatchComposites();
@@ -1626,7 +1625,6 @@ int DD_Main(void)
 
         R_InitSprites();
         R_InitModels();
-        Cl_InitTranslations();
 
         Def_PostInit();
 

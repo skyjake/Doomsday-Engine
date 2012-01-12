@@ -542,7 +542,6 @@ void R_Update(void)
     R_InitModels(); // Defs might've changed.
 
     R_UpdateTranslationTables();
-    Cl_InitTranslations();
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.

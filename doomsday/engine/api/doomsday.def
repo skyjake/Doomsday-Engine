@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 750 <--
+; Highest ordinal is currently: --> 751 <--
 ; Other free ordinals:
 ;   none
 
@@ -900,3 +900,4 @@ EXPORTS
     MaterialArchive_Write       @748 NONAME
     MaterialArchive_Find        @749 NONAME
     MaterialArchive_FindUniqueSerialId @750 NONAME
+    MaterialArchive_Count       @751 NONAME

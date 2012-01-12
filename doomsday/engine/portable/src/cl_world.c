@@ -1,10 +1,9 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file cl_world.c
+ * Clientside world management.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @section License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +19,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
+ *
+ * @author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  */
-
-/**
- * Clientside World Management
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -39,16 +35,13 @@
 #include "de_filesys.h"
 
 #include "r_util.h"
-
-// MACROS ------------------------------------------------------------------
+#include "materialarchive.h"
 
 #define MAX_MOVERS          1024 // Definitely enough!
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.
 #define MVF_SET_FLOORPIC    0x2 // Set floor texture when move done.
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     thinker_t   thinker;
@@ -68,69 +61,35 @@ typedef struct {
     boolean     rotate;
 } polymover_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void Cl_MoverThinker(mover_t *mover);
+void Cl_MoverThinker(mover_t* mover);
 void Cl_PolyMoverThinker(polymover_t* mover);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+static mover_t* activemovers[MAX_MOVERS];
+static polymover_t* activepolys[MAX_MOVERS];
+static MaterialArchive* serverMaterials;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mover_t *activemovers[MAX_MOVERS];
-static polymover_t *activepolys[MAX_MOVERS];
-static short *xlat_lump; // obsolete
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Allocates and inits the lump translation array. Clients use this
- * to make sure lump references are correct (in case the server and the
- * client are using different WAD configurations and the lump index
- * numbers happen to differ).
- *
- * \fixme A bit questionable? Why not allow the clients to download
- * data from the server in ambiguous cases?
- *
- * \note Only used by the obsolete cl_oldworld functions.
- */
-void Cl_InitTranslations(void)
+void Cl_ReadServerMaterials(void)
 {
-    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_APPSTATIC, 0);
-    memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    { int i, numLumps = F_LumpCount();
-    for(i = 0; i < numLumps; ++i)
-        xlat_lump[i] = i; // Identity translation.
-    }
-}
-
-void Cl_SetLumpTranslation(lumpnum_t lumpNum, char *name)
-{
-    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
-        return; // Can't do it, sir! We just don't have the power!!
-
-    xlat_lump[lumpNum] = F_CheckLumpNumForName2(name, true);
-    if(xlat_lump[lumpNum] < 0)
+    if(!serverMaterials)
     {
-        VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lumpNum] = 0;
+        serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
+    MaterialArchive_Read(serverMaterials, -1, msgReader);
+
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMaterials: Received %u materials.\n", (uint) MaterialArchive_Count(serverMaterials));
+#endif
 }
 
-/**
- * This is a fail-safe operation.
- */
-lumpnum_t Cl_TranslateLump(lumpnum_t lumpNum)
+static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
 {
-    if(lumpNum < 0 || lumpNum >= MAX_TRANSLATIONS)
+    if(!serverMaterials)
+    {
+        // Can't do it.
+        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!\n", archId);
         return 0;
-    return xlat_lump[lumpNum];
+    }
+    return MaterialArchive_Find(serverMaterials, archId, 0);
 }
 
 static boolean Cl_IsMoverValid(int i)
@@ -148,10 +107,37 @@ static boolean Cl_IsPolyValid(int i)
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
-void Cl_InitMovers(void)
+void Cl_WorldInit(void)
 {
     memset(activemovers, 0, sizeof(activemovers));
     memset(activepolys, 0, sizeof(activepolys));
+    serverMaterials = 0;
+}
+
+/**
+ * Removes all the active movers.
+ */
+void Cl_WorldReset(void)
+{
+    int i;
+
+    if(serverMaterials)
+    {
+        MaterialArchive_Delete(serverMaterials);
+        serverMaterials = 0;
+    }
+
+    for(i = 0; i < MAX_MOVERS; ++i)
+    {
+        if(Cl_IsMoverValid(i))
+        {
+            P_ThinkerRemove(&activemovers[i]->thinker);
+        }
+        if(Cl_IsPolyValid(i))
+        {
+            P_ThinkerRemove(&activepolys[i]->thinker);
+        }
+    }
 }
 
 void Cl_RemoveActiveMover(mover_t *mover)
@@ -455,26 +441,6 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
         mover->rotate = true;
 }
 
-/**
- * Removes all the active movers.
- */
-void Cl_RemoveMovers(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
-    {
-        if(Cl_IsMoverValid(i))
-        {
-            P_ThinkerRemove(&activemovers[i]->thinker);
-        }
-        if(Cl_IsPolyValid(i))
-        {
-            P_ThinkerRemove(&activepolys[i]->thinker);
-        }
-    }
-}
-
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
     int                 i;
@@ -487,29 +453,6 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
             return activemovers[i];
         }
     return NULL;
-}
-
-/**
- * @return              @c false, if the end marker is found (lump
- *                      index zero).
- */
-int Cl_ReadLumpDelta(void)
-{
-    lumpnum_t           num = (lumpnum_t) Reader_ReadPackedUInt16(msgReader);
-    char                name[9];
-
-    if(!num)
-        return false; // No more.
-
-    // Read the name of the lump.
-    memset(name, 0, sizeof(name));
-    Reader_Read(msgReader, name, 8);
-
-    VERBOSE(Con_Printf("LumpTranslate: %i => %s\n", num, name));
-
-    // Set up translation.
-    Cl_SetLumpTranslation(num, name);
-    return true;
 }
 
 /**
@@ -558,17 +501,15 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec = &dummy;
     }
 
-    /// @todo What if client and server materialnums differ?
-
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t* mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t* mat = Materials_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
 
     if(df & SDF_LIGHT)
@@ -650,15 +591,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    /*if(deltaType == DT_SIDE_R6)
-    {
-        // The R6 protocol reserves a single byte for a side delta.
-        df = Reader_ReadByte(msgReader);
-    }
-    else*/
-    {
-        df = Reader_ReadPackedUInt32(msgReader);
-    }
+    df = Reader_ReadPackedUInt32(msgReader);
 
     if(df & SIDF_TOP_MATERIAL)
         topMat = Reader_ReadPackedUInt16(msgReader);
@@ -703,44 +636,26 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numSideDefs)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-}
+    if(num >= numSideDefs)
+    {
+        // This is worrisome.
+        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
+    }
 #endif
 
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t* mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = Materials_ToMaterial(topMat);
-        Surface_SetMaterial(&sid->SW_topsurface, mat);
+        Surface_SetMaterial(&sid->SW_topsurface, Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t* mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = Materials_ToMaterial(midMat);
-        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+        Surface_SetMaterial(&sid->SW_middlesurface, Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t* mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = Materials_ToMaterial(botMat);
-        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+        Surface_SetMaterial(&sid->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
@@ -779,15 +694,11 @@ if(num >= numSideDefs)
     if(df & SIDF_LINE_FLAGS)
     {
         linedef_t *line = R_GetLineForSide(num);
-
         if(line)
         {
             // The delta includes the entire lowest byte.
             line->flags &= ~0xff;
             line->flags |= lineFlags;
-#if _DEBUG
-Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n", GET_LINE_IDX(line), lineFlags);
-#endif
         }
     }
 }

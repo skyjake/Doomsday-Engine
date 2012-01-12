@@ -38,9 +38,8 @@
 #include "de_play.h"
 #include "de_misc.h"
 
+#include "materialarchive.h"
 #include "r_world.h"
-
-// MACROS ------------------------------------------------------------------
 
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
@@ -56,19 +55,7 @@
 #define TOKEN_LEN 128
 #define VALID_LABEL_LEN 16
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 void    Sv_ClientCoords(int playerNum);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     netRemoteUser = 0; // The client who is currently logged in.
 char   *netPassword = ""; // Remote login password.
@@ -76,9 +63,7 @@ char   *netPassword = ""; // Remote login password.
 // This is the limit when accepting new clients.
 int     svMaxPlayers = DDMAXPLAYERS;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+static MaterialArchive* materialDict;
 
 /**
  * Fills the provided struct with information about the local server.
@@ -838,14 +823,11 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     Msg_End();
     Net_SendBuffer(plrNum, 0);
 
-    //shake.version = SV_VERSION; // byte
-    //shake.yourConsole = plrNum; // byte
-    //shake.playerMask = 0;
-    //shake.gameTime = LONG(gameTime * 100);
-
-    //shake.playerMask = USHORT(shake.playerMask);
-    /*Net_SendPacket(plrNum | DDSP_ORDERED, PSV_HANDSHAKE, &shake,
-                   sizeof(shake));*/
+    // Include the list of material Ids.
+    Msg_Begin(PSV_MATERIAL_ARCHIVE);
+    MaterialArchive_Write(materialDict, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
 
     if(newPlayer)
     {
@@ -899,18 +881,12 @@ void Sv_StartNetGame(void)
         client->connected = false;
         client->ready = false;
         client->nodeID = 0;
-        //client->numTics = 0;
-        //client->firstTic = 0;
         client->enterTime = 0;
-        //client->runTime = -1;
         client->lastTransmit = -1;
-        //client->updateCount = UPDATECOUNT;
         client->fov = 90;
         client->viewConsole = -1;
         memset(client->name, 0, sizeof(client->name));
         client->bandwidthRating = BWR_DEFAULT;
-        //client->bwrAdjustTime = 0;
-        //memset(client->ackTimes, 0, sizeof(client->ackTimes));
         Smoother_Clear(client->smoother);
     }
     gameTime = 0;
@@ -924,6 +900,13 @@ void Sv_StartNetGame(void)
     isServer = true;
     allowSending = true;
 
+    // Prepare the material dictionary we'll be using with clients.
+    materialDict = MaterialArchive_New(false);
+#ifdef _DEBUG
+    Con_Message("Sv_StartNetGame: Prepared material dictionary with %u materials.\n",
+                (uint) MaterialArchive_Count(materialDict));
+#endif
+
     if(!isDedicated)
     {
         player_t           *plr = &ddPlayers[consolePlayer];
@@ -936,6 +919,21 @@ void Sv_StartNetGame(void)
         cl->viewConsole = 0;
         strcpy(cl->name, playerName);
     }
+}
+
+void Sv_StopNetGame(void)
+{
+    if(materialDict)
+    {
+        MaterialArchive_Delete(materialDict);
+        materialDict = 0;
+    }
+}
+
+unsigned int Sv_IdForMaterial(material_t* mat)
+{
+    assert(materialDict);
+    return MaterialArchive_FindUniqueSerialId(materialDict, mat);
 }
 
 void Sv_SendText(int to, int con_flags, const char* text)

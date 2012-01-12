@@ -2448,7 +2448,6 @@ Texture* R_FindModelReflectionSkinForResourcePath(const Uri* path)
 void R_UpdateData(void)
 {
     R_UpdateRawTexs();
-    Cl_InitTranslations();
 }
 
 void R_InitTranslationTables(void)

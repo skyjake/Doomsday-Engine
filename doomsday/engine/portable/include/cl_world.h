@@ -34,15 +34,19 @@ typedef enum {
     MVT_CEILING
 } clmovertype_t;
 
-void            Cl_InitTranslations(void);
-void            Cl_InitMovers(void);
-void            Cl_RemoveMovers(void);
-lumpnum_t       Cl_TranslateLump(lumpnum_t lumpNum);
+void            Cl_WorldInit(void);
+void            Cl_WorldReset(void);
+
+/**
+ * Handles the PSV_MATERIAL_ARCHIVE packet sent by the server. The list of
+ * materials is stored until the client disconnects.
+ */
+void Cl_ReadServerMaterials(void);
+
 void            Cl_SetPolyMover(uint number, int move, int rotate);
 void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
                             float speed);
 
-int             Cl_ReadLumpDelta(void);
 void            Cl_ReadSectorDelta2(int deltaType, boolean skip);
 void            Cl_ReadSideDelta2(int deltaType, boolean skip);
 void            Cl_ReadPolyDelta2(boolean skip);

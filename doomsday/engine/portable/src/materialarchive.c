@@ -53,7 +53,7 @@ static MaterialArchive* create(void)
     return malloc(sizeof(MaterialArchive));
 }
 
-static void destroy(MaterialArchive* mArc)
+static void clearTable(MaterialArchive* mArc)
 {
     if(mArc->table)
     {
@@ -63,7 +63,14 @@ static void destroy(MaterialArchive* mArc)
             Uri_Delete(mArc->table[i].uri);
         }
         free(mArc->table);
+        mArc->table = 0;
     }
+    mArc->count = 0;
+}
+
+static void destroy(MaterialArchive* mArc)
+{
+    clearTable(mArc);
     free(mArc);
 }
 
@@ -98,8 +105,7 @@ static materialarchive_serialid_t insertSerialIdForMaterial(MaterialArchive* mAr
     return mArc->count; // 1-based index.
 }
 
-static materialarchive_serialid_t getSerialIdForMaterial(MaterialArchive* mArc,
-    material_t* mat)
+static materialarchive_serialid_t getSerialIdForMaterial(MaterialArchive* mArc, material_t* mat)
 {
     materialarchive_serialid_t id = 0;
     uint i;
@@ -324,6 +330,12 @@ struct material_s* MaterialArchive_Find(MaterialArchive* arc, materialarchive_se
     return materialForSerialId(arc, serialId, group);
 }
 
+size_t MaterialArchive_Count(MaterialArchive* arc)
+{
+    assert(arc);
+    return arc->count;
+}
+
 void MaterialArchive_Write(MaterialArchive* arc, Writer* writer)
 {
     assert(arc);
@@ -334,6 +346,7 @@ void MaterialArchive_Write(MaterialArchive* arc, Writer* writer)
 void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reader)
 {
     assert(arc);
+    clearTable(arc);
 
     readHeader(arc, reader);
 

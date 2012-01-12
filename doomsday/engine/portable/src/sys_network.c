@@ -1569,6 +1569,7 @@ boolean N_ServerClose(void)
     if(gx.NetServerStop)
         gx.NetServerStop(true);
     Net_StopGame();
+    Sv_StopNetGame();
 
     // Exit server mode.
     N_InitService(false);
