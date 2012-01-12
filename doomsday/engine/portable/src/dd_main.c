@@ -847,6 +847,9 @@ static int DD_ChangeGameWorker(void* paramaters)
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
     loadGameResources(p->game, RC_PACKAGE);
 
+    if(p->initiatedBusyMode)
+        Con_SetProgress(30);
+
     /**
      * Phase 2: Add additional game-startup files.
      * \note These must take precedence over Auto but not game-resource files.
