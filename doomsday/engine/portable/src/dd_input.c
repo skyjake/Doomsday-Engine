@@ -779,7 +779,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
     //
-    // FIXME: This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
+    /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
     memset(ev, 0, sizeof(ev));
     if(ddEvent->type == E_SYMBOLIC)

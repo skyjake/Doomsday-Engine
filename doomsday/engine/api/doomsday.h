@@ -163,6 +163,8 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     boolean         F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
     const char*     F_PrettyPath(const char* path);
 
+/// @addtogroup memzone
+///@{
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
     void* _DECALL   Z_Calloc(size_t size, int tag, void* user);
@@ -172,6 +174,7 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     void            Z_FreeTags(int lowTag, int highTag);
     void            Z_ChangeTag2(void* ptr, int tag);
     void            Z_CheckHeap(void);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -266,7 +269,18 @@ boolean MPE_End(void);
 //
 //------------------------------------------------------------------------
 
-    void            Net_SendPacket(int to_player, int type, const void* data, size_t length);
+/**
+ * Send a packet over the network.
+ * @ingroup network
+ *
+ * @param to_player  Player number to send to. The server is number zero.
+ *                   May include @ref netSendFlags.
+ * @param type       Type of the packet.
+ * @param data       Data of the packet.
+ * @param length     Length of the data.
+ */
+void Net_SendPacket(int to_player, int type, const void* data, size_t length);
+
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
