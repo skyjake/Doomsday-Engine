@@ -926,7 +926,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     Writer_WriteFloat(writer, z);
     Writer_WriteUInt32(writer, angle);
 
-    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
+    Net_SendPacket(plrNum, GPT_PLAYER_SPAWN_POSITION,
         Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -977,7 +977,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1190,7 +1190,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1210,7 +1210,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]);
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
+    Net_SendPacket(to_whom, GPT_PLAYER_INFO,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1348,7 +1348,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 #endif
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
-    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1363,7 +1363,7 @@ void NetSv_SendJumpPower(int target, float power)
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, power);
-    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_ExecuteCheat(int player, const char* command)

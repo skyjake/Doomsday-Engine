@@ -203,7 +203,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Tell the server we're ready to begin receiving frames.
-    Net_SendPacket(DDSP_CONFIRM, DDPT_OK, 0, 0);
+    Net_SendPacket(0, DDPT_OK, 0, 0);
 }
 
 void NetCl_MobjImpulse(Reader* msg)
@@ -852,7 +852,7 @@ void NetCl_SendPlayerInfo()
     Writer_WriteByte(msg, PCLASS_PLAYER);
 #endif
 
-    Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
 
 void NetCl_SaveGame(Reader* msg)
@@ -904,7 +904,7 @@ void NetCl_CheatRequest(const char *command)
     Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)
-        Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
+        Net_SendPacket(0, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
     else
         NetSv_ExecuteCheat(CONSOLEPLAYER, command);
 }
@@ -1001,7 +1001,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
         Writer_WriteInt32(msg, player->readyWeapon);
     }
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
 
 void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
@@ -1026,5 +1026,5 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
     Writer_WriteUInt16(msg, inflictor? inflictor->thinker.id : 0);
     Writer_WriteUInt16(msg, source? source->thinker.id : 0);
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
