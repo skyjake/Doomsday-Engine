@@ -575,7 +575,10 @@ win32 {
 # TODO: Move it to the engine.
 SOURCES += ../plugins/common/src/m_fixed.c
 
-OTHER_FILES += data/cphelp.txt
+OTHER_FILES += \
+    data/cphelp.txt \
+    portable/include/template.h.template \
+    portable/src/template.c.template
 
 # Resources ------------------------------------------------------------------
 
