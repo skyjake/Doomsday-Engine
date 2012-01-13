@@ -148,16 +148,12 @@ void ZipFile_ChangeLumpCacheTag(ZipFile* zip, int lumpIdx, int tag);
 
 void ZipFile_ClearLumpCache(ZipFile* zip);
 
-/**
- * Accessors:
- */
+// Accessors --------------------------------------------------------------
 
 /// @return  Number of lumps contained within this file.
 int ZipFile_LumpCount(ZipFile* zip);
 
-/**
- * Static members:
- */
+// Static members ----------------------------------------------------------
 
 /**
  * Does the specified file appear to be in a format recognised by ZipFile?
