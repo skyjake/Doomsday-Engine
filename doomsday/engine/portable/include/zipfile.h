@@ -88,7 +88,7 @@ const LumpInfo* ZipFile_LumpInfo(ZipFile* zip, int lumpIdx);
 /**
  * Compose the full virtual file system path to a lump contained by this zipfile.
  *
- * @note Always runs a valid string object. In the case of an invalid @a lumpIdx
+ * @note Always returns a valid string object. In the case of an invalid @a lumpIdx
  *       a zero-length string is returned.
  *
  * @param zip  ZipFile instance.
