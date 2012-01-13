@@ -226,11 +226,13 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
 
+/// @addtogroup bindings
+///@{
     // Console: Bindings.
     void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
     int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
     int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
-
+///@}
 //------------------------------------------------------------------------
 //
 // System.

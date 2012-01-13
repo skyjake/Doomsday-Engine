@@ -72,6 +72,8 @@ extern "C" {
 //
 //------------------------------------------------------------------------
 
+/// @defgroup apiFlags Flags
+
 /// Maximum number of players supported by the engine.
 #define DDMAXPLAYERS        16
 
@@ -339,9 +341,13 @@ enum {
 //------------------------------------------------------------------------
 
 /**
+ * @defgroup game Game
+ */
+
+/**
  * Defines the numerous high-level properties of a logical game component.
  * Note that this is POD; no construction or destruction is needed.
- * @see DD_DefineGame()
+ * @see DD_DefineGame() @ingroup game
  */
 typedef struct gamedef_s {
    /**
@@ -370,7 +376,7 @@ typedef struct gamedef_s {
 
 /**
  * Extended info about a registered game component.
- * @see DD_GameInfo()
+ * @see DD_GameInfo() @ingroup game
  */
 typedef struct gameinfo_s {
     const char* title;
@@ -378,11 +384,9 @@ typedef struct gameinfo_s {
     const char* identityKey;
 } GameInfo;
 
-/// @defgroup apiFlags Flags
-
 /**
  * @defgroup resourceFlags Resource Flags
- * @ingroup apiFlags
+ * @ingroup apiFlags resource
  */
 ///@{
 #define RF_STARTUP          0x1 ///< A required resource needed for and loaded during game start up (can't be a virtual file).
@@ -394,6 +398,10 @@ typedef struct gameinfo_s {
 //
 //------------------------------------------------------------------------
 
+/**
+ * @defgroup math Math Routines
+ */
+///@{
 #define FRACBITS            16
 #define FRACUNIT            (1<<FRACBITS)
 
@@ -456,6 +464,7 @@ fixed_t         FixedDiv2(fixed_t a, fixed_t b);
 
 // This one is always in plugins/common/m_fixed.c.
 fixed_t         FixedDiv(fixed_t a, fixed_t b);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -1184,7 +1193,10 @@ typedef struct {
 #define AGF_PRECACHE            0x4000 // Group is just for precaching.
 /**@}*/
 
-/// @defgroup namespace Namespaces
+/**
+ * @defgroup namespace Namespaces
+ * @ingroup resource
+ */
 
 /**
  * Material Namespaces
@@ -1271,24 +1283,31 @@ typedef enum {
 
 /**
  * @defgroup fontNamespaceNames  Font Namespace Names
+ * @ingroup namespace
  * @{
  */
 #define FN_SYSTEM_NAME          "System"
 #define FN_GAME_NAME            "Game"
-/**@}*/
+///@}
 
+/// Font namespace identifier. @ingroup namespace
 typedef enum {
     FN_ANY = -1,
     FONTNAMESPACE_FIRST = 3000,
     FN_SYSTEM = FONTNAMESPACE_FIRST,
     FN_GAME,
     FONTNAMESPACE_LAST = FN_GAME,
-    FN_INVALID /// Special value used to signify an invalid namespace identifier.
+    FN_INVALID ///< Special value used to signify an invalid namespace identifier.
 } fontnamespaceid_t;
 
 #define FONTNAMESPACE_COUNT         (FONTNAMESPACE_LAST - FONTNAMESPACE_FIRST + 1)
 
-/// @c true= val can be interpreted as a valid texture namespace identifier.
+/**
+ * Determines whether @a val can be interpreted as a valid font namespace
+ * identifier. @ingroup namespace
+ * @param val Integer value.
+ * @return @c true or @c false.
+ */
 #define VALID_FONTNAMESPACEID(val)  ((val) >= FONTNAMESPACE_FIRST && (val) <= FONTNAMESPACE_LAST)
 
 /// Patch Info
@@ -1330,6 +1349,24 @@ typedef unsigned int colorpaletteid_t;
 /// @defgroup console Console
 
 /**
+ * @defgroup bindings Bindings
+ * @ingroup input
+ * Event and controller bindings.
+ * Input events and input controller state can be bound to console commands
+ * and player controls.
+ */
+
+/**
+ * @defgroup cvar Console Variables
+ * @ingroup console
+ */
+
+/**
+ * @defgroup ccmd Console Commands
+ * @ingroup console
+ */
+
+/**
  * @defgroup busyModeFlags Busy Mode Flags
  * @ingroup console apiFlags
  */
@@ -1362,7 +1399,7 @@ typedef unsigned int colorpaletteid_t;
 #define CPF_TRANSMIT        0x80000000 ///< If server, sent to all clients.
 ///@}
 
-/// Argument type for B_BindingsForControl().
+/// Argument type for B_BindingsForControl(). @ingroup bindings
 typedef enum bfcinverse_e {
     BFCI_BOTH,
     BFCI_ONLY_NON_INVERSE,
@@ -1371,7 +1408,7 @@ typedef enum bfcinverse_e {
 
 /**
  * @defgroup consoleCommandFlags Console Command Flags
- * @ingroup console apiFlags
+ * @ingroup ccmd apiFlags
  */
 ///@{
 #define CMDF_NO_NULLGAME    0x00000001 ///< Not available unless a game is loaded.
@@ -1380,7 +1417,7 @@ typedef enum bfcinverse_e {
 
 /**
  * @defgroup consoleUsageFlags Console Command Usage Flags
- * @ingroup console apiFlags
+ * @ingroup ccmd apiFlags
  * The method(s) that @em CANNOT be used to invoke a console command, used with
  * @ref commandSource.
  */
@@ -1398,7 +1435,7 @@ typedef enum bfcinverse_e {
 
 /**
  * @defgroup commandSource Command Sources
- * @ingroup console
+ * @ingroup ccmd
  * Where a console command originated.
  */
 ///@{
@@ -1415,7 +1452,7 @@ typedef enum bfcinverse_e {
 
 /**
  * Console command template. Used with Con_AddCommand().
- * @ingroup console
+ * @ingroup ccmd
  */
 typedef struct ccmdtemplate_s {
     /// Name of the command.
@@ -1435,18 +1472,22 @@ typedef struct ccmdtemplate_s {
 #define D_CMD(x)            int CCmd##x(byte src, int argc, char** argv)
 
 /**
- * Helper macros for registering new console commands.
- * @ingroup console
+ * Helper macro for registering new console commands.
+ * @ingroup ccmd
  */
 #define C_CMD(name, argTemplate, fn) \
     { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_template); }
 
+/**
+ * Helper macro for registering new console commands.
+ * @ingroup ccmd
+ */
 #define C_CMD_FLAGS(name, argTemplate, fn, flags) \
     { ccmdtemplate_t _template = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_template); }
 
 /**
  * @defgroup consoleVariableFlags Console Variable Flags
- * @ingroup apiFlags console
+ * @ingroup apiFlags cvar
  */
 ///@{
 #define CVF_NO_ARCHIVE      0x1 ///< Not written in/read from the defaults file.
@@ -1460,7 +1501,7 @@ typedef struct ccmdtemplate_s {
 
 /**
  * @defgroup setVariableFlags Console Set Variable Flags
- * @ingroup apiFlags console
+ * @ingroup apiFlags cvar
  * Use with the various Con_Set* routines (e.g., Con_SetInteger2()).
  */
 ///@{
@@ -1482,7 +1523,7 @@ typedef enum {
 
 /**
  * Console variable template. Used with Con_AddVariable().
- * @ingroup console
+ * @ingroup cvar
  */
 typedef struct cvartemplate_s {
     /// Path of the variable.
@@ -1508,48 +1549,48 @@ typedef struct cvartemplate_s {
     { cvartemplate_t _template = { path, flags, type, ptr, min, max, notifyChanged };    \
         Con_AddVariable(&_template); }
 
-/// Helper macro for registering a new byte console variable. @ingroup console
+/// Helper macro for registering a new byte console variable. @ingroup cvar
 #define C_VAR_BYTE(path, ptr, flags, min, max)    \
     C_VAR(path, ptr, CVT_BYTE, flags, min, max, NULL)
 
-/// Helper macro for registering a new integer console variable. @ingroup console
+/// Helper macro for registering a new integer console variable. @ingroup cvar
 #define C_VAR_INT(path, ptr, flags, min, max)     \
     C_VAR(path, ptr, CVT_INT, flags, min, max, NULL)
 
-/// Helper macro for registering a new float console variable. @ingroup console
+/// Helper macro for registering a new float console variable. @ingroup cvar
 #define C_VAR_FLOAT(path, ptr, flags, min, max) \
     C_VAR(path, ptr, CVT_FLOAT, flags, min, max, NULL)
 
-/// Helper macro for registering a new text console variable. @ingroup console
+/// Helper macro for registering a new text console variable. @ingroup cvar
 #define C_VAR_CHARPTR(path, ptr, flags, min, max) \
     C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, NULL)
 
-/// Helper macro for registering a new Uri console variable. @ingroup console
+/// Helper macro for registering a new Uri console variable. @ingroup cvar
 #define C_VAR_URIPTR(path, ptr, flags, min, max) \
     C_VAR(path, ptr, CVT_URIPTR, flags, min, max, NULL)
 
 /// Same as C_VAR_BYTE() except allows specifying a callback function for
-/// change notification. @ingroup console
+/// change notification. @ingroup cvar
 #define C_VAR_BYTE2(path, ptr, flags, min, max, notifyChanged)    \
     C_VAR(path, ptr, CVT_BYTE, flags, min, max, notifyChanged)
 
 /// Same as C_VAR_INT() except allows specifying a callback function for
-/// change notification. @ingroup console
+/// change notification. @ingroup cvar
 #define C_VAR_INT2(path, ptr, flags, min, max, notifyChanged)     \
     C_VAR(path, ptr, CVT_INT, flags, min, max, notifyChanged)
 
 /// Same as C_VAR_FLOAT() except allows specifying a callback function for
-/// change notification. @ingroup console
+/// change notification. @ingroup cvar
 #define C_VAR_FLOAT2(path, ptr, flags, min, max, notifyChanged) \
     C_VAR(path, ptr, CVT_FLOAT, flags, min, max, notifyChanged)
 
 /// Same as C_VAR_CHARPTR() except allows specifying a callback function for
-/// change notification. @ingroup console
+/// change notification. @ingroup cvar
 #define C_VAR_CHARPTR2(path, ptr, flags, min, max, notifyChanged) \
     C_VAR(path, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
 
 /// Same as C_VAR_URIPTR() except allows specifying a callback function for
-/// change notification. @ingroup console
+/// change notification. @ingroup cvar
 #define C_VAR_URIPTR2(path, ptr, flags, min, max, notifyChanged) \
     C_VAR(path, ptr, CVT_URIPTR, flags, min, max, notifyChanged)
 
