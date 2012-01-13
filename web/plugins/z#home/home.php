@@ -61,17 +61,17 @@ class HomePlugin extends Plugin implements Actioner, RequestInterpreter
     {
         global $FrontController;
 
-        $FrontController->outputHeader($this->title() .' - '. $FrontController->siteDescription());
+        $FrontController->outputHeader($FrontController->siteDescription());
         $FrontController->beginPage($this->title());
 ?>
                     <div id="downloadbox">
 <?php
-        includeHTML('getitnow');
+        includeHTML('getitnow', 'z#home');
 ?>
                     </div>
                     <div id="contentbox"><?php
 
-        includeHTML('introduction');
+        includeHTML('introduction', 'z#home');
 
 ?>                  </div><?php
 
