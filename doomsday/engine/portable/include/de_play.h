@@ -41,7 +41,7 @@
 #include "p_sector.h"
 #include "p_polyobj.h"
 #include "p_dmu.h"
-#include "p_think.h"
+#include "thinker.h"
 #include "p_object.h"
 #include "p_intercept.h"
 #include "p_maputil.h"

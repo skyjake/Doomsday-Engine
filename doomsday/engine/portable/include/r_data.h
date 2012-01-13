@@ -32,7 +32,7 @@
 #include "dd_types.h"
 #include "gl_main.h"
 #include "dd_def.h"
-#include "p_think.h"
+#include "thinker.h"
 #include "m_nodepile.h"
 #include "def_data.h"
 

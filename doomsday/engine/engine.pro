@@ -89,6 +89,7 @@ DENG_API_HEADERS = \
     api/dd_vectorgraphic.h \
     api/dd_wad.h \
     api/dd_world.h \
+    api/def_share.h \
     api/dengproject.h \
     api/dfile.h \
     api/doomsday.h \
@@ -102,6 +103,7 @@ DENG_API_HEADERS = \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
+    api/thinker.h \
     api/uri.h \
     api/writer.h
 
@@ -147,7 +149,6 @@ DENG_HEADERS = \
     portable/include/dd_zone.h \
     portable/include/def_data.h \
     portable/include/def_main.h \
-    portable/include/def_share.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -238,7 +239,6 @@ DENG_HEADERS = \
     portable/include/p_sight.h \
     portable/include/p_subsector.h \
     portable/include/p_surface.h \
-    portable/include/p_think.h \
     portable/include/p_ticker.h \
     portable/include/p_vertex.h \
     portable/include/rend_bias.h \
