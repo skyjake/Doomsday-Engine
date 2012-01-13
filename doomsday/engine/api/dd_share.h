@@ -1659,9 +1659,10 @@ typedef struct serverinfo_s {
 ///@}
 
 /**
- * @defgroup netSendFlags Sent Packet Flags
+ * @defgroup netSendFlags Packet Send Flags
  * @ingroup network apiFlags
  * The flags are OR'd with @a to_player.
+ * @see Net_SendPacket()
  * @{
  */
 #define DDSP_ALL_PLAYERS    0x80000000 ///< Broadcast (for server).
