@@ -168,12 +168,11 @@ boolean FR_Available(void)
 
 void FR_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1 / 35.0 };
-
     if(!inited)
         return;
+
     // Restricted to fixed 35 Hz ticks.
-    if(!M_RunTrigger(&fixed, ticLength))
+    if(!DD_IsSharpTick())
         return; // It's too soon.
 
     ++typeInTime;

@@ -162,11 +162,6 @@ typedef enum {
 
 #define VALID_RESOURCE_CLASS(n)     ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
-typedef struct trigger_s {
-    timespan_t      duration;
-    timespan_t      accum;
-} trigger_t;
-
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
 #  ifdef __cplusplus

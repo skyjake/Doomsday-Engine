@@ -1122,52 +1122,6 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     }
 }
 
-/**
- * Advances time and return true if the trigger is triggered.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
- */
-boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
-{
-    // Either use the trigger's duration, or fall back to the default.
-    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
-
-    trigger->accum += advanceTime;
-
-    if(trigger->accum >= duration)
-    {
-        trigger->accum -= duration;
-        return true;
-    }
-
-    // It wasn't triggered.
-    return false;
-}
-
-/**
- * Checks if the trigger will trigger after @a advanceTime seconds.
- * The trigger itself is not modified in any way.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return @c true, if the trigger will accumulate enough time after @a advanceTime
- *         to fill the trigger's time threshold.
- */
-boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
-{
-    // Either use the trigger's duration, or fall back to the default.
-    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
-    return (trigger->accum + advanceTime>= duration);
-}
-
-/**
- * Calculate CRC-32 for an arbitrary data buffer.
- */
 uint M_CRC32(byte *data, uint length)
 {
 /* ====================================================================== */
