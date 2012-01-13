@@ -31,7 +31,7 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
  * @ingroup builds
  */
 ///{
-define('PID_ANY',             0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('PID_ANY',             0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('PID_WIN_X86',         1);
 define('PID_MAC10_4_X86_PPC', 2);
 define('PID_LINUX_X86',       3);
@@ -43,7 +43,7 @@ define('PID_LINUX_X86_64',    4);
  * @ingroup builds
  */
 ///{
-define('RT_UNSTABLE',         0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
+define('RT_UNSTABLE',         0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('RT_CANDIDATE',        1);
 define('RT_STABLE',           2);
 ///}
