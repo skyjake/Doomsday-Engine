@@ -98,6 +98,7 @@ DENG_API_HEADERS = \
     api/rect.h \
     api/size.h \
     api/smoother.h \
+    api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \

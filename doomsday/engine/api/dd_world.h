@@ -1,30 +1,28 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
- */
-
 /**
- * dd_world.h: Public API to World Data
+ * @file dd_world.h
+ * World Data.
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
+ *
+ * @ingroup map
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef __DOOMSDAY_WORLD_H__
@@ -35,6 +33,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/// @addtogroup map
+///@{
 
 unsigned int    P_ToIndex(const void* ptr);
 void*           P_ToPtr(int type, uint index);
@@ -51,6 +52,19 @@ void            P_FreeDummy(void* dummy);
 int             P_DummyType(void* dummy);
 boolean         P_IsDummy(void* dummy);
 void*           P_DummyExtraData(void* dummy);
+
+uint            P_CountGameMapObjs(int identifier);
+byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
+short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
+int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
+fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
+angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
+float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+
+///@}
+
+/// @addtogroup dmu
+///@{
 
 /* index-based write functions */
 void            P_SetBool(int type, uint index, uint prop, boolean param);
@@ -120,16 +134,12 @@ void            P_GetAnglepv(void* ptr, uint prop, angle_t* params);
 void            P_GetFloatpv(void* ptr, uint prop, float* params);
 void            P_GetPtrpv(void* ptr, uint prop, void* params);
 
-uint            P_CountGameMapObjs(int identifier);
-byte            P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier);
-short           P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier);
-int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
-fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
-angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
-float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
+///@}
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+///@}
 
 #endif // __DOOMSDAY_WORLD_H__

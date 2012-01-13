@@ -436,7 +436,10 @@ td.mdescRight p {
         background-image:url('nav_f.png');
         background-repeat:repeat-x;
         background-color: #E2E8F2;
+}
 
+.memdoc dl table td p {
+        margin: 0;
 }
 
 .memdoc, dl.reflist dd {

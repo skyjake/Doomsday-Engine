@@ -1,24 +1,27 @@
-/**\file stringpool.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file stringpool.h
+ * String pool. @ingroup base
  *
- *\author Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
+ * Simple data structure for managing a set of unique case-insensitive strings
+ * with integral interning mechanism.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @todo Explain briefly what "interning" means in practice.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_STRINGPOOL_H
@@ -30,16 +33,14 @@ extern "C" {
 
 #include "dd_types.h"
 
-/**
- * String Pool.  Simple data structure for managing a set of unique case-insensitive
- * strings with integral interning mechanism.
- *
- * @ingroup data
- */
 struct stringpool_s; // The stringpool instance (opaque).
+
+/**
+ * StringPool instance. Use StringPool_New() or one of the other constructs to create.
+ */
 typedef struct stringpool_s StringPool;
 
-// Interned string identifier.
+/// Interned string identifier.
 typedef uint StringPoolInternId;
 
 /**

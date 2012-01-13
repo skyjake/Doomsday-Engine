@@ -1,46 +1,47 @@
-/**\file dd_infine.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_infine.h
+ * Interactive animation sequence system.
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @ingroup infine
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_INFINE_H
 #define LIBDENG_API_INFINE_H
 
 /**
- * @defgroup infine InFine System
- *
- * The "In Fine" finale sequence system.
+ * @defgroup infine Finale Animations
+ * @ingroup gui
+ * The "In Fine" finale interactive animation sequence system.
  */
+///@{
 
 /// Finale identifier. Used throughout the public API when referencing active Finales.
 typedef ident_t finaleid_t;
 
 /**
  * @defgroup finaleFlags Finale Flags
- * @ingroup apiFlags
+ * @ingroup infine apiFlags
  */
-/*@{*/
+///@{
 #define FF_LOCAL            0x1 /// Local scripts are executed client-side.
-/*@}*/
+///@}
 
 /**
  * Execute a set of Finale commands.
@@ -99,5 +100,7 @@ boolean FI_ScriptCmdExecuted(finaleid_t id);
 boolean FI_ScriptIsMenuTrigger(finaleid_t id);
 
 int FI_ScriptResponder(finaleid_t id, const void* ev);
+
+///@}
 
 #endif /* LIBDENG_API_INFINE_H */

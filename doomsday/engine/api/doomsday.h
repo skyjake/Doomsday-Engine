@@ -25,8 +25,17 @@
  * @mainpage libdeng API
  *
  * This documentation covers all the functions and data that Doomsday makes
- * available for games and other plugins. The documentation has been organized
- * into module (see <a href="modules.html">Modules</a>).
+ * available for games and other plugins.
+ *
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref base
+ * - @ref console
+ * - @ref input
+ * - @ref network
+ * - @ref resource
+ * - @ref gl
  */
 
 #ifndef LIBDENG_EXPORTS_H
@@ -271,7 +280,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
 /**
  * @defgroup system System Routines
- * Functionality provided by the operating system.
+ * Functionality provided by or related to the operating system.
  */
 ///@{
     void            Sys_TicksPerSecond(float num);

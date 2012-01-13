@@ -30,15 +30,16 @@
 
 /**
  * @defgroup pathComparisonFlags  Path Comparison Flags
- * @{
+ * @ingroup base apiFlags
  */
-#define PCF_NO_BRANCH       0x1 /// Do not consider branches as possible candidates.
-#define PCF_NO_LEAF         0x2 /// Do not consider leaves as possible candidates.
-#define PCF_MATCH_PARENT    0x4 /// Only consider nodes whose parent matches that referenced.
-#define PCF_MATCH_FULL      0x8 /// Whole path must match completely (i.e., path begins
-                                /// from the same root point) otherwise allow partial
-                                /// (i.e., relative) matches.
-/**@}*/
+///@{
+#define PCF_NO_BRANCH       0x1 ///< Do not consider branches as possible candidates.
+#define PCF_NO_LEAF         0x2 ///< Do not consider leaves as possible candidates.
+#define PCF_MATCH_PARENT    0x4 ///< Only consider nodes whose parent matches that referenced.
+#define PCF_MATCH_FULL      0x8 /**< Whole path must match completely (i.e., path begins
+                                     from the same root point) otherwise allow partial
+                                     (i.e., relative) matches. */
+///@}
 
 typedef enum {
     PT_ANY = -1,
@@ -69,7 +70,7 @@ typedef struct pathdirectorynode_s PathDirectoryNode;
  * Somewhat similar to a Prefix Tree (Trie) representationally although that is
  * where the similarity ends.
  *
- * @ingroup data
+ * @ingroup base
  */
 
 // Number of buckets in the hash table.

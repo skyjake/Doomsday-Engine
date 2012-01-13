@@ -1,25 +1,36 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_string.h
+ * Dynamic text string.
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ * Simple dynamic string management. @ingroup base
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Uses @ref memzone or standard malloc for memory allocation, chosen during
+ * initialization of a string. The string itself is always allocated with
+ * malloc. The @ref memzone is not thread-safe.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @todo Rename to Str? (str.h)
+ * @todo AutoStr for automatically garbage-collected strings (good for return values,
+ *       temporary variables when printing).
+ * @todo Make this opaque for better forward compatibility -- prevents initialization
+ *       with static C strings, though (which is probably for the better anyway).
+ * @todo Derive from Qt::QString
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
- * Boston, MA  02110-1301  USA
+ * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_STRING_H
@@ -30,22 +41,15 @@
 #include "writer.h"
 
 /**
- * Dynamic String. Simple dynamic string management.
+ * Dynamic string instance. Use Str_New() to allocate one from the heap, or
+ * Str_Init() to initialize a string located on the stack.
  *
- * You can init with static string constants, for example:
- *      ddstring_t mystr = { "Hello world." };
- *
- * \note Uses de::Zone or standard malloc for memory allocation, chosen during
- *       initialization of a string. The string itself is always allocated with
- *       malloc. The Zone is not thread-safe.
- *
- * \todo Derive from Qt::QString
- * \todo Make this opaque for better forward compatibility -- prevents initialization
- *       with static C strings, though.
+ * You can init global ddstring_t variables with static string constants,
+ * for example: @code ddstring_t mystr = { "Hello world." }; @endcode
  */
 typedef struct ddstring_s {
     /// String buffer.
-	char* str;
+    char* str;
 
     /// String length (no terminating nulls).
     size_t length;
@@ -53,10 +57,10 @@ typedef struct ddstring_s {
     /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
     size_t size;
 
-	// Memory management.
-	void (*memFree)(void*);
-	void* (*memAlloc)(size_t n);
-	void* (*memCalloc)(size_t n);
+    // Memory management.
+    void (*memFree)(void*);
+    void* (*memAlloc)(size_t n);
+    void* (*memCalloc)(size_t n);
 } ddstring_t;
 
 // Format checking for Str_Appendf in GCC2
