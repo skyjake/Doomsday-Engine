@@ -496,7 +496,7 @@ ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info)
     return zip;
 }
 
-int ZipFile_PublishLumpsToDirectory(ZipFile* zip, lumpdirectory_t* directory)
+int ZipFile_PublishLumpsToDirectory(ZipFile* zip, LumpDirectory* directory)
 {
     int numPublished = 0;
     assert(zip);

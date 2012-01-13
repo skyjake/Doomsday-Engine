@@ -241,7 +241,7 @@ WadFile* WadFile_New(DFile* file, const char* path, const LumpInfo* info)
     return wad;
 }
 
-int WadFile_PublishLumpsToDirectory(WadFile* wad, lumpdirectory_t* directory)
+int WadFile_PublishLumpsToDirectory(WadFile* wad, LumpDirectory* directory)
 {
     int numPublished = 0;
     assert(wad);

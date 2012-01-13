@@ -85,29 +85,29 @@ static uint hashLumpShortName(const lumpname_t lumpName)
     return hash;
 }
 
-lumpdirectory_t* LumpDirectory_New(void)
+LumpDirectory* LumpDirectory_New(void)
 {
-    lumpdirectory_t* ld = (lumpdirectory_t*)malloc(sizeof(lumpdirectory_t));
+    LumpDirectory* ld = (LumpDirectory*)malloc(sizeof(LumpDirectory));
     ld->numRecords = 0;
     ld->records = NULL;
     ld->flags = 0;
     return ld;
 }
 
-void LumpDirectory_Delete(lumpdirectory_t* ld)
+void LumpDirectory_Delete(LumpDirectory* ld)
 {
     assert(ld);
     LumpDirectory_Clear(ld);
     free(ld);
 }
 
-boolean LumpDirectory_IsValidIndex(lumpdirectory_t* ld, lumpnum_t lumpNum)
+boolean LumpDirectory_IsValidIndex(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
     return (lumpNum >= 0 && lumpNum < ld->numRecords);
 }
 
-static const lumpdirectory_lumprecord_t* LumpDirectory_Record(lumpdirectory_t* ld, lumpnum_t lumpNum)
+static const lumpdirectory_lumprecord_t* LumpDirectory_Record(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
     if(LumpDirectory_IsValidIndex(ld, lumpNum))
@@ -118,13 +118,13 @@ static const lumpdirectory_lumprecord_t* LumpDirectory_Record(lumpdirectory_t* l
     exit(1); // Unreachable.
 }
 
-const LumpInfo* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum)
+const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     const lumpdirectory_lumprecord_t* rec = LumpDirectory_Record(ld, lumpNum);
     return F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
 }
 
-int LumpDirectory_Size(lumpdirectory_t* ld)
+int LumpDirectory_Size(LumpDirectory* ld)
 {
     assert(ld);
     return ld->numRecords;
@@ -134,7 +134,7 @@ int LumpDirectory_Size(lumpdirectory_t* ld)
  * Moves @a count lumps starting beginning at @a from.
  * \assume LumpDirectory::records is large enough for this operation!
  */
-static void LumpDirectory_Move(lumpdirectory_t* ld, uint from, uint count, int offset)
+static void LumpDirectory_Move(LumpDirectory* ld, uint from, uint count, int offset)
 {
     assert(ld);
     // Check that our information is valid.
@@ -145,7 +145,7 @@ static void LumpDirectory_Move(lumpdirectory_t* ld, uint from, uint count, int o
     ld->flags |= LDF_RECORDS_HASHDIRTY;
 }
 
-static void LumpDirectory_Resize(lumpdirectory_t* ld, int numItems)
+static void LumpDirectory_Resize(LumpDirectory* ld, int numItems)
 {
     assert(ld);
     if(numItems < 0) numItems = 0;
@@ -162,7 +162,7 @@ static void LumpDirectory_Resize(lumpdirectory_t* ld, int numItems)
     }
 }
 
-int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject)
+int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* fsObject)
 {
     assert(ld);
     {
@@ -189,7 +189,7 @@ int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject)
     }
 }
 
-void LumpDirectory_Append(lumpdirectory_t* ld, abstractfile_t* fsObject,
+void LumpDirectory_Append(LumpDirectory* ld, abstractfile_t* fsObject,
     int lumpIdxBase, int lumpIdxCount)
 {
     assert(ld && fsObject);
@@ -223,7 +223,7 @@ void LumpDirectory_Append(lumpdirectory_t* ld, abstractfile_t* fsObject,
     }
 }
 
-static void LumpDirectory_BuildHash(lumpdirectory_t* ld)
+static void LumpDirectory_BuildHash(LumpDirectory* ld)
 {
     int i;
     assert(ld);
@@ -253,7 +253,7 @@ static void LumpDirectory_BuildHash(lumpdirectory_t* ld)
 #endif
 }
 
-void LumpDirectory_Clear(lumpdirectory_t* ld)
+void LumpDirectory_Clear(LumpDirectory* ld)
 {
     assert(ld);
     if(ld->numRecords)
@@ -269,13 +269,13 @@ static int directoryContainsLumpsFromFile(const LumpInfo* info, void* paramaters
     return 1; // Stop iteration we need go no further.
 }
 
-boolean LumpDirectory_Catalogues(lumpdirectory_t* ld, abstractfile_t* file)
+boolean LumpDirectory_Catalogues(LumpDirectory* ld, abstractfile_t* file)
 {
     if(!file) return false;
     return LumpDirectory_Iterate(ld, file, directoryContainsLumpsFromFile);
 }
 
-int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
+int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* fsObject,
     int (*callback) (const LumpInfo*, void*), void* paramaters)
 {
     int result = 0;
@@ -300,13 +300,13 @@ int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
     return result;
 }
 
-int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,
+int LumpDirectory_Iterate(LumpDirectory* ld, abstractfile_t* fsObject,
     int (*callback) (const LumpInfo*, void*))
 {
     return LumpDirectory_Iterate2(ld, fsObject, callback, 0);
 }
 
-static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* name,
+static lumpnum_t LumpDirectory_IndexForName2(LumpDirectory* ld, const char* name,
     boolean matchLumpName)
 {
     assert(ld);
@@ -347,12 +347,12 @@ static lumpnum_t LumpDirectory_IndexForName2(lumpdirectory_t* ld, const char* na
     return -1;
 }
 
-lumpnum_t LumpDirectory_IndexForPath(lumpdirectory_t* ld, const char* name)
+lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* name)
 {
     return LumpDirectory_IndexForName2(ld, name, false);
 }
 
-lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name)
+lumpnum_t LumpDirectory_IndexForName(LumpDirectory* ld, const char* name)
 {
     return LumpDirectory_IndexForName2(ld, name, true);
 }
@@ -419,7 +419,7 @@ static int LumpDirectory_CompareRecords(const lumpdirectory_lumprecord_t* record
     return result;
 }
 
-void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpName)
+void LumpDirectory_PruneDuplicateRecords(LumpDirectory* ld, boolean matchLumpName)
 {
     int i, j, sortedNumRecords;
     assert(ld);
@@ -476,7 +476,7 @@ void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpN
         LumpDirectory_Resize(ld, ld->numRecords = sortedNumRecords);
 }
 
-void LumpDirectory_Print(lumpdirectory_t* ld)
+void LumpDirectory_Print(LumpDirectory* ld)
 {
     int i;
     assert(ld);
