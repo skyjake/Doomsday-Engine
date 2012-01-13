@@ -53,7 +53,7 @@ pilotcfg.py contains information such as (global variables):
 - DISTRIB_DIR: distrib directory path
 - EVENTS_DIR: events directory path
 - APT_DIR: apt repository path (for Linux systems)
-- DOC_DIR: apidoc destination path
+- IGNORED_TASKS: list of tasks to quietly ignore (marked as complete)
 
 The function 'postTaskHook(task)' can be defined for actions to be carried out 
 after a successful execution of a task."""
@@ -260,6 +260,11 @@ def checkForTasks():
 
 def doTask(task):
     """Throws an exception if the task fails."""
+
+    # Are we supposed to ignore this task?
+    if 'IGNORED_TASKS' in dir(pilotcfg) and \
+        task in pilotcfg.IGNORED_TASKS:
+        return True
 
     if task == 'tag_build':
         print "TASK: TAG NEW BUILD"
