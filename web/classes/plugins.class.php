@@ -91,6 +91,7 @@ class Plugins implements Iterator, Countable
 
     public function load($pluginName)
     {
+        if(is_string($pluginName) && strlen($pluginName) > 0)
         foreach($this->_plugins as $plugin => $record)
         {
             if(!strcasecmp($plugin, $pluginName))
@@ -111,7 +112,7 @@ class Plugins implements Iterator, Countable
         throw new Exception(sprintf('Unknown plugin %s.', $pluginName));
     }
 
-    public function InterpretRequest($Request)
+    public function interpretRequest($Request)
     {
         foreach($this->_plugins as $plugin => $record)
         {
@@ -124,6 +125,18 @@ class Plugins implements Iterator, Countable
         }
 
         throw new Exception('Unhandled request');
+    }
+
+    /**
+     * Lookup a plugin by name. If no plugin is found by the name specified
+     * Exception is thrown. Plugin is loaded if it is not already.
+     *
+     * @param pluginName  (string) Name of the plugin to locate.
+     * @return (object) Found plugin object.
+     */
+    public function find($pluginName)
+    {
+        return $this->load($pluginName);
     }
 
     /**
