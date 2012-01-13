@@ -417,33 +417,13 @@ tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
 <?php
     }
 
-    private function displayHomepage()
-    {
-        $this->outputHeader();
-        $this->beginPage();
-
-?>
-                    <div id="downloadbox">
-<?php
-        includeHTML('getitnow');
-?>
-                    </div>
-                    <div id="contentbox"><?php
-
-        includeHTML('introduction');
-
-?>                  </div><?php
-
-        $this->endPage();
-    }
-
     public function interpretRequest()
     {
         // Determine action:
         try
         {
             // Maybe a plugin?
-            $this->plugins()->InterpretRequest($this->_request);
+            $this->plugins()->interpretRequest($this->_request);
 
             foreach($this->_actions as $ActionRecord)
             {
@@ -460,7 +440,7 @@ tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
         catch(Exception $e)
         {
             // We'll show the homepage.
-            $this->displayHomepage();
+            $this->enqueueAction($this->plugins()->find('home'), NULL);
         }
     }
 
