@@ -53,7 +53,8 @@
 #define FR_DEF_ATTRIB_CASE_SCALE        (false)
 
 /**
- * @defGroup drawTextFlags  Draw Text Flags
+ * @defgroup drawTextFlags  Draw Text Flags
+ * @ingroup apiFlags
  */
 /*@{*/
 #define DTF_NO_TYPEIN                   (0x0001)
