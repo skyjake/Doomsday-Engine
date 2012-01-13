@@ -354,6 +354,10 @@ table.memberdecls {
 	color: #555;
 }
 
+td.mdescRight p {
+    margin: 0;
+}
+
 .memItemLeft, .memItemRight, .memTemplParams {
 	border-top: 1px solid #C4CFE5;
 }
