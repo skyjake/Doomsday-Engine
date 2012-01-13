@@ -87,12 +87,6 @@ class Plugins implements Iterator, Countable
 
         ksort($plugins);
         $this->_plugins = $plugins;
-
-        if(isset($_GET['danij']) && intval($_GET['danij']) == 1234)
-        {
-            print_r($plugins);
-            die("plugins?");
-        }
     }
 
     public function load($pluginName)
