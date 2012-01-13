@@ -136,6 +136,11 @@ class FrontController
         return $this->_plugins;
     }
 
+    public function findPlugin($pluginName)
+    {
+        return $this->plugins()->find($pluginName);
+    }
+
     public function siteTitle()
     {
         return $this->_siteTitle;
@@ -440,7 +445,7 @@ tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
         catch(Exception $e)
         {
             // We'll show the homepage.
-            $this->enqueueAction($this->plugins()->find('home'), NULL);
+            $this->enqueueAction($this->findPlugin('home'), NULL);
         }
     }
 
