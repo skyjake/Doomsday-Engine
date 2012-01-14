@@ -178,6 +178,7 @@ DENG_HEADERS = \
     portable/include/fs_main.h \
     portable/include/fs_util.h \
     portable/include/game.h \
+    portable/include/garbage.h \
     portable/include/gl_defer.h \
     portable/include/gl_draw.h \
     portable/include/gl_hq2x.h \
