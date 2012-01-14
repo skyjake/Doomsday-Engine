@@ -78,6 +78,9 @@ def main():
     finally:
         endPilotInstance()
 
+def msg(s):
+    print >> sys.stderr, s
+
 
 def isServer():
     return 'server' in sys.argv
@@ -120,6 +123,15 @@ def pidFileName():
         return 'client.pid'
 
 
+def isStale(fn):
+    """Files are considered stale after some time has passed."""
+    age = time.time() - os.stat(fn).st_ctime
+    if age > 4*60*60:
+        msg(fn + ' is stale, ignoring it.')
+        return True
+    return False
+
+
 def startNewPilotInstance():
     """A new pilot instance can only be started if one is not already running
     on the system. If an existing instance is detected, this one will quit
@@ -127,8 +139,9 @@ def startNewPilotInstance():
     # Check for an existing pid file.
     pid = os.path.join(homeDir(), pidFileName())
     if os.path.exists(pid):
-        # Cannot start right now -- will be retried later.
-        sys.exit(0)
+        if not isStale(pid):
+            # Cannot start right now -- will be retried later.
+            sys.exit(0)
     print >> file(pid, 'w'), str(os.getpid())
     
     
@@ -181,7 +194,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
                 raise Exception("Requests must be of type 'dict'")
             self.doRequest()
         except Exception, x:
-            print 'Request failed:', x
+            msg('Request failed: ' + str(x))
             response = { 'result': 'error', 'error': str(x) }
             self.respond(response)
             
@@ -267,36 +280,36 @@ def doTask(task):
         return True
 
     if task == 'tag_build':
-        print "TASK: TAG NEW BUILD"
+        msg("TAG NEW BUILD")
         return autobuild('create')
 
     elif task == 'deb_changes':
-        print "TASK: UPDATE .DEB CHANGELOG"
+        msg("UPDATE .DEB CHANGELOG")
         return autobuild('debchanges')
 
     elif task == 'build':
-        print "TASK: BUILD RELEASE"
+        msg("BUILD RELEASE")
         return autobuild('platform_release')
 
     elif task == 'publish':
-        print "TASK: PUBLISH"
+        msg("PUBLISH")
         systemCommand('deng_copy_build_to_sourceforge.sh')
 
     elif task == 'apt_refresh':
-        print "TASK: APT REPOSITORY REFRESH"
+        msg("APT REPOSITORY REFRESH")
         return autobuild('apt')
         
     elif task == 'update_feed':
-        print "TASK: UPDATE FEED"
+        msg("UPDATE FEED")
         autobuild('feed')
         autobuild('xmlfeed')
         
     elif task == 'purge':
-        print "TASK: PURGE"
+        msg("PURGE")
         return autobuild('purge')
         
     elif task == 'generate_apidoc':
-        print "TASK: GENERATE API DOCUMENTATION"
+        msg("GENERATE API DOCUMENTATION")
         os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/engine'))
         systemCommand('git pull')
         print "\nPUBLIC API DOCS"
