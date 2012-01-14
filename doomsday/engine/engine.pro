@@ -98,6 +98,7 @@ DENG_API_HEADERS = \
     api/rect.h \
     api/size.h \
     api/smoother.h \
+    api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
@@ -574,7 +575,10 @@ win32 {
 # TODO: Move it to the engine.
 SOURCES += ../plugins/common/src/m_fixed.c
 
-OTHER_FILES += data/cphelp.txt
+OTHER_FILES += \
+    data/cphelp.txt \
+    portable/include/template.h.template \
+    portable/src/template.c.template
 
 # Resources ------------------------------------------------------------------
 

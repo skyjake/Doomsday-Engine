@@ -1,15 +1,31 @@
-/**\file uri.h
- *\section License
- * License: GPL
- * Online License Link: http://www.trolltech.com/gpl/
+/**
+ * @file uri.h
+ * Universal Resource Identifier.
  *
- *\author Daniel Swanson <danij@dengine.net>
- *\author Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
+ * @ingroup base
  *
- * This class is based on the semantics defined for the QUrl class, a component
- * of the Qt GUI Toolkit.
+ * Convenient interface class designed to assist working with URIs (Universal
+ * Resource Identifier) to engine-managed resources. This class is based on the
+ * semantics defined for the QUrl class, a component of the Qt GUI Toolkit.
  *
- * \todo Derive from Qt::QUrl
+ * @todo Derive from Qt::QUrl
+ *
+ * @authors Daniel Swanson <danij@dengine.net>
+ * @authors Copyright (C) 1992-2000 Trolltech AS.  All rights reserved.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_URI_H
@@ -23,11 +39,11 @@ extern "C" {
 #include "reader.h"
 #include "writer.h"
 
-/**
- * Uri: Convenient interface class designed to assist working with URIs
- * (Universal Resource Identifier) to engine-managed resources.
- */
 struct uri_s; // The uri instance (opaque).
+
+/**
+ * Uri instance. Created with Uri_New() or one of the other constructors.
+ */
 typedef struct uri_s Uri;
 
 /// Schemes must be at least this many characters.
@@ -54,7 +70,7 @@ Uri* Uri_Copy(Uri* uri, const Uri* other);
  * compatible path (perhaps base-relative).
  *
  * @return  Resolved path else @c NULL if non-resolvable. Caller should ensure
- *          to Str_Delete when no longer needed.
+ *          to Str_Delete() when no longer needed.
  */
 ddstring_t* Uri_Resolved(const Uri* uri);
 

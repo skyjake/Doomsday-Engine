@@ -2,26 +2,23 @@
  * @file doomsday.h
  * Primary header file for the Doomsday Engine Public API
  *
- * @section License
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 51
- * Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
- * @author Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 /**
@@ -30,8 +27,15 @@
  * This documentation covers all the functions and data that Doomsday makes
  * available for games and other plugins.
  *
- * The documentation has been organized into modules
- * (see <a href="modules.html">Modules</a>).
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref base
+ * - @ref console
+ * - @ref input
+ * - @ref network
+ * - @ref resource
+ * - @ref gl
  */
 
 #ifndef LIBDENG_EXPORTS_H
@@ -45,7 +49,7 @@
 #endif
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 /**
@@ -54,7 +58,7 @@ extern          "C" {
  * For example, a game could use sector_t to identify to sector to
  * change with the Map Update API.
  *
- * Define __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
+ * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
@@ -89,13 +93,29 @@ struct font_s;
 //------------------------------------------------------------------------
 
 /**
+ * @defgroup base Base
+ */
+
+/**
+ * @defgroup defs Definitions
+ * @ingroup base
+ */
+
+/**
+ * @defgroup fs File System
+ * @ingroup base
+ */
+
+/// @addtogroup game
+///@{
+/**
  * Register a new game.
- *
- * \note Game registration order defines the order of the automatic game
- * identification/selection logic.
  *
  * @param definition  GameDef structure defining the new game.
  * @return  Unique identifier/name assigned to resultant game.
+ *
+ * @note Game registration order defines the order of the automatic game
+ * identification/selection logic.
  */
 gameid_t DD_DefineGame(const GameDef* definition);
 
@@ -118,7 +138,7 @@ gameid_t DD_GameIdForKey(const char* identityKey);
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
  *
- * \note Resource registration order defines the load order of resources
+ * @note Resource registration order defines the load order of resources
  * (among those of the same type).
  */
 void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
@@ -136,21 +156,36 @@ boolean DD_GameInfo(GameInfo* info);
     void            DD_SetVariable(int ddvalue, void* ptr);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
+///@}
 
+/// @addtogroup namespace
+///@{
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+///@}
 
+/**
+ * @ingroup material
+ */
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
 
+/// @addtogroup defs
+///@{
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
     int             Def_Set(int type, int index, int value, const void* ptr);
     int             Def_EvalFlags(char* flags);
+///@}
 
+/// @addtogroup input
+///@{
     // Base: Input.
     void            DD_ClearKeyRepeaters(void);
     int             DD_GetKeyCode(const char* name);
+///@}
 
+/// @addtogroup fs
+///@{
     // Base: File system.
     int             F_Access(const char* path);
     int             F_FileExists(const char* path);
@@ -166,6 +201,7 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 
     boolean         F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
     const char*     F_PrettyPath(const char* path);
+///@}
 
 /// @addtogroup memzone
 ///@{
@@ -186,6 +222,8 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup console
+///@{
     int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
@@ -225,6 +263,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
+///@}
 
 /// @addtogroup bindings
 ///@{
@@ -239,6 +278,11 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //
 //------------------------------------------------------------------------
 
+/**
+ * @defgroup system System Routines
+ * Functionality provided by or related to the operating system.
+ */
+///@{
     void            Sys_TicksPerSecond(float num);
     int             Sys_GetTime(void);
     double          Sys_GetSeconds(void);
@@ -246,6 +290,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     void            Sys_Sleep(int millisecs);
     int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -253,6 +298,9 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //
 //------------------------------------------------------------------------
 
+/// @defgroup mapEdit Map Editor
+/// @ingroup map
+///@{
 boolean MPE_Begin(const char* mapUri);
 boolean MPE_End(void);
 
@@ -264,10 +312,14 @@ boolean MPE_End(void);
     uint            MPE_PlaneCreate(uint sector, float height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
+///@}
 
+/// @addtogroup mobj
+///@{
     // Custom map object data types.
     boolean         P_RegisterMapObj(int identifier, const char* name);
     boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -298,6 +350,12 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 // Playsim.
 //
 //------------------------------------------------------------------------
+
+/**
+ * @defgroup playsim
+ * @ingroup game
+ */
+///@{
 
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
@@ -341,12 +399,16 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length);
     int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
+///@}
 
+/// @addtogroup controls
+///@{
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
     void            P_Impulse(int playerNum, int control);
+///@}
 
     // Play: Setup.
 

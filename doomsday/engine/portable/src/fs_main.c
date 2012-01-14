@@ -80,15 +80,15 @@ static uint fileIdentifiersCount = 0;
 static uint fileIdentifiersMax = 0;
 static fileidentifier_t* fileIdentifiers = NULL;
 
-static lumpdirectory_t* zipLumpDirectory;
+static LumpDirectory* zipLumpDirectory;
 
-static lumpdirectory_t* primaryWadLumpDirectory;
-static lumpdirectory_t* auxiliaryWadLumpDirectory;
+static LumpDirectory* primaryWadLumpDirectory;
+static LumpDirectory* auxiliaryWadLumpDirectory;
 // @c true = one or more files have been opened using the auxiliary directory.
 static boolean auxiliaryWadLumpDirectoryInUse;
 
 // Currently selected lump directory.
-static lumpdirectory_t* ActiveWadLumpDirectory;
+static LumpDirectory* ActiveWadLumpDirectory;
 
 // Lump directory mappings.
 static uint ldMappingsCount = 0;
@@ -225,7 +225,7 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
     return true;
 }
 
-static void clearLoadedFiles(lumpdirectory_t* directory)
+static void clearLoadedFiles(LumpDirectory* directory)
 {
     abstractfile_t* file;
     int i;

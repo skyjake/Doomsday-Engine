@@ -2,35 +2,34 @@
  * @file reader.h
  * Deserializer for reading values and data from a byte array.
  *
+ * @ingroup base
+ *
  * Reader instances assume that all values stored in the source array are in
- * little-endian (Intel) byte order. All read operations are checked
- * against the buffer boundaries; reading too much data from the buffer results
- * in an error.
+ * little-endian (Intel) byte order. All read operations are checked against
+ * the buffer boundaries; reading too much data from the buffer results in an
+ * error.
  *
  * If @c DENG_WRITER_TYPECHECK is defined, the type check codes preceding
  * the data values are checked for validity. The assumption is that the source
  * data buffer has been created using a Writer.
  *
- * @see writer.h
+ * @see writer.h, Writer
  *
- * @section License
+ * @authors Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_READER_H
@@ -43,6 +42,10 @@ extern "C" {
 #include "dd_types.h"
 
 struct reader_s; // The reader instance (opaque).
+
+/**
+ * Reader instance. Constructed with Reader_New() or one of the other constructors.
+ */
 typedef struct reader_s Reader;
 
 typedef char  (*Reader_Callback_ReadInt8)(Reader*);

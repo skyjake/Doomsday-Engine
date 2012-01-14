@@ -2,6 +2,8 @@
  * @file writer.h
  * Serializer for writing values and data into a byte array.
  *
+ * @ingroup base
+ *
  * Writer instances ensure that all values written into the array are stored in
  * little-endian (Intel) byte order. All write operations are also checked
  * against the buffer boundaries; writing too much data into the buffer results
@@ -11,26 +13,23 @@
  * check code, which is checked when the values are read by Reader. This
  * guarantees that data is interpreted as written.
  *
- * @see reader.h
+ * @see reader.h, Reader
  *
- * @section License
+ * @authors Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *
+ * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
- *
- * @author Copyright &copy; 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_WRITER_H
@@ -58,6 +57,10 @@ enum
 #endif
 
 struct writer_s; // The writer instance (opaque).
+
+/**
+ * Writer instance. Constructed with Writer_New() or one of the other constructors.
+ */
 typedef struct writer_s Writer;
 
 typedef void (*Writer_Callback_WriteInt8)(Writer* w, char v);
@@ -84,16 +87,18 @@ Writer* Writer_New(void);
 Writer* Writer_NewWithBuffer(byte* buffer, size_t maxLen);
 
 /**
- * Constructs a new writer. The writer will allocate memory for the buffer while
- * more data gets written.
+ * Constructs a new writer. The writer will allocate memory for the buffer
+ * while more data gets written. The writer has to be destroyed with
+ * Writer_Delete() after it is not needed any more.
  *
  * @param maxLen  Maximum size for the buffer. Use zero for unlimited size.
  */
 Writer* Writer_NewWithDynamicBuffer(size_t maxLen);
 
 /**
- * Constructs a new writer that has no memory buffer of its own. Instead, all the
- * write operations will get routed to user-provided callbacks.
+ * Constructs a new writer that has no memory buffer of its own. Instead, all
+ * the write operations will get routed to user-provided callbacks. The writer
+ * has to be destroyed with Writer_Delete() after it is not needed any more.
  */
 Writer* Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
                                 Writer_Callback_WriteInt16 writeInt16,

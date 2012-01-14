@@ -49,7 +49,7 @@ void LumpFile_Delete(LumpFile* lump)
     free(lump);
 }
 
-int LumpFile_PublishLumpsToDirectory(LumpFile* lump, lumpdirectory_t* directory)
+int LumpFile_PublishLumpsToDirectory(LumpFile* lump, LumpDirectory* directory)
 {
     assert(lump && directory);
     // Insert the lumps into their rightful places in the directory.

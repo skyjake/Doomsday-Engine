@@ -1,30 +1,26 @@
-/**\file dd_types.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Type Definitions
+ * @file dd_types.h
+ * Type definitions.
+ *
+ * @ingroup base
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_TYPES_H
@@ -38,7 +34,7 @@
  using wide characters (unicode utf-16le) or ansi for functions and strings.
  on Linux and OSX we use utf-8 by default - which conveniently maps to the
  CHAR type. As a general guide, any other Win32 T style functions used,
- should also be re-implemented here in an ANSI style form for use on Linix,
+ should also be re-implemented here in an ANSI style form for use on Linux,
  OSX, and any other UNIX style operating systems or build environments */
 #ifndef WIN32
 #define TCHAR CHAR
@@ -151,8 +147,8 @@ typedef void (*con_textfilter_t) (char* text);
  * @ingroup fs
  */
 typedef enum {
-    RC_NULL = -2,           /// Not a real class, used internally during resource locator init.
-    RC_UNKNOWN = -1,        /// Attempt to guess the class using heuristic evaluation of the path.
+    RC_NULL = -2,           ///< Not a real class, used internally during resource locator init.
+    RC_UNKNOWN = -1,        ///< Attempt to guess the class using heuristic evaluation of the path.
     RESOURCECLASS_FIRST = 0,
     RC_PACKAGE = RESOURCECLASS_FIRST,
     RC_DEFINITION,
@@ -198,17 +194,17 @@ typedef unsigned char binangle_t;
 
 #define DDMAXCHAR   ((char)0x7f)
 #define DDMAXSHORT  ((int16_t)0x7fff)
-#define DDMAXINT    ((int32_t)0x7fffffff)   // max pos 32-bit int
+#define DDMAXINT    ((int32_t)0x7fffffff)   ///< Max positive 32-bit int
 #define DDMAXLONG   ((int32_t)0x7fffffff)
 #define DDMAXFLOAT  ((float)1E+37)
 
 #define DDMINCHAR   ((char)0x80)
 #define DDMINSHORT  ((int16_t)0x8000)
-#define DDMININT    ((int32_t)0x80000000)   // max negative 32-bit integer
+#define DDMININT    ((int32_t)0x80000000)   ///< Min negative 32-bit integer
 #define DDMINLONG   ((int32_t)0x80000000)
 #define DDMINFLOAT  ((float)-(1E+37))
 
-// Predeclarations for map data types. The contents of these structs is
+// Forward declarations for map data types. The contents of these structs is
 // declared in p_maptypes.h.
 struct node_s;
 struct vertex_s;

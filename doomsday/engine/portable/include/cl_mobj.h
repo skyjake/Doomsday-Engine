@@ -83,8 +83,17 @@ void            ClMobj_SetPosition(mobj_t *cmo); // needed?
 void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
 void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
 
-//int             ClMobj_ReadDelta(void); // obsolete
+/**
+ * Reads a single mobj delta (inside PSV_FRAME2 packet) from the message buffer
+ * and applies it to the client mobj in question.
+ *
+ * For client mobjs that belong to players, updates the real player mobj
+ * accordingly.
+ *
+ * @param skip  If @c true, all read data is ignored.
+ */
 void            ClMobj_ReadDelta2(boolean skip);
+
 void            ClMobj_ReadNullDelta2(boolean skip);
 
 boolean         Cl_IsClientMobj(mobj_t* mo); // public
