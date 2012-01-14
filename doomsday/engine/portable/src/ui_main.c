@@ -509,7 +509,6 @@ void UI_Ticker(timespan_t time)
 {
 #define UIALPHA_FADE_STEP .07
 
-    static trigger_t fixed = { 1 / 35.0, 0 };
     float diff = 0;
 
     if(!uiActive)
@@ -517,7 +516,7 @@ void UI_Ticker(timespan_t time)
     if(!uiCurrentPage)
         return;
 
-    if(!M_RunTrigger(&fixed, time))
+    if(!DD_IsSharpTick())
         return;
 
     // Move towards the target alpha level for the entire UI.

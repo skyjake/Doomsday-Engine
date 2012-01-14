@@ -590,9 +590,7 @@ void Demo_ReadLocalCamera(void)
  */
 void Demo_Ticker(timespan_t time)
 {
-    static trigger_t        fixed = { 1 / 35.0, 0 };
-
-    if(!M_RunTrigger(&fixed, time))
+    if(!DD_IsSharpTick())
         return;
 
     // Only playback is handled.

@@ -54,13 +54,11 @@ extern "C" {
 #include "dd_gl.h"
 #include "dd_ui.h"
 #include "dd_infine.h"
-#include "../portable/include/p_think.h"
-#include "../portable/include/def_share.h"
+#include "def_share.h"
+#include "thinker.h"
 
 /** @file
  * @todo dd_version.h is not officially a public header file!
- * @todo def_share.h is not officially a public header file!
- * @todo p_think.h is not officially a public header file!
  */
 
 //------------------------------------------------------------------------

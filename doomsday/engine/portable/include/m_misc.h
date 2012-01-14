@@ -136,7 +136,7 @@ float           M_CycleIntoRange(float value, float length);
 
 /**
  * Using Euclid's Algorithm reduce the given numerator and denominator by
- * their greatest common integer divisor.
+ * their greatest common integer divisor. @ingroup math
  * @param numerator  Input and output numerator.
  * @param denominator  Input and output denominator.
  * @return  Greatest common divisor.
@@ -146,11 +146,11 @@ int M_RatioReduce(int* numerator, int* denominator);
 double          M_SlopeToAngle(double dx, double dy);
 double          M_Length(double x, double y);
 int             M_NumDigits(int num);
-uint            M_CRC32(byte* data, uint length);
 
-// Time utilities.
-boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
-boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
+/**
+ * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
+ */
+uint M_CRC32(byte* data, uint length);
 
 // Other utilities:
 
