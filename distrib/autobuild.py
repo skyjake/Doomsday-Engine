@@ -1,11 +1,15 @@
 #!/usr/bin/python
 # coding=utf-8
-
-# Script for managing automated build events.
+#
+# Script for performing automated build events.
 # http://dengine.net/dew/index.php?title=Automated_build_system
+#
+# The Build Pilot (pilot.py) is responsible for task distribution 
+# and management.
 
 import sys
 import os
+import subprocess
 import shutil
 import time
 import string
@@ -246,6 +250,39 @@ def dir_cleanup():
     print 'Cleanup done.'
 
 
+def system_command(cmd):
+    result = subprocess.call(cmd, shell=True)
+    if result != 0:
+        raise Exception("Error from " + cmd)
+
+
+def generate_apidoc():
+    """Run Doxygen to generate all API documentation."""
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
+    git_pull()
+    
+    print "\n-=-=- PUBLIC API DOCS -=-=-"
+    system_command('doxygen api.doxy >/dev/null')
+
+    print "\n-=-=- INTERNAL WIN32 DOCS -=-=-"
+    system_command('doxygen engine-win32.doxy >/dev/null')
+
+    print "\n-=-=- INTERNAL MAC/UNIX DOCS -=-=-"
+    system_command('doxygen engine-mac.doxy >/dev/null')        
+
+    print "\n-=-=- JDOOM DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
+    system_command('doxygen jdoom.doxy >/dev/null')
+
+    print "\n-=-=- JHERETIC DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
+    system_command('doxygen jheretic.doxy >/dev/null')
+
+    print "\n-=-=- JHEXEN DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
+    system_command('doxygen jhexen.doxy >/dev/null')
+
+
 def show_help():
     """Prints a description of each command."""
     for cmd in sorted_commands():
@@ -271,6 +308,7 @@ commands = {
     'xmlfeed': update_xml_feed,
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
+    'apidoc': generate_apidoc,
     'help': show_help
 }
 

@@ -23,6 +23,9 @@
 ## tasks for the builder client systems. It listens on a TCP port for incoming
 ## queries and actions. On the clients the pilot is run periodically by cron,
 ## and any new tasks are carried out.
+##
+## The pilot's responsibility is distributed task management; the autobuild
+## script carries out the actual tasks.
 
 import sys
 import os
@@ -310,23 +313,7 @@ def doTask(task):
         
     elif task == 'generate_apidoc':
         msg("GENERATE API DOCUMENTATION")
-        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/engine'))
-        systemCommand('git pull')
-        print "\nPUBLIC API DOCS"
-        systemCommand('doxygen api.doxy >/dev/null')
-        print "\nINTERNAL WIN32 DOCS"
-        systemCommand('doxygen engine-win32.doxy >/dev/null')
-        print "\nINTERNAL MAC/UNIX DOCS"
-        systemCommand('doxygen engine-mac.doxy >/dev/null')        
-        print "\nJDOOM DOCS"
-        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
-        systemCommand('doxygen jdoom.doxy >/dev/null')
-        print "\nJHERETIC DOCS"
-        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
-        systemCommand('doxygen jheretic.doxy >/dev/null')
-        print "\nJHEXEN DOCS"
-        os.chdir(os.path.join(pilotcfg.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
-        systemCommand('doxygen jhexen.doxy >/dev/null')
+        return autobuild('apidoc')
 
     return True
     
