@@ -10,7 +10,8 @@
 #
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
-# - deng_aptunstable        Include the unstable apt repository
+# - deng_aptstable          Include the stable apt repository .list
+# - deng_aptunstable        Include the unstable apt repository .list
 # - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
@@ -109,7 +110,8 @@ unix:!macx {
     CONFIG += deng_nofixedasm deng_snowberry deng_packres
 
     # Choose the apt repository to include in the distribution.
-    CONFIG += deng_aptunstable
+    isStableRelease(): CONFIG += deng_aptstable        
+                 else: CONFIG += deng_aptunstable
 
     # Link against standard math library.
     LIBS += -lm

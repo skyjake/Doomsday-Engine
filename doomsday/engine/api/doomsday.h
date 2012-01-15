@@ -484,20 +484,6 @@ Uri* Materials_ComposeUri(materialid_t materialId);
 
 ///@}
 
-/// @addtogroup playsim
-///@{
-
-    // Play: Thinkers.
-    void            DD_InitThinkers(void);
-    void            DD_RunThinkers(void);
-    void            DD_ThinkerAdd(thinker_t* th);
-    void            DD_ThinkerRemove(thinker_t* th);
-    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-
-    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
-
-///@}
-
 //------------------------------------------------------------------------
 //
 // UI.

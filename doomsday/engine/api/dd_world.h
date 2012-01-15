@@ -1,6 +1,6 @@
 /**
  * @file dd_world.h
- * World Data.
+ * World data.
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
