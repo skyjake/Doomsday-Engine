@@ -1,6 +1,6 @@
 /**
  * @file thinker.h
- * Thinkers. @ingroup playsim
+ * Thinkers. @ingroup thinker
  *
  * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -23,7 +23,10 @@
 #ifndef LIBDENG_THINKER_H
 #define LIBDENG_THINKER_H
 
-/// @addtogroup thinker
+/**
+ * @defgroup thinker Thinkers
+ * @ingroup playsim
+ */
 ///@{
 
 /// Function pointer to a function to handle an actor's thinking.
