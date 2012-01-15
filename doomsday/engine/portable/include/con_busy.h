@@ -4,9 +4,12 @@
  *
  * @ingroup console
  *
- * Draws the screen while the main engine thread is working a long
- * operation. The busy mode can be configured to be displaying a progress
- * bar, the console output, or a more generic "please wait" message.
+ * The Busy Mode is intended for long-running tasks that would otherwise block
+ * the main engine (UI) thread. During busy mode, a progress screen is shown by
+ * the main thread while a background thread works on a long operation. The
+ * normal Doomsday UI cannot be interacted with while the task is running. The
+ * busy mode can be configured to show a progress bar, the console output,
+ * and/or a description of the task being carried out.
  *
  * @authors Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
