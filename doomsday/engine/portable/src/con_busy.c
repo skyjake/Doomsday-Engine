@@ -202,6 +202,7 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Make sure the worker finishes before we continue.
     result = Sys_WaitThread(busyThread);
     busyThread = NULL;
+    Sys_DestroyMutex(busy_Mutex);
     busyInited = false;
 
     // Make sure that any remaining deferred content gets uploaded.
