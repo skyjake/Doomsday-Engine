@@ -1,16 +1,22 @@
 #!/usr/bin/python
 # coding=utf-8
-
-# Script for managing automated build events.
+#
+# Script for performing automated build events.
 # http://dengine.net/dew/index.php?title=Automated_build_system
+#
+# The Build Pilot (pilot.py) is responsible for task distribution 
+# and management.
 
 import sys
 import os
+import subprocess
 import shutil
 import time
 import string
 import glob
 import builder
+import pickle
+import zipfile
 from builder.git import * 
 from builder.utils import * 
     
@@ -246,6 +252,101 @@ def dir_cleanup():
     print 'Cleanup done.'
 
 
+def system_command(cmd):
+    result = subprocess.call(cmd, shell=True)
+    if result != 0:
+        raise Exception("Error from " + cmd)
+
+
+def generate_apidoc():
+    """Run Doxygen to generate all API documentation."""
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
+    git_pull()
+    
+    print "\n-=-=- PUBLIC API DOCS -=-=-"
+    system_command('doxygen api.doxy >/dev/null')
+
+    print "\n-=-=- INTERNAL WIN32 DOCS -=-=-"
+    system_command('doxygen engine-win32.doxy >/dev/null')
+
+    print "\n-=-=- INTERNAL MAC/UNIX DOCS -=-=-"
+    system_command('doxygen engine-mac.doxy >/dev/null')        
+
+    print "\n-=-=- JDOOM DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jdoom'))
+    system_command('doxygen jdoom.doxy >/dev/null')
+
+    print "\n-=-=- JHERETIC DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jheretic'))
+    system_command('doxygen jheretic.doxy >/dev/null')
+
+    print "\n-=-=- JHEXEN DOCS -=-=-"
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
+    system_command('doxygen jhexen.doxy >/dev/null')
+    
+
+def web_path():
+    return os.path.join(builder.config.DISTRIB_DIR, '..', 'web')
+    
+    
+def web_manifest_filename():
+    return os.path.join(builder.config.DISTRIB_DIR, '..', '.web.manifest')
+    
+
+def web_save(state):
+    pickle.dump(state, file(web_manifest_filename(), 'wb'), pickle.HIGHEST_PROTOCOL)
+    
+    
+def web_init():
+    print 'Initializing web update manifest.'
+    web_save(DirState(web_path()))
+    
+    
+def web_update():
+    print 'Checking for web file changes...'
+    git_pull()
+    
+    oldState = pickle.load(file(web_manifest_filename(), 'rb'))
+    state = DirState(web_path())
+    updated = state.list_new_files(oldState)
+    removed = state.list_removed(oldState)
+    
+    # Save the updated state.
+    web_save(state)
+    
+    # Is there anything to do?
+    if not updated and not removed[0] and not removed[1]:
+        print 'Everything up-to-date.'
+        return
+    
+    # Compile the update package.
+    print 'Updated:', updated
+    print 'Removed:', removed
+    arcFn = os.path.join(builder.config.DISTRIB_DIR, '..', 
+        'web_update_%s.zip' % time.strftime('%Y%m%d-%H%M%S'))
+    arc = zipfile.ZipFile(arcFn, 'w')
+    for up in updated:
+        arc.write(os.path.join(web_path(), up), 'updated/' + up)
+    if removed[0] or removed[1]:
+        tmpFn = '_removed.tmp'
+        tmp = file(tmpFn, 'wt')
+        for n in removed[0]:        
+            print >> tmp, 'rm', n
+        for d in removed[1]:
+            print >> tmp, 'rmdir', d
+        tmp.close()
+        arc.write(tmpFn, 'removed.txt')
+        os.remove(tmpFn)
+    arc.close()
+    
+    # Deliver the update to the website.
+    print 'Delivering', arcFn
+    system_command('scp %s dengine@dengine.net:www/incoming/' % arcFn)
+    
+    # No need to keep a local copy.
+    os.remove(arcFn)
+    
+
 def show_help():
     """Prints a description of each command."""
     for cmd in sorted_commands():
@@ -271,6 +372,9 @@ commands = {
     'xmlfeed': update_xml_feed,
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
+    'apidoc': generate_apidoc,
+    'web_init': web_init,
+    'web_update': web_update,
     'help': show_help
 }
 

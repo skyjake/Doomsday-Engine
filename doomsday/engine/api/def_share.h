@@ -1,35 +1,32 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * def_share.h: Shared Definition Data Structures and Constants
+ * @file def_share.h
+ * Shared definition data structures and constants. @ingroup defs
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_GAME_DATA_H__
-#define __DOOMSDAY_GAME_DATA_H__
+#ifndef LIBDENG_SHARED_GAME_DEFINITIONS_H
+#define LIBDENG_SHARED_GAME_DEFINITIONS_H
 
 #include "dd_types.h"
+
+/// @addtogroup defs
+///@{
 
 #define NUM_MOBJ_FLAGS          3
 #define NUM_MOBJ_MISC           4
@@ -95,19 +92,24 @@ typedef struct {
 } musicinfo_t;
 
 typedef struct {
-    char*           text; // Pointer to the text (don't modify).
+    char*           text; ///< Pointer to the text (don't modify).
 } ddtext_t;
 
-// Map Info flags.
-#define MIF_FOG             0x1 // Fog is used in the map.
-#define MIF_DRAW_SPHERE     0x2 // Always draw the sky sphere.
-#define MIF_NO_INTERMISSION 0x4 // Skip any intermission between maps.
+/**
+ * @defgroup mapInfoFlags Map Info Flags
+ * @ingroup defs apiFlags
+ */
+///@{
+#define MIF_FOG             0x1 ///< Fog is used in the map.
+#define MIF_DRAW_SPHERE     0x2 ///< Always draw the sky sphere.
+#define MIF_NO_INTERMISSION 0x4 ///< Skip any intermission between maps.
+///@}
 
 typedef struct {
     char*           name;
     char*           author;
     int             music;
-    int             flags; // MIF_* flags.
+    int             flags; ///< MIF_* flags.
     float           ambient;
     float           gravity;
     float           parTime;
@@ -165,9 +167,9 @@ typedef struct {
     float           interval[DDLT_MAX_CHAINS][2];
     int             count[DDLT_MAX_CHAINS];
     int             ambientSound;
-    float           soundInterval[2]; // min,max
-    float           materialMoveAngle[2]; // floor, ceil
-    float           materialMoveSpeed[2]; // floor, ceil
+    float           soundInterval[2]; ///< min,max
+    float           materialMoveAngle[2]; ///< floor, ceil
+    float           materialMoveSpeed[2]; ///< floor, ceil
     float           windAngle;
     float           windSpeed;
     float           verticalWind;
@@ -175,7 +177,7 @@ typedef struct {
     float           friction;
     char*           lightFunc;
     int             lightInterval[2];
-    char*           colFunc[3]; // RGB
+    char*           colFunc[3]; ///< RGB
     int             colInterval[3][2];
     char*           floorFunc;
     float           floorMul, floorOff;
@@ -185,4 +187,6 @@ typedef struct {
     int             ceilInterval[2];
 } sectortype_t;
 
-#endif
+///@}
+
+#endif // LIBDENG_SHARED_GAME_DEFINITIONS_H
