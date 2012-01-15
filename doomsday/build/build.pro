@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 # This project file contains tasks that are done in the beginning of a build.
 
@@ -10,7 +10,7 @@ include(../config.pri)
 
 # Update the PK3 files.
 deng_packres {
-    system(cd $$PWD/scripts/ && python packres.py \"$$OUT_PWD/..\")
+    system(cd $$PWD/scripts/ && python packres.py --quiet \"$$OUT_PWD/..\")
 }
 
 # Install the launcher.
