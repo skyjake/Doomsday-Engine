@@ -605,9 +605,8 @@ boolean Sv_RegisterCompareMobj(cregister_t* reg, const mobj_t* s,
     if(r->type != s->type)
         df |= MDFC_TYPE;
 
-    // Mobj state sent periodically, if it keeps changing.
-    if((!(s->ddFlags & DDMF_MISSILE) && regMo && r->state != s->state) ||
-       !Def_SameStateSequence(r->state, s->state))
+    // Mobj state sent periodically, if the sequence keeps changing.
+    if(regMo && !Def_SameStateSequence(s->state, r->state))
     {
         df |= MDF_STATE;
 

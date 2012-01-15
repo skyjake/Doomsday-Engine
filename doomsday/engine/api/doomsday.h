@@ -330,9 +330,11 @@ boolean MPE_End(void);
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup network
+///@{
+
 /**
  * Send a packet over the network.
- * @ingroup network
  *
  * @param to_player  Player number to send to. The server is number zero.
  *                   May include @ref netSendFlags.
@@ -342,11 +344,51 @@ boolean MPE_End(void);
  */
 void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 
-    int             Net_GetTicCmd(void* command, int player);
-    const char*     Net_GetPlayerName(int player);
-    ident_t         Net_GetPlayerID(int player);
-    Smoother*       Net_PlayerSmoother(int player);
-    boolean         Sv_CanTrustClientPos(int player);
+/**
+ * @return The name of player @a player.
+ */
+const char* Net_GetPlayerName(int player);
+
+/**
+ * @return Client identifier for player @a player.
+ */
+ident_t Net_GetPlayerID(int player);
+
+/**
+ * Provides access to the player's movement smoother.
+ */
+Smoother* Net_PlayerSmoother(int player);
+
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int player);
+
+/**
+ * Searches through the client mobj hash table and returns the clmobj
+ * with the specified ID, if that exists. Note that client mobjs
+ * are also linked to the thinkers list.
+ *
+ * @param id  Mobj identifier.
+ *
+ * @return  Pointer to the mobj.
+ */
+struct mobj_s* ClMobj_Find(thid_t id);
+
+/**
+ * Enables or disables local action function execution on the client.
+ *
+ * @param mo  Client mobj.
+ * @param enable  @c true to enable local actions, @c false to disable.
+ */
+void ClMobj_EnableLocalActions(struct mobj_s* mo, boolean enable);
+
+/**
+ * Determines if local action functions are enabled for client mobj @a mo.
+ */
+boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
+
+///@}
 
 //------------------------------------------------------------------------
 //

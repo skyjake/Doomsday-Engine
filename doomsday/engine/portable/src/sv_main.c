@@ -1228,19 +1228,6 @@ void Sv_ClientCoords(int plrNum)
         ddpl->lookDir = clientLookDir;
     }
 
-    /*
-    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
-    {
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
-                              clientMom[VX], clientMom[VY], clientMom[VZ]) );
-#endif
-        mo->mom[VX] = clientMom[VX];
-        mo->mom[VY] = clientMom[VY];
-        mo->mom[VZ] = clientMom[VZ];
-    }
-    */
-
 #ifdef _DEBUG
     VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
                           clientPos[VX], clientPos[VY], clientPos[VZ]) );
@@ -1259,9 +1246,6 @@ void Sv_ClientCoords(int plrNum)
     }
 }
 
-/**
- * Determines whether the coordinates sent by a player are valid at the moment.
- */
 boolean Sv_CanTrustClientPos(int plrNum)
 {
     player_t* plr = &ddPlayers[plrNum];

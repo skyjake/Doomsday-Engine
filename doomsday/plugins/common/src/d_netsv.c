@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "common.h"
 #include "d_net.h"
@@ -1698,6 +1699,29 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
     Writer_WriteInt16(writer, ammo);
     Writer_WriteByte(writer, force != 0);
     Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
+}
+
+void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
+{
+    Writer* msg;
+    ddstring_t name;
+
+    assert(mobj);
+
+    Str_InitStatic(&name, stateName);
+
+    // Inform the client about this.
+    msg = D_NetWrite();
+    Writer_WriteUInt16(msg, mobj->thinker.id);
+    Writer_WriteUInt16(msg, mobj->target? mobj->target->thinker.id : 0); // target id
+    Str_Write(&name, msg); // state to switch to
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    Writer_WriteInt32(msg, mobj->special1);
+#else
+    Writer_WriteInt32(msg, 0);
+#endif
+
+    Net_SendPacket(0, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
 void P_Telefrag(mobj_t *thing)

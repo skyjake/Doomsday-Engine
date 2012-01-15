@@ -202,21 +202,11 @@ void Net_Shutdown(void)
     Net_DestroyArrays();
 }
 
-/**
- * Part of the Doomsday public API.
- *
- * @return              The name of the specified player.
- */
 const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
-/**
- * Part of the Doomsday public API.
- *
- * @return              Client identifier for the specified player.
- */
 ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
@@ -310,9 +300,6 @@ boolean Net_GetPacket(void)
     return true;
 }
 
-/**
- * Provides access to the player's movement smoother.
- */
 Smoother* Net_PlayerSmoother(int player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
@@ -661,49 +648,6 @@ int Net_TimeDelta(byte now, byte then)
         delta -= 256;
 
     return delta;
-}
-
-/**
- * This is a bit complicated and quite possibly unnecessarily so. The
- * idea is, however, that because the ticcmds sent by clients arrive in
- * bursts, we'll preserve the motion by 'executing' the commands in the
- * same order in which they were generated. If the client's connection
- * lags a lot, the difference between the serverside and clientside
- * positions will be *large*, especially when the client is running.
- * If too many commands are buffered, the client's coord announcements
- * will be processed before the actual movement commands, resulting in
- * serverside warping (which is perceived by all other clients).
- */
-int Net_GetTicCmd(void *pCmd, int player)
-{
-    return false;
-
-#if 0
-
-    client_t *client = &clients[player];
-    ticcmd_t *cmd = pCmd;
-
-    /*  int doMerge = false;
-       int future; */
-
-    if(client->numTics <= 0)
-    {
-        // No more commands for this player.
-        return false;
-    }
-
-    // Return the next ticcmd from the buffer.
-    // There will be one less tic in the buffer after this.
-    client->numTics--;
-    memcpy(cmd, &client->ticCmds[TICCMD_IDX(client->firstTic++)], TICCMD_SIZE);
-
-    // This is the new last command.
-    memcpy(client->lastCmd, cmd, TICCMD_SIZE);
-
-    // Make sure the firsttic index is in range.
-    client->firstTic %= BACKUPTICS;
-    return true;
-#endif
 }
 
 /// @return  @c true iff a demo is currently being recorded.

@@ -29,6 +29,10 @@
 #ifndef __DOOMSDAY_DEFS_H__
 #define __DOOMSDAY_DEFS_H__
 
+/**
+ * @defgroup flags Flags (Internal)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
