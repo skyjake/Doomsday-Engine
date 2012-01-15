@@ -28,14 +28,28 @@
 
 #include "g_common.h"
 
+/**
+ * Handles the stopping of mobj movement. Also stops player walking animation.
+ *
+ * @param mo  Mobj.
+ */
 void Mobj_XYMoveStopping(mobj_t* mo);
 
-boolean Mobj_IsPlayerClMobj(mobj_t* thing);
+/**
+ * Checks if @a thing is a clmobj of one of the players.
+ */
+boolean Mobj_IsPlayerClMobj(mobj_t* mo);
 
 /**
  * @param allAround  @c false= only look 180 degrees in front.
  * @return  @c true iff a player was targeted.
  */
 boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround);
+
+/**
+ * Determines if it is allowed to execute the action function of @a mo.
+ * @return @c true, if allowed.
+ */
+boolean Mobj_ActionFunctionAllowed(mobj_t* mo);
 
 #endif // __LIBCOMMON_MOBJ__

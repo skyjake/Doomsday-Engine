@@ -2,6 +2,9 @@
  * @file doomsday.h
  * Primary header file for the Doomsday Engine Public API
  *
+ * @todo Break this header file up into group-specific ones.
+ * Including doomsday.h should include all of the public API headers.
+ *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -35,7 +38,7 @@
  * - @ref input
  * - @ref network
  * - @ref resource
- * - @ref gl
+ * - @ref render
  */
 
 #ifndef LIBDENG_EXPORTS_H
@@ -479,20 +482,6 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
 materialid_t Materials_ResolveUri(const Uri* uri);
 materialid_t Materials_ResolveUriCString(const char* path);
 Uri* Materials_ComposeUri(materialid_t materialId);
-
-///@}
-
-/// @addtogroup playsim
-///@{
-
-    // Play: Thinkers.
-    void            DD_InitThinkers(void);
-    void            DD_RunThinkers(void);
-    void            DD_ThinkerAdd(thinker_t* th);
-    void            DD_ThinkerRemove(thinker_t* th);
-    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-
-    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
 
 ///@}
 

@@ -62,11 +62,7 @@ static float getFriction(mobj_t* mo)
 
     return P_MobjGetFriction(mo);
 }
-/**
- * Handles the stopping of mobj movement. Also stops player walking animation.
- *
- * @param mo  Mobj.
- */
+
 void Mobj_XYMoveStopping(mobj_t* mo)
 {
     player_t* player = mo->player;
@@ -157,16 +153,13 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 }
 
-/**
- * Checks if @a thing is a clmobj of one of the players.
- */
-boolean Mobj_IsPlayerClMobj(mobj_t* thing)
+boolean Mobj_IsPlayerClMobj(mobj_t* mo)
 {
     int i;
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(ClPlayer_ClMobj(i) == thing)
+        if(ClPlayer_ClMobj(i) == mo)
             return true;
     }
     return false;
@@ -252,4 +245,14 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
     // Start looking from here next time.
     mo->lastLook = cand;
     return foundTarget;
+}
+
+boolean Mobj_ActionFunctionAllowed(mobj_t* mo)
+{
+    if(!(mo->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
+       (mo->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+    {
+        return true;
+    }
+    return false;
 }

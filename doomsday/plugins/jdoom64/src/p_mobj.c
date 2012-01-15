@@ -103,10 +103,7 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
         mobj->turnTime = false; // $visangle-facetarget
 
-        // Modified handling.
-        // Call action functions when the state is set
-        if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
-           (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+        if(Mobj_ActionFunctionAllowed(mobj))
         {
             if(st->action) st->action(mobj);
         }
