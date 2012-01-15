@@ -267,10 +267,6 @@ void Con_BusyList(BusyTask* tasks, int numTasks)
         mode = task->mode | BUSYF_STARTUP;
         // kludge end
 
-        // Accumulate uploads until the last task completes.
-        if(i < numTasks-1)
-            mode |= BUSYF_NO_UPLOADS;
-
         // Busy mode invokes the worker on our behalf in a new thread.
         task->retVal = Con_Busy(mode, currentTaskName, task->worker, task->workerData);
     }
