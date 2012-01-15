@@ -97,7 +97,7 @@ static blockset_t* NodeBlockSet;
 /// Linked list of used directory nodes for re-use. Linked with PathDirectoryNode::next
 static PathDirectoryNode* UsedNodes;
 
-ushort PathDirectory_HashName(const char* path, size_t len, char delimiter)
+ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter)
 {
     const char* c = path + len - 1;
     ushort key = 0;
@@ -306,7 +306,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     // Do we need a new name identifier (and hash)?
     if(!internId)
     {
-        hash = PathDirectory_HashName(Str_Text(name), Str_Length(name), delimiter);
+        hash = PathDirectory_HashPath(Str_Text(name), Str_Length(name), delimiter);
         internId = internNameAndUpdateIdHashMap(pd, name, hash);
     }
     else
@@ -1283,6 +1283,12 @@ StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
     return node->pair.internId;
+}
+
+ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
+{
+    assert(node);
+    return hashForInternId(node->directory, node->pair.internId);
 }
 
 /// \note This routine is also used as an iteration callback, so only return
