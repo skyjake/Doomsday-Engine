@@ -657,7 +657,11 @@ const LumpInfo* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum)
 const char* F_LumpName(lumpnum_t absoluteLumpNum)
 {
     const LumpInfo* info = F_FindInfoForLumpNum(absoluteLumpNum);
-    if(info) return info->name;
+    if(info)
+    {
+        PathDirectoryNode* node = F_LumpDirectoryNode(info->container, info->lumpIdx);
+        return Str_Text(PathDirectory_GetFragment(PathDirectoryNode_Directory(node), node));
+    }
     return "";
 }
 
