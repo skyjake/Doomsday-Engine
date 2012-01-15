@@ -1,57 +1,125 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * con_busy.h: Console Busy Mode
+ * @file con_busy.h
+ * Console Busy Mode
+ *
+ * @ingroup console
+ *
+ * Draws the screen while the main engine thread is working a long
+ * operation. The busy mode can be configured to be displaying a progress
+ * bar, the console output, or a more generic "please wait" message.
+ *
+ * @authors Copyright &copy; 2009-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_CONSOLE_BUSY_H__
-#define __DOOMSDAY_CONSOLE_BUSY_H__
+#ifndef LIBDENG_CONSOLE_BUSY_H
+#define LIBDENG_CONSOLE_BUSY_H
 
-typedef int     (C_DECL *busyworkerfunc_t) (void* parm);
+/// Busy mode worker function.
+typedef int (C_DECL *busyworkerfunc_t) (void* parm);
 
+/// POD structure for defining a task processable in busy mode.
+typedef struct {
+    busyworkerfunc_t worker; ///< Worker thread that does processing while in busy mode.
+    void* workerData; ///< Data context for the worker thread.
+
+    int mode; ///< Busy mode flags @ref busyModeFlags
+    const char* name; ///< Optional task name (drawn with the progress bar).
+
+    /// Used with task lists:
+    int maxProgress;
+    float progressStart;
+    float progressEnd;
+
+    int retVal; ///< Worker return value.
+} BusyTask;
+
+/// Busy mode transition style.
 typedef enum {
     FIRST_TRANSITIONSTYLE,
-    TS_CROSSFADE = FIRST_TRANSITIONSTYLE, // Basic opacity crossfade.
-    TS_DOOMSMOOTH, // Emulates the DOOM "blood on wall" screen wipe (smoothed).
-    TS_DOOM, // Emulates the DOOM "blood on wall" screen wipe.
+    TS_CROSSFADE = FIRST_TRANSITIONSTYLE, ///< Basic opacity crossfade.
+    TS_DOOMSMOOTH, ///< Emulates the DOOM "blood on wall" screen wipe (smoothed).
+    TS_DOOM, ///< Emulates the DOOM "blood on wall" screen wipe.
     LAST_TRANSITIONSTYLE = TS_DOOM
 } transitionstyle_t;
 
 extern int rTransition;
 extern int rTransitionTics;
 
-int         Con_Busy(int flags, const char* taskName,
-                     busyworkerfunc_t worker, void *workerData);
-boolean     Con_IsBusy(void);
-void        Con_BusyWorkerEnd(void);
-void        Con_BusyWorkerError(const char* message);
-void        Con_AcquireScreenshotTexture(void);
-void        Con_ReleaseScreenshotTexture(void);
+/**
+ * Process a single work task in Busy Mode.
+ *
+ * Caller relinquishes ownership of the task until busy mode completes,
+ * (therefore it should NOT be accessed in the worker).
+ *
+ * @param task          Task to be performed.
+ *
+ * @return  Return value of the worker.
+ */
+int Con_Busy2(BusyTask* task);
 
-boolean     Con_TransitionInProgress(void);
-void        Con_TransitionTicker(timespan_t ticLength);
-void        Con_DrawTransition(void);
+/**
+ * Process a single work task in Busy Mode.
+ *
+ * @param mode          Busy mode flags @ref busyModeFlags
+ * @param worker        Worker thread that does processing while in busy mode.
+ * @param workerData    Data context for the worker thread.
+ * @param taskName      Optional task name (drawn with the progress bar).
+ *
+ * @return  Return value of the worker.
+ */
+int Con_Busy(int mode, const char* taskName, busyworkerfunc_t worker, void* workerData);
 
-#endif
+/**
+ * Process a list of work tasks in Busy Mode, from left to right sequentially.
+ * Tasks are worked on one at a time and execution of a task only begins once
+ * all earlier tasks have completed.
+ *
+ * Caller relinquishes ownership of the task list until busy mode completes,
+ * (therefore it should NOT be accessed in the worker).
+ *
+ * @param tasks  List of tasks.
+ * @param numTasks  Number of tasks.
+ */
+void Con_BusyList(BusyTask* tasks, int numTasks);
+
+/// @return  @c true if we are currently busy.
+boolean Con_IsBusy(void);
+
+/**
+ * To be called by the busy worker when it has finished processing, to signal
+ * the end of the task.
+ */
+void Con_BusyWorkerEnd(void);
+
+/**
+ * To be called by the busy worker to shutdown the engine immediately.
+ *
+ * @param message       Message, expected to exist until the engine closes.
+ */
+void Con_BusyWorkerError(const char* message);
+
+void Con_AcquireScreenshotTexture(void);
+void Con_ReleaseScreenshotTexture(void);
+
+/// @return  @c true if a busy mode transition animation is currently in progress.
+boolean Con_TransitionInProgress(void);
+
+void Con_TransitionTicker(timespan_t ticLength);
+void Con_DrawTransition(void);
+
+#endif /// LIBDENG_CONSOLE_BUSY
