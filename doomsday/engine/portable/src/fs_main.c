@@ -456,7 +456,6 @@ void F_ResetFileIds(void)
 void F_InitLumpInfo(LumpInfo* info)
 {
     assert(info);
-    memset(info->name, 0, sizeof info->name);
     info->lumpIdx = 0;
     info->size = 0;
     info->compressedSize = 0;
@@ -467,7 +466,6 @@ void F_InitLumpInfo(LumpInfo* info)
 void F_CopyLumpInfo(LumpInfo* dst, const LumpInfo* src)
 {
     assert(dst && src);
-    memcpy(dst->name, src->name, sizeof dst->name);
     dst->lumpIdx = src->lumpIdx;
     dst->size = src->size;
     dst->compressedSize = src->compressedSize;
@@ -611,23 +609,33 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
     errorIfNotInited("F_CheckLumpNumForName");
     if(name && name[0])
     {
+        ddstring_t searchPath;
+
+        Str_Init(&searchPath); Str_Set(&searchPath, name);
+        // Append a .lmp extension if none is specified.
+        if(!F_FindFileExtension(name))
+            Str_Append(&searchPath, ".lmp");
+        //F_PrependBasePath(&searchPath, &searchPath);
+
         // We have to check both the primary and auxiliary caches because
         // we've only got a name and don't know where it is located. Start with
         // the auxiliary lumps because they take precedence.
         if(useAuxiliaryWadLumpDirectory())
         {
-            lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
+            lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
         }
 
         // Found it yet?
         if(lumpNum < 0)
         {
             usePrimaryWadLumpDirectory();
-            lumpNum = LumpDirectory_IndexForName(ActiveWadLumpDirectory, name);
+            lumpNum = LumpDirectory_IndexForPath(ActiveWadLumpDirectory, Str_Text(&searchPath));
         }
 
         if(!silent && lumpNum < 0)
             Con_Message("Warning:F_CheckLumpNumForName: Lump \"%s\" not found.\n", name);
+
+        Str_Free(&searchPath);
     }
     else if(!silent)
     {
@@ -941,7 +949,6 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
 
 boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
 {
-    char buf[LUMPNAME_T_LASTINDEX + 4/*.ext*/ + 1];
     const LumpInfo* info;
     abstractfile_t* fsObject;
     ddstring_t nativePath;
@@ -963,9 +970,7 @@ boolean F_DumpLump(lumpnum_t absoluteLumpNum, const char* path)
     }
     else
     {
-        memset(buf, 0, sizeof buf);
-        dd_snprintf(buf, 13, "%s.lmp", lumpName);
-        fname = buf;
+        fname = lumpName;
     }
 
     Str_Init(&nativePath); Str_Set(&nativePath, fname);
@@ -1441,36 +1446,26 @@ static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     LumpInfo info;
     DFile* file;
 
-    Str_Init(&absPath); Str_Set(&absPath, _absPath);
-    Str_Strip(&absPath);
-    F_FixSlashes(&absPath, &absPath);
+    Str_Init(&absPath);
+    // Prepare the name of this single-lump file.
+    if(isDehackedPatch)
+    {
+        // Copy the path up to and including the last directory separator if present.
+        char* slash = strrchr(_absPath, '/');
+        if(slash)
+        {
+            Str_PartAppend(&absPath, _absPath, 0, (slash - _absPath) + 1);
+        }
+        Str_Append(&absPath, "DEHACKED.lmp");
+    }
+    else
+    {
+        Str_Append(&absPath, _absPath);
+    }
 
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
     F_CopyLumpInfo(&info, F_LumpInfo(container, lumpIdx));
-
-    // Prepare the name of this single-lump file.
-    if(isDehackedPatch)
-    {
-        strncpy(info.name, "DEHACKED", LUMPNAME_T_MAXLEN);
-    }
-    else
-    {
-        // Is there a prefix to be omitted in the name?
-        char* slash = strrchr(Str_Text(&absPath), '/');
-        int offset = 0;
-        // The slash must not be too early in the string.
-        if(slash && slash >= Str_Text(&absPath) + 2)
-        {
-            // Good old negative indices.
-            if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
-            {
-                offset = slash[-1] - '1' + 1;
-            }
-        }
-        F_ExtractFileBase2(info.name, Str_Text(&absPath), LUMPNAME_T_LASTINDEX, offset);
-        info.name[LUMPNAME_T_LASTINDEX] = '\0';
-    }
 
     file = DFileBuilder_NewFromAbstractFile(
         newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, dontBuffer),
@@ -1728,9 +1723,14 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
             Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
         break;
       }
-    case FT_LUMPFILE:
+    /*case FT_LUMPFILE:
         LumpFile_PublishLumpsToDirectory((LumpFile*)fsObject, ActiveWadLumpDirectory);
+        break;*/
+    case FT_LUMPFILE: {
+        const LumpInfo* info = AbstractFile_Info(fsObject);
+        LumpDirectory_CatalogLumps(ActiveWadLumpDirectory, info->container, info->lumpIdx, 1);
         break;
+      }
     default: break;
         /*Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
         exit(1); // Unreachable.*/
@@ -2000,15 +2000,15 @@ void F_InitLumpDirectoryMappings(void)
     { lumpnum_t i;
     for(i = 0; i < F_LumpCount(); ++i)
     {
-        const LumpInfo* info = F_FindInfoForLumpNum(i);
+        const LumpInfo* info;
         abstractfile_t* fsObject;
         size_t lumpLength;
         int lumpIdx;
 
-        if(strnicmp(info->name, "DD_DIREC", 8))
-            continue;
+        if(strnicmp(F_LumpName(i), "DD_DIREC", 8)) continue;
 
         // Make a copy of it so we can ensure it ends in a null.
+        info = F_FindInfoForLumpNum(i);
         lumpLength = info->size;
         if(bufSize < lumpLength + 1)
         {

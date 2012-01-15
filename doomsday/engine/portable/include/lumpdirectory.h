@@ -55,9 +55,6 @@ void LumpDirectory_Clear(LumpDirectory* dir);
  */
 boolean LumpDirectory_Catalogues(LumpDirectory* dir, abstractfile_t* file);
 
-/// @return  Index associated with the last lump with @a name if found else @c -1
-lumpnum_t LumpDirectory_IndexForName(LumpDirectory* dir, const char* name);
-
 /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
 lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* dir, const char* path);
 
@@ -77,7 +74,7 @@ const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* dir, lumpnum_t lumpNum);
  * @param lumpIdxBase  Base index for the range of lumps being added.
  * @param lumpIdxCount  Number of lumps in the range being added.
  */
-void LumpDirectory_Append(LumpDirectory* dir, abstractfile_t* file,
+void LumpDirectory_CatalogLumps(LumpDirectory* dir, abstractfile_t* file,
     int lumpIdxBase, int lumpIdxCount);
 
 /**
@@ -90,10 +87,9 @@ void LumpDirectory_Append(LumpDirectory* dir, abstractfile_t* file,
 int LumpDirectory_PruneByFile(LumpDirectory* dir, abstractfile_t* file);
 
 /**
- * @param matchLumpName  @c true = Use lump name when performing comparisions,
- *                       else use lump path (with Zips).
+ * Prune path-duplicate records from the directory.
  */
-void LumpDirectory_PruneDuplicateRecords(LumpDirectory* dir, boolean matchLumpName);
+void LumpDirectory_Prune(LumpDirectory* dir);
 
 /**
  * Iterate over lumps in the directory making a callback for each.

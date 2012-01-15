@@ -1934,13 +1934,16 @@ boolean MPE_End(void)
      * Are we caching this map?
      */
     if(gamemap->uri && !Str_IsEmpty(Uri_Path(gamemap->uri)))
-    {   // Yes, write the cached map data file.
+    {
+        // Yes, write the cached map data file.
         lumpnum_t markerLumpNum = F_CheckLumpNumForName2(Str_Text(Uri_Path(gamemap->uri)), true);
         ddstring_t* cachedMapDir = DAM_ComposeCacheDir(F_LumpSourceFile(markerLumpNum));
         ddstring_t cachedMapPath;
 
         Str_Init(&cachedMapPath);
-        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), F_LumpName(markerLumpNum));
+        F_FileName(&cachedMapPath, F_LumpName(markerLumpNum));
+        Str_Append(&cachedMapPath, ".dcm");
+        Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
         F_ExpandBasePath(&cachedMapPath, &cachedMapPath);
 
         // Ensure the destination directory exists.

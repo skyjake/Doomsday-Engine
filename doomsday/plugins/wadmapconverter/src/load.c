@@ -561,7 +561,7 @@ static void buildReject(gamemap_t *map)
 
 int DataTypeForLumpName(const char* name)
 {
-    struct lumptype_s {
+    static const struct lumptype_s {
         lumptype_t      type;
         const char*     name;
     } knownLumps[] =
@@ -595,7 +595,7 @@ int DataTypeForLumpName(const char* name)
     {
         for(i = FIRST_LUMP_TYPE; knownLumps[i].type != ML_INVALID; ++i)
         {
-            if(!strncmp(knownLumps[i].name, name, 8))
+            if(!strnicmp(knownLumps[i].name, name, strlen(knownLumps[i].name)))
                 return knownLumps[i].type;
         }
     }
