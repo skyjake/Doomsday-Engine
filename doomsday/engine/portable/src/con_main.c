@@ -436,7 +436,7 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Con_Shutdown: Shutting down.\n");
+    Con_Message("Shutting down the console...\n");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
