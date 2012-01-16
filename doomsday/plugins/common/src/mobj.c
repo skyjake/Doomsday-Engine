@@ -249,6 +249,11 @@ boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
 
 boolean Mobj_ActionFunctionAllowed(mobj_t* mo)
 {
+    if(IS_CLIENT)
+    {
+        if(ClMobj_LocalActionsEnabled(mo))
+            return true;
+    }
     if(!(mo->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
        (mo->flags3 & MF3_CLIENTACTION))   // action functions allowed?
     {

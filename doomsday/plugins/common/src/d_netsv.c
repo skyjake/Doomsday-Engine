@@ -1721,7 +1721,7 @@ void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
     Writer_WriteInt32(msg, 0);
 #endif
 
-    Net_SendPacket(0, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
 void P_Telefrag(mobj_t *thing)
