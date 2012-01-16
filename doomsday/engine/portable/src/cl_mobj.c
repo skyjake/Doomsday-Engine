@@ -223,7 +223,7 @@ void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
 boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
 {
     clmoinfo_t* info = ClMobj_GetInfo(mo);
-    if(!isClient || !info) return;
+    if(!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
