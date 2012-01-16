@@ -180,11 +180,29 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     if(Str_At(src, 0) == '#')
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
-        int dist;
+        int dist = 0;
+        char* slash;
 
         Str_Appendf(out, "%sauto/", Str_Text(Game_DataPath(theGame)));
-        dist = (Str_At(src, 1) == '/'? 2 : 1);
-        Str_PartAppend(out, Str_Text(src), dist, Str_Length(src)-dist);
+        slash = strrchr(Str_Text(src), '/');
+        dist = slash - Str_Text(src);
+        // Copy the path up to and including the last directory separator if present.
+        if(slash - Str_Text(src) > 1)
+            Str_PartAppend(out, Str_Text(src), 1, dist);
+
+        if(slash)
+        {
+            // Is there a prefix to be omitted in the name?
+            // The slash must not be too early in the string.
+            if(slash >= Str_Text(src) + 2)
+            {
+                // Good old negative indices.
+                if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
+                    dist += slash[-1] - '1' + 1;
+            }
+        }
+
+        Str_PartAppend(out, Str_Text(src), dist+1, Str_Length(src)-(dist+1));
 
         if(dest == src)
         {
@@ -507,8 +525,8 @@ int ZipFile_PublishLumpsToDirectory(ZipFile* zip, LumpDirectory* directory)
         if(ZipFile_LumpCount(zip) > 0)
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_Append(directory, (abstractfile_t*)zip, 0, ZipFile_LumpCount(zip));
-            LumpDirectory_PruneDuplicateRecords(directory, false);
+            LumpDirectory_CatalogLumps(directory, (abstractfile_t*)zip, 0, ZipFile_LumpCount(zip));
+            LumpDirectory_Prune(directory);
             numPublished += ZipFile_LumpCount(zip);
         }
     }

@@ -199,6 +199,7 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     boolean         M_WriteFile(const char* path, const char* source, size_t length);
 
     // Base: File system path/name utilities.
+    void            F_FileName(ddstring_t* dst, const char* src);
     void            F_ExtractFileBase(char* dst, const char* path, size_t len);
     const char*     F_FindFileExtension(const char* path);
 

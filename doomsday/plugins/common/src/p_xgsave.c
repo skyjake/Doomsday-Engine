@@ -267,9 +267,13 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     {
         // Flat number is an absolute lump index.
         Uri* uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-        Uri_SetPath(uri, W_LumpName(SV_ReadLong()));
+        ddstring_t name;
+        Str_Init(&name);
+        F_FileName(&name, W_LumpName(SV_ReadLong()));
+        Uri_SetPath(uri, Str_Text(&name));
         mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
         Uri_Delete(uri);
+        Str_Free(&name);
     }
 
     mov->setSectorType = SV_ReadLong();

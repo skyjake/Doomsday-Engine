@@ -32,7 +32,7 @@ static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
     // Is it time to compute the hash for this fragment?
     if(fragment->hash == PATHDIRECTORY_NOHASH)
     {
-        fragment->hash = PathDirectory_HashName(fragment->from,
+        fragment->hash = PathDirectory_HashPath(fragment->from,
             (fragment->to - fragment->from) + 1, pm->_delimiter);
     }
     return fragment->hash;

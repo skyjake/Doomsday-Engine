@@ -99,12 +99,13 @@ static boolean WadFile_ReadArchiveHeader(DFile* file, wadheader_t* hdr)
 // local buffer before we process it into our runtime representation.
 static void WadFile_ReadLumpDirectory(WadFile* wad)
 {
-    size_t lumpDirSize;
-    wadlumprecord_t* lumpDir;
     wadfile_lumprecord_t* record;
     const wadlumprecord_t* src;
+    wadlumprecord_t* lumpDir;
     PathDirectoryNode* node;
+    size_t lumpDirSize;
     ddstring_t absPath;
+    const char* ext;
     int i, j;
     assert(wad);
 
@@ -125,6 +126,8 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
         Con_Error("WadFile::readLumpDirectory: Failed on allocation of %lu bytes for new lump record vector.", (unsigned long) (wad->lumpRecordsCount * sizeof(*wad->lumpRecords)));
 
     Str_Init(&absPath);
+    // Lumpnames are upto eight characters in length.
+    Str_Reserve(&absPath, LUMPNAME_T_LASTINDEX + 4/*.lmp*/);
 
     src = lumpDir;
     record = wad->lumpRecords;
@@ -135,25 +138,28 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
         F_InitLumpInfo(&record->info);
         record->info.lumpIdx = i;
 
-        /**
-         * The Hexen demo on Mac uses the 0x80 on some lumps, maybe has
-         * significance?
-         * \todo: Ensure that this doesn't break other IWADs. The 0x80-0xff
-         * range isn't normally used in lump names, right??
-         */
-        for(j = 0; j < 8; ++j)
+        /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
+        /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
+        ///       range isn't normally used in lump names, right??
+        Str_Clear(&absPath);
+        for(j = 0; j < LUMPNAME_T_LASTINDEX; ++j)
         {
-            record->info.name[j] = src->name[j] & 0x7f;
+            Str_AppendChar(&absPath, src->name[j] & 0x7f);
         }
+        Str_StripRight(&absPath);
 
-        // We do not consider zero-length names to be valid, so replace with
-        // with _something_.
-        /// \todo Handle this more elegantly...
-        if(!record->info.name[0])
-            strcpy(record->info.name, "________");
+        /// We do not consider zero-length names to be valid, so replace with
+        /// with _something_.
+        /// @todo Handle this more elegantly...
+        if(Str_IsEmpty(&absPath))
+            Str_Set(&absPath, "________");
+
+        // All lumps are ordained with the .lmp extension if they don't have one.
+        ext = F_FindFileExtension(Str_Text(&absPath));
+        if(!(ext && Str_Length(&absPath) > ext - Str_Text(&absPath) + 1))
+            Str_Append(&absPath, ".lmp");
 
         // Make it absolute.
-        Str_Set(&absPath, record->info.name);
         F_PrependBasePath(&absPath, &absPath);
 
         record->info.size = record->info.compressedSize = (size_t)LONG(src->size);
@@ -252,7 +258,7 @@ int WadFile_PublishLumpsToDirectory(WadFile* wad, LumpDirectory* directory)
         {
             // Insert the lumps into their rightful places in the directory.
             const int lumpCount = WadFile_LumpCount(wad);
-            LumpDirectory_Append(directory, (abstractfile_t*)wad, 0, lumpCount);
+            LumpDirectory_CatalogLumps(directory, (abstractfile_t*)wad, 0, lumpCount);
             numPublished += lumpCount;
         }
     }
@@ -363,11 +369,16 @@ uint WadFile_CalculateCRC(WadFile* wad)
 
     for(i = 0; i < lumpCount; ++i)
     {
-        const LumpInfo* info = WadFile_LumpInfo(wad, i);
+        PathDirectoryNode* node = WadFile_LumpDirectoryNode(wad, i);
+        wadfile_lumprecord_t* rec = PathDirectoryNode_UserData(node);
+        const ddstring_t* lumpName = PathDirectory_GetFragment(wad->lumpDirectory, node);
 
-        crc += (uint) info->size;
+        crc += (uint) rec->info.size;
         for(k = 0; k < LUMPNAME_T_LASTINDEX; ++k)
-            crc += info->name[k];
+        {
+            if(k < Str_Length(lumpName))
+                crc += Str_At(lumpName, k);
+        }
     }
     return crc;
 }

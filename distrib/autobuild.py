@@ -260,8 +260,8 @@ def system_command(cmd):
 
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     
     print "\n-=-=- PUBLIC API DOCS -=-=-"
     system_command('doxygen api.doxy >/dev/null')

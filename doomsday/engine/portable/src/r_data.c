@@ -1286,6 +1286,8 @@ rawtex_t** R_CollectRawTexs(int* count)
 
 rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
 {
+    rawtex_t* i;
+
     if(-1 == lumpNum || lumpNum >= F_LumpCount())
     {
 #if _DEBUG
@@ -1295,12 +1297,11 @@ rawtex_t* R_FindRawTex(lumpnum_t lumpNum)
         return NULL;
     }
 
-    { rawtex_t* i;
     for(i = RAWTEX_HASH(lumpNum)->first; i; i = i->next)
     {
         if(i->lumpNum == lumpNum)
             return i;
-    }}
+    }
     return 0;
 }
 
@@ -1320,7 +1321,7 @@ rawtex_t* R_GetRawTex(lumpnum_t lumpNum)
 
     // Check if this lumpNum has already been loaded as a rawtex.
     r = R_FindRawTex(lumpNum);
-    if(NULL != r) return r;
+    if(r) return r;
 
     // Hmm, this is an entirely new rawtex.
     r = Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
@@ -1358,22 +1359,29 @@ void R_UpdateRawTexs(void)
 static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
 {
     int lumpIdx;
-    abstractfile_t* fsObject = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+    abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
     size_t lumpSize = F_LumpLength(lumpNum);
-    const uint8_t* lump = F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
     patchname_t* names, *name;
+    const uint8_t* lump;
     int i, numNames;
 
     if(lumpSize < 4)
     {
-        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) is not valid PNAMES data.\n", F_LumpName(lumpNum), lumpNum);
+        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        Con_Message("Warning:loadPatchNames: \"%s\"(#%i) is not valid PNAMES data.\n",
+                    F_PrettyPath(Str_Text(path)), lumpNum);
+        Str_Delete(path);
+
         if(num) *num = 0;
         return NULL;
     }
 
+    lump = F_CacheLump(file, lumpIdx, PU_APPSTATIC);
     numNames = LONG(*((const int*) lump));
     if(numNames <= 0)
     {
+        F_CacheChangeTag(file, lumpIdx, PU_CACHE);
+
         if(num) *num = 0;
         return NULL;
     }
@@ -1381,14 +1389,18 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
     if((unsigned)numNames > (lumpSize - 4) / 8)
     {
         // Lump is truncated.
-        Con_Message("Warning:loadPatchNames: Lump '%s'(#%i) truncated (%lu bytes, expected %lu).\n",
-            F_LumpName(lumpNum), lumpNum, (unsigned long) lumpSize, (unsigned long) (numNames * 8 + 4));
+        ddstring_t* path = F_ComposeLumpPath(file, lumpIdx);
+        Con_Message("Warning:loadPatchNames: Patch '%s'(#%i) is truncated (%lu bytes, expected %lu).\n",
+                    F_PrettyPath(Str_Text(path)), lumpNum, (unsigned long) lumpSize,
+                    (unsigned long) (numNames * 8 + 4));
+        Str_Delete(path);
+
         numNames = (int) ((lumpSize - 4) / 8);
     }
 
-    names = (patchname_t*) calloc(1, sizeof *names * numNames);
+    names = (patchname_t*) calloc(1, sizeof(*names) * numNames);
     if(!names)
-        Con_Error("loadPatchNames: Failed on allocation of %lu bytes for patch name list.", (unsigned long) sizeof *names * numNames);
+        Con_Error("loadPatchNames: Failed on allocation of %lu bytes for patch name list.", (unsigned long) sizeof(*names) * numNames);
 
     name = names;
     for(i = 0; i < numNames; ++i)
@@ -1398,10 +1410,9 @@ static patchname_t* loadPatchNames(lumpnum_t lumpNum, int* num)
         name++;
     }
 
-    F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
+    F_CacheChangeTag(file, lumpIdx, PU_CACHE);
 
     if(num) *num = numNames;
-
     return names;
 }
 
@@ -1468,7 +1479,7 @@ typedef struct {
     int i, lumpIdx;
     assert(patchNames && origIndexBase);
 
-    patchInfo = (patchinfo_t*)calloc(1, sizeof *patchInfo * numPatchNames);
+    patchInfo = (patchinfo_t*)calloc(1, sizeof(*patchInfo) * numPatchNames);
     if(!patchInfo)
         Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for patch info.", (unsigned long) sizeof *patchInfo * numPatchNames);
 
@@ -1482,15 +1493,19 @@ typedef struct {
 
     numTexDefs = LONG(*maptex1);
 
-    VERBOSE( Con_Message("  Processing lump \"%s\"...\n", F_LumpName(lumpNum)) )
+    VERBOSE(
+        ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+        Con_Message("  Processing \"%s\"...\n", F_PrettyPath(Str_Text(path)));
+        Str_Delete(path);
+    )
 
-    validTexDefs = (byte*) calloc(1, sizeof *validTexDefs * numTexDefs);
+    validTexDefs = (byte*) calloc(1, sizeof(*validTexDefs) * numTexDefs);
     if(!validTexDefs)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.", (unsigned long) sizeof *validTexDefs * numTexDefs);
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for valid texture record list.", (unsigned long) sizeof(*validTexDefs) * numTexDefs);
 
-    texDefNumPatches = (short*) calloc(1, sizeof *texDefNumPatches * numTexDefs);
+    texDefNumPatches = (short*) calloc(1, sizeof(*texDefNumPatches) * numTexDefs);
     if(!texDefNumPatches)
-        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.", (unsigned long) sizeof *texDefNumPatches * numTexDefs);
+        Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for texture patch count record list.", (unsigned long) sizeof(*texDefNumPatches) * numTexDefs);
 
     /**
      * Pass #1
@@ -1505,7 +1520,9 @@ typedef struct {
         offset = LONG(*directory);
         if(offset > lumpSize)
         {
-            Con_Message("Warning: Invalid offset %lu for definition %i in lump \"%s\", ignoring.\n", (unsigned long) offset, i, F_LumpName(lumpNum));
+            ddstring_t* path = F_ComposeLumpPath(fsObject, lumpIdx);
+            Con_Message("Warning: Invalid offset %lu for definition %i in \"%s\", ignoring.\n", (unsigned long) offset, i, F_PrettyPath(Str_Text(path)));
+            Str_Delete(path);
             continue;
         }
 
@@ -1622,7 +1639,7 @@ typedef struct {
          */
 
         // Build the texturedef index.
-        texDefs = (patchcompositetex_t**)malloc(sizeof *texDefs * numValidTexDefs);
+        texDefs = (patchcompositetex_t**)malloc(sizeof(*texDefs) * numValidTexDefs);
         directory = maptex1 + 1;
         n = 0;
         for(i = 0; i < numTexDefs; ++i, directory++)
@@ -1641,7 +1658,7 @@ typedef struct {
                 mappatch_t* mpatch;
                 maptexture_t* mtexture = (maptexture_t*) ((byte*) maptex1 + offset);
 
-                texDef = (patchcompositetex_t*) malloc(sizeof *texDef);
+                texDef = (patchcompositetex_t*) malloc(sizeof(*texDef));
                 if(!texDef)
                     Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new PatchComposite.", (unsigned long) sizeof *texDef);
 
@@ -1653,7 +1670,7 @@ typedef struct {
                 texDef->size.width = SHORT(mtexture->width);
                 texDef->size.height = SHORT(mtexture->height);
 
-                texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
+                texDef->patches = (texpatch_t*)malloc(sizeof(*texDef->patches) * texDef->patchCount);
                 if(!texDef->patches)
                     Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new TexPatch list for texture definition '%s'.", (unsigned long) sizeof *texDef->patches * texDef->patchCount, Str_Text(&texDef->name));
 
@@ -1679,7 +1696,7 @@ typedef struct {
                 strifemappatch_t* smpatch;
                 strifemaptexture_t* smtexture = (strifemaptexture_t*) ((byte*) maptex1 + offset);
 
-                texDef = (patchcompositetex_t*) malloc(sizeof *texDef);
+                texDef = (patchcompositetex_t*) malloc(sizeof(*texDef));
                 if(!texDef)
                     Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new PatchComposite.", (unsigned long) sizeof *texDef);
 
@@ -1691,7 +1708,7 @@ typedef struct {
                 texDef->size.width = SHORT(smtexture->width);
                 texDef->size.height = SHORT(smtexture->height);
 
-                texDef->patches = (texpatch_t*)malloc(sizeof *texDef->patches * texDef->patchCount);
+                texDef->patches = (texpatch_t*)malloc(sizeof(*texDef->patches) * texDef->patchCount);
                 if(!texDef->patches)
                     Con_Error("R_ReadTextureDefs: Failed on allocation of %lu bytes for new TexPatch list for texture definition '%s'.", (unsigned long) sizeof *texDef->patches * texDef->patchCount, Str_Text(&texDef->name));
 
@@ -2063,6 +2080,7 @@ void R_InitPatchComposites(void)
 static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
 {
     Uri* uri, *resourcePath;
+    ddstring_t flatName;
     textureid_t texId;
     Texture* tex;
     Size2Raw size;
@@ -2073,8 +2091,11 @@ static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     if(F_LumpLength(lumpNum) == 0) return NULL;
 
     // Compose the resource name.
+    Str_Init(&flatName);
+    F_FileName(&flatName, F_LumpName(lumpNum));
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, F_LumpName(lumpNum));
+    Uri_SetPath(uri, Str_Text(&flatName));
+    Str_Free(&flatName);
 
     // Compose the path to the data resource.
     // Note that we do not use the lump name and instead use the logical lump index
@@ -2156,7 +2177,7 @@ void R_InitFlatTextures(void)
         {
             const char* lumpName = F_LumpName(i);
 
-            if(lumpName[0] == 'F')
+            if(lumpName[0] == 'F' && strlen(lumpName) >= 5)
             {
                 if(!strnicmp(lumpName + 1, "_START", 6) ||
                    !strnicmp(lumpName + 2, "_START", 6))
@@ -2195,13 +2216,13 @@ void R_InitFlatTextures(void)
     VERBOSE2( Con_Message("R_InitFlatTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-static boolean validSpriteName(const char* name)
+static boolean validSpriteName(const ddstring_t* name)
 {
-    if(!name || !name[0]) return false;
-    if(!name[4] || !name[5] || (name[6] && !name[7])) return false;
+    if(!name || Str_Length(name) < 5) return false;
+    if(!Str_At(name, 4) || !Str_At(name, 5) || (Str_At(name, 6) && !Str_At(name, 7))) return false;
     // Indices 5 and 7 must be numbers (0-8).
-    if(name[5] < '0' || name[5] > '8') return false;
-    if(name[7] && (name[7] < '0' || name[7] > '8')) return false;
+    if(Str_At(name, 5) < '0' || Str_At(name, 5) > '8') return false;
+    if(Str_At(name, 7) && (Str_At(name, 7) < '0' || Str_At(name, 7) > '8')) return false;
     // Its good!
     return true;
 }
@@ -2211,12 +2232,15 @@ void R_InitSpriteTextures(void)
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     int i, numLumps, uniqueId = 1/*1-based index*/;
     Uri* uri, *resourcePath;
+    ddstring_t spriteName;
     ddstack_t* stack;
 
     VERBOSE( Con_Message("Initializing Sprite textures...\n") )
 
     uri = Uri_NewWithPath2(TN_SPRITES_NAME":", RC_NULL);
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
+
+    Str_Init(&spriteName);
 
     stack = Stack_New();
     numLumps = F_LumpCount();
@@ -2229,7 +2253,7 @@ void R_InitSpriteTextures(void)
         Texture* tex;
         int flags;
 
-        if(lumpName[0] == 'S')
+        if(lumpName[0] == 'S' && strlen(lumpName) >= 5)
         {
             if(!strnicmp(lumpName + 1, "_START", 6) ||
                !strnicmp(lumpName + 2, "_START", 6))
@@ -2248,10 +2272,12 @@ void R_InitSpriteTextures(void)
         }
 
         if(!Stack_Height(stack)) continue;
-        if(!validSpriteName(lumpName)) continue;
+
+        F_FileName(&spriteName, lumpName);
+        if(!validSpriteName(&spriteName)) continue;
 
         // Compose the resource name.
-        Uri_SetPath(uri, lumpName);
+        Uri_SetPath(uri, Str_Text(&spriteName));
 
         // Compose the data resource path.
         Uri_SetPath(resourcePath, lumpName);
@@ -2310,6 +2336,7 @@ void R_InitSpriteTextures(void)
 
     Uri_Delete(resourcePath);
     Uri_Delete(uri);
+    Str_Free(&spriteName);
 
     VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }

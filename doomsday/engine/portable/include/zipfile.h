@@ -58,7 +58,7 @@ void ZipFile_Delete(ZipFile* zip);
 
 /**
  * Publish lumps to the end of the specified @a directory and prune any duplicates
- * (see LumpDirectory_PruneDuplicateRecords()).
+ * (see LumpDirectory_Prune()).
  *
  * @param zip  ZipFile instance.
  * @param directory  Directory to publish to.

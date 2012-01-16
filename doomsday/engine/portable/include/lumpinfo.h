@@ -39,7 +39,6 @@ typedef struct {
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
     struct abstractfile_s* container; /// Owning package else @c NULL.
-    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
 } LumpInfo;
 
 void F_InitLumpInfo(LumpInfo* info);

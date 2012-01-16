@@ -59,6 +59,10 @@ void F_FileName(ddstring_t* dst, const char* src)
 #else
     char name[NAME_MAX];
 #endif
+
+    if(!dst) return;
+    Str_Clear(dst);
+    if(!src) return;
     _splitpath(src, 0, 0, name, 0);
     Str_Set(dst, name);
 }

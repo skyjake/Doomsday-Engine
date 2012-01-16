@@ -103,39 +103,41 @@ void DAM_Shutdown(void)
     clearArchivedMaps();
 }
 
+/**
+ * @todo Do not do this here. We should instead ask the map converter to
+ * to locate the lumps it is interested in via the public API.
+ */
 static int mapLumpTypeForName(const char* name)
 {
-    struct maplumpinfo_s {
-        int         type;
-        const char *name;
+    static const struct maplumpinfo_s {
+        int type;
+        const char* name;
     } mapLumpInfos[] =
     {
-        {ML_THINGS,     "THINGS"},
-        {ML_LINEDEFS,   "LINEDEFS"},
-        {ML_SIDEDEFS,   "SIDEDEFS"},
-        {ML_VERTEXES,   "VERTEXES"},
-        {ML_SEGS,       "SEGS"},
-        {ML_SSECTORS,   "SSECTORS"},
-        {ML_NODES,      "NODES"},
-        {ML_SECTORS,    "SECTORS"},
-        {ML_REJECT,     "REJECT"},
-        {ML_BLOCKMAP,   "BLOCKMAP"},
-        {ML_BEHAVIOR,   "BEHAVIOR"},
-        {ML_SCRIPTS,    "SCRIPTS"},
-        {ML_LIGHTS,     "LIGHTS"},
-        {ML_MACROS,     "MACROS"},
-        {ML_LEAFS,      "LEAFS"},
-        {ML_INVALID,    NULL}
+        { ML_THINGS,     "THINGS" },
+        { ML_LINEDEFS,   "LINEDEFS" },
+        { ML_SIDEDEFS,   "SIDEDEFS" },
+        { ML_VERTEXES,   "VERTEXES" },
+        { ML_SEGS,       "SEGS" },
+        { ML_SSECTORS,   "SSECTORS" },
+        { ML_NODES,      "NODES" },
+        { ML_SECTORS,    "SECTORS" },
+        { ML_REJECT,     "REJECT" },
+        { ML_BLOCKMAP,   "BLOCKMAP" },
+        { ML_BEHAVIOR,   "BEHAVIOR" },
+        { ML_SCRIPTS,    "SCRIPTS" },
+        { ML_LIGHTS,     "LIGHTS" },
+        { ML_MACROS,     "MACROS" },
+        { ML_LEAFS,      "LEAFS" },
+        { ML_INVALID,    NULL }
     };
+    int i;
 
-    int         i;
-
-    if(!name)
-        return ML_INVALID;
+    if(!name) return ML_INVALID;
 
     for(i = 0; mapLumpInfos[i].type > ML_INVALID; ++i)
     {
-        if(!strcmp(name, mapLumpInfos[i].name))
+        if(!strnicmp(mapLumpInfos[i].name, name, strlen(mapLumpInfos[i].name)))
             return mapLumpInfos[i].type;
     }
 
@@ -498,7 +500,9 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
 
         // Compose the full path to the cached map data file.
         Str_Init(&cachedMapPath);
-        Str_Appendf(&cachedMapPath, "%s%s.dcm", Str_Text(cachedMapDir), F_LumpName(markerLump));
+        F_FileName(&cachedMapPath, F_LumpName(markerLump));
+        Str_Append(&cachedMapPath, ".dcm");
+        Str_Prepend(&cachedMapPath, Str_Text(cachedMapDir));
 
         // Create an archived map record for this.
         dam = createArchivedMap(uri, sourceLumpListHead, &cachedMapPath);
