@@ -550,48 +550,65 @@ static int unloadListFiles(FileList* list, boolean nonStartup)
     return unloaded;
 }
 
+#if _DEBUG
+static void logOrphanedFileIdentifiers(void)
+{
+    fileidentifierid_t nullId;
+    uint i, orphanCount = 0;
+
+    memset(nullId, 0, sizeof nullId);
+
+    for(i = 0; i < fileIdentifiersCount; ++i)
+    {
+        fileidentifier_t* id = fileIdentifiers + i;
+        if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
+
+        if(!orphanCount)
+        {
+            Con_Printf("Warning: Orphan file identifiers:\n");
+        }
+
+        Con_Printf("  %u - ", orphanCount);
+        F_PrintFileId(id->hash);
+        Con_Printf("\n");
+
+        orphanCount++;
+    }
+}
+#endif
+
 int F_Reset(void)
 {
     int unloaded = 0;
-    if(inited)
-    {
-#if _DEBUG
-        // List all open files with their identifiers.
-        VERBOSE(
-            Con_Printf("Open files at reset:\n");
-            FileList_Print(openFiles);
-            Con_Printf("End\n") )
-#endif
-
-        // Perform non-startup file unloading...
-        unloaded = unloadListFiles(loadedFiles, true/*non-startup*/);
+    if(!inited) return 0;
 
 #if _DEBUG
-        // Sanity check: look for dangling identifiers.
-        { uint i;
-        fileidentifierid_t nullId;
-        memset(nullId, 0, sizeof nullId);
-        for(i = 0; i < fileIdentifiersCount; ++i)
-        {
-            fileidentifier_t* id = fileIdentifiers + i;
-            if(!memcmp(id->hash, &nullId, FILEIDENTIFIERID_T_LASTINDEX)) continue;
-
-            Con_Printf("Warning: Dangling file identifier: ");
-            F_PrintFileId(id->hash);
-            Con_Printf("\n");
-        }}
+    // List all open files with their identifiers.
+    VERBOSE(
+        Con_Printf("Open files at reset:\n");
+        FileList_Print(openFiles);
+        Con_Printf("End\n")
+    )
 #endif
 
-        // Reset file IDs so previously seen files can be processed again.
-        /// \fixme this releases the ID of startup files too but given the
-        /// only startup file is doomsday.pk3 which we never attempt to load
-        /// again post engine startup, this isn't an immediate problem.
-        F_ResetFileIds();
+    // Perform non-startup file unloading...
+    unloaded = unloadListFiles(loadedFiles, true/*non-startup*/);
 
-        // Update the dir/WAD translations.
-        F_InitLumpDirectoryMappings();
-        F_InitVirtualDirectoryMappings();
-    }
+#if _DEBUG
+    // Sanity check: look for orphaned identifiers.
+    logOrphanedFileIdentifiers();
+#endif
+
+    // Reset file IDs so previously seen files can be processed again.
+    /// \fixme this releases the ID of startup files too but given the
+    /// only startup file is doomsday.pk3 which we never attempt to load
+    /// again post engine startup, this isn't an immediate problem.
+    F_ResetFileIds();
+
+    // Update the dir/WAD translations.
+    F_InitLumpDirectoryMappings();
+    F_InitVirtualDirectoryMappings();
+
     return unloaded;
 }
 
@@ -1990,14 +2007,16 @@ void F_InitLumpDirectoryMappings(void)
     static boolean inited = false;
     size_t bufSize = 0;
     uint8_t* buf = NULL;
+    lumpnum_t i;
 
     if(inited)
     {   // Free old paths, if any.
         clearLDMappings();
     }
 
+    if(DD_IsShuttingDown()) return;
+
     // Add the contents of all DD_DIREC lumps.
-    { lumpnum_t i;
     for(i = 0; i < F_LumpCount(); ++i)
     {
         const LumpInfo* info;
@@ -2022,11 +2041,9 @@ void F_InitLumpDirectoryMappings(void)
         F_ReadLumpSection(fsObject, lumpIdx, buf, 0, lumpLength);
         buf[lumpLength] = 0;
         parseLDMappingList((const char*)buf);
-    }}
+    }
 
-    if(NULL != buf)
-        free(buf);
-
+    if(buf) free(buf);
     inited = true;
 }
 
@@ -2133,6 +2150,8 @@ void F_InitVirtualDirectoryMappings(void)
     int i, argC = Argc();
 
     clearVDMappings();
+
+    if(DD_IsShuttingDown()) return;
 
     // Create virtual directory mappings by processing all -vdmap options.
     for(i = 0; i < argC; ++i)

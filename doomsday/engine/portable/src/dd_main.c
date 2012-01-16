@@ -1174,14 +1174,19 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
 
-    Materials_Init();
-    FI_Init();
-    P_PtcInit();
-
-    if(!exchangeEntryPoints(Game_PluginId(game)))
+    if(!DD_IsShuttingDown())
     {
-        Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
-        return false;
+        // Re-initialize subsystems needed even when in ringzero.
+
+        Materials_Init();
+        FI_Init();
+        P_PtcInit(); /// @todo not needed in this mode.
+
+        if(!exchangeEntryPoints(Game_PluginId(game)))
+        {
+            Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
+            return false;
+        }
     }
 
     // This is now the current game.
@@ -1190,63 +1195,69 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
 
-    if(!DD_IsNullGame(theGame))
-    {
-        // Tell the plugin it is being loaded.
-        void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
-#ifdef _DEBUG
-        Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
-#endif
-        if(loader) ((pluginfunc_t)loader)();
-    }
-
     /**
-     * The bulk of this we can do in busy mode unless we are already busy
-     * (which can happen if a fatal error occurs during game load and we must
-     * shutdown immediately; Sys_Shutdown will call back to load the special
-     * "null-game" game).
+     * If we aren't shutting down then we are either loading a game or switching
+     * to ringzero (the current game will have already been unloaded).
      */
+    if(!DD_IsShuttingDown())
     {
-    const int busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
-    ddgamechange_paramaters_t p;
-    BusyTask gameChangeTasks[] = {
-        // Phase 1: Initialization.
-        { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
+        /**
+         * The bulk of this we can do in busy mode unless we are already busy
+         * (which can happen if a fatal error occurs during game load and we must
+         * shutdown immediately; Sys_Shutdown will call back to load the special
+         * "null-game" game).
+         */
+        const int busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        ddgamechange_paramaters_t p;
+        BusyTask gameChangeTasks[] = {
+            // Phase 1: Initialization.
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
 
-        // Phase 2: Loading "startup" resources.
-        { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f },
+            // Phase 2: Loading "startup" resources.
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f },
 
-        // Phase 3: Loading "addon" resources.
-        { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f },
+            // Phase 3: Loading "addon" resources.
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f },
 
-        // Phase 4: Game activation.
-        { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
-    };
+            // Phase 4: Game activation.
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
+        };
 
-    p.initiatedBusyMode = !Con_IsBusy();
+        p.initiatedBusyMode = !Con_IsBusy();
 
-    /// \kludge Use more appropriate task names when unloading a game.
-    if(DD_IsNullGame(game))
-    {
-        gameChangeTasks[0].name = "Unloading game...";
-        gameChangeTasks[3].name = "Activating ringzero...";
-    }
-    // kludge end
+        if(!DD_IsNullGame(theGame))
+        {
+            // Tell the plugin it is being loaded.
+            /// @todo Must this be done in the main thread?
+            void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
+#ifdef _DEBUG
+            Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
+#endif
+            if(loader) ((pluginfunc_t)loader)();
+        }
 
-    Con_BusyList(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
-    }
+        /// \kludge Use more appropriate task names when unloading a game or shutting down.
+        if(DD_IsNullGame(game))
+        {
+            gameChangeTasks[0].name = "Unloading game...";
+            gameChangeTasks[3].name = "Switching to ringzero...";
+        }
+        // kludge end
 
-    // Process any GL-related tasks we couldn't while Busy.
-    Rend_ParticleLoadExtraTextures();
+        Con_BusyList(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
 
-    if(!DD_IsNullGame(theGame))
-    {
-        printGameBanner(theGame);
-    }
-    else
-    {
-        // Lets play a nice title animation.
-        DD_StartTitle();
+        // Process any GL-related tasks we couldn't while Busy.
+        Rend_ParticleLoadExtraTextures();
+
+        if(!DD_IsNullGame(theGame))
+        {
+            printGameBanner(theGame);
+        }
+        else
+        {
+            // Lets play a nice title animation.
+            DD_StartTitle();
+        }
     }
 
     /**
