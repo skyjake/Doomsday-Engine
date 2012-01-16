@@ -452,22 +452,22 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
-    ushort  size = 0;
+    int     size = 0;
     TCPsocket sock = netNodes[from].sock;
     int     bytes = 0;
     boolean error, read;
     char*   packet = 0;
 
-    // \todo What if we get one byte? How come we are here if there's nothing to receive?
-    if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
+    /// @todo What if we get less than 4 bytes?
+    /// How come we are here if there's nothing to receive?
+    if((bytes = SDLNet_TCP_Recv(sock, &size, 4)) != 4)
     {
-        //int number = errno;
-        //Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
-        //Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
         return false;
     }
 
-    size = SHORT(size);
+    size = LONG(size);
+    if(size <= 0 || size > DDMAXINT)
+        return false;
 
     // Read the entire packet's data.
     packet = M_Malloc(size);
@@ -479,11 +479,8 @@ boolean N_ReceiveReliably(nodeid_t from)
         int received = SDLNet_TCP_Recv(sock, packet + bytes, size - bytes);
         if(received == -1)
         {
-            //int number = errno;
             M_Free(packet);
             packet = 0;
-            /*Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
-                        SDLNet_GetError(), strerror(number));*/
             error = true;
             read = true;
         }
@@ -504,10 +501,6 @@ boolean N_ReceiveReliably(nodeid_t from)
         msg->size = size;
         msg->handle = packet;
 
-/*#ifdef _DEBUG
-        VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
-#endif*/
-
         // The message queue will handle the message from now on.
         N_PostMessage(msg);
     }
@@ -520,292 +513,43 @@ boolean N_ReceiveReliably(nodeid_t from)
  */
 void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 {
-    int             result = 0;
-    netnode_t      *node = &netNodes[destination];
-    short           packetSize = 0;
+    int result = 0;
+    netnode_t* node = &netNodes[destination];
+    int packetSize = 0;
 
     if(size == 0 || !node->sock || !node->hasJoined)
         return;
 
-    if(size > DDMAXSHORT)
+    if(size > DDMAXINT)
     {
-        Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
-                  "buffer.\n  Attempted size is %lu bytes.\n", (unsigned long) size);
+        Con_Error("N_SendDataBufferReliably: Trying to send an oversized data buffer.\n"
+                  "  Attempted size is %u bytes.\n", (unsigned long) size);
     }
 
-    // Resize the buffer to fit the entire message + size short.
-    if(transmissionBufferSize < size + 2)
+    // Resize the buffer to fit the entire message + size int.
+    if(transmissionBufferSize < size + 4)
     {
-        transmissionBufferSize = size + 2;
-        transmissionBuffer = M_Realloc(transmissionBuffer, size + 2);
+        transmissionBufferSize = size + 4;
+        transmissionBuffer = M_Realloc(transmissionBuffer, size + 4);
     }
 
     // Compose the message into the transmission buffer.
-    packetSize = SHORT(size);
-    memcpy(transmissionBuffer, &packetSize, 2);
-    memcpy(transmissionBuffer + 2, data, size);
+    packetSize = LONG(size);
+    memcpy(transmissionBuffer, &packetSize, 4);
+    memcpy(transmissionBuffer + 4, data, size);
 
     // Send the data over the socket.
-    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
+    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, size + 4);
 
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
-                          (unsigned long) (size + 2), result) );
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %u bytes, result=%i\n",
+                          (uint)size + 4, result) );
 #endif
-    if(result < 0 || (size_t) result != size + 2)
+    if(result < 0 || (size_t) result != size + 4)
     {
         perror("Socket error");
     }
 }
-
-#if 0
-/**
- * Send the buffer to the destination. For clients, the server is the only
- * possible destination (doesn't depend on the value of 'destination').
- */
-void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
-{
-    sqpack_t       *pack;
-    UDPpacket      *p;
-    netnode_t      *node;
-
-    // If the send queue is not active, we can't send anything.
-    if(!sendQ.online)
-        return;
-
-#ifdef TRANSMIT_RANDOMIZER
-    // There is a chance that the packet is dropped.
-    if(RNG_RandFloat() < RANDOMIZER_DROP_PERCENT / 100.0)
-    {
-        VERBOSE( Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
-                             "(%lu bytes).\n", destination,
-                             (unsigned long) size) );
-        return;
-    }
-#endif
-
-    if(size > maxDatagramSize)
-    {
-        Con_Error("N_SendDataBuffer: Too large packet (%lu), risk of "
-                  "fragmentation (MTU=%lu).\n", (unsigned long) size,
-                  (unsigned long) maxDatagramSize);
-    }
-
-    // This memory is freed after the packet is sent.
-    pack = M_Malloc(sizeof(sqpack_t));
-    p = pack->packet = SDLNet_AllocPacket((int) size);
-
-    // The destination node.
-    pack->node = node = netNodes + destination;
-
-    // Init the packet's data.
-    p->channel = -1;
-    memcpy(p->data, data, (int) size);
-    p->len = (int) size;
-    memcpy(&p->address, &node->addr, sizeof(p->address));
-
-#ifdef TRANSMIT_RANDOMIZER
-    pack->dueTime = Sys_GetRealTime() + RNG_RandFloat() * RANDOMIZER_MAX_DELAY;
-#endif
-
-    // Add the packet to the send queue.
-    Sem_P(sendQ.mutex);
-#ifndef TRANSMIT_RANDOMIZER
-    if(!sendQ.first)
-    {
-        sendQ.first = sendQ.last = pack;
-    }
-    else
-    {
-        sendQ.last->next = pack;
-        sendQ.last = pack;
-    }
-    pack->next = NULL;
-#else
-    // Insertion sort.
-    if(sendQ.first)
-    {
-        // Does the new packet come before all others?
-        if(pack->dueTime < sendQ.first->dueTime)
-        {
-            pack->next = sendQ.first;
-            sendQ.first = pack;
-        }
-        else
-        {
-            // Find the packet after which the new packet belongs.
-            sqpack_t *i = sendQ.first;
-
-            for(; i; i = i->next)
-            {
-                if(!i->next || i->next->dueTime >= pack->dueTime)
-                {
-                    // Add after this one.
-                    pack->next = i->next;
-                    i->next = pack;
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        sendQ.first = pack;
-        pack->next = NULL;
-    }
-#endif
-    Sem_V(sendQ.mutex);
-
-    // Increment the statistics.
-    Sem_P(node->mutex);
-    node->numWaiting++;
-    node->bytesWaiting += (uint) size;
-    Sem_V(node->mutex);
-
-    // Signal the transmitter to start working.
-    Sem_V(sendQ.waiting);
-}
-
-/**
- * @return              The number of messages waiting in the player's send
- *                      queue.
- */
-uint N_GetSendQueueCount(int player)
-{
-    netnode_t *node = netNodes + player;
-    uint    count;
-
-    Sem_P(node->mutex);
-    count = node->numWaiting;
-    Sem_V(node->mutex);
-    return count;
-}
-
-/**
- * @return              The number of bytes waiting in the player's send
- *                      queue.
- */
-uint N_GetSendQueueSize(int player)
-{
-    netnode_t      *node = netNodes + player;
-    uint            bytes;
-
-    Sem_P(node->mutex);
-    bytes = node->bytesWaiting;
-    Sem_V(node->mutex);
-    return bytes;
-}
-
-/**
- * Blocks until all the send queues have been emptied.
- */
-void N_FlushOutgoing(void)
-{
-    int     i;
-    boolean allClear = false;
-
-    while(!allClear)
-    {
-        allClear = true;
-
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-            if(netNodes[i].hasJoined && N_GetSendQueueCount(i))
-                allClear = false;
-
-        Sys_Sleep(5);
-    }
-}
-
-/**
- * Initialize the transmitter thread and the send queue.
- */
-static void N_StartTransmitter(sendqueue_t *q)
-{
-    q->online = true;
-    q->waiting = Sem_Create(0);
-    q->mutex = Sem_Create(1);
-    q->first = NULL;
-    q->last = NULL;
-
-    hTransmitter = Sys_StartThread(N_UDPTransmitter, q);
-}
-
-/**
- * Blocks until the transmitter thread has been exited.
- */
-static void N_StopTransmitter(sendqueue_t *q)
-{
-    uint            i;
-
-    if(!hTransmitter)
-        return;
-
-    // Tell the transmitter to stop sending.
-    q->online = false;
-
-    // Increment the semaphore without adding a new message: this'll
-    // make the transmitter "run dry."
-    for(i = 0; i < 10; ++i)
-        Sem_V(q->waiting);
-
-    // Wait until the transmitter thread finishes.
-    Sys_WaitThread(hTransmitter);
-    hTransmitter = NULL;
-
-    // Destroy the semaphores.
-    Sem_Destroy(q->waiting);
-    Sem_Destroy(q->mutex);
-}
-
-/**
- * Start the UDP receiver thread.
- */
-static void N_StartReceiver(void)
-{
-    stopReceiver = false;
-    mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
-    hReceiver = Sys_StartThread(N_UDPReceiver, NULL);
-}
-
-/**
- * Blocks until the UDP receiver thread has exited.
- */
-static void N_StopReceiver(void)
-{
-    // Wait for the receiver thread the stop.
-    stopReceiver = true;
-    Sys_WaitThread(hReceiver);
-    hReceiver = 0;
-
-    // Close the incoming UDP socket.
-    SDLNet_UDP_Close(inSock);
-    inSock = NULL;
-
-    Sys_DestroyMutex(mutexInSock);
-    mutexInSock = 0;
-}
-
-/**
- * Bind or unbind the address to/from the incoming UDP socket.  When
- * the address is bound, packets from it will be accepted.
- */
-void N_BindIncoming(IPaddress *addr, nodeid_t id)
-{
-    if(!inSock)
-        return;
-
-    Sys_Lock(mutexInSock);
-    if(addr)
-    {
-        SDLNet_UDP_Bind(inSock, id, addr);
-    }
-    else
-    {
-        SDLNet_UDP_Unbind(inSock, id);
-    }
-    Sys_Unlock(mutexInSock);
-}
-#endif
 
 /**
  * Initialize the low-level network subsystem. This is called always
