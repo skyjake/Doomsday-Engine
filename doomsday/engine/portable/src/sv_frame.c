@@ -249,6 +249,12 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
 
+    // Omit NULL state.
+    if(!d->state)
+    {
+        df &= ~MDF_STATE;
+    }
+
     /*
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
@@ -337,8 +343,9 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_SELSPEC)
         Writer_WriteByte(msgWriter, d->selector >> 24);
 
-    if((df & MDF_STATE) && d->state)
+    if(df & MDF_STATE)
     {
+        assert(d->state != 0);
         Writer_WritePackedUInt16(msgWriter, d->state - states);
     }
 
@@ -711,6 +718,7 @@ if(type >= NUM_DELTA_TYPES)
 
     if(delta->state == DELTA_UNACKED)
     {
+        assert(false);
         // Flag this as Resent.
         type |= DT_RESENT;
     }
