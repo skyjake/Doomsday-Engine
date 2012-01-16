@@ -31,10 +31,10 @@ win32 {
 DEFINES += __DOOMSDAY__
 
 !isEmpty(DENG_BUILD) {
-    echo(Build number: $$DENG_BUILD)
+    !win32: echo(Build number: $$DENG_BUILD)
     DEFINES += DOOMSDAY_BUILD_TEXT=\\\"$$DENG_BUILD\\\"
 } else {
-    echo(DENG_BUILD is not defined.)
+    !win32: echo(DENG_BUILD is not defined.)
 }
 
 unix:!macx {

@@ -65,11 +65,11 @@ defineTest(doPostLink) {
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
-    echo(Debug build.)
+    !win32: echo(Debug build.)
     DEFINES += _DEBUG
     CONFIG += deng_rangecheck
 } else {
-    echo(Release build.)
+    !win32: echo(Release build.)
     DEFINES += NDEBUG
 }
 
