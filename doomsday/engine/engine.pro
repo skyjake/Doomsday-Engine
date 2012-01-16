@@ -269,6 +269,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/strarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -529,6 +530,7 @@ SOURCES += \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
     portable/src/size.c \
+    portable/src/strarray.cpp \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \
