@@ -1236,7 +1236,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             if(loader) ((pluginfunc_t)loader)();
         }
 
-        /// \kludge Use more appropriate task names when unloading a game or shutting down.
+        /// \kludge Use more appropriate task names when unloading a game.
         if(DD_IsNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";
