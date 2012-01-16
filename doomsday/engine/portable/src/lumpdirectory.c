@@ -44,12 +44,8 @@
 ///}
 
 typedef struct {
-    /// File system object representing either the container of the lump for this
-    /// record, or the lump file itself.
-    abstractfile_t* file;
-
-    /// Logical lump index identifier. Used with file to reference a lump.
-    int lumpIdx;
+    /// Info record for this lump in it's owning file.
+    const LumpInfo* lumpInfo;
 
     /// @todo refactory away.
     int flags;
@@ -87,21 +83,18 @@ boolean LumpDirectory_IsValidIndex(LumpDirectory* ld, lumpnum_t lumpNum)
     return (lumpNum >= 0 && lumpNum < ld->numRecords);
 }
 
-static const lumpdirectory_lumprecord_t* LumpDirectory_Record(LumpDirectory* ld, lumpnum_t lumpNum)
+static __inline const lumpdirectory_lumprecord_t* LumpDirectory_Record(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
-    if(LumpDirectory_IsValidIndex(ld, lumpNum))
-    {
-        return ld->records + lumpNum;
-    }
-    Con_Error("LumpDirectory::Record: Invalid lumpNum #%i (valid range: [0...%i).", lumpNum, ld->numRecords);
-    exit(1); // Unreachable.
+    if(!LumpDirectory_IsValidIndex(ld, lumpNum)) return NULL;
+    return ld->records + lumpNum;
 }
 
 const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     const lumpdirectory_lumprecord_t* rec = LumpDirectory_Record(ld, lumpNum);
-    return F_LumpInfo(rec->file, rec->lumpIdx);
+    if(!rec) return NULL; // Invalid index?
+    return rec->lumpInfo;
 }
 
 int LumpDirectory_Size(LumpDirectory* ld)
@@ -154,14 +147,14 @@ int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
     origNumLumps = ld->numRecords;
     for(i = 1; i < ld->numRecords+1; ++i)
     {
-        if(ld->records[i-1].file != file)
-            continue;
+        if(ld->records[i-1].lumpInfo->container != file) continue;
 
         // Move the data in the lump storage.
         LumpDirectory_Move(ld, i, ld->numRecords-i, -1);
         --ld->numRecords;
         --i;
-        // We'll need to rebuild the info short name hash chains.
+
+        // We'll need to rebuild the path hash chains.
         ld->flags |= LDF_RECORDS_HASHDIRTY;
     }
 
@@ -169,6 +162,33 @@ int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
     LumpDirectory_Resize(ld, ld->numRecords);
 
     return origNumLumps - ld->numRecords;
+}
+
+boolean LumpDirectory_PruneLump(LumpDirectory* ld, LumpInfo* lumpInfo)
+{
+    int i;
+    assert(ld);
+
+    if(!lumpInfo || 0 == ld->numRecords) return 0;
+
+    for(i = 1; i < ld->numRecords+1; ++i)
+    {
+        if(ld->records[i-1].lumpInfo != lumpInfo) continue;
+
+        // Move the data in the lump storage.
+        LumpDirectory_Move(ld, i, ld->numRecords-i, -1);
+        --ld->numRecords;
+
+        // Resize the lump storage to match numRecords.
+        LumpDirectory_Resize(ld, ld->numRecords);
+
+        // We'll need to rebuild the path hash chains.
+        ld->flags |= LDF_RECORDS_HASHDIRTY;
+
+        return true;
+    }
+
+    return false;
 }
 
 void LumpDirectory_CatalogLumps(LumpDirectory* ld, abstractfile_t* file,
@@ -188,8 +208,7 @@ void LumpDirectory_CatalogLumps(LumpDirectory* ld, abstractfile_t* file,
     record = ld->records + newRecordBase;
     for(i = 0; i < numLumps; ++i, record++)
     {
-        record->file = file;
-        record->lumpIdx = lumpIdxBase + i;
+        record->lumpInfo = F_LumpInfo(file, lumpIdxBase + i);
         record->flags = 0;
     }
     ld->numRecords += numLumps;
@@ -220,8 +239,11 @@ static void LumpDirectory_BuildHash(LumpDirectory* ld)
     // observing pwad ordering rules.
     for(i = 0; i < ld->numRecords; ++i)
     {
-        const PathDirectoryNode* node = F_LumpDirectoryNode(ld->records[i].file, ld->records[i].lumpIdx);
+        const LumpInfo* lumpInfo = ld->records[i].lumpInfo;
+        const PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container,
+                                                            lumpInfo->lumpIdx);
         ushort j = PathDirectoryNode_Hash(node) % (unsigned)ld->numRecords;
+
         ld->records[i].hashNext = ld->records[j].hashRoot; // Prepend to list
         ld->records[j].hashRoot = i;
     }
@@ -262,18 +284,14 @@ int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* file,
     assert(ld);
     if(callback)
     {
-        lumpdirectory_lumprecord_t* record;
-        const LumpInfo* info;
         int i;
-        for(i = 0; i < ld->numRecords; ++i)
+        lumpdirectory_lumprecord_t* record = ld->records;
+        for(i = 0; i < ld->numRecords; ++i, record++)
         {
-            record = ld->records + i;
-
             // Are we only interested in the lumps from a particular file?
-            if(file && record->file != file) continue;
+            if(file && record->lumpInfo->container != file) continue;
 
-            info = F_LumpInfo(record->file, record->lumpIdx);
-            result = callback(info, paramaters);
+            result = callback(record->lumpInfo, paramaters);
             if(result) break;
         }
     }
@@ -302,8 +320,8 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
     hash = PathDirectory_HashPath(path, strlen(path), '/') % ld->numRecords;
     for(idx = ld->records[hash].hashRoot; idx != -1; idx = ld->records[idx].hashNext)
     {
-        const lumpdirectory_lumprecord_t* rec = &ld->records[idx];
-        PathDirectoryNode* node = F_LumpDirectoryNode(rec->file, rec->lumpIdx);
+        const LumpInfo* lumpInfo = ld->records[idx].lumpInfo;
+        PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
 
         // Time to build the pattern?
         if(!builtSearchPattern)
@@ -335,7 +353,8 @@ int C_DECL LumpDirectory_Sorter(const void* a, const void* b)
     if(0 != result) return result;
 
     // Still matched; try the file load order indexes.
-    result = (AbstractFile_LoadOrderIndex(infoA->record->file) - AbstractFile_LoadOrderIndex(infoB->record->file));
+    result = (AbstractFile_LoadOrderIndex(infoA->record->lumpInfo->container) -
+              AbstractFile_LoadOrderIndex(infoB->record->lumpInfo->container));
     if(0 != result) return result;
 
     // Still matched (i.e., present in the same package); use the original indexes.
@@ -360,7 +379,7 @@ void LumpDirectory_Prune(LumpDirectory* ld)
     for(i = 0; i < ld->numRecords; ++i, record++, sortInfo++)
     {
         sortInfo->record = record;
-        sortInfo->path = F_ComposeLumpPath2(record->file, record->lumpIdx, '/');
+        sortInfo->path = F_ComposeLumpPath2(record->lumpInfo->container, record->lumpInfo->lumpIdx, '/');
         sortInfo->origIndex = i;
     }
 
@@ -405,13 +424,13 @@ void LumpDirectory_Print(LumpDirectory* ld)
 
     for(i = 0; i < ld->numRecords; ++i)
     {
-        lumpdirectory_lumprecord_t* rec = ld->records + i;
-        const LumpInfo* info = F_LumpInfo(rec->file, rec->lumpIdx);
-        ddstring_t* path = F_ComposeLumpPath(rec->file, rec->lumpIdx);
+        const LumpInfo* lumpInfo = ld->records[i].lumpInfo;
+        ddstring_t* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
         Con_Printf("%04i - \"%s:%s\" (size: %lu bytes%s)\n", i,
-               F_PrettyPath(Str_Text(AbstractFile_Path(rec->file))),
+               F_PrettyPath(Str_Text(AbstractFile_Path(lumpInfo->container))),
                F_PrettyPath(Str_Text(path)),
-               (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
+               (unsigned long) lumpInfo->size,
+               (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
         Str_Delete(path);
     }
     Con_Printf("---End of lumps---\n");

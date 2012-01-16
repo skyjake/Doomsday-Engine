@@ -87,6 +87,15 @@ void LumpDirectory_CatalogLumps(LumpDirectory* dir, abstractfile_t* file,
 int LumpDirectory_PruneByFile(LumpDirectory* dir, abstractfile_t* file);
 
 /**
+ * Prune the lump referenced by @a lumpInfo.
+ *
+ * @param dir  LumpDirectory instance.
+ * @param lumpInfo  Unique info descriptor for the lump to prune.
+ * @return  @c true if found and pruned.
+ */
+boolean LumpDirectory_PruneLump(LumpDirectory* dir, LumpInfo* lumpInfo);
+
+/**
  * Prune path-duplicate records from the directory.
  */
 void LumpDirectory_Prune(LumpDirectory* dir);
