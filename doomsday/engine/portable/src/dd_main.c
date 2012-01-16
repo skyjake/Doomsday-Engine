@@ -1263,6 +1263,11 @@ boolean DD_ChangeGame(Game* game)
     return DD_ChangeGame2(game, false);
 }
 
+boolean DD_IsShuttingDown(void)
+{
+    return Sys_IsShuttingDown();
+}
+
 /**
  * Looks for new files to autoload from the auto-load data directory.
  */

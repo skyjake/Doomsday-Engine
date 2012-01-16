@@ -27,8 +27,6 @@
  * Abstract interfaces to platform-level services.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
@@ -47,26 +45,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 //int       systics = 0;    // System tics (every game tic).
 int novideo;                // if true, stay in text mode for debugging
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 #ifdef WIN32
 /**
@@ -133,6 +113,11 @@ void Sys_Init(void)
     N_Init();
 
     VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+boolean Sys_IsShuttingDown(void)
+{
+    return appShutdown;
 }
 
 /**
