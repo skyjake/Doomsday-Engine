@@ -72,131 +72,131 @@ struct strarray_s {
 
 StrArray* StrArray_New(void)
 {
-    StrArray* sar = new StrArray;
-    return sar;
+    StrArray* ar = new StrArray;
+    return ar;
 }
 
-void StrArray_Delete(StrArray* sar)
+void StrArray_Delete(StrArray* ar)
 {
-    if(sar) delete sar;
+    if(ar) delete ar;
 }
 
-void StrArray_Clear(StrArray* sar)
+void StrArray_Clear(StrArray* ar)
 {
-    assert(sar);
-    for(StrArray::Strings::iterator i = sar->array.begin(); i != sar->array.end(); ++i)
+    assert(ar);
+    for(StrArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         delete *i;
     }
-    sar->array.clear();
+    ar->array.clear();
 }
 
-int StrArray_Size(StrArray* sar)
+int StrArray_Size(StrArray* ar)
 {
-    assert(sar);
-    return sar->array.size();
+    assert(ar);
+    return ar->array.size();
 }
 
-void StrArray_Append(StrArray* sar, const char* str)
+void StrArray_Append(StrArray* ar, const char* str)
 {
-    assert(sar);
-    sar->array.push_back(new de::Str(str));
+    assert(ar);
+    ar->array.push_back(new de::Str(str));
 }
 
-void StrArray_AppendArray(StrArray* sar, const StrArray* other)
+void StrArray_AppendArray(StrArray* ar, const StrArray* other)
 {
-    assert(sar);
+    assert(ar);
     assert(other);
     for(StrArray::Strings::const_iterator i = other->array.begin(); i != other->array.end(); ++i)
     {
-        StrArray_Append(sar, Str_Text(**i));
+        StrArray_Append(ar, Str_Text(**i));
     }
 }
 
-void StrArray_Prepend(StrArray* sar, const char* str)
+void StrArray_Prepend(StrArray* ar, const char* str)
 {
-    StrArray_Insert(sar, str, 0);
+    StrArray_Insert(ar, str, 0);
 }
 
-void StrArray_Insert(StrArray* sar, const char* str, int atIndex)
+void StrArray_Insert(StrArray* ar, const char* str, int atIndex)
 {
-    assert(sar);
-    sar->assertValidIndex(atIndex);
-    sar->array.insert(sar->array.begin() + atIndex, new de::Str(str));
+    assert(ar);
+    ar->assertValidIndex(atIndex);
+    ar->array.insert(ar->array.begin() + atIndex, new de::Str(str));
 }
 
-void StrArray_Remove(StrArray* sar, int index)
+void StrArray_Remove(StrArray* ar, int index)
 {
-    assert(sar);
-    sar->assertValidIndex(index);
-    delete sar->array[index];
-    sar->array.erase(sar->array.begin() + index);
+    assert(ar);
+    ar->assertValidIndex(index);
+    delete ar->array[index];
+    ar->array.erase(ar->array.begin() + index);
 }
 
-void StrArray_RemoveRange(StrArray* sar, int fromIndex, int count)
+void StrArray_RemoveRange(StrArray* ar, int fromIndex, int count)
 {
     for(int i = 0; i < count; ++i)
     {
-        StrArray_Remove(sar, fromIndex);
+        StrArray_Remove(ar, fromIndex);
     }
 }
 
-StrArray* StrArray_Sub(StrArray* sar, int fromIndex, int count)
+StrArray* StrArray_Sub(StrArray* ar, int fromIndex, int count)
 {
-    assert(sar);
-    sar->assertValidRange(fromIndex, count);
+    assert(ar);
+    ar->assertValidRange(fromIndex, count);
 
     StrArray* sub = StrArray_New();
     for(int i = 0; i < count; ++i)
     {
-        StrArray_Append(sub, StrArray_At(sar, fromIndex + i));
+        StrArray_Append(sub, StrArray_At(ar, fromIndex + i));
     }
     return sub;
 }
 
-int StrArray_IndexOf(StrArray* sar, const char* str)
+int StrArray_IndexOf(StrArray* ar, const char* str)
 {
-    assert(sar);
-    for(uint i = 0; i < sar->array.size(); ++i)
+    assert(ar);
+    for(uint i = 0; i < ar->array.size(); ++i)
     {
-        if(!strcmp(str, Str_Text(*sar->array[i])))
+        if(!strcmp(str, Str_Text(*ar->array[i])))
             return i;
     }
     return -1;
 }
 
-const char* StrArray_At(StrArray* sar, int index)
+const char* StrArray_At(StrArray* ar, int index)
 {
-    assert(sar);
-    sar->assertValidIndex(index);
-    return Str_Text(*sar->array[index]);
+    assert(ar);
+    ar->assertValidIndex(index);
+    return Str_Text(*ar->array[index]);
 }
 
-boolean StrArray_Contains(StrArray* sar, const char* str)
+boolean StrArray_Contains(StrArray* ar, const char* str)
 {
-    return StrArray_IndexOf(sar, str) >= 0;
+    return StrArray_IndexOf(ar, str) >= 0;
 }
 
-void StrArray_Write(StrArray* sar, Writer* writer)
+void StrArray_Write(StrArray* ar, Writer* writer)
 {
-    assert(sar);
-    Writer_WriteUInt32(writer, sar->array.size());
+    assert(ar);
+    Writer_WriteUInt32(writer, ar->array.size());
     // Write each of the strings.
-    for(StrArray::Strings::const_iterator i = sar->array.begin(); i != sar->array.end(); ++i)
+    for(StrArray::Strings::const_iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         Str_Write(**i, writer);
     }
 }
 
-void StrArray_Read(StrArray* sar, Reader* reader)
+void StrArray_Read(StrArray* ar, Reader* reader)
 {
-    StrArray_Clear(sar);
+    StrArray_Clear(ar);
 
     uint count = Reader_ReadUInt32(reader);
     for(uint i = 0; i < count; ++i)
     {
         de::Str* str = new de::Str;
         Str_Read(*str, reader);
-        sar->array.push_back(str);
+        ar->array.push_back(str);
     }
 }
