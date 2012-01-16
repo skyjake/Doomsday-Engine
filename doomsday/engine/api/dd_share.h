@@ -395,6 +395,7 @@ typedef struct gameinfo_s {
 
 /**
  * @defgroup math Math Routines
+ * @ingroup base
  */
 ///@{
 #define FRACBITS            16
@@ -595,7 +596,10 @@ typedef enum {
 //
 //------------------------------------------------------------------------
 
-/// @defgroup memzone Memory Zone
+/**
+ * @defgroup memzone Memory Zone
+ * @ingroup base
+ */
 
 /**
  * @defgroup purgeLevels Purge Levels
@@ -1672,7 +1676,10 @@ typedef struct serverinfo_s {
 //
 //------------------------------------------------------------------------
 
-/// @defgroup player Player
+/**
+ * @defgroup player Player
+ * @ingroup playsim
+ */
 
 /// Built-in control identifiers. @ingroup player
 enum {

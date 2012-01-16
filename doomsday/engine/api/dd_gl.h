@@ -30,6 +30,7 @@
 
 /**
  * @defgroup gl Graphics Library
+ * @ingroup render
  */
 ///@{
 

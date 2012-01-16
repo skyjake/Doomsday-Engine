@@ -168,9 +168,12 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 ///@}
 
 /**
- * @ingroup material
+ * @defgroup material Materials
+ * @ingroup resource
  */
+///@{
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+///@}
 
 /// @addtogroup defs
 ///@{
@@ -284,6 +287,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
 /**
  * @defgroup system System Routines
+ * @ingroup base
  * Functionality provided by or related to the operating system.
  */
 ///@{
@@ -451,7 +455,10 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 ///@}
 
-/// @addtogroup controls
+/**
+ * @defgroup controls Controls
+ * @ingroup input
+ */
 ///@{
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
