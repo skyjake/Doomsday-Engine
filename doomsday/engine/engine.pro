@@ -42,6 +42,8 @@ unix:!macx {
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
 
     QMAKE_LFLAGS += -rdynamic
+
+    LIBS += -ldl
 }
 macx {
     useFramework(Cocoa)
