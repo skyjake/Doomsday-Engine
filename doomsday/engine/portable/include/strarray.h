@@ -33,7 +33,7 @@ struct strarray_s; // opaque
 /**
  * StrArray instance. Construct with StrArray_New().
  */
-typedef strarray_s StrArray;
+typedef struct strarray_s StrArray;
 
 /**
  * Constructs an empty string array.
