@@ -40,6 +40,10 @@
 #include "reader.h"
 #include "writer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Dynamic string instance. Use Str_New() to allocate one from the heap, or
  * Str_Init() to initialize a string located on the stack.
@@ -250,5 +254,9 @@ void Str_Truncate(ddstring_t* str, int position);
 void Str_Write(const ddstring_t* str, Writer* writer);
 
 void Str_Read(ddstring_t* str, Reader* reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_STRING_H */
