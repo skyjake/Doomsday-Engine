@@ -50,7 +50,7 @@
 #define MINIMUM_FRAME_SIZE  1800 // bytes
 
 // The first frame should contain as much information as possible.
-#define MAX_FIRST_FRAME_SIZE    NETBUFFER_MAXDATA // 256000
+#define MAX_FIRST_FRAME_SIZE    64000
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).

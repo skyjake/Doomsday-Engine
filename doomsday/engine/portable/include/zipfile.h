@@ -192,4 +192,19 @@ boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outS
  */
 uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize);
 
+/**
+ * Compresses a block of data using zlib.
+ *
+ * @param in       Pointer to input data to compress.
+ * @param inSize   Size of the input data.
+ * @param outSize  Pointer where the size of the compressed data will be written.
+ *                 Cannot be @c NULL.
+ * @param level    Compression level: 0=none/fastest ... 9=maximum/slowest.
+ *
+ * @return  Compressed data. The caller gets ownership of this memory and must
+ *          free it with M_Free(). If an error occurs, returns @c NULL and
+ *          @a outSize is set to zero.
+ */
+uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level);
+
 #endif // LIBDENG_FILESYS_ZIPFILE_H

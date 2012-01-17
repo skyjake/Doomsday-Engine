@@ -631,6 +631,11 @@ void ZipFile_ClearLumpCache(ZipFile* zip)
 
 uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)
 {
+    return ZipFile_CompressAtLevel(in, inSize, outSize, Z_DEFAULT_COMPRESSION);
+}
+
+uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level)
+{
 #define CHUNK_SIZE 32768
     z_stream stream;
     uint8_t chunk[CHUNK_SIZE];
@@ -649,7 +654,15 @@ uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)
     stream.zfree = Z_NULL;
     stream.opaque = Z_NULL;
 
-    result = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
+    if(level < Z_NO_COMPRESSION)
+    {
+        level = Z_NO_COMPRESSION;
+    }
+    if(level > Z_BEST_COMPRESSION)
+    {
+        level = Z_BEST_COMPRESSION;
+    }
+    result = deflateInit(&stream, level);
     if(result != Z_OK)
     {
         free(output);

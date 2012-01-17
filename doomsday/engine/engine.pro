@@ -203,7 +203,6 @@ DENG_HEADERS = \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_gridmap.h \
-    portable/include/m_huffman.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -450,7 +449,6 @@ SOURCES += \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_gridmap.c \
-    portable/src/m_huffman.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \

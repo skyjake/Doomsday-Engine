@@ -67,17 +67,14 @@
 #define MAX_DATAGRAM_SIZE           1300
 #define DEFAULT_TRANSMISSION_SIZE   4096
 
-// Currently Huffman encoding is applied to all data.
-// Instead, we should apply ZipFile_Compress().
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
+/// Transmissions larger than this will be compressed before sending.
+#define AUTO_COMPRESS_MIN       128 // bytes
 
-/// Transmissions larger than this will be automatically compressed before sending.
-#define AUTO_COMPRESS_LIMIT     (DEFAULT_TRANSMISSION_SIZE * 4)
+/// Transmissions larger than this will be compressed at maximum level.
+#define AUTO_COMPRESS_MAX       4096 // bytes
 
-#define TRMF_AUTO_COMPRESSED    0x80000000 ///< Transmission was automatically compressed.
+#define TRMF_COMPRESSED         0x80000000 ///< Transmission was compressed.
 #define TRMF_MASK               0x80000000
-
-#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -482,11 +479,9 @@ boolean N_ReceiveReliably(nodeid_t from)
 
     // The first 4 bytes contain packet size.
     size = LONG(size);
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
     // Extract the transmission flags.
     flags = size & TRMF_MASK;
     size &= ~TRMF_MASK;
-#endif
     if(size <= 0 || size > DDMAXINT)
         return false;
 
@@ -516,9 +511,8 @@ boolean N_ReceiveReliably(nodeid_t from)
         return false;
     }
 
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
     // Need to uncompress?
-    if(flags & TRMF_AUTO_COMPRESSED)
+    if(flags & TRMF_COMPRESSED)
     {
         // The uncompressed size is included in the beginning.
         size_t uncompSize = ULONG(*(unsigned int*)packet);
@@ -534,7 +528,6 @@ boolean N_ReceiveReliably(nodeid_t from)
         packet = uncompData;
         size = uncompSize;
     }
-#endif
 
     // Post the received message.
     { netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
@@ -555,9 +548,7 @@ static size_t prepareTransmission(void* data, size_t size, int flags, int origin
 
     originalSize = 0; // ignored
 
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
-    if(flags & TRMF_AUTO_COMPRESSED) sizeWithHeader += 4; // original size
-#endif
+    if(flags & TRMF_COMPRESSED) sizeWithHeader += 4; // original size
 
     // Resize the buffer to fit the entire message + size int.
     if(transmissionBufferSize < sizeWithHeader)
@@ -570,13 +561,11 @@ static size_t prepareTransmission(void* data, size_t size, int flags, int origin
 
     // Compose the message into the transmission buffer.
     Writer_WriteUInt32(writer, size | flags);
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
-    if(flags & TRMF_AUTO_COMPRESSED)
+    if(flags & TRMF_COMPRESSED)
     {
         // Include original uncompressed size.
         Writer_WriteUInt32(writer, originalSize);
     }
-#endif
     Writer_Write(writer, data, size);
     memcpy(transmissionBuffer + 4, data, size);
 
@@ -586,8 +575,8 @@ static size_t prepareTransmission(void* data, size_t size, int flags, int origin
 }
 
 /**
- * Send the data buffer over the control link, which is a TCP
- * connection.
+ * Send the data buffer over a TCP connection.
+ * The data may be compressed with zlib.
  */
 void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 {
@@ -604,24 +593,29 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
                   "  Attempted size is %u bytes.\n", (unsigned long) size);
     }
 
-#ifdef LIBDENG_USE_TRANSMISSION_AUTO_COMPRESS
-    if(size >= AUTO_COMPRESS_LIMIT)
+    if(size >= AUTO_COMPRESS_MIN)
     {
+        /// @todo Messages broadcasted to multiple recipients are separately
+        /// compressed for each TCP send -- should do only one compression
+        /// per message.
+
         // The packet is so big that we're going to force compression on it.
         size_t compSize = 0;
-        uint8_t* compData = ZipFile_Compress(data, size, &compSize);
+        uint8_t* compData = ZipFile_CompressAtLevel(data, size, &compSize,
+            size < AUTO_COMPRESS_MAX? 6 /*default*/ : 9 /*best*/);
         if(!compData)
         {
             Con_Error("N_SendDataBufferReliably: Failed to compress transmission.\n");
         }
-        transmissionSize = prepareTransmission(compData, compSize, TRMF_AUTO_COMPRESSED, size);
+        transmissionSize = prepareTransmission(compData, compSize, TRMF_COMPRESSED, size);
         M_Free(compData);
     }
     else
-#endif
     {
         transmissionSize = prepareTransmission(data, size, 0, 0);
     }
+
+    N_AddSentBytes(transmissionSize); // Statistics.
 
     // Send the data over the socket.
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, transmissionSize);

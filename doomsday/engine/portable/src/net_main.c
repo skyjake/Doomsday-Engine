@@ -67,7 +67,6 @@ typedef struct connectparam_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-D_CMD(HuffmanStats); // in net_buf.c
 D_CMD(Login); // in cl_main.c
 D_CMD(Logout); // in sv_main.c
 D_CMD(Ping); // in net_ping.c
@@ -162,7 +161,6 @@ void Net_Register(void)
     C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("huffman", "", HuffmanStats, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
@@ -340,7 +338,7 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
     if(data) Writer_Write(msgWriter, data, length);
     Msg_End();
 #else
-    assert(length <= NETBUFFER_MAXDATA);
+    assert(length <= NETBUFFER_MAXSIZE);
     netBuffer.msg.type = type;
     netBuffer.length = length;
     if(data) memcpy(netBuffer.msg.data, data, length);
