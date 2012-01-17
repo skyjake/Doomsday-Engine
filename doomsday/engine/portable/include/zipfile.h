@@ -155,11 +155,41 @@ int ZipFile_LumpCount(ZipFile* zip);
 // Static members ----------------------------------------------------------
 
 /**
- * Does the specified file appear to be in a format recognised by ZipFile?
- *
+ * Determines whether the specified file appears to be in a format recognised by
+ * ZipFile.
  * @param file  Stream file handle/wrapper to the file being interpreted.
+ *
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
 boolean ZipFile_Recognise(DFile* file);
+
+/**
+ * Inflates a compressed block of data using zlib. The caller must figure out
+ * the uncompressed size of the data before calling this.
+ *
+ * @param in       Pointer to compressed data.
+ * @param inSize   Size of the compressed data.
+ * @param out      Pointer to output buffer.
+ * @param outSize  Size of the output buffer. This must match the size of the
+ *                 decompressed data.
+ *
+ * @return  @c true if successful.
+ */
+boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
+
+/**
+ * Compresses a block of data using zlib with the default/balanced
+ * compression level.
+ *
+ * @param in       Pointer to input data to compress.
+ * @param inSize   Size of the input data.
+ * @param outSize  Pointer where the size of the compressed data will be written.
+ *                 Cannot be @c NULL.
+ *
+ * @return  Compressed data. The caller gets ownership of this memory and must
+ *          free it with M_Free(). If an error occurs, returns @c NULL and
+ *          @a outSize is set to zero.
+ */
+uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize);
 
 #endif // LIBDENG_FILESYS_ZIPFILE_H

@@ -32,6 +32,7 @@
 #include "lumpdirectory.h"
 #include "pathdirectory.h"
 #include "zipfile.h"
+#include "m_misc.h"
 
 typedef struct {
     size_t baseOffset;
@@ -628,11 +629,68 @@ void ZipFile_ClearLumpCache(ZipFile* zip)
     }
 }
 
-/**
- * Use zlib to inflate a compressed lump.
- * @return  @c true if successful.
- */
-static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)
+{
+#define CHUNK_SIZE 32768
+    z_stream stream;
+    uint8_t chunk[CHUNK_SIZE];
+    size_t allocSize = CHUNK_SIZE;
+    uint8_t* output = M_Malloc(allocSize); // some initial space
+    int result;
+    int have;
+
+    assert(outSize);
+    *outSize = 0;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*) in;
+    stream.avail_in = (uInt) inSize;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+
+    result = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
+    if(result != Z_OK)
+    {
+        free(output);
+        return 0;
+    }
+
+    // Compress until all the data has been exhausted.
+    do {
+        stream.next_out = chunk;
+        stream.avail_out = CHUNK_SIZE;
+        result = deflate(&stream, Z_FINISH);
+        if(result == Z_STREAM_ERROR)
+        {
+            free(output);
+            *outSize = 0;
+            return 0;
+        }
+        have = CHUNK_SIZE - stream.avail_out;
+        if(have)
+        {
+            // Need more memory?
+            if(*outSize + have > allocSize)
+            {
+                // Need more memory.
+                allocSize *= 2;
+                output = M_Realloc(output, allocSize);
+            }
+            // Append.
+            memcpy(output + *outSize, chunk, have);
+            *outSize += have;
+        }
+    } while(!stream.avail_out); // output chunk full, more data may follow
+
+    assert(result == Z_STREAM_END);
+
+    deflateEnd(&stream);
+    return output;
+#undef CHUNK_SIZE
+}
+
+boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
     z_stream stream;
     int result;
@@ -678,7 +736,7 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
-        result = ZipFile_InflateLump(compressedData, lumpRecord->info.compressedSize, buffer, lumpRecord->info.size);
+        result = ZipFile_Uncompress(compressedData, lumpRecord->info.compressedSize, buffer, lumpRecord->info.size);
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }
