@@ -140,6 +140,7 @@ gameid_t DD_GameIdForKey(const char* identityKey);
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+ * @param params        Additional parameters.
  *
  * @note Resource registration order defines the load order of resources
  * (among those of the same type).
@@ -409,7 +410,7 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
 ///@}
 
 /**
- * @defgroup playsim
+ * @defgroup playsim Playsim
  * @ingroup game
  */
 ///@{

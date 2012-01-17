@@ -143,7 +143,7 @@ void FR_SetCaseScale(boolean value);
  *
  * A single text block may also embed attribute and draw paramater changes
  * within the text string itself. Paramater blocks are defined within the curly
- * bracketed escape sequence {<whitespace>} A single paramater block may
+ * bracketed escape sequence {&nbsp;} A single paramater block may
  * contain any number of attribute and draw paramaters delimited by semicolons.
  *
  * A text block may contain any number of paramater blocks. The scope for which

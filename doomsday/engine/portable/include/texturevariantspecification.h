@@ -57,7 +57,7 @@ typedef enum {
     (tc) >= TEXTUREVARIANTUSAGECONTEXT_FIRST && (tc) <= TEXTUREVARIANTUSAGECONTEXT_LAST)
 
 /**
- * @defGroup textureVariantSpecificationFlags  Texture Variant Specification Flags
+ * @defgroup textureVariantSpecificationFlags  Texture Variant Specification Flags
  */
 /*@{*/
 #define TSF_ZEROMASK                0x1 // Set pixel alpha to fully opaque.

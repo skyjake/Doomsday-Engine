@@ -198,7 +198,7 @@ int Str_Strip(ddstring_t* ds);
 const char* Str_GetLine(ddstring_t* ds, const char* src);
 
 /**
- * @defGroup copyDelimiterFlags Copy Delimiter Flags
+ * @defgroup copyDelimiterFlags Copy Delimiter Flags
  */
 /*@{*/
 #define CDF_OMIT_DELIMITER      0x1 // Do not copy delimiters into the dest path.

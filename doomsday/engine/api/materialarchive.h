@@ -61,7 +61,13 @@ void MaterialArchive_Delete(MaterialArchive* arc);
 materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(MaterialArchive* arc, struct material_s* mat);
 
 /**
+ * Finds and returns a material with the identifier @a serialId.
+ *
+ * @param arc  MaterialArchive instance.
+ * @param serialId  SerialId of a material.
  * @param group  Set to zero. Only used with the version 0 of MaterialArchive (now obsolete).
+ *
+ * @return  Pointer to a material instance. Ownership not given.
  */
 struct material_s* MaterialArchive_Find(MaterialArchive* arc, materialarchive_serialid_t serialId, int group);
 

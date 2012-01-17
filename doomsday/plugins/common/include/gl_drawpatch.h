@@ -32,7 +32,7 @@
 #include "doomsday.h"
 
 /**
- * @defGroup drawPatchFlags Draw Patch Flags.
+ * @defgroup drawPatchFlags Draw Patch Flags.
  */
 /*@{*/
 #define DPF_NO_OFFSETX      0x0010

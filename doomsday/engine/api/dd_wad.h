@@ -67,7 +67,7 @@ lumpnum_t W_GetLumpNumForName(const char* name);
  * Read the data associated with @a lumpNum into @a buffer.
  *
  * @param lumpNum  Logical lump index associated with the data being read.
- * @param dest  Buffer to read into. Must be at least W_LumpLength() bytes.
+ * @param buffer  Buffer to read into. Must be at least W_LumpLength() bytes.
  * @return  Number of bytes read.
  */
 size_t W_ReadLump(lumpnum_t lumpNum, uint8_t* buffer);

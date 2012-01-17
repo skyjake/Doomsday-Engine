@@ -55,7 +55,7 @@ typedef struct {
 } resourcetypeinfo_t;
 
 /**
- * @defGroup ResourceNamespaceFlags Resource Namespace Flags
+ * @defgroup ResourceNamespaceFlags Resource Namespace Flags
  * @ingroup core.
  */
 /*@{*/
