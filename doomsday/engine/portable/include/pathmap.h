@@ -34,7 +34,7 @@ typedef struct pathmapfragment_s {
 } PathMapFragment;
 
 /// Size of the fixed-length "short" fragment buffer allocated with the map.
-#define PATHMAP_FRAGMENTBUFFER_SIZE 8
+#define PATHMAP_FRAGMENTBUFFER_SIZE 24
 
 typedef struct pathmap_s {
     const char* path; ///< The mapped path.
