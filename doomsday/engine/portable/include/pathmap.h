@@ -33,19 +33,13 @@ typedef struct pathmapfragment_s {
     struct pathmapfragment_s* next;
 } PathMapFragment;
 
-/// Size of the fixed-length "short" path (in characters) allocated with the map.
-#define PATHMAP_SHORT_PATH 256
-
 /// Size of the fixed-length "short" fragment buffer allocated with the map.
 #define PATHMAP_FRAGMENTBUFFER_SIZE 8
 
 typedef struct pathmap_s {
-    char shortPath[PATHMAP_SHORT_PATH+1];
-    char* path; // The long version.
-    char delimiter;
-
-    /// Total number of fragments in the path.
-    uint fragmentCount;
+    const char* path; ///< The mapped path.
+    char delimiter; ///< Character used to delimit path fragments.
+    uint fragmentCount; ///< Total number of fragments in the path.
 
     /**
      * Fragment map of the path. The map is composed of two
@@ -60,19 +54,22 @@ typedef struct pathmap_s {
      */
     PathMapFragment fragmentBuffer[PATHMAP_FRAGMENTBUFFER_SIZE];
 
-    /// Head of the linked list of "extra" fragments, in reverse order.
+    ///< Head of the linked list of "extra" fragments, in reverse order.
     PathMapFragment* extraFragments;
 } PathMap;
 
 /**
- * Initialize the specified PathMap from the given path.
+ * Initialize the specified PathMap from @a path.
  *
  * \post The path will have been subdivided into a fragment map
  * and some or all of the fragment hashes will have been calculated
  * (dependant on the number of discreet fragments).
  *
- * @param path  Relative or absolute path to be mapped.
- * @param delimiter  Fragments of @a path are delimited by this character.
+ * @param path          Relative or absolute path to be mapped. Assumed to remain
+ *                      accessible until PathMap_Destroy() is called.
+ *
+ * @param delimiter     Fragments of @a path are delimited by this character.
+ *
  * @return  Pointer to "this" instance for caller convenience.
  */
 PathMap* PathMap_Initialize2(PathMap* pathMap, const char* path, char delimiter);
@@ -93,12 +90,14 @@ uint PathMap_Size(PathMap* pathMap);
  *
  * For example, if the mapped path is "c:/mystuff/myaddon.addon"
  * the corresponding fragment map will be arranged as follows:
- *
+ * <pre>
  *   [0:{myaddon.addon}, 1:{mystuff}, 2:{c:}].
+ * </pre>
  *
  * \post Hash may have been calculated for the referenced fragment.
  *
- * @param idx  Reverse-index of the fragment to be retrieved.
+ * @param idx           Reverse-index of the fragment to be retrieved.
+ *
  * @return  Processed fragment info else @c NULL if @a idx is invalid.
  */
 const PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);

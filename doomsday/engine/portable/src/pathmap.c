@@ -108,46 +108,15 @@ static void PathMap_ClearFragments(PathMap* pm)
     }
 }
 
-static void PathMap_ClearPath(PathMap* pm)
-{
-    assert(pm);
-    if(pm->path)
-    {
-        free(pm->path);
-        pm->path = NULL;
-    }
-}
-
 PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
 {
-    char* pathBuffer;
-    size_t pathLen;
     assert(pm);
 
-     // Take a copy of the search term.
-    pathLen = (path? strlen(path) : 0);
-    if(pathLen <= PATHMAP_SHORT_PATH)
-    {
-        // Use the small search path buffer.
-        pm->path = NULL;
-        pathBuffer = pm->shortPath;
-    }
-    else
-    {
-        // Allocate a buffer large enough to hold the whole path.
-        pm->path = (char*)malloc(pathLen+1);
-        pathBuffer = pm->path;
-    }
-    if(pathLen)
-    {
-        memcpy(pathBuffer, path, pathLen);
-    }
-    pathBuffer[pathLen] = '\0';
-
+    pm->path = path;
     pm->delimiter = delimiter;
 
     // Create the fragment map of the path.
-    PathMap_MapAllFragments(pm, pathBuffer, pathLen);
+    PathMap_MapAllFragments(pm, pm->path, strlen(pm->path));
 
     // Hash the first (i.e., rightmost) fragment right away.
     PathMap_Fragment(pm, 0);
@@ -164,7 +133,6 @@ void PathMap_Destroy(PathMap* pm)
 {
     assert(pm);
     PathMap_ClearFragments(pm);
-    PathMap_ClearPath(pm);
 }
 
 uint PathMap_Size(PathMap* pm)
