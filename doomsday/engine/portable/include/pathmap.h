@@ -1,24 +1,24 @@
-/**\file pathmap.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file pathmap.h
+ * Fragment map of a delimited string. @ingroup fs
  *
- *\author Copyright © 2011-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * A map of a fragment-delimited string. Instantiate on the stack.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_FILESYS_PATHMAP_H
@@ -33,22 +33,19 @@ typedef struct pathmapfragment_s {
     struct pathmapfragment_s* next;
 } PathMapFragment;
 
-/**
- * PathMap. Can be allocated on the stack.
- */
 /// Size of the fixed-length "short" path (in characters) allocated with the map.
 #define PATHMAP_SHORT_PATH 256
 
 /// Size of the fixed-length "short" fragment buffer allocated with the map.
 #define PATHMAP_FRAGMENTBUFFER_SIZE 8
 
-typedef struct {
-    char _shortPath[PATHMAP_SHORT_PATH+1];
-    char* _path; // The long version.
-    char _delimiter;
+typedef struct pathmap_s {
+    char shortPath[PATHMAP_SHORT_PATH+1];
+    char* path; // The long version.
+    char delimiter;
 
     /// Total number of fragments in the path.
-    uint _fragmentCount;
+    uint fragmentCount;
 
     /**
      * Fragment map of the path. The map is composed of two
@@ -61,10 +58,10 @@ typedef struct {
      * majority of paths can be represented without dynamically
      * allocating memory from the heap.
      */
-    PathMapFragment _fragmentBuffer[PATHMAP_FRAGMENTBUFFER_SIZE];
+    PathMapFragment fragmentBuffer[PATHMAP_FRAGMENTBUFFER_SIZE];
 
     /// Head of the linked list of "extra" fragments, in reverse order.
-    PathMapFragment* _extraFragments;
+    PathMapFragment* extraFragments;
 } PathMap;
 
 /**
@@ -106,4 +103,4 @@ uint PathMap_Size(PathMap* pathMap);
  */
 const PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);
 
-#endif /* LIBDENG_FILESYS_PATHMAP_H */
+#endif // LIBDENG_FILESYS_PATHMAP_H
