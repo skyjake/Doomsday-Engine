@@ -35,39 +35,146 @@ struct strarray_s; // opaque
  */
 typedef strarray_s StrArray;
 
+/**
+ * Constructs an empty string array.
+ *
+ * @return StrArray instance. Must be deleted with StrArray_Delete().
+ */
 StrArray* StrArray_New(void);
 
-void StrArray_Delete(StrArray* sar);
-
-void StrArray_Clear(StrArray* sar);
-
-int StrArray_Size(StrArray* sar);
-
-void StrArray_Append(StrArray* sar, const char* str);
-
-void StrArray_AppendArray(StrArray* sar, const StrArray* other);
-
-void StrArray_Prepend(StrArray* sar, const char* str);
-
-void StrArray_Insert(StrArray* sar, const char* str, int atIndex);
-
-void StrArray_Remove(StrArray* sar, int index);
-
-void StrArray_RemoveRange(StrArray* sar, int fromIndex, int count);
+/**
+ * Creates a new sub-array that contains copies of a subset of the
+ * array's strings.
+ * @param ar  StrArray instance whose strings to copy.
+ * @param fromIndex  Start of range of copied strings.
+ * @param count  Number of strings in the range. Use -1 to extend to range
+ *      to the end of the array.
+ *
+ * @return  A newly created StrArray instance with copies of the strings.
+ *      The returned array will contain @a count strings and
+ *      must be deleted with StrArray_Delete().
+ */
+StrArray* StrArray_NewSub(const StrArray* ar, int fromIndex, int count);
 
 /**
- * @return  A newly created StrArray instance with copies of the strings.
+ * Destructs the string array @a ar.
+ * @param ar  StrArray instance.
  */
-StrArray* StrArray_Sub(StrArray* sar, int fromIndex, int count);
+void StrArray_Delete(StrArray* ar);
 
-int StrArray_IndexOf(StrArray* sar, const char* str);
+/**
+ * Empties the contents of string array @a ar.
+ * @param ar  StrArray instance.
+ */
+void StrArray_Clear(StrArray* ar);
 
-const char* StrArray_At(StrArray* sar, int index);
+/**
+ * Returns the number of strings in the array.
+ * @param ar  StrArray instance.
+ */
+int StrArray_Size(const StrArray* ar);
 
-boolean StrArray_Contains(StrArray* sar, const char* str);
+/**
+ * Appends a string at the end of the array.
+ * @param ar  StrArray instance.
+ * @param str  Text string to append. A copy is made of the contents.
+ */
+void StrArray_Append(StrArray* ar, const char* str);
 
-void StrArray_Write(StrArray* sar, Writer* writer);
+/**
+ * Appends an array of text strings at the end of the array.
+ * @param ar  StrArray instance.
+ * @param other  Another StrArray instance whose strings will be appended
+ * to the end of @a ar.
+ */
+void StrArray_AppendArray(StrArray* ar, const StrArray* other);
 
-void StrArray_Read(StrArray* sar, Reader* reader);
+/**
+ * Inserts a string to the start of the array.
+ * @param ar  StrArray instance.
+ * @param str  Text string to prepend. A copy is made of the contents.
+ */
+void StrArray_Prepend(StrArray* ar, const char* str);
+
+/**
+ * Inserts a string to the array.
+ * @param ar  StrArray instance.
+ * @param str  Text string to prepend. A copy is made of the contents.
+ * @param atIndex  Position where @a str will appear after the operation
+ *      is complete. When inserting at position @em n, strings at positions
+ *      <i>n+1..last</i> will be pushed to positions <i>n+2..last+1</i>.
+ */
+void StrArray_Insert(StrArray* ar, const char* str, int atIndex);
+
+/**
+ * Removes the string at position @a index.
+ * @param ar  StrArray instance.
+ * @param atIndex  Position to remove. When removing position @em n, strings
+ *      at positions <i>n+1..last</i> will be pulled to positions <i>n..last-1</i>.
+ */
+void StrArray_Remove(StrArray* ar, int index);
+
+/**
+ * Removes a range of strings from the array.
+ * @param ar  StrArray instance.
+ * @param fromIndex  Beginning of the range of positions to remove.
+ * @param count  Length of the removed range. Use -1 to extend to range
+ *      to the end of the array.
+ */
+void StrArray_RemoveRange(StrArray* ar, int fromIndex, int count);
+
+/**
+ * Finds string @a str in the array (case sensitive) and returns its position.
+ * @param ar  StrArray instance.
+ * @param str  Text string to find.
+ *
+ * @return Position of the string, or -1 if not found.
+ *
+ * @note Search operation performance is O(n).
+ */
+int StrArray_IndexOf(const StrArray* ar, const char* str);
+
+/**
+ * Returns a non-modifiable string at position @a index.
+ * @param ar  StrArray instance.
+ * @param index  Position in the array.
+ *
+ * @return  Text string.
+ */
+const char* StrArray_At(const StrArray* ar, int index);
+
+/**
+ * Returns a modifiable string at position @a index.
+ * @param ar  StrArray instance.
+ * @param index  Position in the array.
+ *
+ * @return  ddstring_t instance that can be modified.
+ */
+ddstring_t* StrArray_StringAt(StrArray* ar, int index);
+
+/**
+ * Checks if the array contains a string (case sensitive).
+ * @param ar  StrArray instance.
+ * @param str  Text string to check for.
+ *
+ * @return @c true, if the string is in the array; otherwise @c false.
+ *
+ * @note Performance is O(n).
+ */
+boolean StrArray_Contains(const StrArray* ar, const char* str);
+
+/**
+ * Serializes the array of strings using @a writer.
+ * @param ar StrArray instance.
+ * @param writer  Writer instance.
+ */
+void StrArray_Write(const StrArray* ar, Writer* writer);
+
+/**
+ * Deserializes the array of strings from @a reader.
+ * @param ar StrArray instance.
+ * @param reader  Reader instance.
+ */
+void StrArray_Read(StrArray* ar, Reader* reader);
 
 #endif // LIBDENG_STR_ARRAY_H
