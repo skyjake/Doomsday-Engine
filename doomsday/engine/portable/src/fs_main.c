@@ -490,7 +490,7 @@ void F_Init(void)
     openFiles     = FileList_New();
     loadedFiles   = FileList_New();
 
-    zipLumpDirectory          = LumpDirectory_New();
+    zipLumpDirectory          = LumpDirectory_NewWithFlags(LDF_UNIQUE_PATHS);
     primaryWadLumpDirectory   = LumpDirectory_New();
     auxiliaryWadLumpDirectory = LumpDirectory_New();
     auxiliaryWadLumpDirectoryInUse = false;

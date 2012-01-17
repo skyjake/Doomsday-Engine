@@ -57,8 +57,7 @@ ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info);
 void ZipFile_Delete(ZipFile* zip);
 
 /**
- * Publish lumps to the end of the specified @a directory and prune any duplicates
- * (see LumpDirectory_Prune()).
+ * Publish lumps to the end of the specified @a directory.
  *
  * @param zip  ZipFile instance.
  * @param directory  Directory to publish to.

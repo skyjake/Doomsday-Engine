@@ -37,7 +37,24 @@ struct lumpdirectory_s;
  */
 typedef struct lumpdirectory_s LumpDirectory;
 
-LumpDirectory* LumpDirectory_New(void);
+/**
+ * @defgroup lumpDirectoryFlags Lump Directory Flags
+ */
+///{
+#define LDF_UNIQUE_PATHS                0x1 ///< Lumps in the directory must have unique paths.
+                                            /// Inserting a lump with the same path as one which
+                                            /// already exists will result in the earlier lump
+                                            /// being pruned.
+///}
+
+/**
+ * Construct a new (empty) instance of LumpDirectory.
+ *
+ * @param flags  @ref lumpDirectoryFlags
+ */
+LumpDirectory* LumpDirectory_NewWithFlags(int flags);
+LumpDirectory* LumpDirectory_New(void); /*flags=0*/
+
 void LumpDirectory_Delete(LumpDirectory* dir);
 
 /// Number of lumps in the directory.
@@ -94,11 +111,6 @@ int LumpDirectory_PruneByFile(LumpDirectory* dir, abstractfile_t* file);
  * @return  @c true if found and pruned.
  */
 boolean LumpDirectory_PruneLump(LumpDirectory* dir, LumpInfo* lumpInfo);
-
-/**
- * Prune path-duplicate records from the directory.
- */
-void LumpDirectory_Prune(LumpDirectory* dir);
 
 /**
  * Iterate over lumps in the directory making a callback for each.
