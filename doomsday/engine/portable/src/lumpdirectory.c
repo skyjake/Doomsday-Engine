@@ -362,7 +362,10 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
 
         // Time to build the pattern?
         if(!builtSearchPattern)
+        {
             PathMap_Initialize(&searchPattern, path);
+            builtSearchPattern = true;
+        }
 
         if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
         {
