@@ -427,7 +427,6 @@ boolean Demo_ReadPacket(void)
     // Get the packet.
     netBuffer.length = hdr.length - 1;
     netBuffer.player = 0; // From the server.
-    netBuffer.msg.id = 0;
     netBuffer.msg.type = lzGetC(playdemo);
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     //netBuffer.cursor = netBuffer.msg.data;
