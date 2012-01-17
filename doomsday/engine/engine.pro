@@ -648,5 +648,5 @@ else:unix:!macx {
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = /usr/share/applications
+    desktop.path = $$PREFIX/share/applications
 }
