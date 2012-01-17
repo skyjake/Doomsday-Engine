@@ -490,7 +490,7 @@ void F_Init(void)
     openFiles     = FileList_New();
     loadedFiles   = FileList_New();
 
-    zipLumpDirectory          = LumpDirectory_New();
+    zipLumpDirectory          = LumpDirectory_NewWithFlags(LDF_UNIQUE_PATHS);
     primaryWadLumpDirectory   = LumpDirectory_New();
     auxiliaryWadLumpDirectory = LumpDirectory_New();
     auxiliaryWadLumpDirectoryInUse = false;
@@ -1288,8 +1288,8 @@ int F_AllResourcePaths2(const char* rawSearchPattern, int flags,
     PathMap_Initialize(&p.patternMap, Str_Text(&searchPattern));
 
     result = LumpDirectory_Iterate2(zipLumpDirectory, NULL, findLumpWorker, (void*)&p);
-    Str_Free(&p.pattern);
     PathMap_Destroy(&p.patternMap);
+    Str_Free(&p.pattern);
 
     if(result) goto searchEnded;
     }

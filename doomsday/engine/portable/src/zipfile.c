@@ -526,7 +526,6 @@ int ZipFile_PublishLumpsToDirectory(ZipFile* zip, LumpDirectory* directory)
         {
             // Insert the lumps into their rightful places in the directory.
             LumpDirectory_CatalogLumps(directory, (abstractfile_t*)zip, 0, ZipFile_LumpCount(zip));
-            LumpDirectory_Prune(directory);
             numPublished += ZipFile_LumpCount(zip);
         }
     }

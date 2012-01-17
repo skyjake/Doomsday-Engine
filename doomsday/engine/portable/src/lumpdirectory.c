@@ -40,7 +40,8 @@
  */
 ///{
 #define LDF_INTERNAL_MASK               0xff000000
-#define LDF_RECORDS_HASHDIRTY           0x80000000 ///< Path hash must be rebuilt.
+#define LDF_NEED_REBUILD_HASH           0x80000000 ///< Path hash must be rebuilt.
+#define LDF_NEED_PRUNE                  0x40000000 ///< Path duplicate records must be pruned.
 ///}
 
 typedef struct {
@@ -61,13 +62,20 @@ struct lumpdirectory_s {
     lumpdirectory_lumprecord_t* records;
 };
 
-LumpDirectory* LumpDirectory_New(void)
+static void LumpDirectory_Prune(LumpDirectory* ld);
+
+LumpDirectory* LumpDirectory_NewWithFlags(int flags)
 {
     LumpDirectory* ld = (LumpDirectory*)malloc(sizeof(LumpDirectory));
     ld->numRecords = 0;
     ld->records = NULL;
-    ld->flags = 0;
+    ld->flags = flags & ~LDF_INTERNAL_MASK;
     return ld;
+}
+
+LumpDirectory* LumpDirectory_New(void)
+{
+    return LumpDirectory_NewWithFlags(0);
 }
 
 void LumpDirectory_Delete(LumpDirectory* ld)
@@ -80,6 +88,10 @@ void LumpDirectory_Delete(LumpDirectory* ld)
 boolean LumpDirectory_IsValidIndex(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     return (lumpNum >= 0 && lumpNum < ld->numRecords);
 }
 
@@ -100,6 +112,10 @@ const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* ld, lumpnum_t lumpNum)
 int LumpDirectory_Size(LumpDirectory* ld)
 {
     assert(ld);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     return ld->numRecords;
 }
 
@@ -114,7 +130,7 @@ static void LumpDirectory_Move(LumpDirectory* ld, uint from, uint count, int off
     if(offset == 0 || count == 0 || from >= (unsigned)ld->numRecords-1) return;
     memmove(ld->records + from + offset, ld->records + from, sizeof(lumpdirectory_lumprecord_t) * count);
     // We'll need to rebuild the hash.
-    ld->flags |= LDF_RECORDS_HASHDIRTY;
+    ld->flags |= LDF_NEED_REBUILD_HASH;
 }
 
 static void LumpDirectory_Resize(LumpDirectory* ld, int numItems)
@@ -143,6 +159,9 @@ int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
 
     if(!file || 0 == ld->numRecords) return 0;
 
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     // Do this one lump at a time, respecting the possibly-sorted order.
     origNumLumps = ld->numRecords;
     for(i = 1; i < ld->numRecords+1; ++i)
@@ -155,7 +174,7 @@ int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
         --i;
 
         // We'll need to rebuild the path hash chains.
-        ld->flags |= LDF_RECORDS_HASHDIRTY;
+        ld->flags |= LDF_NEED_REBUILD_HASH;
     }
 
     // Resize the lump storage to match numRecords.
@@ -171,6 +190,9 @@ boolean LumpDirectory_PruneLump(LumpDirectory* ld, LumpInfo* lumpInfo)
 
     if(!lumpInfo || 0 == ld->numRecords) return 0;
 
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     for(i = 1; i < ld->numRecords+1; ++i)
     {
         if(ld->records[i-1].lumpInfo != lumpInfo) continue;
@@ -183,7 +205,7 @@ boolean LumpDirectory_PruneLump(LumpDirectory* ld, LumpInfo* lumpInfo)
         LumpDirectory_Resize(ld, ld->numRecords);
 
         // We'll need to rebuild the path hash chains.
-        ld->flags |= LDF_RECORDS_HASHDIRTY;
+        ld->flags |= LDF_NEED_REBUILD_HASH;
 
         return true;
     }
@@ -218,7 +240,14 @@ void LumpDirectory_CatalogLumps(LumpDirectory* ld, abstractfile_t* file,
     LumpDirectory_Resize(ld, ld->numRecords);
 
     // We'll need to rebuild the name hash chains.
-    ld->flags |= LDF_RECORDS_HASHDIRTY;
+    ld->flags |= LDF_NEED_REBUILD_HASH;
+
+    if(ld->flags & LDF_UNIQUE_PATHS)
+    {
+        // We may need to prune duplicate paths.
+        if(ld->numRecords > 1)
+            ld->flags |= LDF_NEED_PRUNE;
+    }
 }
 
 static void LumpDirectory_BuildHash(LumpDirectory* ld)
@@ -226,7 +255,7 @@ static void LumpDirectory_BuildHash(LumpDirectory* ld)
     int i;
     assert(ld);
 
-    if(!(ld->flags & LDF_RECORDS_HASHDIRTY)) return;
+    if(!(ld->flags & LDF_NEED_REBUILD_HASH)) return;
 
     // Clear the chains.
     for(i = 0; i < ld->numRecords; ++i)
@@ -248,7 +277,7 @@ static void LumpDirectory_BuildHash(LumpDirectory* ld)
         ld->records[j].hashRoot = i;
     }
 
-    ld->flags &= ~LDF_RECORDS_HASHDIRTY;
+    ld->flags &= ~LDF_NEED_REBUILD_HASH;
 #if _DEBUG
     VERBOSE2( Con_Message("Rebuilt record hash for LumpDirectory %p.\n", ld) )
 #endif
@@ -263,7 +292,7 @@ void LumpDirectory_Clear(LumpDirectory* ld)
         ld->records = NULL;
     }
     ld->numRecords = 0;
-    ld->flags &= ~LDF_RECORDS_HASHDIRTY;
+    ld->flags &= ~(LDF_NEED_REBUILD_HASH|LDF_NEED_PRUNE);
 }
 
 static int findFirstLumpWorker(const LumpInfo* info, void* paramaters)
@@ -285,7 +314,12 @@ int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* file,
     if(callback)
     {
         int i;
-        lumpdirectory_lumprecord_t* record = ld->records;
+        lumpdirectory_lumprecord_t* record;
+
+        // Do we need to prune path-duplicate lumps?
+        LumpDirectory_Prune(ld);
+
+        record = ld->records;
         for(i = 0; i < ld->numRecords; ++i, record++)
         {
             // Are we only interested in the lumps from a particular file?
@@ -313,6 +347,9 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
     assert(ld);
     if(!path || !path[0] || ld->numRecords <= 0) return -1;
 
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     // Do we need to rebuild the path hash chains?
     LumpDirectory_BuildHash(ld);
 
@@ -325,7 +362,10 @@ lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
 
         // Time to build the pattern?
         if(!builtSearchPattern)
+        {
             PathMap_Initialize(&searchPattern, path);
+            builtSearchPattern = true;
+        }
 
         if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
         {
@@ -361,14 +401,17 @@ int C_DECL LumpDirectory_Sorter(const void* a, const void* b)
     return (infoB->origIndex - infoA->origIndex);
 }
 
-void LumpDirectory_Prune(LumpDirectory* ld)
+static void LumpDirectory_Prune(LumpDirectory* ld)
 {
     lumpsortinfo_t* sortInfoSet, *sortInfo;
     lumpdirectory_lumprecord_t* record;
     int i, origNumLumps;
     assert(ld);
 
+    if(!(ld->flags & LDF_UNIQUE_PATHS)) return;
+
     // Any work to do?
+    if(!(ld->flags & LDF_NEED_PRUNE)) return;
     if(ld->numRecords <= 1) return;
 
     sortInfoSet = malloc(sizeof(*sortInfoSet) * ld->numRecords);
@@ -413,6 +456,8 @@ void LumpDirectory_Prune(LumpDirectory* ld)
 
     // Resize the lump storage to match numRecords.
     LumpDirectory_Resize(ld, ld->numRecords);
+
+    ld->flags &= ~LDF_NEED_PRUNE;
 }
 
 void LumpDirectory_Print(LumpDirectory* ld)
@@ -421,6 +466,9 @@ void LumpDirectory_Print(LumpDirectory* ld)
     assert(ld);
 
     Con_Printf("LumpDirectory %p (%i records):\n", ld, ld->numRecords);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
 
     for(i = 0; i < ld->numRecords; ++i)
     {
