@@ -1957,6 +1957,28 @@ int Def_Set(int type, int index, int value, const void* ptr)
     return true;
 }
 
+StrArray* Def_ListMobjTypeIDs(void)
+{
+    StrArray* array = StrArray_New();
+    int i;
+    for(i = 0; i < defs.count.mobjs.num; ++i)
+    {
+        StrArray_Append(array, defs.mobjs[i].id);
+    }
+    return array;
+}
+
+StrArray* Def_ListStateIDs(void)
+{
+    StrArray* array = StrArray_New();
+    int i;
+    for(i = 0; i < defs.count.states.num; ++i)
+    {
+        StrArray_Append(array, defs.states[i].id);
+    }
+    return array;
+}
+
 /**
  * Prints a list of all the registered mobjs to the console.
  * \fixme Does this belong here?
