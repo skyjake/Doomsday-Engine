@@ -697,6 +697,7 @@ uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, in
     } while(!stream.avail_out); // output chunk full, more data may follow
 
     assert(result == Z_STREAM_END);
+    assert(stream.total_out == *outSize);
 
     deflateEnd(&stream);
     return output;
@@ -724,7 +725,9 @@ boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outS
 
     if(stream.total_out != outSize)
     {
-        Con_Message("ZipFile::InflateLump: Failure due to %s.\n", (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"));
+        inflateEnd(&stream);
+        Con_Message("ZipFile::Uncompress: Failure due to %s (result code %i).\n",
+                    (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"), result);
         return false;
     }
 

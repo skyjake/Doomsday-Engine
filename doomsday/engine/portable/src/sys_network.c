@@ -463,7 +463,7 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
-    int     size = 0;
+    size_t  size = 0;
     int     flags = 0;
     TCPsocket sock = netNodes[from].sock;
     int     bytes = 0;
@@ -478,9 +478,9 @@ boolean N_ReceiveReliably(nodeid_t from)
     }
 
     // The first 4 bytes contain packet size.
-    size = LONG(size);
+    size = ULONG(size);
     // Extract the transmission flags.
-    flags = size & TRMF_MASK;
+    flags = (size & TRMF_MASK);
     size &= ~TRMF_MASK;
     if(size <= 0 || size > DDMAXINT)
         return false;
@@ -543,32 +543,34 @@ boolean N_ReceiveReliably(nodeid_t from)
 
 static size_t prepareTransmission(void* data, size_t size, int flags, int originalSize)
 {
-    size_t sizeWithHeader = size + 4;
+    size_t headerSize = 4;
+    size_t sizeWithHeader;
     Writer* writer;
 
-    originalSize = 0; // ignored
+    if(flags & TRMF_COMPRESSED) headerSize += 4; // extended header
 
-    if(flags & TRMF_COMPRESSED) sizeWithHeader += 4; // original size
-
-    // Resize the buffer to fit the entire message + size int.
+    // Resize the buffer to fit the entire message + header.
+    sizeWithHeader = size + headerSize;
     if(transmissionBufferSize < sizeWithHeader)
     {
         transmissionBufferSize = sizeWithHeader;
         transmissionBuffer = M_Realloc(transmissionBuffer, sizeWithHeader);
     }
 
-    writer = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
-
     // Compose the message into the transmission buffer.
-    Writer_WriteUInt32(writer, size | flags);
+    writer = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
     if(flags & TRMF_COMPRESSED)
     {
-        // Include original uncompressed size.
+        // Include original uncompressed size in the beginning.
+        Writer_WriteUInt32(writer, (size + 4) | flags);
         Writer_WriteUInt32(writer, originalSize);
     }
+    else
+    {
+        // No flags specified.
+        Writer_WriteUInt32(writer, size);
+    }
     Writer_Write(writer, data, size);
-    memcpy(transmissionBuffer + 4, data, size);
-
     Writer_Delete(writer);
 
     return sizeWithHeader;
@@ -578,7 +580,7 @@ static size_t prepareTransmission(void* data, size_t size, int flags, int origin
  * Send the data buffer over a TCP connection.
  * The data may be compressed with zlib.
  */
-void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
+void N_SendReliably(void *data, size_t size, nodeid_t destination)
 {
     int result = 0;
     netnode_t* node = &netNodes[destination];

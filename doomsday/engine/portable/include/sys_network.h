@@ -82,7 +82,7 @@ extern          "C" {
     /*
     void            N_SendDataBuffer(void *data, size_t size,
                                      nodeid_t destination);*/
-    void            N_SendDataBufferReliably(void *data, size_t size,
+    void            N_SendReliably(void *data, size_t size,
                                              nodeid_t destination);
     void            N_ReturnBuffer(void *handle);
     //uint            N_GetSendQueueCount(int player);
