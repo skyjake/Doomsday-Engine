@@ -28,6 +28,10 @@
 
 #include "dd_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct stringarray_s; // opaque
 
 /**
@@ -176,5 +180,9 @@ void StringArray_Write(const StringArray* ar, Writer* writer);
  * @param reader  Reader instance.
  */
 void StringArray_Read(StringArray* ar, Reader* reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif // LIBDENG_STRING_ARRAY_H
