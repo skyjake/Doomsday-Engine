@@ -2227,6 +2227,67 @@ static boolean validSpriteName(const ddstring_t* name)
     return true;
 }
 
+void R_DefineSpriteTexture(textureid_t texId)
+{
+    const Uri* resourceUri = Textures_ResourcePath(texId);
+    Texture* tex = Textures_ToTexture(texId);
+
+    // Have we already encountered this name?
+    if(!tex)
+    {
+        // A new sprite texture.
+        patchtex_t* pTex = (patchtex_t*)malloc(sizeof *pTex);
+        if(!pTex)
+            Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *pTex);
+        pTex->offX = pTex->offY = 0; // Deferred until texture load time.
+
+        tex = Textures_Create(texId, 0, (void*)pTex);
+        if(!tex)
+        {
+            Uri* uri = Textures_ComposeUri(texId);
+            ddstring_t* path = Uri_ToString(uri);
+            Con_Message("Warning: Failed defining Texture for \"%s\", ignoring.\n", Str_Text(path));
+            Str_Delete(path);
+            Uri_Delete(uri);
+            free(pTex);
+        }
+    }
+
+    if(tex && resourceUri)
+    {
+        ddstring_t* resourcePath = Uri_Resolved(resourceUri);
+        lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(resourcePath), true/*quiet please*/);
+        int lumpIdx;
+        abstractfile_t* file = F_FindFileForLumpNum2(lumpNum, &lumpIdx);
+        const doompatch_header_t* patch = (const doompatch_header_t*) F_CacheLump(file, lumpIdx, PU_APPSTATIC);
+        Size2Raw size;
+        int flags;
+
+        size.width  = SHORT(patch->width);
+        size.height = SHORT(patch->height);
+        Texture_SetSize(tex, &size);
+
+        flags = 0;
+        if(F_LumpIsCustom(lumpNum)) flags |= TXF_CUSTOM;
+        Texture_SetFlags(tex, flags);
+
+        F_CacheChangeTag(file, lumpIdx, PU_CACHE);
+        Str_Delete(resourcePath);
+    }
+}
+
+int RIT_DefineSpriteTexture(textureid_t texId, void* paramaters)
+{
+    R_DefineSpriteTexture(texId);
+    return 0; // Continue iteration.
+}
+
+/// @todo Defer until necessary (sprite is first de-referenced).
+static void defineAllSpriteTextures(void)
+{
+    Textures_IterateDeclared(TN_SPRITES, RIT_DefineSpriteTexture);
+}
+
 void R_InitSpriteTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
@@ -2244,14 +2305,12 @@ void R_InitSpriteTextures(void)
 
     stack = Stack_New();
     numLumps = F_LumpCount();
-    /// \fixme Load order here does not respect id tech1 logic.
+
+    /// \fixme Order here does not respect id tech1 logic.
     for(i = 0; i < numLumps; ++i)
     {
         const char* lumpName = F_LumpName((lumpnum_t)i);
-        patchtex_t* pTex;
         textureid_t texId;
-        Texture* tex;
-        int flags;
 
         if(lumpName[0] == 'S' && strlen(lumpName) >= 5)
         {
@@ -2285,50 +2344,6 @@ void R_InitSpriteTextures(void)
         texId = Textures_Declare(uri, uniqueId, resourcePath);
         if(texId == NOTEXTUREID) continue; // Invalid uri?
         uniqueId++;
-
-        // Have we already encountered this name?
-        tex = Textures_ToTexture(texId);
-        if(tex)
-        {
-            flags = 0;
-            if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
-            Texture_SetFlags(tex, flags);
-
-            pTex = (patchtex_t*)Texture_UserData(tex);
-        }
-        else
-        {
-            abstractfile_t* fsObject;
-            const doompatch_header_t* patch;
-            Size2Raw size;
-            int lumpIdx;
-
-            // A new sprite texture.
-            pTex = (patchtex_t*)malloc(sizeof *pTex);
-            if(!pTex)
-                Con_Error("R_InitSpriteTextures: Failed on allocation of %lu bytes for new PatchTex.", (unsigned long) sizeof *pTex);
-            pTex->offX = pTex->offY = 0; // Deferred until texture load time.
-
-            fsObject = F_FindFileForLumpNum2((lumpnum_t)i, &lumpIdx);
-            patch = (const doompatch_header_t*) F_CacheLump(fsObject, lumpIdx, PU_APPSTATIC);
-            size.width  = SHORT(patch->width);
-            size.height = SHORT(patch->height);
-
-            flags = 0;
-            if(F_LumpIsCustom((lumpnum_t)i)) flags |= TXF_CUSTOM;
-
-            F_CacheChangeTag(fsObject, lumpIdx, PU_CACHE);
-
-            tex = Textures_CreateWithSize(texId, flags, &size, (void*)pTex);
-            if(!tex)
-            {
-                ddstring_t* path = Uri_ComposePath(uri);
-                Con_Message("Warning: Failed defining Texture for sprite texture \"%s\" (#%i), ignoring.\n", Str_Text(path), (lumpnum_t)i);
-                Str_Delete(path);
-                free(pTex);
-                continue;
-            }
-        }
     }
 
     while(Stack_Height(stack)) { Stack_Pop(stack); }
@@ -2337,6 +2352,9 @@ void R_InitSpriteTextures(void)
     Uri_Delete(resourcePath);
     Uri_Delete(uri);
     Str_Free(&spriteName);
+
+    // Define any as yet undefined sprite textures.
+    defineAllSpriteTextures();
 
     VERBOSE2( Con_Message("R_InitSpriteTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
