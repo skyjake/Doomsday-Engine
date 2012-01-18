@@ -704,12 +704,66 @@ uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, in
 #undef CHUNK_SIZE
 }
 
-boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+uint8_t* ZipFile_Uncompress(uint8_t* in, size_t inSize, size_t* outSize)
 {
-    return ZipFile_Uncompress2(in, inSize, out, outSize, false /*now raw*/);
+#define INF_CHUNK_SIZE 4096 // Uncompress in 4KB chunks.
+    z_stream stream;
+    uint8_t chunk[INF_CHUNK_SIZE];
+    size_t allocSize = INF_CHUNK_SIZE;
+    uint8_t* output = M_Malloc(allocSize); // some initial space
+    int result;
+    int have;
+
+    assert(outSize);
+    *outSize = 0;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*) in;
+    stream.avail_in = (uInt) inSize;
+
+    result = inflateInit(&stream);
+    if(result != Z_OK)
+    {
+        free(output);
+        return 0;
+    }
+
+    // Uncompress until all the input data has been exhausted.
+    do {
+        stream.next_out = chunk;
+        stream.avail_out = INF_CHUNK_SIZE;
+        result = inflate(&stream, Z_FINISH);
+        if(result == Z_STREAM_ERROR)
+        {
+            free(output);
+            *outSize = 0;
+            return 0;
+        }
+        have = INF_CHUNK_SIZE - stream.avail_out;
+        if(have)
+        {
+            // Need more memory?
+            if(*outSize + have > allocSize)
+            {
+                // Need more memory.
+                allocSize *= 2;
+                output = M_Realloc(output, allocSize);
+            }
+            // Append.
+            memcpy(output + *outSize, chunk, have);
+            *outSize += have;
+        }
+    } while(!stream.avail_out); // output chunk full, more data may follow
+
+    // We should now be at the end.
+    assert(result == Z_STREAM_END);
+
+    inflateEnd(&stream);
+    return output;
+#undef INF_CHUNK_SIZE
 }
 
-boolean ZipFile_Uncompress2(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize, boolean rawMode)
+boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
     z_stream stream;
     int result;
@@ -722,16 +776,8 @@ boolean ZipFile_Uncompress2(uint8_t* in, size_t inSize, uint8_t* out, size_t out
     stream.next_out = (Bytef*) out;
     stream.avail_out = (uInt) outSize;
 
-    if(rawMode)
-    {
-        if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
-            return false;
-    }
-    else
-    {
-        if(inflateInit(&stream) != Z_OK)
-            return false;
-    }
+    if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+        return false;
 
     // Do the inflation in one call.
     result = inflate(&stream, Z_FINISH);
@@ -765,8 +811,8 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
-        result = ZipFile_Uncompress2(compressedData, lumpRecord->info.compressedSize,
-                                     buffer, lumpRecord->info.size, true /*raw*/);
+        result = ZipFile_UncompressRaw(compressedData, lumpRecord->info.compressedSize,
+                                       buffer, lumpRecord->info.size);
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }

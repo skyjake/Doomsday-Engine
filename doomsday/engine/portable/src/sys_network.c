@@ -556,6 +556,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     // Need to uncompress?
     if(flags & TRMF_COMPRESSED)
     {
+        /*
         // The uncompressed size is included in the beginning.
         size_t uncompSize = ULONG(*(unsigned int*)packet);
         uint8_t* uncompData = (uint8_t*) M_Malloc(uncompSize);
@@ -569,6 +570,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         M_Free(packet);
         packet = uncompData;
         size = uncompSize;
+        */
     }
 
     // Post the received message.
