@@ -1397,7 +1397,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
 
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
-    if(!mat) return NULL;
+    if(!mat || isDedicated) return NULL;
     if(!Material_Prepared(mat))
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
