@@ -24,7 +24,7 @@
 #define LIBDENG_DEFINITIONS_MAIN_H
 
 #include "def_data.h"
-#include "strarray.h"
+#include "stringarray.h"
 
 typedef struct sfxinfo_s {
     void* data; /// Pointer to sound data.
@@ -108,17 +108,17 @@ boolean Def_SameStateSequence(state_t* snew, state_t* sold);
  * Compiles a list of all the defined mobj types. Indices in this list
  * match those in the @c mobjInfo array.
  *
- * @return StrArray instance. Caller gets ownership.
+ * @return StringArray instance. Caller gets ownership.
  */
-StrArray* Def_ListMobjTypeIDs(void);
+StringArray* Def_ListMobjTypeIDs(void);
 
 /**
  * Compiles a list of all the defined mobj states. Indices in this list
  * match those in the @c states array.
  *
- * @return StrArray instance. Caller gets ownership.
+ * @return StringArray instance. Caller gets ownership.
  */
-StrArray* Def_ListStateIDs(void);
+StringArray* Def_ListStateIDs(void);
 
 D_CMD(ListMobjs);
 

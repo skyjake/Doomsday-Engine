@@ -1,6 +1,6 @@
 /**
- * @file strarray.cpp
- * Array of text strings. @ingroup base
+ * @file stringarray.cpp
+ * Array of text strings implementation. @ingroup base
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -19,7 +19,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "strarray.h"
+#include "stringarray.h"
 #include <assert.h>
 #include <vector>
 #include <string.h>
@@ -52,7 +52,7 @@ private:
 
 } // namespace de
 
-struct strarray_s {
+struct stringarray_s {
     typedef std::vector<de::Str*> Strings;
     Strings array;
 
@@ -75,13 +75,13 @@ struct strarray_s {
     }
 };
 
-StrArray* StrArray_New(void)
+StringArray* StringArray_New(void)
 {
-    StrArray* ar = new StrArray;
+    StringArray* ar = new StringArray;
     return ar;
 }
 
-StrArray* StrArray_NewSub(const StrArray *ar, int fromIndex, int count)
+StringArray* StringArray_NewSub(const StringArray *ar, int fromIndex, int count)
 {
     assert(ar);
     if(count < 0)
@@ -90,65 +90,65 @@ StrArray* StrArray_NewSub(const StrArray *ar, int fromIndex, int count)
     }
     ar->assertValidRange(fromIndex, count);
 
-    StrArray* sub = StrArray_New();
+    StringArray* sub = StringArray_New();
     for(int i = 0; i < count; ++i)
     {
-        StrArray_Append(sub, StrArray_At(ar, fromIndex + i));
+        StringArray_Append(sub, StringArray_At(ar, fromIndex + i));
     }
     return sub;
 }
 
-void StrArray_Delete(StrArray* ar)
+void StringArray_Delete(StringArray* ar)
 {
     if(ar) delete ar;
 }
 
-void StrArray_Clear(StrArray* ar)
+void StringArray_Clear(StringArray* ar)
 {
     assert(ar);
-    for(StrArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
+    for(StringArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         delete *i;
     }
     ar->array.clear();
 }
 
-int StrArray_Size(const StrArray *ar)
+int StringArray_Size(const StringArray *ar)
 {
     assert(ar);
     return ar->array.size();
 }
 
-void StrArray_Append(StrArray* ar, const char* str)
+void StringArray_Append(StringArray* ar, const char* str)
 {
     assert(ar);
     ar->array.push_back(new de::Str(str));
 }
 
-void StrArray_AppendArray(StrArray* ar, const StrArray* other)
+void StringArray_AppendArray(StringArray* ar, const StringArray* other)
 {
     assert(ar);
     assert(other);
     assert(ar != other);
-    for(StrArray::Strings::const_iterator i = other->array.begin(); i != other->array.end(); ++i)
+    for(StringArray::Strings::const_iterator i = other->array.begin(); i != other->array.end(); ++i)
     {
-        StrArray_Append(ar, Str_Text(**i));
+        StringArray_Append(ar, Str_Text(**i));
     }
 }
 
-void StrArray_Prepend(StrArray* ar, const char* str)
+void StringArray_Prepend(StringArray* ar, const char* str)
 {
-    StrArray_Insert(ar, str, 0);
+    StringArray_Insert(ar, str, 0);
 }
 
-void StrArray_Insert(StrArray* ar, const char* str, int atIndex)
+void StringArray_Insert(StringArray* ar, const char* str, int atIndex)
 {
     assert(ar);
     ar->assertValidIndex(atIndex);
     ar->array.insert(ar->array.begin() + atIndex, new de::Str(str));
 }
 
-void StrArray_Remove(StrArray* ar, int index)
+void StringArray_Remove(StringArray* ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
@@ -156,7 +156,7 @@ void StrArray_Remove(StrArray* ar, int index)
     ar->array.erase(ar->array.begin() + index);
 }
 
-void StrArray_RemoveRange(StrArray* ar, int fromIndex, int count)
+void StringArray_RemoveRange(StringArray* ar, int fromIndex, int count)
 {
     if(count < 0)
     {
@@ -164,11 +164,11 @@ void StrArray_RemoveRange(StrArray* ar, int fromIndex, int count)
     }
     for(int i = 0; i < count; ++i)
     {
-        StrArray_Remove(ar, fromIndex);
+        StringArray_Remove(ar, fromIndex);
     }
 }
 
-int StrArray_IndexOf(const StrArray *ar, const char* str)
+int StringArray_IndexOf(const StringArray *ar, const char* str)
 {
     assert(ar);
     for(uint i = 0; i < ar->array.size(); ++i)
@@ -179,39 +179,39 @@ int StrArray_IndexOf(const StrArray *ar, const char* str)
     return -1;
 }
 
-const char* StrArray_At(const StrArray *ar, int index)
+const char* StringArray_At(const StringArray *ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
     return Str_Text(*ar->array[index]);
 }
 
-ddstring_t* StrArray_StringAt(StrArray* ar, int index)
+ddstring_t* StringArray_StringAt(StringArray* ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
     return *ar->array[index];
 }
 
-boolean StrArray_Contains(const StrArray* ar, const char* str)
+boolean StringArray_Contains(const StringArray* ar, const char* str)
 {
-    return StrArray_IndexOf(ar, str) >= 0;
+    return StringArray_IndexOf(ar, str) >= 0;
 }
 
-void StrArray_Write(const StrArray *ar, Writer* writer)
+void StringArray_Write(const StringArray *ar, Writer* writer)
 {
     assert(ar);
     Writer_WriteUInt32(writer, ar->array.size());
     // Write each of the strings.
-    for(StrArray::Strings::const_iterator i = ar->array.begin(); i != ar->array.end(); ++i)
+    for(StringArray::Strings::const_iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         Str_Write(**i, writer);
     }
 }
 
-void StrArray_Read(StrArray* ar, Reader* reader)
+void StringArray_Read(StringArray* ar, Reader* reader)
 {
-    StrArray_Clear(ar);
+    StringArray_Clear(ar);
 
     uint count = Reader_ReadUInt32(reader);
     for(uint i = 0; i < count; ++i)

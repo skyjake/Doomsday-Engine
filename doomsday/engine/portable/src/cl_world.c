@@ -104,47 +104,47 @@ static void setTableSize(indextranstable_t* table, int size)
 void Cl_ReadServerMobjTypeIDs(void)
 {
     int i;
-    StrArray* ar = StrArray_New();
-    StrArray_Read(ar, msgReader);
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StrArray_Size(ar));
+    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StringArray_Size(ar));
 #endif
 
-    setTableSize(&xlatMobjType, StrArray_Size(ar));
+    setTableSize(&xlatMobjType, StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(i = 0; i < StrArray_Size(ar); ++i)
+    for(i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjType.serverToLocal[i] = Def_GetMobjNumForName(StrArray_At(ar, i));
+        xlatMobjType.serverToLocal[i] = Def_GetMobjNumForName(StringArray_At(ar, i));
 #ifdef _DEBUG
         Con_Message("Server mobj %i => local %i\n", i, xlatMobjType.serverToLocal[i]);
 #endif
     }
 
-    StrArray_Delete(ar);
+    StringArray_Delete(ar);
 }
 
 void Cl_ReadServerMobjStateIDs(void)
 {
     int i;
-    StrArray* ar = StrArray_New();
-    StrArray_Read(ar, msgReader);
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
 #ifdef _DEBUG
-    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StrArray_Size(ar));
+    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StringArray_Size(ar));
 #endif
 
-    setTableSize(&xlatMobjState, StrArray_Size(ar));
+    setTableSize(&xlatMobjState, StringArray_Size(ar));
 
     // Translate the type IDs to local.
-    for(i = 0; i < StrArray_Size(ar); ++i)
+    for(i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StrArray_At(ar, i));
+        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
 #ifdef _DEBUG
         Con_Message("Server state %i => local %i\n", i, xlatMobjState.serverToLocal[i]);
 #endif
     }
 
-    StrArray_Delete(ar);
+    StringArray_Delete(ar);
 }
 
 static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)

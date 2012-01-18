@@ -805,7 +805,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
-    StrArray* ar;
+    StringArray* ar;
     int i;
     uint playersInGame = 0;
 
@@ -834,18 +834,18 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     // Include the list of thing Ids.
     ar = Def_ListMobjTypeIDs();
     Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
-    StrArray_Write(ar, msgWriter);
+    StringArray_Write(ar, msgWriter);
     Msg_End();
     Net_SendBuffer(plrNum, 0);
-    StrArray_Delete(ar);
+    StringArray_Delete(ar);
 
     // Include the list of state Ids.
     ar = Def_ListStateIDs();
     Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
-    StrArray_Write(ar, msgWriter);
+    StringArray_Write(ar, msgWriter);
     Msg_End();
     Net_SendBuffer(plrNum, 0);
-    StrArray_Delete(ar);
+    StringArray_Delete(ar);
 
     if(newPlayer)
     {

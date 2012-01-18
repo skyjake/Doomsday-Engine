@@ -5,8 +5,11 @@
  * Data structure for storing a set of unique case-insensitive strings. When
  * multiple strings with the same case-insensitive contents are added to the
  * pool, only one copy of the string is kept in memory. If there is variation
- * in the letter cases, the version added last is used. In other words, the
- * letter cases of the earlier duplicate strings may change.
+ * in the letter cases, the version added first is used. In other words, the
+ * letter cases of the later duplicate strings is ignored.
+ *
+ * @todo Add serialization.
+ * @todo Add case-sensitive mode.
  *
  * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
  *
