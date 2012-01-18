@@ -29,6 +29,12 @@
 
 #include "stringpool.h"
 
+// Intern string record.
+typedef struct stringpool_intern_s {
+    boolean used; // @c true= this intern is currently in use (i.e., it has not been "removed").
+    ddstring_t string;
+} stringpool_intern_t;
+
 /**
  * @todo Performance is presently suboptimal due to the representation of the
  * intern list. A better implementation would use a binary search tree.
@@ -49,27 +55,21 @@ struct stringpool_s
     uint* _stringSortedInternTable;
 };
 
-// Intern string record.
-typedef struct stringpool_intern_s {
-    boolean used; // @c true= this intern is currently in use (i.e., it has not been "removed").
-    ddstring_t string;
-} stringpool_intern_t;
-
 static ddstring_t nullString = {"(nullptr)"};
 
-static __inline uint internIdx(StringPool* pool, stringpool_intern_t* intern)
+static __inline uint internIdx(const StringPool* pool, stringpool_intern_t* intern)
 {
     assert(pool && intern);
     return intern - pool->_interns;
 }
 
-static __inline StringPoolInternId internId(StringPool* pool, stringpool_intern_t* intern)
+static __inline StringPoolInternId internId(const StringPool* pool, stringpool_intern_t* intern)
 {
     assert(pool && intern);
     return internIdx(pool, intern)+1; // 1-based index.
 }
 
-static __inline boolean internUsed(StringPool* pool, stringpool_intern_t* intern)
+static __inline boolean internUsed(const StringPool* pool, stringpool_intern_t* intern)
 {
     assert(pool);
     return intern->used;
@@ -81,13 +81,13 @@ static __inline setInternUsed(StringPool* pool, stringpool_intern_t* intern, boo
     intern->used = used;
 }
 
-static __inline stringpool_intern_t* getInternByIdx(StringPool* pool, uint idx)
+static __inline stringpool_intern_t* getInternByIdx(const StringPool* pool, uint idx)
 {
     assert(pool && idx < pool->_internsCount);
     return pool->_interns + idx;
 }
 
-static __inline stringpool_intern_t* findInternForId(StringPool* pool, StringPoolInternId id)
+static __inline stringpool_intern_t* findInternForId(const StringPool* pool, StringPoolInternId id)
 {
     if(id != 0 && id <= pool->_internsCount)
         return getInternByIdx(pool, id-1); // ids are 1-based.
@@ -124,7 +124,8 @@ static StringPoolInternId findNextUnusedId(StringPool* pool, StringPoolInternId 
     return (StringPoolInternId) (pool->_internsCount+1);
 }
 
-static boolean findStringSortedInternIdx(StringPool* pool, const ddstring_t* string, uint* result)
+static boolean findStringSortedInternIdx(const StringPool* pool,
+    const ddstring_t* string, uint* result)
 {
     assert(pool && string);
     if(pool->_numStrings)
@@ -170,8 +171,8 @@ static boolean findStringSortedInternIdx(StringPool* pool, const ddstring_t* str
     return false;
 }
 
-static stringpool_intern_t* findIntern(StringPool* pool, const ddstring_t* string,
-    uint* _sortedIdx)
+static stringpool_intern_t* findIntern(const StringPool* pool,
+    const ddstring_t* string, uint* _sortedIdx)
 {
     uint sortedIdx = 0;
     boolean found = findStringSortedInternIdx(pool, string, &sortedIdx);
@@ -324,19 +325,19 @@ void StringPool_Clear(StringPool* pool)
     }
 }
 
-uint StringPool_Size(StringPool* pool)
+uint StringPool_Size(const StringPool* pool)
 {
     if(!pool) Con_Error("StringPool::Size: Invalid StringPool");
     return pool->_numStrings;
 }
 
-boolean StringPool_Empty(StringPool* pool)
+boolean StringPool_Empty(const StringPool* pool)
 {
     if(!pool) Con_Error("StringPool::Emtpy: Invalid StringPool");
     return ((0 == StringPool_Size(pool))? true:false);
 }
 
-StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str)
+StringPoolInternId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)
 {
     stringpool_intern_t* intern;
     if(!pool) Con_Error("StringPool::isInterned: Invalid StringPool");
@@ -345,7 +346,7 @@ StringPoolInternId StringPool_IsInterned(StringPool* pool, const ddstring_t* str
     return internId(pool, intern);
 }
 
-const ddstring_t* StringPool_String(StringPool* pool, StringPoolInternId internId)
+const ddstring_t* StringPool_String(const StringPool* pool, StringPoolInternId internId)
 {
     stringpool_intern_t* intern;
     if(!pool) Con_Error("StringPool::String: Invalid StringPool");
@@ -445,22 +446,57 @@ boolean StringPool_RemoveIntern(StringPool* pool, StringPoolInternId internId)
     return true;
 }
 
-#if _DEBUG
-void StringPool_Print(StringPool* pool)
+int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolInternId, void*),
+    void* paramaters)
 {
-    int numDigits;
+    stringpool_intern_t* intern;
+    int result = 0; // Continue iteration.
     uint i;
 
-    if(!pool) Con_Error("StringPool::Print: Invalid StringPool");
+    if(!pool) Con_Error("StringPool::Iterate: Invalid StringPool");
 
-    numDigits = MAX_OF(M_NumDigits(pool->_numStrings), 3/*length of "idx"*/);
-    Con_Printf("StringPool [%p]\n  %*s: string\n", (void*)pool, numDigits, "idx");
-    for(i = 0; i < pool->_internsCount; ++i)
+    intern = pool->_interns;
+    for(i = 0; i < pool->_internsCount; ++i, intern++)
     {
-        stringpool_intern_t* intern = pool->_interns + i;
-        ddstring_t* string = (internUsed(pool, intern)? &intern->string : &nullString);
-        Con_Printf("  %*u: %s\n", numDigits, i, Str_Text(string));
+        // Is this intern due for removable?
+        if(!internUsed(pool, intern)) continue;
+
+        result = callback(internId(pool, intern), paramaters);
+        if(result) break;
     }
-    Con_Printf("  There is %u %s in the pool.\n", pool->_numStrings, pool->_internsCount==1? "string":"strings");
+    return result;
+}
+
+#if _DEBUG
+typedef struct {
+    int padding; ///< Number of characters to left-pad output.
+    uint count; ///< Running total of the number of strings printed.
+    const StringPool* pool; ///< StringPool instance being printed.
+} printinternedstring_params_t;
+
+static int printInternedString(StringPoolInternId internId, void* params)
+{
+    printinternedstring_params_t* p = (printinternedstring_params_t*)params;
+    const ddstring_t* string = StringPool_String(p->pool, internId);
+    Con_Printf("%*u: %s\n", p->padding, p->count++, Str_Text(string));
+    return 0; // Continue iteration.
+}
+
+void StringPool_Print(const StringPool* pool)
+{
+    printinternedstring_params_t p;
+    int numDigits;
+
+    if(!pool) return;
+
+    numDigits =  MAX_OF(M_NumDigits(StringPool_Size(pool)), 3/*length of "idx"*/);
+    p.padding = 2 + numDigits;
+    p.pool = pool;
+    p.count = 0;
+
+    Con_Printf("StringPool [%p]\n  %*s: string\n", (void*)pool, numDigits, "idx");
+    StringPool_Iterate(pool, printInternedString, &p);
+    Con_Printf("  There is %u %s in the pool.\n", StringPool_Size(pool),
+               StringPool_Size(pool)==1? "string":"strings");
 }
 #endif
