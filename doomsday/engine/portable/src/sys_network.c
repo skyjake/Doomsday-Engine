@@ -1,33 +1,66 @@
-/**\file sys_network.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Low-Level Sockets Networking.
+ * @file sys_network.c
+ * Low-level network socket routines. @ingroup network
  *
- * TCP sockets are periodically polled for activity (Net_Update ->
- * N_Listen).
+ * On server-side connected clients can be either in "unjoined" mode or
+ * "joined" mode. The former is for querying information about the server's
+ * status, while the latter one is for clients participating in the on-going
+ * game.
+ *
+ * Unjoined TCP sockets are periodically polled for activity
+ * (N_ListenUnjoinedNodes()). Joined TCP sockets are handling in a separate
+ * receiver thread (N_JoinedListenerThread()).
+ *
+ * @section netProtocol Network Protocol
+ *
+ * In joined mode, the network protocol works as follows. All messages are sent
+ * over a TCP socket. Every message consists of a header and the message payload.
+ * The content of these depends on the (uncompressed original) message size.
+ *
+ * @par 1&ndash;127 bytes
+ * Very small messages, such as the position updates that a client streams
+ * to the server, are encoded with Huffman codes (see huffman.h). If
+ * the Huffman coded payload happens to exceed 127 bytes, the message is
+ * switched to the medium format (see below). Message structure:
+ * - 1 byte: payload size
+ * - @em n bytes: payload contents (Huffman)
+ *
+ * @par 128&ndash;4095 bytes
+ * Medium-sized messages are compressed using a fast zlib deflate level.
+ * If the deflated message size exceeds 4095 bytes, the message is switched to
+ * the large format (see below). Message structure:
+ * - 1 byte: 0x80 | (payload size & 0x7f)
+ * - 1 byte: payload size >> 7
+ * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ *
+ * @par >= 4096 bytes (up to 4MB)
+ * Large messages are compressed using the best zlib deflate level.
+ * Message structure:
+ * - 1 byte: 0x80 | (payload size & 0x7f)
+ * - 1 byte: 0x80 | (payload size >> 7) & 0x7f
+ * - 1 byte: payload size >> 14
+ * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ *
+ * Messages larger than or equal to 2^22 bytes (about 4MB) must be broken into
+ * smaller pieces before sending.
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 // HEADER FILES ------------------------------------------------------------

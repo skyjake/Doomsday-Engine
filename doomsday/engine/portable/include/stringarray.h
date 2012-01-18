@@ -4,7 +4,7 @@
  *
  * Dynamic, indexable array of text strings.
  *
- * @todo Use StringPool internally for effecient storage, searches
+ * @todo Use StringPool internally for efficient storage, searches
  *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
