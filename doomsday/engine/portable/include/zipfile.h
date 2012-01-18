@@ -165,7 +165,8 @@ boolean ZipFile_Recognise(DFile* file);
 
 /**
  * Inflates a compressed block of data using zlib. The caller must figure out
- * the uncompressed size of the data before calling this.
+ * the uncompressed size of the data before calling this. Uncompression is
+ * done in non-raw mode.
  *
  * @param in       Pointer to compressed data.
  * @param inSize   Size of the compressed data.
@@ -174,8 +175,28 @@ boolean ZipFile_Recognise(DFile* file);
  *                 decompressed data.
  *
  * @return  @c true if successful.
+ *
+ * @see ZipFile_Compress()
  */
 boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
+
+/**
+ * Inflates a compressed block of data using zlib. The caller must figure out
+ * the uncompressed size of the data before calling this.
+ *
+ * @param in       Pointer to compressed data.
+ * @param inSize   Size of the compressed data.
+ * @param out      Pointer to output buffer.
+ * @param outSize  Size of the output buffer. This must match the size of the
+ *                 decompressed data.
+ * @param rawMode  If @c true, use the raw inflate mode. zlib will process
+ *                 raw deflate data, not looking for a zlib or gzip header,
+ *                 not generating a check value, and not looking for any check
+ *                 values for comparison at the end of the stream.
+ *
+ * @return  @c true if successful.
+ */
+boolean ZipFile_Uncompress2(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize, boolean rawMode);
 
 /**
  * Compresses a block of data using zlib with the default/balanced

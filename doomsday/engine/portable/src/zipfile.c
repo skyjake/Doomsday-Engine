@@ -706,6 +706,11 @@ uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, in
 
 boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
+    return ZipFile_Uncompress2(in, inSize, out, outSize, false /*now raw*/);
+}
+
+boolean ZipFile_Uncompress2(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize, boolean rawMode)
+{
     z_stream stream;
     int result;
 
@@ -717,8 +722,16 @@ boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outS
     stream.next_out = (Bytef*) out;
     stream.avail_out = (uInt) outSize;
 
-    if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
-        return false;
+    if(rawMode)
+    {
+        if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+            return false;
+    }
+    else
+    {
+        if(inflateInit(&stream) != Z_OK)
+            return false;
+    }
 
     // Do the inflation in one call.
     result = inflate(&stream, Z_FINISH);
@@ -752,7 +765,8 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
-        result = ZipFile_Uncompress(compressedData, lumpRecord->info.compressedSize, buffer, lumpRecord->info.size);
+        result = ZipFile_Uncompress2(compressedData, lumpRecord->info.compressedSize,
+                                     buffer, lumpRecord->info.size, true /*raw*/);
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }
