@@ -51,6 +51,8 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "zipfile.h"
+
 // MACROS ------------------------------------------------------------------
 
 /**
@@ -64,6 +66,15 @@
 #define MAX_NODES                   32
 #define MAX_DATAGRAM_SIZE           1300
 #define DEFAULT_TRANSMISSION_SIZE   4096
+
+/// Transmissions larger than this will be compressed before sending.
+#define AUTO_COMPRESS_MIN       128 // bytes
+
+/// Transmissions larger than this will be compressed at maximum level.
+#define AUTO_COMPRESS_MAX       4096 // bytes
+
+#define TRMF_COMPRESSED         0x80000000 ///< Transmission was compressed.
+#define TRMF_MASK               0x80000000
 
 // TYPES -------------------------------------------------------------------
 
@@ -452,7 +463,8 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
-    int     size = 0;
+    size_t  size = 0;
+    int     flags = 0;
     TCPsocket sock = netNodes[from].sock;
     int     bytes = 0;
     boolean error, read;
@@ -465,7 +477,11 @@ boolean N_ReceiveReliably(nodeid_t from)
         return false;
     }
 
-    size = LONG(size);
+    // The first 4 bytes contain packet size.
+    size = ULONG(size);
+    // Extract the transmission flags.
+    flags = (size & TRMF_MASK);
+    size &= ~TRMF_MASK;
     if(size <= 0 || size > DDMAXINT)
         return false;
 
@@ -487,35 +503,88 @@ boolean N_ReceiveReliably(nodeid_t from)
         bytes += received;
         if(bytes == size)
             read = true;
-        assert(bytes <= size);
+        assert(bytes <= (int)size);
     }
     if(error)
+    {
+        M_Free(packet);
         return false;
+    }
+
+    // Need to uncompress?
+    if(flags & TRMF_COMPRESSED)
+    {
+        // The uncompressed size is included in the beginning.
+        size_t uncompSize = ULONG(*(unsigned int*)packet);
+        uint8_t* uncompData = (uint8_t*) M_Malloc(uncompSize);
+        if(!ZipFile_Uncompress(packet + 4, size - 4, uncompData, uncompSize))
+        {
+            M_Free(uncompData);
+            M_Free(packet);
+            return false;
+        }
+        // Replace with the uncompressed version.
+        M_Free(packet);
+        packet = uncompData;
+        size = uncompSize;
+    }
 
     // Post the received message.
-    {
-        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
+    { netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
+    msg->sender = from;
+    msg->data = (byte*) packet;
+    msg->size = size;
+    msg->handle = packet;
 
-        msg->sender = from;
-        msg->data = (byte*) packet;
-        msg->size = size;
-        msg->handle = packet;
-
-        // The message queue will handle the message from now on.
-        N_PostMessage(msg);
-    }
+    // The message queue will handle the message from now on.
+    N_PostMessage(msg); }
     return true;
 }
 
+static size_t prepareTransmission(void* data, size_t size, int flags, int originalSize)
+{
+    size_t headerSize = 4;
+    size_t sizeWithHeader;
+    Writer* writer;
+
+    if(flags & TRMF_COMPRESSED) headerSize += 4; // extended header
+
+    // Resize the buffer to fit the entire message + header.
+    sizeWithHeader = size + headerSize;
+    if(transmissionBufferSize < sizeWithHeader)
+    {
+        transmissionBufferSize = sizeWithHeader;
+        transmissionBuffer = M_Realloc(transmissionBuffer, sizeWithHeader);
+    }
+
+    // Compose the message into the transmission buffer.
+    writer = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
+    if(flags & TRMF_COMPRESSED)
+    {
+        // Include original uncompressed size in the beginning.
+        Writer_WriteUInt32(writer, (size + 4) | flags);
+        Writer_WriteUInt32(writer, originalSize);
+    }
+    else
+    {
+        // No flags specified.
+        Writer_WriteUInt32(writer, size);
+    }
+    Writer_Write(writer, data, size);
+    Writer_Delete(writer);
+
+    return sizeWithHeader;
+}
+
 /**
- * Send the data buffer over the control link, which is a TCP
- * connection.
+ * Send the data buffer over a TCP connection.
+ * The data may be compressed with zlib.
  */
-void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
+void N_SendReliably(void *data, size_t size, nodeid_t destination)
 {
     int result = 0;
     netnode_t* node = &netNodes[destination];
-    int packetSize = 0;
+    size_t transmissionSize;
 
     if(size == 0 || !node->sock || !node->hasJoined)
         return;
@@ -526,26 +595,33 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
                   "  Attempted size is %u bytes.\n", (unsigned long) size);
     }
 
-    // Resize the buffer to fit the entire message + size int.
-    if(transmissionBufferSize < size + 4)
+    if(size >= AUTO_COMPRESS_MIN)
     {
-        transmissionBufferSize = size + 4;
-        transmissionBuffer = M_Realloc(transmissionBuffer, size + 4);
+        /// @todo Messages broadcasted to multiple recipients are separately
+        /// compressed for each TCP send -- should do only one compression
+        /// per message.
+
+        // The packet is so big that we're going to force compression on it.
+        size_t compSize = 0;
+        uint8_t* compData = ZipFile_CompressAtLevel(data, size, &compSize,
+            size < AUTO_COMPRESS_MAX? 6 /*default*/ : 9 /*best*/);
+        if(!compData)
+        {
+            Con_Error("N_SendDataBufferReliably: Failed to compress transmission.\n");
+        }
+        transmissionSize = prepareTransmission(compData, compSize, TRMF_COMPRESSED, size);
+        M_Free(compData);
+    }
+    else
+    {
+        transmissionSize = prepareTransmission(data, size, 0, 0);
     }
 
-    // Compose the message into the transmission buffer.
-    packetSize = LONG(size);
-    memcpy(transmissionBuffer, &packetSize, 4);
-    memcpy(transmissionBuffer + 4, data, size);
+    N_AddSentBytes(transmissionSize); // Statistics.
 
     // Send the data over the socket.
-    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, size + 4);
-
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %u bytes, result=%i\n",
-                          (uint)size + 4, result) );
-#endif
-    if(result < 0 || (size_t) result != size + 4)
+    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, transmissionSize);
+    if(result < 0 || (size_t) result != transmissionSize)
     {
         perror("Socket error");
     }

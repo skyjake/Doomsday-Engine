@@ -203,7 +203,6 @@ DENG_HEADERS = \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_gridmap.h \
-    portable/include/m_huffman.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -271,7 +270,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
-    portable/include/strarray.h \
+    portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -450,7 +449,6 @@ SOURCES += \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_gridmap.c \
-    portable/src/m_huffman.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \
@@ -532,7 +530,7 @@ SOURCES += \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
     portable/src/size.c \
-    portable/src/strarray.cpp \
+    portable/src/stringarray.cpp \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \
@@ -650,5 +648,5 @@ else:unix:!macx {
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = /usr/share/applications
+    desktop.path = $$PREFIX/share/applications
 }

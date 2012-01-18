@@ -37,6 +37,7 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
+#include "de_defs.h"
 
 #include "materialarchive.h"
 #include "r_world.h"
@@ -804,6 +805,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
+    StringArray* ar;
     int i;
     uint playersInGame = 0;
 
@@ -828,6 +830,22 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     MaterialArchive_Write(materialDict, msgWriter);
     Msg_End();
     Net_SendBuffer(plrNum, 0);
+
+    // Include the list of thing Ids.
+    ar = Def_ListMobjTypeIDs();
+    Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
+
+    // Include the list of state Ids.
+    ar = Def_ListStateIDs();
+    Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
 
     if(newPlayer)
     {

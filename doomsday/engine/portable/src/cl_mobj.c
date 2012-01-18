@@ -889,6 +889,10 @@ void ClMobj_ReadDelta2(boolean skip)
     if(df & MDF_STATE)
     {
         int stateIdx = Reader_ReadPackedUInt16(msgReader);
+
+        // Translate.
+        stateIdx = Cl_LocalMobjState(stateIdx);
+
         // When local actions are allowed, the assumption is that
         // the client will be doing the state changes.
         if(!skip && !(info->flags & CLMF_LOCAL_ACTIONS))
@@ -929,14 +933,8 @@ void ClMobj_ReadDelta2(boolean skip)
 
     if(moreFlags & MDFE_TYPE)
     {
-        d->type = Reader_ReadInt32(msgReader);
-        if(d->type < 0 || d->type >= defs.count.mobjs.num)
-        {
-            // The specified type is invalid.
-            d->type = 0;
-        }
-        d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
-
+        d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
+        d->info = &mobjInfo[d->type];
         assert(d->info);
     }
 

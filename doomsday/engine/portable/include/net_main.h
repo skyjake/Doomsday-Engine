@@ -101,6 +101,8 @@ enum {
     PKT_COMMAND2 = 29,
     PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
     PCL_GOODBYE = 31,
+    PSV_MOBJ_TYPE_ID_LIST = 32,
+    PSV_MOBJ_STATE_ID_LIST = 33,
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64

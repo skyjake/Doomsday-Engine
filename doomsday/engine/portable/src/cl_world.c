@@ -27,8 +27,10 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
-#include "dd_world.h"
 #include "de_filesys.h"
+#include "de_defs.h"
+#include "de_misc.h"
+#include "dd_world.h"
 
 #include "r_util.h"
 #include "materialarchive.h"
@@ -57,12 +59,19 @@ typedef struct {
     boolean     rotate;
 } polymover_t;
 
+typedef struct {
+    int size;
+    int* serverToLocal;
+} indextranstable_t;
+
 void Cl_MoverThinker(mover_t* mover);
 void Cl_PolyMoverThinker(polymover_t* mover);
 
 static mover_t* activemovers[MAX_MOVERS];
 static polymover_t* activepolys[MAX_MOVERS];
 static MaterialArchive* serverMaterials;
+static indextranstable_t xlatMobjType;
+static indextranstable_t xlatMobjState;
 
 void Cl_ReadServerMaterials(void)
 {
@@ -77,6 +86,67 @@ void Cl_ReadServerMaterials(void)
 #endif
 }
 
+static void setTableSize(indextranstable_t* table, int size)
+{
+    if(size > 0)
+    {
+        table->serverToLocal = (int*) M_Realloc(table->serverToLocal,
+                                                sizeof(*table->serverToLocal) * size);
+    }
+    else
+    {
+        M_Free(table->serverToLocal);
+        table->serverToLocal = 0;
+    }
+    table->size = size;
+}
+
+void Cl_ReadServerMobjTypeIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjType, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjType.serverToLocal[i] = Def_GetMobjNumForName(StringArray_At(ar, i));
+#ifdef _DEBUG
+        Con_Message("Server mobj %i => local %i\n", i, xlatMobjType.serverToLocal[i]);
+#endif
+    }
+
+    StringArray_Delete(ar);
+}
+
+void Cl_ReadServerMobjStateIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjState, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
+#ifdef _DEBUG
+        Con_Message("Server state %i => local %i\n", i, xlatMobjState.serverToLocal[i]);
+#endif
+    }
+
+    StringArray_Delete(ar);
+}
+
 static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
 {
     if(!serverMaterials)
@@ -86,6 +156,20 @@ static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
         return 0;
     }
     return MaterialArchive_Find(serverMaterials, archId, 0);
+}
+
+int Cl_LocalMobjType(int serverMobjType)
+{
+    if(serverMobjType < 0 || serverMobjType >= xlatMobjType.size)
+        return 0; // Invalid type.
+    return xlatMobjType.serverToLocal[serverMobjType];
+}
+
+int Cl_LocalMobjState(int serverMobjState)
+{
+    if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size)
+        return 0; // Invalid state.
+    return xlatMobjState.serverToLocal[serverMobjState];
 }
 
 static boolean Cl_IsMoverValid(int i)
@@ -108,6 +192,8 @@ void Cl_WorldInit(void)
     memset(activemovers, 0, sizeof(activemovers));
     memset(activepolys, 0, sizeof(activepolys));
     serverMaterials = 0;
+    memset(&xlatMobjType, 0, sizeof(xlatMobjType));
+    memset(&xlatMobjState, 0, sizeof(xlatMobjState));
 }
 
 /**
@@ -122,6 +208,9 @@ void Cl_WorldReset(void)
         MaterialArchive_Delete(serverMaterials);
         serverMaterials = 0;
     }
+
+    setTableSize(&xlatMobjType, 0);
+    setTableSize(&xlatMobjState, 0);
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {

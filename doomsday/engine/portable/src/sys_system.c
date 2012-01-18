@@ -109,7 +109,6 @@ void Sys_Init(void)
 #endif
 
     VERBOSE( Con_Message("Initializing Network subsystem...\n") )
-    Huff_Init();
     N_Init();
 
     VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -133,7 +132,6 @@ void Sys_Shutdown(void)
     Sys_ShutdownTimer();
 
     Net_Shutdown();
-    Huff_Shutdown();
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();

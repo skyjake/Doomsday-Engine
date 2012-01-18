@@ -32,6 +32,7 @@
 #include "lumpdirectory.h"
 #include "pathdirectory.h"
 #include "zipfile.h"
+#include "m_misc.h"
 
 typedef struct {
     size_t baseOffset;
@@ -628,11 +629,87 @@ void ZipFile_ClearLumpCache(ZipFile* zip)
     }
 }
 
-/**
- * Use zlib to inflate a compressed lump.
- * @return  @c true if successful.
- */
-static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)
+{
+    return ZipFile_CompressAtLevel(in, inSize, outSize, Z_DEFAULT_COMPRESSION);
+}
+
+uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level)
+{
+#define CHUNK_SIZE 32768
+    z_stream stream;
+    uint8_t chunk[CHUNK_SIZE];
+    size_t allocSize = CHUNK_SIZE;
+    uint8_t* output = M_Malloc(allocSize); // some initial space
+    int result;
+    int have;
+
+    assert(outSize);
+    *outSize = 0;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*) in;
+    stream.avail_in = (uInt) inSize;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+
+    if(level < Z_NO_COMPRESSION)
+    {
+        level = Z_NO_COMPRESSION;
+    }
+    if(level > Z_BEST_COMPRESSION)
+    {
+        level = Z_BEST_COMPRESSION;
+    }
+    result = deflateInit(&stream, level);
+    if(result != Z_OK)
+    {
+        free(output);
+        return 0;
+    }
+
+    // Compress until all the data has been exhausted.
+    do {
+        stream.next_out = chunk;
+        stream.avail_out = CHUNK_SIZE;
+        result = deflate(&stream, Z_FINISH);
+        if(result == Z_STREAM_ERROR)
+        {
+            free(output);
+            *outSize = 0;
+            return 0;
+        }
+        have = CHUNK_SIZE - stream.avail_out;
+        if(have)
+        {
+            // Need more memory?
+            if(*outSize + have > allocSize)
+            {
+                // Need more memory.
+                allocSize *= 2;
+                output = M_Realloc(output, allocSize);
+            }
+            // Append.
+            memcpy(output + *outSize, chunk, have);
+            *outSize += have;
+        }
+    } while(!stream.avail_out); // output chunk full, more data may follow
+
+    assert(result == Z_STREAM_END);
+    assert(stream.total_out == *outSize);
+
+    deflateEnd(&stream);
+    return output;
+#undef CHUNK_SIZE
+}
+
+boolean ZipFile_Uncompress(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+{
+    return ZipFile_Uncompress2(in, inSize, out, outSize, false /*now raw*/);
+}
+
+boolean ZipFile_Uncompress2(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize, boolean rawMode)
 {
     z_stream stream;
     int result;
@@ -645,15 +722,25 @@ static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, siz
     stream.next_out = (Bytef*) out;
     stream.avail_out = (uInt) outSize;
 
-    if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
-        return false;
+    if(rawMode)
+    {
+        if(inflateInit2(&stream, -MAX_WBITS) != Z_OK)
+            return false;
+    }
+    else
+    {
+        if(inflateInit(&stream) != Z_OK)
+            return false;
+    }
 
     // Do the inflation in one call.
     result = inflate(&stream, Z_FINISH);
 
     if(stream.total_out != outSize)
     {
-        Con_Message("ZipFile::InflateLump: Failure due to %s.\n", (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"));
+        inflateEnd(&stream);
+        Con_Message("ZipFile::Uncompress: Failure due to %s (result code %i).\n",
+                    (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"), result);
         return false;
     }
 
@@ -678,7 +765,8 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
-        result = ZipFile_InflateLump(compressedData, lumpRecord->info.compressedSize, buffer, lumpRecord->info.size);
+        result = ZipFile_Uncompress2(compressedData, lumpRecord->info.compressedSize,
+                                     buffer, lumpRecord->info.size, true /*raw*/);
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }

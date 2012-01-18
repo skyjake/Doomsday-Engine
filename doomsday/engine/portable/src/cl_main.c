@@ -328,6 +328,14 @@ void Cl_GetPackets(void)
             Cl_ReadServerMaterials();
             break;
 
+        case PSV_MOBJ_TYPE_ID_LIST:
+            Cl_ReadServerMobjTypeIDs();
+            break;
+
+        case PSV_MOBJ_STATE_ID_LIST:
+            Cl_ReadServerMobjStateIDs();
+            break;
+
         case PKT_PLAYER_INFO:
             Cl_HandlePlayerInfo();
             break;

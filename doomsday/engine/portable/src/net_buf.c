@@ -27,8 +27,6 @@
  * Network Message Handling and Buffering
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_system.h"
 #include "de_network.h"
@@ -36,36 +34,12 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
+#include "zipfile.h" // uses compression for packet contents
 
 #define MSG_MUTEX_NAME  "MsgQueueMutex"
 
-// Flags for the sent message store (for to-be-confirmed messages):
-//#define SMSF_ORDERED  0x1     // Block other ordered messages until confirmed
-//#define SMSF_QUEUED       0x2     // Ordered message waiting to be sent
-//#define SMSF_CONFIRMED    0x4     // Delivery has been confirmed! (OK to remove)
-
-// Length of the received message ID history.
-//#define STORE_HISTORY_SIZE 100
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 boolean allowSending;
 netbuffer_t netBuffer;
-
-// The Sent Message Store: list of sent or queued messages waiting to be
-// confirmed.
-//static store_t stores[DDMAXPLAYERS];
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
@@ -75,15 +49,11 @@ static int msgCount;
 // the message queue.
 static mutex_t msgMutex;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 // Number of bytes of outgoing data transmitted.
 static size_t numOutBytes;
 
 // Number of bytes sent over the network (compressed).
 static size_t numSentBytes;
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Initialize the low-level network subsystem. This is called always
@@ -116,11 +86,6 @@ void N_Shutdown(void)
     // Close the handle of the message queue mutex.
     Sys_DestroyMutex(msgMutex);
     msgMutex = 0;
-
-    if(ArgExists("-huffavg"))
-    {
-        Con_Execute(CMDS_DDAY, "huffman", false, false);
-    }
 }
 
 /**
@@ -264,8 +229,6 @@ void N_ClearMessages(void)
 void N_SendPacket(int flags)
 {
     uint                i, dest = 0;
-    void               *data;
-    size_t              size;
 
     // Is the network available?
     if(!allowSending || !N_IsAvailable())
@@ -303,24 +266,15 @@ void N_SendPacket(int flags)
         }
     }
 
-    // Message IDs are currently not used.
-    netBuffer.msg.id = 0;
-
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
-    // Compress using Huffman codes.
-    data = Huff_Encode((byte *) &netBuffer.msg,
-                       netBuffer.headerLength + netBuffer.length, &size);
+    N_SendReliably(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+}
 
-    // This many bytes are actually sent.
-    numSentBytes += size;
-
-    // All messages are sent over a TCP connection.
-    N_SendDataBufferReliably(data, size, dest);
-#if _DEBUG
-    VERBOSE2(Con_Message("N_SendPacket: Sending %li bytes reliably to %i.\n", size, dest));
-#endif
+void N_AddSentBytes(size_t bytes)
+{
+    numSentBytes += bytes;
 }
 
 /**
@@ -354,12 +308,11 @@ uint N_IdentifyPlayer(nodeid_t id)
 }
 
 /**
- * Confirmations are handled here.
+ * Retrieves the next incoming message.
  *
- * \note Skips all messages from unknown nodeids!
- *
- * @return              The next message waiting in the incoming message
- *                      queue.
+ * @return  The next message waiting in the incoming message queue.
+ *          When the message is no longer needed you must call
+ *          N_ReleaseMessage() to delete it.
  */
 netmessage_t *N_GetNextMessage(void)
 {
@@ -367,24 +320,7 @@ netmessage_t *N_GetNextMessage(void)
 
     while((msg = N_GetMessage()) != NULL)
     {
-        //// \fixme When can player IDs be unknown?
-        /* if(msg->player < 0)
-        {
-            // From an unknown ID?
-            N_ReleaseMessage(msg);
-        }
-        else */
-        {
-            // Decode the Huffman codes. The returned buffer is static, so
-            // it doesn't need to be freed (not thread-safe, though).
-            msg->data = Huff_Decode(msg->data, msg->size, &msg->size);
-
-            // The original packet buffer can be freed.
-            N_ReturnBuffer(msg->handle);
-            msg->handle = NULL;
-
-            return msg;
-        }
+        return msg;
     }
     return NULL; // There are no more messages.
 }
@@ -455,32 +391,27 @@ boolean N_GetPacket(void)
  */
 void N_PrintBufferInfo(void)
 {
-    N_PrintHuffmanStats();
+    N_PrintTransmissionStats();
 }
 
 /**
- * Print status information about the workings of Huffman compression
+ * Print status information about the workings of data compression
  * in the network buffer.
+ *
+ * @note  Currently numOutBytes excludes transmission header, while
+ *        numSentBytes includes every byte written to the socket.
+ *        In other words, the efficiency includes protocol overhead.
  */
-void N_PrintHuffmanStats(void)
+void N_PrintTransmissionStats(void)
 {
     if(numOutBytes == 0)
     {
-        Con_Printf("Huffman efficiency: Nothing has been sent yet.\n");
+        Con_Message("Transmission efficiency: Nothing has been sent yet.\n");
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %i bytes, sent: %i "
-                   "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
-                   (int)numOutBytes, (int)numSentBytes);
+        Con_Message("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
+                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
+                    (int)numOutBytes, (int)numSentBytes);
     }
-}
-
-/**
- * Console command for printing the Huffman efficiency.
- */
-D_CMD(HuffmanStats)
-{
-    N_PrintHuffmanStats();
-    return true;
 }

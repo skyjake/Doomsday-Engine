@@ -43,6 +43,19 @@ void            Cl_WorldReset(void);
  */
 void Cl_ReadServerMaterials(void);
 
+/**
+ * Handles the PSV_MOBJ_TYPE_ID_LIST packet sent by the server.
+ */
+void Cl_ReadServerMobjTypeIDs(void);
+
+/**
+ * Handles the PSV_MOBJ_STATE_ID_LIST packet sent by the server.
+ */
+void Cl_ReadServerMobjStateIDs(void);
+
+int Cl_LocalMobjType(int serverMobjType);
+int Cl_LocalMobjState(int serverMobjState);
+
 void            Cl_SetPolyMover(uint number, int move, int rotate);
 void            Cl_AddMover(uint sectornum, clmovertype_t type, float dest,
                             float speed);
