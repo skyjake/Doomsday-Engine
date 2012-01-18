@@ -229,8 +229,6 @@ void N_ClearMessages(void)
 void N_SendPacket(int flags)
 {
     uint                i, dest = 0;
-    void               *data;
-    size_t              size;
 
     // Is the network available?
     if(!allowSending || !N_IsAvailable())

@@ -503,7 +503,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         bytes += received;
         if(bytes == size)
             read = true;
-        assert(bytes <= size);
+        assert(bytes <= (int)size);
     }
     if(error)
     {
