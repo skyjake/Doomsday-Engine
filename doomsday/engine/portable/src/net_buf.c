@@ -393,22 +393,26 @@ boolean N_GetPacket(void)
  */
 void N_PrintBufferInfo(void)
 {
-    N_PrintCompressionStats();
+    N_PrintTransmissionStats();
 }
 
 /**
  * Print status information about the workings of data compression
  * in the network buffer.
+ *
+ * @note  Currently numOutBytes excludes transmission header, while
+ *        numSentBytes includes every byte written to the socket.
+ *        In other words, the efficiency includes protocol overhead.
  */
-void N_PrintCompressionStats(void)
+void N_PrintTransmissionStats(void)
 {
     if(numOutBytes == 0)
     {
-        Con_Message("Compression efficiency: Nothing has been sent yet.\n");
+        Con_Message("Transmission efficiency: Nothing has been sent yet.\n");
     }
     else
     {
-        Con_Message("Compression efficiency: %.3f%% (data: %i bytes, sent: %i "
+        Con_Message("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i "
                     "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
                     (int)numOutBytes, (int)numSentBytes);
     }
