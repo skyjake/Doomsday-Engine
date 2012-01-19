@@ -534,7 +534,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     TCPsocket sock = netNodes[from].sock;
     char* packet = 0;
     size_t size = 0;
-    bool needInflate = false;
+    boolean needInflate = false;
     byte b;
 
     // Read the header.
@@ -716,7 +716,7 @@ void N_SendReliably(void *data, size_t size, nodeid_t destination)
         M_Free(compData);
     }
 
-transmitNow:
+/*transmitNow:*/
     // Send the data over the socket.
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, transmissionSize);
     if(result < 0 || (size_t) result != transmissionSize)
