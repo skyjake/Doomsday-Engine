@@ -115,10 +115,12 @@ void Cl_ReadServerMobjTypeIDs(void)
     // Translate the type IDs to local.
     for(i = 0; i < StringArray_Size(ar); ++i)
     {
-        xlatMobjType.serverToLocal[i] = Def_GetMobjNumForName(StringArray_At(ar, i));
-#ifdef _DEBUG
-        Con_Message("Server mobj %i => local %i\n", i, xlatMobjType.serverToLocal[i]);
-#endif
+        xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
+        if(xlatMobjType.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local thing definitions.\n",
+                        StringArray_At(ar, i));
+        }
     }
 
     StringArray_Delete(ar);
@@ -139,9 +141,11 @@ void Cl_ReadServerMobjStateIDs(void)
     for(i = 0; i < StringArray_Size(ar); ++i)
     {
         xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
-#ifdef _DEBUG
-        Con_Message("Server state %i => local %i\n", i, xlatMobjState.serverToLocal[i]);
-#endif
+        if(xlatMobjState.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local state definitions.\n",
+                        StringArray_At(ar, i));
+        }
     }
 
     StringArray_Delete(ar);
