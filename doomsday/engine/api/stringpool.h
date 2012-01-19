@@ -6,7 +6,7 @@
  * multiple strings with the same case-insensitive contents are added to the
  * pool, only one copy of the string is kept in memory. If there is variation
  * in the letter cases, the version added first is used. In other words, the
- * letter cases of the later duplicate strings is ignored.
+ * letter cases of the later duplicate strings are ignored.
  *
  * @todo Add serialization.
  * @todo Add case-sensitive mode.

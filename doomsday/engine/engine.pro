@@ -190,6 +190,7 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
     portable/include/lumpdirectory.h \
@@ -436,6 +437,7 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
     portable/src/lumpdirectory.c \

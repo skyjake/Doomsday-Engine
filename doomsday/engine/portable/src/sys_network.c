@@ -1,33 +1,75 @@
-/**\file sys_network.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file sys_network.c
+ * Low-level network socket routines. @ingroup network
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @see @ref sysNetwork
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 /**
- * Low-Level Sockets Networking.
+ * @page sysNetwork Low-Level Networking
  *
- * TCP sockets are periodically polled for activity (Net_Update ->
- * N_Listen).
+ * On server-side connected clients can be either in "unjoined" mode or
+ * "joined" mode. The former is for querying information about the server's
+ * status, while the latter one is for clients participating in the on-going
+ * game.
+ *
+ * Unjoined TCP sockets are periodically polled for activity
+ * (N_ListenUnjoinedNodes()). Joined TCP sockets are handling in a separate
+ * receiver thread (N_JoinedListenerThread()).
+ *
+ * @section netProtocol Network Protocol
+ *
+ * In joined mode, the network protocol works as follows. All messages are sent
+ * over a TCP socket. Every message consists of a header and the message payload.
+ * The content of these depends on the (uncompressed original) message size.
+ *
+ * @par 1&ndash;127 bytes
+ * Very small messages, such as the position updates that a client streams
+ * to the server, are encoded with Huffman codes (see huffman.h). If
+ * the Huffman coded payload happens to exceed 127 bytes, the message is
+ * switched to the medium format (see below). Message structure:
+ * - 1 byte: payload size
+ * - @em n bytes: payload contents (Huffman)
+ *
+ * @par 128&ndash;4095 bytes
+ * Medium-sized messages are compressed using a fast zlib deflate level.
+ * If the deflated message size exceeds 4095 bytes, the message is switched to
+ * the large format (see below). Message structure:
+ * - 1 byte: 0x80 | (payload size & 0x7f)
+ * - 1 byte: payload size >> 7
+ * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ *
+ * @par >= 4096 bytes (up to 4MB)
+ * Large messages are compressed using the best zlib deflate level.
+ * Message structure:
+ * - 1 byte: 0x80 | (payload size & 0x7f)
+ * - 1 byte: 0x80 | (payload size >> 7) & 0x7f
+ * - 1 byte: payload size >> 14
+ * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
+ *
+ * Messages larger than or equal to 2^22 bytes (about 4MB) must be broken into
+ * smaller pieces before sending.
+ *
+ * @see N_SendReliably()
+ * @see N_ReceiveReliably()
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -51,6 +93,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 
+#include "huffman.h"
 #include "zipfile.h"
 
 // MACROS ------------------------------------------------------------------
@@ -67,14 +110,9 @@
 #define MAX_DATAGRAM_SIZE           1300
 #define DEFAULT_TRANSMISSION_SIZE   4096
 
-/// Transmissions larger than this will be compressed before sending.
-#define AUTO_COMPRESS_MIN       128 // bytes
-
-/// Transmissions larger than this will be compressed at maximum level.
-#define AUTO_COMPRESS_MAX       4096 // bytes
-
-#define TRMF_COMPRESSED         0x80000000 ///< Transmission was compressed.
-#define TRMF_MASK               0x80000000
+#define MAX_SIZE_SMALL          127 // bytes
+#define MAX_SIZE_MEDIUM         4095 // bytes
+#define MAX_SIZE_LARGE          (1 << 22) // 4 MB
 
 // TYPES -------------------------------------------------------------------
 
@@ -143,6 +181,12 @@ void N_IPToString(char *buf, IPaddress *ip);
 
 static int C_DECL N_JoinedListenerThread(void* param);
 
+#ifdef _DEBUG
+static void Monitor_Add(const uint8_t* bytes, size_t size);
+#endif
+
+D_CMD(NetFreqs);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -186,6 +230,10 @@ void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
+
+#ifdef _DEBUG
+    C_CMD("netfreq", NULL, NetFreqs);
+#endif
 }
 
 static void N_StartJoinedListener(void)
@@ -453,6 +501,26 @@ void N_ReturnBuffer(void *handle)
     }
 }
 
+static boolean getBytesBlocking(TCPsocket sock, byte* buffer, size_t size)
+{
+    int bytes = 0;
+    while(bytes < (int)size)
+    {
+        int result = SDLNet_TCP_Recv(sock, buffer + bytes, size - bytes);
+        if(result == -1)
+            return false; // Socket error.
+
+        bytes += result;
+        assert(bytes <= (int)size);
+    }
+    return true;
+}
+
+static boolean getNextByte(TCPsocket sock, byte* b)
+{
+    return getBytesBlocking(sock, b, 1);
+}
+
 /**
  * Read a packet from the TCP connection and put it in the incoming
  * packet queue.  This function blocks until the entire packet has
@@ -463,63 +531,57 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
-    size_t  size = 0;
-    int     flags = 0;
     TCPsocket sock = netNodes[from].sock;
-    int     bytes = 0;
-    boolean error, read;
-    char*   packet = 0;
+    char* packet = 0;
+    size_t size = 0;
+    bool needInflate = false;
+    byte b;
 
-    /// @todo What if we get less than 4 bytes?
-    /// How come we are here if there's nothing to receive?
-    if((bytes = SDLNet_TCP_Recv(sock, &size, 4)) != 4)
+    // Read the header.
+    if(!getNextByte(sock, &b)) return false;
+
+    size = b & 0x7f;
+
+    if(b & 0x80)
     {
-        return false;
-    }
+        needInflate = true;
+        if(!getNextByte(sock, &b)) return false;
 
-    // The first 4 bytes contain packet size.
-    size = ULONG(size);
-    // Extract the transmission flags.
-    flags = (size & TRMF_MASK);
-    size &= ~TRMF_MASK;
-    if(size <= 0 || size > DDMAXINT)
-        return false;
+        size |= ((b & 0x7f) << 7);
 
-    // Read the entire packet's data.
-    packet = M_Malloc(size);
-    bytes = 0;
-    read = false;
-    error = false;
-    while(!read)
-    {
-        int received = SDLNet_TCP_Recv(sock, packet + bytes, size - bytes);
-        if(received == -1)
+        if(b & 0x80)
         {
-            M_Free(packet);
-            packet = 0;
-            error = true;
-            read = true;
+            if(!getNextByte(sock, &b)) return false;
+
+            size |= (b << 14);
         }
-        bytes += received;
-        if(bytes == size)
-            read = true;
-        assert(bytes <= (int)size);
     }
-    if(error)
+
+    // Allocate memory for the packet. This will be freed once the message
+    // has been handled.
+    packet = M_Malloc(size);
+
+    if(!getBytesBlocking(sock, packet, size))
     {
+        // An error with the socket (closed?).
         M_Free(packet);
         return false;
     }
 
-    // Need to uncompress?
-    if(flags & TRMF_COMPRESSED)
+    // Uncompress the payload.
     {
-        // The uncompressed size is included in the beginning.
-        size_t uncompSize = ULONG(*(unsigned int*)packet);
-        uint8_t* uncompData = (uint8_t*) M_Malloc(uncompSize);
-        if(!ZipFile_Uncompress(packet + 4, size - 4, uncompData, uncompSize))
+        size_t uncompSize = 0;
+        byte* uncompData = 0;
+        if(needInflate)
         {
-            M_Free(uncompData);
+            uncompData = ZipFile_Uncompress(packet, size, &uncompSize);
+        }
+        else
+        {
+            uncompData = Huff_Decode(packet, size, &uncompSize);
+        }
+        if(!uncompData)
+        {
             M_Free(packet);
             return false;
         }
@@ -530,50 +592,69 @@ boolean N_ReceiveReliably(nodeid_t from)
     }
 
     // Post the received message.
-    { netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
-    msg->sender = from;
-    msg->data = (byte*) packet;
-    msg->size = size;
-    msg->handle = packet;
+    {
+        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
+        msg->sender = from;
+        msg->data = (byte*) packet;
+        msg->size = size;
+        msg->handle = packet;
 
-    // The message queue will handle the message from now on.
-    N_PostMessage(msg); }
+        // The message queue will handle the message from now on.
+        N_PostMessage(msg);
+    }
     return true;
 }
 
-static size_t prepareTransmission(void* data, size_t size, int flags, int originalSize)
+static void checkTransmissionBufferSize(size_t atLeastBytes)
 {
-    size_t headerSize = 4;
-    size_t sizeWithHeader;
-    Writer* writer;
-
-    if(flags & TRMF_COMPRESSED) headerSize += 4; // extended header
-
-    // Resize the buffer to fit the entire message + header.
-    sizeWithHeader = size + headerSize;
-    if(transmissionBufferSize < sizeWithHeader)
+    while(transmissionBufferSize < atLeastBytes)
     {
-        transmissionBufferSize = sizeWithHeader;
-        transmissionBuffer = M_Realloc(transmissionBuffer, sizeWithHeader);
+        transmissionBufferSize *= 2;
+        transmissionBuffer = M_Realloc(transmissionBuffer, transmissionBufferSize);
     }
+}
 
-    // Compose the message into the transmission buffer.
-    writer = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
-    if(flags & TRMF_COMPRESSED)
+/**
+ * Copies the message payload @a data to the transmission buffer.
+ */
+static size_t prepareTransmission(void* data, size_t size)
+{
+    Writer* msg = 0;
+    size_t msgSize = 0;
+
+    // The header is at most 3 bytes.
+    checkTransmissionBufferSize(size + 3);
+
+    // Compose the header and payload into the transmission buffer.
+    msg = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
+
+    if(size <= MAX_SIZE_SMALL)
     {
-        // Include original uncompressed size in the beginning.
-        Writer_WriteUInt32(writer, (size + 4) | flags);
-        Writer_WriteUInt32(writer, originalSize);
+        Writer_WriteByte(msg, size);
+    }
+    else if(size <= MAX_SIZE_MEDIUM)
+    {
+        Writer_WriteByte(msg, 0x80 | (size & 0x7f));
+        Writer_WriteByte(msg, size >> 7);
+    }
+    else if(size <= MAX_SIZE_LARGE)
+    {
+        Writer_WriteByte(msg, 0x80 | (size & 0x7f));
+        Writer_WriteByte(msg, 0x80 | ((size >> 7) & 0x7f));
+        Writer_WriteByte(msg, size >> 14);
     }
     else
     {
-        // No flags specified.
-        Writer_WriteUInt32(writer, size);
+        // Not supported.
+        assert(false);
     }
-    Writer_Write(writer, data, size);
-    Writer_Delete(writer);
 
-    return sizeWithHeader;
+    // The payload.
+    Writer_Write(msg, data, size);
+
+    msgSize = Writer_Size(msg);
+    Writer_Delete(msg);
+    return msgSize;
 }
 
 /**
@@ -584,47 +665,66 @@ void N_SendReliably(void *data, size_t size, nodeid_t destination)
 {
     int result = 0;
     netnode_t* node = &netNodes[destination];
-    size_t transmissionSize;
+    size_t transmissionSize = 0;
 
     if(size == 0 || !node->sock || !node->hasJoined)
         return;
 
     if(size > DDMAXINT)
     {
-        Con_Error("N_SendDataBufferReliably: Trying to send an oversized data buffer.\n"
+        Con_Error("N_SendReliably: Trying to send an oversized data buffer.\n"
                   "  Attempted size is %u bytes.\n", (unsigned long) size);
     }
 
-    if(size >= AUTO_COMPRESS_MIN)
+#ifdef _DEBUG
+    Monitor_Add(data, size);
+#endif
+
+    // Let's first see if the encoded contents are under 128 bytes
+    // as Huffman codes.
+    if(size <= MAX_SIZE_SMALL*4) // Potentially short enough.
+    {
+        size_t compSize = 0;
+        uint8_t* compData = Huff_Encode(data, size, &compSize);
+        if(compSize <= MAX_SIZE_SMALL)
+        {
+            // We can use this.
+            transmissionSize = prepareTransmission(compData, compSize);
+        }
+        M_Free(compData);
+    }
+
+    if(!transmissionSize) // Let's deflate, then.
     {
         /// @todo Messages broadcasted to multiple recipients are separately
         /// compressed for each TCP send -- should do only one compression
         /// per message.
 
-        // The packet is so big that we're going to force compression on it.
         size_t compSize = 0;
         uint8_t* compData = ZipFile_CompressAtLevel(data, size, &compSize,
-            size < AUTO_COMPRESS_MAX? 6 /*default*/ : 9 /*best*/);
+            size < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
         if(!compData)
         {
-            Con_Error("N_SendDataBufferReliably: Failed to compress transmission.\n");
+            Con_Error("N_SendReliably: Failed to compress transmission.\n");
         }
-        transmissionSize = prepareTransmission(compData, compSize, TRMF_COMPRESSED, size);
+        if(compSize > MAX_SIZE_LARGE)
+        {
+            M_Free(compData);
+            Con_Error("N_SendReliably: Compressed payload is too large (%u bytes).\n", compSize);
+        }
+        transmissionSize = prepareTransmission(compData, compSize);
         M_Free(compData);
     }
-    else
-    {
-        transmissionSize = prepareTransmission(data, size, 0, 0);
-    }
 
-    N_AddSentBytes(transmissionSize); // Statistics.
-
+transmitNow:
     // Send the data over the socket.
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, transmissionSize);
     if(result < 0 || (size_t) result != transmissionSize)
     {
         perror("Socket error");
     }
+    // Statistics.
+    N_AddSentBytes(transmissionSize);
 }
 
 /**
@@ -651,6 +751,14 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
+    if(netGame)
+    {
+        if(isClient)
+            N_Disconnect();
+        else
+            N_ServerClose();
+    }
+
     M_Free(transmissionBuffer);
     transmissionBuffer = NULL;
     transmissionBufferSize = 0;
@@ -1596,7 +1704,7 @@ static int C_DECL N_JoinedListenerThread(void* param)
             // Clientside listening.  On clientside, the socket set only
             // includes the server's socket.
             if(SDLNet_CheckSockets(joinedSockSet, 10) > 0)
-            {
+            {   
                 Sys_Unlock(mutexJoinedSockSet);
 
                 if(!N_ReceiveReliably(0))
@@ -1684,3 +1792,92 @@ void N_PrintNetworkStatus(void)
     Con_Message("Configuration:\n");
     Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
 }
+
+#if _DEBUG
+
+/// @todo Move these to monitor.c/h
+static uint monitor[256];
+static uint monitoredBytes;
+static uint monitoredPackets;
+static size_t monitorMaxSize;
+
+static void Monitor_Start(int maxPacketSize)
+{
+    monitorMaxSize = maxPacketSize;
+    monitoredBytes = monitoredPackets = 0;
+    memset(&monitor, 0, sizeof(monitor));
+}
+
+static void Monitor_Stop(void)
+{
+    monitorMaxSize = 0;
+}
+
+static void Monitor_Add(const uint8_t* bytes, size_t size)
+{
+    if(size <= monitorMaxSize)
+    {
+        uint i;
+        monitoredPackets++;
+        monitoredBytes += size;
+        for(i = 0; i < size; ++i) monitor[bytes[i]]++;
+    }
+}
+
+static void Monitor_Print(void)
+{
+    int i, k;
+
+    if(!monitoredBytes)
+    {
+        Con_Message("Nothing has been sent yet.\n");
+        return;
+    }
+    Con_Message("%u bytes sent (%i packets).\n", monitoredBytes, monitoredPackets);
+
+    for(i = 0, k = 0; i < 256; ++i)
+    {
+        if(!k) Con_Message("    ");
+
+        Con_Message("%10.10lf", (double)(monitor[i]) / (double)monitoredBytes);
+
+        // Break lines.
+        if(++k == 4)
+        {
+            k = 0;
+            Con_Message(",\n");
+        }
+        else
+        {
+            Con_Message(", ");
+        }
+    }
+    if(k) Con_Message("\n");
+}
+
+D_CMD(NetFreqs)
+{
+    if(argc == 1) // No args?
+    {
+        Con_Printf("Usage:\n  %s start (maxsize)\n  %s stop\n  %s print/show\n", argv[0], argv[0], argv[0]);
+        return true;
+    }
+    if(argc == 3 && !strcmp(argv[1], "start"))
+    {
+        Monitor_Start(strtoul(argv[2], 0, 10));
+        return true;
+    }
+    if(argc == 2 && !strcmp(argv[1], "stop"))
+    {
+        Monitor_Stop();
+        return true;
+    }
+    if(argc == 2 && (!strcmp(argv[1], "print") || !strcmp(argv[1], "show")))
+    {
+        Monitor_Print();
+        return true;
+    }
+    return false;
+}
+
+#endif // _DEBUG
