@@ -166,7 +166,7 @@ static materialterraintype_t* getMaterialTerrainType(material_t* mat, uint idx)
 void P_InitTerrainTypes(void)
 {
     struct matttypedef_s {
-        const char* materialUri;
+        const char* materialUri; ///< Percent encoded.
         const char* ttName;
     } defs[] = {
 #if __JDOOM__ || __JDOOM64__
@@ -191,13 +191,13 @@ void P_InitTerrainTypes(void)
 #endif
         { 0, 0 }
     };
+    uint i;
 
     if(materialTTypes)
         Z_Free(materialTTypes);
     materialTTypes = 0;
     numMaterialTTypes = maxMaterialTTypes = 0;
 
-    { uint i;
     for(i = 0; defs[i].materialUri; ++i)
     {
         material_t* mat;
@@ -209,7 +209,7 @@ void P_InitTerrainTypes(void)
 
         VERBOSE( Con_Message("P_InitTerrainTypes: Material \"%s\" linked to terrain type '%s'.\n", defs[i].materialUri, defs[i].ttName) )
         getMaterialTerrainType(mat, idx);
-    }}
+    }
 }
 
 void P_ClearTerrainTypes(void)

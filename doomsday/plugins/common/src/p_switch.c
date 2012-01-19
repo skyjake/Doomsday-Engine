@@ -164,8 +164,11 @@ static int numswitches;
 void P_InitSwitchList(void)
 {
     int i, index;
+    ddstring_t path;
     Uri* uri = Uri_New();
     Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
+    Str_Init(&path);
 
     for(index = 0, i = 0; ; ++i)
     {
@@ -175,15 +178,17 @@ void P_InitSwitchList(void)
                 (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
-        if(!switchInfo[i].soundID)
-            break;
+        if(!switchInfo[i].soundID) break;
 
-        Uri_SetPath(uri, switchInfo[i].name1);
+        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name1)));
+        Uri_SetPath(uri, Str_Text(&path));
         switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-        Uri_SetPath(uri, switchInfo[i].name2);
+        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name2)));
+        Uri_SetPath(uri, Str_Text(&path));
         switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
+    Str_Free(&path);
     Uri_Delete(uri);
 
     numswitches = index / 2;
@@ -217,6 +222,7 @@ void P_InitSwitchList(void)
     int i, index, episode;
     lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
     switchlist_t* sList = switchInfo;
+    ddstring_t path;
     Uri* uri;
 
 # if __JHERETIC__
@@ -248,6 +254,8 @@ void P_InitSwitchList(void)
 
     uri = Uri_New();
     Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
+    Str_Init(&path);
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
@@ -259,10 +267,12 @@ void P_InitSwitchList(void)
         {
             if(!SHORT(sList[i].episode)) break;
 
-            Uri_SetPath(uri, sList[i].name1);
+            Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name1)));
+            Uri_SetPath(uri, Str_Text(&path));
             switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
-            Uri_SetPath(uri, sList[i].name2);
+            Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name2)));
+            Uri_SetPath(uri, Str_Text(&path));
             switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
             if(verbose > (lumpNum > 0? 1 : 2))
             {
@@ -271,6 +281,7 @@ void P_InitSwitchList(void)
         }
     }
 
+    Str_Free(&path);
     Uri_Delete(uri);
 
     if(lumpNum > 0)

@@ -802,7 +802,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
         if(Str_CompareIgnoreCase(Uri_Scheme(resourcePath), "Lumps"))
         {
-            ddstring_t* searchPath = Uri_ComposePath(resourcePath);
+            ddstring_t* searchPath = Uri_Compose(resourcePath);
             source = GL_LoadExtTextureEX(image, Str_Text(searchPath), NULL, true/*quiet please*/);
             Str_Delete(searchPath);
         }
@@ -826,7 +826,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     case TN_MODELSKINS:
     case TN_MODELREFLECTIONSKINS: {
         const Uri* resourcePath = Textures_ResourcePath(Textures_Id(tex));
-        ddstring_t* path = Uri_ComposePath(resourcePath);
+        ddstring_t* path = Uri_Compose(resourcePath);
         source = GL_LoadExtTextureEX(image, Str_Text(path), NULL, true/*quiet please*/);
         Str_Delete(path);
         break;

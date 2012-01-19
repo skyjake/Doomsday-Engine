@@ -119,7 +119,7 @@ static void appendSearchPathsInGroup(resourcenamespace_t* rn,
 
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
     {
-        ddstring_t* path = Uri_ComposePath(rn->_searchPaths[group][i].uri);
+        ddstring_t* path = Uri_Compose(rn->_searchPaths[group][i].uri);
         Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
         Str_Delete(path);
     }

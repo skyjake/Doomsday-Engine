@@ -2310,18 +2310,15 @@ const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId)
 {
     textureid_t texId = Textures_TextureForUniqueId(texNamespaceId, uniqueId);
-    ddstring_t* texPath;
     materialid_t matId;
     Uri* uri;
 
     if(texId == NOTEXTUREID) return NOMATERIALID;
 
-    texPath = Textures_ComposePath(texId);
-    uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
+    uri = Textures_ComposeUri(texId);
     Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
     matId = Materials_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
-    Str_Delete(texPath);
     return matId;
 }
 

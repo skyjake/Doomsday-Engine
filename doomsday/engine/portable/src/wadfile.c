@@ -138,15 +138,20 @@ static void WadFile_ReadLumpDirectory(WadFile* wad)
         F_InitLumpInfo(&record->info);
         record->info.lumpIdx = i;
 
-        /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
-        /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
-        ///       range isn't normally used in lump names, right??
         Str_Clear(&absPath);
         for(j = 0; j < LUMPNAME_T_LASTINDEX; ++j)
         {
-            Str_AppendChar(&absPath, src->name[j] & 0x7f);
+            /// The Hexen demo on Mac uses the 0x80 on some lumps, maybe has significance?
+            /// @todo Ensure that this doesn't break other IWADs. The 0x80-0xff
+            ///       range isn't normally used in lump names, right??
+            char ch = src->name[j] & 0x7f;
+            Str_AppendChar(&absPath, ch);
         }
         Str_StripRight(&absPath);
+
+        // Lump names allow characters the file system does not. Therefore they
+        // will be percent-encoded here and later decoded if/when necessary.
+        Str_PercentEncode(&absPath);
 
         /// We do not consider zero-length names to be valid, so replace with
         /// with _something_.

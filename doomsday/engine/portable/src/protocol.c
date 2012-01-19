@@ -320,7 +320,6 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
         M_Free(compData);
     }
 
-transmitNow:
     // Send the data over the socket.
     result = SDLNet_TCP_Send((TCPsocket)N_GetNodeSocket(destination),
                              transmissionBuffer, transmissionSize);

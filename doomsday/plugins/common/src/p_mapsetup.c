@@ -763,7 +763,7 @@ int P_SetupMapWorker(void* paramaters)
 #endif
 
     mapUri = G_ComposeMapUri(param->episode, param->map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     if(!P_LoadMap(Str_Text(mapPath)))
     {
         ddstring_t* path = Uri_ToString(mapUri);
@@ -1122,7 +1122,7 @@ static void P_PrintMapBanner(uint episode, uint map)
     {
     static const char* unknownAuthorStr = "Unknown";
     Uri* uri = G_ComposeMapUri(episode, map);
-    ddstring_t* path = Uri_ComposePath(uri);
+    ddstring_t* path = Uri_Compose(uri);
     const char* lauthor;
 
     lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));

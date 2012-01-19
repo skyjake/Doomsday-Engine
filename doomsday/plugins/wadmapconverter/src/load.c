@@ -247,10 +247,17 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
             else
             {
                 // First try the prefered namespace, then any.
-                Uri* uri = Uri_NewWithPath2(m->name, RC_NULL);
-                Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
-                m->id = Materials_ResolveUri(uri);
+                ddstring_t path;
+                Uri* uri;
 
+                Str_Init(&path);
+                Str_PercentEncode(Str_Set(&path, m->name));
+
+                uri = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+                Uri_SetScheme(uri, isFlat? MN_FLATS_NAME : MN_TEXTURES_NAME);
+                Str_Free(&path);
+
+                m->id = Materials_ResolveUri(uri);
                 if(m->id == NOMATERIALID)
                 {
                     Uri_SetScheme(uri, "");

@@ -1166,17 +1166,17 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
-    ddstring_t* name = (printNamespace? Uri_ToString(uri) : (ddstring_t*)Uri_Path(uri));
+    ddstring_t* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri))));
     ddstring_t* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(name)),
+        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
         resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
-    Uri_Delete(uri);
-    if(printNamespace) Str_Delete(name);
     Str_Delete(resourcePath);
+    Str_Delete(path);
+    Uri_Delete(uri);
 }
 
 /**
@@ -1266,8 +1266,9 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER);
-    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER);
+    // Decode paths before determining a lexicographical delta.
+    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
+    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1314,7 +1315,7 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundTextures, (size_t)count, sizeof *foundTextures, composeAndCompareDirectoryNodePaths);
+    qsort(foundTextures, (size_t)count, sizeof(*foundTextures), composeAndCompareDirectoryNodePaths);
 
     idx = 0;
     for(iter = foundTextures; *iter; ++iter)
@@ -1429,8 +1430,14 @@ D_CMD(ListTextures)
 
 D_CMD(InspectTexture)
 {
-    Uri* search = Uri_NewWithPath2(argv[1], RC_NULL);
+    ddstring_t path;
     Texture* tex;
+    Uri* search;
+
+    // Path is assumed to be in a human-friendly, non-encoded representation.
+    Str_Init(&path); Str_PercentEncode(Str_Set(&path, argv[1]));
+    search = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Str_Free(&path);
 
     if(!Str_IsEmpty(Uri_Scheme(search)))
     {
