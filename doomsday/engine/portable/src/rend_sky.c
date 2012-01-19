@@ -356,8 +356,9 @@ static void renderSkyHemisphere(int flags)
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                glTranslatef(rs.texOffset / rs.texSize.width, yflip? -1.0f : 0.0f, 0.0f);
-                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1.0f : -1.0f), yflip? -1.0f : 1.0f, 1.0f);
+                glTranslatef(rs.texOffset / rs.texSize.width, 0, 0);
+                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1 : -1), yflip? -1 : 1, 1);
+                if(yflip) glTranslatef(0, -1, 0);
             }
 
             renderHemisphere();
