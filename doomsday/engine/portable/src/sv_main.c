@@ -742,21 +742,12 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
-    int                 i, plrNum = -1;
+    int                 plrNum = N_IdentifyPlayer(nodeID);
     boolean             wasInGame;
     player_t           *plr;
     client_t           *cl;
 
-    // First let's find out who this node actually is.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-        if(clients[i].nodeID == nodeID)
-        {
-            plrNum = i;
-            break;
-        }
-
-    if(plrNum == -1)
-        return; // Bogus?
+    if(plrNum == -1) return; // Bogus?
 
     // Log off automatically.
     if(netRemoteUser == plrNum)

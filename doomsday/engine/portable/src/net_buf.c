@@ -210,9 +210,15 @@ void N_ReleaseMessage(netmessage_t *msg)
 void N_ClearMessages(void)
 {
     netmessage_t *msg;
+    float oldSim = netSimulatedLatencySeconds;
+
+    // No simulated latency now.
+    netSimulatedLatencySeconds = 0;
 
     while((msg = N_GetMessage()) != NULL)
         N_ReleaseMessage(msg);
+
+    netSimulatedLatencySeconds = oldSim;
 
     // The queue is now empty.
     msgHead = msgTail = NULL;
@@ -278,29 +284,19 @@ void N_AddSentBytes(size_t bytes)
 }
 
 /**
- * @return              The player number that corresponds the DPNID.
+ * @return The player number that corresponds network node @a id.
  */
-uint N_IdentifyPlayer(nodeid_t id)
+int N_IdentifyPlayer(nodeid_t id)
 {
-    uint                i;
-    boolean             found;
-
     if(netServerMode)
-    {
+    {        
         // What is the corresponding player number? Only the server keeps
         // a list of all the IDs.
-        i = 0;
-        found = false;
-        while(i < DDMAXPLAYERS && !found)
+        int i;
+        for(i = 0; i < DDMAXPLAYERS; ++i)
             if(clients[i].nodeID == id)
-                found = true;
-            else
-                i++;
-
-        if(found)
-            return i;
-        else
-            return -1; // Bogus?
+                return i;
+        return -1;
     }
 
     // Clients receive messages only from the server.

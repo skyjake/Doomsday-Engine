@@ -376,18 +376,23 @@ void N_TerminateNode(nodeid_t id)
     netevent_t netEvent;
 
     if(!node->sock)
-        return;                 // There is nothing here...
+        return;  // There is nothing here...
 
     if(netServerMode && node->hasJoined)
     {
-        Sys_Lock(mutexJoinedSockSet);
-        SDLNet_TCP_DelSocket(joinedSockSet, node->sock);
-        Sys_Unlock(mutexJoinedSockSet);
+        // Let the client know.
+        Msg_Begin(PSV_SERVER_CLOSE);
+        Msg_End();
+        Net_SendBuffer(N_IdentifyPlayer(id), 0);
 
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
         netEvent.id = id;
         N_NEPost(&netEvent);
+
+        Sys_Lock(mutexJoinedSockSet);
+        SDLNet_TCP_DelSocket(joinedSockSet, node->sock);
+        Sys_Unlock(mutexJoinedSockSet);
     }
 
     // Remove the node from the set of active sockets.
@@ -679,7 +684,6 @@ boolean N_Disconnect(void)
         gx.NetDisconnect(true);
 
     Net_StopGame();
-    N_ClearMessages();
 
     // Tell the Game that the disconnection is now complete.
     if(gx.NetDisconnect)
@@ -698,6 +702,8 @@ boolean N_Disconnect(void)
 
     SDLNet_FreeSocketSet(joinedSockSet);
     joinedSockSet = NULL;
+
+    N_ClearMessages();
 
     return true;
 }

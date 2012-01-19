@@ -75,7 +75,7 @@ void            N_Shutdown(void);
 void            N_ClearMessages(void);
 void            N_SendPacket(int flags);
 boolean         N_GetPacket(void);
-uint            N_IdentifyPlayer(nodeid_t id);
+int             N_IdentifyPlayer(nodeid_t id);
 void            N_PrintBufferInfo(void);
 void            N_PrintTransmissionStats(void);
 void            N_PostMessage(netmessage_t *msg);

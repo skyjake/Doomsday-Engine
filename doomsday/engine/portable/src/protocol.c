@@ -118,8 +118,8 @@ static boolean getBytesBlocking(TCPsocket sock, byte* buffer, size_t size)
     while(bytes < (int)size)
     {
         int result = SDLNet_TCP_Recv(sock, buffer + bytes, size - bytes);
-        if(result == -1)
-            return false; // Socket error.
+        if(result <= 0)
+            return false; // Socket closed or an error occurred.
 
         bytes += result;
         assert(bytes <= (int)size);
@@ -328,10 +328,12 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
             size < 2*MAX_SIZE_MEDIUM? 6 /*default*/ : 9 /*best*/);
         if(!compData)
         {
+            M_Free(huffData);
             Con_Error("Protocol_Send: Failed to compress transmission.\n");
         }
         if(compSize > MAX_SIZE_LARGE)
         {
+            M_Free(huffData);
             M_Free(compData);
             Con_Error("Protocol_Send: Compressed payload is too large (%u bytes).\n", compSize);
         }
@@ -339,16 +341,18 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
         // We can choose the smallest compression.
         if(huffData && huffSize <= compSize)
         {
+            // Huffman yielded smaller payload.
             transmissionSize = prepareTransmission(huffData, huffSize, false);
         }
         else
         {
+            // Use the deflated payload.
             transmissionSize = prepareTransmission(compData, compSize, true /*deflated*/);
         }
         M_Free(compData);
     }
 
-    if(huffData) M_Free(huffData);
+    M_Free(huffData);
 
     // Send the data over the socket.
     result = SDLNet_TCP_Send((TCPsocket)N_GetNodeSocket(destination),

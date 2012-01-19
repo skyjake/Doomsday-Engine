@@ -30,6 +30,7 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
+#include "sys_network.h"
 
 #define SV_VERSION          19
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R19)"
@@ -50,8 +51,8 @@ extern char* netPassword; // Remote login password.
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);
 void            Sv_StopNetGame(void);
-boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
-void            Sv_PlayerLeaves(unsigned int nodeID);
+boolean         Sv_PlayerArrives(nodeid_t nodeID, char* name);
+void            Sv_PlayerLeaves(nodeid_t nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
 

@@ -570,7 +570,11 @@ void Net_StopGame(void)
 #endif
     }
     else
-    {   // We are a connected client.
+    {
+#ifdef _DEBUG
+        Con_Message("Net_StopGame: Sending PCL_GOODBYE.\n");
+#endif
+        // We are a connected client.
         Msg_Begin(PCL_GOODBYE);
         Msg_End();
         Net_SendBuffer(0, 0);
