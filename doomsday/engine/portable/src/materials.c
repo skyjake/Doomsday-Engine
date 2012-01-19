@@ -720,15 +720,6 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     /// \todo We should be able to rebuild the variants.
     Material_DestroyVariants(mat);
     Material_SetDefinition(mat, def);
-    Material_SetFlags(mat, def->flags);
-    Material_SetWidth(mat, def->width);
-    Material_SetHeight(mat, def->height);
-    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
-
-    // Textures are updated automatically at prepare-time, so just clear them.
-    Material_SetDetailTexture(mat, NULL);
-    Material_SetShinyTexture(mat, NULL);
-    Material_SetShinyMaskTexture(mat, NULL);
 
     // Update bindings.
     for(i = 0; i < bindingCount; ++i)
@@ -1218,7 +1209,8 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Material_SetSize(mat, Texture_Size(ml->texture));
+                Size2Raw texSize;
+                Material_SetSize(mat, Size2_Raw(Texture_Size(ml->texture), &texSize));
             }
         }
     }

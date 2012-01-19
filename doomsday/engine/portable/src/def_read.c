@@ -1142,8 +1142,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                     READURI(&mat->uri, NULL);
                 }
                 else RV_FLAGS("Flags", mat->flags, "matf_")
-                RV_FLT("Width", mat->width)
-                RV_FLT("Height", mat->height)
+                RV_INT("Width", mat->width)
+                RV_INT("Height", mat->height)
                 if(ISLABEL("Layer"))
                 {
                     stage = 0;

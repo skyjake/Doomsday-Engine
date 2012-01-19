@@ -28,6 +28,7 @@
 #include "m_misc.h"
 
 #include "texture.h"
+#include "s_environ.h"
 #include "materialvariant.h"
 #include "material.h"
 
@@ -85,8 +86,41 @@ ded_material_t* Material_Definition(const material_t* mat)
 
 void Material_SetDefinition(material_t* mat, struct ded_material_s* def)
 {
+    Size2Raw size;
     assert(mat);
-    mat->_def = def;
+
+    if(mat->_def != def)
+    {
+        mat->_def = def;
+
+        // Textures are updated automatically at prepare-time, so just clear them.
+        Material_SetDetailTexture(mat, NULL);
+        Material_SetShinyTexture(mat, NULL);
+        Material_SetShinyMaskTexture(mat, NULL);
+    }
+
+    if(!mat->_def) return;
+
+    mat->_flags = mat->_def->flags;
+
+    size.width  = def->width;
+    size.height = def->height;
+    Material_SetSize(mat, &size);
+
+    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
+
+    // Update custom status.
+    /// @todo This should take into account the whole definition, not just whether
+    ///       the primary layer's first texture is custom or not.
+    mat->_isCustom = false;
+    if(def->layers[0].stageCount.num > 0 && def->layers[0].stages[0].texture)
+    {
+        textureid_t texId = Textures_ResolveUri2(def->layers[0].stages[0].texture, true/*quiet please*/);
+        if(texId != NOTEXTUREID)
+        {
+            mat->_isCustom = Texture_IsCustom(Textures_ToTexture(texId));
+        }
+    }
 }
 
 const Size2* Material_Size(const material_t* mat)
@@ -95,12 +129,19 @@ const Size2* Material_Size(const material_t* mat)
     return mat->_size;
 }
 
-void Material_SetSize(material_t* mat, const Size2* size)
+void Material_SetSize(material_t* mat, const Size2Raw* newSize)
 {
-    assert(mat && size);
-    if(Size2_Equality(mat->_size, size)) return;
-    Size2_SetWidthHeight(mat->_size, Size2_Width(size), Size2_Height(size));
-    R_UpdateMapSurfacesOnMaterialChange(mat);
+    Size2* size;
+    assert(mat);
+    if(!newSize) return;
+
+    size = Size2_NewFromRaw(newSize);
+    if(!Size2_Equality(mat->_size, size))
+    {
+        Size2_SetWidthHeight(mat->_size, newSize->width, newSize->height);
+        R_UpdateMapSurfacesOnMaterialChange(mat);
+    }
+    Size2_Delete(size);
 }
 
 int Material_Width(const material_t* mat)
