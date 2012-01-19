@@ -2053,7 +2053,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     if(secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
         Uri* mapUri = G_ComposeMapUri(0, 30);
-        ddstring_t* mapPath = Uri_ComposePath(mapUri);
+        ddstring_t* mapPath = Uri_Compose(mapUri);
         if(!P_MapExists(Str_Text(mapPath)))
             secretExit = false;
         Str_Delete(mapPath);
@@ -2163,7 +2163,7 @@ void G_DoMapCompleted(void)
     {
     ddmapinfo_t minfo;
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
         Str_Delete(mapPath);
@@ -2236,7 +2236,7 @@ void G_DoMapCompleted(void)
 void G_PrepareWIData(void)
 {
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     wbstartstruct_t* info = &wmInfo;
     ddmapinfo_t minfo;
     int i;
@@ -2419,7 +2419,7 @@ ddstring_t* G_GenerateSaveGameName(void)
     seconds = time;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
 
     mapName = P_GetMapNiceName();
 #if __JHEXEN__
@@ -2855,7 +2855,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
 
     // Check that the map truly exists.
     uri = G_ComposeMapUri(*episode, *map);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if(!P_MapExists(Str_Text(path)))
     {
         // (0,0) should exist always?
@@ -3004,7 +3004,7 @@ const char* P_GetShortMapName(uint episode, uint map)
 const char* P_GetMapName(uint episode, uint map)
 {
     Uri* mapUri = G_ComposeMapUri(episode, map);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     ddmapinfo_t info;
     void* ptr;
 
@@ -3127,7 +3127,7 @@ void G_PrintMapList(void)
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
             Uri* uri = G_ComposeMapUri(episode, map);
-            ddstring_t* path = Uri_ComposePath(uri);
+            ddstring_t* path = Uri_Compose(uri);
             sourceList[map] = P_MapSourceFile(Str_Text(path));
             Str_Delete(path);
             Uri_Delete(uri);
@@ -3152,7 +3152,7 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 
     // Is there such a finale definition?
     mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(mapPath), fin);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);
@@ -3183,7 +3183,7 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 
     // Is there such a finale definition?
     mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_AFTER, Str_Text(mapPath), fin);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);

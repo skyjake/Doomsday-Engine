@@ -114,16 +114,18 @@ textureid_t Textures_TextureForUniqueId(texturenamespaceid_t namespaceId, int un
 /// @return  Namespace-unique identfier associated with the identified @a textureId.
 int Textures_UniqueId(textureid_t textureId);
 
-/// @return  Declared path to this data resource else a "null" Uri (no scheme or path).
+/// @return  Declared, percent-encoded path to this data resource,
+///          else a "null" Uri (no scheme or path).
 const Uri* Textures_ResourcePath(textureid_t textureId);
 
 /// @return  Unique identifier of the namespace this name is in.
 texturenamespaceid_t Textures_Namespace(textureid_t textureId);
 
-/// @return  Symbolic name/path-to this texture as a string. Must be destroyed with Str_Delete().
+/// @return  Symbolic, percent-encoded name/path-to this texture as a string.
+///          Must be destroyed with Str_Delete().
 ddstring_t* Textures_ComposePath(textureid_t textureId);
 
-/// @return  URI to this texture. Must be destroyed with Uri_Delete().
+/// @return  URI to this texture, percent-encoded. Must be destroyed with Uri_Delete().
 Uri* Textures_ComposeUri(textureid_t textureId);
 
 /// @return  Unique URN to this texture. Must be destroyed with Uri_Delete().

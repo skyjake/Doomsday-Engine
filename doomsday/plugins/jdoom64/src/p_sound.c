@@ -53,7 +53,7 @@
 void S_MapMusic(uint episode, uint map)
 {
     Uri* mapUri = G_ComposeMapUri(episode, map);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     ddmapinfo_t mapInfo;
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &mapInfo))
     {

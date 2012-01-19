@@ -36,7 +36,7 @@
 #define UNKNOWN_MATERIALNAME    "DD_BADTX"
 
 typedef struct materialarchive_record_s {
-    Uri* uri;
+    Uri* uri; ///< Percent encoded.
     material_t* material;
 } materialarchive_record_t;
 
@@ -168,7 +168,7 @@ static void populate(MaterialArchive* mArc)
 
 static int writeRecord(const MaterialArchive* mArc, materialarchive_record_t* rec, Writer* writer)
 {
-    ddstring_t* path = Uri_ComposePath(rec->uri);
+    ddstring_t* path = Uri_Compose(rec->uri);
     Str_Write(path, writer);
     Str_Delete(path);
     return true; // Continue iteration.

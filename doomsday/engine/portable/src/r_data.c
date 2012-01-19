@@ -1052,7 +1052,7 @@ void R_InitSystemTextures(void)
 {
     static const struct texdef_s {
         const char* texPath;
-        const char* resourcePath;
+        const char* resourcePath; ///< Percent-encoded.
     } defs[] = {
         { "unknown", GRAPHICS_RESOURCE_NAMESPACE_NAME":unknown" },
         { "missing", GRAPHICS_RESOURCE_NAMESPACE_NAME":missing" },
@@ -1089,13 +1089,13 @@ void R_InitSystemTextures(void)
     Uri_Delete(uri);
 }
 
-static textureid_t findPatchTextureIdByName(const char* name)
+static textureid_t findPatchTextureIdByName(const char* encodedName)
 {
     textureid_t texId;
     Uri* uri;
-    assert(name && name[0]);
+    assert(encodedName && encodedName[0]);
 
-    uri = Uri_NewWithPath2(name, RC_NULL);
+    uri = Uri_NewWithPath2(encodedName, RC_NULL);
     Uri_SetScheme(uri, TN_PATCHES_NAME);
     texId = Textures_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
@@ -1109,6 +1109,7 @@ patchid_t R_DeclarePatch(const char* name)
     abstractfile_t* fsObject;
     Uri* uri, *resourcePath;
     int lumpIdx, flags;
+    ddstring_t encodedName;
     lumpnum_t lumpNum;
     textureid_t texId;
     Texture* tex;
@@ -1123,10 +1124,14 @@ patchid_t R_DeclarePatch(const char* name)
         return 0;
     }
 
+    Str_Init(&encodedName);
+    Str_PercentEncode(Str_Set(&encodedName, name));
+
     // Already defined as a patch?
-    texId = findPatchTextureIdByName(name);
+    texId = findPatchTextureIdByName(Str_Text(&encodedName));
     if(texId)
     {
+        Str_Free(&encodedName);
         /// \todo We should instead define Materials from patches and return the material id.
         return (patchid_t)Textures_UniqueId(texId);
     }
@@ -1142,11 +1147,12 @@ patchid_t R_DeclarePatch(const char* name)
 
     // Compose the resource name
     uri = Uri_NewWithPath2(TN_PATCHES_NAME":", RC_NULL);
-    Uri_SetPath(uri, name);
+    Uri_SetPath(uri, Str_Text(&encodedName));
+    Str_Free(&encodedName);
 
     // Compose the path to the data resource.
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
-    Uri_SetPath(resourcePath, name);
+    Uri_SetPath(resourcePath, F_LumpName(lumpNum));
 
     uniqueId = Textures_Count(TN_PATCHES)+1; // 1-based index.
     texId = Textures_Declare(uri, uniqueId, resourcePath);
@@ -1665,8 +1671,10 @@ typedef struct {
                 texDef->patchCount = texDefNumPatches[i];
                 texDef->flags = 0;
                 texDef->origIndex = (*origIndexBase) + i;
+
                 Str_Init(&texDef->name);
-                Str_PartAppend(&texDef->name, (const char*) mtexture->name, 0, 8);
+                Str_PercentEncode(Str_StripRight(Str_PartAppend(&texDef->name, (const char*) mtexture->name, 0, 8)));
+
                 texDef->size.width = SHORT(mtexture->width);
                 texDef->size.height = SHORT(mtexture->height);
 
@@ -1703,8 +1711,10 @@ typedef struct {
                 texDef->patchCount = texDefNumPatches[i];
                 texDef->flags = 0;
                 texDef->origIndex = (*origIndexBase) + i;
+
                 Str_Init(&texDef->name);
-                Str_PartAppend(&texDef->name, (const char*) smtexture->name, 0, 8);
+                Str_PercentEncode(Str_StripRight(Str_PartAppend(&texDef->name, (const char*) smtexture->name, 0, 8)));
+
                 texDef->size.width = SHORT(smtexture->width);
                 texDef->size.height = SHORT(smtexture->height);
 
@@ -2093,6 +2103,8 @@ static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     // Compose the resource name.
     Str_Init(&flatName);
     F_FileName(&flatName, F_LumpName(lumpNum));
+    Str_PercentEncode(&flatName);
+
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&flatName));
     Str_Free(&flatName);
@@ -2292,8 +2304,8 @@ void R_InitSpriteTextures(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
     int i, numLumps, uniqueId = 1/*1-based index*/;
+    ddstring_t spriteName, decodedSpriteName;
     Uri* uri, *resourcePath;
-    ddstring_t spriteName;
     ddstack_t* stack;
 
     VERBOSE( Con_Message("Initializing Sprite textures...\n") )
@@ -2302,6 +2314,7 @@ void R_InitSpriteTextures(void)
     resourcePath = Uri_NewWithPath2("Lumps:", RC_NULL);
 
     Str_Init(&spriteName);
+    Str_Init(&decodedSpriteName);
 
     stack = Stack_New();
     numLumps = F_LumpCount();
@@ -2333,7 +2346,10 @@ void R_InitSpriteTextures(void)
         if(!Stack_Height(stack)) continue;
 
         F_FileName(&spriteName, lumpName);
-        if(!validSpriteName(&spriteName)) continue;
+
+        Str_Set(&decodedSpriteName, Str_Text(&spriteName));
+        Str_PercentDecode(&decodedSpriteName);
+        if(!validSpriteName(&decodedSpriteName)) continue;
 
         // Compose the resource name.
         Uri_SetPath(uri, Str_Text(&spriteName));
@@ -2351,6 +2367,7 @@ void R_InitSpriteTextures(void)
 
     Uri_Delete(resourcePath);
     Uri_Delete(uri);
+    Str_Free(&decodedSpriteName);
     Str_Free(&spriteName);
 
     // Define any as yet undefined sprite textures.

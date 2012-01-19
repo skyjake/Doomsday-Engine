@@ -1058,7 +1058,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* _sourceFile)
                 READURI(&otherMat, NULL);
                 ReadToken();
 
-                otherMatPath = Uri_ComposePath(otherMat);
+                otherMatPath = Uri_Compose(otherMat);
                 mat = Def_GetMaterial(Str_Text(otherMatPath));
                 Str_Delete(otherMatPath);
                 if(!mat)
