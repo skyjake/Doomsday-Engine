@@ -49,7 +49,7 @@
  * If the deflated message size exceeds 4095 bytes, the message is switched to
  * the large format (see below). Message structure:
  * - 1 byte: 0x80 | (payload size & 0x7f)
- * - 1 byte: payload size >> 7 | (0x40 for Huffman, otherwise deflated)
+ * - 1 byte: (payload size >> 7) | (0x40 for deflated, otherwise Huffman)
  * - @em n bytes: payload contents (as produced by ZipFile_CompressAtLevel()).
  *
  * @par >= 4096 bytes (up to 4MB)
@@ -88,6 +88,12 @@
 #define MAX_SIZE_LARGE          PROTOCOL_MAX_DATAGRAM_SIZE
 
 #define DEFAULT_TRANSMISSION_SIZE   4096
+
+#define TRMF_CONTINUE           0x80
+#define TRMF_DEFLATED           0x40
+#define TRMF_SIZE_MASK          0x7f
+#define TRMF_SIZE_MASK_MEDIUM   0x3f
+#define TRMF_SIZE_SHIFT         7
 
 static byte* transmissionBuffer;
 static size_t transmissionBufferSize;
@@ -137,20 +143,27 @@ boolean Protocol_Receive(nodeid_t from)
     // Read the header.
     if(!getNextByte(sock, &b)) return false;
 
-    size = b & 0x7f;
+    size = b & TRMF_SIZE_MASK;
 
-    if(b & 0x80)
+    if(b & TRMF_CONTINUE)
     {
-        needInflate = true;
         if(!getNextByte(sock, &b)) return false;
 
-        size |= ((b & 0x7f) << 7);
-
-        if(b & 0x80)
+        if(b & TRMF_CONTINUE)
         {
+            // Large header.
+            needInflate = true;
+            size |= ((b & TRMF_SIZE_MASK) << TRMF_SIZE_SHIFT);
+
             if(!getNextByte(sock, &b)) return false;
 
-            size |= (b << 14);
+            size |= (b << (2*TRMF_SIZE_SHIFT));
+        }
+        else
+        {
+            // Medium header.
+            if(b & TRMF_DEFLATED) needInflate = true;
+            size |= ((b & TRMF_SIZE_MASK_MEDIUM) << TRMF_SIZE_SHIFT);
         }
     }
 
@@ -221,8 +234,12 @@ static void checkTransmissionBufferSize(size_t atLeastBytes)
 
 /**
  * Copies the message payload @a data to the transmission buffer.
+ *
+ * @param data  Data payload being send.
+ * @param size  Size of the data payload.
+ * @param needInflate  @c true, if the payload is deflated.
  */
-static size_t prepareTransmission(void* data, size_t size)
+static size_t prepareTransmission(void* data, size_t size, boolean needInflate)
 {
     Writer* msg = 0;
     size_t msgSize = 0;
@@ -235,18 +252,20 @@ static size_t prepareTransmission(void* data, size_t size)
 
     if(size <= MAX_SIZE_SMALL)
     {
+        assert(!needInflate);
         Writer_WriteByte(msg, size);
     }
     else if(size <= MAX_SIZE_MEDIUM)
     {
-        Writer_WriteByte(msg, 0x80 | (size & 0x7f));
-        Writer_WriteByte(msg, size >> 7);
+        Writer_WriteByte(msg, TRMF_CONTINUE | (size & TRMF_SIZE_MASK));
+        Writer_WriteByte(msg, (needInflate? TRMF_DEFLATED : 0) | (size >> TRMF_SIZE_SHIFT));
     }
     else if(size <= MAX_SIZE_LARGE)
     {
-        Writer_WriteByte(msg, 0x80 | (size & 0x7f));
-        Writer_WriteByte(msg, 0x80 | ((size >> 7) & 0x7f));
-        Writer_WriteByte(msg, size >> 14);
+        assert(needInflate);
+        Writer_WriteByte(msg, TRMF_CONTINUE | (size & TRMF_SIZE_MASK));
+        Writer_WriteByte(msg, TRMF_CONTINUE | ((size >> TRMF_SIZE_SHIFT) & TRMF_SIZE_MASK));
+        Writer_WriteByte(msg, size >> (2*TRMF_SIZE_SHIFT));
     }
     else
     {
@@ -270,6 +289,8 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 {
     int result = 0;
     size_t transmissionSize = 0;
+    size_t huffSize = 0;
+    uint8_t* huffData = 0;
 
     if(size == 0 || !N_GetNodeSocket(destination) || !N_HasNodeJoined(destination))
         return;
@@ -286,16 +307,14 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     // Let's first see if the encoded contents are under 128 bytes
     // as Huffman codes.
-    if(size <= MAX_SIZE_SMALL*4) // Potentially short enough.
+    if(size <= MAX_SIZE_SMALL*5) // Potentially short enough.
     {
-        size_t compSize = 0;
-        uint8_t* compData = Huffman_Encode(data, size, &compSize);
-        if(compSize <= MAX_SIZE_SMALL)
+        huffData = Huffman_Encode(data, size, &huffSize);
+        if(huffSize <= MAX_SIZE_SMALL)
         {
             // We can use this.
-            transmissionSize = prepareTransmission(compData, compSize);
+            transmissionSize = prepareTransmission(huffData, huffSize, false);
         }
-        M_Free(compData);
     }
 
     if(!transmissionSize) // Let's deflate, then.
@@ -316,9 +335,20 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
             M_Free(compData);
             Con_Error("Protocol_Send: Compressed payload is too large (%u bytes).\n", compSize);
         }
-        transmissionSize = prepareTransmission(compData, compSize);
+
+        // We can choose the smallest compression.
+        if(huffData && huffSize <= compSize)
+        {
+            transmissionSize = prepareTransmission(huffData, huffSize, false);
+        }
+        else
+        {
+            transmissionSize = prepareTransmission(compData, compSize, true /*deflated*/);
+        }
         M_Free(compData);
     }
+
+    if(huffData) M_Free(huffData);
 
     // Send the data over the socket.
     result = SDLNet_TCP_Send((TCPsocket)N_GetNodeSocket(destination),
@@ -327,6 +357,7 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
     {
         perror("Socket error");
     }
+
     // Statistics.
     N_AddSentBytes(transmissionSize);
 }
