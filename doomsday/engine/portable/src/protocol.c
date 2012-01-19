@@ -87,6 +87,11 @@
 #define MAX_SIZE_MEDIUM         4095 // bytes
 #define MAX_SIZE_LARGE          PROTOCOL_MAX_DATAGRAM_SIZE
 
+/// Threshold for input data size: messages smaller than this are first compressed
+/// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
+/// the Huffman coded payload is used (unless it doesn't fit in a medium-sized packet).
+#define MAX_HUFFMAN_INPUT_SIZE  4096 // bytes
+
 #define DEFAULT_TRANSMISSION_SIZE   4096
 
 #define TRMF_CONTINUE           0x80
@@ -307,12 +312,12 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     // Let's first see if the encoded contents are under 128 bytes
     // as Huffman codes.
-    if(size <= MAX_SIZE_SMALL*5) // Potentially short enough.
+    if(size <= MAX_HUFFMAN_INPUT_SIZE) // Potentially short enough.
     {
         huffData = Huffman_Encode(data, size, &huffSize);
         if(huffSize <= MAX_SIZE_SMALL)
         {
-            // We can use this.
+            // We can use this: set up a small-sized transmission.
             transmissionSize = prepareTransmission(huffData, huffSize, false);
         }
     }
@@ -339,7 +344,7 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
         }
 
         // We can choose the smallest compression.
-        if(huffData && huffSize <= compSize)
+        if(huffData && huffSize <= compSize && huffSize <= MAX_SIZE_MEDIUM)
         {
             // Huffman yielded smaller payload.
             transmissionSize = prepareTransmission(huffData, huffSize, false);
