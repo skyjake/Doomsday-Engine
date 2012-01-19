@@ -280,6 +280,7 @@ ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 
 ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
+    int partLen;
     char* copied;
 
     if(!str)
@@ -297,13 +298,14 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     if(start < 0 || count <= 0)
         return str;
 
-    copied = M_Malloc(count);
+    copied = M_Calloc(count+1);
 
-    memcpy(copied, append + start, count);
+    strncat(copied, append + start, count);
+    partLen = strlen(copied);
 
-    allocateString(str, str->length + count + 1, true);
-    memcpy(str->str + str->length, copied, count);
-    str->length += count;
+    allocateString(str, str->length + partLen + 1, true);
+    memcpy(str->str + str->length, copied, partLen);
+    str->length += partLen;
 
     // Terminate the appended part.
     str->str[str->length] = 0;
