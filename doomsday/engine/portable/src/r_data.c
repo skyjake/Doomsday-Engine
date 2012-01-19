@@ -2103,7 +2103,6 @@ static Texture* createFlatForLump(lumpnum_t lumpNum, int uniqueId)
     // Compose the resource name.
     Str_Init(&flatName);
     F_FileName(&flatName, F_LumpName(lumpNum));
-    Str_PercentEncode(&flatName);
 
     uri = Uri_NewWithPath2(TN_FLATS_NAME":", RC_NULL);
     Uri_SetPath(uri, Str_Text(&flatName));
