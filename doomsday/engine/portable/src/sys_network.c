@@ -621,11 +621,11 @@ boolean N_Connect(int index)
     }
     memcpy(&svNode->addr, &located.addr, sizeof(IPaddress));
 
-    // Connect by issuing: "JOIN (my-udp) (myname)"
+    // Connect by issuing: "JOIN (my-protocol-version) (myname)"
     pName = playerName;
     if(!pName || !pName[0])
         pName = "Anonymous";
-    sprintf(buf, "JOIN %04x %s\n", 0 /*recvUDPPort*/, pName);
+    sprintf(buf, "JOIN %04x %s\n", SV_VERSION, pName);
     SDLNet_TCP_Send(svNode->sock, buf, (int) strlen(buf));
 
     VERBOSE(Con_Message("N_Connect: %s", buf));
@@ -788,7 +788,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     TCPsocket sock = netNodes[node].sock;
     serverinfo_t info;
     ddstring_t msg;
-    uint16_t  port;
+    int protocolVersion;
 
     // If the command is too long, it'll be considered invalid.
     if(length >= 80)
@@ -821,22 +821,24 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     }
     else if(!strncmp(command, "JOIN ", 5) && length > 10)
     {
-        // Which UDP port does the client use?
+        // Which protocol version does the client use?
         memset(buf, 0, 5);
         strncpy(buf, command + 5, 4);
-        port = strtol(buf, &ch, 16);
-        if(*ch) // || !port)
+        protocolVersion = strtol(buf, &ch, 16);
+        if(*ch || protocolVersion != SV_VERSION)
         {
+            Con_Message("Connection denied: Server protocol v%i differs from client protocol v%i.\n",
+                        SV_VERSION, protocolVersion);
             N_TerminateNode(node);
             return false;
         }
 
         // Read the client's name and convert the network node into a
         // real client network node (which has a transmitter).
-        if(N_JoinNode(node, /*port,*/ command + 10))
+        if(N_JoinNode(node, command + 10))
         {
             // Successful! Send a reply.
-            sprintf(buf, "ENTER %04x\n", 0 /*recvUDPPort*/);
+            sprintf(buf, "ENTER %04x\n", SV_VERSION);
             SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
         }
         else
