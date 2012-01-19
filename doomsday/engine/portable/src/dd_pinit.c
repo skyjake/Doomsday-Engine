@@ -256,7 +256,7 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
-    Huff_Shutdown();
+    Huffman_Shutdown();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

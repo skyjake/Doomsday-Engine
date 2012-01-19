@@ -268,7 +268,7 @@ static void Huff_ResizeBuffer(huffbuffer_t *buffer, size_t neededSize)
         Con_Error("Huff_CheckBuffer: realloc failed.");
 }
 
-void Huff_Init(void)
+void Huffman_Init(void)
 {
     huffqueue_t queue;
     huffnode_t *node;
@@ -346,13 +346,13 @@ static void Huff_DestroyBuffer(huffbuffer_t *buffer)
     memset(buffer, 0, sizeof(*buffer));
 }
 
-void Huff_Shutdown(void)
+void Huffman_Shutdown(void)
 {
     Huff_DestroyNode(huffRoot);
     huffRoot = NULL;
 }
 
-void *Huff_Encode(const byte *data, size_t size, size_t *encodedSize)
+void *Huffman_Encode(const byte *data, size_t size, size_t *encodedSize)
 {
     huffbuffer_t    huffEnc;
     size_t          i;
@@ -417,7 +417,7 @@ void *Huff_Encode(const byte *data, size_t size, size_t *encodedSize)
     return huffEnc.data;
 }
 
-byte *Huff_Decode(const void *data, size_t size, size_t *decodedSize)
+byte *Huffman_Decode(const void *data, size_t size, size_t *decodedSize)
 {
     huffbuffer_t    huffDec;
     huffnode_t     *node;

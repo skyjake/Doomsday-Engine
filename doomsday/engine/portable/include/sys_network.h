@@ -27,6 +27,7 @@
 
 #include "dd_share.h"
 #include "net_buf.h"
+#include "monitor.h"
 
 #ifdef __cplusplus
 extern          "C" {
@@ -75,17 +76,10 @@ extern          "C" {
     boolean         N_ServerOpen(void);
     boolean         N_ServerClose(void);
 
-    /*
-    void            N_SendDataBuffer(void *data, size_t size,
-                                     nodeid_t destination);*/
-    void            N_SendReliably(void *data, size_t size,
-                                             nodeid_t destination);
-    void            N_ReturnBuffer(void *handle);
-    //uint            N_GetSendQueueCount(int player);
-    //uint            N_GetSendQueueSize(int player);
     void            N_TerminateNode(nodeid_t id);
-    //void            N_FlushOutgoing(void);
 
+    void*           N_GetNodeSocket(nodeid_t id);
+    boolean         N_HasNodeJoined(nodeid_t id);
     boolean         N_GetNodeName(nodeid_t id, char *name);
     const char     *N_GetProtocolName(void);
 

@@ -28,12 +28,12 @@
 /**
  * Builds the Huffman tree and initializes the code lookup.
  */
-void Huff_Init(void);
+void Huffman_Init(void);
 
 /**
  * Free all resources allocated for Huffman codes.
  */
-void Huff_Shutdown(void);
+void Huffman_Shutdown(void);
 
 /**
  * Encodes the data using Huffman codes.
@@ -45,7 +45,7 @@ void Huff_Shutdown(void);
  * @return Pointer to the encoded block of bits. Caller gets ownership and must
  * delete the data with M_Free().
  */
-void* Huff_Encode(const byte *data, size_t size, size_t *encodedSize);
+void* Huffman_Encode(const byte *data, size_t size, size_t *encodedSize);
 
 /**
  * Decodes the coded message using the Huffman tree.
@@ -57,6 +57,6 @@ void* Huff_Encode(const byte *data, size_t size, size_t *encodedSize);
  * @return Pointer to the decoded data. Caller gets ownership and must delete
  * the data with M_Free().
  */
-byte* Huff_Decode(const void *data, size_t size, size_t *decodedSize);
+byte* Huffman_Decode(const void *data, size_t size, size_t *decodedSize);
 
 #endif // LIBDENG_HUFFMAN_H

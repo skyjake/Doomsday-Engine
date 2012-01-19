@@ -199,6 +199,7 @@ DENG_HEADERS = \
     portable/include/material.h \
     portable/include/materials.h \
     portable/include/materialvariant.h \
+    portable/include/monitor.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
@@ -217,8 +218,6 @@ DENG_HEADERS = \
     portable/include/net_event.h \
     portable/include/net_main.h \
     portable/include/net_msg.h \
-    portable/include/pathdirectory.h \
-    portable/include/pathmap.h \
     portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
@@ -243,6 +242,9 @@ DENG_HEADERS = \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
     portable/include/p_vertex.h \
+    portable/include/pathdirectory.h \
+    portable/include/pathmap.h \
+    portable/include/protocol.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
     portable/include/rend_console.h \
@@ -446,6 +448,7 @@ SOURCES += \
     portable/src/materialarchive.c \
     portable/src/materials.c \
     portable/src/materialvariant.c \
+    portable/src/monitor.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
@@ -465,8 +468,6 @@ SOURCES += \
     portable/src/net_main.c \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
-    portable/src/pathdirectory.c \
-    portable/src/pathmap.c \
     portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
@@ -490,6 +491,9 @@ SOURCES += \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
     portable/src/p_vertex.c \
+    portable/src/pathdirectory.c \
+    portable/src/pathmap.c \
+    portable/src/protocol.c \
     portable/src/point.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \

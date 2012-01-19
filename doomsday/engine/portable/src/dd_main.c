@@ -1503,7 +1503,7 @@ int DD_Main(void)
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     F_Init();
-    Huff_Init();
+    Huffman_Init();
 
     Fonts_Init();
     FR_Init();

@@ -198,7 +198,7 @@ void N_ReleaseMessage(netmessage_t *msg)
 {
     if(msg->handle)
     {
-        N_ReturnBuffer(msg->handle);
+        Protocol_FreeBuffer(msg->handle);
         msg->handle = 0;
     }
     M_Free(msg);
@@ -269,7 +269,7 @@ void N_SendPacket(int flags)
     // This is what will be sent.
     numOutBytes += netBuffer.headerLength + netBuffer.length;
 
-    N_SendReliably(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
+    Protocol_Send(&netBuffer.msg, netBuffer.headerLength + netBuffer.length, dest);
 }
 
 void N_AddSentBytes(size_t bytes)
