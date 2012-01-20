@@ -69,29 +69,29 @@ Material Mods "flats:LAVA4" {
 
 Material Mods "flats:FWATER1" {
   Layer {
-      Stage { Glow = .175; Tics = 24; Rnd = .5; }
-      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+      Stage { Glow = .058; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER2" {
   Layer {
-      Stage { Glow = .175; Tics = 24; Rnd = .5; }
-      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+      Stage { Glow = .058; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER3" {
   Layer {
-      Stage { Glow = .175; Tics = 24; Rnd = .5; }
-      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+      Stage { Glow = .058; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
   }
 }
 
 Material Mods "flats:FWATER4" {
   Layer {
-      Stage { Glow = .175; Tics = 24; Rnd = .5; }
-      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
+      Stage { Glow = .058; Tics = 24; Rnd = .5; }
+      Stage { Glow = .033; Tics = 24; Rnd = .5; }
   }
 }
 
