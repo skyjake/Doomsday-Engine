@@ -10,3 +10,6 @@ Read\ Me.rtf: $(sources)
 
 readme.txt: $(sources)
 	amethyst -dTXT -dWIN32 -oreadme.txt readme.ame
+
+clean:
+	rm -f doomsday.6 Read\ Me.rtf readme.txt
