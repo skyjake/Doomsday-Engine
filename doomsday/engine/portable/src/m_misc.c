@@ -1122,6 +1122,30 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     }
 }
 
+boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
+{
+    // Either use the trigger's duration, or fall back to the default.
+    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
+
+    trigger->accum += advanceTime;
+
+    if(trigger->accum >= duration)
+    {
+        trigger->accum -= duration;
+        return true;
+    }
+
+    // It wasn't triggered.
+    return false;
+}
+
+boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
+{
+    // Either use the trigger's duration, or fall back to the default.
+    timespan_t duration = (trigger->duration? trigger->duration : 1.0f/35);
+    return (trigger->accum + advanceTime>= duration);
+}
+
 uint M_CRC32(byte *data, uint length)
 {
 /* ====================================================================== */

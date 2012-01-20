@@ -147,6 +147,34 @@ double          M_SlopeToAngle(double dx, double dy);
 double          M_Length(double x, double y);
 int             M_NumDigits(int num);
 
+typedef struct trigger_s {
+    timespan_t duration;
+    timespan_t accum;
+} trigger_t;
+
+/**
+ * Advances time and return true if the trigger is triggered.
+ *
+ * @param trigger      Time trigger.
+ * @param advanceTime  Amount of time to advance the trigger.
+ *
+ * @return              @c true, if the trigger has accumulated enough time
+ *                      to fill the trigger's time threshold.
+ */
+boolean M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
+
+/**
+ * Checks if the trigger will trigger after @a advanceTime seconds.
+ * The trigger itself is not modified in any way.
+ *
+ * @param trigger      Time trigger.
+ * @param advanceTime  Amount of time to advance the trigger.
+ *
+ * @return @c true, if the trigger will accumulate enough time after @a advanceTime
+ *         to fill the trigger's time threshold.
+ */
+boolean M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
+
 /**
  * Calculate CRC-32 for an arbitrary data buffer. @ingroup math
  */
