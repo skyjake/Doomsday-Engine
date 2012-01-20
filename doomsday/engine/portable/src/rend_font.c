@@ -172,6 +172,8 @@ void FR_Ticker(timespan_t ticLength)
         return;
 
     // Restricted to fixed 35 Hz ticks.
+    /// @fixme We should not be synced to the games' fixed "sharp" timing.
+    ///        This font renderer is used by the engine's UI also.
     if(!DD_IsSharpTick())
         return; // It's too soon.
 
