@@ -645,7 +645,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop
+    INSTALLS += target data startupgfx desktop readme
 
     target.path = $$DENG_BIN_DIR
 
@@ -655,4 +655,7 @@ else:unix:!macx {
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
     desktop.path = $$PREFIX/share/applications
+
+    readme.files = doc/output/doomsday.6
+    readme.path = $$PREFIX/share/man/man6
 }
