@@ -234,7 +234,7 @@ void P_InitSwitchList(void)
 #  if __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM^GM_DOOM_SHAREWARE))
         episode = 2;
-    else if(gameModeBits & GM_DOOM)
+    else if(gameModeBits & GM_ANY_DOOM2)
         episode = 3;
     else
 #  endif
