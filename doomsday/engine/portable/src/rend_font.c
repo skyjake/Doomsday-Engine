@@ -1174,6 +1174,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     drawtextstate_t state;
     const char* fragment;
     int pass, curCase;
+    Size2Raw textSize;
     size_t charCount;
     float origColor[4];
     short textFlags;
@@ -1184,6 +1185,10 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     if(!text || !text[0] || !origin) return;
 
     origTextFlags &= ~(DTF_INTERNAL_MASK);
+
+    // If we aren't aligning to top-left we need to know the dimensions.
+    if(alignFlags & ALIGN_RIGHT)
+        FR_TextSize(&textSize, text);
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -1304,7 +1309,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                     // We'll take care of horizontal positioning of the fragment so align left.
                     fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                     if(alignFlags & ALIGN_RIGHT)
-                        alignx = -textFragmentWidth(fragment) * state.scaleX;
+                        alignx = -textSize.width * state.scaleX;
                 }
 
                 // Setup the scaling.
