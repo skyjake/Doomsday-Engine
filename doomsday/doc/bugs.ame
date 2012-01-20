@@ -1,0 +1,9 @@
+@chapter{ Known issues }
+
+Doomsday is a work in progress, so there usually is a number of known issues
+that will be addressed in the future.
+
+@deflist{
+@item{SourceForge Bug Tracker} The official place to report new bugs and browse the existing reports.
+@item{Multiplayer Issues} There is a to-do list of known @link{http://skyjake.fi/dl/multiplayer.txt}{multiplayer issues and needed enhancements} maintained by @link{http://dengine.net/dew/index.php?title=User:Skyjake}{skyjake}.
+}

@@ -1,0 +1,7 @@
+@chapter{ Environment }
+
+The following environment variables are recognized by Doomsday.
+
+@deflist{
+@item{DOOMWADDIR} DOOM WAD directory.
+}

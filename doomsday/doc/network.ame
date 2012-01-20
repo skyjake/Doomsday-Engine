@@ -1,0 +1,30 @@
+@chapter{ Networking }
+
+Doomsday uses both TCP and UDP for making network connections.  If you
+are behind a firewall or you are using NAT, you must make sure that
+other computers are able to send network packets to your computer.
+This entails opening the appropriate incoming TCP/UDP ports on your
+firewall and/or configuring the NAT so that the correct ports are
+routed to your computer.
+
+All the TCP/UDP ports that Doomsday will use (in a basic setup where
+there is either one server or one client on a computer) are visible in
+the network setup screens. The corresponding console variables are
+@var{net-port-control} (TCP) and @var{net-port-data} (UDP).
+
+@section{Server settings}
+ 
+The server uses one TCP port for listening to incoming connections. By
+default this is 13209 (setting the port to zero will mean 13209 will
+be used instead). This port must be open for incoming TCP traffic.
+ 
+The server also uses one UDP port of listening to incoming data
+messages from the clients. By default this is port 13209 (the same
+number as with TCP). This port must be open for incoming and outgoing
+UDP traffic.
+ 
+@section{Client settings}
+ 
+The client uses one UDP port for data messages. By default this is
+13209 (just like the server). This port must be open for incoming and
+outgoing UDP traffic.
