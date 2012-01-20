@@ -16,5 +16,8 @@
 @include{resources}
 @include{plugins}
 @include{bugs}
-@include{author}
+@ifdef{MAN}{
+    $ Man pages have an author section.
+    @include{author}    
+}
 @include{credit}
