@@ -1,0 +1,176 @@
+@macro{TITLE}{ The Doomsday Engine }
+@macro{VERSION}{ Version 1.9.7 }
+@macro{AUTHOR}{ Deng Team }
+@macro{LINK}{ http://www.dengine.net/ }
+@require{amestd}
+
+@begin
+
+@ifdef{MAN}{
+    @include{unix}
+}
+@else {
+    @toc
+
+    @include{intro}
+}
+
+@include{gamemodes}
+
+@include{documentation}
+
+@include{resources}
+
+
+@chapter{ Plugins }
+
+@section{ glBSP map loader }
+
+It is no longer necessary to run glBSP manually on WAD files because 
+Doomsday now includes glBSP as a plugin that is run automatically when 
+needed. The glBSP source code is from version 1.96.
+
+The following console variables control how dpMapLoad works:
+
+@deflist{
+@item{ @var{bsp-build} }
+	This is the master switch that either enables or disables the map loader
+	plugin. If set to zero, GL BSP data is read from any loaded GWA files and
+	the glBSP builder in the plugin is not used. 
+
+@item{ @var{bsp-cache} }
+	Determines if cached BSP data from the @file{bspcache} directory should
+	be used if it passes the last modification time test. If set to one, 
+	any suitable data from the @file{bspcache} directory is loaded and no new
+	data needs to be calculated. If set to zero, the plugin will always 
+	calculate new BSP data and store it in the cache.
+	
+@item{ @var{bsp-factor} }
+	Sets the cost glBSP assigns to seg splits. The default value is 7. 
+}
+
+The generated GL BSP data is stored in the @file{bspcache} directory. 
+There are subdirectories for each game mode and WAD. You are free to 
+delete the cache directory at any time.
+
+
+@section{ Dehacked patches }
+
+Most features of Dehacked are supported by Doomsday's Dehacked reader.
+The loader will print a message during startup if an unsupported
+feature is used.
+
+Let's say you have the Dehacked patch @file{file.deh} in your runtime
+directory. Then you can use the command line option
+@opt{-deh file.deh} to load it at startup.
+
+If a lump named @file{DEHACKED} is found in a WAD, it will be
+automatically applied when the WAD is loaded. Normally only the last
+@file{DEHACKED} lump is used if a lump with that name is found
+in multiple WADs. Use the option @opt{-alldehs} to make the engine
+apply all found @file{DEHACKED} lumps.
+
+
+
+@chapter{ Networking }
+
+Doomsday uses both TCP and UDP for making network connections.  If you
+are behind a firewall or you are using NAT, you must make sure that
+other computers are able to send network packets to your computer.
+This entails opening the appropriate incoming TCP/UDP ports on your
+firewall and/or configuring the NAT so that the correct ports are
+routed to your computer.
+
+All the TCP/UDP ports that Doomsday will use (in a basic setup where
+there is either one server or one client on a computer) are visible in
+the network setup screens. The corresponding console variables are
+@var{net-port-control} (TCP) and @var{net-port-data} (UDP).
+
+@section{Server settings}
+ 
+The server uses one TCP port for listening to incoming connections. By
+default this is 13209 (setting the port to zero will mean 13209 will
+be used instead). This port must be open for incoming TCP traffic.
+ 
+The server also uses one UDP port of listening to incoming data
+messages from the clients. By default this is port 13209 (the same
+number as with TCP). This port must be open for incoming and outgoing
+UDP traffic.
+ 
+@section{Client settings}
+ 
+The client uses one UDP port for data messages. By default this is
+13209 (just like the server). This port must be open for incoming and
+outgoing UDP traffic.
+
+
+
+@chapter{ Known issues }
+
+@list{
+@item The list of reported bugs is on the 
+	@link{deng Project page on SourceForge}{http://sourceforge.net/projects/deng/}.
+
+@item Display color adjustments (gamma, contrast, brightness) are
+	currently not functional in Linux.
+
+@item The FMOD library has been known to cause problems on some systems.
+	If you experience sudden crashes or lock-ups, try the @opt{-nofmod}
+	option. It may also be helpful to disable MIDI music entirely
+	with the @opt{-nomusic} option.
+
+@item Software gamma doesn't affect MD2 skins. Use hardware gamma
+	correction (@var{vid-gamma}, @var{vid-contrast}, @var{vid-bright})
+	instead.
+}
+
+
+
+@chapter{ Acknowledgements and thanks }
+
+@a{acks}
+@strong{id Software}, for creating DOOM and then releasing its source code.
+
+@strong{Raven Software}, for creating Heretic and Hexen and then releasing their source code.
+
+@strong{Daniel Swanson}, for maintaining the jDoom Resource Pack and creating the Doomsday Engine logo.
+
+@strong{Abbs}, for maintaining the jDoom model pack and doing wonderful work on the models and particle effects.
+
+@strong{Anton Rzheshevski} (aka Cheb), for player weapon 3D models and
+other MD2 modifications/enhancements, maintaining the jDoom model
+pack and writing KickStart version 2.
+
+@strong{Greg Fisk} (Slyrr), for many excellent 3D models for jHeretic.
+
+@strong{Daniel Norton}, for the jDoom detail textures.
+
+@strong{Graham Jackson}, for helping me with the source code, fixing some Doom bugs and doing a lot of testing.
+
+All authors of the MD2 models and definition files (see the readme files
+under @file{ Md2\ } for more detailed info).
+
+@strong{David Jarvis}, for doing network testing with jDoom and jHeretic and
+generously contributing essential computer hardware components! :-)
+
+@strong{Andrew Apted}, for @link{glBSP}{http://glbsp.sourceforge.net/}.
+
+@strong{William Mull}, for hosting the j-sites and bearing with me.
+
+@strong{James Bunting} and @strong{Patrick Farrell}, for providing FTP space for the Doomsday project.
+
+@strong{Darin Petersen}, for the very useful MD2 export tool QTiP.
+
+People who have sent bug reports. One can't expect me to keep coding this
+thing and test every possible level in case something has broken down...
+(Did you know that Doom, Heretic and Hexen combined have over 220
+'official' levels?) By sending bug reports you can be sure I'll at least
+try to fix it some day. :-)
+
+People who have sent ideas for new features. My goal is not to create the
+most feature-packed, super-customizable FPS extravaganza but to have ports
+of Doom, Heretic and Hexen that play right and look nice, so I might not
+think of something you'd very much like to see.
+
+All DOOM / Heretic / Hexen fans, for keeping these excellent games alive.
+Keep on playing!

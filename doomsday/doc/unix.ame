@@ -1,0 +1,20 @@
+$ Unix manual page: Unix-specific main portion of the readme.
+
+@chapter{Synopsis}
+
+$ Brief listing of the possible command line options.
+
+@toc
+
+@chapter{Description}
+@include{introbrief}
+
+@chapter{Options}
+
+$ Descibe the options in the Synopsis.
+
+More command line options are listed in the
+@link{http://dengine.net/dew/index.php?title=Command_line_options_reference}{Options Reference} 
+in the Doomsday Engine Wiki.
+
+@include{features}
