@@ -283,6 +283,13 @@ def generate_apidoc():
     print "\n-=-=- JHEXEN DOCS -=-=-"
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
     system_command('doxygen jhexen.doxy >/dev/null')
+
+
+def generate_readme():
+    """Run Amethyst to generate readme documentation."""
+    git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/doc/output'))
+    system_command('make')
     
 
 def web_path():
@@ -373,6 +380,7 @@ commands = {
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
     'apidoc': generate_apidoc,
+    'readme': generate_readme,
     'web_init': web_init,
     'web_update': web_update,
     'help': show_help
