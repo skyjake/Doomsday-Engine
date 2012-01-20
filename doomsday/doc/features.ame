@@ -21,8 +21,8 @@ Graphics:
 Sound:
 @list/thin{
 @item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD tracks)
-@item Alternatively supports SDL_mixer for sound effects and some music files
-@item Win32: DirectSound3D, EAX 2.0, Windows Multimedia (for MIDI)
+@item Supports SDL_mixer for sound effects and music files
+@ifdef{WIN32}{@item DirectSound3D, EAX 2.0, Windows Multimedia (for MIDI)}
 @item External music files in MP3 and other formats
 @item 3D positional sound effects
 @item Environmental reverb/echo effects
