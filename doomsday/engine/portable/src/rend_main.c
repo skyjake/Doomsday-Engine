@@ -2091,7 +2091,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
                    &vR_ZTop, &texOffset[VY], unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = matOffsetX;
-                //texOffset[VY] = 0;
+                if(!clipTop) texOffset[VY] = 0;
 
                 return true;
             }
