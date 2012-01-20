@@ -2,7 +2,7 @@
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
 @macro{VERSION}{ Version 1.9.7 }
 @macro{AUTHOR}{ Deng Team }
-@macro{LINK}{ http://www.dengine.net/ }
+@macro{LINK}{ http://dengine.net/ }
 @require{amestd}
 
 @begin

@@ -1,35 +1,5 @@
 @chapter{ Plugins }
 
-@section{ glBSP map loader }
-
-It is no longer necessary to run glBSP manually on WAD files because 
-Doomsday now includes glBSP as a plugin that is run automatically when 
-needed. The glBSP source code is from version 1.96.
-
-The following console variables control how dpMapLoad works:
-
-@deflist{
-@item{ @var{bsp-build} }
-	This is the master switch that either enables or disables the map loader
-	plugin. If set to zero, GL BSP data is read from any loaded GWA files and
-	the glBSP builder in the plugin is not used. 
-
-@item{ @var{bsp-cache} }
-	Determines if cached BSP data from the @file{bspcache} directory should
-	be used if it passes the last modification time test. If set to one, 
-	any suitable data from the @file{bspcache} directory is loaded and no new
-	data needs to be calculated. If set to zero, the plugin will always 
-	calculate new BSP data and store it in the cache.
-	
-@item{ @var{bsp-factor} }
-	Sets the cost glBSP assigns to seg splits. The default value is 7. 
-}
-
-The generated GL BSP data is stored in the @file{bspcache} directory. 
-There are subdirectories for each game mode and WAD. You are free to 
-delete the cache directory at any time.
-
-
 @section{ Dehacked patches }
 
 Most features of Dehacked are supported by Doomsday's Dehacked reader.
