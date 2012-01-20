@@ -9,12 +9,3 @@ The purpose of the project is to create versions of Doom, Heretic and Hexen
 that feel the same as the original games but take advantage of modern
 techniques such as 3D graphics and client/server networking. A lot of emphasis
 is placed on good-looking graphics.
-
-@section{ Requirements }
-
-@list{
-@item At least one WAD file from the original Doom, Heretic, Hexen, or other supported game
-@item Minimum OS versions: Windows XP, Mac OS X 10.4
-@item DirectX 8 (or newer) on Windows
-@item A display adapter capable of OpenGL 1.4 hardware acceleration
-}

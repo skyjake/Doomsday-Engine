@@ -1,15 +1,15 @@
 @chapter{ Documentation }
 
 Additional documentation is available online in the
-@link{http://dengine.net/dew/}{Doomsday Engine Wiki}. Information in the wiki includes:
+@link{Doomsday Engine Wiki}{http://dengine.net/dew/}. Information in the wiki includes:
 
 @list/thin {
-@item @link{http://dengine.net/dew/index.php?title=Manual}{User's Guide}: collection of documentation to help play games with Doomsday
-@item @link{http://dengine.net/dew/index.php?title=Category:Author%27s_Guide}{Author's Guide}: articles for map and resource pack/addon authors
-@item @link{http://dengine.net/dew/index.php?title=Category:Programmer%27s_Guide}{Programmer's Guide}: technical documentation for software developers and Deng Team members
-@item @link{http://dengine.net/dew/index.php?title=DED}{Definitions Reference}: DED and finale script syntax
-@item @link{http://dengine.net/dew/index.php?title=Command_line_options_reference}{Command Line Options Reference}
-@item @link{http://dengine.net/dew/index.php?title=Category:Releases}{Version history and changelogs}
-@item @link{http://dengine.net/dew/index.php?title=Roadmap}{Project roadmap and features in planning}
+@item @link{User's Guide}{http://dengine.net/dew/index.php?title=Manual}: collection of documentation to help play games with Doomsday
+@item @link{Author's Guide}{http://dengine.net/dew/index.php?title=Category:Author%27s_Guide}: articles for map and resource pack/addon authors
+@item @link{Programmer's Guide}{http://dengine.net/dew/index.php?title=Category:Programmer%27s_Guide}: technical documentation for software developers and Deng Team members
+@item @link{Definitions Reference}{http://dengine.net/dew/index.php?title=DED}: DED and finale script syntax
+@item @link{Command Line Options Reference}{http://dengine.net/dew/index.php?title=Command_line_options_reference}
+@item @link{Version history and changelogs}{http://dengine.net/dew/index.php?title=Category:Releases}
+@item @link{Project roadmap and features in planning}{http://dengine.net/dew/index.php?title=Roadmap}
 }
 

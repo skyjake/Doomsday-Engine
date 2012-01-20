@@ -5,4 +5,3 @@
     @toc
     @include{intro}
 }
-@include{features}

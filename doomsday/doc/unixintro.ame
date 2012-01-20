@@ -8,11 +8,12 @@ $ Brief listing of common command line options.
 
 @chapter{Description}
 @include{introbrief}
+@include{features}
 
 @chapter{Options}
 
 $ Descibe the options in the Synopsis.
 
-More command line options are listed in the
-@link{http://dengine.net/dew/index.php?title=Command_line_options_reference}{Options
-Reference} in the Doomsday Engine Wiki.
+More command line options are listed in the @link{Options Reference}
+{http://dengine.net/dew/index.php?title=Command_line_options_reference} in the
+Doomsday Engine Wiki.

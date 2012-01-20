@@ -1,4 +1,4 @@
-@section{ Game modes }
+@chapter{ Game modes }
 
 One game plugin, such as jDoom, is able to run in many different modes. Each
 mode emulates a specific version of the original game and typically has its
