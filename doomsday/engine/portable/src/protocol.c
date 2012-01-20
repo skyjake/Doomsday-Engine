@@ -140,7 +140,7 @@ static boolean getNextByte(TCPsocket sock, byte* b)
 boolean Protocol_Receive(nodeid_t from)
 {
     TCPsocket sock = (TCPsocket) N_GetNodeSocket(from);
-    char* packet = 0;
+    byte* packet = 0;
     size_t size = 0;
     boolean needInflate = false;
     byte b;
@@ -174,7 +174,7 @@ boolean Protocol_Receive(nodeid_t from)
 
     // Allocate memory for the packet. This will be freed once the message
     // has been handled.
-    packet = M_Malloc(size);
+    packet = (byte*) M_Malloc(size);
 
     if(!getBytesBlocking(sock, packet, size))
     {
@@ -210,7 +210,7 @@ boolean Protocol_Receive(nodeid_t from)
     {
         netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
         msg->sender = from;
-        msg->data = (byte*) packet;
+        msg->data = packet;
         msg->size = size;
         msg->handle = packet;
 
