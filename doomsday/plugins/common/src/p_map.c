@@ -1770,6 +1770,9 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
                 // Divisor grows.
                 divisor *= 2;
 
+                // Can we get any closer?
+                if(FEQUAL(d[VZ] / divisor, 0)) break; // No.
+
                 // Move forward until limits breached.
                 while((d[VZ] > 0 && pos[VZ] <= cTop) ||
                       (d[VZ] < 0 && pos[VZ] >= cBottom))
