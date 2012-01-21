@@ -442,7 +442,11 @@ int SV_ParseGameSaveSlot(const char* str)
     }
 
     // Try keyword identifiers.
-    if(!stricmp(str, "<quick>"))
+    if(!stricmp(str, "last") || !stricmp(str, "<last>"))
+    {
+        return Con_GetInteger("game-save-last-slot");
+    }
+    if(!stricmp(str, "quick") || !stricmp(str, "<quick>"))
     {
         return Con_GetInteger("game-save-quick-slot");
     }

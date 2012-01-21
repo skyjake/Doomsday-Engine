@@ -27,7 +27,7 @@ desc = Show the Help screens.
 
 [loadgame]
 desc = Load a game-save or open the load menu.
-inf = Params: loadgame (game-save-name|<keyword>|save-slot-num)\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot: 'loadgame <quick>'\nLoading slot #0: 'loadgame 0'
+inf = Params: loadgame (game-save-name|<keyword>|save-slot-num) (confirm)\nKeywords: last, quick\nExamples:\nOpen load menu: 'loadgame'\nLoading named game: 'loadgame "running low on ammo"'\nLoading current "quick" slot, confirmed: 'loadgame quick confirm'\nLoading slot #0: 'loadgame 0'
 
 [listmaps]
 desc = List all loaded maps.
@@ -70,7 +70,7 @@ desc = Load the quicksaved game.
 
 [savegame]
 desc = Create a new game-save or open the save menu.
-inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name)\nExamples:\nOpen save menu: 'savegame'\nSaving to current "quick" slot: 'savegame <quick> "running low on ammo"'\nSaving to slot #0: 'savegame 0 "running low on ammo"'
+inf = Params: savegame (game-save-name|<keyword>|save-slot-num) (new game-save-name) (confirm)\nKeywords: last, quick\nExamples:\nOpen save menu: 'savegame'\nSaving to current "quick" slot: 'savegame quick "running low on ammo"'\nSaving to slot #0: 'savegame 0 "running low on ammo"'
 
 [togglegamma]
 desc = Cycle gamma correction levels.
@@ -307,7 +307,10 @@ desc = Color of HUD messages blue component.
 [msg-blink]
 desc = HUD messages blink for this number of tics when printed.
 
-[game-save-quick-confirm]
+[game-save-last-slot]
+desc = Last used save slot. -1=Not yet loaded/saved in this game session.
+
+[game-save-confirm]
 desc = 1=Ask me to confirm when quick saving/loading.
 
 [game-save-quick-slot]
