@@ -63,7 +63,7 @@ byte smoothTexAnim = true;
 int useShinySurfaces = true;
 
 int useDynlights = true;
-float dynlightFactor = .7f;
+float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
 int useWallGlow = true;

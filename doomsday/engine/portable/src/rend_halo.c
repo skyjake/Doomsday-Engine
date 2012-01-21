@@ -63,7 +63,7 @@ D_CMD(FlareConfig);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     haloMode = 5, haloBright = 35, haloSize = 50;
+int     haloMode = 5, haloBright = 35, haloSize = 80;
 int     haloRealistic = true;
 int     haloOccludeSpeed = 48;
 float   haloZMagDiv = 100, haloMinRadius = 20;
