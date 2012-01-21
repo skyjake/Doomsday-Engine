@@ -36,6 +36,14 @@ Copy Light {
   Size = 0.22;
 }
 
+# The radiation suit should be lit more dimly.
+Light {
+  State = "SUIT";
+  Flags = nohalo;
+  Size = 1;
+  Color { .32 .34 .32 };
+}
+
 #####====--- LIGHT DECORATIONS ---====#####
 #
 # The default flags allow using these only with the original textures.
