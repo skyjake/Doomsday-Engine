@@ -317,6 +317,9 @@ desc = Color of HUD messages blue component.
 [msg-blink]
 desc = HUD messages blink for this number of tics when printed.
 
+[game-save-quick-confirm]
+desc = 1=Ask me to confirm when quick saving/loading.
+
 [game-save-quick-slot]
 desc = Current "quick" save slot number. -1=None (default).
 

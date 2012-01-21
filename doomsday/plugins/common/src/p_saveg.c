@@ -370,8 +370,12 @@ static thinkerinfo_t thinkerInfo[] = {
 };
 
 cvartemplate_t cvars[] = {
-   {"game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0},
-   {NULL}
+    { "game-save-quick-confirm", 0, CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    { "game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0 },
+
+    // Aliases for obsolete cvars:
+    { "menu-quick-ask", 0,  CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    {NULL}
 };
 
 // CODE --------------------------------------------------------------------

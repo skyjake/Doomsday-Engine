@@ -356,6 +356,9 @@ desc = Current hub.
 [game-music]
 desc = Currently playing music (id).
 
+[game-save-quick-confirm]
+desc = 1=Ask me to confirm when quick saving/loading.
+
 [game-save-quick-slot]
 desc = Current "quick" save slot number. -1=None (default).
 
