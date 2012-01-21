@@ -139,7 +139,6 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-light-decor"},
     {0, "rend-light-multitex", "Lights", "Lights"},
     {0, "rend-halo-realistic"},
-    {0, "rend-glow"},
     {0, "rend-glow-wall"},
     {0, "rend-info-tris"},
     {0, "rend-shadow"},
@@ -302,6 +301,8 @@ uidata_slider_t sld_light_radmax =
     { 64, 512, 0, 1, false, "rend-light-radius-max" };
 uidata_slider_t sld_light_max =
     { 0, 2000, 0, 1, false, "rend-light-num", "Unlimited" };
+uidata_slider_t sld_light_glow_strength =
+    { 0, 2, 0, .01f, true, "rend-glow" };
 uidata_slider_t sld_light_fog_bright =
     { 0, 1, 0, .01f, true, "rend-glow-fog-bright" };
 uidata_slider_t sld_light_ambient =
@@ -476,8 +477,8 @@ ui_object_t ob_panel[] =
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 610, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_ambient },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 670, 0, 55,    "Light range compression", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 670, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_compression },
-    { UI_TEXT,      0,  0,              300, 730, 0, 55,    "Enable glowing textures", UIText_Drawer },
-    { UI_BUTTON2,   0,  0,              680, 730, 70, 55,   "rend-glow", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_TEXT,      0,  0,              300, 730, 0, 55,    "Material glow strength", UIText_Drawer },
+    { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 730, 300, 55,  "rend-glow", UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_light_glow_strength },
     { UI_TEXT,      0,  0,              300, 790, 0, 55,    "Floor/ceiling glow on walls", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 790, 70, 55,   "rend-glow-wall", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  UIF_FADE_AWAY,  300, 850, 0, 55,    "Maximum floor/ceiling glow height", UIText_Drawer },
