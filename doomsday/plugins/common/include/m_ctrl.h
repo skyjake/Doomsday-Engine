@@ -46,6 +46,9 @@ typedef struct mndata_bindings_s {
     int flags;
 } mndata_bindings_t;
 
+mn_object_t* MNBindings_New(void);
+void MNBindings_Delete(mn_object_t* ob);
+
 const char* MNBindings_ControlName(mn_object_t* obj);
 
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin);

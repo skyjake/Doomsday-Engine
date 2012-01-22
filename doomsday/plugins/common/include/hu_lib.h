@@ -392,6 +392,9 @@ typedef struct mndata_text_s {
     patchid_t* patch;
 } mndata_text_t;
 
+mn_object_t* MNText_New(void);
+void MNText_Delete(mn_object_t* ob);
+
 void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
@@ -406,6 +409,9 @@ typedef struct mndata_button_s {
     patchid_t* patch;
     const char* yes, *no;
 } mndata_button_t;
+
+mn_object_t* MNButton_New(void);
+void MNButton_Delete(mn_object_t* ob);
 
 void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -443,6 +449,9 @@ typedef struct mndata_edit_s {
     void* data1;
     int data2;
 } mndata_edit_t;
+
+mn_object_t* MNEdit_New(void);
+void MNEdit_Delete(mn_object_t* ob);
 
 void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -491,14 +500,13 @@ typedef struct mndata_list_s {
     int numvis;
 } mndata_list_t;
 
-void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
+mn_object_t* MNList_New(void);
+void MNList_Delete(mn_object_t* ob);
 
+void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
 
 void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
-void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* obj);
@@ -508,6 +516,13 @@ boolean MNList_SelectionIsVisible(mn_object_t* obj);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
+
+mn_object_t* MNListInline_New(void);
+void MNListInline_Delete(mn_object_t* ob);
+
+void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
  * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
@@ -549,6 +564,9 @@ typedef struct mndata_colorbox_s {
     void* data3;
     void* data4;
 } mndata_colorbox_t;
+
+mn_object_t* MNColorBox_New(void);
+void MNColorBox_Delete(mn_object_t* ob);
 
 void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -646,6 +664,9 @@ typedef struct mndata_slider_s {
     void* data5;
 } mndata_slider_t;
 
+mn_object_t* MNSlider_New(void);
+void MNSlider_Delete(mn_object_t* ob);
+
 void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -682,6 +703,9 @@ typedef struct mndata_mobjpreview_s {
     int tClass, tMap;
     int plrClass; /// Player class identifier.
 } mndata_mobjpreview_t;
+
+mn_object_t* MNMobjPreview_New(void);
+void MNMobjPreview_Delete(mn_object_t* ob);
 
 void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType);
 void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);

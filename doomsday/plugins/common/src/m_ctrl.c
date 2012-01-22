@@ -554,6 +554,31 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
     }
 }
 
+mn_object_t* MNBindings_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for new MNBindings.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for mndata_bindings_t.", (unsigned long) sizeof(mndata_bindings_t));
+
+    ob->_type = MN_BINDINGS;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->updateGeometry = MNBindings_UpdateGeometry;
+    ob->drawer = MNBindings_Drawer;
+    ob->cmdResponder = MNBindings_CommandResponder;
+    ob->privilegedResponder = MNBindings_PrivilegedResponder;
+
+    return ob;
+}
+
+void MNBindings_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_BINDINGS);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
