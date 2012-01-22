@@ -440,47 +440,6 @@ static mn_object_t FilesMenuObjects[] = {
 };
 #endif
 
-mndata_edit_t edit_saveslots[NUMSAVESLOTS] = {
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 0 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 1 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 2 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 3 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 4 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 5 },
-#if !__JHEXEN__
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 6 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 7 }
-#endif
-};
-
-static mn_object_t LoadMenuObjects[] = {
-    { MN_EDIT,  0,  MNF_ID0|MNF_DISABLED,  '0', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[0], NULL, MNF_ID0 },
-    { MN_EDIT,  0,  MNF_ID1|MNF_DISABLED,  '1', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[1], NULL, MNF_ID1 },
-    { MN_EDIT,  0,  MNF_ID2|MNF_DISABLED,  '2', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[2], NULL, MNF_ID2 },
-    { MN_EDIT,  0,  MNF_ID3|MNF_DISABLED,  '3', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[3], NULL, MNF_ID3 },
-    { MN_EDIT,  0,  MNF_ID4|MNF_DISABLED,  '4', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[4], NULL, MNF_ID4 },
-    { MN_EDIT,  0,  MNF_ID5|MNF_DISABLED,  '5', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[5], NULL, MNF_ID5 },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,  0,  MNF_ID6|MNF_DISABLED,  '6', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[6], NULL, MNF_ID6 },
-    { MN_EDIT,  0,  MNF_ID7|MNF_DISABLED,  '7', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[7], NULL, MNF_ID7 },
-#endif
-    { MN_NONE }
-};
-
-static mn_object_t SaveMenuObjects[] = {
-    { MN_EDIT,  0,  MNF_ID0,  '0', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[0], NULL, MNF_ID0 },
-    { MN_EDIT,  0,  MNF_ID1,  '1', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[1], NULL, MNF_ID1 },
-    { MN_EDIT,  0,  MNF_ID2,  '2', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[2], NULL, MNF_ID2 },
-    { MN_EDIT,  0,  MNF_ID3,  '3', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[3], NULL, MNF_ID3 },
-    { MN_EDIT,  0,  MNF_ID4,  '4', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[4], NULL, MNF_ID4 },
-    { MN_EDIT,  0,  MNF_ID5,  '5', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[5], NULL, MNF_ID5 },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,  0,  MNF_ID6,  '6', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[6], NULL, MNF_ID6 },
-    { MN_EDIT,  0,  MNF_ID7,  '7', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[7], NULL, MNF_ID7 },
-#endif
-    { MN_NONE }
-};
-
 mndata_button_t btn_options_end_game = { false, NULL, "End Game" };
 mndata_button_t btn_options_control_panel = { false, NULL, "Control Panel" };
 mndata_button_t btn_options_controls = { false, NULL, "Controls" };
@@ -2423,24 +2382,79 @@ static void initAllPages(void)
 #else
     const Point2Raw origin = { 70, 30 };
 #endif
+    mn_object_t* loadMenuObjects, *saveMenuObjects;
+    mndata_edit_t* saveSlots;
+    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+#if !__JHEXEN__
+        MNF_ID6, MNF_ID7
+#endif
+    };
+    int i;
+
+    saveSlots = Z_Calloc(sizeof(*saveSlots) * NUMSAVESLOTS, PU_GAMESTATIC, 0);
+    if(!saveSlots) Con_Error("initAllPages: Failed on allocation of %lu bytes for load/save menu edit fields.", (unsigned long) (sizeof(*saveSlots) * NUMSAVESLOTS));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mndata_edit_t* slot = saveSlots + i;
+        slot->emptyString = (const char*) TXT_EMPTYSTRING;
+        slot->data2 = i;
+    }
+
+    loadMenuObjects = Z_Calloc(sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!loadMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for load menu objects.", (unsigned long) (sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1)));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mn_object_t* ob = loadMenuObjects + i;
+        ob->_type = MN_EDIT;
+        ob->_flags = saveSlotObjectIds[i] | MNF_DISABLED;
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNObject_DefaultCommandResponder;
+        ob->_typedata = (void*)(saveSlots + i);
+        ob->data2 = saveSlotObjectIds[i];
+    }
+    loadMenuObjects[i]._type = MN_NONE;
+
+    saveMenuObjects = Z_Calloc(sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!saveMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for save menu objects.", (unsigned long) (sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1)));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mn_object_t* ob = saveMenuObjects + i;
+        ob->_type = MN_EDIT;
+        ob->_flags = saveSlotObjectIds[i];
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
+        ob->actions[MNA_ACTIVE].callback = Hu_MenuSaveSlotEdit;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNEdit_CommandResponder;
+        ob->responder = MNEdit_Responder;
+        ob->_typedata = (void*)(saveSlots + i);
+        ob->data2 = saveSlotObjectIds[i];
+    }
+    saveMenuObjects[i]._type = MN_NONE;
 
     page = Hu_MenuNewPage("LoadGame", &origin, Hu_MenuDrawLoadGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = LoadMenuObjects;
-    }
-
-    {
-#if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 80, 54 };
-#else
-    const Point2Raw origin = { 64, 10 };
-#endif
+    page->objects = loadMenuObjects;
 
     page = Hu_MenuNewPage("SaveGame", &origin, Hu_MenuDrawSaveGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = SaveMenuObjects;
+    page->objects = saveMenuObjects;
     }
 
     {
