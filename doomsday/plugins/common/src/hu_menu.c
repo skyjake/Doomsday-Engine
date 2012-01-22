@@ -3548,23 +3548,28 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
 
 int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
+    mn_object_t* plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID1);
+#if __JHEXEN__
+    mn_object_t* plrClassList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID2);
+#endif
+    mn_object_t* plrColorList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID3);
     char buf[300];
 
-    cfg.netColor = list_player_color.selection;
 #if __JHEXEN__
-    cfg.netClass = list_player_class.selection;
+    cfg.netClass = MNList_Selection(plrClassList);
 #endif
+    cfg.netColor = MNList_Selection(plrColorList);
 
     if(MNA_ACTIVEOUT != action) return 1;
 
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, edit_player_name.text, 300);
+    M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         strcpy(buf, "setname ");
-        M_StrCatQuoted(buf, edit_player_name.text, 300);
+        M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change
