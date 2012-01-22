@@ -1716,8 +1716,7 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     assert(obj && obj->_type == MN_EDIT);
 
-    //strncpy(edit->ptr, Con_GetString(edit->data), edit->maxLen);
-    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
+    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH+1, "%s", string);
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
         memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));

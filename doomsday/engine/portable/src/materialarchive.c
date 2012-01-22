@@ -28,7 +28,7 @@
 #include "materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
-#define MATERIALARCHIVE_VERSION (3)
+#define MATERIALARCHIVE_VERSION (4)
 
 #define ASEG_MATERIAL_ARCHIVE   112
 
@@ -168,9 +168,7 @@ static void populate(MaterialArchive* mArc)
 
 static int writeRecord(const MaterialArchive* mArc, materialarchive_record_t* rec, Writer* writer)
 {
-    ddstring_t* path = Uri_Compose(rec->uri);
-    Str_Write(path, writer);
-    Str_Delete(path);
+    Uri_Write(rec->uri, writer);
     return true; // Continue iteration.
 }
 
@@ -181,12 +179,20 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
         rec->uri = Uri_New();
     }
 
-    if(mArc->version >= 2)
+    if(mArc->version >= 4)
+    {
+        Uri_Read(rec->uri, reader);
+    }
+    else if(mArc->version >= 2)
     {
         ddstring_t* path = Str_NewFromReader(reader);
-        if(mArc->version == 2)
-            Str_PercentEncode(path);
         Uri_SetUri3(rec->uri, Str_Text(path), RC_NULL);
+        if(mArc->version == 2)
+        {
+            // We must encode the path.
+            Str_PercentEncode(Str_Set(path, Str_Text(Uri_Path(rec->uri))));
+            Uri_SetPath(rec->uri, Str_Text(path));
+        }
         Str_Delete(path);
     }
     else

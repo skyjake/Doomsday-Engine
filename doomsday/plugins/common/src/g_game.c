@@ -135,11 +135,11 @@ D_CMD(EndGame);
 D_CMD(HelpScreen);
 D_CMD(ListMaps);
 D_CMD(LoadGame);
-D_CMD(LoadGameName);
+D_CMD(OpenLoadMenu);
 D_CMD(QuickLoadGame);
 D_CMD(QuickSaveGame);
 D_CMD(SaveGame);
-D_CMD(SaveGameName);
+D_CMD(OpenSaveMenu);
 
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
@@ -418,12 +418,15 @@ ccmdtemplate_t gameCmds[] = {
     { "endgame",        "",     CCmdEndGame },
     { "helpscreen",     "",     CCmdHelpScreen },
     { "listmaps",       "",     CCmdListMaps },
-    { "loadgame",       "s",    CCmdLoadGameName },
-    { "loadgame",       "",     CCmdLoadGame },
+    { "loadgame",       "ss",   CCmdLoadGame },
+    { "loadgame",       "s",    CCmdLoadGame },
+    { "loadgame",       "",     CCmdOpenLoadMenu },
     { "quickload",      "",     CCmdQuickLoadGame },
     { "quicksave",      "",     CCmdQuickSaveGame },
-    { "savegame",       "s*",   CCmdSaveGameName },
-    { "savegame",       "",     CCmdSaveGame },
+    { "savegame",       "sss",  CCmdSaveGame },
+    { "savegame",       "ss",   CCmdSaveGame },
+    { "savegame",       "s",    CCmdSaveGame },
+    { "savegame",       "",     CCmdOpenSaveMenu },
     { "togglegamma",    "",     CCmdCycleTextureGamma },
     { NULL }
 };
@@ -2331,7 +2334,7 @@ boolean G_LoadGame(int slot)
 
     // Check whether this slot is in use. We do this here also because we
     // need to provide our caller with instant feedback. Naturally this is
-    // no guarantee that the game-save will be acessible come load time.
+    // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
     SV_UpdateGameSaveInfo();
@@ -3275,7 +3278,7 @@ static ddstring_t* composeScreenshotFileName(void)
 void G_DoScreenShot(void)
 {
     ddstring_t* name = composeScreenshotFileName();
-    if(NULL == name)
+    if(!name)
     {
         Con_Message("G_DoScreenShot: Failed composing file name, screenshot not saved.\n");
         return;
@@ -3306,129 +3309,71 @@ static void openSaveMenu(void)
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
 }
 
-int G_QuickLoadGameResponse(msgresponse_t response, void* context)
+D_CMD(OpenLoadMenu)
+{
+    if(!G_IsLoadGamePossible()) return false;
+    openLoadMenu();
+    return true;
+}
+
+D_CMD(OpenSaveMenu)
+{
+    if(!G_IsSaveGamePossible()) return false;
+    openSaveMenu();
+    return true;
+}
+
+int loadGameConfirmResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        const int slot = Con_GetInteger("game-save-quick-slot");
+        const int slot = *(int*)context;
         G_LoadGame(slot);
     }
     return true;
 }
 
-void G_QuickLoadGame(void)
+D_CMD(LoadGame)
 {
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    const gamesaveinfo_t* info;
-    char buf[80];
+    const boolean confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
+    int slot;
 
-    if(G_QuitInProgress()) return;
+    if(G_QuitInProgress()) return false;
+    if(!G_IsLoadGamePossible()) return false;
 
     if(IS_NETGAME)
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
-        return;
+        return false;
     }
 
-    if(0 > slot || !SV_IsGameSaveSlotUsed(slot))
+    slot = SV_ParseGameSaveSlot(argv[1]);
+    if(SV_IsGameSaveSlotUsed(slot))
+    {
+        // A known used slot identifier.
+        const gamesaveinfo_t* info;
+        char buf[80];
+
+        if(confirm || !cfg.confirmQuickGameSave)
+        {
+            // Try to schedule a GA_LOADGAME action.
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            return G_LoadGame(slot);
+        }
+
+        info = SV_GetGameSaveInfoForSlot(slot);
+        dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
+
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, (void*)&slot);
+        return true;
+    }
+    else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
-        return;
-    }
-
-    if(!cfg.confirmQuickGameSave)
-    {
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_LoadGame(slot);
-        return;
-    }
-
-    info = SV_GetGameSaveInfoForSlot(slot);
-    dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
-
-    S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, G_QuickLoadGameResponse, NULL);
-}
-
-int G_QuickSaveGameResponse(msgresponse_t response, void* context)
-{
-    if(response == MSG_YES)
-    {
-        const int slot = Con_GetInteger("game-save-quick-slot");
-        G_SaveGame(slot);
-    }
-    return true;
-}
-
-void G_QuickSaveGame(void)
-{
-    player_t* player = &players[CONSOLEPLAYER];
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    boolean slotIsUsed;
-    char buf[80];
-
-    if(G_QuitInProgress()) return;
-
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
-        return;
-    }
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
-        return;
-    }
-
-    // If no quick-save slot has been nominated - allow doing so now.
-    if(0 > slot)
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        Hu_MenuUpdateGameSaveWidgets();
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
-        menuNominatingQuickSaveSlot = true;
-        return;
-    }
-
-    slotIsUsed = SV_IsGameSaveSlotUsed(slot);
-    if(!slotIsUsed || !cfg.confirmQuickGameSave)
-    {
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(slot);
-        return;
-    }
-
-    if(slotIsUsed)
-    {
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
-        sprintf(buf, QSPROMPT, Str_Text(&info->name));
-    }
-    else
-    {
-        char identifier[11];
-        dd_snprintf(identifier, 10, "#%10.i", slot);
-        dd_snprintf(buf, 80, QLPROMPT, identifier);
-    }
-
-    S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, G_QuickSaveGameResponse, NULL);
-}
-
-D_CMD(LoadGameName)
-{
-    int slot;
-    if(!G_IsLoadGamePossible()) return false;
-
-    slot = SV_ParseGameSaveSlot(argv[1]);
-    if(slot >= 0)
-    {
-        // A known slot identifier. Try to schedule a GA_LOADGAME action.
-        return G_LoadGame(slot);
+        return true;
     }
 
     // Clearly the caller needs some assistance...
@@ -3449,24 +3394,85 @@ D_CMD(LoadGameName)
     return false;
 }
 
-D_CMD(LoadGame)
+D_CMD(QuickLoadGame)
 {
-    if(!G_IsLoadGamePossible()) return false;
-    openLoadMenu();
+    /// @todo Implement console command scripts?
+    return DD_Execute(true, "loadgame quick");
+}
+
+typedef struct {
+    int slot;
+    const char* name;
+} savegameconfirmresponse_params_t;
+
+int saveGameConfirmResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        savegameconfirmresponse_params_t* p = (savegameconfirmresponse_params_t*)context;
+        G_SaveGame2(p->slot, p->name);
+    }
     return true;
 }
 
-D_CMD(SaveGameName)
+D_CMD(SaveGame)
 {
+    const boolean confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t* player = &players[CONSOLEPLAYER];
     int slot;
-    if(!G_IsSaveGamePossible()) return false;
+
+    if(G_QuitInProgress()) return false;
+
+    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+        return true;
+    }
+
+    if(G_GameState() != GS_MAP)
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        return true;
+    }
 
     slot = SV_ParseGameSaveSlot(argv[1]);
     if(slot >= 0)
     {
-        // A known slot identifier. Try to schedule a GA_SAVEGAME action.
-        // We do not care if there is a save already present in this slot.
-        return G_SaveGame2(slot, argc > 2? argv[2] : NULL);
+        // A known slot identifier.
+        const boolean slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+        const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
+        char buf[80];
+
+        if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
+        {
+            // Try to schedule a GA_LOADGAME action.
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            return G_SaveGame2(slot, name);
+        }
+
+        {
+        savegameconfirmresponse_params_t p;
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
+
+        p.slot = slot;
+        p.name = name;
+
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, (void*)&p);
+        }
+        return true;
+    }
+    else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
+    {
+        // No quick-save slot has been nominated - allow doing so now.
+        Hu_MenuCommand(MCMD_OPEN);
+        Hu_MenuUpdateGameSaveWidgets();
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
+        menuNominatingQuickSaveSlot = true;
+        return true;
     }
 
     // Clearly the caller needs some assistance...
@@ -3475,23 +3481,10 @@ D_CMD(SaveGameName)
     return false;
 }
 
-D_CMD(SaveGame)
-{
-    if(!G_IsSaveGamePossible()) return false;
-    openSaveMenu();
-    return true;
-}
-
-D_CMD(QuickLoadGame)
-{
-    G_QuickLoadGame();
-    return true;
-}
-
 D_CMD(QuickSaveGame)
 {
-    G_QuickSaveGame();
-    return true;
+    /// @todo Implement console command scripts?
+    return DD_Execute(true, "savegame quick");
 }
 
 D_CMD(HelpScreen)

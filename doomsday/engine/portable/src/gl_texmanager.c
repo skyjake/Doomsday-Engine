@@ -1822,11 +1822,11 @@ void GL_UploadTextureContent(const texturecontent_t* content)
 {
     assert(content);
     {
-    boolean generateMipmaps  = ((content->flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0);
-    boolean allowCompression = ((content->flags & TXCF_NO_COMPRESSION) == 0);
-    boolean applyTexGamma    = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
-    boolean noSmartFilter    = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
-    boolean noStretch        = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
+    boolean generateMipmaps = ((content->flags & (TXCF_MIPMAP|TXCF_GRAY_MIPMAP)) != 0);
+    boolean applyTexGamma   = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
+    boolean noCompression   = ((content->flags & TXCF_NO_COMPRESSION) != 0);
+    boolean noSmartFilter   = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
+    boolean noStretch       = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
     int loadWidth = content->width, loadHeight = content->height;
     const uint8_t* loadPixels = content->pixels;
     dgltexformat_t dglFormat = content->format;
@@ -2026,7 +2026,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             exit(1);
         }
 
-        glFormat = ChooseTextureFormat(dglFormat, allowCompression);
+        glFormat = ChooseTextureFormat(dglFormat, !noCompression);
 
         if(!GL_UploadTexture(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 generateMipmaps ? true : false))
@@ -2048,7 +2048,7 @@ void GL_UploadTextureContent(const texturecontent_t* content)
             exit(1); // Unreachable.
         }
 
-        glFormat = ChooseTextureFormat(DGL_LUMINANCE, allowCompression);
+        glFormat = ChooseTextureFormat(DGL_LUMINANCE, !noCompression);
 
         if(!GL_UploadTextureGrayMipmap(glFormat, loadFormat, loadPixels, loadWidth, loadHeight,
                 content->grayMipmap * reciprocal255))

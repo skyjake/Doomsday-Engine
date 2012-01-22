@@ -61,7 +61,7 @@ Values {
     Health = "100";       # Initial health.
     Max Health = "100";   # Maximum health.
     Health Limit = "200"; # Absolute health limit.
-    God Health = "100";   # Health when god mode is activated.
+    #God Health = "100";   # Health when god mode is activated.
     Green Armor = "100";
     Blue Armor = "200";
     IDFA Armor = "200";   # Armor given when the IDFA cheat is activated.

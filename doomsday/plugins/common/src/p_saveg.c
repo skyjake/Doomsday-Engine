@@ -171,6 +171,7 @@ static void unarchiveMap(void);
 
 static boolean inited = false;
 
+static int cvarLastSlot; // -1 = Not yet loaded/saved in this game session.
 static int cvarQuickSlot; // -1 = Not yet chosen/determined.
 
 #if __JHEXEN__
@@ -370,8 +371,13 @@ static thinkerinfo_t thinkerInfo[] = {
 };
 
 cvartemplate_t cvars[] = {
-   {"game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0},
-   {NULL}
+    { "game-save-confirm", 0, CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    { "game-save-last-slot", CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, CVT_INT, &cvarLastSlot },
+    { "game-save-quick-slot", CVF_NO_MAX|CVF_NO_ARCHIVE, CVT_INT, &cvarQuickSlot, -1, 0 },
+
+    // Aliases for obsolete cvars:
+    { "menu-quick-ask", 0,  CVT_BYTE, &cfg.confirmQuickGameSave, 0, 1 },
+    {NULL}
 };
 
 // CODE --------------------------------------------------------------------
@@ -4524,6 +4530,7 @@ void SV_Init(void)
         numSoundTargets = 0;
 #endif
         // -1 = Not yet chosen/determined.
+        cvarLastSlot = -1;
         cvarQuickSlot = -1;
     }
 
@@ -4535,6 +4542,7 @@ void SV_Shutdown(void)
 {
     if(!inited) return;
     SV_ShutdownIO();
+    cvarLastSlot = -1;
     cvarQuickSlot = -1;
     inited = false;
 }
@@ -4840,7 +4848,7 @@ static boolean openGameSaveFile(const char* fileName, boolean write)
 
 boolean SV_LoadGame(int slot)
 {
-    boolean result = false;
+    boolean loadError = true;
     ddstring_t path;
 
     errorIfNotInited("SV_LoadGame");
@@ -4870,22 +4878,29 @@ boolean SV_LoadGame(int slot)
     if(openGameSaveFile(Str_Text(&path), false))
     {
         playerHeaderOK = false; // Uninitialized.
-        Str_Free(&path);
-        return SV_LoadGame2();
+        loadError = !SV_LoadGame2();
+    }
+    else
+    {
+        // It might be an original game save?
+#if __JDOOM__
+        loadError = !SV_v19_LoadGame(Str_Text(&path));
+#elif __JHERETIC__
+        loadError = !SV_v13_LoadGame(Str_Text(&path));
+#endif
+    }
+    Str_Free(&path);
+
+    if(!loadError)
+    {
+        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+    }
+    else
+    {
+        Con_Message("Warning: Failed loading game-save slot #%i.\n", slot);
     }
 
-    // It might be an original game save?
-#if __JDOOM__
-    result = SV_v19_LoadGame(Str_Text(&path));
-#elif __JHERETIC__
-    result = SV_v13_LoadGame(Str_Text(&path));
-#endif
-
-    if(!result)
-        Con_Message("Warning:SV_LoadGame: Failed loading game-save slot #%i.\n", slot);
-
-    Str_Free(&path);
-    return result;
+    return !loadError;
 }
 
 void SV_SaveClient(uint gameId)
@@ -5220,19 +5235,19 @@ boolean SV_SaveGame(int slot, const char* name)
 {
     savegameparam_t params;
     ddstring_t path;
-    int result;
+    int saveError;
     assert(name);
 
     errorIfNotInited("SV_SaveGame");
 
     if(!SV_IsValidSlot(slot))
     {
-        Con_Message("Warning:SV_SaveGame: Invalid slot '%i' specified, game not saved.\n", slot);
+        Con_Message("Warning: Invalid slot '%i' specified, game not saved.\n", slot);
         return false;
     }
     if(!name[0])
     {
-        Con_Message("Warning:SV_SaveGame: Empty name specified for slot #%i, game not save.\n", slot);
+        Con_Message("Warning: Empty name specified for slot #%i, game not save.\n", slot);
         return false;
     }
 
@@ -5249,19 +5264,23 @@ boolean SV_SaveGame(int slot, const char* name)
     params.slot = slot;
 
     // \todo Use progress bar mode and update progress during the setup.
-    result = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                      "Saving game...", SV_SaveGameWorker, &params);
+    saveError = Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                         "Saving game...", SV_SaveGameWorker, &params);
 
-    if(result == SV_INVALIDFILENAME)
+    if(!saveError)
     {
-        Con_Message("Warning:SV_SaveGame: Failed opening \"%s\" for writing.\n", Str_Text(&path));
+        Con_SetInteger2("game-save-last-slot", slot, SVF_WRITE_OVERRIDE);
+    }
+    else if(saveError == SV_INVALIDFILENAME)
+    {
+        Con_Message("Warning: Failed opening \"%s\" for writing.\n", Str_Text(&path));
     }
 
     // Update our game save info.
     SV_UpdateGameSaveInfo();
 
     Str_Free(&path);
-    return !result;
+    return !saveError;
 }
 
 #if __JHEXEN__

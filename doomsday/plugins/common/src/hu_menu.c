@@ -1305,7 +1305,6 @@ cvartemplate_t menuCVars[] = {
     { "menu-shadow",    0,  CVT_FLOAT,  &cfg.menuShadow, 0, 1 },
     { "menu-patch-replacement", 0, CVT_INT, &cfg.menuPatchReplaceMode, PRM_FIRST, PRM_LAST },
     { "menu-slam",      0,  CVT_BYTE,   &cfg.menuSlam,  0, 1 },
-    { "menu-quick-ask", 0,  CVT_BYTE,   &cfg.confirmQuickGameSave, 0, 1 },
     { "menu-hotkeys",   0,  CVT_BYTE,   &cfg.menuShortcutsEnabled, 0, 1 },
 #if __JDOOM__ || __JDOOM64__
     { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1 },

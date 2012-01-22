@@ -63,11 +63,11 @@ byte smoothTexAnim = true;
 int useShinySurfaces = true;
 
 int useDynlights = true;
-float dynlightFactor = .7f;
+float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
 int useWallGlow = true;
-float glowFactor = 1.0f;
+float glowFactor = .5f;
 float glowHeightFactor = 3; // Glow height as a multiplier.
 int glowHeightMax = 100; // 100 is the default (0-1024).
 
@@ -126,7 +126,7 @@ void Rend_Register(void)
 {
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
-    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 1);
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);

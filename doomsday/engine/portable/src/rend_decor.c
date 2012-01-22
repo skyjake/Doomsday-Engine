@@ -619,8 +619,9 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
                              LINE_SELFREF(line)? true : false,
                              &bottom, &top, texOffset))
                 {
-                    offsetS = texOffset[VX];
-                    offsetT = texOffset[VY];
+                    //offsetS = texOffset[VX];
+                    // Counteract surface material offset (interpreted as geometry offset).
+                    offsetT = suf->visOffset[VY];
                     visible = true;
                 }
             }

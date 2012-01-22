@@ -131,7 +131,7 @@ static void processMobjShadow(mobj_t* mo)
     if(vy < plane->visHeight) return;
 
     // Glowing planes inversely diminish shadow strength.
-    shadowStrength *= (1 - R_GlowStrength(plane));
+    shadowStrength *= (1 - MIN_OF(1, R_GlowStrength(plane)));
 
     // Would this shadow be seen?
     if(!(shadowStrength >= SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)) return;
