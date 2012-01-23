@@ -10,7 +10,7 @@ Read\ Me.rtf: $(sources)
 	amethyst -dRTF -dMACOSX -oRead\ Me.rtf $(main_source)
 
 readme.txt: $(sources)
-	amethyst -dTXT -dWIN32 -oreadme.txt $(main_source)
+	amethyst -dTXT -dWIN32 -dCR_NL -oreadme.txt $(main_source)
 
 clean:
 	rm -f doomsday.6 Read\ Me.rtf readme.txt

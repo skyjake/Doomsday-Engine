@@ -1,4 +1,4 @@
-@macro{TITLE}{ The Doomsday Engine }
+@macro{TITLE}{ Doomsday Engine }
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
 @macro{VERSION}{ Version 1.9.7 }
 @macro{AUTHOR}{ Deng Team }

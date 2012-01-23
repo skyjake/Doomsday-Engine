@@ -656,6 +656,6 @@ else:unix:!macx {
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
     desktop.path = $$PREFIX/share/applications
 
-    readme.files = doc/output/doomsday.6
+    readme.files = ../doc/output/doomsday.6
     readme.path = $$PREFIX/share/man/man6
 }
