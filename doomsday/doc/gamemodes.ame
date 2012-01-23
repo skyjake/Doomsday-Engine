@@ -1,9 +1,10 @@
 @chapter{ Game modes }
 
-One game plugin, such as jDoom, is able to run in many different modes. Each
-mode emulates a specific version of the original game and typically has its
-own IWAD file. In some cases two modes can have a resource with the same name.
-This is a problem if the same resource file can't be used by both modes.
+@a{gamemode} One game plugin, such as jDoom, is able to run in many different
+modes. Each mode emulates a specific version of the original game and
+typically has its own IWAD file. In some cases two modes can have a resource
+with the same name. This is a problem if the same resource file can't be used
+by both modes.
 
 The resource class directory can have a subdirectory for each game mode. When
 Doomsday looks for an external resource, it first checks the current game
