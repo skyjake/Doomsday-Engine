@@ -67,7 +67,7 @@ directory. When writing the @file{DD_DIREC} table, the prefix
 
 
 
-@section{ Automatical loading of data and definitions }
+@section{ Automatic loading of data and definitions }
 
 All WAD, PK3, ZIP and LMP files placed in the @file{ Data\<Game>\Auto\
 } directory will be automatically loaded at startup.  The data files
