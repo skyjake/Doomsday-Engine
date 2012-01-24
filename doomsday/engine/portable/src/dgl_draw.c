@@ -494,36 +494,31 @@ void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, floa
 
 void DGL_DrawRect(const RectRaw* rect)
 {
-    if(!rect)
-    {
-        Con_Error("DGL_DrawRect: Invalid value for argument 'rect'.");
-        exit(1); // Unreachable.
-    }
     GL_DrawRect(rect);
+}
+
+void DGL_DrawRect2(int x, int y, int w, int h)
+{
+    GL_DrawRect2(x, y, w, h);
 }
 
 void DGL_DrawRectf(const RectRawf* rect)
 {
-    if(!rect)
-    {
-        Con_Error("DGL_DrawRectf: Invalid value for argument 'rect'.");
-        exit(1); // Unreachable.
-    }
     GL_DrawRectf(rect);
 }
 
-void DGL_DrawRectf2(float x, float y, float w, float h)
+void DGL_DrawRectf2(double x, double y, double w, double h)
 {
     GL_DrawRectf2(x, y, w, h);
 }
 
-void DGL_DrawRectf2Color(float x, float y, float w, float h, float r, float g, float b, float a)
+void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
     glColor4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
-void DGL_DrawRectf2Tiled(float x, float y, float w, float h, int tw, int th)
+void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
     // Make sure the current texture will be tiled.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -532,9 +527,8 @@ void DGL_DrawRectf2Tiled(float x, float y, float w, float h, int tw, int th)
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 
-void DGL_DrawCutRectf2Tiled(float x, float y, float w, float h, int tw, int th,
-                          int txoff, int tyoff, float cx, float cy, float cw,
-                          float ch)
+void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+    int txoff, int tyoff, double cx, double cy, double cw, double ch)
 {
     GL_DrawCutRectf2Tiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }
