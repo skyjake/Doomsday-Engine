@@ -553,15 +553,37 @@ void Rend_Draw2DPlayerSprites(void)
 }
 
 /**
+ * The first selected unit is active after this call.
+ */
+static void selectTexUnits(int count)
+{
+    int i;
+    for(i = numTexUnits - 1; i >= count; i--)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glEnable(GL_TEXTURE_2D);
+    }
+}
+
+/**
  * A sort of a sprite, I guess... Masked walls must be rendered sorted
  * with sprites, so no artifacts appear when sprites are seen behind
  * masked walls.
  */
-void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
+void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
 {
-    boolean             withDyn = false;
-    int                 normal = 0, dyn = 1;
-    GLenum              normalTarget, dynTarget;
+    GLenum normalTarget, dynTarget;
+    boolean withDyn = false;
+    int normal = 0, dyn = 1;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -578,7 +600,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
             dyn = 1;
         }
 
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
         GL_ModulateTexture(IS_MUL ? 4 : 5);
 
         // The dynamic light.
@@ -601,7 +623,6 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     }
     else
     {
-        GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
 
         glBindTexture(GL_TEXTURE_2D, renderTextures? params->tex : 0);
@@ -650,7 +671,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     // lots of masked walls, but since 3D models and sprites must be
     // rendered interleaved with masked walls, there's not much that can be
     // done about this.
-    if(withDyn && numTexUnits > 1)
+    if(withDyn)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
@@ -691,7 +712,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         glEnd();
 
         // Restore normal GL state.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         GL_ModulateTexture(1);
     }
     else

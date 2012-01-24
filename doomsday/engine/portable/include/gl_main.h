@@ -77,7 +77,6 @@ void            GL_UseFog(int yes);
 void            GL_LowRes(void);
 
 void            GL_ModulateTexture(int mode);
-void            GL_SelectTexUnits(int count);
 void            GL_SetVSync(boolean on);
 void            GL_SetMultisample(boolean on);
 void            GL_BlendOp(int op);
