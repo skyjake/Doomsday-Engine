@@ -693,7 +693,6 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         // Restore normal GL state.
         GL_SelectTexUnits(1);
         GL_ModulateTexture(1);
-        GL_DisableArrays(true, true, 0x1);
     }
     else
     {

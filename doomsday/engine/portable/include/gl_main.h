@@ -85,15 +85,6 @@ boolean         GL_NewList(DGLuint list, int mode);
 DGLuint         GL_EndList(void);
 void            GL_CallList(DGLuint list);
 void            GL_DeleteLists(DGLuint list, int range);
-void            GL_InitArrays(void);
-void            GL_EnableArrays(int vertices, int colors, int coords);
-void            GL_DisableArrays(int vertices, int colors, int coords);
-void            GL_Arrays(void* vertices, void* colors, int numCoords,
-                          void** coords, int lock);
-void            GL_UnlockArrays(void);
-void            GL_ArrayElement(int index);
-void            GL_DrawElements(dglprimtype_t type, int count,
-                                const uint* indices);
 boolean         GL_Grab(int x, int y, int width, int height,
                         dgltexformat_t format, void* buffer);
 

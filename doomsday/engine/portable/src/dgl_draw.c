@@ -43,14 +43,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_ARRAYS  (2 + MAX_TEX_UNITS)
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct array_s {
-    boolean         enabled;
-    void*           data;
-} array_t;
 
 // FUNCTION PROTOTYPES -----------------------------------------------------
 
@@ -60,8 +53,6 @@ typedef struct array_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static array_t arrays[MAX_ARRAYS];
-
 static int primLevel = 0;
 static DGLuint inList = 0;
 #ifdef _DEBUG
@@ -69,13 +60,6 @@ static boolean inPrim = false;
 #endif
 
 // CODE --------------------------------------------------------------------
-
-void GL_InitArrays(void)
-{
-    if(!GL_state.features.elementArrays)
-        return;
-    memset(arrays, 0, sizeof(arrays));
-}
 
 boolean GL_NewList(DGLuint list, int mode)
 {
@@ -128,205 +112,6 @@ void GL_CallList(DGLuint list)
 void GL_DeleteLists(DGLuint list, int range)
 {
     glDeleteLists(list, range);
-}
-
-void GL_EnableArrays(int vertices, int colors, int coords)
-{
-    int i;
-
-    if(vertices)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_VERTEX].enabled = true;
-        else
-            glEnableClientState(GL_VERTEX_ARRAY);
-    }
-
-    if(colors)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_COLOR].enabled = true;
-        else
-            glEnableClientState(GL_COLOR_ARRAY);
-    }
-
-    for(i = 0; i < numTexUnits; ++i)
-    {
-        if(coords & (1 << i))
-        {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = true;
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-        }
-    }
-
-    assert(!Sys_GLCheckError());
-}
-
-void GL_DisableArrays(int vertices, int colors, int coords)
-{
-    int         i;
-
-    if(vertices)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_VERTEX].enabled = false;
-        else
-            glDisableClientState(GL_VERTEX_ARRAY);
-    }
-
-    if(colors)
-    {
-        if(!GL_state.features.elementArrays)
-            arrays[AR_COLOR].enabled = false;
-        else
-            glDisableClientState(GL_COLOR_ARRAY);
-    }
-
-    for(i = 0; i < numTexUnits; ++i)
-    {
-        if(coords & (1 << i))
-        {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = false;
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
-            }
-        }
-    }
-
-    assert(!Sys_GLCheckError());
-}
-
-/**
- * Enable, set and optionally lock all enabled arrays.
- */
-void GL_Arrays(void *vertices, void *colors, int numCoords, void **coords,
-                int lock)
-{
-    int         i;
-
-    if(vertices)
-    {
-        if(!GL_state.features.elementArrays)
-        {
-            arrays[AR_VERTEX].enabled = true;
-            arrays[AR_VERTEX].data = vertices;
-        }
-        else
-        {
-            glEnableClientState(GL_VERTEX_ARRAY);
-            glVertexPointer(3, GL_FLOAT, 16, vertices);
-        }
-    }
-
-    if(colors)
-    {
-        if(!GL_state.features.elementArrays)
-        {
-            arrays[AR_COLOR].enabled = true;
-            arrays[AR_COLOR].data = colors;
-        }
-        else
-        {
-            glEnableClientState(GL_COLOR_ARRAY);
-            glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
-        }
-    }
-
-    for(i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
-    {
-        if(coords[i])
-        {
-            if(!GL_state.features.elementArrays)
-            {
-                arrays[AR_TEXCOORD0 + i].enabled = true;
-                arrays[AR_TEXCOORD0 + i].data = coords[i];
-            }
-            else
-            {
-                glClientActiveTexture(GL_TEXTURE0 + i);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
-            }
-        }
-    }
-
-    if(GL_state.features.elementArrays && lock > 0)
-    {   // 'lock' is the number of vertices to lock.
-        glLockArraysEXT(0, lock);
-    }
-
-    assert(!Sys_GLCheckError());
-}
-
-void GL_UnlockArrays(void)
-{
-    if(!GL_state.features.elementArrays)
-        return;
-    glUnlockArraysEXT();
-    assert(!Sys_GLCheckError());
-}
-
-void GL_ArrayElement(int index)
-{
-    if(GL_state.features.elementArrays)
-    {
-        glArrayElement(index);
-    }
-    else
-    {
-        int i;
-        for(i = 0; i < numTexUnits; ++i)
-        {
-            if(!arrays[AR_TEXCOORD0 + i].enabled)
-                continue;
-            glMultiTexCoord2fv(GL_TEXTURE0 + i,
-                ((dgl_texcoord_t*)arrays[AR_TEXCOORD0 + i].data)[index].st);
-        }
-
-        if(arrays[AR_COLOR].enabled)
-            glColor4ubv(((dgl_color_t*) arrays[AR_COLOR].data)[index].rgba);
-
-        if(arrays[AR_VERTEX].enabled)
-            glVertex3fv(((dgl_vertex_t*) arrays[AR_VERTEX].data)[index].xyz);
-    }
-}
-
-void GL_DrawElements(dglprimtype_t type, int count, const uint *indices)
-{
-    GLenum          primType =
-        (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : type ==
-         DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
-
-    if(GL_state.features.elementArrays)
-    {
-        glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
-    }
-    else
-    {
-        int         i;
-
-        glBegin(primType);
-        for(i = 0; i < count; ++i)
-        {
-            GL_ArrayElement(indices[i]);
-        }
-        glEnd();
-    }
-
-    assert(!Sys_GLCheckError());
 }
 
 void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)

@@ -341,12 +341,6 @@ static __inline void disableTexUnit(byte id)
 {
     glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
-
-    // Implicit disabling of texcoord array.
-    if(!GL_state.features.elementArrays)
-    {
-        GL_DisableArrays(0, 0, 1 << id);
-    }
 }
 
 /**
@@ -356,13 +350,14 @@ void GL_SelectTexUnits(int count)
 {
     int i;
     for(i = numTexUnits - 1; i >= count; i--)
+    {
         disableTexUnit(i);
+    }
 
     // Enable the selected units.
     for(i = count - 1; i >= 0; i--)
     {
-        if(i >= numTexUnits)
-            continue;
+        if(i >= numTexUnits) continue;
         enableTexUnit(i);
     }
 }

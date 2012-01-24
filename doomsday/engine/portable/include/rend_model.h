@@ -64,13 +64,17 @@ typedef struct rendmodelparams_s {
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
 } rendmodelparams_t;
 
-extern int      modelLight;
-extern int      frameInter;
-extern int      mirrorHudModels;
-extern int      modelShinyMultitex;
-extern float    rendModelLOD;
+extern int modelLight;
+extern int frameInter;
+extern int mirrorHudModels;
+extern int modelShinyMultitex;
+extern float rendModelLOD;
 
-void            Rend_ModelRegister(void);
-void            Rend_RenderModel(const rendmodelparams_t *params);
+void Rend_ModelRegister(void);
+
+/// Initialize this module.
+void Rend_ModelInit(void);
+
+void Rend_RenderModel(const rendmodelparams_t *params);
 
 #endif
