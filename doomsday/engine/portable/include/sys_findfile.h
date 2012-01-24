@@ -22,6 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#include "dd_types.h"
+
 /**
  * Win32-Style File Finding.
  */
@@ -46,22 +48,22 @@ typedef struct finddata_s {
     time_t time;
     size_t size;
 #endif
-    char* name;
+    ddstring_t name;
     long attrib;
 } finddata_t;
 
 /**
- * @return              @c 0, if successful(!).
+ * @return  @c 0, if successful(!).
  */
 int myfindfirst(const char* filename, finddata_t* findData);
 
 /**
- * @return              @c 0, if successful(!).
+ * @return  @c 0, if successful(!).
  */
 int myfindnext(finddata_t* findData);
 
 /**
- * @return              @c 0, if successful(!).
+ * @return  @c 0, if successful(!).
  */
 void myfindend(finddata_t* findData);
 

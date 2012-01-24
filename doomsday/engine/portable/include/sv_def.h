@@ -30,9 +30,10 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
+#include "sys_network.h"
 
-#define SV_VERSION          17
-#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R17)"
+#define SV_VERSION          19
+#define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R19)"
 
 // Anything closer than this is always taken into consideration when
 // deltas are being generated.
@@ -49,8 +50,9 @@ extern char* netPassword; // Remote login password.
 
 void            Sv_Shutdown(void);
 void            Sv_StartNetGame(void);
-boolean         Sv_PlayerArrives(unsigned int nodeID, char* name);
-void            Sv_PlayerLeaves(unsigned int nodeID);
+void            Sv_StopNetGame(void);
+boolean         Sv_PlayerArrives(nodeid_t nodeID, char* name);
+void            Sv_PlayerLeaves(nodeid_t nodeID);
 void            Sv_Handshake(int playernum, boolean newplayer);
 void            Sv_GetPackets(void);
 
@@ -69,5 +71,10 @@ int             Sv_GetNumPlayers(void);
 int             Sv_GetNumConnected(void);
 boolean         Sv_CheckBandwidth(int playerNumber);
 boolean         Sv_CanTrustClientPos(int plrNum);
+
+/**
+ * Returns a unique id for material @a mat that can be passed on to clients.
+ */
+unsigned int Sv_IdForMaterial(material_t* mat);
 
 #endif

@@ -744,7 +744,7 @@ Sound {
   Name = "PotteryExplode";
   Priority = 32;
   Max channels = 2;
-  Flags = "sf_shift";
+  Flags = "sf_shift sf_dontstop";
 }
 
 Sound {

@@ -28,6 +28,19 @@
 #include "dd_string.h"
 #include "pathmap.h"
 
+/**
+ * @defgroup pathComparisonFlags  Path Comparison Flags
+ * @ingroup base apiFlags
+ */
+///@{
+#define PCF_NO_BRANCH       0x1 ///< Do not consider branches as possible candidates.
+#define PCF_NO_LEAF         0x2 ///< Do not consider leaves as possible candidates.
+#define PCF_MATCH_PARENT    0x4 ///< Only consider nodes whose parent matches that referenced.
+#define PCF_MATCH_FULL      0x8 /**< Whole path must match completely (i.e., path begins
+                                     from the same root point) otherwise allow partial
+                                     (i.e., relative) matches. */
+///@}
+
 typedef enum {
     PT_ANY = -1,
     PATHDIRECTORYNODE_TYPE_FIRST = 0,
@@ -40,20 +53,15 @@ typedef enum {
 #define VALID_PATHDIRECTORYNODE_TYPE(v) (\
     (v) >= PATHDIRECTORYNODE_TYPE_FIRST && (v) < PATHDIRECTORYNODE_TYPE_COUNT)
 
-struct pathdirectorynode_s; // The pathdirectorynode instance (opaque).
-typedef struct pathdirectorynode_s PathDirectoryNode;
-
 /**
- * @defgroup pathComparisonFlags  Path Comparison Flags
+ * @defgroup pathDirectoryFlags  Path Directory Flags
  * @{
  */
-#define PCF_NO_BRANCH       0x1 /// Do not consider branches as possible candidates.
-#define PCF_NO_LEAF         0x2 /// Do not consider leaves as possible candidates.
-#define PCF_MATCH_PARENT    0x4 /// Only consider nodes whose parent matches that referenced.
-#define PCF_MATCH_FULL      0x8 /// Whole path must match completely (i.e., path begins
-                                /// from the same root point) otherwise allow partial
-                                /// (i.e., relative) matches.
+#define PDF_ALLOW_DUPLICATE_LEAF  0x1 /// There can be more than one leaf with a given name.
 /**@}*/
+
+struct pathdirectorynode_s; // The pathdirectorynode instance (opaque).
+typedef struct pathdirectorynode_s PathDirectoryNode;
 
 /**
  * PathDirectory. Data structure for modelling a hierarchical relationship tree of
@@ -62,7 +70,7 @@ typedef struct pathdirectorynode_s PathDirectoryNode;
  * Somewhat similar to a Prefix Tree (Trie) representationally although that is
  * where the similarity ends.
  *
- * @ingroup data
+ * @ingroup base
  */
 
 // Number of buckets in the hash table.
@@ -100,6 +108,8 @@ struct pathdirectory_s; // The pathdirectory instance (opaque).
 typedef struct pathdirectory_s PathDirectory;
 
 PathDirectory* PathDirectory_New(void);
+PathDirectory* PathDirectory_NewWithFlags(int flags);
+
 void PathDirectory_Delete(PathDirectory* pd);
 
 /// @return  Number of unique paths in the directory.
@@ -221,7 +231,7 @@ ddstring_t* PathDirectory_CollectPaths(PathDirectory* pd, int flags, char delimi
  *
  * @return  The generated hash key.
  */
-ushort PathDirectory_HashName(const char* path, size_t len, char delimiter);
+ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter);
 
 #if _DEBUG
 void PathDirectory_Print(PathDirectory* pd, char delimiter);
@@ -237,8 +247,8 @@ PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node);
 /// @return  Type of this directory node.
 pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node);
 
-/// @return  Print-ready name for node @a type.
-const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
+/// @return  Hash for this directory node path fragment.
+ushort PathDirectoryNode_Hash(const PathDirectoryNode* node);
 
 /**
  * @param node  Right-most node in path.
@@ -262,5 +272,8 @@ void* PathDirectoryNode_DetachUserData(PathDirectoryNode* node);
 
 /// @return  Data associated with this.
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node);
+
+/// @return  Print-ready name for node @a type.
+const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type);
 
 #endif /* LIBDENG_PATHDIRECTORY_H */

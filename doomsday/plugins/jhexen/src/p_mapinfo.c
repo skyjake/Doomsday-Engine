@@ -254,28 +254,36 @@ void P_InitMapInfo(void)
                 break;
 
             case MCMD_SKY1: {
+                ddstring_t path;
                 Uri* uri;
 
                 SC_MustGetString();
+                Str_Init(&path);
+                Str_PercentEncode(Str_Set(&path, sc_String));
 
                 uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
-                Uri_SetPath(uri, sc_String);
+                Uri_SetPath(uri, Str_Text(&path));
                 info->sky1Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);
+                Str_Free(&path);
 
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
               }
             case MCMD_SKY2: {
+                ddstring_t path;
                 Uri* uri;
 
                 SC_MustGetString();
+                Str_Init(&path);
+                Str_PercentEncode(Str_Set(&path, sc_String));
 
                 uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
-                Uri_SetPath(uri, sc_String);
+                Uri_SetPath(uri, Str_Text(&path));
                 info->sky2Material = Materials_ResolveUri(uri);
                 Uri_Delete(uri);
+                Str_Free(&path);
 
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;

@@ -75,6 +75,7 @@ float defFontRGB2[3];
 float defFontRGB3[3];
 
 // The patches used in drawing the view border.
+// Percent-encoded.
 char* borderGraphics[] = {
     "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
@@ -232,6 +233,7 @@ void D_PreInit(void)
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
+
     cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.menuScale = .9f;
     cfg.menuTextGlitter = .5f;
@@ -246,6 +248,7 @@ void D_PreInit(void)
 
     cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudKeysCombine = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -271,6 +274,7 @@ void D_PreInit(void)
     cfg.xhairColor[1] = 1;
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
+
     cfg.filterStrength = .8f;
     cfg.moveCheckZ = true;
     cfg.jumpPower = 9;
@@ -545,7 +549,7 @@ void D_PostInit(void)
 
     // Validate episode and map.
     uri = G_ComposeMapUri((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;

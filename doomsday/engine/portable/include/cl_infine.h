@@ -28,6 +28,18 @@
 #ifndef LIBDENG_CLIENT_INFINE
 #define LIBDENG_CLIENT_INFINE
 
-void            Cl_Finale(int packetType, const byte* data);
+#include "reader.h"
+
+finaleid_t Cl_CurrentFinale(void);
+
+/**
+ * This is where clients start their InFine sequences.
+ */
+void Cl_Finale(Reader* msg);
+
+/**
+ * Client sends a request to skip the finale.
+ */
+void Cl_RequestFinaleSkip(void);
 
 #endif /* LIBDENG_CLIENT_INFINE */

@@ -168,12 +168,13 @@ boolean FR_Available(void)
 
 void FR_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1 / 35.0 };
-
     if(!inited)
         return;
+
     // Restricted to fixed 35 Hz ticks.
-    if(!M_RunTrigger(&fixed, ticLength))
+    /// @fixme We should not be synced to the games' fixed "sharp" timing.
+    ///        This font renderer is used by the engine's UI also.
+    if(!DD_IsSharpTick())
         return; // It's too soon.
 
     ++typeInTime;
@@ -796,6 +797,9 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     int alignFlags, short textFlags)
 {
     float x = (float) posX, y = (float) posY;
+    Point2Raw coords[4];
+    RectRaw geometry;
+    DGLuint glTex;
 
     if(alignFlags & ALIGN_RIGHT)
         x -= Fonts_CharWidth(font, ch);
@@ -812,93 +816,54 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
 
     switch(Font_Type(font))
     {
-    case FT_BITMAP: {
-        bitmapfont_t* bf = (bitmapfont_t*)font;
-        int s[2], t[2], x = 0, y = 0, w, h;
-
-        if(0 != BitmapFont_GLTextureName(font))
-            GL_BindTexture(BitmapFont_GLTextureName(font), GL_NEAREST);
-
-        BitmapFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-        w = s[1] - s[0];
-        h = t[1] - t[0];
-
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
-
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
-
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
-
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
-
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+    case FT_BITMAP:
+        glTex = BitmapFont_GLTextureName(font);
+        memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
+        BitmapFont_CharCoords(font, ch, coords);
         break;
-      }
+
     case FT_BITMAPCOMPOSITE: {
-        bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
-        DGLuint glTex = BitmapCompositeFont_CharGLTexture(font, ch);
-        int s[2], t[2], x = 0, y = 0, w, h;
+        const uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
 
-        if(glTex)
+        glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
+
+        if(border)
         {
-            GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            geometry.origin.x -= border;
+            geometry.origin.y -= border;
+            geometry.size.width += border*2;
+            geometry.size.height += border*2;
         }
-        else
-        {
-            GL_SetNoTexture();
-        }
-
-        BitmapCompositeFont_CharCoords(font, &s[0], &s[1], &t[0], &t[1], ch);
-
-        x = cf->_chars[ch].geometry.origin.x;
-        y = cf->_chars[ch].geometry.origin.y;
-        w = BitmapCompositeFont_CharWidth(font, ch);
-        h = BitmapCompositeFont_CharHeight(font, ch);
-        if(glTex)
-        {
-            w += 2;
-            h += 2;
-        }
-
-        x -= font->_marginWidth;
-        y -= font->_marginHeight;
-
-        glBegin(GL_QUADS);
-            // Upper left.
-            glTexCoord2i(s[0], t[0]);
-            glVertex2f(x, y);
-
-            // Upper Right.
-            glTexCoord2i(s[1], t[0]);
-            glVertex2f(x + w, y);
-
-            // Lower right.
-            glTexCoord2i(s[1], t[1]);
-            glVertex2f(x + w, y + h);
-
-            // Lower left.
-            glTexCoord2i(s[0], t[1]);
-            glVertex2f(x, y + h);
-        glEnd();
+        BitmapCompositeFont_CharCoords(font, ch, coords);
         break;
       }
     default:
         Con_Error("FR_DrawChar: Invalid font type %i.", (int) Font_Type(font));
         exit(1); // Unreachable.
     }
+
+    if(font->_marginWidth)
+    {
+        geometry.origin.x -= font->_marginWidth;
+        geometry.size.width += font->_marginWidth*2;
+    }
+    if(font->_marginHeight)
+    {
+        geometry.origin.y -= font->_marginHeight;
+        geometry.size.height += font->_marginHeight*2;
+    }
+
+    if(glTex)
+    {
+        /// \fixme Filtering should be determined at a higher level.
+        GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
+    }
+    else
+    {
+        GL_SetNoTexture();
+    }
+    GL_DrawRectWithCoords(&geometry, coords);
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(-x, -y, 0);
@@ -949,13 +914,49 @@ static float parseFloat(char** str)
     char* end;
 
     *str = M_SkipWhite(*str);
-    if(**str != '=')
-        return 0; // Now I'm confused!
+    if(**str != '=') return 0; // Now I'm confused!
 
     *str = M_SkipWhite(*str + 1);
     value = (float) strtod(*str, &end);
     *str = end;
     return value;
+}
+
+/**
+ * Expected: <whitespace> = <whitespace> [|"]<string>[|"]
+ */
+ static boolean parseString(char** str, char* buf, size_t bufLen)
+{
+    size_t len;
+    char* end;
+
+    if(!buf || bufLen == 0) return false;
+
+    *str = M_SkipWhite(*str);
+    if(**str != '=') return false; // Now I'm confused!
+
+    // Skip over any leading whitespace.
+    *str = M_SkipWhite(*str + 1);
+
+    // Skip over any opening '"' character.
+    if(**str == '"') (*str)++;
+
+    // Find the end of the string.
+    end = *str;
+    while(*end && *end != '}' && *end != ',' && *end !='"') { end++; }
+
+    len = end - *str;
+    if(len != 0)
+    {
+        dd_snprintf(buf, MIN_OF(len+1, bufLen), "%s", *str);
+        *str = end;
+    }
+
+    // Skip over any closing '"' character.
+    if(**str == '"')
+        (*str)++;
+
+    return true;
 }
 
 static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numBreaks)
@@ -1082,20 +1083,24 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
             fontid_t fontId;
             if(!strnicmp((*strPtr), "font", 4))
             {
-                Uri* uri;
+                char buf[80];
+
                 (*strPtr) += 4;
-                uri = Uri_NewWithPath2(*strPtr, RC_NULL);
-                fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
-                Uri_Delete(uri);
-                if(fontId != NOFONTID)
+                if(parseString(&(*strPtr), buf, 80))
                 {
-                    (*strPtr) += strlen(*strPtr);
-                    state->fontNum = fontId;
-                    continue;
+                    Uri* uri = Uri_NewWithPath2(buf, RC_NULL);
+
+                    fontId = Fonts_ResolveUri2(uri, true/*quiet please*/);
+                    Uri_Delete(uri);
+
+                    if(fontId != NOFONTID)
+                    {
+                        state->fontNum = fontId;
+                        continue;
+                    }
                 }
 
                 Con_Message("Warning:parseParamaterBlock: Unknown font '%s'.\n", (*strPtr));
-                (*strPtr) = M_FindWhite((*strPtr));
                 continue;
             }
 
@@ -1171,6 +1176,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     drawtextstate_t state;
     const char* fragment;
     int pass, curCase;
+    Size2Raw textSize;
     size_t charCount;
     float origColor[4];
     short textFlags;
@@ -1181,6 +1187,10 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     if(!text || !text[0] || !origin) return;
 
     origTextFlags &= ~(DTF_INTERNAL_MASK);
+
+    // If we aren't aligning to top-left we need to know the dimensions.
+    if(alignFlags & ALIGN_RIGHT)
+        FR_TextSize(&textSize, text);
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -1301,7 +1311,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                     // We'll take care of horizontal positioning of the fragment so align left.
                     fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                     if(alignFlags & ALIGN_RIGHT)
-                        alignx = -textFragmentWidth(fragment) * state.scaleX;
+                        alignx = -textSize.width * state.scaleX;
                 }
 
                 // Setup the scaling.

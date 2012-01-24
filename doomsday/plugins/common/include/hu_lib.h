@@ -194,11 +194,18 @@ typedef struct mn_object_s {
     void* data1;
     int data2;
 
+    // Auto initialized:
+
     /// Current geometry.
     Rect* _geometry;
+
+    /// MenuPage which owns this object (if any).
+    struct mn_page_s* _page;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
+
+struct mn_page_s* MNObject_Page(const mn_object_t* obj);
 
 int MNObject_Flags(const mn_object_t* obj);
 
@@ -260,7 +267,7 @@ boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 typedef enum {
-    MENU_COLOR1,
+    MENU_COLOR1 = 0,
     MENU_COLOR2,
     MENU_COLOR3,
     MENU_COLOR4,
@@ -276,7 +283,7 @@ typedef enum {
 #define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
 
 typedef enum {
-    MENU_FONT1,
+    MENU_FONT1 = 0,
     MENU_FONT2,
     MENU_FONT3,
     MENU_FONT4,
@@ -292,22 +299,47 @@ typedef enum {
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
 typedef struct mn_page_s {
-    mn_object_t* objects; // List of objects.
-    Point2Raw origin;
-    fontid_t fonts[MENU_FONT_COUNT];
-    uint colors[MENU_COLOR_COUNT];
-    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin);
-    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
-    struct mn_page_s* previous; // Pointer to the previous page, if any.
-    void* data;
-
-    // Auto-initialized.
+    /// Collection of objects on this page.
+    mn_object_t* objects;
     int objectsCount;
-    int focus; // Index of the focus object.
+
+    /// "Physical" geometry in fixed 320x200 screen coordinate space.
+    Point2Raw origin;
     Rect* geometry;
+
+    /// Previous page else @c NULL
+    struct mn_page_s* previous;
+
+    /// Title of this page.
+    ddstring_t title;
+
+    /// Index of the currently focused object else @c -1
+    int focus;
+
+    /// Predefined fonts objects on this page.
+    fontid_t fonts[MENU_FONT_COUNT];
+
+    /// Predefined colors for objects on this page.
+    uint colors[MENU_COLOR_COUNT];
+
+    /// Page drawing routine.
+    void (*drawer) (struct mn_page_s* page, const Point2Raw* offset);
+
+    /// Menu command responder routine.
+    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
+
+    /// User data.
+    void* userData;
 } mn_page_t;
 
 void MNPage_Initialize(mn_page_t* page);
+
+void MNPage_SetTitle(mn_page_t* page, const char* title);
+
+void MNPage_SetX(mn_page_t* page, int x);
+void MNPage_SetY(mn_page_t* page, int y);
+
+void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
 
 /// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
@@ -347,6 +379,8 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
  * @return  Identifier of the found font else @c 0
  */
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
+
+void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
 
 /**
  * Text objects.
@@ -680,7 +714,6 @@ extern const mn_rendstate_t* mnRendState;
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-int MN_CountObjects(mn_object_t* list);
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);

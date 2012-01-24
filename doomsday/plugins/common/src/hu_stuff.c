@@ -1455,7 +1455,7 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
 
-static void drawMapTitle(void)
+void Hu_DrawMapTitle(const Point2Raw* offset)
 {
     const char* lname, *lauthor;
     float y = 0, alpha = 1;
@@ -1476,6 +1476,12 @@ static void drawMapTitle(void)
     if(!lname)
         lname = P_GetMapName(gameMap);
 #endif
+
+    if(offset)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(offset->x, offset->y, 0);
+    }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
@@ -1513,16 +1519,37 @@ static void drawMapTitle(void)
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    if(offset)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-offset->x, -offset->y, 0);
+    }
 }
 
-void Hu_DrawMapTitle(int x, int y, float scale)
+void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
+    Point2Raw origin = { SCREENWIDTH/2, 6 };
+    float scale;
+
+    if(!portGeometry) return;
+
+    // Level information is shown for a few seconds in the beginning of a level.
+    if(!cfg.mapTitle || (actualMapTime > 6 * TICSPERSEC)) return;
+
+    R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
+                                    portGeometry->size.width, portGeometry->size.height,
+                                    cfg.menuScaleMode);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
+    DGL_Scalef(scale, scale * 1.2f/*aspect correct*/, 1);
+    DGL_Translatef(origin.x, origin.y, 0);
 
-    drawMapTitle();
+    // Make the title 3/4 smaller.
+    DGL_Scalef(.75f, .75f, 1);
+
+    Hu_DrawMapTitle(NULL/*no offset*/);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

@@ -309,6 +309,17 @@ int P_GetPlayerCheats(const player_t* player)
     }
 }
 
+int P_CountPlayersInGame(void)
+{
+    int c, count = 0;
+    for(c = 0; c < MAXPLAYERS; ++c)
+    {
+        player_t* player = players + c;
+        if(player->plr->inGame) count += 1;
+    }
+    return count;
+}
+
 /**
  * Determines whether the player's state is one of the walking states.
  *

@@ -326,8 +326,8 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
 
 static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
 {
+    ddstring_t* path, decodedPath;
     spriterecord_frame_t* frame;
-    ddstring_t* path;
     spriterecord_t* rec;
     boolean link;
     Uri* uri;
@@ -350,12 +350,15 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     // Add the frame(s).
+    Str_Init(&decodedPath);
+    Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
+
     link = false;
     frame = rec->frames;
     if(rec->frames)
     {
-        while(!(frame->frame[0]    == Str_At(path, 4) - 'a' + 1 &&
-                frame->rotation[0] == Str_At(path, 5) - '0') &&
+        while(!(frame->frame[0]    == toupper(Str_At(&decodedPath, 4)) - 'A' + 1 &&
+                frame->rotation[0] == toupper(Str_At(&decodedPath, 5)) - '0') &&
               (frame = frame->next)) {}
     }
 
@@ -371,16 +374,17 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    frame->frame[0]    = Str_At(path, 4) - 'a' + 1;
-    frame->rotation[0] = Str_At(path, 5) - '0';
-    if(Str_At(path, 6))
+    frame->frame[0]    = toupper(Str_At(&decodedPath, 4)) - 'A' + 1;
+    frame->rotation[0] = toupper(Str_At(&decodedPath, 5)) - '0';
+    if(Str_At(&decodedPath, 6))
     {
-        frame->frame[1]    = Str_At(path, 6) - 'a' + 1;
-        frame->rotation[1] = Str_At(path, 7) - '0';
+        frame->frame[1]    = toupper(Str_At(&decodedPath, 6)) - 'A' + 1;
+        frame->rotation[1] = toupper(Str_At(&decodedPath, 7)) - '0';
     }
     else
     {
         frame->frame[1] = 0;
+        frame->rotation[1] = 0;
     }
 
     if(link)
@@ -389,6 +393,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
         rec->frames = frame;
     }
 
+    Str_Free(&decodedPath);
     Str_Delete(path);
     return 0; // Continue iteration.
 }
@@ -547,22 +552,26 @@ void R_InitSprites(void)
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
-    { int max = MAX_OF(numSpriteRecords, countSprNames.num);
-    if(max > 0)
+    if(numSpriteRecords)
     {
-        spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
-        int n = max-1;
-        rec = spriteRecords;
-        do
+        int max = MAX_OF(numSpriteRecords, countSprNames.num);
+        if(max > 0)
         {
-            int idx = Def_GetSpriteNum(rec->name);
-            list[idx == -1? n-- : idx] = rec;
-        } while((rec = rec->next));
+            spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
+            int n = max-1;
 
-        // Create sprite definitions from the located sprite patch lumps.
-        initSpriteDefs(list, max);
-        M_Free(list);
-    }}
+            rec = spriteRecords;
+            do
+            {
+                int idx = Def_GetSpriteNum(rec->name);
+                list[idx == -1? n-- : idx] = rec;
+            } while((rec = rec->next));
+
+            // Create sprite definitions from the located sprite patch lumps.
+            initSpriteDefs(list, max);
+            M_Free(list);
+        }
+    }
     /// \kludge end
 
     // We are now done with the sprite records.

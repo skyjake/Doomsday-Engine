@@ -1,5 +1,5 @@
 #ifndef __LZSS_IO_COMPRESSION_H__
-#define __LZSS_IO_COMPRESSION_H_
+#define __LZSS_IO_COMPRESSION_H__
 
 #ifdef __cplusplus
 extern          "C" {
@@ -35,42 +35,40 @@ typedef int     int32_t;
 #define LZFILE_FLAG_EOF     8	   /* reached the end-of-file */
 #define LZFILE_FLAG_ERROR   16	   /* an error has occurred */
 
-	typedef struct LZFILE_s {
-		int             hndl;	   /* file handle */
-		int             flags;	   /* LZFILE_FLAG_* constants */
-		unsigned char  *buf_pos;   /* position in buffer */
-		int             buf_size;  /* number of bytes in the buffer */
-		long            todo;	   /* number of bytes still on the disk */
-		struct LZFILE_s *parent;   /* nested, parent file */
-		void           *pack_data; /* for LZSS compression */
-		char           *filename;  /* name of the file */
-		char           *password;  /* current encryption position */
-		unsigned char   buf[F_BUF_SIZE];	/* the actual data buffer */
-	} LZFILE;
+typedef struct LZFILE_s {
+    int             hndl;	   /* file handle */
+    int             flags;	   /* LZFILE_FLAG_* constants */
+    unsigned char  *buf_pos;   /* position in buffer */
+    int             buf_size;  /* number of bytes in the buffer */
+    long            todo;	   /* number of bytes still on the disk */
+    struct LZFILE_s *parent;   /* nested, parent file */
+    void           *pack_data; /* for LZSS compression */
+    char           *filename;  /* name of the file */
+    char           *password;  /* current encryption position */
+    unsigned char   buf[F_BUF_SIZE];	/* the actual data buffer */
+} LZFILE;
 
 #define lzEOF(f)       ((f)->flags & LZFILE_FLAG_EOF)
 #define lzError(f)     ((f)->flags & LZFILE_FLAG_ERROR)
 
-	void LZSSEXPORT lzPassword(char *password);
-	LZFILE         *LZSSEXPORT lzOpen(char *filename, char *mode);
-	int LZSSEXPORT  lzClose(LZFILE * f);
-	LZFILE         *LZSSEXPORT lzOpenChunk(LZFILE * f, int pack);
-	LZFILE         *LZSSEXPORT lzCloseChunk(LZFILE * f);
-	int LZSSEXPORT  lzSeek(LZFILE * f, int offset);
-        int16_t LZSSEXPORT  lzGetW(LZFILE * f);
-        int32_t LZSSEXPORT lzGetL(LZFILE * f);
-        int16_t LZSSEXPORT  lzPutW(int16_t w, LZFILE * f);
-        int32_t LZSSEXPORT lzPutL(int32_t l, LZFILE * f);
-	int LZSSEXPORT  lzGetWm(LZFILE * f);
-	long LZSSEXPORT lzGetLm(LZFILE * f);
-	int LZSSEXPORT  lzPutWm(int w, LZFILE * f);
-	long LZSSEXPORT lzPutLm(long l, LZFILE * f);
-	long LZSSEXPORT lzRead(void *p, long n, LZFILE * f);
-	long LZSSEXPORT lzWrite(void *p, long n, LZFILE * f);
-	char           *LZSSEXPORT lzGetS(char *p, int max, LZFILE * f);
-	int LZSSEXPORT  lzPutS(char *p, LZFILE * f);
-	int LZSSEXPORT  lzGetC(LZFILE * f);
-	int LZSSEXPORT  lzPutC(int c, LZFILE * f);
+void LZSSEXPORT     lzPassword(char *password);
+LZFILE* LZSSEXPORT  lzOpen(char *filename, char *mode);
+int LZSSEXPORT      lzClose(LZFILE * f);
+int LZSSEXPORT      lzSeek(LZFILE * f, int offset);
+int16_t LZSSEXPORT  lzGetW(LZFILE * f);
+int32_t LZSSEXPORT  lzGetL(LZFILE * f);
+int16_t LZSSEXPORT  lzPutW(int16_t w, LZFILE * f);
+int32_t LZSSEXPORT  lzPutL(int32_t l, LZFILE * f);
+int LZSSEXPORT      lzGetWm(LZFILE * f);
+long LZSSEXPORT     lzGetLm(LZFILE * f);
+int LZSSEXPORT      lzPutWm(int w, LZFILE * f);
+long LZSSEXPORT     lzPutLm(long l, LZFILE * f);
+long LZSSEXPORT     lzRead(void *p, long n, LZFILE * f);
+long LZSSEXPORT     lzWrite(void *p, long n, LZFILE * f);
+char* LZSSEXPORT    lzGetS(char *p, int max, LZFILE * f);
+int LZSSEXPORT      lzPutS(char *p, LZFILE * f);
+int LZSSEXPORT      lzGetC(LZFILE * f);
+int LZSSEXPORT      lzPutC(int c, LZFILE * f);
 
 #ifdef __cplusplus
 }

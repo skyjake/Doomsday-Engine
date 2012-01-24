@@ -436,7 +436,7 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Shuting down the console...\n");
+    Con_Message("Shutting down the console...\n");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
@@ -2175,7 +2175,6 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if(DD_GameLoaded())
     {
-        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
         Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
     }
     return true;

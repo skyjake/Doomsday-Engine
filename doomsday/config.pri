@@ -10,7 +10,8 @@
 #
 # CONFIG options for Doomsday:
 # - deng_32bitonly          Only do a 32-bit build (no 64-bit)
-# - deng_aptunstable        Include the unstable apt repository
+# - deng_aptstable          Include the stable apt repository .list
+# - deng_aptunstable        Include the unstable apt repository .list
 # - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nofixedasm         Disable assembler fixed-point math
 # - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
@@ -64,11 +65,11 @@ defineTest(doPostLink) {
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
-    echo(Debug build.)
+    !win32: echo(Debug build.)
     DEFINES += _DEBUG
     CONFIG += deng_rangecheck
 } else {
-    echo(Release build.)
+    !win32: echo(Release build.)
     DEFINES += NDEBUG
 }
 
@@ -102,13 +103,15 @@ unix {
     # Ease up on the warnings. (The old C code is a bit messy.)
     QMAKE_CFLAGS_WARN_ON -= -Wall
     QMAKE_CFLAGS_WARN_ON -= -W
+    QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration
 }
 unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm deng_snowberry deng_packres
 
     # Choose the apt repository to include in the distribution.
-    CONFIG += deng_aptunstable
+    isStableRelease(): CONFIG += deng_aptstable        
+                 else: CONFIG += deng_aptunstable
 
     # Link against standard math library.
     LIBS += -lm

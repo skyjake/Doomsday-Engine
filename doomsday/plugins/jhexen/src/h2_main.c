@@ -79,6 +79,7 @@ const float defFontRGB2[]  = { 1.f,  .65f, .275f };
 const float defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
+// Percent-encoded.
 char* borderGraphics[] = {
     "Flats:F_022", // Background.
     "BORDT", // Top.
@@ -252,6 +253,8 @@ void X_PreInit(void)
     cfg.menuTextFlashColor[2] = .5f;
     cfg.menuTextFlashSpeed = 4;
     cfg.menuCursorRotate = false;
+
+    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudScale = .7f;
     cfg.hudColor[0] = defFontRGB[0];
     cfg.hudColor[1] = defFontRGB[1];
@@ -464,7 +467,7 @@ void X_PostInit(void)
 
     // Validate episode and map.
     uri = G_ComposeMapUri(0, startMap);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startMap = 0;

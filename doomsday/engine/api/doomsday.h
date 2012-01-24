@@ -1,33 +1,44 @@
-/**\file doomsday.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file doomsday.h
+ * Primary header file for the Doomsday Engine Public API
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @todo Break this header file up into group-specific ones.
+ * Including doomsday.h should include all of the public API headers.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 /**
- * Doomsday Engine API (Routines exported from Doomsday.exe).
+ * @mainpage libdeng API
  *
- * Games and plugins need to include this to gain access to the engine's
- * features.
+ * This documentation covers all the functions and data that Doomsday makes
+ * available for games and other plugins.
+ *
+ * @section Overview
+ * The documentation has been organized into <a href="modules.html">modules</a>.
+ * The primary ones are listed below:
+ * - @ref base
+ * - @ref console
+ * - @ref input
+ * - @ref network
+ * - @ref resource
+ * - @ref render
  */
 
 #ifndef LIBDENG_EXPORTS_H
@@ -41,7 +52,7 @@
 #endif
 
 #ifdef __cplusplus
-extern          "C" {
+extern "C" {
 #endif
 
 /**
@@ -50,7 +61,7 @@ extern          "C" {
  * For example, a game could use sector_t to identify to sector to
  * change with the Map Update API.
  *
- * Define __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
+ * Define @c __INTERNAL_MAP_DATA_ACCESS__ if access to the internal map data
  * structures is needed.
  */
 #ifndef __INTERNAL_MAP_DATA_ACCESS__
@@ -85,13 +96,29 @@ struct font_s;
 //------------------------------------------------------------------------
 
 /**
+ * @defgroup base Base
+ */
+
+/**
+ * @defgroup defs Definitions
+ * @ingroup base
+ */
+
+/**
+ * @defgroup fs File System
+ * @ingroup base
+ */
+
+/// @addtogroup game
+///@{
+/**
  * Register a new game.
- *
- * \note Game registration order defines the order of the automatic game
- * identification/selection logic.
  *
  * @param definition  GameDef structure defining the new game.
  * @return  Unique identifier/name assigned to resultant game.
+ *
+ * @note Game registration order defines the order of the automatic game
+ * identification/selection logic.
  */
 gameid_t DD_DefineGame(const GameDef* definition);
 
@@ -107,15 +134,16 @@ gameid_t DD_GameIdForKey(const char* identityKey);
 /**
  * Registers a new resource for the specified game.
  *
- * \note Resource registration order defines the load order of resources
- * (among those of the same type).
- *
  * @param game          Unique identifier/name of the game.
  * @param rclass        Class of resource being added.
- * @param rflags        @see resourceFlags
+ * @param rflags        Resource flags (see @ref resourceFlags).
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+ * @param params        Additional parameters.
+ *
+ * @note Resource registration order defines the load order of resources
+ * (among those of the same type).
  */
 void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
 
@@ -132,21 +160,39 @@ boolean DD_GameInfo(GameInfo* info);
     void            DD_SetVariable(int ddvalue, void* ptr);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
+///@}
 
+/// @addtogroup namespace
+///@{
 texturenamespaceid_t DD_ParseTextureNamespace(const char* str);
 materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
+///@}
 
+/**
+ * @defgroup material Materials
+ * @ingroup resource
+ */
+///@{
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+///@}
 
+/// @addtogroup defs
+///@{
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
     int             Def_Set(int type, int index, int value, const void* ptr);
     int             Def_EvalFlags(char* flags);
+///@}
 
+/// @addtogroup input
+///@{
     // Base: Input.
     void            DD_ClearKeyRepeaters(void);
     int             DD_GetKeyCode(const char* name);
+///@}
 
+/// @addtogroup fs
+///@{
     // Base: File system.
     int             F_Access(const char* path);
     int             F_FileExists(const char* path);
@@ -157,12 +203,16 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     boolean         M_WriteFile(const char* path, const char* source, size_t length);
 
     // Base: File system path/name utilities.
+    void            F_FileName(ddstring_t* dst, const char* src);
     void            F_ExtractFileBase(char* dst, const char* path, size_t len);
     const char*     F_FindFileExtension(const char* path);
 
     boolean         F_TranslatePath(ddstring_t* dst, const ddstring_t* src);
     const char*     F_PrettyPath(const char* path);
+///@}
 
+/// @addtogroup memzone
+///@{
     // Base: Zone.
     void* _DECALL   Z_Malloc(size_t size, int tag, void* ptr);
     void* _DECALL   Z_Calloc(size_t size, int tag, void* user);
@@ -172,6 +222,7 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     void            Z_FreeTags(int lowTag, int highTag);
     void            Z_ChangeTag2(void* ptr, int tag);
     void            Z_CheckHeap(void);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -179,6 +230,8 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup console
+///@{
     int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
@@ -218,18 +271,27 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
     int             DD_Execute(int silent, const char* command);
     int             DD_Executef(int silent, const char* command, ...);
+///@}
 
+/// @addtogroup bindings
+///@{
     // Console: Bindings.
     void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
     int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
     int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
-
+///@}
 //------------------------------------------------------------------------
 //
 // System.
 //
 //------------------------------------------------------------------------
 
+/**
+ * @defgroup system System Routines
+ * @ingroup base
+ * Functionality provided by or related to the operating system.
+ */
+///@{
     void            Sys_TicksPerSecond(float num);
     int             Sys_GetTime(void);
     double          Sys_GetSeconds(void);
@@ -237,6 +299,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
     void            Sys_Sleep(int millisecs);
     int             Sys_CriticalMessage(char* msg);
     void            Sys_Quit(void);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -244,6 +307,9 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 //
 //------------------------------------------------------------------------
 
+/// @defgroup mapEdit Map Editor
+/// @ingroup map
+///@{
 boolean MPE_Begin(const char* mapUri);
 boolean MPE_End(void);
 
@@ -255,10 +321,14 @@ boolean MPE_End(void);
     uint            MPE_PlaneCreate(uint sector, float height, materialid_t materialId, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
     uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
     boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
+///@}
 
+/// @addtogroup mobj
+///@{
     // Custom map object data types.
     boolean         P_RegisterMapObj(int identifier, const char* name);
     boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -266,12 +336,65 @@ boolean MPE_End(void);
 //
 //------------------------------------------------------------------------
 
-    void            Net_SendPacket(int to_player, int type, const void* data, size_t length);
-    int             Net_GetTicCmd(void* command, int player);
-    const char*     Net_GetPlayerName(int player);
-    ident_t         Net_GetPlayerID(int player);
-    Smoother*       Net_PlayerSmoother(int player);
-    boolean         Sv_CanTrustClientPos(int player);
+/// @addtogroup network
+///@{
+
+/**
+ * Send a packet over the network.
+ *
+ * @param to_player  Player number to send to. The server is number zero.
+ *                   May include @ref netSendFlags.
+ * @param type       Type of the packet.
+ * @param data       Data of the packet.
+ * @param length     Length of the data.
+ */
+void Net_SendPacket(int to_player, int type, const void* data, size_t length);
+
+/**
+ * @return The name of player @a player.
+ */
+const char* Net_GetPlayerName(int player);
+
+/**
+ * @return Client identifier for player @a player.
+ */
+ident_t Net_GetPlayerID(int player);
+
+/**
+ * Provides access to the player's movement smoother.
+ */
+Smoother* Net_PlayerSmoother(int player);
+
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int player);
+
+/**
+ * Searches through the client mobj hash table and returns the clmobj
+ * with the specified ID, if that exists. Note that client mobjs
+ * are also linked to the thinkers list.
+ *
+ * @param id  Mobj identifier.
+ *
+ * @return  Pointer to the mobj.
+ */
+struct mobj_s* ClMobj_Find(thid_t id);
+
+/**
+ * Enables or disables local action function execution on the client.
+ *
+ * @param mo  Client mobj.
+ * @param enable  @c true to enable local actions, @c false to disable.
+ */
+void ClMobj_EnableLocalActions(struct mobj_s* mo, boolean enable);
+
+/**
+ * Determines if local action functions are enabled for client mobj @a mo.
+ */
+boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
+
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -279,9 +402,19 @@ boolean MPE_End(void);
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup math
+///@{
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
+///@}
+
+/**
+ * @defgroup playsim Playsim
+ * @ingroup game
+ */
+///@{
+
     int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
     int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
     int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
@@ -321,27 +454,41 @@ boolean MPE_End(void);
     int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
+///@}
 
+/**
+ * @defgroup controls Controls
+ * @ingroup input
+ */
+///@{
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
     void            P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset);
     int             P_GetImpulseControlState(int playerNum, int control);
     void            P_Impulse(int playerNum, int control);
+///@}
 
-    // Play: Setup.
-
+/// @addtogroup map
+///@{
+// Play: Setup.
 boolean P_MapExists(const char* uri);
 boolean P_MapIsCustom(const char* uri);
 const char* P_MapSourceFile(const char* uri);
 
 boolean P_LoadMap(const char* uri);
+///@}
 
-    // Play: World data access (Map Data Updates and access to other information).
+// Play: World data access (Map Data Updates and access to other information).
 #include "dd_world.h"
 
-    // Play: Misc.
-    void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+/// @addtogroup playsim
+///@{
+// Play: Misc.
+void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
+///@}
 
+/// @addtogroup mobj
+///@{
     // Play: Mobjs.
     struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z, angle_t angle, float radius, float height, int ddflags);
     void            P_MobjDestroy(struct mobj_s* mo);
@@ -360,6 +507,13 @@ boolean P_LoadMap(const char* uri);
     int             P_MobjSectorsIterator(struct mobj_s* mo,
                                           int (*func) (sector_t*, void*),
                                           void* data);
+///@}
+
+/**
+ * @defgroup polyobj Polygon Objects
+ * @ingroup map
+ */
+///@{
 
     // Play: Polyobjs.
     boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
@@ -369,20 +523,17 @@ boolean P_LoadMap(const char* uri);
 
     struct polyobj_s* P_GetPolyobj(uint num);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
+///@}
+
+/// @addtogroup material
+///@{
 
 // Play: Materials.
 materialid_t Materials_ResolveUri(const Uri* uri);
 materialid_t Materials_ResolveUriCString(const char* path);
 Uri* Materials_ComposeUri(materialid_t materialId);
 
-    // Play: Thinkers.
-    void            DD_InitThinkers(void);
-    void            DD_RunThinkers(void);
-    void            DD_ThinkerAdd(thinker_t* th);
-    void            DD_ThinkerRemove(thinker_t* th);
-    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-
-    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -390,7 +541,12 @@ Uri* Materials_ComposeUri(materialid_t materialId);
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup gl
+///@{
+
 fontid_t Fonts_ResolveUri(const Uri* uri);
+
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -398,7 +554,24 @@ fontid_t Fonts_ResolveUri(const Uri* uri);
 //
 //------------------------------------------------------------------------
 
+/**
+ * Determines whether the current run of the thinkers should be considered a
+ * "sharp" tick. Sharp ticks occur exactly 35 times per second. Thinkers may be
+ * called at any rate faster than this; in order to retain compatibility with
+ * the original Doom engine game logic that ran at 35 Hz, such logic should
+ * only be executed on sharp ticks.
+ *
+ * @return @c true, if a sharp tick is currently in effect.
+ *
+ * @ingroup playsim
+ */
 boolean DD_IsSharpTick(void);
+
+/**
+ * @defgroup render Renderer
+ */
+///@{
+
 int DD_GetFrameRate(void);
 
 void R_SetupMap(int mode, int flags);
@@ -466,19 +639,29 @@ void R_HSVToRGB(float* rgb, float h, float s, float v);
 angle_t R_PointToAngle2(float x1, float y1, float x2, float y2);
 struct subsector_s* R_PointInSubsector(float x, float y);
 
+///@}
+
 //------------------------------------------------------------------------
 //
 // Renderer.
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup render
+///@{
+
     void            R_SkyParams(int layer, int param, void* data);
+
+///@}
 
 //------------------------------------------------------------------------
 //
 // Graphics.
 //
 //------------------------------------------------------------------------
+
+/// @addtogroup gl
+///@{
 
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
@@ -490,11 +673,16 @@ void GL_ConfigureBorderedProjection(borderedprojectionstate_t* bp, int flags, in
 void GL_BeginBorderedProjection(borderedprojectionstate_t* bp);
 void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
 
+///@}
+
 //------------------------------------------------------------------------
 //
 // Audio.
 //
 //------------------------------------------------------------------------
+
+/// @addtogroup audio
+///@{
 
     void            S_MapChange(void);
     int             S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, float* pos, float volume);
@@ -512,11 +700,21 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp);
     void            S_StopMusic(void);
     void            S_PauseMusic(boolean doPause);
 
+///@}
+
 //------------------------------------------------------------------------
 //
 // Miscellaneous.
 //
 //------------------------------------------------------------------------
+
+/**
+ * @ingroup render
+ */
+int M_ScreenShot(const char* filename, int bits);
+
+/// @addtogroup base
+///@{
 
 char* M_SkipWhite(char* str);
 char* M_FindWhite(char* str);
@@ -525,7 +723,10 @@ boolean M_IsStringValidInt(const char* str);
 boolean M_IsStringValidByte(const char* str);
 boolean M_IsStringValidFloat(const char* str);
 
-    int             M_ScreenShot(const char* filename, int bits);
+///@}
+
+/// @addtogroup math
+///@{
 
     void            M_ClearBox(fixed_t* box);
     void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
@@ -537,10 +738,6 @@ boolean M_IsStringValidFloat(const char* str);
     byte            RNG_RandByte(void);
     float           RNG_RandFloat(void);
 
-    // Miscellaneous: Time utilities.
-    boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);
-    boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime);
-
     // Miscellaneous: Math.
     void            V2_Rotate(float vec[2], float radians);
     float           V2_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
@@ -550,6 +747,11 @@ boolean M_IsStringValidFloat(const char* str);
     float           M_ProjectPointOnLine(const float* point, const float* linepoint, const float* delta, float gap, float* result);
 
     binangle_t      bamsAtan2(int y, int x);
+
+///@}
+
+/// @addtogroup base
+///@{
 
     // Miscellaneous: Command line.
     void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
@@ -561,6 +763,8 @@ boolean M_IsStringValidFloat(const char* str);
     int _DECALL     ArgCheckWith(const char* check, int num);
     int _DECALL     ArgExists(const char* check);
     int _DECALL     ArgIsOption(int i);
+
+///@}
 
 #ifdef __cplusplus
 }

@@ -43,6 +43,9 @@ void Sys_Init(void);
 void Sys_Shutdown(void);
 void Sys_Quit(void);
 
+/// @return  @c true if shutdown is in progress.
+boolean Sys_IsShuttingDown(void);
+
 int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
 

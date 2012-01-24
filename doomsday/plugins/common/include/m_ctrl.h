@@ -31,8 +31,6 @@
 
 #include "hu_lib.h"
 
-extern mn_page_t ControlsMenu;
-
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha);

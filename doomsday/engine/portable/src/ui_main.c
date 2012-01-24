@@ -512,13 +512,10 @@ void UI_Ticker(timespan_t time)
     static trigger_t fixed = { 1 / 35.0, 0 };
     float diff = 0;
 
-    if(!uiActive)
-        return;
-    if(!uiCurrentPage)
-        return;
+    if(!uiActive || !uiCurrentPage) return;
 
-    if(!M_RunTrigger(&fixed, time))
-        return;
+    // Time to think?
+    if(!M_RunTrigger(&fixed, time)) return;
 
     // Move towards the target alpha level for the entire UI.
     diff = uiTargetAlpha - uiAlpha;

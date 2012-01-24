@@ -46,6 +46,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "gl_texmanager.h"
 #include "rend_particle.h" // \todo Should not be necessary at this level.
 
 // MACROS ------------------------------------------------------------------

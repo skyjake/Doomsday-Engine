@@ -66,6 +66,15 @@ weapontype_t    P_WeaponSlotCycle(weapontype_t type, boolean prev);
 int             P_GetPlayerNum(player_t* plr);
 int             P_GetPlayerCheats(const player_t* plr);
 
+/**
+ * Count the number of players currently marked as "in game". Note that
+ * an in-game player may not yet have a (CL)Mobj assigned to them, this
+ * is a count of players in the current game session.
+ *
+ * @return  Total count.
+ */
+int P_CountPlayersInGame(void);
+
 boolean         P_PlayerInWalkState(player_t* plr);
 
 weapontype_t    P_PlayerFindWeapon(player_t* plr, boolean prev);

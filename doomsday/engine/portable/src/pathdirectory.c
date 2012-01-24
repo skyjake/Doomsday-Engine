@@ -25,9 +25,11 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_filesys.h"
+#include "de_system.h"
+#include "m_misc.h" // For M_NumDigits
 
 #include "stringpool.h"
-#include "m_misc.h"
+#include "blockset.h"
 
 #include "pathdirectory.h"
 
@@ -41,23 +43,23 @@ struct pathdirectorynode_s {
     PathDirectoryNode* next;
 
     /// Parent node in the user's logical hierarchy.
-    PathDirectoryNode* _parent;
+    PathDirectoryNode* parent;
 
     /// Symbolic node type.
-    pathdirectorynode_type_t _type;
+    pathdirectorynode_type_t type;
 
     /// PathDirectory which owns this node.
-    PathDirectory* _directory;
+    PathDirectory* directory;
 
     /// User data present at this node.
-    pathdirectorynode_userdatapair_t _pair;
+    pathdirectorynode_userdatapair_t pair;
 };
 
-static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
+static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
     StringPoolInternId internId, void* userData);
 
-static void PathDirectoryNode_Delete(PathDirectoryNode* node);
+static void deleteNode(PathDirectoryNode* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
 StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
@@ -72,17 +74,30 @@ struct pathdirectory_s {
     struct pathdirectory_internpool_s {
         StringPool* strings;
         ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } _internPool;
+    } internPool;
+
+    int flags; /// @see pathDirectoryFlags
 
     /// Path hash map.
-    pathdirectory_pathhash_t* _pathLeafHash;
-    pathdirectory_pathhash_t* _pathBranchHash;
+    pathdirectory_pathhash_t* pathLeafHash;
+    pathdirectory_pathhash_t* pathBranchHash;
 
     /// Number of unique paths in the directory.
-    uint _size;
+    uint size;
 };
 
-ushort PathDirectory_HashName(const char* path, size_t len, char delimiter)
+static volatile uint pathDirectoryInstanceCount;
+
+/// A mutex is used to prevent Data races in the node allocator.
+static mutex_t nodeAllocator_Mutex;
+
+/// Threaded access to the following Data is protected by nodeAllocator_Mutex:
+/// Nodes are block-allocated from this set.
+static blockset_t* NodeBlockSet;
+/// Linked list of used directory nodes for re-use. Linked with PathDirectoryNode::next
+static PathDirectoryNode* UsedNodes;
+
+ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter)
 {
     const char* c = path + len - 1;
     ushort key = 0;
@@ -111,7 +126,7 @@ static __inline pathdirectory_pathhash_t** hashAddressForNodeType(PathDirectory*
     pathdirectorynode_type_t type)
 {
     assert(pd && VALID_PATHDIRECTORYNODE_TYPE(type));
-    return (type == PT_LEAF? &pd->_pathLeafHash : &pd->_pathBranchHash);
+    return (type == PT_LEAF? &pd->pathLeafHash : &pd->pathBranchHash);
 }
 
 static __inline const pathdirectory_pathhash_t** hashAddressForNodeType_Const(const PathDirectory* pd,
@@ -138,10 +153,10 @@ static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 static void clearInternPool(PathDirectory* pd)
 {
     assert(pd);
-    if(pd->_internPool.strings)
+    if(pd->internPool.strings)
     {
-        StringPool_Delete(pd->_internPool.strings), pd->_internPool.strings = NULL;
-        free(pd->_internPool.idHashMap), pd->_internPool.idHashMap = NULL;
+        StringPool_Delete(pd->internPool.strings), pd->internPool.strings = NULL;
+        free(pd->internPool.idHashMap), pd->internPool.idHashMap = NULL;
     }
 }
 
@@ -160,7 +175,7 @@ static void clearNodeList(PathDirectoryNode** list)
             exit(1); // Unreachable.
         }
 #endif
-        PathDirectoryNode_Delete(*list);
+        deleteNode(*list);
     } while(NULL != (*list = next));
 }
 
@@ -204,7 +219,7 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     PathDirectoryNode* node = NULL;
     if(ph)
     {
-        ushort hash = pd->_internPool.idHashMap[internId-1];
+        ushort hash = pd->internPool.idHashMap[internId-1];
         for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
@@ -220,7 +235,7 @@ static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
     assert(pd);
     if(0 == internId)
         Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
-    return pd->_internPool.idHashMap[internId-1];
+    return pd->internPool.idHashMap[internId-1];
 }
 
 static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
@@ -231,10 +246,10 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     uint oldSize;
     assert(pd);
 
-    pool = pd->_internPool.strings;
+    pool = pd->internPool.strings;
     if(!pool)
     {
-        pool = pd->_internPool.strings = StringPool_New();
+        pool = pd->internPool.strings = StringPool_New();
     }
     oldSize = StringPool_Size(pool);
 
@@ -242,15 +257,15 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
-        pd->_internPool.idHashMap = (ushort*) realloc(pd->_internPool.idHashMap, sizeof *pd->_internPool.idHashMap * StringPool_Size(pool));
-        if(!pd->_internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->_internPool.idHashMap * StringPool_Size(pool)));
+        pd->internPool.idHashMap = (ushort*) realloc(pd->internPool.idHashMap, sizeof *pd->internPool.idHashMap * StringPool_Size(pool));
+        if(!pd->internPool.idHashMap)
+            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->internPool.idHashMap * StringPool_Size(pool)));
 
         if(internId < StringPool_Size(pool))
         {
-            memmove(pd->_internPool.idHashMap + internId, pd->_internPool.idHashMap + (internId-1), sizeof *pd->_internPool.idHashMap * (StringPool_Size(pool) - internId));
+            memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
         }
-        pd->_internPool.idHashMap[internId-1] = hash;
+        pd->internPool.idHashMap[internId-1] = hash;
     }
     return internId;
 }
@@ -269,14 +284,18 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     assert(pd && name);
 
     // Have we already encountered this?
-    if(pd->_internPool.strings)
+    if(pd->internPool.strings)
     {
-        internId = StringPool_IsInterned(pd->_internPool.strings, name);
+        internId = StringPool_IsInterned(pd->internPool.strings, name);
         if(0 != internId)
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
-            if(node) return node;
+            if(node)
+            {
+                if(nodeType == PT_BRANCH || !(pd->flags & PDF_ALLOW_DUPLICATE_LEAF))
+                    return node;
+            }
         }
     }
 
@@ -287,7 +306,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     // Do we need a new name identifier (and hash)?
     if(!internId)
     {
-        hash = PathDirectory_HashName(Str_Text(name), Str_Length(name), delimiter);
+        hash = PathDirectory_HashPath(Str_Text(name), Str_Length(name), delimiter);
         internId = internNameAndUpdateIdHashMap(pd, name, hash);
     }
     else
@@ -298,7 +317,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     // Are we out of name indices?
     if(!internId) return NULL;
 
-    node = PathDirectoryNode_New(pd, nodeType, parent, internId, userData);
+    node = newNode(pd, nodeType, parent, internId, userData);
 
     // Do we need to init the path hash?
     phAdr = hashAddressForNodeType(pd, nodeType);
@@ -358,7 +377,7 @@ static PathDirectoryNode* addPath(PathDirectory* pd, const char* path,
     if(node)
     {
         // There is now one more unique path in the directory.
-        ++pd->_size;
+        ++pd->size;
         if(userData)
             PathDirectoryNode_AttachUserData(node, userData);
     }
@@ -493,18 +512,39 @@ static int iteratePaths_Const(const PathDirectory* pd, int flags, const PathDire
     return result;
 }
 
-PathDirectory* PathDirectory_New(void)
+PathDirectory* PathDirectory_NewWithFlags(int flags)
 {
     PathDirectory* pd = (PathDirectory*) malloc(sizeof *pd);
     if(!pd)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
-    pd->_internPool.strings = NULL;
-    pd->_internPool.idHashMap = NULL;
-    pd->_pathLeafHash = NULL;
-    pd->_pathBranchHash = NULL;
-    pd->_size = 0;
+    pd->flags = flags;
+    pd->internPool.strings = NULL;
+    pd->internPool.idHashMap = NULL;
+    pd->pathLeafHash = NULL;
+    pd->pathBranchHash = NULL;
+    pd->size = 0;
+
+    // We'll block-allocate nodes and maintain a list of unused ones
+    // to accelerate directory construction/population.
+    if(!nodeAllocator_Mutex)
+    {
+        nodeAllocator_Mutex = Sys_CreateMutex("PathDirectoryNodeAllocator_MUTEX");
+
+        Sys_Lock(nodeAllocator_Mutex);
+        NodeBlockSet = BlockSet_New(sizeof(struct pathdirectorynode_s), 128);
+        UsedNodes = NULL;
+        Sys_Unlock(nodeAllocator_Mutex);
+    }
+
+    pathDirectoryInstanceCount += 1;
+
     return pd;
+}
+
+PathDirectory* PathDirectory_New(void)
+{
+    return PathDirectory_NewWithFlags(0);
 }
 
 void PathDirectory_Delete(PathDirectory* pd)
@@ -519,12 +559,22 @@ void PathDirectory_Delete(PathDirectory* pd)
 
     clearInternPool(pd);
     free(pd);
+
+    if(--pathDirectoryInstanceCount == 0)
+    {
+        Sys_Lock(nodeAllocator_Mutex);
+        BlockSet_Delete(NodeBlockSet);
+        NodeBlockSet = NULL;
+        UsedNodes = NULL;
+        Sys_DestroyMutex(nodeAllocator_Mutex);
+        nodeAllocator_Mutex = 0;
+    }
 }
 
 uint PathDirectory_Size(PathDirectory* pd)
 {
     assert(pd);
-    return pd->_size;
+    return pd->size;
 }
 
 void PathDirectory_Clear(PathDirectory* pd)
@@ -533,7 +583,7 @@ void PathDirectory_Clear(PathDirectory* pd)
     clearPathHash(*hashAddressForNodeType(pd, PT_LEAF));
     clearPathHash(*hashAddressForNodeType(pd, PT_BRANCH));
     clearInternPool(pd);
-    pd->_size = 0;
+    pd->size = 0;
 }
 
 PathDirectoryNode* PathDirectory_Insert2(PathDirectory* pd, const char* path, char delimiter,
@@ -621,7 +671,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
     if(searchPath && searchPath[0] && PathDirectory_Size(pd))
     {
         PathMap mappedSearchPath;
-        PathMap_Initialize(&mappedSearchPath, searchPath, delimiter);
+        PathMap_Initialize2(&mappedSearchPath, searchPath, delimiter);
         foundNode = PathDirectory_Search(pd, flags, &mappedSearchPath, PathDirectoryNode_MatchDirectory);
         PathMap_Destroy(&mappedSearchPath);
     }
@@ -631,7 +681,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     assert(pd);
-    return StringPool_String(pd->_internPool.strings, PathDirectoryNode_InternId(node));
+    return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
 }
 
 /// Calculate the total length of the final composed path.
@@ -1065,6 +1115,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     pathdirectory_pathhash_t** phAdr;
     size_t totalForRange;
     PathDirectoryNode* node;
+    ushort i;
     int j;
     assert(pd);
 
@@ -1076,7 +1127,6 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
     memset(nodeBucketCollisionsMax, 0, sizeof(nodeBucketCollisionsMax));
     memset(nodeBucketEmpty, 0, sizeof(nodeBucketEmpty));
 
-    { ushort i;
     for(i = 0; i < PATHDIRECTORY_PATHHASH_SIZE; ++i)
     {
         phAdr = hashAddressForNodeType(pd, PT_BRANCH);
@@ -1147,7 +1197,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
         }
         if(totalForRange > nodeBucketCollisionsMaxTotal)
             nodeBucketCollisionsMaxTotal = totalForRange;
-    }}
+    }
 
     printDistributionOverview(pd, nodeCountSum, nodeCountTotal,
         nodeBucketCollisions,    nodeBucketCollisionsTotal,
@@ -1159,48 +1209,63 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 }
 #endif
 
-static PathDirectoryNode* PathDirectoryNode_New(PathDirectory* directory,
+static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
     StringPoolInternId internId, void* userData)
 {
     PathDirectoryNode* node;
-    assert(directory);
 
-    node = (PathDirectoryNode*) malloc(sizeof *node);
-    if(!node)
-        Con_Error("PathDirectory::direcNode: Failed on allocation of %lu bytes for "
-            "new PathDirectory::Node.", (unsigned long) sizeof *node);
+    // Acquire a new node, either from the used list or the block allocator.
+    Sys_Lock(nodeAllocator_Mutex);
+    if(UsedNodes)
+    {
+        node = UsedNodes;
+        UsedNodes = node->next;
+    }
+    else
+    {
+        node = BlockSet_Allocate(NodeBlockSet);
+    }
+    Sys_Unlock(nodeAllocator_Mutex);
 
-    node->_directory = directory;
-    node->_type = type;
-    node->_parent = parent;
-    node->_pair.internId = internId;
-    node->_pair.data = userData;
+    // Initialize the new node.
+    node->next = NULL;
+    node->directory = directory;
+    node->type = type;
+    node->parent = parent;
+    node->pair.internId = internId;
+    node->pair.data = userData;
+
     return node;
 }
 
-static void PathDirectoryNode_Delete(PathDirectoryNode* node)
+static void deleteNode(PathDirectoryNode* node)
 {
-    assert(node);
-    free(node);
+    if(!node) return;
+
+    // Add this node to the list of used nodes for re-use.
+    Sys_Lock(nodeAllocator_Mutex);
+    node->next = UsedNodes;
+    UsedNodes = node;
+    Sys_Unlock(nodeAllocator_Mutex);
 }
 
 PathDirectory* PathDirectoryNode_Directory(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_directory;
+    return node->directory;
 }
 
 PathDirectoryNode* PathDirectoryNode_Parent(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_parent;
+    return node->parent;
 }
 
 pathdirectorynode_type_t PathDirectoryNode_Type(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_type;
+    return node->type;
 }
 
 const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
@@ -1217,7 +1282,13 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
 StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_pair.internId;
+    return node->pair.internId;
+}
+
+ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
+{
+    assert(node);
+    return hashForInternId(node->directory, node->pair.internId);
 }
 
 /// \note This routine is also used as an iteration callback, so only return
@@ -1241,15 +1312,31 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
     {
-        // If the hashes don't match it can't possibly be this.
-        if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
-            return false;
+        if(i == 0 && PathDirectoryNode_Type(node) == PT_LEAF)
+        {
+            char buf[256];
+            dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
+            fragment = PathDirectory_GetFragment(pd, node);
+            if(!F_MatchFileName(Str_Text(fragment), buf))
+                return false;
+        }
+        else
+        {
+            const boolean isWild = sfragment->to == sfragment->from && *sfragment->from == '*';
 
-        // Compare the path fragment to that of the search term.
-        fragment = PathDirectory_GetFragment(pd, node);
-        if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
-           strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
-            return false;
+            if(!isWild)
+            {
+                // If the hashes don't match it can't possibly be this.
+                if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+                    return false;
+
+                // Compare the path fragment to that of the search term.
+                fragment = PathDirectory_GetFragment(pd, node);
+                if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
+                   strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
+                    return false;
+            }
+        }
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)
@@ -1270,26 +1357,26 @@ void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)
 {
     assert(node);
 #if _DEBUG
-    if(node->_pair.data)
+    if(node->pair.data)
     {
         Con_Message("Warning:PathDirectoryNode::AttachUserData: Data is already associated "
             "with this node, will be replaced.\n");
     }
 #endif
-    node->_pair.data = userData;
+    node->pair.data = userData;
 }
 
 void* PathDirectoryNode_DetachUserData(PathDirectoryNode* node)
 {
     void* userData;
     assert(node);
-    userData = node->_pair.data;
-    node->_pair.data = NULL;
+    userData = node->pair.data;
+    node->pair.data = NULL;
     return userData;
 }
 
 void* PathDirectoryNode_UserData(const PathDirectoryNode* node)
 {
     assert(node);
-    return node->_pair.data;
+    return node->pair.data;
 }

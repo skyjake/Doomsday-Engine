@@ -213,7 +213,13 @@ void P_Update(void)
     armorClass[1] = armorClass[2] = armorClass[3] = 2;
 
     GetDefInt("Player|Health Limit", &healthLimit);
-    GetDefInt("Player|God Health", &godModeHealth);
+
+    // Previous versions did not feature a separate value for God Health,
+    // so if its not found, default to the value of Max Health.
+    if(!GetDefInt("Player|God Health", &godModeHealth))
+    {
+        godModeHealth = maxHealth;
+    }
 
     GetDefInt("Player|Green Armor", &armorPoints[0]);
     GetDefInt("Player|Blue Armor", &armorPoints[1]);
@@ -552,9 +558,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     // Setup gun psprite.
     P_SetupPsprites(p);
 
-    // Wake up HUD widgets.
-    ST_Start(p - players);
-    HU_Start(p - players);
+    if(!Con_IsBusy())
+    {
+        /// @todo Is this really necessary after every time a player spawns?
+        /// During map setup there are called after the busy mode ends.
+        ST_Start(p - players);
+        HU_Start(p - players);
+    }
 
 #if __JHEXEN__
     cfg.playerClass[plrNum] = pClass;

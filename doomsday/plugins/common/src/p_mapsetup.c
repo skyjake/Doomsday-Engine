@@ -763,7 +763,7 @@ int P_SetupMapWorker(void* paramaters)
 #endif
 
     mapUri = G_ComposeMapUri(param->episode, param->map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     if(!P_LoadMap(Str_Text(mapPath)))
     {
         ddstring_t* path = Uri_ToString(mapUri);
@@ -877,6 +877,7 @@ int P_SetupMapWorker(void* paramaters)
 void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
 {
     setupmapparams_t param;
+    int i;
 
     param.episode = episode;
     param.map = map;
@@ -887,6 +888,14 @@ void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
     // \todo Use progress bar mode and update progress during the setup.
     Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Loading map...", P_SetupMapWorker, &param);
+
+    // Wake up HUD widgets for players in the game.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame) continue;
+        ST_Start(i);
+        HU_Start(i);
+    }
 
     R_SetupMap(DDSMM_AFTER_BUSY, 0);
 
@@ -1067,16 +1076,24 @@ patchid_t P_FindMapTitlePatch(uint episode, uint map)
 const char* P_GetMapAuthor(boolean supressGameAuthor)
 {
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
+    boolean mapIsCustom;
+    GameInfo gameInfo;
+    ddstring_t* path;
+    Uri* uri;
+
     if(!author || !author[0]) return NULL;
-    if(supressGameAuthor)
-    {
-        Uri* uri = G_ComposeMapUri(gameEpisode, gameMap);
-        ddstring_t* path = Uri_ComposePath(uri);
-        boolean mapIsCustom = P_MapIsCustom(Str_Text(path));
-        Str_Delete(path);
-        Uri_Delete(uri);
-        if(!mapIsCustom) return NULL;
-    }
+
+    uri = G_ComposeMapUri(gameEpisode, gameMap);
+    path = Uri_Resolved(uri);
+
+    mapIsCustom = P_MapIsCustom(Str_Text(path));
+
+    Str_Delete(path);
+    Uri_Delete(uri);
+
+    DD_GameInfo(&gameInfo);
+    if((mapIsCustom || supressGameAuthor) && !stricmp(gameInfo.author, author))
+        return NULL;
     return author;
 }
 
@@ -1105,7 +1122,7 @@ static void P_PrintMapBanner(uint episode, uint map)
     {
     static const char* unknownAuthorStr = "Unknown";
     Uri* uri = G_ComposeMapUri(episode, map);
-    ddstring_t* path = Uri_ComposePath(uri);
+    ddstring_t* path = Uri_Compose(uri);
     const char* lauthor;
 
     lauthor = P_GetMapAuthor(P_MapIsCustom(Str_Text(path)));

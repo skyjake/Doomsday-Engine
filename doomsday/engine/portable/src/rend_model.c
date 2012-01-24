@@ -677,7 +677,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        texture_t* tex = mf->sub[number].shinySkin;
+        Texture* tex = mf->sub[number].shinySkin;
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -772,7 +772,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        texture_t* tex;
+        Texture* tex;
 
         skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
@@ -798,6 +798,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Twosided models won't use backface culling.
     if(subFlags & MFF_TWO_SIDED)
         glDisable(GL_CULL_FACE);
+
+    glEnable(GL_TEXTURE_2D);
 
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
@@ -890,6 +892,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // We're done!
+    glDisable(GL_TEXTURE_2D);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
@@ -911,11 +914,11 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
  */
 void Rend_RenderModel(const rendmodelparams_t* params)
 {
-    if(!params || !params->mf)
-        return;
+    uint i;
+
+    if(!params || !params->mf) return;
 
     // Render all the submodels of this model.
-    {uint i;
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
         if(params->mf->sub[i].model)
@@ -932,7 +935,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
             if(disableZ)
                 glDepthMask(GL_TRUE);
         }
-    }}
+    }
 
     if(devMobjVLights && params->vLightListIdx)
     {   // Draw the vlight vectors, for debug.

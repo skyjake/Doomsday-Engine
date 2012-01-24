@@ -1,33 +1,35 @@
-/**\file dd_ui.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_ui.h
+ * User interface.
+ * @ingroup gui
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @todo The meaning of the "fi_" prefix is unclear; rename to "ui_"?
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_GUI_H
 #define LIBDENG_API_GUI_H
 
 /**
- * @defgroup gui GUI System
+ * @defgroup gui GUI
  */
+///@{
 
 /// Numeric identifiers of predefined colors.
 enum {
@@ -272,8 +274,8 @@ typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
     uint pageColor; /// Identifier of the owning page's predefined color. Zero means use our own color.
-    int alignFlags; /// @see alignmentFlags
-    short textFlags; /// @see drawTextFlags
+    int alignFlags; /// @ref alignmentFlags
+    short textFlags; /// @ref drawTextFlags
     int scrollWait, scrollTimer; /// Automatic scrolling upwards.
     size_t cursorPos;
     int wait, timer;
@@ -295,5 +297,7 @@ void FIData_TextSetColorAndAlpha(struct fi_object_s* text, float red, float gree
  * @return Length of the current text as a counter.
  */
 size_t FIData_TextLength(struct fi_object_s* text);
+
+///@}
 
 #endif /* LIBDENG_API_GUI_H */

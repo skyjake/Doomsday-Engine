@@ -32,7 +32,7 @@
 #include "dd_types.h"
 #include "gl_main.h"
 #include "dd_def.h"
-#include "p_think.h"
+#include "thinker.h"
 #include "m_nodepile.h"
 #include "def_data.h"
 
@@ -181,7 +181,7 @@ typedef struct {
 // Describes a rectangular texture, which is composed of one
 // or more texpatch_t structures that arrange graphic patches.
 typedef struct {
-    ddstring_t name;
+    ddstring_t name; ///< Percent-encoded.
     /// Size of the texture in logical pixels.
     Size2Raw size;
     short flags;
@@ -214,7 +214,7 @@ typedef struct doompatch_header_s {
  * A rawtex is a lump raw graphic that has been prepared for render.
  */
 typedef struct rawtex_s {
-    ddstring_t name;
+    ddstring_t name; ///< Percent-encoded.
     lumpnum_t lumpNum;
     DGLuint tex; /// Name of the associated DGL texture.
     short width, height;

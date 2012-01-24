@@ -136,6 +136,9 @@ static uiwidget_t* allocateWidget(guiwidgettype_t type, uiwidgetid_t id, int pla
         am->oldViewScale = 1;
         am->maxViewPositionDelta = 128;
         am->alpha = am->targetAlpha = am->oldAlpha = 0;
+        /// Set initial geometry size.
+        /// \todo Should not be necessary...
+        Rect_SetWidthHeight(obj->geometry, SCREENWIDTH, SCREENHEIGHT);
         break;
       }
     default: break;
@@ -694,13 +697,6 @@ static void MNEdit_LoadResources(void)
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-int MN_CountObjects(mn_object_t* list)
-{
-    int count;
-    for(count = 0; MNObject_Type(list) != MN_NONE; list++, count++);
-    return count;
-}
-
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags)
 {
     mn_object_t* obj = MNPage_FindObject(page, group, flags);
@@ -785,8 +781,9 @@ static void applyPageLayout(mn_page_t* page)
 
     // Calculate leading/line offset.
     FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    lineHeight = FR_CharHeight('Q');
-    lineOffset = MAX_OF(1, .5f + lineHeight * .08f);
+    /// \kludge We cannot yet query line height from the font.
+    lineHeight = FR_TextHeight("{case}WyQ");
+    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
 
     Rect_SetXY(page->geometry, 0, 0);
     Rect_SetWidthHeight(page->geometry, 0, 0);
@@ -851,6 +848,68 @@ static void applyPageLayout(mn_page_t* page)
         // Proceed to the next object!
         i += 1;
     }
+}
+
+static void composeSubpageString(mn_page_t* page, char* buf, size_t bufSize)
+{
+    assert(page);
+    if(!buf || 0 == bufSize) return;
+    dd_snprintf(buf, bufSize, "Page %i/%i", 0, 0);
+}
+
+static void drawPageNavigation(mn_page_t* page, int x, int y)
+{
+    const int currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
+    const int totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
+#if __JDOOM__ || __JDOOM64__
+    char buf[1024];
+#endif
+
+    if(!page || totalPages <= 1) return;
+
+#if __JDOOM__ || __JDOOM64__
+    composeSubpageString(page, buf, 1024);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetAlpha(mnRendState->pageAlpha);
+
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#else
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+
+    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], x - 144, y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], x + 144, y, ALIGN_LEFT);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+#endif
+}
+
+static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
+{
+    Point2Raw origin;
+
+    if(!page) return;
+
+    /// \kludge no title = no heading.
+    if(Str_IsEmpty(&page->title)) return;
+
+    origin.x = SCREENWIDTH/2;
+    origin.y = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    if(offset)
+    {
+        origin.x += offset->x;
+        origin.y += offset->y;
+    }
+
+    FR_PushAttrib();
+      Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
+      drawPageNavigation(page, origin.x, origin.y);
+    FR_PopAttrib();
 }
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
@@ -956,7 +1015,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         FR_PopAttrib();
     }
 
-    // Finally, the focus cursor?
+    // How about a focus cursor?
     /// \todo cursor should be drawn on top of the page drawer.
     if(showFocusCursor && focusObj)
     {
@@ -965,6 +1024,8 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
+
+    drawPageHeading(page, NULL/*no offset*/);
 
     // The page has its own drawer.
     if(page->drawer)
@@ -979,6 +1040,30 @@ static boolean MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
 {
     assert(info);
     return (info->callback != 0);
+}
+
+void MNPage_SetTitle(mn_page_t* page, const char* title)
+{
+    assert(page);
+    Str_Set(&page->title, title? title : "");
+}
+
+void MNPage_SetX(mn_page_t* page, int x)
+{
+    assert(page);
+    page->origin.x = x;
+}
+
+void MNPage_SetY(mn_page_t* page, int y)
+{
+    assert(page);
+    page->origin.y = y;
+}
+
+void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage)
+{
+    assert(page);
+    page->previous = prevPage;
 }
 
 mn_object_t* MNPage_FocusObject(mn_page_t* page)
@@ -1200,12 +1285,25 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id)
     if(!VALID_MNPAGE_FONTID(id))
     {
 #if _DEBUG
-        Con_Error("MNPage::PredefinedFont: Invalid font id '%i'.", (int)id);
+        Con_Error("MNPage::PredefinedFont: Invalid font id #%i.", (int)id);
         exit(1); // Unreachable.
 #endif
         return 0; // Not a valid font id.
     }
     return page->fonts[id];
+}
+
+void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId)
+{
+    assert(page);
+    if(!VALID_MNPAGE_FONTID(id))
+    {
+#if _DEBUG
+        Con_Message("MNPage::SetPredefinedFont: Invalid font id #%i, ignoring.\n", id);
+#endif
+        return;
+    }
+    page->fonts[id] = fontId;
 }
 
 void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
@@ -1241,6 +1339,12 @@ mn_obtype_e MNObject_Type(const mn_object_t* obj)
 {
     assert(obj);
     return obj->_type;
+}
+
+mn_page_t* MNObject_Page(const mn_object_t* obj)
+{
+    assert(obj);
+    return obj->_page;
 }
 
 int MNObject_Flags(const mn_object_t* obj)
@@ -1612,8 +1716,7 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     assert(obj && obj->_type == MN_EDIT);
 
-    //strncpy(edit->ptr, Con_GetString(edit->data), edit->maxLen);
-    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
+    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH+1, "%s", string);
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
         memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
@@ -2105,7 +2208,7 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
             text = Hu_ChoosePatchReplacement2(cfg.menuPatchReplaceMode, *btn->patch, btn->text);
         }
 
-        if(!text || text[0])
+        if(!text || !text[0])
         {
             // Use the original patch.
             patchinfo_t info;

@@ -127,8 +127,8 @@ uint F_LumpLastModified(lumpnum_t absoluteLumpNum);
 abstractfile_t* F_FindFileForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
 abstractfile_t* F_FindFileForLumpNum(lumpnum_t absoluteLumpNum);
 
-const lumpinfo_t* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
-const lumpinfo_t* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
+const LumpInfo* F_FindInfoForLumpNum2(lumpnum_t absoluteLumpNum, int* lumpIdx);
+const LumpInfo* F_FindInfoForLumpNum(lumpnum_t absoluteLumpNum);
 
 lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent);
 lumpnum_t F_CheckLumpNumForName(const char* name);
@@ -157,7 +157,7 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
  * other files are single lumps whose base filename will become the lump name.
  *
  * @param path  Path to the file to be opened. Either a "real" file in the local
- *      file system, or a "virtual" file in the virtual file system.
+ *              file system, or a "virtual" file in the virtual file system.
  * @param baseOffset  Offset from the start of the file in bytes to begin.
  * @param allowDuplicate  @c true = allow opening multiple copies of the same file.
  * @return  @c true, if the operation is successful.
@@ -165,14 +165,16 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx);
 boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate);
 
 /**
- * Remove a file from the virtual file system.
+ * Attempt to remove a file from the virtual file system.
  *
+ * @param permitRequired  @c true= allow removal of resources marked as "required"
+ *                        by the currently loaded Game.
  * @return @c true if the operation is successful.
  */
-boolean F_RemoveFile(const char* path);
+boolean F_RemoveFile(const char* path, boolean permitRequired);
 
 boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate);
-boolean F_RemoveFiles(const char* const* paths, size_t num);
+boolean F_RemoveFiles(const char* const* paths, size_t num, boolean permitRequired);
 
 /**
  * @return  @c true if the file can be opened for reading.
@@ -207,6 +209,16 @@ DFile* F_Open(const char* path, const char* mode); /* baseOffset = 0 */
  * @return  Handle to the opened file if found.
  */
 DFile* F_OpenLump(lumpnum_t lumpNum);
+
+/**
+ * Write the data associated with the specified lump index to @a fileName.
+ *
+ * @param lumpNum  Absolute index of the lump to open.
+ * @param fileName  If not @c NULL write the associated data to this path.
+ *      Can be @c NULL in which case the fileName will be chosen automatically.
+ * @return  @c true iff successful.
+ */
+boolean F_DumpLump(lumpnum_t lumpNum, const char* fileName);
 
 /**
  * @return  The time when the file was last modified, as seconds since
@@ -256,7 +268,13 @@ void F_Close(DFile* file);
 /// Completely destroy this file; close if open, clear references and any acquired identifiers.
 void F_Delete(DFile* file);
 
-const lumpinfo_t* F_LumpInfo(abstractfile_t* file, int lumpIdx);
+/// @return  Must be free'd with Str_Delete
+ddstring_t* F_ComposeLumpPath2(abstractfile_t* file, int lumpIdx, char delimiter);
+ddstring_t* F_ComposeLumpPath(abstractfile_t* file, int lumpIdx); /*delimiter='/'*/
+
+struct pathdirectorynode_s* F_LumpDirectoryNode(abstractfile_t* file, int lumpIdx);
+
+const LumpInfo* F_LumpInfo(abstractfile_t* file, int lumpIdx);
 
 size_t F_ReadLumpSection(abstractfile_t* file, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
@@ -266,24 +284,16 @@ const uint8_t* F_CacheLump(abstractfile_t* file, int lumpIdx, int tag);
 void F_CacheChangeTag(abstractfile_t* file, int lumpIdx, int tag);
 
 /**
- * Write the data associated with the specified lump index to @a fileName.
- *
- * @param lumpIdx  Index of the lump data being dumped.
- * @param fileName  If not @c NULL write the associated data to this path.
- *      Can be @c NULL in which case the fileName will be chosen automatically.
- * @return  @c true iff successful.
- */
-boolean F_DumpLump(abstractfile_t* file, int lumpIdx, const char* fileName);
-
-/**
  * Parm is passed on to the callback, which is called for each file
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
+ *
+ * @param flags  @see searchPathFlags
  */
-int F_AllResourcePaths2(const char* searchPath,
+int F_AllResourcePaths2(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters),
     void* paramaters);
-int F_AllResourcePaths(const char* searchPath,
+int F_AllResourcePaths(const char* searchPath, int flags,
     int (*callback) (const ddstring_t* path, pathdirectorynode_type_t type, void* paramaters));
 
 #endif /* LIBDENG_FILESYS_MAIN_H */

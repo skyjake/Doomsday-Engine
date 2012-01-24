@@ -12,3 +12,4 @@ macx_release_build
 server-runtime
 client-runtime
 Zcustom.conf
+.web.manifest

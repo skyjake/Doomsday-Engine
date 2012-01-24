@@ -32,21 +32,13 @@
 #include <string.h>
 #include <assert.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
 #include "p_tick.h"
 #include "hu_log.h"
 #include "am_map.h"
 #include "g_common.h"
 #include "r_common.h"
+#include "d_net.h"
 
 #include "fi_lib.h"
 
@@ -90,6 +82,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters);
 static boolean finaleStackInited = false;
 static uint finaleStackSize = 0;
 static fi_state_t* finaleStack = 0;
+static fi_state_t remoteFinaleState; // For the client.
 
 // Console commands for this library:
 static ccmdtemplate_t ccmds[] = {
@@ -112,8 +105,9 @@ void FI_StackRegister(void)
 static void initStateConditions(fi_state_t* s)
 {
     // Only the server is able to figure out the truth values of all the conditions.
-    if(!IS_SERVER)
-    {   // Set the presets.
+    if(IS_CLIENT)
+    {
+        // Set the presets.
         s->conditions.secret = false;
         s->conditions.leave_hub = false;
         return;
@@ -143,6 +137,18 @@ static fi_state_t* stateForFinaleId(finaleid_t id)
                 return s;
         }
     }
+
+    if(IS_CLIENT)
+    {
+        if(remoteFinaleState.finaleId)
+        {
+#ifdef _DEBUG
+            VERBOSE2( Con_Message("stateForFinaleId: Finale %i is remote, using server's state (id %i).\n",
+                                  id, remoteFinaleState.finaleId) );
+#endif
+            return &remoteFinaleState;
+        }
+    }
     return 0;
 }
 
@@ -163,23 +169,46 @@ static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_
     return s;
 }
 
-static void Sv_SendFinaleState(fi_state_t* s)
+static void NetSv_SendFinaleState(fi_state_t* s)
 {
-#define BUF_SIZE            4
-
-    byte buffer[BUF_SIZE], *ptr = buffer;
+    Writer* writer = D_NetWrite();
 
     // First the flags.
-    *ptr++ = (s->mode == FIMODE_AFTER ? FINF_AFTER : (s->mode == FIMODE_OVERLAY) ? FINF_OVERLAY : 0);
+    Writer_WriteByte(writer, s->mode);
+
+    Writer_WriteUInt32(writer, s->finaleId);
 
     // Then the conditions.
-    *ptr++ = 2; // Number of conditions.
-    *ptr++ = s->conditions.secret;
-    *ptr++ = s->conditions.leave_hub;
+    Writer_WriteByte(writer, 2); // Number of conditions.
+    Writer_WriteByte(writer, s->conditions.secret);
+    Writer_WriteByte(writer, s->conditions.leave_hub);
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, 85 /*GPT_FINALE2*/, buffer, BUF_SIZE);
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_FINALE_STATE, Writer_Data(writer), Writer_Size(writer));
+}
 
-#undef BUF_SIZE
+void NetCl_UpdateFinaleState(Reader* msg)
+{
+    int i, numConds;
+    fi_state_t* s = &remoteFinaleState;
+
+    // Flags.
+    s->mode = Reader_ReadByte(msg);
+
+    s->finaleId = Reader_ReadUInt32(msg); // serverside id (local is different)
+
+    // Conditions.
+    numConds = Reader_ReadByte(msg);
+    for(i = 0; i < numConds; ++i)
+    {
+        byte cond = Reader_ReadByte(msg);
+        if(i == 0) s->conditions.secret = cond;
+        if(i == 1) s->conditions.leave_hub = cond;
+    }
+
+#ifdef _DEBUG
+    Con_Message("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i\n",
+                s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
+#endif
 }
 
 void FI_StackInit(void)
@@ -291,7 +320,7 @@ void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
     // Do we need to transmit the state conditions to clients?
     if(IS_SERVER && !(flags & FF_LOCAL))
     {
-        Sv_SendFinaleState(s);
+        NetSv_SendFinaleState(s);
     }
 }
 
@@ -321,6 +350,7 @@ static void stackClear(boolean ignoreSuspendedScripts)
         // Pop all the states.
         while((s = stackTop()))
         {
+
             FI_ScriptTerminate(s->finaleId);
         }
     }
@@ -343,6 +373,15 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
     gamestate_t initialGamestate;
     finale_mode_t mode;
     fi_state_t* s = stateForFinaleId(finaleId);
+
+    if(IS_CLIENT && s == &remoteFinaleState)
+    {
+#ifdef _DEBUG
+        Con_Message("Hook_FinaleScriptStop: Clientside script stopped, clearing remote state.\n");
+        memset(&remoteFinaleState, 0, sizeof(remoteFinaleState));
+#endif
+        return true;
+    }
 
     if(!s)
     {
@@ -400,8 +439,9 @@ int Hook_FinaleScriptTicker(int hookType, int finaleId, void* paramaters)
     gamestate_t gamestate = G_GameState();
     fi_state_t* s = stateForFinaleId(finaleId);
 
-    if(!s)
-    {   // Finale was not initiated by us, leave it alone.
+    if(!s || IS_CLIENT)
+    {
+        // Finale was not initiated by us, leave it alone.
         return true;
     }
 
@@ -461,7 +501,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 
     if(!stricmp(p->token, "deathmatch"))
     {
-        p->returnVal = deathmatch != false;
+        p->returnVal = (deathmatch != false);
         return true;
     }
 
@@ -517,6 +557,10 @@ int FI_PrivilegedResponder(const void* ev)
 {
     fi_state_t* s;
     if(!finaleStackInited) Con_Error("FI_Responder: Not initialized yet!");
+    if(IS_CLIENT && DD_GetInteger(DD_CURRENT_CLIENT_FINALE_ID))
+    {
+        return FI_ScriptResponder(DD_GetInteger(DD_CURRENT_CLIENT_FINALE_ID), ev);
+    }
     if((s = stackTop()))
     {
         return FI_ScriptResponder(s->finaleId, ev);

@@ -66,27 +66,6 @@ typedef struct bindingdrawerdata_s {
 static mn_object_t* ControlsMenuItems;
 static mndata_text_t* ControlsMenuTexts;
 
-mn_page_t ControlsMenu = {
-    NULL,
-#if __JDOOM__ || __JDOOM64__
-    { 32, 40 },
-#elif __JHERETIC__
-    { 32, 26 },
-#elif __JHEXEN__
-    { 32, 21 },
-#endif
-    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
-    Hu_MenuDrawControlsPage, NULL,
-    &OptionsMenu,
-#if __JDOOM__ || __JDOOM64__
-    //0, 17, { 17, 40 }
-#elif __JHERETIC__
-    //0, 15, { 15, 26 }
-#elif __JHEXEN__
-    //0, 16, { 16, 21 }
-#endif
-};
-
 static mndata_bindings_t controlConfig[] =
 {
     { "Movement" },
@@ -280,11 +259,19 @@ int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* pa
 
 void Hu_MenuInitControlsPage(void)
 {
+#if __JDOOM__ || __JDOOM64__
+    const Point2Raw pageOrigin = { 32, 40 };
+#elif __JHERETIC__
+    const Point2Raw pageOrigin = { 32, 40 };
+#elif __JHEXEN__
+    const Point2Raw pageOrigin = { 32, 40 };
+#endif
     int i, textCount, bindingsCount, totalItems, group;
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     size_t objectIdx, textIdx;
+    mn_page_t* page;
 
-    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") );
+    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") )
 
     textCount = 0;
     bindingsCount = 0;
@@ -369,15 +356,15 @@ void Hu_MenuInitControlsPage(void)
             bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             bindingsObj->_typedata = binds;
             bindingsObj->_group = group;
-
-            if(!ControlsMenu.focus)
-                ControlsMenu.focus = bindingsObj - ControlsMenuItems;
         }
     }
     ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
 
-    ControlsMenu.objects = ControlsMenuItems;
-    ControlsMenu.objectsCount = totalItems;
+    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuDrawControlsPage, NULL, NULL);
+    page->objects = ControlsMenuItems;
+    MNPage_SetTitle(page, "Controls");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
 }
 
 static void drawSmallText(const char* string, int x, int y, float alpha)
@@ -633,19 +620,12 @@ void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin)
+void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* offset)
 {
-    Hu_MenuDrawPageTitle("Controls", SCREENWIDTH/2, origin->y - 28);
-    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
-    FR_SetAlpha(mnRendState->pageAlpha);
-
-    FR_DrawTextXY3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Point2Raw origin;
+    origin.x = SCREENWIDTH/2;
+    origin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin.x, origin.y);
 }
 
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)

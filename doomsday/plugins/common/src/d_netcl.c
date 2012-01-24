@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * d_netcl.c : Common code related to net games (client-side).
+ * @file d_netcl.c
+ * Common code related to netgames (client-side). @ingroup client
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -44,77 +36,15 @@
 #include "hu_inventory.h"
 #include "st_stuff.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-//static byte *readbuffer;
-
-// CODE --------------------------------------------------------------------
-
-/*
-// Mini-Msg routines.
-void NetCl_SetReadBuffer(byte *data)
-{
-    readbuffer = data;
-}
-
-byte NetCl_ReadByte(void)
-{
-    return *readbuffer++;
-}
-
-short NetCl_ReadShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(short*) (readbuffer - 2) );
-}
-
-unsigned short NetCl_ReadUShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(unsigned short*) (readbuffer - 2) );
-}
-
-int NetCl_ReadLong(void)
-{
-    readbuffer += 4;
-    return LONG( *(int*) (readbuffer - 4) );
-}
-
-float NetCl_ReadFloat(void)
-{
-    int value = LONG( *(int*) readbuffer );
-    readbuffer += 4;
-    return *(float*) &value;
-}
-
-void NetCl_Read(byte *buf, int len)
-{
-    memcpy(buf, readbuffer, len);
-    readbuffer += len;
-}
-*/
-
 void NetCl_UpdateGameState(Reader* msg)
 {
-    byte gsGameMode = 0;
+    byte len;
     byte gsFlags = 0;
+    char gsGameIdentity[256];
+    Uri* mapUri;
     byte gsEpisode = 0;
     byte gsMap = 0;
-    byte flags = 0;
+    byte configFlags = 0;
     byte gsDeathmatch = 0;
     byte gsMonsters = 0;
     byte gsRespawn = 0;
@@ -122,41 +52,52 @@ void NetCl_UpdateGameState(Reader* msg)
     byte gsSkill = 0;
     float gsGravity = 0;
 
-    gsGameMode = Reader_ReadByte(msg);
     gsFlags = Reader_ReadByte(msg);
-    gsEpisode = Reader_ReadByte(msg) - 1;
-    gsMap = Reader_ReadByte(msg) - 1;
-    flags = Reader_ReadByte(msg);
-    gsDeathmatch = flags & 0x3;
-    gsMonsters = (flags & 0x4? true : false);
-    gsRespawn = (flags & 0x8? true : false);
-    gsJumping = (flags & 0x10? true : false);
+
+    // Game identity key.
+    len = Reader_ReadByte(msg);
+    Reader_Read(msg, gsGameIdentity, len);
+    gsGameIdentity[len] = 0;
+
+    // Current map.
+    mapUri = Uri_NewFromReader(msg);
+
+    gsEpisode = Reader_ReadByte(msg);
+    gsMap = Reader_ReadByte(msg);
+
+    configFlags = Reader_ReadByte(msg);
+    gsDeathmatch = configFlags & 0x3;
+    gsMonsters = (configFlags & 0x4? true : false);
+    gsRespawn = (configFlags & 0x8? true : false);
+    gsJumping = (configFlags & 0x10? true : false);
     gsSkill = Reader_ReadByte(msg);
     gsGravity = Reader_ReadFloat(msg);
+
+    VERBOSE(
+        ddstring_t* str = Uri_ToString(mapUri);
+        Con_Message("NetCl_UpdateGameState: Flags=%x, Map uri=\"%s\"\n", gsFlags, Str_Text(str));
+        Str_Delete(str);
+    )
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#pragma message("!!!WARNING: NetCl_UpdateGameState presently overrides gameMode mismatches.")
-    /**
-     * \kludge
-     * djs: 2010-09-20 23:31 GMT
-     * Dedicated servers are presently built from the master branch and as such
-     * our gameMode will never match that returned by the server. However, this
-     * is now protected against at a much higher level during game initialization
-     * so we don't really need to be worrying about that here.
-     *
-     * For now we'll override it using our local gameMode value.
-     */
-    gsGameMode = gameMode;
-    /*if(gsGameMode != gameMode)
-    {   // Wrong game mode! This is highly irregular!
-        Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
-        // Stop the demo if one is being played.
-        DD_Execute(false, "stopdemo");
-        return;
-    } kludge end */
+    // Check for a game mode mismatch.
+    /// @todo  Automatically load the server's game if it is available.
+    /// However, note that this can only occur if the server changes its game
+    /// while a netgame is running (which currently will end the netgame).
+    {
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+        if(strcmp(gameInfo.identityKey, gsGameIdentity))
+        {
+            Con_Message("NetCl_UpdateGameState: Server's game mode (%s) is different than yours (%s).\n",
+                        gsGameIdentity, gameInfo.identityKey);
+            DD_Execute(false, "net disconnect");
+            return;
+        }
+    }
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
@@ -236,7 +177,7 @@ void NetCl_UpdateGameState(Reader* msg)
     }
 
     // Tell the server we're ready to begin receiving frames.
-    Net_SendPacket(DDSP_CONFIRM, DDPT_OK, 0, 0);
+    Net_SendPacket(0, DDPT_OK, 0, 0);
 }
 
 void NetCl_MobjImpulse(Reader* msg)
@@ -781,9 +722,9 @@ void NetCl_Intermission(Reader* msg)
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(Reader_ReadByte(msg));
+        WI_SetState(Reader_ReadInt16(msg));
 #elif __JHERETIC__ || __JHEXEN__
-        interState = (int) Reader_ReadByte(msg);
+        interState = Reader_ReadInt16(msg);
 #endif
     }
 
@@ -885,7 +826,7 @@ void NetCl_SendPlayerInfo()
     Writer_WriteByte(msg, PCLASS_PLAYER);
 #endif
 
-    Net_SendPacket(DDSP_ORDERED, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_PLAYER_INFO, Writer_Data(msg), Writer_Size(msg));
 }
 
 void NetCl_SaveGame(Reader* msg)
@@ -937,7 +878,7 @@ void NetCl_CheatRequest(const char *command)
     Writer_Write(msg, command, strlen(command));
 
     if(IS_CLIENT)
-        Net_SendPacket(DDSP_CONFIRM, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
+        Net_SendPacket(0, GPT_CHEAT_REQUEST, Writer_Data(msg), Writer_Size(msg));
     else
         NetSv_ExecuteCheat(CONSOLEPLAYER, command);
 }
@@ -1034,7 +975,52 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
         Writer_WriteInt32(msg, player->readyWeapon);
     }
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+}
+
+void NetCl_LocalMobjState(Reader* msg)
+{
+    thid_t mobjId = Reader_ReadUInt16(msg);
+    thid_t targetId = Reader_ReadUInt16(msg);
+    int newState = 0;
+    int special1 = 0;
+    mobj_t* mo = 0;
+    ddstring_t* stateName = Str_New();
+
+    Str_Read(stateName, msg);
+    newState = Def_Get(DD_DEF_STATE, Str_Text(stateName), 0);
+    Str_Delete(stateName);
+
+    special1 = Reader_ReadInt32(msg);
+
+    if(!(mo = ClMobj_Find(mobjId)))
+    {
+#ifdef _DEBUG
+        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.\n", mobjId);
+        return;
+#endif
+    }
+
+    // Let it run the sequence locally.
+    ClMobj_EnableLocalActions(mo, true);
+
+#ifdef _DEBUG
+    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)\n",
+                mobjId, newState, targetId, special1);
+#endif
+
+    if(!targetId)
+    {
+        mo->target = NULL;
+    }
+    else
+    {
+        mo->target = ClMobj_Find(targetId);
+    }
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    mo->special1 = special1;
+#endif
+    P_MobjChangeState(mo, newState);
 }
 
 void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)
@@ -1059,5 +1045,5 @@ void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int 
     Writer_WriteUInt16(msg, inflictor? inflictor->thinker.id : 0);
     Writer_WriteUInt16(msg, source? source->thinker.id : 0);
 
-    Net_SendPacket(DDSP_CONFIRM, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
+    Net_SendPacket(0, GPT_DAMAGE_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }

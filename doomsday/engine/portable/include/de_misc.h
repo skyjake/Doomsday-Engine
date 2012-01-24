@@ -34,7 +34,6 @@
 #include "m_bams.h"
 #include "m_vector.h"
 #include "m_nodepile.h"
-#include "m_huffman.h"
 #include "m_profiler.h"
 #include "m_md5.h"
 #include "m_linkedlist.h"
@@ -43,5 +42,6 @@
 #include "m_gridmap.h"
 #include "m_decomp64.h"
 #include "smoother.h"
+#include "stringarray.h"
 
 #endif /* LIBDENG_MISC_H */

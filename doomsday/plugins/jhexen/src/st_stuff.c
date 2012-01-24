@@ -206,6 +206,7 @@ void ST_Register(void)
     C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_INT(    "hud-patch-replacement", &cfg.hudPatchReplaceMode, 0, PRM_FIRST, PRM_LAST )
     C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
     C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
@@ -3555,9 +3556,12 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         RectRaw displayRegion;
         int posX, posY, availWidth, availHeight;
 
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Scalef(1, 1.2f/*aspect correct*/, 1);
+
         displayRegion.origin.x = displayRegion.origin.y = 0;
         displayRegion.size.width  = .5f + portSize.width  / scale;
-        displayRegion.size.height = .5f + portSize.height / scale;
+        displayRegion.size.height = .5f + portSize.height / (scale * 1.2f /*aspect correct*/);
 
         if(hud->statusbarActive)
         {

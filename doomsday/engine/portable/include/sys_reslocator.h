@@ -139,8 +139,14 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name,
     FileDirectory* directory, ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name), byte flags);
 
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,
-    resourcenamespace_searchpathgroup_t group);
+/**
+ * @param rni  Unique identifier of the namespace to add to.
+ * @param flags  @see searchPathFlags
+ * @param searchPath  Uri representing the search path to be added.
+ * @param group  Group to add the new search path to.
+ */
+boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    const Uri* searchPath, resourcenamespace_searchpathgroup_t group);
 
 const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni);
 

@@ -1,24 +1,22 @@
-/**\file point.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file point.h
+ * 2D points. @ingroup math
  *
- *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_DATA_POINT_H
@@ -29,9 +27,8 @@ extern "C" {
 #endif
 
 /**
- * Point2Raw. Point 2 Raw (integer). Is intended as a handy POD
- * structure for easy manipulation of two dimensional plane points,
- * with integer precison.
+ * 2D point with integer values. A handy POD structure for easy manipulation of
+ * two dimensional plane points. @ingroup math
  */
 typedef struct Point2Raw_s {
     union {
@@ -43,10 +40,12 @@ typedef struct Point2Raw_s {
     };
 } Point2Raw;
 
-/**
- * Point2. Class for manipulating 2d plane points using integer precision.
- */
 struct point2_s; // The Point2f instance (opaque).
+
+/**
+ * Point2 instance. Class for manipulating 2D plane points using integer precision.
+ * Use Point2_New() or one of the other constructors to instantiate.
+ */
 typedef struct point2_s Point2;
 
 Point2* Point2_New(void);
@@ -76,9 +75,9 @@ void Point2_Sum(Point2* point, const Point2* other);
 boolean Point2_Equality(const Point2* point, const Point2* other);
 
 /**
- * Point2Rawf. Point 2 Raw (f)loating point. Is intended as a handy POD
- * structure for easy manipulation of two dimensional plane points,
- * with floating point precison.
+ * 2D point with floating point values. A handy POD structure for easy
+ * manipulation of two dimensional plane points.
+ * @ingroup math
  */
 typedef struct Point2Rawf_s {
     union {
@@ -90,10 +89,12 @@ typedef struct Point2Rawf_s {
     };
 } Point2Rawf;
 
-/**
- * Point2f. Class for manipulating 2d plane points using floating point precision.
- */
 struct point2f_s; // The Point2f instance (opaque).
+
+/**
+ * Point2f instance. Class for manipulating 2D plane points using floating-point precision.
+ * Use Point2f_New() or one of the other constructors to instantiate.
+ */
 typedef struct point2f_s Point2f;
 
 Point2f* Point2f_New(void);

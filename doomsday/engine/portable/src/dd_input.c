@@ -779,7 +779,7 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
     //
-    // FIXME: This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
+    /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
     memset(ev, 0, sizeof(ev));
     if(ddEvent->type == E_SYMBOLIC)
@@ -888,27 +888,26 @@ static void dispatchEvents(timespan_t ticLength)
         if(callGameResponders)
         {
             // Does the game's special responder use this event?
-            if(gx.PrivilegedResponder)
-                if(gx.PrivilegedResponder(&ev))
-                    continue;
-
-            if(gx.FinaleResponder)
-                if(gx.FinaleResponder((void*)ddev))
-                    continue;
+            if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
+                continue;
         }
 
-        if(UI_Responder(ddev))
-            continue;
-        if(Con_Responder(ddev))
-            continue;
+        if(UI_Responder(ddev)) continue;
+        if(Con_Responder(ddev)) continue;
 
-        // The game's normal responder only returns true if the bindings can't be used (like when chatting).
-        if(callGameResponders && gx.Responder(&ev))
-            continue;
+        if(callGameResponders)
+        {
+            if(gx.FinaleResponder && gx.FinaleResponder((void*)ddev))
+                continue;
+
+            // The game's normal responder only returns true if the bindings can't
+            // be used (like when chatting).
+            if(gx.Responder(&ev))
+                continue;
+        }
 
         // The bindings responder.
-        if(B_Responder(ddev))
-            continue;
+        if(B_Responder(ddev)) continue;
 
         // The "fallback" responder. Gets the event if no one else is interested.
         if(callGameResponders && gx.FallbackResponder)

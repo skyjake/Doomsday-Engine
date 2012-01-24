@@ -50,7 +50,7 @@
 #define MINIMUM_FRAME_SIZE  1800 // bytes
 
 // The first frame should contain as much information as possible.
-#define MAX_FIRST_FRAME_SIZE    NETBUFFER_MAXDATA // 256000
+#define MAX_FIRST_FRAME_SIZE    64000
 
 // The frame size is calculated by multiplying the bandwidth rating
 // (max 100) with this factor (+min).
@@ -249,6 +249,12 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(d->selector & ~DDMOBJ_SELECTOR_MASK)
         df |= MDF_SELSPEC;
 
+    // Omit NULL state.
+    if(!d->state)
+    {
+        df &= ~MDF_STATE;
+    }
+
     /*
     // Floor/ceiling z?
     if(df & MDF_POS_Z)
@@ -337,8 +343,9 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
     if(df & MDF_SELSPEC)
         Writer_WriteByte(msgWriter, d->selector >> 24);
 
-    if((df & MDF_STATE) && d->state)
+    if(df & MDF_STATE)
     {
+        assert(d->state != 0);
         Writer_WritePackedUInt16(msgWriter, d->state - states);
     }
 
@@ -502,9 +509,9 @@ void Sv_WriteSectorDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SDF_FLOOR_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_FLOOR].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_FLOOR].surface.material));
     if(df & SDF_CEILING_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->planes[PLN_CEILING].surface.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->planes[PLN_CEILING].surface.material));
     if(df & SDF_LIGHT)
     {
         // Must fit into a byte.
@@ -572,11 +579,11 @@ void Sv_WriteSideDelta(const void* deltaPtr)
     Writer_WritePackedUInt32(msgWriter, df);
 
     if(df & SIDF_TOP_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->top.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->top.material));
     if(df & SIDF_MID_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->middle.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->middle.material));
     if(df & SIDF_BOTTOM_MATERIAL)
-        Writer_WritePackedUInt16(msgWriter, Materials_Id(d->bottom.material));
+        Writer_WritePackedUInt16(msgWriter, Sv_IdForMaterial(d->bottom.material));
 
     if(df & SIDF_LINE_FLAGS)
         Writer_WriteByte(msgWriter, d->lineFlags);
@@ -711,6 +718,7 @@ if(type >= NUM_DELTA_TYPES)
 
     if(delta->state == DELTA_UNACKED)
     {
+        assert(false);
         // Flag this as Resent.
         type |= DT_RESENT;
     }

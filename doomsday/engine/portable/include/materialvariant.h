@@ -81,26 +81,7 @@ typedef struct materialvariant_layer_s {
     short tics;
 } materialvariant_layer_t;
 
-typedef struct materialvariant_s {
-    materialvariant_layer_t _layers[MATERIALVARIANT_MAXLAYERS];
-
-    /// Superior Material of which this is a derivative.
-    struct material_s* _generalCase;
-
-    /// For "smoothed" Material animation:
-    struct materialvariant_s* _current;
-    struct materialvariant_s* _next;
-    float _inter;
-
-    /// Specification used to derive this variant.
-    const materialvariantspecification_t* _spec;
-
-    /// Cached copy of current state if any.
-    materialsnapshot_t* _snapshot;
-
-    /// Frame count when MaterialVariant::_snapshot was last prepared/updated.
-    int _snapshotPrepareFrame;
-} materialvariant_t;
+typedef struct materialvariant_s materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
     const materialvariantspecification_t* spec);

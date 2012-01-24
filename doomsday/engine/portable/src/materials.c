@@ -720,15 +720,6 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     /// \todo We should be able to rebuild the variants.
     Material_DestroyVariants(mat);
     Material_SetDefinition(mat, def);
-    Material_SetFlags(mat, def->flags);
-    Material_SetWidth(mat, def->width);
-    Material_SetHeight(mat, def->height);
-    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
-
-    // Textures are updated automatically at prepare-time, so just clear them.
-    Material_SetDetailTexture(mat, NULL);
-    Material_SetShinyTexture(mat, NULL);
-    Material_SetShinyMaskTexture(mat, NULL);
 
     // Update bindings.
     for(i = 0; i < bindingCount; ++i)
@@ -1099,19 +1090,19 @@ void Materials_Ticker(timespan_t time)
     }
 }
 
-static texture_t* findDetailTextureForDef(const ded_detailtexture_t* def)
+static Texture* findDetailTextureForDef(const ded_detailtexture_t* def)
 {
     assert(def);
     return R_FindDetailTextureForResourcePath(def->detailTex);
 }
 
-static texture_t* findShinyTextureForDef(const ded_reflection_t* def)
+static Texture* findShinyTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
     return R_FindReflectionTextureForResourcePath(def->shinyMap);
 }
 
-static texture_t* findShinyMaskTextureForDef(const ded_reflection_t* def)
+static Texture* findShinyMaskTextureForDef(const ded_reflection_t* def)
 {
     assert(def);
     return R_FindMaskTextureForResourcePath(def->maskMap);
@@ -1142,7 +1133,7 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ms, byte unit, const texturevariant_t* texture,
+static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* texture,
     blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
     float tOffset, float opacity)
 {
@@ -1181,12 +1172,12 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
-        const texturevariant_t* tex;
+        const TextureVariant* tex;
     } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
     int i, layerCount;
-    texture_t* tex;
+    Texture* tex;
     assert(snapshot);
 
     memset(texUnits, 0, sizeof texUnits);
@@ -1218,7 +1209,8 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Material_SetSize(mat, Texture_Size(ml->texture));
+                Size2Raw texSize;
+                Material_SetSize(mat, Size2_Raw(Texture_Size(ml->texture), &texSize));
             }
         }
     }
@@ -1267,7 +1259,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     // Setup the primary texture unit.
     if(texUnits[MTU_PRIMARY].tex)
     {
-        const texturevariant_t* tex = texUnits[MTU_PRIMARY].tex;
+        const TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
         int magMode = glmode[texMagMode];
         float sScale, tScale;
 
@@ -1291,7 +1283,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the detail texture unit?
         if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
         {
-            const texturevariant_t* tex = texUnits[MTU_DETAIL].tex;
+            const TextureVariant* tex = texUnits[MTU_DETAIL].tex;
             const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
             const float height = Texture_Height(TextureVariant_GeneralCase(tex));
             float scale = Material_DetailScale(mat);
@@ -1307,7 +1299,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the shiny texture units?
         if(texUnits[MTU_REFLECTION].tex)
         {
-            const texturevariant_t* tex = texUnits[MTU_REFLECTION].tex;
+            const TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
             const blendmode_t blendmode = Material_ShinyBlendmode(mat);
             const float strength = Material_ShinyStrength(mat);
 
@@ -1316,7 +1308,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
 
         if(texUnits[MTU_REFLECTION_MASK].tex)
         {
-            const texturevariant_t* tex = texUnits[MTU_REFLECTION_MASK].tex;
+            const TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
             setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
                 snapshot->units[MTU_PRIMARY].magMode,
@@ -1397,7 +1389,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
 
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
-    if(!mat) return NULL;
+    if(!mat || isDedicated) return NULL;
     if(!Material_Prepared(mat))
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -1534,15 +1526,14 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    ddstring_t* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, Materials_Id(mat),
         !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
-    if(printNamespace)
-        Str_Delete((ddstring_t*)path);
+    Str_Delete((ddstring_t*)path);
 }
 
 /**
@@ -1632,8 +1623,9 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER);
-    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER);
+    // Decode paths before determining a lexicographical delta.
+    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
+    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1722,6 +1714,8 @@ boolean Materials_IsMaterialInAnimGroup(material_t* mat, int groupNum)
 
 boolean Materials_HasDecorations(material_t* mat)
 {
+    if(novideo) return false;
+
     assert(mat);
     /// \fixme We should not need to prepare to determine this.
     /// Nor should we need to process the group each time. Cache this decision.
@@ -2137,8 +2131,14 @@ D_CMD(ListMaterials)
 
 D_CMD(InspectMaterial)
 {
-    Uri* search = Uri_NewWithPath2(argv[1], RC_NULL);
+    ddstring_t path;
     material_t* mat;
+    Uri* search;
+
+    // Path is assumed to be in a human-friendly, non-encoded representation.
+    Str_Init(&path); Str_PercentEncode(Str_Set(&path, argv[1]));
+    search = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Str_Free(&path);
 
     if(!Str_IsEmpty(Uri_Scheme(search)))
     {

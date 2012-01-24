@@ -1,0 +1,11 @@
+The Doomsday Engine is an enhanced Doom source port for the Windows, Mac OS X,
+and Linux platforms. It is based on the source code of id Software's Doom and
+Raven Software's Heretic and Hexen. The Doomsday Engine and the associated
+ports of Doom, Heretic and Hexen have been under development since 1999; the
+first versions were released in late 1999 and early 2000. Several people have
+been involved in the project (see @ref{acks}{Acknowledgements}).
+
+The purpose of the project is to create versions of Doom, Heretic and Hexen
+that feel the same as the original games but take advantage of modern
+techniques such as 3D graphics and client/server networking. A lot of emphasis
+is placed on good-looking graphics.

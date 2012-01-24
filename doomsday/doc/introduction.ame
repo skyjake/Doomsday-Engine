@@ -1,0 +1,7 @@
+@ifdef{MAN}{
+    @include{unixintro}
+}
+@else {
+    @toc
+    @include{intro}
+}

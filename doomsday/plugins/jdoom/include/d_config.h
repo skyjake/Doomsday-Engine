@@ -114,6 +114,8 @@ typedef struct jdoom_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
     float           hudScale; // How to scale HUD data?

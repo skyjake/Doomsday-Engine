@@ -29,12 +29,13 @@
 #  pragma optimize("g", off)
 #endif
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <math.h>
 #include <assert.h>
+
 #include "mobj.h"
+#include "p_actor.h"
 #include "p_player.h"
+#include "p_map.h"
 #include "dmu_lib.h"
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
@@ -61,11 +62,7 @@ static float getFriction(mobj_t* mo)
 
     return P_MobjGetFriction(mo);
 }
-/**
- * Handles the stopping of mobj movement. Also stops player walking animation.
- *
- * @param mo  Mobj.
- */
+
 void Mobj_XYMoveStopping(mobj_t* mo)
 {
     player_t* player = mo->player;
@@ -156,17 +153,111 @@ void Mobj_XYMoveStopping(mobj_t* mo)
     }
 }
 
-/**
- * Checks if @a thing is a clmobj of one of the players.
- */
-boolean Mobj_IsPlayerClMobj(mobj_t* thing)
+boolean Mobj_IsPlayerClMobj(mobj_t* mo)
 {
     int i;
 
     for(i = 0; i < MAXPLAYERS; i++)
     {
-        if(ClPlayer_ClMobj(i) == thing)
+        if(ClPlayer_ClMobj(i) == mo)
             return true;
+    }
+    return false;
+}
+
+boolean Mobj_LookForPlayers(mobj_t* mo, boolean allAround)
+{
+    const int playerCount = P_CountPlayersInGame();
+    boolean foundTarget = false;
+    int from, to, cand, tries = 0;
+
+    // Nobody to target?
+    if(!playerCount) return false;
+
+    from = mo->lastLook % MAXPLAYERS;
+    to   = (from+MAXPLAYERS-1) % MAXPLAYERS;
+
+    for(cand = from; cand != to; cand = (cand < (MAXPLAYERS-1)? cand + 1 : 0))
+    {
+        player_t* player = players + cand;
+        mobj_t* plrmo;
+
+        // Is player in the game?
+        if(!player->plr->inGame || !player->plr->mo) continue;
+        plrmo = player->plr->mo;
+
+        // Do not target camera players.
+        if(P_MobjIsCamera(plrmo)) continue;
+
+        // Only look ahead a fixed number of times.
+        if(tries++ == 2) break;
+
+        // Do not target dead players.
+        if(player->health <= 0) continue;
+
+        // Within sight?
+        if(!P_CheckSight(mo, plrmo)) continue;
+
+        if(!allAround)
+        {
+            angle_t an = R_PointToAngle2(mo->pos[VX], mo->pos[VY],
+                                         plrmo->pos[VX], plrmo->pos[VY]);
+            an -= mo->angle;
+
+            if(an > ANG90 && an < ANG270)
+            {
+                // If real close, react anyway.
+                float dist = P_ApproxDistance(plrmo->pos[VX] - mo->pos[VX],
+                                              plrmo->pos[VY] - mo->pos[VY]);
+                // Behind us?
+                if(dist > MELEERANGE) continue;
+            }
+        }
+
+#if __JHERETIC__ || __JHEXEN__
+        // If player is invisible we may not detect if too far or randomly.
+        if(plrmo->flags & MF_SHADOW)
+        {
+            if((P_ApproxDistance(plrmo->pos[VX] - mo->pos[VX],
+                                 plrmo->pos[VY] - mo->pos[VY]) > 2 * MELEERANGE) &&
+               P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) < 5)
+            {
+                // Too far; can't detect.
+                continue;
+            }
+
+            // Randomly overlook the player regardless.
+            if(P_Random() < 225) continue;
+        }
+#endif
+
+#if __JHEXEN__
+        // Minotaurs do not target their master.
+        if(mo->type == MT_MINOTAUR && mo->tracer &&
+           mo->tracer->player == player) continue;
+#endif
+
+        // Found our quarry.
+        mo->target = plrmo;
+        foundTarget = true;
+    }
+
+    // Start looking from here next time.
+    mo->lastLook = cand;
+    return foundTarget;
+}
+
+boolean Mobj_ActionFunctionAllowed(mobj_t* mo)
+{
+    if(IS_CLIENT)
+    {
+        if(ClMobj_LocalActionsEnabled(mo))
+            return true;
+    }
+    if(!(mo->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
+       (mo->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+    {
+        return true;
     }
     return false;
 }

@@ -300,7 +300,7 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
         // Caller does not care which namespace.
         // Check for the font in these namespaces in priority order.
         static const fontnamespaceid_t order[] = {
-            FN_GAME, FN_SYSTEM, MN_ANY
+            FN_GAME, FN_SYSTEM, FN_ANY
         };
         int n = 0;
         do
@@ -1377,8 +1377,9 @@ static PathDirectoryNode** collectDirectoryNodes(fontnamespaceid_t namespaceId,
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, FONTS_PATH_DELIMITER);
-    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, FONTS_PATH_DELIMITER);
+    // Decode paths before determining a lexicographical delta.
+    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, FONTS_PATH_DELIMITER));
+    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, FONTS_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);

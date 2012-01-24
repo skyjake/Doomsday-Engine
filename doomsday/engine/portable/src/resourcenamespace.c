@@ -119,7 +119,7 @@ static void appendSearchPathsInGroup(resourcenamespace_t* rn,
 
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
     {
-        ddstring_t* path = Uri_ComposePath(rn->_searchPaths[group][i]);
+        ddstring_t* path = Uri_Compose(rn->_searchPaths[group][i].uri);
         Str_Appendf(pathList, "%s%c", Str_Text(path), delimiter);
         Str_Delete(path);
     }
@@ -190,35 +190,48 @@ void ResourceNamespace_Clear(resourcenamespace_t* rn)
     clearNameHash(rn);
 }
 
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newUri,
-    resourcenamespace_searchpathgroup_t group)
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
+    const Uri* searchPath, resourcenamespace_searchpathgroup_t group)
 {
     uint i, j;
-    assert(rn && newUri && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
+    assert(rn);
 
-    if(Str_IsEmpty(Uri_Path(newUri)) || !Str_CompareIgnoreCase(Uri_Path(newUri), "/"))
-        return false; // Not suitable.
+    // Is this suitable?
+    if(!searchPath || Str_IsEmpty(Uri_Path(searchPath)) || !Str_CompareIgnoreCase(Uri_Path(searchPath), "/"))
+        return false;
+
+    if(!VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group))
+    {
+#if _DEBUG
+        Con_Message("ResourceNamespace::AddSearchPath: Invalid SearchPathGroup %i, ignoring.\n", (int)group);
+#endif
+        return false;
+    }
 
     // Have we seen this path already (we don't want duplicates)?
 
     for(i = 0; i < SEARCHPATHGROUP_COUNT; ++i)
     for(j = 0; j < rn->_searchPathsCount[i]; ++j)
     {
-        if(Uri_Equality(rn->_searchPaths[i][j], newUri))
+        if(Uri_Equality(rn->_searchPaths[i][j].uri, searchPath))
+        {
+            rn->_searchPaths[i][j].flags = flags;
             return true;
+        }
     }
 
-    rn->_searchPaths[group] = (Uri**) realloc(rn->_searchPaths[group],
-        sizeof **rn->_searchPaths * ++rn->_searchPathsCount[group]);
+    rn->_searchPaths[group] = realloc(rn->_searchPaths[group],
+        sizeof(**rn->_searchPaths) * ++rn->_searchPathsCount[group]);
     if(!rn->_searchPaths[group])
-        Con_Error("ResourceNamespace::AddExtraSearchPath: Failed on reallocation of %lu bytes for "
+        Con_Error("ResourceNamespace::AddSearchPath: Failed on reallocation of %lu bytes for "
             "searchPath list.", (unsigned long) sizeof **rn->_searchPaths * (rn->_searchPathsCount[group]-1));
 
     // Prepend to the path list - newer paths have priority.
     if(rn->_searchPathsCount[group] > 1)
         memmove(rn->_searchPaths[group] + 1, rn->_searchPaths[group],
             sizeof(*rn->_searchPaths[group]) * (rn->_searchPathsCount[group]-1));
-    rn->_searchPaths[group][0] = Uri_NewCopy(newUri);
+    rn->_searchPaths[group][0].uri = Uri_NewCopy(searchPath);
+    rn->_searchPaths[group][0].flags = flags;
 
     return true;
 }
@@ -226,13 +239,21 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* newU
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespace_searchpathgroup_t group)
 {
     uint i;
-    assert(rn && VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group));
+    assert(rn);
+
+    if(!VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(group))
+    {
+#if _DEBUG
+        Con_Message("ResourceNamespace::ClearSearchPaths: Invalid SearchPathGroup %i, ignoring.\n", (int)group);
+#endif
+        return;
+    }
 
     if(!rn->_searchPaths[group]) return;
 
     for(i = 0; i < rn->_searchPathsCount[group]; ++i)
     {
-        Uri_Delete(rn->_searchPaths[group][i]);
+        Uri_Delete(rn->_searchPaths[group][i].uri);
     }
     free(rn->_searchPaths[group]);
     rn->_searchPaths[group] = 0;
@@ -247,6 +268,31 @@ ddstring_t* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, ch
 ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn)
 {
     return ResourceNamespace_ComposeSearchPathList2(rn, ';');
+}
+
+int ResourceNamespace_IterateSearchPaths2(resourcenamespace_t* rn,
+    int (*callback) (const Uri* uri, int flags, void* paramaters), void* paramaters)
+{
+    int result = 0;
+    assert(rn);
+    if(callback)
+    {
+        uint i, j;
+        for(i = 0; i < SEARCHPATHGROUP_COUNT; ++i)
+        for(j = 0; j < rn->_searchPathsCount[i]; ++j)
+        {
+            resourcenamespace_searchpath_t* path = &rn->_searchPaths[i][j];
+            result = callback(path->uri, path->flags, paramaters);
+            if(result) return result;
+        }
+    }
+    return result;
+}
+
+int ResourceNamespace_IterateSearchPaths(resourcenamespace_t* rn,
+    int (*callback) (const Uri* uri, int flags, void* paramaters))
+{
+    return ResourceNamespace_IterateSearchPaths2(rn, callback, NULL);
 }
 
 int ResourceNamespace_Iterate2(resourcenamespace_t* rn, const ddstring_t* name,

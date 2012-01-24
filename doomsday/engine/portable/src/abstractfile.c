@@ -28,7 +28,7 @@
 #include "abstractfile.h"
 
 abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
-    DFile* file, const lumpinfo_t* info)
+    const char* path, DFile* file, const LumpInfo* info)
 {
     // Used to favor newer files when duplicates are pruned.
     static uint fileCounter = 0;
@@ -39,6 +39,7 @@ abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
     af->_file = file;
     af->_flags.startup = false;
     af->_flags.iwad = false;
+    Str_Init(&af->_path); Str_Set(&af->_path, path);
     F_CopyLumpInfo(&af->_info, info);
 
     return af;
@@ -47,6 +48,7 @@ abstractfile_t* AbstractFile_Init(abstractfile_t* af, filetype_t type,
 void AbstractFile_Destroy(abstractfile_t* af)
 {
     assert(af);
+    Str_Free(&af->_path);
     F_DestroyLumpInfo(&af->_info);
     if(af->_file)
         DFile_Delete(af->_file, true);
@@ -58,7 +60,7 @@ filetype_t AbstractFile_Type(const abstractfile_t* af)
     return af->_type;
 }
 
-const lumpinfo_t* AbstractFile_Info(abstractfile_t* af)
+const LumpInfo* AbstractFile_Info(abstractfile_t* af)
 {
     assert(af);
     return &af->_info;
@@ -85,7 +87,7 @@ DFile* AbstractFile_Handle(abstractfile_t* af)
 const ddstring_t* AbstractFile_Path(const abstractfile_t* af)
 {
     assert(af);
-    return &af->_info.path;
+    return &af->_path;
 }
 
 uint AbstractFile_LoadOrderIndex(const abstractfile_t* af)

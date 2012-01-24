@@ -37,10 +37,10 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
+#include "de_defs.h"
 
+#include "materialarchive.h"
 #include "r_world.h"
-
-// MACROS ------------------------------------------------------------------
 
 // This is absolute maximum bandwidth rating. Frame size is practically
 // unlimited with this score.
@@ -56,19 +56,7 @@
 #define TOKEN_LEN 128
 #define VALID_LABEL_LEN 16
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 void    Sv_ClientCoords(int playerNum);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     netRemoteUser = 0; // The client who is currently logged in.
 char   *netPassword = ""; // Remote login password.
@@ -76,9 +64,7 @@ char   *netPassword = ""; // Remote login password.
 // This is the limit when accepting new clients.
 int     svMaxPlayers = DDMAXPLAYERS;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+static MaterialArchive* materialDict;
 
 /**
  * Fills the provided struct with information about the local server.
@@ -375,13 +361,6 @@ void Sv_HandlePacket(void)
     char                buf[17];
     size_t              len;
 
-    /*
-#ifdef _DEBUG
-    Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
-    Con_Message("Sv_HandlePacket: length=%li\n", netBuffer.length);
-#endif
-    */
-
     switch(netBuffer.msg.type)
     {
     case PCL_HELLO:
@@ -500,6 +479,19 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
             }
         M_Free(msg);
         break;
+
+    case PCL_FINALE_REQUEST: {
+        finaleid_t fid = Reader_ReadUInt32(msgReader);
+        uint16_t params = Reader_ReadUInt16(msgReader);
+#ifdef _DEBUG
+        Con_Message("PCL_FINALE_REQUEST: fid=%i params=%i\n", fid, params);
+#endif
+        if(params == 1)
+        {
+            // Skip.
+            FI_ScriptRequestSkip(fid);
+        }
+        break; }
 
     case PKT_PLAYER_INFO:
         Sv_HandlePlayerInfoFromClient(sender);
@@ -668,6 +660,7 @@ void Sv_GetPackets(void)
         case PKT_OK:
         case PKT_CHAT:
         case PKT_PLAYER_INFO:
+        case PCL_FINALE_REQUEST:
             Sv_HandlePacket();
             break;
 
@@ -749,21 +742,12 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
-    int                 i, plrNum = -1;
+    int                 plrNum = N_IdentifyPlayer(nodeID);
     boolean             wasInGame;
     player_t           *plr;
     client_t           *cl;
 
-    // First let's find out who this node actually is.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-        if(clients[i].nodeID == nodeID)
-        {
-            plrNum = i;
-            break;
-        }
-
-    if(plrNum == -1)
-        return; // Bogus?
+    if(plrNum == -1) return; // Bogus?
 
     // Log off automatically.
     if(netRemoteUser == plrNum)
@@ -812,6 +796,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
+    StringArray* ar;
     int i;
     uint playersInGame = 0;
 
@@ -831,14 +816,27 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     Msg_End();
     Net_SendBuffer(plrNum, 0);
 
-    //shake.version = SV_VERSION; // byte
-    //shake.yourConsole = plrNum; // byte
-    //shake.playerMask = 0;
-    //shake.gameTime = LONG(gameTime * 100);
+    // Include the list of material Ids.
+    Msg_Begin(PSV_MATERIAL_ARCHIVE);
+    MaterialArchive_Write(materialDict, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
 
-    //shake.playerMask = USHORT(shake.playerMask);
-    /*Net_SendPacket(plrNum | DDSP_ORDERED, PSV_HANDSHAKE, &shake,
-                   sizeof(shake));*/
+    // Include the list of thing Ids.
+    ar = Def_ListMobjTypeIDs();
+    Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
+
+    // Include the list of state Ids.
+    ar = Def_ListStateIDs();
+    Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
 
     if(newPlayer)
     {
@@ -892,18 +890,12 @@ void Sv_StartNetGame(void)
         client->connected = false;
         client->ready = false;
         client->nodeID = 0;
-        //client->numTics = 0;
-        //client->firstTic = 0;
         client->enterTime = 0;
-        //client->runTime = -1;
         client->lastTransmit = -1;
-        //client->updateCount = UPDATECOUNT;
         client->fov = 90;
         client->viewConsole = -1;
         memset(client->name, 0, sizeof(client->name));
         client->bandwidthRating = BWR_DEFAULT;
-        //client->bwrAdjustTime = 0;
-        //memset(client->ackTimes, 0, sizeof(client->ackTimes));
         Smoother_Clear(client->smoother);
     }
     gameTime = 0;
@@ -917,6 +909,13 @@ void Sv_StartNetGame(void)
     isServer = true;
     allowSending = true;
 
+    // Prepare the material dictionary we'll be using with clients.
+    materialDict = MaterialArchive_New(false);
+#ifdef _DEBUG
+    Con_Message("Sv_StartNetGame: Prepared material dictionary with %u materials.\n",
+                (uint) MaterialArchive_Count(materialDict));
+#endif
+
     if(!isDedicated)
     {
         player_t           *plr = &ddPlayers[consolePlayer];
@@ -929,6 +928,21 @@ void Sv_StartNetGame(void)
         cl->viewConsole = 0;
         strcpy(cl->name, playerName);
     }
+}
+
+void Sv_StopNetGame(void)
+{
+    if(materialDict)
+    {
+        MaterialArchive_Delete(materialDict);
+        materialDict = 0;
+    }
+}
+
+unsigned int Sv_IdForMaterial(material_t* mat)
+{
+    assert(materialDict);
+    return MaterialArchive_FindUniqueSerialId(materialDict, mat);
 }
 
 void Sv_SendText(int to, int con_flags, const char* text)
@@ -1223,19 +1237,6 @@ void Sv_ClientCoords(int plrNum)
         ddpl->lookDir = clientLookDir;
     }
 
-    /*
-    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
-    {
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
-                              clientMom[VX], clientMom[VY], clientMom[VZ]) );
-#endif
-        mo->mom[VX] = clientMom[VX];
-        mo->mom[VY] = clientMom[VY];
-        mo->mom[VZ] = clientMom[VZ];
-    }
-    */
-
 #ifdef _DEBUG
     VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
                           clientPos[VX], clientPos[VY], clientPos[VZ]) );
@@ -1254,9 +1255,6 @@ void Sv_ClientCoords(int plrNum)
     }
 }
 
-/**
- * Determines whether the coordinates sent by a player are valid at the moment.
- */
 boolean Sv_CanTrustClientPos(int plrNum)
 {
     player_t* plr = &ddPlayers[plrNum];

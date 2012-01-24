@@ -39,6 +39,13 @@ typedef enum {
 #define VALID_RESOURCENAMESPACE_SEARCHPATHGROUP(g) ((g) >= SPG_OVERRIDE && (g) < SEARCHPATHGROUP_COUNT)
 
 /**
+ * @defgroup searchPathFlags  Search Path Flags
+ * @{
+ */
+#define SPF_NO_DECEND           0x1 /// Do not decend into branches when populating paths.
+/**@}*/
+
+/**
  * Resource Namespace.
  *
  * @ingroup core
@@ -48,9 +55,14 @@ typedef enum {
 typedef unsigned short resourcenamespace_namehash_key_t;
 
 typedef struct {
+    int flags; /// @see searchPathFlags
+    Uri* uri;
+} resourcenamespace_searchpath_t;
+
+typedef struct {
     /// Sets of search paths known by this namespace.
     /// Each set is in order of greatest-importance, right to left.
-    Uri** _searchPaths[SEARCHPATHGROUP_COUNT];
+    resourcenamespace_searchpath_t* _searchPaths[SEARCHPATHGROUP_COUNT];
     uint _searchPathsCount[SEARCHPATHGROUP_COUNT];
 
     /// Name hash table.
@@ -73,12 +85,13 @@ void ResourceNamespace_Clear(resourcenamespace_t* rnamespace);
 /**
  * Add a new path to this namespace.
  *
+ * @param flags  @see searchPathFlags
  * @param path  New unresolved path to add.
  * @param group  Group to add this path to. @see resourcenamespace_searchpathgroup_t
  * @return  @c true if the path is correctly formed and present in the namespace.
  */
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* path,
-    resourcenamespace_searchpathgroup_t group);
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, int flags,
+    const Uri* path, resourcenamespace_searchpathgroup_t group);
 
 /**
  * Clear search paths in this namespace.
@@ -87,13 +100,18 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rn, const Uri* path
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rn, resourcenamespace_searchpathgroup_t group);
 
 /**
- * Compose the list of search paths into a @a delimited string.
+ * Compose the list of search paths into a delimited string.
  *
  * @param delimiter  Discreet paths will be delimited by this character.
  * @return  Resultant string which should be released with Str_Delete().
  */
 ddstring_t* ResourceNamespace_ComposeSearchPathList2(resourcenamespace_t* rn, char delimiter);
 ddstring_t* ResourceNamespace_ComposeSearchPathList(resourcenamespace_t* rn); /*delimiter= ';'*/
+
+int ResourceNamespace_IterateSearchPaths2(resourcenamespace_t* rn,
+    int (*callback) (const Uri* uri, int flags, void* paramaters), void* paramaters);
+int ResourceNamespace_IterateSearchPaths(resourcenamespace_t* rn,
+    int (*callback) (const Uri* uri, int flags, void* paramaters)); /*paramaters=NULL*/
 
 /**
  * Add a new named resource into the namespace. Multiple names for a given

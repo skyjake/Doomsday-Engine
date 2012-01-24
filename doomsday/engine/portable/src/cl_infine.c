@@ -26,65 +26,74 @@
  * Client-side InFine.
  */
 #include "de_base.h"
+#include "de_console.h"
 #include "de_network.h"
 #include "de_infine.h"
 
-static const byte* readbuffer;
+static finaleid_t currentFinale = 0;
+static finaleid_t remoteFinale = 0;
 
-// Mini-Msg routines.
-static void SetReadBuffer(const byte* data)
+finaleid_t Cl_CurrentFinale(void)
 {
-    readbuffer = data;
+    return currentFinale;
 }
 
-static byte ReadByte(void)
+void Cl_Finale(Reader* msg)
 {
-    return *readbuffer++;
-}
+    int flags = Reader_ReadByte(msg);
+    byte* script = 0;
+    int len;
+    finaleid_t finaleId = Reader_ReadUInt32(msg);
 
-static short ReadShort(void)
-{
-    readbuffer += 2;
-    return SHORT( *(const short*) (readbuffer - 2) );
-}
-
-static int ReadLong(void)
-{
-    readbuffer += 4;
-    return LONG( *(const int*) (readbuffer - 4) );
-}
-
-static void Read(byte* buf, size_t len)
-{
-    memcpy(buf, readbuffer, len);
-    readbuffer += len;
-}
-
-/**
- * This is where clients start their InFine sequences.
- */
-void Cl_Finale(int packetType, const byte* data)
-{
-    byte flags;
-
-    SetReadBuffer(data);
-    flags = ReadByte();
-
-    if(flags & (FINF_SCRIPT|FINF_BEGIN))
-    {   // Start the script.
-#pragma message("WARNING: Cl_Finale does not presently read the state condition flags")
-        FI_Execute((const char*)readbuffer, FF_LOCAL);
-    }
-
-    if(flags & FINF_END)
+    if(flags & FINF_SCRIPT)
     {
-#pragma message("WARNING: Cl_Finale does not presently respond to FINF_END")
-        //FI_ScriptTerminate();
+        // Read the script into map-scope memory. It will be freed
+        // when the next map is loaded.
+        len = Reader_ReadUInt32(msg);
+        script = malloc(len + 1);
+        Reader_Read(msg, script, len);
+        script[len] = 0;
     }
 
-    if(flags & FINF_SKIP)
+    if((flags & FINF_SCRIPT) && (flags & FINF_BEGIN))
     {
-#pragma message("WARNING: Cl_Finale does not presently respond to FINF_SKIP")
-        //FI_ScriptRequestSkip();
+        // Start the script.
+        currentFinale = FI_Execute((const char*)script, FF_LOCAL);
+        remoteFinale = finaleId;
+#ifdef _DEBUG
+        Con_Message("Cl_Finale: Started finale %i (remote id %i).\n", currentFinale, remoteFinale);
+#endif
     }
+
+    /// @todo Wouldn't hurt to make sure that the server is talking about the
+    /// same finale as before... (check remoteFinale)
+
+    if((flags & FINF_END) && currentFinale)
+    {
+        FI_ScriptTerminate(currentFinale);
+        currentFinale = 0;
+        remoteFinale = 0;
+    }
+
+    if((flags & FINF_SKIP) && currentFinale)
+    {       
+        FI_ScriptRequestSkip(currentFinale);
+    }
+
+    if(script) free(script);
+}
+
+void Cl_RequestFinaleSkip(void)
+{
+    // First the flags.
+    Msg_Begin(PCL_FINALE_REQUEST);
+    Writer_WriteUInt32(msgWriter, remoteFinale);
+    Writer_WriteUInt16(msgWriter, 1); // skip
+    Msg_End();
+
+#ifdef _DEBUG
+    Con_Message("Cl_RequestFinaleSkip: Requesting skip on finale %i.\n", remoteFinale);
+#endif
+
+    Net_SendBuffer(0, 0);
 }
