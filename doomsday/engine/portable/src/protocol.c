@@ -255,9 +255,8 @@ static size_t prepareTransmission(void* data, size_t size, boolean needInflate)
     // Compose the header and payload into the transmission buffer.
     msg = Writer_NewWithBuffer(transmissionBuffer, transmissionBufferSize);
 
-    if(size <= MAX_SIZE_SMALL)
+    if(size <= MAX_SIZE_SMALL && !needInflate)
     {
-        assert(!needInflate);
         Writer_WriteByte(msg, size);
     }
     else if(size <= MAX_SIZE_MEDIUM)
