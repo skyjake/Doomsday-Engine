@@ -819,6 +819,7 @@ void HU_DrawScoreBoard(int player)
 
     // Scale by HUD scale.
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
@@ -838,6 +839,9 @@ void HU_DrawScoreBoard(int player)
 
     DGL_Disable(DGL_TEXTURE_2D);
 
+    // Restore earlier matrices.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
