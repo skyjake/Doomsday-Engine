@@ -2021,7 +2021,7 @@ void Hu_MenuDrawPageHelp(const char* help, int x, int y)
 static void drawOverlayBackground(float darken)
 {
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
+    DGL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
 }
 
 static void beginOverlayDraw(void)

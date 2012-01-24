@@ -61,7 +61,7 @@ static float filterColor[4] = { 0, 0, 0, 0 };
 
 // CODE --------------------------------------------------------------------
 
-void GL_DrawRecti(const RectRaw* rect)
+void GL_DrawRect(const RectRaw* rect)
 {
     assert(rect);
     glBegin(GL_QUADS);
@@ -99,7 +99,7 @@ void GL_DrawRectWithCoords(const RectRaw* rect, Point2Raw coords[4])
     glEnd();
 }
 
-void GL_DrawRectd(const RectRawf* rect)
+void GL_DrawRectf(const RectRawf* rect)
 {
     assert(rect);
     glBegin(GL_QUADS);
@@ -114,7 +114,7 @@ void GL_DrawRectd(const RectRawf* rect)
     glEnd();
 }
 
-void GL_DrawRect(float x, float y, float w, float h)
+void GL_DrawRectf2(float x, float y, float w, float h)
 {
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -128,13 +128,13 @@ void GL_DrawRect(float x, float y, float w, float h)
     glEnd();
 }
 
-void GL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a)
+void GL_DrawRectf2Color(float x, float y, float w, float h, float r, float g, float b, float a)
 {
     glColor4f(r, g, b, a);
-    GL_DrawRect(x, y, w, h);
+    GL_DrawRectf2(x, y, w, h);
 }
 
-void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuint tex,
+void GL_DrawRectf2TextureColor(float x, float y, float width, float height, DGLuint tex,
     int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha)
 {
@@ -177,7 +177,7 @@ void GL_DrawRectTextureColor(float x, float y, float width, float height, DGLuin
     glEnable(GL_BLEND);
 }
 
-void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
+void GL_DrawRectf2Tiled(float x, float y, float w, float h, int tw, int th)
 {
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -194,7 +194,7 @@ void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 /**
  * The cut rectangle must be inside the other one.
  */
-void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
+void GL_DrawCutRectf2Tiled(float x, float y, float w, float h, int tw, int th,
                          int txoff, int tyoff, float cx, float cy, float cw,
                          float ch)
 {
@@ -443,15 +443,15 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
         {
             // "Pillarbox":
             int w = .5f + (bp->availWidth  - bp->width  * bp->scaleFactor) / 2;
-            GL_DrawRect(0, 0, w, bp->availHeight);
-            GL_DrawRect(bp->availWidth - w, 0, w, bp->availHeight);
+            GL_DrawRectf2(0, 0, w, bp->availHeight);
+            GL_DrawRectf2(bp->availWidth - w, 0, w, bp->availHeight);
         }
         else
         {
             // "Letterbox":
             int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
-            GL_DrawRect(0, 0, bp->availWidth, h);
-            GL_DrawRect(0, bp->availHeight - h, bp->availWidth, h);
+            GL_DrawRectf2(0, 0, bp->availWidth, h);
+            GL_DrawRectf2(0, bp->availHeight - h, bp->availWidth, h);
         }
     }
 

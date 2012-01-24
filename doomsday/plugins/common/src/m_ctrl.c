@@ -409,7 +409,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
+        DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);

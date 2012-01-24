@@ -539,7 +539,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     glBindTexture(GL_TEXTURE_2D, texLoading[0]);
     glColor4fv(col);
-    GL_DrawRect(x - radius, y - radius, radius*2, radius*2);
+    GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
 
     // Rotate around center.
     glMatrixMode(GL_TEXTURE);

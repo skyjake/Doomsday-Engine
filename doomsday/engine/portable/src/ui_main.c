@@ -2471,7 +2471,7 @@ void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size)
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
     glEnable(GL_TEXTURE_2D);
     glColor4f(1, 1, 1, uiAlpha);
-    GL_DrawRecti(&rect);
+    GL_DrawRect(&rect);
     glDisable(GL_TEXTURE_2D);
 }
 

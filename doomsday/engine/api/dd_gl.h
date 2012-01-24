@@ -251,13 +251,13 @@ void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
 void            DGL_DrawRect(const RectRaw* rect);
-void            DGL_DrawRect2(float x, float y, float w, float h);
+
 void            DGL_DrawRectf(const RectRawf* rect);
+void            DGL_DrawRectf2(float x, float y, float w, float h);
+void            DGL_DrawRectf2Color(float x, float y, float w, float h, float r, float g, float b, float a);
+void            DGL_DrawRectf2Tiled(float x, float y, float w, float h, int tw, int th);
 
-void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
-void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
-
-void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
+void            DGL_DrawCutRectf2Tiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int minFilter, int magFilter,

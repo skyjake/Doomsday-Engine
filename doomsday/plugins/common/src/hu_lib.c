@@ -433,7 +433,7 @@ static void drawWidgetAvailableSpace(uiwidget_t* obj)
 {
     assert(obj);
     DGL_Color4f(0, .4f, 0, .1f);
-    DGL_DrawRect2(Rect_X(obj->geometry), Rect_Y(obj->geometry), obj->maxSize.width, obj->maxSize.height);
+    DGL_DrawRectf2(Rect_X(obj->geometry), Rect_Y(obj->geometry), obj->maxSize.width, obj->maxSize.height);
 }
 #endif
 
@@ -1596,21 +1596,21 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
     if(R_GetPatchInfo(pEditLeft, &leftInfo))
     {
         DGL_SetPatch(pEditLeft, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
+        DGL_DrawRectf2(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
         leftOffset = leftInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditRight, &rightInfo))
     {
         DGL_SetPatch(pEditRight, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
+        DGL_DrawRectf2(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
         rightOffset = rightInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
         DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+        DGL_DrawRectf2Tiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
     }
 }
 
@@ -2415,68 +2415,68 @@ void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
-    DGL_DrawRectTiled(x, y, w, h, 64, 64);
+    DGL_DrawRectf2Tiled(x, y, w, h, 64, 64);
 
     // Top
     if(t.id)
     {
         DGL_SetPatch(t.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
+        DGL_DrawRectf2Tiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
     }
 
     // Bottom
     if(b.id)
     {
         DGL_SetPatch(b.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
+        DGL_DrawRectf2Tiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
     }
 
     // Left
     if(l.id)
     {
         DGL_SetPatch(l.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
+        DGL_DrawRectf2Tiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
     }
 
     // Right
     if(r.id)
     {
         DGL_SetPatch(r.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
+        DGL_DrawRectf2Tiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
     }
 
     // Top Left
     if(tl.id)
     {
         DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
+        DGL_DrawRectf2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
     }
 
     // Top Right
     if(tr.id)
     {
         DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
+        DGL_DrawRectf2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
     }
 
     // Bottom Right
     if(br.id)
     {
         DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
+        DGL_DrawRectf2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
     }
 
     // Bottom Left
     if(bl.id)
     {
         DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
+        DGL_DrawRectf2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(x, y, w, h, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
+    DGL_DrawRectf2Color(x, y, w, h, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -2844,7 +2844,7 @@ void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin)
     GL_DrawPatchXY(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+    DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatchXY3(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
