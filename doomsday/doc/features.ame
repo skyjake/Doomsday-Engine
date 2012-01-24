@@ -57,5 +57,6 @@ Other:
     @ifdef{MACOSX}{Mac OS X 10.4}
 }
 @ifdef{WIN32}{@item DirectX 8 (or newer)}
+@ifdef{MACOSX}{@item Processor architectures: 32-bit Intel/PowerPC}
 @item A display adapter capable of OpenGL 1.4 hardware acceleration
 }
