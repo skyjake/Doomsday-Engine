@@ -183,7 +183,7 @@ def update_feed():
     for timestamp, ev in builder.events_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %i</title>' % ev.number()
-        print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, ev.tag())
+        print >> out, '<link>%s/%s/</link>' % ("http://dengine.net", ev.tag())
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
         print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
