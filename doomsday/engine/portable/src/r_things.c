@@ -940,28 +940,13 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean viewAligned)
 {
     const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-    patchtex_t* pTex;
-    const variantspecification_t* texSpec;
+    materialvariant_t* variant;
 
     if(!params) return; // Wha?
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
-
-#if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
-        Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
-
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
-    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-    assert(texSpec);
-
-    params->width  = ms->size.width  + texSpec->border*2;
-    params->height = ms->size.height + texSpec->border*2;
+    variant = Materials_ChooseVariant(mat, spec, true, true);
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -970,15 +955,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) -pTex->offX - params->width/2;
-    params->viewOffY = 0;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->mat = mat;
-    params->tMap = tMap;
-    params->tClass = tClass;
+    params->material = variant;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
