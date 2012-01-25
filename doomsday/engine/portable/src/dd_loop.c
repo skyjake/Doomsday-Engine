@@ -391,8 +391,10 @@ void DD_Ticker(timespan_t time)
                 static float prevSpeed = 0;
                 float speed = V2_Length(mo->mom);
                 float actualMom[2] = { mo->pos[0] - prevPos[0], mo->pos[1] - prevPos[1] };
-                float actuaSpeed = V2_Length(actualMom);
-                Con_Message("%i,%f,%f,%f\n", SECONDS_TO_TICKS())
+                float actualSpeed = V2_Length(actualMom);
+
+                Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
+                            ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
 
                 V3_Copy(prevPos, mo->pos);
                 prevSpeed = speed;
