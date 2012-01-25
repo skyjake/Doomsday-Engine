@@ -226,7 +226,7 @@ class Changes:
                             otherGroups.append(tag)
                             
                     others = self.pretty_group_list(otherGroups)
-                    if others: others = ' <i>(also %s)</i>' % others
+                    if others: others = ' <i>[&rarr; %s]</i>' % others
                         
                     print >> out, '<li><b>%s</b>%s' % (entry.subject, others)
                     print >> out, 'by <i>%s</i> on ' % entry.author
