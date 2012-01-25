@@ -1199,9 +1199,9 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     ddstring_t* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
+        "%-*s %*u %-6s x%u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
-        resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
+        Texture_VariantCount(record->texture), resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
     Str_Delete(resourcePath);
     Str_Delete(path);
@@ -1338,7 +1338,7 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     // Print the result index key.
     numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
     numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Textures_Size()));
-    Con_Printf(" %*s: %-*s %*s origin path\n", numFoundDigits, "idx",
+    Con_Printf(" %*s: %-*s %*s origin x# path\n", numFoundDigits, "idx",
         printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
         numUidDigits, "uid");
     Con_PrintRuler();
