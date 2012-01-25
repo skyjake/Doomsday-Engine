@@ -961,36 +961,76 @@ void Rend_DrawMasked(void)
     }
 }
 
+static materialvariant_t* chooseSpriteMaterial(const rendspriteparams_t* p)
+{
+    assert(p);
+
+    if(!renderTextures) return NULL;
+    if(renderTextures == 2)
+    {
+        // For lighting debug, render all solid surfaces using the gray texture.
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+            1, -2, -1, true, true, false, false);
+        return Materials_ChooseVariant(mat, spec, true, true);
+    }
+
+    // Use the pre-chosen sprite.
+    return p->material;
+}
+
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     float v1[3], v2[3], v3[3], v4[3];
+    Point2Rawf viewOffset = { 0, 0 }; ///< View-aligned offset to center point.
+    Size2Raw size = { 0, 0 };
     dgl_color_t quadColors[4];
     dgl_vertex_t quadNormals[4];
     boolean restoreMatrix = false;
     boolean restoreZ = false;
     float spriteCenter[3];
     float surfaceNormal[3];
-    material_t* mat = NULL;
-    float s = 1, t = 1; // bottom right coords.
+    materialvariant_t* mat = NULL;
+    const materialsnapshot_t* ms = NULL;
+    float s = 1, t = 1; ///< Bottom right coords.
     int i;
 
-    if(renderTextures == 1)
-        mat = params->mat;
-    else if(renderTextures == 2)
-        // For lighting debug, render all solid surfaces using the gray texture.
-        mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
-
-    if(mat)
+    // Many sprite properties are inherited from the material.
+    if(params->material)
     {
-        // Might we need a colour translation?
-        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_SPRITE, 0, (renderTextures == 1? 1 : 0), (renderTextures == 1? params->tClass : 0),
-            (renderTextures == 1? params->tMap : 0), GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-            1, -2, -1, true, true, true, false);
-        const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+        const variantspecification_t* texSpec;
+        patchtex_t* pTex;
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        // Ensure this variant has been prepared.
+        ms = Materials_PrepareVariant(params->material);
+
+        texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
+        assert(texSpec);
+        size.width  = ms->size.width  + texSpec->border*2;
+        size.height = ms->size.height + texSpec->border*2;
+        viewOffset.x = -size.width/2;
+
         TextureVariant_Coords(MST(ms, MTU_PRIMARY), &s, &t);
+
+        if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) == TN_SPRITES)
+        {
+            pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+            assert(pTex);
+            viewOffset.x += (float) -pTex->offX;
+        }
+    }
+
+    // We may want to draw using another material instead.
+    mat = chooseSpriteMaterial(params);
+    if(mat != params->material)
+    {
+        ms = mat? Materials_PrepareVariant(mat) : NULL;
+    }
+
+    if(ms)
+    {
+        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
     else
@@ -1004,15 +1044,15 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     spriteCenter[VZ] = params->center[VZ] + params->srvo[VZ];
 
     M_ProjectViewRelativeLine2D(spriteCenter, params->viewAligned,
-                                params->width, params->viewOffX, v1, v4);
+                                size.width, viewOffset.x, v1, v4);
 
     v2[VX] = v1[VX];
     v2[VY] = v1[VY];
     v3[VX] = v4[VX];
     v3[VY] = v4[VY];
 
-    v1[VZ] = v4[VZ] = spriteCenter[VZ] - params->height / 2 + params->viewOffY;
-    v2[VZ] = v3[VZ] = spriteCenter[VZ] + params->height / 2 + params->viewOffY;
+    v1[VZ] = v4[VZ] = spriteCenter[VZ] - size.height / 2 + viewOffset.y;
+    v2[VZ] = v3[VZ] = spriteCenter[VZ] + size.height / 2 + viewOffset.y;
 
     // Calculate the surface normal.
     M_PointCrossProduct(v2, v1, v3, surfaceNormal);
@@ -1036,11 +1076,13 @@ glEnd();
         memcpy(quadNormals[i].xyz, surfaceNormal, sizeof(surfaceNormal));
 
     if(!params->vLightListIdx)
-    {   // Lit uniformly.
+    {
+        // Lit uniformly.
         Spr_UniformVertexColors(4, quadColors, params->ambientColor);
     }
     else
-    {   // Lit normally.
+    {
+        // Lit normally.
         Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
                          spriteLight + 1, params->ambientColor);
     }
@@ -1057,26 +1099,23 @@ glEnd();
         glTranslatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
         if(!params->viewAligned)
         {
-            float   s_dx = v1[VX] - v2[VX];
-            float   s_dy = v1[VY] - v2[VY];
+            float s_dx = v1[VX] - v2[VX];
+            float s_dy = v1[VY] - v2[VY];
 
             if(alwaysAlign == 2)
             {   // Restricted camera alignment.
-                float   dx = spriteCenter[VX] - vx;
-                float   dy = spriteCenter[VY] - vz;
-                float   spriteAngle =
-                    BANG2DEG(bamsAtan2(spriteCenter[VZ] - vy,
-                                       sqrt(dx * dx + dy * dy)));
+                float dx = spriteCenter[VX] - vx;
+                float dy = spriteCenter[VY] - vz;
+                float spriteAngle = BANG2DEG(
+                    bamsAtan2(spriteCenter[VZ] - vy, sqrt(dx * dx + dy * dy)));
 
                 if(spriteAngle > 180)
                     spriteAngle -= 360;
 
                 if(fabs(spriteAngle) > maxSpriteAngle)
                 {
-                    float   turnAngle =
-                        (spriteAngle >
-                        0 ? spriteAngle - maxSpriteAngle : spriteAngle +
-                        maxSpriteAngle);
+                    float turnAngle = (spriteAngle > 0? spriteAngle - maxSpriteAngle :
+                                                        spriteAngle + maxSpriteAngle);
 
                     // Rotate along the sprite edge.
                     glRotatef(turnAngle, s_dx, 0, s_dy);
@@ -1145,8 +1184,7 @@ glEnd();
     renderQuad(v, quadColors, tc);
     }
 
-    if(mat)
-        glDisable(GL_TEXTURE_2D);
+    if(ms) glDisable(GL_TEXTURE_2D);
 
     if(devMobjVLights && params->vLightListIdx)
     {   // Draw the vlight vectors, for debug.

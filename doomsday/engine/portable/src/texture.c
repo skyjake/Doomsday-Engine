@@ -84,6 +84,18 @@ Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size
     return tex;
 }
 
+static uint countVariants(const Texture* tex)
+{
+    texture_variantlist_node_t* node;
+    uint count = 0;
+    assert(tex);
+    for(node = tex->variants; node; node = node->next)
+    {
+        count += 1;
+    }
+    return count;
+}
+
 static void destroyVariants(Texture* tex)
 {
     assert(tex);
@@ -173,6 +185,11 @@ void Texture_ClearVariants(Texture* tex)
 {
     assert(tex);
     destroyVariants(tex);
+}
+
+uint Texture_VariantCount(const Texture* tex)
+{
+    return countVariants(tex);
 }
 
 TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)

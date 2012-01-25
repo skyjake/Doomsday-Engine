@@ -86,9 +86,6 @@ typedef struct rendmaskedwallparams_s {
 typedef struct rendspriteparams_s {
 // Position/Orientation/Scale
     float           center[3]; // The real center point.
-    float           width, height;
-    float           viewOffX; // View-aligned offset to center point.
-    float           viewOffY;
     float           srvo[3]; // Short-range visual offset.
     float           distance; // Distance from viewer.
     boolean         viewAligned;
@@ -98,8 +95,7 @@ typedef struct rendspriteparams_s {
     blendmode_t     blendMode;
 
     // Material:
-    material_t*     mat;
-    int             tMap, tClass;
+    struct materialvariant_s* material;
     boolean         matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
