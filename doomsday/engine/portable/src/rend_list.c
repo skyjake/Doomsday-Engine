@@ -1356,9 +1356,31 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
 }
 
 /**
+ * The first selected unit is active after this call.
+ */
+static void selectTexUnits(int count)
+{
+    int i;
+    for(i = numTexUnits - 1; i >= count; i--)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glDisable(GL_TEXTURE_2D);
+    }
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glEnable(GL_TEXTURE_2D);
+    }
+}
+
+/**
  * Set per-list GL state.
  *
- * @return                  The conditions to select primitives.
+ * @return  The conditions to select primitives.
  */
 static int setupListState(listmode_t mode, rendlist_t* list)
 {
@@ -1372,14 +1394,14 @@ static int setupListState(listmode_t mode, rendlist_t* list)
         // Should we do blending?
         if(TU(list, TU_INTER)->tex)
         {
-            float           color[4];
+            float color[4];
 
             // Blend between two textures, modulate with primary color.
 #ifdef _DEBUG
 if(numTexUnits < 2)
     Con_Error("setupListState: Not enough texture units.\n");
 #endif
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
 
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_INTER));
@@ -1397,7 +1419,7 @@ if(numTexUnits < 2)
         else
         {
             // Normal modulation.
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             rlBind2(TU(list, TU_PRIMARY));
             GL_ModulateTexture(1);
         }
@@ -1428,7 +1450,7 @@ if(numTexUnits < 2)
     Con_Error("setupListState: Not enough texture units.\n");
 #endif
 
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
 
         rlBindTo(0, TU(list, TU_PRIMARY));
         rlBindTo(1, TU(list, TU_INTER));
@@ -1472,7 +1494,7 @@ if(numTexUnits < 2)
             if(numTexUnits < 2)
                 Con_Error("setupListState: Not enough texture units.\n");
 #endif
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
 
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_INTER));
@@ -1485,7 +1507,7 @@ if(numTexUnits < 2)
             return DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1;
         }
         // No modulation at all.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         rlBind2(TU(list, TU_PRIMARY));
         GL_ModulateTexture(0);
         return DCF_SET_MATRIX_TEXTURE0 | (mode == LM_MOD_TEXTURE_MANY_LIGHTS ? DCF_MANY_LIGHTS : 0);
@@ -1496,7 +1518,7 @@ if(numTexUnits < 2)
             break;
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
             GL_ModulateTexture(9); // Tex+Detail, no color.
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
@@ -1504,7 +1526,7 @@ if(numTexUnits < 2)
         }
         else
         {
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             GL_ModulateTexture(0);
             rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
@@ -1526,7 +1548,7 @@ if(numTexUnits < 2)
             break;
         if(TU(list, TU_PRIMARY_DETAIL)->tex)
         {
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
             GL_ModulateTexture(8);
             rlBindTo(0, TU(list, TU_PRIMARY));
             rlBindTo(1, TU(list, TU_PRIMARY_DETAIL));
@@ -1535,7 +1557,7 @@ if(numTexUnits < 2)
         else
         {
             // Normal modulation.
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
             GL_ModulateTexture(1);
             rlBind2(TU(list, TU_PRIMARY));
             return DCF_SET_MATRIX_TEXTURE0;
@@ -1583,7 +1605,7 @@ if(numTexUnits < 2)
     case LM_MASKED_SHINY:
         if(TU(list, TU_INTER)->tex)
         {
-            GL_SelectTexUnits(2);
+            selectTexUnits(2);
             // The intertex holds the info for the mask texture.
             rlBindTo(1, TU(list, TU_INTER));
             { float color[4];
@@ -1594,7 +1616,7 @@ if(numTexUnits < 2)
     case LM_SHINY:
         rlBindTo(0, TU(list, TU_PRIMARY));
         if(!TU(list, TU_INTER)->tex)
-            GL_SelectTexUnits(1);
+            selectTexUnits(1);
 
         // Render all primitives.
         if(mode == LM_ALL_SHINY)
@@ -1670,7 +1692,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
     switch(mode)
     {
     case LM_SKYMASK:
-        GL_SelectTexUnits(0);
+        selectTexUnits(0);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
@@ -1678,7 +1700,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_BLENDED:
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
     case LM_ALL:
         // The first texture unit is used for the main texture.
         coords[0] = TCA_MAIN + 1;
@@ -1698,7 +1720,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
     case LM_LIGHT_MOD_TEXTURE:
     case LM_TEXTURE_PLUS_LIGHT:
         // Modulate sector light, dynamic light and regular texture.
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
         if(mode == LM_LIGHT_MOD_TEXTURE)
         {
             coords[0] = TCA_LIGHT + 1;
@@ -1725,7 +1747,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
     case LM_FIRST_LIGHT:
         // One light, no texture.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_LIGHT + 1;
         GL_ModulateTexture(6);
         glDisable(GL_ALPHA_TEST);
@@ -1738,7 +1760,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
     case LM_BLENDED_FIRST_LIGHT:
         // One additive light, no texture.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_LIGHT + 1;
         GL_ModulateTexture(7); // Add light, no color.
         glEnable(GL_ALPHA_TEST);
@@ -1752,7 +1774,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_WITHOUT_TEXTURE:
-        GL_SelectTexUnits(0);
+        selectTexUnits(0);
         GL_ModulateTexture(1);
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -1763,7 +1785,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_LIGHTS:
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
@@ -1827,7 +1849,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_ALL_DETAILS:
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
         GL_ModulateTexture(0);
         glDisable(GL_ALPHA_TEST);
@@ -1851,7 +1873,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_BLENDED_DETAILS:
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
         coords[0] = TCA_MAIN + 1;
         coords[1] = TCA_BLEND + 1;
         GL_ModulateTexture(3);
@@ -1877,7 +1899,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
 
     case LM_SHADOW:
         // A bit like 'negative lights'.
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
         GL_ModulateTexture(1);
         glEnable(GL_ALPHA_TEST);
@@ -1896,7 +1918,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_SHINY:
-        GL_SelectTexUnits(1);
+        selectTexUnits(1);
         coords[0] = TCA_MAIN + 1;
         GL_ModulateTexture(1); // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
@@ -1914,7 +1936,7 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         break;
 
     case LM_MASKED_SHINY:
-        GL_SelectTexUnits(2);
+        selectTexUnits(2);
         coords[0] = TCA_MAIN + 1;
         coords[1] = TCA_BLEND + 1; // the mask
         GL_ModulateTexture(8); // same as with details
@@ -2265,7 +2287,7 @@ END_PROF( PROF_RL_RENDER_SHADOW );
     }
 
     // Return to the normal GL state.
-    GL_SelectTexUnits(1);
+    selectTexUnits(1);
     GL_ModulateTexture(1);
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);

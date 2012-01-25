@@ -349,9 +349,6 @@ desc = Modify console font settings.
 [help]
 desc = Show information about the console.
 
-[huffman]
-desc = Print Huffman efficiency and number of bytes sent.
-
 [if]
 desc = Execute a command if the condition is true.
 

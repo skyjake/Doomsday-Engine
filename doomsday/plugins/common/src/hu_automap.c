@@ -1129,7 +1129,7 @@ static void drawMarkedPoints(uiwidget_t* obj)
         DGL_SetPatch(pPointMarkers[i], DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        DGL_DrawRectColor(-w/2, h/2, w, -h, 1, 1, 1, alpha);
+        DGL_DrawRectf2Color(-w/2, h/2, w, -h, 1, 1, 1, alpha);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1199,7 +1199,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         DGL_Scalef(1, (float)geometry.size.height / geometry.size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
 
-        DGL_DrawRect2(0, 0, geometry.size.width, geometry.size.height);
+        DGL_DrawRectf2(0, 0, geometry.size.width, geometry.size.height);
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
@@ -1211,7 +1211,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // Nope just a solid color.
         DGL_SetNoMaterial();
         DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
-        DGL_DrawRect2(0, 0, geometry.size.width, geometry.size.height);
+        DGL_DrawRectf2(0, 0, geometry.size.width, geometry.size.height);
     }
 
 #if __JDOOM64__

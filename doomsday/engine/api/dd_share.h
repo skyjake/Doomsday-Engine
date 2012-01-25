@@ -395,6 +395,7 @@ typedef struct gameinfo_s {
 
 /**
  * @defgroup math Math Routines
+ * @ingroup base
  */
 ///@{
 #define FRACBITS            16
@@ -595,7 +596,10 @@ typedef enum {
 //
 //------------------------------------------------------------------------
 
-/// @defgroup memzone Memory Zone
+/**
+ * @defgroup memzone Memory Zone
+ * @ingroup base
+ */
 
 /**
  * @defgroup purgeLevels Purge Levels
@@ -725,9 +729,11 @@ enum {
 
 /**
  * @defgroup ldefFlags Linedef Flags
- * @ingroup dmu
+ * @ingroup dmu apiFlags
  * For use with P_Set/Get(DMU_LINEDEF, n, DMU_FLAGS).
  */
+
+/// @addtogroup ldefFlags
 ///@{
 #define DDLF_BLOCKING           0x0001
 #define DDLF_DONTPEGTOP         0x0002
@@ -736,9 +742,11 @@ enum {
 
 /**
  * @defgroup sdefFlags Sidedef Flags
- * @ingroup dmu
+ * @ingroup dmu apiFlags
  * For use with P_Set/Get(DMU_SIDEDEF, n, DMU_FLAGS).
  */
+
+/// @addtogroup sdefFlags
 ///@{
 #define SDF_BLENDTOPTOMID       0x0001
 #define SDF_BLENDMIDTOTOP       0x0002
@@ -749,9 +757,11 @@ enum {
 
 /**
  * @defgroup sufFlags Surface Flags
- * @ingroup dmu
+ * @ingroup dmu apiFlags
  * For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
  */
+
+/// @addtogroup sufFlags
 ///@{
 #define DDSUF_MATERIAL_FLIPH    0x00000001 ///< Surface material is flipped horizontally.
 #define DDSUF_MATERIAL_FLIPV    0x00000002 ///< Surface material is flipped vertically.
@@ -1165,22 +1175,24 @@ typedef struct {
 /// Special value used to signify an invalid material id.
 #define NOMATERIALID            0
 
-/**
- * @defgroup materialFlags  Material Flags
- * @ingroup apiFlags
- */
-///@{
-//#define MATF_UNUSED1            0x1
-#define MATF_NO_DRAW            0x2 // Material should never be drawn.
-#define MATF_SKYMASK            0x4 // Sky-mask surfaces using this material.
-///@}
-
 #define DDMAX_MATERIAL_LAYERS   1
 ///@}
 
 /**
+ * @defgroup materialFlags  Material Flags
+ * @ingroup apiFlags resource
+ */
+
+/// @addtogroup materialFlags
+///@{
+//#define MATF_UNUSED1            0x1
+#define MATF_NO_DRAW            0x2 ///< Material should never be drawn.
+#define MATF_SKYMASK            0x4 ///< Sky-mask surfaces using this material.
+///@}
+
+/**
  * @defgroup animationGroupFlags  Animation Group Flags
- * @ingroup apiFlags
+ * @ingroup apiFlags resource
  * @{
  */
 #define AGF_SMOOTH              0x1
@@ -1672,7 +1684,10 @@ typedef struct serverinfo_s {
 //
 //------------------------------------------------------------------------
 
-/// @defgroup player Player
+/**
+ * @defgroup player Player
+ * @ingroup playsim
+ */
 
 /// Built-in control identifiers. @ingroup player
 enum {

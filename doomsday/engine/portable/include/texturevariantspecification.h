@@ -33,6 +33,8 @@ typedef enum {
     TEXS_EXTERNAL                 /// An "external" replacement.
 } TexSource;
 
+const char* TexSource_Name(TexSource source);
+
 typedef enum {
     TC_UNKNOWN = -1,
     TEXTUREVARIANTUSAGECONTEXT_FIRST = 0,
@@ -57,7 +59,7 @@ typedef enum {
     (tc) >= TEXTUREVARIANTUSAGECONTEXT_FIRST && (tc) <= TEXTUREVARIANTUSAGECONTEXT_LAST)
 
 /**
- * @defGroup textureVariantSpecificationFlags  Texture Variant Specification Flags
+ * @defgroup textureVariantSpecificationFlags  Texture Variant Specification Flags
  */
 /*@{*/
 #define TSF_ZEROMASK                0x1 // Set pixel alpha to fully opaque.

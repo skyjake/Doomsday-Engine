@@ -5,6 +5,17 @@ defineReplace(findVersion) {
     return($$member(info, 0))
 }
 
+defineReplace(dengReleaseType) {
+    info = $$system(python \"$$PWD/../distrib/build_version.py\"  \"$$PWD/engine/portable/include/dd_version.h\")
+    return($$member(info, 2))
+}
+
+defineTest(isStableRelease) {
+    relType = $$dengReleaseType()
+    contains(relType, Stable): return(true)
+    else: return(false)
+}
+
 DENG_VERSION            = $$findVersion(engine/portable/include/dd_version.h)
 
 JDOOM_VERSION           = $$findVersion(plugins/jdoom/include/version.h)

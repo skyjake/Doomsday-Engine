@@ -1,0 +1,35 @@
+@chapter{ Game modes }
+
+@a{gamemode} One game plugin, such as jDoom, is able to run in many different
+modes. Each mode emulates a specific version of the original game and
+typically has its own IWAD file. In some cases two modes can have a resource
+with the same name. This is a problem if the same resource file can't be used
+by both modes.
+
+The resource class directory can have a subdirectory for each game mode. When
+Doomsday looks for an external resource, it first checks the current game
+mode's subdirectory. If no suitable resource is found there, the class
+directory is searched instead.
+
+Below is a list of all the game modes supported by jDoom, jHeretic and jHexen.
+
+@table{18 27 55}{
+	@header{Game} @tab @header{Mode} @tab @header{Description}
+@row{single}
+	jDoom @tab doom1-share @tab Shareware Doom @row
+	@tab doom1 @tab Registered Doom @row
+	@tab doom1-ultimate @tab Ultimate Doom (has a 4th episode) @row
+	@tab doom2 @tab Doom 2 @row
+	@tab doom2-plut @tab Final Doom: Plutonia Experiment @row
+	@tab doom2-tnt @tab Final Doom: TNT Evilution @row
+
+	jHeretic @tab heretic-share @tab Shareware Heretic @row
+	@tab heretic @tab Registered Heretic @row
+	@tab heretic-ext @tab Heretic: Shadow of the Serpent Riders (has episodes 4, 5) @row
+
+	jHexen @tab hexen @tab Hexen @row
+	@tab hexen-dk @tab Hexen: Death Kings of Dark Citadel @row
+	@tab hexen-demo @tab The 4-level Hexen Demo
+}
+
+For example, textures meant only for Final Doom: Plutonia Experiment would be placed in the directory @file{ Data\jDoom\Textures\doom2-plut\ }.

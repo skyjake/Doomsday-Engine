@@ -331,46 +331,9 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
     return true;
 }
 
-static __inline void enableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glEnable(GL_TEXTURE_2D);
-}
-
-static __inline void disableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glDisable(GL_TEXTURE_2D);
-
-    // Implicit disabling of texcoord array.
-    if(!GL_state.features.elementArrays)
-    {
-        GL_DisableArrays(0, 0, 1 << id);
-    }
-}
-
-/**
- * The first selected unit is active after this call.
- */
-void GL_SelectTexUnits(int count)
-{
-    int i;
-    for(i = numTexUnits - 1; i >= count; i--)
-        disableTexUnit(i);
-
-    // Enable the selected units.
-    for(i = count - 1; i >= 0; i--)
-    {
-        if(i >= numTexUnits)
-            continue;
-        enableTexUnit(i);
-    }
-}
-
 void GL_SetVSync(boolean on)
 {
-    if(!GL_state.features.vsync)
-        return;
+    if(!GL_state.features.vsync) return;
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
 #endif
@@ -380,10 +343,8 @@ void GL_SetMultisample(boolean on)
 {
     if(!GL_state.features.multisample) return;
 #if WIN32
-    if(on)
-        glEnable(GL_MULTISAMPLE_ARB);
-    else
-        glDisable(GL_MULTISAMPLE_ARB);
+    if(on) glEnable(GL_MULTISAMPLE_ARB);
+    else  glDisable(GL_MULTISAMPLE_ARB);
 #endif
 }
 

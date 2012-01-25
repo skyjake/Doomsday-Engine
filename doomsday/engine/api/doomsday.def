@@ -1,8 +1,8 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 751 <--
+; Highest ordinal is currently: --> 764 <--
 ; Other free ordinals:
-;   340, 341
+;   54, 340, 341
 
 NAME                            "DOOMSDAY"
 
@@ -185,6 +185,7 @@ EXPORTS
     ; String.
     Str_New                     @461 NONAME
     Str_Init                    @462 NONAME
+    Str_InitStatic              @756 NONAME
     Str_Free                    @463 NONAME
     Str_Delete                  @464 NONAME
     Str_Clear                   @465 NONAME
@@ -200,8 +201,11 @@ EXPORTS
     Str_Text                    @475 NONAME
     Str_Copy                    @476 NONAME
     Str_StripLeft               @477 NONAME
+    Str_StripLeft2              @761 NONAME
     Str_StripRight              @478 NONAME
+    Str_StripRight2             @762 NONAME
     Str_Strip                   @479 NONAME
+    Str_Strip2                  @763 NONAME
     Str_GetLine                 @480 NONAME
     Str_CopyDelim2              @481 NONAME
     Str_CopyDelim               @482 NONAME
@@ -210,6 +214,9 @@ EXPORTS
     Str_RAt                     @485 NONAME
     Str_Truncate                @498 NONAME
     Str_PrependChar             @336 NONAME
+    Str_PercentEncode           @757 NONAME
+    Str_PercentEncode2          @758 NONAME
+    Str_PercentDecode           @759 NONAME
     Str_Write                   @739 NONAME
     Str_Read                    @740 NONAME
 
@@ -240,13 +247,14 @@ EXPORTS
     Uri_Clear                   @406 NONAME
     Uri_Scheme                  @486 NONAME
     Uri_Path                    @487 NONAME
-    Uri_ComposePath             @488 NONAME
+    Uri_Compose                 @488 NONAME
     Uri_ToString                @489 NONAME
+    Uri_ToString2               @760 NONAME
     Uri_Equality                @493 NONAME
     Uri_SetPath                 @437 NONAME
     Uri_SetScheme               @500 NONAME
     Uri_Write                   @735 NONAME
-    Uri_WriteOmitScheme         @736 NONAME
+    Uri_Write2                  @736 NONAME
     Uri_Read                    @737 NONAME
     Uri_ReadWithDefaultScheme   @738 NONAME
 
@@ -269,6 +277,7 @@ EXPORTS
     M_WriteFile                 @135 NONAME
 
     F_ExtractFileBase           @136 NONAME
+    F_FileName                  @752 NONAME
     F_FindFileExtension         @137 NONAME
     F_TranslatePath             @140 NONAME
     F_PrettyPath                @421 NONAME
@@ -363,7 +372,6 @@ EXPORTS
 
 ; Network.
     Net_SendPacket              @53 NONAME
-    Net_GetTicCmd               @54 NONAME
     Net_GetPlayerName           @55 NONAME
     Net_GetPlayerID             @56 NONAME
     Net_PlayerSmoother          @586 NONAME
@@ -512,6 +520,9 @@ EXPORTS
     P_MobjForID                 @333 NONAME
     Mobj_OriginSmoothed         @702 NONAME
     ClMobj_IsValid              @103 NONAME
+    ClMobj_Find                 @753 NONAME
+    ClMobj_EnableLocalActions   @754 NONAME
+    ClMobj_LocalActionsEnabled  @755 NONAME
     ClPlayer_ClMobj             @588 NONAME
 
 ; Play: Polyobjs.
@@ -646,11 +657,12 @@ EXPORTS
     DGL_Vertices3fctv           @383 NONAME
     DGL_DrawLine                @127 NONAME
     DGL_DrawRect                @511 NONAME
-    DGL_DrawRect2               @133 NONAME
+    DGL_DrawRect2               @764 NONAME
     DGL_DrawRectf               @512 NONAME
-    DGL_DrawRectColor           @128 NONAME
-    DGL_DrawRectTiled           @129 NONAME
-    DGL_DrawCutRectTiled        @130 NONAME
+    DGL_DrawRectf2              @133 NONAME
+    DGL_DrawRectf2Color         @128 NONAME
+    DGL_DrawRectf2Tiled         @129 NONAME
+    DGL_DrawCutRectf2Tiled      @130 NONAME
     DGL_NewTextureWithParams    @329 NONAME
 
 ; Renderer.

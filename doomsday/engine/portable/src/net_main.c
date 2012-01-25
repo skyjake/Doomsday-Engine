@@ -67,7 +67,6 @@ typedef struct connectparam_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-D_CMD(HuffmanStats); // in net_buf.c
 D_CMD(Login); // in cl_main.c
 D_CMD(Logout); // in sv_main.c
 D_CMD(Ping); // in net_ping.c
@@ -162,7 +161,6 @@ void Net_Register(void)
     C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("huffman", "", HuffmanStats, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
     C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
@@ -202,21 +200,11 @@ void Net_Shutdown(void)
     Net_DestroyArrays();
 }
 
-/**
- * Part of the Doomsday public API.
- *
- * @return              The name of the specified player.
- */
 const char* Net_GetPlayerName(int player)
 {
     return clients[player].name;
 }
 
-/**
- * Part of the Doomsday public API.
- *
- * @return              Client identifier for the specified player.
- */
 ident_t Net_GetPlayerID(int player)
 {
     if(!clients[player].connected)
@@ -310,9 +298,6 @@ boolean Net_GetPacket(void)
     return true;
 }
 
-/**
- * Provides access to the player's movement smoother.
- */
 Smoother* Net_PlayerSmoother(int player)
 {
     if(player < 0 || player >= DDMAXPLAYERS)
@@ -353,7 +338,7 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length)
     if(data) Writer_Write(msgWriter, data, length);
     Msg_End();
 #else
-    assert(length <= NETBUFFER_MAXDATA);
+    assert(length <= NETBUFFER_MAXSIZE);
     netBuffer.msg.type = type;
     netBuffer.length = length;
     if(data) memcpy(netBuffer.msg.data, data, length);
@@ -585,7 +570,11 @@ void Net_StopGame(void)
 #endif
     }
     else
-    {   // We are a connected client.
+    {
+#ifdef _DEBUG
+        Con_Message("Net_StopGame: Sending PCL_GOODBYE.\n");
+#endif
+        // We are a connected client.
         Msg_Begin(PCL_GOODBYE);
         Msg_End();
         Net_SendBuffer(0, 0);
@@ -661,49 +650,6 @@ int Net_TimeDelta(byte now, byte then)
         delta -= 256;
 
     return delta;
-}
-
-/**
- * This is a bit complicated and quite possibly unnecessarily so. The
- * idea is, however, that because the ticcmds sent by clients arrive in
- * bursts, we'll preserve the motion by 'executing' the commands in the
- * same order in which they were generated. If the client's connection
- * lags a lot, the difference between the serverside and clientside
- * positions will be *large*, especially when the client is running.
- * If too many commands are buffered, the client's coord announcements
- * will be processed before the actual movement commands, resulting in
- * serverside warping (which is perceived by all other clients).
- */
-int Net_GetTicCmd(void *pCmd, int player)
-{
-    return false;
-
-#if 0
-
-    client_t *client = &clients[player];
-    ticcmd_t *cmd = pCmd;
-
-    /*  int doMerge = false;
-       int future; */
-
-    if(client->numTics <= 0)
-    {
-        // No more commands for this player.
-        return false;
-    }
-
-    // Return the next ticcmd from the buffer.
-    // There will be one less tic in the buffer after this.
-    client->numTics--;
-    memcpy(cmd, &client->ticCmds[TICCMD_IDX(client->firstTic++)], TICCMD_SIZE);
-
-    // This is the new last command.
-    memcpy(client->lastCmd, cmd, TICCMD_SIZE);
-
-    // Make sure the firsttic index is in range.
-    client->firstTic %= BACKUPTICS;
-    return true;
-#endif
 }
 
 /// @return  @c true iff a demo is currently being recorded.

@@ -311,6 +311,10 @@ def doTask(task):
         msg("PURGE")
         return autobuild('purge')
         
+    elif task == 'generate_readme':
+        msg("GENERATE README")
+        return autobuild('readme')
+        
     elif task == 'generate_apidoc':
         msg("GENERATE API DOCUMENTATION")
         return autobuild('apidoc')
@@ -334,6 +338,7 @@ def handleCompletedTasks():
         
         if task == 'tag_build':
             newTask('deb_changes', forClient='ubuntu')
+            newTask('generate_readme', forClient='clikits')
         
         elif task == 'deb_changes':
             newTask('build', allClients=True)

@@ -121,11 +121,7 @@ mobj_t* ClMobj_MobjForInfo(clmoinfo_t* info)
     return (mobj_t*) ((char*)info + sizeof(clmoinfo_t));
 }
 
-/**
- * Searches through the client mobj hash table and returns the clmobj
- * with the specified ID, if that exists.
- */
-mobj_t *ClMobj_Find(thid_t id)
+struct mobj_s* ClMobj_Find(thid_t id)
 {
     cmhash_t   *hash = ClMobj_Hash(id);
     clmoinfo_t *info;
@@ -202,6 +198,33 @@ void ClMobj_SetPosition(mobj_t *mo)
     P_MobjLink(mo,
                 (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
                 (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+}
+
+void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
+{
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    if(!isClient || !info) return;
+    if(enable)
+    {
+#ifdef _DEBUG
+        Con_Message("ClMobj_EnableLocalActions: Enabled for mobj %i.\n", mo->thinker.id);
+#endif
+        info->flags |= CLMF_LOCAL_ACTIONS;
+    }
+    else
+    {
+#ifdef _DEBUG
+        Con_Message("ClMobj_EnableLocalActions: Disabled for mobj %i.\n", mo->thinker.id);
+#endif
+        info->flags &= ~CLMF_LOCAL_ACTIONS;
+    }
+}
+
+boolean ClMobj_LocalActionsEnabled(struct mobj_s *mo)
+{
+    clmoinfo_t* info = ClMobj_GetInfo(mo);
+    if(!isClient || !info) return true;
+    return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
 
 /**
@@ -866,7 +889,13 @@ void ClMobj_ReadDelta2(boolean skip)
     if(df & MDF_STATE)
     {
         int stateIdx = Reader_ReadPackedUInt16(msgReader);
-        if(!skip)
+
+        // Translate.
+        stateIdx = Cl_LocalMobjState(stateIdx);
+
+        // When local actions are allowed, the assumption is that
+        // the client will be doing the state changes.
+        if(!skip && !(info->flags & CLMF_LOCAL_ACTIONS))
         {
             ClMobj_SetState(d, stateIdx);
             info->flags |= CLMF_KNOWN_STATE;
@@ -904,14 +933,8 @@ void ClMobj_ReadDelta2(boolean skip)
 
     if(moreFlags & MDFE_TYPE)
     {
-        d->type = Reader_ReadInt32(msgReader);
-        if(d->type < 0 || d->type >= defs.count.mobjs.num)
-        {
-            // The specified type is invalid.
-            d->type = 0;
-        }
-        d->info = &mobjInfo[d->type]; /// @todo check validity of d->type
-
+        d->type = Cl_LocalMobjType(Reader_ReadInt32(msgReader));
+        d->info = &mobjInfo[d->type];
         assert(d->info);
     }
 
@@ -957,9 +980,7 @@ void ClMobj_ReadDelta2(boolean skip)
             {
                 // Oopsie, on second thought we shouldn't do this move.
                 ClMobj_UnsetPosition(mo);
-                mo->pos[VX] = oldState.pos[VX];
-                mo->pos[VY] = oldState.pos[VY];
-                mo->pos[VZ] = oldState.pos[VZ];
+                V3_Copy(mo->pos, oldState.pos);
                 mo->floorZ = oldState.floorZ;
                 mo->ceilingZ = oldState.ceilingZ;
                 ClMobj_SetPosition(mo);

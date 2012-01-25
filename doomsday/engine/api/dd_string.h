@@ -6,7 +6,7 @@
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string itself is always allocated with
- * malloc. The @ref memzone is not thread-safe.
+ * malloc. (The @ref memzone is not thread-safe.)
  *
  * @todo Rename to Str? (str.h)
  * @todo AutoStr for automatically garbage-collected strings (good for return values,
@@ -39,6 +39,10 @@
 #include <stddef.h>
 #include "reader.h"
 #include "writer.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Dynamic string instance. Use Str_New() to allocate one from the heap, or
@@ -175,18 +179,33 @@ ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
 
 /**
  * Strip whitespace from beginning.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_StripLeft(ddstring_t* ds);
+ddstring_t* Str_StripLeft2(ddstring_t* ds, int* count);
+ddstring_t* Str_StripLeft(ddstring_t* ds);
 
 /**
  * Strip whitespace from end.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_StripRight(ddstring_t* ds);
+ddstring_t* Str_StripRight2(ddstring_t* ds, int* count);
+ddstring_t* Str_StripRight(ddstring_t* ds);
 
 /**
  * Strip whitespace from beginning and end.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_Strip(ddstring_t* ds);
+ddstring_t* Str_Strip2(ddstring_t* ds, int* count);
+ddstring_t* Str_Strip(ddstring_t* ds);
 
 /**
  * Extract a line of text from the source.
@@ -194,7 +213,7 @@ int Str_Strip(ddstring_t* ds);
 const char* Str_GetLine(ddstring_t* ds, const char* src);
 
 /**
- * @defGroup copyDelimiterFlags Copy Delimiter Flags
+ * @defgroup copyDelimiterFlags Copy Delimiter Flags
  */
 /*@{*/
 #define CDF_OMIT_DELIMITER      0x1 // Do not copy delimiters into the dest path.
@@ -247,8 +266,41 @@ char Str_RAt(const ddstring_t* str, int reverseIndex);
 
 void Str_Truncate(ddstring_t* str, int position);
 
+/**
+ * Percent-encode characters in string. Will encode the default set of
+ * characters for the unicode utf8 charset.
+ *
+ * @param str           String instance.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentEncode(ddstring_t* str);
+
+/**
+ * Percent-encode characters in string.
+ *
+ * @param str           String instance.
+ * @param excludeChars  List of characters that should NOT be encoded. @c 0 terminated.
+ * @param includeChars  List of characters that will always be encoded (has precedence over
+ *                      @a excludeChars). @c 0 terminated.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeCars);
+
+/**
+ * Decode the percent-encoded string. Will match codes for the unicode
+ * utf8 charset.
+ *
+ * @param str           String instance.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentDecode(ddstring_t* str);
+
 void Str_Write(const ddstring_t* str, Writer* writer);
 
 void Str_Read(ddstring_t* str, Reader* reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_STRING_H */

@@ -37,18 +37,23 @@
 
 /**
  * @ingroup lumpDirectoryFlags
- * @{
  */
+///{
 #define LDF_INTERNAL_MASK               0xff000000
-#define LDF_RECORDS_HASHDIRTY           0x80000000 // Hash needs a rebuild.
-/**@}*/
+#define LDF_NEED_REBUILD_HASH           0x80000000 ///< Path hash must be rebuilt.
+#define LDF_NEED_PRUNE                  0x40000000 ///< Path duplicate records must be pruned.
+///}
 
 typedef struct {
-    // killough 1/31/98: hash table fields, used for ultra-fast hash table lookup
+    /// Info record for this lump in it's owning file.
+    const LumpInfo* lumpInfo;
+
+    /// @todo refactory away.
+    int flags;
+
+    /// Indexes into LumpDirectory::records forming a chain of PathDirectoryNode
+    /// fragment hashes. For ultra-fast lookup.
     lumpnum_t hashRoot, hashNext;
-    lumpnum_t presortIndex;
-    abstractfile_t* fsObject;
-    int fsLumpIdx;
 } lumpdirectory_lumprecord_t;
 
 struct lumpdirectory_s {
@@ -57,41 +62,20 @@ struct lumpdirectory_s {
     lumpdirectory_lumprecord_t* records;
 };
 
-/**
- * This is a hash function. It uses the eight-character lump name to generate
- * a somewhat-random number suitable for use as a hash key.
- *
- * Originally DOOM used a sequential search for locating lumps by name. Large
- * wads with > 1000 lumps meant an average of over 500 were probed during every
- * search. Rewritten by Lee Killough to use a hash table for performance and
- * now the average is under 2 probes per search.
- *
- * @param  s  Lump name to be hashed.
- * @return  The generated hash key.
- */
-static uint hashLumpShortName(const lumpname_t lumpName)
-{
-    const char* s = lumpName;
-    uint hash;
-    (void) ((hash =          toupper(s[0]), s[1]) &&
-            (hash = hash*3 + toupper(s[1]), s[2]) &&
-            (hash = hash*2 + toupper(s[2]), s[3]) &&
-            (hash = hash*2 + toupper(s[3]), s[4]) &&
-            (hash = hash*2 + toupper(s[4]), s[5]) &&
-            (hash = hash*2 + toupper(s[5]), s[6]) &&
-            (hash = hash*2 + toupper(s[6]),
-             hash = hash*2 + toupper(s[7]))
-           );
-    return hash;
-}
+static void LumpDirectory_Prune(LumpDirectory* ld);
 
-LumpDirectory* LumpDirectory_New(void)
+LumpDirectory* LumpDirectory_NewWithFlags(int flags)
 {
     LumpDirectory* ld = (LumpDirectory*)malloc(sizeof(LumpDirectory));
     ld->numRecords = 0;
     ld->records = NULL;
-    ld->flags = 0;
+    ld->flags = flags & ~LDF_INTERNAL_MASK;
     return ld;
+}
+
+LumpDirectory* LumpDirectory_New(void)
+{
+    return LumpDirectory_NewWithFlags(0);
 }
 
 void LumpDirectory_Delete(LumpDirectory* ld)
@@ -104,29 +88,34 @@ void LumpDirectory_Delete(LumpDirectory* ld)
 boolean LumpDirectory_IsValidIndex(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     return (lumpNum >= 0 && lumpNum < ld->numRecords);
 }
 
-static const lumpdirectory_lumprecord_t* LumpDirectory_Record(LumpDirectory* ld, lumpnum_t lumpNum)
+static __inline const lumpdirectory_lumprecord_t* LumpDirectory_Record(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     assert(ld);
-    if(LumpDirectory_IsValidIndex(ld, lumpNum))
-    {
-        return ld->records + lumpNum;
-    }
-    Con_Error("LumpDirectory::Record: Invalid lumpNum #%i (valid range: [0...%i).", lumpNum, ld->numRecords);
-    exit(1); // Unreachable.
+    if(!LumpDirectory_IsValidIndex(ld, lumpNum)) return NULL;
+    return ld->records + lumpNum;
 }
 
 const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* ld, lumpnum_t lumpNum)
 {
     const lumpdirectory_lumprecord_t* rec = LumpDirectory_Record(ld, lumpNum);
-    return F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
+    if(!rec) return NULL; // Invalid index?
+    return rec->lumpInfo;
 }
 
 int LumpDirectory_Size(LumpDirectory* ld)
 {
     assert(ld);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
     return ld->numRecords;
 }
 
@@ -138,88 +127,126 @@ static void LumpDirectory_Move(LumpDirectory* ld, uint from, uint count, int off
 {
     assert(ld);
     // Check that our information is valid.
-    if(offset == 0 || count == 0 || from >= (unsigned)ld->numRecords-1)
-        return;
+    if(offset == 0 || count == 0 || from >= (unsigned)ld->numRecords-1) return;
     memmove(ld->records + from + offset, ld->records + from, sizeof(lumpdirectory_lumprecord_t) * count);
     // We'll need to rebuild the hash.
-    ld->flags |= LDF_RECORDS_HASHDIRTY;
+    ld->flags |= LDF_NEED_REBUILD_HASH;
 }
 
 static void LumpDirectory_Resize(LumpDirectory* ld, int numItems)
 {
     assert(ld);
     if(numItems < 0) numItems = 0;
+    if(numItems == ld->numRecords) return;
     if(0 != numItems)
     {
         ld->records = (lumpdirectory_lumprecord_t*) realloc(ld->records, sizeof(*ld->records) * numItems);
-        if(NULL == ld->records)
+        if(!ld->records)
             Con_Error("LumpDirectory::Resize: Failed on (re)allocation of %lu bytes for "
                 "LumpInfo record list.", (unsigned long) (sizeof(*ld->records) * numItems));
     }
     else if(ld->records)
     {
-        free(ld->records), ld->records = NULL;
+        free(ld->records);
+        ld->records = NULL;
     }
 }
 
-int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* fsObject)
+int LumpDirectory_PruneByFile(LumpDirectory* ld, abstractfile_t* file)
 {
+    int i, origNumLumps;
     assert(ld);
-    {
-    int i, origNumLumps = ld->numRecords;
 
-    if(!fsObject || 0 == ld->numRecords) return 0;
+    if(!file || 0 == ld->numRecords) return 0;
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
 
     // Do this one lump at a time, respecting the possibly-sorted order.
+    origNumLumps = ld->numRecords;
     for(i = 1; i < ld->numRecords+1; ++i)
     {
-        if(ld->records[i-1].fsObject != fsObject)
-            continue;
+        if(ld->records[i-1].lumpInfo->container != file) continue;
 
         // Move the data in the lump storage.
         LumpDirectory_Move(ld, i, ld->numRecords-i, -1);
         --ld->numRecords;
         --i;
-        // We'll need to rebuild the info short name hash chains.
-        ld->flags |= LDF_RECORDS_HASHDIRTY;
+
+        // We'll need to rebuild the path hash chains.
+        ld->flags |= LDF_NEED_REBUILD_HASH;
     }
+
     // Resize the lump storage to match numRecords.
     LumpDirectory_Resize(ld, ld->numRecords);
+
     return origNumLumps - ld->numRecords;
-    }
 }
 
-void LumpDirectory_Append(LumpDirectory* ld, abstractfile_t* fsObject,
-    int lumpIdxBase, int lumpIdxCount)
+boolean LumpDirectory_PruneLump(LumpDirectory* ld, LumpInfo* lumpInfo)
 {
-    assert(ld && fsObject);
-    {
-    int maxRecords = ld->numRecords + lumpIdxCount; // This must be enough.
-    int newRecordBase = ld->numRecords;
     int i;
+    assert(ld);
 
-    if(0 == lumpIdxCount)
-        return;
+    if(!lumpInfo || 0 == ld->numRecords) return 0;
 
-    // Allocate more memory for the new records.
-    LumpDirectory_Resize(ld, maxRecords);
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
 
-    for(i = 0; i < lumpIdxCount; ++i)
+    for(i = 1; i < ld->numRecords+1; ++i)
     {
-        lumpdirectory_lumprecord_t* record = ld->records + newRecordBase + i;
-        record->fsObject = fsObject;
-        record->fsLumpIdx = lumpIdxBase + i;
+        if(ld->records[i-1].lumpInfo != lumpInfo) continue;
+
+        // Move the data in the lump storage.
+        LumpDirectory_Move(ld, i, ld->numRecords-i, -1);
+        --ld->numRecords;
+
+        // Resize the lump storage to match numRecords.
+        LumpDirectory_Resize(ld, ld->numRecords);
+
+        // We'll need to rebuild the path hash chains.
+        ld->flags |= LDF_NEED_REBUILD_HASH;
+
+        return true;
     }
 
-    ld->numRecords += lumpIdxCount;
+    return false;
+}
 
-    // It may be that all lumps weren't added. Make sure we don't have
-    // excess memory allocated (=synchronize the storage size with the
-    // real numRecords).
+void LumpDirectory_CatalogLumps(LumpDirectory* ld, abstractfile_t* file,
+    int lumpIdxBase, int numLumps)
+{
+    lumpdirectory_lumprecord_t* record;
+    int i, newRecordBase;
+    assert(ld);
+
+    if(!file || numLumps <= 0) return;
+
+    newRecordBase = ld->numRecords;
+
+    // Allocate more memory for the new records.
+    LumpDirectory_Resize(ld, ld->numRecords + numLumps);
+
+    record = ld->records + newRecordBase;
+    for(i = 0; i < numLumps; ++i, record++)
+    {
+        record->lumpInfo = F_LumpInfo(file, lumpIdxBase + i);
+        record->flags = 0;
+    }
+    ld->numRecords += numLumps;
+
+    // It may be that all lumps weren't added. Make sure we don't have excess
+    // memory allocated (=synchronize the storage size with the real numRecords).
     LumpDirectory_Resize(ld, ld->numRecords);
 
-    // We'll need to rebuild the info short name hash chains.
-    ld->flags |= LDF_RECORDS_HASHDIRTY;
+    // We'll need to rebuild the name hash chains.
+    ld->flags |= LDF_NEED_REBUILD_HASH;
+
+    if(ld->flags & LDF_UNIQUE_PATHS)
+    {
+        // We may need to prune duplicate paths.
+        if(ld->numRecords > 1)
+            ld->flags |= LDF_NEED_PRUNE;
     }
 }
 
@@ -228,26 +255,29 @@ static void LumpDirectory_BuildHash(LumpDirectory* ld)
     int i;
     assert(ld);
 
-    if(!(ld->flags & LDF_RECORDS_HASHDIRTY)) return;
+    if(!(ld->flags & LDF_NEED_REBUILD_HASH)) return;
 
-    // First mark slots empty.
+    // Clear the chains.
     for(i = 0; i < ld->numRecords; ++i)
     {
         ld->records[i].hashRoot = -1;
     }
 
-    // Insert nodes to the beginning of each chain, in first-to-last
-    // lump order, so that the last lump of a given name appears first
-    // in any chain, observing pwad ordering rules. killough
+    // Insert nodes to the beginning of each chain, in first-to-last lump order,
+    // so that the last lump of a given name appears first in any chain,
+    // observing pwad ordering rules.
     for(i = 0; i < ld->numRecords; ++i)
     {
-        const LumpInfo* info = F_LumpInfo(ld->records[i].fsObject, ld->records[i].fsLumpIdx);
-        uint j = hashLumpShortName(info->name) % ld->numRecords;
+        const LumpInfo* lumpInfo = ld->records[i].lumpInfo;
+        const PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container,
+                                                            lumpInfo->lumpIdx);
+        ushort j = PathDirectoryNode_Hash(node) % (unsigned)ld->numRecords;
+
         ld->records[i].hashNext = ld->records[j].hashRoot; // Prepend to list
         ld->records[j].hashRoot = i;
     }
 
-    ld->flags &= ~LDF_RECORDS_HASHDIRTY;
+    ld->flags &= ~LDF_NEED_REBUILD_HASH;
 #if _DEBUG
     VERBOSE2( Con_Message("Rebuilt record hash for LumpDirectory %p.\n", ld) )
 #endif
@@ -258,13 +288,14 @@ void LumpDirectory_Clear(LumpDirectory* ld)
     assert(ld);
     if(ld->numRecords)
     {
-        free(ld->records), ld->records = NULL;
+        free(ld->records);
+        ld->records = NULL;
     }
     ld->numRecords = 0;
-    ld->flags &= ~LDF_RECORDS_HASHDIRTY;
+    ld->flags &= ~(LDF_NEED_REBUILD_HASH|LDF_NEED_PRUNE);
 }
 
-static int directoryContainsLumpsFromFile(const LumpInfo* info, void* paramaters)
+static int findFirstLumpWorker(const LumpInfo* info, void* paramaters)
 {
     return 1; // Stop iteration we need go no further.
 }
@@ -272,208 +303,161 @@ static int directoryContainsLumpsFromFile(const LumpInfo* info, void* paramaters
 boolean LumpDirectory_Catalogues(LumpDirectory* ld, abstractfile_t* file)
 {
     if(!file) return false;
-    return LumpDirectory_Iterate(ld, file, directoryContainsLumpsFromFile);
+    return LumpDirectory_Iterate(ld, file, findFirstLumpWorker);
 }
 
-int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* fsObject,
+int LumpDirectory_Iterate2(LumpDirectory* ld, abstractfile_t* file,
     int (*callback) (const LumpInfo*, void*), void* paramaters)
 {
     int result = 0;
     assert(ld);
     if(callback)
     {
-        lumpdirectory_lumprecord_t* record;
-        const LumpInfo* info;
         int i;
-        for(i = 0; i < ld->numRecords; ++i)
+        lumpdirectory_lumprecord_t* record;
+
+        // Do we need to prune path-duplicate lumps?
+        LumpDirectory_Prune(ld);
+
+        record = ld->records;
+        for(i = 0; i < ld->numRecords; ++i, record++)
         {
-            record = ld->records + i;
-
             // Are we only interested in the lumps from a particular file?
-            if(fsObject && record->fsObject != fsObject) continue;
+            if(file && record->lumpInfo->container != file) continue;
 
-            info = F_LumpInfo(record->fsObject, record->fsLumpIdx);
-            result = callback(info, paramaters);
+            result = callback(record->lumpInfo, paramaters);
             if(result) break;
         }
     }
     return result;
 }
 
-int LumpDirectory_Iterate(LumpDirectory* ld, abstractfile_t* fsObject,
+int LumpDirectory_Iterate(LumpDirectory* ld, abstractfile_t* file,
     int (*callback) (const LumpInfo*, void*))
 {
-    return LumpDirectory_Iterate2(ld, fsObject, callback, 0);
+    return LumpDirectory_Iterate2(ld, file, callback, 0);
 }
 
-static lumpnum_t LumpDirectory_IndexForName2(LumpDirectory* ld, const char* name,
-    boolean matchLumpName)
+lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* path)
 {
+    boolean builtSearchPattern = false;
+    PathMap searchPattern;
+    int idx, hash;
+
     assert(ld);
-    if(!(!name || !name[0]) && ld->numRecords != 0)
+    if(!path || !path[0] || ld->numRecords <= 0) return -1;
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
+
+    // Do we need to rebuild the path hash chains?
+    LumpDirectory_BuildHash(ld);
+
+    // Perform the search.
+    hash = PathDirectory_HashPath(path, strlen(path), '/') % ld->numRecords;
+    for(idx = ld->records[hash].hashRoot; idx != -1; idx = ld->records[idx].hashNext)
     {
-        PathMap searchPattern;
-        register int idx;
+        const LumpInfo* lumpInfo = ld->records[idx].lumpInfo;
+        PathDirectoryNode* node = F_LumpDirectoryNode(lumpInfo->container, lumpInfo->lumpIdx);
 
-        // Do we need to rebuild the name hash chains?
-        LumpDirectory_BuildHash(ld);
-
-        // Can we use the lump name hash?
-        if(matchLumpName)
+        // Time to build the pattern?
+        if(!builtSearchPattern)
         {
-            const int hash = hashLumpShortName(name) % ld->numRecords;
-            idx = ld->records[hash].hashRoot;
-            while(idx != -1 && strnicmp(F_LumpInfo(ld->records[idx].fsObject, ld->records[idx].fsLumpIdx)->name, name, LUMPNAME_T_LASTINDEX))
-                idx = ld->records[idx].hashNext;
-            return idx;
+            PathMap_Initialize(&searchPattern, path);
+            builtSearchPattern = true;
         }
 
-        /// \todo Do not resort to a linear search.
-        PathMap_Initialize(&searchPattern, name);
-        for(idx = ld->numRecords; idx-- > 0; )
+        if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
         {
-            const lumpdirectory_lumprecord_t* rec = ld->records + idx;
-            PathDirectoryNode* node = F_LumpDirectoryNode(rec->fsObject, rec->fsLumpIdx);
-
-            if(PathDirectoryNode_MatchDirectory(node, 0, &searchPattern, NULL/*no paramaters*/))
-            {
-                // This is the lump we are looking for.
-                break;
-            }
+            // This is the lump we are looking for.
+            break;
         }
+    }
+
+    if(builtSearchPattern)
         PathMap_Destroy(&searchPattern);
-        return idx;
-    }
-    return -1;
+    return idx;
 }
 
-lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* ld, const char* name)
-{
-    return LumpDirectory_IndexForName2(ld, name, false);
-}
+typedef struct {
+    lumpdirectory_lumprecord_t* record;
+    ddstring_t* path;
+    int origIndex;
+} lumpsortinfo_t;
 
-lumpnum_t LumpDirectory_IndexForName(LumpDirectory* ld, const char* name)
+int C_DECL LumpDirectory_Sorter(const void* a, const void* b)
 {
-    return LumpDirectory_IndexForName2(ld, name, true);
-}
-
-int C_DECL LumpDirectory_CompareRecordName(const void* a, const void* b)
-{
-    const lumpdirectory_lumprecord_t* recordA = (const lumpdirectory_lumprecord_t*)a;
-    const lumpdirectory_lumprecord_t* recordB = (const lumpdirectory_lumprecord_t*)b;
-    const LumpInfo* infoA = F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx);
-    const LumpInfo* infoB = F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx);
-    int result = strnicmp(infoA->name, infoB->name, LUMPNAME_T_LASTINDEX);
+    const lumpsortinfo_t* infoA = (const lumpsortinfo_t*)a;
+    const lumpsortinfo_t* infoB = (const lumpsortinfo_t*)b;
+    int result = Str_CompareIgnoreCase(infoA->path, Str_Text(infoB->path));
     if(0 != result) return result;
 
     // Still matched; try the file load order indexes.
-    result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
+    result = (AbstractFile_LoadOrderIndex(infoA->record->lumpInfo->container) -
+              AbstractFile_LoadOrderIndex(infoB->record->lumpInfo->container));
     if(0 != result) return result;
 
-    // Still matched (i.e., present in the same package); use the pre-sort indexes.
-    return (recordB->presortIndex > recordA->presortIndex);
+    // Still matched (i.e., present in the same package); use the original indexes.
+    return (infoB->origIndex - infoA->origIndex);
 }
 
-int C_DECL LumpDirectory_CompareRecordPath(const void* a, const void* b)
+static void LumpDirectory_Prune(LumpDirectory* ld)
 {
-    const lumpdirectory_lumprecord_t* recordA = (const lumpdirectory_lumprecord_t*)a;
-    const lumpdirectory_lumprecord_t* recordB = (const lumpdirectory_lumprecord_t*)b;
-    ddstring_t* pathA = F_ComposeLumpPath(recordA->fsObject, recordA->fsLumpIdx);
-    ddstring_t* pathB = F_ComposeLumpPath(recordB->fsObject, recordB->fsLumpIdx);
-    int result;
-
-    result = Str_CompareIgnoreCase(pathA, Str_Text(pathB));
-
-    Str_Delete(pathA);
-    Str_Delete(pathB);
-    if(0 != result) return result;
-
-    // Still matched; try the file load order indexes.
-    result = (AbstractFile_LoadOrderIndex(recordA->fsObject) - AbstractFile_LoadOrderIndex(recordB->fsObject));
-    if(0 != result) return result;
-
-    // Still matched (i.e., present in the same package); use the pre-sort indexes.
-    return (recordB->presortIndex > recordA->presortIndex);
-}
-
-static int LumpDirectory_CompareRecords(const lumpdirectory_lumprecord_t* recordA,
-    const lumpdirectory_lumprecord_t* recordB, boolean matchLumpName)
-{
-    ddstring_t* pathA, *pathB;
-    int result;
-    assert(recordA && recordB);
-
-    if(matchLumpName)
-    {
-        return strnicmp(F_LumpInfo(recordA->fsObject, recordA->fsLumpIdx)->name,
-                        F_LumpInfo(recordB->fsObject, recordB->fsLumpIdx)->name, LUMPNAME_T_MAXLEN);
-    }
-
-    pathA = F_ComposeLumpPath(recordA->fsObject, recordA->fsLumpIdx);
-    pathB = F_ComposeLumpPath(recordB->fsObject, recordB->fsLumpIdx);
-
-    result = Str_CompareIgnoreCase(pathA, Str_Text(pathB));
-
-    Str_Delete(pathA);
-    Str_Delete(pathB);
-    return result;
-}
-
-void LumpDirectory_PruneDuplicateRecords(LumpDirectory* ld, boolean matchLumpName)
-{
-    int i, j, sortedNumRecords;
+    lumpsortinfo_t* sortInfoSet, *sortInfo;
+    lumpdirectory_lumprecord_t* record;
+    int i, origNumLumps;
     assert(ld);
 
-    if(ld->numRecords <= 1)
-        return; // Obviously no duplicates.
+    if(!(ld->flags & LDF_UNIQUE_PATHS)) return;
 
-    // Mark with pre-sort indices; so we can determine if qsort changed element ordinals.
-    for(i = 0; i < ld->numRecords; ++i)
-        ld->records[i].presortIndex = i;
+    // Any work to do?
+    if(!(ld->flags & LDF_NEED_PRUNE)) return;
+    if(ld->numRecords <= 1) return;
 
-    // Sort entries in descending load order for pruning.
-    qsort(ld->records, ld->numRecords, sizeof(*ld->records),
-        (matchLumpName? LumpDirectory_CompareRecordName : LumpDirectory_CompareRecordPath));
+    sortInfoSet = malloc(sizeof(*sortInfoSet) * ld->numRecords);
+    if(!sortInfoSet) Con_Error("LumpDirectory::PruneDuplicateRecords: Failed on allocation of %lu bytes for sort info.", (unsigned long) (sizeof(*sortInfoSet) * ld->numRecords));
 
-    // Peform the prune. One scan through the directory is enough (left relative).
-    sortedNumRecords = ld->numRecords;
-    for(i = 1; i < sortedNumRecords; ++i)
+    record = ld->records;
+    sortInfo = sortInfoSet;
+    for(i = 0; i < ld->numRecords; ++i, record++, sortInfo++)
     {
-        // Is this entry equal to one or more of the next?
-        j = i;
-        while(j < sortedNumRecords &&
-              !LumpDirectory_CompareRecords(ld->records + (j-1),
-                                            ld->records + (j), matchLumpName))
-        { ++j; }
-        if(j == i) continue; // No.
+        sortInfo->record = record;
+        sortInfo->path = F_ComposeLumpPath2(record->lumpInfo->container, record->lumpInfo->lumpIdx, '/');
+        sortInfo->origIndex = i;
+    }
 
-        // Shift equal-range -1 out of the set.
-        if(i != sortedNumRecords-1)
-            memmove(&ld->records[i], &ld->records[j],
-                sizeof(lumpdirectory_lumprecord_t) * (sortedNumRecords-j));
-        sortedNumRecords -= j-i;
+    // Sort in descending load order for pruning.
+    qsort(sortInfoSet, ld->numRecords, sizeof(*sortInfoSet), LumpDirectory_Sorter);
 
-        // We'll need to rebuild the hash.
-        ld->flags |= LDF_RECORDS_HASHDIRTY;
+    // Flag records we'll be pruning.
+    for(i = 1; i < ld->numRecords; ++i)
+    {
+        if(Str_CompareIgnoreCase(sortInfoSet[i-1].path, Str_Text(sortInfoSet[i].path))) continue;
+        sortInfoSet[i].record->flags |= 0x1;
+    }
 
-        // We want to re-test with the new candidate.
+    // Free temporary storage.
+    sortInfo = sortInfoSet;
+    for(i = 0; i < ld->numRecords; ++i, sortInfo++)
+        Str_Delete(sortInfo->path);
+    free(sortInfoSet);
+
+    // Peform the prune. Do this one lump at a time, respecting the possibly-sorted order.
+    origNumLumps = ld->numRecords;
+    for(i = 1; i < ld->numRecords+1; ++i)
+    {
+        if(!(ld->records[i-1].flags & 0x1)) continue;
+
+        // Move the data in the lump storage.
+        LumpDirectory_Move(ld, i, ld->numRecords-i, -1);
+        --ld->numRecords;
         --i;
     }
 
-    // Do we need to invalidate the hash?
-    if(!(ld->flags & LDF_RECORDS_HASHDIRTY))
-    {
-        // As yet undecided. Compare the original ordinals.
-        for(i = 0; i < sortedNumRecords; ++i)
-        {
-            if(i != ld->records[i-1].presortIndex)
-                ld->flags |= LDF_RECORDS_HASHDIRTY;
-        }
-    }
+    // Resize the lump storage to match numRecords.
+    LumpDirectory_Resize(ld, ld->numRecords);
 
-    // Resize record storage to match?
-    if(sortedNumRecords != ld->numRecords)
-        LumpDirectory_Resize(ld, ld->numRecords = sortedNumRecords);
+    ld->flags &= ~LDF_NEED_PRUNE;
 }
 
 void LumpDirectory_Print(LumpDirectory* ld)
@@ -481,18 +465,21 @@ void LumpDirectory_Print(LumpDirectory* ld)
     int i;
     assert(ld);
 
-    printf("LumpDirectory %p (%i records):\n", ld, ld->numRecords);
+    Con_Printf("LumpDirectory %p (%i records):\n", ld, ld->numRecords);
+
+    // Do we need to prune path-duplicate lumps?
+    LumpDirectory_Prune(ld);
 
     for(i = 0; i < ld->numRecords; ++i)
     {
-        lumpdirectory_lumprecord_t* rec = ld->records + i;
-        const LumpInfo* info = F_LumpInfo(rec->fsObject, rec->fsLumpIdx);
-        ddstring_t* path = F_ComposeLumpPath(rec->fsObject, rec->fsLumpIdx);
-        printf("%04i - \"%s:%s\" (size: %lu bytes%s)\n", i,
-               F_PrettyPath(Str_Text(AbstractFile_Path(rec->fsObject))),
+        const LumpInfo* lumpInfo = ld->records[i].lumpInfo;
+        ddstring_t* path = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
+        Con_Printf("%04i - \"%s:%s\" (size: %lu bytes%s)\n", i,
+               F_PrettyPath(Str_Text(AbstractFile_Path(lumpInfo->container))),
                F_PrettyPath(Str_Text(path)),
-               (unsigned long) info->size, (info->compressedSize != info->size? " compressed" : ""));
+               (unsigned long) lumpInfo->size,
+               (lumpInfo->compressedSize != lumpInfo->size? " compressed" : ""));
         Str_Delete(path);
     }
-    printf("---End of lumps---\n");
+    Con_Printf("---End of lumps---\n");
 }

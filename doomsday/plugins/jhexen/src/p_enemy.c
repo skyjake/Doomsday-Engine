@@ -40,6 +40,7 @@
 #include "p_mapspec.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -2196,6 +2197,11 @@ void C_DECL A_BishopAttack(mobj_t* actor)
         return;
     }
     actor->special1 = (P_Random() & 3) + 5;
+
+    if(IS_NETWORK_SERVER && actor->target)
+    {
+        NetSv_SendLocalMobjState(actor, "BISHOP_ATK5");
+    }
 }
 
 /**
@@ -2207,6 +2213,11 @@ void C_DECL A_BishopAttack2(mobj_t* actor)
 
     if(!actor->target || !actor->special1)
     {
+        if(IS_CLIENT)
+        {
+            // End the local action mode.
+            ClMobj_EnableLocalActions(actor, false);
+        }
         actor->special1 = 0;
         P_MobjChangeState(actor, S_BISHOP_WALK1);
         return;

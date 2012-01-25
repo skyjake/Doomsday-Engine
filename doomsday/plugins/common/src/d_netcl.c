@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * d_netcl.c : Common code related to net games (client-side).
+ * @file d_netcl.c
+ * Common code related to netgames (client-side). @ingroup client
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdio.h>
 #include <string.h>
@@ -43,24 +35,6 @@
 #include "p_inventory.h"
 #include "hu_inventory.h"
 #include "st_stuff.h"
-
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void NetCl_UpdateGameState(Reader* msg)
 {
@@ -1002,6 +976,51 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
     }
 
     Net_SendPacket(0, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
+}
+
+void NetCl_LocalMobjState(Reader* msg)
+{
+    thid_t mobjId = Reader_ReadUInt16(msg);
+    thid_t targetId = Reader_ReadUInt16(msg);
+    int newState = 0;
+    int special1 = 0;
+    mobj_t* mo = 0;
+    ddstring_t* stateName = Str_New();
+
+    Str_Read(stateName, msg);
+    newState = Def_Get(DD_DEF_STATE, Str_Text(stateName), 0);
+    Str_Delete(stateName);
+
+    special1 = Reader_ReadInt32(msg);
+
+    if(!(mo = ClMobj_Find(mobjId)))
+    {
+#ifdef _DEBUG
+        Con_Message("NetCl_LocalMobjState: ClMobj %i not found.\n", mobjId);
+        return;
+#endif
+    }
+
+    // Let it run the sequence locally.
+    ClMobj_EnableLocalActions(mo, true);
+
+#ifdef _DEBUG
+    Con_Message("NetCl_LocalMobjState: ClMobj %i => state %i (target:%i, special1:%i)\n",
+                mobjId, newState, targetId, special1);
+#endif
+
+    if(!targetId)
+    {
+        mo->target = NULL;
+    }
+    else
+    {
+        mo->target = ClMobj_Find(targetId);
+    }
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    mo->special1 = special1;
+#endif
+    P_MobjChangeState(mo, newState);
 }
 
 void NetCl_DamageRequest(mobj_t* target, mobj_t* inflictor, mobj_t* source, int damage)

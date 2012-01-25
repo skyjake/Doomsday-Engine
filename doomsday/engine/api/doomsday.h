@@ -2,6 +2,9 @@
  * @file doomsday.h
  * Primary header file for the Doomsday Engine Public API
  *
+ * @todo Break this header file up into group-specific ones.
+ * Including doomsday.h should include all of the public API headers.
+ *
  * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  * @authors Copyright &copy; 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
@@ -35,7 +38,7 @@
  * - @ref input
  * - @ref network
  * - @ref resource
- * - @ref gl
+ * - @ref render
  */
 
 #ifndef LIBDENG_EXPORTS_H
@@ -137,6 +140,7 @@ gameid_t DD_GameIdForKey(const char* identityKey);
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+ * @param params        Additional parameters.
  *
  * @note Resource registration order defines the load order of resources
  * (among those of the same type).
@@ -165,9 +169,12 @@ materialnamespaceid_t DD_ParseMaterialNamespace(const char* str);
 ///@}
 
 /**
- * @ingroup material
+ * @defgroup material Materials
+ * @ingroup resource
  */
+///@{
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId);
+///@}
 
 /// @addtogroup defs
 ///@{
@@ -196,6 +203,7 @@ materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, 
     boolean         M_WriteFile(const char* path, const char* source, size_t length);
 
     // Base: File system path/name utilities.
+    void            F_FileName(ddstring_t* dst, const char* src);
     void            F_ExtractFileBase(char* dst, const char* path, size_t len);
     const char*     F_FindFileExtension(const char* path);
 
@@ -280,6 +288,7 @@ void Con_SetPrintFilter(con_textfilter_t filter);
 
 /**
  * @defgroup system System Routines
+ * @ingroup base
  * Functionality provided by or related to the operating system.
  */
 ///@{
@@ -327,9 +336,11 @@ boolean MPE_End(void);
 //
 //------------------------------------------------------------------------
 
+/// @addtogroup network
+///@{
+
 /**
  * Send a packet over the network.
- * @ingroup network
  *
  * @param to_player  Player number to send to. The server is number zero.
  *                   May include @ref netSendFlags.
@@ -339,11 +350,51 @@ boolean MPE_End(void);
  */
 void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 
-    int             Net_GetTicCmd(void* command, int player);
-    const char*     Net_GetPlayerName(int player);
-    ident_t         Net_GetPlayerID(int player);
-    Smoother*       Net_PlayerSmoother(int player);
-    boolean         Sv_CanTrustClientPos(int player);
+/**
+ * @return The name of player @a player.
+ */
+const char* Net_GetPlayerName(int player);
+
+/**
+ * @return Client identifier for player @a player.
+ */
+ident_t Net_GetPlayerID(int player);
+
+/**
+ * Provides access to the player's movement smoother.
+ */
+Smoother* Net_PlayerSmoother(int player);
+
+/**
+ * Determines whether the coordinates sent by a player are valid at the moment.
+ */
+boolean Sv_CanTrustClientPos(int player);
+
+/**
+ * Searches through the client mobj hash table and returns the clmobj
+ * with the specified ID, if that exists. Note that client mobjs
+ * are also linked to the thinkers list.
+ *
+ * @param id  Mobj identifier.
+ *
+ * @return  Pointer to the mobj.
+ */
+struct mobj_s* ClMobj_Find(thid_t id);
+
+/**
+ * Enables or disables local action function execution on the client.
+ *
+ * @param mo  Client mobj.
+ * @param enable  @c true to enable local actions, @c false to disable.
+ */
+void ClMobj_EnableLocalActions(struct mobj_s* mo, boolean enable);
+
+/**
+ * Determines if local action functions are enabled for client mobj @a mo.
+ */
+boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
+
+///@}
 
 //------------------------------------------------------------------------
 //
@@ -359,7 +410,7 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length);
 ///@}
 
 /**
- * @defgroup playsim
+ * @defgroup playsim Playsim
  * @ingroup game
  */
 ///@{
@@ -405,7 +456,10 @@ void Net_SendPacket(int to_player, int type, const void* data, size_t length);
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 ///@}
 
-/// @addtogroup controls
+/**
+ * @defgroup controls Controls
+ * @ingroup input
+ */
 ///@{
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
@@ -478,20 +532,6 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
 materialid_t Materials_ResolveUri(const Uri* uri);
 materialid_t Materials_ResolveUriCString(const char* path);
 Uri* Materials_ComposeUri(materialid_t materialId);
-
-///@}
-
-/// @addtogroup playsim
-///@{
-
-    // Play: Thinkers.
-    void            DD_InitThinkers(void);
-    void            DD_RunThinkers(void);
-    void            DD_ThinkerAdd(thinker_t* th);
-    void            DD_ThinkerRemove(thinker_t* th);
-    void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-
-    int             DD_IterateThinkers(think_t type, int (*func) (thinker_t *th, void*), void* data);
 
 ///@}
 

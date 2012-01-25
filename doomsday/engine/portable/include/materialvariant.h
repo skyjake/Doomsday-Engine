@@ -28,6 +28,7 @@
 
 struct texturevariant_s;
 struct texturevariantspecification_s;
+struct materialvariant_s;
 
 typedef struct materialvariantspecification_s {
     materialcontext_t context;
@@ -46,6 +47,9 @@ enum {
 };
 
 typedef struct materialsnapshot_s {
+    /// Variant Material used to derive this snapshot.
+    struct materialvariant_s* material;
+
     /// @c true= this material is entirely opaque.
     boolean isOpaque;
 
@@ -141,7 +145,7 @@ materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);
 /// @return  Translated 'current' MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat);
 
-/// @return  Translation position [0...1]
+/// @return  Translation position [0..1]
 float MaterialVariant_TranslationPoint(materialvariant_t* mat);
 
 /**

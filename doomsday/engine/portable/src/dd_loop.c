@@ -43,6 +43,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+/// Development utility: on sharp tics, print player 0 movement state.
+//#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+
 /**
  * There needs to be at least this many tics per second. A smaller value
  * is likely to cause unpredictable changes in playsim.
@@ -379,6 +382,24 @@ void DD_Ticker(timespan_t time)
             // Camera smoothing: now that the world tic has occurred, the next sharp
             // position can be processed.
             R_NewSharpWorld();
+
+#ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+            if(ddPlayers[0].shared.inGame && ddPlayers[0].shared.mo)
+            {
+                mobj_t* mo = ddPlayers[0].shared.mo;
+                static float prevPos[3] = { 0, 0, 0 };
+                static float prevSpeed = 0;
+                float speed = V2_Length(mo->mom);
+                float actualMom[2] = { mo->pos[0] - prevPos[0], mo->pos[1] - prevPos[1] };
+                float actualSpeed = V2_Length(actualMom);
+
+                Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
+                            ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
+
+                V3_Copy(prevPos, mo->pos);
+                prevSpeed = speed;
+            }
+#endif
         }
 
         // While paused, don't modify frametime so things keep still.

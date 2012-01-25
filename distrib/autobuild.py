@@ -183,7 +183,7 @@ def update_feed():
     for timestamp, ev in builder.events_by_time():
         print >> out, '<item>'
         print >> out, '<title>Build %i</title>' % ev.number()
-        print >> out, '<link>%s/%s/</link>' % (builder.config.BUILD_URI, ev.tag())
+        print >> out, '<link>%s/%s/</link>' % ("http://dengine.net", ev.tag())
         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
         print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
@@ -260,8 +260,8 @@ def system_command(cmd):
 
 def generate_apidoc():
     """Run Doxygen to generate all API documentation."""
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/engine'))    
     
     print "\n-=-=- PUBLIC API DOCS -=-=-"
     system_command('doxygen api.doxy >/dev/null')
@@ -283,6 +283,13 @@ def generate_apidoc():
     print "\n-=-=- JHEXEN DOCS -=-=-"
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/plugins/jhexen'))
     system_command('doxygen jhexen.doxy >/dev/null')
+
+
+def generate_readme():
+    """Run Amethyst to generate readme documentation."""
+    git_pull()
+    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/doc/output'))
+    system_command('make')
     
 
 def web_path():
@@ -373,6 +380,7 @@ commands = {
     'purge': purge_obsolete,
     'cleanup': dir_cleanup,
     'apidoc': generate_apidoc,
+    'readme': generate_readme,
     'web_init': web_init,
     'web_update': web_update,
     'help': show_help

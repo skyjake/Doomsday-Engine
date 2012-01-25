@@ -79,6 +79,7 @@ const float defFontRGB2[]  = { 1.f,  .65f, .275f };
 const float defFontRGB3[] = {  .9f, .9f,  .9f };
 
 // The patches used in drawing the view border.
+// Percent-encoded.
 char* borderGraphics[] = {
     "Flats:F_022", // Background.
     "BORDT", // Top.
@@ -466,7 +467,7 @@ void X_PostInit(void)
 
     // Validate episode and map.
     uri = G_ComposeMapUri(0, startMap);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startMap = 0;

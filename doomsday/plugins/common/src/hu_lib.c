@@ -433,7 +433,7 @@ static void drawWidgetAvailableSpace(uiwidget_t* obj)
 {
     assert(obj);
     DGL_Color4f(0, .4f, 0, .1f);
-    DGL_DrawRect2(Rect_X(obj->geometry), Rect_Y(obj->geometry), obj->maxSize.width, obj->maxSize.height);
+    DGL_DrawRectf2(Rect_X(obj->geometry), Rect_Y(obj->geometry), obj->maxSize.width, obj->maxSize.height);
 }
 #endif
 
@@ -1479,6 +1479,29 @@ int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
     return -1; // NOP
 }
 
+mn_object_t* MNText_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNText::New: Failed on allocation of %lu bytes for new MNText.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNText::New: Failed on allocation of %lu bytes for mndata_text_t.", (unsigned long) sizeof(mndata_text_t));
+
+    ob->_type = MN_TEXT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNText_Drawer;
+    ob->updateGeometry = MNText_UpdateGeometry;
+
+    return ob;
+}
+
+void MNText_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_TEXT);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     mndata_text_t* txt = (mndata_text_t*)obj->_typedata;
@@ -1538,6 +1561,31 @@ void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
+mn_object_t* MNEdit_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNEdit::New: Failed on allocation of %lu bytes for new MNEdit.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_edit_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNEdit::New: Failed on allocation of %lu bytes for mndata_edit_t.", (unsigned long) sizeof(mndata_edit_t));
+
+    ob->_type = MN_EDIT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNEdit_Drawer;
+    ob->updateGeometry = MNEdit_UpdateGeometry;
+    ob->cmdResponder = MNEdit_CommandResponder;
+    ob->responder = MNEdit_Responder;
+
+    return ob;
+}
+
+void MNEdit_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_EDIT);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, float alpha)
 {
     patchinfo_t leftInfo, rightInfo, middleInfo;
@@ -1548,21 +1596,21 @@ static void drawEditBackground(const mn_object_t* obj, int x, int y, int width, 
     if(R_GetPatchInfo(pEditLeft, &leftInfo))
     {
         DGL_SetPatch(pEditLeft, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
+        DGL_DrawRectf2(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
         leftOffset = leftInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditRight, &rightInfo))
     {
         DGL_SetPatch(pEditRight, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
+        DGL_DrawRectf2(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
         rightOffset = rightInfo.geometry.size.width;
     }
 
     if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
         DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+        DGL_DrawRectf2Tiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
     }
 }
 
@@ -1716,8 +1764,7 @@ void MNEdit_SetText(mn_object_t* obj, int flags, const char* string)
     mndata_edit_t* edit = (mndata_edit_t*)obj->_typedata;
     assert(obj && obj->_type == MN_EDIT);
 
-    //strncpy(edit->ptr, Con_GetString(edit->data), edit->maxLen);
-    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH, "%s", string);
+    dd_snprintf(edit->text, MNDATA_EDIT_TEXT_MAX_LENGTH+1, "%s", string);
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
         memcpy(edit->oldtext, edit->text, sizeof(edit->oldtext));
@@ -1795,6 +1842,30 @@ void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     // @fixme calculate visible dimensions properly.
     assert(obj);
     Rect_SetWidthHeight(obj->_geometry, 170, 14);
+}
+
+mn_object_t* MNList_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNList::New: Failed on allocation of %lu bytes for new MNList.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNList::New: Failed on allocation of %lu bytes for mndata_list_t.", (unsigned long) sizeof(mndata_list_t));
+
+    ob->_type = MN_LIST;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNList_Drawer;
+    ob->updateGeometry = MNList_UpdateGeometry;
+    ob->cmdResponder = MNList_CommandResponder;
+
+    return ob;
+}
+
+void MNList_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_LIST);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
 }
 
 void MNList_Drawer(mn_object_t* obj, const Point2Raw* _origin)
@@ -1986,6 +2057,30 @@ boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int dataValue)
     return MNList_SelectItem(obj, flags, MNList_FindItem(obj, dataValue));
 }
 
+mn_object_t* MNListInline_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNListInline::New: Failed on allocation of %lu bytes for new MNListInline.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNListInline::New: Failed on allocation of %lu bytes for mndata_list_t.", (unsigned long) sizeof(mndata_list_t));
+
+    ob->_type = MN_LISTINLINE;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNListInline_Drawer;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->cmdResponder = MNListInline_CommandResponder;
+
+    return ob;
+}
+
+void MNListInline_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_LISTINLINE);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     const mndata_list_t* list = (mndata_list_t*)obj->_typedata;
@@ -2079,6 +2174,30 @@ void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     FR_SetFont(MNPage_PredefinedFont(page, obj->_pageFontIdx));
     FR_TextSize(&size, item->text);
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
+}
+
+mn_object_t* MNButton_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNButton::New: Failed on allocation of %lu bytes for new MNButton.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNButton:New: Failed on allocation of %lu bytes for mndata_button_t.", (unsigned long) sizeof(mndata_button_t));
+
+    ob->_type = MN_BUTTON;
+    ob->_pageFontIdx = MENU_FONT2;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNButton_Drawer;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->cmdResponder = MNButton_CommandResponder;
+
+    return ob;
+}
+
+void MNButton_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_BUTTON);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
 }
 
 void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin)
@@ -2226,6 +2345,30 @@ void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
 }
 
+mn_object_t* MNColorBox_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNColorBox::New: Failed on allocation of %lu bytes for new MNList.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNColorBox::New: Failed on allocation of %lu bytes for mndata_colorbox_t.", (unsigned long) sizeof(mndata_colorbox_t));
+
+    ob->_type = MN_COLORBOX;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNColorBox_Drawer;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->cmdResponder = MNColorBox_CommandResponder;
+
+    return ob;
+}
+
+void MNColorBox_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_COLORBOX);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
 {
     const mndata_colorbox_t* cbox = (mndata_colorbox_t*)obj->_typedata;
@@ -2272,68 +2415,68 @@ void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])));
-    DGL_DrawRectTiled(x, y, w, h, 64, 64);
+    DGL_DrawRectf2Tiled(x, y, w, h, 64, 64);
 
     // Top
     if(t.id)
     {
         DGL_SetPatch(t.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
+        DGL_DrawRectf2Tiled(x, y - t.geometry.size.height, w, t.geometry.size.height, up * t.geometry.size.width, up * t.geometry.size.height);
     }
 
     // Bottom
     if(b.id)
     {
         DGL_SetPatch(b.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
+        DGL_DrawRectf2Tiled(x, y + h, w, b.geometry.size.height, up * b.geometry.size.width, up * b.geometry.size.height);
     }
 
     // Left
     if(l.id)
     {
         DGL_SetPatch(l.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
+        DGL_DrawRectf2Tiled(x - l.geometry.size.width, y, l.geometry.size.width, h, up * l.geometry.size.width, up * l.geometry.size.height);
     }
 
     // Right
     if(r.id)
     {
         DGL_SetPatch(r.id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
+        DGL_DrawRectf2Tiled(x + w, y, r.geometry.size.width, h, up * r.geometry.size.width, up * r.geometry.size.height);
     }
 
     // Top Left
     if(tl.id)
     {
         DGL_SetPatch(tl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
+        DGL_DrawRectf2(x - tl.geometry.size.width, y - tl.geometry.size.height, tl.geometry.size.width, tl.geometry.size.height);
     }
 
     // Top Right
     if(tr.id)
     {
         DGL_SetPatch(tr.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
+        DGL_DrawRectf2(x + w, y - tr.geometry.size.height, tr.geometry.size.width, tr.geometry.size.height);
     }
 
     // Bottom Right
     if(br.id)
     {
         DGL_SetPatch(br.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
+        DGL_DrawRectf2(x + w, y + h, br.geometry.size.width, br.geometry.size.height);
     }
 
     // Bottom Left
     if(bl.id)
     {
         DGL_SetPatch(bl.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
+        DGL_DrawRectf2(x - bl.geometry.size.width, y + h, bl.geometry.size.width, bl.geometry.size.height);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(x, y, w, h, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
+    DGL_DrawRectf2Color(x, y, w, h, cbox->r, cbox->g, cbox->b, cbox->a * rs.pageAlpha);
 }
 
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e cmd)
@@ -2594,6 +2737,30 @@ boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* oth
                                              MNColorBox_Alphaf(other));
 }
 
+mn_object_t* MNSlider_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNSlider::New: Failed on allocation of %lu bytes for new MNSlider.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNSlider::New: Failed on allocation of %lu bytes for mndata_slider_t.", (unsigned long) sizeof(mndata_slider_t));
+
+    ob->_type = MN_SLIDER;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNSlider_Drawer;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->cmdResponder = MNSlider_CommandResponder;
+
+    return ob;
+}
+
+void MNSlider_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_SLIDER);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 float MNSlider_Value(const mn_object_t* obj)
 {
     const mndata_slider_t* sldr = (const mndata_slider_t*)obj->_typedata;
@@ -2677,7 +2844,7 @@ void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin)
     GL_DrawPatchXY(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+    DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
     GL_DrawPatchXY3(pSliderHandle, MNSlider_ThumbPos(obj), 1, ALIGN_TOP, DPF_NO_OFFSET);
@@ -2894,6 +3061,29 @@ void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page)
     FR_TextSize(&size, str);
 
     Rect_SetWidthHeight(obj->_geometry, size.width, size.height);
+}
+
+mn_object_t* MNMobjPreview_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNMobjPreview::New: Failed on allocation of %lu bytes for new MNMobjPreview.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_mobjpreview_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNMobjPreview::New: Failed on allocation of %lu bytes for mndata_mobjpreview_t.", (unsigned long) sizeof(mndata_mobjpreview_t));
+
+    ob->_type = MN_MOBJPREVIEW;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->updateGeometry = MNMobjPreview_UpdateGeometry;
+    ob->drawer = MNMobjPreview_Drawer;
+
+    return ob;
+}
+
+void MNMobjPreview_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_MOBJPREVIEW);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
 }
 
 static void findSpriteForMobjType(int mobjType, spritetype_e* sprite, int* frame)

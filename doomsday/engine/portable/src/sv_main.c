@@ -37,6 +37,7 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_misc.h"
+#include "de_defs.h"
 
 #include "materialarchive.h"
 #include "r_world.h"
@@ -741,21 +742,12 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
-    int                 i, plrNum = -1;
+    int                 plrNum = N_IdentifyPlayer(nodeID);
     boolean             wasInGame;
     player_t           *plr;
     client_t           *cl;
 
-    // First let's find out who this node actually is.
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-        if(clients[i].nodeID == nodeID)
-        {
-            plrNum = i;
-            break;
-        }
-
-    if(plrNum == -1)
-        return; // Bogus?
+    if(plrNum == -1) return; // Bogus?
 
     // Log off automatically.
     if(netRemoteUser == plrNum)
@@ -804,6 +796,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
+    StringArray* ar;
     int i;
     uint playersInGame = 0;
 
@@ -828,6 +821,22 @@ void Sv_Handshake(int plrNum, boolean newPlayer)
     MaterialArchive_Write(materialDict, msgWriter);
     Msg_End();
     Net_SendBuffer(plrNum, 0);
+
+    // Include the list of thing Ids.
+    ar = Def_ListMobjTypeIDs();
+    Msg_Begin(PSV_MOBJ_TYPE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
+
+    // Include the list of state Ids.
+    ar = Def_ListStateIDs();
+    Msg_Begin(PSV_MOBJ_STATE_ID_LIST);
+    StringArray_Write(ar, msgWriter);
+    Msg_End();
+    Net_SendBuffer(plrNum, 0);
+    StringArray_Delete(ar);
 
     if(newPlayer)
     {
@@ -1228,19 +1237,6 @@ void Sv_ClientCoords(int plrNum)
         ddpl->lookDir = clientLookDir;
     }
 
-    /*
-    if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
-    {
-#ifdef _DEBUG
-        VERBOSE2( Con_Message("Sv_ClientCoords: Setting momentum for player %i: %f, %f, %f\n", plrNum,
-                              clientMom[VX], clientMom[VY], clientMom[VZ]) );
-#endif
-        mo->mom[VX] = clientMom[VX];
-        mo->mom[VY] = clientMom[VY];
-        mo->mom[VZ] = clientMom[VZ];
-    }
-    */
-
 #ifdef _DEBUG
     VERBOSE2( Con_Message("Sv_ClientCoords: Received coords for player %i: %f, %f, %f\n", plrNum,
                           clientPos[VX], clientPos[VY], clientPos[VZ]) );
@@ -1259,9 +1255,6 @@ void Sv_ClientCoords(int plrNum)
     }
 }
 
-/**
- * Determines whether the coordinates sent by a player are valid at the moment.
- */
 boolean Sv_CanTrustClientPos(int plrNum)
 {
     player_t* plr = &ddPlayers[plrNum];

@@ -368,7 +368,7 @@ void IN_Drawer(void)
         DGL_Color4f(1, 1, 1, 1);
         DGL_SetRawImage(lumpNum, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_Enable(DGL_TEXTURE_2D);
-        DGL_DrawRect2(0, 0, SCREENWIDTH, SCREENHEIGHT);
+        DGL_DrawRectf2(0, 0, SCREENWIDTH, SCREENHEIGHT);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 

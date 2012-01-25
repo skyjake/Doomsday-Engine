@@ -1,33 +1,26 @@
-/**\file sys_network.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Low-Level Sockets Networking.
+ * @file sys_network.c
+ * Low-level network socket routines. @ingroup network
  *
- * TCP sockets are periodically polled for activity (Net_Update ->
- * N_Listen).
+ * @see @ref sysNetwork
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -51,37 +44,11 @@
 #include "de_misc.h"
 #include "de_play.h"
 
-// MACROS ------------------------------------------------------------------
-
-/**
- * The randomized transmitted is only used for simulating a poor
- * network connection.
- */
-#undef TRANSMIT_RANDOMIZER
-#define RANDOMIZER_DROP_PERCENT 25
-#define RANDOMIZER_MAX_DELAY    500
+#include "huffman.h"
+#include "zipfile.h"
+#include "protocol.h"
 
 #define MAX_NODES                   32
-#define MAX_DATAGRAM_SIZE           1300
-#define DEFAULT_TRANSMISSION_SIZE   4096
-
-// TYPES -------------------------------------------------------------------
-
-#if 0
-/**
- * Each network node has a send queue. The queue contains a number of
- * sqpacks.
- */
-typedef struct sqpack_s {
-    struct sqpack_s *next;
-    struct netnode_s *node;
-    UDPpacket *packet;
-#ifdef TRANSMIT_RANDOMIZER
-    // The packet won't be sent until this time.
-    uint    dueTime;
-#endif
-} sqpack_t;
-#endif
 
 /**
  * On serverside, each client has its own network node. A node
@@ -98,23 +65,7 @@ typedef struct netnode_s {
 
     // This is the client's remote address.
     IPaddress       addr;
-
-#if 0
-    // Send queue statistics.
-    long            mutex;
-    uint            numWaiting;
-    uint            bytesWaiting;
-#endif
 } netnode_t;
-
-#if 0
-typedef struct sendqueue_s {
-    long            waiting;
-    long            mutex;
-    sqpack_t       *first, *last;
-    boolean         online; // Set to false to make transmitter stop.
-} sendqueue_t;
-#endif
 
 typedef struct foundhost_s {
     boolean         valid;
@@ -122,59 +73,37 @@ typedef struct foundhost_s {
     IPaddress       addr;
 } foundhost_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 void N_IPToString(char *buf, IPaddress *ip);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int C_DECL N_JoinedListenerThread(void* param);
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-size_t  maxDatagramSize = MAX_DATAGRAM_SIZE;
+size_t  maxDatagramSize = PROTOCOL_MAX_DATAGRAM_SIZE;
 
 char   *nptIPAddress = "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
 int     defaultTCPPort = DEFAULT_TCP_PORT;
-#if 0
-int     nptUDPPort = 0;
-int     defaultUDPPort = DEFAULT_UDP_PORT;
-#endif
 
 // Operating mode of the currently active service provider.
 boolean netIsActive = false;
 boolean netServerMode = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static TCPsocket serverSock;
-//static volatile UDPsocket inSock;
-//static Uint16 recvUDPPort;
-//static mutex_t mutexInSock;
 static netnode_t netNodes[MAX_NODES];
 static SDLNet_SocketSet sockSet;
 static SDLNet_SocketSet joinedSockSet;
 static mutex_t mutexJoinedSockSet;
-//static thread_t hTransmitter;
 static thread_t joinedListener;
 static volatile boolean stopJoinedListener;
-//static sendqueue_t sendQ;
 static foundhost_t located;
-//static volatile boolean stopReceiver;
-static byte* transmissionBuffer;
-static size_t transmissionBufferSize;
-
-// CODE --------------------------------------------------------------------
 
 void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
+
+#ifdef _DEBUG
+    C_CMD("netfreq", NULL, NetFreqs);
+#endif
 }
 
 static void N_StartJoinedListener(void)
@@ -197,632 +126,22 @@ static void N_StopJoinedListener(void)
     }
 }
 
-#if 0
-/**
- * Free any packets still waiting in the queue.
- */
-static void N_ClearQueue(sendqueue_t *q)
-{
-    sqpack_t *pack;
-
-    while((pack = q->first) != NULL)
-    {
-        q->first = pack->next;
-        SDLNet_FreePacket(pack->packet);
-        M_Free(pack);
-    }
-}
-
-/**
- * Send the packet using UDP.  If the packet is associated with no
- * node, nothing will be sent because we don't know the destination
- * address.
- */
-static void N_UDPSend(sqpack_t *pack)
-{
-    if(!pack->node)
-        return;
-
-#ifdef PRINT_PACKETS
-    {
-        char    buf[80];
-
-        N_IPToString(buf, &pack->packet->address);
-        Con_Message("Send: len=%i to %s\n", pack->packet->len, buf);
-    }
-#endif
-
-    if(pack->node->hasJoined)
-    {
-        // Commence sending.
-        SDLNet_UDP_Send(inSock, -1, pack->packet);
-    }
-
-    // Update the node's counters.
-    Sem_P(pack->node->mutex);
-    pack->node->numWaiting--;
-    pack->node->bytesWaiting -= pack->packet->len;
-    Sem_V(pack->node->mutex);
-}
-
-#ifdef TRANSMIT_RANDOMIZER
-/**
- * The randomized version of the UDP transmitter.  This can be used to
- * simulate a real-life connection where UDP packets are received
- * sometimes in the wrong order or get lost entirely.
- */
-static int C_DECL N_UDPTransmitter(void *parm)
-{
-    sendqueue_t *q = parm;
-    sqpack_t *pack;
-    uint    nowTime = 0;
-
-    // When using the randomized transmitter, the send queue is always
-    // sorted by the due times.
-
-    while(q->online)
-    {
-        // If there are packets waiting, see if they should be sent now.
-        Sem_P(q->mutex);
-
-        nowTime = Sys_GetRealTime();
-
-        while((pack = q->first) != NULL)
-        {
-            if(pack->dueTime > nowTime)
-            {
-                // Too early.
-                break;
-            }
-
-            // Remove the packet from the queue.
-            q->first = pack->next;
-
-            N_UDPSend(pack);
-
-            // Now that the packet has been sent, we can discard the data.
-            SDLNet_FreePacket(pack->packet);
-            M_Free(pack);
-        }
-
-        Sem_V(q->mutex);
-
-        // Sleep for a short while before starting another loop.
-        Sys_Sleep(2);
-    }
-
-    N_ClearQueue(q);
-    return 0;
-}
-
-#else                           /* !TRANSMIT_RANDOMIZER */
-
-/**
- * A UDP transmitter thread takes messages off a network node's send
- * queue and sends them one by one. On serverside, each client has its
- * own transmitter thread.
- *
- * 'parm' is a pointer to the network node of this transmitter.
- */
-static int C_DECL N_UDPTransmitter(void *parm)
-{
-    sendqueue_t *q = parm;
-    sqpack_t *pack;
-
-    while(q->online)
-    {
-        // We will wait until there are messages to send.  The
-        // semaphore is incremented when a new message is added to the
-        // queue.  Waiting for this semaphore causes us to sleep
-        // until there are messages to send.
-        Sem_P(q->waiting);
-
-        // Lock the send queue.
-        Sem_P(q->mutex);
-
-        // There should be a message waiting.
-        if(!q->online || !q->first)
-        {
-            Sem_V(q->mutex);
-            continue;
-        }
-
-        // Extract the next message from the FIFO queue.
-        pack = q->first;
-        q->first = q->first->next;
-        if(!q->first)
-            q->last = NULL;
-
-        // Release the send queue.
-        Sem_V(q->mutex);
-
-        N_UDPSend(pack);
-
-        // Now that the packet has been sent, we can discard the data.
-        SDLNet_FreePacket(pack->packet);
-        M_Free(pack);
-    }
-
-    // Free any packets still waiting in the queue.
-    N_ClearQueue(q);
-    return 0;
-}
-#endif
-
-/**
- * The UDP receiver thread waits for UDP packets and places them into
- * the incoming message buffer. The UDP receiver is started when the
- * TCP/IP service is initialized. The thread is stopped when the
- * service is shut down.
- */
-static int C_DECL N_UDPReceiver(void *parm)
-{
-    SDLNet_SocketSet set;
-    UDPpacket *packet = NULL;
-
-    // Put the UDP socket in our socket set so we can wait for it.
-    set = SDLNet_AllocSocketSet(1);
-    SDLNet_UDP_AddSocket(set, inSock);
-
-    while(!stopReceiver)
-    {
-        // Most of the time we will be sleeping here, waiting for
-        // incoming packets.
-        while(SDLNet_CheckSockets(set, 250) > 0)
-        {
-            // There is activity on the socket. Allocate a new packet
-            // to store the data into. The packet will be released later,
-            // in N_ReturnBuffer.
-            if(!packet)
-            {
-                // Allocate a new packet.
-                packet = SDLNet_AllocPacket((int) maxDatagramSize);
-            }
-
-            // The mutex will prevent problems when new channels are
-            // bound to the socket.
-            Sys_Lock(mutexInSock);
-            if(SDLNet_UDP_Recv(inSock, packet) > 0)
-            {
-                netmessage_t *msg = NULL;
-
-                Sys_Unlock(mutexInSock);
-#ifdef PRINT_PACKETS
-                {
-                    char    buf[80];
-
-                    N_IPToString(buf, &packet->address);
-                    Con_Message("Recv: ch=%i len=%i %s\n", packet->channel,
-                           packet->len, buf);
-                }
-#endif
-
-                // If we don't know the sender, discard the packet.
-                if(packet->channel < 0)
-                    continue;
-
-                // Successfully received a packet.
-                msg = (netmessage_t *) M_Calloc(sizeof(netmessage_t));
-
-                msg->sender = packet->channel;
-                msg->data = packet->data;
-                msg->size = packet->len;
-                msg->handle = packet;
-
-                // The message queue will handle the message from now on.
-                N_PostMessage(msg);
-
-                // This packet has now been used.
-                packet = NULL;
-            }
-            else
-            {
-                Sys_Unlock(mutexInSock);
-                continue;
-            }
-        }
-    }
-
-    if(packet)
-        SDLNet_FreePacket(packet);
-
-    SDLNet_FreeSocketSet(set);
-    return 0;
-}
-#endif
-
-/**
- * Free a message buffer.
- */
-void N_ReturnBuffer(void *handle)
-{
-    if(handle)
-    {
-        M_Free(handle);
-    }
-}
-
-/**
- * Read a packet from the TCP connection and put it in the incoming
- * packet queue.  This function blocks until the entire packet has
- * been read, so large packets should be avoided during normal
- * gameplay.
- *
- * Returns true if a packet was successfully received.
- */
-boolean N_ReceiveReliably(nodeid_t from)
-{
-    ushort  size = 0;
-    TCPsocket sock = netNodes[from].sock;
-    int     bytes = 0;
-    boolean error, read;
-    char*   packet = 0;
-
-    // \todo What if we get one byte? How come we are here if there's nothing to receive?
-    if((bytes = SDLNet_TCP_Recv(sock, &size, 2)) != 2)
-    {
-        //int number = errno;
-        //Con_Message("N_ReceiveReliably: Packet header was truncated. Got %i bytes.\n", bytes);
-        //Con_Message("  Error: %s (%s)\n", SDLNet_GetError(), strerror(number));
-        return false;
-    }
-
-    size = SHORT(size);
-
-    // Read the entire packet's data.
-    packet = M_Malloc(size);
-    bytes = 0;
-    read = false;
-    error = false;
-    while(!read)
-    {
-        int received = SDLNet_TCP_Recv(sock, packet + bytes, size - bytes);
-        if(received == -1)
-        {
-            //int number = errno;
-            M_Free(packet);
-            packet = 0;
-            /*Con_Message("N_ReceiveReliably: Error during TCP recv.\n  %s (%s)\n",
-                        SDLNet_GetError(), strerror(number));*/
-            error = true;
-            read = true;
-        }
-        bytes += received;
-        if(bytes == size)
-            read = true;
-        assert(bytes <= size);
-    }
-    if(error)
-        return false;
-
-    // Post the received message.
-    {
-        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
-
-        msg->sender = from;
-        msg->data = (byte*) packet;
-        msg->size = size;
-        msg->handle = packet;
-
-/*#ifdef _DEBUG
-        VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
-#endif*/
-
-        // The message queue will handle the message from now on.
-        N_PostMessage(msg);
-    }
-    return true;
-}
-
-/**
- * Send the data buffer over the control link, which is a TCP
- * connection.
- */
-void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
-{
-    int             result = 0;
-    netnode_t      *node = &netNodes[destination];
-    short           packetSize = 0;
-
-    if(size == 0 || !node->sock || !node->hasJoined)
-        return;
-
-    if(size > DDMAXSHORT)
-    {
-        Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
-                  "buffer.\n  Attempted size is %lu bytes.\n", (unsigned long) size);
-    }
-
-    // Resize the buffer to fit the entire message + size short.
-    if(transmissionBufferSize < size + 2)
-    {
-        transmissionBufferSize = size + 2;
-        transmissionBuffer = M_Realloc(transmissionBuffer, size + 2);
-    }
-
-    // Compose the message into the transmission buffer.
-    packetSize = SHORT(size);
-    memcpy(transmissionBuffer, &packetSize, 2);
-    memcpy(transmissionBuffer + 2, data, size);
-
-    // Send the data over the socket.
-    result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
-
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
-                          (unsigned long) (size + 2), result) );
-#endif
-    if(result < 0 || (size_t) result != size + 2)
-    {
-        perror("Socket error");
-    }
-}
-
-#if 0
-/**
- * Send the buffer to the destination. For clients, the server is the only
- * possible destination (doesn't depend on the value of 'destination').
- */
-void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
-{
-    sqpack_t       *pack;
-    UDPpacket      *p;
-    netnode_t      *node;
-
-    // If the send queue is not active, we can't send anything.
-    if(!sendQ.online)
-        return;
-
-#ifdef TRANSMIT_RANDOMIZER
-    // There is a chance that the packet is dropped.
-    if(RNG_RandFloat() < RANDOMIZER_DROP_PERCENT / 100.0)
-    {
-        VERBOSE( Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
-                             "(%lu bytes).\n", destination,
-                             (unsigned long) size) );
-        return;
-    }
-#endif
-
-    if(size > maxDatagramSize)
-    {
-        Con_Error("N_SendDataBuffer: Too large packet (%lu), risk of "
-                  "fragmentation (MTU=%lu).\n", (unsigned long) size,
-                  (unsigned long) maxDatagramSize);
-    }
-
-    // This memory is freed after the packet is sent.
-    pack = M_Malloc(sizeof(sqpack_t));
-    p = pack->packet = SDLNet_AllocPacket((int) size);
-
-    // The destination node.
-    pack->node = node = netNodes + destination;
-
-    // Init the packet's data.
-    p->channel = -1;
-    memcpy(p->data, data, (int) size);
-    p->len = (int) size;
-    memcpy(&p->address, &node->addr, sizeof(p->address));
-
-#ifdef TRANSMIT_RANDOMIZER
-    pack->dueTime = Sys_GetRealTime() + RNG_RandFloat() * RANDOMIZER_MAX_DELAY;
-#endif
-
-    // Add the packet to the send queue.
-    Sem_P(sendQ.mutex);
-#ifndef TRANSMIT_RANDOMIZER
-    if(!sendQ.first)
-    {
-        sendQ.first = sendQ.last = pack;
-    }
-    else
-    {
-        sendQ.last->next = pack;
-        sendQ.last = pack;
-    }
-    pack->next = NULL;
-#else
-    // Insertion sort.
-    if(sendQ.first)
-    {
-        // Does the new packet come before all others?
-        if(pack->dueTime < sendQ.first->dueTime)
-        {
-            pack->next = sendQ.first;
-            sendQ.first = pack;
-        }
-        else
-        {
-            // Find the packet after which the new packet belongs.
-            sqpack_t *i = sendQ.first;
-
-            for(; i; i = i->next)
-            {
-                if(!i->next || i->next->dueTime >= pack->dueTime)
-                {
-                    // Add after this one.
-                    pack->next = i->next;
-                    i->next = pack;
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        sendQ.first = pack;
-        pack->next = NULL;
-    }
-#endif
-    Sem_V(sendQ.mutex);
-
-    // Increment the statistics.
-    Sem_P(node->mutex);
-    node->numWaiting++;
-    node->bytesWaiting += (uint) size;
-    Sem_V(node->mutex);
-
-    // Signal the transmitter to start working.
-    Sem_V(sendQ.waiting);
-}
-
-/**
- * @return              The number of messages waiting in the player's send
- *                      queue.
- */
-uint N_GetSendQueueCount(int player)
-{
-    netnode_t *node = netNodes + player;
-    uint    count;
-
-    Sem_P(node->mutex);
-    count = node->numWaiting;
-    Sem_V(node->mutex);
-    return count;
-}
-
-/**
- * @return              The number of bytes waiting in the player's send
- *                      queue.
- */
-uint N_GetSendQueueSize(int player)
-{
-    netnode_t      *node = netNodes + player;
-    uint            bytes;
-
-    Sem_P(node->mutex);
-    bytes = node->bytesWaiting;
-    Sem_V(node->mutex);
-    return bytes;
-}
-
-/**
- * Blocks until all the send queues have been emptied.
- */
-void N_FlushOutgoing(void)
-{
-    int     i;
-    boolean allClear = false;
-
-    while(!allClear)
-    {
-        allClear = true;
-
-        for(i = 0; i < DDMAXPLAYERS; ++i)
-            if(netNodes[i].hasJoined && N_GetSendQueueCount(i))
-                allClear = false;
-
-        Sys_Sleep(5);
-    }
-}
-
-/**
- * Initialize the transmitter thread and the send queue.
- */
-static void N_StartTransmitter(sendqueue_t *q)
-{
-    q->online = true;
-    q->waiting = Sem_Create(0);
-    q->mutex = Sem_Create(1);
-    q->first = NULL;
-    q->last = NULL;
-
-    hTransmitter = Sys_StartThread(N_UDPTransmitter, q);
-}
-
-/**
- * Blocks until the transmitter thread has been exited.
- */
-static void N_StopTransmitter(sendqueue_t *q)
-{
-    uint            i;
-
-    if(!hTransmitter)
-        return;
-
-    // Tell the transmitter to stop sending.
-    q->online = false;
-
-    // Increment the semaphore without adding a new message: this'll
-    // make the transmitter "run dry."
-    for(i = 0; i < 10; ++i)
-        Sem_V(q->waiting);
-
-    // Wait until the transmitter thread finishes.
-    Sys_WaitThread(hTransmitter);
-    hTransmitter = NULL;
-
-    // Destroy the semaphores.
-    Sem_Destroy(q->waiting);
-    Sem_Destroy(q->mutex);
-}
-
-/**
- * Start the UDP receiver thread.
- */
-static void N_StartReceiver(void)
-{
-    stopReceiver = false;
-    mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
-    hReceiver = Sys_StartThread(N_UDPReceiver, NULL);
-}
-
-/**
- * Blocks until the UDP receiver thread has exited.
- */
-static void N_StopReceiver(void)
-{
-    // Wait for the receiver thread the stop.
-    stopReceiver = true;
-    Sys_WaitThread(hReceiver);
-    hReceiver = 0;
-
-    // Close the incoming UDP socket.
-    SDLNet_UDP_Close(inSock);
-    inSock = NULL;
-
-    Sys_DestroyMutex(mutexInSock);
-    mutexInSock = 0;
-}
-
-/**
- * Bind or unbind the address to/from the incoming UDP socket.  When
- * the address is bound, packets from it will be accepted.
- */
-void N_BindIncoming(IPaddress *addr, nodeid_t id)
-{
-    if(!inSock)
-        return;
-
-    Sys_Lock(mutexInSock);
-    if(addr)
-    {
-        SDLNet_UDP_Bind(inSock, id, addr);
-    }
-    else
-    {
-        SDLNet_UDP_Unbind(inSock, id);
-    }
-    Sys_Unlock(mutexInSock);
-}
-#endif
-
 /**
  * Initialize the low-level network subsystem. This is called always
  * during startup (via Sys_Init()).
  */
 void N_SystemInit(void)
 {
+#if 0 // obsolete
     // The MTU can be customized.
     if(ArgCheckWith("-mtu", 1))
     {
         maxDatagramSize = (size_t) strtol(ArgNext(), NULL, 0);
         Con_Message("N_SystemInit: Custom MTU: %lu bytes.\n", (unsigned long) maxDatagramSize);
     }
+#endif
 
-    // Allocate the transmission buffer.
-    transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
-    transmissionBuffer = M_Malloc(transmissionBufferSize);
+    Protocol_Init();
 }
 
 /**
@@ -831,10 +150,15 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
-    M_Free(transmissionBuffer);
-    transmissionBuffer = NULL;
-    transmissionBufferSize = 0;
+    if(netGame)
+    {
+        if(isClient)
+            N_Disconnect();
+        else
+            N_ServerClose();
+    }
 
+    Protocol_Shutdown();
     N_ShutdownService();
 }
 
@@ -848,28 +172,6 @@ void N_IPToString(char *buf, IPaddress *ip)
     sprintf(buf, "%i.%i.%i.%i:%i", host >> 24, (host >> 16) & 0xff,
             (host >> 8) & 0xff, host & 0xff, SDLNet_Read16(&ip->port));
 }
-
-#if 0
-/**
- * Opens an UDP socket.  The used port number is returned.  If the
- * socket cannot be opened, 'sock' is set to NULL.  'defaultPort'
- * should never be zero.
- */
-Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
-{
-    Uint16      port = (!preferPort ? defaultPort : preferPort);
-
-    *sock = NULL;
-    if((*sock = SDLNet_UDP_Open(port)) != NULL)
-        return port;
-
-#ifdef _DEBUG
-    Con_Message("N_OpenUDPSocket: Failed to open UDP socket %i.\n", port);
-    Con_Message("  (%s)\n", SDLNet_GetError());
-#endif
-    return 0; // Failure!
-}
-#endif
 
 /**
  * Initialize the chosen service provider each in server or client
@@ -944,32 +246,9 @@ boolean N_InitService(boolean inServerMode)
         located.valid = false;
     }
 
-#if 0
-    // Open the socket that will be used for UDP communications.
-    recvUDPPort = N_OpenUDPSocket((UDPsocket *) &inSock, nptUDPPort, defaultUDPPort);
-    Con_Message("N_InitService: In/out UDP port %i.\n", recvUDPPort);
-#endif
-
     // Success.
     netIsActive = true;
     netServerMode = inServerMode;
-
-#if 0
-    // Did we fail in opening the UDP port?
-    if(!inSock)
-    {
-        Con_Message("N_InitService: Failed to open in/out UDP port.\n");
-        Con_Message("  %s\n", SDLNet_GetError());
-        N_ShutdownService();
-        return false;
-    }
-
-    // Start the UDP receiver right away.
-    N_StartReceiver();
-
-    // Start the UDP transmitter.
-    N_StartTransmitter(&sendQ);
-#endif
 
     return true;
 }
@@ -992,12 +271,6 @@ void N_ShutdownService(void)
 
     // Any queued messages will be destroyed.
     N_ClearMessages();
-
-#if 0
-    // Kill the transmission threads.
-    N_StopTransmitter(&sendQ);
-    N_StopReceiver();
-#endif
 
     N_StopJoinedListener();
 
@@ -1067,6 +340,18 @@ const char *N_GetProtocolName(void)
     return "TCP/IP";
 }
 
+void* N_GetNodeSocket(nodeid_t id)
+{
+    if(id >= MAX_NODES) return 0;
+    return (void*) netNodes[id].sock;
+}
+
+boolean N_HasNodeJoined(nodeid_t id)
+{
+    if(id >= MAX_NODES) return 0;
+    return netNodes[id].hasJoined;
+}
+
 /**
  * Returns the player name associated with the given network node.
  */
@@ -1089,23 +374,25 @@ void N_TerminateNode(nodeid_t id)
 {
     netnode_t *node = &netNodes[id];
     netevent_t netEvent;
-#if 0
-    sqpack_t *i;
-#endif
 
     if(!node->sock)
-        return;                 // There is nothing here...
+        return;  // There is nothing here...
 
     if(netServerMode && node->hasJoined)
     {
-        Sys_Lock(mutexJoinedSockSet);
-        SDLNet_TCP_DelSocket(joinedSockSet, node->sock);
-        Sys_Unlock(mutexJoinedSockSet);
+        // Let the client know.
+        Msg_Begin(PSV_SERVER_CLOSE);
+        Msg_End();
+        Net_SendBuffer(N_IdentifyPlayer(id), 0);
 
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
         netEvent.id = id;
         N_NEPost(&netEvent);
+
+        Sys_Lock(mutexJoinedSockSet);
+        SDLNet_TCP_DelSocket(joinedSockSet, node->sock);
+        Sys_Unlock(mutexJoinedSockSet);
     }
 
     // Remove the node from the set of active sockets.
@@ -1113,26 +400,6 @@ void N_TerminateNode(nodeid_t id)
 
     // Close the socket and forget everything about the node.
     SDLNet_TCP_Close(node->sock);
-
-#if 0
-    // Remove the address binding from the incoming UDP socket.  This
-    // means we'll reject all packets from the address.
-    N_BindIncoming(NULL, id);
-
-    // Cancel this node's packets in the send queue by setting their
-    // node pointers to NULL.
-    if(sendQ.first != sendQ.last)
-    {
-        Sem_P(sendQ.mutex);
-        for(i = sendQ.first; i; i = i->next)
-            if(i->node == node)
-                i->node = NULL;
-        Sem_V(sendQ.mutex);
-    }
-
-    // Clear the node's data.
-    Sem_Destroy(node->mutex);
-#endif
 
     memset(node, 0, sizeof(*node));
 }
@@ -1212,17 +479,6 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
     // been provided by an untrusted source.
     strncpy(node->name, name, sizeof(node->name) - 1);
 
-#if 0
-    // Prepare the transmission stats for the node.
-    node->numWaiting = 0;
-    node->bytesWaiting = 0;
-    node->mutex = Sem_Create(1);
-
-    // Bind the address to the incoming UDP socket, so we'll recognize
-    // the sender.
-    N_BindIncoming(&node->addr, id);
-#endif
-
     // Inform the higher levels of this occurence.
     netEvent.type = NE_CLIENT_ENTRY;
     netEvent.id = id;
@@ -1230,37 +486,6 @@ static boolean N_JoinNode(nodeid_t id, /*Uint16 port,*/ const char *name)
 
     return true;
 }
-
-#ifdef LOOK_TIMEOUT
-// Untested -- may cause memory a segfault.
-typedef struct socket_timeout_s {
-    TCPsocket   sock;
-    int         seconds;
-    boolean     abort;
-} socket_timeout_t;
-
-/**
- * Closes the socket specified with parm after SOCKET_TIMEOUT seconds.
- */
-static int C_DECL N_SocketTimeOut(void *parm)
-{
-    volatile socket_timeout_t* p = parm;
-    timespan_t elapsed = 0;
-
-    while(elapsed < p->seconds && !p->abort)
-    {
-        // Check periodically for abortion.
-        Sys_Sleep(100);
-        elapsed += .1;
-    }
-    if(!p->abort)
-    {
-        // Time to close the socket.
-        SDLNet_TCP_Close(p->sock);
-    }
-    return 0;
-}
-#endif
 
 /**
  * Maybe it would be wisest to run this in a separate thread?
@@ -1271,10 +496,6 @@ boolean N_LookForHosts(const char *address, int port)
     char        buf[256];
     ddstring_t *response;
     boolean     isDone;
-#ifdef LOOK_TIMEOUT
-    socket_timeout_t timeout;
-    void       *timeoutThread;
-#endif
 
     // We must be a client.
     if(!N_IsAvailable() || netServerMode)
@@ -1285,9 +506,6 @@ boolean N_LookForHosts(const char *address, int port)
 
     // Get rid of previous findings.
     memset(&located, 0, sizeof(located));
-#ifdef LOOK_TIMEOUT
-    memset(&timeout, 0, sizeof(timeout));
-#endif
 
     // Let's determine the address we will be looking into.
     SDLNet_ResolveHost(&located.addr, address, port);
@@ -1304,12 +522,6 @@ boolean N_LookForHosts(const char *address, int port)
     SDLNet_TCP_Send(sock, "INFO\n", 5);
 
     Con_Message("Send INFO query.\n");
-
-#ifdef LOOK_TIMEOUT
-    // Setup a timeout.
-    timeout.seconds = 5;
-    timeoutThread = Sys_StartThread(N_SocketTimeOut, &timeout);
-#endif
 
     // Let's listen to the reply.
     memset(buf, 0, sizeof(buf));
@@ -1339,13 +551,6 @@ boolean N_LookForHosts(const char *address, int port)
         else
             isDone = true;
     }
-
-#ifdef LOOK_TIMEOUT
-    timeout.abort = true;
-    Con_Message("Waiting for timeout thread to return.\n");
-    Sys_WaitThread(timeoutThread);
-    Con_Message("Timeout thread stopped.\n");
-#endif
 
     // Close the connection; that was all the information we need.
     SDLNet_TCP_Close(sock);
@@ -1416,11 +621,11 @@ boolean N_Connect(int index)
     }
     memcpy(&svNode->addr, &located.addr, sizeof(IPaddress));
 
-    // Connect by issuing: "JOIN (my-udp) (myname)"
+    // Connect by issuing: "JOIN (my-protocol-version) (myname)"
     pName = playerName;
     if(!pName || !pName[0])
         pName = "Anonymous";
-    sprintf(buf, "JOIN %04x %s\n", 0 /*recvUDPPort*/, pName);
+    sprintf(buf, "JOIN %04x %s\n", SV_VERSION, pName);
     SDLNet_TCP_Send(svNode->sock, buf, (int) strlen(buf));
 
     VERBOSE(Con_Message("N_Connect: %s", buf));
@@ -1438,15 +643,6 @@ boolean N_Connect(int index)
     }
 
     VERBOSE(Con_Message("  Server responds: %s", buf));
-
-#if 0
-    // The server tells us which UDP port we should send packets to.
-    SDLNet_Write16(strtol(buf + 6, NULL, 16), &svNode->addr.port);
-
-    // Bind the server's address to our incoming UDP port, so we'll
-    // recognize the packets from the server.
-    N_BindIncoming(&svNode->addr, 0);
-#endif
 
     // Put the server's socket in a socket set so we may listen to it.
     joinedSockSet = SDLNet_AllocSocketSet(1);
@@ -1488,7 +684,6 @@ boolean N_Disconnect(void)
         gx.NetDisconnect(true);
 
     Net_StopGame();
-    N_ClearMessages();
 
     // Tell the Game that the disconnection is now complete.
     if(gx.NetDisconnect)
@@ -1497,9 +692,6 @@ boolean N_Disconnect(void)
     // This'll prevent the sending of further packets.
     svNode = &netNodes[0];
     svNode->hasJoined = false;
-#if 0
-    N_BindIncoming(NULL, 0);
-#endif
 
     // Stop the TCP receiver thread.
     N_StopJoinedListener();
@@ -1510,6 +702,8 @@ boolean N_Disconnect(void)
 
     SDLNet_FreeSocketSet(joinedSockSet);
     joinedSockSet = NULL;
+
+    N_ClearMessages();
 
     return true;
 }
@@ -1594,7 +788,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     TCPsocket sock = netNodes[node].sock;
     serverinfo_t info;
     ddstring_t msg;
-    uint16_t  port;
+    int protocolVersion;
 
     // If the command is too long, it'll be considered invalid.
     if(length >= 80)
@@ -1627,22 +821,24 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
     }
     else if(!strncmp(command, "JOIN ", 5) && length > 10)
     {
-        // Which UDP port does the client use?
+        // Which protocol version does the client use?
         memset(buf, 0, 5);
         strncpy(buf, command + 5, 4);
-        port = strtol(buf, &ch, 16);
-        if(*ch) // || !port)
+        protocolVersion = strtol(buf, &ch, 16);
+        if(*ch || protocolVersion != SV_VERSION)
         {
+            Con_Message("Connection denied: Server protocol v%i differs from client protocol v%i.\n",
+                        SV_VERSION, protocolVersion);
             N_TerminateNode(node);
             return false;
         }
 
         // Read the client's name and convert the network node into a
         // real client network node (which has a transmitter).
-        if(N_JoinNode(node, /*port,*/ command + 10))
+        if(N_JoinNode(node, command + 10))
         {
             // Successful! Send a reply.
-            sprintf(buf, "ENTER %04x\n", 0 /*recvUDPPort*/);
+            sprintf(buf, "ENTER %04x\n", SV_VERSION);
             SDLNet_TCP_Send(sock, buf, (int) strlen(buf));
         }
         else
@@ -1754,7 +950,7 @@ static int C_DECL N_JoinedListenerThread(void* param)
                     // Does this socket have got any activity?
                     if(node->hasJoined && SDLNet_SocketReady(node->sock))
                     {
-                        if(!N_ReceiveReliably(i))
+                        if(!Protocol_Receive(i))
                         {
                             netevent_t nev;
                             nev.type = NE_TERMINATE_NODE;
@@ -1776,10 +972,10 @@ static int C_DECL N_JoinedListenerThread(void* param)
             // Clientside listening.  On clientside, the socket set only
             // includes the server's socket.
             if(SDLNet_CheckSockets(joinedSockSet, 10) > 0)
-            {
+            {   
                 Sys_Unlock(mutexJoinedSockSet);
 
-                if(!N_ReceiveReliably(0))
+                if(!Protocol_Receive(0))
                 {
                     netevent_t nev;
                     nev.id = 0;

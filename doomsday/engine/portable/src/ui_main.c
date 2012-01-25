@@ -509,15 +509,13 @@ void UI_Ticker(timespan_t time)
 {
 #define UIALPHA_FADE_STEP .07
 
+    static trigger_t fixed = { 1 / 35.0, 0 };
     float diff = 0;
 
-    if(!uiActive)
-        return;
-    if(!uiCurrentPage)
-        return;
+    if(!uiActive || !uiCurrentPage) return;
 
-    if(!DD_IsSharpTick())
-        return;
+    // Time to think?
+    if(!M_RunTrigger(&fixed, time)) return;
 
     // Move towards the target alpha level for the entire UI.
     diff = uiTargetAlpha - uiAlpha;
@@ -2473,7 +2471,7 @@ void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size)
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
     glEnable(GL_TEXTURE_2D);
     glColor4f(1, 1, 1, uiAlpha);
-    GL_DrawRecti(&rect);
+    GL_DrawRect(&rect);
     glDisable(GL_TEXTURE_2D);
 }
 

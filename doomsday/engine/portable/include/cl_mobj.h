@@ -29,13 +29,19 @@
 #ifndef __DOOMSDAY_CLIENT_MOBJ_H__
 #define __DOOMSDAY_CLIENT_MOBJ_H__
 
-// Flags for clmobjs.
-#define CLMF_HIDDEN         0x01 // Not officially created yet
-#define CLMF_UNPREDICTABLE  0x02 // Temporarily hidden (until next delta)
-#define CLMF_SOUND          0x04 // Sound is queued for playing on unhide.
-#define CLMF_NULLED         0x08 // Once nulled, it can't be updated.
-#define CLMF_STICK_FLOOR    0x10 // Mobj will stick to the floor.
-#define CLMF_STICK_CEILING  0x20 // Mobj will stick to the ceiling.
+/**
+ * @defgroup clMobjFlags Client Mobj Flags
+ * @ingroup client flags
+ */
+///@{
+#define CLMF_HIDDEN         0x01 ///< Not officially created yet
+#define CLMF_UNPREDICTABLE  0x02 ///< Temporarily hidden (until next delta)
+#define CLMF_SOUND          0x04 ///< Sound is queued for playing on unhide.
+#define CLMF_NULLED         0x08 ///< Once nulled, it can't be updated.
+#define CLMF_STICK_FLOOR    0x10 ///< Mobj will stick to the floor.
+#define CLMF_STICK_CEILING  0x20 ///< Mobj will stick to the ceiling.
+#define CLMF_LOCAL_ACTIONS  0x40 ///< Allow local action execution.
+///@}
 
 // Clmobj knowledge flags. This keeps track of the information that has been
 // received.
@@ -75,7 +81,7 @@ void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientM
 mobj_t         *ClMobj_Create(thid_t id);
 void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
-mobj_t         *ClMobj_Find(thid_t id);
+struct mobj_s  *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
 boolean         ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm);
 void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?

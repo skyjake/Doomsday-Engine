@@ -59,6 +59,10 @@ extern Game* theGame;
 
 int DD_EarlyInit(void);
 int DD_Main(void);
+
+/// @return  @c true if shutdown is in progress.
+boolean DD_IsShuttingDown(void);
+
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 

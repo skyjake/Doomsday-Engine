@@ -131,13 +131,15 @@ static animdef_t animsShared[] = {
 static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
     boolean lastIsTexture = false; // Shut up compiler!
+    ddstring_t framePath, startPath, endPath;
     Uri* frameUrn = Uri_NewWithPath2("urn:", RC_NULL);
-    Uri* startPath = Uri_New();
-    Uri* endPath = Uri_New();
-    ddstring_t framePath;
+    Uri* startUri = Uri_New();
+    Uri* endUri = Uri_New();
     int i;
 
     Str_Init(&framePath);
+    Str_Init(&startPath);
+    Str_Init(&endPath);
 
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
@@ -148,15 +150,19 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(i == 0 || isTexture != lastIsTexture)
         {
-            Uri_SetScheme(startPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
-            Uri_SetScheme(endPath, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            Uri_SetScheme(startUri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+            Uri_SetScheme(endUri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
             lastIsTexture = isTexture;
         }
-        Uri_SetPath(startPath, animDefs[i].startname);
-        Uri_SetPath(endPath, animDefs[i].endname);
 
-        startFrame = R_TextureUniqueId2(startPath, !isCustom);
-        endFrame   = R_TextureUniqueId2(endPath, !isCustom);
+        Str_PercentEncode(Str_StripRight(Str_Set(&startPath, animDefs[i].startname)));
+        Uri_SetPath(startUri, Str_Text(&startPath));
+
+        Str_PercentEncode(Str_StripRight(Str_Set(&endPath, animDefs[i].endname)));
+        Uri_SetPath(endUri, Str_Text(&endPath));
+
+        startFrame = R_TextureUniqueId2(startUri, !isCustom);
+        endFrame   = R_TextureUniqueId2(endUri, !isCustom);
         if(-1 == startFrame || -1 == endFrame) continue;
 
         numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
@@ -179,12 +185,12 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 
         if(verbose > (isCustom? 1 : 2))
         {
-            ddstring_t* from = Uri_ToString(startPath);
-            ddstring_t* to = Uri_ToString(endPath);
+            ddstring_t* from = Uri_ToString(startUri);
+            ddstring_t* to = Uri_ToString(endUri);
             Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n",
                         i, Str_Text(from), Str_Text(to), ticsPerFrame);
-            Str_Delete(from);
             Str_Delete(to);
+            Str_Delete(from);
         }
 
         // Find an animation group for this.
@@ -201,9 +207,11 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
         }
     }
 
+    Str_Free(&endPath);
+    Str_Free(&startPath);
     Str_Free(&framePath);
-    Uri_Delete(startPath);
-    Uri_Delete(endPath);
+    Uri_Delete(endUri);
+    Uri_Delete(startUri);
     Uri_Delete(frameUrn);
 }
 

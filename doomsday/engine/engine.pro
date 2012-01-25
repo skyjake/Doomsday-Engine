@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 TARGET = doomsday
@@ -31,10 +31,10 @@ win32 {
 DEFINES += __DOOMSDAY__
 
 !isEmpty(DENG_BUILD) {
-    echo(Build number: $$DENG_BUILD)
+    !win32: echo(Build number: $$DENG_BUILD)
     DEFINES += DOOMSDAY_BUILD_TEXT=\\\"$$DENG_BUILD\\\"
 } else {
-    echo(DENG_BUILD is not defined.)
+    !win32: echo(DENG_BUILD is not defined.)
 }
 
 unix:!macx {
@@ -42,6 +42,8 @@ unix:!macx {
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
 
     QMAKE_LFLAGS += -rdynamic
+
+    LIBS += -ldl
 }
 macx {
     useFramework(Cocoa)
@@ -189,6 +191,7 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
     portable/include/lumpdirectory.h \
@@ -197,12 +200,12 @@ DENG_HEADERS = \
     portable/include/material.h \
     portable/include/materials.h \
     portable/include/materialvariant.h \
+    portable/include/monitor.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_gridmap.h \
-    portable/include/m_huffman.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -216,8 +219,6 @@ DENG_HEADERS = \
     portable/include/net_event.h \
     portable/include/net_main.h \
     portable/include/net_msg.h \
-    portable/include/pathdirectory.h \
-    portable/include/pathmap.h \
     portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
@@ -242,6 +243,9 @@ DENG_HEADERS = \
     portable/include/p_surface.h \
     portable/include/p_ticker.h \
     portable/include/p_vertex.h \
+    portable/include/pathdirectory.h \
+    portable/include/pathmap.h \
+    portable/include/protocol.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
     portable/include/rend_console.h \
@@ -270,6 +274,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -435,6 +440,7 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
     portable/src/lumpdirectory.c \
@@ -443,12 +449,12 @@ SOURCES += \
     portable/src/materialarchive.c \
     portable/src/materials.c \
     portable/src/materialvariant.c \
+    portable/src/monitor.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_gridmap.c \
-    portable/src/m_huffman.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \
@@ -463,8 +469,6 @@ SOURCES += \
     portable/src/net_main.c \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
-    portable/src/pathdirectory.c \
-    portable/src/pathmap.c \
     portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
@@ -488,6 +492,9 @@ SOURCES += \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
     portable/src/p_vertex.c \
+    portable/src/pathdirectory.c \
+    portable/src/pathmap.c \
+    portable/src/protocol.c \
     portable/src/point.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
@@ -530,6 +537,7 @@ SOURCES += \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
     portable/src/size.c \
+    portable/src/stringarray.cpp \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \
@@ -638,7 +646,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop
+    INSTALLS += target data startupgfx desktop readme
 
     target.path = $$DENG_BIN_DIR
 
@@ -647,5 +655,8 @@ else:unix:!macx {
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = /usr/share/applications
+    desktop.path = $$PREFIX/share/applications
+
+    readme.files = ../doc/output/doomsday.6
+    readme.path = $$PREFIX/share/man/man6
 }

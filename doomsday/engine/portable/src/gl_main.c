@@ -418,11 +418,8 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
-    if(isDedicated)
-        return true;
-
-    if(initGLOk)
-        return true; // Already initialized.
+    if(isDedicated) return true;
+    if(initGLOk) return true; // Already initialized.
 
     Con_Message("Initializing Render subsystem...\n");
 
@@ -434,7 +431,10 @@ boolean GL_EarlyInit(void)
     envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
 
     GL_InitDeferredTask();
-    GL_InitArrays();
+
+    // Model renderer must be initialized early as it may need to configure
+    // gl-element arrays.
+    Rend_ModelInit();
 
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)

@@ -475,6 +475,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_MobjImpulse(reader);
         break;
 
+    case GPT_LOCAL_MOBJ_STATE:
+        NetCl_LocalMobjState(reader);
+        break;
+
     case GPT_MESSAGE:
 #if __JHEXEN__ || __JSTRIFE__
     case GPT_YELLOW_MESSAGE:

@@ -57,8 +57,7 @@ ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info);
 void ZipFile_Delete(ZipFile* zip);
 
 /**
- * Publish lumps to the end of the specified @a directory and prune any duplicates
- * (see LumpDirectory_PruneDuplicateRecords()).
+ * Publish lumps to the end of the specified @a directory.
  *
  * @param zip  ZipFile instance.
  * @param directory  Directory to publish to.
@@ -156,11 +155,76 @@ int ZipFile_LumpCount(ZipFile* zip);
 // Static members ----------------------------------------------------------
 
 /**
- * Does the specified file appear to be in a format recognised by ZipFile?
- *
+ * Determines whether the specified file appears to be in a format recognised by
+ * ZipFile.
  * @param file  Stream file handle/wrapper to the file being interpreted.
+ *
  * @return  @c true iff this is a file that can be represented using ZipFile.
  */
 boolean ZipFile_Recognise(DFile* file);
+
+/**
+ * Inflates a block of data compressed using ZipFile_Compress() (i.e., zlib
+ * deflate algorithm).
+ *
+ * @param in       Pointer to compressed data.
+ * @param inSize   Size of the compressed data.
+ * @param outSize  Size of the uncompressed data is written here. Must not
+ *                 be @c NULL.
+ *
+ * @return  Pointer to the uncompressed data. Caller gets ownership of the
+ * returned memory and must free it with M_Free().
+ *
+ * @see ZipFile_Compress()
+ */
+uint8_t* ZipFile_Uncompress(uint8_t* in, size_t inSize, size_t* outSize);
+
+/**
+ * Inflates a compressed block of data using zlib. The caller must figure out
+ * the uncompressed size of the data before calling this.
+ *
+ * zlib will expect raw deflate data, not looking for a zlib or gzip header,
+ * not generating a check value, and not looking for any check values for
+ * comparison at the end of the stream.
+ *
+ * @param in       Pointer to compressed data.
+ * @param inSize   Size of the compressed data.
+ * @param out      Pointer to output buffer.
+ * @param outSize  Size of the output buffer. This must match the size of the
+ *                 decompressed data.
+ *
+ * @return  @c true if successful.
+ */
+boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize);
+
+/**
+ * Compresses a block of data using zlib with the default/balanced
+ * compression level.
+ *
+ * @param in       Pointer to input data to compress.
+ * @param inSize   Size of the input data.
+ * @param outSize  Pointer where the size of the compressed data will be written.
+ *                 Cannot be @c NULL.
+ *
+ * @return  Compressed data. The caller gets ownership of this memory and must
+ *          free it with M_Free(). If an error occurs, returns @c NULL and
+ *          @a outSize is set to zero.
+ */
+uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize);
+
+/**
+ * Compresses a block of data using zlib.
+ *
+ * @param in       Pointer to input data to compress.
+ * @param inSize   Size of the input data.
+ * @param outSize  Pointer where the size of the compressed data will be written.
+ *                 Cannot be @c NULL.
+ * @param level    Compression level: 0=none/fastest ... 9=maximum/slowest.
+ *
+ * @return  Compressed data. The caller gets ownership of this memory and must
+ *          free it with M_Free(). If an error occurs, returns @c NULL and
+ *          @a outSize is set to zero.
+ */
+uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level);
 
 #endif // LIBDENG_FILESYS_ZIPFILE_H

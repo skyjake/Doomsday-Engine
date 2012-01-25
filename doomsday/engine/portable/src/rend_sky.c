@@ -279,7 +279,11 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         magMode = MSU(ms, MTU_PRIMARY).magMode;
         rs.texSize.width = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
         rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
-        if(rs.texSize.width == 0 || rs.texSize.height == 0)
+        if(rs.texSize.width && rs.texSize.height)
+        {
+            rs.texOffset = R_SkyLayerOffset(layer);
+        }
+        else
         {
             // Disable texturing.
             rs.texSize.width = rs.texSize.height = 0;
@@ -352,8 +356,9 @@ static void renderSkyHemisphere(int flags)
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1.0f : -1.0f), yflip? -1.0f : 1.0f, 1.0f);
-                glTranslatef(rs.texOffset / rs.texSize.width, yflip? -1.0f : 0.0f, 0.0f);
+                glTranslatef(rs.texOffset / rs.texSize.width, 0, 0);
+                glScalef(1024.f / rs.texSize.width * (rs.texXFlip? 1 : -1), yflip? -1 : 1, 1);
+                if(yflip) glTranslatef(0, -1, 0);
             }
 
             renderHemisphere();
@@ -389,7 +394,6 @@ void Rend_RenderSky(void)
         glDepthMask(GL_FALSE);
         // Disable culling, all triangles face the viewer.
         glDisable(GL_CULL_FACE);
-        GL_DisableArrays(true, true, DDMAXINT);
 
         // Setup a proper matrix.
         glMatrixMode(GL_MODELVIEW);

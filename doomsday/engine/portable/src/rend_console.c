@@ -575,7 +575,7 @@ static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size,
     }
 
     glColor4f(consoleBackgroundLight, consoleBackgroundLight, consoleBackgroundLight, closeFade * consoleBackgroundAlpha);
-    GL_DrawRectTiled(origin->x, origin->y, size->width, size->height, bgX, bgY);
+    GL_DrawRectf2Tiled(origin->x, origin->y, size->width, size->height, bgX, bgY);
 
     if(consoleBackgroundMaterial)
     {
@@ -849,7 +849,7 @@ static void drawConsole(float consoleAlpha)
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
                   consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
-        GL_DrawRect(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
+        GL_DrawRectf2(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
                     (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 

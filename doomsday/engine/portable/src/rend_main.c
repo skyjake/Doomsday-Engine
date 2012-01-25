@@ -63,11 +63,11 @@ byte smoothTexAnim = true;
 int useShinySurfaces = true;
 
 int useDynlights = true;
-float dynlightFactor = .7f;
+float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
 int useWallGlow = true;
-float glowFactor = 1.0f;
+float glowFactor = .5f;
 float glowHeightFactor = 3; // Glow height as a multiplier.
 int glowHeightMax = 100; // 100 is the default (0-1024).
 
@@ -126,7 +126,7 @@ void Rend_Register(void)
 {
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
-    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 1);
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
@@ -672,11 +672,9 @@ int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(const rvertex_t* rvertices,
-                        const ColorRawf* rcolors, float wallLength,
-                        DGLuint tex, int magMode, float texWidth, float texHeight,
-                        const float texOffset[2], blendmode_t blendMode,
-                        uint lightListIdx, float glow, boolean masked)
+void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
+    float wallLength, materialvariant_t* material, const float texOffset[2],
+    blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t* vis = R_NewVisSprite();
     float midpoint[3];
@@ -691,9 +689,12 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     vis->center[VY] = midpoint[VY];
     vis->center[VZ] = midpoint[VZ];
     vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = tex;
-    vis->data.wall.magMode = magMode;
-    vis->data.wall.masked = masked;
+    vis->data.wall.material = material;
+    vis->data.wall.texOffset[VX] = texOffset? texOffset[VX] : 0;
+    vis->data.wall.texOffset[VY] = texOffset? texOffset[VY] : 0;
+    vis->data.wall.length = wallLength;
+    vis->data.wall.blendMode = blendMode;
+
     for(i = 0; i < 4; ++i)
     {
         vis->data.wall.vertices[i].pos[VX] = rvertices[i].pos[VX];
@@ -706,15 +707,6 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                 MINMAX_OF(0, rcolors[i].rgba[c], 1);
         }
     }
-
-    vis->data.wall.texCoord[0][VX] = (texOffset? texOffset[VX] / texWidth : 0);
-    vis->data.wall.texCoord[1][VX] =
-        vis->data.wall.texCoord[0][VX] + wallLength / texWidth;
-    vis->data.wall.texCoord[0][VY] = (texOffset? texOffset[VY] / texHeight : 0);
-    vis->data.wall.texCoord[1][VY] =
-        vis->data.wall.texCoord[0][VY] +
-            (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / texHeight;
-    vis->data.wall.blendMode = blendMode;
 
     //// \fixme Semitransparent masked polys arn't lit atm
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
@@ -1201,21 +1193,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
-                           primaryRTU->tex, primaryRTU->magMode, msA->size.width, msA->size.height,
-                           p->texOffset,
-                           p->blendMode, p->lightListIdx, glowing,
-                           !msA->isOpaque);
+        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength, msA->material,
+                           p->texOffset, p->blendMode, p->lightListIdx, glowing);
+
         R_FreeRendTexCoords(primaryCoords);
-        if(interCoords)
-            R_FreeRendTexCoords(interCoords);
-        if(modCoords)
-            R_FreeRendTexCoords(modCoords);
-        if(shinyTexCoords)
-            R_FreeRendTexCoords(shinyTexCoords);
         R_FreeRendColors(rcolors);
-        if(shinyColors)
-            R_FreeRendColors(shinyColors);
+
+        if(interCoords) R_FreeRendTexCoords(interCoords);
+        if(modCoords) R_FreeRendTexCoords(modCoords);
+        if(shinyTexCoords) R_FreeRendTexCoords(shinyTexCoords);
+        if(shinyColors) R_FreeRendColors(shinyColors);
 
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
@@ -2091,7 +2078,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
                    &vR_ZTop, &texOffset[VY], unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = matOffsetX;
-                //texOffset[VY] = 0;
+                if(!clipTop) texOffset[VY] = 0;
 
                 return true;
             }

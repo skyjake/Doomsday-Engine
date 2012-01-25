@@ -59,6 +59,7 @@
 #include "m_misc.h"
 #include "m_args.h"
 #include "texture.h"
+#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -604,39 +605,6 @@ static boolean allGameResourcesFound(Game* game)
     return true;
 }
 
-static void loadGameResources(Game* game, resourceclass_t rclass)
-{
-    AbstractResource* const* records;
-    AbstractResource* const* recordIt;
-
-    if(!game || !VALID_RESOURCE_CLASS(rclass)) return;
-
-    records = Game_Resources(game, rclass, 0);
-    if(!records) return;
-
-    Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
-
-    for(recordIt = records; *recordIt; recordIt++)
-    {
-        AbstractResource* rec = *recordIt;
-
-        switch(AbstractResource_ResourceClass(rec))
-        {
-        case RC_PACKAGE: {
-            const ddstring_t* path = AbstractResource_ResolvedPath(rec, false/*do not locate resource*/);
-            if(path)
-            {
-                F_AddFile(Str_Text(path), 0, false);
-            }
-            break;
-          }
-        default:
-            Con_Error("loadGameResources: No resource loader found for %s.",
-                      F_ResourceClassStr(AbstractResource_ResourceClass(rec)));
-        }
-    }
-}
-
 /**
  * Print a game mode banner with rulers.
  * \todo dj: This has been moved here so that strings like the game
@@ -798,16 +766,53 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
     return true;
 }
 
+static void loadResource(AbstractResource* res)
+{
+    if(!res) return;
+    switch(AbstractResource_ResourceClass(res))
+    {
+    case RC_PACKAGE: {
+        const ddstring_t* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
+        if(path)
+        {
+            F_AddFile(Str_Text(path), 0, false);
+        }
+        break;
+      }
+    default: Con_Error("loadGameResource: No resource loader found for %s.",
+                       F_ResourceClassStr(AbstractResource_ResourceClass(res)));
+    }
+}
+
 typedef struct {
-    Game* game;
     /// @c true iff caller (i.e., DD_ChangeGame) initiated busy mode.
     boolean initiatedBusyMode;
-} ddchangegameworker_paramaters_t;
+} ddgamechange_paramaters_t;
 
-static int DD_ChangeGameWorker(void* paramaters)
+static int DD_BeginGameChangeWorker(void* paramaters)
 {
-    ddchangegameworker_paramaters_t* p = (ddchangegameworker_paramaters_t*)paramaters;
-    uint i;
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
+    assert(p);
+
+    P_InitMapUpdate();
+    P_InitGameMapObjDefs();
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(100);
+
+    DAM_Init();
+
+    if(p->initiatedBusyMode)
+    {
+        Con_SetProgress(200);
+        Con_BusyWorkerEnd();
+    }
+    return 0;
+}
+
+static int DD_LoadGameStartupResourcesWorker(void* paramaters)
+{
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
     assert(p);
 
     // Reset file Ids so previously seen files can be processed again.
@@ -816,48 +821,76 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     F_InitVirtualDirectoryMappings();
 
-    if(!DD_IsNullGame(p->game))
+    if(p->initiatedBusyMode)
+        Con_SetProgress(50);
+
+    if(!DD_IsNullGame(theGame))
     {
         ddstring_t temp;
 
         // Create default Auto mappings in the runtime directory.
         // Data class resources.
         Str_Init(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DataPath(p->game)));
+        Str_Appendf(&temp, "%sauto", Str_Text(Game_DataPath(theGame)));
         F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
 
         // Definition class resources.
         Str_Clear(&temp);
-        Str_Appendf(&temp, "%sauto", Str_Text(Game_DefsPath(p->game)));
+        Str_Appendf(&temp, "%sauto", Str_Text(Game_DefsPath(theGame)));
         F_AddVirtualDirectoryMapping("auto", Str_Text(&temp));
         Str_Free(&temp);
     }
 
-    if(p->initiatedBusyMode)
-        Con_SetProgress(10);
-
     /**
      * Open all the files, load headers, count lumps, etc, etc...
-     * \note duplicate processing of the same file is automatically guarded against by
-     * the virtual file system layer.
-     *
-     * Phase 1: Add game-resource files.
-     * \fixme dj: First ZIPs then WADs (they may contain WAD files).
+     * @note  Duplicate processing of the same file is automatically guarded
+     *        against by the virtual file system layer.
      */
+    Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
+
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
-    loadGameResources(p->game, RC_PACKAGE);
+
+    { int numResources;
+    AbstractResource* const* resources;
+    if((resources = Game_Resources(theGame, RC_PACKAGE, &numResources)))
+    {
+        AbstractResource* const* resIt;
+        for(resIt = resources; *resIt; resIt++)
+        {
+            loadResource(*resIt);
+
+            // Update our progress.
+            if(p->initiatedBusyMode)
+            {
+                Con_SetProgress(((resIt - resources)+1) * (200-50)/numResources -1);
+            }
+        }
+    }}
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(30);
+    {
+        Con_SetProgress(200);
+        Con_BusyWorkerEnd();
+    }
+    return 0;
+}
+
+static int DD_LoadAddonResourcesWorker(void* paramaters)
+{
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
+    assert(p);
 
     /**
-     * Phase 2: Add additional game-startup files.
+     * Add additional game-startup files.
      * \note These must take precedence over Auto but not game-resource files.
      */
     if(gameStartupFiles && gameStartupFiles[0])
         parseStartupFilePathsAndAddFiles(gameStartupFiles);
 
-    if(!DD_IsNullGame(p->game))
+    if(p->initiatedBusyMode)
+        Con_SetProgress(50);
+
+    if(!DD_IsNullGame(theGame))
     {
         /**
          * Phase 3: Add real files from the Auto directory.
@@ -882,23 +915,41 @@ static int DD_ChangeGameWorker(void* paramaters)
     }
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(60);
+        Con_SetProgress(180);
 
     // Re-initialize the resource locator as there are now new resources to be found
     // on existing search paths (probably that is).
     F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
+    if(p->initiatedBusyMode)
+    {
+        Con_SetProgress(200);
+        Con_BusyWorkerEnd();
+    }
+    return 0;
+}
+
+static int DD_ActivateGameWorker(void* paramaters)
+{
+    ddgamechange_paramaters_t* p = (ddgamechange_paramaters_t*)paramaters;
+    uint i;
+    assert(p);
+
     // Texture resources are located now, prior to initializing the game.
     R_InitPatchComposites();
     R_InitFlatTextures();
     R_InitSpriteTextures();
 
-    Con_SetProgress(100);
+    if(p->initiatedBusyMode)
+        Con_SetProgress(50);
 
     // Now that resources have been located we can begin to initialize the game.
-    if(!DD_IsNullGame(p->game) && gx.PreInit)
-        gx.PreInit(DD_GameId(p->game));
+    if(!DD_IsNullGame(theGame) && gx.PreInit)
+        gx.PreInit(DD_GameId(theGame));
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(100);
 
     /**
      * Parse the game's main config file.
@@ -914,7 +965,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     }
     else
     {
-        configFileName = Game_MainConfig(p->game);
+        configFileName = Game_MainConfig(theGame);
     }
 
     Con_Message("Parsing primary config \"%s\"...\n", F_PrettyPath(Str_Text(configFileName)));
@@ -923,13 +974,13 @@ static int DD_ChangeGameWorker(void* paramaters)
         Str_Free(&tmp);
     }
 
-    if(!isDedicated && !DD_IsNullGame(p->game))
+    if(!isDedicated && !DD_IsNullGame(theGame))
     {
         // Apply default control bindings for this game.
         B_BindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        Con_ParseCommands(Str_Text(Game_BindingConfig(p->game)), false);
+        Con_ParseCommands(Str_Text(Game_BindingConfig(theGame)), false);
     }
 
     if(p->initiatedBusyMode)
@@ -946,7 +997,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     Def_PostInit();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(150);
+        Con_SetProgress(140);
 
     DD_ReadGameHelp();
 
@@ -962,7 +1013,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     R_ResetViewer();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(160);
+        Con_SetProgress(150);
 
     // Invalidate old cmds and init player values.
     for(i = 0; i < DDMAXPLAYERS; ++i)
@@ -983,15 +1034,6 @@ static int DD_ChangeGameWorker(void* paramaters)
         gx.PostInit();
         if(p->initiatedBusyMode)
             Con_SetProgress(190);
-    }
-
-    if(!DD_IsNullGame(p->game))
-    {
-        printGameBanner(p->game);
-    }
-    else
-    {   // Lets play a nice title animation.
-        DD_StartTitle();
     }
 
     if(p->initiatedBusyMode)
@@ -1130,66 +1172,94 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     Library_ReleaseGames();
 
-    if(!exchangeEntryPoints(Game_PluginId(game)))
+    DD_ComposeMainWindowTitle(buf);
+    Sys_SetWindowTitle(windowIDX, buf);
+
+    if(!DD_IsShuttingDown())
     {
-        DD_ComposeMainWindowTitle(buf);
-        Sys_SetWindowTitle(windowIDX, buf);
+        // Re-initialize subsystems needed even when in ringzero.
 
         Materials_Init();
         FI_Init();
-        P_PtcInit();
+        P_PtcInit(); /// @todo not needed in this mode.
 
-        Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
-        return false;
+        if(!exchangeEntryPoints(Game_PluginId(game)))
+        {
+            Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
+            return false;
+        }
     }
 
     // This is now the current game.
     theGame = game;
 
-    if(!DD_IsNullGame(theGame))
-    {
-        // Tell the plugin it is being loaded.
-        void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
-#ifdef _DEBUG
-        Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
-#endif
-        if(loader) ((pluginfunc_t)loader)();
-    }
-
     DD_ComposeMainWindowTitle(buf);
     Sys_SetWindowTitle(windowIDX, buf);
 
-    Materials_Init();
-    FI_Init();
-    P_PtcInit();
-
-    P_InitMapUpdate();
-    P_InitGameMapObjDefs();
-    DAM_Init();
-
     /**
-     * The bulk of this we can do in busy mode unless we are already busy
-     * (which can happen if a fatal error occurs during game load and we must
-     * shutdown immediately; Sys_Shutdown will call back to load the special
-     * "null-game" game).
+     * If we aren't shutting down then we are either loading a game or switching
+     * to ringzero (the current game will have already been unloaded).
      */
-    { ddchangegameworker_paramaters_t p;
-    p.game = game;
-    p.initiatedBusyMode = !Con_IsBusy();
-    if(p.initiatedBusyMode)
+    if(!DD_IsShuttingDown())
     {
-        Con_InitProgress(200);
-        Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                 (DD_IsNullGame(game)?"Unloading game...":"Changing game..."), DD_ChangeGameWorker, &p);
-    }
-    else
-    {   /// \todo Update the current task name and push progress.
-        DD_ChangeGameWorker(&p);
-    }
-    }
+        /**
+         * The bulk of this we can do in busy mode unless we are already busy
+         * (which can happen if a fatal error occurs during game load and we must
+         * shutdown immediately; Sys_Shutdown will call back to load the special
+         * "null-game" game).
+         */
+        const int busyMode = BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        ddgamechange_paramaters_t p;
+        BusyTask gameChangeTasks[] = {
+            // Phase 1: Initialization.
+            { DD_BeginGameChangeWorker,          &p, busyMode, "Loading game...",   200, 0.0f, 0.1f },
 
-    // Process any GL-related tasks we couldn't while Busy.
-    Rend_ParticleLoadExtraTextures();
+            // Phase 2: Loading "startup" resources.
+            { DD_LoadGameStartupResourcesWorker, &p, busyMode, NULL,                200, 0.1f, 0.3f },
+
+            // Phase 3: Loading "addon" resources.
+            { DD_LoadAddonResourcesWorker,       &p, busyMode, "Loading addons...", 200, 0.3f, 0.7f },
+
+            // Phase 4: Game activation.
+            { DD_ActivateGameWorker,             &p, busyMode, "Starting game...",  200, 0.7f, 1.0f }
+        };
+
+        p.initiatedBusyMode = !Con_IsBusy();
+
+        if(!DD_IsNullGame(theGame))
+        {
+            // Tell the plugin it is being loaded.
+            /// @todo Must this be done in the main thread?
+            void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
+#ifdef _DEBUG
+            Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
+#endif
+            if(loader) ((pluginfunc_t)loader)();
+        }
+
+        /// \kludge Use more appropriate task names when unloading a game.
+        if(DD_IsNullGame(game))
+        {
+            gameChangeTasks[0].name = "Unloading game...";
+            gameChangeTasks[3].name = "Switching to ringzero...";
+        }
+        // kludge end
+
+        Con_BusyList(gameChangeTasks, sizeof(gameChangeTasks)/sizeof(gameChangeTasks[0]));
+
+        // Process any GL-related tasks we couldn't while Busy.
+        Rend_ParticleLoadExtraTextures();
+
+        if(!DD_IsNullGame(theGame))
+        {
+            printGameBanner(theGame);
+        }
+        else
+        {
+            // Lets play a nice title animation.
+            DD_StartTitle();
+        }
+    }
 
     /**
      * Clear any input events we may have accumulated during this process.
@@ -1203,6 +1273,11 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 boolean DD_ChangeGame(Game* game)
 {
     return DD_ChangeGame2(game, false);
+}
+
+boolean DD_IsShuttingDown(void)
+{
+    return Sys_IsShuttingDown();
 }
 
 /**
@@ -1428,6 +1503,7 @@ int DD_Main(void)
     // Initialize the subsystems needed prior to entering busy mode for the first time.
     Sys_Init();
     F_Init();
+    Huffman_Init();
 
     Fonts_Init();
     FR_Init();
@@ -2234,18 +2310,15 @@ const ddstring_t* DD_MaterialNamespaceNameForTextureNamespace(texturenamespaceid
 materialid_t DD_MaterialForTextureUniqueId(texturenamespaceid_t texNamespaceId, int uniqueId)
 {
     textureid_t texId = Textures_TextureForUniqueId(texNamespaceId, uniqueId);
-    ddstring_t* texPath;
     materialid_t matId;
     Uri* uri;
 
     if(texId == NOTEXTUREID) return NOMATERIALID;
 
-    texPath = Textures_ComposePath(texId);
-    uri = Uri_NewWithPath2(Str_Text(texPath), RC_NULL);
+    uri = Textures_ComposeUri(texId);
     Uri_SetScheme(uri, Str_Text(DD_MaterialNamespaceNameForTextureNamespace(texNamespaceId)));
     matId = Materials_ResolveUri2(uri, true/*quiet please*/);
     Uri_Delete(uri);
-    Str_Delete(texPath);
     return matId;
 }
 

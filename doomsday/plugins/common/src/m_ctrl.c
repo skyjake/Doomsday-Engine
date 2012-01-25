@@ -409,7 +409,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
+        DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);
@@ -552,6 +552,31 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
 
         ptr = strchr(ptr, ':');
     }
+}
+
+mn_object_t* MNBindings_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for new MNBindings.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for mndata_bindings_t.", (unsigned long) sizeof(mndata_bindings_t));
+
+    ob->_type = MN_BINDINGS;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->updateGeometry = MNBindings_UpdateGeometry;
+    ob->drawer = MNBindings_Drawer;
+    ob->cmdResponder = MNBindings_CommandResponder;
+    ob->privilegedResponder = MNBindings_PrivilegedResponder;
+
+    return ob;
+}
+
+void MNBindings_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_BINDINGS);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
 }
 
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)

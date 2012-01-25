@@ -54,29 +54,18 @@ int S_GetSoundID(const char* name)
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
 
-/**
- * Starts the song of the specified map, updating the currentmap definition
- * in the process.
- *
- * @param episode  "Warp" episode.
- * @param map      "Warp" map number.
- */
 void S_MapMusic(uint episode, uint map)
 {
     int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int cdTrack;
-
-    // Convert to a logical map number.
-    map = P_TranslateMap(map);
-
-    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s\n", episode, map, P_GetMapSongLump(map)) );
+    int cdTrack = P_GetMapCDTrack(map);
 
     // Update the 'currentmap' music definition.
+
+    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s\n", episode, map, P_GetMapSongLump(map)) )
+
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
-    // @fixme  Convert @a map to the "logical" map number. -s
-    Con_Message("S_MapMusic: Map %i, lump %s\n", map, P_GetMapSongLump(map));
-    cdTrack = P_GetMapCDTrack(map);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
+
     if(S_StartMusic("currentmap", true))
     {
         // Set the game status cvar for the map music

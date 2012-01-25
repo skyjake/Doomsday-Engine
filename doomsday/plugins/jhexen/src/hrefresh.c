@@ -284,7 +284,7 @@ void X_DrawViewPort(int port, const RectRaw* portGeometry,
         break;
 
     case GS_STARTUP:
-        DGL_DrawRectColor(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
+        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
         break;
 
     default:
@@ -304,7 +304,7 @@ void X_DrawWindow(const Size2Raw* windowSize)
 
     if(G_QuitInProgress())
     {
-        DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+        DGL_DrawRectf2Color(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
     }
 }
 

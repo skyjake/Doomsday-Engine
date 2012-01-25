@@ -181,7 +181,7 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
         y += pTex->offY;
     }
 
-    GL_DrawRectColor(x, y, w, h, 1, 1, 1, 1);
+    GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
 void R_DrawPatch2(Texture* tex, int x, int y, int w, int h)
@@ -202,7 +202,7 @@ void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, DGLint wrapS, DG
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
 
-    GL_DrawRectTiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
+    GL_DrawRectf2Tiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
 
 /**
@@ -249,7 +249,7 @@ void R_DrawViewBorder(void)
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
         GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
-        GL_DrawCutRectTiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
+        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }
