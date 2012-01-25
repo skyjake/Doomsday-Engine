@@ -842,6 +842,10 @@ ul.games_list li a.game_badge span {
     background: url(http://code.iki.fi/dengine.net/images/hexen_badge.png) no-repeat;
 }
 
+.game_badge_hacx {
+    background: url(http://dengine.net/images/hacx_badge.png) no-repeat;
+}
+
 /*---------------- Platform Pages -----------------*/
 
 .downloads_list {
