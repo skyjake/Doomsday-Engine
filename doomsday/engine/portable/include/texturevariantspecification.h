@@ -33,6 +33,8 @@ typedef enum {
     TEXS_EXTERNAL                 /// An "external" replacement.
 } TexSource;
 
+const char* TexSource_Name(TexSource source);
+
 typedef enum {
     TC_UNKNOWN = -1,
     TEXTUREVARIANTUSAGECONTEXT_FIRST = 0,
