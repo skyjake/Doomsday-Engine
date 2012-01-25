@@ -846,6 +846,10 @@ ul.games_list li a.game_badge span {
     background: url(http://dengine.net/images/hacx_badge.png) no-repeat;
 }
 
+.game_badge_chex {
+    background: url(http://dengine.net/images/chex_badge.png) no-repeat;
+}
+
 /*---------------- Platform Pages -----------------*/
 
 .downloads_list {
