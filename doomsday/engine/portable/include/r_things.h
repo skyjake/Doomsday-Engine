@@ -34,6 +34,8 @@
 #include "materials.h"
 #include "rend_model.h"
 
+struct materialvariant_s;
+
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
 // mobj is range checked at run time.
@@ -66,16 +68,15 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    DGLuint         tex;
-    int             magMode;
-    boolean         masked;
+    struct materialvariant_s* material;
     blendmode_t     blendMode; // Blendmode to be used when drawing
                                // (two sided mid textures only)
     struct wall_vertex_s {
         float           pos[3]; // x y and z coordinates.
         float           color[4];
     } vertices[4];
-    float           texCoord[2][2]; // u and v coordinates.
+    float           texOffset[2];
+    float           length; // Precalculated 2D distance from v1 > v2
 
     DGLuint         modTex; // Texture to modulate with.
     float           modTexCoord[2][2]; // u and v coordinates.

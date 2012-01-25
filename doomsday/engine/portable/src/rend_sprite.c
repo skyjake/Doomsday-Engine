@@ -581,9 +581,21 @@ static void selectTexUnits(int count)
  */
 void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
 {
+    const materialsnapshot_t* ms = NULL;
     GLenum normalTarget, dynTarget;
     boolean withDyn = false;
     int normal = 0, dyn = 1;
+    float texCoord[2][2]; // u and v coordinates.
+
+    if(renderTextures)
+    {
+        ms = Materials_PrepareVariant(params->material);
+        texCoord[0][VX] = params->texOffset[VX] / ms->size.width;
+        texCoord[1][VX] = texCoord[0][VX] + params->length / ms->size.width;
+        texCoord[0][VY] = params->texOffset[VY] / ms->size.height;
+        texCoord[1][VY] = texCoord[0][VY] +
+                (params->vertices[3].pos[VZ] - params->vertices[0].pos[VZ]) / ms->size.height;
+    }
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -614,21 +626,15 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderTextures ? params->tex : 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params->magMode);
-        if(GL_state.features.texFilterAniso)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        glBindTexture(GL_TEXTURE_2D, ms? MSU_gltexture(ms, MTU_PRIMARY) : 0);
 
         withDyn = true;
     }
     else
     {
         GL_ModulateTexture(1);
-
-        glBindTexture(GL_TEXTURE_2D, renderTextures? params->tex : 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params->magMode);
-        if(GL_state.features.texFilterAniso)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, ms? MSU_gltexture(ms, MTU_PRIMARY) : 0);
         normal = 0;
     }
 
@@ -638,28 +644,30 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
     // Most masked walls need wrapping, though. What we need to do is
     // look at the texture coordinates and see if they require texture
     // wrapping.
-    if(params->masked)
+    /// @fixme The texture state should NOT be modified here. Handle
+    ///        by selecting another variant at vissprite creation time.
+    if(ms && !ms->isOpaque)
     {
         if(withDyn)
         {
             glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
         }
 
-        if(params->texCoord[0][VX] < 0 || params->texCoord[0][VX] > 1 ||
-           params->texCoord[1][VX] < 0 || params->texCoord[1][VX] > 1)
+        if(texCoord[0][VX] < 0 || texCoord[0][VX] > 1 ||
+           texCoord[1][VX] < 0 || texCoord[1][VX] > 1)
         {
-            // The texcoords are out of the normal [0,1] range.
+            // The texcoords are out of the normal [0..1] range.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         }
         else
         {
-            // Visible portion is within the actual [0,1] range.
+            // Visible portion is within the actual [0..1] range.
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         }
 
-        // Clamp on the vertical axis if the coords are in the normal [0, 1] range.
-        if(!(params->texCoord[0][VY] < 0 || params->texCoord[0][VY] > 1 ||
-             params->texCoord[1][VY] < 0 || params->texCoord[1][VY] > 1))
+        // Clamp on the vertical axis if the coords are in the normal [0..1] range.
+        if(!(texCoord[0][VY] < 0 || texCoord[0][VY] > 1 ||
+             texCoord[1][VY] < 0 || texCoord[1][VY] > 1))
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     GL_BlendMode(params->blendMode);
@@ -675,7 +683,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
-            glMultiTexCoord2f(normalTarget, params->texCoord[0][0], params->texCoord[1][1]);
+            glMultiTexCoord2f(normalTarget, texCoord[0][0], texCoord[1][1]);
 
             glMultiTexCoord2f(dynTarget, params->modTexCoord[0][0], params->modTexCoord[1][1]);
 
@@ -684,7 +692,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
                        params->vertices[0].pos[VY]);
 
             glColor4fv(params->vertices[1].color);
-            glMultiTexCoord2f(normalTarget, params->texCoord[0][0], params->texCoord[0][1]);
+            glMultiTexCoord2f(normalTarget, texCoord[0][0], texCoord[0][1]);
 
             glMultiTexCoord2f(dynTarget, params->modTexCoord[0][0], params->modTexCoord[1][0]);
 
@@ -693,7 +701,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
                        params->vertices[1].pos[VY]);
 
             glColor4fv(params->vertices[3].color);
-            glMultiTexCoord2f(normalTarget, params->texCoord[1][0], params->texCoord[0][1]);
+            glMultiTexCoord2f(normalTarget, texCoord[1][0], texCoord[0][1]);
 
             glMultiTexCoord2f(dynTarget, params->modTexCoord[0][1], params->modTexCoord[1][0]);
 
@@ -702,7 +710,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
                        params->vertices[3].pos[VY]);
 
             glColor4fv(params->vertices[2].color);
-            glMultiTexCoord2f(normalTarget, params->texCoord[1][0], params->texCoord[1][1]);
+            glMultiTexCoord2f(normalTarget, texCoord[1][0], texCoord[1][1]);
 
             glMultiTexCoord2f(dynTarget, params->modTexCoord[0][1], params->modTexCoord[1][1]);
 
@@ -719,39 +727,39 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t* params)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
-            glTexCoord2f(params->texCoord[0][0], params->texCoord[1][1]);
+            glTexCoord2f(texCoord[0][0], texCoord[1][1]);
 
             glVertex3f(params->vertices[0].pos[VX],
                        params->vertices[0].pos[VZ],
                        params->vertices[0].pos[VY]);
 
             glColor4fv(params->vertices[1].color);
-            glTexCoord2f(params->texCoord[0][0], params->texCoord[0][1]);
+            glTexCoord2f(texCoord[0][0], texCoord[0][1]);
 
             glVertex3f(params->vertices[1].pos[VX],
                        params->vertices[1].pos[VZ],
                        params->vertices[1].pos[VY]);
 
             glColor4fv(params->vertices[3].color);
-            glTexCoord2f(params->texCoord[1][0], params->texCoord[0][1]);
+            glTexCoord2f(texCoord[1][0], texCoord[0][1]);
 
             glVertex3f(params->vertices[3].pos[VX],
                        params->vertices[3].pos[VZ],
                        params->vertices[3].pos[VY]);
 
             glColor4fv(params->vertices[2].color);
-            glTexCoord2f(params->texCoord[1][0], params->texCoord[1][1]);
+            glTexCoord2f(texCoord[1][0], texCoord[1][1]);
 
             glVertex3f(params->vertices[2].pos[VX],
                        params->vertices[2].pos[VZ],
                        params->vertices[2].pos[VY]);
         glEnd();
-
     }
 
-    if(params->masked && renderTextures)
-    {   // Restore the original texture state.
-        glBindTexture(GL_TEXTURE_2D, params->tex);
+    if(ms && !ms->isOpaque)
+    {
+        // Restore the original texture state.
+        glBindTexture(GL_TEXTURE_2D, MSU_gltexture(ms, MTU_PRIMARY));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }

@@ -1161,6 +1161,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
         ms->textures[i] = NULL;
     }
 
+    ms->material = NULL;
     ms->size.width = ms->size.height = 0;
     ms->glowing = 0;
     ms->isOpaque = true;
@@ -1248,6 +1249,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
 
     Materials_InitSnapshot(snapshot);
+    snapshot->material = variant;
     memcpy(&snapshot->size, Material_Size(mat), sizeof snapshot->size);
 
     if(0 == snapshot->size.width && 0 == snapshot->size.height) return snapshot;
@@ -1341,6 +1343,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
             Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
         Materials_InitSnapshot(snapshot);
+        snapshot->material = variant;
 
         // Update the snapshot right away.
         updateSnapshot = true;
