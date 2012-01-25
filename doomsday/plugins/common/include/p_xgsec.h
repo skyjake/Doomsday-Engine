@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -187,6 +187,6 @@ void            SV_ReadXGSector(struct sector_s *sec);
 void            SV_WriteXGPlaneMover(thinker_t *th);
 int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
 
-DEFCC(CCmdMovePlane);
+D_CMD(MovePlane);
 
 #endif

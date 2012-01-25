@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -302,7 +302,7 @@ statenum_t P_GetState(mobjtype_t type, statename_t name)
 {
     if(type < MT_FIRST || type >= Get(DD_NUMMOBJTYPES))
         return S_NULL;
-    if(name < 0 || name >= NUM_STATE_NAMES)
+    if(name < 0 || name >= STATENAMES_COUNT)
         return S_NULL;
 
     return MOBJINFO[type].states[name];
@@ -348,7 +348,7 @@ static spawnqueuenode_t* allocateNode(void)
     {   // We need to allocate more.
         size_t              i;
         spawnqueuenode_t*   storage =
-            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_STATIC, 0);
+            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
 
         // Add all but one to the unused node list.
         for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)

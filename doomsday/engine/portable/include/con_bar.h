@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,8 +29,21 @@
 #ifndef __DOOMSDAY_CONSOLE_BAR_H__
 #define __DOOMSDAY_CONSOLE_BAR_H__
 
-void            Con_InitProgress(int maxProgress);
-void            Con_SetProgress(int progress);
-float           Con_GetProgress(void);
+#include "dd_types.h"
+
+void Con_InitProgress(int maxProgress);
+
+/**
+ * Initialize progress that only covers a part of the progress bar.
+ *
+ * @param maxProgress  Maximum logical progress, for Con_SetProgress().
+ * @param start        Start of normalized progress (default: 0).
+ * @param end          End of normalized progress (default: 1).
+ */
+void Con_InitProgress2(int maxProgress, float start, float end);
+
+void Con_SetProgress(int progress);
+float Con_GetProgress(void);
+boolean Con_IsProgressAnimationCompleted(void);
 
 #endif

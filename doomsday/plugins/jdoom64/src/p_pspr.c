@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "jdoom64.h"
+#include "common.h"
 
 #include "d_net.h"
 #include "p_player.h"
@@ -54,7 +54,6 @@
 
 #define LOWERSPEED      6
 #define RAISESPEED      6
-#define WEAPONBOTTOM    128
 #define WEAPONTOP       32
 
 // TYPES -------------------------------------------------------------------
@@ -136,14 +135,14 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *player)
+void P_BringUpWeapon(struct player_s *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
-
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
+
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);

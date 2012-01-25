@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_list.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,18 +23,20 @@
  */
 
 /**
- * rend_list.h: Rendering Lists
+ * Rendering Lists.
  */
 
-#ifndef __DOOMSDAY_REND_LIST_H__
-#define __DOOMSDAY_REND_LIST_H__
+#ifndef LIBDENG_REND_LIST_H
+#define LIBDENG_REND_LIST_H
 
 #include "r_data.h"
 
 // Multiplicative blending for dynamic lights?
-#define IS_MUL              (dlBlend != 1 && !usingFog)
+#define IS_MUL              (dynlightBlend != 1 && !usingFog)
 
-// Types of rendering primitives.
+/**
+ * Types of render primitive supported by this module (polygons only).
+ */
 typedef enum primtype_e {
     PT_FIRST = 0,
     PT_TRIANGLE_STRIP = PT_FIRST, // Used for most stuff.
@@ -42,47 +44,138 @@ typedef enum primtype_e {
     NUM_PRIM_TYPES
 } primtype_t;
 
-// Special rendpoly types.
-typedef enum {
-    RPT_NORMAL = 0,
-    RPT_SKY_MASK, // A sky mask polygon.
-    RPT_LIGHT, // A dynamic light.
-    RPT_SHADOW, // An object shadow or fakeradio edge shadow.
-    RPT_SHINY // A shiny polygon.
-} rendpolytype_t;
+/**
+ * @defgroup rendpolyFlags  Rendpoly Flags.
+ * @{
+ */
+#define RPF_SKYMASK                 0x1 /// This primitive is to be added to the sky mask.
+#define RPF_LIGHT                   0x2 /// This primitive is to be added to the special lists for lights.
+#define RPF_SHADOW                  0x4 /// This primitive is to be added to the special lists for shadows (either object or fakeradio edge shadow).
+#define RPF_HAS_DYNLIGHTS           0x8 /// Dynamic light primitives are to be drawn on top of this.
 
-typedef struct rtexmapuint_s {
-    DGLuint         tex;
-    int             magMode;
-    float           blend;
-    float           scale[2], offset[2]; // For use with the texture matrix.
-    blendmode_t     blendMode;
-} rtexmapunit_t;
+/// Default rendpolyFlags
+#define RPF_DEFAULT                 0
+/**@}*/
 
 extern int renderTextures;
 extern int renderWireframe;
 extern int useMultiTexLights;
 extern int useMultiTexDetails;
+
+extern int dynlightBlend;
+
 extern float detailFactor, detailScale;
+
 extern int torchAdditive;
 extern float torchColor[];
 
-void            RL_Register(void);
-void            RL_Init(void);
-boolean         RL_IsMTexLights(void);
-boolean         RL_IsMTexDetails(void);
+/// Register the console commands, variables, etc..., of this module.
+void RL_Register(void);
 
-void            RL_ClearLists(void);
-void            RL_DeleteLists(void);
+/// Initialize this module.
+void RL_Init(void);
 
-void RL_AddPoly(primtype_t type, rendpolytype_t polyType,
-                const rvertex_t* rvertices,
-                const rtexcoord_t* rtexcoords, const rtexcoord_t* rtexcoords1,
-                const rtexcoord_t* rtexcoords2,
-                const rcolor_t* rcolors,
-                uint numVertices, uint numLights,
-                DGLuint modTex, float modColor[3],
-                const rtexmapunit_t rTU[NUM_TEXMAP_UNITS]);
-void            RL_RenderAllLists(void);
+/// Shutdown this module.
+void RL_Shutdown(void);
 
-#endif
+/// @return @c true iff multitexturing is currently enabled for lights.
+boolean RL_IsMTexLights(void);
+
+/// @return @c true iff multitexturing is currently enabled for detail textures.
+boolean RL_IsMTexDetails(void);
+
+void RL_ClearLists(void);
+
+void RL_DeleteLists(void);
+
+/**
+ * Reset the texture unit write state back to the initial default values.
+ * Any mappings between logical units and preconfigured RTU states are
+ * cleared at this time.
+ */
+void RL_LoadDefaultRtus(void);
+
+/**
+ * Map the texture unit write state for the identified @a idx unit to
+ * @a rtu. This creates a reference to @a rtu which MUST continue to
+ * remain accessible until the mapping is subsequently cleared or
+ * changed (explicitly by call to RL_MapRtu/RL_LoadDefaultRtus, or,
+ * implicitly by customizing the unit configuration through one of the
+ * RL_RTU* family of functions (at which point a copy will be performed).
+ */
+void RL_MapRtu(uint idx, const rtexmapunit_t* rtu);
+
+/**
+ * Copy the configuration for the identified @idx texture unit of
+ * the primitive writer's internal state from @a rtu.
+ *
+ * @param idx  Logical index of the texture unit being configured.
+ * @param rtu  Configured RTU state to copy the configuration from.
+ */
+void RL_CopyRtu(uint idx, const rtexmapunit_t* rtu);
+
+/// Change the scale property of the identified @a idx texture unit.
+void RL_Rtu_SetScale(uint idx, float s, float t);
+void RL_Rtu_SetScalev(uint idx, float const st[2]);
+
+/// Scale the offset and scale properties of the identified @a idx texture unit.
+void RL_Rtu_Scale(uint idx, float scalar);
+void RL_Rtu_ScaleST(uint idx, float const st[2]);
+
+/// Change the offset property of the identified @a idx texture unit.
+void RL_Rtu_SetOffset(uint idx, float s, float t);
+void RL_Rtu_SetOffsetv(uint idx, float const st[2]);
+
+/// Translate the offset property of the identified @a idx texture unit.
+void RL_Rtu_TranslateOffset(uint idx, float s, float t);
+void RL_Rtu_TranslateOffsetv(uint idx, float const st[2]);
+
+/// Change the texture assigned to the identified @idx texture unit.
+void RL_Rtu_SetTexture(uint idx, DGLuint glName);
+
+/**
+ * @param primType  Type of primitive being written.
+ * @param flags  @see rendpolyFlags
+ */
+void RL_AddPolyWithCoordsModulationReflection(primtype_t primType, int flags,
+    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
+    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords,
+    const ColorRawf* reflectionColors, const rtexcoord_t* reflectionCoords,
+    const rtexcoord_t* reflectionMaskCoords);
+
+/**
+ * @param primType  Type of primitive being written.
+ * @param flags  @see rendpolyFlags
+ */
+void RL_AddPolyWithCoordsModulation(primtype_t primType, int flags,
+    uint numElements, const rvertex_t* vertices, const ColorRawf* colors,
+    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords,
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
+
+/**
+ * @param primType  Type of primitive being written.
+ * @param flags  @see rendpolyFlags
+ */
+void RL_AddPolyWithCoords(primtype_t primType, int flags, uint numElements,
+    const rvertex_t* vertices, const ColorRawf* colors,
+    const rtexcoord_t* primaryCoords, const rtexcoord_t* interCoords);
+
+/**
+ * @param primType  Type of primitive being written.
+ * @param flags  @see rendpolyFlags
+ */
+void RL_AddPolyWithModulation(primtype_t primType, int flags, uint numElements,
+    const rvertex_t* vertices, const ColorRawf* colors,
+    DGLuint modTex, const ColorRawf* modColor, const rtexcoord_t* modCoords);
+
+/**
+ * @param primType  Type of primitive being written.
+ * @param flags  @see rendpolyFlags
+ */
+void RL_AddPoly(primtype_t primType, int flags, uint numElements,
+    const rvertex_t* vertices, const ColorRawf* colors);
+
+void RL_RenderAllLists(void);
+
+#endif /* LIBDENG_REND_LIST_H */

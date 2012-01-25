@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -37,8 +37,10 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <stdio.h>
+#include <string.h>
 
-#include "jheretic.h"
+#include "common.h"
 
 #include "d_net.h"
 #include "p_player.h"
@@ -271,7 +273,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Skull rod
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_1, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -281,7 +283,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 1, 0, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, USE_SKRD_AMMO_2, 0, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -319,7 +321,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Phoenix rod
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_1, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
@@ -329,7 +331,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 1, 0}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, USE_PHRD_AMMO_2, 0}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      false,              // autofire when raised if fire held
@@ -367,7 +369,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    {
     {
     { // Mace
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_1}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -377,7 +379,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
     },
     // lvl2
     {
-     GM_NOTSHAREWARE,           // gamemodebits
+     GM_NOT_SHAREWARE,           // gamemodebits
      {0, 0, 0, 0, 0, 1}, // type:  AT_CRYSTAL | AT_ARROW | etc...
      {0, 0, 0, 0, 0, USE_MACE_AMMO_2}, // pershot: AT_CRYSTAL | AT_ARROW | etc...
      true,               // autofire when raised if fire held
@@ -574,15 +576,15 @@ void P_PostMorphWeapon(player_t *player, weapontype_t weapon)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *player)
+void P_BringUpWeapon(struct player_s *player)
 {
     weaponmodeinfo_t   *wminfo;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_,
-                         (player->powers[PT_WEAPONLEVEL2]? 1:0));
-
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
+
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_,
+                         (player->powers[PT_WEAPONLEVEL2]? 1:0));
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -1393,10 +1395,11 @@ void C_DECL A_BoltSpark(mobj_t* bolt)
 {
     mobj_t*             spark;
 
+    if(IS_NETWORK_SERVER) return; // Would not be visible to anynoe.
+
     if(P_Random() > 50)
     {
-        if((spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos, P_Random() << 24,
-                                   0)))
+        if((spark = P_SpawnMobj3fv(MT_CRBOWFX4, bolt->pos, P_Random() << 24, 0)))
         {
             spark->pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
             spark->pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);

@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_bias.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,17 @@
  */
 
 /**
- * rend_bias.c: Light/Shadow Bias
+ * Light/Shadow Bias.
  *
  * Calculating macro-scale lighting on the fly.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_edit.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -38,9 +41,8 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 #include "de_misc.h"
-#include "p_sight.h"
 
-#include <math.h>
+#include "p_sight.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -127,7 +129,7 @@ static __inline biassurface_t* allocBiasSurface(void)
 {
     if(biasSurfaceBlockSet)
     {   // Use the block allocator.
-        biassurface_t*      bsuf = Z_BlockNewElement(biasSurfaceBlockSet);
+        biassurface_t*      bsuf = ZBlockSet_Allocate(biasSurfaceBlockSet);
         memset(bsuf, 0, sizeof(*bsuf));
         return bsuf;
     }
@@ -332,9 +334,9 @@ void SB_InitForMap(const char* uniqueID)
     numSources = 0;
 
     if(biasSurfaceBlockSet)
-        Z_BlockDestroy(biasSurfaceBlockSet);
+        ZBlockSet_Delete(biasSurfaceBlockSet);
 
-    biasSurfaceBlockSet = Z_BlockCreate(sizeof(biassurface_t), 512, PU_STATIC);
+    biasSurfaceBlockSet = ZBlockSet_New(sizeof(biassurface_t), 512, PU_APPSTATIC);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.
@@ -353,9 +355,9 @@ void SB_InitForMap(const char* uniqueID)
 
     // Create biassurfaces for all current worldmap surfaces.
     {
-    uint                i;
-    size_t              numVertIllums = 0;
-    vertexillum_t*      illums;
+    size_t numVertIllums = 0;
+    vertexillum_t* illums;
+    uint i;
 
     // First, determine the total number of vertexillum_ts we need.
     for(i = 0; i < numSegs; ++i)
@@ -366,21 +368,22 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < numSectors; ++i)
     {
-        sector_t*           sec = &sectors[i];
-        subsector_t**       ssecPtr = sec->ssectors;
-
-        while(*ssecPtr)
+        sector_t* sec = &sectors[i];
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t*        ssec = *ssecPtr;
-            numVertIllums += ssec->numVertices * sec->planeCount;
-            ssecPtr++;
+            subsector_t** ssecPtr = sec->ssectors;
+            do
+            {
+                subsector_t* ssec = *ssecPtr;
+                numVertIllums += ssec->numVertices * sec->planeCount;
+                ssecPtr++;
+            } while(*ssecPtr);
         }
     }
 
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t*          po = polyObjs[i];
-
+        polyobj_t* po = polyObjs[i];
         numVertIllums += po->numSegs * 3 * 4;
     }
 
@@ -392,15 +395,15 @@ void SB_InitForMap(const char* uniqueID)
     // Allocate bias surfaces and attach vertexillum_ts.
     for(i = 0; i < numSegs; ++i)
     {
-        seg_t*              seg = &segs[i];
-        int                 j;
+        seg_t* seg = &segs[i];
+        int j;
 
         if(!seg->lineDef)
             continue;
 
         for(j = 0; j < 3; ++j)
         {
-            biassurface_t*      bsuf = SB_CreateSurface();
+            biassurface_t* bsuf = SB_CreateSurface();
 
             bsuf->size = 4;
             bsuf->illum = illums;
@@ -412,42 +415,43 @@ void SB_InitForMap(const char* uniqueID)
 
     for(i = 0; i < numSectors; ++i)
     {
-        sector_t*           sec = &sectors[i];
-        subsector_t**       ssecPtr = sec->ssectors;
-
-        while(*ssecPtr)
+        sector_t* sec = &sectors[i];
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t*        ssec = *ssecPtr;
-            uint                j;
-
-            for(j = 0; j < sec->planeCount; ++j)
+            subsector_t** ssecPtr = sec->ssectors;
+            do
             {
-                biassurface_t*      bsuf = SB_CreateSurface();
+                subsector_t* ssec = *ssecPtr;
+                uint j;
 
-                bsuf->size = ssec->numVertices;
-                bsuf->illum = illums;
-                illums += ssec->numVertices;
+                for(j = 0; j < sec->planeCount; ++j)
+                {
+                    biassurface_t* bsuf = SB_CreateSurface();
 
-                ssec->bsuf[j] = bsuf;
-            }
+                    bsuf->size = ssec->numVertices;
+                    bsuf->illum = illums;
+                    illums += ssec->numVertices;
 
-            ssecPtr++;
+                    ssec->bsuf[j] = bsuf;
+                }
+                ssecPtr++;
+            } while(*ssecPtr);
         }
     }
 
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t*          po = polyObjs[i];
-        uint                j;
+        polyobj_t* po = polyObjs[i];
+        uint j;
 
         for(j = 0; j < po->numSegs; ++j)
         {
-            seg_t*              seg = po->segs[j];
-            int                 k;
+            seg_t* seg = po->segs[j];
+            int k;
 
             for(k = 0; k < 3; ++k)
             {
-                biassurface_t*      bsuf = SB_CreateSurface();
+                biassurface_t* bsuf = SB_CreateSurface();
 
                 bsuf->size = 4;
                 bsuf->illum = illums;
@@ -459,9 +463,7 @@ void SB_InitForMap(const char* uniqueID)
     }
     }
 
-    // How much time did we spend?
-    VERBOSE(Con_Message("SB_InitForMap: Done in %.2f seconds.\n",
-                        (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE2( Con_Message("SB_InitForMap: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 }
 
 void SB_SetColor(float* dest, float* src)
@@ -675,7 +677,7 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
 void SB_TrackerMark(biastracker_t* tracker, uint index)
 {
     // Assume 32-bit uint.
-    if(index >= 0)
+    //if(index >= 0)
     {
         tracker->changes[index >> 5] |= (1 << (index & 0x1f));
     }
@@ -926,7 +928,7 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param elmIdx        Used with subsectors to select a specific plane.
  * @param isSeg         @c true, if surface is to a seg ELSE a subsector.
  */
-void SB_RendPoly(struct rcolor_s* rcolors, biassurface_t* bsuf,
+void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
                  size_t numVertices, const vectorcomp_t* normal,
                  float sectorLightLevel,
@@ -979,9 +981,22 @@ void SB_RendPoly(struct rcolor_s* rcolors, biassurface_t* bsuf,
         }
     }
 
-    for(i = 0; i < numVertices; ++i)
-        SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected,
-                     rvertices[i].pos, normal);
+/*#if _DEBUG
+// Assign primary colors rather than the real values.
+    if(isSeg)
+    {
+        rcolors[0].rgba[CR] = 1; rcolors[0].rgba[CG] = 0; rcolors[0].rgba[CB] = 0; rcolors[0].rgba[CA] = 1;
+        rcolors[1].rgba[CR] = 0; rcolors[1].rgba[CG] = 1; rcolors[1].rgba[CB] = 0; rcolors[1].rgba[CA] = 1;
+        rcolors[2].rgba[CR] = 0; rcolors[2].rgba[CG] = 0; rcolors[2].rgba[CB] = 1; rcolors[2].rgba[CA] = 1;
+        rcolors[3].rgba[CR] = 1; rcolors[3].rgba[CG] = 1; rcolors[3].rgba[CB] = 0; rcolors[3].rgba[CA] = 1;
+    }
+    else
+#endif*/
+    {
+        for(i = 0; i < numVertices; ++i)
+            SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected,
+                         rvertices[i].pos, normal);
+    }
 
 //    colorOverride = SB_CheckColorOverride(affected);
 

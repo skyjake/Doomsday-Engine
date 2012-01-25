@@ -1,10 +1,10 @@
-/**\file
+/**\file a_action.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +22,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * a_action.h:
- */
-
-#ifndef __A_ACTION_H__
-#define __A_ACTION_H__
+#ifndef LIBHEXEN_A_ACTION_H
+#define LIBHEXEN_A_ACTION_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#endif
+/**
+ * Calculate various LUTs used by the playsim.
+ */
+void X_CreateLUTs(void);
+void X_DestroyLUTs(void);
+
+#endif /* LIBHEXEN_A_ACTION_H */

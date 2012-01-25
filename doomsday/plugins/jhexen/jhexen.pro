@@ -40,9 +40,7 @@ HEADERS += \
     include/info.h \
     include/jhexen.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/p_acs.h \
     include/p_anim.h \
     include/p_enemy.h \

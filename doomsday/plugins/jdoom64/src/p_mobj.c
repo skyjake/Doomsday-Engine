@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -59,10 +59,6 @@
 
 #define MAX_BOB_OFFSET          (8)
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-#define STANDSPEED              (1.0f/2)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -83,7 +79,7 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
     sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
-    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
 
 /**
@@ -107,10 +103,10 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
 
         mobj->turnTime = false; // $visangle-facetarget
 
-        // Modified handling.
-        // Call action functions when the state is set
-        if(st->action)
-            st->action(mobj);
+        if(Mobj_ActionFunctionAllowed(mobj))
+        {
+            if(st->action) st->action(mobj);
+        }
 
         state = st->nextState;
     } while(!mobj->tics);
@@ -183,20 +179,16 @@ static float getFriction(mobj_t* mo)
 
 void P_MobjMoveXY(mobj_t* mo)
 {
-    float               pos[3], mom[3];
-    player_t*           player;
-    boolean             largeNegative;
+    float pos[3], mom[3];
+    player_t* player;
+    boolean largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
-    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
-    mo->mom[MX] = mom[MX];
-    mo->mom[MY] = mom[MY];
-
-    if(mom[MX] == 0 && mom[MY] == 0)
+    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // The skull slammed into something.
@@ -209,6 +201,11 @@ void P_MobjMoveXY(mobj_t* mo)
         return;
     }
 
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+
     player = mo->player;
 
     do
@@ -220,15 +217,14 @@ void P_MobjMoveXY(mobj_t* mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
-           (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
+        if(!cfg.moveBlock && (mom[MX] < -MAXMOMSTEP || mom[MY] < -MAXMOMSTEP))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
-        if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
+        if(largeNegative || mom[MX] > MAXMOMSTEP || mom[MY] > MAXMOMSTEP)
         {
             pos[VX] = mo->pos[VX] + mom[VX] / 2;
             pos[VY] = mo->pos[VY] + mom[VY] / 2;
@@ -255,14 +251,13 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
                    (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
-                        P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
+                    material_t* mat = P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] > P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
@@ -275,8 +270,7 @@ void P_MobjMoveXY(mobj_t* mo)
                 if(floorLine &&
                    (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
-                        P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
+                    material_t* mat = P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
                        mo->pos[VZ] < P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
@@ -294,70 +288,15 @@ void P_MobjMoveXY(mobj_t* mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Slow down.
-    if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
-    {
-        // Debug option for no sliding at all.
-        mo->mom[MX] = mo->mom[MY] = 0;
-        return;
-    }
-
-    if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
-        return; // No friction for missiles ever.
-
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
-        return; // No friction when falling.
-
-    if(cfg.slidingCorpses)
-    {
-        // $dropoff_fix: Add objects falling off ledges, does not apply to
-        // players.
-        if(((mo->flags & MF_CORPSE) || (mo->intFlags & MIF_FALLING)) &&
-           !mo->player)
-        {
-            // Do not stop sliding if halfway off a step with some momentum.
-            if(mo->mom[MX] > (1.0f / 4) || mo->mom[MX] < -(1.0f / 4) ||
-               mo->mom[MY] > (1.0f / 4) || mo->mom[MY] < -(1.0f / 4))
-            {
-                if(mo->floorZ !=
-                   P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-                    return;
-            }
-        }
-    }
-
-    // Stop player walking animation.
-    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
-        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
-       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {
-        // If in a walking frame, stop moving.
-        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
-
-        // $voodoodolls: Do not zero mom!
-        if(!(player && player->plr->mo != mo))
-            mo->mom[MX] = mo->mom[MY] = 0;
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
-    }
-    else
-    {
-        float friction = getFriction(mo);
-
-        mo->mom[MX] *= friction;
-        mo->mom[MY] *= friction;
-    }
+    Mobj_XYMoveStopping(mo);
 }
 
 /*
-static boolean PIT_Splash(sector_t *sector, void *data)
+static int PIT_Splash(sector_t *sector, void *data)
 {
     mobj_t             *mo = data;
     float               floorheight;
@@ -372,7 +311,7 @@ static boolean PIT_Splash(sector_t *sector, void *data)
     }
 
     // Continue checking.
-    return true;
+    return false;
 }
 */
 

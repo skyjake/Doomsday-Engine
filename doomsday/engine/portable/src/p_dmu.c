@@ -1,10 +1,10 @@
-/**\file
+/**\file p_dmu.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_audio.h"
@@ -42,16 +43,22 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct dummysidedef_s {
+    sidedef_t sideDef; // Side data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
+} dummysidedef_t;
+
 typedef struct dummyline_s {
-    linedef_t       line; // Line data.
-    void*           extraData; // Pointer to user data.
-    boolean         inUse; // true, if the dummy is being used.
+    linedef_t line; // Line data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
 } dummyline_t;
 
 typedef struct dummysector_s {
-    sector_t        sector; // Sector data.
-    void           *extraData; // Pointer to user data.
-    boolean         inUse; // true, if the dummy is being used.
+    sector_t sector; // Sector data.
+    void* extraData; // Pointer to user data.
+    boolean inUse; // true, if the dummy is being used.
 } dummysector_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -68,6 +75,7 @@ uint dummyCount = 8; // Number of dummies to allocate (per type).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static dummysidedef_t* dummySideDefs;
 static dummyline_t* dummyLines;
 static dummysector_t* dummySectors;
 
@@ -104,6 +112,14 @@ const char* DMU_Str(uint prop)
         { DMU_X, "DMU_X" },
         { DMU_Y, "DMU_Y" },
         { DMU_XY, "DMU_XY" },
+        { DMU_TANGENT_X, "DMU_TANGENT_X" },
+        { DMU_TANGENT_Y, "DMU_TANGENT_Y" },
+        { DMU_TANGENT_Z, "DMU_TANGENT_Z" },
+        { DMU_TANGENT_XYZ, "DMU_TANGENT_XYZ" },
+        { DMU_BITANGENT_X, "DMU_BITANGENT_X" },
+        { DMU_BITANGENT_Y, "DMU_BITANGENT_Y" },
+        { DMU_BITANGENT_Z, "DMU_BITANGENT_Z" },
+        { DMU_BITANGENT_XYZ, "DMU_BITANGENT_XYZ" },
         { DMU_NORMAL_X, "DMU_NORMAL_X" },
         { DMU_NORMAL_Y, "DMU_NORMAL_Y" },
         { DMU_NORMAL_Z, "DMU_NORMAL_Z" },
@@ -142,7 +158,6 @@ const char* DMU_Str(uint prop)
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
         { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
-        { DMU_NAMESPACE, "DMU_NAMESPACE" },
         { 0, NULL }
     };
     uint                i;
@@ -160,7 +175,7 @@ const char* DMU_Str(uint prop)
  *
  * @param ptr  Pointer to a map data object.
  */
-static int DMU_GetType(const void* ptr)
+int DMU_GetType(const void* ptr)
 {
     int                 type;
 
@@ -211,16 +226,21 @@ static void initArgs(setargs_t* args, int type, uint prop)
  */
 void P_InitMapUpdate(void)
 {
-    // Request the DMU API version the game is expecting.
-    usingDMUAPIver = gx.GetInteger(DD_GAME_DMUAPI_VER);
-    if(!usingDMUAPIver)
-        Con_Error("P_InitMapUpdate: Game dll is not compatible with "
-                  "Doomsday " DOOMSDAY_VERSION_TEXT ".");
+    if(DD_GameLoaded())
+    {
+        // Request the DMU API version the game is expecting.
+        usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
+        if(!usingDMUAPIver)
+            Con_Error("P_InitMapUpdate: Game library is not compatible with "
+                      DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");
 
-    if(usingDMUAPIver > DMUAPI_VER)
-        Con_Error("P_InitMapUpdate: Game dll expects a latter version of the\n"
-                  "DMU API then that defined by Doomsday " DOOMSDAY_VERSION_TEXT ".\n"
-                  "This game is for a newer version of Doomsday.");
+        if(usingDMUAPIver > DMUAPI_VER)
+            Con_Error("P_InitMapUpdate: Game library expects a later version of the\n"
+                      "DMU API then that defined by " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".\n"
+                      "This game is for a newer version of " DOOMSDAY_NICENAME ".");
+    }
+    else
+        usingDMUAPIver = DMUAPI_VER;
 
     // A fixed number of dummies is allocated because:
     // - The number of dummies is mostly dependent on recursive depth of
@@ -228,8 +248,9 @@ void P_InitMapUpdate(void)
     // - To test whether a pointer refers to a dummy is based on pointer
     //   comparisons; if the array is reallocated, its address may change
     //   and all existing dummies are invalidated.
-    dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_STATIC, NULL);
-    dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_STATIC, NULL);
+    dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_APPSTATIC, NULL);
+    dummySideDefs = Z_Calloc(dummyCount * sizeof(dummysidedef_t), PU_APPSTATIC, NULL);
+    dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_APPSTATIC, NULL);
 }
 
 /**
@@ -246,6 +267,21 @@ void* P_AllocDummy(int type, void* extraData)
 
     switch(type)
     {
+    case DMU_SIDEDEF:
+        for(i = 0; i < dummyCount; ++i)
+        {
+            if(!dummySideDefs[i].inUse)
+            {
+                dummySideDefs[i].inUse = true;
+                dummySideDefs[i].extraData = extraData;
+                dummySideDefs[i].sideDef.header.type = DMU_SIDEDEF;
+                dummySideDefs[i].sideDef.sector = 0;
+                dummySideDefs[i].sideDef.line = 0;
+                return &dummySideDefs[i];
+            }
+        }
+        break;
+
     case DMU_LINEDEF:
         for(i = 0; i < dummyCount; ++i)
         {
@@ -255,7 +291,7 @@ void* P_AllocDummy(int type, void* extraData)
                 dummyLines[i].extraData = extraData;
                 dummyLines[i].line.header.type = DMU_LINEDEF;
                 dummyLines[i].line.L_frontside =
-                    dummyLines[i].line.L_backside = NULL;
+                    dummyLines[i].line.L_backside = 0;
                 return &dummyLines[i];
             }
         }
@@ -292,6 +328,10 @@ void P_FreeDummy(void* dummy)
 
     switch(type)
     {
+    case DMU_SIDEDEF:
+        ((dummysidedef_t*)dummy)->inUse = false;
+        break;
+
     case DMU_LINEDEF:
         ((dummyline_t*)dummy)->inUse = false;
         break;
@@ -313,6 +353,13 @@ void P_FreeDummy(void* dummy)
  */
 int P_DummyType(void* dummy)
 {
+    // Is it a SideDef?
+    if(dummy >= (void*) &dummySideDefs[0] &&
+       dummy <= (void*) &dummySideDefs[dummyCount - 1])
+    {
+        return DMU_SIDEDEF;
+    }
+
     // Is it a line?
     if(dummy >= (void*) &dummyLines[0] &&
        dummy <= (void*) &dummyLines[dummyCount - 1])
@@ -347,6 +394,9 @@ void* P_DummyExtraData(void* dummy)
 {
     switch(P_DummyType(dummy))
     {
+    case DMU_SIDEDEF:
+        return ((dummysidedef_t*)dummy)->extraData;
+
     case DMU_LINEDEF:
         return ((dummyline_t*)dummy)->extraData;
 
@@ -396,7 +446,7 @@ uint P_ToIndex(const void* ptr)
         return GET_PLANE_IDX((plane_t*) ptr);
 
     case DMU_MATERIAL:
-        return P_ToMaterialNum((material_t*) ptr);
+        return Materials_Id((material_t*) ptr);
 
     default:
         Con_Error("P_ToIndex: Unknown type %s.\n", DMU_Str(DMU_GetType(ptr)));
@@ -438,7 +488,7 @@ void* P_ToPtr(int type, uint index)
         break;
 
     case DMU_MATERIAL:
-        return P_ToMaterial(index);
+        return Materials_ToMaterial(index);
 
     default:
         Con_Error("P_ToPtr: unknown type %s.\n", DMU_Str(type));
@@ -446,10 +496,9 @@ void* P_ToPtr(int type, uint index)
     return NULL;
 }
 
-int P_Iteratep(void *ptr, uint prop, void* context,
-               int (*callback) (void* p, void* ctx))
+int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx))
 {
-    int                 type = DMU_GetType(ptr);
+    int type = DMU_GetType(ptr);
 
     switch(type)
     {
@@ -459,79 +508,64 @@ int P_Iteratep(void *ptr, uint prop, void* context,
         case DMU_LINEDEF:
             {
             sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
+            int                 result = false; // Continue iteration.
 
             if(sec->lineDefs)
             {
-                linedef_t**         linePtr = sec->lineDefs;
-
-                while(*linePtr && (result = callback(*linePtr, context)) != 0)
+                linedef_t** linePtr = sec->lineDefs;
+                while(*linePtr && !(result = callback(*linePtr, context)))
                     linePtr++;
             }
-
             return result;
-            }
-
+          }
         case DMU_PLANE:
             {
             sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
+            int                 result = false; // Continue iteration.
 
             if(sec->planes)
             {
-                plane_t**           planePtr = sec->planes;
-
-                while(*planePtr && (result = callback(*planePtr, context)) != 0)
+                plane_t** planePtr = sec->planes;
+                while(*planePtr && !(result = callback(*planePtr, context)))
                     planePtr++;
             }
-
             return result;
-            }
-
+          }
         case DMU_SUBSECTOR:
             {
             sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
+            int                 result = false; // Continue iteration.
 
             if(sec->ssectors)
             {
-                subsector_t**       ssecPtr = sec->ssectors;
-
-                while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
+                subsector_t** ssecPtr = sec->ssectors;
+                while(*ssecPtr && !(result = callback(*ssecPtr, context)))
                     ssecPtr++;
             }
-
             return result;
-            }
-
+          }
         default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
-                      DMU_Str(prop));
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
-
     case DMU_SUBSECTOR:
         switch(prop)
         {
         case DMU_SEG:
             {
             subsector_t*        ssec = (subsector_t*) ptr;
-            int                 result = 1;
+            int                 result = false; // Continue iteration.
 
             if(ssec->segs)
             {
-                seg_t**             segPtr = ssec->segs;
-
-                while(*segPtr && (result = callback(*segPtr, context)) != 0)
+                seg_t** segPtr = ssec->segs;
+                while(*segPtr && !(result = callback(*segPtr, context)))
                     segPtr++;
             }
-
             return result;
-            }
-
+          }
         default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
-                      DMU_Str(prop));
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
 
@@ -540,7 +574,7 @@ int P_Iteratep(void *ptr, uint prop, void* context,
         break;
     }
 
-    return true; // Successfully completed.
+    return false;
 }
 
 /**
@@ -602,8 +636,8 @@ int P_Callback(int type, uint index, void* context,
         break;
 
     case DMU_MATERIAL:
-        if(index < numMaterialBinds)
-            return callback(P_ToMaterial(index), context);
+        if(index < Materials_Size())
+            return callback(Materials_ToMaterial(index), context);
         break;
 
     case DMU_LINEDEF_BY_TAG:
@@ -665,6 +699,12 @@ int P_Callbackp(int type, void* ptr, void* context,
         Con_Error("P_Callbackp: Type %s unknown.\n", DMU_Str(type));
     }
     return true;
+}
+
+int DMU_SetMaterialProperty(material_t* mat, const setargs_t* args)
+{
+    Con_Error("DMU::SetMaterialProperty: Property %s is not writable.\n", DMU_Str(args->prop));
+    exit(1); // Unreachable.
 }
 
 /**
@@ -884,8 +924,8 @@ static int setProperty(void* obj, void* context)
      *
      * When setting a property, reference resolution is done hierarchically so
      * that we can update all owner's of the objects being manipulated should
-     * the DMU object's Set routine suggests that a change occured which other
-     * DMU objects may wish/need to respond to.
+     * the DMU object's Set routine suggest that a change occured (which other
+     * DMU objects may wish/need to respond to).
      *
      * 1) Collect references to all current owners of the object.
      * 2) Pass the change delta on to the object.
@@ -982,6 +1022,14 @@ static int setProperty(void* obj, void* context)
         case DMU_OFFSET_X:
         case DMU_OFFSET_Y:
         case DMU_OFFSET_XY:
+        case DMU_TANGENT_X:
+        case DMU_TANGENT_Y:
+        case DMU_TANGENT_Z:
+        case DMU_TANGENT_XYZ:
+        case DMU_BITANGENT_X:
+        case DMU_BITANGENT_Y:
+        case DMU_BITANGENT_Z:
+        case DMU_BITANGENT_XYZ:
         case DMU_NORMAL_X:
         case DMU_NORMAL_Y:
         case DMU_NORMAL_Z:
@@ -1038,11 +1086,11 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_LINEDEF:
-        Linedef_SetProperty(obj, args);
+        LineDef_SetProperty(obj, args);
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_SetProperty(obj, args);
+        SideDef_SetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:
@@ -1054,7 +1102,7 @@ static int setProperty(void* obj, void* context)
         break;
 
     case DMU_MATERIAL:
-        Material_SetProperty(obj, args);
+        DMU_SetMaterialProperty(obj, args);
         break;
 
     case DMU_NODE:
@@ -1123,6 +1171,31 @@ static int setProperty(void* obj, void* context)
     } */
 
     return true; // Continue iteration.
+}
+
+int DMU_GetMaterialProperty(material_t* mat, setargs_t* args)
+{
+    switch(args->prop)
+    {
+    case DMU_FLAGS: {
+        short flags = Material_Flags(mat);
+        DMU_GetValue(DMT_MATERIAL_FLAGS, &flags, args, 0);
+        break;
+      }
+    case DMU_WIDTH: {
+        int width = Material_Width(mat);
+        DMU_GetValue(DMT_MATERIAL_WIDTH, &width, args, 0);
+        break;
+      }
+    case DMU_HEIGHT: {
+        int height = Material_Height(mat);
+        DMU_GetValue(DMT_MATERIAL_HEIGHT, &height, args, 0);
+        break;
+      }
+    default:
+        Con_Error("DMU::GetMaterialProperty: No property %s.\n", DMU_Str(args->prop));
+    }
+    return false; // Continue iteration.
 }
 
 /**
@@ -1402,6 +1475,14 @@ static int getProperty(void* obj, void* context)
         case DMU_OFFSET_X:
         case DMU_OFFSET_Y:
         case DMU_OFFSET_XY:
+        case DMU_TANGENT_X:
+        case DMU_TANGENT_Y:
+        case DMU_TANGENT_Z:
+        case DMU_TANGENT_XYZ:
+        case DMU_BITANGENT_X:
+        case DMU_BITANGENT_Y:
+        case DMU_BITANGENT_Z:
+        case DMU_BITANGENT_XYZ:
         case DMU_NORMAL_X:
         case DMU_NORMAL_Y:
         case DMU_NORMAL_Z:
@@ -1450,7 +1531,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_LINEDEF:
-        Linedef_GetProperty(obj, args);
+        LineDef_GetProperty(obj, args);
         break;
 
     case DMU_SURFACE:
@@ -1466,7 +1547,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_SIDEDEF:
-        Sidedef_GetProperty(obj, args);
+        SideDef_GetProperty(obj, args);
         break;
 
     case DMU_SUBSECTOR:
@@ -1474,7 +1555,7 @@ static int getProperty(void* obj, void* context)
         break;
 
     case DMU_MATERIAL:
-        Material_GetProperty(obj, args);
+        DMU_GetMaterialProperty(obj, args);
         break;
 
     default:

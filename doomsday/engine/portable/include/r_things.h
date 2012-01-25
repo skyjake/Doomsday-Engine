@@ -1,10 +1,10 @@
-/**\file
+/**\file r_things.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,18 @@
  */
 
 /**
- * r_things.h: Object Management and Refresh
+ * Object Management and Refresh
  */
 
-#ifndef __DOOMSDAY_REFRESH_THINGS_H__
-#define __DOOMSDAY_REFRESH_THINGS_H__
+#ifndef LIBDENG_REFRESH_THINGS_H
+#define LIBDENG_REFRESH_THINGS_H
 
 #include "p_mapdata.h"
 #include "r_data.h"
-#include "p_materialmanager.h"
+#include "materials.h"
 #include "rend_model.h"
+
+struct materialvariant_s;
 
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
@@ -44,7 +46,7 @@
 // for all views.
 
 typedef struct {
-    boolean         rotate; // If false use 0 for any position
+    byte            rotate; // 0= no rotations, 1= only front, 2= more...
     material_t*     mats[8]; // Material to use for view angles 0-7
     byte            flip[8]; // Flip (1 = flip) to use for view angles 0-7
 } spriteframe_t;
@@ -66,16 +68,15 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    DGLuint         tex;
-    int             magMode;
-    boolean         masked;
+    struct materialvariant_s* material;
     blendmode_t     blendMode; // Blendmode to be used when drawing
                                // (two sided mid textures only)
     struct wall_vertex_s {
         float           pos[3]; // x y and z coordinates.
         float           color[4];
     } vertices[4];
-    float           texCoord[2][2]; // u and v coordinates.
+    float           texOffset[2];
+    float           length; // Precalculated 2D distance from v1 > v2
 
     DGLuint         modTex; // Texture to modulate with.
     float           modTexCoord[2][2]; // u and v coordinates.
@@ -87,6 +88,7 @@ typedef struct rendspriteparams_s {
     float           center[3]; // The real center point.
     float           width, height;
     float           viewOffX; // View-aligned offset to center point.
+    float           viewOffY;
     float           srvo[3]; // Short-range visual offset.
     float           distance; // Distance from viewer.
     boolean         viewAligned;
@@ -98,7 +100,6 @@ typedef struct rendspriteparams_s {
     // Material:
     material_t*     mat;
     int             tMap, tClass;
-    float           matOffset[2];
     boolean         matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
@@ -197,43 +198,73 @@ typedef struct collectaffectinglights_params_s {
 } collectaffectinglights_params_t;
 
 extern spritedef_t* sprites;
-extern int      numSprites;
-extern float    pspOffset[2], pspLightLevelMultiplier;
-extern int      alwaysAlign;
-extern float    weaponOffsetScale, weaponFOVShift;
-extern int      weaponOffsetScaleY;
-extern float    modelSpinSpeed;
-extern int      maxModelDistance, noSpriteZWrite;
-extern int      useSRVO, useSRVOAngle;
+extern int numSprites;
+extern float pspOffset[2], pspLightLevelMultiplier;
+extern int alwaysAlign;
+extern float weaponOffsetScale, weaponFOVShift;
+extern int weaponOffsetScaleY;
+extern byte weaponScaleMode; // cvar
+extern float modelSpinSpeed;
+extern int maxModelDistance, noSpriteZWrite;
+extern int useSRVO, useSRVOAngle;
 extern vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 extern vissprite_t visSprSortedHead;
 extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 material_t*     R_GetMaterialForSprite(int sprite, int frame);
 boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
-boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
-float           R_VisualRadius(struct mobj_s* mo);
+
+/// @return  Radius of the mobj as it would visually appear to be.
+float R_VisualRadius(struct mobj_s* mo);
+
+/**
+ * Calculate the strength of the shadow this mobj should cast.
+ * \note Implemented using a greatly simplified version of the lighting equation;
+ * no light diminishing or light range compression.
+ */
+float R_ShadowStrength(struct mobj_s* mo);
+
+float R_Alpha(struct mobj_s* mo);
+
 float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);
 float           R_MovementPitch(float momx, float momy, float momz);
 void            R_ProjectSprite(struct mobj_s* mobj);
 void            R_ProjectPlayerSprites(void);
-void            R_SortVisSprites(void);
-vissprite_t*    R_NewVisSprite(void);
-void            R_AddSprites(subsector_t* ssec);
-void            R_AddPSprites(void);
-void            R_DrawSprites(void);
 
-void            R_PreInitSprites(void);
-void            R_InitSprites(void);
+void R_SortVisSprites(void);
+vissprite_t* R_NewVisSprite(void);
+void R_AddSprites(subsector_t* ssec);
 
-void            R_ClearSprites(void);
-void            R_ClipVisSprite(vissprite_t* vis, int xl, int xh);
+/// To be called at the start of the current render frame to clear the vissprite list.
+void R_ClearVisSprites(void);
 
-uint            R_CollectAffectingLights(const collectaffectinglights_params_t* params);
+void R_InitSprites(void);
+void R_ShutdownSprites(void);
 
-void            VL_InitForMap(void);
-void            VL_InitForNewFrame(void);
-boolean         VL_ListIterator(uint listIdx, void* data,
-                                boolean (*func) (const vlight_t*, void*));
-#endif
+uint R_CollectAffectingLights(const collectaffectinglights_params_t* params);
+
+/**
+ * Initialize the vlight system in preparation for rendering view(s) of the
+ * game world. Called by R_InitLevel().
+ */
+void VL_InitForMap(void);
+
+/**
+ * Moves all used vlight nodes to the list of unused nodes, so they can be
+ * reused.
+ */
+void VL_InitForNewFrame(void);
+
+/**
+ * Calls func for all vlights in the given list.
+ *
+ * @param listIdx  Identifier of the list to process.
+ * @param data  Ptr to pass to the callback.
+ * @param func  Callback to make for each object.
+ *
+ * @return  @c true, iff every callback returns @c true.
+ */
+boolean VL_ListIterator(uint listIdx, void* data, boolean (*func) (const vlight_t*, void*));
+
+#endif /* LIBDENG_REFRESH_THINGS_H */

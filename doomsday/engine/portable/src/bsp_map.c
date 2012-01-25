@@ -1,9 +1,9 @@
-/**\file
+/**\file bsp_map.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +21,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * bsp_map.c:
- */
-
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_bsp.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_edit.h"
 #include "de_refresh.h"
-
-#include <stdlib.h>
-#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -232,19 +229,25 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
         if(seg->length == 0)
             seg->length = 0.01f; // Hmm...
 
-        // Calculate the surface normals
+        // Calculate the tangent space surface vectors.
         // Front first
         if(seg->lineDef && SEG_SIDEDEF(seg))
         {
-            sidedef_t*          side = SEG_SIDEDEF(seg);
-            surface_t*          surface = &side->SW_topsurface;
+            sidedef_t* side = SEG_SIDEDEF(seg);
+            surface_t* surface = &side->SW_topsurface;
 
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same tangent space vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
     }
@@ -300,15 +303,12 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     while(*segp)
     {
         seg_t* seg = *segp;
-
         if(!found && seg->lineDef && SEG_SIDEDEF(seg))
         {
-            sidedef_t*          side = SEG_SIDEDEF(seg);
-
+            sidedef_t* side = SEG_SIDEDEF(seg);
             dest->sector = side->sector;
             found = true;
         }
-
         seg->subsector = dest;
         segp++;
     }
@@ -417,23 +417,29 @@ static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
 {
     dest->numNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
-    dest->nodes =
-        Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
+    if(dest->numNodes != 0)
+        dest->nodes = Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
+    else
+        dest->nodes = 0;
 
     dest->numSSectors = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numSSectors);
-    dest->ssectors =
-        Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
+    dest->ssectors = Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
 
-    if(rootNode)
+    if(!rootNode)
+        return;
+
+    if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenbspparams_t params;
+        hardenLeaf(dest, &dest->ssectors[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        return;
+    }
 
-        params.dest = dest;
-        params.ssecCurIndex = 0;
-        params.nodeCurIndex = 0;
-
-        BinaryTree_PostOrder(rootNode, hardenNode, &params);
+    { hardenbspparams_t p;
+    p.dest = dest;
+    p.ssecCurIndex = 0;
+    p.nodeCurIndex = 0;
+    BinaryTree_PostOrder(rootNode, hardenNode, &p);
     }
 }
 

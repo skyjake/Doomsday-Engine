@@ -4,10 +4,12 @@ macx_release_build
 /doomsday/build/win32/license.txt
 *.user.*
 *-build-*
+*-build
 *.dsc
 *.tar.gz
 *.deb
 *.changes
 server-runtime
 client-runtime
-
+Zcustom.conf
+.web.manifest

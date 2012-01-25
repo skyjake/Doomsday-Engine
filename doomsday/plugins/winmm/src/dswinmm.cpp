@@ -1,10 +1,10 @@
-/**\file
+/**\file dswinmm.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dswinmm.cpp: Music Driver for Win32 Multimedia (winmm).
+ * Music Driver for audio playback using Windows Multimedia (winmm).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -380,7 +380,7 @@ int DM_Music_Get(int prop, void* ptr)
     case MUSIP_ID:
         if(ptr)
         {
-            strcpy((char*) ptr, "Win/Mus");
+            strcpy((char*) ptr, "WinMM::Mus");
             return true;
         }
         break;
@@ -429,7 +429,7 @@ void DM_Music_Pause(int setPause)
     }
 }
 
-void* DM_Music_SongBuffer(size_t length)
+void* DM_Music_SongBuffer(unsigned int length)
 {
     if(midiAvail)
     {

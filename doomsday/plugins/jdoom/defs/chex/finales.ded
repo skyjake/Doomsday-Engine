@@ -1,0 +1,90 @@
+# Chex Quest - Intermissions and Finales
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
+
+Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
+
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Patch back 0 0 "TITLEPIC"
+    MusicOnce "intro"
+    Wait 4.857 # Original wait is 170 tics.
+        
+    # Step 2.
+    PlayDemo "cdemo1.cdm"
+
+    # Step 3.
+    Set back "CREDIT"
+    Wait 5.714 # Original is 200 tics.
+      
+    # Step 4.
+    PlayDemo "cdemo2.cdm"
+    
+    # Step 5.
+    Set back "HELP1"
+    Wait 5.714 # 200 tics.
+      
+    # Step 6.
+    PlayDemo "cdemo3.cdm"
+      
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    Patch back 0 0 "HELP1"
+    Patch cursor 298 160 M_SKULL1
+
+    # Configure the animating cursor
+    Clranim cursor
+    Anim cursor M_SKULL1 0.223857
+    Anim cursor M_SKULL2 0.223857
+    Repeat cursor
+
+    Pause
+
+    Set back "CREDIT"
+    Pause
+  };
+}
+
+Finale
+{
+  After = "E1M5";
+  Script {
+    NoSkip
+    Music "victor"
+    Flat FLOOR4_8
+    Wait 0.5
+    TextDef msg 10 10 "E1TEXT"
+    WaitText msg
+    Wait 7 # The original TEXTWAIT is 250 tics.
+    
+    # Show credits.
+    NoFlat DelText msg
+    Patch back 0 0 CREDIT
+  };
+}

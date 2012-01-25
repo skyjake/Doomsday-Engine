@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -222,9 +222,7 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
  */
 void Cl_Frame2Received(int packetType)
 {
-    byte        /*set = Reader_ReadByte(msgReader),*/ deltaType;
-    //byte        resendAcks[300];
-    //int         i, numResendAcks = 0;
+    byte        deltaType;
     boolean     skip = false;
 #ifdef _NETDEBUG
     int         deltaCount = 0;
@@ -287,9 +285,11 @@ void Cl_Frame2Received(int packetType)
         {
             deltaType = Reader_ReadByte(msgReader);
             skip = false;
-
-            VERBOSE2( Con_Printf("Received delta %i.\n", deltaType & ~DT_RESENT) );
-
+/*
+#ifdef _DEBUG
+            Con_Message("Received delta %i.\n", deltaType);
+#endif
+*/
             switch(deltaType)
             {
             case DT_CREATE_MOBJ:
@@ -332,8 +332,8 @@ void Cl_Frame2Received(int packetType)
                 break;
 
             default:
-                Con_Error("Cl_Frame2Received: Unknown delta type %i.\n",
-                          deltaType);
+                Con_Error("Cl_Frame2Received: Unknown delta type %i (numtypes=%i; message size %i).\n",
+                          deltaType, NUM_DELTA_TYPES, netBuffer.length);
             }
         }
 
@@ -345,6 +345,6 @@ void Cl_Frame2Received(int packetType)
 #endif
 
         // We have now received a frame.
-        gotFrame = true;       
+        gotFrame = true;
     }
 }

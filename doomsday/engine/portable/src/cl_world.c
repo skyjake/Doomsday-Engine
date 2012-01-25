@@ -1,32 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * cl_world.c: Clientside World Management
+ * @file cl_world.c
+ * Clientside world management.
+ *
+ * @author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -35,19 +27,19 @@
 #include "de_network.h"
 #include "de_play.h"
 #include "de_refresh.h"
+#include "de_filesys.h"
+#include "de_defs.h"
+#include "de_misc.h"
 #include "dd_world.h"
 
 #include "r_util.h"
-
-// MACROS ------------------------------------------------------------------
+#include "materialarchive.h"
 
 #define MAX_MOVERS          1024 // Definitely enough!
 #define MAX_TRANSLATIONS    16384
 
 #define MVF_CEILING         0x1 // Move ceiling.
 #define MVF_SET_FLOORPIC    0x2 // Set floor texture when move done.
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct {
     thinker_t   thinker;
@@ -67,69 +59,121 @@ typedef struct {
     boolean     rotate;
 } polymover_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+typedef struct {
+    int size;
+    int* serverToLocal;
+} indextranstable_t;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void Cl_MoverThinker(mover_t *mover);
+void Cl_MoverThinker(mover_t* mover);
 void Cl_PolyMoverThinker(polymover_t* mover);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+static mover_t* activemovers[MAX_MOVERS];
+static polymover_t* activepolys[MAX_MOVERS];
+static MaterialArchive* serverMaterials;
+static indextranstable_t xlatMobjType;
+static indextranstable_t xlatMobjState;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static mover_t *activemovers[MAX_MOVERS];
-static polymover_t *activepolys[MAX_MOVERS];
-short *xlat_lump; // obsolete
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Allocates and inits the lump translation array. Clients use this
- * to make sure lump references are correct (in case the server and the
- * client are using different WAD configurations and the lump index
- * numbers happen to differ).
- *
- * \fixme A bit questionable? Why not allow the clients to download
- * data from the server in ambiguous cases?
- *
- * \note Only used by the obsolete cl_oldworld functions.
- */
-void Cl_InitTranslations(void)
+void Cl_ReadServerMaterials(void)
 {
-    int                 i;
-
-    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
-    memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
-    for(i = 0; i < numLumps; ++i)
-        xlat_lump[i] = i; // Identity translation.
-}
-
-void Cl_SetLumpTranslation(lumpnum_t lump, char *name)
-{
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
-        return; // Can't do it, sir! We just don't have the power!!
-
-    xlat_lump[lump] = W_CheckNumForName(name);
-    if(xlat_lump[lump] < 0)
+    if(!serverMaterials)
     {
-        VERBOSE(Con_Message("Cl_SetLumpTranslation: %s not found.\n", name));
-        xlat_lump[lump] = 0;
+        serverMaterials = MaterialArchive_NewEmpty(false /*no segment check*/);
     }
+    MaterialArchive_Read(serverMaterials, -1, msgReader);
+
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMaterials: Received %u materials.\n", (uint) MaterialArchive_Count(serverMaterials));
+#endif
 }
 
-/**
- * This is a fail-safe operation.
- */
-lumpnum_t Cl_TranslateLump(lumpnum_t lump)
+static void setTableSize(indextranstable_t* table, int size)
 {
-    if(lump < 0 || lump >= MAX_TRANSLATIONS)
+    if(size > 0)
+    {
+        table->serverToLocal = (int*) M_Realloc(table->serverToLocal,
+                                                sizeof(*table->serverToLocal) * size);
+    }
+    else
+    {
+        M_Free(table->serverToLocal);
+        table->serverToLocal = 0;
+    }
+    table->size = size;
+}
+
+void Cl_ReadServerMobjTypeIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjTypeIDs: Received %i mobj type IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjType, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjType.serverToLocal[i] = Def_GetMobjNum(StringArray_At(ar, i));
+        if(xlatMobjType.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local thing definitions.\n",
+                        StringArray_At(ar, i));
+        }
+    }
+
+    StringArray_Delete(ar);
+}
+
+void Cl_ReadServerMobjStateIDs(void)
+{
+    int i;
+    StringArray* ar = StringArray_New();
+    StringArray_Read(ar, msgReader);
+#ifdef _DEBUG
+    Con_Message("Cl_ReadServerMobjStateIDs: Received %i mobj state IDs.\n", StringArray_Size(ar));
+#endif
+
+    setTableSize(&xlatMobjState, StringArray_Size(ar));
+
+    // Translate the type IDs to local.
+    for(i = 0; i < StringArray_Size(ar); ++i)
+    {
+        xlatMobjState.serverToLocal[i] = Def_GetStateNum(StringArray_At(ar, i));
+        if(xlatMobjState.serverToLocal[i] < 0)
+        {
+            Con_Message("Could not find '%s' in local state definitions.\n",
+                        StringArray_At(ar, i));
+        }
+    }
+
+    StringArray_Delete(ar);
+}
+
+static material_t* Cl_FindLocalMaterial(materialarchive_serialid_t archId)
+{
+    if(!serverMaterials)
+    {
+        // Can't do it.
+        Con_Message("Cl_FindLocalMaterial: Cannot translate serial id %i, server has not sent its materials!\n", archId);
         return 0;
-    return xlat_lump[lump];
+    }
+    return MaterialArchive_Find(serverMaterials, archId, 0);
+}
+
+int Cl_LocalMobjType(int serverMobjType)
+{
+    if(serverMobjType < 0 || serverMobjType >= xlatMobjType.size)
+        return 0; // Invalid type.
+    return xlatMobjType.serverToLocal[serverMobjType];
+}
+
+int Cl_LocalMobjState(int serverMobjState)
+{
+    if(serverMobjState < 0 || serverMobjState >= xlatMobjState.size)
+        return 0; // Invalid state.
+    return xlatMobjState.serverToLocal[serverMobjState];
 }
 
 static boolean Cl_IsMoverValid(int i)
@@ -147,10 +191,42 @@ static boolean Cl_IsPolyValid(int i)
 /**
  * Clears the arrays that track active plane and polyobj mover thinkers.
  */
-void Cl_InitMovers(void)
+void Cl_WorldInit(void)
 {
     memset(activemovers, 0, sizeof(activemovers));
     memset(activepolys, 0, sizeof(activepolys));
+    serverMaterials = 0;
+    memset(&xlatMobjType, 0, sizeof(xlatMobjType));
+    memset(&xlatMobjState, 0, sizeof(xlatMobjState));
+}
+
+/**
+ * Removes all the active movers.
+ */
+void Cl_WorldReset(void)
+{
+    int i;
+
+    if(serverMaterials)
+    {
+        MaterialArchive_Delete(serverMaterials);
+        serverMaterials = 0;
+    }
+
+    setTableSize(&xlatMobjType, 0);
+    setTableSize(&xlatMobjState, 0);
+
+    for(i = 0; i < MAX_MOVERS; ++i)
+    {
+        if(Cl_IsMoverValid(i))
+        {
+            P_ThinkerRemove(&activemovers[i]->thinker);
+        }
+        if(Cl_IsPolyValid(i))
+        {
+            P_ThinkerRemove(&activepolys[i]->thinker);
+        }
+    }
 }
 
 void Cl_RemoveActiveMover(mover_t *mover)
@@ -454,26 +530,6 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
         mover->rotate = true;
 }
 
-/**
- * Removes all the active movers.
- */
-void Cl_RemoveMovers(void)
-{
-    int                 i;
-
-    for(i = 0; i < MAX_MOVERS; ++i)
-    {
-        if(Cl_IsMoverValid(i))
-        {
-            P_ThinkerRemove(&activemovers[i]->thinker);
-        }
-        if(Cl_IsPolyValid(i))
-        {
-            P_ThinkerRemove(&activepolys[i]->thinker);
-        }
-    }
-}
-
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
     int                 i;
@@ -486,29 +542,6 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
             return activemovers[i];
         }
     return NULL;
-}
-
-/**
- * @return              @c false, if the end marker is found (lump
- *                      index zero).
- */
-int Cl_ReadLumpDelta(void)
-{
-    lumpnum_t           num = (lumpnum_t) Reader_ReadPackedUInt16(msgReader);
-    char                name[9];
-
-    if(!num)
-        return false; // No more.
-
-    // Read the name of the lump.
-    memset(name, 0, sizeof(name));
-    Reader_Read(msgReader, name, 8);
-
-    VERBOSE(Con_Printf("LumpTranslate: %i => %s\n", num, name));
-
-    // Set up translation.
-    Cl_SetLumpTranslation(num, name);
-    return true;
 }
 
 /**
@@ -557,17 +590,15 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec = &dummy;
     }
 
-    /// @todo What if client and server materialnums differ?
-
     if(df & SDF_FLOOR_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_FLOOR_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        material_t* mat = P_ToMaterial(Reader_ReadPackedUInt16(msgReader));
-        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL, mat);
+        P_SetPtrp(sec, DMU_CEILING_OF_SECTOR | DMU_MATERIAL,
+                  Cl_FindLocalMaterial(Reader_ReadPackedUInt16(msgReader)));
     }
 
     if(df & SDF_LIGHT)
@@ -594,18 +625,18 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
         sec->rgb[2] = Reader_ReadByte(msgReader) / 255.f;
 
     if(df & SDF_FLOOR_COLOR_RED)
-        Surface_SetColorR(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_FLOOR_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_floorsurface, Reader_ReadByte(msgReader) / 255.f);
 
     if(df & SDF_CEIL_COLOR_RED)
-        Surface_SetColorR(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorRed(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_GREEN)
-        Surface_SetColorG(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorGreen(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
     if(df & SDF_CEIL_COLOR_BLUE)
-        Surface_SetColorB(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
+        Surface_SetColorBlue(&sec->SP_ceilsurface, Reader_ReadByte(msgReader) / 255.f);
 
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
@@ -649,15 +680,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
     num = Reader_ReadUInt16(msgReader);
 
     // Flags.
-    /*if(deltaType == DT_SIDE_R6)
-    {
-        // The R6 protocol reserves a single byte for a side delta.
-        df = Reader_ReadByte(msgReader);
-    }
-    else*/
-    {
-        df = Reader_ReadPackedUInt32(msgReader);
-    }
+    df = Reader_ReadPackedUInt32(msgReader);
 
     if(df & SIDF_TOP_MATERIAL)
         topMat = Reader_ReadPackedUInt16(msgReader);
@@ -702,68 +725,50 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numSideDefs)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
-}
+    if(num >= numSideDefs)
+    {
+        // This is worrisome.
+        Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);
+    }
 #endif
 
     sid = SIDE_PTR(num);
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(topMat);
-        Surface_SetMaterial(&sid->SW_topsurface, mat);
+        Surface_SetMaterial(&sid->SW_topsurface, Cl_FindLocalMaterial(topMat));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(midMat);
-        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+        Surface_SetMaterial(&sid->SW_middlesurface, Cl_FindLocalMaterial(midMat));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t*         mat;
-        /**
-         * The delta is a server-side materialnum.
-         * \fixme What if client and server materialnums differ?
-         */
-        mat = P_ToMaterial(botMat);
-        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+        Surface_SetMaterial(&sid->SW_bottomsurface, Cl_FindLocalMaterial(botMat));
     }
 
     if(df & SIDF_TOP_COLOR_RED)
-        Surface_SetColorR(&sid->SW_topsurface, toprgb[CR]);
+        Surface_SetColorRed(&sid->SW_topsurface, toprgb[CR]);
     if(df & SIDF_TOP_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_topsurface, toprgb[CG]);
+        Surface_SetColorGreen(&sid->SW_topsurface, toprgb[CG]);
     if(df & SIDF_TOP_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_topsurface, toprgb[CB]);
+        Surface_SetColorBlue(&sid->SW_topsurface, toprgb[CB]);
 
     if(df & SIDF_MID_COLOR_RED)
-        Surface_SetColorR(&sid->SW_middlesurface, midrgba[CR]);
+        Surface_SetColorRed(&sid->SW_middlesurface, midrgba[CR]);
     if(df & SIDF_MID_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_middlesurface, midrgba[CG]);
+        Surface_SetColorGreen(&sid->SW_middlesurface, midrgba[CG]);
     if(df & SIDF_MID_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_middlesurface, midrgba[CB]);
+        Surface_SetColorBlue(&sid->SW_middlesurface, midrgba[CB]);
     if(df & SIDF_MID_COLOR_ALPHA)
-        Surface_SetColorA(&sid->SW_middlesurface, midrgba[CA]);
+        Surface_SetAlpha(&sid->SW_middlesurface, midrgba[CA]);
 
     if(df & SIDF_BOTTOM_COLOR_RED)
-        Surface_SetColorR(&sid->SW_bottomsurface, bottomrgb[CR]);
+        Surface_SetColorRed(&sid->SW_bottomsurface, bottomrgb[CR]);
     if(df & SIDF_BOTTOM_COLOR_GREEN)
-        Surface_SetColorG(&sid->SW_bottomsurface, bottomrgb[CG]);
+        Surface_SetColorGreen(&sid->SW_bottomsurface, bottomrgb[CG]);
     if(df & SIDF_BOTTOM_COLOR_BLUE)
-        Surface_SetColorB(&sid->SW_bottomsurface, bottomrgb[CB]);
+        Surface_SetColorBlue(&sid->SW_bottomsurface, bottomrgb[CB]);
 
     if(df & SIDF_MID_BLENDMODE)
         Surface_SetBlendMode(&sid->SW_middlesurface, blendmode);
@@ -778,7 +783,6 @@ if(num >= numSideDefs)
     if(df & SIDF_LINE_FLAGS)
     {
         linedef_t *line = R_GetLineForSide(num);
-
         if(line)
         {
             // The delta includes the entire lowest byte.

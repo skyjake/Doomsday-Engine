@@ -1,55 +1,41 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * m_linkedlist.c: A pretty simple linked list implementation.
+ * @file m_linkedlist.c
+ * Linked list. @ingroup base
+
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * Supports single, double and ring lists.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
+#include "m_linkedlist.h"
 
 #include <string.h>
 #include <stdlib.h>
 
 #ifndef NDEBUG
-#include <stdio.h> // For debug message output.
+#  include <stdio.h> // For debug message output.
 #endif
 
-#include "m_linkedlist.h"
-
-// MACROS ------------------------------------------------------------------
-
 #define COMPARETYPERELATIVE(type) \
-    ((*(type *)a < *(type *)b) - (*(type *)a > *(type *)b))
+    ((*(type*)a < *(type*)b) - (*(type*)a > *(type*)b))
 
 #define COMPAREFUNCTYPERELATIVE(name, type) \
-    COMPAREFUNC(name) \
-    { \
+    COMPAREFUNC(name) { \
         return COMPARETYPERELATIVE(type); \
     }
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct listnode_s {
     struct listnode_s *next, *prev;
@@ -62,7 +48,7 @@ typedef struct liststate_s {
     int         lastError;
 } liststate_t;
 
-typedef struct linkedlist_s {
+struct linklist_s {
     // List state:
     liststate_t *state;
 
@@ -72,21 +58,7 @@ typedef struct linkedlist_s {
 
     // Misc:
     comparefunc funcCompare;
-} list_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
+};
 
 static __inline listnode_t *allocNode(void)
 {
@@ -98,7 +70,7 @@ static __inline void freeNode(listnode_t *node)
     free(node);
 }
 
-static __inline listnode_t *newNode(list_t *list)
+static __inline listnode_t *newNode(LinkList *list)
 {
     listnode_t *n;
 
@@ -123,7 +95,7 @@ static __inline listnode_t *newNode(list_t *list)
     return n;
 }
 
-static __inline void moveNodeForReuse(list_t *list, listnode_t *node)
+static __inline void moveNodeForReuse(LinkList *list, listnode_t *node)
 {
     if(list->unused != NULL)
         node->next = list->unused;
@@ -134,7 +106,7 @@ static __inline void moveNodeForReuse(list_t *list, listnode_t *node)
     list->unused = node;
 }
 
-static __inline void insertNodeAfter(list_t *list, listnode_t *node,
+static __inline void insertNodeAfter(LinkList *list, listnode_t *node,
                                      listnode_t *newnode)
 {
     newnode->prev = node;
@@ -151,7 +123,7 @@ static __inline void insertNodeAfter(list_t *list, listnode_t *node,
     node->next = newnode;
 }
 
-static __inline void insertNodeBefore(list_t *list, listnode_t *node,
+static __inline void insertNodeBefore(LinkList *list, listnode_t *node,
                                       listnode_t *newnode)
 {
     newnode->prev = node->prev;
@@ -168,7 +140,7 @@ static __inline void insertNodeBefore(list_t *list, listnode_t *node,
     node->prev = newnode;
 }
 
-static __inline void insertNodeAtStart(list_t *list, listnode_t *newnode)
+static __inline void insertNodeAtStart(LinkList *list, listnode_t *newnode)
 {
     if(list->headptr == NULL)
     {
@@ -182,7 +154,7 @@ static __inline void insertNodeAtStart(list_t *list, listnode_t *newnode)
         insertNodeBefore(list, list->headptr, newnode);
 }
 
-static __inline void insertNodeAtEnd(list_t *list, listnode_t *newnode)
+static __inline void insertNodeAtEnd(LinkList *list, listnode_t *newnode)
 {
     if(list->tailptr == NULL)
     {
@@ -196,7 +168,7 @@ static __inline void insertNodeAtEnd(list_t *list, listnode_t *newnode)
         insertNodeAfter(list, list->tailptr, newnode);
 }
 
-static __inline void removeNode(list_t *list, listnode_t *node)
+static __inline void removeNode(LinkList *list, listnode_t *node)
 {
     if(list->state->flags & LCF_CIRCULAR)
     {
@@ -230,7 +202,7 @@ static __inline void removeNode(list_t *list, listnode_t *node)
     moveNodeForReuse(list, node);
 }
 
-static listindex_t findByData(const list_t *list, const void *data)
+static listindex_t findByData(const LinkList *list, const void *data)
 {
     if(list->state->numElements > 0)
     {
@@ -263,7 +235,7 @@ static listindex_t findByData(const list_t *list, const void *data)
     return -1;
 }
 
-static listnode_t *findAtPosition(const list_t *list, listindex_t position)
+static listnode_t *findAtPosition(const LinkList *list, listindex_t position)
 {
     if(list->state->numElements > 0)
     {
@@ -314,7 +286,7 @@ static listnode_t *findAtPosition(const list_t *list, listindex_t position)
     return NULL;
 }
 
-static __inline void* getAt(const list_t *list, listindex_t position)
+static __inline void* getAt(const LinkList *list, listindex_t position)
 {
     void       *data = NULL;
     listnode_t *n;
@@ -327,7 +299,7 @@ static __inline void* getAt(const list_t *list, listindex_t position)
     return data;
 }
 
-static __inline void* extractAt(list_t *list, listindex_t position)
+static __inline void* extractAt(LinkList *list, listindex_t position)
 {
     void       *data = NULL;
     listnode_t *n;
@@ -342,7 +314,7 @@ static __inline void* extractAt(list_t *list, listindex_t position)
     return data;
 }
 
-static __inline int exchangeElements(list_t *list, listindex_t positionA,
+static __inline int exchangeElements(LinkList *list, listindex_t positionA,
                                      listindex_t positionB)
 {
     listnode_t *a, *b;
@@ -362,7 +334,7 @@ static __inline int exchangeElements(list_t *list, listindex_t positionA,
     return 1; // Success!
 }
 
-static __inline void clear(list_t *list)
+static __inline void clear(LinkList *list)
 {
     if(list->state->numElements > 0)
     {
@@ -382,7 +354,7 @@ static __inline void clear(list_t *list)
     }
 }
 
-static __inline void clearUnused(list_t *list)
+static __inline void clearUnused(LinkList *list)
 {
     listnode_t *n, *np;
 
@@ -479,7 +451,7 @@ static listnode_t *doMergeSort(listnode_t *list, comparefunc funcCompare)
     return list;
 }
 
-static void mergeSort(list_t *list)
+static void mergeSort(LinkList *list)
 {
     if(list->state->numElements > 1)
     {
@@ -519,9 +491,9 @@ static void mergeSort(list_t *list)
     }
 }
 
-static linklist_t *createList(int flags, comparefunc cFunc)
+static LinkList *createList(int flags, comparefunc cFunc)
 {
-    list_t *list = malloc(sizeof(list_t));
+    LinkList *list = malloc(sizeof(LinkList));
     liststate_t *state = malloc(sizeof(liststate_t));
 
     list->headptr = list->tailptr = NULL;
@@ -533,7 +505,7 @@ static linklist_t *createList(int flags, comparefunc cFunc)
     list->state->flags = flags;
     list->state->lastError = LL_NO_ERROR;
 
-    return (linklist_t*) list;
+    return (LinkList*) list;
 }
 
 /**
@@ -541,7 +513,7 @@ static linklist_t *createList(int flags, comparefunc cFunc)
  *
  * @return          Ptr to the newly created list.
  */
-linklist_t *List_Create(void)
+LinkList *List_New(void)
 {
     return createList(0, compareAddress);
 }
@@ -557,7 +529,7 @@ linklist_t *List_Create(void)
  *                  address) will be set.
  * @return          Ptr to the newly created list.
  */
-linklist_t *List_Create2(int flags, comparefunc cFunc)
+LinkList *List_NewWithCompareFunc(int flags, comparefunc cFunc)
 {
     return createList(flags, (!cFunc? compareAddress : cFunc));
 }
@@ -567,18 +539,15 @@ linklist_t *List_Create2(int flags, comparefunc cFunc)
  *
  * @param llist     Ptr to the list to be destroyed.
  */
-void List_Destroy(linklist_t *llist)
+void List_Destroy(LinkList *list)
 {
-    if(llist)
+    if(list)
     {
-        list_t     *list = (list_t*) llist;
-
         clear(list);
         clearUnused(list);
 
         free(list->state);
         free(list);
-        return;
     }
 }
 
@@ -589,11 +558,11 @@ void List_Destroy(linklist_t *llist)
  * @param data      Ptr to the element being added.
  * @return          Non-zero, iff successfull.
  */
-int List_InsertFront(linklist_t *llist, const void *data)
+int List_InsertFront(LinkList *llist, const void *data)
 {
     if(llist)
     {
-        list_t     *list = (list_t*) llist;
+        LinkList     *list = (LinkList*) llist;
         listnode_t *n;
 
         n = newNode(list);
@@ -615,11 +584,11 @@ int List_InsertFront(linklist_t *llist, const void *data)
  * @param data      Ptr to the element being added.
  * @return          Non-zero iff successfull.
  */
-int List_InsertBack(linklist_t *llist, const void *data)
+int List_InsertBack(LinkList *llist, const void *data)
 {
     if(llist)
     {
-        list_t     *list = (list_t*) llist;
+        LinkList     *list = (LinkList*) llist;
         listnode_t *n;
 
         n = newNode(list);
@@ -641,11 +610,11 @@ int List_InsertBack(linklist_t *llist, const void *data)
  * @return          Ptr to the extracted element if found and removed
  *                  successfully.
  */
-void *List_ExtractFront(linklist_t *llist)
+void *List_ExtractFront(LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return extractAt(list, 0);
     }
 
@@ -659,11 +628,11 @@ void *List_ExtractFront(linklist_t *llist)
  * @return          Ptr to the extracted element if found and removed
  *                  successfully.
  */
-void *List_ExtractBack(linklist_t *llist)
+void *List_ExtractBack(LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return extractAt(list, list->state->numElements - 1);
     }
 
@@ -679,11 +648,11 @@ void *List_ExtractBack(linklist_t *llist)
  * @return          Ptr to the extracted element if found and removed
  *                  successfully.
  */
-void *List_ExtractAt(linklist_t *llist, listindex_t position)
+void *List_ExtractAt(LinkList *llist, listindex_t position)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return extractAt(list, position);
     }
 
@@ -696,11 +665,11 @@ void *List_ExtractAt(linklist_t *llist, listindex_t position)
  * @param llist     Ptr to the list to retrieve the element from.
  * @return          @c true, iff an element was found at front of the list.
  */
-void *List_GetFront(const linklist_t *llist)
+void *List_GetFront(const LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return getAt(list, 0);
     }
 
@@ -713,11 +682,11 @@ void *List_GetFront(const linklist_t *llist)
  * @param llist     Ptr to the list to retrieve the element from.
  * @return          @c true, iff an element was found at back of the list.
  */
-void *List_GetBack(const linklist_t *llist)
+void *List_GetBack(const LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return getAt(list, list->state->numElements - 1);
     }
 
@@ -732,11 +701,11 @@ void *List_GetBack(const linklist_t *llist)
  * @param position  Position of the element to be retrieved.
  * @return          Ptr to the element if found at the given position.
  */
-void *List_GetAt(const linklist_t *llist, listindex_t position)
+void *List_GetAt(const LinkList *llist, listindex_t position)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return getAt(list, position);
     }
 
@@ -752,12 +721,12 @@ void *List_GetAt(const linklist_t *llist, listindex_t position)
  * @param positionB Position of the send element being exchanged.
  * @return          Non-zero if successfull.
  */
-int List_Exchange(linklist_t *llist, listindex_t positionA,
+int List_Exchange(LinkList *llist, listindex_t positionA,
                   listindex_t positionB)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return exchangeElements(list, positionA, positionB);
     }
 
@@ -771,11 +740,11 @@ int List_Exchange(linklist_t *llist, listindex_t positionA,
  * @param llist     Ptr to the list to be searched.
  * @return          Index of the element in the list if found, else @c <0.
  */
-listindex_t List_Find(const linklist_t *llist, const void *data)
+listindex_t List_Find(const LinkList *llist, const void *data)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return findByData(list, data);
     }
 
@@ -792,11 +761,11 @@ listindex_t List_Find(const linklist_t *llist, const void *data)
  *
  * @param llist     Ptr to the list to be sorted.
  */
-void List_Sort(linklist_t *llist)
+void List_Sort(LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         mergeSort(list);
         return;
     }
@@ -808,11 +777,11 @@ void List_Sort(linklist_t *llist)
  *
  * @param llist     Ptr to the list to be cleared.
  */
-void List_Clear(linklist_t *llist)
+void List_Clear(LinkList *llist)
 {
     if(llist)
     {
-        clear((list_t*) llist);
+        clear((LinkList*) llist);
         return;
     }
 }
@@ -824,11 +793,11 @@ void List_Clear(linklist_t *llist)
  * @return          @c >= 0, Number of elements in the list else,
  *                  @c <0, if error.
  */
-listindex_t List_Count(const linklist_t *llist)
+listindex_t List_Count(const LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return list->state->numElements;
     }
 
@@ -842,11 +811,11 @@ listindex_t List_Count(const linklist_t *llist)
  * @param func      Ptr to the compare func to use. Note: If @ NULL, the
  *                  default compareAddress will be assigned.
  */
-void List_SetCompareFunc(linklist_t *llist, comparefunc func)
+void List_SetCompareFunc(LinkList *llist, comparefunc func)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         if(!func)
             list->funcCompare = compareAddress;
         else
@@ -870,12 +839,12 @@ void List_SetCompareFunc(linklist_t *llist, comparefunc func)
  *                  @c >0, iff every callback returns non-zero else,
  *                  @c == 0, if iteration was ended by the callback.
  */
-int List_Iterate(const linklist_t *llist, int iterateFlags, void *data,
+int List_Iterate(const LinkList *llist, int iterateFlags, void *data,
                  int (*callback) (void *element, void *data))
 {
     if(llist)
     {
-        list_t     *list = (list_t*) llist;
+        LinkList     *list = (LinkList*) llist;
         int         retVal = 1;
 
         if(list->state->numElements > 0)
@@ -918,11 +887,11 @@ int List_Iterate(const linklist_t *llist, int iterateFlags, void *data,
  * @param llist     Ptr to the list to process.
  * @return          Last error reported by the list.
  */
-int List_GetError(const linklist_t *llist)
+int List_GetError(const LinkList *llist)
 {
     if(llist)
     {
-        list_t *list = (list_t*) llist;
+        LinkList *list = (LinkList*) llist;
         return list->state->lastError;
     }
 
@@ -970,7 +939,7 @@ int printInt(void *element, void *data)
     return 1; // Continue iteration.
 }
 
-static int checkError(linklist_t *list)
+static int checkError(LinkList *list)
 {
     int         error;
 
@@ -981,15 +950,15 @@ static int checkError(linklist_t *list)
 
 static void testList(int cFlags)
 {
-    linklist_t *list;
+    LinkList *list;
     int         *data, i, count;
     int         integers[10] =
         {2456, 12, 76889, 45, 2, 0, -45, 680, -4005, 89};
 
     if(cFlags < 0)
-        list = List_Create();
+        list = List_New();
     else
-        list = List_Create2(cFlags, NULL);
+        list = List_NewWithCompareFunc(cFlags, NULL);
     checkError(list);
 
     if(List_Count(list) != 0)

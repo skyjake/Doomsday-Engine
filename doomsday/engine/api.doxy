@@ -1,0 +1,13 @@
+# Public API documentation for libdeng
+@INCLUDE = ../doomsday.doxy
+
+PROJECT_NAME            = "libdeng"
+PROJECT_NUMBER          = 1.9.7
+PROJECT_BRIEF           = "Public API"
+OUTPUT_DIRECTORY        = ../apidoc/api/
+
+INPUT                   = api 
+PREDEFINED              = __DOOMSDAY__
+
+INCLUDED_BY_GRAPH       = YES
+REFERENCED_BY_RELATION  = NO

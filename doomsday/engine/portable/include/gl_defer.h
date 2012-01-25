@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_defer.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,67 +23,44 @@
  */
 
 /**
- * gl_defer.h: Deferred GL Tasks
+ * Deferred GL Tasks.
  */
 
-#ifndef __DOOMSDAY_GRAPHICS_DEREF_H__
-#define __DOOMSDAY_GRAPHICS_DEREF_H__
+#ifndef LIBDENG_GL_DEFERRED_H
+#define LIBDENG_GL_DEFERRED_H
+
+typedef enum {
+    DEFERREDTASK_TYPES_FIRST = 0,
+    DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
+    DEFERREDTASK_TYPES_COUNT
+} deferredtask_type_t;
+
+#define VALID_DEFERREDTASK_TYPE(t)      ((t) >= DEFERREDTASK_TYPES_FIRST || (t) < DEFERREDTASK_TYPES_COUNT)
+
+/// Initialize this module.
+void GL_InitDeferredTask(void);
+
+/// Shutdown this module.
+void GL_ShutdownDeferredTask(void);
+
+/// @return  Number of waiting tasks else @c 0
+int GL_DeferredTaskCount(void);
 
 /**
- * Defines the content of a GL texture. Used when creating textures either
- * immediately or in deferred mode (when busy).
+ * @param timeOutMilliSeconds  Zero for no timeout.
  */
-typedef struct texturecontent_s {
-    DGLuint         name;
-    void*           buffer;
-    //size_t          bufferSize;
-    dgltexformat_t  format;
-    colorpaletteid_t palette;
-    int             width;
-    int             height;
-    int             minFilter;
-    int             magFilter;
-    int             anisoFilter;
-    int             wrap[2];
-    int             grayMipmap;
-    int             flags;
-} texturecontent_t;
+void GL_ProcessDeferredTasks(uint timeOutMilliSeconds);
 
-// Flags for texture content.
-#define TXCF_NO_COMPRESSION             0x1
-#define TXCF_MIPMAP                     0x2
-#define TXCF_GRAY_MIPMAP                0x4
-#define TXCF_CONVERT_8BIT_TO_ALPHA      0x8
-#define TXCF_APPLY_GAMMACORRECTION      0x10
-#define TXCF_EASY_UPLOAD                0x20
-#define TXCF_UPLOAD_ARG_ALPHACHANNEL    0x40
-#define TXCF_UPLOAD_ARG_RGBDATA         0x80
-#define TXCF_UPLOAD_ARG_NOSTRETCH       0x100
-#define TXCF_UPLOAD_ARG_NOSMARTFILTER   0x200
-#define TXCF_NEVER_DEFER                0x400
-#define TXCF_GRAY_MIPMAP_LEVEL_SHIFT    24
-#define TXCF_GRAY_MIPMAP_LEVEL_MASK     0xff000000
+void GL_PurgeDeferredTasks(void);
 
-void            GL_InitDeferred(void);
-void            GL_ShutdownDeferred(void);
-void            GL_UploadDeferredContent(uint timeOutMilliSeconds);
-int             GL_GetDeferredCount(void);
-void            GL_InitTextureContent(texturecontent_t* content);
-DGLuint         GL_NewTexture(texturecontent_t* content, boolean* result);
-DGLuint         GL_NewTextureWithParams(dgltexformat_t format, int width,
-                                        int height, const void* pixels,
-                                        int flags);
-DGLuint         GL_NewTextureWithParams2(dgltexformat_t format, int width,
-                                         int height, const void* pixels,
-                                         int flags, int minFilter,
-                                         int magFilter, int anisoFilter,
-                                         int wrapS, int wrapT);
-DGLuint         GL_NewTextureWithParams3(dgltexformat_t format, int width,
-                                         int height, const void* pixels,
-                                         int flags, int minFilter,
-                                         int magFilter, int anisoFilter,
-                                         int wrapS, int wrapT);
-/// \todo should these be public?
-void            GL_ReserveNames(void);
-void            GL_ReleaseReservedNames(void);
-#endif
+/**
+ * @param type  Type of task to add.
+ * @param data  Caller-supplied additional data ptr, linked with the task.
+ */
+void GL_EnqueueDeferredTask(deferredtask_type_t type, void* data);
+
+DGLuint GL_GetReservedTextureName(void);
+void GL_ReserveNames(void);
+void GL_ReleaseReservedNames(void);
+
+#endif /* LIBDENG_GL_DEFERRED_H */

@@ -2,13 +2,20 @@
 # Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
 #
-# Do not modify this file. Custom options can be specified on the qmake
-# command line or in config_user.pri.
+# Do not modify this file. Custom CONFIG options can be specified on the 
+# qmake command line or in config_user.pri.
+#
+# NOTE: The PREFIX option should always be specified on the qmake command
+#       line, as it is checked before config_user.pri is read.
 #
 # CONFIG options for Doomsday:
-# - deng_aptunstable        Include the unstable apt repository
+# - deng_32bitonly          Only do a 32-bit build (no 64-bit)
+# - deng_aptstable          Include the stable apt repository .list
+# - deng_aptunstable        Include the unstable apt repository .list
+# - deng_fmod               Build the FMOD Ex sound driver
 # - deng_nativesdk          (Mac OS X) Use the current OS's SDK
 # - deng_nofixedasm         Disable assembler fixed-point math
+# - deng_nosdlmixer         Disable SDL_mixer; use dummy driver as default
 # - deng_openal             Build the OpenAL sound driver
 # - deng_nopackres          Do not package the Doomsday resources
 # - deng_rangecheck         Parameter range checking/value assertions
@@ -76,11 +83,11 @@ defineTest(doPostLink) {
 
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
-    echo(Debug build.)
+    !win32: echo(Debug build.)
     DEFINES += _DEBUG
     CONFIG += deng_debug deng_rangecheck
 } else {
-    echo(Release build.)
+    !win32: echo(Release build.)
     DEFINES += NDEBUG
 }
 
@@ -114,13 +121,15 @@ unix {
     # Ease up on the warnings. (The old C code is a bit messy.)
     QMAKE_CFLAGS_WARN_ON -= -Wall
     QMAKE_CFLAGS_WARN_ON -= -W
+    QMAKE_CFLAGS_WARN_ON += -Werror-implicit-function-declaration
 }
 unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm deng_snowberry
 
     # Choose the apt repository to include in the distribution.
-    CONFIG += deng_aptunstable
+    isStableRelease(): CONFIG += deng_aptstable        
+                 else: CONFIG += deng_aptunstable
 
     # Link against standard math library.
     LIBS += -lm
@@ -161,6 +170,9 @@ macx {
 
     DEFINES += MACOSX
 
+    # Print include directories and other info.
+    #QMAKE_CFLAGS += -Wp,-v
+
     QMAKE_LFLAGS += -flat_namespace -undefined suppress
 }
 
@@ -169,13 +181,16 @@ exists(config_user.pri) {
     include(config_user.pri)
 }
 
-# Apply Configuration --------------------------------------------------------
+# Apply deng_* Configuration -------------------------------------------------
 
 deng_nofixedasm {
     DEFINES += NO_FIXED_ASM
 }
 !deng_rangecheck {
     DEFINES += NORANGECHECKING
+}
+deng_nosdlmixer {
+    DEFINES += DENG_DISABLE_SDLMIXER
 }
 macx {
     # Select OS version.
@@ -185,10 +200,20 @@ macx {
         CONFIG += x86 x86_64
     }
     else:deng_snowleopard {
-        echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
-        QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        CONFIG += x86 x86_64
+        deng_32bitonly {
+            echo("Using Mac OS 10.6 SDK (32-bit Intel).")
+            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+            CONFIG += x86
+            QMAKE_CFLAGS_X86_64 = ""
+            QMAKE_OBJECTIVE_CFLAGS_X86_64 = ""
+            QMAKE_LFLAGS_X86_64 = ""
+        } else {
+            echo("Using Mac OS 10.6 SDK (32/64-bit Intel).")
+            QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+            QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+            CONFIG += x86 x86_64
+        }
     }
     else {
         echo("Using Mac OS 10.4 SDK (32-bit Intel + PowerPC).")

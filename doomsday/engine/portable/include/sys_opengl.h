@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_opengl.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,14 @@
  */
 
 /**
- * sys_opengl.h: OpenGL interface, low-level.
+ * OpenGL interface, low-level.
+ *
+ * Get OpenGL header files from:
+ * http://oss.sgi.com/projects/ogl-sample/
  */
 
-#ifndef __DOOMSDAY_SYSTEM_OPENGL_H__
-#define __DOOMSDAY_SYSTEM_OPENGL_H__
+#ifndef LIBDENG_SYSTEM_OPENGL_H
+#define LIBDENG_SYSTEM_OPENGL_H
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -48,18 +51,66 @@
 #    include <SDL.h>
 #    include <SDL_opengl.h>
 #  endif
-
-#  define wglGetProcAddress SDL_GL_GetProcAddress
 #endif
 
 #include <string.h>
 
-#define USE_MULTITEXTURE    1
-#define MAX_TEX_UNITS       2      // More won't be used.
+#include "sys_window.h"
 
-// A helpful macro that changes the origin of the screen
-// coordinate system.
-#define FLIP(y) (theWindow->height - (y+1))
+/**
+ * Configure available features
+ * \todo Move out of this header.
+ */
+#define USE_TEXTURE_COMPRESSION_S3      1
+
+/**
+ * High-level GL state information.
+ */
+typedef struct gl_state_s {
+    /// Global config:
+    boolean forceFinishBeforeSwap;
+    int maxTexFilterAniso;
+    int maxTexSize; // Pixels.
+    int maxTexUnits;
+    int multisampleFormat;
+
+    /// Current state:
+    boolean currentUseFog;
+    float currentLineWidth;
+    float currentPointSize;
+
+    /// Feature (abstract) availability bits:
+    /// Vendor and implementation agnostic.
+    struct {
+        uint blendSubtract : 1;
+        uint elementArrays : 1;
+        uint genMipmap : 1;
+        uint multisample : 1;
+        uint texCompression : 1;
+        uint texFilterAniso : 1;
+        uint texNonPowTwo : 1;
+        uint vsync : 1;
+    } features;
+
+    /// Extension availability bits:
+    struct {
+        uint blendSub : 1;
+        uint genMipmapSGIS : 1;
+        uint lockArray : 1;
+#ifdef USE_TEXTURE_COMPRESSION_S3
+        uint texCompressionS3 : 1;
+#endif
+        uint texEnvComb : 1;
+        uint texEnvCombNV : 1;
+        uint texEnvCombATI : 1;
+        uint texFilterAniso : 1;
+        uint texNonPowTwo : 1;
+#if WIN32
+        uint wglMultisampleARB : 1;
+        uint wglSwapIntervalEXT : 1;
+#endif
+    } extensions;
+} gl_state_t;
 
 typedef enum arraytype_e {
     AR_VERTEX,
@@ -74,69 +125,19 @@ typedef enum arraytype_e {
     AR_TEXCOORD7
 } arraytype_t;
 
-typedef struct gl_state_s {
-    int         maxTexSize;
-    int         palExtAvailable;
-    boolean     allowCompression;
-    boolean     noArrays;
-    boolean     forceFinishBeforeSwap;
-    int         useAnisotropic;
-    boolean     useVSync;
-    int         maxAniso;
-    int         maxTexUnits;
-    boolean     useFog;
-    float       nearClip, farClip;
-    float       currentLineWidth, currentPointSize;
-    int         textureNonPow2;
-#if WIN32
-    int         multisampleFormat;
-#endif
-} gl_state_t;
-
-typedef struct rgba_s {
-    unsigned char color[4];
-} rgba_t;
-
-typedef struct gl_state_texture_s {
-    boolean  usePalTex, dumpTextures, useCompr;
-    float    grayMipmapFactor;
-} gl_state_texture_t;
-
-typedef struct gl_state_ext_s {
-    int         multiTex;
-    int         texEnvComb;
-    int         nvTexEnvComb;
-    int         atiTexEnvComb;
-    int         aniso;
-    int         genMip;
-    int         blendSub;
-    int         s3TC;
-    int         lockArray;
-#if WIN32
-    int         wglSwapIntervalEXT;
-    int         wglMultisampleARB;
-#endif
-} gl_state_ext_t;
-
-extern int polyCounter;
-
 extern gl_state_t GL_state;
-extern gl_state_texture_t GL_state_texture;
-extern gl_state_ext_t GL_state_ext;
 
 #ifdef WIN32
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
-extern PFNGLCLIENTACTIVETEXTUREARBPROC glClientActiveTextureARB;
-extern PFNGLACTIVETEXTUREARBPROC glActiveTextureARB;
-extern PFNGLMULTITEXCOORD2FARBPROC glMultiTexCoord2fARB;
-extern PFNGLMULTITEXCOORD2FVARBPROC glMultiTexCoord2fvARB;
 extern PFNGLBLENDEQUATIONEXTPROC glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT;
-extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
-extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
+extern PFNGLCLIENTACTIVETEXTUREPROC glClientActiveTexture;
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
+extern PFNGLMULTITEXCOORD2FPROC glMultiTexCoord2f;
+extern PFNGLMULTITEXCOORD2FVPROC glMultiTexCoord2fv;
 #endif
 
 #ifndef GL_ATI_texture_env_combine3
@@ -149,15 +150,30 @@ extern PFNGLCOLORTABLEEXTPROC glColorTableEXT;
 #define GL_ATI_texture_env_combine3     1
 #endif
 
-boolean         Sys_PreInitGL(void);
-boolean         Sys_InitGL(void);
-void            Sys_ShutdownGL(void);
-void            Sys_InitGLState(void);
-void            Sys_InitGLExtensions(void);
-#ifdef WIN32
-void            Sys_InitWGLExtensions(void);
-#endif
-void            Sys_PrintGLExtensions(void);
-boolean         Sys_QueryGLExtension(const char* name, const GLubyte* extensions);
-void            Sys_CheckGLError(void);
-#endif
+boolean Sys_GLPreInit(void);
+
+/**
+ * Initializes our OpenGL interface. Called once during engine statup.
+ */
+boolean Sys_GLInitialize(void);
+
+/**
+ * Close our OpenGL interface for good. Called once during engine shutdown.
+ */
+void Sys_GLShutdown(void);
+
+void Sys_GLConfigureDefaultState(void);
+
+/**
+ * Echo the full list of available GL extensions to the console.
+ */
+void Sys_GLPrintExtensions(void);
+
+/**
+ * @return  Non-zero iff the extension is found.
+ */
+boolean Sys_GLQueryExtension(const char* name, const GLubyte* extensions);
+
+boolean Sys_GLCheckError(void);
+
+#endif /* LIBDENG_SYSTEM_OPENGL_H */

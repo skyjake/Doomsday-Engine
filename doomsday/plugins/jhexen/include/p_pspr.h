@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+struct player_s;
+
 typedef enum {
     ps_weapon,
     ps_flash,
@@ -44,6 +46,7 @@ typedef struct {
     float           pos[2];
 } pspdef_t;
 
+void            P_BringUpWeapon(struct player_s *player);
 void            R_GetWeaponBob(int player, float* x, float* y);
 
 #endif

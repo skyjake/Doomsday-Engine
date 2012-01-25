@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,8 @@ void            P_PlayerThinkWeapons(player_t *player);
 void            P_PlayerThinkUse(player_t *player);
 void            P_PlayerThinkPsprites(player_t *player);
 void            P_PlayerThinkPowers(player_t *player);
-void            P_PlayerThinkLookAround(player_t *player, timespan_t ticLength);
+void            P_PlayerThinkLookYaw(player_t *player);
+void            P_PlayerThinkLookPitch(player_t *player, timespan_t ticLength);
 void            P_PlayerThinkUpdateControls(player_t* player);
 
 #if __JHERETIC__ || __JHEXEN__

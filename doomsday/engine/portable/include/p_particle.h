@@ -1,10 +1,10 @@
-/**\file
+/**\file p_particle.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_particle.h: Particle Generator Management
+ * Particle Generator Management.
  */
 
-#ifndef __DOOMSDAY_PARTICLES_H__
-#define __DOOMSDAY_PARTICLES_H__
+#ifndef LIBDENG_PARTICLES_H
+#define LIBDENG_PARTICLES_H
 
 #include "def_data.h"
 
@@ -105,9 +105,7 @@ typedef struct {
 // Particle Generator
 typedef struct ptcgen_s {
     thinker_t       thinker; // Func = P_PtcGenThinker
-    sector_t*       sector; // Flat-triggered.
-    int             ceiling; // Flat-triggered.
-    //float           area; // Rough estimate of sector area.
+    plane_t*        plane; // Flat-triggered.
     const ded_ptcgen_t* def; // The definition of this generator.
     mobj_t*         source; // If mobj-triggered.
     int             srcid; // Source mobj ID.
@@ -128,8 +126,17 @@ typedef struct ptcgen_s {
 typedef short ptcgenid_t;
 
 void            P_PtcInit(void);
-
+void            P_PtcShutdown(void);
 void            P_PtcInitForMap(void);
+
+/**
+ * Attempt to spawn all flat-triggered particle generators for the current map.
+ * To be called after map setup is completed.
+ *
+ * \note Cannot presently be done in P_PtcInitForMap as this is called during
+ *      initial Map load and before any saved game has been loaded.
+ */
+void P_MapSpawnPlaneParticleGens(void);
 
 void            P_CreatePtcGenLinks(void);
 const ptcgen_t* P_IndexToPtcGen(ptcgenid_t ptcGenID);
@@ -141,14 +148,19 @@ boolean         P_IterateSectorLinkedPtcGens(sector_t* sector,
                                              boolean (*callback) (ptcgen_t*, void*),
                                              void* context);
 
-void            P_SpawnParticleGen(const ded_ptcgen_t* def, mobj_t* source);
-void            P_SpawnTypeParticleGens(void);
-void            P_SpawnMapParticleGens(const char* mapID);
-void            P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor,
-                                         int amount);
-void            P_CheckPtcPlanes(void);
+void P_SpawnMobjParticleGen(const ded_ptcgen_t* def, mobj_t* source);
+void P_SpawnTypeParticleGens(void);
+void P_SpawnMapParticleGens(const Uri* mapUri);
+void P_SpawnDamageParticleGen(mobj_t* mo, mobj_t* inflictor, int amount);
+
+/**
+ * Creates a new flat-triggered particle generator based on the given
+ * definition. The generator is added to the list of active ptcgens.
+ */
+void P_SpawnPlaneParticleGen(const ded_ptcgen_t* def, plane_t* plane);
+
 void            P_UpdateParticleGens(void);
 
 float           P_GetParticleRadius(const ded_ptcstage_t* stageDef, int ptcIndex);
 float           P_GetParticleZ(const particle_t* pt);
-#endif
+#endif /* LIBDENG_PARTICLES_H */

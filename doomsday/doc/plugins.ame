@@ -1,0 +1,17 @@
+@chapter{ Plugins }
+
+@section{ Dehacked patches }
+
+Most features of Dehacked are supported by Doomsday's Dehacked reader.
+The loader will print a message during startup if an unsupported
+feature is used.
+
+Let's say you have the Dehacked patch @file{file.deh} in your runtime
+directory. Then you can use the command line option
+@opt{-deh file.deh} to load it at startup.
+
+If a lump named @file{DEHACKED} is found in a WAD, it will be
+automatically applied when the WAD is loaded. Normally only the last
+@file{DEHACKED} lump is used if a lump with that name is found
+in multiple WADs. Use the option @opt{-alldehs} to make the engine
+apply all found @file{DEHACKED} lumps.

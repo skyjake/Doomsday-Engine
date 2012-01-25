@@ -1,10 +1,10 @@
-/**\file
+/**\file m_args.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * m_args.c: Command Line Arguments
+ * Command Line Arguments.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -35,6 +35,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
@@ -168,9 +169,16 @@ int ArgParse(int mode, const char* cmdline)
         // Word has been extracted, examine it.
         if(isResponse) // Response file?
         {
+            ddstring_t nativePath;
+            Str_Init(&nativePath); Str_Set(&nativePath, word);
+            F_ToNativeSlashes(&nativePath, &nativePath);
+
             // Try to open it.
-            if((file = fopen(word, "rt")) != NULL)
+            file = fopen(Str_Text(&nativePath), "rt");
+            if(file)
             {
+                int result;
+
                 // How long is it?
                 if(fseek(file, 0, SEEK_END))
                     Con_Error("ArgParse: fseek failed on SEEK_END!");
@@ -178,17 +186,17 @@ int ArgParse(int mode, const char* cmdline)
                 i = ftell(file);
                 rewind(file);
 
-                if((response = M_Calloc(i + 1)) == NULL)
-                    Con_Error("ArgParse: failed on alloc of %d bytes.",
-                              i + 1);
+                response = (char*)calloc(1, i + 1);
+                if(!response)
+                    Con_Error("ArgParse: failed on alloc of %d bytes.", i + 1);
 
-                fread(response, 1, i, file);
+                result = fread(response, 1, i, file);
                 fclose(file);
-                count +=
-                    ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC,
-                             response);
-                M_Free(response);
+                count += ArgParse(mode == PM_COUNT ? PM_COUNT : PM_NORMAL_REC, response);
+                free(response);
             }
+
+            Str_Free(&nativePath);
         }
         else if(!strcmp(word, "--")) // End of arguments.
         {
@@ -340,24 +348,23 @@ int ArgRecognize(const char* first, const char* second)
  */
 int ArgCheck(const char* check)
 {
-    int                 i;
-    boolean             isDone;
-
     lastMatch = 0;
-    i = 1;
-    isDone = false;
-    while(i < numArgs && !isDone)
+    if(check && check[0])
     {
-        // Check the short names for this arg, too.
-        if(ArgRecognize(check, args[i]))
+        int i = 1;
+        boolean isDone = false;
+        while(i < numArgs && !isDone)
         {
-            lastMatch = i;
-            isDone = true;
+            // Check the short names for this arg, too.
+            if(ArgRecognize(check, args[i]))
+            {
+                lastMatch = i;
+                isDone = true;
+            }
+            else
+                i++;
         }
-        else
-            i++;
     }
-
     return lastMatch;
 }
 
@@ -370,11 +377,9 @@ int ArgCheck(const char* check)
  */
 int ArgCheckWith(const char* check, int num)
 {
-    int                 i = ArgCheck(check);
-
+    int i = ArgCheck(check);
     if(!i || i + num >= numArgs)
         return 0;
-
     return i;
 }
 
@@ -396,11 +401,14 @@ int ArgIsOption(int i)
  */
 int ArgExists(const char* check)
 {
-    int                 i, count;
-
-    for(i = 1, count = 0; i < Argc(); ++i)
-        if(ArgRecognize(check, Argv(i)))
-            count++;
+    int count = 0;
+    if(check && check[0])
+    {
+        int i;
+        for(i = 1; i < Argc(); ++i)
+            if(ArgRecognize(check, Argv(i)))
+                count++;
+    }
 
     return count;
 }

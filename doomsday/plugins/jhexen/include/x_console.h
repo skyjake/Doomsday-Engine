@@ -1,9 +1,9 @@
-/**\file
+/**\file x_console.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +22,16 @@
  */
 
 /**
- * x_console.h:
+ * Console settings and commands - Hexen specific.
  */
 
-#ifndef __X_CONSOLE_H__
-#define __X_CONSOLE_H__
+#ifndef LIBHEXEN_CONSOLE_H
+#define LIBHEXEN_CONSOLE_H
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-void            G_ConsoleRegistration(void);
-void            G_ConsoleBg(int* width, int* height);
+void G_ConsoleRegistration(void);
 
-#endif
+#endif /* LIBHEXEN_CONSOLE_H */

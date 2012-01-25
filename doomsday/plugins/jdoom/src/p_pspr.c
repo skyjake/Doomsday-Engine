@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,8 +38,7 @@
 
 #include <math.h>
 
-#include "jdoom.h"
-
+#include "common.h"
 #include "d_net.h"
 #include "p_player.h"
 #include "p_map.h"
@@ -49,7 +48,6 @@
 
 #define LOWERSPEED              (6)
 #define RAISESPEED              (6)
-#define WEAPONBOTTOM            (128)
 #define WEAPONTOP               (32)
 
 // TYPES -------------------------------------------------------------------
@@ -128,15 +126,21 @@ void P_SetPsprite(player_t* player, int position, statenum_t stnum)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *player)
+void P_BringUpWeapon(struct player_s *player)
 {
     weaponmodeinfo_t   *wminfo;
     int wminfonum = player->pendingWeapon;
 
-    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
+    if(player->plr->flags & DDPF_UNDEFINED_WEAPON)
+    {
+        // We'll do this when the server informs us about the client's current weapon.
+        return;
+    }
 
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
+
+    wminfo = WEAPON_INFO(player->pendingWeapon, player->class_, 0);
 
     if(wminfo->raiseSound)
         S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
@@ -145,7 +149,7 @@ void P_BringUpWeapon(player_t *player)
     player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
 
 #ifdef _DEBUG
-    Con_Message("P_BringUpWeapon: player %i, pending weapon was %i, weapon pspr to %i\n",
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
                 (int)(player - players), wminfonum, wminfo->states[WSN_UP]);
 #endif
     P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
@@ -392,8 +396,6 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     P_ShotAmmo(player);
     player->update |= PSF_AMMO;
-    if(IS_CLIENT)
-        return;
 
     damage = (P_Random() % 10 + 1) * 2;
     angle = player->plr->mo->angle;
@@ -411,10 +413,12 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
 
     S_StartSoundEx(SFX_SAWHIT, player->plr->mo);
 
+    if(IS_CLIENT)
+        return;
+
     // Turn to face target.
-    angle =
-        R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
-                        lineTarget->pos[VX], lineTarget->pos[VY]);
+    angle = R_PointToAngle2(player->plr->mo->pos[VX], player->plr->mo->pos[VY],
+                            lineTarget->pos[VX], lineTarget->pos[VY]);
     if(angle - player->plr->mo->angle > ANG180)
     {
         if(angle - player->plr->mo->angle < -ANG90 / 20)

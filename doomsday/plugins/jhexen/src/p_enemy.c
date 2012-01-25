@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
 #include <math.h>
 
 #include "jhexen.h"
@@ -39,6 +40,7 @@
 #include "p_mapspec.h"
 #include "p_map.h"
 #include "g_common.h"
+#include "d_net.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -400,51 +402,51 @@ typedef struct {
     byte                randomSkip;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Flags requirement?
     if(params->compFlags > 0 && !(mo->flags & params->compFlags))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if(params->minHealth > 0 && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Exclude this mobj?
     if(params->notThis && mo == params->notThis)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Out of range?
     if(params->maxDistance > 0 &&
        P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                         params->origin[VY] - mo->pos[VY]) >
        params->maxDistance)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Randomly skip this?
     if(params->randomSkip && P_Random() < params->randomSkip)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(params->maxTries > 0 && params->count++ > params->maxTries)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
     // Out of sight?
     if(params->checkLOS && params->notThis &&
        !P_CheckSight(params->notThis, mo))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Check the special case of a minotaur looking at it's master.
     if(params->checkMinotaurTracer)
         if(mo->type == MT_MINOTAUR &&
            mo->target != params->checkMinotaurTracer)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 boolean P_LookForMonsters(mobj_t* mo)
@@ -484,89 +486,19 @@ boolean P_LookForMonsters(mobj_t* mo)
  *
  * @return              @c true, if a player was targeted.
  */
-boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
+boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 {
-    int         c, stop;
-    player_t   *player;
-    sector_t   *sector;
-    angle_t     angle;
-    float       dist;
-
+    // If in single player and player is dead, look for monsters.
     if(!IS_NETGAME && players[0].health <= 0)
-    {   // Single player game and player is dead, look for monsters
         return P_LookForMonsters(actor);
-    }
 
-    sector = P_GetPtrp(actor->subsector, DMU_SECTOR);
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(actor->lastLook == stop)
-            return false; // Time to stop looking.
-
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2)
-            return false; // Done looking.
-
-        player = &players[actor->lastLook];
-        if(player->health <= 0)
-            continue; // Dead.
-
-        if(!P_CheckSight(actor, player->plr->mo))
-            continue; // Out of sight.
-
-        if(!allaround)
-        {
-            angle = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                                    player->plr->mo->pos[VX], player->plr->mo->pos[VY]) -
-                                    actor->angle;
-            if(angle > ANG90 && angle < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(player->plr->mo->pos[VX] - actor->pos[VX],
-                                     player->plr->mo->pos[VY] - actor->pos[VY]);
-
-                // If real close, react anyway.
-                if(dist > MELEERANGE)
-                    continue; // Behind back.
-            }
-        }
-
-        if(player->plr->mo->flags & MF_SHADOW)
-        {   // Player is invisible.
-            if((P_ApproxDistance
-                (player->plr->mo->pos[VX] - actor->pos[VX],
-                 player->plr->mo->pos[VY] - actor->pos[VY]) > 2 * MELEERANGE) &&
-               P_ApproxDistance(player->plr->mo->mom[MX],
-                                player->plr->mo->mom[MY]) < 5)
-            {   // Player is sneaking - can't detect.
-                return false;
-            }
-
-            if(P_Random() < 225)
-            {   // Player isn't sneaking, but still didn't detect.
-                return false;
-            }
-        }
-
-        if(actor->type == MT_MINOTAUR)
-        {
-            if(((player_t *) (actor->tracer)) == player)
-                continue; // Don't target master.
-        }
-
-        actor->target = player->plr->mo;
-        return true;
-    }
+    return Mobj_LookForPlayers(actor, allAround);
 }
 
 /**
  * Stay in state until a player is sighted.
  */
-void C_DECL A_Look(mobj_t *actor)
+void C_DECL A_Look(mobj_t* actor)
 {
     mobj_t         *targ;
 
@@ -972,12 +904,10 @@ void C_DECL A_MinotaurFade2(mobj_t *actor)
 
 void C_DECL A_MinotaurRoam(mobj_t *actor)
 {
-    unsigned int *startTime = (unsigned int *) actor->args;
-
     actor->flags &= ~MF_SHADOW; // In case pain caused him to
     actor->flags &= ~MF_ALTSHADOW; // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1011,20 +941,20 @@ typedef struct {
     mobj_t*             foundMobj;
 } findmonsterparams_t;
 
-static boolean findMonster(thinker_t* th, void* context)
+static int findMonster(thinker_t* th, void* context)
 {
     findmonsterparams_t* params = (findmonsterparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     if(!(mo->flags & MF_COUNTKILL))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Health requirement?
     if(!(params->minHealth < 0) && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(!(mo->flags & MF_SHOOTABLE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     if(params->maxDistance > 0)
@@ -1033,22 +963,22 @@ static boolean findMonster(thinker_t* th, void* context)
             P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                              params->origin[VY] - mo->pos[VY]);
         if(dist > params->maxDistance)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
     }
 
     if(params->notThis && params->notThis == mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(params->notThis2 && params->notThis2 == mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Check the special case for minotaurs.
     if(params->checkMinotaurTracer)
         if(mo->type == MT_MINOTAUR && params->checkMinotaurTracer == mo->tracer)
-            return true; // Continue iteration.
+            return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 /**
@@ -1110,7 +1040,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
         params.foundMobj = NULL;
         params.minHealth = 1;
         params.checkMinotaurTracer = actor->tracer;
-        if(!DD_IterateThinkers(P_MobjThinker, findMonster, &params))
+        if(DD_IterateThinkers(P_MobjThinker, findMonster, &params))
             actor->target = params.foundMobj;
     }
 
@@ -1126,13 +1056,12 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
 void C_DECL A_MinotaurChase(mobj_t* actor)
 {
-    unsigned int*       startTime = (unsigned int *) actor->args;
-    statenum_t          state;
+    statenum_t state;
 
     actor->flags &= ~MF_SHADOW; // In case pain caused him to.
     actor->flags &= ~MF_ALTSHADOW;  // Skip his fade in.
 
-    if((mapTime - *startTime) >= MAULATORTICS)
+    if((mapTime - actor->argsUInt) >= MAULATORTICS)
     {
         P_DamageMobj(actor, NULL, NULL, 10000, false);
         return;
@@ -1569,7 +1498,7 @@ void C_DECL A_Explode(mobj_t *actor)
     }
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1582,7 +1511,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1593,7 +1522,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a map.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -1707,17 +1636,17 @@ void C_DECL A_DeQueueCorpse(mobj_t *actor)
     }
 }
 
-static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
+static int addMobjToCorpseQueue(thinker_t* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
     // Must be a corpse.
     if(!(mo->flags & MF_CORPSE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Not ice corpses.
     if(mo->flags & MF_ICECORPSE)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Only corpses that call A_QueueCorpse from death routine.
     switch(mo->type)
@@ -1752,19 +1681,23 @@ static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
         break;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-void P_InitCreatureCorpseQueue(boolean corpseScan)
+/**
+ * Initialize queue.
+ */
+void P_InitCorpseQueue(void)
 {
-    // Initialize queue
     corpseQueueSlot = 0;
     memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
+}
 
-    if(!corpseScan)
-        return;
-
-    // Search the thinker list for corpses and place them in this queue.
+/**
+ * Search the thinker list for corpses and place them in this queue.
+ */
+void P_AddCorpsesToQueue(void)
+{
     DD_IterateThinkers(P_MobjThinker, addMobjToCorpseQueue, NULL);
 }
 
@@ -2264,6 +2197,11 @@ void C_DECL A_BishopAttack(mobj_t* actor)
         return;
     }
     actor->special1 = (P_Random() & 3) + 5;
+
+    if(IS_NETWORK_SERVER && actor->target)
+    {
+        NetSv_SendLocalMobjState(actor, "BISHOP_ATK5");
+    }
 }
 
 /**
@@ -2275,6 +2213,11 @@ void C_DECL A_BishopAttack2(mobj_t* actor)
 
     if(!actor->target || !actor->special1)
     {
+        if(IS_CLIENT)
+        {
+            // End the local action mode.
+            ClMobj_EnableLocalActions(actor, false);
+        }
         actor->special1 = 0;
         P_MobjChangeState(actor, S_BISHOP_WALK1);
         return;
@@ -4179,16 +4122,17 @@ void C_DECL A_FreezeDeath(mobj_t* mo)
 
     if(mo->player)
     {
-        player_t*           plr = mo->player;
+        player_t* plr = mo->player;
 
         plr->damageCount = 0;
         plr->poisonCount = 0;
         plr->bonusCount = 0;
 
-        ST_doPaletteStuff(plr - players, false);
+        R_UpdateViewFilter(plr - players);
     }
     else if(mo->flags & MF_COUNTKILL && mo->special)
-    {   // Initiate monster death actions.
+    {
+        // Initiate monster death actions.
         P_ExecuteLineSpecial(mo->special, mo->args, NULL, 0, mo);
     }
 }

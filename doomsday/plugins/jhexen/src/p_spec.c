@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,9 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <string.h>
+#include <stdio.h>
 
 #include "jhexen.h"
 
@@ -66,8 +69,8 @@ static boolean CheckedLockedDoor(mobj_t* mo, byte lock);
 
 mobj_t lavaInflictor;
 
-materialnum_t sky1Material;
-materialnum_t sky2Material;
+materialid_t sky1Material;
+materialid_t sky2Material;
 float sky1ColumnOffset;
 float sky2ColumnOffset;
 float sky1ScrollDelta;
@@ -105,35 +108,35 @@ void P_InitSky(uint map)
     doubleSky = P_GetMapDoubleSky(map);
 
     // First disable all sky layers.
-    Rend_SkyParams(DD_SKY, DD_DISABLE, NULL);
+    R_SkyParams(DD_SKY, DD_DISABLE, NULL);
 
     // Sky2 is layer zero and Sky1 is layer one.
     fval = 0;
-    Rend_SkyParams(0, DD_OFFSET, &fval);
-    Rend_SkyParams(1, DD_OFFSET, &fval);
+    R_SkyParams(0, DD_OFFSET, &fval);
+    R_SkyParams(1, DD_OFFSET, &fval);
     if(doubleSky && sky2Material)
     {
-        Rend_SkyParams(0, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &sky2Material);
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, &sky2Material);
 
-        Rend_SkyParams(1, DD_ENABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
         ival = DD_YES;
-        Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &sky1Material);
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, &sky1Material);
     }
     else
     {
-        Rend_SkyParams(0, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        Rend_SkyParams(0, DD_MATERIAL, &sky1Material);
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, &sky1Material);
 
-        Rend_SkyParams(1, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_DISABLE, NULL);
         ival = DD_NO;
-        Rend_SkyParams(1, DD_MASK, &ival);
-        Rend_SkyParams(1, DD_MATERIAL, &sky2Material);
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, &sky2Material);
     }
 }
 
@@ -658,22 +661,20 @@ boolean P_ActivateLine(linedef_t *line, mobj_t *mo, int side, int activationType
 /**
  * Called every tic frame that the player origin is in a special sector.
  */
-void P_PlayerInSpecialSector(player_t *player)
+void P_PlayerInSpecialSector(player_t* player)
 {
-    sector_t   *sector;
-    xsector_t  *xsector;
-    static float pushTab[3] = {
-        (1.0f / 32) * 5,
-        (1.0f / 32) * 10,
-        (1.0f / 32) * 25
+    static const float pushTab[3] = {
+        1.0 / 32 * 5,
+        1.0 / 32 * 10,
+        1.0 / 32 * 25
     };
-
-    sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
-    xsector = P_ToXSector(sector);
+    sector_t* sector = P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR);
+    xsector_t* xsector;
 
     if(player->plr->mo->pos[VZ] != P_GetFloatp(sector, DMU_FLOOR_HEIGHT))
         return; // Player is not touching the floor
 
+    xsector = P_ToXSector(sector);
     switch(xsector->special)
     {
     case 9: // SecretArea
@@ -692,7 +693,7 @@ void P_PlayerInSpecialSector(player_t *player)
 
     case 204:
     case 205:
-    case 206: // Sxcroll_East_xxx
+    case 206: // Scroll_East_xxx
         P_Thrust(player, 0, pushTab[xsector->special - 204]);
         break;
 
@@ -759,11 +760,7 @@ void P_PlayerInSpecialSector(player_t *player)
         break;
 
     default:
-        if(IS_CLIENT)
-            break;
-
-        Con_Error("P_PlayerInSpecialSector: unknown special %i",
-                  xsector->special);
+        break;
     }
 }
 
@@ -821,20 +818,19 @@ void P_SpawnSpecials(void)
         if(IS_CLIENT)
             break;
 
-        if(!xsec->special)
-            continue;
-
         switch(xsec->special)
         {
         case 1: // Phased light
-            // Hardcoded base, use sector->lightLevel as the index
+            // Hardcoded base, use sector->lightLevel as the index.
             P_SpawnPhasedLight(sec, (80.f / 255.0f), -1);
             break;
 
-        case 2:// Phased light sequence start
+        case 2: // Phased light sequence start.
             P_SpawnLightSequence(sec, 1);
             break;
-            // Specials 3 & 4 are used by the phased light sequences
+
+        default:
+            break;
         }
     }
 
@@ -855,13 +851,16 @@ void P_SpawnSpecials(void)
             IterList_Push(linespecials, line);
             break;
 
-        case 121:               // Line_SetIdentification
+        case 121: // Line_SetIdentification
             if(xline->arg1)
             {
                 list = P_GetLineIterListForTag((int) xline->arg1, true);
                 IterList_Push(list, line);
             }
             xline->special = 0;
+            break;
+
+        default:
             break;
         }
     }
@@ -884,7 +883,7 @@ void P_AnimateSurfaces(void)
         {
         case 201:
         case 202:
-        case 203:               // Scroll_North_xxx
+        case 203: // Scroll_North_xxx
             texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 201);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
@@ -892,7 +891,7 @@ void P_AnimateSurfaces(void)
 
         case 204:
         case 205:
-        case 206:               // Scroll_East_xxx
+        case 206: // Scroll_East_xxx
             texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 204);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
@@ -900,7 +899,7 @@ void P_AnimateSurfaces(void)
 
         case 207:
         case 208:
-        case 209:               // Scroll_South_xxx
+        case 209: // Scroll_South_xxx
             texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 207);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
@@ -908,7 +907,7 @@ void P_AnimateSurfaces(void)
 
         case 210:
         case 211:
-        case 212:               // Scroll_West_xxx
+        case 212: // Scroll_West_xxx
             texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 210);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
@@ -916,7 +915,7 @@ void P_AnimateSurfaces(void)
 
         case 213:
         case 214:
-        case 215:               // Scroll_NorthWest_xxx
+        case 215: // Scroll_NorthWest_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 213);
@@ -925,7 +924,7 @@ void P_AnimateSurfaces(void)
 
         case 216:
         case 217:
-        case 218:               // Scroll_NorthEast_xxx
+        case 218: // Scroll_NorthEast_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
             texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 216);
@@ -934,7 +933,7 @@ void P_AnimateSurfaces(void)
 
         case 219:
         case 220:
-        case 221:               // Scroll_SouthEast_xxx
+        case 221: // Scroll_SouthEast_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 219);
@@ -943,7 +942,7 @@ void P_AnimateSurfaces(void)
 
         case 222:
         case 223:
-        case 224:               // Scroll_SouthWest_xxx
+        case 224: // Scroll_SouthWest_xxx
             P_GetFloatv(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_XY, texOff);
             texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
             texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 222);
@@ -951,7 +950,7 @@ void P_AnimateSurfaces(void)
             break;
 
         default:
-            // DJS - Is this really necessary every tic?
+            // dj - Is this really necessary every tic?
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
             P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
             break;
@@ -1008,8 +1007,8 @@ void P_AnimateSurfaces(void)
     // Update sky column offsets
     sky1ColumnOffset += sky1ScrollDelta;
     sky2ColumnOffset += sky2ScrollDelta;
-    Rend_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-    Rend_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
+    R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
+    R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
 
     if(mapHasLightning)
     {
@@ -1089,8 +1088,8 @@ static void P_LightningFlash(void)
                 }
             }
 
-            Rend_SkyParams(1, DD_DISABLE, NULL);
-            Rend_SkyParams(0, DD_ENABLE, NULL);
+            R_SkyParams(1, DD_DISABLE, NULL);
+            R_SkyParams(0, DD_ENABLE, NULL);
         }
 
         return;
@@ -1143,8 +1142,8 @@ static void P_LightningFlash(void)
         mobj_t*             crashOrigin = NULL;
 
         // Set the alternate (lightning) sky.
-        Rend_SkyParams(0, DD_DISABLE, NULL);
-        Rend_SkyParams(1, DD_ENABLE, NULL);
+        R_SkyParams(0, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
 
         // If 3D sounds are active, position the clap somewhere above
         // the player.

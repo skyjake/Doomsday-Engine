@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# Determining the number of a build.
+
 import time
 import sys
 

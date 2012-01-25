@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,10 +32,10 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "common.h"
 #include "d_net.h"
-#include "p_svtexarc.h"
 #include "p_player.h"
 #include "p_user.h"
 #include "p_map.h"
@@ -237,7 +237,7 @@ void NetSv_Ticker(void)
         // $democam
         if(oldPals[i] != palette)
         {   // The filter changes.
-            R_GetFilterColor(plr->plr->filterColor, palette);
+            R_ViewFilterColor(plr->plr->filterColor, palette);
             // If we are the server, we'll need inform the client.
             //plr->plr->flags |= DDPF_FILTER;
             oldPals[i] = palette;
@@ -316,7 +316,7 @@ void NetSv_CycleToMapNum(uint map)
 #if __JDOOM64__
     sprintf(cmd, "setmap 1 %u", map);
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         sprintf(cmd, "setmap 1 %u", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -438,7 +438,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                             tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
                             map = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0');
 #elif __JDOOM__
-                    if(gameMode == commercial)
+                    if(gameModeBits & GM_ANY_DOOM2)
                     {
                         sprintf(lump, "MAP%u%u", episode =
                                 tmp[0] == '*' ? RNG_RandByte() % 4 : tmp[0] - '0',
@@ -471,7 +471,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                         continue;
                     sprintf(lump, "MAP%02u", m);
 #endif
-                    if(W_CheckNumForName(lump) >= 0)
+                    if(W_CheckLumpNumForName(lump) >= 0)
                     {
                         tmp[0] = episode + '0';
                         tmp[1] = map + '0';
@@ -713,8 +713,9 @@ void NetSv_NewPlayerEnters(int plrNum)
 
         if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
         {
-            P_SpawnPlayer(plrNum, pClass, start->pos[VX], start->pos[VY],
-                          start->pos[VZ], start->angle, start->spawnFlags,
+            const mapspot_t* spot = &mapSpots[start->spot];
+            P_SpawnPlayer(plrNum, pClass, spot->pos[VX], spot->pos[VY],
+                          spot->pos[VZ], spot->angle, spot->flags,
                           false, true);
         }
         else
@@ -763,14 +764,15 @@ void NetSv_Intermission(int flags, int state, int time)
 #endif
 
     if(flags & IMF_STATE)
-        Writer_WriteByte(msg, state);
-    if(flags & IMF_TIME)
-        Writer_WriteUInt16(msg, time);
+        Writer_WriteInt16(msg, state);
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION,
-                   Writer_Data(msg), Writer_Size(msg));
+    if(flags & IMF_TIME)
+        Writer_WriteInt16(msg, time);
+
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_INTERMISSION, Writer_Data(msg), Writer_Size(msg));
 }
 
+#if 0
 /**
  * The actual script is sent to the clients. 'script' can be NULL.
  */
@@ -812,18 +814,27 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
 
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, Writer_Data(writer), Writer_Size(writer));
 }
+#endif
 
 void NetSv_SendGameState(int flags, int to)
 {
     int i;
     Writer* writer;
+    GameInfo gameInfo;
+    Uri* mapUri;
+    ddstring_t* str;
 
     if(IS_CLIENT)
         return;
 
+    DD_GameInfo(&gameInfo);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+
     // Print a short message that describes the game state.
-    Con_Message("NetSv_SendGameState: Game setup: ep%u map%u %s\n",
-                gameEpisode+1, gameMap+1, gameConfigString);
+    str = Uri_Resolved(mapUri);
+    Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
+                gameInfo.identityKey, Str_Text(str), gameConfigString);
+    Str_Delete(str);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -832,15 +843,19 @@ void NetSv_SendGameState(int flags, int to)
             continue;
 
         writer = D_NetWrite();
-
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteByte(writer, gameMode);
-#else
-        Writer_WriteByte(writer, 0);
-#endif
         Writer_WriteByte(writer, flags);
-        Writer_WriteByte(writer, gameEpisode + 1);
-        Writer_WriteByte(writer, gameMap + 1);
+
+        // Game identity key.
+        Writer_WriteByte(writer, strlen(gameInfo.identityKey));
+        Writer_Write(writer, gameInfo.identityKey, strlen(gameInfo.identityKey));
+
+        // The current map.
+        Uri_Write(mapUri, writer);
+
+        // Also include the episode and map numbers.
+        Writer_WriteByte(writer, gameEpisode);
+        Writer_WriteByte(writer, gameMap);
+
         Writer_WriteByte(writer, (deathmatch & 0x3)
             | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
@@ -848,17 +863,9 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-                         | (cfg.jumpEnabled? 0x10 : 0));
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//            | (gameSkill << 5));
-//#else
-//            );
-//#endif
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//        Writer_WriteByte(writer, 0);
-//#else
+            | (cfg.jumpEnabled? 0x10 : 0));
+
         Writer_WriteByte(writer, gameSkill & 0x7);
-//#endif
         Writer_WriteFloat(writer, P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -871,8 +878,10 @@ void NetSv_SendGameState(int flags, int to)
         }
 
         // Send the packet.
-        Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
+        Net_SendPacket(i, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
     }
+
+    Uri_Delete(mapUri);
 }
 
 /**
@@ -908,17 +917,18 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
 
     if(!IS_SERVER) return;
 
-    Con_Message("NetSv_SendPlayerSpawnPosition: player %i at %f, %f, %f facing %x\n",
-                plrNum, x, y, z, angle);
-
+#ifdef _DEBUG
+    Con_Message("NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x\n",
+        plrNum, x, y, z, angle);
+#endif
     writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
     Writer_WriteFloat(writer, y);
     Writer_WriteFloat(writer, z);
     Writer_WriteUInt32(writer, angle);
 
-    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
-                   Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(plrNum, GPT_PLAYER_SPAWN_POSITION,
+        Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -968,7 +978,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1181,7 +1191,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1201,7 +1211,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]);
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
+    Net_SendPacket(to_whom, GPT_PLAYER_INFO,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1339,7 +1349,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 #endif
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
-    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1354,7 +1364,7 @@ void NetSv_SendJumpPower(int target, float power)
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, power);
-    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_ExecuteCheat(int player, const char* command)
@@ -1381,7 +1391,7 @@ void NetSv_ExecuteCheat(int player, const char* command)
 void NetSv_DoCheat(int player, Reader* msg)
 {
     size_t len = Reader_ReadUInt16(msg);
-    char* command = Z_Calloc(len + 1, PU_STATIC, 0);
+    char* command = Z_Calloc(len + 1, PU_GAMESTATIC, 0);
 
     Reader_Read(msg, command, len);
     NetSv_ExecuteCheat(player, command);
@@ -1496,9 +1506,9 @@ void NetSv_DoAction(int player, Reader* msg)
                 angle, lookDir, actionParam);
 #endif
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
-        if(G_GetGameState() == GS_INTERMISSION)
+        if(G_GameState() == GS_INTERMISSION)
         {
             if(type == GPA_USE || type == GPA_FIRE)
             {
@@ -1602,7 +1612,7 @@ void NetSv_SaveGame(unsigned int game_id)
     // This will make the clients save their games.
     writer = D_NetWrite();
     Writer_WriteUInt32(writer, game_id);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_LoadGame(unsigned int game_id)
@@ -1614,7 +1624,7 @@ void NetSv_LoadGame(unsigned int game_id)
 
     writer = D_NetWrite();
     Writer_WriteUInt32(writer, game_id);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1629,7 +1639,7 @@ void NetSv_Paused(boolean isPaused)
 
     writer = D_NetWrite();
     Writer_WriteByte(writer, (isPaused != false));
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
@@ -1656,19 +1666,62 @@ void NetSv_SendMessageEx(int plrNum, const char *msg, boolean yellow)
     writer = D_NetWrite();
     Writer_WriteUInt16(writer, strlen(msg));
     Writer_Write(writer, msg, strlen(msg));
-    Net_SendPacket(plrNum | DDSP_ORDERED,
+    Net_SendPacket(plrNum,
                    yellow ? GPT_YELLOW_MESSAGE : GPT_MESSAGE,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_SendMessage(int plrNum, const char *msg)
+void NetSv_SendMessage(int plrNum, const char* msg)
 {
     NetSv_SendMessageEx(plrNum, msg, false);
 }
 
-void NetSv_SendYellowMessage(int plrNum, const char *msg)
+void NetSv_SendYellowMessage(int plrNum, const char* msg)
 {
     NetSv_SendMessageEx(plrNum, msg, true);
+}
+
+void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
+{
+    Writer* writer;
+
+    if(IS_CLIENT) return;
+    if(plrNum < 0 || plrNum >= MAXPLAYERS)
+        return;
+
+#ifdef _DEBUG
+    Con_Message("NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i\n",
+                plrNum, weapon, ammo, force);
+#endif
+
+    writer = D_NetWrite();
+    Writer_WriteInt16(writer, weapon);
+    Writer_WriteInt16(writer, ammo);
+    Writer_WriteByte(writer, force != 0);
+    Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
+}
+
+void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
+{
+    Writer* msg;
+    ddstring_t name;
+
+    assert(mobj);
+
+    Str_InitStatic(&name, stateName);
+
+    // Inform the client about this.
+    msg = D_NetWrite();
+    Writer_WriteUInt16(msg, mobj->thinker.id);
+    Writer_WriteUInt16(msg, mobj->target? mobj->target->thinker.id : 0); // target id
+    Str_Write(&name, msg); // state to switch to
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    Writer_WriteInt32(msg, mobj->special1);
+#else
+    Writer_WriteInt32(msg, 0);
+#endif
+
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
 void P_Telefrag(mobj_t *thing)
@@ -1679,7 +1732,7 @@ void P_Telefrag(mobj_t *thing)
 /**
  * Handles the console commands "startcycle" and "endcycle".
  */
-DEFCC(CCmdMapCycle)
+D_CMD(MapCycle)
 {
     int map;
     int i;

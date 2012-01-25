@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,11 +131,11 @@ static void updateSegBBox(seg_t* seg)
 {
     linedef_t* line = seg->lineDef;
 
-    line->bBox[BOXLEFT]  = MIN_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
-    line->bBox[BOXRIGHT] = MAX_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.minX = MIN_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.minY = MIN_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
 
-    line->bBox[BOXBOTTOM] = MIN_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
-    line->bBox[BOXTOP]    = MAX_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
+    line->aaBox.maxX = MAX_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->aaBox.maxY = MAX_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
 
     // Update the line's slopetype.
     line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
@@ -164,7 +164,7 @@ static void updateSegBBox(seg_t* seg)
 /**
  * Update the polyobj bounding box.
  */
-void P_PolyobjUpdateBBox(polyobj_t* po)
+void P_PolyobjUpdateAABox(polyobj_t* po)
 {
     uint                i;
     vec2_t              point;
@@ -173,14 +173,14 @@ void P_PolyobjUpdateBBox(polyobj_t* po)
 
     segPtr = po->segs;
     V2_Set(point, (*segPtr)->SG_v1pos[VX], (*segPtr)->SG_v1pos[VY]);
-    V2_InitBox(po->box, point);
+    V2_InitBox(po->aaBox.arvec2, point);
 
     for(i = 0; i < po->numSegs; ++i, segPtr++)
     {
         vtx = (*segPtr)->SG_v1;
 
         V2_Set(point, vtx->V_pos[VX], vtx->V_pos[VY]);
-        V2_AddToBox(po->box, point);
+        V2_AddToBox(po->aaBox.arvec2, point);
     }
 }
 
@@ -216,13 +216,19 @@ void P_MapInitPolyobjs(void)
             avg.pos[VX] += seg->SG_v1pos[VX];
             avg.pos[VY] += seg->SG_v1pos[VY];
 
-            // Set the surface normal.
+            // Calculate the tangent space surface vectors.
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
             segPtr++;
         }
@@ -236,8 +242,8 @@ void P_MapInitPolyobjs(void)
             if(ssec->polyObj)
             {
                 Con_Message("P_MapInitPolyobjs: Warning: Multiple polyobjs in a single subsector\n"
-                            "  (ssec %i, sector %i). Previous polyobj overridden.\n",
-                            GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
+                            "  (ssec %ld, sector %ld). Previous polyobj overridden.\n",
+                            (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
             }
             ssec->polyObj = po;
             po->subsector = ssec;
@@ -267,10 +273,11 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
     {
         seg_t* seg = *segList;
 
-        seg->lineDef->bBox[BOXTOP]    += y;
-        seg->lineDef->bBox[BOXBOTTOM] += y;
-        seg->lineDef->bBox[BOXLEFT]   += x;
-        seg->lineDef->bBox[BOXRIGHT]  += x;
+        seg->lineDef->aaBox.minX += x;
+        seg->lineDef->aaBox.minY += y;
+
+        seg->lineDef->aaBox.maxX += x;
+        seg->lineDef->aaBox.maxY += y;
 
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
@@ -309,10 +316,11 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
         {
             seg_t* seg = *segList;
 
-            seg->lineDef->bBox[BOXTOP]    -= y;
-            seg->lineDef->bBox[BOXBOTTOM] -= y;
-            seg->lineDef->bBox[BOXLEFT]   -= x;
-            seg->lineDef->bBox[BOXRIGHT]  -= x;
+            seg->lineDef->aaBox.minX -= x;
+            seg->lineDef->aaBox.minY -= y;
+
+            seg->lineDef->aaBox.maxX -= x;
+            seg->lineDef->aaBox.maxY -= y;
 
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
@@ -411,13 +419,19 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         seg->angle += angle;
         seg->lineDef->angle += angle >> FRACBITS;
 
-        // Now update the surface normal.
+        // Now update the tangent space surface vectors.
         surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
         surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
         surface->normal[VZ] = 0;
+        V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-        // All surfaces of a sidedef have the same normal.
+        // All surfaces of a sidedef have the same vectors.
+        memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+        memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
         memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+        memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+        memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
         memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
     }
 
@@ -461,9 +475,15 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
             surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
             surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
             surface->normal[VZ] = 0;
+            V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
-            // All surfaces of a sidedef have the same normal.
+            // All surfaces of a sidedef have the same vectors.
+            memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+            memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+            memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
 
@@ -478,65 +498,16 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
     return true;
 }
 
-void P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link)
-{
-    linkpolyobj_t*      tempLink;
-
-    if(!(*link))
-    {   // Create a new link at the current block cell.
-        *link = Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
-        (*link)->next = NULL;
-        (*link)->prev = NULL;
-        (*link)->polyobj = po;
-        return;
-    }
-    else
-    {
-        tempLink = *link;
-        while(tempLink->next != NULL && tempLink->polyobj != NULL)
-        {
-            tempLink = tempLink->next;
-        }
-    }
-
-    if(tempLink->polyobj == NULL)
-    {
-        tempLink->polyobj = po;
-        return;
-    }
-    else
-    {
-        tempLink->next =
-            Z_Malloc(sizeof(linkpolyobj_t), PU_MAP, 0);
-        tempLink->next->next = NULL;
-        tempLink->next->prev = tempLink;
-        tempLink->next->polyobj = po;
-    }
-}
-
-void P_PolyobjUnlinkFromRing(polyobj_t* po, linkpolyobj_t** list)
-{
-    linkpolyobj_t*      iter = *list;
-
-    while(iter != NULL && iter->polyobj != po)
-    {
-        iter = iter->next;
-    }
-
-    if(iter != NULL)
-    {
-        iter->polyobj = NULL;
-    }
-}
-
 void P_PolyobjUnLink(struct polyobj_s* po)
 {
-    P_BlockmapUnlinkPolyobj(BlockMap, po);
+    gamemap_t* map = P_GetCurrentMap();
+    Map_UnlinkPolyobjInBlockmap(map, po);
 }
 
 void P_PolyobjLink(struct polyobj_s* po)
 {
-    P_BlockmapLinkPolyobj(BlockMap, po);
+    gamemap_t* map = P_GetCurrentMap();
+    Map_LinkPolyobjInBlockmap(map, po);
 }
 
 typedef struct ptrmobjblockingparams_s {
@@ -546,25 +517,25 @@ typedef struct ptrmobjblockingparams_s {
     polyobj_t*      po;
 } ptrmobjblockingparams_t;
 
-boolean PTR_CheckMobjBlocking(mobj_t* mo, void* data)
+int PTR_CheckMobjBlocking(mobj_t* mo, void* data)
 {
     if((mo->ddFlags & DDMF_SOLID) ||
        (mo->dPlayer && !(mo->dPlayer->flags & DDPF_CAMERA)))
     {
-        float               tmbbox[4];
         ptrmobjblockingparams_t* params = data;
+        AABoxf moBox;
 
-        tmbbox[BOXTOP]    = mo->pos[VY] + mo->radius;
-        tmbbox[BOXBOTTOM] = mo->pos[VY] - mo->radius;
-        tmbbox[BOXLEFT]   = mo->pos[VX] - mo->radius;
-        tmbbox[BOXRIGHT]  = mo->pos[VX] + mo->radius;
+        moBox.minX = mo->pos[VX] - mo->radius;
+        moBox.minY = mo->pos[VY] - mo->radius;
+        moBox.maxX = mo->pos[VX] + mo->radius;
+        moBox.maxY = mo->pos[VY] + mo->radius;
 
-        if(!(tmbbox[BOXRIGHT]  <= params->line->bBox[BOXLEFT] ||
-             tmbbox[BOXLEFT]   >= params->line->bBox[BOXRIGHT] ||
-             tmbbox[BOXTOP]    <= params->line->bBox[BOXBOTTOM] ||
-             tmbbox[BOXBOTTOM] >= params->line->bBox[BOXTOP]))
+        if(!(moBox.maxX <= params->line->aaBox.minX ||
+             moBox.minX >= params->line->aaBox.maxX ||
+             moBox.maxY <= params->line->aaBox.minY ||
+             moBox.minY >= params->line->aaBox.maxY))
         {
-            if(P_BoxOnLineSide(tmbbox, params->line) == -1)
+            if(P_BoxOnLineSide(&moBox, params->line) == -1)
             {
                 if(po_callback)
                     po_callback(mo, params->seg, params->po);
@@ -574,30 +545,30 @@ boolean PTR_CheckMobjBlocking(mobj_t* mo, void* data)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
 {
-    uint                blockBox[4];
-    vec2_t              bbox[2];
-    linedef_t*          ld;
+    gamemap_t* map = P_GetCurrentMap();
     ptrmobjblockingparams_t params;
+    GridmapBlock blockCoords;
+    linedef_t* ld;
+    AABoxf aaBox;
 
     params.blocked = false;
     params.line = ld = seg->lineDef;
     params.seg = seg;
     params.po = po;
 
-    bbox[0][VX] = ld->bBox[BOXLEFT]   - DDMOBJ_RADIUS_MAX;
-    bbox[0][VY] = ld->bBox[BOXBOTTOM] - DDMOBJ_RADIUS_MAX;
-    bbox[1][VX] = ld->bBox[BOXRIGHT]  + DDMOBJ_RADIUS_MAX;
-    bbox[1][VY] = ld->bBox[BOXTOP]    + DDMOBJ_RADIUS_MAX;
+    aaBox.minX = ld->aaBox.minX - DDMOBJ_RADIUS_MAX;
+    aaBox.minY = ld->aaBox.minY - DDMOBJ_RADIUS_MAX;
+    aaBox.maxX = ld->aaBox.maxX + DDMOBJ_RADIUS_MAX;
+    aaBox.maxY = ld->aaBox.maxY + DDMOBJ_RADIUS_MAX;
 
     validCount++;
-    P_BoxToBlockmapBlocks(BlockMap, blockBox, bbox);
-    P_BlockBoxMobjsIterator(BlockMap, blockBox,
-                            PTR_CheckMobjBlocking, &params);
+    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, &aaBox);
+    Map_IterateCellBlockMobjs(map, &blockCoords, PTR_CheckMobjBlocking, &params);
 
     return params.blocked;
 }
@@ -608,29 +579,26 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
  *
  * @param po            The polyobj whose lines are to be iterated.
  * @param func          Call back function to call for each line of this po.
- * @return              @c true, if all callbacks are successfull.
+ * @return              @c false, if all callbacks are successfull.
  */
-boolean P_PolyobjLinesIterator(polyobj_t* po,
-                               boolean (*func) (struct linedef_s*, void*),
-                               void* data)
+int P_PolyobjLinesIterator(polyobj_t* po, int (*func) (struct linedef_s*, void*),
+    void* paramaters)
 {
-    uint                i;
-    seg_t**             segList;
-
-    segList = po->segs;
+    int result = false; // Continue iteration.
+    seg_t** segList = po->segs;
+    uint i;
     for(i = 0; i < po->numSegs; ++i, segList++)
     {
-        seg_t*              seg = *segList;
-        linedef_t*          line = seg->lineDef;
+        seg_t* seg = *segList;
+        linedef_t* line = seg->lineDef;
 
         if(line->validCount == validCount)
             continue;
 
         line->validCount = validCount;
 
-        if(!func(line, data))
-            return false;
+        result = func(line, paramaters);
+        if(result) break;
     }
-
-    return true;
+    return result;
 }

@@ -1,10 +1,10 @@
-/**\file
+/**\file p_ticker.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_ticker.c: Timed Playsim Events
+ * Timed Playsim Events.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -55,7 +55,7 @@
 
 // CODE --------------------------------------------------------------------
 
-boolean P_MobjTicker(thinker_t* th, void* context)
+int P_MobjTicker(thinker_t* th, void* context)
 {
     uint                i;
     mobj_t*             mo = (mobj_t*) th;
@@ -110,15 +110,7 @@ boolean P_MobjTicker(thinker_t* th, void* context)
         *haloFactor |= f;
     }
 
-    return true; // Continue iteration.
-}
-
-boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
-{
-    P_MobjTicker((thinker_t*) cmo, NULL);
-
-    // Continue iteration.
-    return true;
+    return false; // Continue iteration.
 }
 
 /**
@@ -127,16 +119,13 @@ boolean PIT_ClientMobjTicker(mobj_t *cmo, void *parm)
 void P_Ticker(timespan_t time)
 {
     P_ControlTicker(time);
-    P_MaterialManagerTicker(time);
+    Materials_Ticker(time);
 
     if(!P_ThinkerListInited())
         return; // Not initialized yet.
 
     if(DD_IsSharpTick())
     {
-        // New ptcgens for planes?
-        P_CheckPtcPlanes();
-
         R_SkyTicker();
 
         // Check all mobjs (always public).

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -163,8 +163,12 @@ static int numswitches;
 #if __JHEXEN__
 void P_InitSwitchList(void)
 {
-    int     i;
-    int     index;
+    int i, index;
+    ddstring_t path;
+    Uri* uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
+    Str_Init(&path);
 
     for(index = 0, i = 0; ; ++i)
     {
@@ -174,17 +178,21 @@ void P_InitSwitchList(void)
                 (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
-        if(!switchInfo[i].soundID)
-            break;
+        if(!switchInfo[i].soundID) break;
 
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name1, MN_TEXTURES));
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name2, MN_TEXTURES));
+        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name1)));
+        Uri_SetPath(uri, Str_Text(&path));
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+
+        Str_PercentEncode(Str_StripRight(Str_Set(&path, switchInfo[i].name2)));
+        Uri_SetPath(uri, Str_Text(&path));
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     }
+    Str_Free(&path);
+    Uri_Delete(uri);
 
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #else
 
@@ -211,20 +219,22 @@ void P_InitSwitchList(void)
  */
 void P_InitSwitchList(void)
 {
-    int         i, index, episode;
-    int         lump = W_CheckNumForName("SWITCHES");
-    switchlist_t *sList = switchInfo;
+    int i, index, episode;
+    lumpnum_t lumpNum = W_CheckLumpNumForName2("SWITCHES", true);
+    switchlist_t* sList = switchInfo;
+    ddstring_t path;
+    Uri* uri;
 
 # if __JHERETIC__
-    if(gameMode == shareware)
+    if(gameMode == heretic_shareware)
         episode = 1;
     else
         episode = 2;
 # else
 #  if __JDOOM__
-    if(gameMode == registered || gameMode == retail)
+    if(gameModeBits & (GM_ANY_DOOM^GM_DOOM_SHAREWARE))
         episode = 2;
-    else if(gameMode == commercial)
+    else if(gameModeBits & GM_ANY_DOOM2)
         episode = 3;
     else
 #  endif
@@ -232,37 +242,53 @@ void P_InitSwitchList(void)
 # endif
 
     // Has a custom SWITCHES lump been loaded?
-    if(lump > 0)
+    if(lumpNum > 0)
     {
-        Con_Message("P_InitSwitchList: \"SWITCHES\" lump found. Reading switches...\n");
-        sList = (switchlist_t *) W_CacheLumpNum(lump, PU_STATIC);
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES...\n", F_PrettyPath(W_LumpSourceFile(lumpNum))) );
+        sList = (switchlist_t*) W_CacheLump(lumpNum, PU_GAMESTATIC);
+    }
+    else
+    {
+        VERBOSE( Con_Message("Registering default switches...\n") );
     }
 
+    uri = Uri_New();
+    Uri_SetScheme(uri, MN_TEXTURES_NAME);
+
+    Str_Init(&path);
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) *
-                (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
+            switchlist = realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(SHORT(sList[i].episode) <= episode)
         {
-            if(!SHORT(sList[i].episode))
-                break;
+            if(!SHORT(sList[i].episode)) break;
 
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                P_MaterialNumForName(sList[i].name1, MN_TEXTURES));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                P_MaterialNumForName(sList[i].name2, MN_TEXTURES));
-            VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
-                                sList[i].name1, sList[i].name2,
-                                SHORT(sList[i].episode)));
+            Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name1)));
+            Uri_SetPath(uri, Str_Text(&path));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+
+            Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name2)));
+            Uri_SetPath(uri, Str_Text(&path));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+            if(verbose > (lumpNum > 0? 1 : 2))
+            {
+                Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
+            }
         }
     }
 
+    Str_Free(&path);
+    Uri_Delete(uri);
+
+    if(lumpNum > 0)
+        W_CacheChangeTag(lumpNum, PU_CACHE);
+
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #endif
 
@@ -327,7 +353,7 @@ typedef struct {
     sidedefsurfaceid_t  ssurfaceID;
 } findmaterialchangerparams_t;
 
-boolean findMaterialChanger(thinker_t* th, void* data)
+int findMaterialChanger(thinker_t* th, void* data)
 {
     materialchanger_t*  mchanger = (materialchanger_t*) th;
     findmaterialchangerparams_t* params =
@@ -335,9 +361,9 @@ boolean findMaterialChanger(thinker_t* th, void* data)
 
     if(mchanger->side == params->side &&
        mchanger->ssurfaceID == params->ssurfaceID)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
-    return true; // Keep looking.
+    return false; // Keep looking.
 }
 
 void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
@@ -349,7 +375,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     params.ssurfaceID = ssurfaceID;
 
     // See if a material change has already been queued.
-    if(!DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+    if(DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
         return;
 
     P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);

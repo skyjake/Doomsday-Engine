@@ -1,9 +1,10 @@
-/**\file
+/**\file smoother.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +35,7 @@
 #include <string.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "smoother.h"
 
 /**
@@ -49,7 +51,7 @@ typedef struct pos_s {
 #define SM_NUM_POINTS 2
 
 /**
- * The smoother contains the data necessary to determine the 
+ * The smoother contains the data necessary to determine the
  * coordinates on the smooth path at a certain point in time.
  * It is assumed that time always moves forward.
  */
@@ -71,17 +73,20 @@ Smoother* Smoother_New()
 
 void Smoother_Delete(Smoother* sm)
 {
+    assert(sm);
     free(sm);
 }
 
 void Smoother_Debug(const Smoother* sm)
 {
+    assert(sm);
     Con_Message("Smoother_Debug: [past=%3.3f / now=%3.3f / future=%3.3f] at=%3.3f\n",
                 sm->past.time, sm->now.time, sm->points[0].time, sm->at);
 }
 
 static boolean Smoother_IsValid(const Smoother* sm)
 {
+    assert(sm);
     if(sm->past.time == 0 || sm->now.time == 0)
     {
         // We don't have valid data.
@@ -92,14 +97,14 @@ static boolean Smoother_IsValid(const Smoother* sm)
 
 void Smoother_Clear(Smoother* sm)
 {
+    assert(sm);
     memset(sm, 0, sizeof(*sm));
 }
 
 void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolean onFloor)
 {
     pos_t* last;
-
-    if(!sm) return;
+    assert(sm);
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
@@ -160,10 +165,14 @@ void Smoother_AddPos(Smoother* sm, float time, float x, float y, float z, boolea
 
 boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
 {
-    const pos_t* past = &sm->past;
-    const pos_t* now = &sm->now;
+    const pos_t* past;
+    const pos_t* now;
     float t;
     int i;
+
+    assert(sm);
+    past = &sm->past;
+    now = &sm->now;
 
     if(!Smoother_IsValid(sm))
     {
@@ -228,19 +237,22 @@ boolean Smoother_Evaluate(const Smoother* sm, float* xyz)
 
 boolean Smoother_IsOnFloor(const Smoother* sm)
 {
+    assert(sm);
+    {
     const pos_t* past = &sm->past;
     const pos_t* now = &sm->now;
 
     if(!Smoother_IsValid(sm)) return false;
     return (past->onFloor && now->onFloor);
+    }
 }
 
 boolean Smoother_IsMoving(const Smoother* sm)
 {
+    assert(sm);
+    {
     const pos_t* past = &sm->past;
     const pos_t* now = &sm->now;
-
-#define SMOOTHER_MOVE_EPSILON .001f
 
     // The smoother is moving if the current past and present are different
     // points in time and space.
@@ -248,15 +260,18 @@ boolean Smoother_IsMoving(const Smoother* sm)
             (!INRANGE_OF(past->xyz[VX], now->xyz[VX], SMOOTHER_MOVE_EPSILON) ||
              !INRANGE_OF(past->xyz[VY], now->xyz[VY], SMOOTHER_MOVE_EPSILON) ||
              !INRANGE_OF(past->xyz[VZ], now->xyz[VZ], SMOOTHER_MOVE_EPSILON));
+    }
 }
 
 void Smoother_Advance(Smoother* sm, float period)
 {
     int i;
 
+    assert(sm);
+
     if(period <= 0) return;
 
-    sm->at += period;  
+    sm->at += period;
 
     // Did we go past the present?
     while(sm->at > sm->now.time)

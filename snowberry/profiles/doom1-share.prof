@@ -1,5 +1,6 @@
 name: Shareware Doom
 game: game-jdoom
+game-mode: game-mode-doom1-share
 banner: banner-doom1-share
 hidden: yes
 

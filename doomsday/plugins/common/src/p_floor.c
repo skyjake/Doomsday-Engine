@@ -1,10 +1,10 @@
-/**\file
+/**\file p_floors.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -28,7 +28,7 @@
  */
 
 /**
- * p_floors.c: Moving floors.
+ * Moving floors.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -459,7 +459,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
          * present, the height is taken from the very first texture.
          */
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, 0));
 
         if(mat)
         {
@@ -475,7 +475,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(!mat)
-            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+            mat = P_ToPtr(DMU_MATERIAL, DD_MaterialForTextureUniqueId(TN_TEXTURES, 0));
 
         if(mat)
         {
@@ -489,7 +489,7 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         }
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 linedef_t* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
@@ -542,10 +542,10 @@ static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
 # endif
     {
         params->foundSec = other;
-        return 0; // Stop iteration.
+        return true; // Stop iteration.
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static sector_t* findSectorSurroundingAtFloorHeight(sector_t* sec,
@@ -961,11 +961,11 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     xsec = P_ToXSector(frontSec);
     if(xsec->special == params->type + STAIR_SECTOR_TYPE && !xsec->specialData &&
@@ -985,7 +985,7 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
         P_SetIntp(backSec, DMU_VALID_COUNT, VALIDCOUNT);
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 #endif
 
@@ -1014,17 +1014,17 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     if(params->baseSec != frontSec)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     if(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) != params->material)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     /**
      * @note The placement of this step height addition is vital to ensure
@@ -1035,11 +1035,11 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 
     xsec = P_ToXSector(backSec);
     if(xsec->specialData)
-        return 1; // Continue iteration.
+        return false; // Continue iteration.
 
     // This looks good.
     params->foundSec = backSec;
-    return 0; // Stop iteration.
+    return true; // Stop iteration.
 }
 #endif
 
@@ -1119,7 +1119,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         params.height = height;
         params.stairSize = stairsize;
 
-        while(!P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
+        while(P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
                           findAdjacentSectorForSpread))
         {   // We found another sector to spread to.
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
@@ -1306,10 +1306,10 @@ int findFirstTwosided(void *ptr, void *context)
     if(backSec && !(params->sector && backSec == params->sector))
     {
         params->foundLineDef = li;
-        return 0; // Stop iteration, this will do.
+        return true; // Stop iteration, this will do.
     }
 
-    return 1; // Continue iteration.
+    return false; // Continue iteration.
 }
 #endif
 
@@ -1339,7 +1339,7 @@ int EV_DoDonut(linedef_t* line)
 
         params.sector = NULL;
         params.foundLineDef = NULL;
-        if(!P_Iteratep(sec, DMU_LINEDEF, &params, findFirstTwosided))
+        if(P_Iteratep(sec, DMU_LINEDEF, &params, findFirstTwosided))
         {
             ring = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
             if(ring == sec)
@@ -1347,7 +1347,7 @@ int EV_DoDonut(linedef_t* line)
 
             params.sector = sec;
             params.foundLineDef = NULL;
-            if(!P_Iteratep(ring, DMU_LINEDEF, &params, findFirstTwosided))
+            if(P_Iteratep(ring, DMU_LINEDEF, &params, findFirstTwosided))
                 outer = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
         }
 
@@ -1393,7 +1393,7 @@ int EV_DoDonut(linedef_t* line)
 #endif
 
 #if __JHEXEN__
-static boolean stopFloorCrush(thinker_t* th, void* context)
+static int stopFloorCrush(thinker_t* th, void* context)
 {
     boolean*            found = (boolean*) context;
     floor_t*        floor = (floor_t *) th;
@@ -1408,7 +1408,7 @@ static boolean stopFloorCrush(thinker_t* th, void* context)
         (*found) = true;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 int EV_FloorCrushStop(linedef_t* line, byte* args)

@@ -47,21 +47,23 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/dpExample.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="EXAMPLE_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api;"
+				PreprocessorDefinitions="__EXAMPLE_PLUGIN__,WIN32,NDEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
+				PrecompiledHeaderFile=""
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\obj\"
 				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -73,7 +75,9 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -84,12 +88,14 @@
 				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/dpExample.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -144,21 +150,21 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\./Bin/Release/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/dpExample.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="EXAMPLE_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api;"
+				PreprocessorDefinitions="__EXAMPLE_PLUGIN__,WIN32,NDEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
-				AssemblerListingLocation=".\./Obj/Release/dpExample/"
-				ObjectFile=".\./Obj/Release/dpExample/"
-				ProgramDataBaseFileName=".\./Obj/Release/dpExample/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -170,21 +176,23 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/release/Doomsday.lib"
-				OutputFile=".\./Bin/Release/dpExample.dll"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib odbc32.lib odbccp32.lib"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\./Bin/Release/dpExample.pdb"
+				GenerateManifest="false"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/dpExample.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -238,25 +246,28 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName="./Bin/Debug/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/$(ProjectName).tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;EXAMPLE_PLUGIN;WIN32;_DEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,__EXAMPLE_PLUGIN__,WIN32,_DEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="./Obj/Debug/dpExample/dpExample.pch"
+				PrecompiledHeaderFile=""
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\obj\"
 				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
 				CallingConvention="0"
 				CompileAs="0"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -264,7 +275,9 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -275,13 +288,15 @@
 				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="./Bin/Debug/dpExample.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -336,25 +351,27 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName="./Bin/Debug/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/$(ProjectName).tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;EXAMPLE_PLUGIN;WIN32;_DEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api;"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,__EXAMPLE_PLUGIN__,WIN32,_DEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="./Obj/Debug/dpExample/dpExample.pch"
-				AssemblerListingLocation="./Obj/Debug/dpExample/"
-				ObjectFile="./Obj/Debug/dpExample/"
-				ProgramDataBaseFileName="./Obj/Debug/dpExample/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CallingConvention="0"
 				CompileAs="0"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -362,22 +379,24 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
-				OutputFile="./Bin/Debug/dpExample.dll"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib odbc32.lib odbccp32.lib"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="./Bin/Debug/dpExample.pdb"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="./Bin/Debug/dpExample.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -429,12 +448,16 @@
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\obj\"
 				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -443,7 +466,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Doomsday.lib"
 				OutputFile="$(OutDir)$(ProjectName).dll"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 			/>
@@ -499,25 +522,27 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName="./Bin/Debug/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/$(ProjectName).tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;EXAMPLE_PLUGIN;WIN32;NO_FIXED_ASM;_DEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api"
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE,__EXAMPLE_PLUGIN__,WIN32,_DEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile="./Obj/Debug/dpExample/dpExample.pch"
-				AssemblerListingLocation="./Obj/Debug/dpExample/"
-				ObjectFile="./Obj/Debug/dpExample/"
-				ProgramDataBaseFileName="./Obj/Debug/dpExample/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				BrowseInformation="1"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
 				CallingConvention="0"
 				CompileAs="0"
+				DisableSpecificWarnings="4996"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -525,22 +550,24 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
-				OutputFile="./Bin/Debug/dpExample.dll"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib odbc32.lib odbccp32.lib"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				GenerateManifest="false"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="./Bin/Debug/dpExample.pdb"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="./Bin/Debug/dpExample.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -594,21 +621,23 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="1"
-				TypeLibraryName=".\./Bin/Release/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/dpExample.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="EXAMPLE_PLUGIN;WIN32;NDEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api;"
+				PreprocessorDefinitions="__EXAMPLE_PLUGIN__,WIN32,NDEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
+				PrecompiledHeaderFile=""
 				AssemblerListingLocation="$(IntDir)\"
 				ObjectFile="$(IntDir)\obj\"
 				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -620,7 +649,9 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -631,12 +662,14 @@
 				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\dpexample.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/dpExample.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -691,21 +724,21 @@
 				MkTypLibCompatible="true"
 				SuppressStartupBanner="true"
 				TargetEnvironment="3"
-				TypeLibraryName=".\./Bin/Release/dpExample.tlb"
+				TypeLibraryName=".\./bin/$(ConfigurationName)/dpExample.tlb"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..\engine\api;"
-				PreprocessorDefinitions="EXAMPLE_PLUGIN;WIN32;NO_FIXED_ASM;NDEBUG;_WINDOWS;_USRDLL;DPEXAMPLE_EXPORTS"
+				AdditionalIncludeDirectories="..\..\..\plugins\exampleplugin\include;..\..\..\engine\api;"
+				PreprocessorDefinitions="__EXAMPLE_PLUGIN__,WIN32,NO_FIXED_ASM,NDEBUG,_WINDOWS,_USRDLL,DPEXAMPLE_EXPORTS"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
-				AssemblerListingLocation=".\./Obj/Release/dpExample/"
-				ObjectFile=".\./Obj/Release/dpExample/"
-				ProgramDataBaseFileName=".\./Obj/Release/dpExample/"
+				PrecompiledHeaderFile=""
+				AssemblerListingLocation=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ObjectFile=".\./obj/$(ConfigurationName)/$(ProjectName)/"
+				ProgramDataBaseFileName=".\./obj/$(ConfigurationName)/$(ProjectName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -717,21 +750,23 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
-				Culture="1035"
+				Culture="1033"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/release/Doomsday.lib"
-				OutputFile=".\./Bin/Release/dpExample.dll"
+				AdditionalDependencies="./bin/$(ConfigurationName)/doomsday.lib odbc32.lib odbccp32.lib"
+				OutputFile="./bin/$(ConfigurationName)/$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\./Bin/Release/dpExample.pdb"
+				GenerateManifest="false"
+				ModuleDefinitionFile="..\..\..\plugins\exampleplugin\api\dpexample.def"
+				ProgramDatabaseFile=".\./bin/$(ConfigurationName)/$(ProjectName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/dpExample.lib"
+				ImportLibrary=".\./bin/$(ConfigurationName)/$(ProjectName).lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -773,11 +808,75 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
+			<File
+				RelativePath="..\..\..\plugins\exampleplugin\include\version.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\exampleplugin\res\resource.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
+			<File
+				RelativePath="..\..\..\plugins\exampleplugin\res\example.rc"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__EXAMPLE_PLUGIN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__EXAMPLE_PLUGIN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug x64|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__EXAMPLE_PLUGIN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release x64|Win32"
+					>
+					<Tool
+						Name="VCResourceCompilerTool"
+						PreprocessorDefinitions="__EXAMPLE_PLUGIN__"
+						Culture="1033"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
+			Name="API"
+			>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\exampleplugin\api\dpexample.def"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

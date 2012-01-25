@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 # This project file contains tasks that are done in the beginning of a build.
 
@@ -68,6 +68,14 @@ deng_aptunstable {
     # Include the Unstable repository for apt.
     INSTALLS += repo
 
-    repo.files = ../../distrib/linux/doomsday-builds-unstable.list
-    repo.path = /etc/apt/sources.list.d
+    repo.files += ../../distrib/linux/doomsday-builds-unstable.list
+    repo.path += /etc/apt/sources.list.d
+}
+
+deng_aptstable {
+    # Include the Stable repository for apt.
+    INSTALLS += repo
+
+    repo.files += ../../distrib/linux/doomsday-builds-stable.list
+    repo.path += /etc/apt/sources.list.d
 }

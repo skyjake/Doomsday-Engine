@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,7 @@ void            DM_Music_Set(int prop, float value);
 int             DM_Music_Get(int prop, void* ptr);
 void            DM_Music_Pause(int pause);
 void            DM_Music_Stop(void);
-void*           DM_Music_SongBuffer(size_t length);
+void*           DM_Music_SongBuffer(unsigned int length);
 int             DM_Music_Play(int looped);
 
 // CD Audio interface:

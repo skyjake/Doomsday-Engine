@@ -32,6 +32,9 @@ rd/s/q work
 
 IF %BUILDFAILURE% == 1 GOTO Failure
 
+REM -- Update readme (could also run Amethyst here).
+copy "C:\Users\Virtual\Dropbox\Doomsday\readme\readme.txt" ..\products\doc
+
 REM -- Run the Inno Setup Compiler.
 "C:\Program Files\Inno Setup 5\Compil32.exe" /cc setup.iss
 

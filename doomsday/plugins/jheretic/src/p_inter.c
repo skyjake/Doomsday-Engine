@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jheretic.h"
 
 #include "am_map.h"
@@ -36,6 +38,7 @@
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "p_tick.h"
 #include "p_user.h"
 #include "p_mapsetup.h"
@@ -336,7 +339,7 @@ boolean P_GivePower(player_t* player, powertype_t power)
     if(retval)
     {
         if(power == PT_ALLMAP)
-            AM_RevealMap(AM_MapForPlayer(player - players), true);
+            ST_RevealAutomap(player - players, true);
     }
 
     return retval;
@@ -956,7 +959,10 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&

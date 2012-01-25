@@ -2,7 +2,7 @@
  .\..\..\plugins\common\src\d_netcl.c
  .\..\..\plugins\common\src\d_net.c
  .\..\..\plugins\common\src\dmu_lib.c
- .\..\..\plugins\common\src\m_multi.c
+ .\..\..\plugins\common\src\fi_lib.c
  .\..\..\plugins\common\src\hu_menu.c
  .\..\..\plugins\jdoom\src\g_ctrl.c
  .\..\..\plugins\jdoom\src\d_api.c
@@ -41,22 +41,20 @@
  .\..\..\plugins\common\src\p_door.c
  .\..\..\plugins\common\src\p_ceiling.c
  .\..\..\plugins\common\src\p_actor.c
- .\..\..\plugins\common\src\p_automap.c
  .\..\..\plugins\common\src\p_player.c
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\jdoom\src\wi_stuff.c
  .\..\..\plugins\jdoom\src\st_stuff.c
- .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\hu_stuff.c
  .\..\..\plugins\common\src\hu_pspr.c
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_lib.c
+ .\..\..\plugins\common\src\hu_chat.c
  .\..\..\plugins\common\src\hu_msg.c
- .\..\..\plugins\common\src\f_infine.c
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jdoom\src\tables.c
  .\..\..\plugins\common\src\r_common.c
- .\..\..\plugins\common\src\rend_automap.c
+ .\..\..\plugins\common\src\hu_automap.c
  .\..\..\plugins\jdoom\src\m_random.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\plugins\jdoom\src\m_cheat.c
@@ -66,5 +64,6 @@
  .\..\..\plugins\common\src\g_controls.c
  .\..\..\plugins\common\src\g_game.c
  .\..\..\plugins\common\src\g_update.c
+ .\..\..\plugins\common\src\gl_drawpatch.c
  .\..\..\plugins\jdoom\src\d_items.c
  .\..\..\plugins\jdoom\src\acfnlink.c

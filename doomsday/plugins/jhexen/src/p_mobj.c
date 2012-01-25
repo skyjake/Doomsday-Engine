@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "../../../engine/portable/include/m_bams.h" // for BANG2RAD
@@ -53,9 +55,6 @@
 #define BLAST_FULLSTRENGTH      255
 #define HEAL_RADIUS_DIST        255
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-
 #define SMALLSPLASHCLIP         (12);
 
 // TYPES -------------------------------------------------------------------
@@ -70,8 +69,6 @@ void    P_BounceWall(mobj_t *mo);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -93,7 +90,7 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
     sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
-    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
 
 /**
@@ -114,9 +111,9 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     P_MobjSetState(mobj, state);
     mobj->turnTime = false; // $visangle-facetarget
 
-    st = &STATES[state];
-    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    if(Mobj_ActionFunctionAllowed(mobj))
     {
+        st = &STATES[state];
         if(st->action) st->action(mobj); // Call action function.
     }
 
@@ -353,6 +350,11 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
+static __inline boolean isInWalkState(player_t* pl)
+{
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
+}
+
 float P_MobjGetFriction(mobj_t* mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
@@ -372,13 +374,15 @@ float P_MobjGetFriction(mobj_t* mo)
 
 void P_MobjMoveXY(mobj_t* mo)
 {
-    static const int    windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+    static const float windTab[3] = {
+        2048.0 / FRACUNIT * 5,
+        2048.0 / FRACUNIT * 10,
+        2048.0 / FRACUNIT * 25
+    };
 
-    float               posTry[2];
-    player_t*           player;
-    float               move[2];
-    int                 special;
-    angle_t             angle;
+    float posTry[2], mom[2];
+    player_t* player;
+    angle_t angle;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
@@ -395,68 +399,61 @@ void P_MobjMoveXY(mobj_t* mo)
         return;
     }
 
-    special = P_ToXSectorOfSubsector(mo->subsector)->special;
     if(mo->flags2 & MF2_WINDTHRUST)
     {
+        int special = P_ToXSectorOfSubsector(mo->subsector)->special;
         switch(special)
         {
         case 40:
         case 41:
         case 42: // Wind_East
-            P_ThrustMobj(mo, 0, FIX2FLT(windTab[special - 40]));
+            P_ThrustMobj(mo, 0, windTab[special - 40]);
             break;
 
         case 43:
         case 44:
         case 45: // Wind_North
-            P_ThrustMobj(mo, ANG90, FIX2FLT(windTab[special - 43]));
+            P_ThrustMobj(mo, ANG90, windTab[special - 43]);
             break;
 
         case 46:
         case 47:
         case 48: // Wind_South
-            P_ThrustMobj(mo, ANG270, FIX2FLT(windTab[special - 46]));
+            P_ThrustMobj(mo, ANG270, windTab[special - 46]);
             break;
 
         case 49:
         case 50:
         case 51: // Wind_West
-            P_ThrustMobj(mo, ANG180, FIX2FLT(windTab[special - 49]));
+            P_ThrustMobj(mo, ANG180, windTab[special - 49]);
             break;
         }
     }
+
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+
     player = mo->player;
-
-    if(mo->mom[MX] > MAXMOVE)
-        mo->mom[MX] = MAXMOVE;
-    else if(mo->mom[MX] < -MAXMOVE)
-        mo->mom[MX] = -MAXMOVE;
-
-    if(mo->mom[MY] > MAXMOVE)
-        mo->mom[MY] = MAXMOVE;
-    else if(mo->mom[MY] < -MAXMOVE)
-        mo->mom[MY] = -MAXMOVE;
-
-    move[VX] = mo->mom[MX];
-    move[VY] = mo->mom[MY];
     do
     {
-        if(move[VX] > MAXMOVE / 2 || move[VY] > MAXMOVE / 2)
+        if(mom[VX] > MAXMOMSTEP || mom[VY] > MAXMOMSTEP)
         {
-            posTry[VX] = mo->pos[VX] + move[VX] / 2;
-            posTry[VY] = mo->pos[VY] + move[VY] / 2;
-            move[VX] /= 2;
-            move[VY] /= 2;
+            posTry[VX] = mo->pos[VX] + mom[VX] / 2;
+            posTry[VY] = mo->pos[VY] + mom[VY] / 2;
+            mom[VX] /= 2;
+            mom[VY] /= 2;
         }
         else
         {
-            posTry[VX] = mo->pos[VX] + move[VX];
-            posTry[VY] = mo->pos[VY] + move[VY];
-            move[VX] = move[VY] = 0;
+            posTry[VX] = mo->pos[VX] + mom[VX];
+            posTry[VY] = mo->pos[VY] + mom[VY];
+            mom[VX] = mom[VY] = 0;
         }
 
         if(!P_TryMove(mo, posTry[VX], posTry[VY]))
-        {   // Blocked move.
+        {   // Blocked mom.
             if(mo->flags2 & MF2_SLIDE)
             {   // Try to slide along it.
                 if(blockingMobj == NULL)
@@ -481,7 +478,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
@@ -491,7 +488,7 @@ void P_MobjMoveXY(mobj_t* mo)
                            ((!blockingMobj->player) &&
                             (!(blockingMobj->flags & MF_COUNTKILL))))
                         {
-                            float       speed;
+                            float speed;
 
                             angle =
                                 R_PointToAngle2(blockingMobj->pos[VX],
@@ -573,10 +570,8 @@ void P_MobjMoveXY(mobj_t* mo)
                     mo->angle = angle;
                     angle >>= ANGLETOFINESHIFT;
 
-                    mo->mom[MX] =
-                        (mo->info->speed / 2) * FIX2FLT(finecosine[angle]);
-                    mo->mom[MY] =
-                        (mo->info->speed / 2) * FIX2FLT(finesine[angle]);
+                    mo->mom[MX] = (mo->info->speed / 2) * FIX2FLT(finecosine[angle]);
+                    mo->mom[MY] = (mo->info->speed / 2) * FIX2FLT(finesine[angle]);
 
                     if(mo->flags2 & MF2_SEEKERMISSILE)
                     {
@@ -649,8 +644,8 @@ explode:
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(move[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(move[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Friction
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
@@ -668,14 +663,13 @@ explode:
     }
 
     if(mo->flags & MF_CORPSE)
-    {   // Don't stop sliding if halfway off a step with some momentum
-        if(mo->mom[MX] > 1.0f / 4 || mo->mom[MX] < -1.0f / 4 ||
-           mo->mom[MY] > 1.0f / 4 || mo->mom[MY] < -1.0f / 4)
+    {
+        // Do not stop sliding if halfway off a step with some momentum.
+        if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOM_THRESHOLD))
         {
             if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-            {
                 return;
-            }
         }
     }
 
@@ -697,8 +691,7 @@ explode:
     }
     else
     {
-        float       friction = P_MobjGetFriction(mo);
-
+        float friction = P_MobjGetFriction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
@@ -1139,7 +1132,8 @@ void P_MobjThinker(mobj_t* mobj)
         }
     }
     else if(!FEQUAL(mobj->pos[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || blockingMobj)
-    {   // Handle Z momentum and gravity
+    {
+        // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
             mobj->onMobj = P_CheckOnMobj(mobj);
@@ -1333,7 +1327,7 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
                          spawnFlags);
 }
 
-static boolean addToTIDList(thinker_t* th, void* context)
+static int addToTIDList(thinker_t* th, void* context)
 {
     size_t*             count = (size_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1351,7 +1345,7 @@ static boolean addToTIDList(thinker_t* th, void* context)
         TIDMobj[(*count)++] = mo;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void P_CreateTIDList(void)
@@ -1747,14 +1741,14 @@ typedef struct {
     mobj_t*             source;
 } radiusblastparams_t;
 
-static boolean radiusBlast(thinker_t* th, void* context)
+static int radiusBlast(thinker_t* th, void* context)
 {
     radiusblastparams_t* params = (radiusblastparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(mo == params->source || (mo->flags2 & MF2_BOSS))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_POISONCLOUD || // poison cloud.
        mo->type == MT_HOLY_FX || // holy fx.
@@ -1764,27 +1758,27 @@ static boolean radiusBlast(thinker_t* th, void* context)
     }
     else if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
     {
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     }
     else if(!(mo->flags & MF_COUNTKILL) && !mo->player &&
             !(mo->flags & MF_MISSILE))
     {   // Must be monster, player, or missile.
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     }
 
     // Is this mobj dormant?
     if(mo->flags2 & MF2_DORMANT)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Is this an underground Wraith?
     if(mo->type == MT_WRAITHB && (mo->flags2 & MF2_DONTDRAW))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_SPLASHBASE || mo->type == MT_SPLASH)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(mo->type == MT_SERPENT || mo->type == MT_SERPENTLEADER)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->source->pos[VX] - mo->pos[VX],
@@ -1794,7 +1788,7 @@ static boolean radiusBlast(thinker_t* th, void* context)
         P_BlastMobj(params->source, mo, BLAST_FULLSTRENGTH);
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -1819,14 +1813,14 @@ typedef struct {
     boolean             effective;
 } radiusgiveparams_t;
 
-static boolean radiusGiveArmor(thinker_t* th, void* context)
+static int radiusGiveArmor(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1843,17 +1837,17 @@ static boolean radiusGiveArmor(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean radiusGiveBody(thinker_t* th, void* context)
+static int radiusGiveBody(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1869,17 +1863,17 @@ static boolean radiusGiveBody(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-static boolean radiusGiveMana(thinker_t* th, void* context)
+static int radiusGiveMana(thinker_t* th, void* context)
 {
     radiusgiveparams_t* params = (radiusgiveparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
     float               dist;
 
     if(!mo->player || mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Within range?
     dist = P_ApproxDistance(params->origin[VX] - mo->pos[VX],
@@ -1896,7 +1890,7 @@ static boolean radiusGiveMana(thinker_t* th, void* context)
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

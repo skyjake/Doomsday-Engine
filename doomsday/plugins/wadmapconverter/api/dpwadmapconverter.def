@@ -1,0 +1,4 @@
+LIBRARY			DPWADMAPCONVERTER
+
+EXPORTS
+    DP_Initialize   @1

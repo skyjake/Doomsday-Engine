@@ -1,10 +1,10 @@
-/**\file
+/**\file r_world.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_world.c: World Setup and Refresh
+ * World Setup and Refresh.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -42,6 +42,8 @@
 #include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
+
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -63,9 +65,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int rendSkyLight = 1; // cvar.
 float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
+
+float rendSkyLight = .2f; // Intensity factor.
+byte rendSkyLightAuto = true;
 
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
@@ -76,11 +80,7 @@ skyfix_t skyFix[2];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean noSkyColorGiven;
-static float skyColorRGB[4]/*, balancedRGB[4]*/;
-static float skyColorBalance;
-
-static surfacelistnode_t* unusedSurfaceListNodes = NULL;
+static surfacelistnode_t* unusedSurfaceListNodes = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ static surfacelistnode_t* unusedSurfaceListNodes = NULL;
  */
 static surfacelistnode_t* allocListNode(void)
 {
-    surfacelistnode_t* node = Z_Calloc(sizeof(*node), PU_STATIC, 0);
+    surfacelistnode_t*      node = Z_Calloc(sizeof(*node), PU_APPSTATIC, 0);
     return node;
 }
 
@@ -108,7 +108,7 @@ static void freeListNode(surfacelistnode_t* node)
 
 surfacelistnode_t* R_SurfaceListNodeCreate(void)
 {
-    surfacelistnode_t*      node;
+    surfacelistnode_t* node;
 
     // Is there a free node in the unused list?
     if(unusedSurfaceListNodes)
@@ -135,15 +135,9 @@ void R_SurfaceListNodeDestroy(surfacelistnode_t* node)
     unusedSurfaceListNodes = node;
 }
 
-/**
- * Adds the surface to the given surface list.
- *
- * @param sl            The surface list to add the surface to.
- * @param suf           The surface to add to the list.
- */
 void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
 {
-    surfacelistnode_t*  node;
+    surfacelistnode_t* node;
 
     if(!sl || !suf)
         return;
@@ -166,9 +160,9 @@ void R_SurfaceListAdd(surfacelist_t* sl, surface_t* suf)
     sl->num++;
 }
 
-boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t *suf)
+boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t* suf)
 {
-    surfacelistnode_t*  last, *n;
+    surfacelistnode_t* last, *n;
 
     if(!sl || !suf)
         return false;
@@ -195,19 +189,25 @@ boolean R_SurfaceListRemove(surfacelist_t* sl, const surface_t *suf)
     return false;
 }
 
-/**
- * Iterate the list of surfaces making a callback for each.
- *
- * @param sl            The surface list to iterate.
- * @param callback      The callback to make. Iteration will continue
- *                      until a callback returns a zero value.
- * @param context       Is passed to the callback function.
- */
-boolean R_SurfaceListIterate(surfacelist_t* sl,
-                             boolean (*callback) (surface_t* suf, void*),
-                             void* context)
+void R_SurfaceListClear(surfacelist_t* sl)
 {
-    boolean             result = true;
+    if(sl)
+    {
+        surfacelistnode_t* node, *next;
+        node = sl->head;
+        while(node)
+        {
+            next = node->next;
+            R_SurfaceListRemove(sl, (surface_t*)node->data);
+            node = next;
+        }
+    }
+}
+
+boolean R_SurfaceListIterate(surfacelist_t* sl, boolean (*callback) (surface_t* suf, void*),
+    void* context)
+{
+    boolean  result = true;
     surfacelistnode_t*  n, *np;
 
     if(sl)
@@ -516,6 +516,25 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
     }
 }
 
+static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramaters)
+{
+    material_t* material = (material_t*) paramaters;
+    if(material == surface->material)
+    {
+        Surface_Update(surface);
+    }
+    return 1; // Continue iteration.
+}
+
+void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
+{
+    gamemap_t* map = P_GetCurrentMap();
+    if(NULL == material || NULL == map || ddMapSetup) return;
+
+    // Light decorations will need a refresh.
+    R_SurfaceListIterate(decoratedSurfaceList, markSurfaceForDecorationUpdate, material);
+}
+
 /**
  * Create a new plane for the given sector. The plane will be initialized
  * with default values.
@@ -523,30 +542,23 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
  * Post: The sector's plane list will be replaced, the new plane will be
  *       linked to the end of the list.
  *
- * @param sec           Sector for which a new plane will be created.
+ * @param sec  Sector for which a new plane will be created.
  *
- * @return              Ptr to the newly created plane.
+ * @return  Ptr to the newly created plane.
  */
 plane_t* R_NewPlaneForSector(sector_t* sec)
 {
-    surface_t*          suf;
-    plane_t*            plane;
-    subsector_t**       ssecPtr;
+    surface_t* suf;
+    plane_t* plane;
 
     if(!sec)
         return NULL; // Do wha?
-
-    //if(sec->planeCount >= 2)
-    //    Con_Error("P_NewPlaneForSector: Cannot create plane for sector, "
-    //              "limit is %i per sector.\n", 2);
 
     // Allocate the new plane.
     plane = Z_Malloc(sizeof(plane_t), PU_MAP, 0);
 
     // Resize this sector's plane list.
-    sec->planes =
-        Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1),
-                  PU_MAP);
+    sec->planes = Z_Realloc(sec->planes, sizeof(plane_t*) * (++sec->planeCount + 1), PU_MAP);
     // Add the new plane to the end of the list.
     sec->planes[sec->planeCount-1] = plane;
     sec->planes[sec->planeCount] = NULL; // Terminate.
@@ -555,9 +567,6 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     plane->header.type = DMU_PLANE;
 
     // Initalize the plane.
-    plane->surface.owner = (void*) plane;
-    plane->glowRGB[CR] = plane->glowRGB[CG] = plane->glowRGB[CB] = 1;
-    plane->glow = 0;
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
@@ -574,11 +583,14 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     memset(&plane->surface, 0, sizeof(plane->surface));
     suf = &plane->surface;
     suf->header.type = DMU_SURFACE; // Setup header for DMU.
-    suf->normal[VZ] = suf->oldNormal[VZ] = 1;
+    suf->normal[VZ] = 1;
+    V3_BuildTangents(suf->tangent, suf->bitangent, suf->normal);
+
+    suf->owner = (void*) plane;
     // \todo The initial material should be the "unknown" material.
     Surface_SetMaterial(suf, NULL);
-    Surface_SetMaterialOffsetXY(suf, 0, 0);
-    Surface_SetColorRGBA(suf, 1, 1, 1, 1);
+    Surface_SetMaterialOrigin(suf, 0, 0);
+    Surface_SetColorAndAlpha(suf, 1, 1, 1, 1);
     Surface_SetBlendMode(suf, BM_NORMAL);
 
     /**
@@ -587,42 +599,45 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
      * as planes are created before the bias system is available.
      */
 
-    ssecPtr = sec->ssectors;
-    while(*ssecPtr)
+    if(sec->ssectors && *sec->ssectors)
     {
-        subsector_t*        ssec = *ssecPtr;
-        biassurface_t**     newList;
-        uint                n = 0;
-
-        newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*),
-                           PU_MAP, NULL);
-        // Copy the existing list?
-        if(ssec->bsuf)
+        subsector_t** ssecPtr = sec->ssectors;
+        do
         {
-            for(; n < sec->planeCount - 1; ++n)
+            subsector_t* ssec = *ssecPtr;
+            biassurface_t** newList;
+            uint n = 0;
+
+            newList = Z_Calloc(sec->planeCount * sizeof(biassurface_t*), PU_MAP, NULL);
+            // Copy the existing list?
+            if(ssec->bsuf)
             {
-                newList[n] = ssec->bsuf[n];
+                for(; n < sec->planeCount - 1; ++n)
+                {
+                    newList[n] = ssec->bsuf[n];
+                }
+                Z_Free(ssec->bsuf);
             }
-            Z_Free(ssec->bsuf);
-        }
 
-        if(!ddMapSetup)
-        {
-            uint                i;
-            biassurface_t*      bsuf = SB_CreateSurface();
+            if(!ddMapSetup)
+            {
+                biassurface_t* bsuf = SB_CreateSurface();
 
-            bsuf->size = ssec->numVertices;
-            bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
+                bsuf->size = ssec->numVertices;
+                bsuf->illum = Z_Calloc(sizeof(vertexillum_t) * bsuf->size, PU_MAP, 0);
 
-            for(i = 0; i < bsuf->size; ++i)
-                SB_InitVertexIllum(&bsuf->illum[i]);
+                { uint i;
+                for(i = 0; i < bsuf->size; ++i)
+                    SB_InitVertexIllum(&bsuf->illum[i]);
+                }
 
-            newList[n] = bsuf;
-        }
+                newList[n] = bsuf;
+            }
 
-        ssec->bsuf = newList;
+            ssec->bsuf = newList;
 
-        ssecPtr++;
+            ssecPtr++;
+        } while(*ssecPtr);
     }
 
     return plane;
@@ -672,15 +687,16 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     R_RemoveWatchedPlane(watchedPlaneList, plane);
     // If this plane's surface is in the moving list, remove it.
     R_SurfaceListRemove(movingSurfaceList, &plane->surface);
-    // If this plane's surface if in the deocrated list, remove it.
+    // If this plane's surface is in the deocrated list, remove it.
     R_SurfaceListRemove(decoratedSurfaceList, &plane->surface);
+    // If this plane's surface is in the glowing list, remove it.
+    R_SurfaceListRemove(glowingSurfaceList, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
     ssecPtr = sec->ssectors;
     while(*ssecPtr)
     {
-        subsector_t*        ssec = *ssecPtr;
-
+        subsector_t* ssec = *ssecPtr;
         SB_DestroySurface(ssec->bsuf[id]);
         if(id < sec->planeCount)
             memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
@@ -696,10 +712,10 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     sec->planes = newList;
 }
 
-surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
+surfacedecor_t* R_CreateSurfaceDecoration(surface_t *suf)
 {
-    uint                i;
-    surfacedecor_t     *d, *s, *decorations;
+    surfacedecor_t* d, *s, *decorations;
+    uint i;
 
     if(!suf)
         return NULL;
@@ -723,7 +739,6 @@ surfacedecor_t* R_CreateSurfaceDecoration(decortype_t type, surface_t *suf)
 
     // Add the new decoration.
     d = &decorations[suf->numDecorations - 1];
-    d->type = type;
 
     suf->decorations = decorations;
 
@@ -743,10 +758,10 @@ void R_ClearSurfaceDecorations(surface_t *suf)
 
 void R_UpdateSkyFixForSec(const sector_t* sec)
 {
-    boolean             skyFloor, skyCeil;
+    boolean skyFloor, skyCeil;
 
-    if(!sec)
-        return; // Wha?
+    if(!sec || 0 == sec->lineDefCount)
+        return;
 
     skyFloor = R_IsSkySurface(&sec->SP_floorsurface);
     skyCeil = R_IsSkySurface(&sec->SP_ceilsurface);
@@ -756,7 +771,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
     if(skyCeil)
     {
-        mobj_t*             mo;
+        mobj_t* mo;
 
         // Adjust for the plane height.
         if(sec->SP_ceilvisheight > skyFix[PLN_CEILING].height)
@@ -767,7 +782,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
         // Check that all the mobjs in the sector fit in.
         for(mo = sec->mobjList; mo; mo = mo->sNext)
         {
-            float               extent = mo->pos[VZ] + mo->height;
+            float extent = mo->pos[VZ] + mo->height;
 
             if(extent > skyFix[PLN_CEILING].height)
             {   // Must raise the skyfix ceiling.
@@ -787,27 +802,23 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
     // Update for middle textures on two sided linedefs which intersect the
     // floor and/or ceiling of their front and/or back sectors.
-    if(sec->lineDefs)
+    if(sec->lineDefs && *sec->lineDefs)
     {
-        linedef_t**         linePtr = sec->lineDefs;
-
-        while(*linePtr)
+        linedef_t** linePtr = sec->lineDefs;
+        do
         {
-            linedef_t*          li = *linePtr;
+            linedef_t* li = *linePtr;
 
             // Must be twosided.
             if(li->L_frontside && li->L_backside)
             {
-                sidedef_t*          si = li->L_frontsector == sec?
-                    li->L_frontside : li->L_backside;
+                sidedef_t* si = li->L_frontsector == sec? li->L_frontside : li->L_backside;
 
                 if(si->SW_middlematerial)
                 {
                     if(skyCeil)
                     {
-                        float               top =
-                            sec->SP_ceilvisheight +
-                                si->SW_middlevisoffset[VY];
+                        float top = sec->SP_ceilvisheight + si->SW_middlevisoffset[VY];
 
                         if(top > skyFix[PLN_CEILING].height)
                         {   // Must raise the skyfix ceiling.
@@ -817,10 +828,8 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
 
                     if(skyFloor)
                     {
-                        float               bottom =
-                            sec->SP_floorvisheight +
-                                si->SW_middlevisoffset[VY] -
-                                    si->SW_middlematerial->height;
+                        float bottom = sec->SP_floorvisheight +
+                                si->SW_middlevisoffset[VY] - Material_Height(si->SW_middlematerial);
 
                         if(bottom < skyFix[PLN_FLOOR].height)
                         {   // Must lower the skyfix floor.
@@ -830,7 +839,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
                 }
             }
             linePtr++;
-        }
+        } while(*linePtr);
     }
 }
 
@@ -841,16 +850,15 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
  */
 void R_InitSkyFix(void)
 {
-    uint                i;
-
     skyFix[PLN_FLOOR].height = DDMAXFLOAT;
     skyFix[PLN_CEILING].height = DDMINFLOAT;
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         R_UpdateSkyFixForSec(SECTOR_PTR(i));
-    }
+    }}
 }
 
 /**
@@ -882,91 +890,6 @@ void R_SetupFogDefaults(void)
 {
     // Go with the defaults.
     Con_Execute(CMDS_DDAY,"fog off", true, false);
-}
-
-void R_SetupSky(ded_sky_t* sky)
-{
-    int                 i;
-    int                 skyTex;
-    int                 ival = 0;
-    float               fval = 0;
-
-    if(!sky)
-    {   // Go with the defaults.
-        fval = .666667f;
-        Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
-        Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
-        Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = P_MaterialNumForName("SKY1", MN_TEXTURES);
-        Rend_SkyParams(0, DD_MATERIAL, &ival);
-        ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        fval = 0;
-        Rend_SkyParams(0, DD_OFFSET, &fval);
-        Rend_SkyParams(1, DD_DISABLE, NULL);
-
-        // There is no sky color.
-        noSkyColorGiven = true;
-        return;
-    }
-
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, &sky->height);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, &sky->horizonOffset);
-    for(i = 0; i < 2; ++i)
-    {
-        ded_skylayer_t*     layer = &sky->layers[i];
-
-        if(layer->flags & SLF_ENABLED)
-        {
-            skyTex = P_MaterialNumForName(layer->material.name,
-                                          layer->material.mnamespace);
-            if(!skyTex)
-            {
-                Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
-                            layer->material.name);
-                skyTex = P_MaterialNumForName("SKY1", MN_TEXTURES);
-            }
-
-            Rend_SkyParams(i, DD_ENABLE, NULL);
-            Rend_SkyParams(i, DD_MATERIAL, &skyTex);
-            ival = ((layer->flags & SLF_MASKED)? DD_YES : DD_NO);
-            Rend_SkyParams(i, DD_MASK, &ival);
-            Rend_SkyParams(i, DD_OFFSET, &layer->offset);
-            Rend_SkyParams(i, DD_COLOR_LIMIT, &layer->colorLimit);
-        }
-        else
-        {
-            Rend_SkyParams(i, DD_DISABLE, NULL);
-        }
-    }
-
-    // Any sky models to setup? Models will override the normal
-    // sphere.
-    R_SetupSkyModels(sky);
-
-    // How about the sky color?
-    noSkyColorGiven = true;
-    for(i = 0; i < 3; ++i)
-    {
-        skyColorRGB[i] = sky->color[i];
-        if(sky->color[i] > 0)
-            noSkyColorGiven = false;
-    }
-
-    // Calculate a balancing factor, so the light in the non-skylit
-    // sectors won't appear too bright.
-    if(sky->color[0] > 0 || sky->color[1] > 0 ||
-        sky->color[2] > 0)
-    {
-        skyColorBalance =
-            (0 +
-             (sky->color[0] * 2 + sky->color[1] * 3 +
-              sky->color[2] * 2) / 7) / 1;
-    }
-    else
-    {
-        skyColorBalance = 1;
-    }
 }
 
 /**
@@ -1070,7 +993,7 @@ linedef_t* R_FindSolidLineNeighbor(const sector_t* sector,
                       oFCeil > sector->SP_floorvisheight)))  )
             {
 
-                if(!Rend_DoesMidTextureFillGap(other, side))
+                if(!LineDef_MiddleMaterialCoversOpening(other, side, false))
                     return 0;
             }
         }
@@ -1155,27 +1078,27 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 #undef SEP
 }
 
-void R_InitLinks(gamemap_t *map)
+void R_InitLinks(gamemap_t* map)
 {
-    uint                i;
-    uint                starttime;
+    uint starttime = 0;
 
-    Con_Message("R_InitLinks: Initializing\n");
+    VERBOSE( Con_Message("R_InitLinks: Initializing...\n") )
+    VERBOSE2( starttime = Sys_GetRealTime() )
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
     NP_Init(&map->lineNodes, map->numLineDefs + 1000);
 
     // Allocate the rings.
-    starttime = Sys_GetRealTime();
-    map->lineLinks =
-        Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+    map->lineLinks = Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+
+    { uint i;
     for(i = 0; i < map->numLineDefs; ++i)
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
+    }
+
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitLinks: Allocating line link rings. Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - starttime) / 1000.0f));
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
 }
 
 /**
@@ -1344,56 +1267,9 @@ static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
 }
 #endif
 
-void R_BuildSectorLinks(gamemap_t *map)
+static __inline void initSurfaceMaterialOffset(surface_t* suf)
 {
-#define DOMINANT_SIZE   1000
-
-    uint                i;
-
-    for(i = 0; i < map->numSectors; ++i)
-    {
-        sector_t           *sec = &map->sectors[i];
-
-        if(!sec->lineDefCount)
-            continue;
-
-        // Is this sector large enough to be a dominant light source?
-        if(sec->lightSource == NULL && sec->planeCount > 0 &&
-           sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]   > DOMINANT_SIZE &&
-           sec->bBox[BOXTOP]   - sec->bBox[BOXBOTTOM] > DOMINANT_SIZE)
-        {
-            if(R_SectorContainsSkySurfaces(sec))
-            {
-                uint                k;
-
-                // All sectors touching this one will be affected.
-                for(k = 0; k < sec->lineDefCount; ++k)
-                {
-                    linedef_t*          lin = sec->lineDefs[k];
-                    sector_t           *other;
-
-                    other = lin->L_frontsector;
-                    if(other == sec)
-                    {
-                        if(lin->L_backside)
-                            other = lin->L_backsector;
-                    }
-
-                    if(other && other != sec)
-                        other->lightSource = sec;
-                }
-            }
-        }
-    }
-
-#undef DOMINANT_SIZE
-}
-
-static __inline void initSurfaceMaterialOffset(surface_t *suf)
-{
-    if(!suf)
-        return;
-
+    assert(suf);
     suf->visOffset[VX] = suf->oldOffset[0][VX] =
         suf->oldOffset[1][VX] = suf->offset[VX];
     suf->visOffset[VY] = suf->oldOffset[0][VY] =
@@ -1401,12 +1277,81 @@ static __inline void initSurfaceMaterialOffset(surface_t *suf)
 }
 
 /**
- * Called by the game at various points in the map setup process.
+ * Set intial values of various tracked and interpolated properties
+ * (lighting, smoothed planes etc).
  */
+void R_MapInitSurfaces(boolean forceUpdate)
+{
+    if(novideo) return;
+
+    { uint i;
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t* sec = SECTOR_PTR(i);
+        uint j;
+
+        R_UpdateSector(sec, forceUpdate);
+        for(j = 0; j < sec->planeCount; ++j)
+        {
+            plane_t* pln = sec->SP_plane(j);
+
+            pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] = pln->height;
+            initSurfaceMaterialOffset(&pln->surface);
+        }
+    }}
+
+    { uint i;
+    for(i = 0; i < numSideDefs; ++i)
+    {
+        sidedef_t* si = SIDE_PTR(i);
+
+        initSurfaceMaterialOffset(&si->SW_topsurface);
+        initSurfaceMaterialOffset(&si->SW_middlesurface);
+        initSurfaceMaterialOffset(&si->SW_bottomsurface);
+    }}
+}
+
+static void addToSurfaceLists(surface_t* suf, material_t* mat)
+{
+    if(!suf || !mat) return;
+
+    if(Material_HasGlow(mat))        R_SurfaceListAdd(glowingSurfaceList,   suf);
+    if(Materials_HasDecorations(mat)) R_SurfaceListAdd(decoratedSurfaceList, suf);
+}
+
+void R_MapInitSurfaceLists(void)
+{
+    if(novideo) return;
+
+    R_SurfaceListClear(decoratedSurfaceList);
+    R_SurfaceListClear(glowingSurfaceList);
+
+    { uint i;
+    for(i = 0; i < numSideDefs; ++i)
+    {
+        sidedef_t* side = SIDE_PTR(i);
+
+        addToSurfaceLists(&side->SW_middlesurface, side->SW_middlematerial);
+        addToSurfaceLists(&side->SW_topsurface,    side->SW_topmaterial);
+        addToSurfaceLists(&side->SW_bottomsurface, side->SW_bottommaterial);
+    }}
+
+    { uint i;
+    for(i = 0; i < numSectors; ++i)
+    {
+        sector_t* sec = SECTOR_PTR(i);
+        if(0 == sec->lineDefCount)
+            continue;
+
+        { uint j;
+        for(j = 0; j < sec->planeCount; ++j)
+            addToSurfaceLists(&sec->SP_planesurface(j), sec->SP_planematerial(j));
+        }
+    }}
+}
+
 void R_SetupMap(int mode, int flags)
 {
-    uint        i;
-
     switch(mode)
     {
     case DDSMM_INITIALIZE:
@@ -1420,49 +1365,32 @@ void R_SetupMap(int mode, int flags)
 
         // A new map is about to be setup.
         ddMapSetup = true;
+
+        Materials_PurgeCacheQueue();
         return;
 
-    case DDSMM_AFTER_LOADING:
-    {
+    case DDSMM_AFTER_LOADING: {
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
-
         R_InitSkyFix();
-
-        // Set intial values of various tracked and interpolated properties
-        // (lighting, smoothed planes etc).
-        for(i = 0; i < numSectors; ++i)
-        {
-            uint                j;
-            sector_t           *sec = SECTOR_PTR(i);
-
-            R_UpdateSector(sec, false);
-            for(j = 0; j < sec->planeCount; ++j)
-            {
-                plane_t            *pln = sec->SP_plane(j);
-
-                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
-                    pln->height;
-
-                initSurfaceMaterialOffset(&pln->surface);
-            }
-        }
-
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            sidedef_t          *si = SIDE_PTR(i);
-
-            initSurfaceMaterialOffset(&si->SW_topsurface);
-            initSurfaceMaterialOffset(&si->SW_middlesurface);
-            initSurfaceMaterialOffset(&si->SW_bottomsurface);
-        }
-
+        R_MapInitSurfaces(false);
         P_MapInitPolyobjs();
         return;
-    }
-    case DDSMM_FINALIZE:
-    {
-        gamemap_t          *map = P_GetCurrentMap();
+      }
+    case DDSMM_FINALIZE: {
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo;
+        float startTime;
+        char cmd[80];
+        int i;
+
+        if(gameTime > 20000000 / TICSPERSEC)
+        {
+            // In very long-running games, gameTime will become so large that it cannot be
+            // accurately converted to 35 Hz integer tics. Thus it needs to be reset back
+            // to zero.
+            gameTime = 0;
+        }
 
         // We are now finished with the game data, map object db.
         P_DestroyGameMapObjDB(&map->gameObjData);
@@ -1471,57 +1399,36 @@ void R_SetupMap(int mode, int flags)
         Sv_InitPools();
 
         // Recalculate the light range mod matrix.
-        Rend_CalcLightModRange(NULL);
-
-        // Update all sectors. Set intial values of various tracked
-        // and interpolated properties (lighting, smoothed planes etc).
-        for(i = 0; i < numSectors; ++i)
-        {
-            uint                l;
-            sector_t           *sec = SECTOR_PTR(i);
-
-            R_UpdateSector(sec, true);
-            for(l = 0; l < sec->planeCount; ++l)
-            {
-                plane_t            *pln = sec->SP_plane(l);
-
-                pln->visHeight = pln->oldHeight[0] = pln->oldHeight[1] =
-                    pln->height;
-
-                initSurfaceMaterialOffset(&pln->surface);
-            }
-        }
-
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            sidedef_t*          si = SIDE_PTR(i);
-
-            initSurfaceMaterialOffset(&si->SW_topsurface);
-            initSurfaceMaterialOffset(&si->SW_middlesurface);
-            initSurfaceMaterialOffset(&si->SW_bottomsurface);
-        }
+        Rend_CalcLightModRange();
 
         P_MapInitPolyobjs();
+        P_MapSpawnPlaneParticleGens();
+
+        R_MapInitSurfaces(true);
+        R_MapInitSurfaceLists();
+
+        startTime = Sys_GetSeconds();
+        R_PrecacheForMap();
+        Materials_ProcessCacheQueue();
+        VERBOSE( Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime) )
+
+        // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        {
-        ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
+        mapInfo = Def_GetMapInfo(P_MapUri(map));
         if(mapInfo && mapInfo->execute)
-            Con_Execute(CMDS_DED, mapInfo->execute, true, false);
+        {
+            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
-        // The map setup has been completed. Run the special map setup
-        // command, which the user may alias to do something useful.
-        if(/*mapID &&*/ mapID[0])
+        // Run the special map setup command, which the user may alias to do something useful.
+        { ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        sprintf(cmd, "init-%s", Str_Text(mapPath));
+        Str_Delete(mapPath);
+        if(Con_IsValidCommand(cmd))
         {
-            char cmd[80];
-
-            sprintf(cmd, "init-%s", mapID);
-            if(Con_IsValidCommand(cmd))
-            {
-                Con_Executef(CMDS_DED, false, cmd);
-            }
+            Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
+        }
         }
 
         // Clear any input events that might have accumulated during the
@@ -1535,8 +1442,8 @@ void R_SetupMap(int mode, int flags)
         // Kill all local commands and determine the invoid status of players.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
-            ddplayer_t         *ddpl = &plr->shared;
+            player_t* plr = &ddPlayers[i];
+            ddplayer_t* ddpl = &plr->shared;
 
             //clients[i].numTics = 0;
 
@@ -1544,14 +1451,10 @@ void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                subsector_t        *ssec =
-                    R_PointInSubsector(ddpl->mo->pos[VX],
-                                       ddpl->mo->pos[VY]);
+                subsector_t* ssec = R_PointInSubsector(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
 
                 //// \fixme $nplanes
-                if(ssec &&
-                   ddpl->mo->pos[VZ] > ssec->sector->SP_floorvisheight + 4 &&
-                   ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
+                if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
         }
@@ -1573,20 +1476,18 @@ void R_SetupMap(int mode, int flags)
         // for free blocks in the entire zone and purge purgable blocks.
         Z_EnableFastMalloc(false);
         return;
-    }
-    case DDSMM_AFTER_BUSY:
-    {
-        gamemap_t  *map = P_GetCurrentMap();
-        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
+      }
+    case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
+        gamemap_t* map = P_GetCurrentMap();
+        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
+
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else
-            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
-                       mapInfo->fogDensity, mapInfo->fogColor);
+            R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
         break;
-    }
+      }
     default:
         Con_Error("R_SetupMap: Unknown setup mode %i", mode);
     }
@@ -1605,18 +1506,33 @@ void R_ClearSectorFlags(void)
     }
 }
 
-/**
- * Is the specified plane glowing (it glows or is a sky mask surface)?
- *
- * @return              @c true, if the specified plane is non-glowing,
- *                      i.e. not glowing or a sky.
- */
 boolean R_IsGlowingPlane(const plane_t* pln)
 {
-    material_t*         mat = pln->surface.material;
+    /// \fixme We should not need to prepare to determine this.
+    material_t* mat = pln->surface.material;
+    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-    return ((mat && (mat->flags & MATF_NO_DRAW)) || pln->glow > 0 ||
-            R_IsSkySurface(&pln->surface));
+    return ((mat && !Material_IsDrawable(mat)) || ms->glowing > 0 || R_IsSkySurface(&pln->surface));
+}
+
+float R_GlowStrength(const plane_t* pln)
+{
+    material_t* mat = pln->surface.material;
+    if(mat)
+    {
+        if(Material_IsDrawable(mat) && !R_IsSkySurface(&pln->surface))
+        {
+            /// \fixme We should not need to prepare to determine this.
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
+
+            return ms->glowing;
+        }
+    }
+    return 0;
 }
 
 /**
@@ -1627,20 +1543,15 @@ boolean R_IsGlowingPlane(const plane_t* pln)
  */
 boolean R_SectorContainsSkySurfaces(const sector_t* sec)
 {
-    uint                i;
-    boolean             sectorContainsSkySurfaces;
-
-    // Does this sector feature any sky surfaces?
-    sectorContainsSkySurfaces = false;
-    i = 0;
+    boolean sectorContainsSkySurfaces = false;
+    uint n = 0;
     do
     {
-        if(R_IsSkySurface(&sec->SP_planesurface(i)))
+        if(R_IsSkySurface(&sec->SP_planesurface(n)))
             sectorContainsSkySurfaces = true;
         else
-            i++;
-    } while(!sectorContainsSkySurfaces && i < sec->planeCount);
-
+            n++;
+    } while(!sectorContainsSkySurfaces && n < sec->planeCount);
     return sectorContainsSkySurfaces;
 }
 
@@ -1664,7 +1575,8 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
         sector_t* backSec = s->line->L_sector(sid^1);
         surface_t* suf;
 
-        if(backSec)
+        if(backSec && ((section == SEG_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
+                       (section == SEG_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
         {
             suf = &backSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
             if(suf->material && !R_IsSkySurface(suf))
@@ -1676,9 +1588,9 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
             choice2 = suf->material;
     }
 
-    if(choice1 && !choice1->inAnimGroup)
+    if(choice1 && !Material_IsGroupAnimated(choice1))
         return choice1;
-    if(choice2 && !choice2->inAnimGroup)
+    if(choice2 && !Material_IsGroupAnimated(choice2))
         return choice2;
     if(choice1)
         return choice1;
@@ -1701,7 +1613,7 @@ static void updateSidedefSection(sidedef_t* s, segsection_t section)
                 surface)*/)
     {
         Surface_SetMaterial(suf, chooseFixMaterial(s, section));
-        suf->inFlags |= SUIF_MATERIAL_FIX;
+        suf->inFlags |= SUIF_FIX_MISSING_MATERIAL;
     }
 }
 
@@ -1747,89 +1659,60 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
 boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 {
-    boolean             changed = false;
-    boolean             hasGlow = false;
-    sector_t*           sec = pln->sector;
-
-    // Update the glow properties.
-    hasGlow = false;
-    if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) ||
-       (pln->PS_material->flags & MATF_GLOW)))
-    {
-        material_snapshot_t ms;
-
-        Material_Prepare(&ms, pln->PS_material, true, NULL);
-        pln->glowRGB[CR] = ms.color[CR];
-        pln->glowRGB[CG] = ms.color[CG];
-        pln->glowRGB[CB] = ms.color[CB];
-        hasGlow = true;
-        changed = true;
-    }
-
-    if(hasGlow)
-    {
-        pln->glow = 4; // Default height factor is 4
-    }
-    else
-    {
-        pln->glowRGB[CR] = pln->glowRGB[CG] = pln->glowRGB[CB] = 0;
-        pln->glow = 0;
-    }
+    sector_t* sec = pln->sector;
+    boolean changed = false;
 
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        uint                i;
-        subsector_t**       ssecp;
-        //sidedef_t*          front = NULL, *back = NULL;
+        subsector_t** ssecp;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
+        { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t*           plr = &ddPlayers[i];
-            ddplayer_t*         ddpl = &plr->shared;
+            player_t* plr = &ddPlayers[i];
+            ddplayer_t* ddpl = &plr->shared;
 
             if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
                 continue;
 
             //// \fixme $nplanes
-            if((ddpl->flags & DDPF_CAMERA) &&
-               ddpl->mo->subsector->sector == sec &&
-               (ddpl->mo->pos[VZ] > sec->SP_ceilheight ||
-                ddpl->mo->pos[VZ] < sec->SP_floorheight))
+            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->subsector->sector == sec &&
+               (ddpl->mo->pos[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->pos[VZ] < sec->SP_floorheight))
             {
                 ddpl->inVoid = true;
             }
-        }
+        }}
 
         // Update the z position of the degenmobj for this plane.
         pln->soundOrg.pos[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
-        ssecp = sec->ssectors;
-        while(*ssecp)
+        if(sec->ssectors && *sec->ssectors)
         {
-            subsector_t*    ssec = *ssecp;
-            seg_t**         segp = ssec->segs;
-
-            while(*segp)
+            ssecp = sec->ssectors;
+            do
             {
-                seg_t*          seg = *segp;
-
-                if(seg->lineDef)
+                subsector_t* ssec = *ssecp;
+                seg_t** segp = ssec->segs;
+                while(*segp)
                 {
-                    for(i = 0; i < 3; ++i)
-                        SB_SurfaceMoved(seg->bsuf[i]);
+                    seg_t* seg = *segp;
+                    if(seg->lineDef)
+                    {
+                        uint i;
+                        for(i = 0; i < 3; ++i)
+                            SB_SurfaceMoved(seg->bsuf[i]);
+                    }
+                    segp++;
                 }
 
-                segp++;
-            }
-
-            SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
-
-            ssecp++;
+                SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
+                ssecp++;
+            } while(*ssecp);
         }
 
         // We need the decorations updated.
@@ -1958,71 +1841,45 @@ float R_DistAttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-/**
- * The DOOM lighting model applies a light level delta to everything when
- * e.g. the player shoots.
- *
- * @return              Calculated delta.
- */
 float R_ExtraLightDelta(void)
 {
     return extraLightDelta;
 }
 
-/**
- * @return              @c > 0, if the sector lightlevel passes the
- *                      limit condition.
- */
 float R_CheckSectorLight(float lightlevel, float min, float max)
 {
     // Has a limit been set?
-    if(min == max)
-        return 1;
-
-    // Apply adaptation
+    if(min == max) return 1;
     Rend_ApplyLightAdaptation(&lightlevel);
-
     return MINMAX_OF(0, (lightlevel - min) / (float) (max - min), 1);
 }
 
-/**
- * Sector light color may be affected by the sky light color.
- */
-const float *R_GetSectorLightColor(const sector_t *sector)
+const float* R_GetSectorLightColor(const sector_t* sector)
 {
-    if(!rendSkyLight || noSkyColorGiven)
-        return sector->rgb; // The sector's real color.
-
-    if(!R_SectorContainsSkySurfaces(sector))
+    static vec3_t skyLightColor, oldSkyAmbientColor = { -1, -1, -1 };
+    static float oldRendSkyLight = -1;
+    if(rendSkyLight > .001f && R_SectorContainsSkySurfaces(sector))
     {
-        sector_t           *src;
-
-        // A dominant light source affects this sector?
-        src = sector->lightSource;
-        if(src && src->lightLevel >= sector->lightLevel)
+        const ColorRawf* ambientColor = R_SkyAmbientColor();
+        if(rendSkyLight != oldRendSkyLight ||
+           !INRANGE_OF(ambientColor->red,   oldSkyAmbientColor[CR], .001f) ||
+           !INRANGE_OF(ambientColor->green, oldSkyAmbientColor[CG], .001f) ||
+           !INRANGE_OF(ambientColor->blue,  oldSkyAmbientColor[CB], .001f))
         {
-            // The color shines here, too.
-            return R_GetSectorLightColor(src);
-        }
+            vec3_t white = { 1, 1, 1 };
+            V3_Copy(skyLightColor, ambientColor->rgb);
+            R_AmplifyColor(skyLightColor);
 
-        return sector->rgb;
-/*
-        // Return the sector's real color (balanced against sky's).
-        if(skyColorBalance >= 1)
-        {
-            return sector->rgb;
-        }
-        else
-        {
-            int                 c;
+            // Apply the intensity factor cvar.
+            V3_Lerp(skyLightColor, skyLightColor, white, 1-rendSkyLight);
 
-            for(c = 0; c < 3; ++c)
-                balancedRGB[c] = sector->rgb[c] * skyColorBalance;
-            return balancedRGB;
+            // When the sky light color changes we must update the lightgrid.
+            LG_MarkAllForUpdate();
+            V3_Copy(oldSkyAmbientColor, ambientColor->rgb);
         }
-*/
+        oldRendSkyLight = rendSkyLight;
+        return skyLightColor;
     }
-
-    // Return the sky color.
-    return skyColorRGB;
+    // A non-skylight sector (i.e., everything else!)
+    return sector->rgb; // The sector's ambient light color.
 }

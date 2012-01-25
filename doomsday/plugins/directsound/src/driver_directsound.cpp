@@ -1,10 +1,10 @@
-/**\file
+/**\file driver_directsound.cpp
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * driver_directsound.cpp: Win32 SFX driver for DirectSound, with EAX 2.0.
+ * Win32 SFX driver for DirectSound, with EAX 2.0.
  *
  * Uses DirectSound 8.0
  * Buffers created on Load.
@@ -419,7 +419,7 @@ int DS_Init(void)
     }
 
     // Announce capabilites:
-    Con_Printf("DirectSound Configuration:\n");
+    Con_Printf("DirectSound configuration:\n");
     Con_Printf("  Primary Buffer: %s (%s)\n", (primaryBuffer3D? "3D" : "2D"),
                (primaryBufferHW? "hardware" : "software"));
     Con_Printf("  Hardware Buffers: %i\n", (primaryBuffer3D? NUMBUFFERS_HW_3D : NUMBUFFERS_HW_2D));
@@ -572,7 +572,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Clear the buffer.
-    buf = (sfxbuffer_t*) Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = (sfxbuffer_t*) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->ptr = buf_object8;
     buf->ptr3D = buf_object3d;

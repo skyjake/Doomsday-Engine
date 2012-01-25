@@ -1,10 +1,10 @@
-/**\file
+/**\file de_refresh.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +23,28 @@
  */
 
 /**
- * de_refresh.h: Refresh Subsystem (Resource Management)
+ * Refresh Subsystem
  */
 
-#ifndef __DOOMSDAY_REFRESH__
-#define __DOOMSDAY_REFRESH__
+#ifndef LIBDENG_REFRESH
+#define LIBDENG_REFRESH
 
-#include "p_materialmanager.h"
+#include "materials.h"
+#include "textures.h"
+#include "fonts.h"
+#include "svg.h"
 #include "r_data.h"
-#include "r_main.h"
-#include "r_things.h"
-#include "r_model.h"
 #include "r_draw.h"
-#include "r_world.h"
-#include "r_shadow.h"
-#include "r_sky.h"
-#include "r_util.h"
-#include "r_extres.h"
-#include "r_shadow.h"
+#include "r_fakeradio.h"
 #include "r_lgrid.h"
 #include "r_lumobjs.h"
+#include "r_main.h"
+#include "r_model.h"
+#include "r_shadow.h"
+#include "r_sky.h"
+#include "rend_dynlight.h"
+#include "r_things.h"
+#include "r_util.h"
+#include "r_world.h"
 
-#endif
+#endif /* LIBDENG_REFRESH */

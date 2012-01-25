@@ -1,0 +1,41 @@
+# DOOM - Sky Definitions
+#
+# For further information on Sky definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Sky
+
+Header { Version = 6; }
+
+Sky {
+  ID = "sky1";
+  Height = 0.49;
+  Horizon offset = -0.105;
+  Layer 1 {
+    Flags = enable;
+    Material = "textures:SKY1";
+  }
+}
+
+# The rest of this file is skipped if DOOM1 Shareware
+SkipIf doom1-share
+
+Copy Sky {
+  ID = "sky2";
+  Layer 1 {
+    Material = "textures:SKY2";
+  };
+}
+
+Copy Sky {
+  ID = "sky3";
+  Layer 1 {
+    Material = "textures:SKY3";
+  };
+}
+
+Copy Sky {
+  ID = "sky4";
+  Layer 1 {
+    Material = "textures:SKY4";
+  };
+}

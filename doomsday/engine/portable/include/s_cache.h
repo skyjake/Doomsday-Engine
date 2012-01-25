@@ -1,9 +1,10 @@
-/**\file
+/**\file s_cache.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +18,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * s_cache.h: Sound Sample Cache
+/**
+ * Sound Sample Cache.
  */
 
-#ifndef __DOOMSDAY_SOUND_CACHE_H__
-#define __DOOMSDAY_SOUND_CACHE_H__
+#ifndef LIBDENG_SOUND_CACHE_H
+#define LIBDENG_SOUND_CACHE_H
 
-void            Sfx_InitCache(void);
-void            Sfx_ShutdownCache(void);
-sfxsample_t    *Sfx_Cache(int id);
-void            Sfx_CacheHit(int id);
-uint            Sfx_GetSoundLength(int id);
-void            Sfx_GetCacheInfo(uint *cacheBytes, uint *sampleCount);
+void Sfx_InitCache(void);
+void Sfx_ShutdownCache(void);
 
-#endif
+sfxsample_t* Sfx_Cache(int id);
+void Sfx_CacheHit(int id);
+uint Sfx_GetSoundLength(int id);
+void Sfx_GetCacheInfo(uint* cacheBytes, uint* sampleCount);
+
+#endif /* LIBDENG_SOUND_CACHE_H */

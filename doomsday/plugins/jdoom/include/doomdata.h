@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,30 +45,27 @@ enum {
 //
 
 // Blocks monsters only.
-#define ML_BLOCKMONSTERS        2
+#define ML_BLOCKMONSTERS        0x0002
 
 // In AutoMap: don't map as two sided: IT'S A SECRET!
-#define ML_SECRET               32
+#define ML_SECRET               0x0020
 
 // Sound rendering: don't let sound cross two of these.
-#define ML_SOUNDBLOCK           64
+#define ML_SOUNDBLOCK           0x0040
 
 // Don't draw on the automap at all.
-#define ML_DONTDRAW             128
+#define ML_DONTDRAW             0x0080
 
 // Set if already seen, thus drawn in automap.
-#define ML_MAPPED               256
+#define ML_MAPPED               0x0100
 
 // Allows a USE action to pass through a linedef with a special
-#define ML_PASSUSE              512
+#define ML_PASSUSE              0x0200
 
 // If set allows any mobj to trigger the linedef's special
-#define ML_ALLTRIGGER           1024
+#define ML_ALLTRIGGER           0x0400
 
-// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
-// ML_BLOCKING -> ML_MAPPED inc will persist.
-#define ML_INVALID              2048
-#define VALIDMASK               0x000001ff
+#define ML_VALID_MASK           (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_PASSUSE|ML_ALLTRIGGER)
 
 // Special activation types:
 #define SPAC_CROSS              0 // Player crosses linedef.

@@ -50,9 +50,7 @@ HEADERS += \
     include/info.h \
     include/jdoom.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/oldinfo.h \
     include/p_enemy.h \
     include/p_inter.h \
@@ -91,9 +89,7 @@ HEADERS += \
     include/info.h \
     include/jdoom.h \
     include/m_cheat.h \
-    include/m_menu.h \
     include/m_random.h \
-    include/mn_def.h \
     include/oldinfo.h \
     include/p_enemy.h \
     include/p_inter.h \

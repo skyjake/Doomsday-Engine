@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,17 +52,11 @@ typedef struct mobjtargetableparams_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-intercept_t intercepts[MAXINTERCEPTS], *intercept_p;
-
-divline_t trace;
-boolean earlyout;
-int     ptflags;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-boolean PIT_MobjTargetable(mobj_t *mo, void *data)
+int PIT_MobjTargetable(mobj_t *mo, void *data)
 {
     mobjtargetableparams_t *params = (mobjtargetableparams_t*) data;
 
@@ -74,12 +68,12 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
@@ -94,12 +88,12 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                (mo->flags2 & MF2_DORMANT) ||
                ((mo->type == MT_MINOTAUR) && (mo->tracer == params->source->tracer)) ||
                 (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
@@ -111,7 +105,7 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
         {
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player))
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
@@ -127,7 +121,7 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
                 if(angle > 226 || angle < 30)
                 {
                     params->target = mo;
-                    return false; // Stop iteration.
+                    return true; // Stop iteration.
                 }
             }
         }
@@ -141,17 +135,17 @@ boolean PIT_MobjTargetable(mobj_t *mo, void *data)
             if(!(mo->flags & MF_SHOOTABLE) ||
                (IS_NETGAME && !deathmatch && mo->player) ||
                mo == params->source->target)
-                return true; // Continue iteration.
+                return false; // Continue iteration.
 
             if(P_CheckSight(params->source, mo))
             {
                 params->target = mo;
-                return false; // Stop iteration.
+                return true; // Stop iteration.
             }
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -167,7 +161,7 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     int             i, block[2], startBlock[2];
     int             count;
     float           mapOrigin[2];
-    float           box[4];
+    AABoxf box;
     mobjtargetableparams_t params;
 
     mapOrigin[VX] = *((float*) DD_GetVariable(DD_MAP_MIN_X));
@@ -187,14 +181,14 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
     startBlock[VX] = FLT2FIX(mo->pos[VX] - mapOrigin[VX]) >> MAPBLOCKSHIFT;
     startBlock[VY] = FLT2FIX(mo->pos[VY] - mapOrigin[VY]) >> MAPBLOCKSHIFT;
 
-    box[BOXLEFT]   = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
-    box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
-    box[BOXBOTTOM] = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
-    box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
+    box.minX = mapOrigin[VX] + startBlock[VX] * MAPBLOCKUNITS;
+    box.minY = mapOrigin[VY] + startBlock[VY] * MAPBLOCKUNITS;
+    box.maxX = box.minX + MAPBLOCKUNITS;
+    box.maxY = box.minY + MAPBLOCKUNITS;
 
     // Check the first block.
     VALIDCOUNT++;
-    if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+    if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
     {   // Found a target right away!
         return params.target;
     }
@@ -204,51 +198,51 @@ mobj_t* P_RoughMonsterSearch(mobj_t *mo, int distance)
         block[VX] = startBlock[VX] - count;
         block[VY] = startBlock[VY] - count;
 
-        box[BOXLEFT]   = mapOrigin[VX] + block[VX] * MAPBLOCKUNITS;
-        box[BOXRIGHT]  = box[BOXLEFT] + MAPBLOCKUNITS;
-        box[BOXBOTTOM] = mapOrigin[VY] + block[VY] * MAPBLOCKUNITS;
-        box[BOXTOP]    = box[BOXBOTTOM] + MAPBLOCKUNITS;
+        box.minX = mapOrigin[VX] + block[VX] * MAPBLOCKUNITS;
+        box.minY = mapOrigin[VY] + block[VY] * MAPBLOCKUNITS;
+        box.maxX = box.minX + MAPBLOCKUNITS;
+        box.maxY = box.minY + MAPBLOCKUNITS;
 
         // Trace the first block section (along the top).
         for(i = 0; i < count * 2 + 1; ++i)
         {
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
 
             if(i < count * 2)
             {
-                box[BOXLEFT]  += MAPBLOCKUNITS;
-                box[BOXRIGHT] += MAPBLOCKUNITS;
+                box.minX += MAPBLOCKUNITS;
+                box.maxX += MAPBLOCKUNITS;
             }
         }
 
         // Trace the second block section (right edge).
         for(i = 0; i < count * 2; ++i)
         {
-            box[BOXBOTTOM] += MAPBLOCKUNITS;
-            box[BOXTOP]    += MAPBLOCKUNITS;
+            box.minY += MAPBLOCKUNITS;
+            box.maxY += MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
         // Trace the third block section (bottom edge).
         for(i = 0; i < count * 2; ++i)
         {
-            box[BOXLEFT]  -= MAPBLOCKUNITS;
-            box[BOXRIGHT] -= MAPBLOCKUNITS;
+            box.minX -= MAPBLOCKUNITS;
+            box.maxX -= MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
 
         // Trace the final block section (left edge).
         for(i = 0; i < count * 2 - 1; ++i)
         {
-            box[BOXBOTTOM] -= MAPBLOCKUNITS;
-            box[BOXTOP]    -= MAPBLOCKUNITS;
+            box.minY -= MAPBLOCKUNITS;
+            box.maxY -= MAPBLOCKUNITS;
 
-            if(!P_MobjsBoxIterator(box, PIT_MobjTargetable, &params))
+            if(P_MobjsBoxIterator(&box, PIT_MobjTargetable, &params))
                 return params.target;
         }
     }

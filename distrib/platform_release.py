@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# This script builds the distribution packages platform-independently.
+# No parameters needed; config is auto-detected.
+
 import sys
 import os
 import platform
@@ -8,23 +11,23 @@ import glob
 import build_version
 import build_number
 
-LAUNCH_DIR = os.path.abspath(os.getcwd())
-DOOMSDAY_DIR = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
+# Configuration.
+LAUNCH_DIR    = os.path.abspath(os.getcwd())
+DOOMSDAY_DIR  = os.path.abspath(os.path.join(os.getcwd(), '..', 'doomsday'))
 SNOWBERRY_DIR = os.path.abspath(os.path.join(LAUNCH_DIR, '..', 'snowberry'))
-WORK_DIR = os.path.join(LAUNCH_DIR, 'work')
-OUTPUT_DIR = os.path.join(os.getcwd(), 'releases')
-DOOMSDAY_VERSION_FULL = "0.0.0-Name"
+WORK_DIR      = os.path.join(LAUNCH_DIR, 'work')
+OUTPUT_DIR    = os.path.abspath(os.path.join(os.getcwd(), 'releases'))
+DOOMSDAY_VERSION_FULL       = "0.0.0-Name"
 DOOMSDAY_VERSION_FULL_PLAIN = "0.0.0"
-DOOMSDAY_VERSION_MAJOR = 0
-DOOMSDAY_VERSION_MINOR = 0
-DOOMSDAY_VERSION_REVISION = 0
-DOOMSDAY_RELEASE_TYPE = "Unstable"
-now = time.localtime()
-DOOMSDAY_BUILD_NUMBER = build_number.todays_build()
-DOOMSDAY_BUILD = 'build' + DOOMSDAY_BUILD_NUMBER
-TIMESTAMP = time.strftime('%y-%m-%d')
+DOOMSDAY_VERSION_MAJOR      = 0
+DOOMSDAY_VERSION_MINOR      = 0
+DOOMSDAY_VERSION_REVISION   = 0
+DOOMSDAY_RELEASE_TYPE       = "Unstable"
+DOOMSDAY_BUILD_NUMBER       = build_number.todays_build()
+DOOMSDAY_BUILD              = 'build' + DOOMSDAY_BUILD_NUMBER
 
-print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
+TIMESTAMP = time.strftime('%y-%m-%d')
+now = time.localtime()
 
 
 def exit_with_error():
@@ -81,6 +84,9 @@ def find_version():
     DOOMSDAY_VERSION_MAJOR = build_version.DOOMSDAY_VERSION_MAJOR
     DOOMSDAY_VERSION_MINOR = build_version.DOOMSDAY_VERSION_MINOR
     DOOMSDAY_VERSION_REVISION = build_version.DOOMSDAY_VERSION_REVISION
+    
+    print 'Build:', DOOMSDAY_BUILD, 'on', TIMESTAMP
+    print 'Version:', DOOMSDAY_VERSION_FULL_PLAIN, DOOMSDAY_RELEASE_TYPE
 
 
 def prepare_work_dir():
@@ -92,8 +98,9 @@ def mac_os_version():
     return platform.mac_ver()[0][:4]
 
 
-"""The Mac OS X release procedure."""
 def mac_release():
+    """The Mac OS X release procedure."""
+    
     # Check Python dependencies.
     try:
         import wx
@@ -194,7 +201,7 @@ def mac_release():
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
     duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
-    shutil.copy(LAUNCH_DIR + "/mac/Read Me.rtf", 'imaging/Read Me.rtf')
+    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') +
         ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')
@@ -204,8 +211,9 @@ def mac_release():
     remove('imaging.dmg')
 
 
-"""The Windows release procedure."""
 def win_release():
+    """The Windows release procedure."""
+    
     PROD_DIR = os.path.join(LAUNCH_DIR, 'products')
     if not os.path.exists(PROD_DIR):
         print "Creating the products directory."
@@ -235,8 +243,9 @@ def win_release():
         raise Exception("Failure in the Windows release script.")
 
 
-"""The Linux release procedure."""
 def linux_release():
+    """The Linux release procedure."""
+    
     os.chdir(LAUNCH_DIR)
 
     # Generate a launcher script.
@@ -252,8 +261,10 @@ import snowberry"""
     os.system('chmod a+x linux/launch-doomsday')
 
     def clean_products():
-        # Remove previously build deb packages.
+        # Remove previously built deb packages.
         os.system('rm -f ../doomsday*.deb ../doomsday*.changes ../doomsday*.tar.gz ../doomsday*.dsc')
+        os.system('rm -f doomsday-fmod*.deb doomsday-fmod*.changes doomsday-fmod*.tar.gz doomsday-fmod*.dsc')
+        #os.system('rm -f dsfmod/fmod-*.txt')
 
     clean_products()
 
@@ -263,6 +274,15 @@ import snowberry"""
 
     if os.system('linux/gencontrol.sh && dpkg-buildpackage -b'):
         raise Exception("Failure to build from source.")
+
+    # Build dsFMOD separately.
+    os.chdir('dsfmod')
+    logSuffix = "%s-%s.txt" % (sys.platform, platform.architecture()[0])
+    if os.system('dpkg-buildpackage -b > fmod-out-%s 2> fmod-err-%s' % (logSuffix, logSuffix)):
+        raise Exception("Failure to build dsFMOD from source.")
+    shutil.copy(glob.glob('../doomsday-fmod*.deb')[0], OUTPUT_DIR)
+    shutil.copy(glob.glob('../doomsday-fmod*.changes')[0], OUTPUT_DIR)    
+    os.chdir('..')
 
     # Place the result in the output directory.
     shutil.copy(glob.glob('../doomsday*.deb')[0], OUTPUT_DIR)

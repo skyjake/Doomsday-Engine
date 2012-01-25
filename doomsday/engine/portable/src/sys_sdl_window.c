@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_sdl_window.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_sdl_window.c: Cross-platform, SDL-based window management.
+ * Cross-platform, SDL-based window management.
  *
  * This code wraps SDL window management routines in order to provide
  * common behavior. The availabilty of features and behavioral traits can
@@ -45,6 +45,9 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 #include "de_ui.h"
+
+#include "gl_texmanager.h"
+#include "rend_particle.h" // \todo Should not be necessary at this level.
 
 // MACROS ------------------------------------------------------------------
 
@@ -102,7 +105,7 @@ static void setAttrib(int flags)
     if(!mainWindowInited)
         return;
 
-    if(flags & (CBLF_YELLOW | CBLF_LIGHT))
+    if(flags & (CPF_YELLOW | CPF_LIGHT))
         wattrset(mainWindow.console.winText, A_BOLD);
     else
         wattrset(mainWindow.console.winText, A_NORMAL);
@@ -112,7 +115,7 @@ static void setAttrib(int flags)
  * Writes the text in winText at (cx,cy).
  */
 static void writeText(const char *line, int len)
-{  
+{
     wmove(mainWindow.console.winText, mainWindow.console.cy, mainWindow.console.cx);
     waddnstr(mainWindow.console.winText, line, len);
     wclrtoeol(mainWindow.console.winText);
@@ -212,19 +215,9 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     setConWindowCmdLine(1, NULL, 0, 0);
 }
 
-/**
- * Set the command line display of the specified console window.
- *
- * @param idx           Console window identifier.
- * @param text          Text string to copy.
- * @param cursorPos     Position to set the cursor on the command line.
- * @param flags         CLF_* flags control the appearance of the
- *                      command line.
- */
-void Sys_SetConWindowCmdLine(uint idx, const char *text, uint cursorPos,
-                             int flags)
+void Sys_SetConWindowCmdLine(uint idx, const char* text, uint cursorPos, int flags)
 {
-    ddwindow_t     *win;
+    ddwindow_t* win;
 
     if(!winManagerInited)
         return;
@@ -377,12 +370,11 @@ boolean Sys_ShutdownWindowManager(void)
 static boolean initOpenGL(void)
 {
     // Attempt to set the video mode.
-    if(!Sys_ChangeVideoMode(theWindow->width, theWindow->height,
-                            theWindow->normal.bpp))
+    if(!Sys_ChangeVideoMode(theWindow->geometry.size.width,
+            theWindow->geometry.size.height, theWindow->normal.bpp))
         return false;
 
-    // Setup the GL state like we want it.
-    Sys_InitGLState();
+    Sys_GLConfigureDefaultState();
     return true;
 }
 
@@ -409,6 +401,7 @@ static boolean createContext(int width, int height, int bpp,
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     if(!initOpenGL())
@@ -443,13 +436,11 @@ boolean Sys_GetWindowManagerInfo(wminfo_t *info)
     return true;
 }
 
-static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
-                                  int flags, ddwindowtype_t type,
-                                  const char *title)
+static ddwindow_t* createDDWindow(application_t* app, const Size2Raw* size,
+    int bpp, int flags, ddwindowtype_t type, const char* title)
 {
     // SDL only supports one window.
-    if(mainWindowInited)
-        return NULL;
+    if(mainWindowInited) return NULL;
 
     if(type == WT_CONSOLE)
     {
@@ -458,7 +449,10 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 
         // Initialize curses.
         if(!(cursesRootWin = initscr()))
+        {
             Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
+            return NULL;
+        }
 
         cbreak();
         noecho();
@@ -524,45 +518,22 @@ static ddwindow_t *createDDWindow(application_t *app, int w, int h, int bpp,
 #endif
     }
 
-    setDDWindow(&mainWindow, w, h, bpp, flags,
+    setDDWindow(&mainWindow, size->width, size->height, bpp, flags,
                 DDSW_NOVISIBLE | DDSW_NOCENTER | DDSW_NOFULLSCREEN);
 
     mainWindowInited = true;
     return &mainWindow;
 }
 
-/**
- * Create a new (OpenGL-ready) system window.
- *
- * @param app           Ptr to the application structure holding our globals.
- * @param parentIDX     Ignored: SDL does not support parent/child windows.
- * @param x             Ignored: SDL does not support changing X position.
- * @param y             Ignored: SDL does not support changing Y position..
- * @param w             Width (client area).
- * @param h             Height (client area).
- * @param bpp           BPP (bits-per-pixel)
- * @param flags         DDWF_* flags, control appearance/behavior.
- * @param type          Type of window to be created.
- * @param title         Window title string, ELSE @c NULL,.
- * @param data          Platform specific data.
- *
- * @return              If @c 0, window creation was unsuccessful,
- *                      ELSE 1-based index identifier of the new window.
- */
-uint Sys_CreateWindow(application_t *app, uint parentIDX,
-                      int x, int y, int w, int h, int bpp, int flags,
-                      ddwindowtype_t type, const char *title, void *data)
+uint Sys_CreateWindow(application_t* app, uint parentIdx, const Point2Raw* origin,
+    const Size2Raw* size, int bpp, int flags, ddwindowtype_t type, const char* title,
+    void* userData)
 {
-    ddwindow_t *win;
+    ddwindow_t* win;
+    if(!winManagerInited) return 0;
 
-    if(!winManagerInited)
-        return 0; // Window manager not initialized yet.
-
-    win = createDDWindow(app, w, h, bpp, flags, type, title);
-
-    if(win)
-        return 1; // Success.
-
+    win = createDDWindow(app, size, bpp, flags, type, title);
+    if(win) return 1; // Success.
     return 0;
 }
 
@@ -629,13 +600,13 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
 
     if(novideo)
         return true;
-    
+
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
 
     // Grab the current values.
-    width = window->width;
-    height = window->height;
+    width = window->geometry.size.width;
+    height = window->geometry.size.height;
     bpp = window->normal.bpp;
     flags = window->flags;
     // Force update on init?
@@ -712,8 +683,8 @@ static boolean setDDWindow(ddwindow_t *window, int newWidth, int newHeight,
     }
 */
     // Update the current values.
-    window->width = width;
-    window->height = height;
+    window->geometry.size.width = width;
+    window->geometry.size.height = height;
     window->normal.bpp = bpp;
     window->flags = flags;
     if(!window->inited)
@@ -732,23 +703,26 @@ extern boolean usingFog;
 #else
         void           *data = NULL;
 #endif
-        boolean         hadFog;
+        boolean         hadFog = false;
 
         if(glIsInited)
         {
             // Shut everything down, but remember our settings.
             hadFog = usingFog;
             GL_TotalReset();
-            gx.UpdateState(DD_RENDER_RESTART_PRE);
-            UI_ClearTextures();
+
+            if(DD_GameLoaded() && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            R_UnloadSvgs();
+            GL_ReleaseTextures();
         }
 
-        if(createContext(window->width, window->height, window->normal.bpp,
-                         (window->flags & DDWF_FULLSCREEN)? false : true,
-                         data))
+        if(createContext(window->geometry.size.width, window->geometry.size.height,
+               window->normal.bpp, (window->flags & DDWF_FULLSCREEN)? false : true, data))
         {
             // We can get on with initializing the OGL state.
-            Sys_InitGLState();
+            Sys_GLConfigureDefaultState();
         }
 
         if(glIsInited)
@@ -759,14 +733,15 @@ extern boolean usingFog;
 
             if(hadFog)
                 GL_UseFog(true);
-            gx.UpdateState(DD_RENDER_RESTART_POST);
-            
-            UI_LoadTextures();
+
+            if(DD_GameLoaded() && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_POST);
         }
     }
     /*else
     {
-        Sys_ChangeVideoMode(window->width, window->height, window->normal.bpp);
+        Sys_ChangeVideoMode(window->geometry.size.width,
+            window->geometry.size.height, window->normal.bpp);
     }*/
 
     // If the window dimensions have changed, update any sub-systems
@@ -892,42 +867,31 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     return false;
 }
 
-/**
- * Attempt to get the dimensions (and position) of the given window (client
- * area) in screen-space.
- *
- * @param idx           Index identifier (1-based) to the window.
- * @param x             Address to write the x position back to,
- *                      unsupported by SDL so always 0.
- * @param y             Address to write the y position back to,
- *                      unsupported by SDL so always 0.
- * @param width         Address to write the width back to (if any).
- * @param height        Address to write the height back to (if any).
- *
- * @return              @c true, if successful.
- */
-boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
-                                int *height)
+const RectRaw* Sys_GetWindowGeometry(uint idx)
 {
-    ddwindow_t *window = getWindow(idx - 1);
-
-    if(!window || (!x && !y && !width && !height))
-        return false;
-
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
     // Moving does not work in dedicated mode.
-    if(isDedicated)
-        return false;
+    if(isDedicated) return NULL;
+    return &window->geometry;
+}
 
-    if(x)
-        *x = 0;
-    if(y)
-        *y = 0;
-    if(width)
-        *width = window->width;
-    if(height)
-        *height = window->height;
+const Point2Raw* Sys_GetWindowOrigin(uint idx)
+{
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
+    // Moving does not work in dedicated mode.
+    if(isDedicated) return NULL;
+    return &window->geometry.origin;
+}
 
-    return true;
+const Size2Raw* Sys_GetWindowSize(uint idx)
+{
+    ddwindow_t* window = getWindow(idx - 1);
+    if(!window) return NULL;
+    // Moving does not work in dedicated mode.
+    if(isDedicated) return NULL;
+    return &window->geometry.size;
 }
 
 /**
@@ -940,7 +904,7 @@ boolean Sys_GetWindowDimensions(uint idx, int *x, int *y, int *width,
  */
 boolean Sys_GetWindowBPP(uint idx, int *bpp)
 {
-    ddwindow_t *window = getWindow(idx - 1);
+    ddwindow_t* window = getWindow(idx - 1);
 
     if(!window || !bpp)
         return false;

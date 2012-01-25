@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,10 @@
 #define __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 
 #include "m_vector.h"
+
+struct rendpoly_s;
+struct rvertex_s;
+struct ColorRawf_s;
 
 #define MAX_BIAS_LIGHTS     (8 * 32) // Hard limit due to change tracking.
 #define MAX_BIAS_TRACKED    (MAX_BIAS_LIGHTS / 8)
@@ -75,9 +79,6 @@ typedef struct biastracker_s {
     uint            changes[MAX_BIAS_TRACKED];
 } biastracker_t;
 
-struct rendpoly_s;
-struct rvertex_s;
-struct rcolor_s;
 
 extern int      useBias; // Bias lighting enabled.
 extern uint     currentTimeSB;
@@ -91,7 +92,7 @@ void            SB_DestroySurface(struct biassurface_s* bsuf);
 void            SB_SurfaceMoved(struct biassurface_s* bsuf);
 
 void            SB_BeginFrame(void);
-void            SB_RendPoly(struct rcolor_s* rcolors,
+void            SB_RendPoly(struct ColorRawf_s* rcolors,
                             struct biassurface_s* bsuf,
                             const struct rvertex_s* rvertices,
                             size_t numVertices, const vectorcomp_t* normal,

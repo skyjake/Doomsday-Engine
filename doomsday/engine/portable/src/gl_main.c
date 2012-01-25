@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * gl_main.c: Graphics Subsystem
+ * Graphics Subsystem.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -44,8 +44,12 @@
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_defs.h"
-
 #include "r_draw.h"
+
+#include "colorpalette.h"
+#include "texturecontent.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
 #  include <icm.h>
@@ -64,11 +68,6 @@
 #if !defined(WIN32_GAMMA) && !defined(XFREE_GAMMA)
 #  define SDL_GAMMA
 #  include <SDL.h>
-#endif
-
-#ifdef TextOut
-// Windows has its own TextOut.
-#  undef TextOut
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -100,22 +99,18 @@ extern boolean fillOutlines;
 // The default resolution (config file).
 int     defResX = 640, defResY = 480, defBPP = 32;
 int     defFullscreen = true;
-int     numTexUnits;
+int numTexUnits = 1;
 boolean envModAdd;              // TexEnv: modulate and add is available.
 int     test3dfx = 0;
 int     r_framecounter;         // Used only for statistics.
 int     r_detail = true;        // Render detail textures (if available).
 
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
-int     glFontFixed, glFontVariable[NUM_GLFS];
-
 float   glNearClip, glFarClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean initGLOk = false;
-//static boolean varFontInited = false;
-
 static gramp_t original_gamma_ramp;
 static boolean gamma_support = false;
 static float oldgamma, oldcontrast, oldbright;
@@ -134,6 +129,8 @@ void GL_Register(void)
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
                 0, 0);
     C_VAR_FLOAT("rend-hud-fov-shift", &weaponFOVShift, CVF_NO_MAX, 0, 1);
+    C_VAR_BYTE("rend-hud-stretch", &weaponScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+
     // * Render-Mobj
     C_VAR_INT("rend-mobj-smooth-move", &useSRVO, 0, 0, 2);
     C_VAR_INT("rend-mobj-smooth-turn", &useSRVOAngle, 0, 0, 1);
@@ -148,7 +145,7 @@ void GL_Register(void)
     C_VAR_FLOAT("vid-bright", &vid_bright, 0, -2, 2);
 
     // Ccmds
-    C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
@@ -275,7 +272,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
 #endif
 }
 
-void GL_SetGammaRamp(unsigned short *ramp)
+void GL_SetGammaRamp(unsigned short* ramp)
 {
     if(!gamma_support)
         return;
@@ -285,49 +282,43 @@ void GL_SetGammaRamp(unsigned short *ramp)
 #endif
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
+    { HWND hWnd;
+    if((hWnd = Sys_GetWindowHandle(windowIDX)))
     {
-        HWND        hWnd = Sys_GetWindowHandle(windowIDX);
-
-        if(!hWnd)
+        HDC hDC;
+        if((hDC = GetDC(hWnd)))
         {
-            suspendMsgPump = true;
-            MessageBox(HWND_DESKTOP,
-                       TEXT("GL_SetGammaRamp: Main window not available."), NULL,
-                       MB_ICONERROR | MB_OK);
-            suspendMsgPump = false;
+            SetDeviceGammaRamp(hDC, (void*) ramp);
+            ReleaseDC(hWnd, hDC);
         }
         else
         {
-            HDC hDC = GetDC(hWnd);
-
-            if(!hDC)
-            {
-                Con_Message("GL_SetGammaRamp: Failed getting device context.");
-                gamma_support = false;
-            }
-            else
-            {
-                SetDeviceGammaRamp(hDC, (void*) ramp);
-                ReleaseDC(hWnd, hDC);
-            }
+            Con_Message("GL_SetGammaRamp: Failed getting device context.");
+            gamma_support = false;
         }
     }
+    else
+    {
+        suspendMsgPump = true;
+        MessageBox(HWND_DESKTOP, TEXT("GL_SetGammaRamp: Main window not available."), 0, MB_ICONERROR | MB_OK);
+        suspendMsgPump = false;
+    }}
 #endif
 
 #ifdef XFREE_GAMMA
+    { Display* dpy;
+    if((dpy = XOpenDisplay(0)))
     {
-        Display *dpy = XOpenDisplay(NULL);
         int screen = DefaultScreen(dpy);
-
-        if(!dpy)
-            return;
-
         // We assume that the gamme ramp size actually is 256.
-        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256,
-                                ramp + 512);
-
+        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256, ramp + 512);
         XCloseDisplay(dpy);
     }
+    else
+    {
+        Con_Message("GL_SetGammaRamp: Failed acquiring Display handle.");
+        gamma_support = false;
+    }}
 #endif
 }
 
@@ -391,7 +382,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
  */
 void GL_SetGamma(void)
 {
-    gramp_t     myramp;
+    gramp_t myramp;
 
     oldgamma = vid_gamma;
     oldcontrast = vid_contrast;
@@ -401,216 +392,85 @@ void GL_SetGamma(void)
     GL_SetGammaRamp(myramp);
 }
 
-const char* GL_ChooseFixedFont(void)
+static void printConfiguration(void)
 {
-    if(theWindow->width < 300)
-        return "console11";
-    if(theWindow->width > 768)
-        return "console18";
-    return "console14";
+    static const char* enabled[] = { "disabled", "enabled" };
+
+    Con_Printf("Render configuration:\n");
+    Con_Printf("  Multisampling: %s", enabled[GL_state.features.multisample? 1:0]);
+    if(GL_state.features.multisample)
+        Con_Printf(" (sf:%i)\n", GL_state.multisampleFormat);
+    else
+        Con_Printf("\n");
+    Con_Printf("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    Con_Printf("  Texture Anisotropy: %s\n", GL_state.features.texFilterAniso? "variable" : "fixed");
+    Con_Printf("  Texture Compression: %s\n", enabled[GL_state.features.texCompression? 1:0]);
+    Con_Printf("  Texture NPOT: %s\n", enabled[GL_state.features.texNonPowTwo? 1:0]);
+    if(GL_state.forceFinishBeforeSwap)
+        Con_Message("  glFinish() forced before swapping buffers.\n");
 }
-
-const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
-{
-    const int SMALL_LIMIT = 500;
-    const int MED_LIMIT = 800;
-
-    switch(style)
-    {
-    default:
-        return (resY < SMALL_LIMIT ? "normal12" :
-                resY < MED_LIMIT ? "normal18" :
-                "normal24");
-
-    case GLFS_LIGHT:
-        return (resY < SMALL_LIMIT ? "normallight12" :
-                resY < MED_LIMIT ? "normallight18" :
-                "normallight24");
-
-    case GLFS_BOLD:
-        return (resY < SMALL_LIMIT ? "normalbold12" :
-                resY < MED_LIMIT ? "normalbold18" :
-                "normalbold24");
-    }
-}
-
-void GL_InitFont(void)
-{
-    FR_Init();
-    FR_PrepareFont(GL_ChooseFixedFont());
-    glFontFixed = FR_GetCurrent();
-
-    Con_SetMaxLineLength();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_NORMAL] = FR_GetCurrent();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_BOLD] = FR_GetCurrent();
-
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
-    glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
-
-    FR_SetFont(glFontFixed);
-
-    Cfont.flags = DDFONT_WHITE;
-    Cfont.height = FR_SingleLineHeight("Con");
-    Cfont.sizeX = 1;
-    Cfont.sizeY = 1;
-    Cfont.drawText = FR_ShadowTextOut;
-    Cfont.getWidth = FR_TextWidth;
-    Cfont.filterText = NULL;
-}
-
-void GL_ShutdownFont(void)
-{
-    FR_Shutdown();
-    glFontFixed =
-        glFontVariable[GLFS_NORMAL] =
-        glFontVariable[GLFS_BOLD] =
-        glFontVariable[GLFS_LIGHT] = 0;
-}
-
-#if 0
-void GL_InitVarFont(void)
-{
-    int         oldFont;
-    //int         i;
-
-    if(novideo) //|| varFontInited)
-        return;
-
-    /*
-    VERBOSE2(Con_Message("GL_InitVarFont.\n"));
-
-    oldFont = FR_GetCurrent();
-    VERBOSE2(Con_Message("GL_InitVarFont: Old font = %i.\n", oldFont));
-
-    for(i = 0; i < NUM_GLFS; ++i)
-    {
-        // The bold font and light fonts are always loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT)
-            continue;
-
-        FR_PrepareFont(GL_ChooseVariableFont(i, theWindow->width, theWindow->height));
-        glFontVariable[i] = FR_GetCurrent();
-        VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
-                             glFontVariable[i]));
-    }
-
-    FR_SetFont(oldFont);
-    VERBOSE2(Con_Message("GL_InitVarFont: Restored old font %i.\n", oldFont));
-     */
-    //varFontInited = true;
-}
-
-void GL_ShutdownVarFont(void)
-{
-//    int         i;
-
-    if(novideo) // || !varFontInited)
-        return;
-
-    //FR_SetFont(glFontFixed);
-    /*
-    for(i = 0; i < NUM_GLFS; ++i)
-    {
-        // Keep the bold and light fonts loaded.
-        if(i == GLFS_BOLD || i == GLFS_LIGHT)
-            continue;
-
-        FR_DestroyFont(glFontVariable[i]);
-        glFontVariable[i] = glFontFixed;
-    }
-     */
-    //varFontInited = false;
-}
-#endif
 
 /**
- * One-time initialization of DGL and the renderer. This is done very early
- * on during engine startup, and is supposed to be fast. All subsystems
- * cannot yet be initialized, such as fonts or texture management, so any
- * rendering occuring before GL_Init() must be done with manually prepared
- * textures.
+ * One-time initialization of GL and the renderer. This is done very early
+ * on during engine startup and is supposed to be fast. All subsystems
+ * cannot yet be initialized, such as the texture management, so any rendering
+ * occuring before GL_Init() must be done with manually prepared textures.
  */
 boolean GL_EarlyInit(void)
 {
-    if(initGLOk)
-        return true; // Already initialized.
+    if(isDedicated) return true;
+    if(initGLOk) return true; // Already initialized.
 
-    if(novideo)
-        return true;
-
-    Con_Message("GL_Init: Initializing Doomsday Graphics Library.\n");
+    Con_Message("Initializing Render subsystem...\n");
 
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
 
-    GL_InitDeferred();
+    // We are simple people; two texture units is enough.
+    numTexUnits = MIN_OF(GL_state.maxTexUnits, MAX_TEX_UNITS);
+    envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
+
+    GL_InitDeferredTask();
+
+    // Model renderer must be initialized early as it may need to configure
+    // gl-element arrays.
+    Rend_ModelInit();
 
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        int             bpp;
+        int bpp;
 
-        Con_Message("  Using restricted texture w/h ratio (1:8).\n");
+        Con_Message("Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
         Sys_GetWindowBPP(windowIDX, &bpp);
         if(bpp == 32)
         {
-            Con_Message("  Warning: Are you sure your video card accelerates"
-                        " a 32 bit mode?\n");
+            Con_Message("Warning: Are you sure your video card accelerates a 32 bit mode?\n");
         }
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
     {
-        int     customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
+        int customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
 
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
-        Con_Message("  Using maximum texture size of %i x %i.\n",
-                    GL_state.maxTexSize, GL_state.maxTexSize);
+        Con_Message("Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
     }
     if(ArgCheck("-outlines"))
     {
         fillOutlines = false;
-        Con_Message("  Textures have outlines.\n");
+        Con_Message("Textures have outlines.\n");
     }
 
-    // Does the graphics library support multitexturing?
-    numTexUnits = GL_state.maxTexUnits;
-    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
-    if(numTexUnits > 1)
-    {
-        Con_Printf("  Multitexturing enabled (%s).\n",
-                   envModAdd ? "full" : "partial");
-    }
-    else
-    {
-        // Can't use multitexturing...
-        Con_Printf("  Multitexturing not available.\n");
-    }
+    renderTextures = !ArgExists("-notex");
+
+    VERBOSE( printConfiguration() );
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
-
-    // Allow font rendering.
-    FR_Init();
-
-    // Render a few black frames before we continue. This will help to
-    // stableize things before we begin drawing for real and to avoid any
-    // unwanted video artefacts.
-    {
-    int i = 0;
-    while(i++ < 3)
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-        GL_DoUpdate();
-    }
-    }
 
     initGLOk = true;
     return true;
@@ -630,17 +490,11 @@ void GL_Init(void)
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
-    // Initialize font renderer.
-    GL_InitFont();
-
-    // Initialize palette management.
-    GL_InitPalettedTexture();
-
-    // Set the gamma in accordance with vid-gamma, vid-bright and
-    // vid-contrast.
+    // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
     GL_SetGamma();
 
     // Initialize one viewport.
+    R_SetupDefaultViewWindow(0);
     R_SetViewGrid(1, 1);
 }
 
@@ -651,6 +505,9 @@ void GL_InitRefresh(void)
 {
     if(novideo) return;
     GL_InitTextureManager();
+
+    // Register/create Texture objects for the system textures.
+    R_InitSystemTextures();
 }
 
 /**
@@ -658,13 +515,10 @@ void GL_InitRefresh(void)
  */
 void GL_ShutdownRefresh(void)
 {
+    Textures_Shutdown();
+    R_DestroyColorPalettes();
+
     GL_ShutdownTextureManager();
-    R_DestroySkins();
-    R_DestroyDetailTextures();
-    R_DestroyLightMaps();
-    R_DestroyFlareTextures();
-    R_DestroyShinyTextures();
-    R_DestroyMaskTextures();
 }
 
 /**
@@ -689,15 +543,14 @@ void GL_Shutdown(void)
             GL_DoUpdate();
         } while(++i < 3);
     }
-
-    GL_ShutdownDeferred();
-    GL_ShutdownFont();
-    Rend_ShutdownSky();
+    GL_ShutdownDeferredTask();
+    FR_Shutdown();
+    Rend_SkyShutdown();
     Rend_Reset();
     GL_ShutdownRefresh();
 
     // Shutdown OpenGL.
-    Sys_ShutdownGL();
+    Sys_GLShutdown();
 
     // Restore original gamma.
     if(!ArgExists("-leaveramp"))
@@ -720,7 +573,10 @@ void GL_Init2DState(void)
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
+
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -743,7 +599,7 @@ void GL_Init2DState(void)
     glFogfv(GL_FOG_COLOR, fogColor);
 }
 
-void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
+void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
 {
     if(push_state)
     {
@@ -757,44 +613,61 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-#if 0
-    viewpx = viewwindowx * theWindow->width / 320, viewpy =
-        viewwindowy * theWindow->height / 200;
-    // Set the viewport.
-    if(viewheight != SCREENHEIGHT)
-    {
-        viewpw = viewwidth * theWindow->width / 320;
-        viewph = viewheight * theWindow->height / 200 + 1;
-        glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
-    }
-    else
-    {
-        viewpw = theWindow->width;
-        viewph = theWindow->height;
-    }
-#endif
-
     memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->x + viewwindowx / 320.0f * port->width;
-    viewpy = port->y + viewwindowy / 200.0f * port->height;
-    viewpw = port->width * viewwidth / 320.0f;
-    viewph = port->height * viewheight / 200.0f;
+    viewpx = port->geometry.origin.x + viewData->window.origin.x;
+    viewpy = port->geometry.origin.y + viewData->window.origin.y;
+    viewpw = MIN_OF(port->geometry.size.width, viewData->window.size.width);
+    viewph = MIN_OF(port->geometry.size.height, viewData->window.size.height);
     glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
 }
 
-void GL_Restore2DState(int step)
+void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
 {
     switch(step)
     {
-    case 1: // After Restore Step 1 normal player sprites are rendered.
+    case 1: { // After Restore Step 1 normal player sprites are rendered.
+        int height = (float)(port->geometry.size.width * viewData->window.size.height / viewData->window.size.width) / port->geometry.size.height * SCREENHEIGHT;
+        scalemode_t sm = R_ChooseScaleMode(SCREENWIDTH, SCREENHEIGHT, port->geometry.size.width, port->geometry.size.height, weaponScaleMode);
+
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        // FIXME: Aspect ratio when not 4:3.
-        glOrtho(0, 320, (320 * viewheight) / viewwidth, 0, -1, 1);
+
+        if(SCALEMODE_STRETCH == sm)
+        {
+            glOrtho(0, SCREENWIDTH, height, 0, -1, 1);
+        }
+        else
+        {
+            /**
+             * Use an orthographic projection in native screenspace. Then
+             * translate and scale the projection to produce an aspect
+             * corrected coordinate space at 4:3, aligned vertically to
+             * the bottom and centered horizontally in the window.
+             */
+            glOrtho(0, port->geometry.size.width, port->geometry.size.height, 0, -1, 1);
+            glTranslatef(port->geometry.size.width/2, port->geometry.size.height, 0);
+
+            if(port->geometry.size.width >= port->geometry.size.height)
+                glScalef((float)port->geometry.size.height/SCREENHEIGHT, (float)port->geometry.size.height/SCREENHEIGHT, 1);
+            else
+                glScalef((float)port->geometry.size.width/SCREENWIDTH, (float)port->geometry.size.width/SCREENWIDTH, 1);
+
+            // Special case: viewport height is greater than width.
+            // Apply an additional scaling factor to prevent player sprites looking too small.
+            if(port->geometry.size.height > port->geometry.size.width)
+            {
+                float extraScale = (((float)port->geometry.size.height*2)/port->geometry.size.width) / 2;
+                glScalef(extraScale, extraScale, 1);
+            }
+
+            glTranslatef(-(SCREENWIDTH/2), -SCREENHEIGHT, 0);
+            glScalef(1, (float)SCREENHEIGHT/height, 1);
+        }
+
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
 
@@ -802,13 +675,10 @@ void GL_Restore2DState(int step)
         // on top of psprite 0 (Doom plasma rifle fire).
         glDisable(GL_DEPTH_TEST);
         break;
-
-    case 2: // After Restore Step 2 nothing special happens.
-        glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
-                   currentView.width, currentView.height);
-        break;
-
-    case 3: // After Restore Step 3 we're back in 2D rendering mode.
+      }
+    case 2: // After Restore Step 2 we're back in 2D rendering mode.
+        glViewport(currentView.geometry.origin.x, FLIP(currentView.geometry.origin.y + currentView.geometry.size.height - 1),
+                   currentView.geometry.size.width, currentView.geometry.size.height);
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
@@ -847,17 +717,13 @@ void GL_UseFog(int yes)
  */
 void GL_TotalReset(void)
 {
-    if(isDedicated)
-        return;
-
-    //GL_ShutdownVarFont();
+    if(isDedicated) return;
 
     // Update the secondary title and the game status.
-    Con_InitUI();
+    Rend_ConsoleUpdateTitle();
 
-    // Delete all textures.
+    // Release all texture memory.
     GL_ResetTextureManager();
-    GL_ShutdownFont();
     GL_ReleaseReservedNames();
 
 #if _DEBUG
@@ -870,27 +736,30 @@ void GL_TotalReset(void)
  */
 void GL_TotalRestore(void)
 {
-    if(isDedicated)
-        return;
+    ded_mapinfo_t* mapInfo = NULL;
+    gamemap_t* map;
+
+    if(isDedicated) return;
 
     // Getting back up and running.
     GL_ReserveNames();
-    GL_InitFont();
-    //GL_InitVarFont();
     GL_Init2DState();
-    GL_InitPalettedTexture();
 
+    // Choose fonts again.
+    R_LoadSystemFonts();
+    Con_Resize();
+
+    map = P_GetCurrentMap();
+    if(map)
     {
-    gamemap_t*          map = P_GetCurrentMap();
-    ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        mapInfo = Def_GetMapInfo(P_MapUri(map));
+    }
 
     // Restore map's fog settings.
     if(!mapInfo || !(mapInfo->flags & MIF_FOG))
         R_SetupFogDefaults();
     else
-        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd,
-                   mapInfo->fogDensity, mapInfo->fogColor);
-    }
+        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
 
 #if _DEBUG
     Z_CheckHeap();
@@ -900,14 +769,30 @@ void GL_TotalRestore(void)
 /**
  * Copies the current contents of the frame buffer and returns a pointer
  * to data containing 24-bit RGB triplets. The caller must free the
- * returned buffer using M_Free()!
+ * returned buffer using free()!
  */
 unsigned char* GL_GrabScreen(void)
 {
-    unsigned char*      buffer = 0;
+    unsigned char* buffer = NULL;
 
-    buffer = M_Malloc(theWindow->width * theWindow->height * 3);
-    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
+    if(!isDedicated && !novideo)
+    {
+        const int width  = theWindow->geometry.size.width;
+        const int height = theWindow->geometry.size.height;
+
+        buffer = (unsigned char*) malloc(width * height * 3);
+        if(!buffer)
+            Con_Error("GL_GrabScreen: Failed on allocation of %lu bytes for frame buffer content copy.", (unsigned long) (width * height * 3));
+
+        if(!GL_Grab(0, 0, width, height, DGL_RGB, (void*) buffer))
+        {
+            free(buffer);
+            buffer = NULL;
+#if _DEBUG
+            Con_Message("Warning:GL_GrabScreen: Failed copying frame buffer content.\n");
+#endif
+        }
+    }
     return buffer;
 }
 
@@ -974,12 +859,394 @@ void GL_LowRes(void)
 {
     // Set everything as low as they go.
     filterSprites = 0;
-    linearRaw = 0;
+    filterUI = 0;
     texMagMode = 0;
 
     // And do a texreset so everything is updated.
     GL_SetTextureParams(GL_NEAREST, true, true);
     GL_TexReset();
+}
+
+int GL_NumMipmapLevels(int width, int height)
+{
+    int numLevels = 0;
+    while(width > 1 || height > 1)
+    {
+        width  /= 2;
+        height /= 2;
+        ++numLevels;
+    }
+    return numLevels;
+}
+
+int GL_GetTexAnisoMul(int level)
+{
+    int mul = 1;
+
+    // Should anisotropic filtering be used?
+    if(GL_state.features.texFilterAniso)
+    {
+        if(level < 0)
+        {   // Go with the maximum!
+            mul = GL_state.maxTexFilterAniso;
+        }
+        else
+        {   // Convert from a DGL aniso level to a multiplier.
+            // i.e 0 > 1, 1 > 2, 2 > 4, 3 > 8, 4 > 16
+            switch(level)
+            {
+            case 0: mul = 1; break; // x1 (normal)
+            case 1: mul = 2; break; // x2
+            case 2: mul = 4; break; // x4
+            case 3: mul = 8; break; // x8
+            case 4: mul = 16; break; // x16
+
+            default: // Wha?
+                mul = 1;
+                break;
+            }
+
+            // Clamp.
+            if(mul > GL_state.maxTexFilterAniso)
+                mul = GL_state.maxTexFilterAniso;
+        }
+    }
+
+    return mul;
+}
+
+void GL_SetMaterialUI(material_t* mat)
+{
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
+
+    if(!mat) return; // \fixme we need a "NULL material".
+
+    spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+    ms = Materials_Prepare(mat, spec, true);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+}
+
+void GL_SetPSprite(material_t* mat, int tClass, int tMap)
+{
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
+
+    if(!mat) return; // \fixme we need a "NULL material".
+
+    spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
+        tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
+    ms = Materials_Prepare(mat, spec, true);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+}
+
+void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+{
+    rawtex_t* rawTex = R_GetRawTex(lumpNum);
+    if(rawTex)
+    {
+        GL_BindTexture(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
+    }
+}
+
+void GL_BindTexture(DGLuint glName, int magMode)
+{
+    if(Con_IsBusy()) return;
+    if(glName == 0)
+    {
+        GL_SetNoTexture();
+        return;
+    }
+
+    glBindTexture(GL_TEXTURE_2D, glName);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
+    if(GL_state.features.texFilterAniso)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+}
+
+void GL_SetNoTexture(void)
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+int GL_ChooseSmartFilter(int width, int height, int flags)
+{
+    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
+        return 2; // hq2x
+    return 1; // nearest neighbor.
+}
+
+uint8_t* GL_SmartFilter(int method, const uint8_t* src, int width, int height,
+    int flags, int* outWidth, int* outHeight)
+{
+    int newWidth, newHeight;
+    uint8_t* out = NULL;
+
+    switch(method)
+    {
+    default: // linear interpolation.
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBuffer(src, width, height, 4, newWidth, newHeight);
+        break;
+
+    case 1: // nearest neighbor.
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_ScaleBufferNearest(src, width, height, 4, newWidth, newHeight);
+        break;
+
+    case 2: // hq2x
+        newWidth  = width  * 2;
+        newHeight = height * 2;
+        out = GL_SmartFilterHQ2x(src, width, height, flags);
+        break;
+    };
+
+    if(NULL == out)
+    {   // Unchanged, return the source image.
+        if(outWidth)  *outWidth  = width;
+        if(outHeight) *outHeight = height;
+        return (uint8_t*)src;
+    }
+
+    if(outWidth)  *outWidth  = newWidth;
+    if(outHeight) *outHeight = newHeight;
+    return out;
+}
+
+uint8_t* GL_ConvertBuffer(const uint8_t* in, int width, int height, int informat,
+    colorpalette_t* palette, int outformat)
+{
+    assert(in);
+    {
+    uint8_t* out;
+
+    if(width <= 0 || height <= 0)
+    {
+        Con_Error("GL_ConvertBuffer: Attempt to convert zero-sized image.");
+        exit(1); // Unreachable.
+    }
+
+    if(informat <= 2 && palette == NULL)
+    {
+        Con_Error("GL_ConvertBuffer: Cannot process image of pixelsize==1 without palette.");
+        exit(1); // Unreachable.
+    }
+
+    if(informat == outformat)
+    {   // No conversion necessary.
+        return (uint8_t*)in;
+    }
+
+    if(NULL == (out = (uint8_t*) malloc(outformat * width * height)))
+        Con_Error("GL_ConvertBuffer: Failed on allocation of %lu bytes for "
+                  "conversion buffer.", (unsigned long) (outformat * width * height));
+
+    // Conversion from pal8(a) to RGB(A).
+    if(informat <= 2 && outformat >= 3)
+    {
+        GL_PalettizeImage(out, outformat, palette, false, in, informat, width, height);
+        return out;
+    }
+
+    // Conversion from RGB(A) to pal8(a), using pal18To8.
+    if(informat >= 3 && outformat <= 2)
+    {
+        GL_QuantizeImageToPalette(out, outformat, palette, in, informat, width, height);
+        return out;
+    }
+
+    if(informat == 3 && outformat == 4)
+    {
+        long i, numPels = width * height;
+        const uint8_t* src = in;
+        uint8_t* dst = out;
+        for(i = 0; i < numPels; ++i)
+        {
+            dst[CR] = src[CR];
+            dst[CG] = src[CG];
+            dst[CB] = src[CB];
+            dst[CA] = 255; // Opaque.
+
+            src += informat;
+            dst += outformat;
+        }
+    }
+    return out;
+    }
+}
+
+void GL_CalcLuminance(const uint8_t* buffer, int width, int height, int pixelSize,
+    colorpalette_t* palette, float* brightX, float* brightY, ColorRawf* color, float* lumSize)
+{
+    const int limit = 0xc0, posLimit = 0xe0, colLimit = 0xc0;
+    int i, k, x, y, c, cnt = 0, posCnt = 0;
+    const uint8_t* src, *alphaSrc = NULL;
+    int avgCnt = 0, lowCnt = 0;
+    float average[3], lowAvg[3];
+    uint8_t rgb[3];
+    int region[4];
+    assert(buffer && brightX && brightY && color && lumSize);
+
+    if(pixelSize == 1 && palette == NULL)
+    {
+        Con_Error("GL_CalcLuminance: Cannot process image of pixelsize==1 without palette.");
+        exit(1); // Unreachable.
+    }
+
+    for(i = 0; i < 3; ++i)
+    {
+        average[i] = 0;
+        lowAvg[i] = 0;
+    }
+    src = buffer;
+
+    if(pixelSize == 1)
+    {
+        // In paletted mode, the alpha channel follows the actual image.
+        alphaSrc = buffer + width * height;
+    }
+
+    FindClipRegionNonAlpha(buffer, width, height, pixelSize, region);
+    if(region[2] > 0)
+    {
+        src += pixelSize * width * region[2];
+        alphaSrc += width * region[2];
+    }
+    (*brightX) = (*brightY) = 0;
+
+    for(k = region[2], y = 0; k < region[3] + 1; ++k, ++y)
+    {
+        if(region[0] > 0)
+        {
+            src += pixelSize * region[0];
+            alphaSrc += region[0];
+        }
+
+        for(i = region[0], x = 0; i < region[1] + 1;
+            ++i, ++x, src += pixelSize, alphaSrc++)
+        {
+            // Alpha pixels don't count.
+            if(pixelSize == 1)
+            {
+                if(*alphaSrc < 255)
+                    continue;
+            }
+            else if(pixelSize == 4)
+            {
+                if(src[3] < 255)
+                    continue;
+            }
+
+            // Bright enough?
+            if(pixelSize == 1)
+            {
+                ColorPalette_Color(palette, *src, rgb);
+            }
+            else if(pixelSize >= 3)
+            {
+                memcpy(rgb, src, 3);
+            }
+
+            if(rgb[0] > posLimit || rgb[1] > posLimit || rgb[2] > posLimit)
+            {
+                // This pixel will participate in calculating the average
+                // center point.
+                (*brightX) += x;
+                (*brightY) += y;
+                posCnt++;
+            }
+
+            // Bright enough to affect size?
+            if(rgb[0] > limit || rgb[1] > limit || rgb[2] > limit)
+                cnt++;
+
+            // How about the color of the light?
+            if(rgb[0] > colLimit || rgb[1] > colLimit || rgb[2] > colLimit)
+            {
+                avgCnt++;
+                for(c = 0; c < 3; ++c)
+                    average[c] += rgb[c] / 255.f;
+            }
+            else
+            {
+                lowCnt++;
+                for(c = 0; c < 3; ++c)
+                    lowAvg[c] += rgb[c] / 255.f;
+            }
+        }
+
+        if(region[1] < width - 1)
+        {
+            src += pixelSize * (width - 1 - region[1]);
+            alphaSrc += (width - 1 - region[1]);
+        }
+    }
+
+    if(!posCnt)
+    {
+        (*brightX) = region[0] + ((region[1] - region[0]) / 2.0f);
+        (*brightY) = region[2] + ((region[3] - region[2]) / 2.0f);
+    }
+    else
+    {
+        // Get the average.
+        (*brightX) /= posCnt;
+        (*brightY) /= posCnt;
+        // Add the origin offset.
+        (*brightX) += region[0];
+        (*brightY) += region[2];
+    }
+
+    // Center on the middle of the brightest pixel.
+    (*brightX) = (*brightX + .5f) / width;
+    (*brightY) = (*brightY + .5f) / height;
+
+    // The color.
+    if(!avgCnt)
+    {
+        if(!lowCnt)
+        {
+            // Doesn't the thing have any pixels??? Use white light.
+            for(c = 0; c < 3; ++c)
+                color->rgb[c] = 1;
+        }
+        else
+        {
+            // Low-intensity color average.
+            for(c = 0; c < 3; ++c)
+                color->rgb[c] = lowAvg[c] / lowCnt;
+        }
+    }
+    else
+    {
+        // High-intensity color average.
+        for(c = 0; c < 3; ++c)
+            color->rgb[c] = average[c] / avgCnt;
+    }
+
+/*#ifdef _DEBUG
+    Con_Message("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
+                "  cell region X[%d, %d] Y[%d, %d]\n"
+                "  flare X= %g Y=%g %s\n"
+                "  flare RGB[%g, %g, %g] %s\n",
+                width, height, pixelSize,
+                region[0], region[1], region[2], region[3],
+                (*brightX), (*brightY),
+                (posCnt? "(average)" : "(center)"),
+                color->red, color->green, color->blue,
+                (avgCnt? "(hi-intensity avg)" :
+                 lowCnt? "(low-intensity avg)" : "(white light)"));
+#endif*/
+
+    R_AmplifyColor(color->rgb);
+
+    // How about the size of the light source?
+    *lumSize = MIN_OF(((2 * cnt + avgCnt) / 3.0f / 70.0f), 1);
 }
 
 /**

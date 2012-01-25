@@ -1,0 +1,13 @@
+@chapter{ Files }
+
+@ifdef{MACOSX}{
+    @include{macfiles}
+}
+@else{
+    @ifdef{MAN}{
+        @include{unixfiles}
+    }
+    @else{
+        @include{winfiles}
+    }
+}

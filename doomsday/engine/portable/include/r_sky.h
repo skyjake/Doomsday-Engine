@@ -1,10 +1,10 @@
-/**\file
+/**\file r_sky.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,30 +22,115 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * r_sky.h: Sky Management
+/**
+ * Sky Management.
  */
 
-#ifndef __DOOMSDAY_REFRESH_SKY_H__
-#define __DOOMSDAY_REFRESH_SKY_H__
+#ifndef LIBDENG_REFRESH_SKY_H
+#define LIBDENG_REFRESH_SKY_H
 
 #include "r_model.h"
 
+#define MAX_SKY_LAYERS                   ( 2 )
+#define MAX_SKY_MODELS                   ( 32 )
+
+#define DEFAULT_SKY_HEIGHT               ( .666667f )
+#define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_MATERIAL      ( MN_TEXTURES_NAME":SKY1" )
+#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
+
 typedef struct skymodel_s {
-    ded_skymodel_t *def;
-    modeldef_t     *model;
-    int             frame;
-    int             timer;
-    int             maxTimer;
-    float           yaw;
+    ded_skymodel_t* def;
+    modeldef_t* model;
+    int frame;
+    int timer;
+    int maxTimer;
+    float yaw;
 } skymodel_t;
 
-extern skymodel_t skyModels[NUM_SKY_MODELS];
-extern boolean  skyModelsInited;
-extern boolean  alwaysDrawSphere;
+extern boolean alwaysDrawSphere;
+extern boolean skyModelsInited;
+extern skymodel_t skyModels[MAX_SKY_MODELS];
 
-void            R_SetupSkyModels(ded_sky_t* sky);
-void            R_PrecacheSky(void);
-void            R_SkyTicker(void);
+/// Initialize this module.
+void R_SkyInit(void);
 
-#endif
+/**
+ * Precache all resources necessary for rendering the current sky.
+ */
+void R_SkyPrecache(void);
+
+/**
+ * Animate the sky.
+ */
+void R_SkyTicker(void);
+
+/**
+ * Configure the sky based on the specified definition if not @c NULL,
+ * otherwise, setup using suitable defaults.
+ */
+void R_SetupSky(ded_sky_t* sky);
+
+/// @return  Unique identifier of the current Sky's first active layer.
+int R_SkyFirstActiveLayer(void);
+
+/// @return  Current ambient sky color.
+const ColorRawf* R_SkyAmbientColor(void);
+
+/// @return  Horizon offset for the current Sky.
+float R_SkyHorizonOffset(void);
+
+/// @return  Height of the current Sky as a factor [0...1] where @c 1 covers the entire view.
+float R_SkyHeight(void);
+
+/// @return  @c true if the identified @a layerId of the current Sky is active.
+boolean R_SkyLayerActive(int layerId);
+
+/// @return  Fadeout limit for the identified @a layerId of the current Sky.
+float R_SkyLayerFadeoutLimit(int layerId);
+
+/// @return  @c true if the identified @a layerId for the current Sky is masked.
+boolean R_SkyLayerMasked(int layerId);
+
+/// @return  Material assigned to the identified @a layerId of the current Sky.
+material_t* R_SkyLayerMaterial(int layerId);
+
+/// @return  Horizontal offset for the identified @a layerId of the current Sky.
+float R_SkyLayerOffset(int layerId);
+
+/**
+ * Change the 'active' state for the identified @a layerId of the current Sky.
+ * \post Sky light color is marked for update (deferred).
+ */
+void R_SkyLayerSetActive(int layerId, boolean yes);
+
+/**
+ * Change the 'masked' state for the identified @a layerId of the current Sky.
+ * \post Sky light color and layer Material are marked for update (deferred).
+ */
+void R_SkyLayerSetMasked(int layerId, boolean yes);
+
+/**
+ * Change the fadeout limit for the identified @a layerId of the current Sky.
+ * \post Sky light color is marked for update (deferred).
+ */
+void R_SkyLayerSetFadeoutLimit(int layerId, float limit);
+
+/**
+ * Change the Material assigned to the identified @a layerId of the current Sky.
+ * \post Sky light color and layer Material are marked for update (deferred).
+ */
+void R_SkyLayerSetMaterial(int layerId, material_t* material);
+
+/**
+ * Change the horizontal offset for the identified @a layerId of the current Sky.
+ */
+void R_SkyLayerSetOffset(int layerId, float offset);
+
+/**
+ * Alternative interface for manipulating Sky (layer) properties by name/id.
+ */
+void R_SkyParams(int layer, int param, void* data);
+
+#endif /* LIBDENG_REFRESH_SKY_H */

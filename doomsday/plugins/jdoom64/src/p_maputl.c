@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *
@@ -67,7 +67,7 @@
  * If more than one linedef is contacted, the effects are cumulative, so
  * balancing is possible.
  */
-static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
+static int PIT_ApplyTorque(linedef_t* ld, void* data)
 {
     mobj_t*             mo = tmThing;
     float               dist;
@@ -76,11 +76,11 @@ static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
     float               d1[2], vtx[2];
 
     if(tmThing->player)
-        return true; // Skip players!
+        return false; // Skip players!
 
     if(!(frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR)) ||
        !(backsec = P_GetPtrp(ld, DMU_BACK_SECTOR)))
-        return true; // Shouldn't ever happen.
+        return false; // Shouldn't ever happen.
 
     ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);
     bfloor = P_GetFloatp(backsec, DMU_FLOOR_HEIGHT);
@@ -141,7 +141,7 @@ static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
         mo->mom[MY] += y;
     }
 
-    return true;
+    return false;
 }
 
 /**

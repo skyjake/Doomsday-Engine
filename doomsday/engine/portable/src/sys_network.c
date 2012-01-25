@@ -1,33 +1,26 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * sys_network.c: Low-Level Sockets Networking
+ * @file sys_network.c
+ * Low-level network socket routines. @ingroup network
  *
- * TCP sockets are periodically polled for activity (Net_Update ->
- * N_Listen).
+ * @see @ref sysNetwork
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -43,24 +36,14 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_play.h"
 
 #include <de/c_wrapper.h> // using LegacyNetwork
-
-// MACROS ------------------------------------------------------------------
-
-/**
- * The randomized transmitted is only used for simulating a poor
- * network connection.
- */
-#undef TRANSMIT_RANDOMIZER
-#define RANDOMIZER_DROP_PERCENT 25
-#define RANDOMIZER_MAX_DELAY    500
+#include "huffman.h"
+#include "zipfile.h"
+#include "protocol.h"
 
 #define MAX_NODES                   32
-#define MAX_DATAGRAM_SIZE           1300
-#define DEFAULT_TRANSMISSION_SIZE   4096
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct ipaddress_s {
     char host[256];
@@ -84,13 +67,6 @@ typedef struct netnode_s {
     ipaddress_t addr;
 
     expectedresponder_t expectedResponder;
-
-#if 0
-    // Send queue statistics.
-    long            mutex;
-    uint            numWaiting;
-    uint            bytesWaiting;
-#endif
 } netnode_t;
 
 typedef struct foundhost_s {
@@ -99,20 +75,7 @@ typedef struct foundhost_s {
     ipaddress_t       addr;
 } foundhost_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-void N_IPToString(char *buf, ipaddress_t *ip);
-void N_ReturnBuffer(void *handle);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-size_t  maxDatagramSize = MAX_DATAGRAM_SIZE;
+static void N_IPToString(char *buf, ipaddress_t *ip);
 
 char   *nptIPAddress = "";
 int     nptIPPort = 0;          // This is the port *we* use to communicate.
@@ -122,87 +85,20 @@ int     defaultTCPPort = DEFAULT_TCP_PORT;
 boolean netIsActive = false;
 boolean netServerMode = false;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static int serverSock;
 static netnode_t netNodes[MAX_NODES];
 static int sockSet;
 static int joinedSockSet;
 static foundhost_t located;
 
-// CODE --------------------------------------------------------------------
-
 void N_Register(void)
 {
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
-    //C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
-}
 
-/**
- * Free a message buffer.
- */
-void N_ReturnBuffer(void *handle)
-{
-    if(handle)
-    {
-        LegacyNetwork_FreeBuffer(handle);
-    }
-}
-
-/**
- * Read a packet from the TCP connection and put it in the incoming
- * packet queue.  This function blocks until the entire packet has
- * been read, so large packets should be avoided during normal
- * gameplay.
- *
- * Returns true if a packet was successfully received.
- */
-boolean N_ReceiveReliably(nodeid_t from)
-{
-    int     size = 0;
-    int     sock = netNodes[from].sock;
-    byte*   packet = 0;
-
-    packet = LegacyNetwork_Receive(sock, &size);
-    if(!packet)
-    {
-        // Failed to receive anything.
-        return false;
-    }
-
-    // Post the received message.
-    {
-        netmessage_t *msg = M_Calloc(sizeof(netmessage_t));
-
-        msg->sender = from;
-        msg->data = packet;
-        msg->size = size;
-        msg->handle = packet; // needs to be freed
-
-/*#ifdef _DEBUG
-        VERBOSE2(Con_Message("N_ReceiveReliably: Posting message, from=%i, size=%i\n", from, size));
-#endif*/
-
-        // The message queue will handle the message from now on.
-        N_PostMessage(msg);
-    }
-    return true;
-}
-
-/**
- * Send the data buffer over the control link, which is a TCP
- * connection.
- */
-void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
-{
-    netnode_t* node = &netNodes[destination];
-
-    if(size == 0 || !node->sock || !node->hasJoined)
-        return;
-
-    LegacyNetwork_Send(node->sock, data, size);
+#ifdef _DEBUG
+    C_CMD("netfreq", NULL, NetFreqs);
+#endif
 }
 
 /**
@@ -213,12 +109,7 @@ void N_SystemInit(void)
 {
     memset(netNodes, 0, sizeof(netNodes));
 
-    // The MTU can be customized.
-    if(ArgCheckWith("-mtu", 1))
-    {
-        maxDatagramSize = (size_t) strtol(ArgNext(), NULL, 0);
-        Con_Message("N_SystemInit: Custom MTU: %lu bytes.\n", (unsigned long) maxDatagramSize);
-    }
+    Protocol_Init();
 }
 
 /**
@@ -227,6 +118,15 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
+    if(netGame)
+    {
+        if(isClient)
+            N_Disconnect();
+        else
+            N_ServerClose();
+    }
+
+    Protocol_Shutdown();
     N_ShutdownService();
 }
 
@@ -366,6 +266,18 @@ const char *N_GetProtocolName(void)
     return "TCP/IP";
 }
 
+void* N_GetNodeSocket(nodeid_t id)
+{
+    if(id >= MAX_NODES) return 0;
+    return (void*) netNodes[id].sock;
+}
+
+boolean N_HasNodeJoined(nodeid_t id)
+{
+    if(id >= MAX_NODES) return 0;
+    return netNodes[id].hasJoined;
+}
+
 /**
  * Returns the player name associated with the given network node.
  */
@@ -390,16 +302,21 @@ void N_TerminateNode(nodeid_t id)
     netevent_t netEvent;
 
     if(!node->sock)
-        return;                 // There is nothing here...
+        return;  // There is nothing here...
 
     if(netServerMode && node->hasJoined)
     {
-        LegacyNetwork_SocketSet_Remove(joinedSockSet, node->sock);
+        // Let the client know.
+        Msg_Begin(PSV_SERVER_CLOSE);
+        Msg_End();
+        Net_SendBuffer(N_IdentifyPlayer(id), 0);
 
         // This causes a network event.
         netEvent.type = NE_CLIENT_EXIT;
         netEvent.id = id;
         N_NEPost(&netEvent);
+
+        LegacyNetwork_SocketSet_Remove(joinedSockSet, node->sock);
     }
 
     // Remove the node from the set of active sockets.
@@ -650,8 +567,6 @@ boolean N_Connect(int index)
     sprintf(buf, "Join %s", pName);
     LegacyNetwork_Send(svNode->sock, buf, (int) strlen(buf));
 
-    //VERBOSE(Con_Message("N_Connect: %s", buf));
-
     svNode->expectedResponder = N_ClientHandleResponseToJoin;
     return true;
 }
@@ -681,7 +596,6 @@ boolean N_Disconnect(void)
     memset(svNode, 0, sizeof(svNode));
 
     Net_StopGame();
-    N_ClearMessages();
 
     // Tell the Game that the disconnection is now complete.
     if(gx.NetDisconnect)
@@ -692,6 +606,12 @@ boolean N_Disconnect(void)
 
 boolean N_ServerOpen(void)
 {
+    if(!isDedicated)
+    {
+        Con_Message("N_ServerOpen: Server can only be started in dedicated mode! (run with -dedicated)\n");
+        return false;
+    }
+
     if(!N_IsAvailable())
         return false;
 
@@ -739,6 +659,7 @@ boolean N_ServerClose(void)
     if(gx.NetServerStop)
         gx.NetServerStop(true);
     Net_StopGame();
+    Sv_StopNetGame();
 
     // Exit server mode.
     N_InitService(false);
@@ -981,14 +902,63 @@ void N_ListenNodes(void)
 /**
  * Called from "net info".
  */
-void N_PrintInfo(void)
+void N_PrintNetworkStatus(void)
 {
-    // \todo Print information about send queues, ports, etc.
+    int i, first;
 
-#ifdef TRANSMIT_RANDOMIZER
-    Con_Message("Randomizer enabled: max delay = %i ms, dropping %i%%.\n",
-               RANDOMIZER_MAX_DELAY, RANDOMIZER_DROP_PERCENT);
-#endif
-
+    if(isServer && !serverSock)
+    {
+        Con_Message("OFFLINE: Single-player mode.\n");
+    }
+    else if(isServer)
+    {
+        if(isDedicated) Con_Message("DEDICATED ");
+        Con_Message("SERVER: ");
+        if(serverSock)
+        {
+            char buf[80];
+            N_IPToString(buf, &netNodes[0].addr);
+            Con_Message("Open at %s.\n", buf);
+        }
+        else
+        {
+            Con_Message("No server socket open.\n");
+        }
+        first = true;
+        for(i = 1; i < DDMAXPLAYERS; ++i)
+        {
+            client_t *cl = &clients[i];
+            player_t *plr = &ddPlayers[i];
+            netnode_t* node = &netNodes[cl->nodeID];
+            if(cl->nodeID)
+            {
+                if(first)
+                {
+                    Con_Message("P# Name:      Nd Jo Hs Rd Gm Age:\n");
+                    first = false;
+                }
+                Con_Message("%2i %-10s %2i %c  %c  %c  %c  %f sec\n",
+                            i, cl->name, cl->nodeID,
+                            node->hasJoined? '*' : ' ',
+                            cl->handshake? '*' : ' ',
+                            cl->ready? '*' : ' ',
+                            plr->shared.inGame? '*' : ' ',
+                            Sys_GetRealSeconds() - cl->enterTime);
+            }
+        }
+        if(first)
+        {
+            Con_Message("No clients connected.\n");
+        }
+    }
+    if(isClient)
+    {
+        char buf[80];
+        N_IPToString(buf, &netNodes[0].addr);
+        Con_Message("CLIENT: Connected to server at %s.\n", buf);
+    }
     N_PrintBufferInfo();
+
+    Con_Message("Configuration:\n");
+    Con_Message("  port for hosting games (net-ip-port): %i\n", Con_GetInteger("net-ip-port"));
 }

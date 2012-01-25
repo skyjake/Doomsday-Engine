@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -317,11 +317,11 @@ static acfnptr_t getActionPtr(const char* name)
 }
 
 /**
- * Called during (post-engine) init and after updating game/engine state.
+ * Called during (post-game) init and after updating game/engine state.
  */
 void P_InitInventory(void)
 {
-    int                 i;
+    int i;
 
     memset(invItems, 0, sizeof(invItems));
     for(i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
@@ -334,7 +334,7 @@ void P_InitInventory(void)
         data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        data->patchLump = W_CheckNumForName(def->patch);
+        data->patchId = R_DeclarePatch(def->patch);
     }
 
     memset(inventories, 0, sizeof(inventories));

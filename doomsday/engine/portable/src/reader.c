@@ -34,11 +34,22 @@
 #  define Reader_TypeCheck(r, code)
 #endif
 
+typedef struct readerfuncs_s {
+    Reader_Callback_ReadInt8  readInt8;
+    Reader_Callback_ReadInt16 readInt16;
+    Reader_Callback_ReadInt32 readInt32;
+    Reader_Callback_ReadFloat readFloat;
+    Reader_Callback_ReadData  readData;
+} readerfuncs_t;
+
 struct reader_s
 {
     const byte* data;       // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
+
+    boolean useCustomFuncs;
+    readerfuncs_t func;
 };
 
 static boolean Reader_Check(const Reader* reader, size_t len)
@@ -48,12 +59,17 @@ static boolean Reader_Check(const Reader* reader, size_t len)
     if(len) len++;
 #endif
 
-    if(!reader || !reader->data)
+    if(!reader || (!reader->data && !reader->useCustomFuncs))
     {
 #ifdef _DEBUG
         Con_Error("Reader_Check: Reader %p is invalid.\n", reader);
 #endif
         return false;
+    }
+    if(reader->useCustomFuncs)
+    {
+        // Not our responsibility.
+        return true;
     }
     if(reader->pos > reader->size - len)
     {
@@ -81,6 +97,22 @@ Reader* Reader_NewWithBuffer(const byte* buffer, size_t len)
     return rd;
 }
 
+Reader* Reader_NewWithCallbacks(Reader_Callback_ReadInt8  readInt8,
+                                Reader_Callback_ReadInt16 readInt16,
+                                Reader_Callback_ReadInt32 readInt32,
+                                Reader_Callback_ReadFloat readFloat,
+                                Reader_Callback_ReadData  readData)
+{
+    Reader* rd = M_Calloc(sizeof(Reader));
+    rd->useCustomFuncs = true;
+    rd->func.readInt8 = readInt8;
+    rd->func.readInt16 = readInt16;
+    rd->func.readInt32 = readInt32;
+    rd->func.readFloat = readFloat;
+    rd->func.readData = readData;
+    return rd;
+}
+
 void Reader_Delete(Reader* reader)
 {
     M_Free(reader);
@@ -101,6 +133,7 @@ size_t Reader_Size(const Reader* reader)
 void Reader_SetPos(Reader* reader, size_t newPos)
 {
     if(!reader) return;
+    if(reader->useCustomFuncs) return;
     reader->pos = newPos;
     Reader_Check(reader, 0);
 }
@@ -108,21 +141,38 @@ void Reader_SetPos(Reader* reader, size_t newPos)
 boolean Reader_AtEnd(const Reader* reader)
 {
     Reader_Check(reader, 0);
+    if(reader->useCustomFuncs) return false;
     return reader->pos == reader->size;
 }
 
 int8_t Reader_ReadChar(Reader* reader)
 {
     if(!Reader_Check(reader, 1)) return 0;
-    Reader_TypeCheck(reader, WTCC_CHAR);
-    return ((int8_t*)reader->data)[reader->pos++];
+    if(!reader->useCustomFuncs)
+    {
+        Reader_TypeCheck(reader, WTCC_CHAR);
+        return ((int8_t*)reader->data)[reader->pos++];
+    }
+    else
+    {
+        assert(reader->func.readInt8);
+        return reader->func.readInt8(reader);
+    }
 }
 
 byte Reader_ReadByte(Reader* reader)
 {
     if(!Reader_Check(reader, 1)) return 0;
-    Reader_TypeCheck(reader, WTCC_BYTE);
-    return reader->data[reader->pos++];
+    if(!reader->useCustomFuncs)
+    {
+        Reader_TypeCheck(reader, WTCC_BYTE);
+        return reader->data[reader->pos++];
+    }
+    else
+    {
+        assert(reader->func.readInt8);
+        return reader->func.readInt8(reader);
+    }
 }
 
 int16_t Reader_ReadInt16(Reader* reader)
@@ -130,9 +180,17 @@ int16_t Reader_ReadInt16(Reader* reader)
     int16_t result = 0;
     if(Reader_Check(reader, 2))
     {
-        Reader_TypeCheck(reader, WTCC_INT16);
-        result = SHORT( *(int16_t*) &reader->data[reader->pos] );
-        reader->pos += 2;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_INT16);
+            result = SHORT( *(int16_t*) &reader->data[reader->pos] );
+            reader->pos += 2;
+        }
+        else
+        {
+            assert(reader->func.readInt16);
+            return reader->func.readInt16(reader);
+        }
     }
     return result;
 }
@@ -142,9 +200,17 @@ uint16_t Reader_ReadUInt16(Reader* reader)
     uint16_t result = 0;
     if(Reader_Check(reader, 2))
     {
-        Reader_TypeCheck(reader, WTCC_UINT16);
-        result = USHORT( *(uint16_t*) &reader->data[reader->pos] );
-        reader->pos += 2;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_UINT16);
+            result = USHORT( *(uint16_t*) &reader->data[reader->pos] );
+            reader->pos += 2;
+        }
+        else
+        {
+            assert(reader->func.readInt16);
+            return reader->func.readInt16(reader);
+        }
     }
     return result;
 }
@@ -154,9 +220,17 @@ int32_t Reader_ReadInt32(Reader* reader)
     int32_t result = 0;
     if(Reader_Check(reader, 4))
     {
-        Reader_TypeCheck(reader, WTCC_INT32);
-        result = LONG( *(int32_t*) &reader->data[reader->pos] );
-        reader->pos += 4;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_INT32);
+            result = LONG( *(int32_t*) &reader->data[reader->pos] );
+            reader->pos += 4;
+        }
+        else
+        {
+            assert(reader->func.readInt32);
+            return reader->func.readInt32(reader);
+        }
     }
     return result;
 }
@@ -166,9 +240,17 @@ uint32_t Reader_ReadUInt32(Reader* reader)
     uint32_t result = 0;
     if(Reader_Check(reader, 4))
     {
-        Reader_TypeCheck(reader, WTCC_UINT32);
-        result = ULONG( *(uint32_t*) &reader->data[reader->pos] );
-        reader->pos += 4;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_UINT32);
+            result = ULONG( *(uint32_t*) &reader->data[reader->pos] );
+            reader->pos += 4;
+        }
+        else
+        {
+            assert(reader->func.readInt32);
+            return reader->func.readInt32(reader);
+        }
     }
     return result;
 }
@@ -178,20 +260,38 @@ float Reader_ReadFloat(Reader* reader)
     float result = 0;
     if(Reader_Check(reader, 4))
     {
-        Reader_TypeCheck(reader, WTCC_FLOAT);
-        result = FLOAT( *(float*) &reader->data[reader->pos] );
-        reader->pos += 4;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_FLOAT);
+            result = FLOAT( *(float*) &reader->data[reader->pos] );
+            reader->pos += 4;
+        }
+        else
+        {
+            assert(reader->func.readFloat);
+            return reader->func.readFloat(reader);
+        }
     }
     return result;
 }
 
 void Reader_Read(Reader* reader, void* buffer, size_t len)
 {
+    if(!len) return;
+
     if(Reader_Check(reader, len))
     {
-        Reader_TypeCheck(reader, WTCC_BLOCK);
-        memcpy(buffer, reader->data + reader->pos, len);
-        reader->pos += len;
+        if(!reader->useCustomFuncs)
+        {
+            Reader_TypeCheck(reader, WTCC_BLOCK);
+            memcpy(buffer, reader->data + reader->pos, len);
+            reader->pos += len;
+        }
+        else
+        {
+            assert(reader->func.readData);
+            reader->func.readData(reader, buffer, len);
+        }
     }
 }
 

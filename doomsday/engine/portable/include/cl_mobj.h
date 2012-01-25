@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,13 +29,19 @@
 #ifndef __DOOMSDAY_CLIENT_MOBJ_H__
 #define __DOOMSDAY_CLIENT_MOBJ_H__
 
-// Flags for clmobjs.
-#define CLMF_HIDDEN         0x01 // Not officially created yet
-#define CLMF_UNPREDICTABLE  0x02 // Temporarily hidden (until next delta)
-#define CLMF_SOUND          0x04 // Sound is queued for playing on unhide.
-#define CLMF_NULLED         0x08 // Once nulled, it can't be updated.
-#define CLMF_STICK_FLOOR    0x10 // Mobj will stick to the floor.
-#define CLMF_STICK_CEILING  0x20 // Mobj will stick to the ceiling.
+/**
+ * @defgroup clMobjFlags Client Mobj Flags
+ * @ingroup client flags
+ */
+///@{
+#define CLMF_HIDDEN         0x01 ///< Not officially created yet
+#define CLMF_UNPREDICTABLE  0x02 ///< Temporarily hidden (until next delta)
+#define CLMF_SOUND          0x04 ///< Sound is queued for playing on unhide.
+#define CLMF_NULLED         0x08 ///< Once nulled, it can't be updated.
+#define CLMF_STICK_FLOOR    0x10 ///< Mobj will stick to the floor.
+#define CLMF_STICK_CEILING  0x20 ///< Mobj will stick to the ceiling.
+#define CLMF_LOCAL_ACTIONS  0x40 ///< Allow local action execution.
+///@}
 
 // Clmobj knowledge flags. This keeps track of the information that has been
 // received.
@@ -75,7 +81,7 @@ void            Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientM
 mobj_t         *ClMobj_Create(thid_t id);
 void            ClMobj_Destroy(mobj_t *mo);
 clmoinfo_t     *ClMobj_GetInfo(mobj_t* mo);
-mobj_t         *ClMobj_Find(thid_t id);
+struct mobj_s  *ClMobj_Find(thid_t id);
 mobj_t         *ClMobj_MobjForInfo(clmoinfo_t* info);
 boolean         ClMobj_Iterator(boolean (*callback) (mobj_t *, void *), void *parm);
 void            ClMobj_UnsetPosition(mobj_t *cmo); // needed?
@@ -83,8 +89,17 @@ void            ClMobj_SetPosition(mobj_t *cmo); // needed?
 void            ClMobj_SetState(mobj_t *mo, int stnum); // needed?
 void            ClMobj_CheckPlanes(mobj_t *mo, boolean justCreated);
 
-//int             ClMobj_ReadDelta(void); // obsolete
+/**
+ * Reads a single mobj delta (inside PSV_FRAME2 packet) from the message buffer
+ * and applies it to the client mobj in question.
+ *
+ * For client mobjs that belong to players, updates the real player mobj
+ * accordingly.
+ *
+ * @param skip  If @c true, all read data is ignored.
+ */
 void            ClMobj_ReadDelta2(boolean skip);
+
 void            ClMobj_ReadNullDelta2(boolean skip);
 
 boolean         Cl_IsClientMobj(mobj_t* mo); // public

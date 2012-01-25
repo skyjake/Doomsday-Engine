@@ -1,10 +1,10 @@
-/**\file
+/**\file qt.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@
  */
 
 /**
- * qt.c: QuickTime implementation for Ext and Mus interfaces
+ * QuickTime implementation for Ext and Mus interfaces
  *
- * This is only used in the Mac OS X version of the plugin.
+ * This is only used on the Mac OS platform.
  */
 
 #if 0
@@ -137,7 +137,7 @@ static int DM_Ext_Get(int property, void *value)
     switch (property)
     {
     case MUSIP_ID:
-        strcpy(value, "QuickTime/Ext");
+        strcpy(value, "QuickTime::Ext");
         break;
 
     default:

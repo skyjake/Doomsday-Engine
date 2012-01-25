@@ -1,0 +1,48 @@
+# Heretic - Material Enhancements
+#
+# Patch the Material definitions created automatically by the engine,
+# adding new effects to them.
+#
+# For further information on Material definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Ded_material
+
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
+
+#
+# Glowing flats:
+#
+
+Material Mods "flats:FLATHUH1" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "flats:FLATHUH2" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "flats:FLATHUH3" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "flats:FLATHUH4" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+#
+# Glowing textures:
+#
+
+Material Mods "textures:LAVAFL1" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:LAVAFL2" {
+  Layer { Stage { Glow = 1.8; } }
+}
+
+Material Mods "textures:LAVAFL3" {
+  Layer { Stage { Glow = 1.8; } }
+}

@@ -1,10 +1,10 @@
-/**\file
+/**\file p_bmap.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,10 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_bmap.c: Blockmaps
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
@@ -35,6 +31,7 @@
 #include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -43,22 +40,27 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct ssecmapblock_s {
-    subsector_t**   ssecs;
-} ssecmapblock_t;
+typedef struct blockmap_ringnode_s {
+    void* object;
+    struct blockmap_ringnode_s* prev;
+    struct blockmap_ringnode_s* next;
+} BlockmapRingNode;
 
-typedef struct bmapblock_s {
-    linedef_t**     lineDefs;
-    linkmobj_t*     mobjLinks;
-    linkpolyobj_t*  polyLinks;
-} bmapblock_t;
+typedef struct {
+    BlockmapRingNode* ringNodes;
+} BlockmapCell;
 
-typedef struct bmap_s {
-    vec2_t          bBox[2];
-    vec2_t          blockSize;
-    uint            dimensions[2]; // In blocks.
-    gridmap_t*      gridmap;
-} bmap_t;
+struct blockmap_s
+{
+    /// Minimal and Maximal points in map space coordinates.
+    AABoxf bounds;
+
+    /// Cell dimensions in map space coordinates.
+    vec2_t cellSize;
+
+    /// Gridmap which implements the blockmap itself.
+    Gridmap* gridmap;
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -70,652 +72,712 @@ typedef struct bmap_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = ssecs.
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = ssecs, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
-void P_BoxToBlockmapBlocks(blockmap_t* blockmap, uint blockBox[4],
-                           const arvec2_t box)
+uint Blockmap_CellX(Blockmap* bm, float x)
 {
-    if(blockmap)
+    uint result;
+    assert(bm);
+    Blockmap_ClipCellX(bm, &result, x);
+    return result;
+}
+
+uint Blockmap_CellY(Blockmap* bm, float y)
+{
+    uint result;
+    assert(bm);
+    Blockmap_ClipCellY(bm, &result, y);
+    return result;
+}
+
+boolean Blockmap_ClipCellX(Blockmap* bm, uint* outX, float x)
+{
+    boolean adjusted = false;
+    assert(bm);
+    if(x < bm->bounds.minX)
     {
-        bmap_t*         bmap = (bmap_t*) blockmap;
-        vec2_t          m[2];
-
-        m[0][VX] = MAX_OF(bmap->bBox[0][VX], box[0][VX]);
-        m[1][VX] = MIN_OF(bmap->bBox[1][VX], box[1][VX]);
-        m[0][VY] = MAX_OF(bmap->bBox[0][VY], box[0][VY]);
-        m[1][VY] = MIN_OF(bmap->bBox[1][VY], box[1][VY]);
-
-        blockBox[BOXLEFT] =
-            MINMAX_OF(0, (m[0][VX] - bmap->bBox[0][VX]) /
-                            bmap->blockSize[VX], bmap->dimensions[0]);
-        blockBox[BOXRIGHT] =
-            MINMAX_OF(0, (m[1][VX] - bmap->bBox[0][VX]) /
-                            bmap->blockSize[VX], bmap->dimensions[0]);
-        blockBox[BOXBOTTOM] =
-            MINMAX_OF(0, (m[0][VY] - bmap->bBox[0][VY]) /
-                            bmap->blockSize[VY], bmap->dimensions[1]);
-        blockBox[BOXTOP] =
-            MINMAX_OF(0, (m[1][VY] - bmap->bBox[0][VY]) /
-                            bmap->blockSize[VY], bmap->dimensions[1]);
+        x = bm->bounds.minX;
+        adjusted = true;
     }
+    else if(x >= bm->bounds.maxX)
+    {
+        x = bm->bounds.maxX - 1;
+        adjusted = true;
+    }
+    if(outX)
+    {
+        *outX = (uint)((x - bm->bounds.minX) / bm->cellSize[VX]);
+    }
+    return adjusted;
+}
+
+boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y)
+{
+    boolean adjusted = false;
+    assert(bm);
+    if(y < bm->bounds.minY)
+    {
+        y = bm->bounds.minY;
+        adjusted = true;
+    }
+    else if(y >= bm->bounds.maxY)
+    {
+        y = bm->bounds.maxY - 1;
+        adjusted = true;
+    }
+    if(outY)
+    {
+        *outY = (uint)((y - bm->bounds.minY) / bm->cellSize[VY]);
+    }
+    return adjusted;
+}
+
+boolean Blockmap_CellCoords(Blockmap* bm, uint coords[2], float const pos[2])
+{
+    assert(bm);
+    if(coords && pos)
+    {
+        // Deliberate bitwise OR - we need to clip both X and Y.
+        return Blockmap_ClipCellX(bm, &coords[0], pos[VX]) |
+               Blockmap_ClipCellY(bm, &coords[1], pos[VY]);
+    }
+    return false;
+}
+
+boolean Blockmap_CellBlockCoords(Blockmap* bm, GridmapBlock* blockCoords, const AABoxf* box)
+{
+    assert(bm);
+    if(blockCoords && box)
+    {
+        // Deliberate bitwise OR - we need to clip both Min and Max.
+        return Blockmap_CellCoords(bm, blockCoords->min, box->min) |
+               Blockmap_CellCoords(bm, blockCoords->max, box->max);
+    }
+    return false;
+}
+
+Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
+    uint cellHeight, size_t sizeOfCell)
+{
+    Blockmap* bm = Z_Calloc(sizeof *bm, PU_MAPSTATIC, 0);
+    uint width, height;
+    if(!bm) Con_Error("Blockmap::New: Failed on allocation of %lu bytes for new Blockmap.", (unsigned long) sizeof *bm);
+
+    V2_Copy(bm->bounds.min, min);
+    V2_Copy(bm->bounds.max, max);
+    bm->cellSize[VX] = cellWidth;
+    bm->cellSize[VY] = cellHeight;
+
+    width  = (uint)ceil((max[0] - min[0]) / (float)cellWidth);
+    height = (uint)ceil((max[1] - min[1]) / (float)cellHeight);
+    bm->gridmap = Gridmap_New(width, height, sizeOfCell, PU_MAPSTATIC);
+
+    VERBOSE( Con_Message("Blockmap::New: Width:%u Height:%u\n", width, height) )
+    return bm;
+}
+
+const pvec2_t Blockmap_Origin(Blockmap* bm)
+{
+    assert(bm);
+    return bm->bounds.min;
+}
+
+const AABoxf* Blockmap_Bounds(Blockmap* bm)
+{
+    assert(bm);
+    return &bm->bounds;
+}
+
+uint Blockmap_Width(Blockmap* bm)
+{
+    assert(bm);
+    return Gridmap_Width(bm->gridmap);
+}
+
+uint Blockmap_Height(Blockmap* bm)
+{
+    assert(bm);
+    return Gridmap_Height(bm->gridmap);
+}
+
+void Blockmap_Size(Blockmap* bm, uint v[2])
+{
+    assert(bm);
+    Gridmap_Size(bm->gridmap, v);
+}
+
+float Blockmap_CellWidth(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize[VX];
+}
+
+float Blockmap_CellHeight(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize[VY];
+}
+
+const pvec2_t Blockmap_CellSize(Blockmap* bm)
+{
+    assert(bm);
+    return bm->cellSize;
+}
+
+static void linkObjectToRing(void* object, BlockmapRingNode** link)
+{
+    BlockmapRingNode* tempLink;
+    assert(object && link);
+
+    if(!(*link))
+    {
+        // Create a new link at the current cell.
+        *link = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
+        (*link)->next = NULL;
+        (*link)->prev = NULL;
+        (*link)->object = object;
+        return;
+    }
+
+    tempLink = *link;
+    while(tempLink->next && tempLink->object)
+    {
+        tempLink = tempLink->next;
+    }
+
+    if(!tempLink->object)
+    {
+        tempLink->object = object;
+        return;
+    }
+
+    tempLink->next = Z_Malloc(sizeof(BlockmapRingNode), PU_MAP, 0);
+    tempLink->next->next = NULL;
+    tempLink->next->prev = tempLink;
+    tempLink->next->object = object;
 }
 
 /**
- * Given a world coordinate, output the blockmap block[x, y] it resides in.
+ * Unlink the given object from the specified cell ring (if indeed linked).
+ *
+ * @param object  Object to be unlinked.
+ * @return  @c true iff the object was linked to the ring and was unlinked.
  */
-
-boolean P_ToBlockmapBlockIdx(blockmap_t* blockmap, uint dest[2],
-                             const pvec2_t pos)
+static boolean unlinkObjectFromRing(void* object, BlockmapRingNode** list)
 {
-    if(blockmap)
+    BlockmapRingNode* iter;
+    assert(object && list);
+
+    iter = *list;
+    while(iter && iter->object != object)
     {
-        bmap_t*         bmap = (bmap_t*) blockmap;
-
-        if(!(pos[VX] < bmap->bBox[0][VX] || pos[VX] >= bmap->bBox[1][VX] ||
-             pos[VY] < bmap->bBox[0][VY] || pos[VY] >= bmap->bBox[1][VY]))
-        {
-            dest[VX] = (pos[VX] - bmap->bBox[0][VX]) / bmap->blockSize[VX];
-            dest[VY] = (pos[VY] - bmap->bBox[0][VY]) / bmap->blockSize[VY];
-
-            return true;
-        }
-
-        return false; // Outside blockmap.
+        iter = iter->next;
     }
 
-    return false; // hmm...
-}
-
-static __inline int xToSSecBlockX(bmap_t* bmap, float x)
-{
-    if(x >= bmap->bBox[0][VX] && x < bmap->bBox[1][VX])
-        return (x - bmap->bBox[0][VX]) / bmap->blockSize[VX];
-
-    return -1;
-}
-
-static __inline int yToSSecBlockY(bmap_t* bmap, float y)
-{
-    if(y >= bmap->bBox[0][VY] && y < bmap->bBox[1][VY])
-        return (y - bmap->bBox[0][VY]) / bmap->blockSize[VY];
-
-    return -1;
-}
-
-static bmap_t* allocBmap(void)
-{
-    return Z_Calloc(sizeof(bmap_t), PU_MAPSTATIC, 0);
-}
-
-blockmap_t* P_BlockmapCreate(const pvec2_t min, const pvec2_t max,
-                             uint width, uint height)
-{
-    bmap_t*         bmap = allocBmap();
-
-    V2_Copy(bmap->bBox[0], min);
-    V2_Copy(bmap->bBox[1], max);
-    bmap->dimensions[VX] = width;
-    bmap->dimensions[VY] = height;
-
-    V2_Set(bmap->blockSize,
-           (bmap->bBox[1][VX] - bmap->bBox[0][VX]) / bmap->dimensions[VX],
-           (bmap->bBox[1][VY] - bmap->bBox[0][VY]) / bmap->dimensions[VY]);
-
-    bmap->gridmap =
-        M_GridmapCreate(bmap->dimensions[VX], bmap->dimensions[VY],
-                        sizeof(bmapblock_t), PU_MAPSTATIC);
-
-    VERBOSE(Con_Message
-            ("P_BlockMapCreate: w=%i h=%i\n", bmap->dimensions[VX],
-             bmap->dimensions[VY]));
-
-    return (blockmap_t *) bmap;
-}
-
-void P_SSecBlockmapSetBlock(blockmap_t* blockmap, uint x, uint y,
-                            subsector_t** ssecs)
-{
-    if(blockmap)
+    if(iter)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        ssecmapblock_t*     block =
-            M_GridmapGetBlock(bmap->gridmap, x, y, true);
-
-        if(block)
-        {
-            block->ssecs = ssecs;
-        }
+        iter->object = NULL;
+        return true; // Object was unlinked.
     }
+    return false; // object was not linked.
 }
 
-void P_BuildSubsectorBlockMap(gamemap_t* map)
+static int unlinkObjectInCell(void* ptr, void* paramaters)
 {
-#define BLKMARGIN       8
-#define BLOCK_WIDTH     128
-#define BLOCK_HEIGHT    128
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    unlinkObjectFromRing(paramaters/*object ptr*/, &cell->ringNodes);
+    return false; // Continue iteration.
+}
 
-typedef struct ssecnode_s {
-    void*           data;
-    struct ssecnode_s* next;
-} ssecnode_t;
+static int linkObjectInCell(void* ptr, void* paramaters)
+{
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    linkObjectToRing(paramaters/*object ptr*/, &cell->ringNodes);
+    return false; // Continue iteration.
+}
 
-typedef struct subsecmap_s {
-    uint            count;
-    ssecnode_t*     nodes;
-} ssecmap_t;
+boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, void* object)
+{
+    BlockmapCell* cell;
+    assert(blockmap && object);
+    cell = (BlockmapCell*) Gridmap_CellXY(blockmap->gridmap, x, y, true);
+    if(!cell) return false; // Outside the blockmap?
+    linkObjectInCell((void*)cell, object);
+    return true; // Link added.
+}
 
-    uint                startTime = Sys_GetRealTime();
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], void* object)
+{
+    assert(coords);
+    return Blockmap_CreateCellAndLinkObjectXY(blockmap, coords[VX], coords[VY], object);
+}
 
-    int                 xl, xh, yl, yh, x, y;
-    int                 subMapWidth, subMapHeight;
-    uint                i;
-    ssecnode_t*         iter, *next;
-    ssecmap_t*          bmap, *block;
-    vec2_t              bounds[2], blockSize, dims;
-    blockmap_t*         ssecBlockMap;
-    subsector_t**       ssecLinks;
-    size_t              totalLinks;
+void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+{
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
     // Setup the blockmap area to enclose the whole map, plus a margin
-    // (margin is needed for a map that fits entirely inside one blockmap
-    // cell).
-    V2_Set(bounds[0], map->bBox[BOXLEFT] - BLKMARGIN,
-                      map->bBox[BOXBOTTOM] - BLKMARGIN);
-    V2_Set(bounds[1], map->bBox[BOXRIGHT] + BLKMARGIN,
-                      map->bBox[BOXTOP] + BLKMARGIN);
+    // (margin is needed for a map that fits entirely inside one blockmap cell).
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    // Select a good size for the blocks.
-    V2_Set(blockSize, MAPBLOCKUNITS, MAPBLOCKUNITS);
-    V2_Subtract(dims, bounds[1], bounds[0]);
+    map->lineDefBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
-    // Calculate the dimensions of the blockmap.
-    if(dims[VX] <= blockSize[VX])
-        subMapWidth = 1;
-    else
-        subMapWidth = ceil(dims[VX] / blockSize[VX]);
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+}
 
-    if(dims[VY] <= blockSize[VY])
-        subMapHeight = 1;
-    else
-        subMapHeight = ceil(dims[VY] / blockSize[VY]);
+void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+{
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
 
-    // Adjust the max bound so we have whole blocks.
-    V2_Set(bounds[1], bounds[0][VX] + subMapWidth  * blockSize[VX],
-                      bounds[0][VY] + subMapHeight * blockSize[VY]);
+    vec2_t min, max;
+    assert(map && min_ && max_);
 
-    ssecBlockMap = (blockmap_t*)
-        P_BlockmapCreate(bounds[0], bounds[1], subMapWidth, subMapHeight);
+    // Setup the blockmap area to enclose the whole map, plus a margin
+    // (margin is needed for a map that fits entirely inside one blockmap cell).
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
 
-    // We'll construct the temporary links using nodes.
-    bmap = M_Calloc(sizeof(ssecmap_t) * subMapWidth * subMapHeight);
+    map->mobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
 
-    // Process all the subsectors in the map.
-    totalLinks = 0;
-    for(i = 0; i < map->numSSectors; ++i)
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+}
+
+void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+{
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+    vec2_t min, max;
+    assert(map && min_ && max_);
+
+    // Setup the blockmap area to enclose the whole map, plus a margin
+    // (margin is needed for a map that fits entirely inside one blockmap cell).
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
+
+    map->polyobjBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+}
+
+void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+{
+#define BLOCKMAP_MARGIN      8 // size guardband around map
+#define CELL_SIZE            MAPBLOCKUNITS
+
+    vec2_t min, max;
+    assert(map && min_ && max_);
+
+    // Setup the blockmap area to enclose the whole map, plus a margin
+    // (margin is needed for a map that fits entirely inside one blockmap cell).
+    V2_Set(min, min_[VX] - BLOCKMAP_MARGIN,
+                min_[VY] - BLOCKMAP_MARGIN);
+    V2_Set(max, max_[VX] + BLOCKMAP_MARGIN,
+                max_[VY] + BLOCKMAP_MARGIN);
+
+    map->subsectorBlockmap = Blockmap_New(min, max, CELL_SIZE, CELL_SIZE, sizeof(BlockmapCell));
+
+#undef CELL_SIZE
+#undef BLOCKMAP_MARGIN
+}
+
+void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
+{
+    Blockmap* blockmap = map->mobjBlockmap;
+    uint coords[2];
+    Blockmap_CellCoords(blockmap, coords, mo->pos);
+    Blockmap_CreateCellAndLinkObject(blockmap, coords, mo);
+}
+
+boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
+{
+    Blockmap* blockmap = map->mobjBlockmap;
+    BlockmapCell* cell;
+    boolean unlinked = false;
+    uint coords[2];
+
+    Blockmap_CellCoords(blockmap, coords, mo->pos);
+    cell = (BlockmapCell*) Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
     {
-        subsector_t*        ssec = &map->ssectors[i];
-
-        if(!ssec->sector)
-            continue;
-
-        // Blockcoords to link to.
-        xl = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bBox[0].pos[VX]);
-        xh = xToSSecBlockX((bmap_t*)ssecBlockMap, ssec->bBox[1].pos[VX]);
-        yl = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bBox[0].pos[VY]);
-        yh = yToSSecBlockY((bmap_t*)ssecBlockMap, ssec->bBox[1].pos[VY]);
-
-        for(x = xl; x <= xh; ++x)
-            for(y = yl; y <= yh; ++y)
-            {
-                if(x < 0 || y < 0 || x >= subMapWidth || y >= subMapHeight)
-                {
-                    Con_Printf("sub%i: outside block x=%i, y=%i\n", i, x, y);
-                    continue;
-                }
-
-                // Create a new node.
-                iter = M_Malloc(sizeof(ssecnode_t));
-                iter->data = ssec;
-
-                // Link to the temporary map.
-                block = &bmap[x + y * subMapWidth];
-                iter->next = block->nodes;
-                block->nodes = iter;
-                totalLinks++;
-                if(!block->count)
-                    totalLinks++; // +1 for terminating NULL.
-                block->count++;
-            }
+        unlinked = unlinkObjectInCell((void*)cell, (void*)mo);
     }
-
-    ssecLinks = Z_Malloc(totalLinks * sizeof(subsector_t*), PU_MAP, NULL);
-
-    // Create the actual links by 'hardening' the lists into arrays.
-    for(y = 0; y < subMapHeight; ++y)
-        for(x = 0; x < subMapWidth; ++x)
-        {
-            block = &bmap[y * subMapWidth + x];
-
-            if(block->count > 0)
-            {
-                subsector_t**       ssecs, **ptr;
-
-                // A NULL-terminated array of pointers to subsectors.
-                ssecs = ssecLinks;
-
-                // Copy pointers to the array, delete the nodes.
-                ptr = ssecs;
-                for(iter = block->nodes; iter; iter = next)
-                {
-                    *ptr++ = (subsector_t *) iter->data;
-                    // Kill the node.
-                    next = iter->next;
-                    M_Free(iter);
-                }
-                // Terminate.
-                *ptr = NULL;
-
-                // Link it into the ssecblockmap.
-                P_SSecBlockmapSetBlock(ssecBlockMap, x, y, ssecs);
-
-                ssecLinks += block->count + 1;
-            }
-        }
-
-    map->ssecBlockMap = ssecBlockMap;
-
-    // Free the temporary link map.
-    M_Free(bmap);
-
-    // How much time did we spend?
-    VERBOSE(Con_Message
-            ("P_BuildSubsectorBlockMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
-
-#undef BLOCK_WIDTH
-#undef BLOCK_HEIGHT
-}
-
-void P_BlockmapSetBlock(blockmap_t* blockmap, uint x, uint y,
-                        linedef_t** lines, linkmobj_t* moLink,
-                        linkpolyobj_t* poLink)
-{
-    if(blockmap)
-    {
-        bmap_t*         bmap = (bmap_t*) blockmap;
-        bmapblock_t*    block = M_GridmapGetBlock(bmap->gridmap, x, y, true);
-
-        if(block)
-        {
-            block->lineDefs = lines;
-            block->mobjLinks = moLink;
-            block->polyLinks = poLink;
-        }
-    }
-}
-
-boolean unlinkPolyobjInBlock(void* ptr, void* context)
-{
-    bmapblock_t*        block = (bmapblock_t*) ptr;
-    polyobj_t*          po = (polyobj_t*) context;
-
-    P_PolyobjUnlinkFromRing(po, &block->polyLinks);
-    return true;
-}
-
-boolean linkPolyobjInBlock(void* ptr, void* context)
-{
-    bmapblock_t*        block = (bmapblock_t*) ptr;
-    polyobj_t*          po = (polyobj_t *) context;
-
-    P_PolyobjLinkToRing(po, &block->polyLinks);
-    return true;
-}
-
-void P_BlockmapLinkPolyobj(blockmap_t* blockmap, polyobj_t* po)
-{
-    if(blockmap)
-    {
-        bmap_t* bmap = (bmap_t*) blockmap;
-        uint blockBox[4], x, y;
-
-        P_PolyobjUpdateBBox(po);
-        P_BoxToBlockmapBlocks(blockmap, blockBox, po->box);
-
-        for(y = blockBox[BOXBOTTOM]; y <= blockBox[BOXTOP]; ++y)
-            for(x = blockBox[BOXLEFT]; x <= blockBox[BOXRIGHT]; ++x)
-            {
-                bmapblock_t* block = (bmapblock_t*) M_GridmapGetBlock(bmap->gridmap, x, y, true);
-                linkPolyobjInBlock((void*)block, po);
-            }
-    }
-}
-
-void P_BlockmapUnlinkPolyobj(blockmap_t* blockmap, polyobj_t* po)
-{
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockBox[4];
-
-        P_PolyobjUpdateBBox(po);
-        P_BoxToBlockmapBlocks(BlockMap, blockBox, po->box);
-
-        M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                              unlinkPolyobjInBlock, (void*) po);
-    }
-}
-
-void P_BlockmapLinkMobj(blockmap_t* blockmap, mobj_t* mo)
-{
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockXY[2];
-        bmapblock_t*        block;
-
-        P_ToBlockmapBlockIdx(BlockMap, blockXY, mo->pos);
-        block = (bmapblock_t*)
-            M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], true);
-        if(block)
-            P_MobjLinkToRing(mo, &block->mobjLinks);
-    }
-}
-
-boolean P_BlockmapUnlinkMobj(blockmap_t* blockmap, mobj_t* mo)
-{
-    boolean             unlinked = false;
-
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockXY[2];
-        bmapblock_t*        block;
-
-        P_ToBlockmapBlockIdx(BlockMap, blockXY, mo->pos);
-        block = (bmapblock_t*)
-            M_GridmapGetBlock(bmap->gridmap, blockXY[0], blockXY[1], false);
-        if(block)
-            unlinked = P_MobjUnlinkFromRing(mo, &block->mobjLinks);
-    }
-
     return unlinked;
 }
 
-void P_GetBlockmapBounds(blockmap_t* blockmap, pvec2_t min, pvec2_t max)
+void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
 {
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
+    vec2_t origin, cellSize, cell, from, to;
+    GridmapBlock blockCoords;
+    Blockmap* blockmap;
+    uint x, y;
+    assert(map);
 
-        if(min)
-            V2_Copy(min, bmap->bBox[0]);
-        if(max)
-            V2_Copy(max, bmap->bBox[1]);
+    // LineDefs of Polyobjs don't get into the blockmap (presently...).
+    if(lineDef->inFlags & LF_POLYOBJ) return;
+
+    blockmap = map->lineDefBlockmap;
+    V2_Copy(origin, Blockmap_Origin(blockmap));
+    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
+
+    // Determine the block of cells we'll be working within.
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &lineDef->aaBox);
+
+    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
+    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    {
+        if(lineDef->slopeType == ST_VERTICAL || lineDef->slopeType == ST_HORIZONTAL)
+        {
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
+            continue;
+        }
+
+        // Calculate cell origin.
+        V2_Copy(cell, Blockmap_CellSize(blockmap));
+        cell[VX] *= x; cell[VY] *= y;
+        V2_Sum(cell, cell, Blockmap_Origin(blockmap));
+
+        // Choose a cell diagonal to test.
+        if(lineDef->slopeType == ST_POSITIVE)
+        {
+            // LineDef slope / vs \ cell diagonal.
+            V2_Set(from, cell[VX], cell[VY] + cellSize[VY]);
+            V2_Set(to,   cell[VX] + cellSize[VX], cell[VY]);
+        }
+        else
+        {
+            // LineDef slope \ vs / cell diagonal.
+            V2_Set(from, cell[VX] + cellSize[VX], cell[VY] + cellSize[VY]);
+            V2_Set(to,   cell[VX], cell[VY]);
+        }
+
+        // Would LineDef intersect this?
+        if(P_PointOnLinedefSide(from, lineDef) != P_PointOnLinedefSide(to, lineDef))
+        {
+            Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, lineDef);
+        }
     }
 }
 
-void P_GetBlockmapDimensions(blockmap_t* blockmap, uint v[2])
+void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* ssec)
 {
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
+    Blockmap* blockmap = map->subsectorBlockmap;
+    GridmapBlock blockCoords;
+    AABoxf aaBox;
+    uint x, y;
+    assert(map);
 
-        v[VX] = bmap->dimensions[VX];
-        v[VY] = bmap->dimensions[VY];
+    // Subsectors without sectors don't get in.
+    if(!ssec || !ssec->sector) return;
+
+    aaBox.minX = ssec->aaBox.minX;
+    aaBox.minY = ssec->aaBox.minY;
+    aaBox.maxX = ssec->aaBox.maxX;
+    aaBox.maxY = ssec->aaBox.maxY;
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &aaBox);
+
+    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
+    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    {
+        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, ssec);
     }
+}
+
+void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
+{
+    Blockmap* blockmap = map->polyobjBlockmap;
+    GridmapBlock blockCoords;
+    uint x, y;
+
+    P_PolyobjUpdateAABox(po);
+    Blockmap_CellBlockCoords(blockmap, &blockCoords, &po->aaBox);
+
+    for(y = blockCoords.minY; y <= blockCoords.maxY; ++y)
+    for(x = blockCoords.minX; x <= blockCoords.maxX; ++x)
+    {
+        Blockmap_CreateCellAndLinkObjectXY(blockmap, x, y, po);
+    }
+}
+
+void Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
+{
+    Blockmap* blockmap = map->polyobjBlockmap;
+    GridmapBlock blockCoords;
+
+    P_PolyobjUpdateAABox(po);
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, &po->aaBox);
+    Gridmap_BlockIterate2(blockmap->gridmap, &blockCoords, unlinkObjectInCell, (void*) po);
 }
 
 typedef struct bmapiterparams_s {
-    int             localValidCount;
-    boolean       (*func) (linedef_t*, void *);
-    void*           param;
+    int localValidCount;
+    int (*func) (linedef_t*, void *);
+    void* param;
 } bmapiterparams_t;
 
-static boolean bmapBlockLinesIterator(void* ptr, void* context)
+static int blockmapCellLinesIterator(void* ptr, void* context)
 {
-    bmapblock_t*        block = (bmapblock_t*) ptr;
-
-    if(block->lineDefs)
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    bmapiterparams_t* args = (bmapiterparams_t*) context;
+    BlockmapRingNode* next, *link = cell->ringNodes;
+    int result = false; // Continue iteration.
+    while(link)
     {
-        linedef_t**         iter;
-        bmapiterparams_t*   args = (bmapiterparams_t*) context;
+        next = link->next;
 
-        iter = block->lineDefs;
-        while(*iter)
+        if(link->object)
         {
-            linedef_t*          line = *iter;
-
-            if(line->validCount != args->localValidCount)
+            linedef_t* lineDef = (linedef_t*)link->object;
+            if(lineDef->validCount != args->localValidCount)
             {
-                line->validCount = args->localValidCount;
-
-                if(!args->func(line, args->param))
-                    return false;
+                lineDef->validCount = args->localValidCount;
+                result = args->func(lineDef, args->param);
+                if(result) return result; // Stop iteration.
             }
-
-            iter++;
         }
-    }
 
-    return true;
+        link = next;
+    }
+    return result;
 }
 
-boolean P_BlockmapLinesIterator(blockmap_t* blockmap, const uint block[2],
-                                boolean (*func) (linedef_t*, void*),
-                                void* data)
+int Map_IterateCellLineDefs(gamemap_t* map, const uint coords[2],
+    int (*func) (linedef_t*, void*), void* data)
 {
-    if(blockmap)
+    Blockmap* blockmap = map->lineDefBlockmap;
+    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        bmapblock_t*        bmapBlock =
-            M_GridmapGetBlock(bmap->gridmap, block[VX], block[VY], false);
-
-        if(bmapBlock)
-        {
-            bmapiterparams_t    args;
-
-            args.localValidCount = validCount;
-            args.func = func;
-            args.param = data;
-
-            return bmapBlockLinesIterator(bmapBlock, &args);
-        }
+        bmapiterparams_t args;
+        args.localValidCount = validCount;
+        args.func = func;
+        args.param = data;
+        return blockmapCellLinesIterator(cell, &args);
     }
-
-    return true;
+    return false;
 }
 
-boolean P_BlockBoxLinesIterator(blockmap_t* blockmap, const uint blockBox[4],
-                                boolean (*func) (linedef_t*, void*),
-                                void* data)
+int Map_IterateCellBlockLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (linedef_t*, void*), void* data)
 {
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    bmapiterparams_t    args;
-
+    Blockmap* blockmap = map->lineDefBlockmap;
+    bmapiterparams_t args;
     args.localValidCount = validCount;
     args.func = func;
     args.param = data;
-
-    return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockLinesIterator, (void*) &args);
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellLinesIterator, (void*) &args);
 }
 
 typedef struct bmappoiterparams_s {
-    int             localValidCount;
-    boolean       (*func) (polyobj_t*, void *);
-    void*           param;
+    int localValidCount;
+    int (*func) (polyobj_t*, void *);
+    void* param;
 } bmappoiterparams_t;
 
-static boolean bmapBlockPolyobjsIterator(void* ptr, void* context)
+static int blockmapCellPolyobjsIterator(void* ptr, void* context)
 {
-    bmapblock_t*        block = (bmapblock_t*) ptr;
+    BlockmapCell* cell = (BlockmapCell*) ptr;
     bmappoiterparams_t* args = (bmappoiterparams_t*) context;
-    linkpolyobj_t*      link;
-
-    link = block->polyLinks;
+    BlockmapRingNode* next, *link = cell->ringNodes;
+    int result = false; // Continue iteration.
     while(link)
     {
-        linkpolyobj_t*      next = link->next;
+        next = link->next;
 
-        if(link->polyobj)
-            if(link->polyobj->validCount != args->localValidCount)
+        if(link->object)
+        {
+            polyobj_t* polyobj = (polyobj_t*)link->object;
+            if(polyobj->validCount != args->localValidCount)
             {
-                link->polyobj->validCount = args->localValidCount;
-
-                if(!args->func(link->polyobj, args->param))
-                    return false;
+                polyobj->validCount = args->localValidCount;
+                result = args->func(polyobj, args->param);
+                if(result) return result; // Stop iteration.
             }
+        }
 
         link = next;
     }
-
-    return true;
+    return result;
 }
 
-boolean P_BlockmapPolyobjsIterator(blockmap_t* blockmap, const uint block[2],
-                                   boolean (*func) (polyobj_t*, void*),
-                                   void* data)
+int Map_IterateCellPolyobjs(gamemap_t* map, const uint coords[2],
+    int (*func) (polyobj_t*, void*), void* data)
 {
-    if(blockmap)
+    Blockmap* blockmap = map->polyobjBlockmap;
+    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        bmapblock_t*        bmapBlock =
-            M_GridmapGetBlock(bmap->gridmap, block[VX], block[VY], false);
-
-        if(bmapBlock)
-        {
-            bmappoiterparams_t  args;
-
-            args.localValidCount = validCount;
-            args.func = func;
-            args.param = data;
-
-            return bmapBlockPolyobjsIterator(bmapBlock, (void*) &args);
-        }
+        bmappoiterparams_t  args;
+        args.localValidCount = validCount;
+        args.func = func;
+        args.param = data;
+        return blockmapCellPolyobjsIterator(cell, (void*) &args);
     }
-
-    return true;
+    return false;
 }
 
-boolean P_BlockBoxPolyobjsIterator(blockmap_t* blockmap, const uint blockBox[4],
-                                   boolean (*func) (polyobj_t*, void*),
-                                   void* data)
+int Map_IterateCellBlockPolyobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (polyobj_t*, void*), void* data)
 {
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    bmappoiterparams_t  args;
-
+    Blockmap* blockmap = map->polyobjBlockmap;
+    bmappoiterparams_t args;
     args.localValidCount = validCount;
     args.func = func;
     args.param = data;
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellPolyobjsIterator, (void*) &args);
+}
 
-    return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockPolyobjsIterator, (void*) &args);
+typedef struct poiterparams_s {
+    int (*func) (linedef_t*, void*);
+    void* param;
+} poiterparams_t;
+
+int PTR_PolyobjLines(polyobj_t* po, void* data)
+{
+    poiterparams_t* args = (poiterparams_t*) data;
+    return P_PolyobjLinesIterator(po, args->func, args->param);
+}
+
+int Map_IterateCellPolyobjLineDefsIterator(gamemap_t* map, const uint coords[2],
+    int (*func) (linedef_t*, void*), void* data)
+{
+    Blockmap* blockmap = map->polyobjBlockmap;
+    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
+    {
+        bmappoiterparams_t args;
+        poiterparams_t poargs;
+        poargs.func = func;
+        poargs.param = data;
+
+        args.localValidCount = validCount;
+        args.func = PTR_PolyobjLines;
+        args.param = &poargs;
+        return blockmapCellPolyobjsIterator(cell, &args);
+    }
+    return false;
+}
+
+int Map_IterateCellBlockPolyobjLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters)
+{
+    Blockmap* blockmap = map->polyobjBlockmap;
+    bmappoiterparams_t bpiParams;
+    poiterparams_t piParams;
+
+    piParams.func = callback;
+    piParams.param = paramaters;
+
+    bpiParams.localValidCount = validCount;
+    bpiParams.func = PTR_PolyobjLines;
+    bpiParams.param = &piParams;
+
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellPolyobjsIterator, (void*) &bpiParams);
 }
 
 typedef struct bmapmoiterparams_s {
-    int             localValidCount;
-    boolean       (*func) (mobj_t*, void *);
-    void*           param;
+    int localValidCount;
+    int (*func) (mobj_t*, void *);
+    void* param;
 } bmapmoiterparams_t;
 
-static boolean bmapBlockMobjsIterator(void* ptr, void* context)
+static int blockmapCellMobjsIterator(void* ptr, void* paramaters)
 {
-    bmapblock_t*        block = (bmapblock_t*) ptr;
-    bmapmoiterparams_t* args = (bmapmoiterparams_t*) context;
-    linkmobj_t*         link;
-
-    link = block->mobjLinks;
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    bmapmoiterparams_t* args = (bmapmoiterparams_t*) paramaters;
+    BlockmapRingNode* next, *link = cell->ringNodes;
+    int result = false; // Continue iteration.
     while(link)
     {
-        linkmobj_t*         next = link->next;
+        next = link->next;
 
-        if(link->mobj)
-            if(link->mobj->validCount != args->localValidCount)
+        if(link->object)
+        {
+            mobj_t* mobj = (mobj_t*)link->object;
+            if(mobj->validCount != args->localValidCount)
             {
-                link->mobj->validCount = args->localValidCount;
-
-                if(!args->func(link->mobj, args->param))
-                    return false;
+                mobj->validCount = args->localValidCount;
+                result = args->func(mobj, args->param);
+                if(result) return result; // Stop iteration.
             }
+        }
 
         link = next;
     }
-
-    return true;
+    return result;
 }
 
-boolean P_BlockmapMobjsIterator(blockmap_t* blockmap, const uint block[2],
-                                boolean (*func) (mobj_t*, void*),
-                                void* data)
+int Map_IterateCellMobjs(gamemap_t* map, const uint coords[2],
+    int (*func) (mobj_t*, void*), void* data)
 {
-    if(blockmap)
+    Blockmap* blockmap = map->mobjBlockmap;
+    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        bmapblock_t*        bmapBlock =
-            M_GridmapGetBlock(bmap->gridmap, block[VX], block[VY], false);
-
-        if(bmapBlock)
-        {
-            bmapmoiterparams_t  args;
-
-            args.localValidCount = validCount;
-            args.func = func;
-            args.param = data;
-
-            return bmapBlockMobjsIterator(bmapBlock, (void*) &args);
-        }
+        bmapmoiterparams_t  args;
+        args.localValidCount = validCount;
+        args.func = func;
+        args.param = data;
+        return blockmapCellMobjsIterator(cell, (void*) &args);
     }
-
-    return true;
+    return false;
 }
 
-boolean P_BlockBoxMobjsIterator(blockmap_t *blockmap, const uint blockBox[4],
-                                boolean (*func) (mobj_t*, void*),
-                                void* data)
+int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+    int (*func) (mobj_t*, void*), void* data)
 {
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    bmapmoiterparams_t  args;
-
+    Blockmap* blockmap = map->mobjBlockmap;
+    bmapmoiterparams_t args;
     args.localValidCount = validCount;
     args.func = func;
     args.param = data;
-
-    return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockMobjsIterator, (void*) &args);
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellMobjsIterator, (void*) &args);
 }
 
 typedef struct sseciterparams_s {
-    arvec2_t        box;
-    sector_t*       sector;
-    int             localValidCount;
-    boolean       (*func) (subsector_t*, void*);
-    void*           param;
-} sseciterparams_t;
+    const AABoxf* box;
+    sector_t* sector;
+    int localValidCount;
+    int (*func) (subsector_t*, void*);
+    void* param;
+} bmapsseciterparams_t;
 
-static boolean ssecBlockIterator(void* ptr, void* context)
+static int blockmapCellSubsectorsIterator(void* ptr, void* context)
 {
-    ssecmapblock_t*     block = (ssecmapblock_t*) ptr;
-
-    if(block->ssecs)
+    BlockmapCell* cell = (BlockmapCell*) ptr;
+    bmapsseciterparams_t* args = (bmapsseciterparams_t*) context;
+    BlockmapRingNode* next, *link = cell->ringNodes;
+    int result = false; // Continue iteration.
+    while(link)
     {
-        subsector_t**       iter;
-        sseciterparams_t*   args = (sseciterparams_t*) context;
+        next = link->next;
 
-        iter = block->ssecs;
-
-        while(*iter)
+        if(link->object)
         {
-            subsector_t*        ssec = *iter;
-
+            subsector_t* ssec = (subsector_t*)link->object;
             if(ssec->validCount != args->localValidCount)
             {
-                boolean             ok = true;
+                boolean ok = true;
 
                 ssec->validCount = args->localValidCount;
 
@@ -725,298 +787,96 @@ static boolean ssecBlockIterator(void* ptr, void* context)
 
                 // Check the bounds.
                 if(args->box &&
-                   (ssec->bBox[1].pos[VX] < args->box[0][VX] ||
-                    ssec->bBox[0].pos[VX] > args->box[1][VX] ||
-                    ssec->bBox[0].pos[VY] > args->box[1][VY] ||
-                    ssec->bBox[1].pos[VY] < args->box[0][VY]))
-                   ok = false;
+                   (ssec->aaBox.maxX < args->box->minX ||
+                    ssec->aaBox.minX > args->box->maxX ||
+                    ssec->aaBox.minY > args->box->maxY ||
+                    ssec->aaBox.maxY < args->box->minY))
+                    ok = false;
 
                 if(ok)
                 {
-                    if(!args->func(ssec, args->param))
-                        return false;
+                    result = args->func(ssec, args->param);
+                    if(result) return result; // Stop iteration.
                 }
             }
-
-            iter++;
         }
-    }
 
-    return true;
+        link = next;
+    }
+    return result;
 }
 
-boolean P_BlockmapSubsectorsIterator(blockmap_t* blockmap, const uint block[2],
-                                     sector_t* sector, const arvec2_t box,
-                                     int localValidCount,
-                                     boolean (*func) (subsector_t*, void*),
-                                     void* data)
+int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
+    sector_t* sector, const AABoxf* box, int localValidCount,
+    int (*func) (subsector_t*, void*), void* paramaters)
 {
-    if(blockmap)
+    Blockmap* blockmap = map->subsectorBlockmap;
+    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        ssecmapblock_t*     ssecBlock =
-            M_GridmapGetBlock(bmap->gridmap, block[VX], block[VY], false);
-
-        if(ssecBlock && ssecBlock->ssecs)
-        {
-            sseciterparams_t    args;
-
-            args.box = box;
-            args.localValidCount = localValidCount;
-            args.sector = sector;
-            args.func = func;
-            args.param = data;
-
-            return ssecBlockIterator(ssecBlock, &args);
-        }
+        bmapsseciterparams_t args;
+        args.localValidCount = localValidCount;
+        args.func = func;
+        args.param = paramaters;
+        args.sector = sector;
+        args.box = box;
+        return blockmapCellSubsectorsIterator(cell, (void*) &args);
     }
-
-    return true;
+    return false;
 }
 
-boolean P_BlockBoxSubsectorsIterator(blockmap_t* blockmap, const uint blockBox[4],
-                                     sector_t* sector,  const arvec2_t box,
-                                     int localValidCount,
-                                     boolean (*func) (subsector_t*, void*),
-                                     void* data)
+int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoords,
+    sector_t* sector,  const AABoxf* box, int localValidCount,
+    int (*func) (subsector_t*, void*), void* data)
 {
-    bmap_t*             bmap = (bmap_t *) blockmap;
-    sseciterparams_t    args;
-
-    args.box = box;
+    Blockmap* blockmap = map->subsectorBlockmap;
+    bmapsseciterparams_t args;
     args.localValidCount = localValidCount;
-    args.sector = sector;
     args.func = func;
     args.param = data;
-
-    return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 ssecBlockIterator, (void*) &args);
+    args.sector = sector;
+    args.box = box;
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellSubsectorsIterator, (void*) &args);
 }
 
-typedef struct poiterparams_s {
-    boolean       (*func) (linedef_t*, void*);
-    void*           param;
-} poiterparams_t;
-
-boolean PTR_PolyobjLines(polyobj_t* po, void* data)
+static int rendMobj(mobj_t* mo, void* paramaters)
 {
-    poiterparams_t*     args = (poiterparams_t*) data;
-
-    return P_PolyobjLinesIterator(po, args->func, args->param);
-}
-
-boolean P_BlockmapPolyobjLinesIterator(blockmap_t* blockmap, const uint block[2],
-                                       boolean (*func) (linedef_t*, void*),
-                                       void* data)
-{
-    if(blockmap)
-    {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        bmapblock_t*        bmapBlock =
-            M_GridmapGetBlock(bmap->gridmap, block[VX], block[VY], false);
-
-        if(bmapBlock && bmapBlock->polyLinks)
-        {
-            bmappoiterparams_t args;
-            poiterparams_t poargs;
-
-            poargs.func = func;
-            poargs.param = data;
-
-            args.localValidCount = validCount;
-            args.func = PTR_PolyobjLines;
-            args.param = &poargs;
-
-            return bmapBlockPolyobjsIterator(bmapBlock, &args);
-        }
-    }
-
-    return true;
-}
-
-boolean P_BlockBoxPolyobjLinesIterator(blockmap_t* blockmap, const uint blockBox[4],
-                                       boolean (*func) (linedef_t*, void*),
-                                       void* data)
-{
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    bmappoiterparams_t  args;
-    poiterparams_t      poargs;
-
-    poargs.func = func;
-    poargs.param = data;
-
-    args.localValidCount = validCount;
-    args.func = PTR_PolyobjLines;
-    args.param = &poargs;
-
-    return M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                                 bmapBlockPolyobjsIterator, (void*) &args);
-}
-
-boolean P_BlockPathTraverse(blockmap_t* bmap, const uint originBlock[2],
-                            const uint destBlock[2],
-                            const float origin[2], const float dest[2],
-                            int flags, boolean (*func) (intercept_t*))
-{
-    uint                count, block[2];
-    float               delta[2], partial;
-    fixed_t             intercept[2], step[2];
-    int                 stepDir[2];
-
-    if(destBlock[VX] > originBlock[VX])
-    {
-        stepDir[VX] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else if(destBlock[VX] < originBlock[VX])
-    {
-        stepDir[VX] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VX]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VY] = (dest[VY] - origin[VY]) / fabs(dest[VX] - origin[VX]);
-    }
-    else
-    {
-        stepDir[VX] = 0;
-        partial = 1;
-        delta[VY] = 256;
-    }
-    intercept[VY] = (FLT2FIX(origin[VY]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VY]);
-
-    if(destBlock[VY] > originBlock[VY])
-    {
-        stepDir[VY] = 1;
-        partial = FIX2FLT(FRACUNIT - ((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1)));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else if(destBlock[VY] < originBlock[VY])
-    {
-        stepDir[VY] = -1;
-        partial = FIX2FLT((FLT2FIX(origin[VY]) >> MAPBTOFRAC) & (FRACUNIT - 1));
-        delta[VX] = (dest[VX] - origin[VX]) / fabs(dest[VY] - origin[VY]);
-    }
-    else
-    {
-        stepDir[VY] = 0;
-        partial = 1;
-        delta[VX] = 256;
-    }
-    intercept[VX] = (FLT2FIX(origin[VX]) >> MAPBTOFRAC) +
-        FLT2FIX(partial * delta[VX]);
-
-    //
-    // Step through map blocks.
-    //
-
-    // Count is present to prevent a round off error from skipping the
-    // break and ending up in an infinite loop..
-    block[VX] = originBlock[VX];
-    block[VY] = originBlock[VY];
-    step[VX] = FLT2FIX(delta[VX]);
-    step[VY] = FLT2FIX(delta[VY]);
-    for(count = 0; count < 64; ++count)
-    {
-        if(flags & PT_ADDLINES)
-        {
-            if(numPolyObjs > 0)
-            {
-                if(!P_BlockmapPolyobjLinesIterator(BlockMap, block,
-                                                   PIT_AddLineIntercepts, 0))
-                    return false; // Early out.
-            }
-
-            if(!P_BlockmapLinesIterator(BlockMap, block,
-                                        PIT_AddLineIntercepts, 0))
-                return false; // Early out
-        }
-
-        if(flags & PT_ADDMOBJS)
-        {
-            if(!P_BlockmapMobjsIterator(BlockMap, block,
-                                      PIT_AddMobjIntercepts, 0))
-                return false; // Early out.
-        }
-
-        if(block[VX] == destBlock[VX] && block[VY] == destBlock[VY])
-            break;
-
-        if((unsigned) (intercept[VY] >> FRACBITS) == block[VY])
-        {
-            intercept[VY] += step[VY];
-            block[VX] += stepDir[VX];
-        }
-        else if((unsigned) (intercept[VX] >> FRACBITS) == block[VX])
-        {
-            intercept[VX] += step[VX];
-            block[VY] += stepDir[VY];
-        }
-    }
-
-    return true;
-}
-
-static boolean rendBlockMobj(mobj_t* mo, void* data)
-{
-    vec2_t              start, end;
-    arvec2_t            bbox = data;
-
-    V2_Set(start,
-           mo->pos[VX] - bbox[0][VX] - mo->radius,
-           mo->pos[VY] - bbox[0][VY] - mo->radius);
-    V2_Set(end,
-           mo->pos[VX] - bbox[0][VX] + mo->radius,
-           mo->pos[VY] - bbox[0][VY] + mo->radius);
-
+    vec2_t start, end;
+    V2_Set(start, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
+    V2_Set(end,   mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
     glVertex2f(start[VX], start[VY]);
-    glVertex2f(end[VX], start[VY]);
-    glVertex2f(end[VX], end[VY]);
-    glVertex2f(start[VX], end[VY]);
-    return true; // Continue iteration.
+    glVertex2f(  end[VX], start[VY]);
+    glVertex2f(  end[VX],   end[VY]);
+    glVertex2f(start[VX],   end[VY]);
+    return false; // Continue iteration.
 }
 
-static boolean rendBlockLinedef(linedef_t* line, void* data)
+static int rendLineDef(linedef_t* line, void* paramaters)
 {
-    vec2_t              start, end;
-    arvec2_t            bbox = data;
-
-    V2_Set(start,
-           line->L_v1pos[VX] - bbox[0][VX], line->L_v1pos[VY] - bbox[0][VY]);
-
-    V2_Set(end,
-           line->L_v2pos[VX] - bbox[0][VX], line->L_v2pos[VY] - bbox[0][VY]);
-
-    glVertex2fv(start);
-    glVertex2fv(end);
-    return true; // Continue iteration.
+    glVertex2f(line->L_v1pos[VX], line->L_v1pos[VY]);
+    glVertex2f(line->L_v2pos[VX], line->L_v2pos[VY]);
+    return false; // Continue iteration.
 }
 
-static boolean rendBlockSubsector(subsector_t* ssec, void* data)
+static int rendSubsector(subsector_t* ssec, void* paramaters)
 {
-    vec2_t              start, end;
-    arvec2_t            bbox = data;
-    seg_t**             segs = ssec->segs;
+    const float scale = MAX_OF(bmapDebugSize, 1);
+    const float width = (theWindow->geometry.size.width / 16) / scale;
+    float length, dx, dy, normal[2], unit[2];
+    seg_t** segIter, *seg;
+    vec2_t start, end;
 
-    while(*segs)
+    for(segIter = ssec->segs; *segIter; segIter++)
     {
-        seg_t*              seg = *segs;
+        seg = *segIter;
 
-        V2_Set(start,
-               seg->SG_v1pos[VX] - bbox[0][VX], seg->SG_v1pos[VY] - bbox[0][VY]);
-
-        V2_Set(end,
-               seg->SG_v2pos[VX] - bbox[0][VX], seg->SG_v2pos[VY] - bbox[0][VY]);
+        V2_Set(start, seg->SG_v1pos[VX], seg->SG_v1pos[VY]);
+        V2_Set(end,   seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
 
         glBegin(GL_LINES);
             glVertex2fv(start);
             glVertex2fv(end);
         glEnd();
-
-        {
-        float               length, dx, dy;
-        float               normal[2], unit[2];
-        float               scale = MAX_OF(bmapDebugSize, 1);
-        float               width = (theWindow->width / 16) / scale;
 
         dx = end[VX] - start[VX];
         dy = end[VY] - start[VY];
@@ -1029,7 +889,6 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
             normal[VY] = unit[VX];
 
             glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
-
             glEnable(GL_TEXTURE_2D);
             GL_BlendOp(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -1049,559 +908,583 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
 
             glDisable(GL_TEXTURE_2D);
             GL_BlendMode(BM_NORMAL);
-            }
         }
 
         // Draw the bounding box.
-        V2_Set(start, ssec->bBox[0].pos[VX] - bbox[0][VX],
-                      ssec->bBox[0].pos[VY] - bbox[0][VY]);
-        V2_Set(end, ssec->bBox[1].pos[VX] - bbox[0][VX],
-                    ssec->bBox[1].pos[VY] - bbox[0][VY]);
+        V2_Set(start, ssec->aaBox.minX, ssec->aaBox.minY);
+        V2_Set(end,   ssec->aaBox.maxX, ssec->aaBox.maxY);
 
         glBegin(GL_LINES);
             glVertex2f(start[VX], start[VY]);
-            glVertex2f(end[VX], start[VY]);
-            glVertex2f(end[VX], start[VY]);
-            glVertex2f(end[VX], end[VY]);
-            glVertex2f(end[VX], end[VY]);
-            glVertex2f(start[VX], end[VY]);
-            glVertex2f(start[VX], end[VY]);
+            glVertex2f(  end[VX], start[VY]);
+            glVertex2f(  end[VX], start[VY]);
+            glVertex2f(  end[VX],   end[VY]);
+            glVertex2f(  end[VX],   end[VY]);
+            glVertex2f(start[VX],   end[VY]);
+            glVertex2f(start[VX],   end[VY]);
             glVertex2f(start[VX], start[VY]);
         glEnd();
-        segs++;
     }
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-void rendBlockLinedefs(void* blockPtr, void* param,
-                       float r, float g, float b, float a)
+int rendCellLineDefs(void* cellPtr, void* paramaters)
 {
-    bmapblock_t*        block = blockPtr;
-
-    // Lines?
-    if(block->lineDefs)
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
+    if(cell && cell->ringNodes)
     {
-        bmapiterparams_t    args;
-
-        args.localValidCount = validCount;
-        args.func = rendBlockLinedef;
-        args.param = param;
-
-        glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
+        bmapiterparams_t biParams;
+        biParams.localValidCount = validCount;
+        biParams.func = rendLineDef;
+        biParams.param = paramaters;
 
         glBegin(GL_LINES);
-            bmapBlockLinesIterator(block, &args);
+            blockmapCellLinesIterator(cell, (void*)&biParams);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
-
-    // Polyobj lines?
-    if(block->polyLinks)
-    {
-        bmappoiterparams_t  args;
-        poiterparams_t      poargs;
-
-        poargs.func = rendBlockLinedef;
-        poargs.param = param;
-
-        args.localValidCount = validCount;
-        args.func = PTR_PolyobjLines;
-        args.param = &poargs;
-
-        glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
-
-        glBegin(GL_LINES);
-            bmapBlockPolyobjsIterator(block, &args);
-        glEnd();
-
-        glEnable(GL_TEXTURE_2D);
-    }
+    return false; // Continue iteration.
 }
 
-void rendBlockMobjs(void* blockPtr, void* data,
-                    float r, float g, float b, float a)
+int rendCellPolyobjs(void* cellPtr, void* paramaters)
 {
-    bmapblock_t*        block = blockPtr;
-
-    // Mobjs?
-    if(block->mobjLinks)
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
+    if(cell && cell->ringNodes)
     {
-        bmapmoiterparams_t  args;
+        bmappoiterparams_t bpiParams;
+        poiterparams_t piParams;
 
-        args.localValidCount = validCount;
-        args.func = rendBlockMobj;
-        args.param = data;
+        piParams.func = rendLineDef;
+        piParams.param = paramaters;
 
-        glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
+        bpiParams.localValidCount = validCount;
+        bpiParams.func = PTR_PolyobjLines;
+        bpiParams.param = &piParams;
+
+        glBegin(GL_LINES);
+            blockmapCellPolyobjsIterator(cell, (void*)&bpiParams);
+        glEnd();
+    }
+    return false; // Continue iteration.
+}
+
+int rendCellMobjs(void* cellPtr, void* paramaters)
+{
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
+    if(cell && cell->ringNodes)
+    {
+        bmapmoiterparams_t bmiParams;
+        bmiParams.localValidCount = validCount;
+        bmiParams.func = rendMobj;
+        bmiParams.param = paramaters;
 
         glBegin(GL_QUADS);
-            bmapBlockMobjsIterator(block, (void*) &args);
+            blockmapCellMobjsIterator(cell, (void*)&bmiParams);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
+    return false; // Continue iteration.
 }
 
-void rendBlockSubsectors(void* blockPtr, void* param,
-                         float r, float g, float b, float a)
+int rendCellSubsectors(void* cellPtr, void* paramaters)
 {
-    ssecmapblock_t*     block = blockPtr;
-
-    if(block->ssecs)
+    BlockmapCell* cell = (BlockmapCell*)cellPtr;
+    if(cell && cell->ringNodes)
     {
-        sseciterparams_t    args;
+        bmapsseciterparams_t bsiParams;
+        bsiParams.localValidCount = validCount;
+        bsiParams.func = rendSubsector;
+        bsiParams.param = paramaters;
+        bsiParams.sector = NULL;
+        bsiParams.box = NULL;
 
-        args.box = NULL;
-        args.localValidCount = validCount;
-        args.sector = NULL;
-        args.func = rendBlockSubsector;
-        args.param = param;
-
-        glColor4f(r, g, b, a);
-        ssecBlockIterator(block, &args);
+        blockmapCellSubsectorsIterator(cell, (void*)&bsiParams);
     }
+    return false; // Continue iteration.
 }
 
-static void drawInfoBox(int x, int y, long blockIdx, uint blockX,
-                        uint blockY, int lineCount, int moCount, int poCount)
+void rendBlockmapBackground(Blockmap* blockmap)
 {
-    int                 w, h;
-    char                buf[160];
+    vec2_t start, end;
+    uint x, y, bmapSize[2];
+    assert(blockmap);
 
-    sprintf(buf, "Block: %li [%u, %u] Lines: #%i Mobjs: #%i Polyobjs: #%i",
-            blockIdx, blockX, blockY, lineCount, moCount, poCount);
-    w = FR_TextWidth(buf) + 16;
-    h = FR_TextHeight(buf) + 16;
-    x -= w / 2;
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
-                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
-    UI_SetColor(UI_Color(UIC_TEXT));
-    UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
-}
+    Gridmap_Size(blockmap->gridmap, bmapSize);
 
-static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
-                         float blockWidth, float blockHeight,
-                         uint width, uint height)
-{
-    int                 w = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
-    int                 th = FR_TextHeight("a"), h = th * 4 + 16;
-    int                 x, y;
-    char                buf[80];
-
-    x = theWindow->width - 10 - w;
-    y = theWindow->height - 10 - h;
-
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
-                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
-
-    x += 8;
-    y += 8 + th/2;
-
-    UI_TextOutEx("Blockmap", x, y, false, true, UI_Color(UIC_TITLE), 1);
-    y += th;
-
-    sprintf(buf, "Dimensions:[%u,%u] #%li", width, height,
-            width * (long) height);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
-
-    sprintf(buf, "Blksize:[%.2f,%.2f]", blockWidth, blockHeight);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
-
-    sprintf(buf, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
-            minX, minY, maxX, maxY);
-    UI_TextOutEx(buf, x, y, false, true, UI_Color(UIC_TEXT), 1);
-    y += th;
-}
-
-static void drawBlockInfoBox(uint vBlock[2])
-{
-    int                 lineCount = -1, moCount = -1, poCount = -1;
-    long                blockIdx = -1;
-    bmap_t*             bmap = (bmap_t*) BlockMap;
-    bmapblock_t*        block;
-
-    block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
-    if(block)
-    {
-        blockIdx = vBlock[VY] * bmap->dimensions[VY] + vBlock[VX];
-
-        // Count the number of lines linked to this block.
-        lineCount = 0;
-        if(block->lineDefs)
-        {
-            linedef_t**         iter = block->lineDefs;
-            while(*iter)
-            {
-                lineCount++;
-                iter++;
-            }
-        }
-
-        // Count the number of mobjs linked to this block.
-        moCount = 0;
-        if(block->mobjLinks)
-        {
-            linkmobj_t*         link = block->mobjLinks;
-            while(link)
-            {
-                if(link->mobj)
-                    moCount++;
-                link = link->next;
-            }
-        }
-
-        // Count the number of polyobjs linked to this block.
-        poCount = 0;
-        if(block->polyLinks)
-        {
-            linkpolyobj_t*      link = block->polyLinks;
-            while(link)
-            {
-                if(link->polyobj)
-                    poCount++;
-                link = link->next;
-            }
-        }
-    }
-
-    drawInfoBox(theWindow->width / 2, 30,
-                blockIdx, vBlock[VX], vBlock[VY], lineCount, moCount, poCount);
-}
-
-/**
- * Draw the blockmap in 2D HUD mode.
- */
-static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
-                          void (*func) (void* blockPtr, void* param,
-                                        float r, float g, float b, float a))
-{
-    bmap_t*             bmap = (bmap_t*) blockmap;
-    void*               block;
-    uint                x, y, vBlock[2], vBlockBox[4];
-    float               scale, radius;
-    vec2_t              start, end, box[2];
-
-    scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
-
-    if(followMobj)
-    {   // Determine the mobj's block.
-        if(!P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
-            followMobj = NULL; // The target is outside the blockmap.
-    }
-
-    if(followMobj)
-    {
-        // Determine the mobj's collision blockbox.
-        radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
-        V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
-        V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
-        V2_InitBox(box, start);
-        V2_AddToBox(box, end);
-        P_BoxToBlockmapBlocks(blockmap, vBlockBox, box);
-    }
-
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
+    // Scale modelview matrix so we can express cell geometry
+    // using a cell-sized unit coordinate space.
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glScalef(blockmap->cellSize[VX], blockmap->cellSize[VY], 1);
 
-    glTranslatef((theWindow->width / 2), (theWindow->height / 2), 0);
-    glScalef(scale, -scale, 1);
-
-    if(followMobj)
-    {   // Offset relatively to center on the location of the mobj.
-        V2_Set(start,
-               (vBlock[VX] * bmap->blockSize[VX]),
-               (vBlock[VY] * bmap->blockSize[VY]));
-        glTranslatef(-start[VX], -start[VY], 0);
-    }
-    else
-    {   // Offset to center the blockmap on the screen.
-        glTranslatef(-(bmap->blockSize[VX] * bmap->dimensions[VX] / 2),
-                     -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
-    }
-
-    glDisable(GL_TEXTURE_2D);
-
-    // Draw a background.
+    /**
+     * Draw the translucent quad which represents the "used" cells.
+     */
     V2_Set(start, 0, 0);
-    V2_Set(end, bmap->blockSize[VX] * bmap->dimensions[VX],
-                bmap->blockSize[VY] * bmap->dimensions[VY]);
-
+    V2_Set(end, bmapSize[VX], bmapSize[VY]);
     glColor4f(.25f, .25f, .25f, .66f);
     glBegin(GL_QUADS);
         glVertex2f(start[VX], start[VY]);
-        glVertex2f(end[VX], start[VY]);
-        glVertex2f(end[VX], end[VY]);
-        glVertex2f(start[VX], end[VY]);
+        glVertex2f(  end[VX], start[VY]);
+        glVertex2f(  end[VX],   end[VY]);
+        glVertex2f(start[VX],   end[VY]);
     glEnd();
 
     /**
-     * Draw the blocks.
+     * Draw the "null cells" over the top.
      */
-
-    for(y = 0; y < bmap->dimensions[VY]; ++y)
-        for(x = 0; x < bmap->dimensions[VX]; ++x)
-        {
-            boolean             draw = false;
-            bmapblock_t*        block =
-                M_GridmapGetBlock(bmap->gridmap, x, y, false);
-
-            if(followMobj)
-            {
-                if(x == vBlock[VX] && y == vBlock[VY])
-                {   // The block the viewPlayer is in.
-                    glColor4f(.66f, .66f, 1, .66f);
-                    draw = true;
-                }
-                else if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
-                        y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
-                {   // In the viewPlayer's extended collision range.
-                    glColor4f(.33f, .33f, .66f, .33f);
-                    draw = true;
-                }
-            }
-
-            if(!draw && !block)
-            {   // NULL block.
-                glColor4f(0, 0, 0, .95f);
-                draw = true;
-            }
-
-            if(draw)
-            {
-                V2_Set(start, x * bmap->blockSize[VX],
-                              y * bmap->blockSize[VY]);
-                V2_Set(end, bmap->blockSize[VX],
-                            bmap->blockSize[VY]);
-                V2_Sum(end, end, start);
-
-                glBegin(GL_QUADS);
-                    glVertex2f(start[VX], start[VY]);
-                    glVertex2f(end[VX], start[VY]);
-                    glVertex2f(end[VX], end[VY]);
-                    glVertex2f(start[VX], end[VY]);
-                glEnd();
-            }
-        }
-
-    /**
-     * Draw the grid lines
-     */
-
-    glColor4f(.5f, .5f, .5f, .125f);
-
-    // Vertical lines:
-    glBegin(GL_LINES);
-    for(x = 1; x < bmap->dimensions[VX]; ++x)
+    glColor4f(0, 0, 0, .95f);
+    for(y = 0; y < bmapSize[VY]; ++y)
+    for(x = 0; x < bmapSize[VX]; ++x)
     {
-        glVertex2f(x * bmap->blockSize[VX],  0);
-        glVertex2f(x * bmap->blockSize[VX],
-                   bmap->blockSize[VY] * bmap->dimensions[VY]);
-    }
-    glEnd();
+        // If this cell has user data its not null.
+        if(Gridmap_CellXY(blockmap->gridmap, x, y, false)) continue;
 
-    // Horizontal lines
-    glBegin(GL_LINES);
-    for(y = 1; y < bmap->dimensions[VY]; ++y)
-    {
-        glVertex2f(0, y * bmap->blockSize[VY]);
-        glVertex2f(bmap->blockSize[VX] * bmap->dimensions[VX],
-                   y * bmap->blockSize[VY]);
+        glBegin(GL_QUADS);
+            glVertex2f(x,   y);
+            glVertex2f(x+1, y);
+            glVertex2f(x+1, y+1);
+            glVertex2f(x,   y+1);
+        glEnd();
     }
-    glEnd();
+
+    // Restore previous GL state.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+static void drawCellInfo(const Point2Raw* _origin, const char* info)
+{
+    Point2Raw origin;
+    Size2Raw size;
+    assert(_origin);
 
     glEnable(GL_TEXTURE_2D);
 
-    /**
-     * Draw the blockmap-linked data.
-     */
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    size.width  = FR_TextWidth(info)  + 16;
+    size.height = FR_SingleLineHeight(info) + 16;
 
+    origin.x = _origin->x;
+    origin.y = _origin->y;
+
+    origin.x -= size.width / 2;
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+
+    origin.x += 8;
+    origin.y += size.height / 2;
+    UI_SetColor(UI_Color(UIC_TEXT));
+    UI_TextOutEx2(info, &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
+}
+
+static void drawBlockmapInfo(const Point2Raw* _origin, Blockmap* blockmap)
+{
+    uint bmapSize[2];
+    Point2Raw origin;
+    Size2Raw size;
+    char buf[80];
+    int th;
+    assert(blockmap);
+
+    glEnable(GL_TEXTURE_2D);
+
+    origin.x = _origin->x;
+    origin.y = _origin->y;
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+    size.width = 16 + FR_TextWidth("(+000.0,+000.0)(+000.0,+000.0)");
+    th = FR_SingleLineHeight("Info");
+    size.height = th * 4 + 16;
+
+    origin.x -= size.width;
+    origin.y -= size.height;
+    UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
+    UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+
+    origin.x += 8;
+    origin.y += 8 + th/2;
+
+    UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
+
+    Blockmap_Size(blockmap, bmapSize);
+    dd_snprintf(buf, 80, "Dimensions:[%u,%u] #%li", bmapSize[VX], bmapSize[VY],
+        (long) bmapSize[VY] * bmapSize[VX]);
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
+
+    dd_snprintf(buf, 80, "Cellsize:[%.3f,%.3f]", Blockmap_CellWidth(blockmap), Blockmap_CellHeight(blockmap));
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    origin.y += th;
+
+    dd_snprintf(buf, 80, "(%+06.0f,%+06.0f)(%+06.0f,%+06.0f)",
+        Blockmap_Bounds(blockmap)->minX, Blockmap_Bounds(blockmap)->minY,
+        Blockmap_Bounds(blockmap)->maxX, Blockmap_Bounds(blockmap)->maxY);
+    UI_TextOutEx2(buf, &origin, UI_Color(UIC_TEXT), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
+
+    glDisable(GL_TEXTURE_2D);
+}
+
+static int countLineDefLink(linedef_t* lineDef, void* paramaters)
+{
+    uint* count = (uint*)paramaters;
+    *count += 1;
+    return false; // Continue iteration.
+}
+
+static int countMobjLink(mobj_t* mobj, void* paramaters)
+{
+    uint* count = (uint*)paramaters;
+    *count += 1;
+    return false; // Continue iteration.
+}
+
+static int countPolyobjLink(polyobj_t* polyobj, void* paramaters)
+{
+    uint* count = (uint*)paramaters;
+    *count += 1;
+    return false; // Continue iteration.
+}
+
+static int countSubsectorLink(subsector_t* subsector, void* paramaters)
+{
+    uint* count = (uint*)paramaters;
+    *count += 1;
+    return false; // Continue iteration.
+}
+
+static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
+{
+    gamemap_t* map = P_GetCurrentMap();
+    uint count = 0;
+    char info[160];
     validCount++;
+    Map_IterateCellLineDefs(map, coords, countLineDefLink, (void*)&count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] LineDefs:#%u", coords[VX], coords[VY], count);
+    drawCellInfo(origin, info);
+}
+
+static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
+{
+    gamemap_t* map = P_GetCurrentMap();
+    uint count = 0;
+    char info[160];
+    validCount++;
+    Map_IterateCellMobjs(map, coords, countMobjLink, (void*)&count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] Mobjs:#%u", coords[VX], coords[VY], count);
+    drawCellInfo(origin, info);
+}
+
+static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
+{
+    gamemap_t* map = P_GetCurrentMap();
+    uint count = 0;
+    char info[160];
+    validCount++;
+    Map_IterateCellPolyobjs(map, coords, countPolyobjLink, (void*)&count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] Polyobjs:#%u", coords[VX], coords[VY], count);
+    drawCellInfo(origin, info);
+}
+
+static void drawSubsectorCellInfoBox(const Point2Raw* origin, uint coords[2])
+{
+    gamemap_t* map = P_GetCurrentMap();
+    uint count = 0;
+    char info[160];
+    validCount++;
+    Map_IterateCellSubsectors(map, coords, NULL/*no sector requirement*/,
+        NULL/*no subregion requirement*/, validCount, countSubsectorLink, (void*)&count);
+    dd_snprintf(info, 160, "Cell:[%u,%u] Subsectors:#%u", coords[VX], coords[VY], count);
+    drawCellInfo(origin, info);
+}
+
+/**
+ * @param blockmap  Blockmap to be rendered.
+ * @param followMobj  Mobj to center/focus the visual on. Can be @c NULL.
+ * @param cellDrawer  Blockmap cell content drawing callback. Can be @a NULL.
+ */
+static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
+    int (*cellDrawer) (void* cellPtr, void* paramaters))
+{
+    uint x, y, vCoords[2];
+    GridmapBlock vBlockCoords;
+    vec2_t start, end, cellSize;
+    void* cell;
+
+    V2_Copy(cellSize, Blockmap_CellSize(blockmap));
 
     if(followMobj)
     {
-        // First, the blocks outside the viewPlayer's range.
-        for(y = 0; y < bmap->dimensions[VY]; ++y)
-            for(x = 0; x < bmap->dimensions[VX]; ++x)
-            {
-                if(x >= vBlockBox[BOXLEFT]   && x <= vBlockBox[BOXRIGHT] &&
-                   y >= vBlockBox[BOXBOTTOM] && y <= vBlockBox[BOXTOP])
-                    continue;
+        // Determine the followed Mobj's blockmap coords.
+        if(Blockmap_CellCoords(blockmap, vCoords, followMobj->pos))
+            followMobj = NULL; // Outside the blockmap.
 
-                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-                if(block)
-                {
-                    func(block, bmap->bBox, .33f, 0, 0, .75f);
-                }
-            }
-
-        validCount++;
-
-        // Next, the blocks within the viewPlayer's extended collision range.
-        for(y = vBlockBox[BOXBOTTOM]; y <= vBlockBox[BOXTOP]; ++y)
-            for(x = vBlockBox[BOXLEFT]; x <= vBlockBox[BOXRIGHT]; ++x)
-            {
-                if(x == vBlock[VX] && y == vBlock[VY])
-                    continue;
-
-                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-                if(block)
-                {
-                    func(block, bmap->bBox, 1, .5f, 0, 1);
-                }
-            }
-
-        validCount++;
-
-        // Lastly, the block the viewPlayer is in.
-        block = M_GridmapGetBlock(bmap->gridmap, vBlock[VX], vBlock[VY], false);
-        if(block)
+        if(followMobj)
         {
-            func(block, bmap->bBox, 1, 1, 0, 1);
+            // Determine the extended blockmap coords for the followed
+            // Mobj's "touch" range.
+            const float radius = followMobj->radius + DDMOBJ_RADIUS_MAX * 2;
+            AABoxf aaBox;
+            V2_Set(start, followMobj->pos[VX] - radius, followMobj->pos[VY] - radius);
+            V2_Set(end,   followMobj->pos[VX] + radius, followMobj->pos[VY] + radius);
+            V2_InitBox(aaBox.arvec2, start);
+            V2_AddToBox(aaBox.arvec2, end);
+            Blockmap_CellBlockCoords(blockmap, &vBlockCoords, &aaBox);
         }
+    }
 
-        /**
-         * Draw the followMobj.
-         */
-
-        radius = followMobj->radius;
-        V2_Set(start,
-               followMobj->pos[VX] - bmap->bBox[0][VX] - radius,
-               followMobj->pos[VY] - bmap->bBox[0][VY] - radius);
-        V2_Set(end,
-               followMobj->pos[VX] - bmap->bBox[0][VX] + radius,
-               followMobj->pos[VY] - bmap->bBox[0][VY] + radius);
-
-        glColor4f(0, 1, 0, 1);
-        glDisable(GL_TEXTURE_2D);
-
-        glBegin(GL_QUADS);
-            glVertex2f(start[VX], start[VY]);
-            glVertex2f(end[VX], start[VY]);
-            glVertex2f(end[VX], end[VY]);
-            glVertex2f(start[VX], end[VY]);
-        glEnd();
-
-        glEnable(GL_TEXTURE_2D);
+    if(followMobj)
+    {
+        // Orient on the center of the followed Mobj.
+        V2_Set(start, vCoords[VX] * cellSize[VX],
+                      vCoords[VY] * cellSize[VY]);
+        glTranslatef(-start[VX], -start[VY], 0);
     }
     else
-    {   // Just draw the lot.
-        for(y = 0; y < bmap->dimensions[VY]; ++y)
-            for(x = 0; x < bmap->dimensions[VX]; ++x)
+    {
+        // Orient on center of the Blockmap.
+        glTranslatef(-(cellSize[VX] * Blockmap_Width(blockmap))/2,
+                     -(cellSize[VY] * Blockmap_Height(blockmap))/2, 0);
+    }
+
+    // First we'll draw a background showing the "null" cells.
+    rendBlockmapBackground(blockmap);
+    if(followMobj)
+    {
+        // Highlight cells the followed Mobj "touches".
+
+        for(y = vBlockCoords.minY; y <= vBlockCoords.maxY; ++y)
+        for(x = vBlockCoords.minX; x <= vBlockCoords.maxX; ++x)
+        {
+            if(x == vCoords[VX] && y == vCoords[VY])
             {
-                block = M_GridmapGetBlock(bmap->gridmap, x, y, false);
-                if(block)
-                {
-                    func(block, bmap->bBox, .33f, 0, 0, .75f);
-                }
+                // The cell the followed Mobj is actually in.
+                glColor4f(.66f, .66f, 1, .66f);
             }
+            else
+            {
+                // A cell within the followed Mobj's extended collision range.
+                glColor4f(.33f, .33f, .66f, .33f);
+            }
+
+            V2_Set(start, x * cellSize[VX], y * cellSize[VY]);
+            V2_Set(end, cellSize[VX], cellSize[VY]);
+            V2_Sum(end, end, start);
+
+            glBegin(GL_QUADS);
+                glVertex2f(start[VX], start[VY]);
+                glVertex2f(  end[VX], start[VY]);
+                glVertex2f(  end[VX],   end[VY]);
+                glVertex2f(start[VX],   end[VY]);
+            glEnd();
+        }
+
     }
 
     /**
-     * Draw the blockmap bounds.
+     * Draw the Gridmap visual.
+     * \note Gridmap uses a cell unit size of [width:1,height:1], so we
+     * need to scale it up so it aligns correctly.
      */
-
-    V2_Set(start, -1, -1);
-    V2_Set(end, 1 + bmap->blockSize[VX] * bmap->dimensions[VX],
-           1 + bmap->blockSize[VY] * bmap->dimensions[VY]);
-
-    glColor4f(1, .5f, .5f, 1);
-    glDisable(GL_TEXTURE_2D);
-
-    glBegin(GL_LINES);
-        glVertex2f(start[VX], start[VY]);
-        glVertex2f(end[VX], start[VY]);
-
-        glVertex2f(end[VX], start[VY]);
-        glVertex2f(end[VX], end[VY]);
-
-        glVertex2f(end[VX], end[VY]);
-        glVertex2f(start[VX], end[VY]);
-
-        glVertex2f(start[VX], end[VY]);
-        glVertex2f(start[VX], start[VY]);
-    glEnd();
-
-    glPopMatrix();
-    glEnable(GL_TEXTURE_2D);
-}
-
-void P_BlockmapDebug(void)
-{
-    blockmap_t*         blockmap;
-    bmap_t*             bmap;
-    mobj_t*             followMobj = NULL;
-    void              (*func) (void*, void*, float r, float g, float b, float a);
-
-    if(!bmapShowDebug || bmapShowDebug > 3)
-        return;
-
-    switch(bmapShowDebug)
-    {
-    default: // Mobjs.
-        if(!BlockMap)
-            return;
-
-        blockmap = BlockMap;
-        func = rendBlockMobjs;
-        break;
-
-    case 2: // Linedefs.
-        if(!BlockMap)
-            return;
-
-        blockmap = BlockMap;
-        func = rendBlockLinedefs;
-        break;
-
-    case 3: // Subsectors.
-        if(!SSecBlockMap)
-            return;
-
-        blockmap = SSecBlockMap;
-        func = rendBlockSubsectors;
-        break;
-    }
-
-    // If possible, we'll tailor what we draw relative to the viewPlayer.
-    if(viewPlayer && viewPlayer->shared.mo)
-        followMobj = viewPlayer->shared.mo;
-
-    blockmapDebug(blockmap, followMobj, func);
-
-    glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glScalef(cellSize[VX], cellSize[VY], 1);
 
-    if(followMobj && bmapShowDebug != 3)
+    Gridmap_Debug(blockmap->gridmap);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    /**
+     * Draw the blockmap-linked data.
+     * Translate the modelview matrix so that objects can be drawn using
+     * the map space coordinates directly.
+     */
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(-Blockmap_Origin(blockmap)[VX], -Blockmap_Origin(blockmap)[VY], 0);
+
+    if(cellDrawer)
     {
-        uint                vBlock[2];
-
-        // Determine the block mobj is in.
-        if(P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
+        if(followMobj)
         {
-            // Draw info about the block mobj is in.
-            drawBlockInfoBox(vBlock);
+            /**
+             * Draw cell contents color coded according to their range
+             * from the followed Mobj.
+             */
+
+            // First, the cells outside the "touch" range (crimson).
+            validCount++;
+            glColor4f(.33f, 0, 0, .75f);
+            for(y = 0; y < Blockmap_Height(blockmap); ++y)
+            for(x = 0; x < Blockmap_Width(blockmap); ++x)
+            {
+                if(x >= vBlockCoords.minX && x <= vBlockCoords.maxX &&
+                   y >= vBlockCoords.minY && y <= vBlockCoords.maxY)
+                    continue;
+
+                cell = Gridmap_CellXY(blockmap->gridmap, x, y, false);
+                if(cell)
+                {
+                    cellDrawer(cell, NULL/*no params*/);
+                }
+            }
+
+            // Next, the cells within the "touch" range (orange).
+            validCount++;
+            glColor3f(1, .5f, 0);
+            for(y = vBlockCoords.minY; y <= vBlockCoords.maxY; ++y)
+            for(x = vBlockCoords.minX; x <= vBlockCoords.maxX; ++x)
+            {
+                if(x == vCoords[VX] && y == vCoords[VY]) continue;
+
+                cell = Gridmap_CellXY(blockmap->gridmap, x, y, false);
+                if(cell)
+                {
+                    cellDrawer(cell, NULL/*no params*/);
+                }
+            }
+
+            // Lastly, the cell the followed Mobj is in (yellow).
+            validCount++;
+            glColor3f(1, 1, 0);
+            cell = Gridmap_Cell(blockmap->gridmap, vCoords, false);
+            if(cell)
+            {
+                cellDrawer(cell, NULL/*no params*/);
+            }
+        }
+        else
+        {
+            // Draw all cells without color coding.
+            validCount++;
+            glColor4f(.33f, 0, 0, .75f);
+            Gridmap_Iterate(blockmap->gridmap, cellDrawer);
         }
     }
 
-    // Draw info about the blockmap.
-    bmap = (bmap_t*) blockmap;
-    drawInfoBox2(bmap->bBox[0][VX], bmap->bBox[0][VY],
-                 bmap->bBox[1][VX], bmap->bBox[1][VY],
-                 bmap->blockSize[VX], bmap->blockSize[VY],
-                 bmap->dimensions[VX], bmap->dimensions[VY]);
+    /**
+     * Draw the followed mobj, if any.
+     */
+    if(followMobj)
+    {
+        glColor3f(0, 1, 0);
+        glBegin(GL_QUADS);
+            rendMobj(followMobj, NULL/*no params*/);
+        glEnd();
+    }
+
+    // Undo the map coordinate space translation.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+void Rend_BlockmapDebug(void)
+{
+    int (*cellDrawer) (void* cellPtr, void* paramaters);
+    void (*cellInfoDrawer) (const Point2Raw* origin, uint coords[2]);
+    mobj_t* followMobj = NULL;
+    Blockmap* blockmap;
+    Point2Raw origin;
+    gamemap_t* map;
+    float scale;
+
+    // Disabled?
+    if(!bmapShowDebug || bmapShowDebug > 4) return;
+
+    map = P_GetCurrentMap();
+    if(!map) return;
+
+    switch(bmapShowDebug)
+    {
+    default: // MobjLinks.
+        if(!map->mobjBlockmap) return;
+
+        blockmap = map->mobjBlockmap;
+        cellDrawer = rendCellMobjs;
+        cellInfoDrawer = drawMobjCellInfoBox;
+        break;
+
+    case 2: // LineDefs.
+        if(!map->lineDefBlockmap) return;
+
+        blockmap = map->lineDefBlockmap;
+        cellDrawer = rendCellLineDefs;
+        cellInfoDrawer = drawLineDefCellInfoBox;
+        break;
+
+    case 3: // Subsectors.
+        if(!map->subsectorBlockmap) return;
+
+        blockmap = map->subsectorBlockmap;
+        cellDrawer = rendCellSubsectors;
+        cellInfoDrawer = drawSubsectorCellInfoBox;
+        break;
+
+    case 4: // PolyobjLinks.
+        if(!map->polyobjBlockmap) return;
+
+        blockmap = map->polyobjBlockmap;
+        cellDrawer = rendCellPolyobjs;
+        cellInfoDrawer = drawPolyobjCellInfoBox;
+        break;
+    }
+
+    /**
+     * Draw the blockmap.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+    // Orient on the center of the window.
+    glTranslatef((theWindow->geometry.size.width / 2), (theWindow->geometry.size.height / 2), 0);
+
+    // Uniform scaling factor for this visual.
+    scale = bmapDebugSize / MAX_OF(theWindow->geometry.size.height / 100, 1);
+    glScalef(scale, -scale, 1);
+
+    // If possible we'll tailor what we draw relative to the viewPlayer.
+    if(viewPlayer && viewPlayer->shared.mo)
+        followMobj = viewPlayer->shared.mo;
+
+    // Draw!
+    rendBlockmap(blockmap, followMobj, cellDrawer);
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    /**
+     * Draw HUD info.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+
+    if(followMobj)
+    {
+        // About the cell the followed Mobj is in.
+        uint coords[2];
+        if(!Blockmap_CellCoords(blockmap, coords, followMobj->pos))
+        {
+            origin.x = theWindow->geometry.size.width / 2;
+            origin.y = 30;
+            cellInfoDrawer(&origin, coords);
+        }
+    }
+
+    // About the Blockmap itself.
+    origin.x = theWindow->geometry.size.width  - 10;
+    origin.y = theWindow->geometry.size.height - 10;
+    drawBlockmapInfo(&origin, blockmap);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

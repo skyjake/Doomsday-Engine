@@ -1,10 +1,10 @@
-/**\file
+/**\file p_user.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2000-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * p_user.c : Player related stuff.
+ * Player related stuff.
  *
  * Bobbing POV/weapon, movement, pending weapon...
  */
@@ -33,25 +33,20 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
-#  include "g_common.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
-#  include "g_common.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "g_common.h"
-#  include "r_common.h"
-#  include "p_inventory.h"
 #elif __JHEXEN__
-#  include <math.h>
 #  include "jhexen.h"
-#  include "p_inventory.h"
 #endif
 
 #include "doomsday.h"
+#include "g_common.h"
 #include "p_player.h"
 #include "p_tick.h" // for P_IsPaused()
 #include "p_view.h"
@@ -62,8 +57,12 @@
 #include "g_common.h"
 #include "am_map.h"
 #include "hu_log.h"
+#include "hu_stuff.h"
+#include "r_common.h"
+
 #if __JHERETIC__ || __JHEXEN__
-#include "hu_inventory.h"
+#  include "p_inventory.h"
+#  include "hu_inventory.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
@@ -102,7 +101,7 @@ int armorClass[4]; // Green, blue, IDFA and IDKFA armor classes.
 #if __JDOOM__ || __JDOOM64__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
-        NULL, true,
+        PCLASS_PLAYER, NULL, true,
         MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
@@ -121,7 +120,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 #elif __JHERETIC__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
     {   // Player
-        NULL, true,
+        PCLASS_PLAYER, NULL, true,
         MT_PLAYER,
         S_PLAY,
         S_PLAY_RUN1,
@@ -136,8 +135,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         24,
         SFX_NONE
     },
-    {   // Chicken
-        NULL, false,
+    {
+        PCLASS_CHICKEN, NULL, false,
         MT_CHICPLAYER,
         S_CHICPLAY,
         S_CHICPLAY_RUN1,
@@ -155,8 +154,8 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
 };
 #elif __JHEXEN__
 classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
-    {   // Fighter
-        NULL, true,
+    {
+        PCLASS_FIGHTER, NULL, true,
         MT_PLAYER_FIGHTER,
         S_FPLAY,
         S_FPLAY_RUN1,
@@ -172,10 +171,12 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_FIGHTER_FAILED_USE,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
-        {190, 225, 234}
+        {190, 225, 234},
+        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 }
+
     },
     {   // Cleric
-        NULL, true,
+        PCLASS_CLERIC, NULL, true,
         MT_PLAYER_CLERIC,
         S_CPLAY,
         S_CPLAY_RUN1,
@@ -191,10 +192,11 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_CLERIC_FAILED_USE,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
-        {190, 212, 225}
+        {190, 212, 225},
+        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 }
     },
     {   // Mage
-        NULL, true,
+        PCLASS_MAGE, NULL, true,
         MT_PLAYER_MAGE,
         S_MPLAY,
         S_MPLAY_RUN1,
@@ -210,10 +212,11 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_MAGE_FAILED_USE,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
-        {190, 205, 224}
+        {190, 205, 224},
+        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 }
     },
     {   // Pig
-        NULL, false,
+        PCLASS_PIG, NULL, false,
         MT_PIGPLAYER,
         S_PIGPLAY,
         S_PIGPLAY_RUN1,
@@ -226,10 +229,7 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         {0x17, 0x27},
         2048,
         {640, 1280},
-        18,
-        SFX_NONE,
-        {0, 0, 0, 0},
-        {0, 0, 0}
+        18
     },
 };
 #endif
@@ -473,7 +473,7 @@ void P_MovePlayer(player_t *player)
 
     if(!plrmo) return;
 
-    if(IS_NETGAME && IS_SERVER)
+    if(IS_NETWORK_SERVER)
     {
         // Server starts the walking animation for remote players.
         if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
@@ -514,12 +514,13 @@ void P_MovePlayer(player_t *player)
     onground = P_IsPlayerOnGround(player);
     if(dp->flags & DDPF_CAMERA)    // $democam
     {
-        static const fixed_t cameraSpeed[2] = {0x19, 0x31};
+        static const float cameraSpeed[2] = { FIX2FLT(0x19), FIX2FLT(0x54) };
+        int moveMul = 2048;
 
         // Cameramen have a 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookDir,
-                   brain->forwardMove * cameraSpeed[speed] * 2048,
-                   brain->sideMove * cameraSpeed[speed] * 2048);
+                   brain->forwardMove * cameraSpeed[speed] * moveMul,
+                   brain->sideMove    * cameraSpeed[speed] * moveMul);
     }
     else
     {
@@ -816,6 +817,11 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
+    if(INRANGE_OF(pmo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(pmo->mom[MY], 0, NOMOM_THRESHOLD) && P_Random() < 160)
+    {   // Twitch view angle
+        pmo->angle += (P_Random() - P_Random()) << 19;
+    }
 
     if(!IS_NETGAME || IS_CLIENT)
     {
@@ -841,9 +847,6 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
-/**
- * \todo Need to replace this as it comes straight from Hexen.
- */
 boolean P_UndoPlayerMorph(player_t *player)
 {
     mobj_t*             fog = 0, *mo = 0, *pmo = 0;
@@ -942,7 +945,6 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->class_ = cfg.playerClass[playerNum];
 # endif
     an = angle >> ANGLETOFINESHIFT;
-// REWRITE ME - I MATCH HEXEN UNTIL HERE
 
     if((fog = P_SpawnMobj3f(MT_TFOG,
                             pos[VX] + 20 * FIX2FLT(finecosine[an]),
@@ -1188,6 +1190,7 @@ void P_PlayerThinkView(player_t* player)
     }
 }
 
+
 void P_PlayerThinkSpecial(player_t* player)
 {
     if(!player->plr->mo) return;
@@ -1313,6 +1316,22 @@ void P_PlayerThinkWeapons(player_t* player)
     weapontype_t        oldweapon = player->pendingWeapon;
     weapontype_t        newweapon = WT_NOCHANGE;
 
+    if(IS_NETWORK_SERVER)
+    {
+        if(brain->changeWeapon != WT_NOCHANGE)
+        {
+            // Weapon change logic has already been done by the client.
+            newweapon = brain->changeWeapon;
+
+            if(!player->weapons[newweapon].owned)
+            {
+                Con_Message("P_PlayerThinkWeapons: Player %i tried to change to unowned weapon %i!\n",
+                            (int)(player - players), newweapon);
+                newweapon = WT_NOCHANGE;
+            }
+        }
+    }
+    else
     // Check for weapon change.
 #if __JHERETIC__ || __JHEXEN__
     if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
@@ -1321,7 +1340,7 @@ void P_PlayerThinkWeapons(player_t* player)
 #endif
     {
         // Direct slot selection.
-        weapontype_t        cand, first;
+        weapontype_t cand, first;
 
         // Is this a same-slot weapon cycle?
         if(P_GetWeaponSlot(brain->changeWeapon) ==
@@ -1382,7 +1401,7 @@ void P_PlayerThinkWeapons(player_t* player)
 
 void P_PlayerThinkUse(player_t *player)
 {
-    if(IS_NETGAME && IS_SERVER && player != &players[CONSOLEPLAYER])
+    if(IS_NETWORK_SERVER && player != &players[CONSOLEPLAYER])
     {
         // Clients send use requests instead.
         return;
@@ -1420,35 +1439,38 @@ void P_PlayerThinkHUD(player_t* player)
         HU_ScoreBoardUnHide(player - players);
 
     if(brain->logRefresh)
-        Hu_LogRefresh(player - players);
+        ST_LogRefresh(player - players);
 }
 
 void P_PlayerThinkMap(player_t* player)
 {
-    uint                plnum = player - players;
-    playerbrain_t*      brain = &player->brain;
-    automapid_t         map = AM_MapForPlayer(plnum);
+    uint playerIdx = player - players;
+    playerbrain_t* brain = &player->brain;
 
     if(brain->mapToggle)
-        AM_Open(map, !AM_IsActive(map), false);
+        ST_AutomapOpen(playerIdx, !ST_AutomapIsActive(playerIdx), false);
 
     if(brain->mapFollow)
-        AM_ToggleFollow(map);
+        ST_ToggleAutomapPanMode(playerIdx);
 
     if(brain->mapRotate)
-        AM_SetViewRotate(map, 2); // 2 = toggle.
+    {
+        cfg.automapRotate = !cfg.automapRotate;
+        ST_SetAutomapCameraRotation(playerIdx, cfg.automapRotate);
+        P_SetMessage(player, (cfg.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), false);
+    }
 
     if(brain->mapZoomMax)
-        AM_ToggleZoomMax(map);
+        ST_ToggleAutomapMaxZoom(playerIdx);
 
     if(brain->mapMarkAdd)
     {
-        mobj_t*         pmo = player->plr->mo;
-        AM_AddMark(map, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
+        mobj_t* pmo = player->plr->mo;
+        ST_AutomapAddPoint(playerIdx, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
     }
 
     if(brain->mapMarkClearAll)
-        AM_ClearMarks(map);
+        ST_AutomapClearPoints(playerIdx);
 }
 
 void P_PlayerThinkPowers(player_t* player)
@@ -1648,7 +1670,44 @@ void P_PlayerThinkPowers(player_t* player)
 }
 
 /**
- * Handles the updating of the player's view angles depending on the game
+ * Handles the updating of the player's yaw view angle depending on the game
+ * input controllers. Control states are queried from the engine. Note
+ * that this is done once per sharp tic so that behavior conforms to the
+ * original engine.
+ *
+ * @param player        Player doing the thinking.
+ */
+void P_PlayerThinkLookYaw(player_t* player)
+{
+    int playerNum = player - players;
+    ddplayer_t* plr = player->plr;
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
+    float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
+    float vel, off, turnSpeedPerTic;
+
+    if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
+        return;
+
+    turnSpeedPerTic = pClassInfo->turnSpeed[0];
+
+    // Check for extra speed.
+    P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
+    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
+    {   // Hurry, good man!
+        turnSpeedPerTic = pClassInfo->turnSpeed[1];
+    }
+
+    // Yaw.
+    if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
+    {
+        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+        plr->mo->angle -= FLT2FIX(turnSpeedPerTic * vel) +
+            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
+    }
+}
+
+/**
+ * Handles the updating of the player's view pitch angle depending on the game
  * input controllers. Control states are queried from the engine. Note
  * that this is done as often as possible (i.e., on every frame) so that
  * changes will be smooth and lag-free.
@@ -1658,33 +1717,15 @@ void P_PlayerThinkPowers(player_t* player)
  *                      Note that original game logic was always using a
  *                      tick duration of 1/35 seconds.
  */
-void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
+void P_PlayerThinkLookPitch(player_t* player, timespan_t ticLength)
 {
     int playerNum = player - players;
     ddplayer_t* plr = player->plr;
-    float vel, off, turnSpeed;
+    float vel, off;
     float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t* pClassInfo = PCLASS_INFO(player->class_);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
-
-    turnSpeed = pClassInfo->turnSpeed[0] * TICRATE;
-
-    // Check for extra speed.
-    P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if((!FEQUAL(vel, 0)) ^ (cfg.alwaysRun != 0))
-    {   // Hurry, good man!
-        turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
-    }
-
-    // Yaw.
-    if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
-    {
-        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
-            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
-    }
 
     // Look center requested?
     if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
@@ -1772,7 +1813,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for look centering based on lookSpring.
     if(cfg.lookSpring &&
-       (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove > .333f)))
+       (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove) > .333f))
     {
         // Center view when mlook released w/lookspring, or when moving.
         player->centering = true;
@@ -1862,6 +1903,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
+#if __JHERETIC__ || __JHEXEN__
+    // Also unhide the HUD when cycling inventory items.
+    if(brain->cycleInvItem != 0)
+        brain->hudShow = true;
+#endif
     brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
     brain->logRefresh = (P_GetImpulseControlState(playerNum, CTL_LOG_REFRESH) != 0);
 
@@ -1922,7 +1968,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(P_IsPaused())
         return;
 
-    if(G_GetGameState() != GS_MAP)
+    if(G_GameState() != GS_MAP)
     {
         // Just check the controls in case some UI stuff is relying on them
         // (like intermission).
@@ -1937,7 +1983,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkState(player);
 
     // Adjust turn angles and look direction. This is done in fractional time.
-    P_PlayerThinkLookAround(player, ticLength);
+    P_PlayerThinkLookPitch(player, ticLength);
 
     P_PlayerRemoteMove(player);
 
@@ -1951,6 +1997,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     player->worldTimer++;
 #endif
 
+    P_PlayerThinkLookYaw(player);
     P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 

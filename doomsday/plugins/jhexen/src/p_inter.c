@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,12 +29,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
 #include <math.h>
 
 #include "jhexen.h"
 
 #include "am_map.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "p_user.h"
@@ -1300,35 +1302,35 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
 }
 
 typedef struct {
-    player_t*           master;
-    mobj_t*             foundMobj;
+    player_t* master;
+    mobj_t* foundMobj;
 } findactiveminotaurparams_t;
 
-static boolean findActiveMinotaur(thinker_t* th, void* context)
+static int findActiveMinotaur(thinker_t* th, void* context)
 {
     findactiveminotaurparams_t* params =
         (findactiveminotaurparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t* mo = (mobj_t*) th;
 
     if(mo->type != MT_MINOTAUR)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(!(mo->flags & MF_COUNTKILL)) // For morphed minotaurs.
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     if(mo->flags & MF_CORPSE)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
-    if((mapTime - *((unsigned int *) mo->args)) >= MAULATORTICS)
-        return true; // Continue iteration.
+    if(mapTime - mo->argsUInt >= MAULATORTICS)
+        return false; // Continue iteration.
 
     if(mo->tracer->player == params->master)
     {   // Found it!
         params->foundMobj = mo;
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 mobj_t* ActiveMinotaur(player_t* master)
@@ -1338,7 +1340,7 @@ mobj_t* ActiveMinotaur(player_t* master)
     params.master = master;
     params.foundMobj = NULL;
 
-    if(!DD_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
+    if(DD_IterateThinkers(P_MobjThinker, findActiveMinotaur, &params))
         return params.foundMobj;
 
     return NULL;
@@ -1462,7 +1464,10 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
         }
 
         // Don't die with the automap open.
-        AM_Open(AM_MapForPlayer(target->player - players), false, false);
+        ST_AutomapOpen(target->player - players, false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
     else
     {   // Target is some monster or an object.
@@ -2196,7 +2201,7 @@ int P_DamageMobj2(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
 
-        ST_doPaletteStuff(player - players, false);
+        R_UpdateViewFilter(player - players);
     }
 
     // How about some particles, yes?

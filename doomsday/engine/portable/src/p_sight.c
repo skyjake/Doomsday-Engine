@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2006 James Haley <haleyjd@hotmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -72,10 +72,10 @@ static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
     divline_t           localDL, *dlPtr;
 
     // Try a quick, bounding-box rejection.
-    if(li->bBox[BOXLEFT]   > los->bBox[BOXRIGHT] ||
-       li->bBox[BOXRIGHT]  < los->bBox[BOXLEFT] ||
-       li->bBox[BOXBOTTOM] > los->bBox[BOXTOP] ||
-       li->bBox[BOXTOP]    < los->bBox[BOXBOTTOM])
+    if(li->aaBox.minX > los->bBox[BOXRIGHT] ||
+       li->aaBox.maxX < los->bBox[BOXLEFT] ||
+       li->aaBox.minY > los->bBox[BOXTOP] ||
+       li->aaBox.maxY < los->bBox[BOXBOTTOM])
         return false;
 
     if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY],
@@ -128,7 +128,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     if(noBack)
     {
         if((los->flags & LS_PASSLEFT) &&
-           P_PointOnLinedefSide(FIX2FLT(los->trace.pos[VX]),
+           P_PointOnLinedefSideXY(FIX2FLT(los->trace.pos[VX]),
                                 FIX2FLT(los->trace.pos[VY]), li))
             return true; // Ray does not intercept seg from left to right.
 
@@ -201,51 +201,38 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 static boolean crossSSec(uint ssecIdx, losdata_t* los)
 {
     const subsector_t*  ssec = &ssectors[ssecIdx];
-
     if(ssec->polyObj)
     {   // Check polyobj lines.
-        polyobj_t*          po = ssec->polyObj;
-        seg_t**             segPtr = po->segs;
-
+        polyobj_t* po = ssec->polyObj;
+        seg_t** segPtr = po->segs;
         while(*segPtr)
         {
-            seg_t*              seg = *segPtr;
-
+            seg_t* seg = *segPtr;
             if(seg->lineDef && seg->lineDef->validCount != validCount)
             {
-                linedef_t*          li = seg->lineDef;
-
+                linedef_t* li = seg->lineDef;
                 li->validCount = validCount;
-
                 if(!crossLineDef(li, seg->side, los))
                     return false; // Stop iteration.
             }
-
             segPtr++;
         }
     }
 
-    {
     // Check lines.
-    const seg_t** segPtr = (const seg_t**) ssec->segs;
-
+    { seg_t** segPtr = ssec->segs;
     while(*segPtr)
     {
-        const seg_t*        seg = *segPtr;
-
+        const seg_t* seg = *segPtr;
         if(seg->lineDef && seg->lineDef->validCount != validCount)
         {
-            linedef_t*          li = seg->lineDef;
-
+            linedef_t* li = seg->lineDef;
             li->validCount = validCount;
-
             if(!crossLineDef(li, seg->side, los))
                 return false;
         }
-
         segPtr++;
-    }
-    }
+    }}
 
     return true; // Continue iteration.
 }

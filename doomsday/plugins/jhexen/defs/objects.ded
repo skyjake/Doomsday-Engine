@@ -8079,7 +8079,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_local mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_seekermissile";
 }
 

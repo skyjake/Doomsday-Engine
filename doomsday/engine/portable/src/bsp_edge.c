@@ -1,9 +1,9 @@
-/**\file
+/**\file bsp_edge.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -26,7 +26,7 @@
  */
 
 /**
- * bsp_edge.c: GL-friendly BSP node builder, half-edges.
+ * GL-friendly BSP node builder, half-edges.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -34,14 +34,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "de_base.h"
-#include "de_bsp.h"
-#include "de_misc.h"
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <limits.h>
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_bsp.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -68,7 +69,7 @@ static __inline hedge_t *allocHEdge(void)
 {
     if(hEdgeAllocatorInited)
     {   // Use the block allocator.
-        hedge_t            *hEdge = Z_BlockNewElement(hEdgeBlockSet);
+        hedge_t            *hEdge = ZBlockSet_Allocate(hEdgeBlockSet);
         memset(hEdge, 0, sizeof(hedge_t));
         return hEdge;
     }
@@ -104,7 +105,7 @@ void BSP_InitHEdgeAllocator(void)
     if(hEdgeAllocatorInited)
         return; // Already been here.
 
-    hEdgeBlockSet = Z_BlockCreate(sizeof(hedge_t), 512, PU_STATIC);
+    hEdgeBlockSet = ZBlockSet_New(sizeof(hedge_t), 512, PU_APPSTATIC);
     hEdgeAllocatorInited = true;
 }
 
@@ -115,7 +116,7 @@ void BSP_ShutdownHEdgeAllocator(void)
 {
     if(hEdgeAllocatorInited)
     {
-        Z_BlockDestroy(hEdgeBlockSet);
+        ZBlockSet_Delete(hEdgeBlockSet);
         hEdgeBlockSet = NULL;
 
         hEdgeAllocatorInited = false;

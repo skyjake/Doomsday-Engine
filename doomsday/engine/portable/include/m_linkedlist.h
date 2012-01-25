@@ -1,32 +1,30 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file m_linkedlist.h
+ * Linked list. @ingroup base
  *
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ * A pretty simple linked list implementation that supports
+ * single, double and ring lists.
+
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-/*
- * m_linkedlist.h: Linked lists.
- */
-
-#ifndef __LINKEDLIST_H__
-#define __LINKEDLIST_H__
+#ifndef LIBDENG_LINKEDLIST_H
+#define LIBDENG_LINKEDLIST_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,14 +54,16 @@ COMPAREFUNC( compareDouble );
 COMPAREFUNC( compareString );
 COMPAREFUNC( compareAddress );
 
-//
-// Linked lists.
-//
-typedef void* linklist_t;
+struct linklist_s;
+
+/**
+ * LinkList instance. Use List_New() to construct.
+ */
+typedef struct linklist_s LinkList;
 
 #define PTR_NOT_LIST        -1
 
-// Linked list errors:
+/// Linked list errors.
 enum {
     LL_NO_ERROR,
     LL_ERROR_UNKNOWN,
@@ -80,40 +80,39 @@ enum {
 // List_Iterate flags
 #define LIF_REVERSE         0x1 // Iteration will be tail > head.
 
-// Create/Destroy:
-linklist_t     *List_Create(void);
-linklist_t     *List_Create2(int createFlags, comparefunc func);
-void            List_Destroy(linklist_t *list);
+LinkList*       List_New(void);
+LinkList*       List_NewWithCompareFunc(int createFlags, comparefunc func);
+void            List_Destroy(LinkList *list);
 
 // Inserts:
-int             List_InsertFront(linklist_t *list, const void *data);
-int             List_InsertBack(linklist_t *list, const void *data);
+int             List_InsertFront(LinkList *list, const void *data);
+int             List_InsertBack(LinkList *list, const void *data);
 
 // Retrieves:
-void*           List_GetFront(const linklist_t *list);
-void*           List_GetBack(const linklist_t *list);
-void*           List_GetAt(const linklist_t *list, listindex_t position);
+void*           List_GetFront(const LinkList *list);
+void*           List_GetBack(const LinkList *list);
+void*           List_GetAt(const LinkList *list, listindex_t position);
 
 // Extracts:
-void*           List_ExtractFront(linklist_t *list);
-void*           List_ExtractBack(linklist_t *list);
-void*           List_ExtractAt(linklist_t *list, listindex_t position);
+void*           List_ExtractFront(LinkList *list);
+void*           List_ExtractBack(LinkList *list);
+void*           List_ExtractAt(LinkList *list, listindex_t position);
 
 // Other:
-void            List_SetCompareFunc(linklist_t *list, comparefunc func);
-void            List_Clear(linklist_t *list);
-listindex_t     List_Find(const linklist_t *list, const void *data);
-int             List_Exchange(linklist_t *list, listindex_t positionA,
+void            List_SetCompareFunc(LinkList *list, comparefunc func);
+void            List_Clear(LinkList *list);
+listindex_t     List_Find(const LinkList *list, const void *data);
+int             List_Exchange(LinkList *list, listindex_t positionA,
                               listindex_t positionB);
 // Sorts:
-void            List_Sort(linklist_t *list);
+void            List_Sort(LinkList *list);
 
 // State retrieval:
-listindex_t     List_Count(const linklist_t *list);
-int             List_GetError(const linklist_t *list);
+listindex_t     List_Count(const LinkList *list);
+int             List_GetError(const LinkList *list);
 
 // Iteration:
-int             List_Iterate(const linklist_t *list, int iterateFlags,
+int             List_Iterate(const LinkList *list, int iterateFlags,
                              void *data,
                              int (*callback) (void *element, void *data));
 // Debugging:
@@ -125,4 +124,4 @@ void            List_Test(void);
 }
 #endif
 
-#endif
+#endif // LIBDENG_LINKEDLIST_H

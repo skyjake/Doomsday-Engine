@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_model.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,13 @@
  */
 
 /**
- * rend_model.c: 3D Model Renderer v2.0
+ * 3D Model Renderer v2.0
  *
- * Note: Light vectors and triangle normals are considered to be
- * in a totally independent, right-handed coordinate system.
+ * Note: Light vectors and triangle normals are in an entirely independent,
+ * right-handed coordinate system.
  *
- * There is some more confusion with Y and Z axes as the game uses
- * Z as the vertical axis and the rendering code and model definitions
- * use the Y axis.
+ * There is some more confusion with Y and Z axes as the game uses Z as the
+ * vertical axis and the rendering code and model definitions use the Y axis.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,7 +45,10 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 
-#include "net_main.h"           // for gametic
+#include "net_main.h" // for gametic
+#include "texture.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,6 +57,8 @@
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // \fixme Precalculate arcsin.
 
+#define MAX_ARRAYS  (2 + MAX_TEX_UNITS)
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum rendcmd_e {
@@ -62,6 +66,11 @@ typedef enum rendcmd_e {
     RC_OTHER_COORDS,
     RC_BOTH_COORDS
 } rendcmd_t;
+
+typedef struct array_s {
+    boolean enabled;
+    void* data;
+} array_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -83,6 +92,8 @@ float   rend_model_lod = 256;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static array_t arrays[MAX_ARRAYS];
+
 // Fixed-size vertex arrays for the model.
 static dgl_vertex_t modelVertices[MAX_VERTS];
 static dgl_vertex_t modelNormals[MAX_VERTS];
@@ -92,7 +103,7 @@ static dgl_texcoord_t modelTexCoords[MAX_VERTS];
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
 static int activeLod;
-static char *vertexUsage;
+static char* vertexUsage;
 
 // CODE --------------------------------------------------------------------
 
@@ -113,14 +124,251 @@ void Rend_ModelRegister(void)
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10);
 }
 
+void Mod_InitArrays(void)
+{
+    if(!GL_state.features.elementArrays) return;
+    memset(arrays, 0, sizeof(arrays));
+}
+
+void Mod_EnableArrays(int vertices, int colors, int coords)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_VERTEX].enabled = true;
+        else
+            glEnableClientState(GL_VERTEX_ARRAY);
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_COLOR].enabled = true;
+        else
+            glEnableClientState(GL_COLOR_ARRAY);
+    }
+
+    for(i = 0; i < numTexUnits; ++i)
+    {
+        if(coords & (1 << i))
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = true;
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
+        }
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_DisableArrays(int vertices, int colors, int coords)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_VERTEX].enabled = false;
+        else
+            glDisableClientState(GL_VERTEX_ARRAY);
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_COLOR].enabled = false;
+        else
+            glDisableClientState(GL_COLOR_ARRAY);
+    }
+
+    for(i = 0; i < numTexUnits; ++i)
+    {
+        if(coords & (1 << i))
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = false;
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+            }
+        }
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+static __inline void enableTexUnit(byte id)
+{
+    glActiveTexture(GL_TEXTURE0 + id);
+    glEnable(GL_TEXTURE_2D);
+}
+
+static __inline void disableTexUnit(byte id)
+{
+    glActiveTexture(GL_TEXTURE0 + id);
+    glDisable(GL_TEXTURE_2D);
+
+    // Implicit disabling of texcoord array.
+    if(!GL_state.features.elementArrays)
+    {
+        Mod_DisableArrays(0, 0, 1 << id);
+    }
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+void Mod_SelectTexUnits(int count)
+{
+    int i;
+    for(i = numTexUnits - 1; i >= count; i--)
+    {
+        disableTexUnit(i);
+    }
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+        enableTexUnit(i);
+    }
+}
+
+/**
+ * Enable, set and optionally lock all enabled arrays.
+ */
+void Mod_Arrays(void* vertices, void* colors, int numCoords, void** coords, int lock)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+        {
+            arrays[AR_VERTEX].enabled = true;
+            arrays[AR_VERTEX].data = vertices;
+        }
+        else
+        {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(3, GL_FLOAT, 16, vertices);
+        }
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+        {
+            arrays[AR_COLOR].enabled = true;
+            arrays[AR_COLOR].data = colors;
+        }
+        else
+        {
+            glEnableClientState(GL_COLOR_ARRAY);
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+        }
+    }
+
+    for(i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
+    {
+        if(coords[i])
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = true;
+                arrays[AR_TEXCOORD0 + i].data = coords[i];
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
+            }
+        }
+    }
+
+    if(GL_state.features.elementArrays && lock > 0)
+    {
+        // 'lock' is the number of vertices to lock.
+        glLockArraysEXT(0, lock);
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_UnlockArrays(void)
+{
+    if(!GL_state.features.elementArrays) return;
+    glUnlockArraysEXT();
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_ArrayElement(int index)
+{
+    if(GL_state.features.elementArrays)
+    {
+        glArrayElement(index);
+    }
+    else
+    {
+        int i;
+        for(i = 0; i < numTexUnits; ++i)
+        {
+            if(!arrays[AR_TEXCOORD0 + i].enabled)
+                continue;
+            glMultiTexCoord2fv(GL_TEXTURE0 + i,
+                ((dgl_texcoord_t*)arrays[AR_TEXCOORD0 + i].data)[index].st);
+        }
+
+        if(arrays[AR_COLOR].enabled)
+            glColor4ubv(((dgl_color_t*) arrays[AR_COLOR].data)[index].rgba);
+
+        if(arrays[AR_VERTEX].enabled)
+            glVertex3fv(((dgl_vertex_t*) arrays[AR_VERTEX].data)[index].xyz);
+    }
+}
+
+void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
+{
+    GLenum primType = (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN :
+                       type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
+
+    if(GL_state.features.elementArrays)
+    {
+        glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
+    }
+    else
+    {
+        int i;
+
+        glBegin(primType);
+        for(i = 0; i < count; ++i)
+        {
+            Mod_ArrayElement(indices[i]);
+        }
+        glEnd();
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
 static __inline float qatan2(float y, float x)
 {
-    float       ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
-
-    if(ang > PI)
-        ang -= 2 * (float) PI;
+    float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
+    if(ang > PI) ang -= 2 * (float) PI;
     return ang;
-
     // This is slightly faster, I believe...
     //return atan2(y, x);
 }
@@ -166,24 +414,24 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     void       *coords[2];
 
     // Disable all vertex arrays.
-    GL_DisableArrays(true, true, DDMAXINT);
+    Mod_DisableArrays(true, true, DDMAXINT);
 
     // Load the vertex array.
     switch(mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        GL_Arrays(vertices, colors, 1, coords, 0);
+        Mod_Arrays(vertices, colors, 1, coords, 0);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        GL_Arrays(vertices, colors, 2, coords, 0);
+        Mod_Arrays(vertices, colors, 2, coords, 0);
         break;
 
     default:
-        GL_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
+        Mod_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
         break;
     }
 
@@ -210,7 +458,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
                 glTexCoord2f(FLOAT(v->s), FLOAT(v->t));
             }
 
-            GL_ArrayElement(LONG(v->index));
+            Mod_ArrayElement(LONG(v->index));
         }
 
         // The primitive is complete.
@@ -449,67 +697,43 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t *nextFrame = NULL;
 
-    //int mainFlags = mf->flags;
     int         subFlags = smf->flags;
     int         numVerts;
     int         useSkin;
     int         i, c;
     float       endPos, offset;
-    float       alpha, customAlpha;
+    float       alpha;
     float       delta[3], color[4];
     float       ambient[4];
     float       shininess, *shinyColor;
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
-    blendmode_t blending = mf->def->sub[number].blendMode;
+    blendmode_t blending;
     DGLuint     skinTexture = 0, shinyTexture = 0;
     int         zSign = (params->mirror? -1 : 1);
 
-    if(mf->scale[VX] == 0 && mf->scale[VY] == 0 && mf->scale[VZ] == 0)
+    // Do not bother with infinitely small models...
+    if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
+
+    alpha = params->ambientColor[CA];
+    // Is the submodel-defined alpha multiplier in effect?
+    if(!(params->flags & (DDMF_BRIGHTSHADOW|DDMF_SHADOW|DDMF_ALTSHADOW)))
     {
-        // Why bother? It's infinitely small...
-        return;
+        alpha *= smf->alpha * reciprocal255;
     }
 
-    // Submodel can define a custom Transparency level.
-    customAlpha = 1 - smf->alpha / 255.0f;
+    // Would this be visible?
+    if(alpha <= 0) return;
 
-    if(missileBlend &&
-       ((params->flags & DDMF_BRIGHTSHADOW) || (subFlags & MFF_BRIGHTSHADOW)))
+    // Is the submodel-defined blend mode in effect?
+    if(params->flags & DDMF_BRIGHTSHADOW)
     {
-        alpha = .80f;
         blending = BM_ADD;
     }
-    else if(subFlags & MFF_BRIGHTSHADOW2)
-    {
-        alpha = customAlpha;
-        blending = BM_ADD;
-    }
-    else if(subFlags & MFF_DARKSHADOW)
-    {
-        alpha = customAlpha;
-        blending = BM_DARK;
-    }
-    else if((params->flags & DDMF_SHADOW) || (subFlags & MFF_SHADOW2))
-        alpha = .2f;
-    else if((params->flags & DDMF_ALTSHADOW) || (subFlags & MFF_SHADOW1))
-        alpha = .62f;
     else
-        alpha = customAlpha;
-
-    // More custom alpha?
-    if(params->ambientColor[CA] >= 0)
-        alpha *= params->ambientColor[CA];
-    if(alpha <= 0)
-        return; // Fully transparent.
-    if(alpha > 1)
-        alpha = 1;
-
-    // Extra blending modes.
-    if(subFlags & MFF_SUBTRACT)
-        blending = BM_SUBTRACT;
-    if(subFlags & MFF_REVERSE_SUBTRACT)
-        blending = BM_REVERSE_SUBTRACT;
+    {
+        blending = smf->blendMode;
+    }
 
     useSkin = smf->skin;
 
@@ -633,7 +857,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     {
         float   lodFactor;
 
-        lodFactor = rend_model_lod * theWindow->width / 640.0f / (fieldOfView / 90.0f);
+        lodFactor = rend_model_lod * theWindow->geometry.size.width / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
             lodFactor = 1 / lodFactor;
 
@@ -695,17 +919,27 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                          -params->yaw, -params->pitch);
     }
 
-    // Calculate shiny coordinates.
-    shininess = mf->def->sub[number].shiny * modelShinyFactor;
-    if(shininess < 0)
-        shininess = 0;
-    if(shininess > 1)
-        shininess = 1;
-
+    shininess = MINMAX_OF(0, mf->def->sub[number].shiny * modelShinyFactor, 1);
+    // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        const skinname_t*       sn;
+        Texture* tex = mf->sub[number].shinySkin;
+        if(tex)
+        {
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
+                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                    false, false, false, false);
+            shinyTexture = GL_PrepareTexture(tex, texSpec);
+        }
+        else
+        {
+            shininess = 0;
+        }
+    }
 
+    if(shininess > 0)
+    {   // Calculate shiny coordinates.
         shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
@@ -764,28 +998,18 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 color[c] = shinyColor[c];
         }
         color[3] = shininess;
-
-        // Ensure we've prepared the shiny skin.
-        shinyTexture = 0;
-        if((sn = R_GetSkinNameByIndex(mf->sub[number].shinySkin)))
-        {
-            const gltexture_inst_t* texInst;
-
-            if((texInst = GL_PrepareGLTexture(sn->id, NULL, NULL)))
-                shinyTexture = texInst->id;
-        }
     }
 
     if(renderTextures == 2)
     {   // For lighting debug, render all surfaces using the gray texture.
-        material_t*         mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
-
+        material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
         if(mat)
         {
-            material_snapshot_t ms;
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
+            const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-            Material_Prepare(&ms, mat, true, NULL);
-            skinTexture = ms.units[MTU_PRIMARY].texInst->id;
+            skinTexture = MSU_gltexture(ms, MTU_PRIMARY);
         }
         else
         {
@@ -794,24 +1018,20 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        const skinname_t*       sn;
+        Texture* tex;
 
-
+        skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
             useSkin = 0;
 
-        skinTexture = 0;
-
-        if((sn = R_GetSkinNameByIndex(mdl->skins[useSkin].id)))
+        tex = mdl->skins[useSkin].texture;
+        if(tex)
         {
-            const gltexture_inst_t* texInst;
-            material_load_params_t params;
-
-            memset(&params, 0, sizeof(params));
-            params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
-
-            if((texInst = GL_PrepareGLTexture(sn->id, &params, NULL)))
-                skinTexture = texInst->id;
+            texturevariantspecification_t* texSpec =
+                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
+                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
+                    GL_REPEAT, 1, -2, -1, true, true, false, false);
+            skinTexture = GL_PrepareTexture(tex, texSpec);
         }
     }
 
@@ -825,6 +1045,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(subFlags & MFF_TWO_SIDED)
         glDisable(GL_CULL_FACE);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
        blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR) ||
@@ -833,7 +1055,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // The first pass can be skipped if it won't be visible.
         if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
         {
-            GL_SelectTexUnits(1);
+            Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
             GL_BindTexture(renderTextures? skinTexture : 0, glmode[texMagMode]);
 
@@ -859,26 +1081,26 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             {
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
-                GL_SelectTexUnits(2);
+                Mod_SelectTexUnits(2);
                 GL_ModulateTexture(11);
 
-                GL_ActiveTexture(GL_TEXTURE1);
+                glActiveTexture(GL_TEXTURE1);
                 GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
-                GL_ActiveTexture(GL_TEXTURE0);
+                glActiveTexture(GL_TEXTURE0);
                 GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
 
-                GL_SelectTexUnits(1);
+                Mod_SelectTexUnits(1);
                 GL_ModulateTexture(1);
             }
             else
             {
                 // Empty spots will get shine, too.
-                GL_SelectTexUnits(1);
+                Mod_SelectTexUnits(1);
                 GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -891,12 +1113,12 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // A special case: specular shininess on an opaque object.
         // Multitextured shininess with the normal blending.
         GL_BlendMode(blending);
-        GL_SelectTexUnits(2);
+        Mod_SelectTexUnits(2);
 
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
 
-        GL_ActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
 
         // Multiply by shininess.
@@ -904,18 +1126,19 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             color[c] *= color[3];
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
-        GL_ActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,
                            modelTexCoords);
 
-        GL_SelectTexUnits(1);
+        Mod_SelectTexUnits(1);
         GL_ModulateTexture(1);
     }
 
     // We're done!
+    glDisable(GL_TEXTURE_2D);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
@@ -932,15 +1155,19 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     GL_BlendMode(BM_NORMAL);
 }
 
+void Rend_ModelInit(void)
+{
+    Mod_InitArrays();
+}
+
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(const rendmodelparams_t *params)
+void Rend_RenderModel(const rendmodelparams_t* params)
 {
-    int         i;
+    uint i;
 
-    if(!params || !params->mf)
-        return;
+    if(!params || !params->mf) return;
 
     // Render all the submodels of this model.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
@@ -959,5 +1186,24 @@ void Rend_RenderModel(const rendmodelparams_t *params)
             if(disableZ)
                 glDepthMask(GL_TRUE);
         }
+    }
+
+    if(devMobjVLights && params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+
+        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
     }
 }

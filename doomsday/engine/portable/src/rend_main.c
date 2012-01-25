@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,12 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * rend_main.c: Rendering Subsystem
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -40,19 +34,18 @@
 #include "de_refresh.h"
 #include "de_play.h"
 #include "de_graphics.h"
-
 #include "de_misc.h"
 #include "de_ui.h"
 #include "de_system.h"
+
 #include "net_main.h"
+#include "texturevariant.h"
+#include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+// Surface (tangent-space) Vector Flags.
+#define SVF_TANGENT             0x01
+#define SVF_BITANGENT           0x02
+#define SVF_NORMAL              0x04
 
 void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
                    const float color3f[3], float alpha, float br,
@@ -60,24 +53,28 @@ void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
 void Rend_DrawArrow(const float pos3f[3], float a, float s,
                     const float color3f[3], float alpha);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 static void Rend_RenderBoundingBoxes(void);
 static DGLuint constructBBox(DGLuint name, float br);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern int useDynLights, translucentIceCorpse;
-extern int skyhemispheres;
-extern int loMaxRadius;
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean usingFog = false; // Is the fog in use?
 float fogColor[4];
 float fieldOfView = 95.0f;
 byte smoothTexAnim = true;
 int useShinySurfaces = true;
+
+int useDynlights = true;
+float dynlightFactor = .5f;
+float dynlightFogBright = .15f;
+
+int useWallGlow = true;
+float glowFactor = .5f;
+float glowHeightFactor = 3; // Glow height as a multiplier.
+int glowHeightMax = 100; // 100 is the default (0-1024).
+
+int useShadows = true;
+float shadowFactor = 1.2f;
+int shadowMaxRadius = 80;
+int shadowMaxDistance = 1000;
 
 float vx, vy, vz, vang, vpitch;
 float viewsidex, viewsidey;
@@ -86,7 +83,6 @@ byte freezeRLs = false;
 int devRendSkyMode = false;
 byte devRendSkyAlways = false;
 
-int missileBlend = 1;
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
 // The value chosen for rAmbient occurs in Rend_CalcLightModRange
@@ -100,80 +96,89 @@ float yfov;
 
 int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be drawn
 
+/**
+ * Implements a pre-calculated LUT for light level limiting and range
+ * compression offsets, arranged such that it may be indexed with a
+ * light level value. Return value is an appropriate delta (considering
+ * all applicable renderer properties) which has been pre-clamped such
+ * that when summed with the original light value the result remains in
+ * the normalized range [0..1].
+ */
 float lightRangeCompression = 0;
 float lightModRange[255];
 byte devLightModRange = 0;
 
 float rendLightDistanceAttentuation = 1024;
 
+byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 int devPolyobjBBox = 0; // 1 = Draw polyobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
 byte devVertexIndices = 0; // @c 1= Draw world vertex indices (for debug).
 byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
-byte devSurfaceNormals = 0; // @c 1= Draw world surface normal tails.
+byte devSurfaceVectors = 0;
 byte devNoTexFix = 0;
 
-// Current sector light color.
-const float* sLightColor;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static boolean firstsubsector; // No range checking for the first one.
-
-// CODE --------------------------------------------------------------------
 
 void Rend_Register(void)
 {
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
-    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
-    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
+
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
+    C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
+    C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
+    C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
+
+    C_VAR_INT2("rend-light", &useDynlights, 0, 0, 1, LO_UnlinkMobjLumobjs);
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
-    C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-bright", &dynlightFactor, 0, 0, 1);
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
+    C_VAR_FLOAT("rend-light-fog-bright", &dynlightFogBright, 0, 0, 1);
+    C_VAR_FLOAT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
 
-    C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_BYTE("rend-map-material-precache", &precacheMapMaterials, 0, 0, 1);
+
+    C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
+    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 2);
+    C_VAR_INT("rend-shadow-far", &shadowMaxDistance, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-shadow-radius-max", &shadowMaxRadius, CVF_NO_MAX, 0, 0);
+
+    C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
+    C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
+
+    C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-mobj-show-vlights", &devMobjVLights, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
+    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 4);
     C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-surface-show-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-surface-show-vectors", &devSurfaceVectors, CVF_NO_ARCHIVE, 0, 7);
 
     RL_Register();
-    DL_Register();
+    LO_Register();
+    Rend_DecorRegister();
     SB_Register();
     LG_Register();
+    Rend_SkyRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Rend_RadioRegister();
-    Rend_ShadowRegister();
-    Rend_SkyRegister();
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
 }
-
-#if 0 // unused atm
-float Rend_SignedPointDist2D(float c[2])
-{
-    /*          (YA-YC)(XB-XA)-(XA-XC)(YB-YA)
-       s = -----------------------------
-       L**2
-       Luckily, L**2 is one. dist = s*L. Even more luckily, L is also one.
-     */
-    return (vz - c[VY]) * viewsidex - (vx - c[VX]) * viewsidey;
-}
-#endif
 
 /**
  * Approximated! The Z axis aspect ratio is corrected.
@@ -185,23 +190,25 @@ float Rend_PointDist3D(const float c[3])
 
 void Rend_Init(void)
 {
-    C_Init();                   // Clipper.
-    RL_Init();                  // Rendering lists.
-    Rend_InitSky();             // The sky.
+    C_Init();
+    RL_Init();
+    Rend_SkyInit();
 }
 
-/**
- * Used to be called before starting a new map.
- */
+void Rend_Shutdown(void)
+{
+    RL_Shutdown();
+}
+
+/// World/map renderer reset.
 void Rend_Reset(void)
 {
-    // Textures are deleted (at least skies need this???).
-    GL_ClearRuntimeTextures();
     LO_Clear(); // Free lumobj stuff.
-
     if(dlBBox)
+    {
         GL_DeleteLists(dlBBox, 1);
-    dlBBox = 0;
+        dlBBox = 0;
+    }
 }
 
 void Rend_ModelViewMatrix(boolean useAngles)
@@ -231,65 +238,35 @@ static __inline float segFacingViewerDot(float v1[2], float v2[2])
     return (v1[VY] - v2[VY]) * (v1[VX] - vx) + (v2[VX] - v1[VX]) * (v1[VY] - vz);
 }
 
-#if 0 // unused atm
-static int Rend_FixedSegFacingDir(const seg_t *seg)
+static int C_DECL DivSortAscend(const void* e1, const void* e2)
 {
-    // The dot product. (1 if facing front.)
-    return((seg->fv1.pos[VY] - seg->fv2.pos[VY]) * (seg->fv1.pos[VX] - viewX) +
-           (seg->fv2.pos[VX] - seg->fv1.pos[VX]) * (seg->fv1.pos[VY] - viewY)) > 0;
-}
-#endif
-
-#if 0 // unused atm
-int Rend_SegFacingPoint(float v1[2], float v2[2], float pnt[2])
-{
-    float   nx = v1[VY] - v2[VY], ny = v2[VX] - v1[VX];
-    float   vvx = v1[VX] - pnt[VX], vvy = v1[VY] - pnt[VY];
-
-    // The dot product.
-    if(nx * vvx + ny * vvy > 0)
-        return 1;               // Facing front.
-    return 0;                   // Facing away.
-}
-#endif
-
-static int C_DECL DivSortAscend(const void *e1, const void *e2)
-{
-    float   f1 = *(float *) e1, f2 = *(float *) e2;
-
-    if(f1 > f2)
-        return 1;
-    if(f2 > f1)
-        return -1;
+    float f1 = *(float*) e1, f2 = *(float*) e2;
+    if(f1 > f2) return 1;
+    if(f2 > f1) return -1;
     return 0;
 }
 
-static int C_DECL DivSortDescend(const void *e1, const void *e2)
+static int C_DECL DivSortDescend(const void* e1, const void* e2)
 {
-    float   f1 = *(float *) e1, f2 = *(float *) e2;
-
-    if(f1 > f2)
-        return -1;
-    if(f2 > f1)
-        return 1;
+    float f1 = *(float*) e1, f2 = *(float*) e2;
+    if(f1 > f2) return -1;
+    if(f2 > f1) return 1;
     return 0;
 }
 
-void Rend_VertexColorsGlow(rcolor_t* colors, size_t num)
+void Rend_VertexColorsGlow(ColorRawf* colors, size_t num, float glow)
 {
-    size_t              i;
-
+    size_t i;
     for(i = 0; i < num; ++i)
     {
-        rcolor_t*           c = &colors[i];
-        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = 1;
+        ColorRawf* c = &colors[i];
+        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = glow;
     }
 }
 
-void Rend_VertexColorsAlpha(rcolor_t* colors, size_t num, float alpha)
+void Rend_VertexColorsAlpha(ColorRawf* colors, size_t num, float alpha)
 {
-    size_t               i;
-
+    size_t i;
     for(i = 0; i < num; ++i)
     {
         colors[i].rgba[CA] = alpha;
@@ -298,18 +275,18 @@ void Rend_VertexColorsAlpha(rcolor_t* colors, size_t num, float alpha)
 
 void Rend_ApplyTorchLight(float* color, float distance)
 {
-    ddplayer_t*         ddpl = &viewPlayer->shared;
+    ddplayer_t* ddpl = &viewPlayer->shared;
 
-    if(!ddpl->fixedColorMap)
-        return;
+    // Disabled?
+    if(!ddpl->fixedColorMap) return;
 
     // Check for torch.
     if(distance < 1024)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        int                 ll = 16 - ddpl->fixedColorMap;
-        float               d = (1024 - distance) / 1024.0f * ll / 15.0f;
+        int ll = 16 - ddpl->fixedColorMap;
+        float d = (1024 - distance) / 1024.0f * ll / 15.0f;
 
         if(torchAdditive)
         {
@@ -326,15 +303,11 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
-static void lightVertex(rcolor_t* color, const rvertex_t* vtx,
-                        float lightLevel, const float* ambientColor)
+static void lightVertex(ColorRawf* color, const rvertex_t* vtx, float lightLevel,
+    const float* ambientColor)
 {
-    float               lightVal, dist;
-
-    dist = Rend_PointDist2D(vtx->pos);
-
-    // Apply distance attenuation.
-    lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
+    float dist = Rend_PointDist2D(vtx->pos);
+    float lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
     lightVal += R_ExtraLightDelta();
@@ -347,30 +320,37 @@ static void lightVertex(rcolor_t* color, const rvertex_t* vtx,
     color->rgba[CB] = lightVal * ambientColor[CB];
 }
 
-void Rend_VertexColorsApplyTorchLight(rcolor_t* colors,
-                                      const rvertex_t* vertices,
-                                      size_t numVertices)
+static void lightVertices(size_t num, ColorRawf* colors, const rvertex_t* verts,
+    float lightLevel, const float* ambientColor)
 {
-    size_t              i;
-    ddplayer_t*         ddpl = &viewPlayer->shared;
+    size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        lightVertex(colors+i, verts+i, lightLevel, ambientColor);
+    }
+}
 
-    if(!ddpl->fixedColorMap)
-        return; // No need, its disabled.
+void Rend_VertexColorsApplyTorchLight(ColorRawf* colors, const rvertex_t* vertices,
+    size_t numVertices)
+{
+    ddplayer_t* ddpl = &viewPlayer->shared;
+    size_t i;
+
+    // Disabled?
+    if(!ddpl->fixedColorMap) return;
 
     for(i = 0; i < numVertices; ++i)
     {
-        const rvertex_t*    vtx = &vertices[i];
-        rcolor_t*           c = &colors[i];
-
+        const rvertex_t* vtx = &vertices[i];
+        ColorRawf* c = &colors[i];
         Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
     }
 }
 
 void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
-                       float height, const subsector_t* subsector,
-                       boolean antiClockwise)
+    float height, const subsector_t* subsector, boolean antiClockwise)
 {
-    size_t              i, vid;
+    size_t i, vid;
 
     // First vertex is always #0.
     rvertices[0].pos[VX] = subsector->vertices[0]->pos[VX];
@@ -393,173 +373,82 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
     }
 }
 
-/**
- * \fixme No need to do this each frame. Set a flag in sidedef_t->flags to
- * denote this. Is sensitive to plane heights, surface properties
- * (e.g. alpha) and surface texture properties.
- */
-boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
+static void markSegSectionsPVisible(seg_t* seg)
 {
-    // Check for unmasked midtextures on twosided lines that completely
-    // fill the gap between floor and ceiling (we don't want to give away
-    // the location of any secret areas (false walls)).
-    if(line->L_backside)
+    const plane_t* fceil, *bceil, *ffloor, *bfloor;
+    sidedef_t* side;
+    uint i;
+
+    if(!seg->lineDef || !seg->lineDef->L_side(seg->side)) return;
+    side = seg->lineDef->L_side(seg->side);
+
+    for(i = 0; i < 3; ++i)
     {
-        sector_t*           front = line->L_sector(backside);
-        sector_t*           back  = line->L_sector(backside^1);
-        sidedef_t*          side  = line->L_side(backside);
-
-        if(side->SW_middlematerial)
-        {
-            material_t*         mat = side->SW_middlematerial;
-            material_snapshot_t ms;
-
-            // Ensure we have up to date info.
-            Material_Prepare(&ms, mat, true, NULL);
-
-            if(ms.isOpaque && !side->SW_middleblendmode &&
-               side->SW_middlergba[3] >= 1)
-            {
-                float               openTop[2], matTop[2];
-                float               openBottom[2], matBottom[2];
-
-                if(side->flags & SDF_MIDDLE_STRETCH)
-                    return true;
-
-                openTop[0] = openTop[1] = matTop[0] = matTop[1] =
-                    MIN_OF(back->SP_ceilvisheight, front->SP_ceilvisheight);
-                openBottom[0] = openBottom[1] = matBottom[0] = matBottom[1] =
-                    MAX_OF(back->SP_floorvisheight, front->SP_floorvisheight);
-
-                // Could the mid texture fill enough of this gap for us
-                // to consider it completely closed?
-                if(ms.height >= (openTop[0] - openBottom[0]) &&
-                   ms.height >= (openTop[1] - openBottom[1]))
-                {
-                    // Possibly. Check the placement of the mid texture.
-                    if(Rend_MidMaterialPos
-                       (&matBottom[0], &matBottom[1], &matTop[0], &matTop[1],
-                        NULL, side->SW_middlevisoffset[VY], ms.height,
-                        0 != (line->flags & DDLF_DONTPEGBOTTOM),
-                        !(R_IsSkySurface(&front->SP_ceilsurface) &&
-                          R_IsSkySurface(&back->SP_ceilsurface)),
-                        !(R_IsSkySurface(&front->SP_floorsurface) &&
-                          R_IsSkySurface(&back->SP_floorsurface))))
-                    {
-                        if(matTop[0] >= openTop[0] &&
-                           matTop[1] >= openTop[1] &&
-                           matBottom[0] <= openBottom[0] &&
-                           matBottom[1] <= openBottom[1])
-                            return true;
-                    }
-                }
-            }
-        }
+        side->sections[i].inFlags |= SUIF_PVIS;
     }
 
-    return false;
+    if(!seg->lineDef->L_backside)
+    {
+        side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
+        side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
+        return;
+    }
+
+    fceil  = seg->lineDef->L_sector(seg->side  )->SP_plane(PLN_CEILING);
+    ffloor = seg->lineDef->L_sector(seg->side  )->SP_plane(PLN_FLOOR);
+    bceil  = seg->lineDef->L_sector(seg->side^1)->SP_plane(PLN_CEILING);
+    bfloor = seg->lineDef->L_sector(seg->side^1)->SP_plane(PLN_FLOOR);
+
+    // Middle.
+    if(!side->SW_middlematerial || !Material_IsDrawable(side->SW_middlematerial) || side->SW_middlergba[3] <= 0)
+        side->SW_middlesurface.inFlags &= ~SUIF_PVIS;
+
+    // Top.
+    if((!devRendSkyMode && R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
+       (!devRendSkyMode && R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+       (fceil->visHeight <= bceil->visHeight))
+        side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
+
+    // Bottom.
+    if((!devRendSkyMode && R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
+       (!devRendSkyMode && R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_FIX_MISSING_MATERIAL)) ||
+       (ffloor->visHeight >= bfloor->visHeight))
+        side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
 
-static void Rend_MarkSegSectionsPVisible(seg_t *seg)
+static void Rend_MarkSegSectionsPVisible(seg_t* seg)
 {
-    uint                i, j;
-    sidedef_t          *side;
-    linedef_t          *line;
-
-    if(!seg || !seg->lineDef)
-        return; // huh?
-
-    line = seg->lineDef;
-    for(i = 0; i < 2; ++i)
-    {
-        // Missing side?
-        if(!line->L_side(i))
-            continue;
-
-        side = line->L_side(i);
-        for(j = 0; j < 3; ++j)
-            side->sections[j].inFlags |= SUIF_PVIS;
-
-        // Top
-        if(!line->L_backside)
-        {
-            side->sections[SEG_TOP].inFlags &= ~SUIF_PVIS;
-            side->sections[SEG_BOTTOM].inFlags &= ~SUIF_PVIS;
-        }
-        else
-        {
-            // Check middle texture
-            if((!side->SW_middlematerial ||
-                (side->SW_middlematerial->flags & MATF_NO_DRAW)) ||
-                side->SW_middlergba[3] <= 0) // Check alpha
-                side->sections[SEG_MIDDLE].inFlags &= ~SUIF_PVIS;
-
-            if(R_IsSkySurface(&line->L_backsector->SP_ceilsurface) &&
-               R_IsSkySurface(&line->L_frontsector->SP_ceilsurface))
-               side->sections[SEG_TOP].inFlags &= ~SUIF_PVIS;
-            else
-            {
-                if(i != 0)
-                {
-                    if(line->L_backsector->SP_ceilvisheight <=
-                       line->L_frontsector->SP_ceilvisheight)
-                        side->sections[SEG_TOP].inFlags &= ~SUIF_PVIS;
-                }
-                else
-                {
-                    if(line->L_frontsector->SP_ceilvisheight <=
-                       line->L_backsector->SP_ceilvisheight)
-                        side->sections[SEG_TOP].inFlags &= ~SUIF_PVIS;
-                }
-            }
-
-            // Bottom
-            if(R_IsSkySurface(&line->L_backsector->SP_floorsurface) &&
-               R_IsSkySurface(&line->L_frontsector->SP_floorsurface))
-               side->sections[SEG_BOTTOM].inFlags &= ~SUIF_PVIS;
-            else
-            {
-                if(i != 0)
-                {
-                    if(line->L_backsector->SP_floorvisheight >=
-                       line->L_frontsector->SP_floorvisheight)
-                        side->sections[SEG_BOTTOM].inFlags &= ~SUIF_PVIS;
-                }
-                else
-                {
-                    if(line->L_frontsector->SP_floorvisheight >=
-                       line->L_backsector->SP_floorvisheight)
-                        side->sections[SEG_BOTTOM].inFlags &= ~SUIF_PVIS;
-                }
-            }
-        }
-    }
+    assert(seg);
+    // danij: Do we really need to do this for both sides? Surely not.
+    markSegSectionsPVisible(seg);
+    if(seg->backSeg)
+        markSegSectionsPVisible(seg->backSeg);
 }
 
 /**
- * @return              @true, if there is a division at the specified height.
+ * @return  @true if there is a division at the specified height.
  */
-static int checkDiv(walldiv_t *div, float height)
+static int checkDiv(walldiv_t* div, float height)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < div->num; ++i)
+    {
         if(div->pos[i] == height)
             return true;
-
+    }
     return false;
 }
 
 static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
-                               boolean backSide, const sector_t* frontSec,
-                               float bottomZ, float topZ, boolean doRight)
+    boolean backSide, const sector_t* frontSec, float bottomZ, float topZ,
+    boolean doRight)
 {
-    uint                i, j;
-    linedef_t          *iter;
-    sector_t           *scanSec;
-    lineowner_t        *base, *own;
-    boolean             clockwise = !doRight;
-    boolean             stopScan = false;
+    uint i, j;
+    linedef_t* iter;
+    sector_t* scanSec;
+    lineowner_t* base, *own;
+    boolean clockwise = !doRight;
+    boolean stopScan = false;
 
     if(bottomZ >= topZ)
         return; // Obviously no division.
@@ -571,7 +460,9 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
         own = own->link[clockwise];
 
         if(own == base)
+        {
             stopScan = true;
+        }
         else
         {
             iter = own->lineDef;
@@ -594,7 +485,7 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                     {
                         for(j = 0; j < scanSec->planeCount && !stopScan; ++j)
                         {
-                            plane_t            *pln = scanSec->SP_plane(j);
+                            plane_t* pln = scanSec->SP_plane(j);
 
                             if(pln->visHeight > bottomZ && pln->visHeight < topZ)
                             {
@@ -609,7 +500,8 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                             }
 
                             if(!stopScan)
-                            {   // Clip a range bound to this height?
+                            {
+                                // Clip a range bound to this height?
                                 if(pln->type == PLN_FLOOR && pln->visHeight > bottomZ)
                                     bottomZ = pln->visHeight;
                                 else if(pln->type == PLN_CEILING && pln->visHeight < topZ)
@@ -630,7 +522,7 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
                          * we automatically fix the case of a floor above a
                          * ceiling by lowering the floor.
                          */
-                        float               z = scanSec->SP_ceilvisheight;
+                        float z = scanSec->SP_ceilvisheight;
 
                         if(z > bottomZ && z < topZ)
                         {
@@ -655,39 +547,35 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
 }
 
 static void calcSegDivisions(walldiv_t* div, const seg_t* seg,
-                             const sector_t* frontSec, float bottomZ,
-                             float topZ, boolean doRight)
+    const sector_t* frontSec, float bottomZ, float topZ, boolean doRight)
 {
-    sidedef_t*          side;
+    sidedef_t* side;
 
     div->num = 0;
 
-    side = SEG_SIDEDEF(seg);
-
-    if(seg->flags & SEGF_POLYOBJ)
-        return; // Polyobj segs are never split.
+    // Polyobj segs are never split.
+    if(seg->flags & SEGF_POLYOBJ) return;
 
     // Only segs at sidedef ends can/should be split.
+    side = SEG_SIDEDEF(seg);
     if(!((seg == side->segs[0] && !doRight) ||
          (seg == side->segs[side->segCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ,
-                       topZ, doRight);
+    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ, topZ, doRight);
 }
 
 /**
  * Division will only happen if it must be done.
  */
 static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
-                                    const sector_t* frontsec, float low,
-                                    float hi)
+    const sector_t* frontsec, float low, float hi)
 {
-    uint                i;
-    walldiv_t*          div;
+    walldiv_t* div;
+    uint i;
 
-    if(!seg->lineDef)
-        return; // Mini-segs arn't drawn.
+    // Mini-segs are never drawn.
+    if(!seg->lineDef) return;
 
     for(i = 0; i < 2; ++i)
     {
@@ -704,85 +592,22 @@ static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
         }
 
 #ifdef RANGECHECK
-{
-uint        k;
+{ uint k;
 for(k = 0; k < div->num; ++k)
+{
     if(div->pos[k] > hi || div->pos[k] < low)
     {
         Con_Error("DivQuad: i=%i, pos (%f), hi (%f), low (%f), num=%i\n",
                   i, div->pos[k], hi, low, div->num);
     }
-}
+}}
 #endif
     }
 }
 
-/**
- * Calculates the placement for a middle texture (top, bottom, offset).
- * texoffy may be NULL.
- * Returns false if the middle texture isn't visible (in the opening).
- */
-int Rend_MidMaterialPos(float* bottomleft, float* bottomright,
-                        float* topleft, float* topright, float* texoffy,
-                        float tcyoff, float texHeight, boolean lowerUnpeg,
-                        boolean clipTop, boolean clipBottom)
-{
-    int                 side;
-    float               openingTop, openingBottom;
-    boolean             visible[2] = {false, false};
-
-    for(side = 0; side < 2; ++side)
-    {
-        openingTop = *(side? topright : topleft);
-        openingBottom = *(side? bottomright : bottomleft);
-
-        if(openingTop <= openingBottom)
-            continue;
-
-        // Else the mid texture is visible on this side.
-        visible[side] = true;
-
-        if(side == 0 && texoffy)
-            *texoffy = 0;
-
-        // We don't allow vertical tiling.
-        if(lowerUnpeg)
-        {
-            *(side? bottomright : bottomleft) += tcyoff;
-            *(side? topright : topleft) =
-                *(side? bottomright : bottomleft) + texHeight;
-        }
-        else
-        {
-            *(side? topright : topleft) += tcyoff;
-            *(side? bottomright : bottomleft) =
-                *(side? topright : topleft) - texHeight;
-        }
-
-        // Clip it.
-        if(clipBottom)
-            if(*(side? bottomright : bottomleft) < openingBottom)
-            {
-                *(side? bottomright : bottomleft) = openingBottom;
-            }
-
-        if(clipTop)
-            if(*(side? topright : topleft) > openingTop)
-            {
-                if(side == 0 && texoffy)
-                    *texoffy += *(side? topright : topleft) - openingTop;
-                *(side? topright : topleft) = openingTop;
-            }
-    }
-
-    return (visible[0] || visible[1]);
-}
-
 static void selectSurfaceColors(const float** topColor,
-                                const float** bottomColor, sidedef_t* side,
-                                segsection_t section)
+    const float** bottomColor, sidedef_t* side, segsection_t section)
 {
-    // Select the colors for this surface.
     switch(section)
     {
     case SEG_MIDDLE:
@@ -817,7 +642,6 @@ static void selectSurfaceColors(const float** topColor,
         break;
 
     case SEG_BOTTOM:
-        // Select the correct colors for this surface.
         if(side->flags & SDF_BLENDBOTTOMTOMID)
         {
             *topColor = side->SW_middlergba;
@@ -835,12 +659,11 @@ static void selectSurfaceColors(const float** topColor,
     }
 }
 
-boolean RLIT_DynGetFirst(const dynlight_t* dyn, void* data)
+int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
 {
-    dynlight_t**        ptr = data;
-
-    *ptr = (dynlight_t*) dyn;
-    return false; // Stop iteration.
+    const dynlight_t** ptr = (const dynlight_t**)paramaters;
+    *ptr = dyn;
+    return 1; // Stop iteration.
 }
 
 /**
@@ -849,16 +672,13 @@ boolean RLIT_DynGetFirst(const dynlight_t* dyn, void* data)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(const rvertex_t* rvertices,
-                        const rcolor_t* rcolors, float wallLength,
-                        float texWidth, float texHeight,
-                        const float texOffset[2], blendmode_t blendMode,
-                        uint lightListIdx, boolean glow, boolean masked,
-                        const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
+void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
+    float wallLength, materialvariant_t* material, const float texOffset[2],
+    blendmode_t blendMode, uint lightListIdx, float glow)
 {
-    vissprite_t*        vis = R_NewVisSprite();
-    int                 i, c;
-    float               midpoint[3];
+    vissprite_t* vis = R_NewVisSprite();
+    float midpoint[3];
+    int i, c;
 
     midpoint[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
     midpoint[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
@@ -869,9 +689,12 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     vis->center[VY] = midpoint[VY];
     vis->center[VZ] = midpoint[VZ];
     vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = rTU[TU_PRIMARY].tex;
-    vis->data.wall.magMode = rTU[TU_PRIMARY].magMode;
-    vis->data.wall.masked = masked;
+    vis->data.wall.material = material;
+    vis->data.wall.texOffset[VX] = texOffset? texOffset[VX] : 0;
+    vis->data.wall.texOffset[VY] = texOffset? texOffset[VY] : 0;
+    vis->data.wall.length = wallLength;
+    vis->data.wall.blendMode = blendMode;
+
     for(i = 0; i < 4; ++i)
     {
         vis->data.wall.vertices[i].pos[VX] = rvertices[i].pos[VX];
@@ -885,35 +708,25 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
         }
     }
 
-    vis->data.wall.texCoord[0][VX] = (texOffset? texOffset[VX] / texWidth : 0);
-    vis->data.wall.texCoord[1][VX] =
-        vis->data.wall.texCoord[0][VX] + wallLength / texWidth;
-    vis->data.wall.texCoord[0][VY] = (texOffset? texOffset[VY] / texHeight : 0);
-    vis->data.wall.texCoord[1][VY] =
-        vis->data.wall.texCoord[0][VY] +
-            (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / texHeight;
-    vis->data.wall.blendMode = blendMode;
-
     //// \fixme Semitransparent masked polys arn't lit atm
-    if(!glow && lightListIdx && numTexUnits > 1 && envModAdd &&
+    if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
-        dynlight_t*         dyn = NULL;
+        const dynlight_t* dyn = NULL;
 
         /**
          * The dynlights will have already been sorted so that the brightest
          * and largest of them is first in the list. So grab that one.
          */
-        DL_ListIterator(lightListIdx, &dyn, RLIT_DynGetFirst);
+        LO_IterateProjections2(lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
         vis->data.wall.modTex = dyn->texture;
         vis->data.wall.modTexCoord[0][0] = dyn->s[0];
         vis->data.wall.modTexCoord[0][1] = dyn->s[1];
         vis->data.wall.modTexCoord[1][0] = dyn->t[0];
         vis->data.wall.modTexCoord[1][1] = dyn->t[1];
-        for(c = 0; c < 3; ++c)
-            vis->data.wall.modColor[c] = dyn->color[c];
-        vis->data.wall.modColor[3] = 1;
+        for(c = 0; c < 4; ++c)
+            vis->data.wall.modColor[c] = dyn->color.rgba[c];
     }
     else
     {
@@ -922,7 +735,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
 }
 
 static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
-                          float wallLength, const vectorcomp_t topLeft[3])
+    float wallLength, const vectorcomp_t topLeft[3])
 {
     tc[0].st[0] = tc[1].st[0] =
         rverts[0].pos[VX] - topLeft[VX];
@@ -933,8 +746,7 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]);
 }
 
-static void quadLightCoords(rtexcoord_t* tc, const float s[2],
-                            const float t[2])
+static void quadLightCoords(rtexcoord_t* tc, const float s[2], const float t[2])
 {
     tc[1].st[0] = tc[0].st[0] = s[0];
     tc[1].st[1] = tc[3].st[1] = t[0];
@@ -942,38 +754,21 @@ static void quadLightCoords(rtexcoord_t* tc, const float s[2],
     tc[2].st[1] = tc[0].st[1] = t[1];
 }
 
-#if 0
-static void quadShinyMaskTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
-                                   float wallLength, float texWidth,
-                                   float texHeight, const pvec2_t texOrigin[2],
-                                   const pvec2_t texOffset)
-{
-    tc[0].st[0] = tc[1].st[0] =
-        rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VX] / texWidth;
-    tc[3].st[1] = tc[1].st[1] =
-        rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VY] / texHeight;
-    tc[3].st[0] = tc[2].st[0] = tc[0].st[0] + wallLength / texWidth;
-    tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
-    tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
-}
-#endif
-
 static float shinyVertical(float dy, float dx)
 {
-    return ( (atan(dy/dx) / (PI/2)) + 1 ) / 2;
+    return ((atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
 static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
-                               const rvertex_t* bottomRight, float wallLength)
+    const rvertex_t* bottomRight, float wallLength)
 {
-    uint                i;
-    vec2_t              surface, normal, projected, s, reflected, view;
-    float               distance, angle, prevAngle = 0;
+    vec2_t surface, normal, projected, s, reflected, view;
+    float distance, angle, prevAngle = 0;
+    uint i;
 
     // Quad surface vector.
-    V2_Set(surface,
-           (bottomRight->pos[VX] - topLeft->pos[VX]) / wallLength,
-           (bottomRight->pos[VY] - topLeft->pos[VY]) / wallLength);
+    V2_Set(surface, (bottomRight->pos[VX] - topLeft->pos[VX]) / wallLength,
+                    (bottomRight->pos[VY] - topLeft->pos[VY]) / wallLength);
 
     V2_Set(normal, surface[VY], -surface[VX]);
 
@@ -982,7 +777,7 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
     {
         // View vector.
         V2_Set(view, vx - (i == 0? topLeft->pos[VX] : bottomRight->pos[VX]),
-                vz - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
+                     vz - (i == 0? topLeft->pos[VY] : bottomRight->pos[VY]));
 
         distance = V2_Normalize(view);
 
@@ -1009,7 +804,7 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
 
         // Horizontal coordinates.
         tc[ (i == 0 ? 1 : 2) ].st[0] = tc[ (i == 0 ? 0 : 3) ].st[0] =
-            angle + .3f;     /*acos(-dot)/PI*/
+            angle + .3f; /*acos(-dot)/PI*/
 
         tc[ (i == 0 ? 0 : 2) ].st[1] =
             shinyVertical(vy - bottomRight->pos[VZ], distance);
@@ -1022,9 +817,8 @@ static void quadShinyTexCoords(rtexcoord_t* tc, const rvertex_t* topLeft,
 
 static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
 {
-    vec2_t              view, start;
-    float               distance;
-    float               offset;
+    float distance, offset;
+    vec2_t view, start;
 
     // View vector.
     V2_Set(view, vx - xyz[VX], vz - xyz[VY]);
@@ -1047,322 +841,49 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
     tc->st[1] = shinyVertical(vy - xyz[VZ], distance);
 }
 
-typedef struct {
-    uint            lastIdx;
-    const rvertex_t* rvertices;
-    uint            numVertices, realNumVertices;
-    const float*    texTL, *texBR;
-    boolean         isWall;
-    const walldiv_t* divs;
-} dynlightiterparams_t;
-
-boolean RLIT_DynLightWrite(const dynlight_t* dyn, void* data)
+static float getSnapshots(const materialsnapshot_t** msA,
+    const materialsnapshot_t** msB, material_t* mat)
 {
-    dynlightiterparams_t* params = data;
+    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    float interPos = 0;
+    assert(msA);
 
-    // If multitexturing is in use, we skip the first light.
-    if(!(RL_IsMTexLights() && params->lastIdx == 0))
-    {
-        uint                i;
-        rvertex_t*          rvertices;
-        rtexcoord_t*        rtexcoords;
-        rcolor_t*           rcolors;
-        rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
-
-        memset(rTU, 0, sizeof(rTU));
-
-        // Allocate enough for the divisions too.
-        rvertices = R_AllocRendVertices(params->realNumVertices);
-        rtexcoords = R_AllocRendTexCoords(params->realNumVertices);
-        rcolors = R_AllocRendColors(params->realNumVertices);
-
-        rTU[TU_PRIMARY].tex = dyn->texture;
-        rTU[TU_PRIMARY].magMode = GL_LINEAR;
-
-        rTU[TU_PRIMARY_DETAIL].tex = 0;
-        rTU[TU_INTER].tex = 0;
-        rTU[TU_INTER_DETAIL].tex = 0;
-
-        for(i = 0; i < params->numVertices; ++i)
-        {
-            uint                c;
-            rcolor_t*           col = &rcolors[i];
-
-            // Each vertex uses the light's color.
-            for(c = 0; c < 3; ++c)
-                col->rgba[c] = dyn->color[c];
-            col->rgba[3] = 1;
-        }
-
-        if(params->isWall)
-        {
-            rtexcoords[1].st[0] = rtexcoords[0].st[0] = dyn->s[0];
-            rtexcoords[1].st[1] = rtexcoords[3].st[1] = dyn->t[0];
-            rtexcoords[3].st[0] = rtexcoords[2].st[0] = dyn->s[1];
-            rtexcoords[2].st[1] = rtexcoords[0].st[1] = dyn->t[1];
-
-            if(params->divs)
-            {   // We need to subdivide the dynamic light quad.
-                float               bL, tL, bR, tR;
-                rvertex_t           origVerts[4];
-                rcolor_t            origColors[4];
-                rtexcoord_t         origTexCoords[4];
-
-                /**
-                 * Need to swap indices around into fans set the position
-                 * of the division vertices, interpolate texcoords and
-                 * color.
-                 */
-
-                memcpy(origVerts, params->rvertices, sizeof(rvertex_t) * 4);
-                memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-                memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
-
-                bL = params->rvertices[0].pos[VZ];
-                tL = params->rvertices[1].pos[VZ];
-                bR = params->rvertices[2].pos[VZ];
-                tR = params->rvertices[3].pos[VZ];
-
-                R_DivVerts(rvertices, origVerts, params->divs);
-                R_DivTexCoords(rtexcoords, origTexCoords, params->divs, bL, tL, bR, tR);
-                R_DivVertColors(rcolors, origColors, params->divs, bL, tL, bR, tR);
-            }
-            else
-            {
-                memcpy(rvertices, params->rvertices, sizeof(rvertex_t) * params->numVertices);
-            }
-        }
-        else
-        {   // It's a flat.
-            uint                i;
-            float               width, height;
-
-            width  = params->texBR[VX] - params->texTL[VX];
-            height = params->texBR[VY] - params->texTL[VY];
-
-            for(i = 0; i < params->numVertices; ++i)
-            {
-                rtexcoords[i].st[0] = ((params->texBR[VX] - params->rvertices[i].pos[VX]) / width * dyn->s[0]) +
-                    ((params->rvertices[i].pos[VX] - params->texTL[VX]) / width * dyn->s[1]);
-
-                rtexcoords[i].st[1] = ((params->texBR[VY] - params->rvertices[i].pos[VY]) / height * dyn->t[0]) +
-                    ((params->rvertices[i].pos[VY] - params->texTL[VY]) / height * dyn->t[1]);
-            }
-
-            memcpy(rvertices, params->rvertices, sizeof(rvertex_t) * params->numVertices);
-        }
-
-        if(params->isWall && params->divs)
-        {
-            RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices + 3 + params->divs[0].num,
-                       rtexcoords + 3 + params->divs[0].num, NULL, NULL,
-                       rcolors + 3 + params->divs[0].num,
-                       3 + params->divs[1].num, 0,
-                       0, NULL, rTU);
-            RL_AddPoly(PT_FAN, RPT_LIGHT, rvertices, rtexcoords, NULL, NULL,
-                       rcolors, 3 + params->divs[0].num, 0,
-                       0, NULL, rTU);
-        }
-        else
-        {
-            RL_AddPoly(params->isWall? PT_TRIANGLE_STRIP : PT_FAN,
-                       RPT_LIGHT,
-                       rvertices, rtexcoords, NULL, NULL,
-                       rcolors, params->numVertices, 0,
-                       0, NULL, rTU);
-        }
-
-        R_FreeRendVertices(rvertices);
-        R_FreeRendTexCoords(rtexcoords);
-        R_FreeRendColors(rcolors);
-    }
-    params->lastIdx++;
-
-    return true; // Continue iteration.
-}
-
-static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
-                          material_t* mat)
-{
-    float               interPos = 0;
-
-    Material_Prepare(msA, mat, true, NULL);
+    *msA = Materials_Prepare(mat, spec, true);
 
     // Smooth Texture Animation?
     if(msB)
     {
-        // If fog is active, inter=0 is accepted as well. Otherwise
-        // flickering may occur if the rendering passes don't match for
-        // blended and unblended surfaces.
-        if(numTexUnits > 1 && mat->current != mat->next &&
-           !(!usingFog && mat->inter < 0))
+        materialvariant_t* variant = Materials_ChooseVariant(mat, spec, false, false);
+        if(MaterialVariant_TranslationCurrent(variant) != MaterialVariant_TranslationNext(variant))
         {
+            materialvariant_t* matB = MaterialVariant_TranslationNext(variant);
+
             // Prepare the inter texture.
-            Material_Prepare(msB, mat->next, false, NULL);
-            interPos = mat->inter;
+            *msB = Materials_PrepareVariant(matB);
+
+            // If fog is active, inter=0 is accepted as well. Otherwise
+            // flickering may occur if the rendering passes don't match for
+            // blended and unblended surfaces.
+            if(!(!usingFog && MaterialVariant_TranslationPoint(matB) < 0))
+            {
+                interPos = MaterialVariant_TranslationPoint(matB);
+            }
+        }
+        else
+        {
+            *msB = NULL;
         }
     }
 
     return interPos;
 }
 
-static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                     rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
-                     const material_snapshot_t* msA, float inter,
-                     const material_snapshot_t* msB)
-{
-    rTU[TU_PRIMARY].tex = msA->units[MTU_PRIMARY].texInst->id;
-    rTU[TU_PRIMARY].magMode = msA->units[MTU_PRIMARY].magMode;
-    rTU[TU_PRIMARY].scale[0] = msA->units[MTU_PRIMARY].scale[0];
-    rTU[TU_PRIMARY].scale[1] = msA->units[MTU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].offset[0] = msA->units[MTU_PRIMARY].offset[0];
-    rTU[TU_PRIMARY].offset[1] = msA->units[MTU_PRIMARY].offset[1];
-    rTU[TU_PRIMARY].blendMode = msA->units[MTU_PRIMARY].blendMode;
-    rTU[TU_PRIMARY].blend = msA->units[MTU_PRIMARY].alpha;
-
-    if(msA->units[MTU_DETAIL].texInst)
-    {
-        rTU[TU_PRIMARY_DETAIL].tex = msA->units[MTU_DETAIL].texInst->id;
-        rTU[TU_PRIMARY_DETAIL].magMode = msA->units[MTU_DETAIL].magMode;
-        rTU[TU_PRIMARY_DETAIL].scale[0] = msA->units[MTU_DETAIL].scale[0];
-        rTU[TU_PRIMARY_DETAIL].scale[1] = msA->units[MTU_DETAIL].scale[1];
-        rTU[TU_PRIMARY_DETAIL].offset[0] = msA->units[MTU_DETAIL].offset[0];
-        rTU[TU_PRIMARY_DETAIL].offset[1] = msA->units[MTU_DETAIL].offset[1];
-        rTU[TU_PRIMARY_DETAIL].blendMode = msA->units[MTU_DETAIL].blendMode;
-        rTU[TU_PRIMARY_DETAIL].blend = msA->units[MTU_DETAIL].alpha;
-    }
-
-    if(msB && msB->units[MTU_PRIMARY].texInst)
-    {
-        rTU[TU_INTER].tex = msB->units[MTU_PRIMARY].texInst->id;
-        rTU[TU_INTER].magMode = msB->units[MTU_PRIMARY].magMode;
-        rTU[TU_INTER].scale[0] = msB->units[MTU_PRIMARY].scale[0];
-        rTU[TU_INTER].scale[1] = msB->units[MTU_PRIMARY].scale[1];
-        rTU[TU_INTER].offset[0] = msB->units[MTU_PRIMARY].offset[0];
-        rTU[TU_INTER].offset[1] = msB->units[MTU_PRIMARY].offset[1];
-        rTU[TU_INTER].blendMode = msB->units[MTU_PRIMARY].blendMode;
-        rTU[TU_INTER].blend = msB->units[MTU_PRIMARY].alpha;
-
-        // Blend between the primary and inter textures.
-        rTU[TU_INTER].blend = inter;
-    }
-
-    if(msB && msB->units[MTU_DETAIL].texInst)
-    {
-        rTU[TU_INTER_DETAIL].tex = msB->units[MTU_DETAIL].texInst->id;
-        rTU[TU_INTER_DETAIL].magMode = msB->units[MTU_DETAIL].magMode;
-        rTU[TU_INTER_DETAIL].scale[0] = msB->units[MTU_DETAIL].scale[0];
-        rTU[TU_INTER_DETAIL].scale[1] = msB->units[MTU_DETAIL].scale[1];
-        rTU[TU_INTER_DETAIL].offset[0] = msB->units[MTU_DETAIL].offset[0];
-        rTU[TU_INTER_DETAIL].offset[1] = msB->units[MTU_DETAIL].offset[1];
-        rTU[TU_INTER_DETAIL].blendMode = msB->units[MTU_DETAIL].blendMode;
-        rTU[TU_INTER_DETAIL].blend = msB->units[MTU_DETAIL].alpha;
-
-        // Blend between the primary and inter detail textures.
-        rTU[TU_INTER_DETAIL].blend = inter;
-    }
-
-    if(msA->units[MTU_REFLECTION].texInst)
-    {
-        rTUs[TU_PRIMARY].tex = msA->units[MTU_REFLECTION].texInst->id;
-        rTUs[TU_PRIMARY].magMode = msA->units[MTU_REFLECTION].magMode;
-        rTUs[TU_PRIMARY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
-        rTUs[TU_PRIMARY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
-        rTUs[TU_PRIMARY].offset[0] = msA->units[MTU_REFLECTION].offset[0];
-        rTUs[TU_PRIMARY].offset[1] = msA->units[MTU_REFLECTION].offset[1];
-        rTUs[TU_PRIMARY].blendMode = msA->units[MTU_REFLECTION].blendMode;
-        rTUs[TU_PRIMARY].blend = msA->units[MTU_REFLECTION].alpha;
-
-        if(msA->units[MTU_REFLECTION_MASK].texInst)
-        {
-            rTUs[TU_INTER].tex = msA->units[MTU_REFLECTION_MASK].texInst->id;
-            rTUs[TU_INTER].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
-            rTUs[TU_INTER].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
-            rTUs[TU_INTER].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
-            rTUs[TU_INTER].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0];
-            rTUs[TU_INTER].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1];
-            rTUs[TU_INTER].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
-            rTUs[TU_INTER].blend = msA->units[MTU_REFLECTION_MASK].alpha;
-        }
-    }
-}
-
-/**
- * Apply primitive-specific manipulations.
- */
-static void setupRTU2(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                      rtexmapunit_t rTUs[NUM_TEXMAP_UNITS],
-                      boolean isWall, const float texOffset[2],
-                      const float texScale[2],
-                      const material_snapshot_t* msA,
-                      const material_snapshot_t* msB)
-{
-    if(texScale)
-    {
-        rTU[TU_PRIMARY].scale[0] *= texScale[0];
-        rTU[TU_PRIMARY].scale[1] *= texScale[1];
-    }
-    if(texOffset)
-    {
-        rTU[TU_PRIMARY].offset[0] += texOffset[0] / msA->width;
-        rTU[TU_PRIMARY].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) / msA->height;
-    }
-
-    if(msA->units[MTU_DETAIL].texInst && texOffset)
-    {
-        rTU[TU_PRIMARY_DETAIL].offset[0] +=
-            texOffset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
-        rTU[TU_PRIMARY_DETAIL].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) *
-                rTU[TU_PRIMARY_DETAIL].scale[1];
-    }
-
-    if(msB && msB->units[MTU_PRIMARY].texInst)
-    {
-        if(texScale)
-        {
-            rTU[TU_INTER].scale[0] *= texScale[0];
-            rTU[TU_INTER].scale[1] *= texScale[1];
-        }
-        if(texOffset)
-        {
-            rTU[TU_INTER].offset[0] += texOffset[0] / msB->width;
-            rTU[TU_INTER].offset[1] +=
-                (isWall? texOffset[1] : -texOffset[1]) / msB->height;
-        }
-    }
-
-    if(msB && msB->units[MTU_DETAIL].texInst && texOffset)
-    {
-        rTU[TU_INTER_DETAIL].offset[0] +=
-            texOffset[0] * rTU[TU_INTER_DETAIL].scale[0];
-        rTU[TU_INTER_DETAIL].offset[1] +=
-            (isWall? texOffset[1] : -texOffset[1]) *
-                rTU[TU_INTER_DETAIL].scale[1];
-    }
-
-    if(msA->units[MTU_REFLECTION].texInst)
-    {
-        if(texScale)
-        {
-            rTUs[TU_INTER].scale[0] *= texScale[0];
-            rTUs[TU_INTER].scale[1] *= texScale[1];
-        }
-        if(texOffset)
-        {
-            rTUs[TU_INTER].offset[0] += texOffset[0] / msA->width;
-            rTUs[TU_INTER].offset[1] += (isWall? texOffset[1] : -texOffset[1]) /
-                msA->height;
-        }
-    }
-}
-
 typedef struct {
     boolean         isWall;
-    rendpolytype_t  type;
+    int             flags; /// @see rendpolyFlags
     blendmode_t     blendMode;
-    const float*    texTL, *texBR;
+    pvec3_t         texTL, texBR;
     const float*    texOffset, *texScale;
     const float*    normal; // Surface normal.
     float           alpha;
@@ -1373,8 +894,8 @@ typedef struct {
     const float*    surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
-    boolean         glowing;
-    boolean         reflective;
+    uint            shadowListIdx; // List of shadows that affect this poly.
+    float           glowing;
     boolean         forceOpaque;
 
 // For bias:
@@ -1390,49 +911,42 @@ typedef struct {
 static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                                const walldiv_t* divs,
                                const rendworldpoly_params_t* p,
-                               const material_snapshot_t* msA, float inter,
-                               const material_snapshot_t* msB)
+                               const materialsnapshot_t* msA, float inter,
+                               const materialsnapshot_t* msB)
 {
-    rcolor_t*           rcolors;
-    rtexcoord_t*        rtexcoords = NULL, *rtexcoords2 = NULL,
-                       *rtexcoords5 = NULL;
-    uint                realNumVertices =
-        p->isWall && divs? 3 + divs[0].num + 3 + divs[1].num : numVertices;
-    rcolor_t*           shinyColors = NULL;
-    rtexcoord_t*        shinyTexCoords = NULL;
-    boolean             useLights = false;
-    uint                numLights = 0;
-    DGLuint             modTex = 0;
-    float               modTexTC[2][2];
-    float               modColor[3];
-    boolean             drawAsVisSprite = false, isGlowing = p->glowing;
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
+    boolean useLights = false, useShadows = false, hasDynlights = false;
+    rtexcoord_t* primaryCoords = NULL, *interCoords = NULL, *modCoords = NULL;
+    uint realNumVertices = p->isWall && divs? 3 + divs[0].num + 3 + divs[1].num : numVertices;
+    ColorRawf* rcolors;
+    ColorRawf* shinyColors = NULL;
+    rtexcoord_t* shinyTexCoords = NULL;
+    float modTexTC[2][2] = {{ 0, 0 }, { 0, 0 }};
+    ColorRawf modColor = { 0, 0, 0, 0 };
+    DGLuint modTex = 0;
+    float glowing = p->glowing;
+    boolean drawAsVisSprite = false;
 
-    if(!p->forceOpaque && p->type != RPT_SKY_MASK &&
+    // Map RTU configuration from prepared MaterialSnapshot(s).
+    const rtexmapunit_t* primaryRTU       = (!(p->flags & RPF_SKYMASK))? &MSU(msA, MTU_PRIMARY) : NULL;
+    const rtexmapunit_t* primaryDetailRTU = (r_detail && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_DETAIL).tex)? &MSU(msA, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* interRTU         = (!(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_PRIMARY).tex)? &MSU(msB, MTU_PRIMARY) : NULL;
+    const rtexmapunit_t* interDetailRTU   = (r_detail && !(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_DETAIL).tex)? &MSU(msB, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* shinyRTU         = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex)? &MSU(msA, MTU_REFLECTION) : NULL;
+    const rtexmapunit_t* shinyMaskRTU     = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex && MSU(msA, MTU_REFLECTION_MASK).tex)? &MSU(msA, MTU_REFLECTION_MASK) : NULL;
+
+    if(!p->forceOpaque && !(p->flags & RPF_SKYMASK) &&
        (!msA->isOpaque || p->alpha < 1 || p->blendMode > 0))
         drawAsVisSprite = true;
 
-    memset(rTU, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
-    memset(rTUs, 0, sizeof(rtexmapunit_t) * NUM_TEXMAP_UNITS);
-
-    if(p->type != RPT_SKY_MASK)
-    {
-        setupRTU(rTU, rTUs, msA, inter, msB);
-        setupRTU2(rTU, rTUs, p->isWall, p->texOffset, p->texScale, msA, msB);
-    }
-
-    memset(modTexTC, 0, sizeof(modTexTC));
-    memset(modColor, 0, sizeof(modColor));
-
     rcolors = R_AllocRendColors(realNumVertices);
-    rtexcoords = R_AllocRendTexCoords(realNumVertices);
-    if(rTU[TU_INTER].tex)
-        rtexcoords2 = R_AllocRendTexCoords(realNumVertices);
+    primaryCoords = R_AllocRendTexCoords(realNumVertices);
+    if(interRTU)
+        interCoords = R_AllocRendTexCoords(realNumVertices);
 
-    if(p->type != RPT_SKY_MASK)
+    if(!(p->flags & RPF_SKYMASK))
     {
         // ShinySurface?
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(shinyRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1441,14 +955,10 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             shinyTexCoords = R_AllocRendTexCoords(realNumVertices);
         }
 
-        /**
-         * Dynamic lights?
-         * In multiplicative mode, glowing surfaces are fullbright.
-         * Rendering lights on them would be pointless.
-         */
-        if(!isGlowing)
+        if(glowing < 1)
         {
-            useLights = (p->lightListIdx? true : false);
+            useLights  = (p->lightListIdx ? true : false);
+            useShadows = (p->shadowListIdx? true : false);
 
             /**
              * If multitexturing is enabled and there is at least one
@@ -1457,22 +967,20 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
              */
             if(useLights && RL_IsMTexLights())
             {
-                dynlight_t*         dyn = NULL;
+                dynlight_t* dyn = NULL;
 
-                DL_ListIterator(p->lightListIdx, &dyn, RLIT_DynGetFirst);
+                LO_IterateProjections2(p->lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
-                rtexcoords5 = R_AllocRendTexCoords(realNumVertices);
+                modCoords = R_AllocRendTexCoords(realNumVertices);
 
                 modTex = dyn->texture;
-                modColor[CR] = dyn->color[CR];
-                modColor[CG] = dyn->color[CG];
-                modColor[CB] = dyn->color[CB];
+                modColor.red   = dyn->color.red;
+                modColor.green = dyn->color.green;
+                modColor.blue  = dyn->color.blue;
                 modTexTC[0][0] = dyn->s[0];
                 modTexTC[0][1] = dyn->s[1];
                 modTexTC[1][0] = dyn->t[0];
                 modTexTC[1][1] = dyn->t[1];
-
-                numLights = 1;
             }
         }
     }
@@ -1480,99 +988,102 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->isWall)
     {
         // Primary texture coordinates.
-        quadTexCoords(rtexcoords, rvertices, *p->segLength, p->texTL);
+        quadTexCoords(primaryCoords, rvertices, *p->segLength, p->texTL);
 
         // Blend texture coordinates.
-        if(rTU[TU_INTER].tex && !drawAsVisSprite)
-            quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texTL);
+        if(interRTU && !drawAsVisSprite)
+            quadTexCoords(interCoords, rvertices, *p->segLength, p->texTL);
 
         // Shiny texture coordinates.
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
-            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
-                               *p->segLength);
+        if(shinyRTU && !drawAsVisSprite)
+            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], *p->segLength);
 
         // First light texture coordinates.
-        if(numLights > 0 && RL_IsMTexLights())
-            quadLightCoords(rtexcoords5, modTexTC[0], modTexTC[1]);
+        if(modTex && RL_IsMTexLights())
+            quadLightCoords(modCoords, modTexTC[0], modTexTC[1]);
     }
     else
     {
-        uint                i;
+        uint i;
 
         for(i = 0; i < numVertices; ++i)
         {
-            const rvertex_t*    vtx = &rvertices[i];
-            float               xyz[3];
+            const rvertex_t* vtx = &rvertices[i];
+            float xyz[3];
 
             xyz[VX] = vtx->pos[VX] - p->texTL[VX];
             xyz[VY] = vtx->pos[VY] - p->texTL[VY];
             xyz[VZ] = vtx->pos[VZ] - p->texTL[VZ];
 
             // Primary texture coordinates.
-            if(rTU[TU_PRIMARY].tex)
+            if(primaryRTU)
             {
-                rtexcoord_t*        tc = &rtexcoords[i];
+                rtexcoord_t* tc = &primaryCoords[i];
 
                 tc->st[0] =  xyz[VX];
                 tc->st[1] = -xyz[VY];
             }
 
             // Blend primary texture coordinates.
-            if(rTU[TU_INTER].tex)
+            if(interRTU)
             {
-                rtexcoord_t*        tc = &rtexcoords2[i];
+                rtexcoord_t* tc = &interCoords[i];
 
                 tc->st[0] =  xyz[VX];
                 tc->st[1] = -xyz[VY];
             }
 
             // Shiny texture coordinates.
-            if(p->reflective && rTUs[TU_PRIMARY].tex)
+            if(shinyRTU)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx->pos);
             }
 
             // First light texture coordinates.
-            if(numLights > 0 && RL_IsMTexLights())
+            if(modTex && RL_IsMTexLights())
             {
-                rtexcoord_t*        tc = &rtexcoords5[i];
-                float               width, height;
+                rtexcoord_t* tc = &modCoords[i];
+                float width, height;
 
                 width  = p->texBR[VX] - p->texTL[VX];
                 height = p->texBR[VY] - p->texTL[VY];
 
-                tc->st[0] = ((p->texBR[VX] - vtx->pos[VX]) / width * modTexTC[0][0]) +
-                    (xyz[VX] / width * modTexTC[0][1]);
-                tc->st[1] = ((p->texBR[VY] - vtx->pos[VY]) / height * modTexTC[1][0]) +
-                    (xyz[VY] / height * modTexTC[1][1]);
+                tc->st[0] = ((p->texBR[VX] - vtx->pos[VX]) / width  * modTexTC[0][0]) + (xyz[VX] / width  * modTexTC[0][1]);
+                tc->st[1] = ((p->texBR[VY] - vtx->pos[VY]) / height * modTexTC[1][0]) + (xyz[VY] / height * modTexTC[1][1]);
             }
         }
     }
 
     // Light this polygon.
-    if(p->type != RPT_SKY_MASK)
+    if(!(p->flags & RPF_SKYMASK))
     {
-        if(isGlowing || levelFullBright)
+        if(levelFullBright || !(glowing < 1))
         {   // Uniform colour. Apply to all vertices.
-            Rend_VertexColorsGlow(rcolors, numVertices);
+            Rend_VertexColorsGlow(rcolors, numVertices, *p->sectorLightLevel + (levelFullBright? 1 : glowing));
         }
         else
         {   // Non-uniform color.
             if(useBias && p->bsuf)
-            {
-                // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices,
-                            p->normal, *p->sectorLightLevel,
-                            p->mapObject, p->elmIdx, p->isWall);
+            {   // Do BIAS lighting for this poly.
+                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices, p->normal, *p->sectorLightLevel, p->mapObject, p->elmIdx, p->isWall);
+                if(glowing > 0)
+                {
+                    uint i;
+                    for(i = 0; i < numVertices; ++i)
+                    {
+                        rcolors[i].rgba[CR] = MINMAX_OF(0, rcolors[i].rgba[CR] + glowing, 1);
+                        rcolors[i].rgba[CG] = MINMAX_OF(0, rcolors[i].rgba[CG] + glowing, 1);
+                        rcolors[i].rgba[CB] = MINMAX_OF(0, rcolors[i].rgba[CB] + glowing, 1);
+                    }
+                }
             }
             else
             {
-                uint i;
-                
+                float llL = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDL + glowing, 1);
+                float llR = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDR + glowing, 1);
 
                 // Calculate the color for each vertex, blended with plane color?
-                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
-                   p->surfaceColor[2] < 1)
+                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 || p->surfaceColor[2] < 1)
                 {
                     float vColor[4];
 
@@ -1582,11 +1093,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    if(p->isWall)
+                    if(p->isWall && llL != llR)
                     {
-                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
-
                         lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, vColor);
                         lightVertex(&rcolors[2], &rvertices[2], llR, vColor);
@@ -1594,18 +1102,13 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], ll, vColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, vColor);
                     }
                 }
                 else
                 {   // Use sector light+color only.
-                    if(p->isWall)
+                    if(p->isWall && llL != llR)
                     {
-                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
-
                         lightVertex(&rcolors[0], &rvertices[0], llL, p->sectorLightColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, p->sectorLightColor);
                         lightVertex(&rcolors[2], &rvertices[2], llR, p->sectorLightColor);
@@ -1613,10 +1116,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], ll,
-                                        p->sectorLightColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, p->sectorLightColor);
                     }
                 }
 
@@ -1631,59 +1131,56 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor2[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    lightVertex(&rcolors[0], &rvertices[0], *p->sectorLightLevel + p->surfaceLightLevelDL, vColor);
-                    lightVertex(&rcolors[2], &rvertices[2], *p->sectorLightLevel + p->surfaceLightLevelDR, vColor);
+                    lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
+                    lightVertex(&rcolors[2], &rvertices[2], llR, vColor);
                 }
             }
 
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(shinyRTU && !drawAsVisSprite)
         {
-            uint                i;
+            uint i;
 
             // Strength of the shine.
             for(i = 0; i < numVertices; ++i)
             {
-                shinyColors[i].rgba[CR] =
-                    MAX_OF(rcolors[i].rgba[CR], msA->shiny.minColor[CR]);
-                shinyColors[i].rgba[CG] =
-                    MAX_OF(rcolors[i].rgba[CG], msA->shiny.minColor[CG]);
-                shinyColors[i].rgba[CB] =
-                    MAX_OF(rcolors[i].rgba[CB], msA->shiny.minColor[CB]);
-                shinyColors[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
+                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shinyMinColor[CR]);
+                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shinyMinColor[CG]);
+                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shinyMinColor[CB]);
+                shinyColors[i].rgba[CA] = shinyRTU->opacity;
             }
         }
 
         // Apply uniform alpha.
         Rend_VertexColorsAlpha(rcolors, numVertices, p->alpha);
     }
-    else
-    {
-        memset(rcolors, 0, sizeof(rcolor_t) * numVertices);
-    }
 
-    if(IS_MUL && useLights)
+    if(useLights || useShadows)
     {
         // Surfaces lit by dynamic lights may need to be rendered
         // differently than non-lit surfaces.
-        uint                i;
-        float               avglightlevel = 0;
+        float avgLightlevel = 0;
 
         // Determine the average light level of this rend poly,
         // if too bright; do not bother with lights.
+        {uint i;
         for(i = 0; i < numVertices; ++i)
         {
-            avglightlevel += rcolors[i].rgba[CR];
-            avglightlevel += rcolors[i].rgba[CG];
-            avglightlevel += rcolors[i].rgba[CB];
-        }
-        avglightlevel /= (float) numVertices * 3;
+            avgLightlevel += rcolors[i].rgba[CR];
+            avgLightlevel += rcolors[i].rgba[CG];
+            avgLightlevel += rcolors[i].rgba[CB];
+        }}
+        avgLightlevel /= (float) numVertices * 3;
 
-        if(avglightlevel > 0.98f)
+        if(avgLightlevel > 0.98f)
         {
             useLights = false;
+        }
+        if(avgLightlevel < 0.02f)
+        {
+            useShadows = false;
         }
     }
 
@@ -1696,46 +1193,100 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
-                           msA->width, msA->height, p->texOffset,
-                           p->blendMode, p->lightListIdx, isGlowing,
-                           !msA->isOpaque, rTU);
-        R_FreeRendTexCoords(rtexcoords);
-        if(rtexcoords2)
-            R_FreeRendTexCoords(rtexcoords2);
-        if(rtexcoords5)
-            R_FreeRendTexCoords(rtexcoords5);
-        if(shinyTexCoords)
-            R_FreeRendTexCoords(shinyTexCoords);
+        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength, msA->material,
+                           p->texOffset, p->blendMode, p->lightListIdx, glowing);
+
+        R_FreeRendTexCoords(primaryCoords);
         R_FreeRendColors(rcolors);
-        if(shinyColors)
-            R_FreeRendColors(shinyColors);
+
+        if(interCoords) R_FreeRendTexCoords(interCoords);
+        if(modCoords) R_FreeRendTexCoords(modCoords);
+        if(shinyTexCoords) R_FreeRendTexCoords(shinyTexCoords);
+        if(shinyColors) R_FreeRendColors(shinyColors);
 
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
-    if(p->type != RPT_SKY_MASK && useLights)
+    if(!(p->flags & RPF_SKYMASK) && useLights)
     {
-        /**
-         * Generate a dynlight primitive for each of the lights affecting
-         * the surface. Multitexturing may be used for the first light, so
-         * it's skipped.
-         */
-        dynlightiterparams_t dlparams;
+        // Render all lights projected onto this surface.
+        renderlightprojectionparams_t params;
 
-        dlparams.rvertices = rvertices;
-        dlparams.numVertices = numVertices;
-        dlparams.realNumVertices = realNumVertices;
-        dlparams.lastIdx = 0;
-        dlparams.isWall = p->isWall;
-        dlparams.divs = divs;
-        dlparams.texTL = p->texTL;
-        dlparams.texBR = p->texBR;
+        params.rvertices = rvertices;
+        params.numVertices = numVertices;
+        params.realNumVertices = realNumVertices;
+        params.lastIdx = 0;
+        params.isWall = p->isWall;
+        params.divs = divs;
+        params.texTL = p->texTL;
+        params.texBR = p->texBR;
 
-        DL_ListIterator(p->lightListIdx, &dlparams, RLIT_DynLightWrite);
-        numLights += dlparams.lastIdx;
-        if(RL_IsMTexLights())
-            numLights -= 1;
+        hasDynlights = (0 != Rend_RenderLightProjections(p->lightListIdx, &params));
+    }
+
+    if(!(p->flags & RPF_SKYMASK) && useShadows)
+    {
+        // Render all shadows projected onto this surface.
+        rendershadowprojectionparams_t params;
+
+        params.rvertices = rvertices;
+        params.numVertices = numVertices;
+        params.realNumVertices = realNumVertices;
+        params.isWall = p->isWall;
+        params.texTL = p->texTL;
+        params.texBR = p->texBR;
+        params.divs = divs;
+
+        Rend_RenderShadowProjections(p->shadowListIdx, &params);
+    }
+
+    // Map RTU state from the prepared texture units in the MaterialSnapshot(s).
+    RL_LoadDefaultRtus();
+    RL_MapRtu(RTU_PRIMARY, primaryRTU);
+    RL_MapRtu(RTU_PRIMARY_DETAIL, primaryDetailRTU);
+    RL_MapRtu(RTU_INTER, interRTU);
+    RL_MapRtu(RTU_INTER_DETAIL, interDetailRTU);
+    RL_MapRtu(RTU_REFLECTION, shinyRTU);
+    RL_MapRtu(RTU_REFLECTION_MASK, shinyMaskRTU);
+
+    /// \todo Avoid modifying the RTU write state for the purposes of primitive
+    /// specific translations by implementing these as arguments to the RL_Add*
+    /// family of functions.
+    if(primaryRTU)
+    {
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY, p->texOffset);
+        if(p->texScale) RL_Rtu_ScaleST(RTU_PRIMARY, p->texScale);
+    }
+
+    if(primaryDetailRTU)
+    {
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_PRIMARY_DETAIL, p->texOffset);
+    }
+
+    if(interRTU)
+    {
+        rtexmapunit_t rtu;
+        memcpy(&rtu, interRTU, sizeof rtu);
+        // Blend between the primary and inter textures.
+        rtu.opacity = inter;
+        if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+        if(p->texScale) Rtu_ScaleST(&rtu, p->texScale);
+        RL_CopyRtu(RTU_INTER, &rtu);
+
+        if(interDetailRTU)
+        {
+            memcpy(&rtu, interDetailRTU, sizeof rtu);
+            // Blend between the primary and inter textures.
+            rtu.opacity = inter;
+            if(p->texOffset) Rtu_TranslateOffsetv(&rtu, p->texOffset);
+            RL_CopyRtu(RTU_INTER_DETAIL, &rtu);
+        }
+    }
+
+    if(shinyMaskRTU)
+    {
+        if(p->texOffset) RL_Rtu_TranslateOffsetv(RTU_REFLECTION_MASK, p->texOffset);
+        if(p->texScale) RL_Rtu_ScaleST(RTU_REFLECTION_MASK, p->texScale);
     }
 
     // Write multiple polys depending on rend params.
@@ -1743,7 +1294,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     {
         float               bL, tL, bR, tR;
         rvertex_t           origVerts[4];
-        rcolor_t            origColors[4];
+        ColorRawf            origColors[4];
         rtexcoord_t         origTexCoords[4];
 
         /**
@@ -1753,8 +1304,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          */
 
         memcpy(origVerts, rvertices, sizeof(rvertex_t) * 4);
-        memcpy(origTexCoords, rtexcoords, sizeof(rtexcoord_t) * 4);
-        memcpy(origColors, rcolors, sizeof(rcolor_t) * 4);
+        memcpy(origTexCoords, primaryCoords, sizeof(rtexcoord_t) * 4);
+        memcpy(origColors, rcolors, sizeof(ColorRawf) * 4);
 
         bL = origVerts[0].pos[VZ];
         tL = origVerts[1].pos[VZ];
@@ -1762,28 +1313,28 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         tR = origVerts[3].pos[VZ];
 
         R_DivVerts(rvertices, origVerts, divs);
-        R_DivTexCoords(rtexcoords, origTexCoords, divs, bL, tL, bR, tR);
+        R_DivTexCoords(primaryCoords, origTexCoords, divs, bL, tL, bR, tR);
         R_DivVertColors(rcolors, origColors, divs, bL, tL, bR, tR);
 
-        if(rtexcoords2)
+        if(interCoords)
         {
-            rtexcoord_t         origTexCoords2[4];
+            rtexcoord_t origTexCoords2[4];
 
-            memcpy(origTexCoords2, rtexcoords2, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(rtexcoords2, origTexCoords2, divs, bL, tL, bR, tR);
+            memcpy(origTexCoords2, interCoords, sizeof(rtexcoord_t) * 4);
+            R_DivTexCoords(interCoords, origTexCoords2, divs, bL, tL, bR, tR);
         }
 
-        if(rtexcoords5)
+        if(modCoords)
         {
-            rtexcoord_t         origTexCoords5[4];
+            rtexcoord_t origTexCoords5[4];
 
-            memcpy(origTexCoords5, rtexcoords5, sizeof(rtexcoord_t) * 4);
-            R_DivTexCoords(rtexcoords5, origTexCoords5, divs, bL, tL, bR, tR);
+            memcpy(origTexCoords5, modCoords, sizeof(rtexcoord_t) * 4);
+            R_DivTexCoords(modCoords, origTexCoords5, divs, bL, tL, bR, tR);
         }
 
         if(shinyTexCoords)
         {
-            rtexcoord_t         origShinyTexCoords[4];
+            rtexcoord_t origShinyTexCoords[4];
 
             memcpy(origShinyTexCoords, shinyTexCoords, sizeof(rtexcoord_t) * 4);
             R_DivTexCoords(shinyTexCoords, origShinyTexCoords, divs, bL, tL, bR, tR);
@@ -1791,52 +1342,38 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
         if(shinyColors)
         {
-            rcolor_t            origShinyColors[4];
-            memcpy(origShinyColors, shinyColors, sizeof(rcolor_t) * 4);
+            ColorRawf origShinyColors[4];
+            memcpy(origShinyColors, shinyColors, sizeof(ColorRawf) * 4);
             R_DivVertColors(shinyColors, origShinyColors, divs, bL, tL, bR, tR);
         }
 
-        RL_AddPoly(PT_FAN, p->type, rvertices + 3 + divs[0].num,
-                   rtexcoords + 3 + divs[0].num,
-                   rtexcoords2? rtexcoords2 + 3 + divs[0].num : NULL,
-                   rtexcoords5? rtexcoords5 + 3 + divs[0].num : NULL,
-                   rcolors + 3 + divs[0].num, 3 + divs[1].num,
-                   numLights, modTex, modColor, rTU);
-        RL_AddPoly(PT_FAN, p->type, rvertices, rtexcoords, rtexcoords2,
+        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            3 + divs[1].num, rvertices + 3 + divs[0].num, rcolors + 3 + divs[0].num,
+            primaryCoords + 3 + divs[0].num, interCoords? interCoords + 3 + divs[0].num : NULL,
+            modTex, &modColor, modCoords? modCoords + 3 + divs[0].num : NULL,
+            shinyColors + 3 + divs[0].num, shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
+            shinyMaskRTU? primaryCoords + 3 + divs[0].num : NULL);
 
-                   rtexcoords5, rcolors, 3 + divs[0].num,
-                   numLights, modTex, modColor, rTU);
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
-        {
-            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
-                       shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
-                       rTUs[TU_INTER].tex? rtexcoords + 3 + divs[0].num : NULL,
-                       NULL,
-                       shinyColors + 3 + divs[0].num,
-                       3 + divs[1].num, 0, 0, NULL, rTUs);
-            RL_AddPoly(PT_FAN, RPT_SHINY, rvertices,
-                       shinyTexCoords, rTUs[TU_INTER].tex? rtexcoords : NULL,
-                       NULL, shinyColors, 3 + divs[0].num, 0, 0, NULL, rTUs);
-        }
+        RL_AddPolyWithCoordsModulationReflection(PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            3 + divs[0].num, rvertices, rcolors,
+            primaryCoords, interCoords,
+            modTex, &modColor, modCoords,
+            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
     }
     else
     {
-        RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->type, rvertices,
-                   rtexcoords, rtexcoords2, rtexcoords5, rcolors,
-
-                   numVertices, numLights, modTex, modColor, rTU);
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
-            RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
-                       rvertices, shinyTexCoords,
-                       rTUs[TU_INTER].tex? rtexcoords : NULL,
-                       NULL, shinyColors, numVertices, 0, 0, NULL, rTUs);
+        RL_AddPolyWithCoordsModulationReflection(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, p->flags | (hasDynlights? RPF_HAS_DYNLIGHTS : 0),
+            numVertices, rvertices, rcolors,
+            primaryCoords, interCoords,
+            modTex, &modColor, modCoords,
+            shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : NULL);
     }
 
-    R_FreeRendTexCoords(rtexcoords);
-    if(rtexcoords2)
-        R_FreeRendTexCoords(rtexcoords2);
-    if(rtexcoords5)
-        R_FreeRendTexCoords(rtexcoords5);
+    R_FreeRendTexCoords(primaryCoords);
+    if(interCoords)
+        R_FreeRendTexCoords(interCoords);
+    if(modCoords)
+        R_FreeRendTexCoords(modCoords);
     if(shinyTexCoords)
         R_FreeRendTexCoords(shinyTexCoords);
     R_FreeRendColors(rcolors);
@@ -1855,18 +1392,18 @@ static boolean doRenderSeg(seg_t* seg,
                            float lightLevelDR,
                            const float* lightColor,
                            uint lightListIdx,
+                           uint shadowListIdx,
                            const walldiv_t* divs,
                            boolean skyMask,
-                           boolean addFakeRadio, boolean addReflection,
-                           boolean isGlowing,
-                           const float texTL[3], const float texBR[3],
+                           boolean addFakeRadio,
+                           vec3_t texTL, vec3_t texBR,
                            const float texOffset[2],
                            const float texScale[2],
                            blendmode_t blendMode,
                            const float* color, const float* color2,
                            biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                           const material_snapshot_t* msA, float inter,
-                           const material_snapshot_t* msB,
+                           const materialsnapshot_t* msA, float inter,
+                           const materialsnapshot_t* msB,
                            boolean isTwosidedMiddle)
 {
     rendworldpoly_params_t params;
@@ -1876,7 +1413,7 @@ static boolean doRenderSeg(seg_t* seg,
     // Init the params.
     memset(&params, 0, sizeof(params));
 
-    params.type = (skyMask? RPT_SKY_MASK : RPT_NORMAL);
+    params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     params.isWall = true;
     params.segLength = &seg->length;
     params.forceOpaque = (alpha < 0? true : false);
@@ -1893,10 +1430,12 @@ static boolean doRenderSeg(seg_t* seg,
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.surfaceColor2 = color2;
+    params.glowing = msA? msA->glowing : 0;
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
     params.lightListIdx = lightListIdx;
+    params.shadowListIdx = shadowListIdx;
 
     if(divs)
     {
@@ -1921,25 +1460,15 @@ static boolean doRenderSeg(seg_t* seg,
     // Top Right.
     V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-    // Is reflective?
-    if(addReflection)
-    {
-        params.reflective = true;
-    }
-
-    // Make it fullbright?
-    if(isGlowing)
-        params.glowing = true;
-
     // Draw this seg.
     if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
     {   // Drawn poly was opaque.
         // Render Fakeradio polys for this seg?
-        if(params.type != RPT_SKY_MASK && addFakeRadio)
+        if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
         {
             rendsegradio_params_t radioParams;
+            float ll;
 
-            radioParams.sectorLightLevel = lightLevel;
             radioParams.linedefLength = &seg->lineDef->length;
             radioParams.botCn = side->bottomCorners;
             radioParams.topCn = side->topCorners;
@@ -1967,7 +1496,22 @@ static boolean doRenderSeg(seg_t* seg,
             // Top Right.
             V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-            Rend_RadioSegSection(rvertices, divs, &radioParams);
+            ll = *lightLevel;
+            Rend_ApplyLightAdaptation(&ll);
+            if(ll > 0)
+            {
+                // Determine the shadow properties.
+                // \fixme Make cvars out of constants.
+                radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
+                radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll);
+
+                if(radioParams.shadowSize > 0)
+                {
+                    // Shadows are black.
+                    radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 0;
+                    Rend_RadioSegSection(rvertices, divs, &radioParams);
+                }
+            }
         }
 
         R_FreeRendVertices(rvertices);
@@ -1979,16 +1523,16 @@ static boolean doRenderSeg(seg_t* seg,
     return false; // Do not clip with this.
 }
 
-static void renderPlane(subsector_t* ssec, planetype_t type,
-                        float height, const vectorcomp_t normal[3],
-                        material_t* inMat, short sufInFlags,
-                        const float sufColor[4], blendmode_t blendMode,
-                        const float texTL[3], const float texBR[3],
-                        const float texOffset[2], const float texScale[2],
-                        boolean skyMasked,
-                        boolean addDLights, boolean isGlowing,
-                        biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                        int texMode /*tmp*/)
+static void renderPlane(subsector_t* ssec, planetype_t type, float height,
+    vec3_t tangent, vec3_t bitangent, vec3_t normal,
+    material_t* inMat, int sufFlags, short sufInFlags,
+    const float sufColor[4], blendmode_t blendMode,
+    vec3_t texTL, vec3_t texBR,
+    const float texOffset[2], const float texScale[2],
+    boolean skyMasked,
+    boolean addDLights, boolean addMobjShadows,
+    biassurface_t* bsuf, uint elmIdx /*tmp*/,
+    int texMode /*tmp*/, boolean flipSurfaceNormal)
 {
     float               inter = 0;
     rendworldpoly_params_t params;
@@ -1997,13 +1541,11 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     boolean             blended = false;
     sector_t*           sec = ssec->sector;
     material_t*         mat = NULL;
-    material_snapshot_t msA, msB;
-
-    memset(&msA, 0, sizeof(msA));
-    memset(&msB, 0, sizeof(msB));
+    const materialsnapshot_t* msA = NULL, *msB = NULL;
 
     memset(&params, 0, sizeof(params));
 
+    params.flags = RPF_DEFAULT;
     params.isWall = false;
     params.mapObject = ssec;
     params.elmIdx = elmIdx;
@@ -2020,33 +1562,23 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
     if(skyMasked)
     {
-        skyhemispheres |=
-            (type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
-
         // In devRendSkyMode mode we render all polys destined for the
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
         {
-            params.type = RPT_NORMAL;
             params.blendMode = BM_NORMAL;
-            params.glowing = true;
+            params.glowing = 1;
             params.forceOpaque = true;
             mat = inMat;
         }
         else
         {   // We'll mask this.
-            params.type = RPT_SKY_MASK;
+            params.flags |= RPF_SKYMASK;
         }
     }
     else
     {
-        params.type = RPT_NORMAL;
         mat = inMat;
-
-        if(isGlowing)
-        {
-            params.glowing = true; // Make it stand out
-        }
 
         if(type != PLN_MID)
         {
@@ -2064,101 +1596,97 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         }
     }
 
-    /**
-     * If this poly is destined for the skymask, we don't need to
-     * do any further processing.
-     */
-    if(params.type != RPT_SKY_MASK)
+    rvertices = R_AllocRendVertices(numVertices);
+    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0) ^ flipSurfaceNormal);
+
+    if(!(params.flags & RPF_SKYMASK))
     {
         // Smooth Texture Animation?
-        if(smoothTexAnim && texMode != 1)
+        if(smoothTexAnim)
             blended = true;
 
-        // Dynamic lights.
-        if(addDLights && !params.glowing)
-        {
-            params.lightListIdx =
-                DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
-                                    (DLF_NO_PLANAR |
-                                     (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
-        }
-
-        // Render Shiny polys?
-        if(useShinySurfaces && mat && mat->reflection)
-        {
-            params.reflective = true;
-        }
-    }
-
-    rvertices = R_AllocRendVertices(numVertices);
-    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0));
-
-    if(params.type != RPT_SKY_MASK)
-    {
         inter = getSnapshots(&msA, blended? &msB : NULL, mat);
+
+        if(texMode != 2)
+        {
+            params.glowing = msA->glowing;
+        }
+        else
+        {
+            surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
+            const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+                MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+            const materialsnapshot_t* ms = Materials_Prepare(suf->material, spec, true);
+            params.glowing = ms->glowing;
+        }
+
+        // Dynamic lights?
+        if(addDLights && params.glowing < 1 && !(!useDynlights && !useWallGlow))
+        {
+            params.lightListIdx = LO_ProjectToSurface((PLF_NO_PLANE | (type == PLN_FLOOR? PLF_TEX_FLOOR : PLF_TEX_CEILING)), ssec, 1,
+                params.texTL, params.texBR, tangent, bitangent, normal);
+        }
+
+        // Mobj shadows?
+        if(addMobjShadows && params.glowing < 1 && Rend_MobjShadowsEnabled())
+        {
+            // Glowing planes inversely diminish shadow strength.
+            params.shadowListIdx = R_ProjectShadowsToSurface(ssec, 1 - params.glowing,
+                params.texTL, params.texBR, tangent, bitangent, normal);
+        }
     }
 
-    renderWorldPoly(rvertices, numVertices, NULL, &params,
-                    &msA, inter, blended? &msB : NULL);
+    renderWorldPoly(rvertices, numVertices, NULL, &params, msA, inter, blended? msB : NULL);
 
     R_FreeRendVertices(rvertices);
 }
 
-static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
-                             float height, const vectorcomp_t normal[3],
-                             material_t* inMat, short sufInFlags,
-                             const float sufColor[4], blendmode_t blendMode,
-                             const float texOffset[2], const float texScale[2],
-                             boolean skyMasked,
-                             boolean addDLights, boolean isGlowing,
-                             biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                             int texMode /*tmp*/)
+static void Rend_RenderPlane(subsector_t* ssec, planetype_t type, float height,
+    const_pvec3_t _tangent, const_pvec3_t _bitangent, const_pvec3_t _normal,
+    material_t* inMat, int sufFlags, short sufInFlags,
+    const float sufColor[4], blendmode_t blendMode,
+    const float texOffset[2], const float texScale[2],
+    boolean skyMasked, boolean addDLights, boolean addMobjShadows,
+    biassurface_t* bsuf, uint elmIdx /*tmp*/,
+    int texMode /*tmp*/, boolean flipNormal, boolean clipBackFacing)
 {
-    vec3_t vec;
+    vec3_t vec, tangent, bitangent, normal;
 
     // Must have a visible surface.
-    if(!inMat || (inMat->flags & MATF_NO_DRAW))
-        return;
+    if(!inMat || !Material_IsDrawable(inMat)) return;
 
-    V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY],
-           vy - height);
+    V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY], vy - height);
+
+    /**
+     * Flip surface tangent space vectors according to the z positon of the viewer relative
+     * to the plane height so that the plane is always visible.
+     */
+    V3_Copy(tangent, _tangent);
+    V3_Copy(bitangent, _bitangent);
+    V3_Copy(normal, _normal);
+    if(flipNormal)
+    {
+        /// \fixme This is obviously wrong, do this correctly!
+        tangent[VZ] *= -1;
+        bitangent[VZ] *= -1;
+        normal[VZ] *= -1;
+    }
 
     // Don't bother with planes facing away from the camera.
-    if(!(V3_DotProduct(vec, normal) < 0))
+    if(!(clipBackFacing && !(V3_DotProduct(vec, normal) < 0)))
     {
         float texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
-        V3_Set(texTL, ssec->bBox[0].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 1 : 0].pos[VY], height);
-        V3_Set(texBR, ssec->bBox[1].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
+        V3_Set(texTL, ssec->aaBox.minX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 1 : 0][VY], height);
+        V3_Set(texBR, ssec->aaBox.maxX,
+               ssec->aaBox.arvec2[type == PLN_FLOOR? 0 : 1][VY], height);
 
-        renderPlane(ssec, type, height, normal, inMat, sufInFlags,
+        renderPlane(ssec, type, height, tangent, bitangent, normal, inMat, sufFlags, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
-                    skyMasked, addDLights, isGlowing, bsuf, elmIdx, texMode);
+                    skyMasked, addDLights, addMobjShadows, bsuf, elmIdx, texMode, flipNormal);
     }
-}
-
-static boolean isVisible(surface_t* surface, sector_t* frontsec,
-                         boolean canMask, boolean* skyMask)
-{
-    if(!(surface->material && (surface->material->flags & MATF_NO_DRAW)))
-    {
-        *skyMask = false;
-        return true;
-    }
-    else if(canMask)
-    {   // Perhaps add this section to the sky mask?
-        if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-           R_IsSkySurface(&frontsec->SP_floorsurface))
-        {
-           *skyMask = true;
-           return true;
-        }
-    }
-
-    return false;
 }
 
 static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
@@ -2167,17 +1695,13 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                               float bottom, float top,
                               const float texOffset[2],
                               sector_t* frontsec, boolean softSurface,
-                              boolean addDLights, short sideFlags)
+                              boolean addDLights, boolean addMobjShadows, short sideFlags)
 {
-    float               alpha;
-    boolean             skyMask;
-    boolean             solidSeg = true;
+    boolean solidSeg = true;
+    float alpha;
 
-    if(!isVisible(surface, frontsec, false, &skyMask))
-        return false;
-
-    if(bottom >= top)
-        return true;
+    if(!Surface_IsDrawable(surface)) return false;
+    if(bottom >= top) return true;
 
     alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
 
@@ -2203,12 +1727,11 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             delta[0] = lineDef->dX;
             delta[1] = lineDef->dY;
 
-            pos = M_ProjectPointOnLine(mo->pos, lineDef->L_v1pos, delta, 0,
-                                       result);
+            pos = M_ProjectPointOnLine(mo->pos, lineDef->L_v1pos, delta, 0, result);
             if(pos > 0 && pos < 1)
             {
-                float               distance;
-                float               minDistance = mo->radius * .8f;
+                float distance;
+                float minDistance = mo->radius * .8f;
 
                 delta[VX] = mo->pos[VX] - result[VX];
                 delta[VY] = mo->pos[VY] - result[VY];
@@ -2230,24 +1753,19 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 
     if(alpha > 0)
     {
-        int                 texMode = 0;
-        uint                lightListIdx = 0;
+        uint                lightListIdx = 0, shadowListIdx = 0;
         float               texTL[3], texBR[3], texScale[2],
                             inter = 0;
         walldiv_t           divs[2];
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
-        rendpolytype_t      type = RPT_NORMAL;
+        int                 rpFlags = RPF_DEFAULT;
         boolean             isTwoSided = (seg->lineDef &&
             seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
-        boolean             addFakeRadio = false, addReflection = false,
-                            isGlowing = false, blended = false;
+        boolean             addFakeRadio = false;
         const float*        color = NULL, *color2 = NULL;
-        material_snapshot_t msA, msB;
-
-        memset(&msA, 0, sizeof(msA));
-        memset(&msB, 0, sizeof(msB));
+        const materialsnapshot_t* msA = NULL, *msB = NULL;
 
         texScale[0] = ((surface->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[1] = ((surface->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
@@ -2255,57 +1773,63 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         V3_Set(texTL, from->pos[VX], from->pos[VY], top);
         V3_Set(texBR, to->pos  [VX], to->pos  [VY], bottom);
 
-        // Fill in the remaining params data.
-        if(skyMask || R_IsSkySurface(surface))
+        // Determine which Material to use.
+        if(devRendSkyMode && seg->SG_backsector &&
+           ((section == SEG_BOTTOM && R_IsSkySurface(&seg->SG_frontsector->SP_floorsurface) &&
+                                      R_IsSkySurface(&seg->SG_backsector->SP_floorsurface)) ||
+            (section == SEG_TOP    && R_IsSkySurface(&seg->SG_frontsector->SP_ceilsurface) &&
+                                      R_IsSkySurface(&seg->SG_backsector->SP_ceilsurface))))
         {
-            // In devRendSkyMode mode we render all polys destined for the skymask
-            // as regular world polys (with a few obvious properties).
-            if(devRendSkyMode)
-            {
-                mat = surface->material;
-                forceOpaque = true;
-                isGlowing = true;
-            }
-            else
-            {   // We'll mask this.
-                type = RPT_SKY_MASK;
-            }
+            // Geometry not normally rendered however we do so in dev sky mode.
+            mat = seg->SG_frontsector->SP_planematerial(section == SEG_TOP? PLN_CEILING : PLN_FLOOR);
         }
         else
         {
-            int                 surfaceFlags, surfaceInFlags;
-
-            // Determine which texture to use.
             if(renderTextures == 2)
-                texMode = 2;
+            {
+                // Lighting debug mode; render using System:gray.
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
+            }
             else if(!surface->material ||
-                    ((surface->inFlags & SUIF_MATERIAL_FIX) && devNoTexFix))
-                texMode = 1;
+                    ((surface->inFlags & SUIF_FIX_MISSING_MATERIAL) && devNoTexFix))
+            {
+                // Missing material debug mode; render using System:missing.
+                mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
+            }
             else
-                texMode = 0;
-
-            if(texMode == 0)
+            {
+                // Normal mode.
                 mat = surface->material;
-            else if(texMode == 1)
-                // For debug, render the "missing" texture instead of the texture
-                // chosen for surfaces to fix the HOMs.
-                mat = P_GetMaterial(DDT_MISSING, MN_SYSTEM);
-            else // texMode == 2
-                // For lighting debug, render all solid surfaces using the gray
-                // texture.
-                mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
+            }
+
+            if(Material_IsSkyMasked(mat))
+            {
+                if(!devRendSkyMode)
+                {
+                    // We'll mask this.
+                    rpFlags |= RPF_SKYMASK;
+                }
+                else
+                {
+                    // In dev sky mode we render all would-be skymask geometry
+                    // as if it were non-skymask.
+                    forceOpaque = true;
+                }
+            }
+        }
+
+        // Fill in the remaining params data.
+        if(!(rpFlags & RPF_SKYMASK))
+        {
+            int surfaceFlags, surfaceInFlags;
 
             // Make any necessary adjustments to the surface flags to suit the
             // current texture mode.
             surfaceFlags = surface->flags;
             surfaceInFlags = surface->inFlags;
-            if(texMode == 1)
+            if(renderTextures == 2)
             {
-                isGlowing = true; // Make it stand out
-            }
-            else if(texMode == 2)
-            {
-                surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
+                surfaceInFlags &= ~(SUIF_FIX_MISSING_MATERIAL);
             }
 
             if(section != SEG_MIDDLE || (section == SEG_MIDDLE && !isTwoSided))
@@ -2321,36 +1845,33 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                     blendMode = surface->blendMode;
             }
 
-            if(glowingTextures &&
-               ((surfaceFlags & DDSUF_GLOW) ||
-               (surface->material && (surface->material->flags & MATF_GLOW))))
-                isGlowing = true;
-
             addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
         }
 
-        if(type != RPT_SKY_MASK)
+        if(!(rpFlags & RPF_SKYMASK) && mat)
         {
             // Smooth Texture Animation?
-            if(smoothTexAnim && texMode != 1)
-                blended = true;
+            inter = getSnapshots(&msA, smoothTexAnim? &msB : NULL, mat);
+
+            // Dynamic Lights?
+            if(addDLights && msA->glowing < 1 && !(!useDynlights && !useWallGlow))
+            {
+                lightListIdx = LO_ProjectToSurface(((section == SEG_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), ssec, 1,
+                    texTL, texBR, SEG_SIDEDEF(seg)->SW_middletangent, SEG_SIDEDEF(seg)->SW_middlebitangent, SEG_SIDEDEF(seg)->SW_middlenormal);
+            }
+
+            // Mobj shadows?
+            if(addMobjShadows && msA->glowing < 1 && Rend_MobjShadowsEnabled())
+            {
+                // Glowing planes inversely diminish shadow strength.
+                shadowListIdx = R_ProjectShadowsToSurface(ssec, 1 - msA->glowing, texTL, texBR,
+                    SEG_SIDEDEF(seg)->SW_middletangent, SEG_SIDEDEF(seg)->SW_middlebitangent, SEG_SIDEDEF(seg)->SW_middlenormal);
+            }
+
+            addFakeRadio = ((addFakeRadio && msA->glowing == 0)? true : false);
+
+            selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
         }
-
-        if(type != RPT_SKY_MASK)
-        {
-            inter = getSnapshots(&msA, blended? &msB : NULL, mat);
-        }
-
-        if(addDLights && !isGlowing)
-            lightListIdx =
-                DL_ProjectOnSurface(ssec, texTL, texBR,
-                                    SEG_SIDEDEF(seg)->SW_middlenormal,
-                                    ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
-
-        addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
-        addReflection = (useShinySurfaces && mat && mat->reflection? true : false);
-
-        selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
 
         // Check for neighborhood division?
         divs[0].num = divs[1].num = 0;
@@ -2363,7 +1884,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         {
         float deltaL, deltaR, diff;
 
-        Linedef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
+        LineDef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
 
         // Linear interpolation of the linedef light deltas to the edges of the seg.
         diff = deltaR - deltaL;
@@ -2376,16 +1897,14 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                &frontsec->lightLevel,
                                deltaL, deltaR,
                                R_GetSectorLightColor(frontsec),
-                               lightListIdx,
+                               lightListIdx, shadowListIdx,
                                (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
-                               skyMask,
+                               !!(rpFlags & RPF_SKYMASK),
                                addFakeRadio,
-                               addReflection,
-                               isGlowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
                                seg->bsuf[section], (uint) section,
-                               &msA, inter, blended? &msB : NULL,
+                               msA, inter, msB,
                                (section == SEG_MIDDLE && isTwoSided));
         }
     }
@@ -2396,21 +1915,18 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 /**
  * Renders the given single-sided seg into the world.
  */
-static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
+static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
 {
-    boolean             solidSeg = true;
-    sidedef_t*          side;
-    linedef_t*          ldef;
-    float               ffloor, fceil;
-    boolean             backSide;
-    sector_t*           frontsec;
-    int                 pid;
+    boolean solidSeg = true;
+    sidedef_t* side;
+    linedef_t* ldef;
+    float ffloor, fceil;
+    boolean backSide;
+    sector_t* frontsec;
+    int pid;
 
     side = SEG_SIDEDEF(seg);
-    if(!side)
-    {   // A one-way window.
-        return false;
-    }
+    if(!side) return false; // A one-way window?
 
     frontsec = ssec->sector;
     backSide = seg->side;
@@ -2436,8 +1952,8 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
     // Middle section.
     if(side->SW_middleinflags & SUIF_PVIS)
     {
-        float               texOffset[2];
-        surface_t*          surface = &side->SW_middlesurface;
+        float texOffset[2];
+        surface_t* surface = &side->SW_middlesurface;
 
         texOffset[0] = surface->visOffset[0] + seg->offset;
         texOffset[1] = surface->visOffset[1];
@@ -2451,7 +1967,7 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
                            &seg->SG_v1->v, &seg->SG_v2->v, ffloor, fceil,
                            texOffset,
                            /*temp >*/ frontsec, /*< temp*/
-                           false, true, side->flags);
+                           false, true, true, side->flags);
     }
 
     if(P_IsInVoid(viewPlayer))
@@ -2460,13 +1976,13 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
     return solidSeg;
 }
 
-boolean R_FindBottomTop(segsection_t section, float segOffset,
-                             const surface_t* suf,
-                             const plane_t* ffloor, const plane_t* fceil,
-                             const plane_t* bfloor, const plane_t* bceil,
-                             boolean unpegBottom, boolean unpegTop,
-                             boolean stretchMiddle, boolean isSelfRef,
-                             float* bottom, float* top, float texOffset[2])
+boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
+    float matOffsetX, float matOffsetY,
+    const plane_t* ffloor, const plane_t* fceil,
+    const plane_t* bfloor, const plane_t* bceil,
+    boolean unpegBottom, boolean unpegTop,
+    boolean stretchMiddle, boolean isSelfRef,
+    float* bottom, float* top, float texOffset[2])
 {
     switch(section)
     {
@@ -2479,8 +1995,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             *bottom = bceil->visHeight;
         if(*top > *bottom)
         {
-            texOffset[VX] = suf->visOffset[VX] + segOffset;
-            texOffset[VY] = suf->visOffset[VY];
+            texOffset[VX] = matOffsetX;
+            texOffset[VY] = matOffsetY;
 
             // Align with normal middle texture?
             if(!unpegTop)
@@ -2490,9 +2006,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         }
         break;
 
-    case SEG_BOTTOM:
-        {
-        float               t = bfloor->visHeight;
+    case SEG_BOTTOM: {
+        float t = bfloor->visHeight;
 
         *bottom = ffloor->visHeight;
         // Can't go over the back ceiling, would induce polygon flaws.
@@ -2506,8 +2021,8 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
 
         if(*top > *bottom)
         {
-            texOffset[VX] = suf->visOffset[VX] + segOffset;
-            texOffset[VY] = suf->visOffset[VY];
+            texOffset[VX] = matOffsetX;
+            texOffset[VY] = matOffsetY;
 
             if(bfloor->visHeight > fceil->visHeight)
                 texOffset[VY] += -(fceil->visHeight - bfloor->visHeight);
@@ -2519,11 +2034,9 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             return true;
         }
         break;
-        }
-    case SEG_MIDDLE:
-        {
-        float               ftop, fbottom, vR_ZBottom, vR_ZTop;
-        material_t*         mat = suf->material->current;
+      }
+    case SEG_MIDDLE: {
+        float ftop, fbottom, vR_ZBottom, vR_ZTop;
 
         if(isSelfRef)
         {
@@ -2536,9 +2049,6 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
         }
 
-        //fbottom += suf->visOffset[VY];
-        //ftop    += suf->visOffset[VY];
-
         *bottom = vR_ZBottom = fbottom;
         *top    = vR_ZTop    = ftop;
 
@@ -2546,7 +2056,7 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         {
             if(*top > *bottom)
             {
-                texOffset[VX] = suf->visOffset[VX] + segOffset;
+                texOffset[VX] = matOffsetX;
                 texOffset[VY] = 0;
 
                 return true;
@@ -2554,19 +2064,21 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         }
         else
         {
-            boolean             clipBottom =
-                !(R_IsSkySurface(&ffloor->surface) &&
-                  R_IsSkySurface(&bfloor->surface));
-            boolean             clipTop =
-                !(R_IsSkySurface(&fceil->surface) &&
-                  R_IsSkySurface(&bceil->surface));
+            boolean clipBottom = true, clipTop = true;
 
-            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop,
-                    NULL, suf->visOffset[VY], mat->height, unpegBottom,
-                    clipTop, clipBottom))
+            if(!P_IsInVoid(viewPlayer))
             {
-                texOffset[VX] = suf->visOffset[VX] + segOffset;
-                texOffset[VY] = 0;
+                if(R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface))
+                    clipBottom = false;
+                if(R_IsSkySurface(&fceil->surface)  && R_IsSkySurface(&bceil->surface))
+                    clipTop = false;
+            }
+
+            if(LineDef_MiddleMaterialCoords(lineDef, side, bottom, &vR_ZBottom, top,
+                   &vR_ZTop, &texOffset[VY], unpegBottom, clipTop, clipBottom))
+            {
+                texOffset[VX] = matOffsetX;
+                if(!clipTop) texOffset[VY] = 0;
 
                 return true;
             }
@@ -2579,9 +2091,9 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
 }
 
 /**
- * Renders wall sections for given two-sided seg.
+ * Render wall sections for a Seg belonging to a two-sided LineDef.
  */
-static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
+static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
 {
     int                 pid = viewPlayer - ddPlayers;
     float               bottom, top, texOffset[2];
@@ -2635,20 +2147,21 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_middlesurface;
 
-        if(R_FindBottomTop(SEG_MIDDLE, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_MIDDLE,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, suf,
                                       &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
                                       frontSec,
                                       (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                                         !(line->flags & DDLF_BLOCKING))? true : false),
-                                      true, frontSide->flags);
+                                      true, false, frontSide->flags);
             if(solidSeg)
             {
                 float               xbottom, xtop;
@@ -2680,17 +2193,18 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*      suf = &frontSide->SW_topsurface;
 
-        if(R_FindBottomTop(SEG_TOP, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_TOP,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_TOP, suf,
                            &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
-                           frontSec, false, true, frontSide->flags);
+                           frontSec, false, true, true, frontSide->flags);
         }
     }
 
@@ -2699,17 +2213,18 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_bottomsurface;
 
-        if(R_FindBottomTop(SEG_BOTTOM, seg->offset, suf,
-                         ffloor, fceil, bfloor, bceil,
-                         (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                         (line->flags & DDLF_DONTPEGTOP)? true : false,
-                         (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
-                         LINE_SELFREF(line)? true : false,
-                         &bottom, &top, texOffset))
+        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_BOTTOM,
+               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+               ffloor, fceil, bfloor, bceil,
+               (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+               (line->flags & DDLF_DONTPEGTOP)? true : false,
+               (frontSide->flags & SDF_MIDDLE_STRETCH)? true : false,
+               LINE_SELFREF(line)? true : false,
+               &bottom, &top, texOffset))
         {
             rendSegSection(ssec, seg, SEG_BOTTOM, suf,
                            &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
-                           frontSec, false, true, frontSide->flags);
+                           frontSec, false, true, true, frontSide->flags);
         }
     }
 
@@ -2736,8 +2251,7 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
             // A closed gap.
             solidSeg = true;
         }
-        else if((seg->frameFlags & SEGINF_BACKSECSKYFIX) ||
-                (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
+        else if((!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
                 (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
                 (frontSide->SW_bottommaterial)))
         {
@@ -2752,29 +2266,18 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     return false;
 }
 
-float Rend_SectorLight(sector_t *sec)
-{
-    if(levelFullBright)
-        return 1.0f;
-
-    return sec->lightLevel;
-}
-
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
-    uint                i;
-    seg_t              *seg, **ptr;
+    seg_t* seg, **segIt;
+    uint i;
 
-    ptr = sub->segs;
-    while(*ptr)
+    for(segIt = sub->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->lineDef && !(seg->flags & SEGF_POLYOBJ))
+        if(seg->lineDef)
         {
-            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
-
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
                 seg->frameFlags |= SEGINF_FACINGFRONT;
@@ -2783,16 +2286,13 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
             Rend_MarkSegSectionsPVisible(seg);
         }
-        ptr++;
-     }
+    }
 
     if(sub->polyObj)
     {
         for(i = 0; i < sub->polyObj->numSegs; ++i)
         {
             seg = sub->polyObj->segs[i];
-
-            seg->frameFlags &= ~SEGINF_BACKSECSKYFIX;
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
@@ -2807,241 +2307,291 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
 static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
 {
-    seg_t** ptr;
+    seg_t** segIt;
+    seg_t* seg;
+    uint i;
 
-    ptr = ssec->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg_t* seg = *ptr;
+        seg = *segIt;
+        if(!seg->lineDef || !(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
 
-        if((seg->frameFlags & SEGINF_FACINGFRONT) && seg->lineDef &&
-           !(seg->flags & SEGF_POLYOBJ))
+        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
         {
-            if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
-                seg->frameFlags &= ~SEGINF_FACINGFRONT;
+            seg->frameFlags &= ~SEGINF_FACINGFRONT;
         }
-        ptr++;
     }
 
-    if(ssec->polyObj)
+    if(!ssec->polyObj) return;
+
+    for(i = 0; i < ssec->polyObj->numSegs; ++i)
     {
-        uint i;
-        for(i = 0; i < ssec->polyObj->numSegs; ++i)
+        seg = ssec->polyObj->segs[i];
+        if(!(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
+
+        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
+                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
         {
-            seg_t* seg = ssec->polyObj->segs[i];
-            if(seg->frameFlags & SEGINF_FACINGFRONT)
+            seg->frameFlags &= ~SEGINF_FACINGFRONT;
+        }
+    }
+}
+
+/**
+ * @defgroup skyCapFlags  Sky Cap Flags
+ * @{
+ */
+#define SKYCAP_LOWER                0x1
+#define SKYCAP_UPPER                0x2
+/**@}*/
+
+static __inline float skyCapZ(subsector_t* ssec, int skyCap)
+{
+    const planetype_t plane = (skyCap & SKYCAP_UPPER)? PLN_CEILING : PLN_FLOOR;
+    if(!ssec) Con_Error("skyCapZ: Invalid ssec argument (=NULL).");
+    if(!ssec->sector || !P_IsInVoid(viewPlayer)) return skyFix[plane].height;
+    return ssec->sector->SP_planevisheight(plane);
+}
+
+static __inline float skyFixFloorZ(const plane_t* frontFloor, const plane_t* backFloor)
+{
+    if(P_IsInVoid(viewPlayer))
+        return frontFloor->visHeight;
+    return skyFix[PLN_FLOOR].height;
+}
+
+static __inline float skyFixCeilZ(const plane_t* frontCeil, const plane_t* backCeil)
+{
+    if(P_IsInVoid(viewPlayer))
+        return frontCeil->visHeight;
+    return skyFix[PLN_CEILING].height;
+}
+
+/**
+ * Determine which sky fixes are necessary for the specified @a seg.
+ * @param seg  Seg to be evaluated.
+ * @return  @see skyCapFlags
+ */
+static int segSkyFixes(seg_t* seg)
+{
+    int fixes = 0;
+    if(seg && seg->lineDef) // "minisegs" have no linedefs.
+    {
+        const sector_t* frontSec = seg->SG_frontsector;
+        const sector_t* backSec  = seg->SG_backsector;
+
+        if(!backSec || backSec != seg->SG_frontsector)
+        {
+            const boolean hasSkyFloor   = R_IsSkySurface(&frontSec->SP_floorsurface);
+            const boolean hasSkyCeiling = R_IsSkySurface(&frontSec->SP_ceilsurface);
+
+            if(hasSkyFloor || hasSkyCeiling)
             {
-                if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
-                    seg->frameFlags &= ~SEGINF_FACINGFRONT;
+                const boolean hasClosedBack = LineDef_BackClosed(seg->lineDef, seg->side, true/*ignore opacity*/);
+
+                // Lower fix?
+                if(hasSkyFloor)
+                {
+                    const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
+                    const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR) : NULL;
+                    const float skyZ = skyFixFloorZ(ffloor, bfloor);
+
+                    if(hasClosedBack || (!R_IsSkySurface(&bfloor->surface) || P_IsInVoid(viewPlayer)))
+                    {
+                        const plane_t* floor = (bfloor && R_IsSkySurface(&bfloor->surface)? bfloor : ffloor);
+                        if(floor->visHeight > skyZ)
+                            fixes |= SKYCAP_LOWER;
+                    }
+                }
+
+                // Upper fix?
+                if(hasSkyCeiling)
+                {
+                    const plane_t* fceil = frontSec->SP_plane(PLN_CEILING);
+                    const plane_t* bceil = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+                    const float skyZ = skyFixCeilZ(fceil, bceil);
+
+                    if(hasClosedBack || (!R_IsSkySurface(&bceil->surface) || P_IsInVoid(viewPlayer)))
+                    {
+                        const plane_t* ceil = (bceil && R_IsSkySurface(&bceil->surface)? bceil : fceil);
+                        if(ceil->visHeight < skyZ)
+                            fixes |= SKYCAP_UPPER;
+                    }
+                }
+            }
+        }
+    }
+    return fixes;
+}
+
+/**
+ * @param seg  Seg from which to determine sky fix coordinates.
+ * @param skyCap  Either SKYCAP_LOWER or SKYCAP_UPPER (SKYCAP_UPPER has precendence).
+ * @param bottom  Z map space coordinate for the bottom of the skyfix written here.
+ * @param top  Z map space coordinate for the top of the skyfix written here.
+ */
+static void skyFixZCoords(seg_t* seg, int skyCap, float* bottom, float* top)
+{
+    const sector_t* frontSec = seg->SG_frontsector;
+    const sector_t* backSec  = seg->SG_backsector;
+    const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
+    const plane_t* fceil  = frontSec->SP_plane(PLN_CEILING);
+    const plane_t* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
+    const plane_t* bfloor = backSec? backSec->SP_plane(PLN_FLOOR)   : NULL;
+
+    if(!bottom && !top) return;
+    if(bottom) *bottom = 0;
+    if(top)    *top    = 0;
+
+    if(skyCap & SKYCAP_UPPER)
+    {
+        if(top)    *top    = skyFixCeilZ(fceil, bceil);
+        if(bottom) *bottom = MAX_OF((backSec && R_IsSkySurface(&bceil->surface))? bceil->visHeight : fceil->visHeight, ffloor->visHeight);
+    }
+    else
+    {
+        if(top)    *top    = MIN_OF((backSec && R_IsSkySurface(&bfloor->surface)? bfloor->visHeight : ffloor->visHeight), fceil->visHeight);
+        if(bottom) *bottom = skyFixFloorZ(ffloor, bfloor);
+    }
+}
+
+static void writeSkyFixGeometry(subsector_t* ssec, int skyCap, int rendPolyFlags)
+{
+    float zBottom, zTop;
+    int segSkyCapFlags;
+    rvertex_t verts[4];
+    seg_t** segPtr;
+
+    if(!ssec || !ssec->segCount || !ssec->sector) return;
+    if(!(skyCap & SKYCAP_LOWER|SKYCAP_UPPER)) return;
+
+    for(segPtr = ssec->segs; *segPtr; segPtr++)
+    {
+        seg_t* seg = *segPtr;
+
+        // Is a fix or two necessary for this seg?
+        segSkyCapFlags = segSkyFixes(seg);
+        if(!(segSkyCapFlags & (SKYCAP_LOWER|SKYCAP_UPPER))) continue;
+
+        /**
+         * Vertex layout:
+         *   1--3
+         *   |  |
+         *   0--2
+         */
+        V2_Copy(verts[0].pos, seg->SG_v1pos);
+        V2_Copy(verts[1].pos, seg->SG_v1pos);
+        V2_Copy(verts[2].pos, seg->SG_v2pos);
+        V2_Copy(verts[3].pos, seg->SG_v2pos);
+
+        // First, lower fix:
+        if(skyCap & segSkyCapFlags & SKYCAP_LOWER)
+        {
+            skyFixZCoords(seg, SKYCAP_LOWER, &zBottom, &zTop);
+            if(zBottom < zTop)
+            {
+                verts[0].pos[VZ] = verts[2].pos[VZ] = zBottom;
+                verts[1].pos[VZ] = verts[3].pos[VZ] = zTop;
+                RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, 4, verts, NULL);
+            }
+        }
+
+        // Upper fix:
+        if(skyCap & segSkyCapFlags & SKYCAP_UPPER)
+        {
+            skyFixZCoords(seg, SKYCAP_UPPER, &zBottom, &zTop);
+            if(zBottom < zTop)
+            {
+                verts[0].pos[VZ] = verts[2].pos[VZ] = zBottom;
+                verts[1].pos[VZ] = verts[3].pos[VZ] = zTop;
+                RL_AddPoly(PT_TRIANGLE_STRIP, rendPolyFlags, 4, verts, NULL);
             }
         }
     }
 }
 
-static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
-                               rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
-                               float wallLength, material_t* mat)
+/**
+ * Render the lower and/or upper sky cap geometry for @a ssec.
+ * @param ssec  Subsector to render geometry for.
+ * @param skyCap  @see skyCapFlags
+ */
+static void rendSubsectorSky(subsector_t* ssec, int skyCap)
 {
-    material_snapshot_t ms;
-    vec3_t              texOrigin[2];
+    const int rendPolyFlags = RPF_DEFAULT | RPF_SKYMASK;
 
-    // In devRendSkyMode mode we render all polys destined for the skymask as
-    // regular world polys (with a few obvious properties).
+    if(!ssec || !ssec->segCount || !ssec->sector) return;
 
-    Material_Prepare(&ms, mat, true, NULL);
+    // Sky caps are only necessary in sectors with skymasked planes.
+    if((skyCap & SKYCAP_LOWER) && !R_IsSkySurface(&ssec->sector->SP_floorsurface))
+        skyCap &= ~SKYCAP_LOWER;
+    if((skyCap & SKYCAP_UPPER) && !R_IsSkySurface(&ssec->sector->SP_ceilsurface))
+        skyCap &= ~SKYCAP_UPPER;
 
-    rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
-    rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
-    rTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
-    rTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0];
-    rTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1];
-    rTU[TU_PRIMARY].blend = ms.units[MTU_PRIMARY].alpha;
-    rTU[TU_PRIMARY].blendMode = ms.units[MTU_PRIMARY].blendMode;
+    // Sky fixes:
+    writeSkyFixGeometry(ssec, skyCap, rendPolyFlags);
 
-    // Top left.
-    V3_Set(texOrigin[0], verts[1].pos[VX], verts[1].pos[VY], verts[1].pos[VZ]);
+    // Lower cap:
+    if(skyCap & SKYCAP_LOWER)
+    {
+        const float height = skyCapZ(ssec, SKYCAP_LOWER);
+        const int numVerts = ssec->numVertices;
+        rvertex_t* verts = R_AllocRendVertices(numVerts);
 
-    // Bottom right.
-    V3_Set(texOrigin[1], verts[2].pos[VX], verts[2].pos[VY], verts[2].pos[VZ]);
+        Rend_PreparePlane(verts, numVerts, height, ssec, false/*clockwise*/);
+        RL_AddPoly(PT_FAN, rendPolyFlags, numVerts, verts, NULL);
+        R_FreeRendVertices(verts);
+    }
 
-    quadTexCoords(coords, verts, wallLength, texOrigin[0]);
+    // Upper cap:
+    if(skyCap & SKYCAP_UPPER)
+    {
+        const float height = skyCapZ(ssec, SKYCAP_UPPER);
+        const int numVerts = ssec->numVertices;
+        rvertex_t* verts = R_AllocRendVertices(numVerts);
+
+        Rend_PreparePlane(verts, numVerts, height, ssec, true/*anticlockwise*/);
+        RL_AddPoly(PT_FAN, rendPolyFlags, numVerts, verts, NULL);
+        R_FreeRendVertices(verts);
+    }
 }
 
-static void Rend_SSectSkyFixes(subsector_t *ssec)
+static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
 {
-    float               ffloor, fceil, bfloor, bceil, bsh;
-    rvertex_t           rvertices[4];
-    rcolor_t            rcolors[4];
-    rtexcoord_t         rtexcoords[4];
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
-    float*              vBL, *vBR, *vTL, *vTR;
-    sector_t*           frontsec, *backsec;
-    uint                j, num;
-    seg_t*              seg, **list;
-    sidedef_t*          side;
+    linedef_t* lineDef;
+    sidedef_t* sideDef;
+    sector_t* backSec;
+    sector_t* frontSec;
 
-    // Init the poly.
-    memset(rTU, 0, sizeof(rTU));
+    // "minisegs" have no linedefs.
+    if(!seg->lineDef) return false;
+    lineDef = seg->lineDef;
 
-    if(devRendSkyMode)
-    {
-        uint                i;
+    // No SideDef on this side?
+    sideDef = SEG_SIDEDEF(seg);
+    if(!sideDef) return false;
 
-        rtexcoords[0].st[0] = 0;
-        rtexcoords[0].st[1] = 1;
-        rtexcoords[1].st[0] = 0;
-        rtexcoords[1].st[1] = 0;
-        rtexcoords[2].st[0] = 1;
-        rtexcoords[2].st[1] = 1;
-        rtexcoords[3].st[0] = 1;
-        rtexcoords[3].st[1] = 0;
+    // Let's first check which way this seg is facing.
+    if(clipBackFacing && !(seg->frameFlags & SEGINF_FACINGFRONT)) return false;
 
-        for(i = 0; i < 4; ++i)
-            rcolors[i].rgba[CR] = rcolors[i].rgba[CG] =
-                rcolors[i].rgba[CB] = rcolors[i].rgba[CA] = 1;
-    }
+    backSec  = seg->SG_backsector;
+    frontSec = seg->SG_frontsector;
 
-    vBL = rvertices[0].pos;
-    vBR = rvertices[2].pos;
-    vTL = rvertices[1].pos;
-    vTR = rvertices[3].pos;
+    // Avoid obvious hack (best take no chances...).
+    return !(backSec == frontSec && !sideDef->SW_topmaterial && !sideDef->SW_bottommaterial &&
+            !sideDef->SW_middlematerial);
+}
 
-    num  = ssec->segCount;
-    list = ssec->segs;
+static void Rend_RenderSubsectorSky(subsector_t* ssec)
+{
+    // Any work to do?
+    if(devRendSkyMode || !ssec || !ssec->sector || !R_SectorContainsSkySurfaces(ssec->sector)) return;
 
-    for(j = 0; j < num; ++j)
-    {
-        seg = list[j];
+    // All geometry uses the same (default) RTU write state.
+    RL_LoadDefaultRtus();
 
-        if(!seg->lineDef) // "minisegs" have no linedefs.
-            continue;
-
-        // Let's first check which way this seg is facing.
-        if(!(seg->frameFlags & SEGINF_FACINGFRONT))
-            continue;
-
-        side = SEG_SIDEDEF(seg);
-        if(!side)
-            continue;
-
-        backsec = seg->SG_backsector;
-        frontsec = seg->SG_frontsector;
-
-        if(backsec == frontsec &&
-           !side->SW_topmaterial && !side->SW_bottommaterial &&
-           !side->SW_middlematerial)
-           continue; // Ugh... an obvious wall seg hack. Best take no chances...
-
-        ffloor = frontsec->SP_floorvisheight;
-        fceil = frontsec->SP_ceilvisheight;
-
-        if(backsec)
-        {
-            bceil = backsec->SP_ceilvisheight;
-            bfloor = backsec->SP_floorvisheight;
-            bsh = bceil - bfloor;
-        }
-        else
-            bsh = bceil = bfloor = 0;
-
-        // Get the start and end vertices, left then right. Top and bottom.
-        vBL[VX] = vTL[VX] = seg->SG_v1pos[VX];
-        vBL[VY] = vTL[VY] = seg->SG_v1pos[VY];
-        vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
-        vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
-
-        // Upper/lower normal skyfixes.
-        if(!backsec || backsec != seg->SG_frontsector)
-        {
-            // Floor.
-            if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
-               !(backsec && R_IsSkySurface(&backsec->SP_floorsurface)) &&
-               ffloor > skyFix[PLN_FLOOR].height)
-            {
-                vTL[VZ] = vTR[VZ] = ffloor;
-                vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
-
-                if(devRendSkyMode)
-                    prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
-                                       frontsec->SP_floormaterial);
-
-                RL_AddPoly(PT_TRIANGLE_STRIP,
-                           (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU);
-            }
-
-            // Ceiling.
-            if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-               !(backsec && R_IsSkySurface(&backsec->SP_ceilsurface)) &&
-               fceil < skyFix[PLN_CEILING].height)
-            {
-                vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
-                vBL[VZ] = vBR[VZ] = fceil;
-
-                if(devRendSkyMode)
-                     prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
-                                        frontsec->SP_ceilmaterial);
-
-                RL_AddPoly(PT_TRIANGLE_STRIP,
-                           (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU);
-            }
-        }
-
-        // Upper/lower zero height backsec skyfixes.
-        if(backsec && bsh <= 0)
-        {
-            // Floor.
-            if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
-               R_IsSkySurface(&backsec->SP_floorsurface))
-            {
-                if(bfloor > skyFix[PLN_FLOOR].height)
-                {
-                    vTL[VZ] = vTR[VZ] = bfloor;
-                    vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
-
-                    if(devRendSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
-                                           frontsec->SP_floormaterial);
-
-                    RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords, NULL, NULL,
-                               rcolors, 4, 0, 0, NULL, rTU);
-                }
-
-                // Ensure we add a solid view seg.
-                seg->frameFlags |= SEGINF_BACKSECSKYFIX;
-            }
-
-            // Ceiling.
-            if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-               R_IsSkySurface(&backsec->SP_ceilsurface))
-            {
-                if(bceil < skyFix[PLN_CEILING].height)
-                {
-                    vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
-                    vBL[VZ] = vBR[VZ] = bceil;
-
-                    if(devRendSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
-                                           frontsec->SP_ceilmaterial);
-
-
-                    RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords, NULL, NULL,
-                               rcolors, 4, 0, 0, NULL, rTU);
-                }
-
-                // Ensure we add a solid view seg.
-                seg->frameFlags |= SEGINF_BACKSECSKYFIX;
-            }
-        }
-    }
+    // Write geometry.
+    rendSubsectorSky(ssec, SKYCAP_LOWER|SKYCAP_UPPER);
 }
 
 /**
@@ -3050,12 +2600,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
  * the remaining faces, i.e. the forward facing segs. This is done before
  * rendering segs, so solid segments cut out all unnecessary oranges.
  */
-static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
+static void occludeSubsector(const subsector_t* ssec, boolean forwardFacing)
 {
-    float               fronth[2], backh[2];
-    float*              startv, *endv;
-    sector_t*           front = sub->sector, *back;
-    seg_t*              seg, **ptr;
+    float fronth[2], backh[2];
+    float* startv, *endv;
+    sector_t* front = ssec->sector, *back;
+    seg_t* seg, **segIt;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
         return;
@@ -3063,10 +2613,9 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    ptr = sub->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
 
         // Occlusions can only happen where two sectors contact.
         if(seg->lineDef &&
@@ -3076,6 +2625,7 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
             back = seg->SG_backsector;
             backh[0] = back->SP_floorheight;
             backh[1] = back->SP_ceilheight;
+
             // Choose start and end vertices so that it's facing forward.
             if(forwardFacing)
             {
@@ -3097,8 +2647,7 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
                    (backh[0] < fronth[0] && vy >= fronth[0]))
                 {
                     // Occlude down.
-                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]),
-                                          false);
+                    C_AddViewRelOcclusion(startv, endv, MAX_OF(fronth[0], backh[0]), false);
                 }
             }
 
@@ -3111,28 +2660,22 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
                    (backh[1] > fronth[1] && vy <= fronth[1]))
                 {
                     // Occlude up.
-                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]),
-                                          true);
+                    C_AddViewRelOcclusion(startv, endv, MIN_OF(fronth[1], backh[1]), true);
                 }
             }
         }
-
-        ptr++;
     }
 }
 
 static void Rend_RenderSubsector(uint ssecidx)
 {
-    uint                i;
-    subsector_t*        ssec = SUBSECTOR_PTR(ssecidx);
-    seg_t*              seg, **ptr;
-    sector_t*           sect;
-    float               sceil, sfloor;
+    uint i;
+    subsector_t* ssec = SUBSECTOR_PTR(ssecidx);
+    seg_t* seg, **segIt;
+    sector_t* sect;
+    float sceil, sfloor;
 
-    if(!ssec->sector)
-    {   // An orphan subsector.
-        return;
-    }
+    if(!ssec->sector) return; // An orphan subsector?
 
     sect = ssec->sector;
     sceil = sect->SP_ceilvisheight;
@@ -3158,13 +2701,9 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Mark the sector visible for this frame.
     sect->frameFlags |= SIF_VISIBLE;
 
-    // Retrieve the sector light color.
-    sLightColor = R_GetSectorLightColor(sect);
-
     Rend_MarkSegsFacingFront(ssec);
 
     R_InitForSubsector(ssec);
-
     Rend_RadioSubsectorEdges(ssec);
 
     occludeSubsector(ssec, false);
@@ -3193,55 +2732,30 @@ static void Rend_RenderSubsector(uint ssecidx)
      */
     R_AddSprites(ssec);
 
-    // Draw the various skyfixes for all front facing segs in this ssec
-    // (includes polyobject segs).
-    if(ssec->sector->planeCount > 0)
-    {
-        boolean             doSkyFixes;
-
-        doSkyFixes = false;
-        i = 0;
-        do
-        {
-            if(R_IsSkySurface(&ssec->sector->SP_planesurface(i)))
-                doSkyFixes = true;
-            else
-                i++;
-        } while(!doSkyFixes && i < ssec->sector->planeCount);
-
-        if(doSkyFixes)
-            Rend_SSectSkyFixes(ssec);
-    }
+    // Draw the sky cap geometry (and various skymask fixes).
+    Rend_RenderSubsectorSky(ssec);
 
     // Draw the walls.
-    ptr = ssec->segs;
-    while(*ptr)
+    for(segIt = ssec->segs; *segIt; segIt++)
     {
-        seg = *ptr;
+        seg = *segIt;
 
         if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
            seg->lineDef && // "minisegs" have no linedefs.
            (seg->frameFlags & SEGINF_FACINGFRONT))
         {
-            boolean             solid;
-
+            boolean solid;
             if(!seg->SG_backsector || !seg->SG_frontsector)
-                solid = Rend_RenderSSWallSeg(ssec, seg);
+                solid = Rend_RenderSeg(ssec, seg);
             else
-                solid = Rend_RenderWallSeg(ssec, seg);
+                solid = Rend_RenderSegTwosided(ssec, seg);
 
             if(solid)
             {
-                if(seg->lineDef->buildData.index -1 == 291)
-                    solid = false;
-                if(seg->lineDef->buildData.index -1 == 302)
-                    solid = false;
                 C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
                                 seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
             }
         }
-
-        ptr++;
     }
 
     // Is there a polyobj on board?
@@ -3250,12 +2764,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         for(i = 0; i < ssec->polyObj->numSegs; ++i)
         {
             seg = ssec->polyObj->segs[i];
-
             // Let's first check which way this seg is facing.
             if(seg->frameFlags & SEGINF_FACINGFRONT)
             {
-                boolean             solid = Rend_RenderSSWallSeg(ssec, seg);
-
+                boolean solid = Rend_RenderSeg(ssec, seg);
                 if(solid)
                 {
                     C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
@@ -3268,35 +2780,26 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Render all planes of this sector.
     for(i = 0; i < sect->planeCount; ++i)
     {
-        int                 texMode;
-        float               height, texOffset[2], texScale[2];
-        const plane_t*      plane = sect->planes[i];
-        const surface_t*    suf = &plane->surface;
-        material_t*         mat;
-        boolean             isGlowing = false;
+        const plane_t* plane = sect->planes[i];
+        const surface_t* suf = &plane->surface;
+        boolean isSkyMasked = false;
+        boolean addDLights = true;
+        boolean flipSurfaceNormal = false;
+        boolean clipBackFacing = false;
+        float texOffset[2], texScale[2];
+        material_t* mat;
+        int texMode;
 
-        // Determine plane height.
-        if(!R_IsSkySurface(suf))
+        isSkyMasked = R_IsSkySurface(suf);
+        if(isSkyMasked && plane->type != PLN_MID)
         {
-            height = plane->visHeight;
-        }
-        else
-        {
-            // We don't render planes for unclosed sectors when the polys would
-            // be added to the skymask (a DOOM.EXE renderer hack).
-            if(sect->flags & SECF_UNCLOSED)
-                return;
-
-            if(plane->type != PLN_MID)
-                height = skyFix[plane->type].height;
-            else
-                height = plane->visHeight;
+            if(!devRendSkyMode) continue; // Not handled here.
+            isSkyMasked = false;
         }
 
         if(renderTextures == 2)
             texMode = 2;
-        else if(!suf->material ||
-                (devNoTexFix && (suf->inFlags & SUIF_MATERIAL_FIX)))
+        else if(!suf->material || (devNoTexFix && (suf->inFlags & SUIF_FIX_MISSING_MATERIAL)))
             texMode = 1;
         else
             texMode = 0;
@@ -3306,88 +2809,28 @@ static void Rend_RenderSubsector(uint ssecidx)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = P_GetMaterial(DDT_MISSING, MN_SYSTEM);
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":missing"));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
+            mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
 
         V2_Copy(texOffset, suf->visOffset);
-
         // Add the Y offset to orient the Y flipped texture.
         if(plane->type == PLN_CEILING)
-            texOffset[VY] -= ssec->bBox[1].pos[VY] - ssec->bBox[0].pos[VY];
-
+            texOffset[VY] -= ssec->aaBox.maxY - ssec->aaBox.minY;
         // Add the additional offset to align with the worldwide grid.
         texOffset[VX] += ssec->worldGridOffset[VX];
         texOffset[VY] += ssec->worldGridOffset[VY];
+        // Inverted.
+        texOffset[VY] = -texOffset[VY];
 
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        if(glowingTextures &&
-           (texMode == 1 || ((suf->flags & DDSUF_GLOW) ||
-                             (mat && (mat->flags & MATF_GLOW)))))
-            isGlowing = true;
-
-        Rend_RenderPlane(ssec, plane->type, height, suf->normal, mat,
-                         suf->inFlags, suf->rgba,
-                         suf->blendMode, texOffset, texScale,
-                         R_IsSkySurface(suf), true, isGlowing,
-                         ssec->bsuf[plane->planeID], plane->planeID,
-                         texMode);
-    }
-
-    if(devRendSkyMode == 2)
-    {
-        /**
-         * In devSky mode 2, we draw additional geometry, showing the
-         * real "physical" height of any sky masked planes that are
-         * drawn at a different height due to the skyFix.
-         */
-        if(sect->SP_floorvisheight > skyFix[PLN_FLOOR].height &&
-           R_IsSkySurface(&sect->SP_floorsurface))
-        {
-            vec3_t              normal;
-            const plane_t*      plane = sect->SP_plane(PLN_FLOOR);
-            const surface_t*    suf = &plane->surface;
-
-            /**
-             * Flip the plane normal according to the z positon of the
-             * viewer relative to the plane height so that the plane is
-             * always visible.
-             */
-            V3_Copy(normal, plane->PS_normal);
-            if(vy < plane->visHeight)
-                normal[VZ] *= -1;
-
-            Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->inFlags, suf->rgba,
-                             BM_NORMAL, NULL, NULL, false,
-                             (vy > plane->visHeight? true : false),
-                             false, NULL,
-                             plane->planeID, 2);
-        }
-
-        if(sect->SP_ceilvisheight < skyFix[PLN_CEILING].height &&
-           R_IsSkySurface(&sect->SP_ceilsurface))
-        {
-            vec3_t              normal;
-            const plane_t*      plane = sect->SP_plane(PLN_CEILING);
-            const surface_t*    suf = &plane->surface;
-
-            V3_Copy(normal, plane->PS_normal);
-            if(vy > plane->visHeight)
-                normal[VZ] *= -1;
-
-            Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->inFlags, suf->rgba,
-                             BM_NORMAL, NULL, NULL, false,
-                             (vy < plane->visHeight? true : false),
-                             false, NULL,
-                             plane->planeID, 2);
-        }
+        Rend_RenderPlane(ssec, plane->type, plane->visHeight, suf->tangent, suf->bitangent, suf->normal,
+            mat, suf->flags, suf->inFlags, suf->rgba, suf->blendMode, texOffset, texScale,
+            isSkyMasked, addDLights, (i == PLN_FLOOR), ssec->bsuf[plane->planeID], plane->planeID,
+            texMode, flipSurfaceNormal, clipBackFacing);
     }
 }
 
@@ -3396,8 +2839,7 @@ static void Rend_RenderNode(uint bspnum)
     // If the clipper is full we're pretty much done. This means no geometry
     // will be visible in the distance because every direction has already been
     // fully covered by geometry.
-    if(C_IsFull())
-        return;
+    if(C_IsFull()) return;
 
     if(bspnum & NF_SUBSECTOR)
     {
@@ -3422,55 +2864,60 @@ static void Rend_RenderNode(uint bspnum)
     }
 }
 
-static void drawNormal(vec3_t origin, vec3_t normal, float scalar)
+static void drawVector(const_pvec3_t origin, const_pvec3_t normal, float scalar, const float color[3])
 {
-    float               black[4] = { 0, 0, 0, 0 };
-    float               red[4] = { 1, 0, 0, 1 };
+    static const float black[4] = { 0, 0, 0, 0 };
+
+    glBegin(GL_LINES);
+        glColor4fv(black);
+        glVertex3f(scalar * normal[VX], scalar * normal[VZ], scalar * normal[VY]);
+        glColor3fv(color);
+        glVertex3f(0, 0, 0);
+    glEnd();
+}
+
+static void drawSurfaceTangentSpaceVectors(surface_t* suf, const_pvec3_t origin)
+{
+#define VISUAL_LENGTH       (20)
+
+    static const float red[3]   = { 1, 0, 0 };
+    static const float green[3] = { 0, 1, 0 };
+    static const float blue[3]  = { 0, 0, 1 };
+
+    assert(origin && suf);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-
     glTranslatef(origin[VX], origin[VZ], origin[VY]);
 
-    glBegin(GL_LINES);
-    {
-        glColor4fv(black);
-        glVertex3f(scalar * normal[VX],
-                     scalar * normal[VZ],
-                     scalar * normal[VY]);
-        glColor4fv(red);
-        glVertex3f(0, 0, 0);
-
-    }
-    glEnd();
+    if(devSurfaceVectors & SVF_TANGENT)   drawVector(origin, suf->tangent,   VISUAL_LENGTH, red);
+    if(devSurfaceVectors & SVF_BITANGENT) drawVector(origin, suf->bitangent, VISUAL_LENGTH, green);
+    if(devSurfaceVectors & SVF_NORMAL)    drawVector(origin, suf->normal,    VISUAL_LENGTH, blue);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+
+#undef VISUAL_LENGTH
 }
 
 /**
  * Draw the surface normals, primarily for debug.
  */
-void Rend_RenderNormals(void)
+void Rend_RenderSurfaceVectors(void)
 {
-#define NORM_TAIL_LENGTH    (20)
+    uint i;
 
-    uint                i;
+    if(devSurfaceVectors == 0) return;
 
-    if(!devSurfaceNormals)
-        return;
-
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
     for(i = 0; i < numSegs; ++i)
     {
-        seg_t*              seg = &segs[i];
-        sidedef_t*          side;
-        surface_t*          suf;
-        vec3_t              origin;
-        float               x, y, bottom, top;
-        float               scale = NORM_TAIL_LENGTH;
+        seg_t* seg = &segs[i];
+        float x, y, bottom, top;
+        sidedef_t* side;
+        surface_t* suf;
+        vec3_t origin;
 
         if(!seg->lineDef || !seg->SG_frontsector ||
            (seg->lineDef->inFlags & LF_POLYOBJ))
@@ -3487,7 +2934,7 @@ void Rend_RenderNormals(void)
             suf = &side->SW_middlesurface;
 
             V3_Set(origin, x, y, bottom + (top - bottom) / 2);
-            drawNormal(origin, suf->normal, scale);
+            drawSurfaceTangentSpaceVectors(suf, origin);
         }
         else
         {
@@ -3498,7 +2945,7 @@ void Rend_RenderNormals(void)
                 suf = &side->SW_middlesurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
-                drawNormal(origin, suf->normal, scale);
+                drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
             if(seg->SG_backsector->SP_ceilvisheight <
@@ -3511,7 +2958,7 @@ void Rend_RenderNormals(void)
                 suf = &side->SW_topsurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
-                drawNormal(origin, suf->normal, scale);
+                drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
             if(seg->SG_backsector->SP_floorvisheight >
@@ -3524,49 +2971,64 @@ void Rend_RenderNormals(void)
                 suf = &side->SW_bottomsurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
-                drawNormal(origin, suf->normal, scale);
+                drawSurfaceTangentSpaceVectors(suf, origin);
             }
         }
     }
 
     for(i = 0; i < numSSectors; ++i)
     {
-        uint                j;
-        subsector_t*        ssec = &ssectors[i];
+        subsector_t* ssec = &ssectors[i];
+        uint j;
+
+        if(!ssec->sector) continue;
 
         for(j = 0; j < ssec->sector->planeCount; ++j)
         {
-            vec3_t              origin;
-            plane_t*            pln = ssec->sector->SP_plane(j);
-            float               scale = NORM_TAIL_LENGTH;
+            plane_t* pln = ssec->sector->SP_plane(j);
+            vec3_t origin;
 
-            V3_Set(origin, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY],
-                   pln->visHeight);
+            V3_Set(origin, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY], pln->visHeight);
             if(pln->type != PLN_MID && R_IsSkySurface(&pln->surface))
                 origin[VZ] = skyFix[pln->type].height;
 
-            drawNormal(origin, pln->PS_normal, scale);
+            drawSurfaceTangentSpaceVectors(&pln->surface, origin);
+        }
+    }
+
+    for(i = 0; i < numPolyObjs; ++i)
+    {
+        const polyobj_t* po = polyObjs[i];
+        const sector_t* sec = po->subsector->sector;
+        float zPos = sec->SP_floorheight + (sec->SP_ceilheight - sec->SP_floorheight)/2;
+        vec3_t origin;
+        uint j;
+
+        for(j = 0; j < po->numSegs; ++j)
+        {
+            seg_t* seg = po->segs[j];
+            linedef_t* lineDef = seg->lineDef;
+
+            V3_Set(origin, (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2,
+                           (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2, zPos);
+            drawSurfaceTangentSpaceVectors(&SEG_SIDEDEF(seg)->SW_middlesurface, origin);
         }
     }
 
     glEnable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_2D);
-
-#undef NORM_TAIL_LENGTH
 }
 
 static void getVertexPlaneMinMax(const vertex_t* vtx, float* min, float* max)
 {
-    lineowner_t*        vo, *base;
+    lineowner_t* vo, *base;
 
     if(!vtx || (!min && !max))
         return; // Wha?
 
     vo = base = vtx->lineOwners;
-
     do
     {
-        linedef_t*          li = vo->lineDef;
+        linedef_t* li = vo->lineDef;
 
         if(li->L_frontside)
         {
@@ -3598,12 +3060,11 @@ static void drawVertexPoint(const vertex_t* vtx, float z, float alpha)
     glEnd();
 }
 
-static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
-                          float alpha)
+static void drawVertexBar(const vertex_t* vtx, float bottom, float top, float alpha)
 {
 #define EXTEND_DIST     64
 
-    static const float  black[4] = { 0, 0, 0, 0 };
+    static const float black[4] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -3620,10 +3081,17 @@ static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
 #undef EXTEND_DIST
 }
 
-static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
-                            float alpha)
+static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alpha)
 {
-    char                buf[80];
+    const Point2Raw origin = { 2, 2 };
+    char buf[80];
+
+    FR_SetFont(fontFixed);
+    FR_LoadDefaultAttrib();
+    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
+    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
+
+    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -3632,8 +3100,11 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
 
-    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
-    UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+    glEnable(GL_TEXTURE_2D);
+
+    UI_TextOutEx(buf, &origin, UI_Color(UIC_TITLE), alpha);
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -3641,36 +3112,31 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
 
 #define MAX_VERTEX_POINT_DIST 1280
 
-static boolean drawVertex1(linedef_t* li, void* context)
+static int drawVertex1(linedef_t* li, void* context)
 {
-    vertex_t*           vtx = li->L_v1;
-    polyobj_t*          po = context;
-    float               dist2D =
-        M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
+    vertex_t* vtx = li->L_v1;
+    polyobj_t* po = context;
+    float dist2D = M_ApproxDistancef(vx - vtx->V_pos[VX], vz - vtx->V_pos[VY]);
 
     if(dist2D < MAX_VERTEX_POINT_DIST)
     {
-        float               alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
+        float alpha = 1 - dist2D / MAX_VERTEX_POINT_DIST;
 
         if(alpha > 0)
         {
-            float               bottom = po->subsector->sector->SP_floorvisheight;
-            float               top = po->subsector->sector->SP_ceilvisheight;
-
-            glDisable(GL_TEXTURE_2D);
+            float bottom = po->subsector->sector->SP_floorvisheight;
+            float top = po->subsector->sector->SP_ceilvisheight;
 
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
 
             drawVertexPoint(vtx, bottom, alpha * 2);
-
-            glEnable(GL_TEXTURE_2D);
         }
     }
 
     if(devVertexIndices)
     {
-        float               eye[3], pos[3], dist3D;
+        float eye[3], pos[3], dist3D;
 
         eye[VX] = vx;
         eye[VY] = vz;
@@ -3684,15 +3150,15 @@ static boolean drawVertex1(linedef_t* li, void* context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->width / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->geometry.size.width / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
-boolean drawPolyObjVertexes(polyobj_t* po, void* context)
+int drawPolyObjVertexes(polyobj_t* po, void* context)
 {
     return P_PolyobjLinesIterator(po, drawVertex1, po);
 }
@@ -3702,11 +3168,11 @@ boolean drawPolyObjVertexes(polyobj_t* po, void* context)
  */
 void Rend_Vertexes(void)
 {
-    uint                i;
-    float               oldPointSize, oldLineWidth = 1, bbox[4];
+    float oldPointSize, oldLineWidth = 1;
+    uint i;
+    AABoxf box;
 
-    if(!devVertexBars && !devVertexIndices)
-        return;
+    if(!devVertexBars && !devVertexIndices) return;
 
     glDisable(GL_DEPTH_TEST);
 
@@ -3715,12 +3181,11 @@ void Rend_Vertexes(void)
         glEnable(GL_LINE_SMOOTH);
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
-        glDisable(GL_TEXTURE_2D);
 
         for(i = 0; i < numVertexes; ++i)
         {
-            vertex_t*           vtx = &vertexes[i];
-            float               alpha;
+            vertex_t* vtx = &vertexes[i];
+            float alpha;
 
             if(!vtx->lineOwners)
                 continue; // Not a linedef vertex.
@@ -3733,7 +3198,7 @@ void Rend_Vertexes(void)
 
             if(alpha > 0)
             {
-                float               bottom, top;
+                float bottom, top;
 
                 bottom = DDMAXFLOAT;
                 top = DDMINFLOAT;
@@ -3742,20 +3207,17 @@ void Rend_Vertexes(void)
                 drawVertexBar(vtx, bottom, top, alpha);
             }
         }
-
-        glEnable(GL_TEXTURE_2D);
     }
 
     // Always draw the vertex point nodes.
     glEnable(GL_POINT_SMOOTH);
     oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
-    glDisable(GL_TEXTURE_2D);
 
     for(i = 0; i < numVertexes; ++i)
     {
-        vertex_t*           vtx = &vertexes[i];
-        float               dist;
+        vertex_t* vtx = &vertexes[i];
+        float dist;
 
         if(!vtx->lineOwners)
             continue; // Not a linedef vertex.
@@ -3766,7 +3228,7 @@ void Rend_Vertexes(void)
 
         if(dist < MAX_VERTEX_POINT_DIST)
         {
-            float               bottom;
+            float bottom;
 
             bottom = DDMAXFLOAT;
             getVertexPlaneMinMax(vtx, &bottom, NULL);
@@ -3775,11 +3237,10 @@ void Rend_Vertexes(void)
         }
     }
 
-    glEnable(GL_TEXTURE_2D);
 
     if(devVertexIndices)
     {
-        float               eye[3];
+        float eye[3];
 
         eye[VX] = vx;
         eye[VY] = vz;
@@ -3787,13 +3248,11 @@ void Rend_Vertexes(void)
 
         for(i = 0; i < numVertexes; ++i)
         {
-            vertex_t*           vtx = &vertexes[i];
-            float               pos[3], dist;
+            vertex_t* vtx = &vertexes[i];
+            float pos[3], dist;
 
-            if(!vtx->lineOwners)
-                continue; // Not a linedef vertex.
-            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ)
-                continue; // A polyobj linedef vertex.
+            if(!vtx->lineOwners) continue; // Not a linedef vertex.
+            if(vtx->lineOwners[0].lineDef->inFlags & LF_POLYOBJ) continue; // A polyobj linedef vertex.
 
             pos[VX] = vtx->V_pos[VX];
             pos[VY] = vtx->V_pos[VY];
@@ -3804,10 +3263,10 @@ void Rend_Vertexes(void)
 
             if(dist < MAX_VERTEX_POINT_DIST)
             {
-                float               alpha, scale;
+                float alpha, scale;
 
                 alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                scale = dist / (theWindow->width / 2);
+                scale = dist / (theWindow->geometry.size.width / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3815,11 +3274,11 @@ void Rend_Vertexes(void)
     }
 
     // Next, the vertexes of all nearby polyobjs.
-    bbox[BOXLEFT]   = vx - MAX_VERTEX_POINT_DIST;
-    bbox[BOXRIGHT]  = vx + MAX_VERTEX_POINT_DIST;
-    bbox[BOXBOTTOM] = vy - MAX_VERTEX_POINT_DIST;
-    bbox[BOXTOP]    = vy + MAX_VERTEX_POINT_DIST;
-    P_PolyobjsBoxIterator(bbox, drawPolyObjVertexes, NULL);
+    box.minX = vx - MAX_VERTEX_POINT_DIST;
+    box.minY = vy - MAX_VERTEX_POINT_DIST;
+    box.maxX = vx + MAX_VERTEX_POINT_DIST;
+    box.maxY = vy + MAX_VERTEX_POINT_DIST;
+    P_PolyobjsBoxIterator(&box, drawPolyObjVertexes, NULL);
 
     // Restore previous state.
     if(devVertexBars)
@@ -3835,7 +3294,6 @@ void Rend_Vertexes(void)
 void Rend_RenderMap(void)
 {
     binangle_t viewside;
-    boolean doLums = (useDynLights || haloMode || spriteLight || useDecorations);
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
@@ -3853,6 +3311,10 @@ void Rend_RenderMap(void)
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
 
+        // Recycle the vlight lists. Currently done here as the lists are
+        // not shared by all viewports.
+        VL_InitForNewFrame();
+
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
 
@@ -3861,18 +3323,9 @@ void Rend_RenderMap(void)
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
 
-        // Recycle the vlight lists. Currently done here as the lists are
-        // not shared by all viewports.
-        VL_InitForNewFrame();
-
-        if(doLums)
+        if(Rend_MobjShadowsEnabled())
         {
-            /**
-             * Clear the projected dynlight lists. This is done here as
-             * the projections are sensitive to distance from the viewer
-             * (e.g. some may fade out when far away).
-             */
-            DL_InitForNewFrame();
+            R_InitShadowProjectionListsForNewFrame();
         }
 
         // Add the backside clipping range (if vpitch allows).
@@ -3895,14 +3348,24 @@ void Rend_RenderMap(void)
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
-        Rend_RenderNode(numNodes - 1);
+        if(numNodes != 0)
+        {
+            Rend_RenderNode(numNodes - 1);
+        }
+        else
+        {
+            Rend_RenderSubsector(0);
+        }
 
-        Rend_RenderShadows();
+        if(Rend_MobjShadowsEnabled())
+        {
+            Rend_RenderMobjShadows();
+        }
     }
     RL_RenderAllLists();
 
     // Draw various debugging displays:
-    Rend_RenderNormals(); // World surface normals.
+    Rend_RenderSurfaceVectors();
     LO_DrawLumobjs(); // Lumobjs.
     Rend_RenderBoundingBoxes(); // Mobj bounding boxes.
     Rend_Vertexes(); // World vertex positions/indices.
@@ -3922,12 +3385,13 @@ void Rend_RenderMap(void)
  * The offsets in the lightRangeModTables are added to the sector->lightLevel
  * during rendering (both positive and negative).
  */
-void Rend_CalcLightModRange(cvar_t *unused)
+void Rend_CalcLightModRange(void)
 {
-    int                 j;
-    int                 mapAmbient;
-    float               f;
-    gamemap_t          *map = P_GetCurrentMap();
+    gamemap_t* map = P_GetCurrentMap();
+    int j, mapAmbient;
+    float f;
+
+    if(novideo) return;
 
     memset(lightModRange, 0, sizeof(float) * 255);
 
@@ -3943,10 +3407,16 @@ void Rend_CalcLightModRange(cvar_t *unused)
         f = 0;
         if(lightRangeCompression != 0)
         {
-            if(lightRangeCompression >= 0) // Brighten dark areas.
+            if(lightRangeCompression >= 0)
+            {
+                // Brighten dark areas.
                 f = (float) (255 - j) * lightRangeCompression;
-            else // Darken bright areas.
+            }
+            else
+            {
+                // Darken bright areas.
                 f = (float) -j * -lightRangeCompression;
+            }
         }
 
         // Lower than the ambient limit?
@@ -3964,53 +3434,23 @@ void Rend_CalcLightModRange(cvar_t *unused)
     }
 }
 
-/**
- * Applies the offset from the lightModRangeto the given light value.
- *
- * The lightModRange is used to implement (precalculated) ambient light
- * limit, light range compression and light range shift.
- *
- * \note There is no need to clamp the result. Since the offset values in
- *       the lightModRange have already been clamped so that the resultant
- *       lightvalue is NEVER outside the range 0-254 when the original
- *       lightvalue is used as the index.
- *
- * @param lightvar      Ptr to the value to apply the adaptation to.
- */
-void Rend_ApplyLightAdaptation(float *lightvar)
+float Rend_LightAdaptationDelta(float val)
 {
-    int                 lightval;
+    int clampedVal;
 
-    if(lightvar == NULL)
-        return; // Can't apply adaptation to a NULL val ptr...
+    clampedVal = ROUND(255.0f * val);
+    if(clampedVal > 254)
+        clampedVal = 254;
+    else if(clampedVal < 0)
+        clampedVal = 0;
 
-    lightval = ROUND(255.0f * *lightvar);
-    if(lightval > 254)
-        lightval = 254;
-    else if(lightval < 0)
-        lightval = 0;
-
-    *lightvar += lightModRange[lightval];
+    return lightModRange[clampedVal];
 }
 
-/**
- * Same as above but instead of applying light adaptation to the var directly
- * it returns the light adaptation value for the passed light value.
- *
- * @param lightvalue    Light value to look up the adaptation value of.
- * @return int          Adaptation value for the passed light value.
- */
-float Rend_GetLightAdaptVal(float lightvalue)
+void Rend_ApplyLightAdaptation(float* val)
 {
-    int                 lightval;
-
-    lightval = ROUND(255.0f * lightvalue);
-    if(lightval > 254)
-        lightval = 254;
-    else if(lightval < 0)
-        lightval = 0;
-
-    return lightModRange[lightval];
+    if(!val) return;
+    *val += Rend_LightAdaptationDelta(*val);
 }
 
 /**
@@ -4018,21 +3458,21 @@ float Rend_GetLightAdaptVal(float lightvalue)
  */
 void R_DrawLightRange(void)
 {
-#define bWidth          1.0f
-#define bHeight         (bWidth * 255.0f)
-#define BORDER          20
+#define BLOCK_WIDTH             (1.0f)
+#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
+#define BORDER                  (20)
 
-    int                 i;
-    float               c, off;
-    ui_color_t          color;
+    ui_color_t color;
+    float c, off;
+    int i;
 
-    if(!devLightModRange)
-        return;
+    // Disabled?
+    if(!devLightModRange) return;
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -4040,18 +3480,16 @@ void R_DrawLightRange(void)
     color.green = 0;
     color.blue = 0.6f;
 
-    glDisable(GL_TEXTURE_2D);
-
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);
     glBegin(GL_LINES);
         glVertex2f(-1, -1);
         glVertex2f(255 + 1, -1);
-        glVertex2f(255 + 1,  -1);
-        glVertex2f(255 + 1,  bHeight + 1);
-        glVertex2f(255 + 1,  bHeight + 1);
-        glVertex2f(-1,  bHeight + 1);
-        glVertex2f(-1,  bHeight + 1);
+        glVertex2f(255 + 1, -1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(255 + 1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
+        glVertex2f(-1, BLOCK_HEIGHT + 1);
         glVertex2f(-1, -1);
     glEnd();
 
@@ -4062,21 +3500,19 @@ void R_DrawLightRange(void)
         off = lightModRange[i];
 
         glColor4f(c + off, c + off, c + off, 1);
-        glVertex2f(i * bWidth, 0);
-        glVertex2f(i * bWidth + bWidth, 0);
-        glVertex2f(i * bWidth + bWidth,  bHeight);
-        glVertex2f(i * bWidth, bHeight);
+        glVertex2f(i * BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, 0);
+        glVertex2f(i * BLOCK_WIDTH + BLOCK_WIDTH, BLOCK_HEIGHT);
+        glVertex2f(i * BLOCK_WIDTH, BLOCK_HEIGHT);
     }
     glEnd();
-
-    glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 
-#undef bWidth
-#undef bHeight
 #undef BORDER
+#undef BLOCK_HEIGHT
+#undef BLOCK_WIDTH
 }
 
 static DGLuint constructBBox(DGLuint name, float br)
@@ -4117,10 +3553,8 @@ static DGLuint constructBBox(DGLuint name, float br)
             glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,-1.0f-br,-1.0f-br);  // BR
         }
         glEnd();
-
         return GL_EndList();
     }
-
     return 0;
 }
 
@@ -4210,7 +3644,7 @@ void Rend_DrawArrow(const float pos3f[3], float a, float s,
     glPopMatrix();
 }
 
-static boolean drawMobjBBox(thinker_t* th, void* context)
+static int drawMobjBBox(thinker_t* th, void* context)
 {
     static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
     static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
@@ -4221,16 +3655,16 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
 
     // We don't want the console player.
     if(mo == ddPlayers[consolePlayer].shared.mo)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
     // Is it vissible?
     if(!(mo->subsector && mo->subsector->sector->frameFlags & SIF_VISIBLE))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     eye[VX] = vx;
     eye[VY] = vz;
     eye[VZ] = vy;
 
-    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
+    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->geometry.size.width/2))/4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
@@ -4244,7 +3678,7 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
     Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
                    (mo->ddFlags & DDMF_MISSILE)? yellow :
                    (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -4256,14 +3690,15 @@ static boolean drawMobjBBox(thinker_t* th, void* context)
  */
 static void Rend_RenderBoundingBoxes(void)
 {
-    //static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
-    static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
-    static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    //static const float red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
+    static const float green[3] = { 0.2f, 1, 0.2f}; // solid objects
+    static const float yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
-    uint                i;
-    float               eye[3];
-    material_t*         mat;
-    material_snapshot_t ms;
+    const materialvariantspecification_t* spec;
+    const materialsnapshot_t* ms;
+    material_t* mat;
+    float eye[3];
+    uint i;
 
     if(!devMobjBBox && !devPolyobjBBox)
         return;
@@ -4284,11 +3719,12 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = P_GetMaterial(DDT_BBOX, MN_SYSTEM);
-    Material_Prepare(&ms, mat, true, NULL);
+    mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":bbox"));
+    spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 0, 0, 0,
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
+    ms = Materials_Prepare(mat, spec, true);
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                   ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
@@ -4299,16 +3735,16 @@ static void Rend_RenderBoundingBoxes(void)
     {
         const polyobj_t* po = polyObjs[i];
         const sector_t* sec = po->subsector->sector;
-        float width  = (po->box[1][0] - po->box[0][0])/2;
-        float length = (po->box[1][1] - po->box[0][1])/2;
+        float width  = (po->aaBox.maxX - po->aaBox.minX)/2;
+        float length = (po->aaBox.maxY - po->aaBox.minY)/2;
         float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
         float pos[3], alpha;
-        
-        pos[VX] = po->box[0][0]+width;
-        pos[VY] = po->box[0][1]+length;
+
+        pos[VX] = po->aaBox.minX + width;
+        pos[VY] = po->aaBox.minY + length;
         pos[VZ] = sec->SP_floorheight;
 
-        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
+        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->geometry.size.width/2))/4);
         if(alpha < .25f)
             alpha = .25f; // Don't make them totally invisible.
 
@@ -4319,13 +3755,13 @@ static void Rend_RenderBoundingBoxes(void)
         {
             seg_t* seg = po->segs[j];
             linedef_t* lineDef = seg->lineDef;
-            float width  = (lineDef->bBox[BOXRIGHT] - lineDef->bBox[BOXLEFT])/2;
-            float length = (lineDef->bBox[BOXTOP] - lineDef->bBox[BOXBOTTOM])/2;
+            float width  = (lineDef->aaBox.maxX - lineDef->aaBox.minX)/2;
+            float length = (lineDef->aaBox.maxY - lineDef->aaBox.minY)/2;
             float pos[3];
 
             /** Draw a bounding box for the lineDef.
-            pos[VX] = lineDef->bBox[BOXLEFT]+width;
-            pos[VY] = lineDef->bBox[BOXBOTTOM]+length;
+            pos[VX] = lineDef->aaBox.minX+width;
+            pos[VY] = lineDef->aaBox.minY+length;
             pos[VZ] = sec->SP_floorheight;
             Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
             */
@@ -4343,5 +3779,6 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_NORMAL);
 
     glEnable(GL_CULL_FACE);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,12 +24,13 @@
  */
 
 /**
- * p_mobj.c: Moving object handling. Spawn functions.
+ * Moving object handling. Spawn functions.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #include "jheretic.h"
 
@@ -50,10 +51,7 @@
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
 #define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-#define STANDSPEED              (1.0f/2)
-
 // TYPES -------------------------------------------------------------------
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -75,10 +73,10 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
     sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
-    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
 
-/**
+/** 
  * @return              @c true, if the mobj is still present.
  */
 boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
@@ -97,7 +95,7 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
     mobj->turnTime = false; // $visangle-facetarget.
 
     st = &STATES[state];
-    if(!(mobj->ddFlags & DDMF_REMOTE)) // only for local mobjs
+    if(Mobj_ActionFunctionAllowed(mobj))
     {
         if(st->action) st->action(mobj); // Call action function.
     }
@@ -330,36 +328,18 @@ float P_MobjGetFriction(mobj_t *mo)
     }
 }
 
-static float getFriction(mobj_t* mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
-       !mo->onMobj)
-    {   // Airborne friction.
-        return FRICTION_FLY;
-    }
-
-#if __JHERETIC__
-    if(P_ToXSector(P_GetPtrp(mo->subsector, DMU_SECTOR))->special == 15)
-    {   // Friction_Low
-        return FRICTION_LOW;
-    }
-#endif
-
-    return P_MobjGetFriction(mo);
-}
-
 void P_MobjMoveXY(mobj_t* mo)
 {
-    float               pos[2], mom[2];
-    player_t*           player;
-    boolean             largeNegative;
+    float pos[2], mom[2];
+    player_t* player;
+    boolean largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
-    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
@@ -387,18 +367,19 @@ void P_MobjMoveXY(mobj_t* mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
-           (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
+        if(!cfg.moveBlock && (mom[MX] < -MAXMOMSTEP || mom[MY] < -MAXMOMSTEP))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
-        if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
+        if(largeNegative || mom[MX] > MAXMOMSTEP || mom[MY] > MAXMOMSTEP)
         {
-            pos[VX] = mo->pos[VX] + (mom[MX] /= 2);
-            pos[VY] = mo->pos[VY] + (mom[MY] /= 2);
+            pos[VX] = mo->pos[VX] + mom[MX] / 2;
+            pos[VY] = mo->pos[VY] + mom[MY] / 2;
+            mom[MX] /= 2;
+            mom[MY] /= 2;
         }
         else
         {
@@ -420,7 +401,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {   // Explode a missile
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
@@ -473,75 +454,11 @@ void P_MobjMoveXY(mobj_t* mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Slow down.
-    if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
-    {
-        // Debug option for no sliding a`t all
-        mo->mom[MX] = mo->mom[MY] = 0;
-        return;
-    }
-
-    if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
-    {   // No friction for missiles.
-        return;
-    }
-
-    if(mo->pos[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
-    {   // No friction when falling.
-        return;
-    }
-
-    if(cfg.slidingCorpses)
-    {
-        /**
-         * $dropoff_fix:
-         * Add objects falling off ledges. Does not apply to players!
-         */
-
-        if(((mo->flags & MF_CORPSE) || (mo->intFlags & MIF_FALLING)) &&
-           !mo->player)
-        {   // Do not stop sliding.
-            // If halfway off a step with some momentum.
-            if(mo->mom[MX] > 1.0f / 4 || mo->mom[MX] < -1.0f / 4 ||
-               mo->mom[MY] > 1.0f / 4 || mo->mom[MY] < -1.0f / 4)
-            {
-                if(mo->floorZ !=
-                   P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-                    return;
-            }
-        }
-    }
-
-    // Stop player walking animation.
-    if((!player || (!(player->plr->forwardMove || player->plr->sideMove) &&
-        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
-       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {
-        // If in a walking frame, stop moving.
-        if(player && P_PlayerInWalkState(player) && player->plr->mo == mo)
-        {
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
-        }
-
-        // $voodoodolls: Do not zero mom!
-        if(!(player && player->plr->mo != mo))
-            mo->mom[MX] = mo->mom[MY] = 0;
-
-        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
-        if(player && player->plr->mo == mo)
-            player->bob = 0;
-    }
-    else
-    {
-        float friction = getFriction(mo);
-
-        mo->mom[MX] *= friction;
-        mo->mom[MY] *= friction;
-    }
+    Mobj_XYMoveStopping(mo);
 }
 
 void P_MobjMoveZ(mobj_t *mo)
@@ -670,7 +587,7 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = -mo->mom[MZ];
         }
 
-        if(movingDown = (mo->mom[MZ] < 0))
+        if((movingDown = (mo->mom[MZ] < 0)))
         {
             if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
@@ -1081,9 +998,9 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     case MT_ARTISUPERHEAL:
     case MT_ARTITELEPORT:
     case MT_ITEMSHIELD2:
-        if(gameMode == shareware)
-        {   // Don't place on map in shareware version.
-            return NULL;
+        if(gameMode == heretic_shareware)
+        {
+            return 0;// Don't place on map.
         }
         break;
 
@@ -1093,7 +1010,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     // Don't spawn any monsters if -noMonstersParm.
     if(noMonstersParm && (info->flags & MF_COUNTKILL))
-        return NULL;
+        return 0;
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
@@ -1190,13 +1107,13 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
  */
 void P_RepositionMace(mobj_t* mo)
 {
-    int                 spot;
-    subsector_t*        ss;
+    mapspotid_t spot;
+    subsector_t* ss;
 
     P_MobjUnsetPosition(mo);
-    spot = P_Random() % maceSpotCount;
-    mo->pos[VX] = maceSpots[spot].pos[VX];
-    mo->pos[VY] = maceSpots[spot].pos[VY];
+    spot = maceSpots[P_Random() % maceSpotCount];
+    mo->pos[VX] = mapSpots[spot].pos[VX];
+    mo->pos[VY] = mapSpots[spot].pos[VY];
     ss = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
 
     mo->floorZ = P_GetFloatp(ss, DMU_CEILING_HEIGHT);

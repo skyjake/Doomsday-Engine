@@ -28,26 +28,23 @@
    Later modified for use in the Allegro filesystem by Shawn Hargreaves.
 
    Later still, modified to function as a stand-alone Win32 DLL by
-   Jaakko Ker√§nen.  Currently used as a part of the Doomsday Engine:
+   Jaakko Ker‰nen.  Currently used as a part of the Doomsday Engine:
    http://sf.net/projects/deng/
- 
+
 
    Use, distribute, and modify this code freely.
 */
 
-/** \file 
+/** \file
 * LZSS compression routines
 * These are the legacy LZSS compression routines. New code should not
 * use these routines, and instead should use zlib's deflate routines
 * if LZSS compression or decompression is required.
 *
-* This code does not build on Win32, and uses an inseure temporary
-* name generation. It is likely to be a possible security hole in future
-* and as such all code still using this should migrate to zlib's deflate
-* as soon as possible.
+* This code does not build on Win32.
 *
 * For now LZSS compression is used by FileReader in engine/portable/src/m_misc.c
-* by plugins/jhexen/src/sv_save.c in many routines, and by 
+* by plugins/jhexen/src/sv_save.c in many routines, and by
 * engine/portable/include/net_main.h in the Demo_* rouines.
 */
 
@@ -62,7 +59,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "../../../engine/unix/include/sys_findfile.h"
+#include "../../../engine/portable/include/sys_findfile.h"
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------
@@ -80,15 +77,15 @@
 #define FILE_SEARCH_STRUCT                      finddata_t
 #define FILE_FINDFIRST(filename, attrib, dta)   myfindfirst(filename, dta)
 #define FILE_FINDNEXT(dta)                      myfindnext(dta)
-#define FILE_FINDCLOSE(dta)						myfindend(dta)
+#define FILE_FINDCLOSE(dta)                     myfindend(dta)
 #define FILE_ATTRIB                             attrib
 #define FILE_SIZE                               size
 #define FILE_NAME                               name
-#define FILE_DATE								date
-#define FILE_TIME								time
+#define FILE_DATE                               date
+#define FILE_TIME                               time
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE    1
+#define FALSE   0
 
 #ifndef MIN
 #  define MIN(x,y)     (((x) < (y)) ? (x) : (y))
@@ -96,36 +93,36 @@
 #  define MID(x,y,z)   MAX((x), MIN((y), (z)))
 #endif
 
-#define N            4096		/* 4k buffers for LZ compression */
-#define F            18			/* upper limit for LZ match length */
-#define THRESHOLD    2			/* LZ encode string into pos and length
-								   if match size is greater than this */
+#define N            4096       /* 4k buffers for LZ compression */
+#define F            18         /* upper limit for LZ match length */
+#define THRESHOLD    2          /* LZ encode string into pos and length
+                                   if match size is greater than this */
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct PACK_DATA		/* stuff for doing LZ compression */
+typedef struct PACK_DATA        /* stuff for doing LZ compression */
 {
-	int     state;				/* where have we got to in the pack? */
-	int     i, c, len, r, s;
-	int     last_match_length, code_buf_ptr;
-	unsigned char mask;
-	char    code_buf[17];
-	int     match_position;
-	int     match_length;
-	int     lson[N + 1];		/* left children, */
-	int     rson[N + 257];		/* right children, */
-	int     dad[N + 1];			/* and parents, = binary search trees */
-	unsigned char text_buf[N + F - 1];	/* ring buffer, with F-1 extra bytes
-										   for string comparison */
+    int     state;              /* where have we got to in the pack? */
+    int     i, c, len, r, s;
+    int     last_match_length, code_buf_ptr;
+    unsigned char mask;
+    char    code_buf[17];
+    int     match_position;
+    int     match_length;
+    int     lson[N + 1];        /* left children, */
+    int     rson[N + 257];      /* right children, */
+    int     dad[N + 1];         /* and parents, = binary search trees */
+    unsigned char text_buf[N + F - 1];  /* ring buffer, with F-1 extra bytes
+                                           for string comparison */
 } PACK_DATA;
 
-typedef struct UNPACK_DATA		/* for reading LZ files */
+typedef struct UNPACK_DATA      /* for reading LZ files */
 {
-	int     state;				/* where have we got to? */
-	int     i, j, k, r, c;
-	int     flags;
-	unsigned char text_buf[N + F - 1];	/* ring buffer, with F-1 extra bytes
-										   for string comparison */
+    int     state;              /* where have we got to? */
+    int     i, j, k, r, c;
+    int     flags;
+    unsigned char text_buf[N + F - 1];  /* ring buffer, with F-1 extra bytes
+                                           for string comparison */
 } UNPACK_DATA;
 
 // FUNCTION DECLARATIONS ---------------------------------------------------
@@ -146,13 +143,13 @@ int     _packfile_datasize = 0;
  */
 int _sort_out_getc(LZFILE * f)
 {
-	if(f->buf_size == 0)
-	{
-		if(f->todo <= 0)
-			f->flags |= LZFILE_FLAG_EOF;
-		return *(f->buf_pos++);
-	}
-	return RefillBuffer(f);
+    if(f->buf_size == 0)
+    {
+        if(f->todo <= 0)
+            f->flags |= LZFILE_FLAG_EOF;
+        return *(f->buf_pos++);
+    }
+    return RefillBuffer(f);
 }
 
 /**
@@ -160,102 +157,102 @@ int _sort_out_getc(LZFILE * f)
  */
 int _sort_out_putc(int c, LZFILE * f)
 {
-	f->buf_size--;
+    f->buf_size--;
 
-	if(FlushBuffer(f, FALSE))
-		return EOF;
+    if(FlushBuffer(f, FALSE))
+        return EOF;
 
-	f->buf_size++;
-	return (*(f->buf_pos++) = c);
+    f->buf_size++;
+    return (*(f->buf_pos++) = c);
 }
 
 /**
- *  For i = 0 to N-1, rson[i] and lson[i] will be the right and left 
- *  children of node i. These nodes need not be initialized. Also, dad[i] 
- *  is the parent of node i. These are initialized to N, which stands for 
- *  'not used.' For i = 0 to 255, rson[N+i+1] is the root of the tree for 
- *  strings that begin with character i. These are initialized to N. Note 
+ *  For i = 0 to N-1, rson[i] and lson[i] will be the right and left
+ *  children of node i. These nodes need not be initialized. Also, dad[i]
+ *  is the parent of node i. These are initialized to N, which stands for
+ *  'not used.' For i = 0 to 255, rson[N+i+1] is the root of the tree for
+ *  strings that begin with character i. These are initialized to N. Note
  *  there are 256 trees.
  */
 static void pack_inittree(PACK_DATA * dat)
 {
-	int     i;
+    int     i;
 
-	for(i = N + 1; i <= N + 256; i++)
-		dat->rson[i] = N;
+    for(i = N + 1; i <= N + 256; i++)
+        dat->rson[i] = N;
 
-	for(i = 0; i < N; i++)
-		dat->dad[i] = N;
+    for(i = 0; i < N; i++)
+        dat->dad[i] = N;
 }
 
 /* pack_insertnode:
- *  Inserts a string of length F, text_buf[r..r+F-1], into one of the trees 
- *  (text_buf[r]'th tree) and returns the longest-match position and length 
- *  via match_position and match_length. If match_length = F, then removes 
- *  the old node in favor of the new one, because the old one will be 
- *  deleted sooner. Note r plays double role, as tree node and position in 
- *  the buffer. 
+ *  Inserts a string of length F, text_buf[r..r+F-1], into one of the trees
+ *  (text_buf[r]'th tree) and returns the longest-match position and length
+ *  via match_position and match_length. If match_length = F, then removes
+ *  the old node in favor of the new one, because the old one will be
+ *  deleted sooner. Note r plays double role, as tree node and position in
+ *  the buffer.
  */
 static void pack_insertnode(int r, PACK_DATA * dat)
 {
-	int     i, p, cmp;
-	unsigned char *key;
-	unsigned char *text_buf = dat->text_buf;
+    int     i, p, cmp;
+    unsigned char *key;
+    unsigned char *text_buf = dat->text_buf;
 
-	cmp = 1;
-	key = &text_buf[r];
-	p = N + 1 + key[0];
-	dat->rson[r] = dat->lson[r] = N;
-	dat->match_length = 0;
+    cmp = 1;
+    key = &text_buf[r];
+    p = N + 1 + key[0];
+    dat->rson[r] = dat->lson[r] = N;
+    dat->match_length = 0;
 
-	for(;;)
-	{
+    for(;;)
+    {
 
-		if(cmp >= 0)
-		{
-			if(dat->rson[p] != N)
-				p = dat->rson[p];
-			else
-			{
-				dat->rson[p] = r;
-				dat->dad[r] = p;
-				return;
-			}
-		}
-		else
-		{
-			if(dat->lson[p] != N)
-				p = dat->lson[p];
-			else
-			{
-				dat->lson[p] = r;
-				dat->dad[r] = p;
-				return;
-			}
-		}
+        if(cmp >= 0)
+        {
+            if(dat->rson[p] != N)
+                p = dat->rson[p];
+            else
+            {
+                dat->rson[p] = r;
+                dat->dad[r] = p;
+                return;
+            }
+        }
+        else
+        {
+            if(dat->lson[p] != N)
+                p = dat->lson[p];
+            else
+            {
+                dat->lson[p] = r;
+                dat->dad[r] = p;
+                return;
+            }
+        }
 
-		for(i = 1; i < F; i++)
-			if((cmp = key[i] - text_buf[p + i]) != 0)
-				break;
+        for(i = 1; i < F; i++)
+            if((cmp = key[i] - text_buf[p + i]) != 0)
+                break;
 
-		if(i > dat->match_length)
-		{
-			dat->match_position = p;
-			if((dat->match_length = i) >= F)
-				break;
-		}
-	}
+        if(i > dat->match_length)
+        {
+            dat->match_position = p;
+            if((dat->match_length = i) >= F)
+                break;
+        }
+    }
 
-	dat->dad[r] = dat->dad[p];
-	dat->lson[r] = dat->lson[p];
-	dat->rson[r] = dat->rson[p];
-	dat->dad[dat->lson[p]] = r;
-	dat->dad[dat->rson[p]] = r;
-	if(dat->rson[dat->dad[p]] == p)
-		dat->rson[dat->dad[p]] = r;
-	else
-		dat->lson[dat->dad[p]] = r;
-	dat->dad[p] = N;			/* remove p */
+    dat->dad[r] = dat->dad[p];
+    dat->lson[r] = dat->lson[p];
+    dat->rson[r] = dat->rson[p];
+    dat->dad[dat->lson[p]] = r;
+    dat->dad[dat->rson[p]] = r;
+    if(dat->rson[dat->dad[p]] == p)
+        dat->rson[dat->dad[p]] = r;
+    else
+        dat->lson[dat->dad[p]] = r;
+    dat->dad[p] = N;            /* remove p */
 }
 
 /**
@@ -263,221 +260,221 @@ static void pack_insertnode(int r, PACK_DATA * dat)
  */
 static void pack_deletenode(int p, PACK_DATA * dat)
 {
-	int     q;
+    int     q;
 
-	if(dat->dad[p] == N)
-		return;					/* not in tree */
+    if(dat->dad[p] == N)
+        return;                 /* not in tree */
 
-	if(dat->rson[p] == N)
-		q = dat->lson[p];
-	else if(dat->lson[p] == N)
-		q = dat->rson[p];
-	else
-	{
-		q = dat->lson[p];
-		if(dat->rson[q] != N)
-		{
-			do
-			{
-				q = dat->rson[q];
-			} while(dat->rson[q] != N);
-			dat->rson[dat->dad[q]] = dat->lson[q];
-			dat->dad[dat->lson[q]] = dat->dad[q];
-			dat->lson[q] = dat->lson[p];
-			dat->dad[dat->lson[p]] = q;
-		}
-		dat->rson[q] = dat->rson[p];
-		dat->dad[dat->rson[p]] = q;
-	}
+    if(dat->rson[p] == N)
+        q = dat->lson[p];
+    else if(dat->lson[p] == N)
+        q = dat->rson[p];
+    else
+    {
+        q = dat->lson[p];
+        if(dat->rson[q] != N)
+        {
+            do
+            {
+                q = dat->rson[q];
+            } while(dat->rson[q] != N);
+            dat->rson[dat->dad[q]] = dat->lson[q];
+            dat->dad[dat->lson[q]] = dat->dad[q];
+            dat->lson[q] = dat->lson[p];
+            dat->dad[dat->lson[p]] = q;
+        }
+        dat->rson[q] = dat->rson[p];
+        dat->dad[dat->rson[p]] = q;
+    }
 
-	dat->dad[q] = dat->dad[p];
-	if(dat->rson[dat->dad[p]] == p)
-		dat->rson[dat->dad[p]] = q;
-	else
-		dat->lson[dat->dad[p]] = q;
+    dat->dad[q] = dat->dad[p];
+    if(dat->rson[dat->dad[p]] == p)
+        dat->rson[dat->dad[p]] = q;
+    else
+        dat->lson[dat->dad[p]] = q;
 
-	dat->dad[p] = N;
+    dat->dad[p] = N;
 }
 
 /**
- *  Called by FlushBuffer(). Packs size bytes from buf, using the pack 
+ *  Called by FlushBuffer(). Packs size bytes from buf, using the pack
  *  information contained in dat. Returns 0 on success.
  */
 static int pack_write(LZFILE * file, PACK_DATA * dat, int size,
-					  unsigned char *buf, int last)
+                      unsigned char *buf, int last)
 {
-	int     i = dat->i;
-	int     c = dat->c;
-	int     len = dat->len;
-	int     r = dat->r;
-	int     s = dat->s;
-	int     last_match_length = dat->last_match_length;
-	int     code_buf_ptr = dat->code_buf_ptr;
-	unsigned char mask = dat->mask;
-	int     ret = 0;
+    int     i = dat->i;
+    int     c = dat->c;
+    int     len = dat->len;
+    int     r = dat->r;
+    int     s = dat->s;
+    int     last_match_length = dat->last_match_length;
+    int     code_buf_ptr = dat->code_buf_ptr;
+    unsigned char mask = dat->mask;
+    int     ret = 0;
 
-	if(dat->state == 2)
-		goto pos2;
-	else if(dat->state == 1)
-		goto pos1;
+    if(dat->state == 2)
+        goto pos2;
+    else if(dat->state == 1)
+        goto pos1;
 
-	dat->code_buf[0] = 0;
-	/* code_buf[1..16] saves eight units of code, and code_buf[0] works
-	   as eight flags, "1" representing that the unit is an unencoded
-	   letter (1 byte), "0" a position-and-length pair (2 bytes).
-	   Thus, eight units require at most 16 bytes of code. */
+    dat->code_buf[0] = 0;
+    /* code_buf[1..16] saves eight units of code, and code_buf[0] works
+       as eight flags, "1" representing that the unit is an unencoded
+       letter (1 byte), "0" a position-and-length pair (2 bytes).
+       Thus, eight units require at most 16 bytes of code. */
 
-	code_buf_ptr = mask = 1;
+    code_buf_ptr = mask = 1;
 
-	s = 0;
-	r = N - F;
-	pack_inittree(dat);
+    s = 0;
+    r = N - F;
+    pack_inittree(dat);
 
-	for(len = 0; (len < F) && (size > 0); len++)
-	{
-		dat->text_buf[r + len] = *(buf++);
-		if(--size == 0)
-		{
-			if(!last)
-			{
-				dat->state = 1;
-				goto getout;
-			}
-		}
-	  pos1:
-		;
-	}
+    for(len = 0; (len < F) && (size > 0); len++)
+    {
+        dat->text_buf[r + len] = *(buf++);
+        if(--size == 0)
+        {
+            if(!last)
+            {
+                dat->state = 1;
+                goto getout;
+            }
+        }
+      pos1:
+        ;
+    }
 
-	if(len == 0)
-		goto getout;
+    if(len == 0)
+        goto getout;
 
-	for(i = 1; i <= F; i++)
-		pack_insertnode(r - i, dat);
-	/* Insert the F strings, each of which begins with one or
-	   more 'space' characters. Note the order in which these
-	   strings are inserted. This way, degenerate trees will be
-	   less likely to occur. */
+    for(i = 1; i <= F; i++)
+        pack_insertnode(r - i, dat);
+    /* Insert the F strings, each of which begins with one or
+       more 'space' characters. Note the order in which these
+       strings are inserted. This way, degenerate trees will be
+       less likely to occur. */
 
-	pack_insertnode(r, dat);
-	/* Finally, insert the whole string just read. match_length
-	   and match_position are set. */
+    pack_insertnode(r, dat);
+    /* Finally, insert the whole string just read. match_length
+       and match_position are set. */
 
-	do
-	{
-		if(dat->match_length > len)
-			dat->match_length = len;	/* match_length may be long near the end */
+    do
+    {
+        if(dat->match_length > len)
+            dat->match_length = len;    /* match_length may be long near the end */
 
-		if(dat->match_length <= THRESHOLD)
-		{
-			dat->match_length = 1;	/* not long enough match: send one byte */
-			dat->code_buf[0] |= mask;	/* 'send one byte' flag */
-			dat->code_buf[code_buf_ptr++] = dat->text_buf[r];	/* send uncoded */
-		}
-		else
-		{
-			/* send position and length pair. Note match_length > THRESHOLD */
-			dat->code_buf[code_buf_ptr++] =
-				(unsigned char) dat->match_position;
-			dat->code_buf[code_buf_ptr++] =
-				(unsigned char) (((dat->match_position >> 4) & 0xF0) |
-								 (dat->match_length - (THRESHOLD + 1)));
-		}
+        if(dat->match_length <= THRESHOLD)
+        {
+            dat->match_length = 1;  /* not long enough match: send one byte */
+            dat->code_buf[0] |= mask;   /* 'send one byte' flag */
+            dat->code_buf[code_buf_ptr++] = dat->text_buf[r];   /* send uncoded */
+        }
+        else
+        {
+            /* send position and length pair. Note match_length > THRESHOLD */
+            dat->code_buf[code_buf_ptr++] =
+                (unsigned char) dat->match_position;
+            dat->code_buf[code_buf_ptr++] =
+                (unsigned char) (((dat->match_position >> 4) & 0xF0) |
+                                 (dat->match_length - (THRESHOLD + 1)));
+        }
 
-		if((mask <<= 1) == 0)
-		{						/* shift mask left one bit */
-			if(*file->password)
-			{
-				dat->code_buf[0] ^= *file->password;
-				file->password++;
-				if(!*file->password)
-					file->password = thepassword;
-			};
+        if((mask <<= 1) == 0)
+        {                       /* shift mask left one bit */
+            if(*file->password)
+            {
+                dat->code_buf[0] ^= *file->password;
+                file->password++;
+                if(!*file->password)
+                    file->password = thepassword;
+            };
 
-			for(i = 0; i < code_buf_ptr; i++)	/* send at most 8 units of */
-				lzPutC(dat->code_buf[i], file);	/* code together */
-			if(lzError(file))
-			{
-				ret = EOF;
-				goto getout;
-			}
-			dat->code_buf[0] = 0;
-			code_buf_ptr = mask = 1;
-		}
+            for(i = 0; i < code_buf_ptr; i++)   /* send at most 8 units of */
+                lzPutC(dat->code_buf[i], file); /* code together */
+            if(lzError(file))
+            {
+                ret = EOF;
+                goto getout;
+            }
+            dat->code_buf[0] = 0;
+            code_buf_ptr = mask = 1;
+        }
 
-		last_match_length = dat->match_length;
+        last_match_length = dat->match_length;
 
-		for(i = 0; (i < last_match_length) && (size > 0); i++)
-		{
-			c = *(buf++);
-			if(--size == 0)
-			{
-				if(!last)
-				{
-					dat->state = 2;
-					goto getout;
-				}
-			}
-		  pos2:
-			pack_deletenode(s, dat);	/* delete old strings and */
-			dat->text_buf[s] = c;	/* read new bytes */
-			if(s < F - 1)
-				dat->text_buf[s + N] = c;	/* if the position is near the end of
-											   buffer, extend the buffer to make
-											   string comparison easier */
-			s = (s + 1) & (N - 1);
-			r = (r + 1) & (N - 1);	/* since this is a ring buffer,
-									   increment the position modulo N */
+        for(i = 0; (i < last_match_length) && (size > 0); i++)
+        {
+            c = *(buf++);
+            if(--size == 0)
+            {
+                if(!last)
+                {
+                    dat->state = 2;
+                    goto getout;
+                }
+            }
+          pos2:
+            pack_deletenode(s, dat);    /* delete old strings and */
+            dat->text_buf[s] = c;   /* read new bytes */
+            if(s < F - 1)
+                dat->text_buf[s + N] = c;   /* if the position is near the end of
+                                               buffer, extend the buffer to make
+                                               string comparison easier */
+            s = (s + 1) & (N - 1);
+            r = (r + 1) & (N - 1);  /* since this is a ring buffer,
+                                       increment the position modulo N */
 
-			pack_insertnode(r, dat);	/* register the string in
-										   text_buf[r..r+F-1] */
-		}
+            pack_insertnode(r, dat);    /* register the string in
+                                           text_buf[r..r+F-1] */
+        }
 
-		while(i++ < last_match_length)
-		{						/* after the end of text, */
-			pack_deletenode(s, dat);	/* no need to read, but */
-			s = (s + 1) & (N - 1);	/* buffer may not be empty */
-			r = (r + 1) & (N - 1);
-			if(--len)
-				pack_insertnode(r, dat);
-		}
+        while(i++ < last_match_length)
+        {                       /* after the end of text, */
+            pack_deletenode(s, dat);    /* no need to read, but */
+            s = (s + 1) & (N - 1);  /* buffer may not be empty */
+            r = (r + 1) & (N - 1);
+            if(--len)
+                pack_insertnode(r, dat);
+        }
 
-	} while(len > 0);			/* until length of string to be processed is zero */
+    } while(len > 0);           /* until length of string to be processed is zero */
 
-	if(code_buf_ptr > 1)
-	{							/* send remaining code */
-		if(*file->password)
-		{
-			dat->code_buf[0] ^= *file->password;
-			file->password++;
-			if(!*file->password)
-				file->password = thepassword;
-		};
+    if(code_buf_ptr > 1)
+    {                           /* send remaining code */
+        if(*file->password)
+        {
+            dat->code_buf[0] ^= *file->password;
+            file->password++;
+            if(!*file->password)
+                file->password = thepassword;
+        };
 
-		for(i = 0; i < code_buf_ptr; i++)
-		{
-			lzPutC(dat->code_buf[i], file);
-			if(lzError(file))
-			{
-				ret = EOF;
-				goto getout;
-			}
-		}
-	}
+        for(i = 0; i < code_buf_ptr; i++)
+        {
+            lzPutC(dat->code_buf[i], file);
+            if(lzError(file))
+            {
+                ret = EOF;
+                goto getout;
+            }
+        }
+    }
 
-	dat->state = 0;
+    dat->state = 0;
 
   getout:
 
-	dat->i = i;
-	dat->c = c;
-	dat->len = len;
-	dat->r = r;
-	dat->s = s;
-	dat->last_match_length = last_match_length;
-	dat->code_buf_ptr = code_buf_ptr;
-	dat->mask = mask;
+    dat->i = i;
+    dat->c = c;
+    dat->len = len;
+    dat->r = r;
+    dat->s = s;
+    dat->last_match_length = last_match_length;
+    dat->code_buf_ptr = code_buf_ptr;
+    dat->mask = mask;
 
-	return ret;
+    return ret;
 }
 
 /**
@@ -486,94 +483,94 @@ static int pack_write(LZFILE * file, PACK_DATA * dat, int size,
  *  bytes added to the buffer
  */
 static int pack_read(LZFILE * file, UNPACK_DATA * dat, int s,
-					 unsigned char *buf)
+                     unsigned char *buf)
 {
-	int     i = dat->i;
-	int     j = dat->j;
-	int     k = dat->k;
-	int     r = dat->r;
-	int     c = dat->c;
-	unsigned int flags = dat->flags;
-	int     size = 0;
+    int     i = dat->i;
+    int     j = dat->j;
+    int     k = dat->k;
+    int     r = dat->r;
+    int     c = dat->c;
+    unsigned int flags = dat->flags;
+    int     size = 0;
 
-	if(dat->state == 2)
-		goto pos2;
-	else if(dat->state == 1)
-		goto pos1;
+    if(dat->state == 2)
+        goto pos2;
+    else if(dat->state == 1)
+        goto pos1;
 
-	r = N - F;
-	flags = 0;
+    r = N - F;
+    flags = 0;
 
-	for(;;)
-	{
-		if(((flags >>= 1) & 256) == 0)
-		{
-			if((c = lzGetC(file)) == EOF)
-				break;
+    for(;;)
+    {
+        if(((flags >>= 1) & 256) == 0)
+        {
+            if((c = lzGetC(file)) == EOF)
+                break;
 
-			if(*file->password)
-			{
-				c ^= *file->password;
-				file->password++;
-				if(!*file->password)
-					file->password = thepassword;
-			};
+            if(*file->password)
+            {
+                c ^= *file->password;
+                file->password++;
+                if(!*file->password)
+                    file->password = thepassword;
+            };
 
-			flags = c | 0xFF00;	/* uses higher byte to count eight */
-		}
+            flags = c | 0xFF00; /* uses higher byte to count eight */
+        }
 
-		if(flags & 1)
-		{
-			if((c = lzGetC(file)) == EOF)
-				break;
-			dat->text_buf[r++] = c;
-			r &= (N - 1);
-			*(buf++) = c;
-			if(++size >= s)
-			{
-				dat->state = 1;
-				goto getout;
-			}
-		  pos1:
-			;
-		}
-		else
-		{
-			if((i = lzGetC(file)) == EOF)
-				break;
-			if((j = lzGetC(file)) == EOF)
-				break;
-			i |= ((j & 0xF0) << 4);
-			j = (j & 0x0F) + THRESHOLD;
-			for(k = 0; k <= j; k++)
-			{
-				c = dat->text_buf[(i + k) & (N - 1)];
-				dat->text_buf[r++] = c;
-				r &= (N - 1);
-				*(buf++) = c;
-				if(++size >= s)
-				{
-					dat->state = 2;
-					goto getout;
-				}
-			  pos2:
-				;
-			}
-		}
-	}
+        if(flags & 1)
+        {
+            if((c = lzGetC(file)) == EOF)
+                break;
+            dat->text_buf[r++] = c;
+            r &= (N - 1);
+            *(buf++) = c;
+            if(++size >= s)
+            {
+                dat->state = 1;
+                goto getout;
+            }
+          pos1:
+            ;
+        }
+        else
+        {
+            if((i = lzGetC(file)) == EOF)
+                break;
+            if((j = lzGetC(file)) == EOF)
+                break;
+            i |= ((j & 0xF0) << 4);
+            j = (j & 0x0F) + THRESHOLD;
+            for(k = 0; k <= j; k++)
+            {
+                c = dat->text_buf[(i + k) & (N - 1)];
+                dat->text_buf[r++] = c;
+                r &= (N - 1);
+                *(buf++) = c;
+                if(++size >= s)
+                {
+                    dat->state = 2;
+                    goto getout;
+                }
+              pos2:
+                ;
+            }
+        }
+    }
 
-	dat->state = 0;
+    dat->state = 0;
 
   getout:
 
-	dat->i = i;
-	dat->j = j;
-	dat->k = k;
-	dat->r = r;
-	dat->c = c;
-	dat->flags = flags;
+    dat->i = i;
+    dat->j = j;
+    dat->k = k;
+    dat->r = r;
+    dat->c = c;
+    dat->flags = flags;
 
-	return size;
+    return size;
 }
 
 /**
@@ -581,13 +578,13 @@ static int pack_read(LZFILE * file, UNPACK_DATA * dat, int s,
  */
 long Encrypt(long x)
 {
-	long    mask = 0;
-	int     i;
+    long    mask = 0;
+    int     i;
 
-	for(i = 0; thepassword[i]; i++)
-		mask ^= ((long) thepassword[i] << ((i & 3) * 8));
+    for(i = 0; thepassword[i]; i++)
+        mask ^= ((long) thepassword[i] << ((i & 3) * 8));
 
-	return x ^ mask;
+    return x ^ mask;
 }
 
 /**
@@ -597,11 +594,11 @@ int16_t lzGetW(LZFILE * f)
 {
         int16_t b1, b2;
 
-	if((b1 = lzGetC(f)) != EOF)
+    if((b1 = lzGetC(f)) != EOF)
                 if((b2 = lzGetC(f)) != EOF)
-			return ((b2 << 8) | b1);
+            return ((b2 << 8) | b1);
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -611,14 +608,14 @@ int32_t lzGetL(LZFILE * f)
 {
         int32_t b1, b2, b3, b4;
 
-	if((b1 = lzGetC(f)) != EOF)
-		if((b2 = lzGetC(f)) != EOF)
-			if((b3 = lzGetC(f)) != EOF)
-				if((b4 = lzGetC(f)) != EOF)
+    if((b1 = lzGetC(f)) != EOF)
+        if((b2 = lzGetC(f)) != EOF)
+            if((b3 = lzGetC(f)) != EOF)
+                if((b4 = lzGetC(f)) != EOF)
                                         return (((int32_t) b4 << 24) | ((int32_t) b3 << 16) |
                                                         ((int32_t) b2 << 8) | (int32_t) b1);
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -628,14 +625,14 @@ int16_t lzPutW(int16_t w, LZFILE * f)
 {
         int b1, b2;
 
-	b1 = (w & 0xFF00) >> 8;
-	b2 = w & 0x00FF;
+    b1 = (w & 0xFF00) >> 8;
+    b2 = w & 0x00FF;
 
-	if(lzPutC(b2, f) == b2)
-		if(lzPutC(b1, f) == b1)
-			return w;
+    if(lzPutC(b2, f) == b2)
+        if(lzPutC(b1, f) == b1)
+            return w;
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -643,20 +640,20 @@ int16_t lzPutW(int16_t w, LZFILE * f)
  */
 int32_t lzPutL(int32_t l, LZFILE * f)
 {
-	int     b1, b2, b3, b4;
+    int     b1, b2, b3, b4;
 
-	b1 = (int) ((l & 0xFF000000L) >> 24);
-	b2 = (int) ((l & 0x00FF0000L) >> 16);
-	b3 = (int) ((l & 0x0000FF00L) >> 8);
-	b4 = (int) l & 0x00FF;
+    b1 = (int) ((l & 0xFF000000L) >> 24);
+    b2 = (int) ((l & 0x00FF0000L) >> 16);
+    b3 = (int) ((l & 0x0000FF00L) >> 8);
+    b4 = (int) l & 0x00FF;
 
-	if(lzPutC(b4, f) == b4)
-		if(lzPutC(b3, f) == b3)
-			if(lzPutC(b2, f) == b2)
-				if(lzPutC(b1, f) == b1)
-					return l;
+    if(lzPutC(b4, f) == b4)
+        if(lzPutC(b3, f) == b3)
+            if(lzPutC(b2, f) == b2)
+                if(lzPutC(b1, f) == b1)
+                    return l;
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -664,13 +661,13 @@ int32_t lzPutL(int32_t l, LZFILE * f)
  */
 int lzGetWm(LZFILE * f)
 {
-	int     b1, b2;
+    int     b1, b2;
 
-	if((b1 = lzGetC(f)) != EOF)
-		if((b2 = lzGetC(f)) != EOF)
-			return ((b1 << 8) | b2);
+    if((b1 = lzGetC(f)) != EOF)
+        if((b2 = lzGetC(f)) != EOF)
+            return ((b1 << 8) | b2);
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -678,16 +675,16 @@ int lzGetWm(LZFILE * f)
  */
 long lzGetLm(LZFILE * f)
 {
-	int     b1, b2, b3, b4;
+    int     b1, b2, b3, b4;
 
-	if((b1 = lzGetC(f)) != EOF)
-		if((b2 = lzGetC(f)) != EOF)
-			if((b3 = lzGetC(f)) != EOF)
-				if((b4 = lzGetC(f)) != EOF)
-					return (((long) b1 << 24) | ((long) b2 << 16) |
-							((long) b3 << 8) | (long) b4);
+    if((b1 = lzGetC(f)) != EOF)
+        if((b2 = lzGetC(f)) != EOF)
+            if((b3 = lzGetC(f)) != EOF)
+                if((b4 = lzGetC(f)) != EOF)
+                    return (((long) b1 << 24) | ((long) b2 << 16) |
+                            ((long) b3 << 8) | (long) b4);
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -695,16 +692,16 @@ long lzGetLm(LZFILE * f)
  */
 int lzPutWm(int w, LZFILE * f)
 {
-	int     b1, b2;
+    int     b1, b2;
 
-	b1 = (w & 0xFF00) >> 8;
-	b2 = w & 0x00FF;
+    b1 = (w & 0xFF00) >> 8;
+    b2 = w & 0x00FF;
 
-	if(lzPutC(b1, f) == b1)
-		if(lzPutC(b2, f) == b2)
-			return w;
+    if(lzPutC(b1, f) == b1)
+        if(lzPutC(b2, f) == b2)
+            return w;
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -712,20 +709,20 @@ int lzPutWm(int w, LZFILE * f)
  */
 long lzPutLm(long l, LZFILE * f)
 {
-	int     b1, b2, b3, b4;
+    int     b1, b2, b3, b4;
 
-	b1 = (int) ((l & 0xFF000000L) >> 24);
-	b2 = (int) ((l & 0x00FF0000L) >> 16);
-	b3 = (int) ((l & 0x0000FF00L) >> 8);
-	b4 = (int) l & 0x00FF;
+    b1 = (int) ((l & 0xFF000000L) >> 24);
+    b2 = (int) ((l & 0x00FF0000L) >> 16);
+    b3 = (int) ((l & 0x0000FF00L) >> 8);
+    b4 = (int) l & 0x00FF;
 
-	if(lzPutC(b1, f) == b1)
-		if(lzPutC(b2, f) == b2)
-			if(lzPutC(b3, f) == b3)
-				if(lzPutC(b4, f) == b4)
-					return l;
+    if(lzPutC(b1, f) == b1)
+        if(lzPutC(b2, f) == b2)
+            if(lzPutC(b3, f) == b3)
+                if(lzPutC(b4, f) == b4)
+                    return l;
 
-	return EOF;
+    return EOF;
 }
 
 /**
@@ -742,176 +739,176 @@ long lzPutLm(long l, LZFILE * f)
  *       data does not need to be decompressed.
  *
  *  Instead of these flags, one of the constants F_READ, F_WRITE,
- *  F_READ_PACKED, F_WRITE_PACKED or F_WRITE_NOPACK may be used as the second 
+ *  F_READ_PACKED, F_WRITE_PACKED or F_WRITE_NOPACK may be used as the second
  *  argument to fopen().
  *
  *  On success, fopen() returns a pointer to a file structure, and on error
- *  it returns NULL and stores an error code in errno. An attempt to read a 
+ *  it returns NULL and stores an error code in errno. An attempt to read a
  *  normal file in packed mode will cause errno to be set to EDOM.
  */
 
 LZFILE *lzOpen(char *filename, char *mode)
 {
-	LZFILE *f, *f2;
-	FILE_SEARCH_STRUCT dta;
-	int     c;
-	long    header = FALSE;
+    LZFILE *f, *f2;
+    FILE_SEARCH_STRUCT dta;
+    int     c;
+    long    header = FALSE;
 
-	errno = 0;
+    errno = 0;
 
-	if((f = malloc(sizeof(LZFILE))) == NULL)
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
+    if((f = malloc(sizeof(LZFILE))) == NULL)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
 
-	f->buf_pos = f->buf;
-	f->flags = 0;
-	f->buf_size = 0;
-	f->filename = NULL;
-	f->password = thepassword;
+    f->buf_pos = f->buf;
+    f->flags = 0;
+    f->buf_size = 0;
+    f->filename = NULL;
+    f->password = thepassword;
 
-	for(c = 0; mode[c]; c++)
-	{
-		switch (mode[c])
-		{
-		case 'r':
-		case 'R':
-			f->flags &= ~LZFILE_FLAG_WRITE;
-			break;
-		case 'w':
-		case 'W':
-			f->flags |= LZFILE_FLAG_WRITE;
-			break;
-		case 'p':
-		case 'P':
-			f->flags |= LZFILE_FLAG_PACK;
-			break;
-		case '!':
-			f->flags &= ~LZFILE_FLAG_PACK;
-			header = TRUE;
-			break;
-		}
-	}
+    for(c = 0; mode[c]; c++)
+    {
+        switch (mode[c])
+        {
+        case 'r':
+        case 'R':
+            f->flags &= ~LZFILE_FLAG_WRITE;
+            break;
+        case 'w':
+        case 'W':
+            f->flags |= LZFILE_FLAG_WRITE;
+            break;
+        case 'p':
+        case 'P':
+            f->flags |= LZFILE_FLAG_PACK;
+            break;
+        case '!':
+            f->flags &= ~LZFILE_FLAG_PACK;
+            header = TRUE;
+            break;
+        }
+    }
 
-	if(f->flags & LZFILE_FLAG_WRITE)
-	{
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			/* write a packed file */
-			PACK_DATA *dat = malloc(sizeof(PACK_DATA));
+    if(f->flags & LZFILE_FLAG_WRITE)
+    {
+        if(f->flags & LZFILE_FLAG_PACK)
+        {
+            /* write a packed file */
+            PACK_DATA *dat = malloc(sizeof(PACK_DATA));
 
-			if(!dat)
-			{
-				errno = ENOMEM;
-				free(f);
-				return NULL;
-			}
-			if((f->parent = lzOpen(filename, F_WRITE)) == NULL)
-			{
-				free(dat);
-				free(f);
-				return NULL;
-			}
-			lzPutLm(Encrypt(F_PACK_MAGIC), f->parent);
-			f->todo = 4;
-			for(c = 0; c < N - F; c++)
-				dat->text_buf[c] = 0;
-			dat->state = 0;
-			f->pack_data = dat;
-		}
-		else
-		{
-			/* write a 'real' file */
-			f->parent = NULL;
-			f->pack_data = NULL;
+            if(!dat)
+            {
+                errno = ENOMEM;
+                free(f);
+                return NULL;
+            }
+            if((f->parent = lzOpen(filename, F_WRITE)) == NULL)
+            {
+                free(dat);
+                free(f);
+                return NULL;
+            }
+            lzPutLm(Encrypt(F_PACK_MAGIC), f->parent);
+            f->todo = 4;
+            for(c = 0; c < N - F; c++)
+                dat->text_buf[c] = 0;
+            dat->state = 0;
+            f->pack_data = dat;
+        }
+        else
+        {
+            /* write a 'real' file */
+            f->parent = NULL;
+            f->pack_data = NULL;
 
-			FILE_CREATE(filename, f->hndl);
-			if(f->hndl < 0)
-			{
-				free(f);
-				return NULL;
-			}
-			errno = 0;
-			f->todo = 0;
-		}
-		if(header)
-			lzPutLm(Encrypt(F_NOPACK_MAGIC), f);
-	}
-	else
-	{							/* must be a read */
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			/* read a packed file */
-			UNPACK_DATA *dat = malloc(sizeof(UNPACK_DATA));
+            FILE_CREATE(filename, f->hndl);
+            if(f->hndl < 0)
+            {
+                free(f);
+                return NULL;
+            }
+            errno = 0;
+            f->todo = 0;
+        }
+        if(header)
+            lzPutLm(Encrypt(F_NOPACK_MAGIC), f);
+    }
+    else
+    {                           /* must be a read */
+        if(f->flags & LZFILE_FLAG_PACK)
+        {
+            /* read a packed file */
+            UNPACK_DATA *dat = malloc(sizeof(UNPACK_DATA));
 
-			if(!dat)
-			{
-				errno = ENOMEM;
-				free(f);
-				return NULL;
-			}
-			if((f->parent = lzOpen(filename, F_READ)) == NULL)
-			{
-				free(dat);
-				free(f);
-				return NULL;
-			}
-			header = lzGetLm(f->parent);
-			if(header == Encrypt(F_PACK_MAGIC))
-			{
-				for(c = 0; c < N - F; c++)
-					dat->text_buf[c] = 0;
-				dat->state = 0;
-				f->todo = LONG_MAX;
-				f->pack_data = (char *) dat;
-			}
-			else
-			{
-				if(header == Encrypt(F_NOPACK_MAGIC))
-				{
-					f2 = f->parent;
-					free(dat);
-					free(f);
-					return f2;
-				}
-				else
-				{
-					lzClose(f->parent);
-					free(dat);
-					free(f);
-					if(errno == 0)
-						errno = EDOM;
-					return NULL;
-				}
-			}
-		}
-		else
-		{
-			/* read a 'real' file */
-			f->parent = NULL;
-			f->pack_data = NULL;
-			errno =
-				FILE_FINDFIRST(filename, A_RDONLY | A_HIDDEN | A_ARCH, &dta);
-			if(errno != 0)
-			{
-				FILE_FINDCLOSE(&dta);
-				free(f);
-				return NULL;
-			}
-			f->todo = dta.FILE_SIZE;
-			FILE_FINDCLOSE(&dta);
+            if(!dat)
+            {
+                errno = ENOMEM;
+                free(f);
+                return NULL;
+            }
+            if((f->parent = lzOpen(filename, F_READ)) == NULL)
+            {
+                free(dat);
+                free(f);
+                return NULL;
+            }
+            header = lzGetLm(f->parent);
+            if(header == Encrypt(F_PACK_MAGIC))
+            {
+                for(c = 0; c < N - F; c++)
+                    dat->text_buf[c] = 0;
+                dat->state = 0;
+                f->todo = LONG_MAX;
+                f->pack_data = (char *) dat;
+            }
+            else
+            {
+                if(header == Encrypt(F_NOPACK_MAGIC))
+                {
+                    f2 = f->parent;
+                    free(dat);
+                    free(f);
+                    return f2;
+                }
+                else
+                {
+                    lzClose(f->parent);
+                    free(dat);
+                    free(f);
+                    if(errno == 0)
+                        errno = EDOM;
+                    return NULL;
+                }
+            }
+        }
+        else
+        {
+            /* read a 'real' file */
+            f->parent = NULL;
+            f->pack_data = NULL;
+            errno =
+                FILE_FINDFIRST(filename, A_RDONLY | A_HIDDEN | A_ARCH, &dta);
+            if(errno != 0)
+            {
+                FILE_FINDCLOSE(&dta);
+                free(f);
+                return NULL;
+            }
+            f->todo = dta.FILE_SIZE;
+            FILE_FINDCLOSE(&dta);
 
-			FILE_OPEN(filename, f->hndl);
-			if(f->hndl < 0)
-			{
-				errno = f->hndl;
-				free(f);
-				return NULL;
-			}
-		}
-	}
-	return f;
+            FILE_OPEN(filename, f->hndl);
+            if(f->hndl < 0)
+            {
+                errno = f->hndl;
+                free(f);
+                return NULL;
+            }
+        }
+    }
+    return f;
 }
 
 /**
@@ -923,298 +920,141 @@ LZFILE *lzOpen(char *filename, char *mode)
 
 int lzClose(LZFILE * f)
 {
-	if(f)
-	{
-		if(f->flags & LZFILE_FLAG_WRITE)
-		{
-			if(f->flags & LZFILE_FLAG_CHUNK)
-				return lzClose(lzCloseChunk(f));
+    if(f)
+    {
+        if(f->flags & LZFILE_FLAG_WRITE)
+        {
+#if 0
+            if(f->flags & LZFILE_FLAG_CHUNK)
+                return lzClose(lzCloseChunk(f));
+#endif
+            FlushBuffer(f, TRUE);
+        }
 
-			FlushBuffer(f, TRUE);
-		}
+        if(f->pack_data)
+            free(f->pack_data);
 
-		if(f->pack_data)
-			free(f->pack_data);
+        if(f->parent)
+            lzClose(f->parent);
+        else
+            FILE_CLOSE(f->hndl);
 
-		if(f->parent)
-			lzClose(f->parent);
-		else
-			FILE_CLOSE(f->hndl);
-
-		free(f);
-		return errno;
-	}
-	return 0;
+        free(f);
+        return errno;
+    }
+    return 0;
 }
 
 /**
- *  Like the stdio fseek() function, but only supports forward seeks 
+ *  Like the stdio fseek() function, but only supports forward seeks
  *  relative to the current file position.
  */
 int lzSeek(LZFILE * f, int offset)
 {
-	int     i;
+    int     i;
 
-	if(f->flags & LZFILE_FLAG_WRITE)
-		return -1;
+    if(f->flags & LZFILE_FLAG_WRITE)
+        return -1;
 
-	errno = 0;
+    errno = 0;
 
-	/* skip forward through the buffer */
-	if(f->buf_size > 0)
-	{
-		i = MIN(offset, f->buf_size);
-		f->buf_size -= i;
-		f->buf_pos += i;
-		offset -= i;
-		if((f->buf_size <= 0) && (f->todo <= 0))
-			f->flags |= LZFILE_FLAG_EOF;
-	}
+    /* skip forward through the buffer */
+    if(f->buf_size > 0)
+    {
+        i = MIN(offset, f->buf_size);
+        f->buf_size -= i;
+        f->buf_pos += i;
+        offset -= i;
+        if((f->buf_size <= 0) && (f->todo <= 0))
+            f->flags |= LZFILE_FLAG_EOF;
+    }
 
-	/* need to seek some more? */
-	if(offset > 0)
-	{
-		i = MIN(offset, f->todo);
+    /* need to seek some more? */
+    if(offset > 0)
+    {
+        i = MIN(offset, f->todo);
 
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			/* for compressed files, we just have to read through the data */
-			while(i > 0)
-			{
-				lzGetC(f);
-				i--;
-			}
-		}
-		else
-		{
-			if(f->parent)
-			{
-				/* pass the seek request on to the parent file */
-				lzSeek(f->parent, i);
-			}
-			else
-			{
-				/* do a real seek */
-				lseek(f->hndl, i, SEEK_CUR);
-			}
-			f->todo -= i;
-			if(f->todo <= 0)
-				f->flags |= LZFILE_FLAG_EOF;
-		}
-	}
+        if(f->flags & LZFILE_FLAG_PACK)
+        {
+            /* for compressed files, we just have to read through the data */
+            while(i > 0)
+            {
+                lzGetC(f);
+                i--;
+            }
+        }
+        else
+        {
+            if(f->parent)
+            {
+                /* pass the seek request on to the parent file */
+                lzSeek(f->parent, i);
+            }
+            else
+            {
+                /* do a real seek */
+                lseek(f->hndl, i, SEEK_CUR);
+            }
+            f->todo -= i;
+            if(f->todo <= 0)
+                f->flags |= LZFILE_FLAG_EOF;
+        }
+    }
 
-	return errno;
+    return errno;
 }
 
 /**
- *  Opens a sub-chunk of the specified file, for reading or writing depending
- *  on the type of the file. The returned file pointer describes the sub
- *  chunk, and replaces the original file, which will no longer be valid.
- *  When writing to a chunk file, data is sent to the original file, but
- *  is prefixed with two length counts (32 bit, big-endian). For uncompressed 
- *  chunks these will both be set to the length of the data in the chunk.
- *  For compressed chunks, created by setting the pack flag, the first will
- *  contain the raw size of the chunk, and the second will be the negative
- *  size of the uncompressed data. When reading chunks, the pack flag is
- *  ignored, and the compression type is detected from the sign of the
- *  second size value. The file structure used to read chunks checks the
- *  chunk size, and will return EOF if you try to read past the end of
- *  the chunk. If you don't read all of the chunk data, when you call
- *  lzCloseChunk(), the parent file will advance past the unused data.
- *  When you have finished reading or writing a chunk, you should call
- *  lzCloseChunk() to return to your original file.
- */
-LZFILE *lzOpenChunk(LZFILE * f, int pack)
-{
-	int     c;
-	char   *name;
-	LZFILE *chunk;
-
-	if(f->flags & LZFILE_FLAG_WRITE)
-	{
-		/* write a sub-chunk */
-		name = tmpnam(NULL);
-		chunk = lzOpen(name, (pack ? F_WRITE_PACKED : F_WRITE_NOPACK));
-
-		if(chunk)
-		{
-			chunk->filename = malloc(strlen(name) + 1);
-			strcpy(chunk->filename, name);
-
-			if(pack)
-				chunk->parent->parent = f;
-			else
-				chunk->parent = f;
-
-			chunk->flags |= LZFILE_FLAG_CHUNK;
-		}
-	}
-	else
-	{
-		/* read a sub-chunk */
-		_packfile_filesize = lzGetLm(f);
-		_packfile_datasize = lzGetLm(f);
-
-		if((chunk = malloc(sizeof(LZFILE))) == NULL)
-		{
-			errno = ENOMEM;
-			return NULL;
-		}
-
-		chunk->buf_pos = chunk->buf;
-		chunk->flags = LZFILE_FLAG_CHUNK;
-		chunk->buf_size = 0;
-		chunk->filename = NULL;
-		chunk->parent = f;
-		chunk->password = f->password;
-		f->password = thepassword;
-
-		if(_packfile_datasize < 0)
-		{
-			/* read a packed chunk */
-			UNPACK_DATA *dat = malloc(sizeof(UNPACK_DATA));
-
-			if(!dat)
-			{
-				errno = ENOMEM;
-				free(chunk);
-				return NULL;
-			}
-			for(c = 0; c < N - F; c++)
-				dat->text_buf[c] = 0;
-			dat->state = 0;
-			_packfile_datasize = -_packfile_datasize;
-			chunk->todo = _packfile_datasize;
-			chunk->pack_data = (char *) dat;
-			chunk->flags |= LZFILE_FLAG_PACK;
-		}
-		else
-		{
-			/* read an uncompressed chunk */
-			chunk->todo = _packfile_datasize;
-			chunk->pack_data = NULL;
-		}
-	}
-
-	return chunk;
-}
-
-/**
- *  Call after reading or writing a sub-chunk. This closes the chunk file,
- *  and returns a pointer to the original file structure (the one you
- *  passed to lzOpenChunk()), to allow you to read or write data 
- *  after the chunk.
- */
-LZFILE *lzCloseChunk(LZFILE * f)
-{
-	LZFILE *parent = f->parent;
-	LZFILE *tmp;
-	char   *name = f->filename;
-	int     header;
-
-	if(f->flags & LZFILE_FLAG_WRITE)
-	{
-		/* finish writing a chunk */
-		_packfile_datasize = f->todo + f->buf_size - 4;
-
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			parent = parent->parent;
-			f->parent->parent = NULL;
-		}
-		else
-			f->parent = NULL;
-
-		f->flags &= ~LZFILE_FLAG_CHUNK;
-		lzClose(f);
-
-		tmp = lzOpen(name, F_READ);
-		_packfile_filesize = tmp->todo - 4;
-		header = lzGetLm(tmp);
-
-		lzPutLm(_packfile_filesize, parent);
-
-		if(header == Encrypt(F_PACK_MAGIC))
-			lzPutLm(-_packfile_datasize, parent);
-		else
-			lzPutLm(_packfile_datasize, parent);
-
-		while(!lzEOF(tmp))
-			lzPutC(lzGetC(tmp), parent);
-
-		lzClose(tmp);
-
-		unlink(name);
-		free(name);
-	}
-	else
-	{
-		/* finish reading a chunk */
-		while(f->todo > 0)
-			lzGetC(f);
-
-		parent->password = f->password;
-
-		if(f->pack_data)
-			free(f->pack_data);
-
-		free(f);
-	}
-
-	return parent;
-}
-
-/**
- *  Reads n bytes from f and stores them at memory location p. Returns the 
- *  number of items read, which will be less than n if EOF is reached or an 
+ *  Reads n bytes from f and stores them at memory location p. Returns the
+ *  number of items read, which will be less than n if EOF is reached or an
  *  error occurs. Error codes are stored in errno.
  */
 long lzRead(void *p, long n, LZFILE * f)
 {
-	long    c;					/* counter of bytes read */
-	int     i;
-	unsigned char *cp = (unsigned char *) p;
+    long    c;                  /* counter of bytes read */
+    int     i;
+    unsigned char *cp = (unsigned char *) p;
 
-	for(c = 0; c < n; c++)
-	{
-		if(--(f->buf_size) > 0)
-			*(cp++) = *(f->buf_pos++);
-		else
-		{
-			i = _sort_out_getc(f);
-			if(i == EOF)
-				return c;
-			else
-				*(cp++) = i;
-		}
-	}
+    for(c = 0; c < n; c++)
+    {
+        if(--(f->buf_size) > 0)
+            *(cp++) = *(f->buf_pos++);
+        else
+        {
+            i = _sort_out_getc(f);
+            if(i == EOF)
+                return c;
+            else
+                *(cp++) = i;
+        }
+    }
 
-	return n;
+    return n;
 }
 
 /**
- *  Writes n bytes to the file f from memory location p. Returns the number 
- *  of items written, which will be less than n if an error occurs. Error 
+ *  Writes n bytes to the file f from memory location p. Returns the number
+ *  of items written, which will be less than n if an error occurs. Error
  *  codes are stored in errno.
  */
 long lzWrite(void *p, long n, LZFILE * f)
 {
-	long    c;					/* counter of bytes written */
-	unsigned char *cp = (unsigned char *) p;
+    long    c;                  /* counter of bytes written */
+    unsigned char *cp = (unsigned char *) p;
 
-	for(c = 0; c < n; c++)
-	{
-		if(++(f->buf_size) >= F_BUF_SIZE)
-		{
-			if(_sort_out_putc(*cp, f) != *cp)
-				return c;
-			cp++;
-		}
-		else
-			*(f->buf_pos++) = *(cp++);
-	}
+    for(c = 0; c < n; c++)
+    {
+        if(++(f->buf_size) >= F_BUF_SIZE)
+        {
+            if(_sort_out_putc(*cp, f) != *cp)
+                return c;
+            cp++;
+        }
+        else
+            *(f->buf_pos++) = *(cp++);
+    }
 
-	return n;
+    return n;
 }
 
 /**
@@ -1225,29 +1065,29 @@ long lzWrite(void *p, long n, LZFILE * f)
  */
 char   *lzGetS(char *p, int max, LZFILE * f)
 {
-	int     c;
+    int     c;
 
-	if(lzEOF(f))
-	{
-		p[0] = 0;
-		return NULL;
-	}
+    if(lzEOF(f))
+    {
+        p[0] = 0;
+        return NULL;
+    }
 
-	for(c = 0; c < max - 1; c++)
-	{
-		p[c] = lzGetC(f);
-		if(p[c] == '\r')
-			c--;
-		else if(p[c] == '\n')
-			break;
-	}
+    for(c = 0; c < max - 1; c++)
+    {
+        p[c] = lzGetC(f);
+        if(p[c] == '\r')
+            c--;
+        else if(p[c] == '\n')
+            break;
+    }
 
-	p[c] = 0;
+    p[c] = 0;
 
-	if(errno)
-		return NULL;
-	else
-		return p;
+    if(errno)
+        return NULL;
+    else
+        return p;
 }
 
 /**
@@ -1256,23 +1096,23 @@ char   *lzGetS(char *p, int max, LZFILE * f)
  */
 int lzPutS(char *p, LZFILE * f)
 {
-	while(*p)
-	{
-		if(*p == '\n')
-		{
-			lzPutC('\r', f);
-			lzPutC('\n', f);
-		}
-		else
-			lzPutC(*p, f);
+    while(*p)
+    {
+        if(*p == '\n')
+        {
+            lzPutC('\r', f);
+            lzPutC('\n', f);
+        }
+        else
+            lzPutC(*p, f);
 
-		p++;
-	}
+        p++;
+    }
 
-	if(errno)
-		return -1;
-	else
-		return 0;
+    if(errno)
+        return -1;
+    else
+        return 0;
 }
 
 /**
@@ -1281,52 +1121,52 @@ int lzPutS(char *p, LZFILE * f)
  */
 int RefillBuffer(LZFILE * f)
 {
-	int     sz;
+    int     sz;
 
-	if((f->flags & LZFILE_FLAG_EOF) || (f->todo <= 0))
-	{							/* EOF */
-		f->flags |= LZFILE_FLAG_EOF;
-		return EOF;
-	}
+    if((f->flags & LZFILE_FLAG_EOF) || (f->todo <= 0))
+    {                           /* EOF */
+        f->flags |= LZFILE_FLAG_EOF;
+        return EOF;
+    }
 
-	if(f->parent)
-	{
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			f->buf_size =
-				pack_read(f->parent, (UNPACK_DATA *) f->pack_data,
-						  MIN(F_BUF_SIZE, f->todo), f->buf);
-		}
-		else
-		{
-			f->buf_size = lzRead(f->buf, MIN(F_BUF_SIZE, f->todo), f->parent);
-		}
-		if(f->parent->flags & LZFILE_FLAG_EOF)
-			f->todo = 0;
-		if(f->parent->flags & LZFILE_FLAG_ERROR)
-			goto err;
-	}
-	else
-	{
-		f->buf_size = MIN(F_BUF_SIZE, f->todo);
-		FILE_READ(f->hndl, f->buf, f->buf_size, sz);
-		if(sz != f->buf_size)
-			goto err;
-	}
+    if(f->parent)
+    {
+        if(f->flags & LZFILE_FLAG_PACK)
+        {
+            f->buf_size =
+                pack_read(f->parent, (UNPACK_DATA *) f->pack_data,
+                          MIN(F_BUF_SIZE, f->todo), f->buf);
+        }
+        else
+        {
+            f->buf_size = lzRead(f->buf, MIN(F_BUF_SIZE, f->todo), f->parent);
+        }
+        if(f->parent->flags & LZFILE_FLAG_EOF)
+            f->todo = 0;
+        if(f->parent->flags & LZFILE_FLAG_ERROR)
+            goto err;
+    }
+    else
+    {
+        f->buf_size = MIN(F_BUF_SIZE, f->todo);
+        FILE_READ(f->hndl, f->buf, f->buf_size, sz);
+        if(sz != f->buf_size)
+            goto err;
+    }
 
-	f->todo -= f->buf_size;
-	f->buf_pos = f->buf;
-	f->buf_size--;
-	if(f->buf_size <= 0)
-		if(f->todo <= 0)
-			f->flags |= LZFILE_FLAG_EOF;
+    f->todo -= f->buf_size;
+    f->buf_pos = f->buf;
+    f->buf_size--;
+    if(f->buf_size <= 0)
+        if(f->todo <= 0)
+            f->flags |= LZFILE_FLAG_EOF;
 
-	return *(f->buf_pos++);
+    return *(f->buf_pos++);
 
   err:
-	errno = EFAULT;
-	f->flags |= LZFILE_FLAG_ERROR;
-	return EOF;
+    errno = EFAULT;
+    f->flags |= LZFILE_FLAG_ERROR;
+    return EOF;
 }
 
 /**
@@ -1334,51 +1174,51 @@ int RefillBuffer(LZFILE * f)
  */
 int FlushBuffer(LZFILE * f, int last)
 {
-	int     sz;
+    int     sz;
 
-	if(f->buf_size > 0)
-	{
-		if(f->flags & LZFILE_FLAG_PACK)
-		{
-			if(pack_write
-			   (f->parent, (PACK_DATA *) f->pack_data, f->buf_size, f->buf,
-				last))
-				goto err;
-		}
-		else
-		{
-			FILE_WRITE(f->hndl, f->buf, f->buf_size, sz);
-			if(sz != f->buf_size)
-				goto err;
-		}
-		f->todo += f->buf_size;
-	}
-	f->buf_pos = f->buf;
-	f->buf_size = 0;
-	return 0;
+    if(f->buf_size > 0)
+    {
+        if(f->flags & LZFILE_FLAG_PACK)
+        {
+            if(pack_write
+               (f->parent, (PACK_DATA *) f->pack_data, f->buf_size, f->buf,
+                last))
+                goto err;
+        }
+        else
+        {
+            FILE_WRITE(f->hndl, f->buf, f->buf_size, sz);
+            if(sz != f->buf_size)
+                goto err;
+        }
+        f->todo += f->buf_size;
+    }
+    f->buf_pos = f->buf;
+    f->buf_size = 0;
+    return 0;
 
   err:
-	errno = EFAULT;
-	f->flags |= LZFILE_FLAG_ERROR;
-	return EOF;
+    errno = EFAULT;
+    f->flags |= LZFILE_FLAG_ERROR;
+    return EOF;
 }
 
 int lzGetC(LZFILE * f)
 {
-	f->buf_size--;
-	if(f->buf_size > 0)
-		return *(f->buf_pos++);
-	else
-		return _sort_out_getc(f);
+    f->buf_size--;
+    if(f->buf_size > 0)
+        return *(f->buf_pos++);
+    else
+        return _sort_out_getc(f);
 }
 
 int lzPutC(int c, LZFILE * f)
 {
-	f->buf_size++;
-	if(f->buf_size >= F_BUF_SIZE)
-		return _sort_out_putc(c, f);
-	else
-		return (*(f->buf_pos++) = c);
+    f->buf_size++;
+    if(f->buf_size >= F_BUF_SIZE)
+        return _sort_out_putc(c, f);
+    else
+        return (*(f->buf_pos++) = c);
 }
 
 /**
@@ -1386,11 +1226,11 @@ int lzPutC(int c, LZFILE * f)
  */
 void lzPassword(char *password)
 {
-	if(password)
-	{
-		strncpy(thepassword, password, 255);
-		thepassword[255] = 0;
-	}
-	else
-		thepassword[0] = 0;
+    if(password)
+    {
+        strncpy(thepassword, password, 255);
+        thepassword[255] = 0;
+    }
+    else
+        thepassword[0] = 0;
 }

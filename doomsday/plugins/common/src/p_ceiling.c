@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Martin Eyre <martineyre@btinternet.com>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
@@ -480,9 +480,9 @@ typedef struct {
     int                 count;
 } activateceilingparams_t;
 
-static boolean activateCeiling(thinker_t* th, void* context)
+static int activateCeiling(thinker_t* th, void* context)
 {
-    ceiling_t*          ceiling = (ceiling_t*) th;
+    ceiling_t* ceiling = (ceiling_t*) th;
     activateceilingparams_t* params = (activateceilingparams_t*) context;
 
     if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
@@ -492,7 +492,7 @@ static boolean activateCeiling(thinker_t* th, void* context)
         params->count++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -519,7 +519,7 @@ typedef struct {
     int                 count;
 } deactivateceilingparams_t;
 
-static boolean deactivateCeiling(thinker_t* th, void* context)
+static int deactivateCeiling(thinker_t* th, void* context)
 {
     ceiling_t*          ceiling = (ceiling_t*) th;
     deactivateceilingparams_t* params =
@@ -531,7 +531,7 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         SN_StopSequence(P_SectorSoundOrigin(ceiling->sector));
         stopCeiling(ceiling);
         params->count++;
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 #else
     if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
@@ -541,7 +541,7 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         params->count++;
     }
 #endif
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

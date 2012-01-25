@@ -1,10 +1,10 @@
-/**\file
+/**\file p_mapdata.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,14 +23,14 @@
  */
 
 /**
- * p_mapdata.h: Playsim Data Structures, Macros and Constants
+ * Playsim Data Structures, Macros and Constants.
  *
  * These are internal to Doomsday. The games have no direct access to
  * this data.
  */
 
-#ifndef __DOOMSDAY_PLAY_DATA_H__
-#define __DOOMSDAY_PLAY_DATA_H__
+#ifndef LIBDENG_PLAY_DATA_H
+#define LIBDENG_PLAY_DATA_H
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
 #  error "Attempted to include internal Doomsday p_mapdata.h from a game"
@@ -72,8 +72,6 @@ typedef struct runtime_mapdata_header_s {
     int             type; // One of the DMU type constants.
 } runtime_mapdata_header_t;
 
-typedef unsigned int gltextureid_t; /// \todo Does not belong here.
-
 typedef struct fvertex_s {
     float           pos[2];
 } fvertex_t;
@@ -89,18 +87,6 @@ typedef struct edgespan_s {
     float           length;
     float           shift;
 } edgespan_t;
-
-typedef struct linkmobj_s {
-    struct mobj_s* mobj;
-    struct linkmobj_s* prev;
-    struct linkmobj_s* next;
-} linkmobj_t;
-
-typedef struct linkpolyobj_s {
-    struct polyobj_s* polyobj;
-    struct linkpolyobj_s* prev;
-    struct linkpolyobj_s* next;
-} linkpolyobj_t;
 
 typedef struct watchedplanelist_s {
     uint            num, maxNum;
@@ -130,7 +116,97 @@ typedef struct biassurface_s {
     struct biassurface_s* next;
 } biassurface_t;
 
-typedef void* blockmap_t;
+#include "m_gridmap.h"
+
+struct blockmap_s; // The Blockmap instance (opaque).
+typedef struct blockmap_s Blockmap;
+
+Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
+    uint cellHeight, size_t sizeOfCell);
+
+/**
+ * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
+ */
+const pvec2_t Blockmap_Origin(Blockmap* blockmap);
+
+/**
+ * Retrieve the extremal map space points covered by the Blockmap.
+ */
+const AABoxf* Blockmap_Bounds(Blockmap* blockmap);
+
+/// @return  Width of the Blockmap in cells.
+uint Blockmap_Width(Blockmap* blockmap);
+
+/// @return  Height of the Blockmap in cells.
+uint Blockmap_Height(Blockmap* blockmap);
+
+/**
+ * Retrieve the size of the Blockmap in cells.
+ *
+ * @param widthHeight  Size of the Blockmap [width,height] written here.
+ */
+void Blockmap_Size(Blockmap* blockmap, uint widthHeight[2]);
+
+/// @return  Width of a Blockmap cell in map space units.
+float Blockmap_CellWidth(Blockmap* blockmap);
+
+/// @return  Height of a Blockmap cell in map space units.
+float Blockmap_CellHeight(Blockmap* blockmap);
+
+/// @return  Size [width,height] of a Blockmap cell in map space units.
+const pvec2_t Blockmap_CellSize(Blockmap* blockmap);
+
+/**
+ * Given map space X coordinate @a x, return the corresponding cell coordinate.
+ * If @a x is outside the Blockmap it will be clamped to the nearest edge on
+ * the X axis.
+ */
+uint Blockmap_CellX(Blockmap* blockmap, float x);
+
+/**
+ * Given map space Y coordinate @a y, return the corresponding cell coordinate.
+ * If @a y is outside the Blockmap it will be clamped to the nearest edge on
+ * the Y axis.
+ *
+ * @param outY  Blockmap cell X coordinate written here.
+ * @param y  Map space X coordinate to be translated.
+ * @return  @c true iff clamping was necessary.
+ */
+uint Blockmap_CellY(Blockmap* blockmap, float y);
+
+/**
+ * Same as @a Blockmap::CellX with alternative semantics for when the caller
+ * needs to know if the coordinate specified was inside/outside the Blockmap.
+ */
+boolean Blockmap_ClipCellX(Blockmap* bm, uint* outX, float x);
+
+/**
+ * Same as @a Blockmap::CellY with alternative semantics for when the caller
+ * needs to know if the coordinate specified was inside/outside the Blockmap.
+ *
+ * @param outY  Blockmap cell Y coordinate written here.
+ * @param y  Map space Y coordinate to be translated.
+ * @return  @c true iff clamping was necessary.
+ */
+boolean Blockmap_ClipCellY(Blockmap* bm, uint* outY, float y);
+
+/**
+ * Given map space XY coordinates @a pos, output the Blockmap cell[x, y] it
+ * resides in. If @a pos is outside the Blockmap it will be clamped to the
+ * nearest edge on one or more axes as necessary.
+ *
+ * @return  @c true iff clamping was necessary.
+ */
+boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], float const pos[2]);
+
+/**
+ * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
+ * they reside in. If any point defined by @a box lies outside the blockmap
+ * it will be clamped to the nearest edge on one or more axes as necessary.
+ *
+ * @return  @c true iff Clamping was necessary.
+ */
+boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const AABoxf* box);
 
 #include "p_polyob.h"
 #include "p_maptypes.h"
@@ -188,7 +264,7 @@ typedef struct {
 /**
  * The map data arrays are accessible globally inside the engine.
  */
-extern char mapID[9];
+extern Uri* mapUri;
 extern uint numVertexes;
 extern vertex_t* vertexes;
 
@@ -213,12 +289,13 @@ extern sidedef_t* sideDefs;
 extern watchedplanelist_t* watchedPlaneList;
 extern surfacelist_t* movingSurfaceList;
 extern surfacelist_t* decoratedSurfaceList;
+extern surfacelist_t* glowingSurfaceList;
 
 extern float mapGravity;
 
 typedef struct gamemap_s {
-    char            mapID[9];
-    char            uniqueID[256];
+    Uri* uri;
+    char            uniqueId[256];
 
     float           bBox[4];
 
@@ -248,14 +325,15 @@ typedef struct gamemap_s {
 
     gameobjdata_t   gameObjData;
 
-    linkpolyobj_t** polyBlockMap;
-
     watchedplanelist_t watchedPlaneList;
     surfacelist_t   movingSurfaceList;
     surfacelist_t   decoratedSurfaceList;
+    surfacelist_t   glowingSurfaceList;
 
-    blockmap_t*     blockMap;
-    blockmap_t*     ssecBlockMap;
+    Blockmap*       mobjBlockmap;
+    Blockmap*       polyobjBlockmap;
+    Blockmap*       lineDefBlockmap;
+    Blockmap*       subsectorBlockmap;
 
     nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
     nodeindex_t*    lineLinks; // Indices to roots.
@@ -264,22 +342,58 @@ typedef struct gamemap_s {
     int             ambientLightLevel; // Ambient lightlevel for the current map.
 } gamemap_t;
 
-void            P_InitData(void);
-
 gamemap_t*      P_GetCurrentMap(void);
 void            P_SetCurrentMap(gamemap_t* map);
 
-const char*     P_GetMapID(gamemap_t* map);
-const char*     P_GetUniqueMapID(gamemap_t* map);
+/**
+ * This ID is the name of the lump tag that marks the beginning of map
+ * data, e.g. "MAP03" or "E2M8".
+ */
+const Uri* P_MapUri(gamemap_t* map);
+
+/// @return  The 'unique' identifier of the map.
+const char* P_GetUniqueMapId(gamemap_t* map);
+
 void            P_GetMapBounds(gamemap_t* map, float* min, float* max);
 int             P_GetMapAmbientLightLevel(gamemap_t* map);
 
-const char*     P_GenerateUniqueMapID(const char* mapID);
+const char*     P_GenerateUniqueMapId(const char* mapId);
+
+/**
+ * Is there a known map referenced by @a uri and if so, is it available for loading?
+ *
+ * @param  Uri identifying the map to be searched for.
+ * @return  @c true= A known and loadable map.
+ */
+boolean P_MapExists(const char* uri);
+
+/**
+ * Retrieve the name of the source file containing the map referenced by @a uri
+ * if known and available for loading.
+ *
+ * @param  Uri identifying the map to be searched for.
+ * @return  Fully qualified (i.e., absolute) path to the source file.
+ */
+const char* P_MapSourceFile(const char* uri);
+
+/**
+ * Begin the process of loading a new map.
+ *
+ * @param uri  Uri identifying the map to be loaded.
+ * @return @c true, if the map was loaded successfully.
+ */
+boolean P_LoadMap(const char* uri);
 
 void            P_PolyobjChanged(polyobj_t* po);
 void            P_RegisterUnknownTexture(const char* name, boolean planeTex);
 void            P_PrintMissingTextureList(void);
 void            P_FreeBadTexList(void);
+
+/// To be called to initialize the game map object defs.
+void P_InitGameMapObjDefs(void);
+
+/// To be called to free all memory allocated for the map obj defs.
+void P_ShutdownGameMapObjDefs(void);
 
 void            P_InitGameMapObjDefs(void);
 void            P_ShutdownGameMapObjDefs(void);
@@ -304,4 +418,4 @@ int             P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier);
 fixed_t         P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier);
 angle_t         P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier);
 float           P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier);
-#endif
+#endif /* LIBDENG_PLAY_DATA_H */

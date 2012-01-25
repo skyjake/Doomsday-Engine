@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -67,9 +67,6 @@
 
 boolean bossKilled;
 
-mobj_t **brainTargets;
-int numBrainTargets;
-int numBrainTargetsAlloc;
 braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -368,17 +365,18 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmBBox, line) == -1)
+       // Linedef must be contacted
+       tmBox.minX < aaBox->maxX &&
+       tmBox.maxX > aaBox->minX &&
+       tmBox.minY < aaBox->maxY &&
+       tmBox.maxY > aaBox->minY &&
+       P_BoxOnLineSide(&tmBox, line) == -1)
     {
         sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -399,7 +397,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -408,7 +406,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -454,78 +452,7 @@ static void newChaseDir(mobj_t *actor)
     doNewChaseDir(actor, deltaX, deltaY);
 }
 
-/**
- * If allaround is false, only look 180 degrees in front.
- *
- * @return              @c true, if a player is targeted.
- */
-static boolean lookForPlayers(mobj_t *actor, boolean allAround)
-{
-    int                 c, stop, playerCount;
-    player_t           *player;
-    angle_t             an;
-    float               dist;
-
-    playerCount = 0;
-    for(c = 0; c < MAXPLAYERS; ++c)
-    {
-        if(players[c].plr->inGame)
-            playerCount++;
-    }
-
-    // Are there any players?
-    if(!playerCount)
-        return false;
-
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2 || actor->lastLook == stop)
-        {   // Done looking.
-            return false;
-        }
-
-        player = &players[actor->lastLook];
-
-        if(P_MobjIsCamera(player->plr->mo))
-            continue;
-
-        if(player->health <= 0)
-            continue; // Player is already dead.
-
-        if(!P_CheckSight(actor, player->plr->mo))
-            continue; // Player is out of sight.
-
-        if(!allAround)
-        {
-            an = R_PointToAngle2(actor->pos[VX],
-                                 actor->pos[VY],
-                                 player->plr->mo->pos[VX],
-                                 player->plr->mo->pos[VY]);
-            an -= actor->angle;
-
-            if(an > ANG90 && an < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(player->plr->mo->pos[VX] - actor->pos[VX],
-                                     player->plr->mo->pos[VY] - actor->pos[VY]);
-                // If real close, react anyway.
-                if(dist > MELEERANGE)
-                    continue; // Behind back.
-            }
-        }
-
-        actor->target = player->plr->mo;
-        return true;
-    }
-}
-
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -536,7 +463,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -547,7 +474,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a map.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -555,56 +482,12 @@ int P_Massacre(void)
     return count;
 }
 
-static boolean findBrainTarget(thinker_t* th, void* context)
-{
-    mobj_t*             mo = (mobj_t *) th;
-
-    if(mo->type == MT_BOSSTARGET)
-    {
-        if(numBrainTargets >= numBrainTargetsAlloc)
-        {
-            // Do we need to alloc more targets?
-            if(numBrainTargets == numBrainTargetsAlloc)
-            {
-                numBrainTargetsAlloc *= 2;
-                brainTargets =
-                    Z_Realloc(brainTargets,
-                              numBrainTargetsAlloc * sizeof(*brainTargets),
-                              PU_MAP);
-            }
-            else
-            {
-                numBrainTargetsAlloc = 32;
-                brainTargets =
-                    Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
-                             PU_MAP, NULL);
-            }
-        }
-
-        brainTargets[numBrainTargets++] = mo;
-    }
-
-    return true; // Continue iteration.
-}
-
-/**
- * Initialize boss brain targets at map startup, rather than at boss
- * wakeup, to prevent savegame-related crashes.
- *
- * \todo Does not belong in this file, find it a better home.
- */
-void P_SpawnBrainTargets(void)
-{
-    // Find all the target spots.
-    DD_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
-}
-
 typedef struct {
     mobjtype_t          type;
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -612,7 +495,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -668,8 +551,7 @@ void C_DECL A_Look(mobj_t* actor)
             goto seeyou;
     }
 
-    if(!lookForPlayers(actor, false))
-        return;
+    if(!Mobj_LookForPlayers(actor, false)) return;
 
     // Go into chase state.
   seeyou:
@@ -746,7 +628,7 @@ void C_DECL A_Chase(mobj_t* actor)
        P_MobjIsCamera(actor->target))
     {
         // Look for a new target.
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
         {   // Got a new target.
         }
         else
@@ -796,7 +678,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(IS_NETGAME && !actor->threshold &&
        !P_CheckSight(actor, actor->target))
     {
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
             return; // Got a new target.
     }
 
@@ -1130,25 +1012,25 @@ void C_DECL A_SkelFist(mobj_t *actor)
 /**
  * Detect a corpse that could be raised.
  */
-boolean PIT_VileCheck(mobj_t *thing, void *data)
+int PIT_VileCheck(mobj_t *thing, void *data)
 {
     float               maxdist;
     boolean             check;
 
     if(!(thing->flags & MF_CORPSE))
-        return true; // Not a monster.
+        return false; // Not a monster.
 
     if(thing->tics != -1)
-        return true; // Not lying still yet.
+        return false; // Not lying still yet.
 
     if(P_GetState(thing->type, SN_RAISE) == S_NULL)
-        return true; // Monster doesn't have a raise state.
+        return false; // Monster doesn't have a raise state.
 
     maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
 
     if(fabs(thing->pos[VX] - vileTry[VX]) > maxdist ||
        fabs(thing->pos[VY] - vileTry[VY]) > maxdist)
-        return true; // Not actually touching.
+        return false; // Not actually touching.
 
     corpseHit = thing;
     corpseHit->mom[MX] = corpseHit->mom[MY] = 0;
@@ -1180,9 +1062,9 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
     // End raiseghosts.
 
     if(!check)
-        return true; // Doesn't fit here.
+        return false; // Doesn't fit here.
 
-    return false; // Got one, so stop checking.
+    return true; // Got one, so stop checking.
 }
 
 /**
@@ -1190,29 +1072,27 @@ boolean PIT_VileCheck(mobj_t *thing, void *data)
  */
 void C_DECL A_VileChase(mobj_t *actor)
 {
-    mobjinfo_t         *info;
-    mobj_t             *temp;
-    float               box[4];
+    mobjinfo_t* info;
+    mobj_t* temp;
+    AABoxf box;
 
     if(actor->moveDir != DI_NODIR)
     {
         // Check for corpses to raise.
-        vileTry[VX] = actor->pos[VX] +
-            actor->info->speed * dirSpeed[actor->moveDir][VX];
-        vileTry[VY] = actor->pos[VY] +
-            actor->info->speed * dirSpeed[actor->moveDir][VY];
+        vileTry[VX] = actor->pos[VX] + actor->info->speed * dirSpeed[actor->moveDir][VX];
+        vileTry[VY] = actor->pos[VY] + actor->info->speed * dirSpeed[actor->moveDir][VY];
 
-        box[BOXLEFT]   = vileTry[VX] - MAXRADIUS * 2;
-        box[BOXRIGHT]  = vileTry[VX] + MAXRADIUS * 2;
-        box[BOXBOTTOM] = vileTry[VY] - MAXRADIUS * 2;
-        box[BOXTOP]    = vileTry[VY] + MAXRADIUS * 2;
+        box.minX = vileTry[VX] - MAXRADIUS * 2;
+        box.minY = vileTry[VY] - MAXRADIUS * 2;
+        box.maxX = vileTry[VX] + MAXRADIUS * 2;
+        box.maxY = vileTry[VY] + MAXRADIUS * 2;
 
         vileObj = actor;
 
         // Call PIT_VileCheck to check whether object is a corpse
         // that can be raised.
         VALIDCOUNT++;
-        if(!P_MobjsBoxIterator(box, PIT_VileCheck, 0))
+        if(P_MobjsBoxIterator(&box, PIT_VileCheck, 0))
         {
             // Got one!
             temp = actor->target;
@@ -1620,7 +1500,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap != 6)
             return;
@@ -1715,7 +1595,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
 
     // Victory!
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap == 6)
         {
@@ -1792,7 +1672,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1804,7 +1684,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_METAL |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1813,6 +1693,49 @@ void C_DECL A_BabyMetal(mobj_t *mo)
 {
     S_StartSound(SFX_BSPWLK, mo);
     A_Chase(mo);
+}
+
+void P_BrainInitForMap(void)
+{
+    brain.easy = 0; // Always init easy to 0.
+    // Calling shutdown rather than clear allows us to free up memory.
+    P_BrainShutdown();
+}
+
+void P_BrainClearTargets(void)
+{
+    brain.numTargets = 0;
+    brain.targetOn = 0;
+}
+
+void P_BrainShutdown(void)
+{
+    if(brain.targets)
+        Z_Free(brain.targets);
+    brain.targets = 0;
+    brain.numTargets = 0;
+    brain.maxTargets = -1;
+    brain.targetOn = 0;
+}
+
+void P_BrainAddTarget(mobj_t* mo)
+{
+    if(brain.numTargets >= brain.maxTargets)
+    {
+        // Do we need to alloc more targets?
+        if(brain.numTargets == brain.maxTargets)
+        {
+            brain.maxTargets *= 2;
+            brain.targets = Z_Realloc(brain.targets, brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC);
+        }
+        else
+        {
+            brain.maxTargets = 32;
+            brain.targets = Z_Malloc(brain.maxTargets * sizeof(*brain.targets), PU_APPSTATIC, NULL);
+        }
+    }
+
+    brain.targets[brain.numTargets++] = mo;
 }
 
 void C_DECL A_BrainAwake(mobj_t* mo)
@@ -1884,7 +1807,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     mobj_t             *targ;
     mobj_t             *newmobj;
 
-    if(!numBrainTargets)
+    if(!brain.numTargets)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
@@ -1892,8 +1815,8 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return;
 
     // Shoot a cube at current target.
-    targ = brainTargets[brain.targetOn++];
-    brain.targetOn %= numBrainTargets;
+    targ = brain.targets[brain.targetOn++];
+    brain.targetOn %= brain.numTargets;
 
     // Spawn brain missile.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);
@@ -1962,7 +1885,7 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
     if((newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0)))
     {
-        if(lookForPlayers(newmobj, true))
+        if(Mobj_LookForPlayers(newmobj, true))
             P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
 
         // Telefrag anything in this spot.
@@ -1975,9 +1898,9 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
 void C_DECL A_PlayerScream(mobj_t *mo)
 {
-    int                 sound = SFX_PLDETH; // Default death sound.
+    int sound = SFX_PLDETH; // Default death sound.
 
-    if((gameMode == commercial) && (mo->health < -50))
+    if((gameModeBits & GM_ANY_DOOM2) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
         sound = SFX_PDIEHI;

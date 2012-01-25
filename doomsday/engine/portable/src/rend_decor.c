@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_decor.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,7 @@
  */
 
 /**
- * rend_decor.c: Decorations
- *
- * Surface decorations.
+ * Surface Decorations.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -34,17 +32,19 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_render.h"
 #include "de_misc.h"
 
+#include "materialvariant.h"
+
 // MACROS ------------------------------------------------------------------
 
 // Quite a bit of decorations, there!
 #define MAX_DECOR_LIGHTS    (16384)
-#define MAX_DECOR_MODELS    (8192)
 
 BEGIN_PROF_TIMERS()
   PROF_DECOR_UPDATE,
@@ -59,19 +59,10 @@ typedef struct decorsource_s {
     float           maxDistance;
     const surface_t* surface;
     subsector_t*    subsector;
-    decortype_t     type;
     unsigned int    lumIdx; // index+1 of linked lumobj, or 0.
     float           fadeMul;
-    union decorsource_data_s {
-        struct decorsource_data_light_s {
-            const ded_decorlight_t* def;
-        } light;
-        struct decorsource_data_model_s {
-            const ded_decormodel_t* def;
-            struct modeldef_s* mf;
-            float          pitch, yaw;
-        } model;
-    } data;
+    const ded_decorlight_t* def;
+    DGLuint flareTex;
     struct decorsource_s* next;
 } decorsource_t;
 
@@ -81,28 +72,32 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void updateSideSectionDecorations(sidedef_t* side, segsection_t section);
+static void updatePlaneDecorations(plane_t* pln);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte useDecorations = true;
+byte useLightDecorations = true;
 float decorMaxDist = 2048; // No decorations are visible beyond this.
-float decorFactor = 1;
-float decorFadeAngle = .1f;
+float decorLightBrightFactor = 1;
+float decorLightFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static uint numDecorLights = 0, numDecorModels = 0;
-static decorsource_t* sourceFirst = NULL, *sourceLast = NULL;
-static decorsource_t* sourceCursor = NULL;
+static uint numDecorations = 0;
+
+static decorsource_t* sourceFirst = 0;
+static decorsource_t* sourceCursor = 0;
 
 // CODE --------------------------------------------------------------------
 
 void Rend_DecorRegister(void)
 {
-    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-bright", &decorFactor, 0, 0, 10);
+    C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-angle", &decorLightFadeAngle, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
 }
 
 /**
@@ -110,44 +105,26 @@ void Rend_DecorRegister(void)
  */
 static void clearDecorations(void)
 {
-    numDecorLights = numDecorModels = 0;
+    numDecorations = 0;
     sourceCursor = sourceFirst;
 }
 
-extern void setupModelParamsForVisSprite(rendmodelparams_t *params,
-                                         float x, float y, float z, float distance,
-                                         float visOffX, float visOffY, float visOffZ, float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
-                                         struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
-                                         float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                         vlight_t* lightList, uint numLights,
-                                         int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
-                                         boolean viewAlign, boolean fullBright,
-                                         boolean alwaysInterpolate);
 extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
                               float distance, boolean fullBright,
-                              uint maxLights, float ambientColor[3],
-                              vlight_t** lights, uint* numLights);
+                              float ambientColor[3], uint* lightListIdx);
 
 static void projectDecoration(decorsource_t* src)
 {
-    float               v1[2], min, max;
-    vissprite_t*        vis;
-    float               distance, brightness;
+    float distance, brightness;
+    float v1[2], min, max;
+    const lumobj_t* lum;
+    vissprite_t* vis;
 
     // Does it pass the sector light limitation?
-    if(src->type == DT_LIGHT)
-    {
-        min = src->data.light.def->lightLevels[0];
-        max = src->data.light.def->lightLevels[1];
-    }
-    else // Its a decor model.
-    {
-        min = src->data.model.def->lightLevels[0];
-        max = src->data.model.def->lightLevels[0];
-    }
+    min = src->def->lightLevels[0];
+    max = src->def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel,
-                                          min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     if(src->fadeMul <= 0)
@@ -156,6 +133,10 @@ static void projectDecoration(decorsource_t* src)
     // Is the point in range?
     distance = Rend_PointDist3D(src->pos);
     if(distance > src->maxDistance)
+        return;
+
+    /// @fixme dj: Why is LO_GetLuminous returning NULL given a supposedly valid index?
+    if(!LO_GetLuminous(src->lumIdx))
         return;
 
     // Calculate edges of the shape.
@@ -167,90 +148,62 @@ static void projectDecoration(decorsource_t* src)
      * Light decorations become flare-type vissprites.
      */
     vis = R_NewVisSprite();
-    vis->type = ((src->type == DT_MODEL)? VSPR_MODEL : VSPR_FLARE);
+    vis->type = VSPR_FLARE;
 
     vis->center[VX] = src->pos[VX];
     vis->center[VY] = src->pos[VY];
     vis->center[VZ] = src->pos[VZ];
     vis->distance = distance;
 
-    switch(src->type)
-    {
-    case DT_MODEL:
-        {
-        float           ambientColor[3];
-        vlight_t*       lightList = NULL;
-        uint            numLights = 0;
+    lum = LO_GetLuminous(src->lumIdx);
 
-        getLightingParams(src->pos[VX], src->pos[VY], src->pos[VZ],
-                          src->subsector, distance, levelFullBright,
-                          modelLight,
-                          ambientColor, &lightList, &numLights);
+    vis->data.flare.isDecoration = true;
+    vis->data.flare.lumIdx = src->lumIdx;
 
-        setupModelParamsForVisSprite(&vis->data.model, src->pos[VX], src->pos[VY], src->pos[VZ],
-                                     distance, 0, 0, 0, src->pos[VZ], src->data.model.yaw, 0,
-                                     src->data.model.pitch, 0,
-                                     src->data.model.mf, NULL, 0,
-                                     ambientColor[CR], ambientColor[CG], ambientColor[CB],
-                                     src->fadeMul, lightList, numLights, 0, 0, src->subsector,
-                                     0, 0, false, levelFullBright, true);
-        break;
-        }
-    case DT_LIGHT:
-        {
-        const ded_decorlight_t* def = src->data.light.def;
-        const lumobj_t* lum = LO_GetLuminous(src->lumIdx);
+    // Color is taken from the associated lumobj.
+    V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
 
-        vis->data.flare.isDecoration = true;
-        vis->data.flare.lumIdx = src->lumIdx;
+    if(src->def->haloRadius > 0)
+        vis->data.flare.size = MAX_OF(1, src->def->haloRadius * 60 * (50 + haloSize) / 100.0f);
+    else
+        vis->data.flare.size = 0;
 
-        // Color is taken from the associated lumobj.
-        V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
-
-        if(def->haloRadius > 0)
-        {
-            vis->data.flare.size = MAX_OF(1,
-                def->haloRadius * 60 * (50 + haloSize) / 100.0f);
-        }
-        else
-        {
-            vis->data.flare.size = 0;
-        }
-
-        if(!(def->flare.id && def->flare.id[0] == '-'))
-        {
-            vis->data.flare.tex = GL_GetFlareTexture(def->flare.id, def->flareTexture);
-        }
-        else
-        {   // Primary halo disabled.
-            vis->data.flare.flags |= RFF_NO_PRIMARY;
-            vis->data.flare.tex = 0;
-        }
-
-        // Halo brightness drops as the angle gets too big.
-        vis->data.flare.mul = 1;
-        if(src->data.light.def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
-        {
-            float vector[3], dot;
-
-            vector[VX] = src->pos[VX] - vx;
-            vector[VY] = src->pos[VY] - vz;
-            vector[VZ] = src->pos[VZ] - vy;
-            M_Normalize(vector);
-            dot = -(src->surface->normal[VX] * vector[VX] +
-                    src->surface->normal[VY] * vector[VY] +
-                    src->surface->normal[VZ] * vector[VZ]);
-
-            if(dot < decorFadeAngle / 2)
-                vis->data.flare.mul = 0;
-            else if(dot < 3 * decorFadeAngle)
-                vis->data.flare.mul = (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
-        }
-        break;
-        }
-    default:
-        break;
+    if(src->flareTex != 0)
+        vis->data.flare.tex = src->flareTex;
+    else
+    {   // Primary halo disabled.
+        vis->data.flare.flags |= RFF_NO_PRIMARY;
+        vis->data.flare.tex = 0;
     }
+
+    // Halo brightness drops as the angle gets too big.
+    vis->data.flare.mul = 1;
+    if(src->def->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
+    {
+        float vector[3], dot;
+
+        vector[VX] = src->pos[VX] - vx;
+        vector[VY] = src->pos[VY] - vz;
+        vector[VZ] = src->pos[VZ] - vy;
+        M_Normalize(vector);
+        dot = -(src->surface->normal[VX] * vector[VX] +
+                src->surface->normal[VY] * vector[VY] +
+                src->surface->normal[VZ] * vector[VZ]);
+
+        if(dot < decorLightFadeAngle / 2)
+            vis->data.flare.mul = 0;
+        else if(dot < 3 * decorLightFadeAngle)
+            vis->data.flare.mul = (dot - decorLightFadeAngle / 2) / (2.5f * decorLightFadeAngle);
+    }
+}
+
+/**
+ * Re-initialize the decoration source tracking (might be called during a map
+ * load or othersuch situation).
+ */
+void Rend_DecorInit(void)
+{
+    clearDecorations();
 }
 
 /**
@@ -258,42 +211,37 @@ static void projectDecoration(decorsource_t* src)
  */
 void Rend_ProjectDecorations(void)
 {
-    if(sourceFirst != sourceCursor)
-    {
-        decorsource_t*      src = sourceFirst;
+    if(sourceFirst == sourceCursor)
+        return;
+    if(!useLightDecorations)
+        return;
 
-        do
-        {
-            projectDecoration(src);
-        } while((src = src->next) != sourceCursor);
+    { decorsource_t* src = sourceFirst;
+    do
+    {
+        projectDecoration(src);
+    } while((src = src->next) != sourceCursor);
     }
 }
 
 static void addLuminousDecoration(decorsource_t* src)
 {
-    uint                i;
-    float               min, max;
-    uint                lumIdx;
-    lumobj_t*           l;
-    float               brightness;
-    const ded_decorlight_t* def = src->data.light.def;
-
-    src->lumIdx = 0;
-    src->fadeMul = 1;
-
-    if(src->type != DT_LIGHT)
-        return;
+    const ded_decorlight_t* def = src->def;
+    float brightness;
+    uint i, lumIdx;
+    float min, max;
+    lumobj_t* l;
 
     // Does it pass the sector light limitation?
     min = def->lightLevels[0];
     max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(
-            src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    src->fadeMul *= brightness * decorFactor;
+    src->fadeMul = brightness * decorLightBrightFactor;
+    src->lumIdx = 0;
 
     if(src->fadeMul <= 0)
         return;
@@ -313,9 +261,9 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
-    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
-    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
+    LUM_OMNI(l)->tex = GL_PrepareLightMap(def->sides);
+    LUM_OMNI(l)->ceilTex = GL_PrepareLightMap(def->up);
+    LUM_OMNI(l)->floorTex = GL_PrepareLightMap(def->down);
 
     // These are the same rules as in DL_MobjRadius().
     LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
@@ -337,10 +285,9 @@ void Rend_AddLuminousDecorations(void)
 {
 BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
-    if(sourceFirst != sourceCursor)
+    if(useLightDecorations && sourceFirst != sourceCursor)
     {
-        decorsource_t*      src = sourceFirst;
-
+        decorsource_t* src = sourceFirst;
         do
         {
             addLuminousDecoration(src);
@@ -361,19 +308,31 @@ static decorsource_t* addDecoration(void)
     if(!sourceCursor)
     {
         // Allocate a new entry.
-        src = Z_Calloc(sizeof(decorsource_t), PU_STATIC, NULL);
-
-        if(sourceLast)
-            sourceLast->next = src;
-        sourceLast = src;
+        src = Z_Calloc(sizeof(decorsource_t), PU_APPSTATIC, NULL);
 
         if(!sourceFirst)
+        {
             sourceFirst = src;
+        }
+        else
+        {
+            src->next = sourceFirst;
+            sourceFirst = src;
+        }
     }
     else
     {
         // There are old sources to use.
         src = sourceCursor;
+
+        src->fadeMul = 0;
+        src->lumIdx = 0;
+        src->maxDistance = 0;
+        src->pos[VX] = src->pos[VY] = src->pos[VZ] = 0;
+        src->subsector = 0;
+        src->surface = 0;
+        src->def = NULL;
+        src->flareTex = 0;
 
         // Advance the cursor.
         sourceCursor = sourceCursor->next;
@@ -385,26 +344,13 @@ static decorsource_t* addDecoration(void)
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(const surface_t* suf,
-                              const surfacedecor_t* dec,
-                              const float maxDistance)
+static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, const float maxDistance)
 {
-    decorsource_t*      src;
+    decorsource_t* src;
 
-    if(dec->type == DT_LIGHT)
-    {
-        if(numDecorLights > MAX_DECOR_LIGHTS)
-            return; // Out of sources!
-
-        numDecorLights++;
-    }
-    else // It's a model decoration.
-    {
-        if(numDecorModels > MAX_DECOR_MODELS)
-            return; // Out of sources!
-
-        numDecorModels++;
-    }
+    if(numDecorations >= MAX_DECOR_LIGHTS)
+        return; // Out of sources!
+    ++numDecorations;
 
     // Fill in the data for a new surface decoration.
     src = addDecoration();
@@ -414,28 +360,16 @@ static void createDecorSource(const surface_t* suf,
     src->maxDistance = maxDistance;
     src->subsector = dec->subsector;
     src->surface = suf;
-    src->type = dec->type;
-    switch(src->type)
+    src->fadeMul = 1;
+    src->def = dec->def;
+    if(NULL != src->def)
     {
-    case DT_LIGHT:
-        src->data.light.def = DEC_LIGHT(dec)->def;
-        break;
-
-    case DT_MODEL:
-        src->data.model.def = DEC_MODEL(dec)->def;
-        src->data.model.mf = DEC_MODEL(dec)->mf;
-        src->data.model.pitch = DEC_MODEL(dec)->pitch;
-        src->data.model.yaw = DEC_MODEL(dec)->yaw;
-        break;
-
-    default:
-        break;
+        const ded_decorlight_t* def = src->def;
+        if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
+        {
+            src->flareTex = GL_PrepareFlareTexture(def->flare, def->flareTexture);
+        }
     }
-}
-
-boolean R_IsValidModelDecoration(const ded_decormodel_t* modelDef)
-{
-    return ((modelDef && modelDef->id && modelDef->id[0])? true : false);
 }
 
 /**
@@ -444,29 +378,35 @@ boolean R_IsValidModelDecoration(const ded_decormodel_t* modelDef)
  */
 boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
 {
-    uint                i;
-    float               maxDist = *((float*) context);
+    float maxDist = *((float*) context);
+    uint i;
 
+    if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
+    {
+        R_ClearSurfaceDecorations(suf);
+
+        switch(DMU_GetType(suf->owner))
+        {
+        case DMU_SIDEDEF:
+            {
+            sidedef_t* side = (sidedef_t*)suf->owner;
+            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SEG_MIDDLE : &side->SW_bottomsurface == suf? SEG_BOTTOM : SEG_TOP);
+            break;
+            }
+        case DMU_PLANE:
+            updatePlaneDecorations((plane_t*)suf->owner);
+            break;
+        default:
+            Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
+            break;
+        }
+        suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
+    }
+
+    if(useLightDecorations)
     for(i = 0; i < suf->numDecorations; ++i)
     {
         const surfacedecor_t* d = &suf->decorations[i];
-
-        switch(d->type)
-        {
-        case DT_LIGHT:
-            if(!R_IsValidLightDecoration(DEC_LIGHT(d)->def))
-                return true;
-            break;
-
-        case DT_MODEL:
-            if(!R_IsValidModelDecoration(DEC_MODEL(d)->def))
-                return true;
-            break;
-
-        default:
-            break;
-        }
-
         createDecorSource(suf, d, maxDist);
     }
 
@@ -478,39 +418,34 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
  */
 static void getDecorationSkipPattern(const int patternSkip[2], int* skip)
 {
-    uint                i;
-
+    uint i;
     for(i = 0; i < 2; ++i)
     {
         // Skip must be at least one.
         skip[i] = patternSkip[i] + 1;
-
-        if(skip[i] < 1)
-            skip[i] = 1;
+        if(skip[i] < 1) skip[i] = 1;
     }
 }
 
-static uint generateDecorLights(const ded_decorlight_t* def,
-                                surface_t* suf, const pvec3_t v1,
-                                const pvec3_t v2, float width, float height,
-                                const pvec3_t delta, int axis,
-                                float offsetS, float offsetT, sector_t* sec)
+static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
+    material_t* mat, const pvec3_t v1, const pvec3_t v2, float width, float height,
+    const pvec3_t delta, int axis, float offsetS, float offsetT, sector_t* sec)
 {
-    uint                num;
-    float               s, t; // Horizontal and vertical offset.
-    vec3_t              posBase, pos;
-    float               patternW, patternH;
-    int                 skip[2];
-    material_t*         mat = suf->material;
+    vec3_t posBase, pos;
+    float patternW, patternH;
+    float s, t; // Horizontal and vertical offset.
+    int skip[2];
+    uint num;
 
-    if(!R_IsValidLightDecoration(def))
-        return 0;
+    if(!mat || !R_IsValidLightDecoration(def)) return 0;
 
     // Skip must be at least one.
     getDecorationSkipPattern(def->patternSkip, skip);
 
-    patternW = mat->width * skip[0];
-    patternH = mat->height * skip[1];
+    patternW = Material_Width(mat)  * skip[0];
+    patternH = Material_Height(mat) * skip[1];
+
+    if(0 == patternW && 0 == patternH) return 0;
 
     V3_Set(posBase, def->elevation * suf->normal[VX],
                     def->elevation * suf->normal[VY],
@@ -519,19 +454,19 @@ static uint generateDecorLights(const ded_decorlight_t* def,
 
     // Let's see where the top left light is.
     s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         mat->width * def->patternOffset[0] +
+                         Material_Width(mat) * def->patternOffset[0] +
                          offsetS, patternW);
     num = 0;
     for(; s < width; s += patternW)
     {
         t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             mat->height * def->patternOffset[1] +
+                             Material_Height(mat) * def->patternOffset[1] +
                              offsetT, patternH);
 
         for(; t < height; t += patternH)
         {
-            surfacedecor_t*     d;
-            float               offS = s / width, offT = t / height;
+            surfacedecor_t* d;
+            float offS = s / width, offT = t / height;
 
             V3_Set(pos, delta[VX] * offS,
                         delta[VY] * (axis == VZ? offT : offS),
@@ -545,99 +480,12 @@ static uint generateDecorLights(const ded_decorlight_t* def,
                     continue;
             }
 
-            if(NULL != (d = R_CreateSurfaceDecoration(DT_LIGHT, suf)))
+            d = R_CreateSurfaceDecoration(suf);
+            if(d)
             {
                 V3_Copy(d->pos, pos);
                 d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
-                DEC_LIGHT(d)->def = def;
-
-                R_SurfaceListAdd(decoratedSurfaceList, suf);
-
-                num++;
-            }
-        }
-    }
-
-    return num;
-}
-
-static uint generateDecorModels(const ded_decormodel_t* def,
-                                surface_t* suf, const pvec3_t v1,
-                                const pvec3_t v2, float width, float height,
-                                const pvec3_t delta, int axis,
-                                float offsetS, float offsetT, sector_t* sec)
-{
-    uint                num;
-    modeldef_t*         mf;
-    float               pitch, yaw;
-    float               patternW, patternH;
-    float               s, t; // Horizontal and vertical offset.
-    vec3_t              posBase, pos;
-    int                 skip[2];
-    material_t*         mat = suf->material;
-
-    if(!R_IsValidModelDecoration(def))
-        return 0;
-
-    if((mf = R_CheckIDModelFor(def->id)) == NULL)
-        return 0;
-
-    yaw = R_MovementYaw(suf->normal[VX], suf->normal[VY]);
-    if(axis == VZ)
-        yaw += 90;
-    pitch = R_MovementPitch(suf->normal[VX], suf->normal[VY],
-                            suf->normal[VZ]);
-
-    // Skip must be at least one.
-    getDecorationSkipPattern(def->patternSkip, skip);
-
-    patternW = mat->width * skip[0];
-    patternH = mat->height * skip[1];
-
-    V3_Set(posBase, def->elevation * suf->normal[VX],
-                    def->elevation * suf->normal[VY],
-                    def->elevation * suf->normal[VZ]);
-    V3_Sum(posBase, posBase, v1);
-
-    // Let's see where the top left light is.
-    s = M_CycleIntoRange(def->pos[0] - suf->visOffset[0] -
-                         mat->width * def->patternOffset[0] +
-                         offsetS, patternW);
-    num = 0;
-    for(; s < width; s += patternW)
-    {
-        t = M_CycleIntoRange(def->pos[1] - suf->visOffset[1] -
-                             mat->height * def->patternOffset[1] +
-                             offsetT, patternH);
-
-        for(; t < height; t += patternH)
-        {
-            surfacedecor_t     *d;
-            float               offS = s / width, offT = t / height;
-
-            V3_Set(pos, delta[VX] * offS,
-                        delta[VY] * (axis == VZ? offT : offS),
-                        delta[VZ] * (axis == VZ? offS : offT));
-            V3_Sum(pos, posBase, pos);
-
-            if(sec)
-            {
-                // The point must be inside the correct sector.
-                if(!R_IsPointInSector(pos[VX], pos[VY], sec))
-                    continue;
-            }
-
-            if(NULL != (d = R_CreateSurfaceDecoration(DT_MODEL, suf)))
-            {
-                V3_Copy(d->pos, pos);
-                d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
-                DEC_MODEL(d)->def = def;
-                DEC_MODEL(d)->mf = mf;
-                DEC_MODEL(d)->pitch = pitch;
-                DEC_MODEL(d)->yaw = yaw;
-
-                R_SurfaceListAdd(decoratedSurfaceList, suf);
-
+                d->def = def;
                 num++;
             }
         }
@@ -649,14 +497,10 @@ static uint generateDecorModels(const ded_decormodel_t* def,
 /**
  * Generate decorations for the specified surface.
  */
-static void updateSurfaceDecorations(surface_t* suf, float offsetS,
-                                     float offsetT, vec3_t v1, vec3_t v2,
-                                     sector_t* sec, boolean visible)
+static void updateSurfaceDecorations2(surface_t* suf, float offsetS, float offsetT,
+    vec3_t v1, vec3_t v2, sector_t* sec, boolean visible)
 {
-    vec3_t              delta;
-
-    R_ClearSurfaceDecorations(suf);
-    R_SurfaceListRemove(decoratedSurfaceList, suf);
+    vec3_t delta;
 
     V3_Subtract(delta, v2, v1);
 
@@ -665,15 +509,16 @@ static void updateSurfaceDecorations(surface_t* suf, float offsetS,
         delta[VX] * delta[VZ] != 0 ||
         delta[VY] * delta[VZ] != 0))
     {
-        uint                i;
-        float               matW, matH, width, height;
-        int                 axis = V3_MajorAxis(suf->normal);
-        const ded_decor_t*  def = Material_GetDecoration(suf->material);
-
+        const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
+            MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+        material_t* mat = MaterialVariant_GeneralCase(Materials_ChooseVariant(suf->material, spec, true, true));
+        const ded_decor_t* def = Materials_DecorationDef(mat);
         if(def)
         {
-            matW = suf->material->width;
-            matH = suf->material->height;
+            int axis = V3_MajorAxis(suf->normal);
+            float width, height;
+            uint i;
+
             if(axis == VX || axis == VY)
             {
                 width = sqrt(delta[VX] * delta[VX] + delta[VY] * delta[VY]);
@@ -684,30 +529,17 @@ static void updateSurfaceDecorations(surface_t* suf, float offsetS,
                 width = sqrt(delta[VX] * delta[VX]);
                 height = delta[VY];
             }
-            if(width < 0)
-                width = -width;
-            if(height < 0)
-                height = -height;
 
-            // Generate a number of models.
-            for(i = 0; i < DED_DECOR_NUM_MODELS; ++i)
-            {
-                generateDecorModels(&def->models[i], suf, v1, v2, width,
-                                    height, delta, axis, offsetS, offsetT,
-                                    sec);
-            }
+            if(width < 0)  width  = -width;
+            if(height < 0) height = -height;
 
             // Generate a number of lights.
             for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
             {
-                generateDecorLights(&def->lights[i], suf, v1, v2, width,
-                                    height, delta, axis, offsetS, offsetT,
-                                    sec);
+                generateDecorLights(&def->lights[i], suf, mat, v1, v2, width, height, delta, axis, offsetS, offsetT, sec);
             }
         }
     }
-
-    suf->inFlags &= ~SUIF_UPDATE_DECORATIONS;
 }
 
 /**
@@ -734,7 +566,7 @@ static void updatePlaneDecorations(plane_t* pln)
     offsetS = -fmod(sec->bBox[BOXLEFT], 64);
     offsetT = -fmod(sec->bBox[BOXBOTTOM], 64);
 
-    updateSurfaceDecorations(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
+    updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
 static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
@@ -745,7 +577,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
     int                 sid;
     float               offsetS = 0, offsetT = 0;
     boolean             visible = false;
-    const plane_t*      frontCeil, *frontFloor, *backCeil, *backFloor;
+    const plane_t*      frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
     if(!side->segs || !side->segs[0])
@@ -779,7 +611,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             else
             {
                 float texOffset[2];
-                if(R_FindBottomTop(SEG_MIDDLE, 0, suf,
+                if(R_FindBottomTop(line, sid, SEG_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
                              frontFloor, frontCeil, backFloor, backCeil,
                              (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                              (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -787,8 +619,9 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
                              LINE_SELFREF(line)? true : false,
                              &bottom, &top, texOffset))
                 {
-                    offsetS = texOffset[VX];
-                    offsetT = texOffset[VY];
+                    //offsetS = texOffset[VX];
+                    // Counteract surface material offset (interpreted as geometry offset).
+                    offsetT = suf->visOffset[VY];
                     visible = true;
                 }
             }
@@ -830,53 +663,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
         V3_Set(v2, line->L_vpos(sid^1)[VX], line->L_vpos(sid^1)[VY], bottom);
     }
 
-    updateSurfaceDecorations(suf, offsetS, offsetT, v1, v2, NULL, visible);
-}
-
-void Rend_UpdateSurfaceDecorations(void)
-{
-BEGIN_PROF( PROF_DECOR_UPDATE );
-
-    // This only needs to be done if decorations have been enabled.
-    if(useDecorations)
-    {
-        uint                i;
-
-        // Process all sidedefs.
-        for(i = 0; i < numSideDefs; ++i)
-        {
-            sidedef_t*          side = &sideDefs[i];
-            surface_t*          suf;
-
-            suf = &side->SW_middlesurface;
-            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
-                updateSideSectionDecorations(side, SEG_MIDDLE);
-
-            suf = &side->SW_topsurface;
-            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
-                updateSideSectionDecorations(side, SEG_TOP);
-
-            suf = &side->SW_bottomsurface;
-            if(suf->inFlags & SUIF_UPDATE_DECORATIONS)
-                updateSideSectionDecorations(side, SEG_BOTTOM);
-        }
-
-        // Process all planes.
-        for(i = 0; i < numSectors; ++i)
-        {
-            uint                j;
-            sector_t*           sec = &sectors[i];
-
-            for(j = 0; j < sec->planeCount; ++j)
-            {
-                plane_t*            pln = sec->SP_plane(j);
-                if(pln->surface.inFlags & SUIF_UPDATE_DECORATIONS)
-                    updatePlaneDecorations(pln);
-            }
-        }
-    }
-
-END_PROF( PROF_DECOR_UPDATE );
+    updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, NULL, visible);
 }
 
 /**
@@ -896,17 +683,13 @@ void Rend_InitDecorationsForFrame(void)
     }
 #endif
 
-    clearDecorations();
-
     // This only needs to be done if decorations have been enabled.
-    if(useDecorations)
+    if(0 != useLightDecorations)
     {
-        Rend_UpdateSurfaceDecorations(); // temporary.
-
 BEGIN_PROF( PROF_DECOR_PROJECT );
 
-        R_SurfaceListIterate(decoratedSurfaceList,
-                             R_ProjectSurfaceDecorations, &decorMaxDist);
+        clearDecorations();
+        R_SurfaceListIterate(decoratedSurfaceList, R_ProjectSurfaceDecorations, &decorMaxDist);
 
 END_PROF( PROF_DECOR_PROJECT );
     }

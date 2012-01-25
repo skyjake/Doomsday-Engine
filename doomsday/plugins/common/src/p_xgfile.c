@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -178,7 +178,7 @@ static void ReadString(char** str)
         Con_Error("ReadString: Bogus len!\n");
 
     // Allocate memory for the string.
-    *str = Z_Malloc(len + 1, PU_STATIC, 0);
+    *str = Z_Malloc(len + 1, PU_GAMESTATIC, 0);
     memcpy(*str, readptr, len);
     readptr += len;
     (*str)[len] = 0;
@@ -321,33 +321,36 @@ void XG_WriteTypes(FILE* f)
 }
 #endif
 
-void XG_ReadXGLump(char* name)
+void XG_ReadXGLump(lumpnum_t lumpNum)
 {
-    lumpnum_t           lump;
-    void*               buf;
-    int                 lc = 0, sc = 0, i;
-    linetype_t*         li;
-    sectortype_t*       sec;
-    boolean             done = false;
+    int lc = 0, sc = 0, i;
+    sectortype_t* sec;
+    linetype_t* li;
+    boolean done = false;
+    size_t len;
+    uint8_t* buf;
 
-    if((lump = W_CheckNumForName(name)) < 0)
+    if(0 > lumpNum)
         return; // No such lump.
 
     xgDataLumps = true;
 
     Con_Message("XG_ReadTypes: Reading XG types from DDXGDATA.\n");
 
-    buf = malloc(W_LumpLength(lump));
-    W_ReadLump(lump, buf);
+    len = W_LumpLength(lumpNum);
+    buf = (uint8_t*) malloc(len);
+    if(NULL == buf)
+        Con_Error("XG_ReadTypes: Failed on allocation of %lu bytes for temporary buffer.", (unsigned long) len);
+    W_ReadLump(lumpNum, buf);
 
-    readptr = buf;
+    readptr = (byte*)buf;
 
     num_linetypes = ReadShort();
     num_sectypes = ReadShort();
 
     // Allocate the arrays.
-    linetypes = Z_Calloc(sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
-    sectypes = Z_Calloc(sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
+    linetypes = Z_Calloc(sizeof(*linetypes) * num_linetypes, PU_GAMESTATIC, 0);
+    sectypes = Z_Calloc(sizeof(*sectypes) * num_sectypes, PU_GAMESTATIC, 0);
 
     while(!done)
     {
@@ -381,8 +384,8 @@ void XG_ReadXGLump(char* name)
             li->actChain = ReadShort();
             li->deactChain = ReadShort();
             li->wallSection = ReadByte();
-            li->actMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
-            li->deactMaterial = /* \fixme Convert texture idx to material idx */ ReadShort();
+            li->actMaterial = DD_MaterialForTextureUniqueId(TN_TEXTURES, ReadShort());
+            li->deactMaterial = DD_MaterialForTextureUniqueId(TN_TEXTURES, ReadShort());
             ReadString(&li->actMsg);
             ReadString(&li->deactMsg);
             li->materialMoveAngle = ReadFloat();
@@ -473,7 +476,7 @@ void XG_ReadTypes(void)
     linetypes = 0;
     sectypes = 0;
 
-    XG_ReadXGLump("DDXGDATA");
+    XG_ReadXGLump(W_CheckLumpNumForName2("DDXGDATA", true));
 }
 
 linetype_t* XG_GetLumpLine(int id)

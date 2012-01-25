@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,9 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include <string.h>
+#include <stdio.h>
 
 #include "jhexen.h"
 
@@ -52,11 +55,13 @@
 
 // TYPES -------------------------------------------------------------------
 
+#pragma pack(1)
 typedef struct acsheader_s {
-    int     marker;
-    int     infoOffset;
-    int     code;
+    int32_t marker;
+    int32_t infoOffset;
+    int32_t code;
 } acsheader_t;
+#pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -243,18 +248,29 @@ const char* GetACString(int id)
 
 void P_LoadACScripts(int lump)
 {
-    int                 i;
-    const int*          buffer;
-    const acsheader_t*  header;
-    acsinfo_t*          info;
+    size_t lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
+    const acsheader_t* header;
+    const int* buffer = NULL;
+    acsinfo_t* info;
+    int i;
 
-    header = W_CacheLumpNum(lump, PU_MAP);
-    ActionCodeBase = (const byte*) header;
-    buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
-    ACScriptCount = LONG(*buffer++);
+    ACScriptCount = 0;
+
+    if(lumpLength >= sizeof(acsheader_t))
+    {
+        header = (const acsheader_t*) W_CacheLump(lump, PU_MAP);
+        ActionCodeBase = (const byte*) header;
+
+        if(LONG(header->infoOffset) < (int)lumpLength)
+        {
+            buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
+            ACScriptCount = LONG(*buffer++);
+        }
+    }
+
     if(ACScriptCount == 0 || IS_CLIENT)
-    {                           // Empty behavior lump
-        ACScriptCount = 0;
+    {   // Empty/Invalid lump.
+        Con_Message("Warning:P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
         return;
     }
 
@@ -332,17 +348,17 @@ void P_CheckACSStore(uint map)
         memmove(&ACSStore[i], &ACSStore[i+1], sizeof(acsstore_t) * (ACSStoreSize-i));
     }
 
-    if(ACSStoreSize != origSize)
+    if(ACSStoreSize == origSize)
+        return;
+
+    if(ACSStoreSize)
     {
-        if(ACSStoreSize)
-        {
-            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
-        }
-        else
-        {
-            Z_Free(ACSStore); ACSStore = NULL;
-        }
+        ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
+        return;
     }
+
+    Z_Free(ACSStore);
+    ACSStore = 0;
 }
 
 /**
@@ -426,11 +442,11 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
                 return false;
         }
 
-        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_STATIC);
+        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_GAMESTATIC);
     }
     else
     {
-        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_STATIC, 0);
+        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_GAMESTATIC, 0);
         ACSStoreSize = 1;
     }
 
@@ -1175,22 +1191,22 @@ typedef struct {
     int                 count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t* params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Does the type match?
     if(mo->type != params->type)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if((mo->flags & MF_COUNTKILL) && mo->health <= 0)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 static void ThingCount(int type, int tid)
@@ -1272,13 +1288,22 @@ static int CmdPolyWaitDirect(void)
 
 static int CmdChangeFloor(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    sector_t* sec = NULL;
+    iterlist_t* list;
+    material_t* mat;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(GetACString(Pop()),
-                                                     MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1297,14 +1322,22 @@ static int CmdChangeFloor(void)
 
 static int CmdChangeFloorDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(
-        GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1322,13 +1355,22 @@ static int CmdChangeFloorDirect(void)
 
 static int CmdChangeCeiling(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
-    mat = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(GetACString(Pop()), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1347,14 +1389,22 @@ static int CmdChangeCeiling(void)
 
 static int CmdChangeCeilingDirect(void)
 {
-    int                 tag;
-    material_t*         mat;
-    sector_t*           sec = NULL;
-    iterlist_t*         list;
+    sector_t* sec = NULL;
+    material_t* mat;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
+    int tag;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL,
-        P_MaterialNumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
+    uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1693,12 +1743,22 @@ static int CmdSoundSequence(void)
 
 static int CmdSetLineTexture(void)
 {
-    int                 lineTag, side, position;
-    material_t*         mat;
-    linedef_t*          line;
-    iterlist_t*         list;
+    int lineTag, side, position;
+    material_t* mat;
+    linedef_t* line;
+    iterlist_t* list;
+    ddstring_t path;
+    Uri* uri;
 
-    mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(GetACString(Pop()), MN_TEXTURES));
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
+    uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
+    Uri_SetPath(uri, Str_Text(&path));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
+    Uri_Delete(uri);
+    Str_Free(&path);
+
     position = Pop();
     side = Pop();
     lineTag = Pop();
@@ -1792,7 +1852,7 @@ static int CmdSetLineSpecial(void)
 }
 
 // Console commands.
-DEFCC(CCmdScriptInfo)
+D_CMD(ScriptInfo)
 {
     int                 i, whichOne = -1;
     char*               scriptStates[] = {

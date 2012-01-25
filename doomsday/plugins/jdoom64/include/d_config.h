@@ -1,10 +1,10 @@
-/**\file
+/**\file d_config.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * d_config.h: jDoom64 configuration.
+ * jDoom64 configuration.
  * Global settings. Most of these are console variables.
  */
 
@@ -36,6 +36,7 @@
 #endif
 
 #include "doomdef.h"
+#include "hu_lib.h"
 
 enum {
     HUD_HEALTH,
@@ -43,6 +44,7 @@ enum {
     HUD_AMMO,
     HUD_KEYS,
     HUD_FRAGS,
+    HUD_LOG,
     HUD_INVENTORY, // jd64
     NUMHUDDISPLAYS
 };
@@ -59,6 +61,14 @@ typedef enum {
     HUE_ON_PICKUP_KEY,
     NUMHUDUNHIDEEVENTS
 } hueevent_t;
+
+// Counter Cheat flags.
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRETS         0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRETS_PRCNT   0x20
 
 // WARNING: Do not use the boolean type. Its size can be either 1 or 4 bytes
 //          depending on build settings.
@@ -85,39 +95,48 @@ typedef struct jdoom64_config_s {
     byte            slidingCorpses;
     byte            fastMonsters;
     byte            echoMsg;
-    float           menuScale;
-    int             menuEffects;
     int             hudFog;
-    float           menuGlitter;
+
+    float           menuScale;
+    int             menuEffectFlags;
     float           menuShadow;
     int             menuQuitSound;
     byte            menuSlam;
-    byte            menuHotkeys;
-    byte            askQuickSaveLoad;
-    float           flashColor[3];
-    int             flashSpeed;
-    byte            turningSkull;
+    byte            menuShortcutsEnabled;
+    byte            menuScaleMode;
+    int             menuPatchReplaceMode;
+    byte            menuGameSaveSuggestName;
+    byte            menuCursorRotate;
+    float           menuTextColors[MENU_COLOR_COUNT][3];
+    float           menuTextFlashColor[3];
+    int             menuTextFlashSpeed;
+    float           menuTextGlitter;
+
+    byte            inludeScaleMode;
+    int             inludePatchReplaceMode;
+
+    byte            confirmQuickGameSave;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     float           hudScale; // How to scale HUD data?
     float           hudColor[4];
     float           hudIconAlpha;
     float           hudTimer; // Number of seconds until the hud auto-hides.
     byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // When the hud unhides.
-    byte            usePatchReplacement;
     byte            moveCheckZ; // If true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
+    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            ammoAutoSwitch;
     byte            berserkAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
-    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            weaponRecoil; // jd64
     byte            secretMsg;
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColor[3];
-    float           menuColor2[3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;
@@ -140,8 +159,8 @@ typedef struct jdoom64_config_s {
     byte            zombiesCanExit; // Zombie players can exit maps.
     byte            fallOff; // Objects fall under their own weight.
 
-    byte            counterCheat;
-    float           counterCheatScale;
+    byte            hudShownCheatCounters;
+    float           hudCheatCounterScale;
 
     // Automap stuff.
 /*  int             automapPos;
@@ -171,7 +190,6 @@ typedef struct jdoom64_config_s {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
 
     char           *chatMacros[10];
@@ -194,7 +212,7 @@ typedef struct jdoom64_config_s {
     byte            netBFGFreeLook; // Allow free-aim with BFG.
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
     byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Multiplayer custom gravity.
+    int             netGravity; // Custom gravity multiplier.
     byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
     byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
     byte            netNoMonsters;

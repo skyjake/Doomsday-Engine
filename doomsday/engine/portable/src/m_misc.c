@@ -1,10 +1,10 @@
-/**\file
+/**\file m_misc.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * m_misc.c: Miscellanous Routines
+ * Miscellanous Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -51,6 +51,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_misc.h"
@@ -60,14 +61,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MALLOC_CLIB 1
-#define MALLOC_ZONE 2
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct file_identifier_s {
-    byte hash[16];
-} file_identifier_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -75,17 +69,13 @@ typedef struct file_identifier_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static size_t FileReader(char const *name, byte **buffer, int mallocType);
+static size_t FileReader(char const* name, char** buffer);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static uint numReadFiles = 0;
-static uint maxReadFiles = 0;
-static file_identifier_t *readFiles = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -109,68 +99,6 @@ void M_Free(void *ptr)
     free(ptr);
 }
 
-/**
- * Resets the array of known file IDs. The next time M_CheckFileID() is
- * called on a file, it passes.
- */
-void M_ResetFileIDs(void)
-{
-    numReadFiles = 0;
-}
-
-/**
- * Maintains a list of identifiers already seen.
- *
- * @return              @c true, if the given file can be read, or
- *                      @c false, if it has already been read.
- */
-boolean M_CheckFileID(const char *path)
-{
-    byte                id[16];
-    uint                i;
-    boolean             alreadySeen;
-
-    if(!F_Access(path))
-    {
-        if(verbose)
-            Con_Message("CheckFile: %s not found.\n", path);
-        return false;
-    }
-
-    // Calculate the identifier.
-    Dir_FileID(path, id);
-
-    alreadySeen = false;
-    i = 0;
-    while(i < numReadFiles && !alreadySeen)
-    {
-        if(!memcmp(readFiles[i].hash, id, 16))
-        {
-            // This identifier has already been encountered.
-            alreadySeen = true;
-        }
-        i++;
-    }
-
-    if(alreadySeen)
-        return false;
-
-    // Allocate a new entry.
-    numReadFiles++;
-    if(numReadFiles > maxReadFiles)
-    {
-        if(!maxReadFiles)
-            maxReadFiles = 16;
-        else
-            maxReadFiles *= 2;
-
-        readFiles = M_Realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
-    }
-
-    memcpy(readFiles[numReadFiles - 1].hash, id, 16);
-    return true;
-}
-
 char* M_SkipWhite(char* str)
 {
     while(*str && ISSPACE(*str))
@@ -185,6 +113,44 @@ char* M_FindWhite(char* str)
     return str;
 }
 
+void M_StripLeft(char* str)
+{
+    size_t len, num;
+    if(NULL == str || !str[0]) return;
+
+    len = strlen(str);
+    // Count leading whitespace characters.
+    num = 0;
+    while(num < len && isspace(str[num]))
+        ++num;
+    if(0 == num) return;
+
+    // Remove 'num' characters.
+    memmove(str, str + num, len - num);
+    str[len] = 0;
+}
+
+void M_StripRight(char* str, size_t len)
+{
+    char* end;
+    int numZeroed = 0;
+    if(NULL == str || 0 == len) return;
+
+    end = str + strlen(str) - 1;
+    while(end >= str && isspace(*end))
+    {
+        end--;
+        numZeroed++;
+    }
+    memset(end + 1, 0, numZeroed);
+}
+
+void M_Strip(char* str, size_t len)
+{
+    M_StripLeft(str);
+    M_StripRight(str, len);
+}
+
 char* M_SkipLine(char* str)
 {
     while(*str && *str != '\n')
@@ -193,6 +159,25 @@ char* M_SkipLine(char* str)
     if(*str == '\n')
         str++;
     return str;
+}
+
+char* M_StrCat(char* buf, const char* str, size_t bufSize)
+{
+    return M_StrnCat(buf, str, strlen(str), bufSize);
+}
+
+char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
+{
+    int n = nChars;
+    int destLen = strlen(buf);
+    if((int)bufSize - destLen - 1 > n)
+    {
+        // Cannot copy more than fits in the buffer.
+        // The 1 is for the null character.
+        n = bufSize - destLen - 1;
+    }
+    if(n <= 0) return buf; // No space left.
+    return strncat(buf, str, n);
 }
 
 char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
@@ -226,61 +211,21 @@ char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
     return buf;
 }
 
-void M_ExtractFileBase(char* dest, const char* path, size_t len)
+void M_ReadLine(char* buffer, size_t len, DFile* file)
 {
-    M_ExtractFileBase2(dest, path, len, 0);
-}
-
-/**
- * This has been modified to work with filenames of all sizes.
- */
-void M_ExtractFileBase2(char* dest, const char* path, size_t max,
-                        int ignore)
-{
-    const char*         src;
-
-    src = path + strlen(path) - 1;
-
-    // Back up until a \ or the start.
-    while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
-    {
-        src--;
-    }
-
-    // Copy up to eight characters.
-    while(*src && *src != '.' && max-- > 0)
-    {
-        if(ignore-- > 0)
-        {
-            src++; // Skip chars.
-            max++; // Doesn't count.
-        }
-        else
-            *dest++ = toupper((int) *src++);
-    }
-
-    if(max > 0) // Room for a null?
-    {
-        // End with a terminating null.
-        *dest++ = 0;
-    }
-}
-
-void M_ReadLine(char* buffer, size_t len, DFILE *file)
-{
-    size_t              p;
-    char                ch;
-    boolean             isDone;
+    size_t p;
+    char ch;
+    boolean isDone;
 
     memset(buffer, 0, len);
     p = 0;
     isDone = false;
     while(p < len - 1 && !isDone)    // Make the last null stay there.
     {
-        ch = F_GetC(file);
+        ch = DFile_GetC(file);
         if(ch != '\r')
         {
-            if(deof(file) || ch == '\n')
+            if(DFile_AtEnd(file) || ch == '\n')
                 isDone = true;
             else
                 buffer[p++] = ch;
@@ -290,7 +235,7 @@ void M_ReadLine(char* buffer, size_t len, DFILE *file)
 
 boolean M_IsComment(const char* buffer)
 {
-    int                 i = 0;
+    int i = 0;
 
     while(isspace((unsigned char) buffer[i]) && buffer[i])
         i++;
@@ -299,14 +244,12 @@ boolean M_IsComment(const char* buffer)
     return false;
 }
 
-/**
- * Can the given string be interpreted as a valid integer?
- */
-boolean M_IsStringValidInt(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidInt(const char* str)
 {
-    size_t          i, len;
-    const char     *c;
-    boolean         isBad;
+    size_t i, len;
+    const char* c;
+    boolean isBad;
 
     if(!str)
         return false;
@@ -326,30 +269,24 @@ boolean M_IsStringValidInt(const char *str)
     return !isBad;
 }
 
-/**
- * Can the given string be interpreted as a valid byte?
- */
-boolean M_IsStringValidByte(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidByte(const char* str)
 {
     if(M_IsStringValidInt(str))
     {
-        int             val = atoi(str);
-
+        int val = atoi(str);
         if(!(val < 0 || val > 255))
             return true;
     }
-
     return false;
 }
 
-/**
- * Can the given string be interpreted as a valid float?
- */
-boolean M_IsStringValidFloat(const char *str)
+/// \note Part of the Doomsday public API
+boolean M_IsStringValidFloat(const char* str)
 {
-    size_t          i, len;
-    const char     *c;
-    boolean         isBad, foundDP = false;
+    size_t i, len;
+    const char* c;
+    boolean isBad, foundDP = false;
 
     if(!str)
         return false;
@@ -416,6 +353,44 @@ float RNG_RandFloat(void)
 void RNG_Reset(void)
 {
     rngIndex = 0, rngIndex2 = 0;
+}
+
+int M_RatioReduce(int* numerator, int* denominator)
+{
+    int n, d, temp;
+
+    if(!numerator || !denominator)
+    {
+#if _DEBUG
+        Con_Message("Warning: M_RatioReduce: Invalid arguments, returning 1:1.\n");
+#endif
+        return 1;
+    }
+
+    if(*numerator == *denominator) return 1; // 1:1
+
+    n = abs(*numerator);
+    d = abs(*denominator);
+    // Ensure numerator is larger.
+    if(n < d)
+    {
+        temp = n;
+        n = d;
+        d = temp;
+    }
+
+    // Reduce to the common divisor.
+    while(d != 0)
+    {
+        temp = n;
+        n = d;
+        d = temp % d;
+    }
+
+    // Apply divisor.
+    *numerator   /= n;
+    *denominator /= n;
+    return n;
 }
 
 /**
@@ -714,7 +689,7 @@ void M_ProjectViewRelativeLine2D(const float center[2],
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     float sinrv, cosrv;
 
-    if(alignToViewPlane)       
+    if(alignToViewPlane)
     {
         // Should be fully aligned to view plane.
         sinrv = -viewData->viewCos;
@@ -813,124 +788,100 @@ void M_CopyBox(fixed_t dest[4], const fixed_t src[4])
 #  define O_BINARY 0
 #endif
 
-boolean M_WriteFile(const char *name, void *source, size_t length)
+boolean M_WriteFile(const char* name, const char* source, size_t length)
 {
-    int             handle;
-    size_t          count;
+    int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+    size_t count;
 
-    handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
     if(handle == -1)
         return false;
 
     count = write(handle, source, length);
     close(handle);
 
-    if(count < length)
-        return false;
-
-    return true;
-}
-
-/**
- * Read a file into a buffer allocated using Z_Malloc().
- */
-size_t M_ReadFile(const char *name, byte **buffer)
-{
-    return FileReader(name, buffer, MALLOC_ZONE);
+    return (count >= length);
 }
 
 /**
  * Read a file into a buffer allocated using M_Malloc().
  */
-size_t M_ReadFileCLib(const char *name, byte **buffer)
+size_t M_ReadFile(const char* name, char** buffer)
 {
-    return FileReader(name, buffer, MALLOC_CLIB);
+    return FileReader(name, buffer);
 }
 
-static size_t FileReader(const char *name, byte **buffer, int mallocType)
+static size_t FileReader(const char* name, char** buffer)
 {
-    int         handle;
-    size_t      count, length;
-    struct      stat fileinfo;
-    byte       *buf;
-    LZFILE     *file;
+    struct stat fileinfo;
+    char* buf = NULL;
+    size_t length = 0;
+    int handle;
 
     // First try with LZSS.
-    if((file = lzOpen((char *) name, "rp")) != NULL)
+    { LZFILE* file = lzOpen((char*) name, "rp");
+    if(NULL != file)
     {
 #define BSIZE 1024
-        byte    rbuf[BSIZE];
+
+        char readBuf[BSIZE];
 
         // Read 1kb pieces until file ends.
-        length = 0;
-        buf = 0;
         while(!lzEOF(file))
         {
-            count = lzRead(rbuf, BSIZE, file);
+            size_t bytesRead = lzRead(readBuf, BSIZE, file);
+            char* newBuf;
+
             // Allocate more memory.
-            if(mallocType == MALLOC_ZONE)
+            newBuf = (char*) Z_Malloc(length + bytesRead, PU_APPSTATIC, 0);
+            if(NULL == newBuf)
+                Con_Error("FileReader: realloc failed.");
+            if(NULL != buf)
             {
-                byte   *newbuf = Z_Malloc(length + count, PU_STATIC, 0);
-
-                if(buf)
-                {
-                    memcpy(newbuf, buf, length);
-                    Z_Free(buf);
-                }
-                buf = newbuf;
+                memcpy(newBuf, buf, length);
+                Z_Free(buf);
             }
-            else
-            {
-                byte   *newbuf = M_Realloc(buf, length + count);
-
-                if(newbuf == NULL)
-                    Con_Error("FileReader: realloc failed.");
-
-                buf = newbuf;
-            }
+            buf = newBuf;
 
             // Copy new data to buffer.
-            memcpy(buf + length, rbuf, count);
-            length += count;
+            memcpy(buf + length, readBuf, bytesRead);
+            length += bytesRead;
         }
 
         lzClose(file);
-        *buffer = buf;
+        *buffer = (char*)buf;
         return length;
-    }
+
+#undef BSIZE
+    }}
 
     handle = open(name, O_RDONLY | O_BINARY, 0666);
     if(handle == -1)
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
+#if _DEBUG
+        Con_Message("Warning:FileReader: Failed opening \"%s\" for reading.\n", name);
+#endif
+        return length;
     }
 
-    if(fstat(handle, &fileinfo) == -1)
+    if(-1 == fstat(handle, &fileinfo))
     {
         Con_Error("FileReader: Couldn't read file %s\n", name);
     }
 
     length = fileinfo.st_size;
-    if(mallocType == MALLOC_ZONE)
-    {   // Use zone memory allocation
-        buf = Z_Malloc(length, PU_STATIC, NULL);
-    }
-    else
-    {   // Use c library memory allocation
-        buf = M_Malloc(length);
-        if(buf == NULL)
-        {
-            Con_Error("FileReader: Failed on allocation of %lu bytes for file %s.\n",
-                      (unsigned long) length, name);
-        }
+    buf = Z_Malloc(length, PU_APPSTATIC, 0);
+    if(buf == NULL)
+    {
+        Con_Error("FileReader: Failed on allocation of %lu bytes for file \"%s\".\n",
+                  (unsigned long) length, name);
     }
 
-    count = read(handle, buf, length);
+    { size_t bytesRead = read(handle, buf, length);
     close(handle);
-    if(count < length)
+    if(bytesRead < length)
     {
-        Con_Error("FileReader: Couldn't read file %s\n", name);
-    }
+        Con_Error("FileReader: Couldn't read file \"%s\".\n", name);
+    }}
     *buffer = buf;
 
     return length;
@@ -975,14 +926,19 @@ void M_WriteCommented(FILE *file, const char* text)
  */
 void M_WriteTextEsc(FILE* file, const char* text)
 {
-    size_t              i;
+    if(!file || !text)
+    {
+        Con_Error("Attempted M_WriteTextEsc with invalid reference (%s==0).", !file? "file":"text");
+        return; // Unreachable.
+    }
 
+    { size_t i;
     for(i = 0; i < strlen(text) && text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
-    }
+    }}
 }
 
 /**
@@ -1019,220 +975,42 @@ float M_ApproxDistance3f(float dx, float dy, float dz)
     return M_ApproxDistancef(M_ApproxDistancef(dx, dy), dz);
 }
 
-/**
- * Writes a Targa file of the specified depth.
- */
-int M_ScreenShot(const char* filename, int bits)
+int M_ScreenShot(const char* name, int bits)
 {
-    byte*               screen = 0;
+    byte* screen = (byte*) GL_GrabScreen();
+    ddstring_t fullName;
+    FILE* file;
 
-    if(bits != 16 && bits != 24)
+    if(!screen)
+    {
+        Con_Message("Warning:M_ScreenShot: Failed acquiring frame buffer content.\n");
         return false;
+    }
 
-    // Grab that screen!
-    screen = GL_GrabScreen();
+    // Compose the final file name.
+    Str_Init(&fullName); Str_Set(&fullName, name);
+    if(!F_FindFileExtension(Str_Text(&fullName)))
+        Str_Append(&fullName, ".tga");
+    F_ToNativeSlashes(&fullName, &fullName);
 
+    file = fopen(Str_Text(&fullName), "wb");
+    if(!file)
+    {
+        Con_Message("Warning: M_Screenshot: Failed opening \"%s\" for write.\n", F_PrettyPath(Str_Text(&fullName)));
+        Str_Free(&fullName);
+        return false;
+    }
+
+    bits = (bits == 24? 24 : 16);
     if(bits == 16)
-        TGA_Save16_rgb888(filename, theWindow->width, theWindow->height, screen);
+        TGA_Save16_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
     else
-        TGA_Save24_rgb888(filename, theWindow->width, theWindow->height, screen);
+        TGA_Save24_rgb888(file, theWindow->geometry.size.width, theWindow->geometry.size.height, screen);
 
-    M_Free(screen);
+    fclose(file);
+    Str_Free(&fullName);
+    free(screen);
     return true;
-}
-
-void M_PrependBasePath(char* newpath, const char* path, size_t len)
-{
-    filename_t          buf;
-
-    if(Dir_IsAbsolute(path))
-    {
-        // Can't prepend to absolute paths.
-        strncpy(newpath, path, len);
-    }
-    else
-    {
-        dd_snprintf(buf, FILENAME_T_MAXLEN, "%s%s", ddBasePath, path);
-        strncpy(newpath, buf, len);
-    }
-}
-
-/**
- * If the base path is found in the beginning of the path, it is removed.
- */
-void M_RemoveBasePath(char* newPath, const char* absPath, size_t len)
-{
-    if(!strnicmp(absPath, ddBasePath, strlen(ddBasePath)))
-    {
-        // This makes the new path relative to the base path.
-        strncpy(newPath, absPath + strlen(ddBasePath), len);
-    }
-    else
-    {
-        // This doesn't appear to be the base path.
-        strncpy(newPath, absPath, len);
-    }
-}
-
-/**
- * Expands >.
- */
-void M_TranslatePath(char* translated, const char* path, size_t len)
-{
-    filename_t          buf;
-
-    if(path[0] == '>' || path[0] == '}')
-    {
-        path++;
-        if(!Dir_IsAbsolute(path))
-            M_PrependBasePath(buf, path, FILENAME_T_MAXLEN);
-        else
-            strncpy(buf, path, FILENAME_T_MAXLEN);
-        strncpy(translated, buf, len);
-    }
-    else if(translated != path)
-    {
-        strncpy(translated, path, len);
-    }
-    Dir_FixSlashes(translated, len);
-}
-
-/**
- * Also checks for '>'.
- * The file must be a *real* file!
- */
-int M_FileExists(const char* file)
-{
-    filename_t          buf;
-
-    M_TranslatePath(buf, file, FILENAME_T_MAXLEN);
-    return !access(buf, 4);     // Read permission?
-}
-
-/**
- * Check that the given directory exists. If it doesn't, create it.
- * The path must be relative!
- *
- * @return              @c true, if the directory already exists.
- */
-boolean M_CheckPath(const char* path)
-{
-    filename_t          full, buf;
-    char*               ptr, *endptr;
-
-    // Convert all backslashes to normal slashes.
-    strncpy(full, path, FILENAME_T_MAXLEN);
-    Dir_FixSlashes(full, FILENAME_T_MAXLEN);
-
-    if(!access(full, 0))
-        return true;            // Quick test.
-
-    // Check and create the path in segments.
-    ptr = full;
-    memset(buf, 0, sizeof(buf));
-    do
-    {
-        endptr = strchr(ptr, DIR_SEP_CHAR);
-        if(!endptr)
-            strncat(buf, ptr, FILENAME_T_MAXLEN);
-        else
-            strncat(buf, ptr, endptr - ptr);
-        if(access(buf, 0))
-        {
-            // Path doesn't exist, create it.
-#if defined(WIN32)
-            mkdir(buf);
-#elif defined(UNIX)
-            mkdir(buf, 0775);
-#endif
-        }
-        strncat(buf, DIR_SEP_STR, FILENAME_T_MAXLEN);
-        ptr = endptr + 1;
-
-    } while(endptr);
-
-    return false;
-}
-
-/**
- * The dot is not included in the returned extension.
- * The extension can be at most 10 characters long.
- */
-void M_GetFileExt(char* ext, const char* path, size_t len)
-{
-    char*               ptr = strrchr(path, '.');
-
-    *ext = 0;
-    if(!ptr)
-        return;
-    strncpy(ext, ptr + 1, len);
-    strlwr(ext);
-}
-
-char* M_FindFileExtension(char* path)
-{
-    if(path && path[0])
-    {
-        size_t              len = strlen(path);
-        char*               p = NULL;
-
-        p = path + len - 1;
-        if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
-        {
-            do
-            {
-                if(*(p - 1) == DIR_SEP_CHAR ||
-                   *(p - 1) == DIR_WRONG_SEP_CHAR)
-                    break;
-                if(*p == '.')
-                    return (size_t)(p - path) < len - 1? p + 1 : NULL;
-            } while(--p > path);
-        }
-    }
-
-    return NULL; // Not found.
-}
-
-/**
- * The new extension must not include a dot.
- */
-void M_ReplaceFileExt(char* path, const char* newext, size_t len)
-{
-    char*               ptr = M_FindFileExtension(path);
-
-    if(!ptr)
-    {
-        strncat(path, ".", FILENAME_T_MAXLEN);
-        strncat(path, newext, FILENAME_T_MAXLEN);
-    }
-    else
-    {
-        strncpy(ptr, newext, FILENAME_T_MAXLEN);
-    }
-}
-
-/**
- * Return a prettier copy of the original path.
- */
-const char* M_PrettyPath(const char* path)
-{
-#define MAX_BUFS            8
-
-    static filename_t   buffers[MAX_BUFS];
-    static uint         index = 0;
-    char*               str;
-    size_t              len = path? strlen(path) : 0;
-
-    if(len > 0 && !strnicmp(path, ddBasePath, len))
-    {
-        str = buffers[index++ % MAX_BUFS];
-        M_RemoveBasePath(str, path, FILENAME_T_MAXLEN);
-        Dir_FixSlashes(str, FILENAME_T_MAXLEN);
-        return str;
-    }
-
-    // We don't know how to make this prettier.
-    return path;
 }
 
 /**
@@ -1285,15 +1063,65 @@ char* M_StrTok(char** cursor, char* delimiters)
     return begin;
 }
 
-/**
- * Advances time and return true if the trigger is triggered.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
- */
+char* M_TrimmedFloat(float val)
+{
+    static char trimmedFloatBuffer[32];
+    char* ptr = trimmedFloatBuffer;
+
+    sprintf(ptr, "%f", val);
+    // Get rid of the extra zeros.
+    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
+    {
+        if(*ptr == '0')
+            *ptr = 0;
+        else if(*ptr == '.')
+        {
+            *ptr = 0;
+            break;
+        }
+        else
+            break;
+    }
+    return trimmedFloatBuffer;
+}
+
+void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
+{
+    assert(src && cb && out);
+    {
+    int offset = 0, unread = numBits;
+
+    // Read full bytes.
+    if(unread >= 8)
+    {
+        do
+        {
+            out[offset++] = **src, (*src)++;
+        } while((unread -= 8) >= 8);
+    }
+
+    if(unread != 0)
+    {   // Read remaining bits.
+        uint8_t fb = 8 - unread;
+
+        if((*cb) == 0)
+            (*cb) = 8;
+
+        do
+        {
+            (*cb)--;
+            out[offset] <<= 1;
+            out[offset] |= ((**src >> (*cb)) & 0x01);
+        } while(--unread > 0);
+
+        out[offset] <<= fb;
+
+        if((*cb) == 0)
+            (*src)++;
+    }
+    }
+}
+
 boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
@@ -1311,16 +1139,6 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
     return false;
 }
 
-/**
- * Checks if the trigger will trigger after @a advanceTime seconds.
- * The trigger itself is not modified in any way.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return @c true, if the trigger will accumulate enough time after @a advanceTime
- *         to fill the trigger's time threshold.
- */
 boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
@@ -1328,9 +1146,6 @@ boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
     return (trigger->accum + advanceTime>= duration);
 }
 
-/**
- * Calculate CRC-32 for an arbitrary data buffer.
- */
 uint M_CRC32(byte *data, uint length)
 {
 /* ====================================================================== */

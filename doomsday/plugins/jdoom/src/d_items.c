@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,7 +109,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // plasma rifle
-     GM_NOTSHAREWARE,
+     GM_ANY & ~GM_DOOM_SHAREWARE,
      {0, 0, 1, 0}, // type: clip | shell | cell | misl
      {0, 0, 1, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
@@ -120,7 +120,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // bfg 9000
-     GM_NOTSHAREWARE,
+     GM_ANY & ~GM_DOOM_SHAREWARE,
      {0, 0, 1, 0},  // type: clip | shell | cell | misl
      {0, 0, 40, 0}, // pershot: clip | shell | cell | misl
      false,         // autofire when raised if fire held
@@ -142,7 +142,7 @@ weaponinfo_t weaponInfo[NUM_WEAPON_TYPES][NUM_PLAYER_CLASSES] = {
    },
    {
     { // super shotgun
-     GM_COMMERCIAL,
+     GM_ANY_DOOM2,
      {0, 1, 0, 0}, // type: clip | shell | cell | misl
      {0, 2, 0, 0}, // pershot: clip | shell | cell | misl
      true,         // autofire when raised if fire held
@@ -243,7 +243,7 @@ void P_InitWeaponInfo(void)
     P_SetWeaponSlot(WT_EIGHTH, 1);
     P_SetWeaponSlot(WT_SECOND, 2);
     P_SetWeaponSlot(WT_THIRD, 3);
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         P_SetWeaponSlot(WT_NINETH, 3);
     P_SetWeaponSlot(WT_FOURTH, 4);
     P_SetWeaponSlot(WT_FIFTH, 5);

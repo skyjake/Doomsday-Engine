@@ -1,10 +1,10 @@
-/**\file
+/**\file r_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_main.c: Refresh Subsystem
+ * Refresh Subsystem.
  *
  * The refresh daemon has the highest-level rendering code.
  * The view window is handled by refresh. The more specialized
@@ -38,6 +38,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_network.h"
 #include "de_render.h"
 #include "de_refresh.h"
@@ -45,6 +46,8 @@
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_ui.h"
+
+#include "font.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,7 +67,6 @@ D_CMD(ViewGrid);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern byte rendInfoRPolys;
 extern byte freezeRLs;
 extern boolean firstFrameAfterLoad;
 
@@ -74,9 +76,6 @@ int validCount = 1; // Increment every time a check is made.
 int frameCount; // Just for profiling purposes.
 int rendInfoTris = 0;
 int useVSync = 0;
-float viewX = 0, viewY = 0, viewZ = 0, viewPitch = 0;
-int viewAngle = 0;
-boolean setSizeNeeded;
 
 // Precalculated math tables.
 fixed_t* fineCosine = &finesine[FINEANGLES / 4];
@@ -88,20 +87,22 @@ float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int loadInStartupMode = false;
 
+fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int rendCameraSmooth = true; // Smoothed by default.
 
 static boolean resetNextViewer = true;
 
-static viewdata_t viewData[DDMAXPLAYERS];
+static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
 
 static byte showFrameTimePos = false;
 static byte showViewAngleDeltas = false;
 static byte showViewPosDeltas = false;
 
 static int gridCols, gridRows;
-static viewport_t viewports[DDMAXPLAYERS], *currentPort;
+static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS], *currentViewport;
 
 // CODE --------------------------------------------------------------------
 
@@ -124,67 +125,302 @@ void R_Register(void)
 
     C_CMD("viewgrid", "ii", ViewGrid);
 
-    P_MaterialManagerRegister();
+    Materials_Register();
 }
 
-/**
- * Will the specified surface be added to the sky mask?
- *
- * @param suf           Ptr to the surface to test.
- * @return boolean      @c true, iff the surface will be masked.
- */
-boolean R_IsSkySurface(const surface_t* suf)
+const char* R_ChooseFixedFont(void)
 {
-    if(suf && suf->material && (suf->material->flags & MATF_SKYMASK))
-        return true;
-
-    return false;
+    if(theWindow->geometry.size.width < 300)
+        return "console11";
+    if(theWindow->geometry.size.width > 768)
+        return "console18";
+    return "console14";
 }
 
-/**
- * Don't really change anything here, because i might be in the middle of
- * a refresh.  The change will take effect next refresh.
- */
-void R_SetViewWindow(int x, int y, int w, int h)
+const char* R_ChooseVariableFont(fontstyle_t style, int resX, int resY)
 {
-    viewwindowx = x;
-    viewwindowy = y;
-    viewwidth = w;
-    viewheight = h;
-}
+    const int SMALL_LIMIT = 500;
+    const int MED_LIMIT = 800;
 
-/**
- * Retrieve the dimensions of the specified viewport by console player num.
- */
-int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
-{
-    int                 p = P_ConsoleToLocal(player);
-
-    if(p != -1)
+    switch(style)
     {
-        if(x) *x = viewports[p].x;
-        if(y) *y = viewports[p].y;
-        if(w) *w = viewports[p].width;
-        if(h) *h = viewports[p].height;
+    default:
+        return (resY < SMALL_LIMIT ? "normal12" :
+                resY < MED_LIMIT   ? "normal18" :
+                                     "normal24");
 
-        return p;
+    case FS_LIGHT:
+        return (resY < SMALL_LIMIT ? "normallight12" :
+                resY < MED_LIMIT   ? "normallight18" :
+                                     "normallight24");
+
+    case FS_BOLD:
+        return (resY < SMALL_LIMIT ? "normalbold12" :
+                resY < MED_LIMIT   ? "normalbold18" :
+                                     "normalbold24");
+    }
+}
+
+static fontid_t loadSystemFont(const char* name)
+{
+    ddstring_t resourcePath;
+    font_t* font;
+    Uri* uri;
+    assert(name && name[0]);
+
+    // Compose the resource name.
+    uri = Uri_NewWithPath2(FN_SYSTEM_NAME":", RC_NULL);
+    Uri_SetPath(uri, name);
+
+    // Compose the resource data path.
+    // \todo This is currently rather awkward due
+    Str_Init(&resourcePath);
+    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    F_ExpandBasePath(&resourcePath, &resourcePath);
+
+    font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
+    Str_Free(&resourcePath);
+    Uri_Delete(uri);
+
+    if(!font)
+    {
+        Con_Error("loadSystemFont: Failed loading font \"%s\".", name);
+        exit(1); // Unreachable.
     }
 
-    return -1;
+    return Fonts_Id(font);
+}
+
+void R_LoadSystemFonts(void)
+{
+    fontFixed = loadSystemFont(R_ChooseFixedFont());
+    fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height));
+    fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->geometry.size.width, theWindow->geometry.size.height));
+    fontVariable[FS_LIGHT]  = loadSystemFont(R_ChooseVariableFont(FS_LIGHT,  theWindow->geometry.size.width, theWindow->geometry.size.height));
+
+    Con_SetFont(fontFixed);
+}
+
+boolean R_IsSkySurface(const surface_t* suf)
+{
+    return (suf && suf->material && Material_IsSkyMasked(suf->material));
 }
 
 /**
- * Sets the view player for a console.
+ * Update the view origin position for player @a consoleNum.
  *
- * @param consoleNum  Player whose view to set.
- * @param viewPlayer  Player that will be viewed by player @a consoleNum.
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
  */
+void R_SetViewOrigin(int consoleNum, float const origin[3])
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    V3_Copy(viewDataOfConsole[consoleNum].latest.pos, origin);
+}
+
+/**
+ * Update the view yaw angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewAngle(int consoleNum, angle_t angle)
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewDataOfConsole[consoleNum].latest.angle = angle;
+}
+
+/**
+ * Update the view pitch angle for player @a consoleNum.
+ *
+ * @param consoleNum  Console number.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewPitch(int consoleNum, float pitch)
+{
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+    viewDataOfConsole[consoleNum].latest.pitch = pitch;
+}
+
+void R_SetupDefaultViewWindow(int consoleNum)
+{    
+    viewdata_t* vd = &viewDataOfConsole[consoleNum];
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+
+    vd->window.origin.x = vd->windowOld.origin.x = vd->windowTarget.origin.x = 0;
+    vd->window.origin.y = vd->windowOld.origin.y = vd->windowTarget.origin.y = 0;
+    vd->window.size.width  = vd->windowOld.size.width  = vd->windowTarget.size.width  = theWindow->geometry.size.width;
+    vd->window.size.height = vd->windowOld.size.height = vd->windowTarget.size.height = theWindow->geometry.size.height;
+    vd->windowInter = 1;
+}
+
+void R_ViewWindowTicker(int consoleNum, timespan_t ticLength)
+{
+#define LERP(start, end, pos) (end * pos + start * (1 - pos))
+
+    viewdata_t* vd = &viewDataOfConsole[consoleNum];
+    if(consoleNum < 0 || consoleNum >= DDMAXPLAYERS) return;
+
+    vd->windowInter += (float)(.4 * ticLength * TICRATE);
+    if(vd->windowInter >= 1)
+    {
+        memcpy(&vd->window, &vd->windowTarget, sizeof(vd->window));
+    }
+    else
+    {
+        const float x = LERP(vd->windowOld.origin.x, vd->windowTarget.origin.x, vd->windowInter);
+        const float y = LERP(vd->windowOld.origin.y, vd->windowTarget.origin.y, vd->windowInter);
+        const float w = LERP(vd->windowOld.size.width,  vd->windowTarget.size.width,  vd->windowInter);
+        const float h = LERP(vd->windowOld.size.height, vd->windowTarget.size.height, vd->windowInter);
+        vd->window.origin.x = ROUND(x);
+        vd->window.origin.y = ROUND(y);
+        vd->window.size.width  = ROUND(w);
+        vd->window.size.height = ROUND(h);
+    }
+
+#undef LERP
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewWindowGeometry(int player, RectRaw* geometry)
+{
+    const viewdata_t* vd;
+    if(!geometry) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
+
+    vd = &viewDataOfConsole[player];
+    memcpy(geometry, &vd->window, sizeof *geometry);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewWindowOrigin(int player, Point2Raw* origin)
+{
+    const viewdata_t* vd;
+    if(!origin) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
+
+    vd = &viewDataOfConsole[player];
+    memcpy(origin, &vd->window.origin, sizeof *origin);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewWindowSize(int player, Size2Raw* size)
+{
+    const viewdata_t* vd;
+    if(!size) return false;
+    if(player < 0 || player >= DDMAXPLAYERS) return false;
+
+    vd = &viewDataOfConsole[player];
+    memcpy(size, &vd->window.size, sizeof *size);
+    return true;
+}
+
+/**
+ * \note Do not change values used during refresh here because we might be
+ * partway through rendering a frame. Changes should take effect on next
+ * refresh only.
+ *
+ * \note Part of the Doomsday public API.
+ */
+void R_SetViewWindowGeometry(int player, const RectRaw* geometry, boolean interpolate)
+{
+    int p = P_ConsoleToLocal(player);
+    if(p < 0) return;
+
+    {
+        const viewport_t* vp = &viewportOfLocalPlayer[p];
+        viewdata_t* vd = &viewDataOfConsole[player];
+        RectRaw newGeom;
+
+        // Clamp to valid range.
+        newGeom.origin.x = MINMAX_OF(0, geometry->origin.x, vp->geometry.size.width);
+        newGeom.origin.y = MINMAX_OF(0, geometry->origin.y, vp->geometry.size.height);
+        newGeom.size.width  = abs(geometry->size.width);
+        newGeom.size.height = abs(geometry->size.height);
+        if(newGeom.origin.x + newGeom.size.width > vp->geometry.size.width)
+            newGeom.size.width = vp->geometry.size.width - newGeom.origin.x;
+        if(newGeom.origin.y + newGeom.size.height > vp->geometry.size.height)
+            newGeom.size.height = vp->geometry.size.height - newGeom.origin.y;
+
+        // Already at this target?
+        if(vd->window.origin.x    == newGeom.origin.x &&
+           vd->window.origin.y    == newGeom.origin.y &&
+           vd->window.size.width  == newGeom.size.width &&
+           vd->window.size.height == newGeom.size.height)
+            return;
+
+        // Record the new target.
+        memcpy(&vd->windowTarget, &newGeom, sizeof vd->windowTarget);
+
+        // Restart or advance the interpolation timer?
+        // If dimensions have not yet been set - do not interpolate.
+        if(interpolate && !(vd->window.size.width == 0 && vd->window.size.height == 0))
+        {
+            vd->windowInter = 0;
+            memcpy(&vd->windowOld, &vd->window, sizeof(vd->windowOld));
+        }
+        else
+        {
+            vd->windowInter = 1; // Update on next frame.
+            memcpy(&vd->windowOld, &vd->windowTarget, sizeof(vd->windowOld));
+        }
+    }
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewPortGeometry(int player, RectRaw* geometry)
+{
+    viewport_t* vp;
+    int p;
+    if(!geometry) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewportOfLocalPlayer[p];
+
+    memcpy(geometry, &vp->geometry, sizeof *geometry);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewPortOrigin(int player, Point2Raw* origin)
+{
+    viewport_t* vp;
+    int p;
+    if(!origin) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewportOfLocalPlayer[p];
+
+    memcpy(origin, &vp->geometry.origin, sizeof *origin);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
+int R_ViewPortSize(int player, Size2Raw* size)
+{
+    viewport_t* vp;
+    int p;
+    if(!size) return false;
+    p = P_ConsoleToLocal(player);
+    if(p == -1) return false;
+    vp = &viewportOfLocalPlayer[p];
+
+    memcpy(size, &vp->geometry.size, sizeof *size);
+    return true;
+}
+
+/// \note Part of the Doomsday public API.
 void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
 {
     int p = P_ConsoleToLocal(consoleNum);
     if(p != -1)
     {
-        viewports[p].console = viewPlayer;
+        viewportOfLocalPlayer[p].console = viewPlayer;
     }
 }
 
@@ -192,73 +428,103 @@ void R_SetViewPortPlayer(int consoleNum, int viewPlayer)
  * Calculate the placement and dimensions of a specific viewport.
  * Assumes that the grid has already been configured.
  */
-void R_ViewPortPlacement(viewport_t* port, int x, int y)
+void R_UpdateViewPortGeometry(viewport_t* port, int col, int row)
 {
-    float               w = theWindow->width / (float) gridCols;
-    float               h = theWindow->height / (float) gridRows;
+    assert(port);
+    {
+    RectRaw* rect = &port->geometry;
+    const int x = col * theWindow->geometry.size.width  / gridCols;
+    const int y = row * theWindow->geometry.size.height / gridRows;
+    const int width  = (col+1) * theWindow->geometry.size.width  / gridCols - x;
+    const int height = (row+1) * theWindow->geometry.size.height / gridRows - y;
+    ddhook_viewport_reshape_t p;
+    boolean doReshape = false;
 
-    port->x = x * w;
-    port->y = y * h;
+    if(rect->origin.x == x && rect->origin.y == y && rect->size.width == width && rect->size.height == height)
+        return;
 
-    port->width = (x + 1) * w - port->x;
-    port->height = (y + 1) * h - port->y;
+    if(port->console != -1 && Plug_CheckForHook(HOOK_VIEWPORT_RESHAPE))
+    {
+        memcpy(&p.oldGeometry, rect, sizeof(p.oldGeometry));
+        doReshape = true;
+    }
+
+    rect->origin.x = x;
+    rect->origin.y = y;
+    rect->size.width  = width;
+    rect->size.height = height;
+
+    if(doReshape)
+    {
+        memcpy(&p.geometry, rect, sizeof(p.geometry));
+        DD_CallHooks(HOOK_VIEWPORT_RESHAPE, port->console, (void*)&p);
+    }
+    }
 }
 
 /**
- * Set up a view grid and calculate the viewports.  Set 'numCols' and
+ * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
  * 'numRows' to zero to just update the viewport coordinates.
  */
-void R_SetViewGrid(int numCols, int numRows)
+boolean R_SetViewGrid(int numCols, int numRows)
 {
-    int                 x, y, p;
+    int x, y, p, console;
 
     if(numCols > 0 && numRows > 0)
     {
-        if(numCols > 16)
-            numCols = 16;
-        if(numRows > 16)
-            numRows = 16;
+        if(numCols * numRows > DDMAXPLAYERS)
+            return false;
+
+        if(numCols > DDMAXPLAYERS)
+            numCols = DDMAXPLAYERS;
+        if(numRows > DDMAXPLAYERS)
+            numRows = DDMAXPLAYERS;
 
         gridCols = numCols;
         gridRows = numRows;
     }
 
-    // Reset all viewports to zero.
-    memset(viewports, 0, sizeof(viewports));
-
-    for(p = 0, y = 0; y < gridRows; ++y)
+    p = 0;
+    for(y = 0; y < gridRows; ++y)
     {
-        for(x = 0; x < gridCols; ++x, ++p)
+        for(x = 0; x < gridCols; ++x)
         {
-            R_ViewPortPlacement(&viewports[p], x, y);
+            // The console number is -1 if the viewport belongs to no one.
+            viewport_t* vp = viewportOfLocalPlayer + p;
 
-            // The console number is -1 if the viewport belongs to no
-            // one.
-            viewports[p].console = displayPlayer; //clients[P_LocalToConsole(p)].viewConsole;
+            console = P_LocalToConsole(p);
+            if(console != -1)
+            {
+                vp->console = clients[console].viewConsole;
+            }
+            else
+            {
+                vp->console = -1;
+            }
+
+            R_UpdateViewPortGeometry(vp, x, y);
+            ++p;
         }
     }
+
+    return true;
 }
 
 /**
  * One-time initialization of the refresh daemon. Called by DD_Main.
- * GL has not yet been inited.
  */
 void R_Init(void)
 {
-    R_InitData();
-    // viewwidth / viewheight / detailLevel are set by the defaults
-    R_SetViewWindow(0, 0, 320, 200);
-    R_InitSprites(); // Fully initialize sprites.
+    R_LoadSystemFonts();
+    R_InitColorPalettes();
     R_InitTranslationTables();
+    R_InitRawTexs();
+    R_InitSvgs();
+    R_InitViewWindow();
+    R_SkyInit();
     Rend_Init();
     frameCount = 0;
-    R_InitViewBorder();
     P_PtcInit();
-
-    // Defs have been read; we can now init models.
-    R_InitModels();
-
-    Def_PostInit();
 }
 
 /**
@@ -266,77 +532,72 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    uint                i;
-
-    R_UpdateTexturesAndFlats();
-    R_InitTextures();
-    R_InitFlats();
-    R_PreInitSprites();
-
+    // Reset file IDs so previously seen files can be processed again.
+    F_ResetFileIds();
     // Re-read definitions.
     Def_Read();
 
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
-    R_UpdateTranslationTables();
-
     R_InitModels(); // Defs might've changed.
 
-    // Now that we've read the defs, we can load system textures.
-    GL_LoadSystemTextures();
+    R_UpdateTranslationTables();
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
 
+    // Reset the archived map cache (the available maps may have changed).
+    DAM_Init();
+
+    { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t*           plr = &ddPlayers[i];
-        ddplayer_t*         ddpl = &plr->shared;
-
+        player_t* plr = &ddPlayers[i];
+        ddplayer_t* ddpl = &plr->shared;
         // States have changed, the states are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
-    }
+    }}
 
     // Update all world surfaces.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
-        uint                j;
-        sector_t*           sec = &sectors[i];
-
+        sector_t* sec = &sectors[i];
+        uint j;
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
-    }
+    }}
 
+    { uint i;
     for(i = 0; i < numSideDefs; ++i)
     {
-        sidedef_t*          side = &sideDefs[i];
-
+        sidedef_t* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
-    }
+    }}
 
+    { uint i;
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t*          po = polyObjs[i];
-        seg_t**             segPtr = po->segs;
-
+        polyobj_t* po = polyObjs[i];
+        seg_t** segPtr = po->segs;
         while(*segPtr)
         {
-            sidedef_t*          side = SEG_SIDEDEF(*segPtr);
-
+            sidedef_t* side = SEG_SIDEDEF(*segPtr);
             Surface_Update(&side->SW_middlesurface);
-
             segPtr++;
         }
-    }
+    }}
+
+    R_MapInitSurfaceLists();
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.
     RL_DeleteLists();
 
     // Update the secondary title and the game status.
-    Con_InitUI();
+    Rend_ConsoleUpdateTitle();
 
 #if _DEBUG
     Z_CheckHeap();
@@ -348,10 +609,22 @@ void R_Update(void)
  */
 void R_Shutdown(void)
 {
+    R_ClearAnimGroups();
+    R_ShutdownSprites();
     R_ShutdownModels();
-    R_ShutdownData();
-    R_ShutdownResourceLocator();
-    // Most allocated memory goes down with the zone.
+    R_ShutdownSvgs();
+    R_ShutdownViewWindow();
+    Fonts_Shutdown();
+    Rend_Shutdown();
+}
+
+void R_Ticker(timespan_t time)
+{
+    int i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        R_ViewWindowTicker(i, time);
+    }
 }
 
 void R_ResetViewer(void)
@@ -359,16 +632,17 @@ void R_ResetViewer(void)
     resetNextViewer = 1;
 }
 
-void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
-                         viewer_t* out)
+void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* out)
 {
-    float               inv = 1 - pos;
+    float inv = 1 - pos;
+    int delta;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
     out->pos[VZ] = inv * start->pos[VZ] + pos * end->pos[VZ];
 
-    out->angle = start->angle + pos * ((int) end->angle - (int) start->angle);
+    delta = (int)end->angle - (int)start->angle;
+    out->angle = start->angle + (int)(pos * delta);
     out->pitch = inv * start->pitch + pos * end->pitch;
 }
 
@@ -381,11 +655,10 @@ void R_CopyViewer(viewer_t* dst, const viewer_t* src)
     dst->pitch = src->pitch;
 }
 
-const viewdata_t* R_ViewData(int localPlayerNum)
+const viewdata_t* R_ViewData(int consoleNum)
 {
-    assert(localPlayerNum >= 0 && localPlayerNum < DDMAXPLAYERS);
-
-    return &viewData[localPlayerNum];
+    assert(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
+    return &viewDataOfConsole[consoleNum];
 }
 
 /**
@@ -404,8 +677,12 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
         src->pos[VZ] = dst->pos[VZ];
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
+    {
+#ifdef _DEBUG
+        Con_Message("R_CheckViewerLimits: Snap camera angle to %08x.\n", dst->angle);
+#endif
         src->angle = dst->angle;
-
+    }
 #undef MAXMOVE
 }
 
@@ -414,21 +691,13 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
  */
 void R_GetSharpView(viewer_t* view, player_t* player)
 {
+    viewdata_t* vd = &viewDataOfConsole[player - ddPlayers];
     ddplayer_t* ddpl;
 
-    if(!player || !player->shared.mo)
-    {
-        return;
-    }
-
+    if(!player || !player->shared.mo) return;
     ddpl = &player->shared;
 
-    view->pos[VX] = viewX;
-    view->pos[VY] = viewY;
-    view->pos[VZ] = viewZ;
-    /* $unifiedangles */
-    view->angle = viewAngle;
-    view->pitch = viewPitch;
+    R_CopyViewer(view, &vd->latest);
 
     if((ddpl->flags & DDPF_CHASECAM) && !(ddpl->flags & DDPF_CAMERA))
     {
@@ -471,20 +740,8 @@ void R_GetSharpView(viewer_t* view, player_t* player)
  */
 void R_NewSharpWorld(void)
 {
-    extern boolean firstFrameAfterLoad;
+    int i;
 
-    int                 i;
-
-    if(firstFrameAfterLoad)
-    {
-        /**
-         * We haven't yet drawn the world. Everything *is* sharp so simply
-         * reset the viewer data.
-         * \fixme A bit of a kludge?
-         */
-        memset(viewData, 0, sizeof(viewData));
-        return;
-    }
 
     if(resetNextViewer)
         resetNextViewer = 2;
@@ -492,7 +749,7 @@ void R_NewSharpWorld(void)
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         viewer_t sharpView;
-        viewdata_t* vd = &viewData[i];
+        viewdata_t* vd = &viewDataOfConsole[i];
         player_t* plr = &ddPlayers[i];
 
         if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
@@ -502,11 +759,6 @@ void R_NewSharpWorld(void)
         }
 
         R_GetSharpView(&sharpView, plr);
-
-        // Update the camera angles that will be used when the camera is
-        // not smoothed.
-        vd->frozenAngle = sharpView.angle;
-        vd->frozenPitch = sharpView.pitch;
 
         // The game tic has changed, which means we have an updated sharp
         // camera position.  However, the position is at the beginning of
@@ -547,7 +799,7 @@ BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
         for(iter = seciter->mobjList; iter; iter = iter->sNext)
         {
-            R_ObjLinkCreate(iter, OT_MOBJ); // For spreading purposes.
+            R_ObjlinkCreate(iter, OT_MOBJ); // For spreading purposes.
         }
     }
 
@@ -568,8 +820,8 @@ void R_BeginWorldFrame(void)
     {
         LG_Update();
         SB_BeginFrame();
-        LO_ClearForFrame();
-        R_ClearObjLinksForFrame(); // Zeroes the links.
+        LO_BeginWorldFrame();
+        R_ClearObjlinksForFrame(); // Zeroes the links.
 
         // Clear the objlinks.
         R_InitForNewFrame();
@@ -620,20 +872,16 @@ void R_SetupFrame(player_t* player)
     viewdata_t*         vd;
 
     // Reset the GL triangle counter.
-    polyCounter = 0;
+    //polyCounter = 0;
 
     viewPlayer = player;
-    vd = &viewData[viewPlayer - ddPlayers];
+    vd = &viewDataOfConsole[viewPlayer - ddPlayers];
 
     R_GetSharpView(&sharpView, viewPlayer);
 
     if(resetNextViewer ||
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
-#ifdef _DEBUG
-        Con_Message("R_SetupFrame: plr %i, resetNextViewer = %i\n", (int) (viewPlayer - ddPlayers), resetNextViewer);
-#endif
-
         // Keep reseting until a new sharp world has arrived.
         if(resetNextViewer > 1)
             resetNextViewer = 0;
@@ -659,8 +907,8 @@ void R_SetupFrame(player_t* player)
         // are not set. The interpolation flags are used when the view angles
         // are updated during the sharp tics and need to be smoothed out here.
         // For example, view locking (dead or camera setlock).
-        if(!(player->shared.flags & DDPF_INTERYAW))
-            smoothView.angle = sharpView.angle;
+        /*if(!(player->shared.flags & DDPF_INTERYAW))
+            smoothView.angle = sharpView.angle;*/
         if(!(player->shared.flags & DDPF_INTERPITCH))
             smoothView.pitch = sharpView.pitch;
 
@@ -704,7 +952,7 @@ void R_SetupFrame(player_t* player)
             static oldpos_t         oldpos[DDMAXPLAYERS];
             oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
 
-            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f\n",
+            Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
                         SECONDS_TO_TICKS(gameTime),
                         frameTimePos,
@@ -712,8 +960,8 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[0] - old->x,
                         smoothView.pos[1] - old->y,
                         smoothView.pos[2] - old->z,
-                        (smoothView.pos[0] - old->x) / (sysTime - old->time) /*,
-                        smoothView.pos[1] - old->y / (sysTime - old->time)*/);
+                        (smoothView.pos[0] - old->x) / (sysTime - old->time),
+                        (smoothView.pos[1] - old->y) / (sysTime - old->time));
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];
@@ -789,17 +1037,26 @@ void R_RenderPlayerViewBorder(void)
 /**
  * Set the GL viewport.
  */
-void R_UseViewPort(viewport_t* port)
+void R_UseViewPort(viewport_t* vp)
 {
-    if(!port)
+    if(!vp)
     {
-        glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
+        currentViewport = NULL;
+        glViewport(0, FLIP(0 + theWindow->geometry.size.height - 1),
+            theWindow->geometry.size.width, theWindow->geometry.size.height);
     }
     else
     {
-        currentPort = port;
-        glViewport(port->x, FLIP(port->y + port->height - 1), port->width, port->height);
+        currentViewport = vp;
+        glViewport(vp->geometry.origin.x,
+            FLIP(vp->geometry.origin.y + vp->geometry.size.height - 1),
+            vp->geometry.size.width, vp->geometry.size.height);
     }
+}
+
+const viewport_t* R_CurrentViewPort(void)
+{
+    return currentViewport;
 }
 
 /**
@@ -807,7 +1064,9 @@ void R_UseViewPort(viewport_t* port)
  */
 void R_RenderBlankView(void)
 {
-    UI_DrawDDBackground(0, 0, 320, 200, 1);
+    Point2Raw origin = { 0, 0 };
+    Size2Raw size = { 320, 200 };
+    UI_DrawDDBackground(&origin, &size, 1);
 }
 
 /**
@@ -816,10 +1075,11 @@ void R_RenderBlankView(void)
 void R_RenderPlayerView(int num)
 {
     extern boolean      firstFrameAfterLoad;
-    extern int          psp3d, modelTriCount;
+    extern int          psp3d;// modelTriCount;
 
-    int                 oldFlags = 0;
-    player_t*           player;
+    int oldFlags = 0;
+    player_t* player;
+    viewdata_t* vd;
 
     if(num < 0 || num >= DDMAXPLAYERS)
         return; // Huh?
@@ -837,10 +1097,16 @@ void R_RenderPlayerView(int num)
         DD_ResetTimer();
     }
 
+    vd = &viewDataOfConsole[num];
+    if(vd->window.size.width == 0 || vd->window.size.height == 0)
+        return; // Too early? Game has not configured the view window?
+
     // Setup for rendering the frame.
     R_SetupFrame(player);
     if(!freezeRLs)
-        R_ClearSprites();
+    {
+        R_ClearVisSprites();
+    }
 
     R_ProjectPlayerSprites(); // Only if 3D models exists for them.
 
@@ -855,10 +1121,12 @@ void R_RenderPlayerView(int num)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // GL is in 3D transformation state only during the frame.
-    GL_SwitchTo3DState(true, currentPort);
+    GL_SwitchTo3DState(true, currentViewport, vd);
+
     Rend_RenderMap();
+
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1);
+    GL_Restore2DState(1, currentViewport, vd);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
@@ -867,21 +1135,25 @@ void R_RenderPlayerView(int num)
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // Fullscreen viewport.
-    GL_Restore2DState(2);
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
-        GL_SwitchTo3DState(false, currentPort);
+        GL_SwitchTo3DState(false, currentViewport, vd);
         Rend_Draw3DPlayerSprites();
-        GL_Restore2DState(2);   // Restore viewport.
     }
-    // Original matrices and state: back to normal 2D.
-    GL_Restore2DState(3);
+
+    // Restore fullscreen viewport, original matrices and state: back to normal 2D.
+    GL_Restore2DState(2, currentViewport, vd);
 
     // Back from wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // The colored filter.
+    if(GL_FilterIsVisible())
+    {
+        GL_DrawFilter();
+    }
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))
@@ -891,9 +1163,9 @@ void R_RenderPlayerView(int num)
     if(rendInfoTris)
     {
         // This count includes all triangles drawn since R_SetupFrame.
-        Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
-        modelTriCount = 0;
-        polyCounter = 0;
+        //Con_Printf("Tris: %-4i (Mdl=%-4i)\n", polyCounter, modelTriCount);
+        //modelTriCount = 0;
+        //polyCounter = 0;
     }
 
     if(rendInfoLums)
@@ -902,9 +1174,6 @@ void R_RenderPlayerView(int num)
     }
 
     R_InfoRendVerticesPool();
-
-    // The colored filter.
-    GL_DrawFilter();
 }
 
 /**
@@ -919,7 +1188,7 @@ static void restoreDefaultGLState(void)
     // Here we use the DGL methods as this ensures it's state is kept in sync.
     DGL_Disable(DGL_FOG);
     DGL_Disable(DGL_SCISSOR_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURE_2D);
     DGL_Enable(DGL_LINE_SMOOTH);
     DGL_Enable(DGL_POINT_SMOOTH);
 }
@@ -929,9 +1198,11 @@ static void restoreDefaultGLState(void)
  */
 void R_RenderViewPorts(void)
 {
-    int                 oldDisplay = displayPlayer;
-    int                 x, y, p;
-    GLbitfield          bits = GL_DEPTH_BUFFER_BIT;
+    int oldDisplay = displayPlayer, x, y, p;
+    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
+
+    if(!devRendSkyMode)
+        bits |= GL_STENCIL_BUFFER_BIT;
 
     if(/*firstFrameAfterLoad ||*/ freezeRLs)
     {
@@ -939,7 +1210,7 @@ void R_RenderViewPorts(void)
     }
     else
     {
-        int                 i;
+        int i;
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
@@ -963,8 +1234,11 @@ void R_RenderViewPorts(void)
     for(p = 0, y = 0; y < gridRows; ++y)
         for(x = 0; x < gridCols; x++, ++p)
         {
-            displayPlayer = viewports[p].console;
-            R_UseViewPort(viewports + p);
+            viewport_t* vp = &viewportOfLocalPlayer[p];
+            viewdata_t* vd = 0;
+
+            displayPlayer = vp->console;
+            R_UseViewPort(vp);
 
             if(displayPlayer < 0 || ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS)
             {
@@ -972,21 +1246,36 @@ void R_RenderViewPorts(void)
                 continue;
             }
 
-            // Draw in-window game graphics (layer 0).
-            gx.G_Drawer(0);
+            vd = &viewDataOfConsole[vp->console];
+
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+
+            /**
+             * Use an orthographic projection in real pixel dimensions.
+             */
+            glOrtho(0, vp->geometry.size.width, vp->geometry.size.height, 0, -1, 1);
+
+            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 0/*layer #0*/);
             restoreDefaultGLState();
 
-            // Draw the view border.
             R_RenderPlayerViewBorder();
 
-            // Draw in-window game graphics (layer 1).
-            gx.G_Drawer(1);
+            gx.DrawViewPort(p, &vp->geometry, &vd->window, displayPlayer, 1/*layer #1*/);
             restoreDefaultGLState();
+
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
 
             // Increment the internal frame count. This does not
             // affect the FPS counter.
             frameCount++;
         }
+
+    // Keep reseting until a new sharp world has arrived.
+    if(resetNextViewer > 1)
+        resetNextViewer = 0;
 
     // Restore things back to normal.
     displayPlayer = oldDisplay;
@@ -1002,6 +1291,5 @@ D_CMD(ViewGrid)
     }
 
     // Recalculate viewports.
-    R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
-    return true;
+    return R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
 }

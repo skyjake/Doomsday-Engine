@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 
 #include <math.h>
 
-#include "jhexen.h"
+#include "common.h"
 
 #include "p_player.h"
 #include "p_map.h"
@@ -404,10 +404,13 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(player_t *plr)
+void P_BringUpWeapon(struct player_s *plr)
 {
     statenum_t newState;
     weaponmodeinfo_t *wminfo;
+
+    if(plr->pendingWeapon == WT_NOCHANGE)
+        plr->pendingWeapon = plr->readyWeapon;
 
     wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class_, 0);
 
@@ -417,9 +420,6 @@ void P_BringUpWeapon(player_t *plr)
     {
         newState = S_FAXEUP_G;
     }
-
-    if(plr->pendingWeapon == WT_NOCHANGE)
-        plr->pendingWeapon = plr->readyWeapon;
 
     if(wminfo->raiseSound)
         S_StartSound(wminfo->raiseSound, plr->plr->mo);
@@ -793,6 +793,8 @@ void C_DECL A_FSwordFlames(mobj_t *mo)
 
 void C_DECL A_MWandAttack(player_t *plr, pspdef_t *psp)
 {
+    if(IS_CLIENT) return;
+
     P_SpawnPlayerMissile(MT_MWAND_MISSILE, plr->plr->mo);
     S_StartSound(SFX_MAGE_WAND_FIRE, plr->plr->mo);
 }
@@ -1014,7 +1016,7 @@ void C_DECL A_MStaffAttack(player_t* plr, pspdef_t* psp)
         float           rgba[4];
 
         // $democam
-        R_GetFilterColor(rgba, pal);
+        R_ViewFilterColor(rgba, pal);
         GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         GL_SetFilter(true);
@@ -1038,7 +1040,7 @@ void C_DECL A_MStaffPalette(player_t* plr, pspdef_t* psp)
             float           rgba[4];
 
             // $democam
-            R_GetFilterColor(rgba, pal);
+            R_ViewFilterColor(rgba, pal);
             GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
             GL_SetFilter(true);
@@ -1200,6 +1202,8 @@ void C_DECL A_FAxeAttack(player_t *plr, pspdef_t *psp)
     float       power;
     float       slope;
     int         damage, useMana;
+
+    if(IS_CLIENT) return;
 
     damage = 40 + (P_Random() & 15) + (P_Random() & 7);
     power = 0;
@@ -1613,7 +1617,7 @@ void C_DECL A_CHolyAttack(player_t* plr, pspdef_t* psp)
         float               rgba[4];
 
         // $democam
-        R_GetFilterColor(rgba, STARTHOLYPAL);
+        R_ViewFilterColor(rgba, STARTHOLYPAL);
         GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
         GL_SetFilter(true);
@@ -1639,7 +1643,7 @@ void C_DECL A_CHolyPalette(player_t* plr, pspdef_t* psp)
             float               rgba[4];
 
             // $democam
-            R_GetFilterColor(rgba, pal);
+            R_ViewFilterColor(rgba, pal);
             GL_SetFilterColor(rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 
             GL_SetFilter(true);

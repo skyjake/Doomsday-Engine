@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #ifdef MSVC
 #  pragma optimize("g", off)
@@ -69,7 +70,6 @@ boolean P_TestMobjLocation(mobj_t *mobj);
 
 extern boolean fellDown; //$dropoff_fix: used to flag pushed off ledge
 extern linedef_t *blockLine; // $unstuck: blocking linedef
-extern float tmBBox[4]; // for line intersection checks
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -356,17 +356,18 @@ static void newChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmBBox, line) == -1)
+       // Linedef must be contacted
+       tmBox.minX < aaBox->maxX &&
+       tmBox.maxX > aaBox->minX &&
+       tmBox.minY < aaBox->maxY &&
+       tmBox.maxY > aaBox->minY &&
+       P_BoxOnLineSide(&tmBox, line) == -1)
     {
         sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -387,7 +388,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // back side drop off
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -395,7 +396,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VX] -= FIX2FLT(finesine[angle >> ANGLETOFINESHIFT]) * 32;
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
-    return true;
+    return false;
 }
 
 /**
@@ -458,45 +459,45 @@ typedef struct {
     byte                randomSkip;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static int findMobj(thinker_t* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
 
     // Flags requirement?
     if(params->compFlags > 0 && !(mo->flags & params->compFlags))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Minimum health requirement?
     if(params->minHealth > 0 && mo->health < params->minHealth)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Exclude this mobj?
     if(params->notThis && mo == params->notThis)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Out of range?
     if(params->maxDistance > 0 &&
        P_ApproxDistance(params->origin[VX] - mo->pos[VX],
                         params->origin[VY] - mo->pos[VY]) >
        params->maxDistance)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Randomly skip this?
     if(params->randomSkip && P_Random() < params->randomSkip)
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     if(params->maxTries > 0 && params->count++ > params->maxTries)
-        return false; // Stop iteration.
+        return true; // Stop iteration.
 
     // Out of sight?
     if(params->checkLOS && params->notThis &&
        !P_CheckSight(params->notThis, mo))
-        return true; // Continue iteration.
+        return false; // Continue iteration.
 
     // Found one!
     params->foundMobj = mo;
-    return false; // Stop iteration.
+    return true; // Stop iteration.
 }
 
 boolean P_LookForMonsters(mobj_t* mo)
@@ -532,87 +533,13 @@ boolean P_LookForMonsters(mobj_t* mo)
  * If allaround is false, only look 180 degrees in front
  * returns true if a player is targeted
  */
-boolean P_LookForPlayers(mobj_t *actor, boolean allaround)
+boolean P_LookForPlayers(mobj_t* actor, boolean allAround)
 {
-    int         c, stop;
-    player_t   *player;
-    sector_t   *sector;
-    angle_t     an;
-    float       dist;
-    mobj_t     *plrmo;
-    int         playerCount;
-
     // If in single player and player is dead, look for monsters.
     if(!IS_NETGAME && players[0].health <= 0)
         return P_LookForMonsters(actor);
 
-    for(c = playerCount = 0; c < MAXPLAYERS; c++)
-        if(players[c].plr->inGame)
-            playerCount++;
-
-    // Are there any players?
-    if(!playerCount)
-        return false;
-
-    sector = P_GetPtrp(actor->subsector, DMU_SECTOR);
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2 || actor->lastLook == stop)
-            return false;  // Done looking
-
-        player = &players[actor->lastLook];
-        plrmo = player->plr->mo;
-
-        // Dead?
-        if(player->health <= 0)
-            continue;
-
-        // Out of sight?
-        if(!P_CheckSight(actor, plrmo))
-            continue;
-
-        if(!allaround)
-        {
-            an = R_PointToAngle2(actor->pos[VX], actor->pos[VY],
-                                 plrmo->pos[VX], plrmo->pos[VY]) - actor->angle;
-            if(an > ANG90 && an < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(plrmo->pos[VX] - actor->pos[VX],
-                                     plrmo->pos[VY] - actor->pos[VY]);
-                // if real close, react anyway
-                if(dist > MELEERANGE)
-                    continue;   // behind back
-            }
-        }
-
-        // Is player invisible?
-        if(plrmo->flags & MF_SHADOW)
-        {
-            if((P_ApproxDistance(plrmo->pos[VX] - actor->pos[VX],
-                                 plrmo->pos[VY] - actor->pos[VY]) >
-                2 * MELEERANGE) &&
-               P_ApproxDistance(plrmo->mom[MX], plrmo->mom[MY]) < 5)
-            {
-                // Player is sneaking - can't detect.
-                return false;
-            }
-
-            if(P_Random() < 225)
-            {
-                // Player isn't sneaking, but still didn't detect.
-                return false;
-            }
-        }
-
-        actor->target = plrmo;
-        return true;
-    }
+    return Mobj_LookForPlayers(actor, allAround);
 }
 
 /**
@@ -1230,7 +1157,7 @@ void P_DSparilTeleport(mobj_t* actor)
 
         do
         {
-            dest = &bossSpots[++i % bossSpotCount];
+            dest = &mapSpots[bossSpots[++i % bossSpotCount]];
             if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
                                 actor->pos[VY] - dest->pos[VY]) >= 128)
             {   // A suitable teleport destination is available.
@@ -2087,7 +2014,7 @@ void C_DECL A_MakePod(mobj_t* actor)
     return;
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2098,7 +2025,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -2109,7 +2036,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -2122,7 +2049,7 @@ typedef struct {
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2130,7 +2057,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**

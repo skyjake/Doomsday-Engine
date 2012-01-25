@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -27,6 +27,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -45,11 +46,11 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct eventsequence_s {
-    unsigned char*  sequence;
-    int           (*callback) (const int* args, int);
-    size_t          length, pos;
-    int             args[2];
-    int             currentArg;
+    char* sequence;
+    int (*callback) (const int* args, int);
+    size_t length, pos;
+    int args[2];
+    int currentArg;
 } eventsequence_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -64,14 +65,13 @@ typedef struct eventsequence_s {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static eventsequence_t* eventSequences = NULL;
-static int numEventSequences = 0;
+static boolean inited = false;
+static eventsequence_t* eventSequences;
+static int numEventSequences;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * @return              Non-zero iff the sequence was completed.
- */
+/// @return              Non-zero iff the sequence was completed.
 static int checkSequence(eventsequence_t* es, char key, boolean* eat)
 {
     if(es->sequence[es->pos] == 0)
@@ -107,16 +107,28 @@ static int checkSequence(eventsequence_t* es, char key, boolean* eat)
     return false;
 }
 
-/**
- * Responds to an input event if determined to be part of a known event
- * sequence.
- *
- * @param ev            Ptr to the event to be checked.
- *
- * @return              @c true, if the event was 'eaten'.
- */
-boolean G_EventSequenceResponder(event_t* ev)
+void G_InitEventSequences(void)
 {
+    if(inited) return;
+    eventSequences = 0;
+    numEventSequences = 0;
+    inited = true;
+}
+
+void G_ShutdownEventSequences(void)
+{
+    if(!inited) return;
+    if(eventSequences)
+        Z_Free(eventSequences);
+    eventSequences = 0;
+    numEventSequences = 0;
+    inited = false;
+}
+
+int G_EventSequenceResponder(event_t* ev)
+{
+    assert(inited && ev);
+    {
     boolean eat = false;
     int i;
 
@@ -135,22 +147,24 @@ boolean G_EventSequenceResponder(event_t* ev)
     }
 
     return eat;
+    }
 }
 
-void G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
-                        int (*callback) (const int*, int))
+void G_AddEventSequence(const char* sequence, size_t sequenceLength, int (*callback) (const int*, int))
 {
+    assert(inited && sequence && sequenceLength > 0 && callback);
+    {
     eventsequence_t* es;
 
-    eventSequences = Z_Realloc(eventSequences,
-        sizeof(eventsequence_t) * ++numEventSequences, PU_STATIC);
+    eventSequences = Z_Realloc(eventSequences, sizeof(eventsequence_t) * ++numEventSequences, PU_GAMESTATIC);
     es = &eventSequences[numEventSequences-1];
 
-    es->sequence = Z_Malloc(sizeof(unsigned char) * sequenceLength, PU_STATIC, 0);
+    es->sequence = Z_Malloc(sizeof(*es->sequence) * sequenceLength, PU_GAMESTATIC, 0);
     memcpy(es->sequence, sequence, sequenceLength);
     es->length = sequenceLength;
     es->callback = callback;
     es->pos = 0;
     es->currentArg = 0;
     memset(es->args, 0, sizeof(es->args));
+    }
 }

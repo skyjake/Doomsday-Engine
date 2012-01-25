@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "r_common.h"
@@ -38,7 +41,6 @@
 #define MAPINFO_SCRIPT_NAME "MAPINFO"
 
 #define UNKNOWN_MAP_NAME "DEVELOPMENT MAP"
-#define DEFAULT_SKY_NAME "SKY1"
 #define DEFAULT_SONG_LUMP "DEFSONG"
 #define DEFAULT_FADE_TABLE "COLORMAP"
 
@@ -50,8 +52,8 @@ typedef struct mapinfo_s {
     uint            nextMap;
     short           cdTrack;
     char            name[32];
-    materialnum_t   sky1Material;
-    materialnum_t   sky2Material;
+    materialid_t    sky1Material;
+    materialid_t    sky2Material;
     float           sky1ScrollDelta;
     float           sky2ScrollDelta;
     boolean         doubleSky;
@@ -167,14 +169,13 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material =
-        P_MaterialNumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MN_TEXTURES);
+    defMapInfo.sky1Material = Materials_ResolveUriCString(gameMode == hexen_demo ? MN_TEXTURES_NAME":SKY2" : MN_TEXTURES_NAME":SKY1");
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
     defMapInfo.doubleSky = false;
     defMapInfo.lightning = false;
-    defMapInfo.fadetable = W_GetNumForName(DEFAULT_FADE_TABLE);
+    defMapInfo.fadetable = W_GetLumpNumForName(DEFAULT_FADE_TABLE);
     strcpy(defMapInfo.name, UNKNOWN_MAP_NAME);
 
     for(map = 0; map < 99; ++map)
@@ -252,22 +253,42 @@ void P_InitMapInfo(void)
                 info->cdTrack = sc_Number;
                 break;
 
-            case MCMD_SKY1:
+            case MCMD_SKY1: {
+                ddstring_t path;
+                Uri* uri;
+
                 SC_MustGetString();
-                info->sky1Material =
-                    P_MaterialNumForName(sc_String, MN_TEXTURES);
+                Str_Init(&path);
+                Str_PercentEncode(Str_Set(&path, sc_String));
+
+                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
+                Uri_SetPath(uri, Str_Text(&path));
+                info->sky1Material = Materials_ResolveUri(uri);
+                Uri_Delete(uri);
+                Str_Free(&path);
+
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
+              }
+            case MCMD_SKY2: {
+                ddstring_t path;
+                Uri* uri;
 
-            case MCMD_SKY2:
                 SC_MustGetString();
-                info->sky2Material =
-                    P_MaterialNumForName(sc_String, MN_TEXTURES);
+                Str_Init(&path);
+                Str_PercentEncode(Str_Set(&path, sc_String));
+
+                uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
+                Uri_SetPath(uri, Str_Text(&path));
+                info->sky2Material = Materials_ResolveUri(uri);
+                Uri_Delete(uri);
+                Str_Free(&path);
+
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
                 break;
-
+              }
             case MCMD_DOUBLESKY:
                 info->doubleSky = true;
                 break;
@@ -278,7 +299,7 @@ void P_InitMapInfo(void)
 
             case MCMD_FADETABLE:
                 SC_MustGetString();
-                info->fadetable = W_GetNumForName(sc_String);
+                info->fadetable = W_GetLumpNumForName(sc_String);
                 break;
 
             case MCMD_CD_STARTTRACK:
@@ -321,8 +342,12 @@ static void setSongCDTrack(int index, int track)
 {
     int         cdTrack = track;
 
+#ifdef _DEBUG
+    Con_Message("setSongCDTrack: index=%i, track=%i\n", index, track);
+#endif
+
     // Set the internal array.
-    cdNonMapTracks[index] = sc_Number;
+    cdNonMapTracks[index] = cdTrack;
 
     // Update the corresponding Doomsday definition.
     Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, cdSongDefIDs[index], 0),
@@ -430,25 +455,25 @@ uint P_GetMapNextMap(uint map)
 }
 
 /**
- * Retrieve the sky1 material num of the given map.
+ * Retrieve the sky1 material of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
  * @return              The sky1 material num of the map.
  */
-materialnum_t P_GetMapSky1Material(uint map)
+materialid_t P_GetMapSky1Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky1Material;
 }
 
 /**
- * Retrieve the sky2 material num of the given map.
+ * Retrieve the sky2 material of the given map.
  *
  * @param map           The map (logical number) to be queried.
  *
  * @return              The sky2 material num of the map.
  */
-materialnum_t P_GetMapSky2Material(uint map)
+materialid_t P_GetMapSky2Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky2Material;
 }

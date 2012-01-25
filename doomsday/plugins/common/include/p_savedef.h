@@ -1,0 +1,109 @@
+/**\file p_savedef.h
+ *\section License
+ * License: GPL
+ * Online License Link: http://www.gnu.org/licenses/gpl.html
+ *
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+#ifndef LIBCOMMON_SAVEGAME_DEFS_H
+#define LIBCOMMON_SAVEGAME_DEFS_H
+
+#if __JDOOM__
+# define MY_SAVE_MAGIC         0x1DEAD666
+# define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
+# define MY_SAVE_VERSION       9
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "DoomSav"
+# define CLIENTSAVEGAMENAME    "DoomCl"
+# define SAVEGAMEEXTENSION     "dsg"
+
+#elif __JDOOM64__
+# define MY_SAVE_MAGIC         0x1D6420F4
+# define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
+# define MY_SAVE_VERSION       8
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x2c
+# define SAVEGAMENAME          "D64Sav"
+# define CLIENTSAVEGAMENAME    "D64Cl"
+# define SAVEGAMEEXTENSION     "6sg"
+
+#elif __JHERETIC__
+# define MY_SAVE_MAGIC         0x7D9A12C5
+# define MY_CLIENT_SAVE_MAGIC  0x1062AF43
+# define MY_SAVE_VERSION       8
+# define SAVESTRINGSIZE        24
+# define CONSISTENCY           0x9d
+# define SAVEGAMENAME          "HticSav"
+# define CLIENTSAVEGAMENAME    "HticCl"
+# define SAVEGAMEEXTENSION     "hsg"
+
+#elif __JHEXEN__
+# define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
+# define HXS_VERSION_TEXT_LENGTH 16
+
+# define MY_SAVE_VERSION       9
+# define SAVESTRINGSIZE        24
+# define SAVEGAMENAME          "hex"
+# define CLIENTSAVEGAMENAME    "hexencl"
+# define SAVEGAMEEXTENSION     "hxs"
+
+# define MOBJ_XX_PLAYER        -2
+# define MAX_MAPS              99
+# define BASE_SLOT             6
+# define REBORN_SLOT           7
+# define REBORN_DESCRIPTION    "TEMP GAME"
+
+typedef union saveptr_u {
+    byte        *b;
+    short       *w;
+    int         *l;
+    float       *f;
+} saveptr_t;
+
+typedef struct targetplraddress_s {
+    void     **address;
+    struct targetplraddress_s *next;
+} targetplraddress_t;
+
+#endif
+
+#if !__JHEXEN__
+typedef struct saveheader_s {
+    int             magic;
+    int             version;
+    int             gameMode;
+    char            name[SAVESTRINGSIZE];
+    byte            skill;
+    byte            episode;
+    byte            map;
+    byte            deathmatch;
+    byte            noMonsters;
+    byte            respawnMonsters;
+    int             mapTime;
+    byte            players[MAXPLAYERS];
+    unsigned int    gameId;
+} saveheader_t;
+
+#define PRE_VER5_END_SPECIALS   7
+
+#endif
+
+#endif

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,11 @@
  */
 
 /**
- * net_demo.h: Demos
+ * Demos.
  */
 
-#ifndef __DOOMSDAY_DEMO_H__
-#define __DOOMSDAY_DEMO_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_DEMO_H
+#define LIBDENG_DEMO_H
 
 extern int      playback;
 
@@ -50,4 +48,4 @@ boolean         Demo_BeginPlayback(const char* filename);
 boolean         Demo_ReadPacket(void);
 void            Demo_StopPlayback(void);
 
-#endif
+#endif /* LIBDENG_DEMO_H */

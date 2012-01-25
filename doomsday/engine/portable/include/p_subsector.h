@@ -1,10 +1,10 @@
-/**\file
+/**\file p_subsector.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,16 +23,23 @@
  */
 
 /**
- * p_subsector.h: World subsectors.
+ * Map subsector
  */
 
-#ifndef __DOOMSDAY_WORLD_SUBSECTOR_H__
-#define __DOOMSDAY_WORLD_SUBSECTOR_H__
+#ifndef LIBDENG_MAP_SUBSECTOR_H
+#define LIBDENG_MAP_SUBSECTOR_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
-boolean         Subsector_GetProperty(const subsector_t* sub, setargs_t* args);
-boolean         Subsector_SetProperty(subsector_t* sub, const setargs_t* args);
+/**
+ * Get the value of a subsector property, selected by DMU_* name.
+ */
+int Subsector_GetProperty(const subsector_t* subsector, setargs_t* args);
 
-#endif
+/**
+ * Update the subsector, property is selected by DMU_* name.
+ */
+int Subsector_SetProperty(subsector_t* subsector, const setargs_t* args);
+
+#endif /* LIBDENG_MAP_SUBSECTOR_H */

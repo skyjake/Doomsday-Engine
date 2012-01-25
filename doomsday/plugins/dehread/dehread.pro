@@ -14,6 +14,9 @@ HEADERS += include/version.h
 SOURCES += src/dehmain.c
 
 win32 {
+    QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpdehread.def\"
+    OTHER_FILES += api/dpdehread.def
+
     RC_FILE = res/dehread.rc
 }
 

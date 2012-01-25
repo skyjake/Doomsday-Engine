@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_pinit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * dd_pinit.h: Portable Engine Initialization
+ * Portable Engine Initialization
  */
 
-#ifndef __DOOMSDAY_PORTABLE_INIT_H__
-#define __DOOMSDAY_PORTABLE_INIT_H__
+#ifndef LIBDENG_PORTABLE_INIT_H
+#define LIBDENG_PORTABLE_INIT_H
 
 #include "dd_share.h"
 #include "dd_api.h"
@@ -36,16 +36,16 @@
 // Maximum allowed number of plugins.
 #define MAX_PLUGS   32
 
-void            DD_ShutdownAll(void);
-int             DD_CheckArg(char* tag, const char** value);
-void            DD_ErrorBox(boolean error, char* format, ...) PRINTF_F(2,3);
-void            DD_ComposeMainWindowTitle(char* title);
-boolean         DD_EarlyInit(void);
-void            DD_InitAPI(void);
-void            DD_InitCommandLine(const char* cmdLine);
+void DD_ShutdownAll(void);
+int DD_CheckArg(char* tag, const char** value);
+void DD_ErrorBox(boolean error, char* format, ...) PRINTF_F(2,3);
+void DD_ComposeMainWindowTitle(char* title);
+void DD_ConsoleInit(void);
+void DD_InitAPI(void);
+void DD_InitCommandLine(const char* cmdLine);
 
 extern game_import_t gi;
 extern game_export_t gx;
 extern LegacyCore* de2LegacyCore;
 
-#endif                          // __DOOMSDAY_PORTABLE_INIT_H__
+#endif /* LIBDENG_PORTABLE_INIT_H */

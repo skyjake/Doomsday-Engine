@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1999 by Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman (PrBoom 2.2.6)
  *\author Copyright © 1999-2000 by Jess Haas, Nicolas Kalkhof, Colin Phipps, Florian Schulze (PrBoom 2.2.6)
@@ -366,17 +366,18 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  * p_map.c::P_TryMove(), allows monsters to free themselves without making
  * them tend to hang over dropoffs.
  */
-static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
+static int PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t* backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
+    AABoxf* aaBox = P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
-       tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
-       tmBBox[BOXLEFT]   < bbox[BOXRIGHT]  &&
-       tmBBox[BOXTOP]    > bbox[BOXBOTTOM] && // Linedef must be contacted
-       tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
-       P_BoxOnLineSide(tmBBox, line) == -1)
+       // Linedef must be contacted
+       tmBox.minX < aaBox->maxX &&
+       tmBox.maxX > aaBox->minX &&
+       tmBox.minY < aaBox->maxY &&
+       tmBox.maxY > aaBox->minY &&
+       P_BoxOnLineSide(&tmBox, line) == -1)
     {
         sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
@@ -397,7 +398,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
             if(front == floorZ && back < floorZ - 24)
                 angle = R_PointToAngle2(d1[0], d1[1], 0, 0); // Back side drop off.
             else
-                return true;
+                return false;
         }
 
         // Move away from drop off at a standard speed.
@@ -406,7 +407,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
         dropoffDelta[VY] += FIX2FLT(finecosine[angle >> ANGLETOFINESHIFT]) * 32;
     }
 
-    return true;
+    return false;
 }
 
 /**
@@ -452,75 +453,7 @@ static void newChaseDir(mobj_t *actor)
     doNewChaseDir(actor, deltaX, deltaY);
 }
 
-/**
- * If allaround is false, only look 180 degrees in front.
- *
- * @return              @c true, if a player is targeted.
- */
-static boolean lookForPlayers(mobj_t *actor, boolean allAround)
-{
-    int                 c, stop, playerCount;
-    player_t           *player;
-    angle_t             an;
-    float               dist;
-
-    playerCount = 0;
-    for(c = 0; c < MAXPLAYERS; ++c)
-    {
-        if(players[c].plr->inGame)
-            playerCount++;
-    }
-
-    // Are there any players?
-    if(!playerCount)
-        return false;
-
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2 || actor->lastLook == stop)
-        {   // Done looking.
-            return false;
-        }
-
-        player = &players[actor->lastLook];
-
-        if(player->health <= 0)
-            continue; // Player is already dead.
-
-        if(!P_CheckSight(actor, player->plr->mo))
-            continue; // Player is out of sight.
-
-        if(!allAround)
-        {
-            an = R_PointToAngle2(actor->pos[VX],
-                                 actor->pos[VY],
-                                 player->plr->mo->pos[VX],
-                                 player->plr->mo->pos[VY]);
-            an -= actor->angle;
-
-            if(an > ANG90 && an < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(player->plr->mo->pos[VX] - actor->pos[VX],
-                                     player->plr->mo->pos[VY] - actor->pos[VY]);
-                // If real close, react anyway.
-                if(dist > MELEERANGE)
-                    continue; // Behind back.
-            }
-        }
-
-        actor->target = player->plr->mo;
-        return true;
-    }
-}
-
-static boolean massacreMobj(thinker_t* th, void* context)
+static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -531,7 +464,7 @@ static boolean massacreMobj(thinker_t* th, void* context)
         (*count)++;
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 int P_Massacre(void)
@@ -539,7 +472,7 @@ int P_Massacre(void)
     int                 count = 0;
 
     // Only massacre when actually in a level.
-    if(G_GetGameState() == GS_MAP)
+    if(G_GameState() == GS_MAP)
     {
         DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
     }
@@ -552,7 +485,7 @@ typedef struct {
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -560,7 +493,7 @@ static boolean countMobjOfType(thinker_t* th, void* context)
     if(params->type == mo->type && mo->health > 0)
         params->count++;
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -951,7 +884,7 @@ void C_DECL A_Look(mobj_t *actor)
             goto seeyou;
     }
 
-    if(!lookForPlayers(actor, false))
+    if(!Mobj_LookForPlayers(actor, false))
         return;
 
     // Go into chase state.
@@ -1063,7 +996,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(!actor->target || !(actor->target->flags & MF_SHOOTABLE))
     {
         // Look for a new target.
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
         {   // Got a new target.
         }
         else
@@ -1113,7 +1046,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(IS_NETGAME && !actor->threshold &&
        !P_CheckSight(actor, actor->target))
     {
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
             return; // Got a new target.
     }
 
@@ -2165,9 +2098,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2177,9 +2108,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \kludge Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL |
-                 (gameMode != commercial &&
-                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

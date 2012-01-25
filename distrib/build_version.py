@@ -1,4 +1,4 @@
-# Determining the current Doomsday version and release type from headers.
+# Parsing the current Doomsday version and release type from headers.
 
 import os
 import string
@@ -18,7 +18,7 @@ def parse_header_for_version(headerFile):
     versionName = ""
     releaseType = ""
     
-    f = file(os.path.join(headerFile), 'rt')
+    f = file(headerFile, 'rt')
     for line in f.readlines():
         line = line.strip()
         if line[:7] != "#define": continue

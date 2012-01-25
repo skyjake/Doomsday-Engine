@@ -1,10 +1,10 @@
-/**\file
+/**\file p_xgline.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_xgline.c: Extended Generalized Line Types.
+ * Extended Generalized Line Types.
  *
  * Implements all XG line interactions on a map
  */
@@ -381,13 +381,13 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Always Stomp", "", -1} }}               // ip5: non-zero = Always telefrag
 };
 
-cvar_t xgCVars[] =
+cvartemplate_t xgCVars[] =
 {
     {"xg-dev", CVF_NO_ARCHIVE, CVT_INT, &xgDev, 0, 1},
     {NULL}
 };
 
-ccmd_t xgCCmds[] =
+ccmdtemplate_t xgCCmds[] =
 {
     {"movefloor",  NULL, CCmdMovePlane},
     {"moveceil",   NULL, CCmdMovePlane},
@@ -402,9 +402,9 @@ ccmd_t xgCCmds[] =
  */
 void XG_Register(void)
 {
-    int                 i;
+    int i;
 
-    for(i = 0; xgCVars[i].name; ++i)
+    for(i = 0; xgCVars[i].path; ++i)
         Con_AddVariable(xgCVars + i);
     for(i = 0; xgCCmds[i].name; ++i)
         Con_AddCommand(xgCCmds + i);
@@ -415,12 +415,10 @@ void XG_Register(void)
  */
 void XG_Dev(const char* format, ...)
 {
-    static char         buffer[2000];
-    va_list             args;
-
+    static char buffer[2000];
+    va_list args;
     if(!xgDev)
         return;
-
     va_start(args, format);
     dd_vsnprintf(buffer, sizeof(buffer), format, args);
     strcat(buffer, "\n");
@@ -589,14 +587,14 @@ float XG_RandomPercentFloat(float value, int percent)
     return value * (1 + i);
 }
 
-boolean findXLThinker(thinker_t* th, void* context)
+int findXLThinker(thinker_t* th, void* context)
 {
     xlthinker_t*        xl = (xlthinker_t*) th;
 
     if(xl->line == (linedef_t*) context)
-        return false; // Stop iteration, we've found it.
+        return true; // Stop iteration, we've found it.
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 /**
@@ -628,7 +626,7 @@ void XL_SetLineType(linedef_t* line, int id)
                xgClasses[xline->xg->info.lineClass].className, id);
 
         // If there is not already an xlthinker for this line, create one.
-        if(DD_IterateThinkers(XL_Thinker, findXLThinker, line))
+        if(!DD_IterateThinkers(XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
             xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
@@ -1463,7 +1461,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
         side = P_GetPtrp(line, DMU_SIDEDEF0);
     }
 
-    XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
+    XG_Dev("XLTrav_ChangeWallMaterial: LineDef %i", P_ToIndex(line));
 
     rgba[0] = info->iparm[9];
     rgba[1] = info->iparm[10];
@@ -1691,7 +1689,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
         side = 1;
 
     // Make sure we are on correct side of exit linedef.
-    while(P_PointOnLinedefSide(newX, newY, newLine) != side && --fudge >= 0)
+    while(P_PointOnLinedefSideXY(newX, newY, newLine) != side && --fudge >= 0)
     {
         if(fabs(newLineDelta[0]) > fabs(newLineDelta[1]))
             newY -= FIX2FLT((newLineDelta[0] < 0) != side ? -1 : 1);
@@ -1774,7 +1772,7 @@ boolean XL_ValidateMap(uint* map, int type)
     uint bMap = *map, episode;
 
 #if __JDOOM__
-    if(gameMode == commercial || gameMode == shareware)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_SHAREWARE))
         episode = 0;
     else
         episode = gameEpisode;
@@ -1894,7 +1892,7 @@ boolean XL_CheckLineStatus(linedef_t* line, int reftype, int ref, int active,
                             XLTrav_CheckLine);
 }
 
-boolean XL_CheckMobjGone(thinker_t* th, void* context)
+int XL_CheckMobjGone(thinker_t* th, void* context)
 {
     int                 thingtype = *(int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1904,10 +1902,10 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
         XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
                "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
                mo->health, mo->pos[VX], mo->pos[VY]);
-        return false; // Stop iteration.
+        return true; // Stop iteration.
     }
 
-    return true; // Continue iteration.
+    return false; // Continue iteration.
 }
 
 void XL_SwapSwitchTextures(linedef_t* line, int snum)
@@ -2133,10 +2131,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
             S_StartSound(info->actSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->actMaterial)
+        if(info->wallSection && info->actMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->actMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->actMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
         if(info->actLineType)
@@ -2151,10 +2148,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
             S_StartSound(info->deactSound, (mobj_t *) soundOrg);
 
         // Change the texture of the line if asked to.
-        if(info->wallSection && info->deactMaterial)
+        if(info->wallSection && info->deactMaterial != NOMATERIALID)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->deactMaterial),
-                              BM_NORMAL, rgba, 0);
+                P_ToPtr(DMU_MATERIAL, info->deactMaterial), BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to.
         if(info->deactLineType)
@@ -2351,7 +2347,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+        if(DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
             return false;
     }
 
@@ -2533,34 +2529,44 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(linedef_t* line, int chain, boolean activating,
-                mobj_t* actThing)
+void XL_DoChain(linedef_t* lineDef, int chain, boolean activating, mobj_t* actThing)
 {
-    linedef_t*          dummyLine;
-    xline_t*            xdummyLine;
+    sidedef_t* dummyFrontSideDef, *dummyBackSideDef = NULL;
+    linedef_t* dummyLineDef;
+    xline_t* xdummyLineDef;
 
-    // We'll use a dummy line for the chain.
-    dummyLine = P_AllocDummyLine();
-    xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    // We'll use dummies for the chain.
+    dummyLineDef = P_AllocDummyLine();
+    xdummyLineDef = P_ToXLine(dummyLineDef);
+    xdummyLineDef->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    dummyFrontSideDef = P_AllocDummySideDef();
+    P_SetPtrp(dummyLineDef, DMU_SIDEDEF0, dummyFrontSideDef);
+    P_SetPtrp(dummyFrontSideDef, DMU_LINEDEF, dummyLineDef);
+    P_SetPtrp(dummyLineDef, DMU_FRONT_SECTOR, P_GetPtrp(lineDef, DMU_FRONT_SECTOR));
+    if(0 != P_GetPtrp(lineDef, DMU_SIDEDEF1))
+    {
+        dummyBackSideDef = P_AllocDummySideDef();
+        P_SetPtrp(dummyLineDef, DMU_SIDEDEF1, dummyBackSideDef);
+        P_SetPtrp(dummyBackSideDef, DMU_LINEDEF, dummyLineDef);
+        P_SetPtrp(dummyLineDef, DMU_BACK_SECTOR, P_GetPtrp(lineDef, DMU_BACK_SECTOR));
+    }
 
-    XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
-    XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
+    XG_Dev("XL_DoChain: LineDef %i, chained type %i", P_ToIndex(lineDef), chain);
+    XG_Dev("  (dummy linedef will show up as %i)", P_ToIndex(dummyLineDef));
 
-    // Copy all properties to the dummy
-    P_CopyLine(dummyLine, line);
+    // Copy all properties to the dummies.
+    P_CopyLine(dummyLineDef, lineDef);
 
-    P_SetPtrp(dummyLine, DMU_SIDEDEF0, NULL);
-    P_SetPtrp(dummyLine, DMU_SIDEDEF1, NULL);
-
-    xdummyLine->xg->active = !activating;
+    xdummyLineDef->xg->active = !activating;
 
     // Make the chain event
-    XL_LineEvent(XLE_CHAIN, chain, dummyLine, 0, actThing);
+    XL_LineEvent(XLE_CHAIN, chain, dummyLineDef, 0, actThing);
 
-    // Free the dummy
-    Z_Free(xdummyLine->xg);
-    P_FreeDummyLine(dummyLine);
+    Z_Free(xdummyLineDef->xg);
+    P_FreeDummyLine(dummyLineDef);
+    P_FreeDummySideDef(dummyFrontSideDef);
+    if(dummyBackSideDef)
+        P_FreeDummySideDef(dummyBackSideDef);
 }
 
 /**

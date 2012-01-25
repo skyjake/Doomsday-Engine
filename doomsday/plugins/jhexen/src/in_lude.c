@@ -1,10 +1,10 @@
-/**\file
+/**\file in_lude.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,13 +24,13 @@
  */
 
 /**
- * in_lude.c:
+ * Intermission screens - jHexen specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <ctype.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "jhexen.h"
 
@@ -105,16 +105,20 @@ static signed int totalFrags[MAXPLAYERS];
 
 static int hubCount;
 
-static int patchInterpicLumpRS; // A raw screen.
-static int fontBNumbersLump[10];
-static int fontBNegativeLump;
-static int fontBSlashLump;
-static int fontBPercentLump;
-static int fontABaseLump;
-static int fontBLump;
-static int fontBLumpBase;
+static patchid_t dpTallyTop;
+static patchid_t dpTallyLeft;
 
 // CODE --------------------------------------------------------------------
+
+void WI_Register(void)
+{
+    cvartemplate_t cvars[] = {
+        { "inlude-stretch",  0, CVT_BYTE, &cfg.inludeScaleMode, SCALEMODE_FIRST, SCALEMODE_LAST },
+        { "inlude-patch-replacement", 0, CVT_INT, &cfg.inludePatchReplaceMode, PRM_FIRST, PRM_LAST },
+        { NULL }
+    };
+    Con_AddVariableList(cvars);
+}
 
 void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
 {
@@ -167,7 +171,6 @@ void IN_Init(void)
 
     WI_initVariables();
     loadPics();
-
     initStats();
 }
 
@@ -183,8 +186,8 @@ void IN_WaitStop(void)
 void IN_Stop(void)
 {
     NetSv_Intermission(IMF_END, 0, 0);
-    intermission = false;
     unloadPics();
+    intermission = false;
 }
 
 /**
@@ -237,23 +240,10 @@ static void initStats(void)
 
 static void loadPics(void)
 {
-    int                 i;
-
-    if(hubCount || gameType == DEATHMATCH)
+    if(gameType != SINGLE)
     {
-        patchInterpicLumpRS = W_GetNumForName("INTERPIC");
-        fontBLumpBase = W_GetNumForName("FONTB16");
-        for(i = 0; i < 10; ++i)
-        {
-            fontBNumbersLump[i] = fontBLumpBase + i;
-        }
-
-        fontBLump = W_GetNumForName("FONTB_S") + 1;
-        fontBNegativeLump = W_GetNumForName("FONTB13");
-        fontABaseLump = W_GetNumForName("FONTA_S") + 1;
-
-        fontBSlashLump = W_GetNumForName("FONTB15");
-        fontBPercentLump = W_GetNumForName("FONTB05");
+        dpTallyTop = R_DeclarePatch("TALLYTOP");
+        dpTallyLeft = R_DeclarePatch("TALLYLFT");
     }
 }
 
@@ -363,34 +353,46 @@ static void CheckForSkip(void)
 
 void IN_Drawer(void)
 {
-    if(!intermission)
+    borderedprojectionstate_t bp;
+    lumpnum_t lumpNum;
+
+    if(!intermission || interState)
         return;
 
-    if(interState)
-        return;
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.inludeScaleMode);
+    GL_BeginBorderedProjection(&bp);
 
-    GL_DrawRawScreen(patchInterpicLumpRS, 0, 0);
+    lumpNum = W_GetLumpNumForName("INTERPIC");
+    if(lumpNum >= 0)
+    {
+        DGL_Color4f(1, 1, 1, 1);
+        DGL_SetRawImage(lumpNum, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_Enable(DGL_TEXTURE_2D);
+        DGL_DrawRectf2(0, 0, SCREENWIDTH, SCREENHEIGHT);
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
 
     if(gameType != SINGLE)
     {
         drawDeathTally();
     }
+
+    GL_EndBorderedProjection(&bp);
 }
 
 static void drawDeathTally(void)
 {
-    static boolean      showTotals;
+    static boolean showTotals;
 
-    int                 i, j;
-    fixed_t             xPos, yPos;
-    fixed_t             xDelta, yDelta;
-    fixed_t             xStart, scale;
-    int                 x, y;
-    boolean             bold;
-    int                 temp;
+    fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
+    int i, j, x, y;
+    boolean bold;
 
-    GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, W_GetNumForName("tallytop"));
-    GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, W_GetNumForName("tallylft"));
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    DGL_Color4f(1, 1, 1, 1);
+    GL_DrawPatchXY(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
+    GL_DrawPatchXY(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {
@@ -398,19 +400,15 @@ static void drawDeathTally(void)
         scale = (interTime * FRACUNIT) / TALLY_EFFECT_TICKS;
         xDelta = FixedMul(scale, TALLY_FINAL_X_DELTA);
         yDelta = FixedMul(scale, TALLY_FINAL_Y_DELTA);
-        xStart =
-            TALLY_START_XPOS - FixedMul(scale,
-                                        TALLY_START_XPOS - TALLY_STOP_XPOS);
-        yPos =
-            TALLY_START_YPOS - FixedMul(scale,
-                                        TALLY_START_YPOS - TALLY_STOP_YPOS);
+        xStart = TALLY_START_XPOS - FixedMul(scale, TALLY_START_XPOS - TALLY_STOP_XPOS);
+        yPos   = TALLY_START_YPOS - FixedMul(scale, TALLY_START_YPOS - TALLY_STOP_YPOS);
     }
     else
     {
         xDelta = TALLY_FINAL_X_DELTA;
         yDelta = TALLY_FINAL_Y_DELTA;
         xStart = TALLY_STOP_XPOS;
-        yPos = TALLY_STOP_YPOS;
+        yPos   = TALLY_STOP_YPOS;
     }
 
     if(interTime >= TALLY_EFFECT_TICKS && showTotals == false)
@@ -419,6 +417,9 @@ static void drawDeathTally(void)
         S_StartSound(SFX_PLATFORM_STOP, NULL);
     }
     y = yPos >> FRACBITS;
+
+    FR_SetFont(FID(GF_FONTA));
+    FR_LoadDefaultAttrib();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -440,14 +441,15 @@ static void drawDeathTally(void)
             }
             else
             {
-                temp = M_StringWidth("--", GF_FONTA) / 2;
                 if(bold)
                 {
-                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 0.7f, 0.3f, 1);
+                    FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
+                    FR_DrawTextXY3("--", x, y, ALIGN_TOP, DTF_NO_EFFECTS);
                 }
                 else
                 {
-                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 1, 1, 1);
+                    FR_SetColorAndAlpha(1, 1, 1, 1);
+                    FR_DrawTextXY("--", x, y);
                 }
             }
         }
@@ -461,30 +463,32 @@ static void drawDeathTally(void)
         yPos += yDelta;
         y = yPos >> FRACBITS;
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawNumber(int val, int x, int y, int wrapThresh)
 {
-    char                buff[8] = "XX";
+    char buf[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
-        sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
+        sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
-                 GF_FONTA, 1, 1, 1, 1);
+    FR_SetColorAndAlpha(1, 1, 1, 1);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
 {
-    char                buff[8] = "XX";
+    char buf[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
-        sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
+        sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
-                 GF_FONTA, 1, 0.7f, 0.3f, 1);
+    FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
 }

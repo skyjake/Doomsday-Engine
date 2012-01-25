@@ -32,13 +32,24 @@
 #  define Writer_TypeCheck(w, code)
 #endif
 
+typedef struct writerfuncs_s {
+    Writer_Callback_WriteInt8  writeInt8;
+    Writer_Callback_WriteInt16 writeInt16;
+    Writer_Callback_WriteInt32 writeInt32;
+    Writer_Callback_WriteFloat writeFloat;
+    Writer_Callback_WriteData  writeData;
+} writerfuncs_t;
+
 struct writer_s
 {
     byte* data;             // The data buffer.
     size_t size;            // Size of the data buffer.
     size_t pos;             // Current position in the buffer.
-    boolean isDynamic;         // The buffer will be reallocated when needed.
+    boolean isDynamic;      // The buffer will be reallocated when needed.
     size_t maxDynamicSize;  // Zero for unlimited.
+
+    boolean useCustomFuncs; // Validity checks are skipped (callbacks' responsibility).
+    writerfuncs_t func;     // Callbacks for write operations.
 };
 
 static boolean Writer_Check(const Writer* writer, size_t len)
@@ -48,10 +59,15 @@ static boolean Writer_Check(const Writer* writer, size_t len)
     if(len) len++;
 #endif
 
-    if(!writer || !writer->data)
+    if(!writer || (!writer->data && !writer->useCustomFuncs))
     {
         Con_Message("Writer_Check: Invalid Writer!\n");
         return false;
+    }
+    if(writer->useCustomFuncs)
+    {
+        // Not our responsibility.
+        return true;
     }
     if((int)writer->pos > (int)writer->size - (int)len)
     {
@@ -85,7 +101,7 @@ static boolean Writer_Check(const Writer* writer, size_t len)
 Writer* Writer_New(void)
 {
     Writer* w = M_Calloc(sizeof(Writer));
-    w->size = NETBUFFER_ACTUALSIZE;
+    w->size = NETBUFFER_MAXSIZE;
     w->data = netBuffer.msg.data;
     return w;
 }
@@ -105,6 +121,22 @@ Writer* Writer_NewWithDynamicBuffer(size_t maxLen)
     w->maxDynamicSize = maxLen;
     w->size = 256;
     w->data = M_Calloc(w->size);
+    return w;
+}
+
+Writer* Writer_NewWithCallbacks(Writer_Callback_WriteInt8  writeInt8,
+                                Writer_Callback_WriteInt16 writeInt16,
+                                Writer_Callback_WriteInt32 writeInt32,
+                                Writer_Callback_WriteFloat writeFloat,
+                                Writer_Callback_WriteData  writeData)
+{
+    Writer* w = M_Calloc(sizeof(Writer));
+    w->useCustomFuncs = true;
+    w->func.writeInt8 = writeInt8;
+    w->func.writeInt16 = writeInt16;
+    w->func.writeInt32 = writeInt32;
+    w->func.writeFloat = writeFloat;
+    w->func.writeData = writeData;
     return w;
 }
 
@@ -146,7 +178,7 @@ const byte* Writer_Data(const Writer* writer)
 
 void Writer_SetPos(Writer* writer, size_t newPos)
 {
-    if(!writer) return;
+    if(!writer || writer->useCustomFuncs) return;
     writer->pos = newPos;
     Writer_Check(writer, 0);
 }
@@ -154,24 +186,48 @@ void Writer_SetPos(Writer* writer, size_t newPos)
 void Writer_WriteChar(Writer* writer, char v)
 {
     if(!Writer_Check(writer, 1)) return;
-    Writer_TypeCheck(writer, WTCC_CHAR);
-    ((int8_t*)writer->data)[writer->pos++] = v;
+    if(!writer->useCustomFuncs)
+    {
+        Writer_TypeCheck(writer, WTCC_CHAR);
+        ((int8_t*)writer->data)[writer->pos++] = v;
+    }
+    else
+    {
+        assert(writer->func.writeInt8);
+        writer->func.writeInt8(writer, v);
+    }
 }
 
 void Writer_WriteByte(Writer* writer, byte v)
 {
     if(!Writer_Check(writer, 1)) return;
-    Writer_TypeCheck(writer, WTCC_BYTE);
-    writer->data[writer->pos++] = v;
+    if(!writer->useCustomFuncs)
+    {
+        Writer_TypeCheck(writer, WTCC_BYTE);
+        writer->data[writer->pos++] = v;
+    }
+    else
+    {
+        assert(writer->func.writeInt8);
+        writer->func.writeInt8(writer, v);
+    }
 }
 
 void Writer_WriteInt16(Writer* writer, int16_t v)
 {
     if(Writer_Check(writer, 2))
     {
-        Writer_TypeCheck(writer, WTCC_INT16);
-        *(int16_t*) (writer->data + writer->pos) = SHORT(v);
-        writer->pos += 2;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_INT16);
+            *(int16_t*) (writer->data + writer->pos) = SHORT(v);
+            writer->pos += 2;
+        }
+        else
+        {
+            assert(writer->func.writeInt16);
+            writer->func.writeInt16(writer, v);
+        }
     }
 }
 
@@ -179,9 +235,17 @@ void Writer_WriteUInt16(Writer* writer, uint16_t v)
 {
     if(Writer_Check(writer, 2))
     {
-        Writer_TypeCheck(writer, WTCC_UINT16);
-        *(uint16_t*) (writer->data + writer->pos) = USHORT(v);
-        writer->pos += 2;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_UINT16);
+            *(uint16_t*) (writer->data + writer->pos) = USHORT(v);
+            writer->pos += 2;
+        }
+        else
+        {
+            assert(writer->func.writeInt16);
+            writer->func.writeInt16(writer, v);
+        }
     }
 }
 
@@ -189,9 +253,17 @@ void Writer_WriteInt32(Writer* writer, int32_t v)
 {
     if(Writer_Check(writer, 4))
     {
-        Writer_TypeCheck(writer, WTCC_INT32);
-        *(int32_t*) (writer->data + writer->pos) = LONG(v);
-        writer->pos += 4;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_INT32);
+            *(int32_t*) (writer->data + writer->pos) = LONG(v);
+            writer->pos += 4;
+        }
+        else
+        {
+            assert(writer->func.writeInt32);
+            writer->func.writeInt32(writer, v);
+        }
     }
 }
 
@@ -199,9 +271,17 @@ void Writer_WriteUInt32(Writer* writer, uint32_t v)
 {
     if(Writer_Check(writer, 4))
     {
-        Writer_TypeCheck(writer, WTCC_UINT32);
-        *(uint32_t*) (writer->data + writer->pos) = ULONG(v);
-        writer->pos += 4;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_UINT32);
+            *(uint32_t*) (writer->data + writer->pos) = ULONG(v);
+            writer->pos += 4;
+        }
+        else
+        {
+            assert(writer->func.writeInt32);
+            writer->func.writeInt32(writer, v);
+        }
     }
 }
 
@@ -209,19 +289,37 @@ void Writer_WriteFloat(Writer* writer, float v)
 {
     if(Writer_Check(writer, 4))
     {
-        Writer_TypeCheck(writer, WTCC_FLOAT);
-        *(float*) (writer->data + writer->pos) = FLOAT(v);
-        writer->pos += 4;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_FLOAT);
+            *(float*) (writer->data + writer->pos) = FLOAT(v);
+            writer->pos += 4;
+        }
+        else
+        {
+            assert(writer->func.writeFloat);
+            writer->func.writeFloat(writer, v);
+        }
     }
 }
 
 void Writer_Write(Writer* writer, const void* buffer, size_t len)
 {
+    if(!len) return;
+
     if(Writer_Check(writer, len))
     {
-        Writer_TypeCheck(writer, WTCC_BLOCK);
-        memcpy(writer->data + writer->pos, buffer, len);
-        writer->pos += len;
+        if(!writer->useCustomFuncs)
+        {
+            Writer_TypeCheck(writer, WTCC_BLOCK);
+            memcpy(writer->data + writer->pos, buffer, len);
+            writer->pos += len;
+        }
+        else
+        {
+            assert(writer->func.writeData);
+            writer->func.writeData(writer, buffer, len);
+        }
     }
 }
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,11 @@
  */
 
 /**
- * dd_input.h: Input Subsystem
+ * Input Subsystem.
  */
 
-#ifndef __DOOMSDAY_BASEINPUT_H__
-#define __DOOMSDAY_BASEINPUT_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_CORE_INPUT_H
+#define LIBDENG_CORE_INPUT_H
 
 #define NUMKKEYS            256
 
@@ -193,7 +191,7 @@ void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
 inputdev_t *I_GetDevice(uint ident, boolean ifactive);
 inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
-boolean     I_ParseDeviceAxis(const char *str, uint *deviceID, int *axis);
+boolean     I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
 inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
 int         I_GetAxisByName(inputdev_t *device, const char *name);
 int         I_GetKeyByName(inputdev_t* device, const char* name);
@@ -202,4 +200,4 @@ boolean     I_IsDeviceKeyDown(uint ident, uint code);
 void        I_SetUIMouseMode(boolean on);
 void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
 
-#endif
+#endif /* LIBDENG_CORE_INPUT_H */

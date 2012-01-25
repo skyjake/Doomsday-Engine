@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #include "de_render.h"
 #include "de_refresh.h"
 #include "de_system.h"
+#include "de_filesys.h"
 #include "de_misc.h"
 
 #include "rend_bias.h"
@@ -69,7 +70,7 @@ extern boolean mapSetup;
 /**
  * These map data arrays are internal to the engine.
  */
-char mapID[9]; // Name by which the game referred to the current map.
+Uri* mapUri; // Name by which the game referred to the current map.
 uint numVertexes = 0;
 vertex_t* vertexes = NULL;
 
@@ -94,9 +95,7 @@ sidedef_t* sideDefs = NULL;
 watchedplanelist_t* watchedPlaneList = NULL;
 surfacelist_t* movingSurfaceList = NULL;
 surfacelist_t* decoratedSurfaceList = NULL;
-
-blockmap_t* BlockMap = NULL;
-blockmap_t* SSecBlockMap = NULL;
+surfacelist_t* glowingSurfaceList = NULL;
 
 nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
@@ -109,18 +108,13 @@ static gamemap_t* currentMap = NULL;
 // Bad texture list
 static uint numBadTexNames = 0;
 static uint maxBadTexNames = 0;
-static badtex_t *badTexNames = NULL;
+static badtex_t* badTexNames = NULL;
 
 // Game-specific, map object type definitions.
 static uint numGameMapObjDefs;
 static gamemapobjdef_t* gameMapObjDefs;
 
 // CODE --------------------------------------------------------------------
-
-void P_InitData(void)
-{
-    P_InitMapUpdate();
-}
 
 void P_PolyobjChanged(polyobj_t* po)
 {
@@ -147,19 +141,19 @@ void P_PolyobjChanged(polyobj_t* po)
  *
  * The entire ID string will be in lowercase letters.
  */
-const char* P_GenerateUniqueMapID(const char* mapID)
+const char* P_GenerateUniqueMapId(const char* mapID)
 {
-    static char         uid[255];
-    filename_t          base;
-    int                 lump = W_GetNumForName(mapID);
+    static char uid[255];
+    lumpnum_t lumpNum = F_CheckLumpNumForName2(mapID, true);
+    ddstring_t fileName;
 
-    M_ExtractFileBase(base, W_LumpSourceFile(lump), FILENAME_T_MAXLEN);
-
-    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID,
-            base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            (char *) gx.GetVariable(DD_GAME_MODE));
-
+    Str_Init(&fileName);
+    F_FileName(&fileName, F_LumpSourceFile(lumpNum));
+    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, Str_Text(&fileName),
+        (!F_LumpIsCustom(lumpNum) ? "iwad" : "pwad"), Str_Text(Game_IdentityKey(theGame)));
     strlwr(uid);
+
+    Str_Free(&fileName);
     return uid;
 }
 
@@ -173,7 +167,57 @@ gamemap_t *P_GetCurrentMap(void)
 
 void P_SetCurrentMap(gamemap_t* map)
 {
-    strncpy(mapID, map->mapID, sizeof(mapID));
+    if(!map)
+    {
+        // \todo dj: Merge in explicit map unload from branch beta6-mapcache.
+
+        // Most memory is allocated from the zone.
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL-1);
+
+        if(mapUri)
+        {
+            Uri_Delete(mapUri), mapUri = NULL;
+        }
+        numVertexes = 0;
+        vertexes = 0;
+
+        numSegs = 0;
+        segs = 0;
+
+        numSectors = 0;
+        sectors = 0;
+
+        numSSectors = 0;
+        ssectors = 0;
+
+        numNodes = 0;
+        nodes = 0;
+
+        numLineDefs = 0;
+        lineDefs = 0;
+
+        numSideDefs = 0;
+        sideDefs = 0;
+
+        watchedPlaneList = 0;
+        movingSurfaceList = 0;
+        decoratedSurfaceList = 0;
+        glowingSurfaceList = 0;
+
+        numPolyObjs = 0;
+        polyObjs = 0;
+
+        mobjNodes = 0;
+        lineNodes = 0;
+        linelinks = 0;
+
+        mapGravity = 0;
+
+        currentMap = map;
+        return;
+    }
+
+    mapUri = map->uri;
 
     numVertexes = map->numVertexes;
     vertexes = map->vertexes;
@@ -199,6 +243,7 @@ void P_SetCurrentMap(gamemap_t* map)
     watchedPlaneList = &map->watchedPlaneList;
     movingSurfaceList = &map->movingSurfaceList;
     decoratedSurfaceList = &map->decoratedSurfaceList;
+    glowingSurfaceList = &map->glowingSurfaceList;
 
     numPolyObjs = map->numPolyObjs;
     polyObjs = map->polyObjs;
@@ -207,35 +252,21 @@ void P_SetCurrentMap(gamemap_t* map)
     lineNodes = &map->lineNodes;
     linelinks = map->lineLinks;
 
-    BlockMap = map->blockMap;
-    SSecBlockMap = map->ssecBlockMap;
-
     mapGravity = map->globalGravity;
 
     currentMap = map;
 }
 
-/**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-const char* P_GetMapID(gamemap_t* map)
+const Uri* P_MapUri(gamemap_t* map)
 {
-    if(!map)
-        return NULL;
-
-    return map->mapID;
+    if(!map) return NULL;
+    return map->uri;
 }
 
-/**
- * @return              The 'unique' identifier of the map.
- */
-const char* P_GetUniqueMapID(gamemap_t* map)
+const char* P_GetUniqueMapId(gamemap_t* map)
 {
-    if(!map)
-        return NULL;
-
-    return map->uniqueID;
+    if(!map) return NULL;
+    return map->uniqueId;
 }
 
 void P_GetMapBounds(gamemap_t* map, float* min, float* max)
@@ -258,22 +289,54 @@ int P_GetMapAmbientLightLevel(gamemap_t* map)
     return map->ambientLightLevel;
 }
 
-/**
- * Begin the process of loading a new map.
- * Can be accessed by the games via the public API.
- *
- * @param levelId       Identifier of the map to be loaded (eg "E1M1").
- *
- * @return              @c true, if the map was loaded successfully.
- */
-boolean P_LoadMap(const char *mapID)
+/// \note Part of the Doomsday public API.
+boolean P_MapExists(const char* uriCString)
 {
-    uint                i;
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    return (lumpNum >= 0);
+}
 
-    if(!mapID || !mapID[0])
+/// \note Part of the Doomsday public API.
+boolean P_MapIsCustom(const char* uriCString)
+{
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    return (lumpNum >= 0 && W_LumpIsCustom(lumpNum));
+}
+
+/// \note Part of the Doomsday public API.
+const char* P_MapSourceFile(const char* uriCString)
+{
+    Uri* uri = Uri_NewWithPath2(uriCString, RC_NULL);
+    lumpnum_t lumpNum = W_CheckLumpNumForName2(Str_Text(Uri_Path(uri)), true/*quiet please*/);
+    Uri_Delete(uri);
+    if(lumpNum < 0) return NULL;
+    return W_LumpSourceFile(lumpNum);
+}
+
+/// \note Part of the Doomsday public API.
+boolean P_LoadMap(const char* uriCString)
+{
+    ddstring_t* path;
+    Uri* uri;
+    uint i;
+
+    if(!uriCString || !uriCString[0])
+    {
+#if _DEBUG
+        Con_Message("Warning:P_LoadMap: Passed invalid Uri reference, ignoring.\n");
+#endif
         return false; // Yeah, ok... :P
+    }
 
-    Con_Message("P_LoadMap: \"%s\"\n", mapID);
+    uri = Uri_NewWithPath2(uriCString, RC_NULL);
+
+    path = Uri_ToString(uri);
+    Con_Message("Loading Map \"%s\"...\n", Str_Text(path));
+    Str_Delete(path);
 
     // It would be very cool if map loading happened in another
     // thread. That way we could be keeping ourselves busy while
@@ -291,37 +354,35 @@ boolean P_LoadMap(const char *mapID)
         // they're ready to begin receiving frames.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
-
-            if(!(plr->shared.flags & DDPF_LOCAL) && clients[i].connected)
+            //player_t *plr = &ddPlayers[i];
+            if(/*!(plr->shared.flags & DDPF_LOCAL) &&*/ clients[i].connected)
             {
 #ifdef _DEBUG
-                Con_Printf("Cl%i NOT READY ANY MORE!\n", i);
+                Con_Message("Client %i marked as 'not ready' to receive frames.\n", i);
 #endif
                 clients[i].ready = false;
             }
         }
     }
 
-    if(DAM_AttemptMapLoad(mapID))
+    if(DAM_AttemptMapLoad(uri))
     {
-        uint                i;
-        gamemap_t*          map = P_GetCurrentMap();
+        gamemap_t* map = P_GetCurrentMap();
 
         // Init the thinker lists (public and private).
         P_InitThinkerLists(0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
-        SB_InitForMap(P_GetUniqueMapID(map));
+        SB_InitForMap(P_GetUniqueMapId(map));
 
         Cl_Reset();
         RL_DeleteLists();
-        Rend_CalcLightModRange(NULL);
+        Rend_CalcLightModRange();
 
         // Invalidate old cmds and init player values.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
+            player_t* plr = &ddPlayers[i];
 
             /*
             if(isServer && plr->shared.inGame)
@@ -335,24 +396,27 @@ boolean P_LoadMap(const char *mapID)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        R_ResetAnimGroups();
+        Materials_ResetAnimGroups();
 
-        R_InitObjLinksForMap();
+        R_InitObjlinkBlockmapForMap();
         LO_InitForMap(); // Lumobj management.
-        DL_InitForMap(); // Projected dynlights (from lumobjs) management.
+        R_InitShadowProjectionListsForMap(); // Projected mobj shadows.
         VL_InitForMap(); // Converted vlights (from lumobjs) management.
 
         // Init Particle Generator links.
         P_PtcInitForMap();
 
         // Initialize the lighting grid.
-        LG_Init();
+        LG_InitForMap();
 
         if(!isDedicated)
             R_InitRendVerticesPool();
+
+        Uri_Delete(uri);
         return true;
     }
 
+    Uri_Delete(uri);
     return false;
 }
 
@@ -446,15 +510,11 @@ void P_FreeBadTexList(void)
  * @param identifer     If objName is @c NULL, compare using this unique identifier.
  * @param objName       If not @c NULL, compare using this unique name.
  */
-gamemapobjdef_t *P_GetGameMapObjDef(int identifier, const char *objName,
-                                    boolean canCreate)
+gamemapobjdef_t* P_GetGameMapObjDef(int identifier, const char* objName, boolean canCreate)
 {
-    uint                i;
-    size_t              len;
-    gamemapobjdef_t    *def;
-
-    if(objName)
-        len = strlen(objName);
+    size_t len = (objName? strlen(objName) : 0);
+    gamemapobjdef_t* def;
+    uint i;
 
     // Is this a known game object?
     for(i = 0; i < numGameMapObjDefs; ++i)
@@ -578,11 +638,16 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     }
 
     // Looks good! Add it to the list of properties.
-    def->props = M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
+    if(NULL == (def->props = (mapobjprop_t*)
+       realloc(def->props, ++def->numProps * sizeof(*def->props))))
+        Con_Error("P_RegisterMapObjProperty: Failed on (re)allocation of %lu bytes for "
+            "new MapObjProperty.", (unsigned long) sizeof(*def->props));
 
     prop = &def->props[def->numProps - 1];
     prop->identifier = propIdentifier;
-    prop->name = M_Malloc(len + 1);
+    if(NULL == (prop->name = (char*) malloc(sizeof(*prop->name) * (len + 1))))
+        Con_Error("P_RegisterMapObjProperty: Failed on allocation of %lu bytes for "
+            "MapObjProperty::name.", (unsigned long) (sizeof(*prop->name) * (len + 1)));
     strncpy(prop->name, propName, len);
     prop->name[len] = '\0';
     prop->type = type;
@@ -590,44 +655,38 @@ boolean P_RegisterMapObjProperty(int identifier, int propIdentifier,
     return true; // Success!
 }
 
-/**
- * Called during init to initialize the map obj defs.
- */
-void P_InitGameMapObjDefs(void)
+static void clearGameMapObjDefs(void)
 {
-    gameMapObjDefs = NULL;
+    if(NULL != gameMapObjDefs)
+    {
+        uint i;
+        for(i = 0; i < numGameMapObjDefs; ++i)
+        {
+            gamemapobjdef_t* def = &gameMapObjDefs[i];
+            { uint j;
+            for(j = 0; j < def->numProps; ++j)
+            {
+                mapobjprop_t* prop = &def->props[j];
+                free(prop->name);
+            }}
+            free(def->props);
+            free(def->name);
+        }
+        free(gameMapObjDefs);
+        gameMapObjDefs = NULL;
+    }
     numGameMapObjDefs = 0;
 }
 
-/**
- * Called at shutdown to free all memory allocated for the map obj defs.
- */
+void P_InitGameMapObjDefs(void)
+{
+    // Allow re-init.
+    clearGameMapObjDefs();
+}
+
 void P_ShutdownGameMapObjDefs(void)
 {
-    uint                i, j;
-
-    if(gameMapObjDefs)
-    {
-        for(i = 0; i < numGameMapObjDefs; ++i)
-        {
-            gamemapobjdef_t    *def = &gameMapObjDefs[i];
-
-            for(j = 0; j < def->numProps; ++j)
-            {
-                mapobjprop_t       *prop = &def->props[i];
-
-                M_Free(prop->name);
-            }
-
-            M_Free(def->name);
-            M_Free(def->props);
-        }
-
-        M_Free(gameMapObjDefs);
-    }
-
-    gameMapObjDefs = NULL;
-    numGameMapObjDefs = 0;
+    clearGameMapObjDefs();
 }
 
 static valuetable_t *getDBTable(valuedb_t *db, valuetype_t type,
@@ -706,9 +765,9 @@ static uint insertIntoDB(valuedb_t *db, valuetype_t type, void *data)
     return tbl->numElms - 1;
 }
 
-static void* getPtrToDBElm(valuedb_t *db, valuetype_t type, uint elmIdx)
+static void* getPtrToDBElm(valuedb_t* db, valuetype_t type, uint elmIdx)
 {
-    valuetable_t       *tbl = getDBTable(db, type, false);
+    valuetable_t* tbl = getDBTable(db, type, false);
 
     if(!tbl)
         Con_Error("getPtrToDBElm: Table for type %i not found.", (int) type);

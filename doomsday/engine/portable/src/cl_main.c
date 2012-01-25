@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ void Cl_CleanUp(void)
 
     Cl_DestroyClientMobjs();
     Cl_InitPlayers();
-    Cl_RemoveMovers();
+    Cl_WorldReset();
     GL_SetFilter(false);
 }
 
@@ -134,7 +134,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+    strncpy(buf, Str_Text(Game_IdentityKey(theGame)), sizeof(buf) - 1);
 
 #ifdef _DEBUG
     Con_Message("Cl_SendHello: game mode = %s\n", buf);
@@ -179,6 +179,8 @@ void Cl_AnswerHandshake(void)
     }
     consolePlayer = displayPlayer = myConsole;
 
+    Smoother_Clear(clients[consolePlayer].smoother);
+
     isClient = true;
     isServer = false;
     netLoggedIn = false;
@@ -205,7 +207,7 @@ void Cl_AnswerHandshake(void)
 
     // Prepare the client-side data.
     Cl_InitClientMobjs();
-    Cl_InitMovers();
+    Cl_WorldInit();
 
     // Get ready for ticking.
     DD_ResetTimer();
@@ -322,6 +324,18 @@ void Cl_GetPackets(void)
             Cl_AnswerHandshake();
             break;
 
+        case PSV_MATERIAL_ARCHIVE:
+            Cl_ReadServerMaterials();
+            break;
+
+        case PSV_MOBJ_TYPE_ID_LIST:
+            Cl_ReadServerMobjTypeIDs();
+            break;
+
+        case PSV_MOBJ_STATE_ID_LIST:
+            Cl_ReadServerMobjStateIDs();
+            break;
+
         case PKT_PLAYER_INFO:
             Cl_HandlePlayerInfo();
             break;
@@ -365,6 +379,10 @@ void Cl_GetPackets(void)
             // Server responds to our login request. Let's see if we
             // were successful.
             netLoggedIn = Reader_ReadByte(msgReader);
+            break;
+
+        case PSV_FINALE:
+            Cl_Finale(msgReader);
             break;
 
         default:

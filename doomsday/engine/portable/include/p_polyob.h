@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,10 +51,8 @@ boolean         P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
 void            P_PolyobjLink(struct polyobj_s* po);
 void            P_PolyobjUnLink(struct polyobj_s* po);
 
-void            P_PolyobjUpdateBBox(polyobj_t* po);
+void            P_PolyobjUpdateAABox(polyobj_t* po);
 
-void            P_PolyobjLinkToRing(polyobj_t* po, linkpolyobj_t** link);
-void            P_PolyobjUnlinkFromRing(polyobj_t* po, linkpolyobj_t** link);
-boolean         P_PolyobjLinesIterator(polyobj_t* po, boolean (*func) (struct linedef_s*, void*),
+int             P_PolyobjLinesIterator(polyobj_t* po, int (*func) (struct linedef_s*, void*),
                                        void* data);
 #endif

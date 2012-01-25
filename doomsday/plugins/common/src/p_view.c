@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@
  */
 void P_CalcHeight(player_t* plr)
 {
+    int plrNum = plr - players;
     boolean         airborne;
     boolean         morphed = false;
     ddplayer_t*     ddplr = plr->plr;
@@ -200,4 +201,18 @@ void P_CalcHeight(player_t* plr)
 
     // Set the plr's eye-level Z coordinate.
     plr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
+
+#if __JHEXEN__
+    // How about a bit of quake?
+    if(localQuakeHappening[plrNum] && !P_IsPaused())
+    {
+        int intensity = localQuakeHappening[plrNum];
+        plr->viewOffset[VX] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+        plr->viewOffset[VY] = (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
+    }
+    else
+    {
+        plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
+    }
+#endif
 }

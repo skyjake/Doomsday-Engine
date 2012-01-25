@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,12 +26,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
+
 #include "jhexen.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define DEFAULT_ARCHIVEPATH     "o:\\sound\\archive\\"
 
 // TYPES -------------------------------------------------------------------
 
@@ -47,8 +47,6 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char ArchivePath[128];
-
 // CODE --------------------------------------------------------------------
 
 int S_GetSoundID(const char* name)
@@ -56,19 +54,18 @@ int S_GetSoundID(const char* name)
     return Def_Get(DD_DEF_SOUND_BY_NAME, name, 0);
 }
 
-/**
- * Starts the song of the specified map, updating the currentmap definition
- * in the process.
- */
 void S_MapMusic(uint episode, uint map)
 {
     int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int cdTrack;
+    int cdTrack = P_GetMapCDTrack(map);
 
     // Update the 'currentmap' music definition.
+
+    VERBOSE( Con_Message("S_MapMusic: Ep %i, map %i, lump %s\n", episode, map, P_GetMapSongLump(map)) )
+
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
-    cdTrack = P_GetMapCDTrack(map);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
+
     if(S_StartMusic("currentmap", true))
     {
         // Set the game status cvar for the map music
@@ -80,9 +77,7 @@ void S_ParseSndInfoLump(void)
 {
     int                 i;
     char                buf[80];
-    lumpnum_t           lump = W_CheckNumForName("SNDINFO");
-
-    strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
+    lumpnum_t           lump = W_CheckLumpNumForName("SNDINFO");
 
     if(lump != -1)
     {
@@ -95,15 +90,15 @@ void S_ParseSndInfoLump(void)
                 if(!stricmp(sc_String, "$ARCHIVEPATH"))
                 {
                     SC_MustGetString();
-                    strcpy(ArchivePath, sc_String);
+                    // Presently unused.
                 }
                 else if(!stricmp(sc_String, "$MAP"))
                 {
                     SC_MustGetNumber();
                     SC_MustGetString();
-                    if(sc_Number)
+                    if(sc_Number - 1 >= 0)
                     {
-                        P_PutMapSongLump(sc_Number, sc_String);
+                        P_PutMapSongLump(sc_Number - 1, sc_String);
                     }
                 }
                 continue;
