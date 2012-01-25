@@ -1025,7 +1025,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     mat = chooseSpriteMaterial(params);
     if(mat != params->material)
     {
-        ms = Materials_PrepareVariant(mat);
+        ms = mat? Materials_PrepareVariant(mat) : NULL;
     }
 
     if(ms)
