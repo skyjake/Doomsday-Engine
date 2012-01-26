@@ -925,7 +925,7 @@ void GL_SetMaterialUI(material_t* mat)
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
@@ -938,7 +938,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
@@ -946,13 +946,13 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(rawTex)
     {
-        GL_BindTexture(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }
 }
 
-void GL_BindTexture(DGLuint glName, int magMode)
+void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
     if(Con_IsBusy()) return;
     if(glName == 0)

@@ -434,7 +434,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -984,7 +984,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
     if(ms)
     {
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
         glEnable(GL_TEXTURE_2D);
     }
     else

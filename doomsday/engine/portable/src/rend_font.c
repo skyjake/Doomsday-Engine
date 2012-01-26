@@ -857,7 +857,7 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     if(glTex)
     {
         /// \fixme Filtering should be determined at a higher level.
-        GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
+        GL_BindTextureUnmanaged(glTex, filterUI? GL_LINEAR : GL_NEAREST);
     }
     else
     {

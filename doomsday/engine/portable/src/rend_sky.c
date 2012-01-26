@@ -313,7 +313,7 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
         V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
 
-    GL_BindTexture(tex, magMode);
+    GL_BindTextureUnmanaged(tex, magMode);
 }
 
 /// @param flags  @see skySphereRenderFlags

@@ -168,7 +168,7 @@ void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
         return;
     }
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
+    GL_BindTextureUnmanaged(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -198,7 +198,7 @@ void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, DGLint wrapS, DG
 {
     if(!tex) return;
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
+    GL_BindTextureUnmanaged(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
 
@@ -248,7 +248,7 @@ void R_DrawViewBorder(void)
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
