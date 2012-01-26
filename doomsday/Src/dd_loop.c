@@ -35,6 +35,8 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+
 /*
  * There needs to be at least this many tics per second. A smaller value
  * is likely to cause unpredictable changes in playsim.
@@ -274,6 +276,26 @@ void DD_Ticker(timespan_t time)
 			realFrameTimePos -= 1;
 
 			R_NewSharpWorld();
+
+#ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+            if(ddplayers[0].ingame && ddplayers[0].mo)
+            {
+                mobj_t* mo = ddplayers[0].mo;
+                static float prevPos[2] = { 0, 0 };
+                static float prevSpeed = 0;
+                float mom[2] = { FIX2FLT(mo->momx), FIX2FLT(mo->momy) };
+                float speed = V2_Length(mom);
+                float actualMom[2] = { FIX2FLT(mo->x) - prevPos[0], FIX2FLT(mo->y) - prevPos[1] };
+                float actualSpeed = V2_Length(actualMom);
+
+                Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
+                            0.f, speed, actualSpeed, speed - prevSpeed);
+
+                prevPos[0] = FIX2FLT(mo->x);
+                prevPos[1] = FIX2FLT(mo->y);
+                prevSpeed = speed;
+            }
+#endif
 		}
 
 		// While paused, don't modify frametime so things keep still.

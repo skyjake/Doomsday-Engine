@@ -72,7 +72,7 @@
 #define	SBARHEIGHT		39		   // status bar height at bottom of screen
 #define PI				3.141592657
 
-#define SECONDS_TO_TICKS(sec) ((int)(sec*35))
+#define SECONDS_TO_TICKS(sec) ((int)((sec)*35))
 
 // Heap relations.
 #define HEAP_PARENT(i)	(((i) + 1)/2 - 1)
