@@ -123,6 +123,113 @@ void Point2f_Sum(Point2f* point, const Point2f* other);
 
 boolean Point2f_Equality(const Point2f* point, const Point2f* other);
 
+/**
+ * 3D point with integer values. A handy POD structure for easy manipulation of
+ * three dimensional space points. @ingroup math
+ */
+typedef struct Point3Raw_s {
+    union {
+        struct {
+            int x;
+            int y;
+            int z;
+        };
+        int xy[2];
+        int xyz[3];
+    };
+} Point3Raw;
+
+struct point3_s; // The Point3f instance (opaque).
+
+/**
+ * Point3 instance. Class for manipulating 3D plane points using integer precision.
+ * Use Point3_New() or one of the other constructors to instantiate.
+ */
+typedef struct point3_s Point3;
+
+Point3* Point3_New(void);
+Point3* Point3_NewWithCoords(int x, int y, int z);
+Point3* Point3_NewFromRaw(const Point3Raw* rawPoint);
+void Point3_Delete(Point3* point);
+
+Point3Raw* Point3_Raw(const Point3* point, Point3Raw* rawPoint);
+
+boolean Point3_IsNull(const Point3* point);
+
+int Point3_X(const Point3* point);
+int Point3_Y(const Point3* point);
+int Point3_Z(const Point3* point);
+
+void Point3_SetX(Point3* point, int x);
+void Point3_SetY(Point3* point, int y);
+void Point3_SetZ(Point3* point, int z);
+
+const int* Point3_XYZ(const Point3* point);
+void Point3_SetXYZ(Point3* point, int x, int y, int z);
+
+void Point3_Translate(Point3* point, int x, int y, int z);
+void Point3_TranslateX(Point3* point, int x);
+void Point3_TranslateY(Point3* point, int y);
+void Point3_TranslateZ(Point3* point, int z);
+
+void Point3_Sum(Point3* point, const Point3* other);
+
+boolean Point3_Equality(const Point3* point, const Point3* other);
+
+/**
+ * 3D point with floating point values. A handy POD structure for easy
+ * manipulation of three dimensional space points.
+ * @ingroup math
+ */
+typedef struct Point3Rawf_s {
+    union {
+        struct {
+            double x;
+            double y;
+            double z;
+        };
+        double xy[2];
+        double xyz[3];
+    };
+} Point3Rawf;
+
+struct point3f_s; // The Point3f instance (opaque).
+
+/**
+ * Point3f instance. Class for manipulating 3D plane points using floating-point precision.
+ * Use Point3f_New() or one of the other constructors to instantiate.
+ */
+typedef struct point3f_s Point3f;
+
+Point3f* Point3f_New(void);
+Point3f* Point3f_NewWithCoords(double x, double y, double z);
+Point3f* Point3f_NewFromRaw(const Point3Rawf* rawPoint);
+void Point3f_Delete(Point3f* point);
+
+Point3Rawf* Point3f_Raw(const Point3f* point, Point3Rawf* rawPoint);
+
+boolean Point3f_IsNull(const Point3f* point);
+
+double Point3f_X(const Point3f* point);
+double Point3f_Y(const Point3f* point);
+double Point3f_Z(const Point3f* point);
+
+void Point3f_SetX(Point3f* point, double x);
+void Point3f_SetY(Point3f* point, double y);
+void Point3f_SetZ(Point3f* point, double z);
+
+const double* Point3f_XYZ(const Point3f* point);
+void Point3f_SetXYZ(Point3f* point, double x, double y, double z);
+
+void Point3f_Translate(Point3f* point, double x, double y, double z);
+void Point3f_TranslateX(Point3f* point, double x);
+void Point3f_TranslateY(Point3f* point, double y);
+void Point3f_TranslateZ(Point3f* point, double z);
+
+void Point3f_Sum(Point3f* point, const Point3f* other);
+
+boolean Point3f_Equality(const Point3f* point, const Point3f* other);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

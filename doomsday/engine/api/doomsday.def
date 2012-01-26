@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 764 <--
+; Highest ordinal is currently: --> 804 <--
 ; Other free ordinals:
 ;   54, 340, 341
 
@@ -181,6 +181,49 @@ EXPORTS
 
     Rectf_Normalized            @729 NONAME
     Rectf_United                @730 NONAME
+
+    ; 3D space Point.
+    Point3_New                  @765 NONAME
+    Point3_NewWithCoords        @766 NONAME
+    Point3_NewFromRaw           @767 NONAME
+    Point3_Delete               @768 NONAME
+    Point3_Raw                  @769 NONAME
+    Point3_IsNull               @770 NONAME
+    Point3_X                    @771 NONAME
+    Point3_Y                    @772 NONAME
+    Point3_Z                    @773 NONAME
+    Point3_SetX                 @774 NONAME
+    Point3_SetY                 @775 NONAME
+    Point3_SetZ                 @776 NONAME
+    Point3_XYZ                  @777 NONAME
+    Point3_SetXYZ               @778 NONAME
+    Point3_Translate            @779 NONAME
+    Point3_TranslateX           @780 NONAME
+    Point3_TranslateY           @781 NONAME
+    Point3_TranslateZ           @782 NONAME
+    Point3_Sum                  @783 NONAME
+    Point3_Equality             @784 NONAME
+
+    Point3f_New                 @785 NONAME
+    Point3f_NewWithCoords       @786 NONAME
+    Point3f_NewFromRaw          @787 NONAME
+    Point3f_Delete              @788 NONAME
+    Point3f_Raw                 @789 NONAME
+    Point3f_IsNull              @790 NONAME
+    Point3f_X                   @791 NONAME
+    Point3f_Y                   @792 NONAME
+    Point3f_Z                   @793 NONAME
+    Point3f_SetX                @794 NONAME
+    Point3f_SetY                @795 NONAME
+    Point3f_SetZ                @796 NONAME
+    Point3f_XYZ                 @797 NONAME
+    Point3f_SetXYZ              @798 NONAME
+    Point3f_Translate           @799 NONAME
+    Point3f_TranslateX          @800 NONAME
+    Point3f_TranslateY          @801 NONAME
+    Point3f_TranslateZ          @802 NONAME
+    Point3f_Sum                 @803 NONAME
+    Point3f_Equality            @804 NONAME
 
     ; String.
     Str_New                     @461 NONAME
