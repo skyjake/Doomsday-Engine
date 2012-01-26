@@ -753,6 +753,18 @@ void DD_PostEvent(ddevent_t *ev)
         events[eventhead].symbolic.name = DD_AllocEventString(ev->symbolic.name);
     }
 
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+    if(ev->device == IDEV_KEYBOARD && ev->type == E_TOGGLE
+            && ev->toggle.state == ETOG_DOWN)
+    {
+        // Restart timer on each key down.
+        extern float devCameraMovementStartTime;
+        extern float devCameraMovementStartTimeRealSecs;
+        devCameraMovementStartTime = sysTime;
+        devCameraMovementStartTimeRealSecs = Sys_GetRealSeconds();
+    }
+#endif
+
     eventhead++;
     eventhead &= MAXEVENTS - 1;
 }

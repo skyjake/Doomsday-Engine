@@ -51,6 +51,11 @@
 
 // MACROS ------------------------------------------------------------------
 
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+float devCameraMovementStartTime = 0; // sysTime
+float devCameraMovementStartTimeRealSecs = 0;
+#endif
+
 BEGIN_PROF_TIMERS()
   PROF_MOBJ_INIT_ADD
 END_PROF_TIMERS()
@@ -648,9 +653,7 @@ void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos, viewer_t* ou
 
 void R_CopyViewer(viewer_t* dst, const viewer_t* src)
 {
-    dst->pos[VX] = src->pos[VX];
-    dst->pos[VY] = src->pos[VY];
-    dst->pos[VZ] = src->pos[VZ];
+    V3_Copy(dst->pos, src->pos);
     dst->angle = src->angle;
     dst->pitch = src->pitch;
 }
@@ -672,9 +675,7 @@ void R_CheckViewerLimits(viewer_t* src, viewer_t* dst)
     if(fabs(dst->pos[VX] - src->pos[VX]) > MAXMOVE ||
        fabs(dst->pos[VY] - src->pos[VY]) > MAXMOVE)
     {
-        src->pos[VX] = dst->pos[VX];
-        src->pos[VY] = dst->pos[VY];
-        src->pos[VZ] = dst->pos[VZ];
+        V3_Copy(src->pos, dst->pos);
     }
     if(abs((int) dst->angle - (int) src->angle) >= ANGLE_45)
     {
@@ -1103,6 +1104,7 @@ void R_RenderPlayerView(int num)
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
+
     if(!freezeRLs)
     {
         R_ClearVisSprites();
@@ -1174,6 +1176,26 @@ void R_RenderPlayerView(int num)
     }
 
     R_InfoRendVerticesPool();
+
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+    {
+        static float prevPos[3] = { 0, 0, 0 };
+        static float prevSpeed = 0;
+        static float prevTime;
+        float delta[2] = { vd->current.pos[VX] - prevPos[VX],
+                           vd->current.pos[VY] - prevPos[VY] };
+        float speed = V2_Length(delta);
+        float time = sysTime - devCameraMovementStartTime;
+        float elapsed = time - prevTime;
+
+        Con_Message("%f,%f,%f,%f,%f\n", Sys_GetRealSeconds() - devCameraMovementStartTimeRealSecs,
+                    time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
+
+        V3_Copy(prevPos, vd->current.pos);
+        prevSpeed = speed/elapsed;
+        prevTime = time;
+    }
+#endif
 }
 
 /**
