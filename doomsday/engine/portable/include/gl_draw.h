@@ -41,7 +41,7 @@ void GL_DrawRectfWithCoords(const RectRawf* rect, Point2Rawf coords[4]);
 
 void GL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
 void GL_DrawRectf2TextureColor(double x, double y, double w, double h,
-    DGLuint tex, int texW, int texH, const float topColor[3], float topAlpha,
+    int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha);
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);

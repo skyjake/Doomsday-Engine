@@ -523,8 +523,10 @@ static void renderParticles(int rtype, boolean withBlend)
     {
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
-        glBindTexture(GL_TEXTURE_2D, tex);
+
+        GL_BindTextureUnmanaged(tex, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
+
         glDepthFunc(GL_LEQUAL);
         glBegin(primType = GL_QUADS);
     }

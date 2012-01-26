@@ -322,22 +322,27 @@ void Sys_SuspendThread(thread_t handle, boolean dopause)
 }
 
 /**
- * @return              The return value of the thread.
+ * @return  Return value of the thread.
  */
 int Sys_WaitThread(thread_t thread)
 {
-    int             result = 0;
-
+    int result = 0;
     SDL_WaitThread(thread, &result);
     return result;
 }
 
-/**
- * @return              The identifier of the current thread.
- */
-uint Sys_ThreadID(void)
+uint Sys_ThreadId(thread_t handle)
 {
+    if(handle)
+    {
+        return SDL_GetThreadID(handle);
+    }
     return SDL_ThreadID();
+}
+
+uint Sys_CurrentThreadId(void)
+{
+    return Sys_ThreadId(NULL/*this thread*/);
 }
 
 mutex_t Sys_CreateMutex(const char *name)

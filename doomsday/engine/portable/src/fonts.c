@@ -545,7 +545,7 @@ void Fonts_Release(font_t* font)
         BitmapFont_DeleteGLTexture(font);
         break;
     case FT_BITMAPCOMPOSITE:
-        BitmapCompositeFont_DeleteGLTextures(font);
+        BitmapCompositeFont_ReleaseTextures(font);
         break;
     default:
         Con_Error("Fonts::Release: Invalid font type %i.", (int) Font_Type(font));
@@ -1507,7 +1507,7 @@ static int releaseFontTextures(font_t* font, void* paramaters)
         BitmapFont_DeleteGLTexture(font);
         break;
     case FT_BITMAPCOMPOSITE:
-        BitmapCompositeFont_DeleteGLTextures(font);
+        BitmapCompositeFont_ReleaseTextures(font);
         break;
     default:
         Con_Error("Fonts::ReleaseFontTextures: Invalid font type %i.", (int) Font_Type(font));

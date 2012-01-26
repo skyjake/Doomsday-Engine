@@ -915,7 +915,7 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI(material_t* mat)
+void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
 {
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
@@ -923,9 +923,14 @@ void GL_SetMaterialUI(material_t* mat)
     if(!mat) return; // \fixme we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+        wrapS, wrapT, 0, 1, 0, false, false, false, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
+}
+
+void GL_SetMaterialUI(material_t* mat)
+{
+    GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
@@ -938,7 +943,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTextureUnmanaged(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
@@ -954,7 +959,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_IsBusy()) return;
+    if(Con_IsBusyWorker()) return;
     if(glName == 0)
     {
         GL_SetNoTexture();
@@ -969,6 +974,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 
 void GL_SetNoTexture(void)
 {
+    /// @todo Don't actually change the current binding.
+    ///       Simply disable any currently enabled texture types.
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

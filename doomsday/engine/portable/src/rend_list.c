@@ -306,13 +306,8 @@ static void rlBind(DGLuint glName, int magMode)
 
     if(!renderTextures) glName = 0;
 
-    glBindTexture(GL_TEXTURE_2D, glName);
-    if(glName != 0)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-        if(GL_state.features.texFilterAniso)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
-    }
+    /// @fixme Do not modify the GL texture state of "managed" textures here.
+    GL_BindTextureUnmanaged(glName, magMode);
 
 #if _DEBUG
     error = glGetError();
@@ -329,9 +324,7 @@ static void rlBind2(const rendlist_texmapunit_t* tmu)
 
 static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
 {
-    if(!tmu->tex)
-        return;
-
+    if(!tmu->tex) return;
     glActiveTexture(GL_TEXTURE0 + (byte)unit);
     rlBind(tmu->tex, tmu->magMode);
 }

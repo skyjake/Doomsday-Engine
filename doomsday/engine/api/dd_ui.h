@@ -142,7 +142,6 @@ typedef struct fi_page_s {
 
     struct fi_page_background_s {
         struct material_s* material;
-        DGLuint tex;
         animatorvector4_t topColor;
         animatorvector4_t bottomColor;
     } _bg;

@@ -292,6 +292,18 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
+boolean Con_IsBusyWorker(void)
+{
+    boolean result;
+    if(!Con_IsBusy()) return false;
+
+    /// @todo Is locking necessary?
+    Sys_Lock(busy_Mutex);
+    result = Sys_ThreadId(busyThread) == Sys_CurrentThreadId();
+    Sys_Unlock(busy_Mutex);
+    return result;
+}
+
 static void Con_BusyPrepareResources(void)
 {
     if(isDedicated || novideo) return;
@@ -473,7 +485,7 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
 {
     if(texScreenshot)
     {
-        glBindTexture(GL_TEXTURE_2D, texScreenshot);
+        GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
         glColor3ub(255, 255, 255);
@@ -537,7 +549,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     // Draw the frame.
     glEnable(GL_TEXTURE_2D);
 
-    glBindTexture(GL_TEXTURE_2D, texLoading[0]);
+    GL_BindTextureUnmanaged(texLoading[0], GL_LINEAR);
     glColor4fv(col);
     GL_DrawRectf2(x - radius, y - radius, radius*2, radius*2);
 
@@ -551,7 +563,7 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     // Draw a fan.
     glColor4f(col[0], col[1], col[2], .5f);
-    glBindTexture(GL_TEXTURE_2D, texLoading[1]);
+    GL_BindTextureUnmanaged(texLoading[1], GL_LINEAR);
     glBegin(GL_TRIANGLE_FAN);
     // Center.
     glTexCoord2f(.5f, .5f);
@@ -787,22 +799,22 @@ static void sampleDoomWipe(void)
 {
     int i;
     for(i = 0; i <= SCREENWIDTH; ++i)
+    {
         doomWipeSamples[i] = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+    }
 }
 
 void Con_DrawTransition(void)
 {
-    if(isDedicated)
-        return;
-    if(!Con_TransitionInProgress())
-        return;
+    if(isDedicated) return;
+    if(!Con_TransitionInProgress()) return;
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
-    glBindTexture(GL_TEXTURE_2D, texScreenshot);
+    GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
     switch(transitionStyle)
@@ -880,7 +892,7 @@ void Con_DrawTransition(void)
         break;
     }
 
-    glDisable(GL_TEXTURE_2D);
+    GL_SetNoTexture();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

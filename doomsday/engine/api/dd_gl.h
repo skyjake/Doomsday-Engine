@@ -217,12 +217,12 @@ DGLuint         DGL_EndList(void);
 void            DGL_CallList(DGLuint list);
 void            DGL_DeleteLists(DGLuint list, int range);
 
-void            DGL_SetMaterialUI(struct material_s* mat);
 void            DGL_SetNoMaterial(void);
-void            DGL_SetPatch(patchid_t id, int wrapS, int wrapT);
+void            DGL_SetMaterialUI(struct material_s* mat, DGLint wrapS, DGLint wrapT);
+void            DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT);
 void            DGL_SetPSprite(struct material_s* mat);
 void            DGL_SetPSprite2(struct material_s* mat, int tclass, int tmap);
-void            DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
+void            DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT);
 
 void            DGL_BlendOp(int op);
 void            DGL_BlendFunc(int param1, int param2);

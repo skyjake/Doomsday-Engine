@@ -109,7 +109,6 @@ static void pageClear(fi_page_t* p)
     p->_timer = 0;
     p->flags.showBackground = true; /// Draw background by default.
     p->_bg.material = 0; // No background material.
-    p->_bg.tex = 0;
 
     if(p->_objects.vector)
     {
@@ -541,30 +540,37 @@ static void drawPageBackground(fi_page_t* p, float x, float y, float width, floa
     float light, float alpha)
 {
     vec3_t topColor, bottomColor;
-    DGLuint tex;
+    float topAlpha, bottomAlpha;
+
     if(p->_bg.material)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(p->_bg.material, spec, true);
 
-        tex = MSU_gltexture(ms, MTU_PRIMARY);
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        glEnable(GL_TEXTURE_2D);
+    }
+
+    V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
+    topAlpha = p->_bg.topColor[3].value * alpha;
+
+    V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
+    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
+
+    if(p->_bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
+    {
+        GL_BlendMode(BM_NORMAL);
     }
     else
     {
-        DGLuint glName = p->_bg.tex;
-        if(glName)
-        {
-            // Make sure the current texture will be tiled.
-            glBindTexture(GL_TEXTURE_2D, glName);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        }
-        tex = p->_bg.tex;
+        glDisable(GL_BLEND);
     }
-    V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
-    V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
-    GL_DrawRectf2TextureColor(x, y, width, height, tex, 64, 64, topColor, p->_bg.topColor[3].value * alpha, bottomColor, p->_bg.bottomColor[3].value * alpha);
+
+    GL_DrawRectf2TextureColor(x, y, width, height, 64, 64, topColor, topAlpha, bottomColor, bottomAlpha);
+
+    GL_SetNoTexture();
+    glEnable(GL_BLEND);
 }
 
 void FIPage_Drawer(fi_page_t* p)
@@ -927,9 +933,9 @@ void FIData_PicThink(fi_object_t* obj)
  * | / |
  * 2 - 3
  */
-static size_t buildGeometry(const float dimensions[3], DGLuint tex,
-    boolean flipTextureS, const float rgba[4], const float rgba2[4],
-    rvertex_t** verts, ColorRawf** colors, rtexcoord_t** coords)
+static size_t buildGeometry(const float dimensions[3], boolean flipTextureS,
+    const float rgba[4], const float rgba2[4], rvertex_t** verts,
+    ColorRawf** colors, rtexcoord_t** coords)
 {
     static rvertex_t rvertices[4];
     static ColorRawf rcolors[4];
@@ -940,13 +946,10 @@ static size_t buildGeometry(const float dimensions[3], DGLuint tex,
     V3_Set(rvertices[2].pos, 0, 1, 0);
     V3_Set(rvertices[3].pos, 1, 1, 0);
 
-    if(tex)
-    {
-        V2_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
-        V2_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
-        V2_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
-        V2_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
-    }
+    V2_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
+    V2_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
+    V2_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
+    V2_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
 
     V4_Copy(rcolors[0].rgba, rgba);
     V4_Copy(rcolors[1].rgba, rgba);
@@ -954,35 +957,24 @@ static size_t buildGeometry(const float dimensions[3], DGLuint tex,
     V4_Copy(rcolors[3].rgba, rgba2);
 
     *verts = rvertices;
-    *coords = (tex!=0? rcoords : 0);
+    *coords = rcoords;
     *colors = rcolors;
     return 4;
 }
 
-static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
+static void drawGeometry(size_t numVerts, const rvertex_t* verts,
     const ColorRawf* colors, const rtexcoord_t* coords)
 {
-    glBindTexture(GL_TEXTURE_2D, tex);
-    if(tex)
-    {
-        glEnable(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
-    }
+    size_t i;
 
     glBegin(GL_TRIANGLE_STRIP);
-    {size_t i;
     for(i = 0; i < numVerts; ++i)
     {
         if(coords) glTexCoord2fv(coords[i].st);
         if(colors) glColor4fv(colors[i].rgba);
         glVertex3fv(verts[i].pos);
-    }}
+    }
     glEnd();
-
-    if(tex)
-        glDisable(GL_TEXTURE_2D);
 }
 
 static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
@@ -992,7 +984,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2_t texScale = { 1, 1 };
     boolean showEdges = true, flipTextureS = false;
-    DGLuint glTexName = 0;
+    boolean mustPopTextureMatrix = false;
+    boolean textureEnabled = false;
     size_t numVerts;
     rvertex_t* rvertices;
     ColorRawf* rcolors;
@@ -1011,50 +1004,67 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             rawtex_t* rawTex = R_GetRawTex(f->texRef.lumpNum);
             if(rawTex)
             {
-                glTexName = GL_PrepareRawTexture(rawTex);
+                DGLuint glName = GL_PrepareRawTexture(rawTex);
                 V3_Set(offset, 0, 0, 0);
                 V3_Set(dimensions, rawTex->width, rawTex->height, 0);
+                GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
+                if(glName)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    textureEnabled = true;
+                }
             }
             break;
           }
         case PFT_XIMAGE:
-            glTexName = f->texRef.tex;
             V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, 1, 1, 0);
+            GL_BindTextureUnmanaged(f->texRef.tex, (filterUI ? GL_LINEAR : GL_NEAREST));
+            if(f->texRef.tex)
+            {
+                glEnable(GL_TEXTURE_2D);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                textureEnabled = true;
+            }
             break;
         case PFT_MATERIAL: {
             material_t* mat = f->texRef.material;
             if(mat)
             {
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                    MC_UI, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                    MC_UI, 0, filterUI? 1 : 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-                glTexName = MSU_gltexture(ms, MTU_PRIMARY);
-                if(glTexName)
+                GL_BindTexture(MST(ms, MTU_PRIMARY));
+                glEnable(GL_TEXTURE_2D);
+                textureEnabled = true;
+
                 {
-                    const texturevariantspecification_t* spec = MSU_texturespec(ms, MTU_PRIMARY);
+                const texturevariantspecification_t* spec = MSU_texturespec(ms, MTU_PRIMARY);
 
-                    /// \todo Utilize *all* properties of the Material.
-                    V3_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
-                                       ms->size.height + TS_GENERAL(spec)->border*2, 0);
-                    TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
+                /// \todo Utilize *all* properties of the Material.
+                V3_Set(dimensions, ms->size.width  + TS_GENERAL(spec)->border*2,
+                       ms->size.height + TS_GENERAL(spec)->border*2, 0);
+                TextureVariant_Coords(MST(ms, MTU_PRIMARY), &texScale[VX], &texScale[VY]);
 
-                    switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
+                switch(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))))
+                {
+                case TN_SPRITES: {
+                    patchtex_t* sTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
+                    if(sTex)
                     {
-                    case TN_SPRITES: {
-                        patchtex_t* sTex = (patchtex_t*)Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-                        if(sTex)
-                        {
-                            V3_Set(offset, sTex->offX, sTex->offY, 0);
-                            break;
-                        }
-                      }
-                        // Fall through.
-                    default:
-                        V3_Set(offset, 0, 0, 0);
+                        V3_Set(offset, sTex->offX, sTex->offY, 0);
                         break;
                     }
+                  }
+                    // Fall through.
+                default:
+                    V3_Set(offset, 0, 0, 0);
+                    break;
+                }
                 }
             }
             break;
@@ -1063,12 +1073,17 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             Texture* texture = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, f->texRef.patch));
             if(texture)
             {
+                TextureVariant* tex = GL_PreparePatchTexture(texture);
+                GL_BindTexture(tex);
+                glEnable(GL_TEXTURE_2D);
+                textureEnabled = true;
+
+                {
                 patchtex_t* pTex = (patchtex_t*)Texture_UserData(texture);
                 assert(pTex);
-
-                glTexName = (renderTextures==1? GL_PreparePatchTexture(texture) : 0);
                 V3_Set(offset, pTex->offX, pTex->offY, 0);
                 V3_Set(dimensions, Texture_Width(texture), Texture_Height(texture), 0);
+                }
             }
             break;
           }
@@ -1078,7 +1093,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 
     // If we've not chosen a texture by now set some defaults.
-    if(!glTexName)
+    /// @fixme This is some seriously funky logic... refactor or remove.
+    if(!textureEnabled)
     {
         V3_Copy(dimensions, scale);
         V3_Set(scale, 1, 1, 1);
@@ -1094,7 +1110,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, glTexName, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1120,19 +1136,20 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // Scale up our unit-geometry to the desired dimensions.
     glScalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
 
-    if(glTexName)
+    if(texScale[0] != 1 || texScale[1] != 1)
     {
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glScalef(texScale[0], texScale[1], 1);
-        glEnable(GL_TEXTURE_2D);
+        mustPopTextureMatrix = true;
     }
 
-    drawGeometry(glTexName, numVerts, rvertices, rcolors, rcoords);
+    drawGeometry(numVerts, rvertices, rcolors, rcoords);
 
-    if(glTexName)
+    GL_SetNoTexture();
+
+    if(mustPopTextureMatrix)
     {
-        glDisable(GL_TEXTURE_2D);
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
     }
