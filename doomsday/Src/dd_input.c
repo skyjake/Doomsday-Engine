@@ -398,6 +398,17 @@ void DD_PostEvent(event_t *ev)
 {
 	events[eventhead++] = *ev;
 	eventhead &= MAXEVENTS - 1;
+
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+    if(ev->type == ev_keydown)
+    {
+        // Restart timer on each key down.
+        extern float devCameraMovementStartTime;
+        extern float devCameraMovementStartTimeRealSecs;
+        devCameraMovementStartTime = sysTime;
+        devCameraMovementStartTimeRealSecs = Sys_GetSeconds();
+    }
+#endif
 }
 
 /*

@@ -35,7 +35,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+//#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
 
 /*
  * There needs to be at least this many tics per second. A smaller value

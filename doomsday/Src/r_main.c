@@ -49,6 +49,11 @@ void    R_InitSkyMap(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+float devCameraMovementStartTime = 0; // sysTime
+float devCameraMovementStartTimeRealSecs = 0;
+#endif
+
 int     viewangleoffset = 0;
 int     validcount = 1;			// increment every time a check is made
 int     framecount;				// just for profiling purposes
@@ -574,4 +579,25 @@ void R_RenderPlayerView(ddplayer_t *player)
 	{
 		Con_Printf("LumObjs: %-4i\n", numLuminous);
 	}
+
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+    {
+        static float prevPos[3] = { 0, 0, 0 };
+        static float prevSpeed = 0;
+        static float prevTime;
+        float delta[2] = { FIX2FLT(viewx) - prevPos[VX],
+                           FIX2FLT(viewy) - prevPos[VY] };
+        float speed = V2_Length(delta);
+        float time = sysTime - devCameraMovementStartTime;
+        float elapsed = time - prevTime;
+
+        Con_Message("%f,%f,%f,%f,%f\n", Sys_GetSeconds() - devCameraMovementStartTimeRealSecs,
+                    time, elapsed, speed/elapsed, speed/elapsed - prevSpeed);
+
+        prevPos[0] = FIX2FLT(viewx);
+        prevPos[1] = FIX2FLT(viewy);
+        prevSpeed = speed/elapsed;
+        prevTime = time;
+    }
+#endif
 }
