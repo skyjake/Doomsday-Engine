@@ -69,18 +69,19 @@ typedef enum {
 
 typedef struct rendmaskedwallparams_s {
     struct materialvariant_s* material;
-    blendmode_t     blendMode; // Blendmode to be used when drawing
-                               // (two sided mid textures only)
+    blendmode_t blendMode; ///< Blendmode to be used when drawing
+                               /// (two sided mid textures only)
     struct wall_vertex_s {
-        float           pos[3]; // x y and z coordinates.
-        float           color[4];
+        float pos[3]; ///< x y and z coordinates.
+        float color[4];
     } vertices[4];
-    float           texOffset[2];
-    float           length; // Precalculated 2D distance from v1 > v2
 
-    DGLuint         modTex; // Texture to modulate with.
-    float           modTexCoord[2][2]; // u and v coordinates.
-    float           modColor[4];
+    Point2Rawf texOffset;
+    float texCoord[2][2]; ///< u and v coordinates.
+
+    DGLuint modTex; ///< Texture to modulate with.
+    float modTexCoord[2][2]; ///< u and v coordinates.
+    float modColor[4];
 } rendmaskedwallparams_t;
 
 typedef struct rendspriteparams_s {
@@ -145,6 +146,11 @@ typedef struct vissprite_s {
         rendflareparams_t flare;
     } data;
 } vissprite_t;
+
+#define VS_SPRITE(v)        (&((v)->data.sprite))
+#define VS_WALL(v)          (&((v)->data.wall))
+#define VS_MODEL(v)         (&((v)->data.model))
+#define VS_FLARE(v)         (&((v)->data.flare))
 
 typedef enum {
     VPSPR_SPRITE,
