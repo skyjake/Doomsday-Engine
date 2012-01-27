@@ -691,7 +691,7 @@ DGL_Enable(DGL_TEXTURE_2D);
                     cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
 
-                    DGL_SetMaterialUI(sprInfo.material);
+                    DGL_SetMaterialUI(sprInfo.material, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
                     drawQuad(cX, cY, w, h, sprInfo.texCoord[0], sprInfo.texCoord[1], 1, 1, 1, alpha);
                 }

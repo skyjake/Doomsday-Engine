@@ -166,6 +166,39 @@ void GL_TexRegister(void)
     Textures_Register();
 }
 
+static __inline GLint glMinFilterForVariantSpec(const variantspecification_t* spec)
+{
+    assert(spec);
+    if(spec->minFilter >= 0) // Constant logical value.
+    {
+        return (spec->mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + spec->minFilter;
+    }
+    // "No class" preference.
+    return spec->mipmapped? glmode[mipmapping] : GL_LINEAR;
+}
+
+static __inline GLint glMagFilterForVariantSpec(const variantspecification_t* spec)
+{
+    assert(spec);
+    if(spec->magFilter >= 0) // Constant logical value.
+    {
+        return GL_NEAREST + spec->magFilter;
+    }
+    if(spec->magFilter == -1) // "No class" preference.
+    {
+        return glmode[texMagMode];
+    }
+    // Preference for texture class id.
+    // Just "Sprite" presently.
+    return filterSprites ? GL_LINEAR : GL_NEAREST;
+}
+
+static __inline int logicalAnisoLevelForVariantSpec(const variantspecification_t* spec)
+{
+    assert(spec);
+    return spec->anisoFilter < 0? texAniso : spec->anisoFilter;
+}
+
 static texturevariantspecification_t* unlinkVariantSpecification(texturevariantspecification_t* spec)
 {
     variantspecificationlist_t** listHead;
@@ -838,7 +871,7 @@ static TexSource loadSourceImage(Texture* tex, const texturevariantspecification
     return source;
 }
 
-static uploadcontentmethod_t prepareVariant(TextureVariant* tex, image_t* image)
+static uploadcontentmethod_t prepareVariantFromImage(TextureVariant* tex, image_t* image)
 {
     const variantspecification_t* spec = TS_GENERAL(TextureVariant_Spec(tex));
     boolean monochrome    = (spec->flags & TSF_MONOCHROME) != 0;
@@ -977,29 +1010,9 @@ static uploadcontentmethod_t prepareVariant(TextureVariant* tex, image_t* image)
         }
     }
 
-    if(spec->minFilter >= 0) // Constant logical value.
-    {
-        minFilter = (spec->mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + spec->minFilter;
-    }
-    else // "No class" preference.
-    {
-        minFilter = spec->mipmapped? glmode[mipmapping] : GL_LINEAR;
-    }
-
-    if(spec->magFilter >= 0) // Constant logical value.
-    {
-        magFilter = GL_NEAREST + spec->magFilter;
-    }
-    else if(spec->magFilter == -1) // "No class" preference.
-    {
-        magFilter = glmode[texMagMode];
-    }
-    else // Preference for texture class id.
-    {   // Just "Sprite" presently.
-        magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
-    }
-
-    anisoFilter = spec->anisoFilter < 0? texAniso : spec->anisoFilter;
+    minFilter = glMinFilterForVariantSpec(spec);
+    magFilter = glMagFilterForVariantSpec(spec);
+    anisoFilter = logicalAnisoLevelForVariantSpec(spec);
 
     /**
      * Calculate texture coordinates based on the image dimensions. The
@@ -1041,7 +1054,7 @@ static uploadcontentmethod_t prepareVariant(TextureVariant* tex, image_t* image)
     return uploadContentForVariant(chooseContentUploadMethod(&c), &c, tex);
 }
 
-static uploadcontentmethod_t prepareDetailVariant(TextureVariant* tex, image_t* image)
+static uploadcontentmethod_t prepareDetailVariantFromImage(TextureVariant* tex, image_t* image)
 {
     const detailvariantspecification_t* spec = TS_DETAIL(TextureVariant_Spec(tex));
     float baMul, hiMul, loMul, s, t;
@@ -2745,7 +2758,7 @@ DGLuint GL_PrepareFlareTexture(const Uri* uri, int oldIdx)
     return 0; // Use the automatic selection logic.
 }
 
-DGLuint GL_PreparePatchTexture(Texture* tex)
+TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
 {
     texturevariantspecification_t* texSpec;
     patchtex_t* pTex;
@@ -2763,8 +2776,13 @@ DGLuint GL_PreparePatchTexture(Texture* tex)
     texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
             0 | ((pTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
               | ((pTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-            0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
-    return GL_PrepareTexture(tex, texSpec);
+            0, 0, 0, wrapS, wrapT, 0, filterUI? 1 : 0, 0, false, false, false, false);
+    return GL_PrepareTextureVariant(tex, texSpec);
+}
+
+TextureVariant* GL_PreparePatchTexture(Texture* tex)
+{
+    return GL_PreparePatchTexture2(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
 boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean isMipMapped,
@@ -2842,12 +2860,6 @@ boolean GL_OptimalTextureSize(int width, int height, boolean noStretch, boolean 
     return noStretch;
 }
 
-static void setTextureMinMode(DGLuint tex, int minMode)
-{
-    glBindTexture(GL_TEXTURE_2D, tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMode);
-}
-
 void GL_SetRawTextureParams(int minMode)
 {
     rawtex_t** rawTexs, **ptr;
@@ -2857,7 +2869,10 @@ void GL_SetRawTextureParams(int minMode)
     {
         rawtex_t* r = (*ptr);
         if(r->tex) // Is the texture loaded?
-            setTextureMinMode(r->tex, minMode);
+        {
+            glBindTexture(GL_TEXTURE_2D, r->tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMode);
+        }
     }
     Z_Free(rawTexs);
 }
@@ -2952,6 +2967,7 @@ void GL_ReleaseTexturesForRawImages(void)
     Z_Free(rawTexs);
 }
 
+#if 0
 static int setVariantMinFilter(TextureVariant* tex, void* paramaters)
 {
     DGLuint glName = TextureVariant_GLName(tex);
@@ -2969,11 +2985,16 @@ static int setVariantMinFilterWorker(Texture* tex, void* paramaters)
     Texture_IterateVariants(tex, setVariantMinFilter, paramaters);
     return 0; // Continue iteration.
 }
+#endif
 
 void GL_SetAllTexturesMinFilter(int minFilter)
 {
     int localMinFilter = minFilter;
+    /// @fixme This is no longer correct logic. Changing the global minification
+    ///        filter should not modify the uploaded texture content.
+#if 0
     Textures_Iterate2(TN_ANY, setVariantMinFilterWorker, (void*)&localMinFilter);
+#endif
 }
 
 static void performImageAnalyses(Texture* tex, const image_t* image,
@@ -3222,8 +3243,8 @@ static boolean tryLoadImageAndPrepareVariant(Texture* tex,
     // (Re)Prepare the variant according to specification.
     switch(spec->type)
     {
-    case TST_GENERAL: uploadMethod = prepareVariant(*variant, &image); break;
-    case TST_DETAIL:  uploadMethod = prepareDetailVariant(*variant, &image); break;
+    case TST_GENERAL: uploadMethod = prepareVariantFromImage(*variant, &image); break;
+    case TST_DETAIL:  uploadMethod = prepareDetailVariantFromImage(*variant, &image); break;
     default:
         Con_Error("tryLoadImageAndPrepareVariant: Invalid spec type %i.", spec->type);
         exit(1); // Unreachable.
@@ -3274,7 +3295,7 @@ static TextureVariant* findVariantForSpec(Texture* tex,
     return variant;
 }
 
-const TextureVariant* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec,
+TextureVariant* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec,
     preparetextureresult_t* outcome)
 {
     // Have we already prepared something suitable?
@@ -3283,36 +3304,34 @@ const TextureVariant* GL_PrepareTextureVariant2(Texture* tex, texturevariantspec
     if(variant && TextureVariant_IsPrepared(variant))
     {
         if(outcome) *outcome = PTR_FOUND;
+        return variant;
     }
-    else
-    {
-        // Suffer the cache miss and attempt to (re)prepare a variant.
-        boolean loadedOk = tryLoadImageAndPrepareVariant(tex, spec, &variant);
 
-        if(outcome)
+    // Suffer the cache miss and attempt to (re)prepare a variant.
+    { boolean loadedOk = tryLoadImageAndPrepareVariant(tex, spec, &variant);
+    if(outcome)
+    {
+        if(loadedOk)
         {
-            if(loadedOk)
+            switch(TextureVariant_Source(variant))
             {
-                switch(TextureVariant_Source(variant))
-                {
-                case TEXS_ORIGINAL: *outcome = PTR_UPLOADED_ORIGINAL; break;
-                case TEXS_EXTERNAL: *outcome = PTR_UPLOADED_EXTERNAL; break;
-                default:
-                    Con_Error("GL_PrepareTextureVariant2: Unknown TexSource %i.", (int)TextureVariant_Source(variant));
-                    exit(1); // Unreachable.
-                }
-            }
-            else
-            {
-                *outcome = PTR_NOTFOUND;
+            case TEXS_ORIGINAL: *outcome = PTR_UPLOADED_ORIGINAL; break;
+            case TEXS_EXTERNAL: *outcome = PTR_UPLOADED_EXTERNAL; break;
+            default:
+                Con_Error("GL_PrepareTextureVariant2: Unknown TexSource %i.",
+                          (int)TextureVariant_Source(variant));
+                exit(1); // Unreachable.
             }
         }
-    }
-
+        else
+        {
+            *outcome = PTR_NOTFOUND;
+        }
+    }}
     return variant;
 }
 
-const TextureVariant* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec)
+TextureVariant* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTextureVariant2(tex, spec, NULL);
 }
@@ -3328,6 +3347,52 @@ DGLuint GL_PrepareTexture2(struct texture_s* tex, texturevariantspecification_t*
 DGLuint GL_PrepareTexture(struct texture_s* tex, texturevariantspecification_t* spec)
 {
     return GL_PrepareTexture2(tex, spec, NULL);
+}
+
+void GL_BindTexture(TextureVariant* tex)
+{
+    texturevariantspecification_t* spec = NULL;
+
+    if(Con_IsBusyWorker()) return;
+
+    if(tex)
+    {
+        spec = TextureVariant_Spec(tex);
+        // Ensure we've prepared this.
+        if(!TextureVariant_IsPrepared(tex))
+        {
+            TextureVariant** hndl = &tex;
+            if(!tryLoadImageAndPrepareVariant(TextureVariant_GeneralCase(tex), spec, hndl))
+            {
+                tex = NULL;
+            }
+        }
+    }
+
+    // Bind our chosen texture.
+    if(!tex)
+    {
+        GL_SetNoTexture();
+        return;
+    }
+    glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
+
+    // Apply dynamic adjustments to the GL texture state according to our spec.
+#if 0
+    /// @todo Not presently enabled because variant selection does not yet take into
+    ///       account that some properties may be set dynamically (and thus avoiding
+    ///       the need to upload another texture for e.g., wrap state changes).
+    if(spec->type == TS_GENERAL)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec)->wrapT);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(spec)));
+        if(GL_state.features.texFilterAniso)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec)));
+    }
+#endif
 }
 
 int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* paramaters)
@@ -3359,6 +3424,12 @@ void GL_ReleaseVariantTexturesBySpec(Texture* tex, texturevariantspecification_t
 {
     if(!tex) return;
     Texture_IterateVariants(tex, releaseVariantGLTexture, (void*)spec);
+}
+
+void GL_ReleaseVariantTexture(TextureVariant* tex)
+{
+    if(!tex) return;
+    releaseVariantGLTexture(tex, NULL);
 }
 
 static int releaseGLTexturesByColorPaletteWorker(Texture* tex, void* paramaters)

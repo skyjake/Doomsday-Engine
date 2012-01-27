@@ -434,7 +434,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
             MC_SPRITE, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, 0, false, true, true, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -581,14 +581,15 @@ static void selectTexUnits(int count)
  */
 void Rend_RenderMaskedWall(const rendmaskedwallparams_t* p)
 {
-    const materialsnapshot_t* ms = NULL;
     GLenum normalTarget, dynTarget;
+    TextureVariant* tex = NULL;
     boolean withDyn = false;
     int normal = 0, dyn = 1;
 
     if(renderTextures)
     {
-        ms = Materials_PrepareVariant(p->material);
+        const materialsnapshot_t* ms = Materials_PrepareVariant(p->material);
+        tex = MST(ms, MTU_PRIMARY);
     }
 
     // Do we have a dynamic light to blend with?
@@ -611,16 +612,14 @@ void Rend_RenderMaskedWall(const rendmaskedwallparams_t* p)
 
         // The dynamic light.
         glActiveTexture(IS_MUL ? GL_TEXTURE0 : GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, renderTextures ? p->modTex : 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        if(GL_state.features.texFilterAniso)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        /// @fixme modTex may be the name of a "managed" texture.
+        GL_BindTextureUnmanaged(renderTextures ? p->modTex : 0, GL_LINEAR);
 
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, p->modColor);
 
         // The actual texture.
         glActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, ms? MSU_gltexture(ms, MTU_PRIMARY) : 0);
+        GL_BindTexture(tex);
 
         withDyn = true;
     }
@@ -628,7 +627,7 @@ void Rend_RenderMaskedWall(const rendmaskedwallparams_t* p)
     {
         GL_ModulateTexture(1);
         glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, ms? MSU_gltexture(ms, MTU_PRIMARY) : 0);
+        GL_BindTexture(tex);
         normal = 0;
     }
 
@@ -984,7 +983,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
     if(ms)
     {
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
         glEnable(GL_TEXTURE_2D);
     }
     else

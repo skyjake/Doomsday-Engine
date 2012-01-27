@@ -63,7 +63,7 @@ typedef struct materialsnapshot_s {
     vec3_t shinyMinColor;
 
     /// Textures used on each texture unit.
-    const struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
+    struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
 
     /// Texture unit configuration.
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];

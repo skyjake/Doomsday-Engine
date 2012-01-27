@@ -630,24 +630,34 @@ if(glGetError() == GL_STACK_OVERFLOW)
 #endif
 }
 
-void DGL_SetMaterialUI(material_t* mat)
-{
-    GL_SetMaterialUI(mat);
-}
-
 void DGL_SetNoMaterial(void)
 {
     GL_SetNoTexture();
 }
 
-void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
+static int DGL_ToGLWrapCap(DGLint cap)
+{
+    switch(cap)
+    {
+    case DGL_CLAMP:         return GL_CLAMP;
+    case DGL_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+    case DGL_REPEAT:        return GL_REPEAT;
+    default:
+        Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
+        exit(1); // Unreachable.
+    }
+}
+
+void DGL_SetMaterialUI(material_t* mat, DGLint wrapS, DGLint wrapT)
+{
+    GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
+}
+
+void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(!tex) return;
-
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
 }
 
 void DGL_SetPSprite(material_t* mat)
@@ -660,13 +670,9 @@ void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
     GL_SetPSprite(mat, tclass, tmap);
 }
 
-void DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 {
-    GL_SetRawImage(lumpNum,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
 void DGL_PopMatrix(void)
@@ -715,7 +721,7 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
 
 int DGL_Bind(DGLuint texture)
 {
-    glBindTexture(GL_TEXTURE_2D, texture);
+    GL_BindTextureUnmanaged(texture, GL_LINEAR);
     assert(!Sys_GLCheckError());
     return 0;
 }

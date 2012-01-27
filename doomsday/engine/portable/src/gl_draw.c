@@ -161,27 +161,11 @@ void GL_DrawRectf2Color(double x, double y, double w, double h, float r, float g
     GL_DrawRectf2(x, y, w, h);
 }
 
-void GL_DrawRectf2TextureColor(double x, double y, double width, double height, DGLuint tex,
+void GL_DrawRectf2TextureColor(double x, double y, double width, double height,
     int texW, int texH, const float topColor[3], float topAlpha,
     const float bottomColor[3], float bottomAlpha)
 {
-    if(!(topAlpha > 0 || bottomAlpha > 0))
-        return;
-
-    if(tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glEnable(GL_TEXTURE_2D);
-    }
-
-    if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
-    {
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
+    if(!(topAlpha > 0 || bottomAlpha > 0)) return;
 
     glBegin(GL_QUADS);
         // Top color.
@@ -198,10 +182,6 @@ void GL_DrawRectf2TextureColor(double x, double y, double width, double height, 
         glTexCoord2f(0, height / (float) texH);
         glVertex2f(x, y + height);
     glEnd();
-
-    if(tex)
-        glDisable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
 }
 
 void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)

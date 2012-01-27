@@ -305,10 +305,6 @@ void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float 
 
 void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
 {
-    // Make sure the current texture will be tiled.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 

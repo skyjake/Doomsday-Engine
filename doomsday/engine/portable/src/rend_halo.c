@@ -352,7 +352,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
         // Don't wrap the texture. Evidently some drivers can't just

@@ -3771,7 +3771,7 @@ static void Rend_RenderBoundingBoxes(void)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

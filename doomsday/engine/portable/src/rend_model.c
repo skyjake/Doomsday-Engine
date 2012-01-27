@@ -709,7 +709,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
     blendmode_t blending;
-    DGLuint     skinTexture = 0, shinyTexture = 0;
+    TextureVariant* skinTexture = NULL, *shinyTexture = NULL;
     int         zSign = (params->mirror? -1 : 1);
 
     // Do not bother with infinitely small models...
@@ -930,7 +930,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
                     false, false, false, false);
-            shinyTexture = GL_PrepareTexture(tex, texSpec);
+            shinyTexture = GL_PrepareTextureVariant(tex, texSpec);
         }
         else
         {
@@ -1009,7 +1009,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-            skinTexture = MSU_gltexture(ms, MTU_PRIMARY);
+            skinTexture = MST(ms, MTU_PRIMARY);
         }
         else
         {
@@ -1031,7 +1031,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                     (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
                     GL_REPEAT, 1, -2, -1, true, true, false, false);
-            skinTexture = GL_PrepareTexture(tex, texSpec);
+            skinTexture = GL_PrepareTextureVariant(tex, texSpec);
         }
     }
 
@@ -1057,7 +1057,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
-            GL_BindTexture(renderTextures? skinTexture : 0, glmode[texMagMode]);
+            GL_BindTexture(renderTextures? skinTexture : 0);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1085,10 +1085,10 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_ModulateTexture(11);
 
                 glActiveTexture(GL_TEXTURE1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+                GL_BindTexture(renderTextures ? shinyTexture : 0);
 
                 glActiveTexture(GL_TEXTURE0);
-                GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
+                GL_BindTexture(renderTextures ? skinTexture : 0);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -1101,7 +1101,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             {
                 // Empty spots will get shine, too.
                 Mod_SelectTexUnits(1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+                GL_BindTexture(renderTextures ? shinyTexture : 0);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -1119,7 +1119,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         GL_ModulateTexture(10);
 
         glActiveTexture(GL_TEXTURE1);
-        GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+        GL_BindTexture(renderTextures ? shinyTexture : 0);
 
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
@@ -1127,7 +1127,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
         glActiveTexture(GL_TEXTURE0);
-        GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
+        GL_BindTexture(renderTextures ? skinTexture : 0);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,

@@ -588,7 +588,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
     if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(font));
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glLoadIdentity();
@@ -799,7 +800,6 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     float x = (float) posX, y = (float) posY;
     Point2Raw coords[4];
     RectRaw geometry;
-    DGLuint glTex;
 
     if(alignFlags & ALIGN_RIGHT)
         x -= Fonts_CharWidth(font, ch);
@@ -817,7 +817,10 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP:
-        glTex = BitmapFont_GLTextureName(font);
+        /// @fixme Filtering should be determined at a higher level.
+        /// @fixme We should not need to re-bind this texture here.
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+
         memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
         BitmapFont_CharCoords(font, ch, coords);
         break;
@@ -825,9 +828,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     case FT_BITMAPCOMPOSITE: {
         const uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
 
-        glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        GL_BindTexture(BitmapCompositeFont_CharTexture(font, ch));
         memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
-
         if(border)
         {
             geometry.origin.x -= border;
@@ -854,16 +856,12 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         geometry.size.height += font->_marginHeight*2;
     }
 
-    if(glTex)
-    {
-        /// \fixme Filtering should be determined at a higher level.
-        GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
-    }
-    else
+    GL_DrawRectWithCoords(&geometry, coords);
+
+    if(Font_Type(font) == FT_BITMAPCOMPOSITE)
     {
         GL_SetNoTexture();
     }
-    GL_DrawRectWithCoords(&geometry, coords);
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(-x, -y, 0);
@@ -884,7 +882,7 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
     w = (int) fw;
     h = (int) fh;
 
-    glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
 
     if(bright)
         GL_BlendMode(BM_ADD);

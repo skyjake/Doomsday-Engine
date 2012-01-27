@@ -1986,7 +1986,7 @@ void UI_Shade(const Point2Raw* origin, const Size2Raw* size, int border, ui_colo
         bottomAlpha = alpha;
 
     GL_BlendMode(BM_ADD);
-    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_SHADE]);
+    GL_BindTextureUnmanaged(uiTextures[UITEX_SHADE], GL_LINEAR);
     glBegin(GL_QUADS);
     for(i = 0; i < 2; ++i)
     {
@@ -2033,7 +2033,7 @@ void UI_HorizGradient(const Point2Raw* origin, const Size2Raw* size, ui_color_t*
     leftAlpha  *= uiAlpha;
     rightAlpha *= uiAlpha;
 
-    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_HINT]);
+    GL_BindTextureUnmanaged(uiTextures[UITEX_HINT], GL_LINEAR);
     glBegin(GL_QUADS);
         UI_SetColorA(left, leftAlpha);
         glTexCoord2f(0, 1);
@@ -2175,7 +2175,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     // The fill comes first, if there's one.
     if(filled)
     {
-        glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_FILL]);
+        GL_BindTextureUnmanaged(uiTextures[UITEX_FILL], GL_LINEAR);
         glBegin(GL_QUADS);
         glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
@@ -2187,7 +2187,7 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, bo
     }
     else
     {
-        glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_CORNER]);
+        GL_BindTextureUnmanaged(uiTextures[UITEX_CORNER], GL_LINEAR);
         glBegin(GL_QUADS);
     }
     if(!filled || border > 0)
@@ -2444,7 +2444,7 @@ void UI_DrawMouse(const Point2Raw* origin, const Size2Raw* size)
     assert(origin && size);
 
     glColor3f(1, 1, 1);
-    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_MOUSE]);
+    GL_BindTextureUnmanaged(uiTextures[UITEX_MOUSE], GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
@@ -2468,7 +2468,7 @@ void UI_DrawLogo(const Point2Raw* origin, const Size2Raw* size)
     rect.size.width  = size->width;
     rect.size.height = size->height;
 
-    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
+    GL_BindTextureUnmanaged(uiTextures[UITEX_LOGO], GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
     glColor4f(1, 1, 1, uiAlpha);
     GL_DrawRect(&rect);
@@ -2483,7 +2483,7 @@ void UI_DrawDDBackground(const Point2Raw* origin, const Size2Raw* size, float al
     assert(origin && size);
 
     // Background gradient picture.
-    glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_BACKGROUND]);
+    GL_BindTextureUnmanaged(uiTextures[UITEX_BACKGROUND], GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
     if(alpha < 1.0)

@@ -240,9 +240,6 @@ typedef enum {
 
 static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t setupCap)
 {
-    int magMode = GL_LINEAR;
-    DGLuint tex = 0;
-
     // Default state is no texture and no fadeout.
     rs.texSize.width = rs.texSize.height = 0;
     if(setupCap != HC_NONE)
@@ -275,19 +272,18 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
             0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE, 1, -2, -1, false, true, false, false);
         ms = Materials_Prepare(mat, spec, true);
 
-        tex     = MSU_gltexture(ms, MTU_PRIMARY);
-        magMode = MSU(ms, MTU_PRIMARY).magMode;
         rs.texSize.width = Texture_Width(MSU_texture(ms, MTU_PRIMARY));
         rs.texSize.height = Texture_Height(MSU_texture(ms, MTU_PRIMARY));
         if(rs.texSize.width && rs.texSize.height)
         {
             rs.texOffset = R_SkyLayerOffset(layer);
+            GL_BindTexture(MST(ms, MTU_PRIMARY));
         }
         else
         {
             // Disable texturing.
             rs.texSize.width = rs.texSize.height = 0;
-            tex = 0;
+            GL_SetNoTexture();
         }
 
         if(setupCap != HC_NONE)
@@ -306,14 +302,16 @@ static void configureRenderHemisphereStateForLayer(int layer, hemispherecap_t se
                           rs.capColor.blue  >= fadeoutLimit);
         }
     }
+    else
+    {
+        GL_SetNoTexture();
+    }
 
     if(setupCap != HC_NONE && !rs.fadeout)
     {
         // Default color is black.
         V3_Set(rs.capColor.rgb, 0, 0, 0);
     }
-
-    GL_BindTexture(tex, magMode);
 }
 
 /// @param flags  @see skySphereRenderFlags
