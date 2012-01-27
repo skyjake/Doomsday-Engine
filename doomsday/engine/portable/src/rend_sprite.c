@@ -937,7 +937,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     float v1[3], v2[3], v3[3], v4[3];
     Point2Rawf viewOffset = { 0, 0 }; ///< View-aligned offset to center point.
-    Size2Raw size = { 0, 0 };
+    Size2Rawf size = { 0, 0 };
     dgl_color_t quadColors[4];
     dgl_vertex_t quadNormals[4];
     boolean restoreMatrix = false;
