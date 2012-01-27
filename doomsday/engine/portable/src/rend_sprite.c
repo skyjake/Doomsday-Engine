@@ -340,7 +340,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
     flip = sprFrame->flip[0];
 
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
+        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -2, 0, false, true, true, false);
     ms = Materials_Prepare(sprFrame->mats[0], spec, true);
 
 #if _DEBUG
