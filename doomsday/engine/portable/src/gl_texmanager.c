@@ -1179,7 +1179,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
         /* TST_GENERAL */   "general",
         /* TST_DETAIL */    "detail"
     };
-    static const char* filterModeNames[] = { "sprite", "noclass", "const" };
+    static const char* filterModeNames[] = { "ui", "sprite", "noclass", "const" };
     static const char* glFilterNames[] = {
         "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
         "nearest_mipmap_linear", "linear_mipmap_linear"
@@ -1235,9 +1235,9 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
             "    minFilter:(%s|%s) magFilter:(%s|%s) anisoFilter:%i",
             textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
             (spec->flags & ~TSF_INTERNAL_MASK), spec->border,
-            filterModeNames[1 + MINMAX_OF(-1, spec->minFilter, 0)],
+            filterModeNames[2 + MINMAX_OF(-1, spec->minFilter, 0)],
             glFilterNames[glMinFilterNameIdx],
-            filterModeNames[2 + MINMAX_OF(-2, spec->magFilter, 0)],
+            filterModeNames[3 + MINMAX_OF(-3, spec->magFilter, 0)],
             glFilterNames[glMagFilterNameIdx],
             spec->anisoFilter);
         if(spec->flags & TSF_HAS_COLORPALETTE_XLAT)

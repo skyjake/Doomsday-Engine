@@ -1157,8 +1157,7 @@ static int printVariantInfo(TextureVariant* variant, void* paramaters)
     float s, t;
     assert(variantIdx);
 
-    Con_Printf("Variant #%i: Spec:%p GLName:%u\n", *variantIdx,
-               (void*)TextureVariant_Spec(variant),
+    Con_Printf("Variant #%i: GLName:%u\n", *variantIdx,
                TextureVariant_GLName(variant));
 
     TextureVariant_Coords(variant, &s, &t);
@@ -1167,6 +1166,9 @@ static int printVariantInfo(TextureVariant* variant, void* paramaters)
                TextureVariant_IsMasked(variant)  ? "yes":"no",
                TextureVariant_IsPrepared(variant)? "yes":"no",
                TextureVariant_IsUploaded(variant)? "yes":"no", s, t);
+
+    Con_Printf("  Specification: ");
+    GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
 
     ++(*variantIdx);
     return 0; // Continue iteration.
