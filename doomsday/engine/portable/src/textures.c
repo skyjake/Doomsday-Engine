@@ -1153,7 +1153,7 @@ int Textures_IterateDeclared(texturenamespaceid_t namespaceId,
 
 static int printVariantInfo(TextureVariant* variant, void* paramaters)
 {
-    uint* variantIdx = (int*)paramaters;
+    uint* variantIdx = (uint*)paramaters;
     float s, t;
     assert(variantIdx);
 

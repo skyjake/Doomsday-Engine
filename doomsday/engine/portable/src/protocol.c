@@ -339,7 +339,7 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
         {
             M_Free(huffData);
             M_Free(compData);
-            Con_Message("Protocol_Send: Compressed payload is too large (%u bytes).\n", compSize);
+            Con_Message("Protocol_Send: Compressed payload is too large (%u bytes).\n", (uint) compSize);
             return;
         }
 
