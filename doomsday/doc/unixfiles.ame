@@ -1,1 +1,21 @@
-Description of files and folders for UNIX.
+@deflist{
+
+@item{@file{~/.doomsday/}} Location for the user-specific files.
+
+@item{@file{~/.doomsday/addons/}} Directory where to put addons (WAD, PK3,
+Snowberry @file{.addon}, etc.) so that they appear in the launcher's list.
+
+@item{@file{~/.doomsday/runtime/}} Doomsday's runtime files, e.g., message log
+(@file{doomsday.out}), savegames, and screenshots.
+
+@item{@file{~/.doomsday/runtime/client.id}} Unique client identifier. Used to
+identify clients in a multiplayer game. Delete this file to generate a new
+identifier, for instance if you're getting a @dquote{duplicate ID} error.
+
+@item{@file{~/.doomsday/runtime/configs/}} Saved values for console variables
+and control bindings.
+
+@item{@file{/usr/share/doomsday/}} Read-only files for the launcher, engine
+and game plugins.
+
+}

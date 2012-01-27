@@ -21,22 +21,17 @@ PK3 files can be created with just about any ZIP program, such as
 WinZip. Just make sure all the files have the correct paths, or
 otherwise Doomsday may not be able to find them.
 
-Version 1.8.6 introduces enhancements to PK3 path handling.
-
-@list{
-
-@item Files in the root of a PK3 are subject to automatic relocation
-based on file name extension: PK3/ZIP/LMP/WAD are mapped to
-@file{Data\<Game>\Auto\} and DED goes to @file{Defs\<Game>\Auto\}.  For
-example, placing @file{test.ded} into the root of a PK3 has the same
-end result as placing @file{test.ded} into @file{Defs\<Game>\Auto\}.
-
-@item Since the automatic mapping described above only affects single
-files, it is also possible to request mapping manually by adding a
-special prefix character to the name of a directory in the root of a
-PK3. If the directory begins with @file{#}, it is mapped into
-@file{Data\<Game>\Auto\}; if it begins with @file{@@}, it is mapped into
+Files in the root of a PK3 are subject to automatic relocation based on file
+name extension: PK3/ZIP/LMP/WAD are mapped to @file{Data\<Game>\Auto\} and DED
+goes to @file{Defs\<Game>\Auto\}. For example, placing @file{test.ded} into
+the root of a PK3 has the same end result as placing @file{test.ded} into
 @file{Defs\<Game>\Auto\}.
+
+Since this automatic mapping only affects single files, it is also possible to
+request mapping manually by adding a special prefix character to the name of a
+directory in the root of a PK3. If the directory begins with @file{#}, it is
+mapped into @file{Data\<Game>\Auto\}; if it begins with @file{@@}, it is
+mapped into @file{Defs\<Game>\Auto\}.
 
 @samp{@file{#CoolStuff/Some.pk3} => @file{Data/<Game>/Auto/CoolStuff/Some.pk3}}
 
@@ -46,24 +41,40 @@ PK3. If the directory begins with @file{#}, it is mapped into
 
 @section{ Definitions and files in WADs }
 
-After all DED files have been processed, the engine will check through all the loaded WAD files for lumps named @file{DD_DEFNS}. All the lumps with that name are processed just as if they were DED files, i.e. they should contain a DED file in plain text format. The @file{DD_DEFNS} lumps are applied in the order in which they have been loaded.
+After all DED files have been processed, the engine will check through all the
+loaded WAD files for lumps named @file{DD_DEFNS}. All the lumps with that name
+are processed just as if they were DED files, i.e. they should contain a DED
+file in plain text format. The @file{DD_DEFNS} lumps are applied in the order
+in which they have been loaded.
 
-Another special lump used by Doomsday is @file{DD_DIREC}. It contains a table that translates file paths to lump names. An example is shown below:
+Another special lump used by Doomsday is @file{DD_DIREC}. It contains a table
+that translates file paths to lump names. An example is shown below:
 
 @samp{
 @pre{FILE001  /Md2/jDoom/Some.md2
 FILE002  Another.ded}
 }
 
-Each line in @file{DD_DIREC} contains a lump/path pair. The paths that begin with a (back)slash are interpreted as paths that start from the Doomsday base directory (set with @opt{-basedir}; e.g. @file{C:\Doomsday}) and paths that don't begin with a (back)slash are located in the runtime directory. The engine will first search the @file{DD_DIREC}@nsp{s} before opening any file for reading. Note, however, that all kinds of files are not loaded using the @file{DD_DIREC}@nsp{s}: for instance demos (which are compressed with the LZSS library) must always be loaded from real files.
+Each line in @file{DD_DIREC} contains a lump/path pair. The paths that begin
+with a (back)slash are interpreted as paths that start from the Doomsday base
+directory (set with @opt{-basedir}; e.g. @file{C:\Doomsday}) and paths that
+don't begin with a (back)slash are located in the runtime directory. The
+engine will first search the @file{DD_DIREC}@nsp{s} before opening any file
+for reading. Note, however, that all kinds of files are not loaded using the
+@file{DD_DIREC}@nsp{s}: for instance demos (which are compressed with the LZSS
+library) must always be loaded from real files.
 
-I've written a simple utility for automatically creating a WAD file that contains the current directory and all its subdirectories plus a @file{DD_DIREC} lump that has (with a high probability) a unique lump name for each file. You could invoke the utility like this:
+skyjake has created a simple utility for automatically creating a WAD file
+that contains the current directory and all its subdirectories plus a
+@file{DD_DIREC} lump that has (with a high probability) a unique lump name for
+each file. You can invoke the utility like this:
 
 @samp{@cmd{ wadtool myfiles.wad /Data/jDoom/Textures/ }}
 
 This would create a WAD file that contains all the files from the current
 directory. When writing the @file{DD_DIREC} table, the prefix
-"/Data/jDoom/Textures/" would be added to each file name.
+"/Data/jDoom/Textures/" would be added to each file name. @cmd{wadtool} is
+available in the Doomsday source repository under @file{/tools/wadtool}.
 
 
 
@@ -86,13 +97,11 @@ will also be loaded.
 
 @section{ Virtual directory mapping }
 
-Version 1.8.7 introduces virtual directory mappings, which allows you
-to make the contents of one directory appear inside another directory
-at runtime.  For example, you could have a directory called
-@file{MyAuto} with a set of data files somewhere on your hard drive.
-You could map this directory to @file{Data/<Game>/Auto}, which would
-cause @file{MyAuto} to behave as though it was an auto-loading
-directory.
+Virtual directory mapping allows you to make the contents of one directory
+appear inside another directory at runtime. For example, you could have a
+directory called @file{MyAuto} with a set of data files somewhere on your hard
+drive. You could map this directory to @file{Data/<Game>/Auto}, which would
+cause @file{MyAuto} to behave as though it was an auto-loading directory.
 
 A virtual directory mapping is defined using the @opt{-vdmap} option.
 It takes the source and destination directories as parameters.  For
@@ -312,57 +321,102 @@ directory from which the textures are searched.
 
 @section{ Patches }
 
-Patches are images that are commonly used in game menus and intermission screens. Like textures, patches can be replaced with TGA, PNG or PCX images. The @file{Patches} resource class directory is searched using the lump names of the original patches. For example, to replace the Doom menu title, you would place the file @file{m_doom.png} to the @file{Patches} directory.
+Patches are images that are commonly used in game menus and intermission
+screens. Like textures, patches can be replaced with TGA, PNG or PCX images.
+The @file{Patches} resource class directory is searched using the lump names
+of the original patches. For example, to replace the Doom menu title, you
+would place the file @file{m_doom.png} to the @file{Patches} directory.
 
-The original data lumps are required even if an external resource is found, because the original data includes information about offsets and the on-screen size of the patch. This means the image from the external resource can be of any arbitrary resolution: it will be scaled to match the original patch.
+The original data lumps are required even if an external resource is found,
+because the original data includes information about offsets and the on-screen
+size of the patch. This means the image from the external resource can be of
+any arbitrary resolution: it will be scaled to match the original patch.
 
-Currently external patch resources are not precached, which may cause slight delays when the patches are first loaded.
+Currently external patch resources are not precached, which may cause slight
+delays when the patches are first loaded.
 
 
 
 @section{ Sprite frames }
 
-Sprite frames are patches. They can be replaced with external resources just like all other patches. The same restrictions apply, though: the dimensions of the external resource do not affect the actual size of the sprite frame. This means the external resources must really be @em{high-resolution} versions of the original images. Otherwise the size and/or aspect ratio will not be right for the resource.
+Sprite frames are patches. They can be replaced with external resources just
+like all other patches. The same restrictions apply, though: the dimensions of
+the external resource do not affect the actual size of the sprite frame. This
+means the external resources must really be @em{high-resolution} versions of
+the original images. Otherwise the size and/or aspect ratio will not be right
+for the resource.
 
-For example, in order to replace the Doom medikit (lump name MEDIA0), one would place the file @file{media0.png} into the @file{Patches} directory.
+For example, in order to replace the Doom medikit (lump name MEDIA0), one
+would place the file @file{media0.png} into the @file{Patches} directory.
 
-Color-mapped versions of sprite frames can have external resources, too. To indicate that a resource is color-mapped, its name is formed like this:
+Color-mapped versions of sprite frames can have external resources, too. To
+indicate that a resource is color-mapped, its name is formed like this:
 
 @ind{@file{(patchName)-table(classNum)(tableNum).ext}}
 
-@file{(patchName)} is the sprite frame lump name. @file{(classNum)} is the number of the color translation class. This number is always zero in jDoom and jHeretic. In jHexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage). @file{tableNum} is the index number of the color translation table. jDoom and jHeretic have 4 tables, jHexen has 8. For example: @file{playa1-table01-ck.png} would be the Doom player sprite frame A1 with color table 1. The @file{-ck} suffix makes the image color keyed (i.e. special colors indicate transparent pixels).
+@file{(patchName)} is the sprite frame lump name. @file{(classNum)} is the
+number of the color translation class. This number is always zero in jDoom and
+jHeretic. In jHexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage).
+@file{tableNum} is the index number of the color translation table. jDoom and
+jHeretic have 4 tables, jHexen has 8. For example:
+@file{playa1-table01-ck.png} would be the Doom player sprite frame A1 with
+color table 1. The @file{-ck} suffix makes the image color keyed (i.e. special
+colors indicate transparent pixels).
 
 
 
 @section { Raw screens }
 
-Some background pictures are in the raw screen format, which is used to store 320 x 200 pixel paletted images. A lump containing a raw screen image (for example Heretic's TITLEPIC) is exactly 320 x 200 = 64000 bytes long. Raw screens can be replaced with external resources in the @file{Patches} directory.
+Some background pictures are in the raw screen format, which is used to store
+320 x 200 pixel paletted images. A lump containing a raw screen image (for
+example Heretic's TITLEPIC) is exactly 320 x 200 = 64000 bytes long. Raw
+screens can be replaced with external resources in the @file{Patches}
+directory.
 
 
 
 @section{ Light maps }
 
-Light maps are monochrome images that can be used with dynamic lights. The dimensions of a light map must be powers of two, for example 256 x 256. If the map contains an alpha channel, the actual color values are ignored; only the alpha values are significant. If the map doesn't have an alpha channel, one is generated by averaging the color values of the image.
+Light maps are monochrome images that can be used with dynamic lights. The
+dimensions of a light map must be powers of two, for example 256 x 256. If the
+map contains an alpha channel, the actual color values are ignored; only the
+alpha values are significant. If the map doesn't have an alpha channel, one is
+generated by averaging the color values of the image.
 
-Example: If you assign the light map "Round" to a light source, images with that file name are searched from the @file{LightMaps} directory. The accepted image formats are PCX, TGA and PNG. If @file{Round.pcx}, @file{Round.tga} or @file{Round.png} is found, it will be loaded.
+Example: If you assign the light map "Round" to a light source, images with
+that file name are searched from the @file{LightMaps} directory. The accepted
+image formats are PCX, TGA and PNG. If @file{Round.pcx}, @file{Round.tga} or
+@file{Round.png} is found, it will be loaded.
 
 
 
 @section{ Music }
 
-Doomsday can play various external music files using the @link{FMOD library}{http://www.fmod.org/}. FMOD supports many music file formats including MP3, OGG, MOD and S3M (mods are a good choice due
-to their good quality/size ratio). External music files can be played at
-any time using the @cmd{playext} console command.
+Doomsday can play various external music files using the @link{FMOD
+library}{http://www.fmod.org/}. FMOD supports many music file formats
+including MP3, OGG, MOD and S3M (mods are a good choice due to their good
+quality/size ratio). External music files can be played at any time using the
+@cmd{playext} console command.
 
-@notice{
-	On some systems, using FMOD with Doomsday has caused lock-ups or other unwanted behavior. If this appears to be the case for you, you should disable FMOD with the @opt{-nofmod} option. However, this will also make it impossible to play external music files such as MP3s.
-}
+@notice{ On some systems, using FMOD with Doomsday has caused lock-ups or
+other unwanted behavior. If this appears to be the case for you, you should
+disable FMOD with the @opt{-nofmod} option. However, this will also make it
+impossible to play external music files such as MP3s. }
 
-Like other external resources, placing a music file into the @file{Music} resource class directory is enough. The file name must match the lump name of the original music data lump. For example, to replace the music for Doom's first episode's second map, the file @file{d_e1m2.mp3} would be placed in the @file{Music} directory.
+Like other external resources, placing a music file into the @file{Music}
+resource class directory is enough. The file name must match the lump name of
+the original music data lump. For example, to replace the music for Doom's
+first episode's second map, the file @file{d_e1m2.mp3} would be placed in the
+@file{Music} directory.
 
-It is also possible to store music files into a WAD. Again, you must name the lumps so that they match the lumps of the original songs, and are thus loaded instead of them. Any music files supported by FMOD can be loaded from a WAD.
+It is also possible to store music files into a WAD. Again, you must name the
+lumps so that they match the lumps of the original songs, and are thus loaded
+instead of them. Any music files supported by FMOD can be loaded from a WAD.
 
-Another way to specify an external resource file is to use the @opt{Ext} key of a Music definition (in Audio.ded). An example of editing the definitions: You have a terrific song called @file{song.mp3} and you'd like to hear it instead of Doom's regular "e1m2".
+Another way to specify an external resource file is to use the @opt{Ext} key
+of a Music definition (in Audio.ded). An example of editing the definitions:
+You have a terrific song called @file{song.mp3} and you'd like to hear it
+instead of Doom's regular "e1m2".
 
 @list/enum{
 @item The first thing to decide is whether you want to play the
@@ -378,9 +432,16 @@ a bunch of Music definitions, including:
 
 @code{Music @{ ID = "e1m2"; Lump = "D_E1M2"; @} }
 
-In order to make the change persist over version upgrades (each one will overwrite @file{Audio.ded}) copy the definition to @file{User.ded} in the @file{ Defs\jDoom\ } directory, or create a new DED file with any name you like in the @file{ Defs\jDoom\Auto\ } directory. Everything in the @file{Auto} directory will be read automatically. If @file{User.ded} doesn't exist, just create a new file for it.
+In order to make the change persist over version upgrades (each one will
+overwrite @file{Audio.ded}) copy the definition to @file{User.ded} in the
+@file{ Defs\jDoom\ } directory, or create a new DED file with any name you
+like in the @file{ Defs\jDoom\Auto\ } directory. Everything in the @file{Auto}
+directory will be read automatically. If @file{User.ded} doesn't exist, just
+create a new file for it.
 
-@item Now you have the new Music definition, and the only thing left is to let the engine know which file it should load when the song "e1m2" is played. Edit your definition by adding the @opt{Ext} key:
+@item Now you have the new Music definition, and the only thing left is to let
+the engine know which file it should load when the song "e1m2" is played. Edit
+your definition by adding the @opt{Ext} key:
 
 @ind{@pre{Music @{
   ID = "e1m2"; Lump = "D_E1M2";
@@ -397,8 +458,14 @@ key:
 
 @section{ Sound effects }
 
-Sound samples can be replaced with WAV files. The supported formats are 8-bit and 16-bit mono PCM with no compression. The @file{Sfx} resource class directory is searched using the lump names of the original samples. For example, to replace jDoom's rocket launcher sound, the file @file{dsrlaunc.wav} would be placed in the @file{Sfx} directory.
+Sound samples can be replaced with WAV files. The supported formats are 8-bit
+and 16-bit mono PCM with no compression. The @file{Sfx} resource class
+directory is searched using the lump names of the original samples. For
+example, to replace jDoom's rocket launcher sound, the file
+@file{dsrlaunc.wav} would be placed in the @file{Sfx} directory.
 
-Another way to specify an external resource file is to use the Sound definition @opt{Ext} key.
+Another way to specify an external resource file is to use the Sound
+definition @opt{Ext} key.
 
-Doomsday will automatically detect the format of a sample if it's loaded from a WAD file, making it possible to compile a WAD out of WAV samples.
+Doomsday will automatically detect the format of a sample if it's loaded from
+a WAD file, making it possible to compile a WAD out of WAV samples.
