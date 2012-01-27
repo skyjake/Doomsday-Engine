@@ -46,6 +46,7 @@
 #define CCF_STAGED              0x4
 #define CCF_REPEAT              0x8
 #define CCF_SIDESTEP_MODIFIER   0x10
+#define CCF_MULTIPLAYER         0x20
 
 #define SMALL_SCALE             .75f
 
@@ -162,20 +163,20 @@ static mndata_bindings_t controlConfig[] =
 #endif
 
     { "Chat" },
-    { "Open Chat", 0, 0, "beginchat" },
+    { "Open Chat", 0, 0, "beginchat", CCF_MULTIPLAYER },
 
 #if __JDOOM__ || __JDOOM64__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Indigo Chat", 0, 0, "beginchat 1" },
-    { "Brown Chat", 0, 0, "beginchat 2" },
-    { "Red Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Indigo Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Brown Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
 #if __JHERETIC__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Yellow Chat", 0, 0, "beginchat 1" },
-    { "Red Chat", 0, 0, "beginchat 2" },
-    { "Blue Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Yellow Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Blue Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
     { "Send Message", "chat", 0, "chatcomplete" },
@@ -709,7 +710,8 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 
         if(binds->command)
         {
-            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], binds->command);
+            const char* extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
+            sprintf(cmd, "bindevent {%s:%s%s} {%s}", bindContext, &symbol[5], extraCondition, binds->command);
 
             // Check for repeats.
             if(binds->flags & CCF_REPEAT)

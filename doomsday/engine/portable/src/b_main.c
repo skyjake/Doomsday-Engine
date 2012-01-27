@@ -186,7 +186,7 @@ void B_Init(void)
     B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
 
     // Game contexts.
-    // FIXME: Obviously belong to the game, so shouldn't be here.
+    /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
     B_NewContext("map");
     B_NewContext("map-freepan");
     B_AcquireAll(B_NewContext("menu"), true);
