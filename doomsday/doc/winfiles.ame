@@ -1,2 +1,5 @@
-Description of files and folders for Windows.
+Your runtime files are stored in a folder called @file{Doomsday Frontend} in
+the @file{Documents} folder. The following noteworthy files and folders can be
+found inside:
 
+@include{runtimefiles}
