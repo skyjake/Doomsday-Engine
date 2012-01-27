@@ -220,23 +220,6 @@ void Net_SendBuffer(int toPlayer, int spFlags)
 {
     assert(!Msg_BeingWritten()); // Must finish writing before calling this.
 
-    /*
-#ifdef _DEBUG
-    {
-        char* buf = M_Calloc(netBuffer.length * 3 + 1);
-        int i;
-        for(i = 0; i < netBuffer.length; ++i)
-        {
-            char tmp[10];
-            sprintf(tmp, "%02x ", netBuffer.msg.data[i]);
-            strcat(buf, tmp);
-        }
-        Con_Message("Net_SendBuffer: [%i] %s\n", netBuffer.length, buf);
-        M_Free(buf);
-    }
-#endif
-    */
-
     // Don't send anything during demo playback.
     if(playback)
         return;
