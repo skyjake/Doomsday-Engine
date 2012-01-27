@@ -299,7 +299,7 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     /// @todo We can be a bit cleverer here...
     if(a->context != b->context) return 0;
     if(a->flags != b->flags) return 0;
-    //if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
+    if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
     //if(a->magFilter != b->magFilter) return 0;
     //if(a->anisoFilter != b->anisoFilter) return 0;
     if(a->mipmapped != b->mipmapped) return 0;
