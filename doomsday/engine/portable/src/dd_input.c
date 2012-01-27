@@ -982,7 +982,7 @@ void DD_ProcessEvents(timespan_t ticLength)
 void DD_ProcessSharpEvents(timespan_t ticLength)
 {
     // Sharp ticks may have some events queued on the side.
-    if(DD_IsSharpTick())
+    if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
     {
         dispatchEvents(&sharpQueue, ticLength);
     }
