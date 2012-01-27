@@ -1235,7 +1235,7 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
             "    minFilter:(%s|%s) magFilter:(%s|%s) anisoFilter:%i",
             textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1],
             (spec->flags & ~TSF_INTERNAL_MASK), spec->border,
-            filterModeNames[2 + MINMAX_OF(-1, spec->minFilter, 0)],
+            filterModeNames[3 + MINMAX_OF(-1, spec->minFilter, 0)],
             glFilterNames[glMinFilterNameIdx],
             filterModeNames[3 + MINMAX_OF(-3, spec->magFilter, 0)],
             glFilterNames[glMagFilterNameIdx],

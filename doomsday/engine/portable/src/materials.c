@@ -1134,7 +1134,7 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
 }
 
 static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* texture,
-    blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
+    blendmode_t blendMode, float sScale, float tScale, float sOffset,
     float tOffset, float opacity)
 {
     rtexmapunit_t* tu;
@@ -1142,9 +1142,9 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* textur
 
     ms->textures[unit] = texture;
     tu = &ms->units[unit];
-    tu->tex = (texture? TextureVariant_GLName(texture) : 0);
+    tu->texture.variant = texture;
+    tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
     tu->blendMode = blendMode;
-    tu->magMode = magMode;
     V2_Set(tu->scale, sScale, tScale);
     V2_Set(tu->offset, sOffset, tOffset);
     tu->opacity = MINMAX_OF(0, opacity, 1);
@@ -1266,7 +1266,6 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         const float tScale = 1.f / snapshot->size.height;
 
         setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL,
-            snapshot->units[MTU_PRIMARY].magMode,
             sScale, tScale, MaterialVariant_Layer(variant, 0)->texOrigin[0],
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
     }
@@ -1291,7 +1290,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
                 scale *= detailScale;
 
             setTexUnit(snapshot, MTU_DETAIL, tex, BM_NORMAL,
-                texMagMode?GL_LINEAR:GL_NEAREST, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+                       1.f / width * scale, 1.f / height * scale, 0, 0, 1);
         }
 
         // Setup the shiny texture units?
@@ -1301,7 +1300,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             const blendmode_t blendmode = Material_ShinyBlendmode(mat);
             const float strength = Material_ShinyStrength(mat);
 
-            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, GL_LINEAR, 1, 1, 0, 0, strength);
+            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, 1, 1, 0, 0, strength);
         }
 
         if(texUnits[MTU_REFLECTION_MASK].tex)
@@ -1309,7 +1308,6 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
             setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                snapshot->units[MTU_PRIMARY].magMode,
                 1.f / (snapshot->size.width * Texture_Width(TextureVariant_GeneralCase(tex))),
                 1.f / (snapshot->size.height * Texture_Height(TextureVariant_GeneralCase(tex))),
                 snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);

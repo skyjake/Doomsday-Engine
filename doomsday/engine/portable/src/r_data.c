@@ -44,6 +44,7 @@
 #include "colorpalette.h"
 #include "texture.h"
 #include "materialvariant.h"
+#include "texturevariant.h"
 #include "font.h"
 
 // MACROS ------------------------------------------------------------------
@@ -752,10 +753,9 @@ rtexcoord_t* R_AllocRendTexCoords(uint num)
  */
 void R_FreeRendVertices(rvertex_t* rvertices)
 {
-    uint                i;
+    uint i;
 
-    if(!rvertices)
-        return;
+    if(!rvertices) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -778,10 +778,9 @@ void R_FreeRendVertices(rvertex_t* rvertices)
  */
 void R_FreeRendColors(ColorRawf* rcolors)
 {
-    uint                i;
+    uint i;
 
-    if(!rcolors)
-        return;
+    if(!rcolors) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -804,10 +803,9 @@ void R_FreeRendColors(ColorRawf* rcolors)
  */
 void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 {
-    uint                i;
+    uint i;
 
-    if(!rtexcoords)
-        return;
+    if(!rtexcoords) return;
 
     for(i = 0; i < numrendpolys; ++i)
     {
@@ -825,12 +823,20 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 void Rtu_Init(rtexmapunit_t* rtu)
 {
     assert(rtu);
-    rtu->tex = 0;
-    rtu->magMode = GL_LINEAR;
+    rtu->texture.glName = 0;
+    rtu->texture.magMode = GL_LINEAR;
+    rtu->texture.flags = 0;
     rtu->blendMode = BM_NORMAL;
     rtu->opacity = 1;
     rtu->scale[0] = rtu->scale[1] = 1;
     rtu->offset[0] = rtu->offset[1] = 0;
+}
+
+boolean Rtu_HasTexture(const rtexmapunit_t* rtu)
+{
+    if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
+        return TextureVariant_GLName(rtu->texture.variant) != 0;
+    return rtu->texture.glName != 0;
 }
 
 void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)

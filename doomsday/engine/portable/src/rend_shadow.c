@@ -174,7 +174,7 @@ void Rend_RenderMobjShadows(void)
 
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
-    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
 
     // Initialize the invariant parts of our shadow primitive now.
     initShadowPrimitive();
@@ -304,7 +304,7 @@ void Rend_RenderShadowProjections(uint listIdx, rendershadowprojectionparams_t* 
 {
     // Configure the render list primitive writer's texture unit state now.
     RL_LoadDefaultRtus();
-    RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
+    RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(LST_DYNAMIC));
 
     // Write shadows to the render lists.
     R_IterateShadowProjections2(listIdx, RIT_RenderShadowProjectionIterator, (void*)p);

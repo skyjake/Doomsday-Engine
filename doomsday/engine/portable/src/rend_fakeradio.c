@@ -991,7 +991,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
     {
         // Write multiple polys depending on rend params.
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(p->texture));
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(p->texture));
 
         if(divs)
         {
