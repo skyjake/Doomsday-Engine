@@ -286,48 +286,40 @@ static texturevariantspecification_t* copyDetailVariantSpecification(
 }
 
 /**
- * \note Minification, Magnification and Anisotropic filter variance is
- * handled through dynamic changes to GL's texture environment state.
- * Consequently they are ignored here.
+ * @todo Magnification, Anisotropic filter level and GL texture wrap modes
+ * will be handled through dynamic changes to GL's texture environment state.
+ * Consequently they should be ignored here.
  */
 static int compareVariantSpecifications(const variantspecification_t* a,
     const variantspecification_t* b)
 {
-    /// \todo We can be a bit cleverer here...
-    if(a->context != b->context)
-        return 1;
-    if(a->flags   != b->flags)
-        return 1;
-    if(a->wrapS   != b->wrapS || a->wrapT != b->wrapT)
-        return 1;
-    if(a->mipmapped != b->mipmapped)
-        return 1;
-    if(a->noStretch != b->noStretch)
-        return 1;
-    if(a->gammaCorrection != b->gammaCorrection)
-        return 1;
-    if(a->toAlpha != b->toAlpha)
-        return 1;
-    if(a->border  != b->border)
-        return 1;
+    /// @todo We can be a bit cleverer here...
+    if(a->context != b->context) return 0;
+    if(a->flags != b->flags) return 0;
+    if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
+    if(a->magFilter != b->magFilter) return 0;
+    if(a->anisoFilter != b->anisoFilter) return 0;
+    if(a->mipmapped != b->mipmapped) return 0;
+    if(a->noStretch != b->noStretch) return 0;
+    if(a->gammaCorrection != b->gammaCorrection) return 0;
+    if(a->toAlpha != b->toAlpha) return 0;
+    if(a->border != b->border) return 0;
     if(a->flags & TSF_HAS_COLORPALETTE_XLAT)
     {
         const colorpalettetranslationspecification_t* cptA = a->translated;
         const colorpalettetranslationspecification_t* cptB = b->translated;
         assert(cptA && cptB);
-        if(cptA->tClass != cptB->tClass)
-            return 1;
-        if(cptA->tMap   != cptB->tMap)
-            return 1;
+        if(cptA->tClass != cptB->tClass) return 0;
+        if(cptA->tMap != cptB->tMap) return 0;
     }
-    return 0; // Equal.
+    return 1; // Equal.
 }
 
 static int compareDetailVariantSpecifications(const detailvariantspecification_t* a,
     const detailvariantspecification_t* b)
 {
-    if(a->contrast != b->contrast) return 1;
-    return 0; // Equal.
+    if(a->contrast != b->contrast) return 0;
+    return 1; // Equal.
 }
 
 static colorpalettetranslationspecification_t* applyColorPaletteTranslationSpecification(
@@ -448,7 +440,7 @@ static texturevariantspecification_t* findVariantSpecification(
     // Do we already have a concrete version of the template specification?
     for(; node; node = node->next)
     {
-        if(!GL_CompareTextureVariantSpecifications(node->spec, tpl))
+        if(GL_CompareTextureVariantSpecifications(node->spec, tpl))
             return node->spec;
     }
 
@@ -606,14 +598,16 @@ static int chooseVariantWorker(TextureVariant* variant, void* context)
     {
     case METHOD_MATCH:
         if(cand == p->spec)
-        {   // This is the one we're looking for.
+        {
+            // This is the one we're looking for.
             p->chosen = variant;
             return 1; // Stop iteration.
         }
         break;
     case METHOD_FUZZY:
-        if(!GL_CompareTextureVariantSpecifications(cand, p->spec))
-        {   // This will do fine.
+        if(GL_CompareTextureVariantSpecifications(cand, p->spec))
+        {
+            // This will do fine.
             p->chosen = variant;
             return 1; // Stop iteration.
         }
@@ -1151,15 +1145,15 @@ int GL_CompareTextureVariantSpecifications(const texturevariantspecification_t* 
     const texturevariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b) return 0;
-    if(a->type != b->type) return 1;
+    if(a == b) return 1;
+    if(a->type != b->type) return 0;
     switch(a->type)
     {
     case TST_GENERAL: return compareVariantSpecifications(TS_GENERAL(a), TS_GENERAL(b));
     case TST_DETAIL:  return compareDetailVariantSpecifications(TS_DETAIL(a), TS_DETAIL(b));
     }
     Con_Error("GL_CompareTextureVariantSpecifications: Invalid type %i.", (int) a->type);
-    return 1; // Unreachable.
+    exit(1); // Unreachable.
 }
 
 void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* baseSpec)
@@ -3382,7 +3376,7 @@ void GL_BindTexture(TextureVariant* tex)
     /// @todo Not presently enabled because variant selection does not yet take into
     ///       account that some properties may be set dynamically (and thus avoiding
     ///       the need to upload another texture for e.g., wrap state changes).
-    if(spec->type == TS_GENERAL)
+    if(spec->type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, TS_GENERAL(spec)->wrapT);
@@ -3390,7 +3384,7 @@ void GL_BindTexture(TextureVariant* tex)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(spec)));
         if(GL_state.features.texFilterAniso)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec)));
+                            GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
     }
 #endif
 }

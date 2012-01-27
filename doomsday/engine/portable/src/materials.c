@@ -305,8 +305,8 @@ static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b) return 0;
-    if(a->context != b->context) return 1;
+    if(a == b) return 1;
+    if(a->context != b->context) return 0;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
 }
 
@@ -344,7 +344,7 @@ static materialvariantspecification_t* findVariantSpecification(
     materialvariantspecificationlist_node_t* node;
     for(node = variantSpecs; node; node = node->next)
     {
-        if(!compareVariantSpecifications(node->spec, tpl))
+        if(compareVariantSpecifications(node->spec, tpl))
             return node->spec;
     }
     if(!canCreate)
@@ -404,7 +404,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
     assert(p);
 
-    if(!compareVariantSpecifications(cand, p->spec))
+    if(compareVariantSpecifications(cand, p->spec))
     {
         // This will do fine.
         p->chosen = variant;
