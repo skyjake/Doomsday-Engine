@@ -106,6 +106,8 @@ static int lastFrameCount;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
 
+static float realFrameTimePos = 0;
+
 // CODE --------------------------------------------------------------------
 
 /**
@@ -323,24 +325,25 @@ boolean DD_IsSharpTick(void)
 }
 
 /**
- * This is the main ticker of the engine. We'll call all the other tickers
- * from here.
- *
- * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
+ * Determines whether frame time is advancing.
  */
-void DD_Ticker(timespan_t time)
+boolean DD_IsFrameTimeAdvancing(void)
 {
-    static float realFrameTimePos = 0;
+    if(Con_TransitionInProgress()) return false;
+    return tickFrame || netGame;
+}
 
-    // Sharp ticks are the ones that occur 35 per second. The rest are interpolated
-    // (smoothed) somewhere in between.
+void DD_CheckSharpTick(timespan_t time)
+{
+    // Sharp ticks are the ones that occur 35 per second. The rest are
+    // interpolated (smoothed) somewhere in between.
     tickIsSharp = false;
 
-    if(!Con_TransitionInProgress() && (tickFrame || netGame)) // Advance frametime?
+    if(DD_IsFrameTimeAdvancing())
     {
         /**
-         * realFrameTimePos will be reduced when new sharp world positions are calculated,
-         * so that frametime always stays within the range 0..1.
+         * realFrameTimePos will be reduced when new sharp world positions are
+         * calculated, so that frametime always stays within the range 0..1.
          */
         realFrameTimePos += time * TICSPERSEC;
 
@@ -349,7 +352,19 @@ void DD_Ticker(timespan_t time)
         {
             tickIsSharp = true;
         }
+    }
+}
 
+/**
+ * This is the main ticker of the engine. We'll call all the other tickers
+ * from here.
+ *
+ * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
+ */
+void DD_Ticker(timespan_t time)
+{
+    if(DD_IsFrameTimeAdvancing())
+    {
         // Demo ticker. Does stuff like smoothing of view angles.
         Demo_Ticker(time);
         P_Ticker(time);
@@ -374,10 +389,8 @@ void DD_Ticker(timespan_t time)
 
         if(DD_IsSharpTick())
         {
-            // A new 35 Hz tick begins.
             // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
-            //assert(realFrameTimePos < 1);
 
             // Camera smoothing: now that the world tic has occurred, the next sharp
             // position can be processed.
@@ -404,14 +417,17 @@ void DD_Ticker(timespan_t time)
 
         // While paused, don't modify frametime so things keep still.
         if(!clientPaused)
+        {
             frameTimePos = realFrameTimePos;
+        }
     }
 
     // Console is always ticking.
     Con_Ticker(time);
 
+    // User interface ticks.
     if(tickUI)
-    {   // User interface ticks.
+    {
         UI_Ticker(time);
     }
 
@@ -520,11 +536,18 @@ void DD_RunTics(void)
         ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
         frameTime -= ticLength;
 
+        // Will this be a sharp tick?
+        DD_CheckSharpTick(ticLength);
+
         // Process input events.
         DD_ProcessEvents(ticLength);
 
         // Call all the tickers.
         DD_Ticker(ticLength);
+
+        // Some events are only processed during sharp tics.
+        // This is done after tickers for compatibility with ye olde game logic.
+        DD_ProcessSharpEvents(ticLength);
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);

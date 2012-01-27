@@ -1440,6 +1440,7 @@ int DD_Main(void)
         ASSERT_32BIT(float32);
 #ifdef __64BIT__
         ASSERT_64BIT(ptr);
+        ASSERT_64BIT(int64_t);
 #else
         ASSERT_NOT_64BIT(ptr);
 #endif
