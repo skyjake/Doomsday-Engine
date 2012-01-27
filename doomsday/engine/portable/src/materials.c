@@ -1262,15 +1262,11 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     if(texUnits[MTU_PRIMARY].tex)
     {
         TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
-        int magMode = glmode[texMagMode];
-        float sScale, tScale;
+        const float sScale = 1.f / snapshot->size.width;
+        const float tScale = 1.f / snapshot->size.height;
 
-        if(TN_SPRITES == Textures_Namespace(Textures_Id(TextureVariant_GeneralCase(tex))))
-            magMode = filterSprites? GL_LINEAR : GL_NEAREST;
-        sScale = 1.f / snapshot->size.width;
-        tScale = 1.f / snapshot->size.height;
-
-        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL, magMode,
+        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL,
+            snapshot->units[MTU_PRIMARY].magMode,
             sScale, tScale, MaterialVariant_Layer(variant, 0)->texOrigin[0],
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
     }

@@ -1035,7 +1035,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             if(mat)
             {
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                    MC_UI, 0, filterUI? 1 : 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                    MC_UI, 0, -3, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
                 GL_BindTexture(MST(ms, MTU_PRIMARY));

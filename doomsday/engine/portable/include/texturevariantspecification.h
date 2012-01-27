@@ -117,6 +117,7 @@ typedef struct {
      * user's preference for that class) or a constant value.
      *
      * Texture class:
+     * -3: UI class
      * -2: Sprite class
      * -1: No class
      *

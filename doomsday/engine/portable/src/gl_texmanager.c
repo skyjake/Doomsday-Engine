@@ -184,13 +184,16 @@ static __inline GLint glMagFilterForVariantSpec(const variantspecification_t* sp
     {
         return GL_NEAREST + spec->magFilter;
     }
-    if(spec->magFilter == -1) // "No class" preference.
+    // Preference for texture class id.
+    switch(abs(spec->magFilter)-1)
     {
+    case 1: // Sprite class.
+        return filterSprites? GL_LINEAR : GL_NEAREST;
+    case 2: // UI class.
+        return filterUI? GL_LINEAR : GL_NEAREST;
+    default: // "No class" preference.
         return glmode[texMagMode];
     }
-    // Preference for texture class id.
-    // Just "Sprite" presently.
-    return filterSprites ? GL_LINEAR : GL_NEAREST;
 }
 
 static __inline int logicalAnisoLevelForVariantSpec(const variantspecification_t* spec)
@@ -296,9 +299,9 @@ static int compareVariantSpecifications(const variantspecification_t* a,
     /// @todo We can be a bit cleverer here...
     if(a->context != b->context) return 0;
     if(a->flags != b->flags) return 0;
-    if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
-    if(a->magFilter != b->magFilter) return 0;
-    if(a->anisoFilter != b->anisoFilter) return 0;
+    //if(a->wrapS != b->wrapS || a->wrapT != b->wrapT) return 0;
+    //if(a->magFilter != b->magFilter) return 0;
+    //if(a->anisoFilter != b->anisoFilter) return 0;
     if(a->mipmapped != b->mipmapped) return 0;
     if(a->noStretch != b->noStretch) return 0;
     if(a->gammaCorrection != b->gammaCorrection) return 0;
@@ -355,7 +358,7 @@ static variantspecification_t* applyVariantSpecification(
     spec->wrapS = wrapS;
     spec->wrapT = wrapT;
     spec->minFilter = MINMAX_OF(-1, minFilter, spec->mipmapped? 3:1);
-    spec->magFilter = MINMAX_OF(-2, magFilter, 1);
+    spec->magFilter = MINMAX_OF(-3, magFilter, 1);
     spec->anisoFilter = MINMAX_OF(-1, anisoFilter, 4);
     spec->gammaCorrection = gammaCorrection;
     spec->noStretch = noStretch;
@@ -1212,13 +1215,20 @@ void GL_PrintTextureVariantSpecification(const texturevariantspecification_t* ba
         {
             glMagFilterNameIdx = spec->magFilter;
         }
-        else if(spec->magFilter == -1) // "No class" preference.
+        else
         {
-            glMagFilterNameIdx = texMagMode;
-        }
-        else // Preference for texture class id.
-        {   // Just sprites presently.
-            glMagFilterNameIdx = filterSprites;
+            // Preference for texture class id.
+            switch(abs(spec->magFilter)-1)
+            {
+            default: // "No class" preference.
+                glMagFilterNameIdx = texMagMode; break;
+
+            case 1: // "Sprite" class.
+                glMagFilterNameIdx = filterSprites; break;
+
+            case 2: // "UI" class.
+                glMagFilterNameIdx = filterUI; break;
+            }
         }
 
         Con_Printf(" context:%s flags:%i border:%i\n"
@@ -2770,7 +2780,7 @@ TextureVariant* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT)
     texSpec = GL_TextureVariantSpecificationForContext(TC_UI,
             0 | ((pTex->flags & PF_MONOCHROME)         ? TSF_MONOCHROME : 0)
               | ((pTex->flags & PF_UPSCALE_AND_SHARPEN)? TSF_UPSCALE_AND_SHARPEN : 0),
-            0, 0, 0, wrapS, wrapT, 0, filterUI? 1 : 0, 0, false, false, false, false);
+            0, 0, 0, wrapS, wrapT, 0, -3, 0, false, false, false, false);
     return GL_PrepareTextureVariant(tex, texSpec);
 }
 
@@ -3372,10 +3382,6 @@ void GL_BindTexture(TextureVariant* tex)
     glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-#if 0
-    /// @todo Not presently enabled because variant selection does not yet take into
-    ///       account that some properties may be set dynamically (and thus avoiding
-    ///       the need to upload another texture for e.g., wrap state changes).
     if(spec->type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, TS_GENERAL(spec)->wrapS);
@@ -3386,7 +3392,6 @@ void GL_BindTexture(TextureVariant* tex)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
     }
-#endif
 }
 
 int GL_ReleaseGLTexturesByTexture2(Texture* tex, void* paramaters)
