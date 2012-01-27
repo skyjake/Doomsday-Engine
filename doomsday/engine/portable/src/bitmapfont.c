@@ -523,7 +523,7 @@ static __inline texturevariantspecification_t* BitmapCompositeFont_CharSpec(void
 {
     return GL_TextureVariantSpecificationForContext(
                 TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, filterUI? 1 : 0, 0, false, false, false, false);
 }
 
 void BitmapCompositeFont_Prepare(font_t* font)
