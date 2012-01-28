@@ -26,8 +26,6 @@
  * Common routines for refresh.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <assert.h>
 #include <math.h>
 #include <string.h>
@@ -51,28 +49,13 @@
 
 #include "r_common.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+Size2Rawf viewScale = { 1, 1 };
+float aspectScale = 1;
 
 static int gammaLevel;
 #ifndef __JHEXEN__
 char gammamsg[5][81];
 #endif
-
-// CODE --------------------------------------------------------------------
 
 void R_PrecachePSprites(void)
 {
@@ -240,7 +223,14 @@ void R_ResizeViewWindow(int flags)
 int R_UpdateViewport(int hookType, int param, void* data)
 {
     const ddhook_viewport_reshape_t* p = (ddhook_viewport_reshape_t*)data;
+
     resizeViewWindow(param, &p->geometry, &p->oldGeometry, false);
+
+    // Calculate fixed 320x200 scale factors.
+    viewScale.width  = (float)p->geometry.size.width  / SCREENWIDTH;
+    viewScale.height = (float)p->geometry.size.height / SCREENHEIGHT;
+    aspectScale = p->geometry.size.width >= p->geometry.size.height? viewScale.width : viewScale.height;
+
     return true;
 }
 

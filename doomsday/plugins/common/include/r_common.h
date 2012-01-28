@@ -25,6 +25,8 @@
 #ifndef LIBCOMMON_REFRESH_H
 #define LIBCOMMON_REFRESH_H
 
+#include "doomsday.h"
+
 // Translate between fixed screen dimensions to actual, current.
 #define FIXXTOSCREENX(x) (portSize.width * ((x) / (float) SCREENWIDTH))
 #define FIXYTOSCREENY(y) (portSize.height * ((y) / (float) SCREENHEIGHT))
@@ -38,6 +40,11 @@
 #define RWF_FORCE               0x1 /// Update regardless of tracked state.
 #define RWF_NO_LERP             0x2 /// Do not interpolate.
 ///@}
+
+/// Globally visible view scale factors which translate between the dimensions
+/// of viewports and the legacy 320x200 fixed coordinate space.
+extern Size2Rawf viewScale;
+extern float aspectScale;
 
 /**
  * @param flags  @ref resizeViewWindowFlags
