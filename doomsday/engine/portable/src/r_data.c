@@ -823,8 +823,8 @@ void R_FreeRendTexCoords(rtexcoord_t* rtexcoords)
 void Rtu_Init(rtexmapunit_t* rtu)
 {
     assert(rtu);
-    rtu->texture.glName = 0;
-    rtu->texture.magMode = GL_LINEAR;
+    rtu->texture.gl.name = 0;
+    rtu->texture.gl.magMode = GL_LINEAR;
     rtu->texture.flags = 0;
     rtu->blendMode = BM_NORMAL;
     rtu->opacity = 1;
@@ -836,7 +836,7 @@ boolean Rtu_HasTexture(const rtexmapunit_t* rtu)
 {
     if(rtu->texture.flags & TUF_TEXTURE_IS_MANAGED)
         return TextureVariant_GLName(rtu->texture.variant) != 0;
-    return rtu->texture.glName != 0;
+    return rtu->texture.gl.name != 0;
 }
 
 void Rtu_SetScale(rtexmapunit_t* rtu, float s, float t)

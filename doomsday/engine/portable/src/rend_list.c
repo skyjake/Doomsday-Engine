@@ -302,7 +302,7 @@ static __inline boolean unitHasTexture(const rtexmapunit_texture_t* tu)
 {
     if(tu->flags & TUF_TEXTURE_IS_MANAGED)
         return TextureVariant_GLName(tu->variant) != 0;
-    return tu->glName != 0;
+    return tu->gl.name != 0;
 }
 
 static __inline ushort unitHashForTexture(const rtexmapunit_texture_t* tu)
@@ -314,7 +314,7 @@ static __inline ushort unitHashForTexture(const rtexmapunit_texture_t* tu)
     }
     else
     {
-        glName = tu->glName;
+        glName = tu->gl.name;
     }
     return glName % RL_HASH_SIZE;
 }
@@ -330,8 +330,8 @@ static boolean compareUnitTexture(const rtexmapunit_texture_t* ltu,
     }
     else
     {
-        if(ltu->glName  != rtu->glName)  return false;
-        if(ltu->magMode != rtu->magMode) return false;
+        if(ltu->gl.name != rtu->gl.name)  return false;
+        if(ltu->gl.magMode != rtu->gl.magMode) return false;
     }
     return true;
 }
@@ -379,7 +379,7 @@ static void rlBind(const rendlist_texmapunit_t* tmu)
     }
     if(!(tmu->texture.flags & TUF_TEXTURE_IS_MANAGED))
     {
-        rlBindUnmanaged(tmu->texture.glName, tmu->texture.magMode);
+        rlBindUnmanaged(tmu->texture.gl.name, tmu->texture.gl.magMode);
         return;
     }
 
@@ -508,7 +508,7 @@ static void destroyList(rendlist_t* rl)
 #endif
 
     rl->cursor = NULL;
-    TU(rl, TU_INTER_DETAIL)->texture.glName = 0;
+    TU(rl, TU_INTER_DETAIL)->texture.gl.name = 0;
     TU(rl, TU_INTER_DETAIL)->texture.flags = 0;
     rl->last = NULL;
     rl->size = 0;
@@ -571,11 +571,11 @@ static void rewindList(rendlist_t* rl)
     rl->last = NULL;
 
     // The interpolation target must be explicitly set (in RL_AddPoly).
-    TU(rl, TU_INTER)->texture.glName = 0;
+    TU(rl, TU_INTER)->texture.gl.name = 0;
     TU(rl, TU_INTER)->texture.flags = 0;
     TU(rl, TU_INTER)->opacity = 0;
 
-    TU(rl, TU_INTER_DETAIL)->texture.glName = 0;
+    TU(rl, TU_INTER_DETAIL)->texture.gl.name = 0;
     TU(rl, TU_INTER_DETAIL)->texture.flags = 0;
     TU(rl, TU_INTER_DETAIL)->opacity = 0;
 }
@@ -1147,7 +1147,7 @@ void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName)
 {
     errorIfNotValidRTUIndex(idx, "RL_Rtu_SetTextureUnmanaged");
     copyMappedRtuToState(idx);
-    rtuState[idx].texture.glName = glName;
+    rtuState[idx].texture.gl.name = glName;
     rtuState[idx].texture.flags &= ~TUF_TEXTURE_IS_MANAGED;
 }
 

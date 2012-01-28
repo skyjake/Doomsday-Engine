@@ -62,9 +62,13 @@ struct font_s;
 ///@}
 
 typedef struct rtexmapunit_texture_s {
-    DGLuint glName; ///< Texture used on this layer (if any).
-    int magMode; ///< GL texture magnification filter.
-    struct texturevariant_s* variant;
+    union {
+        struct {
+            DGLuint name; ///< Texture used on this layer (if any).
+            int magMode; ///< GL texture magnification filter.
+        } gl;
+        struct texturevariant_s* variant;
+    };
     /// @ref textureUnitFlags
     int flags;
 } rtexmapunit_texture_t;
