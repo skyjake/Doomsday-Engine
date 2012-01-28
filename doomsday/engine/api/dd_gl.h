@@ -203,8 +203,14 @@ void            DGL_Ortho(float left, float top, float right, float bottom, floa
 /**
  * @note Coordinates are in viewport space.
  */
-void DGL_Scissor(const RectRaw* rect);
-void DGL_Scissor2(int x, int y, int width, int height);
+/**
+ * Change the current viewport scissor region.
+ * @note This only sets the geometry. To enable the scissor use DGL_Enable(DGL_SCISSOR_TEST).
+ *
+ * @param rect  Geometry of the new scissor region. Coordinates are in viewport space.
+ */
+void DGL_SetScissor(const RectRaw* rect);
+void DGL_SetScissor2(int x, int y, int width, int height);
 
 void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);

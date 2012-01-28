@@ -1282,7 +1282,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
 #endif
 
     // Setup the scissor clipper.
-    /// \todo Do this in the UI module.
+    /// @todo Do this in the UI module.
     {
     RectRaw clipRegion;
     Size2Raw portSize;
@@ -1293,21 +1293,20 @@ static void setupGLStateForMap(uiwidget_t* obj)
     clipRegion.size.width  = .5f + FIXXTOSCREENX(geometry.size.width  - am->border*2);
     clipRegion.size.height = .5f + FIXYTOSCREENY(geometry.size.height - am->border*2);
 
-    DGL_Scissor(clipRegion.origin.x, clipRegion.origin.y,
-                clipRegion.size.width, clipRegion.size.height);
+    DGL_SetScissor(&clipRegion);
     DGL_Enable(DGL_SCISSOR_TEST);
     }
 }
 
 /**
- * Restores the previous gl draw state
+ * Restores the previous GL draw state
  */
 static void restoreGLStateFromMap(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     if(!am->scissorState[0])
         DGL_Disable(DGL_SCISSOR_TEST);
-    DGL_Scissor(am->scissorState[1], am->scissorState[2], am->scissorState[3], am->scissorState[4]);
+    DGL_SetScissor(&am->scissorRegion);
 }
 
 static void renderVertexes(uiwidget_t* obj)
