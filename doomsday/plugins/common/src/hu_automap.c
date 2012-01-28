@@ -1090,7 +1090,7 @@ static void positionPointInView(uiwidget_t* obj, float point[2],
 /**
  * Draws all the points marked by the player.
  */
-static void drawMarkedPoints(uiwidget_t* obj)
+static void drawMarkedPoints(uiwidget_t* obj, float scale)
 {
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
@@ -1116,8 +1116,8 @@ static void drawMarkedPoints(uiwidget_t* obj)
         if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL)) continue;
         if(!R_GetPatchInfo(pPointMarkers[i], &info)) continue;
 
-        w = info.geometry.size.width  * stom;
-        h = info.geometry.size.height * stom;
+        w = info.geometry.size.width  * stom * scale;
+        h = info.geometry.size.height * stom * scale;
 
         positionPointInView(obj, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
@@ -1523,7 +1523,7 @@ DGL_End();
 
     restoreGLStateFromMap(obj);
 
-    drawMarkedPoints(obj);
+    drawMarkedPoints(obj, aspectScale);
 
     // Return to the normal GL state.
     DGL_MatrixMode(DGL_MODELVIEW);
