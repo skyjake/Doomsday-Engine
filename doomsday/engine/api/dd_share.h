@@ -1140,7 +1140,8 @@ typedef struct {
     int availWidth, availHeight;
     boolean alignHorizontal; /// @c false= align vertically instead.
     float scaleFactor;
-    int scissorState[5];
+    int scissorState;
+    RectRaw scissorRegion;
 } borderedprojectionstate_t;
 
 //------------------------------------------------------------------------

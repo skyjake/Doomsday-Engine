@@ -1156,8 +1156,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
 
     // Check for scissor box (to clip the map lines and stuff).
     // Store the old scissor state.
-    DGL_GetIntegerv(DGL_SCISSOR_TEST, am->scissorState);
-    DGL_GetIntegerv(DGL_SCISSOR_BOX, am->scissorState + 1);
+    am->scissorState = DGL_GetInteger(DGL_SCISSOR_TEST);
+    DGL_Scissor(&am->scissorRegion);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1304,7 +1304,8 @@ static void setupGLStateForMap(uiwidget_t* obj)
 static void restoreGLStateFromMap(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    if(!am->scissorState[0])
+    // Restore the previous scissor state.
+    if(!am->scissorState)
         DGL_Disable(DGL_SCISSOR_TEST);
     DGL_SetScissor(&am->scissorRegion);
 }

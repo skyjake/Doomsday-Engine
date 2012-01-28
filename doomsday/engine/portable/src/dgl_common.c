@@ -364,6 +364,22 @@ void DGL_SetScissor2(int x, int y, int width, int height)
     DGL_SetScissor(&rect);
 }
 
+void DGL_Scissor(RectRaw* rect)
+{
+    GLint v[4];
+
+    if(!rect) return;
+
+    glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
+    // Y is flipped.
+    v[1] = FLIP(v[1] + v[3] - 1);
+
+    rect->origin.x = v[0];
+    rect->origin.y = v[1];
+    rect->size.width  = v[2];
+    rect->size.height = v[3];
+}
+
 boolean DGL_GetIntegerv(int name, int* v)
 {
     float color[4];
@@ -377,11 +393,6 @@ boolean DGL_GetIntegerv(int name, int* v)
 
     case DGL_SCISSOR_TEST:
         glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
-        break;
-
-    case DGL_SCISSOR_BOX:
-        glGetIntegerv(GL_SCISSOR_BOX, (GLint*) v);
-        v[1] = FLIP(v[1] + v[3] - 1);
         break;
 
     case DGL_FOG:

@@ -36,8 +36,7 @@
 
 enum {
     // Values
-    DGL_SCISSOR_BOX,
-    DGL_ACTIVE_TEXTURE,
+    DGL_ACTIVE_TEXTURE = 1,
 
     DGL_CURRENT_COLOR_R,
     DGL_CURRENT_COLOR_G,
@@ -201,8 +200,10 @@ boolean         DGL_SetFloat(int name, float value);
 void            DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar);
 
 /**
- * @note Coordinates are in viewport space.
+ * Retrieve the current dimensions of the viewport scissor region.
  */
+void DGL_Scissor(RectRaw* rect);
+
 /**
  * Change the current viewport scissor region.
  * @note This only sets the geometry. To enable the scissor use DGL_Enable(DGL_SCISSOR_TEST).

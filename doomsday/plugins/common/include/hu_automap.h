@@ -59,7 +59,8 @@ typedef struct {
 
 typedef struct {
     automapcfg_t* mcfg;
-    int scissorState[5];
+    int scissorState;
+    RectRaw scissorRegion;
 
 // DGL display lists:
     DGLuint lists[NUM_MAP_OBJECTLISTS]; // Each list contains one or more of given type of automap obj.
