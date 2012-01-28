@@ -140,7 +140,7 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
         needWidth = yScale * ST_WIDTH;
         if(needWidth > geom.size.width)
             fscale *= (float)geom.size.width/needWidth;
-        statusBarHeight = floor(ST_HEIGHT * fscale);
+        statusBarHeight = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * fscale);
 #endif
 
         if(cfg.screenBlocks != 10)
