@@ -115,7 +115,7 @@ static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
     const RectRaw* oldGeometry, boolean interpolate)
 {
-    RectRaw geom;
+    RectRaw window;
     assert(newGeometry);
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -124,43 +124,45 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
         exit(1); // Unreachable.
     }
 
-    memcpy(&geom, newGeometry, sizeof(geom));
-    geom.origin.x = geom.origin.y = 0;
+    // Calculate fixed 320x200 scale factors.
+    viewScale.width  = (float)newGeometry->size.width  / SCREENWIDTH;
+    viewScale.height = (float)newGeometry->size.height / SCREENHEIGHT;
+    aspectScale = newGeometry->size.width >= newGeometry->size.height? viewScale.width : viewScale.height;
+
+    // Determine view window geometry.
+    memcpy(&window, newGeometry, sizeof(window));
+    window.origin.x = window.origin.y = 0;
 
     // Override @c cfg.screenBlocks and force a maximized window?
     if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
     {
-        Size2Rawf viewScale;
         Size2Raw statusBarSize;
-
-        viewScale.width  = (float)geom.size.width  / SCREENWIDTH;
-        viewScale.height = (float)geom.size.height / SCREENHEIGHT;
-        calcStatusBarSize(&statusBarSize, &viewScale, geom.size.width);
+        calcStatusBarSize(&statusBarSize, &viewScale, newGeometry->size.width);
 
         if(cfg.screenBlocks != 10)
         {
-            geom.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
-            geom.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
+            window.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
+            window.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
 
-            geom.origin.x = (SCREENWIDTH - geom.size.width) / 2;
-            geom.origin.y = (SCREENHEIGHT - statusBarSize.height - geom.size.height) / 2;
+            window.origin.x = (SCREENWIDTH - window.size.width) / 2;
+            window.origin.y = (SCREENHEIGHT - statusBarSize.height - window.size.height) / 2;
         }
         else
         {
-            geom.origin.x = 0;
-            geom.origin.y = 0;
-            geom.size.width  = SCREENWIDTH;
-            geom.size.height = SCREENHEIGHT - statusBarSize.height;
+            window.origin.x = 0;
+            window.origin.y = 0;
+            window.size.width  = SCREENWIDTH;
+            window.size.height = SCREENHEIGHT - statusBarSize.height;
         }
 
         // Scale from fixed to viewport coordinates.
-        geom.origin.x = ROUND(geom.origin.x * viewScale.width);
-        geom.origin.y = ROUND(geom.origin.y * viewScale.height);
-        geom.size.width  = ROUND(geom.size.width  * viewScale.width);
-        geom.size.height = ROUND(geom.size.height * viewScale.height);
+        window.origin.x = ROUND(window.origin.x * viewScale.width);
+        window.origin.y = ROUND(window.origin.y * viewScale.height);
+        window.size.width  = ROUND(window.size.width  * viewScale.width);
+        window.size.height = ROUND(window.size.height * viewScale.height);
     }
 
-    R_SetViewWindowGeometry(player, &geom, interpolate);
+    R_SetViewWindowGeometry(player, &window, interpolate);
 }
 
 void R_ResizeViewWindow(int flags)
@@ -223,14 +225,7 @@ void R_ResizeViewWindow(int flags)
 int R_UpdateViewport(int hookType, int param, void* data)
 {
     const ddhook_viewport_reshape_t* p = (ddhook_viewport_reshape_t*)data;
-
     resizeViewWindow(param, &p->geometry, &p->oldGeometry, false);
-
-    // Calculate fixed 320x200 scale factors.
-    viewScale.width  = (float)p->geometry.size.width  / SCREENWIDTH;
-    viewScale.height = (float)p->geometry.size.height / SCREENHEIGHT;
-    aspectScale = p->geometry.size.width >= p->geometry.size.height? viewScale.width : viewScale.height;
-
     return true;
 }
 
