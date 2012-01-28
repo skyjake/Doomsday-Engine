@@ -44,13 +44,19 @@ extern boolean freezeMapRLs;
  * of the current map with navigational interface.
  */
 
-// Automap flags:
+#define UIAUTOMAP_BORDER        4 ///< In fixed 320x200 pixels.
+
+/**
+ * @defgroup uiautomapFlags  UIAutomap Flags
+ */
+///@{
 #define AMF_REND_THINGS         0x01
 #define AMF_REND_KEYS           0x02
 #define AMF_REND_ALLLINES       0x04
 #define AMF_REND_SPECIALLINES   0x08
 #define AMF_REND_VERTEXES       0x10
 #define AMF_REND_LINE_NORMALS   0x20
+///@}
 
 // Mapped point of interest.
 typedef struct {
@@ -90,9 +96,6 @@ typedef struct {
 // Paramaters for render:
     float alpha, targetAlpha, oldAlpha;
     float alphaTimer;
-
-// Automap window border (in screen space):
-    float border;
 
 // Viewer location on the map:
     float viewTimer;

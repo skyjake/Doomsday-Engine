@@ -1284,14 +1284,14 @@ static void setupGLStateForMap(uiwidget_t* obj)
     // Setup the scissor clipper.
     /// @todo Do this in the UI module.
     {
+    const int border = .5f + UIAUTOMAP_BORDER * aspectScale;
     RectRaw clipRegion;
-    Size2Raw portSize;
 
-    R_ViewPortSize(obj->player, &portSize);
-    clipRegion.origin.x = .5f + FIXXTOSCREENX(geometry.origin.x  + am->border);
-    clipRegion.origin.y = .5f + FIXYTOSCREENY(geometry.origin.y  + am->border);
-    clipRegion.size.width  = .5f + FIXXTOSCREENX(geometry.size.width  - am->border*2);
-    clipRegion.size.height = .5f + FIXYTOSCREENY(geometry.size.height - am->border*2);
+    Rect_Raw(UIWidget_Geometry(obj), &clipRegion);
+    clipRegion.origin.x += border;
+    clipRegion.origin.y += border;
+    clipRegion.size.width  -= 2 * border;
+    clipRegion.size.height -= 2 * border;
 
     DGL_SetScissor(&clipRegion);
     DGL_Enable(DGL_SCISSOR_TEST);
@@ -1447,6 +1447,8 @@ DGL_End();
 
     if(amMaskTexture)
     {
+        const int border = .5f + UIAUTOMAP_BORDER * aspectScale;
+
         DGL_Bind(amMaskTexture);
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1456,10 +1458,10 @@ DGL_End();
         DGL_LoadIdentity();
 
         DGL_PushMatrix();
-        DGL_Scalef(1.f / (geometry.size.width  - am->border*2),
-                   1.f / (geometry.size.height - am->border*2), 1);
-        DGL_Translatef(geometry.size.width  /2 - am->border,
-                       geometry.size.height /2 - am->border, 0);
+        DGL_Scalef(1.f / (geometry.size.width  - border*2),
+                   1.f / (geometry.size.height - border*2), 1);
+        DGL_Translatef(geometry.size.width  /2 - border,
+                       geometry.size.height /2 - border, 0);
         DGL_Rotatef(-angle, 0, 0, 1);
         DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
         DGL_Translatef(-vx, -vy, 0);
@@ -1738,36 +1740,34 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     am->scaleMTOF = scale;
     am->scaleFTOM = 1.0f / am->scaleMTOF;
 
-    // Calculate border (viewport coordinate space).
-    am->border = 4;
-
     /**
-     * Calculate the am coordinates of the rotated view window.
+     * Calculate the coordinates of the rotated view window.
      */
+    // Determine fixed to screen space scaling factors.
     {
     float viewPoint[2], rads, viewWidth, viewHeight;
+    const int border = .5f + UIAUTOMAP_BORDER * aspectScale;
 
-    // Determine the dimensions of the view window in am coordinates.
-    viewWidth  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry)  - (am->border*2));
-    viewHeight = UIAutomap_FrameToMap(obj, Rect_Height(obj->geometry) - (am->border*2));
+    viewWidth  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry)  - border*2);
+    viewHeight = UIAutomap_FrameToMap(obj, Rect_Height(obj->geometry) - border*2);
     am->topLeft[0]     = am->bottomLeft[0] = -viewWidth/2;
     am->topLeft[1]     = am->topRight[1]   =  viewHeight/2;
     am->bottomRight[0] = am->topRight[0]   =  viewWidth/2;
     am->bottomRight[1] = am->bottomLeft[1] = -viewHeight/2;
 
-    // Apply am rotation.
+    // Apply rotation.
     rads = (float)(am->angle / 360 * 2 * PI);
     V2_Rotate(am->topLeft,     rads);
     V2_Rotate(am->bottomRight, rads);
     V2_Rotate(am->bottomLeft,  rads);
     V2_Rotate(am->topRight,    rads);
 
-    // Translate to the viewpoint.
+    // Translate to the view point.
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
-    am->topLeft[0]     += viewPoint[0]; am->topLeft[1]     += viewPoint[1];
-    am->bottomRight[0] += viewPoint[0]; am->bottomRight[1] += viewPoint[1];
-    am->bottomLeft[0]  += viewPoint[0]; am->bottomLeft[1]  += viewPoint[1];
-    am->topRight[0]    += viewPoint[0]; am->topRight[1]    += viewPoint[1];
+    V2_Sum(am->topLeft,     am->topLeft,     viewPoint);
+    V2_Sum(am->bottomRight, am->bottomRight, viewPoint);
+    V2_Sum(am->bottomLeft,  am->bottomLeft,  viewPoint);
+    V2_Sum(am->topRight,    am->topRight,    viewPoint);
     }
 
     width  = UIAutomap_FrameToMap(obj, Rect_Width(obj->geometry));
