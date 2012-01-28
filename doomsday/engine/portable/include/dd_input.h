@@ -163,7 +163,6 @@ typedef struct inputdev_s {
     inputdevhat_t *hats;
 } inputdev_t;
 
-extern boolean  ignoreInput;
 extern int      repWait1, repWait2;
 extern int      keyRepeatDelay1, keyRepeatDelay2;   // milliseconds
 extern boolean  shiftDown, altDown;
@@ -173,6 +172,7 @@ void        DD_InitInput(void);
 void        DD_ShutdownInput(void);
 void        DD_StartInput(void);
 void        DD_StopInput(void);
+boolean     DD_IgnoreInput(boolean ignore);
 
 void        DD_ReadKeyboard(void);
 void        DD_ReadMouse(timespan_t ticLength);

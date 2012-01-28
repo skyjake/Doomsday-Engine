@@ -76,11 +76,11 @@ D_CMD(ListInputDevices);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void postEvents(timespan_t ticLength);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean ignoreInput = false;
 
 int     mouseFilter = 1;        // Filtering on by default.
 
@@ -93,6 +93,8 @@ boolean shiftDown = false, altDown = false;
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean ignoreInput = false;
 
 static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
 
@@ -545,7 +547,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 
     if(a->type == IDAT_STICK)
         a->position = pos; //a->realPosition;
-    else // Cumulative.
+    else if(!ignoreInput) // Cumulative.
         a->position += pos; //a->realPosition;
 
     // We can clear the expiration when it returns to default state.
@@ -741,6 +743,23 @@ static void clearQueue(eventqueue_t* q)
     q->head = q->tail;
 }
 
+boolean DD_IgnoreInput(boolean ignore)
+{
+    boolean old = ignoreInput;
+    ignoreInput = ignore;
+#ifdef _DEBUG
+    Con_Message("DD_IgnoreInput: ignoring=%i\n", ignore);
+#endif
+    if(!ignore)
+    {
+        // Clear all the event buffers.
+        postEvents(0);
+        DD_ClearEvents();
+        DD_ClearKeyRepeaters();
+    }
+    return old;
+}
+
 /**
  * Clear the input event queue.
  */
@@ -911,11 +930,11 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
     {
         event_t ev;
 
-        if(ignoreInput)
-            continue;
-
         // Update the state of the input device tracking table.
         I_TrackInput(ddev, ticLength);
+
+        if(ignoreInput)
+            continue;
 
         DD_ConvertEvent(ddev, &ev);
 
@@ -1208,7 +1227,7 @@ void DD_ReadMouse(timespan_t ticLength)
     xpos = mouse.x;
     ypos = mouse.y;
 
-    if(mouseFilter > 0)
+    if(ticLength > 0 && mouseFilter > 0)
     {
         // Filtering ensures that events are sent more evenly on each frame.
         static float accumulation[2] = { 0, 0 };

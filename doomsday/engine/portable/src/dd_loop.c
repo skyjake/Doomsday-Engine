@@ -329,6 +329,7 @@ boolean DD_IsSharpTick(void)
  */
 boolean DD_IsFrameTimeAdvancing(void)
 {
+    if(Con_IsBusy()) return false;
     if(Con_TransitionInProgress()) return false;
     return tickFrame || netGame;
 }

@@ -552,7 +552,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
         PostQuitMessage(0);
-        ignoreInput = TRUE;
+        DD_IgnoreInput(true);
         forwardMsg = FALSE;
         break;
 
@@ -605,12 +605,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
-                ignoreInput = FALSE;
+                DD_IgnoreInput(false);
             }
             else
             {
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-                ignoreInput = TRUE;
+                DD_IgnoreInput(true);
             }
         }
         forwardMsg = FALSE;

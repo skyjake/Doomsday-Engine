@@ -106,6 +106,7 @@ static boolean animatedTransitionActive(int busyMode)
 int Con_Busy2(BusyTask* task)
 {
     boolean willAnimateTransition;
+    boolean wasIgnoringInput;
     int result;
 
     if(!task) return 0;
@@ -126,10 +127,9 @@ int Con_Busy2(BusyTask* task)
         Con_Error("Con_Busy: Already busy.\n");
     }
 
-    // Activate the UI binding context so that any and all accumulated input
-    // events are discarded when done.
-    DD_ClearKeyRepeaters();
-    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), true);
+    // Discard input events so that any and all accumulated input
+    // events are ignored.
+    wasIgnoringInput = DD_IgnoreInput(true);
 
     Sys_Lock(busy_Mutex);
     busyDone = false;
@@ -166,13 +166,7 @@ int Con_Busy2(BusyTask* task)
         Con_AbnormalShutdown((const char*) busyError);
     }
 
-    if(!transitionInProgress)
-    {
-        // Clear any input events that might have accumulated whilst busy.
-        DD_ClearEvents();
-        B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
-    }
-    else
+    if(transitionInProgress)
     {
         transitionStartTime = Sys_GetTime();
         transitionPosition = 0;
@@ -191,6 +185,8 @@ int Con_Busy2(BusyTask* task)
     {
         GL_ProcessDeferredTasks(0);
     }
+
+    DD_IgnoreInput(wasIgnoringInput);
 
     return result;
 }
@@ -444,6 +440,9 @@ static void Con_BusyLoop(void)
         Sys_Lock(busy_Mutex);
         busyDoneCopy = busyDone;
         Sys_Unlock(busy_Mutex);
+
+        // Post and discard all input events.
+        DD_ProcessEvents(0);
 
         Sys_Sleep(20);
 
