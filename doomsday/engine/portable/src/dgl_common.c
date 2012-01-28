@@ -348,15 +348,26 @@ void GL_SetMultisample(boolean on)
 #endif
 }
 
-void DGL_Scissor(int x, int y, int width, int height)
+void DGL_Scissor(const RectRaw* rect)
 {
-    glScissor(x, FLIP(y + height - 1), width, height);
+    if(!rect) return;
+    glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
 
-boolean DGL_GetIntegerv(int name, int *v)
+void DGL_Scissor2(int x, int y, int width, int height)
 {
-    int         i;
-    float       color[4];
+    RectRaw rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = width;
+    rect.size.height = height;
+    DGL_Scissor(&rect);
+}
+
+boolean DGL_GetIntegerv(int name, int* v)
+{
+    float color[4];
+    int i;
 
     switch(name)
     {

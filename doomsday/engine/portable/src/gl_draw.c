@@ -385,7 +385,7 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
             int w = .5f + (bp->availWidth - bp->width * bp->scaleFactor) / 2;
             DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
             DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
-            DGL_Scissor(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
+            DGL_Scissor2(w, 0, bp->width * bp->scaleFactor, bp->availHeight);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 
@@ -402,7 +402,7 @@ void GL_BeginBorderedProjection(borderedprojectionstate_t* bp)
             int h = .5f + (bp->availHeight - bp->height * bp->scaleFactor) / 2;
             DGL_GetIntegerv(DGL_SCISSOR_TEST, bp->scissorState);
             DGL_GetIntegerv(DGL_SCISSOR_BOX, bp->scissorState + 1);
-            DGL_Scissor(0, h, bp->availWidth, bp->height * bp->scaleFactor);
+            DGL_Scissor2(0, h, bp->availWidth, bp->height * bp->scaleFactor);
             DGL_Enable(DGL_SCISSOR_TEST);
         }
 
@@ -433,7 +433,7 @@ void GL_EndBorderedProjection(borderedprojectionstate_t* bp)
     {
         if(!bp->scissorState[0])
             DGL_Disable(DGL_SCISSOR_TEST);
-        DGL_Scissor(bp->scissorState[1], bp->scissorState[2], bp->scissorState[3], bp->scissorState[4]);
+        DGL_Scissor2(bp->scissorState[1], bp->scissorState[2], bp->scissorState[3], bp->scissorState[4]);
     }
 
     if(bp->flags & BPF_OVERDRAW_MASK)

@@ -199,7 +199,12 @@ float           DGL_GetFloat(int name);
 boolean         DGL_SetFloat(int name, float value);
 
 void            DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar);
-void            DGL_Scissor(int x, int y, int width, int height);
+
+/**
+ * @note Coordinates are in viewport space.
+ */
+void DGL_Scissor(const RectRaw* rect);
+void DGL_Scissor2(int x, int y, int width, int height);
 
 void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);
