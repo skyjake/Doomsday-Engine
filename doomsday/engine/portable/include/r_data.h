@@ -57,18 +57,14 @@ struct font_s;
 /**
  * @defgroup textureUnitFlags  Texture Unit Flags
  */
-///{
+///@{
 #define TUF_TEXTURE_IS_MANAGED    0x1 ///< A managed texture is bound to this unit.
-///}
+///@}
 
 typedef struct rtexmapunit_texture_s {
-   union {
-        struct unmanaged {
-            DGLuint glName; ///< Texture used on this layer (if any).
-            int magMode; ///< GL texture magnification filter.
-        };
-        struct texturevariant_s* variant;
-    };
+    DGLuint glName; ///< Texture used on this layer (if any).
+    int magMode; ///< GL texture magnification filter.
+    struct texturevariant_s* variant;
     /// @ref textureUnitFlags
     int flags;
 } rtexmapunit_texture_t;
