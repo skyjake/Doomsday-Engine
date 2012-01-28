@@ -154,6 +154,10 @@ static const keyname_t keyNames[] = {
 
 void B_Register(void)
 {
+    extern byte zeroControlUponConflict;
+
+    C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
+
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED|CMDF_DED|CMDF_CLIENT)
 
     C_CMD_FLAGS("bindevent",      "ss",   BindEventToCommand, PROTECTED_FLAGS);

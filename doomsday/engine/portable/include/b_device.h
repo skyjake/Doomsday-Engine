@@ -34,7 +34,8 @@
 typedef enum cbdevtype_e {
     CBD_TOGGLE,
     CBD_AXIS,
-    CBD_ANGLE
+    CBD_ANGLE,
+    NUM_CBD_TYPES
 } cbdevtype_t;
 
 // Flags for control-device bindings.

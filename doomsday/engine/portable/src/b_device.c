@@ -55,6 +55,7 @@
 
 float       stageThreshold = 6.f/35;
 float       stageFactor = .5f;
+byte        zeroControlUponConflict = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -288,6 +289,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
     float       deviceOffset;
     uint        deviceTime;
     uint        nowTime = Sys_GetRealTime();
+    boolean     conflicted[NUM_CBD_TYPES] = { false, false, false };
+    boolean     appliedState[NUM_CBD_TYPES] = { false, false, false };
 
     *pos = 0;
     *relativeOffset = 0;
@@ -397,6 +400,26 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
 
         *pos += devicePos;
         *relativeOffset += deviceOffset;
+
+        // Is this state contributing to the outcome?
+        if(!FEQUAL(devicePos, 0.f))
+        {
+            if(appliedState[cb->type])
+            {
+                // Another binding already influenced this; we have a conflict.
+                conflicted[cb->type] = true;
+            }
+
+            // We've found one effective binding that influences this control.
+            appliedState[cb->type] = true;
+        }
+    }
+
+    if(zeroControlUponConflict)
+    {
+        for(i = 0; i < NUM_CBD_TYPES; ++i)
+            if(conflicted[i])
+                *pos = 0;
     }
 
     // Clamp appropriately.
