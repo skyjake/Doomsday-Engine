@@ -1,8 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 804 <--
-; Other free ordinals:
-;   54, 340, 341
+; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
 
@@ -841,6 +840,8 @@ EXPORTS
     bamsAtan2                   @145 NONAME
 
     ; Vectors.
+    V2_Sum                      @54 NONAME
+    V2_Subtract                 @341 NONAME
     V2_Rotate                   @344 NONAME
     V2_Intersection             @349 NONAME
 
