@@ -113,6 +113,22 @@ static boolean maximizedViewWindow(int player)
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
+static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth)
+{
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+    float aspectScale = cfg.statusbarScale;
+
+    size->width = ST_WIDTH * viewScale->height;
+    if(size->width > maxWidth)
+        aspectScale *= (float)maxWidth/size->width;
+
+    size->width *= cfg.statusbarScale;
+    size->height = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * aspectScale);
+#else
+    size->width = size->height  = 0;
+#endif
+}
+
 static void resizeViewWindow(int player, const RectRaw* newGeometry,
     const RectRaw* oldGeometry, boolean interpolate)
 {
@@ -131,44 +147,34 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
     // Override @c cfg.screenBlocks and force a maximized window?
     if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
     {
-        const float xScale = (float)geom.size.width  / SCREENWIDTH;
-        const float yScale = (float)geom.size.height / SCREENHEIGHT;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        float fscale = cfg.statusbarScale;
-        int statusBarHeight, needWidth;
+        Size2Rawf viewScale;
+        Size2Raw statusBarSize;
 
-        needWidth = yScale * ST_WIDTH;
-        if(needWidth > geom.size.width)
-            fscale *= (float)geom.size.width/needWidth;
-        statusBarHeight = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * fscale);
-#endif
+        viewScale.width  = (float)geom.size.width  / SCREENWIDTH;
+        viewScale.height = (float)geom.size.height / SCREENHEIGHT;
+        calcStatusBarSize(&statusBarSize, &viewScale, geom.size.width);
 
         if(cfg.screenBlocks != 10)
         {
-            geom.size.width = cfg.screenBlocks * SCREENWIDTH/10;
-            geom.origin.x = SCREENWIDTH/2 - geom.size.width/2;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            geom.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-            geom.origin.y = (SCREENHEIGHT - statusBarHeight - geom.size.height) / 2;
-#else
-            geom.size.height = cfg.screenBlocks * SCREENHEIGHT/10;
-            geom.origin.y = (SCREENHEIGHT - geom.size.height) / 2;
-#endif
+            geom.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
+            geom.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
+
+            geom.origin.x = (SCREENWIDTH - geom.size.width) / 2;
+            geom.origin.y = (SCREENHEIGHT - statusBarSize.height - geom.size.height) / 2;
         }
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
         else
         {
             geom.origin.x = 0;
             geom.origin.y = 0;
             geom.size.width  = SCREENWIDTH;
-            geom.size.height = SCREENHEIGHT - statusBarHeight;
+            geom.size.height = SCREENHEIGHT - statusBarSize.height;
         }
-#endif
+
         // Scale from fixed to viewport coordinates.
-        geom.origin.x = ROUND(geom.origin.x * xScale);
-        geom.origin.y = ROUND(geom.origin.y * yScale);
-        geom.size.width  = ROUND(geom.size.width  * xScale);
-        geom.size.height = ROUND(geom.size.height * yScale);
+        geom.origin.x = ROUND(geom.origin.x * viewScale.width);
+        geom.origin.y = ROUND(geom.origin.y * viewScale.height);
+        geom.size.width  = ROUND(geom.size.width  * viewScale.width);
+        geom.size.height = ROUND(geom.size.height * viewScale.height);
     }
 
     R_SetViewWindowGeometry(player, &geom, interpolate);
