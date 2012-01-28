@@ -1841,22 +1841,12 @@ float UIAutomap_FrameToMap(uiwidget_t* obj, float val)
 void UIAutomap_UpdateGeometry(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    float scaleX, scaleY;
-    Size2Raw portSize;
     RectRaw newGeom;
     assert(obj->type == GUI_AUTOMAP);
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
-    R_ViewPortSize(UIWidget_Player(obj), &portSize);
-    scaleX = (float)SCREENWIDTH  / portSize.width;
-    scaleY = (float)SCREENHEIGHT / portSize.height;
-
     R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
-    newGeom.origin.x = .5f + newGeom.origin.x * scaleX;
-    newGeom.origin.y = .5f + newGeom.origin.y * scaleY;
-    newGeom.size.width  = .5f + newGeom.size.width  * scaleX;
-    newGeom.size.height = .5f + newGeom.size.height * scaleY;
 
     if(newGeom.origin.x != Rect_X(obj->geometry) ||
        newGeom.origin.y != Rect_Y(obj->geometry) ||
