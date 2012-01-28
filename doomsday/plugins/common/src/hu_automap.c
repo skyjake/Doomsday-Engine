@@ -1410,22 +1410,19 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     // Setup for frame.
     setupGLStateForMap(obj);
 
+    // Configure the modelview matrix so that we can draw geometry for world
+    // objects using their world-space coordinates directly.
     DGL_MatrixMode(DGL_MODELVIEW);
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Translatef(geometry.size.width  / 2,
                    geometry.size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
-    DGL_Scalef(1, -1, 1);
+    DGL_Scalef(1, -1, 1); // In the world coordinate space Y+ is up.
     DGL_Scalef(am->scaleMTOF, am->scaleMTOF, 1);
     DGL_Translatef(-vx, -vy, 0);
 
-    {
-    Size2Raw portSize;
-    R_ViewPortSize(obj->player, &portSize);
-
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, portSize.width>= portSize.height? FIXXTOSCREENX(AM_LINE_WIDTH) : FIXYTOSCREENY(AM_LINE_WIDTH));
-    }
+    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH * aspectScale);
 
 /*#if _DEBUG
 { // Draw the rectangle described by the visible bounds.
