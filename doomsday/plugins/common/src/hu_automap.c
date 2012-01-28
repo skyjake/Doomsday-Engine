@@ -1322,7 +1322,7 @@ static void renderVertexes(uiwidget_t* obj)
 
     DGL_Enable(DGL_POINT_SMOOTH);
     oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
-    DGL_SetFloat(DGL_POINT_SIZE, 4);
+    DGL_SetFloat(DGL_POINT_SIZE, 4 * aspectScale);
 
     DGL_Begin(DGL_POINTS);
     for(i = 0; i < numvertexes; ++i)
