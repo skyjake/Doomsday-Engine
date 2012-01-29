@@ -743,7 +743,6 @@ void R_NewSharpWorld(void)
 {
     int i;
 
-
     if(resetNextViewer)
         resetNextViewer = 2;
 
@@ -859,26 +858,21 @@ void R_EndWorldFrame(void)
     }
 }
 
-/**
- * Prepare rendering the view of the given player.
- */
-void R_SetupFrame(player_t* player)
+void R_UpdateViewer(int consoleNum)
 {
 #define VIEWPOS_MAX_SMOOTHDISTANCE  172
-#define MINEXTRALIGHTFRAMES         2
 
-    int                 tableAngle;
-    float               yawRad, pitchRad;
-    viewer_t            sharpView, smoothView;
-    viewdata_t*         vd;
+    viewdata_t* vd = viewDataOfConsole + consoleNum;
+    player_t* player = ddPlayers + consoleNum;
+    viewer_t sharpView, smoothView;
+    float yawRad, pitchRad;
+    uint an;
 
-    // Reset the GL triangle counter.
-    //polyCounter = 0;
+    assert(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
 
-    viewPlayer = player;
-    vd = &viewDataOfConsole[viewPlayer - ddPlayers];
+    if(!player->shared.inGame || !player->shared.mo) return;
 
-    R_GetSharpView(&sharpView, viewPlayer);
+    R_GetSharpView(&sharpView, player);
 
     if(resetNextViewer ||
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
@@ -897,12 +891,10 @@ void R_SetupFrame(player_t* player)
     // time offsets or interpolated camera positions.
     else //if(!clientPaused)
     {
-        // Calculate the smoothed camera position, which is somewhere
-        // between the previous and current sharp positions. This
-        // introduces a slight delay (max. 1/35 sec) to the movement
-        // of the smoothed camera.
-        R_InterpolateViewer(vd->lastSharp, vd->lastSharp + 1, frameTimePos,
-                            &smoothView);
+        // Calculate the smoothed camera position, which is somewhere between
+        // the previous and current sharp positions. This introduces a slight
+        // delay (max. 1/35 sec) to the movement of the smoothed camera.
+        R_InterpolateViewer(vd->lastSharp, vd->lastSharp + 1, frameTimePos, &smoothView);
 
         // Use the latest view angles known to us, if the interpolation flags
         // are not set. The interpolation flags are used when the view angles
@@ -919,14 +911,13 @@ void R_SetupFrame(player_t* player)
         if(showViewAngleDeltas)
         {
             typedef struct oldangle_s {
-                double           time;
-                float            yaw, pitch;
+                double time;
+                float yaw, pitch;
             } oldangle_t;
 
-            static oldangle_t       oldangle[DDMAXPLAYERS];
-            oldangle_t*             old = &oldangle[viewPlayer - ddPlayers];
-            float                   yaw =
-                (double)smoothView.angle / ANGLE_MAX * 360;
+            static oldangle_t oldangle[DDMAXPLAYERS];
+            oldangle_t* old = &oldangle[viewPlayer - ddPlayers];
+            float yaw = (double)smoothView.angle / ANGLE_MAX * 360;
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f "
                         "Rdx=%-10.3f Rdy=%-10.3f\n",
@@ -937,6 +928,7 @@ void R_SetupFrame(player_t* player)
                         smoothView.pitch - old->pitch,
                         (yaw - old->yaw) / (sysTime - old->time),
                         (smoothView.pitch - old->pitch) / (sysTime - old->time));
+
             old->yaw = yaw;
             old->pitch = smoothView.pitch;
             old->time = sysTime;
@@ -946,12 +938,12 @@ void R_SetupFrame(player_t* player)
         if(showViewPosDeltas)
         {
             typedef struct oldpos_s {
-                double           time;
-                float            x, y, z;
+                double time;
+                float x, y, z;
             } oldpos_t;
 
-            static oldpos_t         oldpos[DDMAXPLAYERS];
-            oldpos_t*               old = &oldpos[viewPlayer - ddPlayers];
+            static oldpos_t oldpos[DDMAXPLAYERS];
+            oldpos_t* old = &oldpos[viewPlayer - ddPlayers];
 
             Con_Message("(%i) F=%.3f dt=%-10.3f dx=%-10.3f dy=%-10.3f dz=%-10.3f dx/dt=%-10.3f dy/dt=%-10.3f\n",
                         //"Rdx=%-10.3f Rdy=%-10.3f\n",
@@ -963,6 +955,7 @@ void R_SetupFrame(player_t* player)
                         smoothView.pos[2] - old->z,
                         (smoothView.pos[0] - old->x) / (sysTime - old->time),
                         (smoothView.pos[1] - old->y) / (sysTime - old->time));
+
             old->x = smoothView.pos[VX];
             old->y = smoothView.pos[VY];
             old->z = smoothView.pos[VZ];
@@ -971,17 +964,12 @@ void R_SetupFrame(player_t* player)
     }
 
     // Update viewer.
-    tableAngle = vd->current.angle >> ANGLETOFINESHIFT;
-    vd->viewSin = FIX2FLT(finesine[tableAngle]);
-    vd->viewCos = FIX2FLT(fineCosine[tableAngle]);
+    an = vd->current.angle >> ANGLETOFINESHIFT;
+    vd->viewSin = FIX2FLT(finesine[an]);
+    vd->viewCos = FIX2FLT(fineCosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    // The vectors are in the DGL coordinate system, which is a left-handed
-    // one (same as in the game, but Y and Z have been swapped). Anyone
-    // who uses these must note that it might be necessary to fix the aspect
-    // ratio of the Y axis by dividing the Y coordinate by 1.2.
     yawRad = ((vd->current.angle / (float) ANGLE_MAX) *2) * PI;
-
     pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
@@ -996,6 +984,22 @@ void R_SetupFrame(player_t* player)
 
     // The side vector is the cross product of the front and up vectors.
     M_CrossProduct(vd->frontVec, vd->upVec, vd->sideVec);
+
+#undef VIEWPOS_MAX_SMOOTHDISTANCE
+}
+
+/**
+ * Prepare rendering the view of the given player.
+ */
+void R_SetupFrame(player_t* player)
+{
+#define MINEXTRALIGHTFRAMES         2
+
+    // This is now the current view player.
+    viewPlayer = player;
+
+    // Reset the GL triangle counter.
+    //polyCounter = 0;
 
     if(showFrameTimePos)
     {
@@ -1023,8 +1027,12 @@ void R_SetupFrame(player_t* player)
     // Why?
     validCount++;
 
+    if(!freezeRLs)
+    {
+        R_ClearVisSprites();
+    }
+
 #undef MINEXTRALIGHTFRAMES
-#undef VIEWPOS_MAX_SMOOTHDISTANCE
 }
 
 /**
@@ -1075,19 +1083,17 @@ void R_RenderBlankView(void)
  */
 void R_RenderPlayerView(int num)
 {
-    extern boolean      firstFrameAfterLoad;
-    extern int          psp3d;// modelTriCount;
+    extern boolean firstFrameAfterLoad;
+    extern int psp3d;// modelTriCount;
 
     int oldFlags = 0;
     player_t* player;
     viewdata_t* vd;
 
-    if(num < 0 || num >= DDMAXPLAYERS)
-        return; // Huh?
+    if(num < 0 || num >= DDMAXPLAYERS) return; // Huh?
     player = &ddPlayers[num];
 
-    if(!player->shared.inGame || !player->shared.mo)
-        return;
+    if(!player->shared.inGame || !player->shared.mo) return;
 
     if(firstFrameAfterLoad)
     {
@@ -1098,17 +1104,12 @@ void R_RenderPlayerView(int num)
         DD_ResetTimer();
     }
 
+    // Too early? Game has not configured the view window?
     vd = &viewDataOfConsole[num];
-    if(vd->window.size.width == 0 || vd->window.size.height == 0)
-        return; // Too early? Game has not configured the view window?
+    if(vd->window.size.width == 0 || vd->window.size.height == 0) return;
 
     // Setup for rendering the frame.
     R_SetupFrame(player);
-
-    if(!freezeRLs)
-    {
-        R_ClearVisSprites();
-    }
 
     R_ProjectPlayerSprites(); // Only if 3D models exists for them.
 
@@ -1118,6 +1119,7 @@ void R_RenderPlayerView(int num)
         oldFlags = player->shared.mo->ddFlags;
         player->shared.mo->ddFlags |= DDMF_DONTDRAW;
     }
+
     // Go to wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1133,7 +1135,9 @@ void R_RenderPlayerView(int num)
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     Rend_Draw2DPlayerSprites(); // If the 2D versions are needed.
+
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -1262,11 +1266,13 @@ void R_RenderViewPorts(void)
             displayPlayer = vp->console;
             R_UseViewPort(vp);
 
-            if(displayPlayer < 0 || ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS)
+            if(displayPlayer < 0 || (ddPlayers[displayPlayer].shared.flags & DDPF_UNDEFINED_POS))
             {
                 R_RenderBlankView();
                 continue;
             }
+
+            R_UpdateViewer(vp->console);
 
             vd = &viewDataOfConsole[vp->console];
 

@@ -55,6 +55,5 @@ void X_PostInit(void);
 void X_Shutdown(void);
 int X_GetInteger(int id);
 void* X_GetVariable(int id);
-void X_EndFrame(void);
 
 #endif /* LIBJHEXEN_MAIN_H */

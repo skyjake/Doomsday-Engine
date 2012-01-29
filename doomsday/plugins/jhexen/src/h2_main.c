@@ -494,7 +494,3 @@ void X_Shutdown(void)
     G_CommonShutdown();
 }
 
-void X_EndFrame(void)
-{
-    SN_UpdateActiveSequences();
-}

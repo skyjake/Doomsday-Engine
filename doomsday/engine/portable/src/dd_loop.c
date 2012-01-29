@@ -251,8 +251,7 @@ void DD_DrawAndBlit(void)
         Net_Drawer();
         S_Drawer();
 
-        // Finish up any tasks that must be completed after view(s) have
-        // been drawn.
+        // Finish up any tasks that must be completed after view(s) have been drawn.
         R_EndWorldFrame();
     }
 
@@ -288,9 +287,9 @@ void DD_StartFrame(void)
 
 void DD_EndFrame(void)
 {
-    static uint         lastFpsTime = 0;
+    static uint lastFpsTime = 0;
 
-    uint                nowTime = Sys_GetRealTime();
+    uint nowTime = Sys_GetRealTime();
 
     // Increment the (local) frame counter.
     rFrameCount++;
@@ -298,14 +297,15 @@ void DD_EndFrame(void)
     // Count the frames every other second.
     if(nowTime - 2000 >= lastFpsTime)
     {
-        fps = (rFrameCount - lastFrameCount) /
-            ((nowTime - lastFpsTime)/1000.0f);
+        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;
         lastFrameCount = rFrameCount;
     }
 
     if(gx.EndFrame)
+    {
         gx.EndFrame();
+    }
 
     S_EndFrame();
 }
