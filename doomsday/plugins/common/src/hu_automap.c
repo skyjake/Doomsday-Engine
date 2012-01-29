@@ -75,8 +75,6 @@ static int autopageLumpNum = 1;
 static int autopageLumpNum = 1;
 #endif
 
-static patchid_t pPointMarkers[10]; // Numbers used for marking points.
-
 static int playerColorPaletteIndices[NUMPLAYERCOLORS] = {
     AM_PLR1_COLOR,
     AM_PLR2_COLOR,
@@ -186,20 +184,6 @@ void UIAutomap_ClearLists(uiwidget_t* obj)
 
 void UIAutomap_LoadResources(void)
 {
-#if !__JDOOM64__
-    int i;
-    char patchName[9];
-    for(i = 0; i < 10; ++i)
-    {
-#  if __JDOOM__
-        sprintf(patchName, "ammnum%d", i);
-#  else
-        sprintf(patchName, "fonta%d", 16+i);
-#  endif
-        pPointMarkers[i] = R_DeclarePatch(patchName);
-    }
-#endif
-
     if(autopageLumpNum >= 0)
         autopageLumpNum = W_CheckLumpNumForName("autopage");
 
@@ -1095,13 +1079,19 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
     //guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
     float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
-    float viewPoint[2], angle, stom;
+    float viewPoint[2], angle;
     uint i, pointCount = UIAutomap_PointCount(obj);
+    const Point2Raw origin = { 0, 0 };
     assert(obj->type == GUI_AUTOMAP);
 
     if(!pointCount) return;
 
-    stom = UIAutomap_FrameToMap(obj, 1);
+    // Calculate final scale factor.
+    scale = UIAutomap_FrameToMap(obj, 1) * scale;
+#if __JHERETIC__ || __JHEXEN__
+    // These games use a larger font, so use a smaller scale.
+    scale *= .5f;
+#endif
 
     UIAutomap_CameraOrigin(obj, &viewPoint[0], &viewPoint[1]);
     UIAutomap_VisibleBounds(obj, topLeft, bottomRight, topRight, bottomLeft);
@@ -1110,26 +1100,30 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
 
     for(i = 0; i < pointCount; ++i)
     {
-        float point[2], w, h;
-        patchinfo_t info;
+        float point[2];
+        char label[10];
 
         if(!UIAutomap_PointOrigin(obj, i, &point[0], &point[1], NULL)) continue;
-        if(!R_GetPatchInfo(pPointMarkers[i], &info)) continue;
 
-        w = info.geometry.size.width  * stom * scale;
-        h = info.geometry.size.height * stom * scale;
+        dd_snprintf(label, 10, "%i", i);
 
         positionPointInView(obj, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(point[0], point[1], 0);
+        DGL_Scalef(scale, scale, 1);
         DGL_Rotatef(angle, 0, 0, 1);
-
-        DGL_SetPatch(pPointMarkers[i], DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_Scalef(1, -1, 1);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        DGL_DrawRectf2Color(-w/2, h/2, w, -h, 1, 1, 1, alpha);
+        FR_SetFont(FID(GF_MAPPOINT));
+#if __JDOOM__
+        FR_SetColorAndAlpha(.22f, .22f, .22f, alpha);
+#else
+        FR_SetColorAndAlpha(1, 1, 1, alpha);
+#endif
+        FR_DrawText3(label, &origin, 0, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);

@@ -44,6 +44,7 @@ typedef enum {
 #if __JHERETIC__ || __JHEXEN__
     GF_SMALLIN,
 #endif
+    GF_MAPPOINT, ///< Marked points on the automap
     NUM_GAME_FONTS
 } gamefontid_t;
 

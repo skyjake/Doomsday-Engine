@@ -858,18 +858,19 @@ void R_InitRefresh(void)
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
     // Locate our fonts.
-    fonts[GF_FONTA]   = R_MustFindFontForName("a");
-    fonts[GF_FONTB]   = R_MustFindFontForName("b");
-    fonts[GF_STATUS]  = R_MustFindFontForName("status");
+    fonts[GF_FONTA]    = R_MustFindFontForName("a");
+    fonts[GF_FONTB]    = R_MustFindFontForName("b");
+    fonts[GF_STATUS]   = R_MustFindFontForName("status");
 #if __JDOOM__
-    fonts[GF_INDEX]   = R_MustFindFontForName("index");
+    fonts[GF_INDEX]    = R_MustFindFontForName("index");
 #endif
 #if __JDOOM__ || __JDOOM64__
-    fonts[GF_SMALL]   = R_MustFindFontForName("small");
+    fonts[GF_SMALL]    = R_MustFindFontForName("small");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    fonts[GF_SMALLIN] = R_MustFindFontForName("smallin");
+    fonts[GF_SMALLIN]  = R_MustFindFontForName("smallin");
 #endif
+    fonts[GF_MAPPOINT] = R_MustFindFontForName("mappoint");
 
     { float mul = 1.4f;
     DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
