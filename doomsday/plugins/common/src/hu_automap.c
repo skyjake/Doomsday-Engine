@@ -1192,6 +1192,7 @@ static void setupGLStateForMap(uiwidget_t* obj)
         // aspect of the quad (sized to map window dimensions).
         DGL_Translatef(UIAutomap_MapToFrame(obj, plx) + .5f,
                        UIAutomap_MapToFrame(obj, ply) + .5f, 0);
+        DGL_Scalef(1, 1.2f/*aspect correct*/, 1);
         DGL_Rotatef(360-angle, 0, 0, 1);
         DGL_Scalef(1, (float)geometry.size.height / geometry.size.width, 1);
         DGL_Translatef(-(.5f), -(.5f), 0);
