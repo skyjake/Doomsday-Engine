@@ -989,7 +989,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
     {
         svgid_t vgId = p->vgId;
         boolean isVisible = false;
-        float* color = p->rgb;
+        float* color = p->rgb, angle;
         float keyColorRGB[3];
 
         if(p->flags & AMF_REND_KEYS)
@@ -1000,18 +1000,21 @@ static int rendThingPoint(mobj_t* mo, void* context)
                 R_GetColorPaletteRGBf(0, keyColor, keyColorRGB, false);
                 vgId  = VG_KEYSQUARE;
                 color = keyColorRGB;
+                angle = 0;
                 isVisible = true;
             }
         }
 
         // Something else?
         if(!isVisible)
+        {
             isVisible = !!(p->flags & AMF_REND_THINGS);
+            angle = (mo->visAngle << 16) / (float) ANGLE_MAX * 360; // In degrees.
+        }
 
         if(isVisible)
         {
             /* $unifiedangles */
-            const float angle = (mo->visAngle << 16) / (float) ANGLE_MAX * 360; // In degrees.
             const float radius = 16;
             float origin[3];
             Mobj_OriginSmoothed(mo, origin);
