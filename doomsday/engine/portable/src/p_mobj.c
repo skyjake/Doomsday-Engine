@@ -233,6 +233,12 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
         origin[VY] += mo->srvo[VY] * mul;
         origin[VZ] += mo->srvo[VZ] * mul;
     }
+
+    // The client may have a Smoother for this object.
+    if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
+    {
+        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
+    }
 }
 
 D_CMD(InspectMobj)
