@@ -685,14 +685,14 @@ void R_LoadVectorGraphics(void)
 {
 #define R (1.0f)
     const SvgLine keysquare[] = {
-        { {0, 0}, {R / 4, -R / 2} },
-        { {R / 4, -R / 2}, {R / 2, -R / 2} },
-        { {R / 2, -R / 2}, {R / 2, R / 2} },
-        { {R / 2, R / 2}, {R / 4, R / 2} },
-        { {R / 4, R / 2}, {0, 0} }, // Handle part type thing.
-        { {0, 0}, {-R, 0} }, // Stem.
-        { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
-        { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
+        { {0, 0}, {-R / 4, R / 2} },
+        { {-R / 4, R / 2}, {-R / 2, R / 2} },
+        { {-R / 2, R / 2}, {-R / 2, -R / 2} },
+        { {-R / 2, -R / 2}, {-R / 4, -R / 2} },
+        { {-R / 4, -R / 2}, {0, 0} }, // Handle part type thing.
+        { {0, 0}, {R, 0} }, // Stem.
+        { {R, 0}, {R, R / 2} }, // End lockpick part.
+        { {3 * R / 4, 0}, {3 * R / 4, R / 4} }
     };
     const SvgLine thintriangle_guy[] = {
         { {-R / 2, R - R / 2}, {R, 0} }, // >
