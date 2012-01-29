@@ -248,9 +248,21 @@ void GUI_LoadResources(void)
 
 void GUI_ReleaseResources(void)
 {
+    int i;
+
     if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
 
     UIAutomap_ReleaseResources();
+
+    for(i = 0; i < numWidgets; ++i)
+    {
+        uiwidget_t* ob = widgets + i;
+        switch(ob->type)
+        {
+        case GUI_AUTOMAP: UIAutomap_Reset(ob); break;
+        default: break;
+        }
+    }
 }
 
 uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
