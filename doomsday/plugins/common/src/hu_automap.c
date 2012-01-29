@@ -94,7 +94,6 @@ void UIAutomap_Register(void)
 {
     cvartemplate_t cvars[] = {
         { "map-opacity", 0, CVT_FLOAT, &cfg.automapOpacity, 0, 1 },
-        { "map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1 },
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         { "map-babykeys", 0, CVT_BYTE, &cfg.automapBabyKeys, 0, 1 },
 #endif
@@ -102,6 +101,8 @@ void UIAutomap_Register(void)
         { "map-background-g", 0, CVT_FLOAT, &cfg.automapBack[1], 0, 1 },
         { "map-background-b", 0, CVT_FLOAT, &cfg.automapBack[2], 0, 1 },
         { "map-customcolors", 0, CVT_INT, &cfg.automapCustomColors, 0, 1 },
+        { "map-line-opacity", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1 },
+        { "map-line-width", 0, CVT_FLOAT, &cfg.automapLineWidth, .1f, 2 },
         { "map-mobj-r", 0, CVT_FLOAT, &cfg.automapMobj[0], 0, 1 },
         { "map-mobj-g", 0, CVT_FLOAT, &cfg.automapMobj[1], 0, 1 },
         { "map-mobj-b", 0, CVT_FLOAT, &cfg.automapMobj[2], 0, 1 },
@@ -126,6 +127,9 @@ void UIAutomap_Register(void)
         { "map-zoom-speed", 0, CVT_FLOAT, &cfg.automapZoomSpeed, 0, 1 },
         { "map-open-timer", CVF_NO_MAX, CVT_FLOAT, &cfg.automapOpenSeconds, 0, 0 },
         { "rend-dev-freeze-map", CVF_NO_ARCHIVE, CVT_BYTE, &freezeMapRLs, 0, 1 },
+
+        // Aliases for old names:
+        { "map-alpha-lines", 0, CVT_FLOAT, &cfg.automapLineAlpha, 0, 1 },
         { NULL }
     };
     Con_AddVariableList(cvars);
@@ -1420,7 +1424,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH * aspectScale);
+    DGL_SetFloat(DGL_LINE_WIDTH, MAX_OF(.5f, cfg.automapLineWidth * aspectScale));
 
 /*#if _DEBUG
 { // Draw the rectangle described by the visible bounds.

@@ -32,7 +32,6 @@
 #include "hu_lib.h"
 
 #define MAX_MAP_POINTS          (10)
-#define AM_LINE_WIDTH           (1.1f) ///< In fixed 320x200 pixels
 
 /// To be called to register the console commands and variables of this module.
 void UIAutomap_Register(void);

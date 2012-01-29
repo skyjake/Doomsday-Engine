@@ -362,6 +362,7 @@ void D_PreInit(void)
     cfg.automapBack[2] = 0.f;
     cfg.automapOpacity = .7f;
     cfg.automapLineAlpha = .7f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;

@@ -913,7 +913,8 @@ static mn_object_t WeaponMenuObjects[] = {
 };
 
 mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
-mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-alpha-lines" };
+mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-line-opacity" };
+mndata_slider_t sld_map_linewidth = { .1f, 2, 0, 0.1f, true, "map-line-width" };
 mndata_slider_t sld_map_doorglow = { 0, 200, 0, 5, true, "map-door-glow" };
 
 mndata_listitem_t lstit_map_statusbar[] = {
@@ -961,6 +962,7 @@ mndata_colorbox_t cbox_map_background_color = {
 
 mndata_text_t txt_map_opacity = { "Background Opacity" };
 mndata_text_t txt_map_line_opacity = { "Line Opacity" };
+mndata_text_t txt_map_line_width = { "Line Width" };
 mndata_text_t txt_map_hud_display = { "HUD Display" };
 mndata_text_t txt_map_door_colors = { "Door Colors" };
 mndata_text_t txt_map_door_glow = { "Door Glow" };
@@ -979,6 +981,8 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_SLIDER,    0,  0,  'o', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_opacity },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
     { MN_SLIDER,    0,  0,  'l', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_width },
+    { MN_SLIDER,    0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_linewidth },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
     { MN_LISTINLINE, 0, 0,  'h', MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_statusbar },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },

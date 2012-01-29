@@ -130,6 +130,7 @@ typedef struct {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     byte            automapHudDisplay;
     int             automapCustomColors;

@@ -485,8 +485,11 @@ desc = Chat macro 9.
 [chat-macro9]
 desc = Chat macro 10.
 
-[map-alpha-lines]
-desc = Alpha level of automap lines.
+[map-line-opacity]
+desc = Opacity of automap lines (default: .7).
+
+[map-line-width]
+desc = Scale factor for automap lines (default: 1.1).
 
 [map-babykeys]
 desc = 1=Show keys in automap (easy skill mode only).
