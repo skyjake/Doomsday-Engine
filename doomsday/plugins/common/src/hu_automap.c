@@ -1459,7 +1459,7 @@ DGL_End();
     }
 
     // Draw static map geometry.
-    for(i = 0; i < NUM_MAP_OBJECTLISTS; ++i)
+    for(i = NUM_MAP_OBJECTLISTS-1; i >= 0; i--)
     {
         if(am->lists[i])
         {
