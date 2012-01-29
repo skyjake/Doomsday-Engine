@@ -2064,13 +2064,15 @@ void Con_Error(const char* error, ...)
 
     if(Con_IsBusy())
     {
-        // In busy mode, the other thread will handle this.
         Con_BusyWorkerError(buff);
-        for(;;)
+
+        if(Con_IsBusyWorker())
         {
-            // We'll stop here.
-            // \todo Kill this thread?
-            Sys_Sleep(10000);
+            for(;;)
+            {
+                // We'll stop here. The main thread will shut down the process.
+                Sys_Sleep(500);
+            }
         }
     }
     else
