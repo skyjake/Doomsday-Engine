@@ -64,7 +64,7 @@
 #define GREENS          (33*8)
 #define YELLOWS         (10*8)
 #define GRAYS           (5*8)
-#define BROWNS          (14*8)
+#define BROWNS          (14*8-2)
 #define PARCH           (13*8-1)
 
 #define WALLCOLORS      REDS
