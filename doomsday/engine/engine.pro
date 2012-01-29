@@ -645,7 +645,7 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop readme
+    INSTALLS += target data startupgfx startupfonts desktop readme
 
     target.path = $$DENG_BIN_DIR
 
