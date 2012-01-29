@@ -1493,11 +1493,11 @@ DGL_End();
     }
 
     // Draw map objects:
-    rendPlayerMarkers(obj);
     if(UIAutomap_Flags(obj) & (AMF_REND_THINGS|AMF_REND_KEYS))
     {
         rendThingPoints(obj);
     }
+    rendPlayerMarkers(obj);
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
     if(amMaskTexture)
@@ -1509,7 +1509,8 @@ DGL_End();
 
     // Draw glows?
     if(cfg.automapShowDoors)
-    {   // \optimize Hugely inefficent. Need a new approach.
+    {
+        /// @optimize Hugely inefficent. Need a new approach.
         DGL_Enable(DGL_TEXTURE_2D);
         renderWalls(obj, -1, false);
         DGL_Disable(DGL_TEXTURE_2D);
