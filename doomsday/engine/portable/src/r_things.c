@@ -1202,6 +1202,7 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    /// @fixme R_VisualRadius() does not consider sprite rotation.
     {
     float center[2], v1[2], v2[2];
     float width = R_VisualRadius(mo)*2, offset = 0;
