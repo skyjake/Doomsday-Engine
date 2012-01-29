@@ -294,9 +294,9 @@ void H_PreInit(void)
     cfg.automapL3[1] = .230f;
     cfg.automapL3[2] = .121f;
 
-    cfg.automapMobj[0] = 1.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 1.f;
+    cfg.automapMobj[0] = .093f;
+    cfg.automapMobj[1] = .093f;
+    cfg.automapMobj[2] = .093f;
 
     cfg.automapBack[0] = 1.0f;
     cfg.automapBack[1] = 1.0f;

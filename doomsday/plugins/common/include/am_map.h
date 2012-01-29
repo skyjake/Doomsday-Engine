@@ -71,7 +71,7 @@
 #define TSWALLCOLORS    GRAYS
 #define CDWALLCOLORS    YELLOWS
 #define FDWALLCOLORS    BROWNS
-#define THINGCOLORS     GREENS
+#define THINGCOLORS     4
 #define BACKGROUND      PARCH
 
 // Keys for Baby Mode
