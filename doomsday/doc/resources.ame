@@ -79,7 +79,7 @@ the source and destination directories as parameters. For example:
     @samp{@cmd{-vdmap "D:\Games\MyAuto" "C:\Doomsday\Data\jDoom\Auto"}}
 }
 @else{
-    @samp{@cmd{-vdmap /home/username/myauto /usr/share/doomsday/data/jdoom/auto"}}    
+    @samp{@cmd{-vdmap /home/username/myauto /usr/share/doomsday/data/jdoom/auto}}    
 }
 
 You can define an unlimited number of virtual directory mappings using

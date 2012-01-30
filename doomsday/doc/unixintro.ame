@@ -11,7 +11,7 @@ response file whose contents are added to the command line.
 
 @chapter{Options}
 
-@deflist{
+@deflist/thin{
 
 @item{@opt{-iwad}} Specifies a directory where to look for IWAD files.
 Searches for IWADs from all known games and automatically loads them when

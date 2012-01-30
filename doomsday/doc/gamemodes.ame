@@ -8,7 +8,7 @@ Below is a list of all the game modes supported by the game plugins
 distributed with Doomsday: @plugin{libdoom} (previously called jDoom),
 @plugin{libheretic} (jHeretic) and @plugin{libhexen} (jHexen).
 
-@table{20 27 53}{
+@table{19 25 56}{
 	@header{Plugin} @tab @header{Game Mode} @tab @header{Description} @row{single}
 
 @plugin{libdoom} 
