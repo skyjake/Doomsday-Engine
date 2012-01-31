@@ -1,0 +1,91 @@
+#!/usr/bin/python
+# -*- Mode: Python; -*-
+
+# The Doomsday Host is a cron utility script that helps with maintaining
+# a set of Doomsday servers.
+# - configure any number of servers
+# - log file rotation
+# - automatic updates by rebuilding from source with custom options
+
+import os
+from xml.dom.minidom import parse
+
+commonOptions = ''
+rebuildTimes = []
+branch = 'master'
+mainLogFile = os.path.join(os.getenv('HOME'), 'doomsdayhost.log')
+servers = []
+
+
+def getText(nodelist):
+    rc = []
+    for node in nodelist:
+        if node.nodeType == node.TEXT_NODE:
+            rc.append(node.data)
+    return ''.join(rc)
+
+
+def getContent(node):
+	return getText(node.childNodes)
+	
+
+def parseRebuildTimes(rebuilds):
+	times = []
+	for node in rebuilds.getElementsByTagName('rebuild'):
+		times.append((str(node.getAttribute('weekday')),
+					  int(node.getAttribute('hour')),
+  					  int(node.getAttribute('minute'))))	
+	return times
+
+
+class Server:
+	def __init__(self):
+		self.port = 13209
+		self.game = None
+		self.name = 'Multiplayer Server'
+		self.info = ''
+		self.runtime = ''
+		self.options = ''
+		
+		
+def parseServers(nodes):
+	svs = []
+	for node in nodes:
+		s = Server()
+		s.port = int(node.getAttribute('port'))
+		s.game = str(node.getAttribute('game'))
+		s.name = str(node.getAttribute('name'))
+		s.info = str(node.getAttribute('info'))
+		s.runtime = str(node.getAttribute('dir'))
+		s.options = str(node.getAttribute('options'))		
+		svs.append(s)
+	return svs
+		
+
+def parseConfig(fn):
+	global commonOptions
+	global rebuildTimes
+	global mainLogFile
+	global branch
+	global servers
+
+	cfg = parse(fn)
+	commonOptions = getContent(cfg.getElementsByTagName('options')[0])
+	
+	rebuildTimes = \
+		parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
+		
+	mainLogFile = getContent(cfg.getElementsByTagName('logFile')[0])
+	branch = getContent(cfg.getElementsByTagName('branch')[0])
+	
+	servers = \
+		parseServers(cfg.getElementsByTagName('servers')[0].
+			getElementsByTagName('server'))
+	
+
+def main():
+	cfg = parseConfig(os.path.join(os.getenv('HOME'), '.doomsdayhostrc'))
+
+
+if __name__ == '__main__':
+	main()
