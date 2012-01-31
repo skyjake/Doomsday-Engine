@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 805 <--
+; Highest ordinal is currently: --> 806 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -706,6 +706,7 @@ EXPORTS
     DGL_DrawRectf2              @133 NONAME
     DGL_DrawRectf2Color         @128 NONAME
     DGL_DrawRectf2Tiled         @129 NONAME
+    DGL_DrawCutRectfTiled       @806 NONAME
     DGL_DrawCutRectf2Tiled      @130 NONAME
     DGL_NewTextureWithParams    @329 NONAME
 

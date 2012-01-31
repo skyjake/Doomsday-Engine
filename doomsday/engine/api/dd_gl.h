@@ -270,6 +270,7 @@ void DGL_DrawRectf2(double x, double y, double w, double h);
 void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
 void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);
 
+void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff, const RectRawf* cutRect);
 void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff,
     double cx, double cy, double cw, double ch);
 

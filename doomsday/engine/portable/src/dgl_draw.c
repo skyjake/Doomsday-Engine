@@ -308,6 +308,12 @@ void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
     GL_DrawRectf2Tiled(x, y, w, h, tw, th);
 }
 
+void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf* cutRect)
+{
+    GL_DrawCutRectfTiled(rect, tw, th, txoff, tyoff, cutRect);
+}
+
 void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
     int txoff, int tyoff, double cx, double cy, double cw, double ch)
 {
