@@ -870,18 +870,31 @@ void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Raw* size);
 void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
 
 /**
- * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
+ * @defgroup orderFlags  Order Flags
  */
-/*@{*/
-#define UWGF_LEFTTORIGHT        0x0001
-#define UWGF_RIGHTTOLEFT        0x0002
+///@{
+#define ORDER_LEFTTORIGHT       0x0001
+#define ORDER_RIGHTTOLEFT       0x0002
+///@}
+
+/**
+ * @defgroup uiWidgetGroupFlags  UIWidget Group Flags
+ */
+///@{
 #define UWGF_VERTICAL           0x0004
-/*@}*/
+///@}
 
 typedef struct {
+    /// @ref orderFlags
+    int orderFlags;
+
+    /// @ref uiWidgetGroupFlags
     int flags;
+
     int padding;
+
     int widgetIdCount;
+
     uiwidgetid_t* widgetIds;
 } guidata_group_t;
 
@@ -1069,7 +1082,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
     void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
-uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding);
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int orderFlags, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;

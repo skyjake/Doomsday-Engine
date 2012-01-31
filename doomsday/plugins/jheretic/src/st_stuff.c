@@ -2732,6 +2732,7 @@ void ST_BuildWidgets(int player)
 typedef struct {
     int group;
     int alignFlags;
+    int orderFlags;
     int groupFlags;
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
@@ -2751,16 +2752,16 @@ typedef struct {
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT },
-        { UWG_TOPCENTER,    ALIGN_TOP,         UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
-        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT },
-        { UWG_COUNTERS,     ALIGN_LEFT,        UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_TOP,          ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT },
+        { UWG_TOPCENTER,    ALIGN_TOP,         ORDER_LEFTTORIGHT, UWGF_VERTICAL, PADDING },
+        { UWG_TOPLEFT,      ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    ORDER_RIGHTTOLEFT, 0, PADDING },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
+        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, ORDER_RIGHTTOLEFT, 0, PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT },
+        { UWG_COUNTERS,     ALIGN_LEFT,        ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
@@ -2803,7 +2804,7 @@ typedef struct {
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->orderFlags, def->padding);
     }
 
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
