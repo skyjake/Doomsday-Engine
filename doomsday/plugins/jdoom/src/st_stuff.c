@@ -2880,7 +2880,7 @@ void ST_BuildWidgets(int player)
 typedef struct {
     int group;
     int alignFlags;
-    int orderFlags;
+    order_t order;
     int groupFlags;
     int padding;
 } uiwidgetgroupdef_t;
@@ -2959,7 +2959,7 @@ typedef struct {
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->orderFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->order, def->padding);
     }
 
     UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]),

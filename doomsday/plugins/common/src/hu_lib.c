@@ -276,7 +276,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
     return obj->id;
 }
 
-uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int orderFlags, int padding)
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, order_t order, int padding)
 {
     uiwidget_t* obj;
     guidata_group_t* grp;
@@ -285,7 +285,7 @@ uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int ord
     obj = createWidget(GUI_GROUP, player, alignFlags, 1, 0, UIGroup_UpdateGeometry, NULL, NULL, NULL);
     grp = (guidata_group_t*)obj->typedata;
     grp->flags = groupFlags;
-    grp->orderFlags = orderFlags;
+    grp->order = order;
     grp->padding = padding;
 
     return obj->id;
@@ -401,14 +401,14 @@ void UIGroup_UpdateGeometry(uiwidget_t* obj)
             childGeometry = UIWidget_Geometry(child);
             if(Rect_Width(childGeometry) > 0 && Rect_Height(childGeometry) > 0)
             {
-                if(grp->orderFlags & ORDER_RIGHTTOLEFT)
+                if(grp->order == ORDER_RIGHTTOLEFT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
                         x -= Rect_Width(childGeometry)  + grp->padding;
                     else
                         y -= Rect_Height(childGeometry) + grp->padding;
                 }
-                else if(grp->orderFlags & ORDER_LEFTTORIGHT)
+                else if(grp->order == ORDER_LEFTTORIGHT)
                 {
                     if(!(grp->flags & UWGF_VERTICAL))
                         x += Rect_Width(childGeometry)  + grp->padding;
