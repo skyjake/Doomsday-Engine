@@ -198,6 +198,19 @@ class State:
         args += sv.options + commonOptions 
         args += ['-out', os.path.join(sv.runtime, time.strftime('doomsday-%Y%m%d-%H%M%S.out'))]
 
+        # Join the -parse arguments.
+        i = args.index('-parse')
+        j = i+2 
+        while j < len(args):
+            if args[j] == '-parse':
+                # Move the arg.
+                del args[j]
+                opt = args[j]
+                del args[j]
+                args.insert(i+1, opt)
+                continue
+            j += 1                
+
         try:
             msg('Start options: ' + string.join(args, ' '))
             po = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
