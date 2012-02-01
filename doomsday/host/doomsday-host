@@ -2,7 +2,7 @@
 # -*- Mode: Python; -*-
 
 # The Doomsday Host is a cron utility script that helps with maintaining
-# a set of Doomsday servers.
+# a set of Doomsday servers. Configure to run on every minute.
 # - configure any number of servers
 # - log file rotation
 # - automatic updates by rebuilding from source with custom options
@@ -219,11 +219,11 @@ def rebuildAndInstall():
         os.chdir(buildDir)
         run('git checkout ' + branch)
         run('git pull')
-        run('sudo_make uninstall', mustSucceed=False)
+        run('sudo make uninstall', mustSucceed=False)
         run('make clean')
         run(qmakeCommand)
         run('make')
-        run('sudo_make install')
+        run('sudo make install')
     except Exception:
         msg('Failed to build!')
         return False
