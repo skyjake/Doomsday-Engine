@@ -4,6 +4,8 @@
 	<option>-server</option>
 	<option>-parse</option>
 	<option>/home/jaakko/host.cfg</option>
+	<option>-iwad</option>
+	<option>/home/jaakko/iwads/</option>
 	<branch>master</branch>
 	<buildDir>/home/jaakko/src/deng/doomsday-build</buildDir>
 	<qmakeCommand>qmake -r ../doomsday/doomsday.pro CONFIG+='debug deng_packres'</qmakeCommand>

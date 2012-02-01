@@ -191,12 +191,16 @@ class State:
         print >> cfgFile, 'net-ip-port %i' % sv.port
         cfgFile.close()
         
+        args += ['-userdir', sv.runtime]
         args += ['-game', sv.game]
         args += ['-parse', cfgFn]
+        args += ['-noinput']
         args += sv.options + commonOptions 
-        
+        args += ['-out', os.path.join(sv.runtime, time.strftime('doomsday-%Y%m%d-%H%M%S.out'))]
+
         try:
-            po = subprocess.Popen(args)
+            msg('Start options: ' + string.join(args, ' '))
+            po = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             pid = po.pid
             time.sleep(1)
             if po.poll() is not None:
