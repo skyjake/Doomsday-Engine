@@ -973,6 +973,8 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
  */
 static void postEvents(timespan_t ticLength)
 {
+    if(ArgExists("-noinput")) return;
+
     DD_ReadKeyboard();
 
     // In dedicated mode, we don't do mice or joysticks.
