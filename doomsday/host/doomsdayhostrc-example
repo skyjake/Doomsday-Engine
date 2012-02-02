@@ -2,6 +2,8 @@
 	<logFile>/home/jaakko/host.log</logFile>
 	<option>-dedicated</option>
 	<option>-server</option>
+	<option>-daemon</option>
+	<option>-noinput</option>
 	<option>-parse</option>
 	<option>/home/jaakko/host.cfg</option>
 	<option>-iwad</option>
@@ -70,6 +72,6 @@
 			dir="/home/jaakko/runtime/hexen-dm">
 			<option>-parse</option>
 			<option>/home/jaakko/deathmatch.cfg</option>
-		</server>
+		</server>  
 	</servers>
 </hostconfig>

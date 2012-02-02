@@ -199,7 +199,6 @@ class State:
         args += ['-userdir', sv.runtime]
         args += ['-game', sv.game]
         args += ['-parse', cfgFn]
-        args += ['-noinput']
         args += sv.options + commonOptions 
 
         timestamp = '%s-' % todaysBuild() + time.strftime('%H%M%S')
