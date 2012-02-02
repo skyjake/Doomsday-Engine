@@ -144,6 +144,11 @@ def checkPid(pid):
         return False
 
 
+def todaysBuild():
+    now = time.localtime()
+    return str((now.tm_year - 2011)*365 + now.tm_yday)
+
+
 class State:
     def __init__(self):
         self.lastRun = self.now()
@@ -196,7 +201,9 @@ class State:
         args += ['-parse', cfgFn]
         args += ['-noinput']
         args += sv.options + commonOptions 
-        args += ['-out', os.path.join(sv.runtime, time.strftime('doomsday-%Y%m%d-%H%M%S.out'))]
+
+        timestamp = '%s-' % todaysBuild() + time.strftime('%H%M%S')
+        args += ['-out', os.path.join(sv.runtime, 'doomsday-%s.out' % timestamp)]
 
         # Join the -parse arguments.
         i = args.index('-parse')
@@ -212,10 +219,13 @@ class State:
             j += 1                
 
         try:
+            msg('PATH=' + os.getenv('PATH'))
+            msg('HOME=' + os.getenv('HOME'))
             msg('Start options: ' + string.join(args, ' '))
-            po = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            outfile = file(os.path.join(sv.runtime, 'stdout-%s.log' % timestamp), 'wt')
+            po = subprocess.Popen(args, stdout=outfile, stderr=outfile)
             pid = po.pid
-            time.sleep(1)
+            time.sleep(3)
             if po.poll() is not None:
                 raise OSError('terminated')
             self.pids[sv.port] = pid        
