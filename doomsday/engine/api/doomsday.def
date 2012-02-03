@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 806 <--
+; Highest ordinal is currently: --> 816 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -59,7 +59,8 @@ EXPORTS
     Point2_SetY                 @606 NONAME
     Point2_XY                   @607 NONAME
     Point2_SetXY                @608 NONAME
-    Point2_Translate            @609 NONAME
+    Point2_Translate            @813 NONAME
+    Point2_TranslateXY          @609 NONAME
     Point2_TranslateX           @610 NONAME
     Point2_TranslateY           @611 NONAME
     Point2_Sum                  @612 NONAME
@@ -77,7 +78,8 @@ EXPORTS
     Point2f_SetY                @623 NONAME
     Point2f_XY                  @624 NONAME
     Point2f_SetXY               @625 NONAME
-    Point2f_Translate           @626 NONAME
+    Point2f_Translate           @814 NONAME
+    Point2f_TranslateXY         @626 NONAME
     Point2f_TranslateX          @627 NONAME
     Point2f_TranslateY          @628 NONAME
     Point2f_Sum                 @629 NONAME
@@ -133,6 +135,10 @@ EXPORTS
     Rect_SetXY                  @674 NONAME
     Rect_SetX                   @731 NONAME
     Rect_SetY                   @732 NONAME
+    Rect_Translate              @815 NONAME
+    Rect_TranslateXY            @809 NONAME
+    Rect_TranslateX             @807 NONAME
+    Rect_TranslateY             @808 NONAME
     Rect_Size                   @675 NONAME
     Rect_SetSize                @676 NONAME
     Rect_SetWidthHeight         @677 NONAME
@@ -166,6 +172,10 @@ EXPORTS
     Rectf_SetXY                 @717 NONAME
     Rectf_SetX                  @733 NONAME
     Rectf_SetY                  @734 NONAME
+    Rectf_Translate             @816 NONAME
+    Rectf_TranslateXY           @810 NONAME
+    Rectf_TranslateX            @811 NONAME
+    Rectf_TranslateY            @812 NONAME
     Rectf_Size                  @718 NONAME
     Rectf_SetSize               @719 NONAME
     Rectf_SetWidthHeight        @720 NONAME
