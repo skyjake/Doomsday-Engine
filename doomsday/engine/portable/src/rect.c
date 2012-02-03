@@ -77,6 +77,14 @@ void Rect_Delete(Rect* r)
     free(r);
 }
 
+void Rect_Copy(Rect* r, const Rect* other)
+{
+    assert(r);
+    if(!other) return;
+    Point2_SetXY(r->origin, Rect_X(other), Rect_Y(other));
+    Size2_SetWidthHeight(r->size, Rect_Width(other), Rect_Height(other));
+}
+
 RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
 {
     assert(r);
@@ -379,6 +387,14 @@ void Rectf_Delete(Rectf* r)
     Point2f_Delete(r->origin);
     Size2f_Delete(r->size);
     free(r);
+}
+
+void Rectf_Copy(Rectf* r, const Rectf* other)
+{
+    assert(r);
+    if(!other) return;
+    Point2f_SetXY(r->origin, Rectf_X(other), Rectf_Y(other));
+    Size2f_SetWidthHeight(r->size, Rectf_Width(other), Rectf_Height(other));
 }
 
 RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)

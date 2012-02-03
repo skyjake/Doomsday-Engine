@@ -51,6 +51,8 @@ Rect* Rect_NewFromRaw(const RectRaw* rawRect);
 
 void Rect_Delete(Rect* rect);
 
+void Rect_Copy(Rect* rect, const Rect* other);
+
 RectRaw* Rect_Raw(const Rect* rect, RectRaw* rawRect);
 
 boolean Rect_IsNull(const Rect* rect);
@@ -117,6 +119,8 @@ Rectf* Rectf_NewWithOriginSize(const Point2f* origin, const Size2f* size);
 Rectf* Rectf_NewFromRaw(const RectRawf* rawRect);
 
 void Rectf_Delete(Rectf* rect);
+
+void Rectf_Copy(Rectf* rect, const Rectf* other);
 
 RectRawf* Rectf_Raw(const Rectf* rect, RectRawf* rawRect);
 
