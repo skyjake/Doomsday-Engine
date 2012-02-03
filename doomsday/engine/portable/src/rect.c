@@ -244,14 +244,17 @@ RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
 /// \assume  This and @a other have been normalized.
 static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
 {
+    Point2Raw oldOrigin;
     assert(r && other);
+
+    Point2_Raw(r->origin, &oldOrigin);
 
     Rect_SetXY(r, MIN_OF(Point2_X(r->origin), other->origin.x),
                   MIN_OF(Point2_Y(r->origin), other->origin.y));
 
-    Rect_SetWidthHeight(r, MAX_OF(Point2_X(r->origin) + Size2_Width(r->size),
+    Rect_SetWidthHeight(r, MAX_OF(oldOrigin.x + Size2_Width(r->size),
                                   other->origin.x + other->size.width)  - Point2_X(r->origin),
-                           MAX_OF(Point2_Y(r->origin) + Size2_Height(r->size),
+                           MAX_OF(oldOrigin.y + Size2_Height(r->size),
                                   other->origin.y + other->size.height) - Point2_Y(r->origin));
 
     return r;
@@ -521,14 +524,17 @@ RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
 /// \assume  This and @a other have been normalized.
 static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
 {
+    Point2Rawf oldOrigin;
     assert(r && other);
+
+    Point2f_Raw(r->origin, &oldOrigin);
 
     Rectf_SetXY(r, MIN_OF(Point2f_X(r->origin), other->origin.x),
                    MIN_OF(Point2f_Y(r->origin), other->origin.y));
 
-    Rectf_SetWidthHeight(r, MAX_OF(Point2f_X(r->origin) + Size2f_Width(r->size),
+    Rectf_SetWidthHeight(r, MAX_OF(oldOrigin.x + Size2f_Width(r->size),
                                    other->origin.x + other->size.width)  - Point2f_X(r->origin),
-                            MAX_OF(Point2f_Y(r->origin) + Size2f_Height(r->size),
+                            MAX_OF(oldOrigin.y + Size2f_Height(r->size),
                                    other->origin.y + other->size.height) - Point2f_Y(r->origin));
 
     return r;
