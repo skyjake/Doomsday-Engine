@@ -773,6 +773,7 @@ static void updatePageObjectGeometries(mn_page_t* page)
         FR_PushAttrib();
         if(obj->updateGeometry)
         {
+            Rect_SetXY(obj->_geometry, 0, 0);
             obj->updateGeometry(obj, page);
         }
         FR_PopAttrib();
@@ -804,44 +805,44 @@ static void applyPageLayout(mn_page_t* page)
     // Apply layout logic to this page.
     for(i = 0; i < page->objectsCount;)
     {
-        mn_object_t* obj = &page->objects[i];
-        mn_object_t* nextObj = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
+        mn_object_t* ob = &page->objects[i];
+        mn_object_t* nextOb = i+1 < page->objectsCount? &page->objects[i+1] : NULL;
 
-        if(!MNObject_IsDrawable(obj))
+        if(!MNObject_IsDrawable(ob))
         {
             // Proceed to the next object!
             i += 1;
             continue;
         }
 
-        Rect_SetXY(obj->_geometry, origin.x, origin.y);
+        Rect_SetXY(ob->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other object
         // on the right.
         // \todo Do not assume pairing, an object should designate it's pair.
-        if(MNObject_Type(obj) == MN_TEXT && nextObj)
+        if(MNObject_Type(ob) == MN_TEXT && nextOb)
         {
-            if(MNObject_IsDrawable(nextObj) &&
-               (MNObject_Type(nextObj) == MN_BUTTON ||
-                MNObject_Type(nextObj) == MN_LISTINLINE ||
-                MNObject_Type(nextObj) == MN_COLORBOX ||
-                MNObject_Type(nextObj) == MN_BINDINGS ||
-                (MNObject_Type(nextObj) == MN_SLIDER && nextObj->drawer == MNSlider_TextualValueDrawer)))
+            if(MNObject_IsDrawable(nextOb) &&
+               (MNObject_Type(nextOb) == MN_BUTTON ||
+                MNObject_Type(nextOb) == MN_LISTINLINE ||
+                MNObject_Type(nextOb) == MN_COLORBOX ||
+                MNObject_Type(nextOb) == MN_BINDINGS ||
+                (MNObject_Type(nextOb) == MN_SLIDER && nextOb->drawer == MNSlider_TextualValueDrawer)))
             {
                 const int margin = lineOffset * 2;
                 RectRaw united;
 
-                Rect_SetXY(nextObj->_geometry, margin + Rect_Width(obj->_geometry), origin.y);
+                Rect_SetXY(nextOb->_geometry, margin + Rect_Width(ob->_geometry), origin.y);
 
-                origin.y += Rect_United(obj->_geometry, nextObj->_geometry, &united)
+                origin.y += Rect_United(ob->_geometry, nextOb->_geometry, &united)
                           ->size.height + lineOffset;
 
                 Rect_UniteRaw(page->geometry, &united);
 
                 // Extra spacing between object groups.
                 if(i+2 < page->objectsCount &&
-                   nextObj->_group != page->objects[i+2]._group)
+                   nextOb->_group != page->objects[i+2]._group)
                     origin.y += lineHeight;
 
                 // Proceed to the next object!
@@ -850,12 +851,12 @@ static void applyPageLayout(mn_page_t* page)
             }
         }
 
-        Rect_Unite(page->geometry, obj->_geometry);
+        Rect_Unite(page->geometry, ob->_geometry);
 
-        origin.y += Rect_Height(obj->_geometry) + lineOffset;
+        origin.y += Rect_Height(ob->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
-        if(nextObj && nextObj->_group != obj->_group)
+        if(nextOb && nextOb->_group != ob->_group)
             origin.y += lineHeight;
 
         // Proceed to the next object!
@@ -3029,7 +3030,7 @@ void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 
     if(R_GetPatchInfo(pSliderRight, &info))
     {
-        info.geometry.origin.x = -info.geometry.size.width;
+        info.geometry.origin.x += middleWidth;
         Rect_UniteRaw(obj->_geometry, &info.geometry);
     }
 
