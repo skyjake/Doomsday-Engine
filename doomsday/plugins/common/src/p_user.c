@@ -1970,9 +1970,12 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     if(G_GameState() != GS_MAP)
     {
-        // Just check the controls in case some UI stuff is relying on them
-        // (like intermission).
-        P_PlayerThinkUpdateControls(player);
+        if(DD_IsSharpTick())
+        {
+            // Just check the controls in case some UI stuff is relying on them
+            // (like intermission).
+            P_PlayerThinkUpdateControls(player);
+        }
         return;
     }
 

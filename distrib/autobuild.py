@@ -289,7 +289,7 @@ def generate_readme():
     """Run Amethyst to generate readme documentation."""
     git_pull()
     os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/doc/output'))
-    system_command('make')
+    system_command('make clean all')
     
 
 def web_path():

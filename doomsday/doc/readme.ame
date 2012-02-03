@@ -5,10 +5,12 @@
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
 
+@macro{plugin}{@arg}
+
 @begin
 
 @include{introduction}
-@include{documentation}
+@ifndef{MAN}{@include{documentation}}
 @include{gamemodes}
 @include{files}
 @include{environment}
@@ -17,6 +19,8 @@
 @include{plugins}
 @include{bugs}
 @ifdef{MAN}{
+    $ See also
+    @include{documentation}
     $ Man pages have an author section.
     @include{author}    
 }
