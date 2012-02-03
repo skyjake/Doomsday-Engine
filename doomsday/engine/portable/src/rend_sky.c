@@ -114,7 +114,7 @@ static void renderSkyModels(void)
         if(!sky->def)
             continue;
 
-        if(!R_SkyLayerActive(sky->def->layer))
+        if(!R_SkyLayerActive(sky->def->layer+1))
         {
             // The model has been assigned to a layer, but the layer is
             // not visible.
@@ -390,6 +390,7 @@ void Rend_RenderSky(void)
         // We don't want anything written in the depth buffer.
         glDisable(GL_DEPTH_TEST);
         glDepthMask(GL_FALSE);
+
         // Disable culling, all triangles face the viewer.
         glDisable(GL_CULL_FACE);
 
@@ -408,6 +409,7 @@ void Rend_RenderSky(void)
 
         // Restore assumed default GL state.
         glEnable(GL_CULL_FACE);
+
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
     }
@@ -415,7 +417,15 @@ void Rend_RenderSky(void)
     // How about some 3D models?
     if(skyModelsInited)
     {
+        // We don't want anything written in the depth buffer.
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
         renderSkyModels();
+
+        // Restore assumed default GL state.
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
     }
 }
 
