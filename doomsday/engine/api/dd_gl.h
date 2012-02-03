@@ -274,6 +274,11 @@ void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int 
 void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff,
     double cx, double cy, double cw, double ch);
 
+void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br,
+    const Point2Raw* bl, const float color[4]);
+void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY,
+    const float color[4]);
+
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT);

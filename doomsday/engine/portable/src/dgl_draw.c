@@ -319,3 +319,32 @@ void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int 
 {
     GL_DrawCutRectf2Tiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
 }
+
+void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br,
+    const Point2Raw* bl, const float color[4])
+{
+    if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
+
+    if(color) DGL_Color4fv(color);
+    glBegin(GL_LINE_LOOP);
+        glVertex2iv((const GLint*)tl->xy);
+        glVertex2iv((const GLint*)tr->xy);
+        glVertex2iv((const GLint*)br->xy);
+        glVertex2iv((const GLint*)bl->xy);
+    glEnd();
+}
+
+void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX,
+    int blY, const float color[4])
+{
+    Point2Raw tl, tr, bl, br;
+    tl.x = tlX;
+    tl.y = tlY;
+    tr.x = trX;
+    tr.y = trY;
+    br.x = brX;
+    br.y = brY;
+    bl.x = blX;
+    bl.y = blY;
+    DGL_DrawQuadOutline(&tl, &tr, &br, &bl, color);
+}
