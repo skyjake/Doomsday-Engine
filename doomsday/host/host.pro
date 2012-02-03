@@ -8,10 +8,14 @@ TEMPLATE = subdirs
 
 # The host is not installed by default.
 deng_host {
-	INSTALLS += host
+    INSTALLS += host
 
-	unix {
-		host.files += doomsday-host
-		host.path = $$DENG_BIN_DIR
-	}
+    unix {
+        host.files += doomsday-host
+        host.path = $$DENG_BIN_DIR
+    }
 }
+
+OTHER_FILES += \
+    doomsday-host \
+    doomsdayhostrc-example
