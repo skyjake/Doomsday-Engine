@@ -155,7 +155,6 @@ static int loadPluginWorker(const char* pluginPath, void* data)
 #endif
 #ifdef MACOSX
     _splitpath(pluginPath, NULL, NULL, name, ext);
-    fprintf(stderr, "%s\n", ext);
     if(((params->loadingGames  && !strncmp(name, "j", 1)) ||
        (!params->loadingGames && !strncmp(name, "dp", 2)))
             && (!stricmp(ext, ".dylib") || !stricmp(ext, ".bundle")))
