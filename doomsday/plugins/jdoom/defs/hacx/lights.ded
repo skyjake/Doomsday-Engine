@@ -14,6 +14,26 @@ SkipIf -nodefaultfx;
 #
 #   http://dengine.net/dew/?title=Light
 
+Light {
+  State = "RTORCHSHRT";
+  Color { .88 .7 .65 };
+  Size = 1;
+  Y Offset = 1;
+}
+
+# The default lights are a little too strong.
+Light {
+  State = "BROK";
+  Flags = nohalo;
+  Color { .36 .65 .33 };
+  Size = .8;
+}
+
+Copy Light {
+  State = "ROCK";
+  Size = .4;
+}
+
 #####====--- LIGHT DECORATIONS ---====#####
 #
 # The default flags allow using these only with the original textures.

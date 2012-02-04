@@ -19,6 +19,206 @@ Include "hacx/menu.ded";
 Include "hacx/inlude.ded";
 Include "hacx/lights.ded";
 
+# Make the photon rocket ammo's fullbright so we can add a light.
+State {
+  ID = "ROCK";
+  Sprite = "ROCK";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BROK";
+  Sprite = "BROK";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+# Nerf the lights on fullbright but non-light emitting objects.
+State {
+  ID = "RKEY";
+  Flags = noautolight;
+  Sprite = "RKEY";
+  Frame = 0;
+  Tics = 10;
+  Next state = "RKEY2";
+}
+
+State {
+  ID = "PSTR";
+  Sprite = "PSTR";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "PINS";
+  Sprite = "PINS";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS2";
+}
+
+State {
+  ID = "PINS2";
+  Sprite = "PINS";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS3";
+}
+
+State {
+  ID = "PINS3";
+  Sprite = "PINS";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS4";
+}
+
+State {
+  ID = "PINS4";
+  Sprite = "PINS";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS";
+}
+
+State {
+  ID = "BON1";
+  Sprite = "BON1";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1A";
+}
+
+State {
+  ID = "BON1A";
+  Sprite = "BON1";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1B";
+}
+
+State {
+  ID = "BON1B";
+  Sprite = "BON1";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1C";
+}
+
+State {
+  ID = "BON1C";
+  Sprite = "BON1";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1D";
+}
+
+State {
+  ID = "BON1D";
+  Sprite = "BON1";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1E";
+}
+
+State {
+  ID = "BON1E";
+  Sprite = "BON1";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1";
+}
+
+State {
+  ID = "GREENTORCH";
+  Sprite = "TGRN";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH2";
+}
+
+State {
+  ID = "GREENTORCH2";
+  Sprite = "TGRN";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH3";
+}
+
+State {
+  ID = "GREENTORCH3";
+  Sprite = "TGRN";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH4";
+}
+
+State {
+  ID = "GREENTORCH4";
+  Sprite = "TGRN";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH";
+}
+
+State {
+  ID = "FLOATSKULL";
+  Sprite = "FSKU";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL2";
+}
+
+State {
+  ID = "FLOATSKULL2";
+  Sprite = "FSKU";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL3";
+}
+
+State {
+  ID = "FLOATSKULL3";
+  Sprite = "FSKU";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL";
+}
+
+State {
+  ID = "BFUG";
+  Sprite = "BFUG";
+  Frame = 0;
+  Flags = noautolight;
+  Tics = -1;
+  Next state = "NULL";
+}
+
 # The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
 Thing {
   ID = "BFG";
