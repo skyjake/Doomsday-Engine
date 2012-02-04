@@ -15,3 +15,31 @@ Include "doom2/finales.ded";
 Include "doom1/materials.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
+
+# The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
+Thing {
+  ID = "BFG";
+  DoomEd number = -1;
+  Spawn state = "BFGSHOT";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "BFGLAND";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "rxplod";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Speed = 25;
+  Radius = 13;
+  Height = 8;
+  Mass = 100;
+  Damage = 100;
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
+}
