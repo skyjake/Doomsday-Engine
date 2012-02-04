@@ -127,10 +127,10 @@ static void PathMap_MapAllFragments(PathMap* pm, const char* path, size_t pathLe
     }
 
     // Deal with the special case of a Unix style zero-length root name.
-    if(*begin == '/')
+    if(*begin == pm->delimiter)
     {
         fragment = PathMap_AllocFragment(pm);
-        fragment->from = fragment->to = begin;
+        fragment->from = fragment->to = "";
     }
 }
 
