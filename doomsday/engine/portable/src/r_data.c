@@ -3159,6 +3159,7 @@ font_t* R_CreateFontFromFile(const Uri* uri, const char* resourcePath)
     {
 #if _DEBUG
         Con_Message("Warning:R_CreateFontFromFile: Invalid Uri or ResourcePath reference, ignoring.\n");
+        if(resourcePath) Con_Message("  Resource path: %s\n", resourcePath);
 #endif
         return NULL;
     }
