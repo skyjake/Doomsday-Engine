@@ -15,6 +15,7 @@ Include "doom2/finales.ded";
 Include "doom1/materials.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
+Include "hacx/menu.ded";
 
 # The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
 Thing {
@@ -42,4 +43,30 @@ Thing {
   Damage = 100;
   Flags = noblockmap | missile | dropoff | nogravity;
   Flags2 = noteleport;
+}
+
+# HacX uses different skill level names.
+Text {
+  ID = "SKILL1";
+  Text = "Please don't shoot!";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Arrgh, I need health!";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Let's rip them apart!";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "I am immortal";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Insanity!";
 }

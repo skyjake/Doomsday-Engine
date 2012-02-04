@@ -19,3 +19,4 @@ Include "doom2/particles.ded";
 Include "doom1/lights.ded";
 Include "doom2/lights.ded";
 Include "doom2/music.ded";
+Include "doom1/menu.ded";
