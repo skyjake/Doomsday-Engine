@@ -1126,7 +1126,10 @@ static void drawMarkedPoints(uiwidget_t* obj, float scale)
 
         FR_SetFont(FID(GF_MAPPOINT));
 #if __JDOOM__
-        FR_SetColorAndAlpha(.22f, .22f, .22f, alpha);
+        if(gameMode == doom2_hacx)
+            FR_SetColorAndAlpha(1, 1, 1, alpha);
+        else
+            FR_SetColorAndAlpha(.22f, .22f, .22f, alpha);
 #else
         FR_SetColorAndAlpha(1, 1, 1, alpha);
 #endif
