@@ -302,10 +302,9 @@ void D_PreInit(void)
     {
         cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
         memcpy(cfg.menuTextColors[1], defFontRGB, sizeof(cfg.menuTextColors[1]));
-        cfg.menuTextColors[2][CR] = .2f;
-        cfg.menuTextColors[2][CG] = .2f;
-        cfg.menuTextColors[2][CB] = .9f;
-        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+        cfg.menuTextColors[2][CR] = cfg.menuTextColors[3][CR] = .2f;
+        cfg.menuTextColors[2][CG] = cfg.menuTextColors[3][CG] = .2f;
+        cfg.menuTextColors[2][CB] = cfg.menuTextColors[3][CB] = .9f;
     }
     else
     {
