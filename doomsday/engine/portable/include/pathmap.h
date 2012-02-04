@@ -102,4 +102,11 @@ uint PathMap_Size(PathMap* pathMap);
  */
 const PathMapFragment* PathMap_Fragment(PathMap* pathMap, uint idx);
 
-#endif // LIBDENG_FILESYS_PATHMAP_H
+#if _DEBUG
+/**
+ * Perform unit tests for this class.
+ */
+void PathMap_Test(void);
+#endif
+
+#endif /// LIBDENG_FILESYS_PATHMAP_H
