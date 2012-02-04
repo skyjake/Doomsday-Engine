@@ -166,6 +166,7 @@ typedef struct jdoom_config_s {
 
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*  int             automapPos;

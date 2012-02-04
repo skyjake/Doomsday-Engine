@@ -167,6 +167,9 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, "hud-ammo" },
     { 0, "hud-armor" },
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { 0, "hud-cheat-counter-show-mapopen" },
+#endif
 #if __JHERETIC__ || __JHEXEN__
     { 0, "hud-currentitem" },
 #endif
@@ -633,6 +636,9 @@ mndata_text_t txt_hud_full_show_keys = { "Show Keys" };
 #if __JHERETIC__ || __JHEXEN__
 mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item" };
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_text_t txt_hud_cntr_mapopen = { "Automap Only" };
+#endif
 
 mndata_button_t btn_hud_single_key_display = { true, "hud-keys-combine" };
 mndata_button_t btn_hud_unhide_receive_damage = { true, "hud-unhide-damage" };
@@ -666,6 +672,9 @@ mndata_button_t btn_hud_full_show_keys = { true, "hud-keys" };
 #endif
 #if __JHERETIC__ || __JHEXEN__
 mndata_button_t btn_hud_full_show_readyitem = { true, "hud-currentitem" };
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_button_t btn_hud_cntr_mapopen = { true, "hud-cheat-counter-show-mapopen" };
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -727,12 +736,14 @@ static mn_object_t HudMenuObjects[] = {
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_counters },
-    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
-    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_items },
     { MN_LISTINLINE, 5, 0,  'i',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_items },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
+    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_secrets },
     { MN_LISTINLINE, 5, 0,  's',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_secrets },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_mapopen },
+    { MN_BUTTON,    5,  0,  0,  MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_cntr_mapopen },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_size },
     { MN_SLIDER,    5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_cntr_size },
 #endif

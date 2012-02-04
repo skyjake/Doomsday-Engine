@@ -304,7 +304,9 @@ void X_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.hudCheatCounterScale = .7f; //From jHeretic
+
+    cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;

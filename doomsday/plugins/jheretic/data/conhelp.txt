@@ -509,6 +509,9 @@ desc = 6-bit bitfield. Show kills, items and secret counters.
 [hud-cheat-counter-scale]
 desc = Size factor for the counters.
 
+[hud-cheat-counter-show-mapopen]
+desc = 1=Only show the cheat counters while the automap is open.
+
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.
 

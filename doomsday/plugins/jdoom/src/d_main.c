@@ -374,6 +374,7 @@ void D_PreInit(void)
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
 
     cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
