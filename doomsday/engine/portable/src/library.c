@@ -296,12 +296,14 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 
     while((entry = readdir(dir)))
     {
+        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
 #ifdef MACOSX
         // Mac plugins are bundled in a subdir.
-        if(entry->d_type != DT_REG && entry->d_type != DT_DIR) continue;
-        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        if(entry->d_type != DT_REG && entry->d_type != DT_DIR &&
+           entry->d_type != DT_LNK) continue;
 #else
-        if(entry->d_type != DT_REG) continue;
+        // Also include symlinks.
+        if(entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
 #endif
         if(func(entry->d_name, data)) break;
     }
