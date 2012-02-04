@@ -17,3 +17,4 @@ Include "doom1/lights.ded";
 Include "doom1/materials.ded";
 Include "doom1/music.ded";
 Include "doom1/menu.ded";
+Include "doom1/inlude.ded";
