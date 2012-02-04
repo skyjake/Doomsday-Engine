@@ -174,79 +174,8 @@ Copy Map Info {
 }
 
 Copy Map Info {
-  ID = "MAP22";
-  Name = "HUSTR_22";
-  Music = "ddtbl3";
-  Par time = 150;
-}
-
-Copy Map Info {
-  ID = "MAP23";
-  Name = "HUSTR_23";
-  Music = "ampie";
-  Par time = 180;
-}
-
-Copy Map Info {
-  ID = "MAP24";
-  Name = "HUSTR_24";
-  Author = "Banjo Software";
-  Music = "theda3";
-  Par time = 150;
-}
-
-Copy Map Info {
-  ID = "MAP25";
-  Name = "HUSTR_25";
-  Music = "adrian";
-  Par time = 150;
-}
-
-Copy Map Info {
-  ID = "MAP26";
-  Name = "HUSTR_26";
-  Music = "messg2";
-  Par time = 300;
-}
-
-Copy Map Info {
-  ID = "MAP27";
-  Name = "HUSTR_27";
-  Music = "romer2";
-  Par time = 330;
-}
-
-Copy Map Info {
-  ID = "MAP28";
-  Name = "HUSTR_28";
-  Music = "tense";
-  Par time = 420;
-}
-
-Copy Map Info {
-  ID = "MAP29";
-  Name = "HUSTR_29";
-  Music = "shawn3";
-  Par time = 300;
-}
-
-Copy Map Info {
-  ID = "MAP30";
-  Name = "HUSTR_30";
-  Music = "openin";
-  Par time = 180;
-}
-
-Copy Map Info {
   ID = "MAP31";
   Name = "HUSTR_31";
   Music = "evil";
   Par time = 120;
-}
-
-Copy Map Info {
-  ID = "MAP32";
-  Name = "HUSTR_32";
-  Music = "ultima";
-  Par time = 30;
 }
