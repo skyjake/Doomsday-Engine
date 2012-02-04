@@ -16,6 +16,7 @@ Include "doom1/materials.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
 Include "hacx/menu.ded";
+Include "hacx/lights.ded";
 
 # The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
 Thing {
