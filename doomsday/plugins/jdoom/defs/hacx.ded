@@ -45,6 +45,52 @@ Thing {
   Flags2 = noteleport;
 }
 
+# HacX uses different weapon names.
+Text {
+  ID = "WEAPON1";
+  Text = "Kick";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Tazer";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "UZI";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Photon 'Zooka";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Big Stick";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Nuker";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "HOIG Reznator";
+}
+
+Text {
+  ID = "WEAPON9";
+  Text = "Cryogun";
+}
+
 # HacX uses different skill level names.
 Text {
   ID = "SKILL1";
