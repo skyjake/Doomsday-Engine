@@ -427,7 +427,7 @@ static mn_object_t SkillMenuObjects[] = {
     { MN_BUTTON,    0,  MNF_ID1,                'r', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
     { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    'h', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
     { MN_BUTTON,    0,  MNF_ID3,                'u', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4|MNF_NO_ALTTEXT, 'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  MNF_ID4,                'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
     { MN_NONE }
 };
 #endif
@@ -1496,11 +1496,19 @@ void Hu_MenuInitSkillMenu(void)
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
         const struct skillbutton_s* sb = &skillButtons[i];
-        mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
-        mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
+        mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
 
         btn->text = GET_TXT(sb->textDefId);
-        MNObject_SetShortcut(obj, btn->text[0]);
+        MNObject_SetShortcut(ob, btn->text[0]);
+    }
+#endif
+
+#if __JDOOM__
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+    {
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, MNF_ID4);
+        MNObject_SetFlags(ob, FO_SET, MNF_NO_ALTTEXT);
     }
 #endif
 }
