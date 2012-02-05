@@ -161,6 +161,25 @@ char* M_SkipLine(char* str)
     return str;
 }
 
+char* M_StrCat(char* buf, const char* str, size_t bufSize)
+{
+    return M_StrnCat(buf, str, strlen(str), bufSize);
+}
+
+char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
+{
+    int n = nChars;
+    int destLen = strlen(buf);
+    if((int)bufSize - destLen - 1 > n)
+    {
+        // Cannot copy more than fits in the buffer.
+        // The 1 is for the null character.
+        n = bufSize - destLen - 1;
+    }
+    if(n <= 0) return buf; // No space left.
+    return strncat(buf, str, n);
+}
+
 char* M_LimitedStrCat(char* buf, const char* str, size_t maxWidth,
                       char separator, size_t bufLength)
 {
@@ -338,12 +357,17 @@ void RNG_Reset(void)
 
 int M_RatioReduce(int* numerator, int* denominator)
 {
-    assert(numerator && denominator);
-    {
     int n, d, temp;
 
-    if(*numerator == *denominator)
-        return 1; // 1:1
+    if(!numerator || !denominator)
+    {
+#if _DEBUG
+        Con_Message("Warning: M_RatioReduce: Invalid arguments, returning 1:1.\n");
+#endif
+        return 1;
+    }
+
+    if(*numerator == *denominator) return 1; // 1:1
 
     n = abs(*numerator);
     d = abs(*denominator);
@@ -367,7 +391,6 @@ int M_RatioReduce(int* numerator, int* denominator)
     *numerator   /= n;
     *denominator /= n;
     return n;
-    }
 }
 
 /**
@@ -1099,15 +1122,6 @@ void M_ReadBits(uint numBits, const uint8_t** src, uint8_t* cb, uint8_t* out)
     }
 }
 
-/**
- * Advances time and return true if the trigger is triggered.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return              @c true, if the trigger has accumulated enough time
- *                      to fill the trigger's time threshold.
- */
 boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
@@ -1125,16 +1139,6 @@ boolean M_RunTrigger(trigger_t *trigger, timespan_t advanceTime)
     return false;
 }
 
-/**
- * Checks if the trigger will trigger after @a advanceTime seconds.
- * The trigger itself is not modified in any way.
- *
- * @param trigger      Time trigger.
- * @param advanceTime  Amount of time to advance the trigger.
- *
- * @return @c true, if the trigger will accumulate enough time after @a advanceTime
- *         to fill the trigger's time threshold.
- */
 boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
 {
     // Either use the trigger's duration, or fall back to the default.
@@ -1142,9 +1146,6 @@ boolean M_CheckTrigger(const trigger_t *trigger, timespan_t advanceTime)
     return (trigger->accum + advanceTime>= duration);
 }
 
-/**
- * Calculate CRC-32 for an arbitrary data buffer.
- */
 uint M_CRC32(byte *data, uint length)
 {
 /* ====================================================================== */

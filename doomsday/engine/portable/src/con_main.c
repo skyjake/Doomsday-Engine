@@ -436,7 +436,7 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Shuting down the console...\n");
+    Con_Message("Shutting down the console...\n");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
@@ -1854,8 +1854,6 @@ static void conPrintf(int flags, const char* format, va_list args)
     {
         if(prbuff == NULL)
             prbuff = M_Malloc(PRBUFF_SIZE);
-        else
-            memset(prbuff, 0, PRBUFF_SIZE);
 
         // Format the message to prbuff.
         dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
@@ -2066,13 +2064,15 @@ void Con_Error(const char* error, ...)
 
     if(Con_IsBusy())
     {
-        // In busy mode, the other thread will handle this.
         Con_BusyWorkerError(buff);
-        for(;;)
+
+        if(Con_IsBusyWorker())
         {
-            // We'll stop here.
-            // \todo Kill this thread?
-            Sys_Sleep(10000);
+            for(;;)
+            {
+                // We'll stop here. The main thread will shut down the process.
+                Sys_Sleep(500);
+            }
         }
     }
     else
@@ -2177,7 +2177,6 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if(DD_GameLoaded())
     {
-        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
         Con_Printf("Game: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
     }
     return true;

@@ -38,6 +38,7 @@
 #include "p_player.h"
 #include "hu_menu.h"
 #include "p_start.h"
+#include "fi_lib.h"
 #include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
@@ -474,6 +475,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_MobjImpulse(reader);
         break;
 
+    case GPT_LOCAL_MOBJ_STATE:
+        NetCl_LocalMobjState(reader);
+        break;
+
     case GPT_MESSAGE:
 #if __JHEXEN__ || __JSTRIFE__
     case GPT_YELLOW_MESSAGE:
@@ -536,12 +541,9 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_Intermission(reader);
         break;
 
-/*
-    case GPT_FINALE:
-    case GPT_FINALE2:
-        NetCl_Finale(type, reader);
+    case GPT_FINALE_STATE:
+        NetCl_UpdateFinaleState(reader);
         break;
-*/
 
     case GPT_PLAYER_INFO:
         NetCl_UpdatePlayerInfo(reader);

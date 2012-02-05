@@ -57,6 +57,12 @@ typedef struct repeater_s {
     int     count;              // How many times has been repeated?
 } repeater_t;
 
+typedef struct {
+    ddevent_t events[MAXEVENTS];
+    int head;
+    int tail;
+} eventqueue_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -70,11 +76,11 @@ D_CMD(ListInputDevices);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void postEvents(timespan_t ticLength);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean ignoreInput = false;
 
 int     mouseFilter = 1;        // Filtering on by default.
 
@@ -84,15 +90,16 @@ int     keyRepeatDelay1 = 430, keyRepeatDelay2 = 85;    // milliseconds
 unsigned int  mouseFreq = 0;
 boolean shiftDown = false, altDown = false;
 
-static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
+inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-/*static*/ inputdev_t inputDevices[NUM_INPUT_DEVICES];
+static boolean ignoreInput = false;
 
-static ddevent_t events[MAXEVENTS];
-static int eventhead;
-static int eventtail;
+static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
+
+static eventqueue_t queue;
+static eventqueue_t sharpQueue;
 
 static char defaultShiftTable[96] = // Contains characters 32 to 127.
 {
@@ -107,13 +114,12 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 /* 110 */   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
 /* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
 };
-/* *INDENT-ON* */
 
 static repeater_t keyReps[MAX_DOWNKEYS];
-//static int oldJoyBState = 0;
 static float oldPOV = IJOY_POV_CENTER;
 static char* eventStrings[MAXEVENTS];
 static boolean uiMouseMode = false; // Can mouse data be modified?
+static byte useSharpToggleEvents = true;
 
 // CODE --------------------------------------------------------------------
 
@@ -122,6 +128,7 @@ void DD_RegisterInput(void)
     // Cvars
     C_VAR_INT("input-key-delay1", &keyRepeatDelay1, CVF_NO_MAX, 50, 0);
     C_VAR_INT("input-key-delay2", &keyRepeatDelay2, CVF_NO_MAX, 20, 0);
+    C_VAR_BYTE("input-toggle-sharp", &useSharpToggleEvents, 0, 0, 1);
 
     C_VAR_INT("input-mouse-filter", &mouseFilter, 0, 0, MAX_AXIS_FILTER - 1);
     C_VAR_INT("input-mouse-frequency", &mouseFreq, CVF_NO_MAX, 0, 0);
@@ -132,6 +139,7 @@ void DD_RegisterInput(void)
     C_CMD("keymap", "s", KeyMap);
 #endif
     C_CMD("listinputdevices", "", ListInputDevices);
+
     //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
@@ -539,7 +547,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
 
     if(a->type == IDAT_STICK)
         a->position = pos; //a->realPosition;
-    else // Cumulative.
+    else if(!ignoreInput) // Cumulative.
         a->position += pos; //a->realPosition;
 
     // We can clear the expiration when it returns to default state.
@@ -730,14 +738,51 @@ void DD_ClearEventStrings(void)
     }
 }
 
+static void clearQueue(eventqueue_t* q)
+{
+    q->head = q->tail;
+}
+
+boolean DD_IgnoreInput(boolean ignore)
+{
+    boolean old = ignoreInput;
+    ignoreInput = ignore;
+#ifdef _DEBUG
+    Con_Message("DD_IgnoreInput: ignoring=%i\n", ignore);
+#endif
+    if(!ignore)
+    {
+        // Clear all the event buffers.
+        postEvents(0);
+        DD_ClearEvents();
+        DD_ClearKeyRepeaters();
+    }
+    return old;
+}
+
 /**
  * Clear the input event queue.
  */
 void DD_ClearEvents(void)
 {
-    eventhead = eventtail;
+    clearQueue(&queue);
+    clearQueue(&sharpQueue);
 
     DD_ClearEventStrings();
+}
+
+static void postToQueue(eventqueue_t* q, ddevent_t* ev)
+{
+    q->events[q->head] = *ev;
+
+    if(ev->type == E_SYMBOLIC)
+    {
+        // Allocate a throw-away string from our buffer.
+        q->events[q->head].symbolic.name = DD_AllocEventString(ev->symbolic.name);
+    }
+
+    q->head++;
+    q->head &= MAXEVENTS - 1;
 }
 
 /**
@@ -745,31 +790,41 @@ void DD_ClearEvents(void)
  */
 void DD_PostEvent(ddevent_t *ev)
 {
-    events[eventhead] = *ev;
-
-    if(ev->type == E_SYMBOLIC)
+    eventqueue_t* q = &queue;
+    if(useSharpToggleEvents && ev->type == E_TOGGLE)
     {
-        // Allocate a throw-away string from our buffer.
-        events[eventhead].symbolic.name = DD_AllocEventString(ev->symbolic.name);
+        q = &sharpQueue;
     }
 
-    eventhead++;
-    eventhead &= MAXEVENTS - 1;
+    postToQueue(q, ev);
+
+#ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
+    if(ev->device == IDEV_KEYBOARD && ev->type == E_TOGGLE
+            && ev->toggle.state == ETOG_DOWN)
+    {
+        // Restart timer on each key down.
+        extern float devCameraMovementStartTime;
+        extern float devCameraMovementStartTimeRealSecs;
+        devCameraMovementStartTime = sysTime;
+        devCameraMovementStartTimeRealSecs = Sys_GetRealSeconds();
+    }
+#endif
 }
 
 /**
- * Get the next event from the input event queue.  Returns NULL if no
- * more events are available.
+ * Gets the next event from an input event queue.
+ * @param q  Event queue.
+ * @return @c NULL if no more events are available.
  */
-static ddevent_t *DD_GetEvent(void)
+static ddevent_t* nextFromQueue(eventqueue_t* q)
 {
     ddevent_t *ev;
 
-    if(eventhead == eventtail)
+    if(q->head == q->tail)
         return NULL;
 
-    ev = &events[eventtail];
-    eventtail = (eventtail + 1) & (MAXEVENTS - 1);
+    ev = &q->events[q->tail];
+    q->tail = (q->tail + 1) & (MAXEVENTS - 1);
 
     return ev;
 }
@@ -779,16 +834,14 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
     //
-    // FIXME: This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
+    /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
     memset(ev, 0, sizeof(ev));
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
 #ifdef __64BIT__
-        ASSERT_64BIT(int64_t);
         ASSERT_64BIT(ddEvent->symbolic.name);
-
         ev->data1 = (int)(((int64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
         ev->data2 = (int)(((int64_t) ddEvent->symbolic.name) >> 32); // high dword
 #else
@@ -868,47 +921,46 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(timespan_t ticLength)
+static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
 {
     const boolean callGameResponders = DD_GameLoaded();
     ddevent_t* ddev;
 
-    while((ddev = DD_GetEvent()))
+    while((ddev = nextFromQueue(q)))
     {
         event_t ev;
 
-        if(ignoreInput)
-            continue;
-
         // Update the state of the input device tracking table.
         I_TrackInput(ddev, ticLength);
+
+        if(ignoreInput)
+            continue;
 
         DD_ConvertEvent(ddev, &ev);
 
         if(callGameResponders)
         {
             // Does the game's special responder use this event?
-            if(gx.PrivilegedResponder)
-                if(gx.PrivilegedResponder(&ev))
-                    continue;
-
-            if(gx.FinaleResponder)
-                if(gx.FinaleResponder((void*)ddev))
-                    continue;
+            if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
+                continue;
         }
 
-        if(UI_Responder(ddev))
-            continue;
-        if(Con_Responder(ddev))
-            continue;
+        if(UI_Responder(ddev)) continue;
+        if(Con_Responder(ddev)) continue;
 
-        // The game's normal responder only returns true if the bindings can't be used (like when chatting).
-        if(callGameResponders && gx.Responder(&ev))
-            continue;
+        if(callGameResponders)
+        {
+            if(gx.FinaleResponder && gx.FinaleResponder((void*)ddev))
+                continue;
+
+            // The game's normal responder only returns true if the bindings can't
+            // be used (like when chatting).
+            if(gx.Responder(&ev))
+                continue;
+        }
 
         // The bindings responder.
-        if(B_Responder(ddev))
-            continue;
+        if(B_Responder(ddev)) continue;
 
         // The "fallback" responder. Gets the event if no one else is interested.
         if(callGameResponders && gx.FallbackResponder)
@@ -921,10 +973,13 @@ static void dispatchEvents(timespan_t ticLength)
  */
 static void postEvents(timespan_t ticLength)
 {
+    if(ArgExists("-noinput")) return;
+
     DD_ReadKeyboard();
 
+    // In dedicated mode, we don't do mice or joysticks.
     if(!isDedicated)
-    {   // In dedicated mode, we don't do mice or joysticks.
+    {
         DD_ReadMouse(ticLength);
         DD_ReadJoystick();
     }
@@ -941,8 +996,17 @@ void DD_ProcessEvents(timespan_t ticLength)
     // Poll all event sources (i.e., input devices) and post events.
     postEvents(ticLength);
 
-    // Despatch all accumulated events down the responder chain.
-    dispatchEvents(ticLength);
+    // Dispatch all accumulated events down the responder chain.
+    dispatchEvents(&queue, ticLength);
+}
+
+void DD_ProcessSharpEvents(timespan_t ticLength)
+{
+    // Sharp ticks may have some events queued on the side.
+    if(DD_IsSharpTick() || !DD_IsFrameTimeAdvancing())
+    {
+        dispatchEvents(&sharpQueue, ticLength);
+    }
 }
 
 /**
@@ -1165,7 +1229,7 @@ void DD_ReadMouse(timespan_t ticLength)
     xpos = mouse.x;
     ypos = mouse.y;
 
-    if(mouseFilter > 0)
+    if(ticLength > 0 && mouseFilter > 0)
     {
         // Filtering ensures that events are sent more evenly on each frame.
         static float accumulation[2] = { 0, 0 };

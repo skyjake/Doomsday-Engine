@@ -44,9 +44,10 @@ HEADERS += \
     $$common_inc/p_mapspec.h \
     $$common_inc/p_plat.h \
     $$common_inc/p_player.h \
+    $$common_inc/p_savedef.h \
     $$common_inc/p_saveg.h \
+    $$common_inc/p_saveio.h \
     $$common_inc/p_start.h \
-    $$common_inc/p_svtexarc.h \
     $$common_inc/p_switch.h \
     $$common_inc/p_terraintype.h \
     $$common_inc/p_tick.h \
@@ -96,8 +97,8 @@ SOURCES += \
     $$common_src/p_plat.c \
     $$common_src/p_player.c \
     $$common_src/p_saveg.c \
+    $$common_src/p_saveio.c \
     $$common_src/p_start.c \
-    $$common_src/p_svtexarc.c \
     $$common_src/p_switch.c \
     $$common_src/p_terraintype.c \
     $$common_src/p_tick.c \

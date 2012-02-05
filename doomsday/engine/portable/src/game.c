@@ -53,7 +53,7 @@ struct Game_s {
     /// The base directory for all defs-class resources.
     ddstring_t defsPath;
 
-    /// Name of the main config file (e.g., "jdoom.cfg").
+    /// Name of the main config file (e.g., "configs/doom/game.cfg").
     ddstring_t mainConfig;
 
     /// Name of the file used for control bindings, set automatically at creation time.
@@ -64,7 +64,7 @@ struct Game_s {
 };
 
 Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const ddstring_t* defsPath, const char* configDir, const char* title,
     const char* author)
 {
     int i;
@@ -85,15 +85,18 @@ Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
         Str_Set(&g->defsPath, Str_Text(defsPath));
 
     Str_Init(&g->mainConfig);
+    Str_Appendf(&g->mainConfig, "configs/%s", configDir);
+    Str_Strip(&g->mainConfig);
+    F_FixSlashes(&g->mainConfig, &g->mainConfig);
+    F_AppendMissingSlash(&g->mainConfig);
+    Str_Append(&g->mainConfig, "game.cfg");
+
     Str_Init(&g->bindingConfig);
-    if(mainConfig)
-    {
-        Str_Set(&g->mainConfig, mainConfig);
-        Str_Strip(&g->mainConfig);
-        F_FixSlashes(&g->mainConfig, &g->mainConfig);
-        Str_PartAppend(&g->bindingConfig, Str_Text(&g->mainConfig), 0, Str_Length(&g->mainConfig)-4);
-        Str_Append(&g->bindingConfig, "-bindings.cfg");
-    }
+    Str_Appendf(&g->bindingConfig, "configs/%s", configDir);
+    Str_Strip(&g->bindingConfig);
+    F_FixSlashes(&g->bindingConfig, &g->bindingConfig);
+    F_AppendMissingSlash(&g->bindingConfig);
+    Str_Append(&g->bindingConfig, "player/bindings.cfg");
 
     Str_Init(&g->title);
     if(title)
@@ -176,6 +179,37 @@ AbstractResource* Game_AddResource(Game* g, resourceclass_t rclass,
     return record;
 }
 
+boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
+{
+    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
+    if(records)
+    {
+        AbstractResource* const* recordIt;
+        // Is this resource from a container?
+        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        if(file)
+        {
+            // Yes; use the container's path instead.
+            absolutePath = Str_Text(AbstractFile_Path(file));
+        }
+
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
+            {
+                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    // Not found, so no.
+    return false;
+}
+
 pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)
 {
     assert(g);
@@ -230,7 +264,7 @@ const ddstring_t* Game_Author(Game* g)
     return &g->author;
 }
 
-AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, size_t* count)
+AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, int* count)
 {
     assert(g);
     if(!VALID_RESOURCE_CLASS(rclass))
@@ -239,7 +273,7 @@ AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, size_t*
         return NULL;
     }
 
-    if(count) *count = g->requiredResources[rclass].numRecords;
+    if(count) *count = (int)g->requiredResources[rclass].numRecords;
     return g->requiredResources[rclass].records? g->requiredResources[rclass].records : 0;
 }
 
@@ -254,17 +288,15 @@ Game* Game_FromDef(const GameDef* def)
     Str_Strip(&dataPath);
     F_FixSlashes(&dataPath, &dataPath);
     F_ExpandBasePath(&dataPath, &dataPath);
-    if(Str_RAt(&dataPath, 0) != '/')
-        Str_AppendChar(&dataPath, '/');
+    F_AppendMissingSlash(&dataPath);
 
     Str_Init(&defsPath); Str_Set(&defsPath, def->defsPath);
     Str_Strip(&defsPath);
     F_FixSlashes(&defsPath, &defsPath);
     F_ExpandBasePath(&defsPath, &defsPath);
-    if(Str_RAt(&defsPath, 0) != '/')
-        Str_AppendChar(&defsPath, '/');
+    F_AppendMissingSlash(&defsPath);
 
-    game = Game_New(def->identityKey, &dataPath, &defsPath, def->mainConfig,
+    game = Game_New(def->identityKey, &dataPath, &defsPath, def->configDir,
                     def->defaultTitle, def->defaultAuthor);
 
     Str_Free(&defsPath);

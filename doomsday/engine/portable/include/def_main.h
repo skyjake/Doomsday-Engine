@@ -1,35 +1,30 @@
-/**\file def_main.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Definitions Subsystem.
+ * @file def_main.h
+ * Definitions subsystem. @ingroup defs
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_DEFINITIONS_MAIN_H
 #define LIBDENG_DEFINITIONS_MAIN_H
 
 #include "def_data.h"
+#include "stringarray.h"
 
 typedef struct sfxinfo_s {
     void* data; /// Pointer to sound data.
@@ -107,7 +102,24 @@ ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
  */
 int Def_Get(int type, const char* id, void* out);
 
-boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
+boolean Def_SameStateSequence(state_t* snew, state_t* sold);
+
+/**
+ * Compiles a list of all the defined mobj types. Indices in this list
+ * match those in the @c mobjInfo array.
+ *
+ * @return StringArray instance. Caller gets ownership.
+ */
+StringArray* Def_ListMobjTypeIDs(void);
+
+/**
+ * Compiles a list of all the defined mobj states. Indices in this list
+ * match those in the @c states array.
+ *
+ * @return StringArray instance. Caller gets ownership.
+ */
+StringArray* Def_ListStateIDs(void);
 
 D_CMD(ListMobjs);
+
 #endif /* LIBDENG_DEFINITIONS_MAIN_H */

@@ -45,6 +45,7 @@ typedef enum ebstate_e {
 } ebstate_t;
 
 typedef enum stateconditiontype_e {
+    SCT_STATE,                      ///< Related to the state of the engine.
     SCT_TOGGLE_STATE,               ///< Toggle is in a specific state.
     SCT_MODIFIER_STATE,             ///< Modifier is in a specific state.
     SCT_AXIS_BEYOND,                ///< Axis is past a specific position.
@@ -55,10 +56,13 @@ typedef enum stateconditiontype_e {
 typedef struct statecondition_s {
     uint        device;             // Which device?
     stateconditiontype_t type;
-    boolean     negate;             // Test the inverse (e.g., not in a specific state).
     int         id;                 // Toggle/axis/angle identifier in the device.
     ebstate_t   state;
     float       pos;                // Axis position/angle condition.
+    struct {
+        uint    negate:1;           // Test the inverse (e.g., not in a specific state).
+        uint    multiplayer:1;      // Only for multiplayer.
+    } flags;
 } statecondition_t;
 
 boolean     B_ParseToggleState(const char* toggleName, ebstate_t* state);

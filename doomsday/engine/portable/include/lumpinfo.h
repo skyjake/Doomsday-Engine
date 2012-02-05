@@ -39,12 +39,10 @@ typedef struct {
     size_t size; /// Size of the uncompressed file.
     size_t compressedSize; /// Size of the original file compressed.
     struct abstractfile_s* container; /// Owning package else @c NULL.
-    lumpname_t name; /// Ends in '\0'. Used with WAD lumps.
-    ddstring_t path; /// Absolute variable-length path in the vfs.
-} lumpinfo_t;
+} LumpInfo;
 
-void F_InitLumpInfo(lumpinfo_t* info);
-void F_CopyLumpInfo(lumpinfo_t* dst, const lumpinfo_t* src);
-void F_DestroyLumpInfo(lumpinfo_t* info);
+void F_InitLumpInfo(LumpInfo* info);
+void F_CopyLumpInfo(LumpInfo* dst, const LumpInfo* src);
+void F_DestroyLumpInfo(LumpInfo* info);
 
 #endif /* LIBDENG_FILESYS_LUMPINFO_H */

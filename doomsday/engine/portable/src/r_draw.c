@@ -157,7 +157,7 @@ void R_ShutdownViewWindow(void)
     inited = false;
 }
 
-void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets)
+void R_DrawPatch3(Texture* tex, int x, int y, int w, int h, boolean useOffsets)
 {
     if(!tex) return;
     if(Textures_Namespace(Textures_Id(tex)) != TN_PATCHES)
@@ -168,10 +168,7 @@ void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets
         return;
     }
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    GL_BindTexture(GL_PreparePatchTexture(tex));
     if(useOffsets)
     {
         patchtex_t* pTex = (patchtex_t*)Texture_UserData(tex);
@@ -181,28 +178,25 @@ void R_DrawPatch3(texture_t* tex, int x, int y, int w, int h, boolean useOffsets
         y += pTex->offY;
     }
 
-    GL_DrawRectColor(x, y, w, h, 1, 1, 1, 1);
+    GL_DrawRectf2Color(x, y, w, h, 1, 1, 1, 1);
 }
 
-void R_DrawPatch2(texture_t* tex, int x, int y, int w, int h)
+void R_DrawPatch2(Texture* tex, int x, int y, int w, int h)
 {
     R_DrawPatch3(tex, x, y, w, h, true);
 }
 
-void R_DrawPatch(texture_t* tex, int x, int y)
+void R_DrawPatch(Texture* tex, int x, int y)
 {
     R_DrawPatch2(tex, x, y, Texture_Width(tex), Texture_Height(tex));
 }
 
-void R_DrawPatchTiled(texture_t* tex, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
+void R_DrawPatchTiled(Texture* tex, int x, int y, int w, int h, int wrapS, int wrapT)
 {
     if(!tex) return;
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
-
-    GL_DrawRectTiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
+    GL_BindTexture(GL_PreparePatchTexture2(tex, wrapS, wrapT));
+    GL_DrawRectf2Tiled(x, y, w, h, Texture_Width(tex), Texture_Height(tex));
 }
 
 /**
@@ -245,11 +239,11 @@ void R_DrawViewBorder(void)
     if(mat)
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
+            MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, -3, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), (filterUI ? GL_LINEAR : GL_NEAREST));
-        GL_DrawCutRectTiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
+        GL_DrawCutRectf2Tiled(0, 0, port->geometry.size.width, port->geometry.size.height, ms->size.width, ms->size.height, 0, 0,
                             vd->window.origin.x - border, vd->window.origin.y - border,
                             vd->window.size.width + 2 * border, vd->window.size.height + 2 * border);
     }

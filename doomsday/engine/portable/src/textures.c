@@ -35,6 +35,7 @@
 #include "gl_texmanager.h"
 #include "pathdirectory.h"
 
+#include "texturevariant.h"
 #include "textures.h"
 
 /**
@@ -48,7 +49,7 @@ typedef struct {
     Uri* resourcePath;
 
     /// The defined texture instance (if any).
-    texture_t* texture;
+    Texture* texture;
 } texturerecord_t;
 
 typedef struct {
@@ -88,6 +89,13 @@ void Textures_Register(void)
 #if _DEBUG
     C_CMD("texturestats", NULL, PrintTextureStats)
 #endif
+}
+
+const char* TexSource_Name(TexSource source)
+{
+    if(source == TEXS_ORIGINAL) return "original";
+    if(source == TEXS_EXTERNAL) return "external";
+    return "none";
 }
 
 static __inline PathDirectory* getDirectoryForNamespaceId(texturenamespaceid_t id)
@@ -315,17 +323,18 @@ static PathDirectoryNode* findDirectoryNodeForUri(const Uri* uri)
             TN_MODELREFLECTIONSKINS,
             TN_LIGHTMAPS,
             TN_FLAREMAPS,
+            TN_ANY
         };
         int n = 0;
         do
         {
             node = findDirectoryNodeForPath(getDirectoryForNamespaceId(order[n]), path);
-        } while(!node && order[++n] != MN_ANY);
+        } while(!node && order[++n] != TN_ANY);
     }
     return node;
 }
 
-static void destroyTexture(texture_t* tex)
+static void destroyTexture(Texture* tex)
 {
     assert(tex);
 
@@ -490,7 +499,7 @@ texturenamespaceid_t Textures_ParseNamespace(const char* str)
         { TN_DETAILS_NAME, sizeof(TN_DETAILS_NAME)-1, TN_DETAILS },
         { TN_REFLECTIONS_NAME, sizeof(TN_REFLECTIONS_NAME)-1, TN_REFLECTIONS },
         { TN_MASKS_NAME, sizeof(TN_MASKS_NAME)-1, TN_MASKS },
-        { TN_MODELSKINS_NAME, sizeof(TN_MODELSKINS_NAME)-1, TN_MASKS },
+        { TN_MODELSKINS_NAME, sizeof(TN_MODELSKINS_NAME)-1, TN_MODELSKINS },
         { TN_MODELREFLECTIONSKINS_NAME, sizeof(TN_MODELREFLECTIONSKINS_NAME)-1, TN_MODELREFLECTIONSKINS },
         { TN_LIGHTMAPS_NAME, sizeof(TN_LIGHTMAPS_NAME)-1, TN_LIGHTMAPS },
         { TN_FLAREMAPS_NAME, sizeof(TN_FLAREMAPS_NAME)-1, TN_FLAREMAPS },
@@ -616,14 +625,14 @@ void Textures_ClearNamespace(texturenamespaceid_t namespaceId)
     }
 }
 
-void Textures_Release(texture_t* tex)
+void Textures_Release(Texture* tex)
 {
     /// Stub.
     GL_ReleaseGLTexturesByTexture(tex);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-texture_t* Textures_ToTexture(textureid_t id)
+Texture* Textures_ToTexture(textureid_t id)
 {
     PathDirectoryNode* node = directoryNodeForBindId(id);
     texturerecord_t* record = (node? (texturerecord_t*)PathDirectoryNode_UserData(node) : NULL);
@@ -884,7 +893,7 @@ textureid_t Textures_Declare(const Uri* uri, int uniqueId, const Uri* resourcePa
     return id;
 }
 
-texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
+Texture* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* size,
     void* userData)
 {
     PathDirectoryNode* node = directoryNodeForBindId(id);
@@ -905,7 +914,7 @@ texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* si
         /// \todo Do not update textures here (not enough knowledge). We should instead
         /// return an invalid reference/signal and force the caller to implement the
         /// necessary update logic.
-        texture_t* tex = record->texture;
+        Texture* tex = record->texture;
 #if _DEBUG
         Uri* uri = Textures_ComposeUri(id);
         ddstring_t* path = Uri_ToString(uri);
@@ -924,7 +933,7 @@ texture_t* Textures_CreateWithSize(textureid_t id, int flags, const Size2Raw* si
     return record->texture = Texture_NewWithSize(flags, id, size, userData);
 }
 
-texture_t* Textures_Create(textureid_t id, int flags, void* userData)
+Texture* Textures_Create(textureid_t id, int flags, void* userData)
 {
     Size2Raw size = { 0, 0 };
     return Textures_CreateWithSize(id, flags, &size, userData);
@@ -965,7 +974,7 @@ const Uri* Textures_ResourcePath(textureid_t id)
     return emptyUri;
 }
 
-textureid_t Textures_Id(texture_t* tex)
+textureid_t Textures_Id(Texture* tex)
 {
     if(tex)
     {
@@ -1048,7 +1057,7 @@ Uri* Textures_ComposeUrn(textureid_t id)
 }
 
 typedef struct {
-    int (*definedCallback)(texture_t* tex, void* paramaters);
+    int (*definedCallback)(Texture* tex, void* paramaters);
     int (*declaredCallback)(textureid_t id, void* paramaters);
     void* paramaters;
 } iteratedirectoryworker_params_t;
@@ -1109,7 +1118,7 @@ static int iterateDirectory(texturenamespaceid_t namespaceId,
 }
 
 int Textures_Iterate2(texturenamespaceid_t namespaceId,
-    int (*callback)(texture_t* tex, void* paramaters), void* paramaters)
+    int (*callback)(Texture* tex, void* paramaters), void* paramaters)
 {
     iteratedirectoryworker_params_t p;
     if(!callback) return 0;
@@ -1120,7 +1129,7 @@ int Textures_Iterate2(texturenamespaceid_t namespaceId,
 }
 
 int Textures_Iterate(texturenamespaceid_t namespaceId,
-    int (*callback)(texture_t* tex, void* paramaters))
+    int (*callback)(Texture* tex, void* paramaters))
 {
     return Textures_Iterate2(namespaceId, callback, NULL/*no paramaters*/);
 }
@@ -1142,18 +1151,41 @@ int Textures_IterateDeclared(texturenamespaceid_t namespaceId,
     return Textures_IterateDeclared2(namespaceId, callback, NULL/*no paramaters*/);
 }
 
-static void printTextureInfo(texture_t* tex)
+static int printVariantInfo(TextureVariant* variant, void* paramaters)
+{
+    uint* variantIdx = (uint*)paramaters;
+    float s, t;
+    assert(variantIdx);
+
+    Con_Printf("Variant #%i: GLName:%u\n", *variantIdx,
+               TextureVariant_GLName(variant));
+
+    TextureVariant_Coords(variant, &s, &t);
+    Con_Printf("  Source:%s Masked:%s Prepared:%s Uploaded:%s\n  Coords:(s:%g t:%g)\n",
+               TexSource_Name(TextureVariant_Source(variant)),
+               TextureVariant_IsMasked(variant)  ? "yes":"no",
+               TextureVariant_IsPrepared(variant)? "yes":"no",
+               TextureVariant_IsUploaded(variant)? "yes":"no", s, t);
+
+    Con_Printf("  Specification: ");
+    GL_PrintTextureVariantSpecification(TextureVariant_Spec(variant));
+
+    ++(*variantIdx);
+    return 0; // Continue iteration.
+}
+
+static void printTextureInfo(Texture* tex)
 {
     Uri* uri = Textures_ComposeUri(Textures_Id(tex));
     ddstring_t* path = Uri_ToString(uri);
-    //int variantIdx = 0;
+    uint variantIdx = 0;
 
-    Con_Printf("Texture \"%s\" [%p] uid:%u origin:%s\nSize: %d x %d\n",
-        F_PrettyPath(Str_Text(path)), (void*) tex, (uint) Textures_Id(tex),
-        Texture_IsCustom(tex)? "addon" : "game",
+    Con_Printf("Texture \"%s\" [%p] x%u uid:%u origin:%s\nSize: %d x %d\n",
+        F_PrettyPath(Str_Text(path)), (void*) tex, Texture_VariantCount(tex),
+        (uint) Textures_Id(tex), Texture_IsCustom(tex)? "addon" : "game",
         Texture_Width(tex), Texture_Height(tex));
 
-    //Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
+    Texture_IterateVariants(tex, printVariantInfo, (void*)&variantIdx);
 
     Str_Delete(path);
     Uri_Delete(uri);
@@ -1165,17 +1197,17 @@ static void printTextureOverview(PathDirectoryNode* node, boolean printNamespace
     textureid_t texId = findBindIdForDirectoryNode(node);
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Textures_Size()));
     Uri* uri = record->texture? Textures_ComposeUri(texId) : Uri_New();
-    ddstring_t* name = (printNamespace? Uri_ToString(uri) : (ddstring_t*)Uri_Path(uri));
+    ddstring_t* path = printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri))));
     ddstring_t* resourcePath = Uri_ToString(Textures_ResourcePath(texId));
 
     Con_FPrintf(!record->texture? CPF_LIGHT : CPF_WHITE,
-        "%-*s %*u %-6s %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(name)),
+        "%-*s %*u %-6s x%u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, texId, !record->texture? "unknown" : Texture_IsCustom(record->texture)? "addon" : "game",
-        resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
+        Texture_VariantCount(record->texture), resourcePath? F_PrettyPath(Str_Text(resourcePath)) : "N/A");
 
-    Uri_Delete(uri);
-    if(printNamespace) Str_Delete(name);
     Str_Delete(resourcePath);
+    Str_Delete(path);
+    Uri_Delete(uri);
 }
 
 /**
@@ -1265,8 +1297,9 @@ static PathDirectoryNode** collectDirectoryNodes(texturenamespaceid_t namespaceI
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER);
-    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER);
+    // Decode paths before determining a lexicographical delta.
+    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, TEXTURES_PATH_DELIMITER));
+    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, TEXTURES_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -1307,13 +1340,13 @@ static size_t printTextures3(texturenamespaceid_t namespaceId, const char* like,
     // Print the result index key.
     numFoundDigits = MAX_OF(3/*idx*/, M_NumDigits((int)count));
     numUidDigits = MAX_OF(3/*uid*/, M_NumDigits((int)Textures_Size()));
-    Con_Printf(" %*s: %-*s %*s origin path\n", numFoundDigits, "idx",
+    Con_Printf(" %*s: %-*s %*s origin x# path\n", numFoundDigits, "idx",
         printNamespace? 22 : 14, printNamespace? "namespace:name" : "name",
         numUidDigits, "uid");
     Con_PrintRuler();
 
     // Sort and print the index.
-    qsort(foundTextures, (size_t)count, sizeof *foundTextures, composeAndCompareDirectoryNodePaths);
+    qsort(foundTextures, (size_t)count, sizeof(*foundTextures), composeAndCompareDirectoryNodePaths);
 
     idx = 0;
     for(iter = foundTextures; *iter; ++iter)
@@ -1428,8 +1461,14 @@ D_CMD(ListTextures)
 
 D_CMD(InspectTexture)
 {
-    Uri* search = Uri_NewWithPath2(argv[1], RC_NULL);
-    texture_t* tex;
+    ddstring_t path;
+    Texture* tex;
+    Uri* search;
+
+    // Path is assumed to be in a human-friendly, non-encoded representation.
+    Str_Init(&path); Str_PercentEncode(Str_Set(&path, argv[1]));
+    search = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Str_Free(&path);
 
     if(!Str_IsEmpty(Uri_Scheme(search)))
     {

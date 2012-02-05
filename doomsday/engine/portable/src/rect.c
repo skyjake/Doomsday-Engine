@@ -77,6 +77,14 @@ void Rect_Delete(Rect* r)
     free(r);
 }
 
+void Rect_Copy(Rect* r, const Rect* other)
+{
+    assert(r);
+    if(!other) return;
+    Point2_SetXY(r->origin, Rect_X(other), Rect_Y(other));
+    Size2_SetWidthHeight(r->size, Rect_Width(other), Rect_Height(other));
+}
+
 RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
 {
     assert(r);
@@ -140,10 +148,46 @@ void Rect_SetOrigin(Rect* r, const Point2* origin)
     Point2_SetXY(r->origin, Point2_X(origin), Point2_Y(origin));
 }
 
+void Rect_SetX(Rect* r, int x)
+{
+    assert(r);
+    Point2_SetX(r->origin, x);
+}
+
+void Rect_SetY(Rect* r, int y)
+{
+    assert(r);
+    Point2_SetY(r->origin, y);
+}
+
 void Rect_SetXY(Rect* r, int x, int y)
 {
     assert(r);
     Point2_SetXY(r->origin, x, y);
+}
+
+void Rect_TranslateX(Rect* r, int x)
+{
+    assert(r);
+    Point2_TranslateX(r->origin, x);
+}
+
+void Rect_TranslateY(Rect* r, int y)
+{
+    assert(r);
+    Point2_TranslateY(r->origin, y);
+}
+
+void Rect_TranslateXY(Rect* r, int x, int y)
+{
+    assert(r);
+    Point2_TranslateXY(r->origin, x, y);
+}
+
+void Rect_Translate(Rect* r, const Point2Raw* delta)
+{
+    assert(r);
+    Point2_Translate(r->origin, delta);
 }
 
 const Size2* Rect_Size(const Rect* r)
@@ -232,14 +276,17 @@ RectRaw* Rect_Normalized(const Rect* rect, RectRaw* normalized)
 /// \assume  This and @a other have been normalized.
 static Rect* Rect_UniteRaw2(Rect* r, const RectRaw* other)
 {
+    Point2Raw oldOrigin;
     assert(r && other);
+
+    Point2_Raw(r->origin, &oldOrigin);
 
     Rect_SetXY(r, MIN_OF(Point2_X(r->origin), other->origin.x),
                   MIN_OF(Point2_Y(r->origin), other->origin.y));
 
-    Rect_SetWidthHeight(r, MAX_OF(Point2_X(r->origin) + Size2_Width(r->size),
+    Rect_SetWidthHeight(r, MAX_OF(oldOrigin.x + Size2_Width(r->size),
                                   other->origin.x + other->size.width)  - Point2_X(r->origin),
-                           MAX_OF(Point2_Y(r->origin) + Size2_Height(r->size),
+                           MAX_OF(oldOrigin.y + Size2_Height(r->size),
                                   other->origin.y + other->size.height) - Point2_Y(r->origin));
 
     return r;
@@ -342,6 +389,14 @@ void Rectf_Delete(Rectf* r)
     free(r);
 }
 
+void Rectf_Copy(Rectf* r, const Rectf* other)
+{
+    assert(r);
+    if(!other) return;
+    Point2f_SetXY(r->origin, Rectf_X(other), Rectf_Y(other));
+    Size2f_SetWidthHeight(r->size, Rectf_Width(other), Rectf_Height(other));
+}
+
 RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)
 {
     assert(r);
@@ -393,10 +448,46 @@ void Rectf_SetOrigin(Rectf* r, const Point2f* origin)
     Point2f_SetXY(r->origin, Point2f_X(origin), Point2f_Y(origin));
 }
 
+void Rectf_SetX(Rectf* r, double x)
+{
+    assert(r);
+    Point2f_SetX(r->origin, x);
+}
+
+void Rectf_SetY(Rectf* r, double y)
+{
+    assert(r);
+    Point2f_SetY(r->origin, y);
+}
+
 void Rectf_SetXY(Rectf* r, double x, double y)
 {
     assert(r);
     Point2f_SetXY(r->origin, x, y);
+}
+
+void Rectf_Translate(Rectf* r, const Point2Rawf* delta)
+{
+    assert(r);
+    Point2f_Translate(r->origin, delta);
+}
+
+void Rectf_TranslateX(Rectf* r, double x)
+{
+    assert(r);
+    Point2f_TranslateX(r->origin, x);
+}
+
+void Rectf_TranslateY(Rectf* r, double y)
+{
+    assert(r);
+    Point2f_TranslateY(r->origin, y);
+}
+
+void Rectf_TranslateXY(Rectf* r, double x, double y)
+{
+    assert(r);
+    Point2f_TranslateXY(r->origin, x, y);
 }
 
 void Rectf_SetWidth(Rectf* r, double width)
@@ -497,14 +588,17 @@ RectRawf* Rectf_Normalized(const Rectf* rect, RectRawf* normalized)
 /// \assume  This and @a other have been normalized.
 static Rectf* Rectf_UniteRaw2(Rectf* r, const RectRawf* other)
 {
+    Point2Rawf oldOrigin;
     assert(r && other);
+
+    Point2f_Raw(r->origin, &oldOrigin);
 
     Rectf_SetXY(r, MIN_OF(Point2f_X(r->origin), other->origin.x),
                    MIN_OF(Point2f_Y(r->origin), other->origin.y));
 
-    Rectf_SetWidthHeight(r, MAX_OF(Point2f_X(r->origin) + Size2f_Width(r->size),
+    Rectf_SetWidthHeight(r, MAX_OF(oldOrigin.x + Size2f_Width(r->size),
                                    other->origin.x + other->size.width)  - Point2f_X(r->origin),
-                            MAX_OF(Point2f_Y(r->origin) + Size2f_Height(r->size),
+                            MAX_OF(oldOrigin.y + Size2f_Height(r->size),
                                    other->origin.y + other->size.height) - Point2f_Y(r->origin));
 
     return r;

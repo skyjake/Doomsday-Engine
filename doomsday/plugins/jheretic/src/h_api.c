@@ -66,19 +66,19 @@ int G_RegisterGames(int hookType, int param, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
+#define CONFIGDIR       "heretic"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     const GameDef hereticExtDef = {
-        "heretic-ext", DATAPATH, DEFSPATH, MAINCONFIG,
+        "heretic-ext", DATAPATH, DEFSPATH, CONFIGDIR,
         "Heretic: Shadow of the Serpent Riders", "Raven Software"
     };
     const GameDef hereticDef = {
-        "heretic", DATAPATH, DEFSPATH, MAINCONFIG,
+        "heretic", DATAPATH, DEFSPATH, CONFIGDIR,
         "Heretic Registered", "Raven Software"
     };
     const GameDef hereticShareDef = {
-        "heretic-share", DATAPATH, DEFSPATH, MAINCONFIG,
+        "heretic-share", DATAPATH, DEFSPATH, CONFIGDIR,
         "Heretic Shareware", "Raven Software"
     };
 
@@ -102,7 +102,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     return true;
 
 #undef STARTUPPK3
-#undef MAINCONFIG
+#undef CONFIGDIR
 #undef DEFSPATH
 #undef DATAPATH
 }
@@ -185,6 +185,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
+    gx.EndFrame = H_EndFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.MobjCheckPosition3f = P_CheckPosition3f;

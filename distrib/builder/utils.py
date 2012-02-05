@@ -1,10 +1,65 @@
 import os, sys, platform
+import string
 import glob
 import gzip
 import codecs
 import time
 import build_number
 import config
+
+def omit_path(path, omitted):
+    if path.startswith(omitted):
+        path = path[len(omitted):]
+        if path[0] == '/': path = path[1:]
+    return path
+
+
+class FileState:
+    def __init__(self, isDir, mtime):
+        if isDir:
+            self.type = 'dir'
+        else:
+            self.type = 'file'
+        self.mtime = int(mtime)
+        
+    def __repr__(self):
+        return "(%s, %i)" % (self.type, self.mtime)
+
+
+class DirState:
+    def __init__(self, path=None):
+        self.files = {} # path -> FileState
+        if path:
+            self.update(path, path)
+    
+    def update(self, path, omitted=None):
+        for name in os.listdir(path):
+            if name[0] == '.': continue
+            fullPath = os.path.join(path, name)
+            self.files[omit_path(fullPath, omitted)] = \
+                FileState(os.path.isdir(fullPath), os.stat(fullPath).st_mtime)
+            if os.path.isdir(fullPath):
+                self.update(fullPath, omitted)
+    
+    def list_new_files(self, oldState):
+        new = []
+        for path in self.files:
+            if self.files[path].type == 'dir': continue
+            if path not in oldState.files or self.files[path].mtime > oldState.files[path].mtime:
+                new.append(path)
+        return new
+        
+    def list_removed(self, oldState):
+        """Returns a tuple: (list of removed files, list of removed dirs)"""
+        rmFiles = []
+        rmDirs = []
+        for oldPath in oldState.files:
+            if oldPath not in self.files:
+                if oldState.files[oldPath].type == 'dir':
+                    rmDirs.append(oldPath)
+                else:
+                    rmFiles.append(oldPath)
+        return (rmFiles, rmDirs)
 
 
 def sys_id():
@@ -62,7 +117,7 @@ def count_log_word(fn, word):
     while True:
         pos = txt.find(unicode(word), pos)
         if pos < 0: break 
-        if txt[pos-1] not in ['/', '\\'] and txt[pos+len(word)] != 's' and \
+        if txt[pos-1] not in '/\\_'+string.ascii_letters and txt[pos+len(word)] != 's' and \
             txt[pos-11:pos] != 'shlibdeps: ':
             count += 1            
         pos += len(word)

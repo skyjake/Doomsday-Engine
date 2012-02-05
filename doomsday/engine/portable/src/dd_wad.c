@@ -37,7 +37,7 @@
 
 size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 {
-    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    const LumpInfo* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(!info)
     {
         W_Error("W_LumpLength: Invalid lumpnum %i.", absoluteLumpNum);
@@ -48,18 +48,18 @@ size_t W_LumpLength(lumpnum_t absoluteLumpNum)
 
 const char* W_LumpName(lumpnum_t absoluteLumpNum)
 {
-    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
-    if(!info)
+    const char* lumpName = F_LumpName(absoluteLumpNum);
+    if(!lumpName[0])
     {
         W_Error("W_LumpName: Invalid lumpnum %i.", absoluteLumpNum);
         return NULL;
     }
-    return info->name;
+    return lumpName;
 }
 
 uint W_LumpLastModified(lumpnum_t absoluteLumpNum)
 {
-    const lumpinfo_t* info = F_FindInfoForLumpNum(absoluteLumpNum);
+    const LumpInfo* info = F_FindInfoForLumpNum(absoluteLumpNum);
     if(!info)
     {
         W_Error("W_LumpLastModified: Invalid lumpnum %i.", absoluteLumpNum);

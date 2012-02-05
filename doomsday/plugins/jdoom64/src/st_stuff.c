@@ -102,6 +102,7 @@ void ST_Register(void)
     C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_INT(    "hud-patch-replacement", &cfg.hudPatchReplaceMode, 0, PRM_FIRST, PRM_LAST )
     C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
     C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
@@ -110,6 +111,7 @@ void ST_Register(void)
     C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
     C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
@@ -563,23 +565,24 @@ void MapName_UpdateGeometry(uiwidget_t* obj)
     patchinfo_t info;
     assert(obj && obj->type == GUI_MAPNAME);
 
-    obj->geometry.size.width  = 0;
-    obj->geometry.size.height = 0;
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(!text && 0 == patch) return;
 
     if(text)
     {
+        Size2Raw textSize;
         FR_SetFont(obj->font);
-        FR_TextSize(&obj->geometry.size, text);
-        obj->geometry.size.width  *= scale;
-        obj->geometry.size.height *= scale;
+        FR_TextSize(&textSize, text);
+        textSize.width  *= scale;
+        textSize.height *= scale;
+        Rect_SetWidthHeight(obj->geometry, textSize.width, textSize.height);
         return;
     }
 
     R_GetPatchInfo(patch, &info);
-    obj->geometry.size.width  = info.geometry.size.width  * scale;
-    obj->geometry.size.height = info.geometry.size.height * scale;
+    Rect_SetWidthHeight(obj->geometry, info.geometry.size.width  * scale,
+                                       info.geometry.size.height * scale);
 }
 
 typedef struct {
@@ -797,7 +800,7 @@ void ST_BuildWidgets(int player)
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, 0, def->padding);
     }
 
     hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
@@ -993,9 +996,11 @@ boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 
 void ST_AutomapClearPoints(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_ClearPoints(obj);
+    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
+    if(!ob) return;
+
+    UIAutomap_ClearPoints(ob);
+    P_SetMessage(&players[player], AMSTR_MARKSCLEARED, false);
 }
 
 /**

@@ -30,6 +30,6 @@
 
 #include "de_infine.h"
 
-void Sv_Finale(int flags, const char* script);
+void Sv_Finale(finaleid_t id, int flags, const char *script);
 
 #endif /* LIBDENG_SERVER_INFINE */

@@ -85,10 +85,9 @@ const Size2* Material_Size(const material_t* mat);
 
 /**
  * Change dimensions.
- * @param width  New width in logical world units.
- * @param height  New height in logical world units.
+ * @param size  New dimensions in logical world units.
  */
-void Material_SetSize(material_t* mat, const Size2* size);
+void Material_SetSize(material_t* mat, const Size2Raw* size);
 
 /// @return  Logical width.
 int Material_Width(const material_t* mat);

@@ -66,18 +66,18 @@ int G_RegisterGames(int hookType, int param, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
+#define CONFIGDIR       "hexen"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     const GameDef deathkingsDef = {
-        "hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG,
+        "hexen-dk", DATAPATH, DEFSPATH, CONFIGDIR,
         "Hexen: Deathkings of the Dark Citadel", "Raven Software"
     };
     const GameDef hexenDef = {
-        "hexen", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen", "Raven Software"
+        "hexen", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen", "Raven Software"
     };
     const GameDef hexenDemoDef = {
-        "hexen-demo", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software"
+        "hexen-demo", DATAPATH, DEFSPATH, CONFIGDIR, "Hexen 4-map Beta Demo", "Raven Software"
     };
 
     /* Hexen (Death Kings) */
@@ -101,7 +101,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     return true;
 
 #undef STARTUPPK3
-#undef MAINCONFIG
+#undef CONFIGDIR
 #undef DEFSPATH
 #undef DATAPATH
 }

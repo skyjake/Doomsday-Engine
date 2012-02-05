@@ -55,7 +55,7 @@ typedef struct {
 } resourcetypeinfo_t;
 
 /**
- * @defGroup ResourceNamespaceFlags Resource Namespace Flags
+ * @defgroup ResourceNamespaceFlags Resource Namespace Flags
  * @ingroup core.
  */
 /*@{*/
@@ -204,7 +204,8 @@ static void resetAllNamespaces(void)
     }
 }
 
-static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo, PathDirectoryNode* node)
+static void addResourceToNamespace(resourcenamespaceinfo_t* rnInfo,
+    PathDirectoryNode* node)
 {
     ddstring_t* name;
     assert(rnInfo && node);
@@ -230,12 +231,20 @@ static int addFileResourceWorker(PathDirectoryNode* node, void* paramaters)
     return 0; // Continue adding.
 }
 
+static int rebuildResourceNamespaceWorker(const Uri* searchPath, int flags,
+    void* paramaters)
+{
+    resourcenamespaceinfo_t* rnInfo = (resourcenamespaceinfo_t*)paramaters;
+    FileDirectory_AddPaths3(rnInfo->directory, flags, &searchPath, 1,
+                            addFileResourceWorker, (void*)rnInfo);
+    return 0; // Continue iteration.
+}
+
 static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 {
 /*#if _DEBUG
     uint startTime;
 #endif*/
-    ddstring_t* searchPaths;
 
     assert(rnInfo);
     if(!(rnInfo->flags & RNF_IS_DIRTY)) return;
@@ -245,31 +254,25 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
     VERBOSE2( startTime = Sys_GetRealTime() )
 #endif*/
 
+    // (Re)populate the directory and insert found paths into the resource namespace.
+    // \todo It should not be necessary for a unique directory per namespace.
+
     ResourceNamespace_Clear(rnInfo->rnamespace);
     FileDirectory_Clear(rnInfo->directory);
 
-    searchPaths = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
-    if(searchPaths)
-    {
-        if(!Str_IsEmpty(searchPaths))
-        {
 /*#if _DEBUG
-            VERBOSE2( Con_PrintPathList(Str_Text(searchPaths)) )
+    VERBOSE2(
+        ddstring_t* searchPathList = ResourceNamespace_ComposeSearchPathList(rnInfo->rnamespace);
+        Con_PrintPathList(Str_Text(searchPathList));
+        Str_Delete(searchPathList)
+        )
 #endif*/
 
-            // (Re)populate the directory and insert found paths into the resource namespace.
-            // \todo It should not be necessary for a unique directory per namespace.
-            FileDirectory_AddPathList3(rnInfo->directory, Str_Text(searchPaths), addFileResourceWorker, (void*)rnInfo);
-
-/*#if _DEBUG
-            VERBOSE2( FileDirectory_Print(rnInfo->directory) )
-#endif*/
-        }
-        Str_Delete(searchPaths);
-    }
+    ResourceNamespace_IterateSearchPaths2(rnInfo->rnamespace, rebuildResourceNamespaceWorker, (void*)rnInfo);
     rnInfo->flags &= ~RNF_IS_DIRTY;
 
 /*#if _DEBUG
+    VERBOSE2( FileDirectory_Print(rnInfo->directory) )
     VERBOSE2( ResourceNamespace_Print(rnInfo->rnamespace) )
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) )
 #endif*/
@@ -278,7 +281,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 typedef struct {
     const char* path;
     char delimiter;
-    pathdirectorysearch_t search;
+    PathMap searchPattern;
     boolean searchInited;
     PathDirectoryNode* foundNode;
 } findresourceinnamespaceworker_params_t;
@@ -290,11 +293,11 @@ static int findResourceInNamespaceWorker(PathDirectoryNode* node, void* paramate
     // Are we yet to initialize the search?
     if(!p->searchInited)
     {
-        PathDirectory_InitSearch(&p->search, PCF_NO_BRANCH, p->path, p->delimiter);
+        PathMap_Initialize2(&p->searchPattern, p->path, p->delimiter);
         p->searchInited = true;
     }
     // Stop iteration of resources as soon as a match is found.
-    if(PathDirectoryNode_MatchDirectory(node, &p->search, NULL))
+    if(PathDirectoryNode_MatchDirectory(node, PCF_NO_BRANCH, &p->searchPattern, NULL))
     {
         p->foundNode = node;
         return 1;
@@ -326,7 +329,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         rebuildResourceNamespace(rnInfo);
 
         // There may not be any matching named resources, so we defer initialization
-        // of the PathDirectorySearch until the first name-match is found.
+        // of the PathMap until the first name-match is found.
         p.path = Str_Text(searchPath);
         p.delimiter = delimiter;
         p.searchInited = false;
@@ -344,7 +347,7 @@ static boolean findResourceInNamespace(resourcenamespaceinfo_t* rnInfo, const dd
         }
 
         // Cleanup.
-        if(p.searchInited) PathDirectory_DestroySearch(&p.search);
+        if(p.searchInited) PathMap_Destroy(&p.searchPattern);
     }
     return found;
 }
@@ -510,7 +513,7 @@ static int findResource(resourceclass_t rclass, const Uri* const* list,
 
         // Ignore incomplete paths.
         resolvedPath = Uri_Resolved(searchPath);
-        if(!resolvedPath || Str_IsEmpty(resolvedPath)) continue;
+        if(!resolvedPath) continue;
 
         // If this is an absolute path, locate using it.
         if(F_IsAbsolute(resolvedPath))
@@ -598,8 +601,9 @@ static void createPackagesResourceNamespace(void)
         char last = Str_RAt(path, 0); \
         ddstring_t* pathCopy = Str_New(); \
         F_FixSlashes(pathCopy, path); \
-        if(Str_RAt(pathCopy, 0) != '/') \
-            Str_AppendChar(pathCopy, '/'); \
+        F_AppendMissingSlash(pathCopy); \
+        if(verbose >= 1) \
+            Con_Message(" %i: %s\n", n, F_PrettyPath(Str_Text(pathCopy))); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
         doomWadPaths[doomWadPathsCount-1] = pathCopy; \
     } \
@@ -611,13 +615,20 @@ static void createPackagesResourceNamespace(void)
         Str_Strip(&fullString);
         if(!Str_IsEmpty(&fullString))
         {
-            ddstring_t path; Str_Init(&path);
+            ddstring_t path;
             // Split into paths.
-            { const char* c = Str_Text(&fullString);
+            const char* c = Str_Text(&fullString);
+            int n;
+
+            VERBOSE( Con_Message("Using DOOMWADPATH:\n") )
+
+            Str_Init(&path);
+            n = 0;
             while((c = Str_CopyDelim2(&path, c, PATH_DELIMITER_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
             {
                 ADDDOOMWADPATH(&path)
-            }}
+                n++;
+            }
             // Add the last path.
             if(!Str_IsEmpty(&path))
             {
@@ -645,8 +656,8 @@ static void createPackagesResourceNamespace(void)
         }
         else
         {
-            if(Str_RAt(doomWadDir, 0) != '/')
-                Str_AppendChar(doomWadDir, '/');
+            F_AppendMissingSlash(doomWadDir);
+            VERBOSE( Con_Message("Using DOOMWADDIR: %s\n", F_PrettyPath(Str_Text(doomWadDir))) )
         }
     }
 
@@ -689,7 +700,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < searchPathsCount; ++i)
         {
-            ResourceNamespace_AddSearchPath(rnamespace, searchPaths[i], SPG_DEFAULT);
+            ResourceNamespace_AddSearchPath(rnamespace, 0, searchPaths[i], SPG_DEFAULT);
         }
     }
 
@@ -706,29 +717,41 @@ void F_CreateNamespacesForFileResourcePaths(void)
         const char* name;
         const char* optOverridePath;
         const char* optFallbackPath;
-        byte flags;
-        const char* defaultPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
+        byte flags; /// @see resourceNamespaceFlags
+        int searchPathFlags; /// @see searchPathFlags
+        /// Priority is right to left.
+        const char* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0,
-            { "$(Game.DefsPath)/$(Game.IdentityKey)/", "$(Game.DefsPath)/", "$(App.DefsPath)/" } },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0,
-            { "$(App.DataPath)/graphics/" } },
-        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP,
-            { "$(Game.DataPath)/models/$(Game.IdentityKey)/", "$(Game.DataPath)/models/" } },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/sfx/$(Game.IdentityKey)/", "$(Game.DataPath)/sfx/" } },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/music/$(Game.IdentityKey)/", "$(Game.DataPath)/music/" } },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/textures/$(Game.IdentityKey)/", "$(Game.DataPath)/textures/" } },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP,
-            { "$(Game.DataPath)/flats/$(Game.IdentityKey)/", "$(Game.DataPath)/flats/" } },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP,
-            { "$(Game.DataPath)/patches/$(Game.IdentityKey)/", "$(Game.DataPath)/patches/" } },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP,
-            { "$(Game.DataPath)/lightmaps/$(Game.IdentityKey)/", "$(Game.DataPath)/lightmaps/" } },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP,
-            { "$(Game.DataPath)/fonts/$(Game.IdentityKey)/", "$(Game.DataPath)/fonts/", "$(App.DataPath)/fonts/" } },
+        { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
+            { "$(App.DefsPath)/", "$(Game.DefsPath)/", "$(Game.DefsPath)/$(Game.IdentityKey)/" }
+        },
+        { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
+            { "$(App.DataPath)/graphics/" }
+        },
+        { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
+            { "$(Game.DataPath)/models/", "$(Game.DataPath)/models/$(Game.IdentityKey)/" }
+        },
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/sfx/", "$(Game.DataPath)/sfx/$(Game.IdentityKey)/" }
+        },
+        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/music/", "$(Game.DataPath)/music/$(Game.IdentityKey)/" }
+        },
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/textures/", "$(Game.DataPath)/textures/$(Game.IdentityKey)/" }
+        },
+        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/flats/", "$(Game.DataPath)/flats/$(Game.IdentityKey)/" }
+        },
+        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(Game.DataPath)/patches/", "$(Game.DataPath)/patches/$(Game.IdentityKey)/" }
+        },
+        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
+            { "$(Game.DataPath)/lightmaps/" }
+        },
+        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DECEND,
+            { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
+        },
         { NULL }
     };
     Uri* uri = Uri_New();
@@ -740,20 +763,20 @@ void F_CreateNamespacesForFileResourcePaths(void)
     { size_t i;
     for(i = 0; defs[i].name; ++i)
     {
-        uint j, defaultPathCount;
+        uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
         FileDirectory* directory = FileDirectory_New();
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 
-        defaultPathCount = 0;
-        while(def->defaultPaths[defaultPathCount] && ++defaultPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
+        searchPathCount = 0;
+        while(def->searchPaths[searchPathCount] && ++searchPathCount < NAMESPACEDEF_MAX_SEARCHPATHS)
         {}
 
-        for(j = 0; j < defaultPathCount; ++j)
+        for(j = 0; j < searchPathCount; ++j)
         {
-            Uri_SetUri3(uri, def->defaultPaths[j], RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_DEFAULT);
+            Uri_SetUri3(uri, def->searchPaths[j], RC_NULL);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_DEFAULT);
         }
 
         if(def->optOverridePath && ArgCheckWith(def->optOverridePath, 1))
@@ -765,10 +788,10 @@ void F_CreateNamespacesForFileResourcePaths(void)
             Str_Init(&path2);
             Str_Appendf(&path2, "%s/$(Game.IdentityKey)", path);
             Uri_SetUri3(uri, Str_Text(&path2), RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_OVERRIDE);
 
             Uri_SetUri3(uri, path, RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_OVERRIDE);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_OVERRIDE);
 
             Str_Free(&path2);
         }
@@ -776,7 +799,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
         if(def->optFallbackPath && ArgCheckWith(def->optFallbackPath, 1))
         {
             Uri_SetUri3(uri, ArgNext(), RC_NULL);
-            ResourceNamespace_AddSearchPath(rnamespace, uri, SPG_FALLBACK);
+            ResourceNamespace_AddSearchPath(rnamespace, def->searchPathFlags, uri, SPG_FALLBACK);
         }
     }}
 
@@ -884,24 +907,18 @@ resourcenamespace_t* F_CreateResourceNamespace(const char* name, FileDirectory* 
     return rn;
 }
 
-boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, const Uri* uri,
-    resourcenamespace_searchpathgroup_t group)
+boolean F_AddSearchPathToResourceNamespace(resourcenamespaceid_t rni, int flags,
+    const Uri* searchPath, resourcenamespace_searchpathgroup_t group)
 {
     resourcenamespaceinfo_t* info;
     errorIfNotInited("F_AddSearchPathToResourceNamespace");
     info = getNamespaceInfoForId(rni);
-    if(ResourceNamespace_AddSearchPath(info->rnamespace, uri, group))
+    if(ResourceNamespace_AddSearchPath(info->rnamespace, flags, searchPath, group))
     {
         info->flags |= RNF_IS_DIRTY;
         return true;
     }
     return false;
-}
-
-void F_AddResourceToNamespace(resourcenamespaceid_t rni, PathDirectoryNode* node)
-{
-    errorIfNotInited("F_AddResourceToNamespace");
-    addResourceToNamespace(getNamespaceInfoForId(rni), node);
 }
 
 const ddstring_t* F_ResourceNamespaceName(resourcenamespaceid_t rni)
@@ -1018,43 +1035,47 @@ void F_DestroyUriList(Uri** list)
 ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
     const ddstring_t* pathList, size_t* count, char delimiter)
 {
-    {Uri** uris;
-    if((uris = F_CreateUriListStr(RC_NULL, pathList)) != 0)
+    Uri** uriList = F_CreateUriListStr(RC_NULL, pathList);
+    size_t resolvedPathCount = 0;
+    ddstring_t** paths = NULL;
+
+    if(uriList)
     {
-        ddstring_t** paths = 0;
-        size_t numResolvedPaths = 0;
-
-        { Uri** ptr;
-        for(ptr = uris; *ptr; ++ptr)
+        Uri** uriIt;
+        for(uriIt = uriList; *uriIt; ++uriIt)
         {
-            if(Uri_Resolved(*ptr) != 0) // Ignore incomplete paths.
-                ++numResolvedPaths;
-        }}
+            // Ignore incomplete paths.
+            ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+            if(!resolvedPath) continue;
 
-        if(numResolvedPaths != 0)
+            ++resolvedPathCount;
+            Str_Delete(resolvedPath);
+        }
+
+        if(resolvedPathCount)
         {
             uint n = 0;
-            paths = malloc(sizeof(*paths) * (numResolvedPaths+1));
-            { Uri** ptr;
-            for(ptr = uris; *ptr; ++ptr)
+
+            paths = (ddstring_t**)malloc(sizeof(*paths) * (resolvedPathCount+1));
+            if(!paths) Con_Error("F_ResolvePathList: Failed on allocation of %lu bytes for new path list.", (unsigned long) sizeof(*paths) * (resolvedPathCount+1));
+
+            for(uriIt = uriList; *uriIt; ++uriIt)
             {
-                ddstring_t* resolvedPath;
-                if((resolvedPath = Uri_Resolved(*ptr)) == 0)
-                    continue; // Incomplete path; ignore it.
-                // Let's try to make it a relative path.
-                F_RemoveBasePath(resolvedPath, resolvedPath);
+                // Ignore incomplete paths.
+                ddstring_t* resolvedPath = Uri_Resolved(*uriIt);
+                if(!resolvedPath) continue;
+
                 paths[n++] = resolvedPath;
-            }}
-            paths[n] = 0; // Terminate.
+            }
+
+            paths[n] = NULL; // Terminate.
         }
-        F_DestroyUriList(uris);
-        if(count)
-            *count = numResolvedPaths;
-        return paths;
-    }}
-    if(count)
-        *count = 0;
-    return 0;
+
+        F_DestroyUriList(uriList);
+    }
+
+    if(count) *count = resolvedPathCount;
+    return paths;
 }
 
 ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,

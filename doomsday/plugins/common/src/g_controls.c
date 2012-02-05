@@ -349,11 +349,11 @@ D_CMD(DefaultGameBinds)
         "bindcontrol walk joy-y-inverse",
 
         // Chat events:
-        "bindevent key-t beginchat",
-        "bindevent key-g {beginchat 0}",
-        "bindevent key-y {beginchat 1}",
-        "bindevent key-r {beginchat 2}",
-        "bindevent key-b {beginchat 3}",
+        "bindevent key-t+multiplayer beginchat",
+        "bindevent key-g+multiplayer {beginchat 0}",
+        "bindevent key-y+multiplayer {beginchat 1}",
+        "bindevent key-r+multiplayer {beginchat 2}",
+        "bindevent key-b+multiplayer {beginchat 3}",
         "bindevent chat:key-return chatcomplete",
         "bindevent chat:key-escape chatcancel",
         "bindevent chat:key-f1 {chatsendmacro 0}",

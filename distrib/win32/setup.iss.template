@@ -88,6 +88,7 @@ Source: "..\..\snowberry\conf\*.conf"; DestDir: "{app}\snowberry\conf"; Componen
 
 ; Documentation
 Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
+Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine

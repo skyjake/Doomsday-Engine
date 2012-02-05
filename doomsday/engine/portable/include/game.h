@@ -45,12 +45,12 @@ typedef struct Game_s Game;
  * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
- * @param mainConfig    The main config file. Can be @c NULL.
+ * @param configDir     Name of the config directory.
  * @param title         Default game title.
  * @param author        Default game author.
  */
 Game* Game_New(const char* identityKey, const ddstring_t* dataPath,
-    const ddstring_t* defsPath, const char* mainConfig, const char* title,
+    const ddstring_t* defsPath, const char* configDir, const char* title,
     const char* author);
 
 void Game_Delete(Game* game);
@@ -66,6 +66,11 @@ void Game_Delete(Game* game);
  */
 struct AbstractResource_s* Game_AddResource(Game* game, resourceclass_t rclass,
     struct AbstractResource_s* record);
+
+/**
+ * @return  @c true iff @a absolutePath points to a required resource.
+ */
+boolean Game_IsRequiredResource(Game* game, const char* absolutePath);
 
 /**
  * Change the identfier of the plugin associated with this.
@@ -101,8 +106,7 @@ const ddstring_t* Game_BindingConfig(Game* game);
  * @param rclass  Class of resource to collect.
  * @return  Vector of selected resource records.
  */
-struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass,
-    size_t* count);
+struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass, int* count);
 
 /**
  * \note Unless caller is the resource locator then you probably shouldn't be calling.

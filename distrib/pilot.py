@@ -2,7 +2,7 @@
 # coding=utf-8
 #
 # The Doomsday Build Pilot
-# (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+# (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,9 @@
 ## tasks for the builder client systems. It listens on a TCP port for incoming
 ## queries and actions. On the clients the pilot is run periodically by cron,
 ## and any new tasks are carried out.
+##
+## The pilot's responsibility is distributed task management; the autobuild
+## script carries out the actual tasks.
 
 import sys
 import os
@@ -53,6 +56,7 @@ pilotcfg.py contains information such as (global variables):
 - DISTRIB_DIR: distrib directory path
 - EVENTS_DIR: events directory path
 - APT_DIR: apt repository path (for Linux systems)
+- IGNORED_TASKS: list of tasks to quietly ignore (marked as complete)
 
 The function 'postTaskHook(task)' can be defined for actions to be carried out 
 after a successful execution of a task."""
@@ -76,6 +80,9 @@ def main():
         print APP_NAME + ':', x
     finally:
         endPilotInstance()
+
+def msg(s):
+    print >> sys.stderr, s
 
 
 def isServer():
@@ -119,6 +126,15 @@ def pidFileName():
         return 'client.pid'
 
 
+def isStale(fn):
+    """Files are considered stale after some time has passed."""
+    age = time.time() - os.stat(fn).st_ctime
+    if age > 4*60*60:
+        msg(fn + ' is stale, ignoring it.')
+        return True
+    return False
+
+
 def startNewPilotInstance():
     """A new pilot instance can only be started if one is not already running
     on the system. If an existing instance is detected, this one will quit
@@ -126,8 +142,9 @@ def startNewPilotInstance():
     # Check for an existing pid file.
     pid = os.path.join(homeDir(), pidFileName())
     if os.path.exists(pid):
-        # Cannot start right now -- will be retried later.
-        sys.exit(0)
+        if not isStale(pid):
+            # Cannot start right now -- will be retried later.
+            sys.exit(0)
     print >> file(pid, 'w'), str(os.getpid())
     
     
@@ -142,6 +159,7 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
 
     for name in os.listdir(homeDir()):
         fn = os.path.join(homeDir(), name)
+        if fn == '.' or fn == '..': continue
 
         # All tasks are specific to a client.
         if os.path.isdir(fn) and (name == clientId or allClients):
@@ -156,7 +174,7 @@ def listTasks(clientId=None, includeCompleted=True, onlyCompleted=False,
         tasks = filter(lambda n: not n.endswith('.done'), tasks)
         
     if onlyCompleted:
-        tasks = filter(lambda n: n.endswith('.done'), tasks)
+        tasks = filter(lambda n: isTaskComplete(n), tasks)
 
     tasks.sort()
     return tasks
@@ -179,7 +197,7 @@ class ReqHandler(SocketServer.StreamRequestHandler):
                 raise Exception("Requests must be of type 'dict'")
             self.doRequest()
         except Exception, x:
-            print 'Request failed:', x
+            msg('Request failed: ' + str(x))
             response = { 'result': 'error', 'error': str(x) }
             self.respond(response)
             
@@ -259,28 +277,48 @@ def checkForTasks():
 def doTask(task):
     """Throws an exception if the task fails."""
 
+    # Are we supposed to ignore this task?
+    if 'IGNORED_TASKS' in dir(pilotcfg) and \
+        task in pilotcfg.IGNORED_TASKS:
+        return True
+
     if task == 'tag_build':
+        msg("TAG NEW BUILD")
         return autobuild('create')
 
     elif task == 'deb_changes':
+        msg("UPDATE .DEB CHANGELOG")
         return autobuild('debchanges')
 
     elif task == 'build':
+        msg("BUILD RELEASE")
         return autobuild('platform_release')
 
     elif task == 'publish':
+        msg("PUBLISH")
         systemCommand('deng_copy_build_to_sourceforge.sh')
 
     elif task == 'apt_refresh':
+        msg("APT REPOSITORY REFRESH")
         return autobuild('apt')
         
     elif task == 'update_feed':
+        msg("UPDATE FEED")
         autobuild('feed')
         autobuild('xmlfeed')
         
     elif task == 'purge':
+        msg("PURGE")
         return autobuild('purge')
         
+    elif task == 'generate_readme':
+        msg("GENERATE README")
+        return autobuild('readme')
+        
+    elif task == 'generate_apidoc':
+        msg("GENERATE API DOCUMENTATION")
+        return autobuild('apidoc')
+
     return True
     
 
@@ -292,7 +330,7 @@ def handleCompletedTasks():
         if len(tasks) == 0: break
 
         task = tasks[0][:-5] # Remove '.done'
-        if not isTaskComplete(task): continue
+        assert isTaskComplete(task)
         
         clearTask(task)
         
@@ -300,6 +338,7 @@ def handleCompletedTasks():
         
         if task == 'tag_build':
             newTask('deb_changes', forClient='ubuntu')
+            newTask('generate_readme', forClient='clikits')
         
         elif task == 'deb_changes':
             newTask('build', allClients=True)
@@ -366,6 +405,9 @@ def clearTask(name, direc=None):
 
 
 def isTaskComplete(name):
+    # Remote the possible '.done' suffix.
+    if name[-5:] == '.done': name = name[:-5]
+    # Check that everyone has completed it.
     for task in listTasks(allClients=True):
         if task.startswith(name) and not task.endswith('.done'):
             # This one is not complete.

@@ -31,33 +31,34 @@
 #include "de_infine.h"
 
 /**
- * The actual script is sent to the clients. 'script' can be NULL.
+ * The actual script is sent to the clients. @a script can be NULL.
  */
-void Sv_Finale(int flags, const char* script)
+void Sv_Finale(finaleid_t id, int flags, const char* script)
 {
-    size_t scriptLen = 0, len = 1 /* Just enough memory for the flags byte */;
-    byte* buffer, *ptr;
+    size_t scriptLen = 0;
 
-    assert(isServer);
+    if(isClient) return;
 
     // How much memory do we need?
-    if(flags & FINF_SCRIPT)
-    {
-        scriptLen = strlen(script) + 1;
-        len += scriptLen + 1; // The end null.
-    }
-
-    ptr = buffer = malloc(len);
-
-    // First the flags.
-    *ptr++ = flags;
     if(script)
     {
-        memcpy(ptr, script, scriptLen + 1);
-        ptr[scriptLen] = '\0';
+        flags |= FINF_SCRIPT;
+        scriptLen = strlen(script);
     }
 
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, PSV_FINALE2, buffer, len);
+    // First the flags.
+    Msg_Begin(PSV_FINALE);
+    Writer_WriteByte(msgWriter, flags);
+    Writer_WriteUInt32(msgWriter, id); // serverside Id
 
-    free(buffer);
+    if(script)
+    {
+        // Then the script itself.
+        Writer_WriteUInt32(msgWriter, scriptLen);
+        Writer_Write(msgWriter, script, scriptLen);
+    }
+
+    Msg_End();
+
+    Net_SendBuffer(NSP_BROADCAST, 0);
 }

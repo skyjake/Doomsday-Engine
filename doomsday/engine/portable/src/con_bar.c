@@ -37,7 +37,7 @@
 // MACROS ------------------------------------------------------------------
 
 // Time for the progress to reach the new target (seconds).
-#define PROGRESS_DELTA_TIME     1.0
+#define PROGRESS_DELTA_TIME     0.5f
 
 // TYPES -------------------------------------------------------------------
 
@@ -59,6 +59,7 @@ typedef struct tval_s {
 } tval_t;
 
 static int progressMax;
+static float progressStart, progressEnd;
 static tval_t target, last;
 static mutex_t progressMutex;
 
@@ -76,14 +77,21 @@ static void lockProgress(boolean lock)
     }
 }
 
-void Con_InitProgress(int maxProgress)
+void Con_InitProgress2(int maxProgress, float start, float end)
 {
+    progressStart = start;
+    progressEnd = end;
     memset(&target, 0, sizeof(target));
     memset(&last, 0, sizeof(last));
 
     progressMax = maxProgress;
     if(!progressMutex)
         progressMutex = Sys_CreateMutex("ConBarProgressMutex");
+}
+
+void Con_InitProgress(int maxProgress)
+{
+    Con_InitProgress2(maxProgress, 0, 1);
 }
 
 void Con_ShutdownProgress(void)
@@ -94,40 +102,50 @@ void Con_ShutdownProgress(void)
     }
 }
 
+static currentProgress(void)
+{
+    timespan_t nowTime = Sys_GetRealSeconds();
+    timespan_t span = target.time - last.time;
+
+    if(nowTime >= target.time || span <= 0)
+    {
+        // Done.
+        return target.value;
+    }
+    else
+    {
+        // Interpolate.
+        return last.value + (target.value - last.value) * (nowTime - last.time) / span;
+    }
+}
+
+boolean Con_IsProgressAnimationCompleted(void)
+{
+    boolean done;
+
+    lockProgress(true);
+    done = (Sys_GetRealSeconds() >= target.time);
+    lockProgress(false);
+
+    return done;
+}
+
 /**
  * Updates the progress indicator.
  */
 void Con_SetProgress(int progress)
 {
-    timespan_t      nowTime;
+    timespan_t nowTime;
 
     lockProgress(true);
 
+    // Continue animation from the current value.
     nowTime = Sys_GetRealSeconds();
-
-    if(nowTime >= target.time)
-    {   // Previous movement has ended.
-        last.time = nowTime;
-        last.value = target.value;
-    }
+    last.value = currentProgress();
+    last.time = nowTime;
 
     target.value = progress;
-    target.time = Sys_GetRealSeconds();
-    if(target.value < progressMax)
-    {
-        float           delta = target.time - last.time;
-
-        if(delta < PROGRESS_DELTA_TIME)
-        {
-            delta = (delta + PROGRESS_DELTA_TIME) / 2;
-        }
-
-        target.time += delta;
-    }
-    else
-    {
-        target.value = progressMax;
-    }
+    target.time = nowTime + (progress < progressMax? PROGRESS_DELTA_TIME : PROGRESS_DELTA_TIME/2);
 
     lockProgress(false);
 }
@@ -137,35 +155,16 @@ void Con_SetProgress(int progress)
  */
 float Con_GetProgress(void)
 {
-    timespan_t      nowTime, span;
-    float           retValue = 1.0;
+    float prog;
+
+    if(!progressMax) return 1.0f;
 
     lockProgress(true);
-
-    nowTime = Sys_GetRealSeconds();
-    span = target.time - last.time;
-
-    if(progressMax)
-    {
-        if(nowTime >= target.time)
-        {   // Done.
-            retValue = target.value / (float) progressMax;
-        }
-        else if(span <= 0)
-        {   // Interpolate.
-            retValue = target.value;
-        }
-        else
-        {
-            timespan_t     inter =
-                (target.value - last.value) * (nowTime - last.time);
-
-            retValue += last.value + inter / span;
-            retValue /= progressMax;
-        }
-    }
-
+    prog = currentProgress();
     lockProgress(false);
 
-    return retValue;
+    prog /= (float) progressMax;
+
+    // Scale to the progress range.
+    return progressStart + prog * (progressEnd - progressStart);
 }

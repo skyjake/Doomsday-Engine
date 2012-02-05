@@ -1,29 +1,23 @@
-/**\file dd_api.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Data Structures for the Engine/Plugin Interfaces.
+ * @file dd_api.h
+ * Data structures for the engine/plugin interfaces.
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_H
@@ -32,12 +26,12 @@
 #include "dd_share.h"
 
 /**
- * The data exported out of the Doomsday engine.
- * \todo Refactor away - there should be no need for an ABI in this direction.
+ * The data exported out of the Doomsday engine. @ingroup game
+ * @todo Refactor away - there should be no need for an ABI in this direction.
  */
 typedef struct game_import_s {
-    size_t          apiSize; // sizeof(game_import_t)
-    int             version; // Doomsday Engine version.
+    size_t          apiSize; ///< sizeof(game_import_t)
+    int             version; ///< Doomsday Engine version.
 
     //
     // DATA
@@ -53,10 +47,10 @@ typedef struct game_import_s {
 } game_import_t;
 
 /**
- * The routines/data exported from the game DLL.
+ * The routines/data exported from the game plugin. @ingroup game
  */
 typedef struct {
-    size_t          apiSize; // sizeof(game_export_t)
+    size_t          apiSize; ///< sizeof(game_export_t)
 
     // Base-level.
     void          (*PreInit) (gameid_t gameId);
@@ -88,6 +82,15 @@ typedef struct {
 
     // Refresh.
     void          (*BeginFrame) (void);
+
+    /**
+     * Called at the end of a refresh frame. This is the last chance the game
+     * will have at updating the engine state before rendering of the frame
+     * begins. Once rendering begins, the viewer can still be updated however
+     * any changes will not take effect until the subsequent frame. Therefore
+     * this is the place where games should strive to update the viewer to
+     * ensure latency-free world refresh.
+     */
     void          (*EndFrame) (void);
 
     /**
@@ -96,7 +99,7 @@ typedef struct {
      * dimensions prior to calling this.
      *
      * Example subdivision of the game window into four view ports:
-     *
+     * <pre>
      *     (0,0)-----------------------. X
      *       | .--------. |            |
      *       | | window | |            |
@@ -109,19 +112,18 @@ typedef struct {
      *       |    port #2 |    port #3 |
      *       '--------------------(xn-1, yn-1)
      *       Y               Game Window
+     * </pre>
      *
      * @param port  Logical number of this view port.
      * @param portGeometry  Geometry of the view port in real screen pixels.
-     * @param windowGeometry  Geometry of the view window within the port,
-     *     in real screen pixels.
+     * @param windowGeometry  Geometry of the view window within the port, in
+     *                        real screen pixels.
      *
      * @param player  Console player number associated with the view port.
      * @param layer  Logical layer identifier for the content to be drawn:
-     *
-     *     0: The bottom-most layer and the one which generally contains the
+     *      - 0: The bottom-most layer and the one which generally contains the
      *        call to R_RenderPlayerView.
-     *
-     *     1: Displays to be drawn on top of view window (after bordering),
+     *      - 1: Displays to be drawn on top of view window (after bordering),
      *        such as the player HUD.
      */
     void          (*DrawViewPort) (int port, const RectRaw* portGeometry,
@@ -147,29 +149,34 @@ typedef struct {
     size_t          polyobjSize; // sizeof(polyobj_t)
 
     // Map data setup
-    // This routine is called before any data is read
-    // (with the number of items to be read) to allow the
-    // game do any initialization it needs (eg create an
-    // array of its own private data structures).
+    /**
+     * Called before any data is read (with the number of items to be read) to
+     * allow the game do any initialization it needs (eg create an array of its
+     * own private data structures).
+     */
     void          (*SetupForMapData) (int type, uint num);
 
-    // This routine is called when trying to assign a value read
-    // from the map data (to a property known to us) that we don't
-    // know what to do with.
-
-    // (eg the side->toptexture field contains a text string that
-    // we don't understand but the game might).
-
-    // The action code returned by the game depends on the context.
+    /**
+     * Called when trying to assign a value read from the map data (to a
+     * property known to us) that we don't know what to do with.
+     *
+     * (eg the side->toptexture field contains a text string that
+     * we don't understand but the game might).
+     *
+     * @return The action code returned by the game depends on the context.
+     */
     int           (*HandleMapDataPropertyValue) (uint id, int dtype, int prop,
                                                  valuetype_t type, void* data);
     // Post map setup
-    // The engine calls this to inform the game of any changes it is
-    // making to map data object to which the game might want to
-    // take further action.
+    /**
+     * The engine calls this to inform the game of any changes it is
+     * making to map data object to which the game might want to
+     * take further action.
+     */
     int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void* data);
 } game_export_t;
 
+/// Function pointer for @c GetGameAPI() (exported by game plugin). @ingroup game
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 
 #endif /* LIBDENG_API_H */

@@ -50,6 +50,7 @@
 #include "de_network.h"
 #include "de_misc.h"
 
+#include "fs_util.h"
 #include "dd_uinit.h"
 
 // MACROS ------------------------------------------------------------------
@@ -143,17 +144,20 @@ static int loadPluginWorker(const char* pluginPath, void* data)
 {
     loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
     filename_t name;
+    filename_t ext;
 
     // What is the actual file name?
 #ifndef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
-       (!params->loadingGames && !strncmp(name, "libdp", 5)))
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "libj", 4)) ||
+        (!params->loadingGames && !strncmp(name, "libdp", 5)))
+            && !stricmp(ext, ".so")) // Only .so files
 #endif
 #ifdef MACOSX
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if((params->loadingGames  && !strncmp(name, "j", 1)) ||
+    _splitpath(pluginPath, NULL, NULL, name, ext);
+    if(((params->loadingGames  && !strncmp(name, "j", 1)) ||
        (!params->loadingGames && !strncmp(name, "dp", 2)))
+            && (!stricmp(ext, ".dylib") || !stricmp(ext, ".bundle")))
 #endif
     {
         loadPlugin(params->app, pluginPath, NULL/*no paramaters*/);
@@ -253,7 +257,15 @@ static void determineGlobalPaths(application_t* app)
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
-        directory_t* temp = Dir_New(ArgNext());
+        filename_t runtimePath;
+        directory_t* temp;
+
+        strncpy(runtimePath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
+        // Ensure the path is closed with a directory separator.
+        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
+
+        temp = Dir_New(runtimePath);
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingUserDir)
         {
@@ -297,8 +309,7 @@ static void determineGlobalPaths(application_t* app)
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
     // Ensure it ends with a directory separator.
-    if(ddBasePath[strlen(ddBasePath)-1] != '/')
-        strncat(ddBasePath, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 static char* buildCommandLineString(int argc, char** argv)
@@ -332,7 +343,8 @@ static int createMainWindow(void)
     Size2Raw size = { 640, 480 };
     char buf[256];
     DD_ComposeMainWindowTitle(buf);
-    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0, isDedicated, buf, 0);
+    windowIDX = Sys_CreateWindow(&app, 0, &origin, &size, 32, 0,
+                                 isDedicated? WT_CONSOLE : WT_NORMAL, buf, 0);
     return windowIDX != 0;
 }
 

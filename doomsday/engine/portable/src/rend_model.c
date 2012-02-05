@@ -57,6 +57,8 @@
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // \fixme Precalculate arcsin.
 
+#define MAX_ARRAYS  (2 + MAX_TEX_UNITS)
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum rendcmd_e {
@@ -64,6 +66,11 @@ typedef enum rendcmd_e {
     RC_OTHER_COORDS,
     RC_BOTH_COORDS
 } rendcmd_t;
+
+typedef struct array_s {
+    boolean enabled;
+    void* data;
+} array_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -85,6 +92,8 @@ float   rend_model_lod = 256;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static array_t arrays[MAX_ARRAYS];
+
 // Fixed-size vertex arrays for the model.
 static dgl_vertex_t modelVertices[MAX_VERTS];
 static dgl_vertex_t modelNormals[MAX_VERTS];
@@ -94,7 +103,7 @@ static dgl_texcoord_t modelTexCoords[MAX_VERTS];
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
 static int activeLod;
-static char *vertexUsage;
+static char* vertexUsage;
 
 // CODE --------------------------------------------------------------------
 
@@ -115,14 +124,251 @@ void Rend_ModelRegister(void)
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10);
 }
 
+void Mod_InitArrays(void)
+{
+    if(!GL_state.features.elementArrays) return;
+    memset(arrays, 0, sizeof(arrays));
+}
+
+void Mod_EnableArrays(int vertices, int colors, int coords)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_VERTEX].enabled = true;
+        else
+            glEnableClientState(GL_VERTEX_ARRAY);
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_COLOR].enabled = true;
+        else
+            glEnableClientState(GL_COLOR_ARRAY);
+    }
+
+    for(i = 0; i < numTexUnits; ++i)
+    {
+        if(coords & (1 << i))
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = true;
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            }
+        }
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_DisableArrays(int vertices, int colors, int coords)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_VERTEX].enabled = false;
+        else
+            glDisableClientState(GL_VERTEX_ARRAY);
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+            arrays[AR_COLOR].enabled = false;
+        else
+            glDisableClientState(GL_COLOR_ARRAY);
+    }
+
+    for(i = 0; i < numTexUnits; ++i)
+    {
+        if(coords & (1 << i))
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = false;
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, 0, NULL);
+            }
+        }
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+static __inline void enableTexUnit(byte id)
+{
+    glActiveTexture(GL_TEXTURE0 + id);
+    glEnable(GL_TEXTURE_2D);
+}
+
+static __inline void disableTexUnit(byte id)
+{
+    glActiveTexture(GL_TEXTURE0 + id);
+    glDisable(GL_TEXTURE_2D);
+
+    // Implicit disabling of texcoord array.
+    if(!GL_state.features.elementArrays)
+    {
+        Mod_DisableArrays(0, 0, 1 << id);
+    }
+}
+
+/**
+ * The first selected unit is active after this call.
+ */
+void Mod_SelectTexUnits(int count)
+{
+    int i;
+    for(i = numTexUnits - 1; i >= count; i--)
+    {
+        disableTexUnit(i);
+    }
+
+    // Enable the selected units.
+    for(i = count - 1; i >= 0; i--)
+    {
+        if(i >= numTexUnits) continue;
+        enableTexUnit(i);
+    }
+}
+
+/**
+ * Enable, set and optionally lock all enabled arrays.
+ */
+void Mod_Arrays(void* vertices, void* colors, int numCoords, void** coords, int lock)
+{
+    int i;
+
+    if(vertices)
+    {
+        if(!GL_state.features.elementArrays)
+        {
+            arrays[AR_VERTEX].enabled = true;
+            arrays[AR_VERTEX].data = vertices;
+        }
+        else
+        {
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glVertexPointer(3, GL_FLOAT, 16, vertices);
+        }
+    }
+
+    if(colors)
+    {
+        if(!GL_state.features.elementArrays)
+        {
+            arrays[AR_COLOR].enabled = true;
+            arrays[AR_COLOR].data = colors;
+        }
+        else
+        {
+            glEnableClientState(GL_COLOR_ARRAY);
+            glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+        }
+    }
+
+    for(i = 0; i < numCoords && i < MAX_TEX_UNITS; ++i)
+    {
+        if(coords[i])
+        {
+            if(!GL_state.features.elementArrays)
+            {
+                arrays[AR_TEXCOORD0 + i].enabled = true;
+                arrays[AR_TEXCOORD0 + i].data = coords[i];
+            }
+            else
+            {
+                glClientActiveTexture(GL_TEXTURE0 + i);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                glTexCoordPointer(2, GL_FLOAT, 0, coords[i]);
+            }
+        }
+    }
+
+    if(GL_state.features.elementArrays && lock > 0)
+    {
+        // 'lock' is the number of vertices to lock.
+        glLockArraysEXT(0, lock);
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_UnlockArrays(void)
+{
+    if(!GL_state.features.elementArrays) return;
+    glUnlockArraysEXT();
+    assert(!Sys_GLCheckError());
+}
+
+void Mod_ArrayElement(int index)
+{
+    if(GL_state.features.elementArrays)
+    {
+        glArrayElement(index);
+    }
+    else
+    {
+        int i;
+        for(i = 0; i < numTexUnits; ++i)
+        {
+            if(!arrays[AR_TEXCOORD0 + i].enabled)
+                continue;
+            glMultiTexCoord2fv(GL_TEXTURE0 + i,
+                ((dgl_texcoord_t*)arrays[AR_TEXCOORD0 + i].data)[index].st);
+        }
+
+        if(arrays[AR_COLOR].enabled)
+            glColor4ubv(((dgl_color_t*) arrays[AR_COLOR].data)[index].rgba);
+
+        if(arrays[AR_VERTEX].enabled)
+            glVertex3fv(((dgl_vertex_t*) arrays[AR_VERTEX].data)[index].xyz);
+    }
+}
+
+void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
+{
+    GLenum primType = (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN :
+                       type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
+
+    if(GL_state.features.elementArrays)
+    {
+        glDrawElements(primType, count, GL_UNSIGNED_INT, indices);
+    }
+    else
+    {
+        int i;
+
+        glBegin(primType);
+        for(i = 0; i < count; ++i)
+        {
+            Mod_ArrayElement(indices[i]);
+        }
+        glEnd();
+    }
+
+    assert(!Sys_GLCheckError());
+}
+
 static __inline float qatan2(float y, float x)
 {
-    float       ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
-
-    if(ang > PI)
-        ang -= 2 * (float) PI;
+    float ang = BANG2RAD(bamsAtan2(y * 512, x * 512));
+    if(ang > PI) ang -= 2 * (float) PI;
     return ang;
-
     // This is slightly faster, I believe...
     //return atan2(y, x);
 }
@@ -168,24 +414,24 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
     void       *coords[2];
 
     // Disable all vertex arrays.
-    GL_DisableArrays(true, true, DDMAXINT);
+    Mod_DisableArrays(true, true, DDMAXINT);
 
     // Load the vertex array.
     switch(mode)
     {
     case RC_OTHER_COORDS:
         coords[0] = texCoords;
-        GL_Arrays(vertices, colors, 1, coords, 0);
+        Mod_Arrays(vertices, colors, 1, coords, 0);
         break;
 
     case RC_BOTH_COORDS:
         coords[0] = NULL;
         coords[1] = texCoords;
-        GL_Arrays(vertices, colors, 2, coords, 0);
+        Mod_Arrays(vertices, colors, 2, coords, 0);
         break;
 
     default:
-        GL_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
+        Mod_Arrays(vertices, colors, 0, NULL, 0 /* numVertices */ );
         break;
     }
 
@@ -212,7 +458,7 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
                 glTexCoord2f(FLOAT(v->s), FLOAT(v->t));
             }
 
-            GL_ArrayElement(LONG(v->index));
+            Mod_ArrayElement(LONG(v->index));
         }
 
         // The primitive is complete.
@@ -463,7 +709,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     float       normYaw, normPitch, shinyAng, shinyPnt;
     float       inter = params->inter;
     blendmode_t blending;
-    DGLuint     skinTexture = 0, shinyTexture = 0;
+    TextureVariant* skinTexture = NULL, *shinyTexture = NULL;
     int         zSign = (params->mirror? -1 : 1);
 
     // Do not bother with infinitely small models...
@@ -677,14 +923,14 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Ensure we've prepared the shiny skin.
     if(shininess > 0)
     {
-        texture_t* tex = mf->sub[number].shinySkin;
+        Texture* tex = mf->sub[number].shinySkin;
         if(tex)
         {
             texturevariantspecification_t* texSpec =
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
                     TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
                     false, false, false, false);
-            shinyTexture = GL_PrepareTexture(tex, texSpec);
+            shinyTexture = GL_PrepareTextureVariant(tex, texSpec);
         }
         else
         {
@@ -763,7 +1009,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 MC_MODELSKIN, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
             const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
-            skinTexture = MSU_gltexture(ms, MTU_PRIMARY);
+            skinTexture = MST(ms, MTU_PRIMARY);
         }
         else
         {
@@ -772,7 +1018,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        texture_t* tex;
+        Texture* tex;
 
         skinTexture = 0;
         if(useSkin < 0 || useSkin >= mdl->info.numSkins)
@@ -785,7 +1031,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
                     (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
                     GL_REPEAT, 1, -2, -1, true, true, false, false);
-            skinTexture = GL_PrepareTexture(tex, texSpec);
+            skinTexture = GL_PrepareTextureVariant(tex, texSpec);
         }
     }
 
@@ -799,6 +1045,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     if(subFlags & MFF_TWO_SIDED)
         glDisable(GL_CULL_FACE);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
        blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR) ||
@@ -807,9 +1055,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // The first pass can be skipped if it won't be visible.
         if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
         {
-            GL_SelectTexUnits(1);
+            Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
-            GL_BindTexture(renderTextures? skinTexture : 0, glmode[texMagMode]);
+            GL_BindTexture(renderTextures? skinTexture : 0);
 
             Mod_RenderCommands(RC_COMMAND_COORDS,
                                mdl->lods[activeLod].glCommands, /*numVerts,*/
@@ -833,27 +1081,27 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             {
                 // We'll use multitexturing to clear out empty spots in
                 // the primary texture.
-                GL_SelectTexUnits(2);
+                Mod_SelectTexUnits(2);
                 GL_ModulateTexture(11);
 
                 glActiveTexture(GL_TEXTURE1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+                GL_BindTexture(renderTextures ? shinyTexture : 0);
 
                 glActiveTexture(GL_TEXTURE0);
-                GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
+                GL_BindTexture(renderTextures ? skinTexture : 0);
 
                 Mod_RenderCommands(RC_BOTH_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
 
-                GL_SelectTexUnits(1);
+                Mod_SelectTexUnits(1);
                 GL_ModulateTexture(1);
             }
             else
             {
                 // Empty spots will get shine, too.
-                GL_SelectTexUnits(1);
-                GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+                Mod_SelectTexUnits(1);
+                GL_BindTexture(renderTextures ? shinyTexture : 0);
                 Mod_RenderCommands(RC_OTHER_COORDS,
                                    mdl->lods[activeLod].glCommands, /*numVerts,*/
                                    modelVertices, modelColors, modelTexCoords);
@@ -865,13 +1113,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         // A special case: specular shininess on an opaque object.
         // Multitextured shininess with the normal blending.
         GL_BlendMode(blending);
-        GL_SelectTexUnits(2);
+        Mod_SelectTexUnits(2);
 
         // Tex1*Color + Tex2RGB*ConstRGB
         GL_ModulateTexture(10);
 
         glActiveTexture(GL_TEXTURE1);
-        GL_BindTexture(renderTextures ? shinyTexture : 0, glmode[texMagMode]);
+        GL_BindTexture(renderTextures ? shinyTexture : 0);
 
         // Multiply by shininess.
         for(c = 0; c < 3; ++c)
@@ -879,17 +1127,18 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);
 
         glActiveTexture(GL_TEXTURE0);
-        GL_BindTexture(renderTextures ? skinTexture : 0, glmode[texMagMode]);
+        GL_BindTexture(renderTextures ? skinTexture : 0);
 
         Mod_RenderCommands(RC_BOTH_COORDS, mdl->lods[activeLod].glCommands,
                            /*numVerts,*/ modelVertices, modelColors,
                            modelTexCoords);
 
-        GL_SelectTexUnits(1);
+        Mod_SelectTexUnits(1);
         GL_ModulateTexture(1);
     }
 
     // We're done!
+    glDisable(GL_TEXTURE_2D);
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
@@ -906,16 +1155,21 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     GL_BlendMode(BM_NORMAL);
 }
 
+void Rend_ModelInit(void)
+{
+    Mod_InitArrays();
+}
+
 /**
  * Render all the submodels of a model.
  */
 void Rend_RenderModel(const rendmodelparams_t* params)
 {
-    if(!params || !params->mf)
-        return;
+    uint i;
+
+    if(!params || !params->mf) return;
 
     // Render all the submodels of this model.
-    {uint i;
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
         if(params->mf->sub[i].model)
@@ -932,7 +1186,7 @@ void Rend_RenderModel(const rendmodelparams_t* params)
             if(disableZ)
                 glDepthMask(GL_TRUE);
         }
-    }}
+    }
 
     if(devMobjVLights && params->vLightListIdx)
     {   // Draw the vlight vectors, for debug.

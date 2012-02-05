@@ -395,15 +395,15 @@ void UIChat_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 void UIChat_UpdateGeometry(uiwidget_t* obj)
 {
     const char* text = UIChat_Text(obj);
-    obj->geometry.size.width  = 0;
-    obj->geometry.size.height = 0;
     assert(obj->type == GUI_CHAT);
+
+    Rect_SetWidthHeight(obj->geometry, 0, 0);
 
     if(!UIChat_IsActive(obj)) return;
 
     FR_SetFont(obj->font);
-    obj->geometry.size.width  = cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_'));
-    obj->geometry.size.height = cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_')));
+    Rect_SetWidthHeight(obj->geometry, cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_')),
+                                       cfg.msgScale * (MAX_OF(FR_TextHeight(text), FR_CharHeight('_'))));
 }
 
 int UIChat_ParseDestination(const char* str)

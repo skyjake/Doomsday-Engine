@@ -63,7 +63,7 @@ D_CMD(FlareConfig);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int     haloMode = 5, haloBright = 35, haloSize = 50;
+int     haloMode = 5, haloBright = 35, haloSize = 80;
 int     haloRealistic = true;
 int     haloOccludeSpeed = 48;
 float   haloZMagDiv = 100, haloMinRadius = 20;
@@ -352,7 +352,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
         // Don't wrap the texture. Evidently some drivers can't just

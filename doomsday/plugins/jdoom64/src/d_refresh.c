@@ -100,7 +100,7 @@ static void rendSpecialFilter(int player, const RectRaw* region)
     g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
     b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
-    DGL_DrawRectColor(region->origin.x, region->origin.y,
+    DGL_DrawRectf2Color(region->origin.x, region->origin.y,
         region->size.width, region->size.height, r, g, b, 1);
 
     // Restore the normal rendering state.
@@ -224,10 +224,6 @@ static void rendPlayerView(int player)
         R_SetAllDoomsdayFlags();
     }
 
-    // View angles are updated with fractional ticks, so we can just use the current values.
-    R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
-    R_SetViewPitch(player, plr->plr->lookDir);
-
     pspriteOffsetY = HU_PSpriteYOffset(plr);
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
 
@@ -255,39 +251,12 @@ static void rendHUD(int player, const RectRaw* portGeometry)
 
     ST_Drawer(player);
     HU_DrawScoreBoard(player);
-
-    // Level information is shown for a few seconds in the beginning of a level.
-    if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
-    {
-        int needWidth;
-        float scale;
-
-        if(portGeometry->size.width >= portGeometry->size.height)
-        {
-            needWidth = (float)portGeometry->size.height/SCREENHEIGHT * SCREENWIDTH;
-            scale = (float)portGeometry->size.height/SCREENHEIGHT;
-        }
-        else
-        {
-            needWidth = (float)portGeometry->size.width/SCREENWIDTH * SCREENWIDTH;
-            scale = (float)portGeometry->size.width/SCREENWIDTH;
-        }
-        if(needWidth > portGeometry->size.width)
-            scale *= (float)portGeometry->size.width/needWidth;
-
-        scale *= (1+cfg.hudScale)/2;
-        // Make the title 3/4 smaller.
-        scale *= .75f;
-
-        Hu_DrawMapTitle(portGeometry->size.width/2, (float)portGeometry->size.height/SCREENHEIGHT * 6, scale);
-    }
+    Hu_MapTitleDrawer(portGeometry);
 }
 
 void D_DrawViewPort(int port, const RectRaw* portGeometry,
     const RectRaw* windowGeometry, int player, int layer)
 {
-    player_t* plr = players + player;
-
     if(layer != 0)
     {
         rendHUD(player, portGeometry);
@@ -296,7 +265,9 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 
     switch(G_GameState())
     {
-    case GS_MAP:
+    case GS_MAP: {
+        player_t* plr = players + player;
+
         if(!ST_AutomapObscures2(player, windowGeometry))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
@@ -309,13 +280,12 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
                 X_Drawer(player);
         }
         break;
-
+      }
     case GS_STARTUP:
-        DGL_DrawRectColor(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
+        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -331,7 +301,25 @@ void D_DrawWindow(const Size2Raw* windowSize)
 
     if(G_QuitInProgress())
     {
-        DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+        DGL_DrawRectf2Color(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+    }
+}
+
+void D_EndFrame(void)
+{
+    int i;
+
+    if(G_GameState() != GS_MAP) return;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+
+        if(!plr->plr->inGame || !plr->plr->mo) continue;
+
+        // View angles are updated with fractional ticks, so we can just use the current values.
+        R_SetViewAngle(i, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(i)));
+        R_SetViewPitch(i, plr->plr->lookDir);
     }
 }
 

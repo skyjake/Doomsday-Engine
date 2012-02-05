@@ -39,8 +39,12 @@ struct filedirectory_s {
     PathDirectory* _pathDirectory;
 };
 
+static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* filePath,
+    int (*callback) (PathDirectoryNode*, void*), void* paramaters);
+
 typedef struct {
     FileDirectory* fileDirectory;
+    int flags; /// @see searchPathFlags
     int (*callback) (PathDirectoryNode* node, void* paramaters);
     void* paramaters;
 } addpathworker_paramaters_t;
@@ -49,167 +53,108 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
     void* paramaters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
-    int result = 0; // Continue adding.
-    assert(filePath && VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
+    assert(VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
+    return addNodesOnSearchPath(p->fileDirectory, p->flags, filePath, p->callback, p->paramaters);
+}
 
-    if(!Str_IsEmpty(filePath))
+/**
+ * @param flags  @see searchPathFlags
+ * @param searchPath  Base of the target search path to add files from.
+ * @param callback  Caller's logic dictates iteration.
+ * @param paramaters  Passed to the callback.
+ * @return  Non-zero if iteration should stop else @c 0.
+ */
+static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* _searchPath,
+    int (*callback) (PathDirectoryNode*, void*), void* paramaters)
+{
+    int result = 0; // Continue iteration.
+    filedirectory_nodeinfo_t* info;
+    const ddstring_t* relPath;
+    PathDirectoryNode* node;
+    ddstring_t searchPath;
+    assert(fd);
+
+    if(!_searchPath || Str_IsEmpty(_searchPath)) return result;
+
+    // Let's try to make it a relative path.
+    if(F_IsAbsolute(_searchPath))
     {
-        PathDirectoryNode* node;
-        filedirectory_nodeinfo_t* info;
-        ddstring_t relPath;
+        Str_Init(&searchPath);
+        F_RemoveBasePath(&searchPath, _searchPath);
+        relPath = &searchPath;
+    }
+    else
+    {
+        relPath = _searchPath;
+    }
 
-        // Let's try to make it a relative path.
-        Str_Init(&relPath);
-        F_RemoveBasePath(&relPath, filePath);
+    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
 
-        node = PathDirectory_Insert(p->fileDirectory->_pathDirectory, Str_Text(&relPath), '/');
-        //assert(PT_LEAF == PathDirectoryNode_Type(node));
+    // Has this already been processed?
+    info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
+    if(!info)
+    {
+        // Clearly not. Attach our node info.
+        info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
+        if(!info) Con_Error("FileDirectory::addNodesOnSearchPath: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
 
-        // Has this already been processed?
-        info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
-        if(!info)
-        {
-            // Clearly not. Attach our node info.
-            info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
-            if(!info)
-                Con_Error("FileDirectory::addPathWorker: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
+        info->processed = false;
+        PathDirectoryNode_AttachUserData(node, info);
+    }
 
-            info->processed = false;
-            PathDirectoryNode_AttachUserData(node, info);
-        }
-
-        if(info->processed)
-        {
-            // Does caller want to process it again?
-            if(p->callback)
-            {
-                if(PT_BRANCH == PathDirectoryNode_Type(node))
-                {
-                    result = PathDirectory_Iterate2(p->fileDirectory->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_NOHASH, p->callback, p->paramaters);
-                }
-                else
-                {
-                    result = p->callback(node, p->paramaters);
-                }
-            }
-        }
-        else
+    if(info->processed)
+    {
+        // Does caller want to process it again?
+        if(callback)
         {
             if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
-                ddstring_t searchPattern;
-
-                // Compose the search pattern. Resolve relative to the base path
-                // if not already absolute. We're interested in *everything*.
-                Str_Init(&searchPattern);
-                Str_Appendf(&searchPattern, "%s*", Str_Text(filePath));
-                //F_PrependBasePath(&searchPattern, &searchPattern);
-
-                // Process this search.
-                F_AllResourcePaths2(Str_Text(&searchPattern), addPathWorker, (void*)p);
-                Str_Free(&searchPattern);
+                result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
+                                                PATHDIRECTORY_NOHASH, callback, paramaters);
             }
             else
             {
-                if(p->callback)
-                    p->callback(node, p->paramaters);
+                result = callback(node, paramaters);
             }
-
-            info->processed = true;
         }
-        Str_Free(&relPath);
     }
+    else
+    {
+        if(PT_BRANCH == PathDirectoryNode_Type(node))
+        {
+            addpathworker_paramaters_t p;
+            ddstring_t searchPattern;
+
+            // Compose the search pattern. Resolve relative to the base path
+            // if not already absolute. We're interested in *everything*.
+            Str_Init(&searchPattern);
+            Str_Appendf(&searchPattern, "%s*", Str_Text(_searchPath));
+            //F_PrependBasePath(&searchPattern, &searchPattern);
+
+            p.callback = callback;
+            p.fileDirectory = fd;
+            p.flags = flags;
+            p.paramaters = paramaters;
+
+            // Process this search.
+            F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
+            Str_Free(&searchPattern);
+        }
+        else if(callback)
+        {
+            callback(node, paramaters);
+        }
+
+        info->processed = true;
+    }
+
+    if(relPath == &searchPath) Str_Free(&searchPath);
+
     return result;
 }
 
-static FileDirectory* addPaths(FileDirectory* fd, const ddstring_t* const* paths,
-    size_t pathsCount, int (*callback) (PathDirectoryNode* node, void* paramaters),
-    void* paramaters)
-{
-//    uint startTime = verbose >= 2? Sys_GetRealTime(): 0;
-    const ddstring_t* const* ptr = paths;
-    size_t i;
-
-    assert(fd && paths && pathsCount);
-
-    for(i = 0; i < pathsCount && *ptr; ++i, ptr++)
-    {
-        const ddstring_t* searchPath = *ptr;
-        PathDirectoryNode* node;
-        filedirectory_nodeinfo_t* info;
-
-        if(Str_IsEmpty(searchPath)) continue;
-
-        node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(searchPath), '/');
-
-        // Has this already been processed?
-        info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
-        if(!info)
-        {
-            // Clearly not. Attach our node info.
-            info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
-            if(!info)
-                Con_Error("FileDirectory::addPaths: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
-
-            info->processed = false;
-            PathDirectoryNode_AttachUserData(node, info);
-        }
-
-        if(info->processed)
-        {
-            // Does caller want to process it again?
-            if(callback)
-            {
-                if(PT_BRANCH == PathDirectoryNode_Type(node))
-                {
-                    PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node, PATHDIRECTORY_NOHASH, callback, paramaters);
-                }
-                else
-                {
-                    callback(node, paramaters);
-                }
-            }
-        }
-        else
-        {
-            if(PT_BRANCH == PathDirectoryNode_Type(node))
-            {
-                addpathworker_paramaters_t p;
-                ddstring_t searchPattern;
-
-                // Compose the search pattern. Resolve relative to the base path
-                // if not already absolute. We're interested in *everything*.
-                Str_Init(&searchPattern);
-                Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
-                //F_PrependBasePath(&searchPattern, &searchPattern);
-
-                // Process this search.
-                p.fileDirectory = fd;
-                p.callback = callback;
-                p.paramaters = paramaters;
-                F_AllResourcePaths2(Str_Text(&searchPattern), addPathWorker, (void*)&p);
-                Str_Free(&searchPattern);
-            }
-            else
-            {
-                if(callback)
-                    callback(node, paramaters);
-            }
-
-            info->processed = true;
-        }
-    }
-
-/*#if _DEBUG
-    FileDirectory_Print(fd);
-#endif*/
-//    VERBOSE2( Con_Message("FileDirectory::addPaths: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
-
-    return fd;
-}
-
 static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
-    const Uri* const* searchPaths, uint searchPathsCount,
+    int flags, const Uri* const* searchPaths, uint searchPathsCount,
     int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
 {
     uint i;
@@ -219,15 +164,15 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
     {
         ddstring_t* searchPath = Uri_Resolved(searchPaths[i]);
         if(!searchPath) continue;
+        F_AppendMissingSlash(searchPath);
 
-        // Let's try to make it a relative path.
-        F_RemoveBasePath(searchPath, searchPath);
-        if(Str_RAt(searchPath, 0) != '/')
-            Str_AppendChar(searchPath, '/');
-
-        addPaths(fd, (const ddstring_t**)&searchPath, 1, callback, paramaters);
+        addNodesOnSearchPath(fd, flags, searchPath, callback, paramaters);
         Str_Delete(searchPath);
     }
+
+/*#if _DEBUG
+    FileDirectory_Print(fd);
+#endif*/
 }
 
 static void printPaths(const Uri* const* paths, size_t pathsCount)
@@ -250,7 +195,7 @@ static void printPaths(const Uri* const* paths, size_t pathsCount)
     }
 }
 
-FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList)
+FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList, int flags)
 {
     FileDirectory* fd = (FileDirectory*) malloc(sizeof *fd);
     if(!fd)
@@ -261,13 +206,13 @@ FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList)
     {
         size_t count;
         Uri** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        resolveAndAddSearchPathsToDirectory(fd, (const Uri**)uris, (uint)count, 0, 0);
+        resolveAndAddSearchPathsToDirectory(fd, flags, (const Uri**)uris, (uint)count, 0, 0);
         F_DestroyUriList(uris);
     }
     return fd;
 }
 
-FileDirectory* FileDirectory_NewWithPathList(const char* pathList)
+FileDirectory* FileDirectory_NewWithPathList(const char* pathList, int flags)
 {
     FileDirectory* fd;
     ddstring_t _pathList, *paths = NULL;
@@ -278,14 +223,14 @@ FileDirectory* FileDirectory_NewWithPathList(const char* pathList)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_NewWithPathListStr(paths);
+    fd = FileDirectory_NewWithPathListStr(paths, flags);
     if(len != 0) Str_Free(paths);
     return fd;
 }
 
 FileDirectory* FileDirectory_New(void)
 {
-    return FileDirectory_NewWithPathListStr(NULL);
+    return FileDirectory_NewWithPathListStr(NULL, 0);
 }
 
 static int freeNodeInfo(PathDirectoryNode* node, void* paramaters)
@@ -317,8 +262,9 @@ void FileDirectory_Clear(FileDirectory* fd)
     PathDirectory_Clear(fd->_pathDirectory);
 }
 
-void FileDirectory_AddPaths3(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
+void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths,
+    uint pathsCount, int (*callback) (PathDirectoryNode*, void*),
+    void* paramaters)
 {
     assert(fd);
     if(!paths || pathsCount == 0)
@@ -333,22 +279,23 @@ void FileDirectory_AddPaths3(FileDirectory* fd, const Uri* const* paths, uint pa
     VERBOSE( Con_Message("Adding paths to FileDirectory...\n") );
     VERBOSE2( printPaths(paths, pathsCount) );
 #endif
-    resolveAndAddSearchPathsToDirectory(fd, paths, pathsCount, callback, paramaters);
+    resolveAndAddSearchPathsToDirectory(fd, flags, paths, pathsCount, callback, paramaters);
 }
 
-void FileDirectory_AddPaths2(FileDirectory* fd, const Uri* const* paths, uint pathsCount,
-    int (*callback) (PathDirectoryNode* node, void* paramaters))
+void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths,
+    uint pathsCount, int (*callback) (PathDirectoryNode*, void*))
 {
-    FileDirectory_AddPaths3(fd, paths, pathsCount, callback, NULL);
+    FileDirectory_AddPaths3(fd, flags, paths, pathsCount, callback, NULL);
 }
 
-void FileDirectory_AddPaths(FileDirectory* fd, const Uri* const* paths, uint pathsCount)
+void FileDirectory_AddPaths(FileDirectory* fd, int flags, const Uri* const* paths,
+    uint pathsCount)
 {
-    FileDirectory_AddPaths2(fd, paths, pathsCount, NULL);
+    FileDirectory_AddPaths2(fd, flags, paths, pathsCount, NULL);
 }
 
-void FileDirectory_AddPathList3(FileDirectory* fd, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
+void FileDirectory_AddPathList3(FileDirectory* fd, int flags, const char* pathList,
+    int (*callback) (PathDirectoryNode*, void*), void* paramaters)
 {
     Uri** paths = NULL;
     size_t pathsCount = 0;
@@ -357,19 +304,19 @@ void FileDirectory_AddPathList3(FileDirectory* fd, const char* pathList,
     if(pathList && pathList[0])
         paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
 
-    FileDirectory_AddPaths3(fd, (const Uri**)paths, (uint)pathsCount, callback, paramaters);
+    FileDirectory_AddPaths3(fd, flags, (const Uri**)paths, (uint)pathsCount, callback, paramaters);
     if(paths) F_DestroyUriList(paths);
 }
 
-void FileDirectory_AddPathList2(FileDirectory* fd, const char* pathList,
-    int (*callback) (PathDirectoryNode* node, void* paramaters))
+void FileDirectory_AddPathList2(FileDirectory* fd, int flags, const char* pathList,
+    int (*callback) (PathDirectoryNode*, void*))
 {
-    FileDirectory_AddPathList3(fd, pathList, callback, NULL);
+    FileDirectory_AddPathList3(fd, flags, pathList, callback, NULL);
 }
 
-void FileDirectory_AddPathList(FileDirectory* fd, const char* pathList)
+void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathList)
 {
-    FileDirectory_AddPathList2(fd, pathList, NULL);
+    FileDirectory_AddPathList2(fd, flags, pathList, NULL);
 }
 
 int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t nodeType,

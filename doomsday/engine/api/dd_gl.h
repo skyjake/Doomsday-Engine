@@ -1,30 +1,26 @@
-/**\file dd_gl.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
+ * @file dd_gl.h
  * Doomsday graphics library.
+ *
+ * @ingroup gl
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_DGL_H
@@ -32,10 +28,15 @@
 
 #include "rect.h"
 
+/**
+ * @defgroup gl Graphics Library
+ * @ingroup render
+ */
+///@{
+
 enum {
     // Values
-    DGL_SCISSOR_BOX,
-    DGL_ACTIVE_TEXTURE,
+    DGL_ACTIVE_TEXTURE = 1,
 
     DGL_CURRENT_COLOR_R,
     DGL_CURRENT_COLOR_G,
@@ -102,7 +103,7 @@ typedef int DGLsizei;
 typedef double DGLdouble;
 typedef unsigned int DGLenum;
 
-// Texture formats:
+/// Texture formats.
 typedef enum dgltexformat_e {
     DGL_RGB,
     DGL_RGBA,
@@ -112,6 +113,7 @@ typedef enum dgltexformat_e {
     DGL_LUMINANCE_PLUS_A8
 } dgltexformat_t;
 
+/// Primitive types.
 typedef enum dglprimtype_e {
     DGL_LINES,
     DGL_TRIANGLES,
@@ -124,6 +126,7 @@ typedef enum dglprimtype_e {
 
 #define DDNUM_BLENDMODES    9
 
+/// Blending modes.
 typedef enum blendmode_e {
     BM_ZEROALPHA = -1,
     BM_NORMAL,
@@ -140,7 +143,7 @@ typedef enum blendmode_e {
 #define VALID_BLENDMODE(val) ((val) >= BM_ZEROALPHA && (val) <= BM_ALPHA_SUBTRACT)
 
 typedef struct dgl_vertex_s {
-    float           xyz[4]; // The fourth is padding.
+    float           xyz[4]; ///< The fourth is padding.
 } dgl_vertex_t;
 
 typedef struct dgl_texcoord_s {
@@ -159,26 +162,26 @@ typedef struct {
     DGLubyte        rgba[4];
 } dgl_rgba_t;
 
-// A 2-vertex with texture coordinates, using floats
+/// 2-vertex with texture coordinates, using floats.
 typedef struct {
     float           pos[2];
     float           tex[2];
 } dgl_ft2vertex_t;
 
-// A 3-vertex with texture coordinates, using floats
+/// 3-vertex with texture coordinates, using floats.
 typedef struct {
     float           pos[3];
     float           tex[2];
 } dgl_ft3vertex_t;
 
-// A 3-vertex with texture coordinates and a color, using floats
+/// 3-vertex with texture coordinates and a color, using floats.
 typedef struct {
     float           pos[3];
     float           tex[2];
     float           color[4];
 } dgl_fct3vertex_t;
 
-// A colored 3-vertex, using floats
+/// Colored 3-vertex, using floats.
 typedef struct {
     float           pos[3];
     float           color[4];
@@ -195,7 +198,20 @@ float           DGL_GetFloat(int name);
 boolean         DGL_SetFloat(int name, float value);
 
 void            DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar);
-void            DGL_Scissor(int x, int y, int width, int height);
+
+/**
+ * Retrieve the current dimensions of the viewport scissor region.
+ */
+void DGL_Scissor(RectRaw* rect);
+
+/**
+ * Change the current viewport scissor region.
+ * @note This only sets the geometry. To enable the scissor use DGL_Enable(DGL_SCISSOR_TEST).
+ *
+ * @param rect  Geometry of the new scissor region. Coordinates are in viewport space.
+ */
+void DGL_SetScissor(const RectRaw* rect);
+void DGL_SetScissor2(int x, int y, int width, int height);
 
 void            DGL_MatrixMode(int mode);
 void            DGL_PushMatrix(void);
@@ -213,12 +229,12 @@ DGLuint         DGL_EndList(void);
 void            DGL_CallList(DGLuint list);
 void            DGL_DeleteLists(DGLuint list, int range);
 
-void            DGL_SetMaterialUI(struct material_s* mat);
 void            DGL_SetNoMaterial(void);
-void            DGL_SetPatch(patchid_t id, int wrapS, int wrapT);
+void            DGL_SetMaterialUI(struct material_s* mat, DGLint wrapS, DGLint wrapT);
+void            DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT);
 void            DGL_SetPSprite(struct material_s* mat);
 void            DGL_SetPSprite2(struct material_s* mat, int tclass, int tmap);
-void            DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT);
+void            DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT);
 
 void            DGL_BlendOp(int op);
 void            DGL_BlendFunc(int param1, int param2);
@@ -246,14 +262,22 @@ void            DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec);
 
 void            DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 
-void            DGL_DrawRect(const RectRaw* rect);
-void            DGL_DrawRect2(float x, float y, float w, float h);
-void            DGL_DrawRectf(const RectRawf* rect);
+void DGL_DrawRect(const RectRaw* rect);
+void DGL_DrawRect2(int x, int y, int w, int h);
 
-void            DGL_DrawRectColor(float x, float y, float w, float h, float r, float g, float b, float a);
-void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
+void DGL_DrawRectf(const RectRawf* rect);
+void DGL_DrawRectf2(double x, double y, double w, double h);
+void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a);
+void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th);
 
-void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
+void DGL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff, const RectRawf* cutRect);
+void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th, int txoff, int tyoff,
+    double cx, double cy, double cw, double ch);
+
+void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2Raw* br,
+    const Point2Raw* bl, const float color[4]);
+void DGL_DrawQuad2Outline(int tlX, int tlY, int trX, int trY, int brX, int brY, int blX, int blY,
+    const float color[4]);
 
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     const uint8_t* pixels, int flags, int minFilter, int magFilter,
@@ -265,5 +289,7 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
  */
 int             DGL_Bind(DGLuint texture);
 void            DGL_DeleteTextures(int num, const DGLuint* names);
+
+///@}
 
 #endif /* LIBDENG_DGL_H */

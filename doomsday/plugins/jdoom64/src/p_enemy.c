@@ -453,74 +453,6 @@ static void newChaseDir(mobj_t *actor)
     doNewChaseDir(actor, deltaX, deltaY);
 }
 
-/**
- * If allaround is false, only look 180 degrees in front.
- *
- * @return              @c true, if a player is targeted.
- */
-static boolean lookForPlayers(mobj_t *actor, boolean allAround)
-{
-    int                 c, stop, playerCount;
-    player_t           *player;
-    angle_t             an;
-    float               dist;
-
-    playerCount = 0;
-    for(c = 0; c < MAXPLAYERS; ++c)
-    {
-        if(players[c].plr->inGame)
-            playerCount++;
-    }
-
-    // Are there any players?
-    if(!playerCount)
-        return false;
-
-    c = 0;
-    stop = (actor->lastLook - 1) & 3;
-
-    for(;; actor->lastLook = (actor->lastLook + 1) & 3)
-    {
-        if(!players[actor->lastLook].plr->inGame)
-            continue;
-
-        if(c++ == 2 || actor->lastLook == stop)
-        {   // Done looking.
-            return false;
-        }
-
-        player = &players[actor->lastLook];
-
-        if(player->health <= 0)
-            continue; // Player is already dead.
-
-        if(!P_CheckSight(actor, player->plr->mo))
-            continue; // Player is out of sight.
-
-        if(!allAround)
-        {
-            an = R_PointToAngle2(actor->pos[VX],
-                                 actor->pos[VY],
-                                 player->plr->mo->pos[VX],
-                                 player->plr->mo->pos[VY]);
-            an -= actor->angle;
-
-            if(an > ANG90 && an < ANG270)
-            {
-                dist =
-                    P_ApproxDistance(player->plr->mo->pos[VX] - actor->pos[VX],
-                                     player->plr->mo->pos[VY] - actor->pos[VY]);
-                // If real close, react anyway.
-                if(dist > MELEERANGE)
-                    continue; // Behind back.
-            }
-        }
-
-        actor->target = player->plr->mo;
-        return true;
-    }
-}
-
 static int massacreMobj(thinker_t* th, void* context)
 {
     int*                count = (int*) context;
@@ -952,7 +884,7 @@ void C_DECL A_Look(mobj_t *actor)
             goto seeyou;
     }
 
-    if(!lookForPlayers(actor, false))
+    if(!Mobj_LookForPlayers(actor, false))
         return;
 
     // Go into chase state.
@@ -1064,7 +996,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(!actor->target || !(actor->target->flags & MF_SHOOTABLE))
     {
         // Look for a new target.
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
         {   // Got a new target.
         }
         else
@@ -1114,7 +1046,7 @@ void C_DECL A_Chase(mobj_t* actor)
     if(IS_NETGAME && !actor->threshold &&
        !P_CheckSight(actor, actor->target))
     {
-        if(lookForPlayers(actor, true))
+        if(Mobj_LookForPlayers(actor, true))
             return; // Got a new target.
     }
 

@@ -41,10 +41,7 @@
 * use these routines, and instead should use zlib's deflate routines
 * if LZSS compression or decompression is required.
 *
-* This code does not build on Win32, and uses an inseure temporary
-* name generation. It is likely to be a possible security hole in future
-* and as such all code still using this should migrate to zlib's deflate
-* as soon as possible.
+* This code does not build on Win32.
 *
 * For now LZSS compression is used by FileReader in engine/portable/src/m_misc.c
 * by plugins/jhexen/src/sv_save.c in many routines, and by
@@ -927,9 +924,10 @@ int lzClose(LZFILE * f)
     {
         if(f->flags & LZFILE_FLAG_WRITE)
         {
+#if 0
             if(f->flags & LZFILE_FLAG_CHUNK)
                 return lzClose(lzCloseChunk(f));
-
+#endif
             FlushBuffer(f, TRUE);
         }
 
@@ -1004,164 +1002,6 @@ int lzSeek(LZFILE * f, int offset)
     }
 
     return errno;
-}
-
-/**
- *  Opens a sub-chunk of the specified file, for reading or writing depending
- *  on the type of the file. The returned file pointer describes the sub
- *  chunk, and replaces the original file, which will no longer be valid.
- *  When writing to a chunk file, data is sent to the original file, but
- *  is prefixed with two length counts (32 bit, big-endian). For uncompressed
- *  chunks these will both be set to the length of the data in the chunk.
- *  For compressed chunks, created by setting the pack flag, the first will
- *  contain the raw size of the chunk, and the second will be the negative
- *  size of the uncompressed data. When reading chunks, the pack flag is
- *  ignored, and the compression type is detected from the sign of the
- *  second size value. The file structure used to read chunks checks the
- *  chunk size, and will return EOF if you try to read past the end of
- *  the chunk. If you don't read all of the chunk data, when you call
- *  lzCloseChunk(), the parent file will advance past the unused data.
- *  When you have finished reading or writing a chunk, you should call
- *  lzCloseChunk() to return to your original file.
- */
-LZFILE *lzOpenChunk(LZFILE * f, int pack)
-{
-    int     c;
-    char   *name;
-    LZFILE *chunk;
-
-    if(f->flags & LZFILE_FLAG_WRITE)
-    {
-        /* write a sub-chunk */
-        name = tmpnam(NULL);
-        chunk = lzOpen(name, (pack ? F_WRITE_PACKED : F_WRITE_NOPACK));
-
-        if(chunk)
-        {
-            chunk->filename = malloc(strlen(name) + 1);
-            strcpy(chunk->filename, name);
-
-            if(pack)
-                chunk->parent->parent = f;
-            else
-                chunk->parent = f;
-
-            chunk->flags |= LZFILE_FLAG_CHUNK;
-        }
-    }
-    else
-    {
-        /* read a sub-chunk */
-        _packfile_filesize = lzGetLm(f);
-        _packfile_datasize = lzGetLm(f);
-
-        if((chunk = malloc(sizeof(LZFILE))) == NULL)
-        {
-            errno = ENOMEM;
-            return NULL;
-        }
-
-        chunk->buf_pos = chunk->buf;
-        chunk->flags = LZFILE_FLAG_CHUNK;
-        chunk->buf_size = 0;
-        chunk->filename = NULL;
-        chunk->parent = f;
-        chunk->password = f->password;
-        f->password = thepassword;
-
-        if(_packfile_datasize < 0)
-        {
-            /* read a packed chunk */
-            UNPACK_DATA *dat = malloc(sizeof(UNPACK_DATA));
-
-            if(!dat)
-            {
-                errno = ENOMEM;
-                free(chunk);
-                return NULL;
-            }
-            for(c = 0; c < N - F; c++)
-                dat->text_buf[c] = 0;
-            dat->state = 0;
-            _packfile_datasize = -_packfile_datasize;
-            chunk->todo = _packfile_datasize;
-            chunk->pack_data = (char *) dat;
-            chunk->flags |= LZFILE_FLAG_PACK;
-        }
-        else
-        {
-            /* read an uncompressed chunk */
-            chunk->todo = _packfile_datasize;
-            chunk->pack_data = NULL;
-        }
-    }
-
-    return chunk;
-}
-
-/**
- *  Call after reading or writing a sub-chunk. This closes the chunk file,
- *  and returns a pointer to the original file structure (the one you
- *  passed to lzOpenChunk()), to allow you to read or write data
- *  after the chunk.
- */
-LZFILE *lzCloseChunk(LZFILE * f)
-{
-    LZFILE *parent = f->parent;
-    LZFILE *tmp;
-    char   *name = f->filename;
-    int     header;
-
-    if(f->flags & LZFILE_FLAG_WRITE)
-    {
-        /* finish writing a chunk */
-        _packfile_datasize = f->todo + f->buf_size - 4;
-
-        if(f->flags & LZFILE_FLAG_PACK)
-        {
-            parent = parent->parent;
-            f->parent->parent = NULL;
-        }
-        else
-            f->parent = NULL;
-
-        f->flags &= ~LZFILE_FLAG_CHUNK;
-        lzClose(f);
-
-        tmp = lzOpen(name, F_READ);
-        _packfile_filesize = tmp->todo - 4;
-        header = lzGetLm(tmp);
-
-        lzPutLm(_packfile_filesize, parent);
-
-        if(header == Encrypt(F_PACK_MAGIC))
-            lzPutLm(-_packfile_datasize, parent);
-        else
-            lzPutLm(_packfile_datasize, parent);
-
-        while(!lzEOF(tmp))
-            lzPutC(lzGetC(tmp), parent);
-
-        lzClose(tmp);
-
-        unlink(name);
-        free(name);
-    }
-    else
-    {
-        /* finish reading a chunk */
-        while(f->todo > 0)
-            lzGetC(f);
-
-        parent->password = f->password;
-
-        if(f->pack_data)
-            free(f->pack_data);
-
-        free(f);
-    }
-
-    return parent;
 }
 
 /**

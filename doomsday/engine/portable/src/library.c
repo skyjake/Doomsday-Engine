@@ -1,25 +1,23 @@
-/**\file library.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file library.c
+ * Dynamic libraries implementation. @ingroup base
  *
- *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -123,7 +121,10 @@ void Library_Init(void)
 {
     lastError = Str_NewStd();
 #ifdef UNIX
-    getcwd(appDir, sizeof(appDir));
+    if(!getcwd(appDir, sizeof(appDir)))
+    {
+        strcpy(appDir, "");
+    }
 #endif
 }
 
@@ -182,14 +183,14 @@ Library* Library_New(const char *fileName)
 
     getBundlePath(bundlePath, FILENAME_T_MAXLEN);
     if(bundlePath[strlen(bundlePath) - 1] != '/')
-        strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+        M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN);
-    strncat(bundlePath, "/", FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, "/", FILENAME_T_MAXLEN);
 #endif
 
-    strncat(bundlePath, fileName, FILENAME_T_MAXLEN);
+    M_StrCat(bundlePath, fileName, FILENAME_T_MAXLEN);
 
 #ifdef MACOSX
     { const char* ext = F_FindFileExtension(bundlePath);
@@ -295,12 +296,14 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
 
     while((entry = readdir(dir)))
     {
+        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
 #ifdef MACOSX
         // Mac plugins are bundled in a subdir.
-        if(entry->d_type != DT_REG && entry->d_type != DT_DIR) continue;
-        if(!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
+        if(entry->d_type != DT_REG && entry->d_type != DT_DIR &&
+           entry->d_type != DT_LNK) continue;
 #else
-        if(entry->d_type != DT_REG) continue;
+        // Also include symlinks.
+        if(entry->d_type != DT_REG && entry->d_type != DT_LNK) continue;
 #endif
         if(func(entry->d_name, data)) break;
     }

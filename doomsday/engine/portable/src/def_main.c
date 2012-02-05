@@ -859,7 +859,7 @@ static void readAllDefinitions(void)
         ddstring_t pattern;
         Str_Init(&pattern);
         Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(Game_DefsPath(theGame)));
-        F_AllResourcePaths(Str_Text(&pattern), autoDefsReader);
+        F_AllResourcePaths(Str_Text(&pattern), 0, autoDefsReader);
         Str_Free(&pattern);
     }
 
@@ -933,7 +933,7 @@ static int generateMaterialDefForPatchCompositeTexture(textureid_t texId, void* 
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];
@@ -972,7 +972,7 @@ static int generateMaterialDefForFlatTexture(textureid_t texId, void* paramaters
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];
@@ -1009,7 +1009,7 @@ static int generateMaterialDefForSpriteTexture(textureid_t texId, void* paramate
     ded_material_layer_stage_t* st;
     ded_material_t* mat;
     int stage, idx;
-    texture_t* tex;
+    Texture* tex;
 
     idx = DED_AddMaterial(&defs, NULL);
     mat = &defs.materials[idx];
@@ -1955,6 +1955,28 @@ int Def_Set(int type, int index, int value, const void* ptr)
         return false;
     }
     return true;
+}
+
+StringArray* Def_ListMobjTypeIDs(void)
+{
+    StringArray* array = StringArray_New();
+    int i;
+    for(i = 0; i < defs.count.mobjs.num; ++i)
+    {
+        StringArray_Append(array, defs.mobjs[i].id);
+    }
+    return array;
+}
+
+StringArray* Def_ListStateIDs(void)
+{
+    StringArray* array = StringArray_New();
+    int i;
+    for(i = 0; i < defs.count.states.num; ++i)
+    {
+        StringArray_Append(array, defs.states[i].id);
+    }
+    return array;
 }
 
 /**

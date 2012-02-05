@@ -991,7 +991,7 @@ static void renderShadowSeg(const rvertex_t* origVertices, const walldiv_t* divs
     {
         // Write multiple polys depending on rend params.
         RL_LoadDefaultRtus();
-        RL_Rtu_SetTexture(RTU_PRIMARY, GL_PrepareLSTexture(p->texture));
+        RL_Rtu_SetTextureUnmanaged(RTU_PRIMARY, GL_PrepareLSTexture(p->texture));
 
         if(divs)
         {
@@ -1594,7 +1594,7 @@ void Rend_DrawShadowOffsetVerts(void)
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
 
-    GL_BindTexture(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
     for(i = 0; i < numLineDefs; ++i)

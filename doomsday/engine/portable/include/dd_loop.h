@@ -46,5 +46,6 @@ void            DD_EndFrame(void);
 float           DD_GetFrameRate(void);
 void            DD_ResetTimer(void);
 boolean         DD_IsSharpTick(void);
+boolean         DD_IsFrameTimeAdvancing(void);
 
 #endif

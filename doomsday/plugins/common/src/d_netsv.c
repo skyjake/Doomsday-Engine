@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "common.h"
 #include "d_net.h"
@@ -763,9 +764,10 @@ void NetSv_Intermission(int flags, int state, int time)
 #endif
 
     if(flags & IMF_STATE)
-        Writer_WriteByte(msg, state);
+        Writer_WriteInt16(msg, state);
+
     if(flags & IMF_TIME)
-        Writer_WriteUInt16(msg, time);
+        Writer_WriteInt16(msg, time);
 
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_INTERMISSION, Writer_Data(msg), Writer_Size(msg));
 }
@@ -818,13 +820,21 @@ void NetSv_SendGameState(int flags, int to)
 {
     int i;
     Writer* writer;
+    GameInfo gameInfo;
+    Uri* mapUri;
+    ddstring_t* str;
 
     if(IS_CLIENT)
         return;
 
+    DD_GameInfo(&gameInfo);
+    mapUri = G_ComposeMapUri(gameEpisode, gameMap);
+
     // Print a short message that describes the game state.
-    Con_Message("NetSv_SendGameState: Game setup: ep%u map%u %s\n",
-                gameEpisode+1, gameMap+1, gameConfigString);
+    str = Uri_Resolved(mapUri);
+    Con_Message("NetSv_SendGameState: Game setup: %s %s %s\n",
+                gameInfo.identityKey, Str_Text(str), gameConfigString);
+    Str_Delete(str);
 
     // Send an update to all the players in the game.
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -833,15 +843,19 @@ void NetSv_SendGameState(int flags, int to)
             continue;
 
         writer = D_NetWrite();
-
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteByte(writer, gameMode);
-#else
-        Writer_WriteByte(writer, 0);
-#endif
         Writer_WriteByte(writer, flags);
-        Writer_WriteByte(writer, gameEpisode + 1);
-        Writer_WriteByte(writer, gameMap + 1);
+
+        // Game identity key.
+        Writer_WriteByte(writer, strlen(gameInfo.identityKey));
+        Writer_Write(writer, gameInfo.identityKey, strlen(gameInfo.identityKey));
+
+        // The current map.
+        Uri_Write(mapUri, writer);
+
+        // Also include the episode and map numbers.
+        Writer_WriteByte(writer, gameEpisode);
+        Writer_WriteByte(writer, gameMap);
+
         Writer_WriteByte(writer, (deathmatch & 0x3)
             | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__
@@ -849,17 +863,9 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-                         | (cfg.jumpEnabled? 0x10 : 0));
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//            | (gameSkill << 5));
-//#else
-//            );
-//#endif
-//#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-//        Writer_WriteByte(writer, 0);
-//#else
+            | (cfg.jumpEnabled? 0x10 : 0));
+
         Writer_WriteByte(writer, gameSkill & 0x7);
-//#endif
         Writer_WriteFloat(writer, P_GetGravity());
 
         if(flags & GSF_CAMERA_INIT)
@@ -872,8 +878,10 @@ void NetSv_SendGameState(int flags, int to)
         }
 
         // Send the packet.
-        Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
+        Net_SendPacket(i, GPT_GAME_STATE, Writer_Data(writer), Writer_Size(writer));
     }
+
+    Uri_Delete(mapUri);
 }
 
 /**
@@ -919,7 +927,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     Writer_WriteFloat(writer, z);
     Writer_WriteUInt32(writer, angle);
 
-    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
+    Net_SendPacket(plrNum, GPT_PLAYER_SPAWN_POSITION,
         Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -970,7 +978,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1183,7 +1191,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1203,7 +1211,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]);
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
+    Net_SendPacket(to_whom, GPT_PLAYER_INFO,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1341,7 +1349,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 #endif
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
-    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1356,7 +1364,7 @@ void NetSv_SendJumpPower(int target, float power)
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, power);
-    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_ExecuteCheat(int player, const char* command)
@@ -1691,6 +1699,29 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
     Writer_WriteInt16(writer, ammo);
     Writer_WriteByte(writer, force != 0);
     Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
+}
+
+void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
+{
+    Writer* msg;
+    ddstring_t name;
+
+    assert(mobj);
+
+    Str_InitStatic(&name, stateName);
+
+    // Inform the client about this.
+    msg = D_NetWrite();
+    Writer_WriteUInt16(msg, mobj->thinker.id);
+    Writer_WriteUInt16(msg, mobj->target? mobj->target->thinker.id : 0); // target id
+    Str_Write(&name, msg); // state to switch to
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    Writer_WriteInt32(msg, mobj->special1);
+#else
+    Writer_WriteInt32(msg, 0);
+#endif
+
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
 void P_Telefrag(mobj_t *thing)

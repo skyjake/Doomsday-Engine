@@ -231,7 +231,8 @@ void Hu_MsgDrawer(void)
 
     if(!messageToPrint) return;
 
-    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
+    GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
+          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
     GL_BeginBorderedProjection(&bp);
 
     DGL_MatrixMode(DGL_MODELVIEW);

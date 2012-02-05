@@ -28,6 +28,7 @@
 
 struct texturevariant_s;
 struct texturevariantspecification_s;
+struct materialvariant_s;
 
 typedef struct materialvariantspecification_s {
     materialcontext_t context;
@@ -46,6 +47,9 @@ enum {
 };
 
 typedef struct materialsnapshot_s {
+    /// Variant Material used to derive this snapshot.
+    struct materialvariant_s* material;
+
     /// @c true= this material is entirely opaque.
     boolean isOpaque;
 
@@ -59,7 +63,7 @@ typedef struct materialsnapshot_s {
     vec3_t shinyMinColor;
 
     /// Textures used on each texture unit.
-    const struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
+    struct texturevariant_s* textures[NUM_MATERIAL_TEXTURE_UNITS];
 
     /// Texture unit configuration.
     rtexmapunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
@@ -81,26 +85,7 @@ typedef struct materialvariant_layer_s {
     short tics;
 } materialvariant_layer_t;
 
-typedef struct materialvariant_s {
-    materialvariant_layer_t _layers[MATERIALVARIANT_MAXLAYERS];
-
-    /// Superior Material of which this is a derivative.
-    struct material_s* _generalCase;
-
-    /// For "smoothed" Material animation:
-    struct materialvariant_s* _current;
-    struct materialvariant_s* _next;
-    float _inter;
-
-    /// Specification used to derive this variant.
-    const materialvariantspecification_t* _spec;
-
-    /// Cached copy of current state if any.
-    materialsnapshot_t* _snapshot;
-
-    /// Frame count when MaterialVariant::_snapshot was last prepared/updated.
-    int _snapshotPrepareFrame;
-} materialvariant_t;
+typedef struct materialvariant_s materialvariant_t;
 
 materialvariant_t* MaterialVariant_New(struct material_s* generalCase,
     const materialvariantspecification_t* spec);
@@ -160,7 +145,7 @@ materialvariant_t* MaterialVariant_TranslationNext(materialvariant_t* mat);
 /// @return  Translated 'current' MaterialVariant if set, else this.
 materialvariant_t* MaterialVariant_TranslationCurrent(materialvariant_t* mat);
 
-/// @return  Translation position [0...1]
+/// @return  Translation position [0..1]
 float MaterialVariant_TranslationPoint(materialvariant_t* mat);
 
 /**

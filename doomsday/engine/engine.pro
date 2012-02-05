@@ -1,6 +1,6 @@
 # The Doomsday Engine Project
-# Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
-# Copyright (c) 2011 Daniel Swanson <danij@dengine.net>
+# Copyright (c) 2011-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2011-2012 Daniel Swanson <danij@dengine.net>
 
 TEMPLATE = app
 TARGET = doomsday
@@ -31,10 +31,10 @@ win32 {
 DEFINES += __DOOMSDAY__
 
 !isEmpty(DENG_BUILD) {
-    echo(Build number: $$DENG_BUILD)
+    !win32: echo(Build number: $$DENG_BUILD)
     DEFINES += DOOMSDAY_BUILD_TEXT=\\\"$$DENG_BUILD\\\"
 } else {
-    echo(DENG_BUILD is not defined.)
+    !win32: echo(DENG_BUILD is not defined.)
 }
 
 unix:!macx {
@@ -42,6 +42,8 @@ unix:!macx {
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
 
     QMAKE_LFLAGS += -rdynamic
+
+    LIBS += -ldl
 }
 macx {
     useFramework(Cocoa)
@@ -89,22 +91,27 @@ DENG_API_HEADERS = \
     api/dd_vectorgraphic.h \
     api/dd_wad.h \
     api/dd_world.h \
+    api/def_share.h \
     api/dengproject.h \
     api/dfile.h \
     api/doomsday.h \
+    api/materialarchive.h \
     api/point.h \
     api/reader.h \
     api/rect.h \
     api/size.h \
     api/smoother.h \
+    api/stringpool.h \
     api/sys_audiod.h \
     api/sys_audiod_mus.h \
     api/sys_audiod_sfx.h \
+    api/thinker.h \
     api/uri.h \
     api/writer.h
 
 DENG_HEADERS = \
     portable/include/abstractfile.h \
+    portable/include/abstractresource.h \
     portable/include/bitmapfont.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
@@ -144,7 +151,6 @@ DENG_HEADERS = \
     portable/include/dd_zone.h \
     portable/include/def_data.h \
     portable/include/def_main.h \
-    portable/include/def_share.h \
     portable/include/de_audio.h \
     portable/include/de_base.h \
     portable/include/de_bsp.h \
@@ -184,6 +190,7 @@ DENG_HEADERS = \
     portable/include/gl_tex.h \
     portable/include/gl_texmanager.h \
     portable/include/gl_tga.h \
+    portable/include/huffman.h \
     portable/include/image.h \
     portable/include/library.h \
     portable/include/lumpdirectory.h \
@@ -192,12 +199,12 @@ DENG_HEADERS = \
     portable/include/material.h \
     portable/include/materials.h \
     portable/include/materialvariant.h \
+    portable/include/monitor.h \
     portable/include/m_args.h \
     portable/include/m_bams.h \
     portable/include/m_binarytree.h \
     portable/include/m_decomp64.h \
     portable/include/m_gridmap.h \
-    portable/include/m_huffman.h \
     portable/include/m_linkedlist.h \
     portable/include/m_md5.h \
     portable/include/m_misc.h \
@@ -211,7 +218,6 @@ DENG_HEADERS = \
     portable/include/net_event.h \
     portable/include/net_main.h \
     portable/include/net_msg.h \
-    portable/include/pathdirectory.h \
     portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
@@ -234,9 +240,11 @@ DENG_HEADERS = \
     portable/include/p_sight.h \
     portable/include/p_subsector.h \
     portable/include/p_surface.h \
-    portable/include/p_think.h \
     portable/include/p_ticker.h \
     portable/include/p_vertex.h \
+    portable/include/pathdirectory.h \
+    portable/include/pathmap.h \
+    portable/include/protocol.h \
     portable/include/rend_bias.h \
     portable/include/rend_clip.h \
     portable/include/rend_console.h \
@@ -253,7 +261,6 @@ DENG_HEADERS = \
     portable/include/rend_sky.h \
     portable/include/rend_sprite.h \
     portable/include/resourcenamespace.h \
-    portable/include/abstractresource.h \
     portable/include/r_data.h \
     portable/include/r_draw.h \
     portable/include/r_fakeradio.h \
@@ -266,6 +273,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
     portable/include/sv_infine.h \
@@ -431,19 +439,21 @@ SOURCES += \
     portable/src/gl_tex.c \
     portable/src/gl_texmanager.c \
     portable/src/gl_tga.c \
+    portable/src/huffman.c \
     portable/src/image.c \
     portable/src/library.c \
     portable/src/lumpdirectory.c \
     portable/src/lumpfile.c \
     portable/src/material.c \
+    portable/src/materialarchive.c \
     portable/src/materials.c \
     portable/src/materialvariant.c \
+    portable/src/monitor.c \
     portable/src/m_args.c \
     portable/src/m_bams.c \
     portable/src/m_binarytree.c \
     portable/src/m_decomp64.c \
     portable/src/m_gridmap.c \
-    portable/src/m_huffman.c \
     portable/src/m_linkedlist.c \
     portable/src/m_md5.c \
     portable/src/m_misc.c \
@@ -458,7 +468,6 @@ SOURCES += \
     portable/src/net_main.c \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
-    portable/src/pathdirectory.c \
     portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
@@ -482,6 +491,9 @@ SOURCES += \
     portable/src/p_think.c \
     portable/src/p_ticker.c \
     portable/src/p_vertex.c \
+    portable/src/pathdirectory.c \
+    portable/src/pathmap.c \
+    portable/src/protocol.c \
     portable/src/point.c \
     portable/src/r_data.c \
     portable/src/r_draw.c \
@@ -524,6 +536,7 @@ SOURCES += \
     portable/src/s_sfx.c \
     portable/src/s_wav.c \
     portable/src/size.c \
+    portable/src/stringarray.cpp \
     portable/src/sv_frame.c \
     portable/src/sv_infine.c \
     portable/src/sv_main.c \
@@ -570,15 +583,32 @@ win32 {
 # TODO: Move it to the engine.
 SOURCES += ../plugins/common/src/m_fixed.c
 
-OTHER_FILES += data/cphelp.txt
+OTHER_FILES += \
+    data/cphelp.txt \
+    portable/include/template.h.template \
+    portable/src/template.c.template
 
 # Resources ------------------------------------------------------------------
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
+startupdata.files = \
+    data/cphelp.txt
+
+# These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
+    data/fonts/console11.dfn \
+    data/fonts/console14.dfn \
+    data/fonts/console18.dfn \
     data/fonts/normal12.dfn \
-    data/fonts/normal18.dfn
+    data/fonts/normal18.dfn \
+    data/fonts/normal24.dfn \
+    data/fonts/normalbold12.dfn \
+    data/fonts/normalbold18.dfn \
+    data/fonts/normalbold24.dfn \
+    data/fonts/normallight12.dfn \
+    data/fonts/normallight18.dfn \
+    data/fonts/normallight24.dfn
 
 startupgfx.files = \
     data/graphics/background.pcx \
@@ -604,10 +634,11 @@ macx {
         mac/res/deng.icns
 
     data.path = $$res.path
+    startupdata.path = $${res.path}/Data
     startupfonts.path = $${res.path}/Data/Fonts
     startupgfx.path = $${res.path}/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
+    QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
@@ -616,11 +647,12 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts license
 
     target.path = $$DENG_LIB_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR/data
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
@@ -629,14 +661,18 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx desktop
+    INSTALLS += target data startupdata startupgfx startupfonts desktop readme
 
     target.path = $$DENG_BIN_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR/data
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
     desktop.files = ../../distrib/linux/doomsday-engine.desktop
-    desktop.path = /usr/share/applications
+    desktop.path = $$PREFIX/share/applications
+
+    readme.files = ../doc/output/doomsday.6
+    readme.path = $$PREFIX/share/man/man6
 }

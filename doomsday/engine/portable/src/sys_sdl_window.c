@@ -46,6 +46,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "gl_texmanager.h"
 #include "rend_particle.h" // \todo Should not be necessary at this level.
 
 // MACROS ------------------------------------------------------------------
@@ -99,9 +100,19 @@ static __inline ddwindow_t *getWindow(uint idx)
 }
 
 #if defined(UNIX)
+static boolean isValidWindow(ddwindow_t* win)
+{
+    if(win->type == WT_CONSOLE)
+    {
+        return win->console.winText && win->console.winTitle &&
+                win->console.winCommand;
+    }
+    return true;
+}
+
 static void setAttrib(int flags)
 {
-    if(!mainWindowInited)
+    if(!mainWindowInited || !isValidWindow(&mainWindow))
         return;
 
     if(flags & (CPF_YELLOW | CPF_LIGHT))
@@ -115,6 +126,8 @@ static void setAttrib(int flags)
  */
 static void writeText(const char *line, int len)
 {
+    if(!isValidWindow(&mainWindow)) return;
+
     wmove(mainWindow.console.winText, mainWindow.console.cy, mainWindow.console.cx);
     waddnstr(mainWindow.console.winText, line, len);
     wclrtoeol(mainWindow.console.winText);
@@ -123,6 +136,8 @@ static void writeText(const char *line, int len)
 static int getScreenSize(int axis)
 {
     int                 x, y;
+
+    if(!isValidWindow(&mainWindow)) return;
 
     getmaxyx(mainWindow.console.winText, y, x);
     return axis == VX ? x : y;
@@ -147,6 +162,7 @@ void Sys_ConPrint(uint idx, const char *text, int clflags)
     }
 
     win = &mainWindow;
+    if(!isValidWindow(win)) return;
 
     // Determine the size of the text window.
     getmaxyx(win->console.winText, maxPos[VY], maxPos[VX]);
@@ -244,6 +260,7 @@ static void setConWindowCmdLine(uint idx, const char *text,
         return;
     }
     win = &mainWindow;
+    if(!isValidWindow(win)) return;
 
     maxX = getScreenSize(VX);
 
@@ -444,56 +461,65 @@ static ddwindow_t* createDDWindow(application_t* app, const Size2Raw* size,
     if(type == WT_CONSOLE)
     {
 #if defined(UNIX)
-        int         maxPos[2];
-
-        // Initialize curses.
-        if(!(cursesRootWin = initscr()))
+        if(ArgExists("-daemon"))
         {
-            Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
-            return NULL;
+            // Create a blank dummy window.
+            memset(&mainWindow, 0, sizeof(mainWindow));
+            mainWindow.type = type;
         }
+        else
+        {
+            int maxPos[2];
 
-        cbreak();
-        noecho();
-        nonl();
+            // Initialize curses.
+            if(!(cursesRootWin = initscr()))
+            {
+                Sys_CriticalMessage("createDDWindow: Failed creating terminal.");
+                return NULL;
+            }
 
-        mainWindow.type = type;
+            cbreak();
+            noecho();
+            nonl();
 
-        // The current size of the screen.
-        getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
+            mainWindow.type = type;
 
-        // Create the three windows we will be using.
-        mainWindow.console.winTitle = newwin(1, maxPos[VX], 0, 0);
-        mainWindow.console.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
-        mainWindow.console.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
+            // The current size of the screen.
+            getmaxyx(stdscr, maxPos[VY], maxPos[VX]);
 
-        // Set attributes.
-        wattrset(mainWindow.console.winTitle, A_REVERSE);
-        wattrset(mainWindow.console.winText, A_NORMAL);
-        wattrset(mainWindow.console.winCommand, A_BOLD);
+            // Create the three windows we will be using.
+            mainWindow.console.winTitle = newwin(1, maxPos[VX], 0, 0);
+            mainWindow.console.winText = newwin(maxPos[VY] - 2, maxPos[VX], 1, 0);
+            mainWindow.console.winCommand = newwin(1, maxPos[VX], maxPos[VY] - 1, 0);
 
-        scrollok(mainWindow.console.winText, TRUE);
-        wclear(mainWindow.console.winText);
-        wrefresh(mainWindow.console.winText);
+            // Set attributes.
+            wattrset(mainWindow.console.winTitle, A_REVERSE);
+            wattrset(mainWindow.console.winText, A_NORMAL);
+            wattrset(mainWindow.console.winCommand, A_BOLD);
 
-        keypad(mainWindow.console.winCommand, TRUE);
-        nodelay(mainWindow.console.winCommand, TRUE);
-        setConWindowCmdLine(1, "", 1, 0);
+            scrollok(mainWindow.console.winText, TRUE);
+            wclear(mainWindow.console.winText);
+            wrefresh(mainWindow.console.winText);
 
-        // The background will also be in reverse.
-        wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
+            keypad(mainWindow.console.winCommand, TRUE);
+            nodelay(mainWindow.console.winCommand, TRUE);
+            setConWindowCmdLine(1, "", 1, 0);
 
-        // First clear the whole line.
-        wmove(mainWindow.console.winTitle, 0, 0);
-        wclrtoeol(mainWindow.console.winTitle);
+            // The background will also be in reverse.
+            wbkgdset(mainWindow.console.winTitle, ' ' | A_REVERSE);
 
-        // Center the title.
-        wmove(mainWindow.console.winTitle, 0, getmaxx(mainWindow.console.winTitle) / 2 - strlen(title) / 2);
-        waddstr(mainWindow.console.winTitle, title);
-        wrefresh(mainWindow.console.winTitle);
+            // First clear the whole line.
+            wmove(mainWindow.console.winTitle, 0, 0);
+            wclrtoeol(mainWindow.console.winTitle);
 
-        // We'll need the input event handler.
-        Sys_ConInputInit();
+            // Center the title.
+            wmove(mainWindow.console.winTitle, 0, getmaxx(mainWindow.console.winTitle) / 2 - strlen(title) / 2);
+            waddstr(mainWindow.console.winTitle, title);
+            wrefresh(mainWindow.console.winTitle);
+
+            // We'll need the input event handler.
+            Sys_ConInputInit();
+        }
 #endif
     }
     else
@@ -556,6 +582,9 @@ boolean Sys_DestroyWindow(uint idx)
 
     if(window->type == WT_CONSOLE)
     {
+#ifdef UNIX
+        if(!isValidWindow(window)) return true;
+#endif
         // Delete windows and shut down curses.
         delwin(window->console.winTitle);
         delwin(window->console.winText);
@@ -846,6 +875,8 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
         else // Its a terminal window.
         {
 #if defined(UNIX)
+            if(!isValidWindow(window)) return true;
+
             // The background will also be in reverse.
             wbkgdset(window->console.winTitle, ' ' | A_REVERSE);
 

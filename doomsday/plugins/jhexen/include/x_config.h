@@ -69,6 +69,8 @@ typedef struct {
     int             useMLook, useJLook;
     int             screenBlocks;
     int             setBlocks;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[4]; // HUD data visibility.
     float           hudScale;
     float           hudColor[4];
@@ -113,8 +115,10 @@ typedef struct {
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           filterStrength;
+
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*    int             automapPos;
@@ -128,6 +132,7 @@ typedef struct {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     byte            automapHudDisplay;
     int             automapCustomColors;

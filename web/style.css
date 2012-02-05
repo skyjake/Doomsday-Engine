@@ -1,0 +1,902 @@
+body {
+    background: rgb(255,255,255) url(http://code.iki.fi/dengine.net/images/background.png) repeat-x;
+    font-family: georgia, serif; /* Use a serif font for the main content as its easier to read in blocks */
+    font-size: 100%;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 10px;
+    margin-right: 10px;
+    color: #807970;
+    text-align: center;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin-top: .4em;
+    margin-bottom: 0;
+    padding:inherit;
+}
+
+p {
+    line-height: 160%;
+    padding:inherit;
+    margin:inherit;
+}
+
+p.leadparagraph {
+    font-weight: bold;
+}
+
+a {
+    text-decoration: none;
+    color: #495f5f;
+    outline: 0 none;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #ff8a00;
+}
+
+a[class ="jump"] {
+    font-size:smaller;
+    font-family: monospace;
+}
+
+a[class ="jump"]:before {
+    content:"(";
+}
+
+a[class ="jump"]:after {
+    content:")";
+}
+
+a[class ="link-definition"] {
+    padding-right:.4em;
+    overflow:visible;
+}
+
+a[class ="link-definition"]:after {
+    position:absolute;
+    text-decoration: none;
+    color:#5f5fff;
+    font-size: .83em;
+    font-family: georgia, serif;
+    font-weight: normal;
+    content:"?";
+}
+
+a[class ="link-external"] {
+    padding-right: 18px;
+    background: transparent url(http://code.iki.fi/dengine.net/images/Icon_External_Link.png) no-repeat center right;
+}
+
+a[class ="link-rss"] {
+    padding-left: 18px;
+    background: transparent url(http://code.iki.fi/dengine.net/images/rssicon.png) no-repeat center left;
+}
+
+span.hidden {
+    display: none;
+}
+
+.major_issue {
+    background-color:#ff4444; /* red */
+}
+
+.minor_issue {
+    background-color:#ffee00; /* yellow */
+}
+
+.no_issue {
+    background-color:#00ee00; /* green */
+}
+
+hr {
+    background-color: rgb(210,210,210);
+    height: 1px;
+    border: none;
+    width: 80%;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+table.directory {
+    width: 100%;
+    border-width: .5em;
+    border-spacing: 0em;
+    border-style: hidden;
+    border-color: black;
+    border-collapse: separate;
+    background-color: white;
+}
+
+table.directory th {
+    border-width: .1em;
+    padding: .4em;
+    border-style: solid;
+    border-color: gray;
+    background-color: white;
+}
+
+table.directory td {
+    border-width: .1em;
+    padding: .4em;
+    border-style: solid;
+    border-color: gray;
+    background-color: white;
+    font-size: small;
+}
+
+td {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+img {
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+div {
+    background: none;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+div.game-sprite {
+    float: right;
+    width: auto;
+}
+
+/* Horizontally aligned lists (used for navigation bars mainly). */
+
+div.hnav {
+    white-space: nowrap;
+    text-align:center;
+}
+
+div.hnav ul {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+div.hnav li {
+    list-style-type: none;
+    padding: 0.25em 1em;
+    display: inline
+}
+
+div.hnav li:first-child {
+    border: none;
+}
+
+div.jumplist_wrapper {
+    text-align: center;
+}
+
+ol.jumplist {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align:left;
+    display:inline-block;
+    vertical-align:top;
+    margin:0;
+    padding:0 1em;
+}
+
+.centered {
+    text-align:center;
+}
+
+.centered div {
+    text-align:left;
+    display: inline-block;
+}
+
+/*----------------- Picture frame ----------------*/
+
+.picture {
+    padding: .5em;
+    margin: .25em;
+    border: 1px solid rgb(180,180,180);
+    display: inline-block;
+    font-size: small;
+    vertical-align:text-top;
+}
+
+.picture p {
+    padding: 0;
+    margin: 0;
+    line-height: normal;
+    text-align: center;
+}
+
+.picture img {
+    display: block;
+    margin: .5em;
+    border: 2px solid black;
+}
+
+/*------------------ Library Icons -----------------*/
+
+#libicons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-width: 620px;
+    z-index: 0;
+    overflow: hidden;
+}
+
+#libicons ul {
+    margin-top: 0;
+    margin-bottom: .4em;
+}
+
+#libicons li {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
+}
+
+#libicons #groupa {
+    margin: 0;
+    padding: 8px 10px;
+    float: left;
+}
+
+#libicons #groupb {
+    margin: 0;
+    padding: 6px 10px;
+    float: right;
+}
+
+/*------------- Graphical Outer Border ------------*/
+
+.t {background: url(http://code.iki.fi/dengine.net/images/tc02.png) 0 0 repeat-x;}
+.b {background: url(http://code.iki.fi/dengine.net/images/tc08.png) 0 100% repeat-x;}
+.l {background: url(http://code.iki.fi/dengine.net/images/tc04.png) 0 0 repeat-y;}
+.r {background: url(http://code.iki.fi/dengine.net/images/tc06.png) 100% 0 repeat-y;}
+.bl {background: url(http://code.iki.fi/dengine.net/images/tc07.gif) 0 100% no-repeat;}
+.br {background: url(http://code.iki.fi/dengine.net/images/tc09.gif) 100% 100% no-repeat;}
+.tl {background: url(http://code.iki.fi/dengine.net/images/tc01.gif) 0 0 no-repeat;}
+.tr {background: url(http://code.iki.fi/dengine.net/images/tc03.gif) 100% 0 no-repeat; padding:7px;}
+
+/*---------------- Main site frame ----------------*/
+
+#mainouter {
+    max-width: 1280px;
+    height: auto;
+    clear: both;
+    min-width: 600px;
+    margin-top: 52px;
+    margin-bottom: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 1;
+    text-align: left;
+}
+
+#maininner {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.framepanel {
+    overflow: hidden;
+    position: relative;
+}
+
+/*---------------- Navigation Bar -----------------*/
+
+#menudiv {
+    position:relative;
+    top:-8px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    width: 100%;
+    z-index: 3;
+}
+
+#menu {
+    position:relative;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    z-index: 4;
+    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
+    background-position: 0 -8px;
+    width: 100%;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+#menu ul {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+#menu li {
+    position: relative;
+    list-style-type: none;
+    display: inline;
+    padding: 0;
+    vertical-align:top;
+}
+
+#menu li.logo {
+    background: url(http://code.iki.fi/dengine.net/images/denginelogo.png) no-repeat;
+    background-position: 0 22px;
+    padding: 75px 0;
+    margin: 0;
+}
+
+#menu li.logo a {
+    padding-top: 83px;
+    padding-bottom: 83px;
+    padding-left: 202px;
+}
+
+#menu a, span.paddle_left_select, span.paddle_right_select {
+    position:inherit;
+    font-size: 11pt;
+    text-decoration: none;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 5px;
+    padding-right: 4px;
+}
+
+#menu li.logo a {
+    border: 0;
+}
+
+#menu a.paddle_left, span.paddle_left_select {
+    border-left: solid 1px #627f7f;
+}
+
+#menu a.paddle_right, span.paddle_right_select {
+    border-right: solid 1px #627f7f;
+}
+
+#menu span.paddle_left_select, span.paddle_right_select, a[class = "paddle_left"]:hover, navigation a[class = "paddle_left"]:visited:hover, a[class = "paddle_right"]:hover, navigation a[class = "paddle_right"]:visited:hover {
+    color: #ffffff;
+    background: url(http://code.iki.fi/dengine.net/images/navbarhover.png);
+    background-position: 0 2px;
+    margin-left: 0px;
+}
+
+#menu span.paddle_left_select, span.paddle_right_select {
+    color: #495f5f;
+}
+
+#divider {
+    width: 100%;
+    height: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
+}
+
+#divider2 {
+    width: 100%;
+    height: 8px;
+    background: url(http://code.iki.fi/dengine.net/images/navbar.png);
+    background-position: 0 16px;
+    border-bottom: solid 1px #627f7f;
+}
+
+/*-------------------- Top Panel -------------------*/
+
+#framepanel_top {
+    position: absolute;
+    background: rgb(51, 64, 72);
+    width: 100%;
+    height: 282px;
+    padding: 0;
+    margin: 0;
+}
+
+#panorama {
+    position: relative;
+    left:50%;
+    margin-left:-650px;
+    top: 0;
+    height: 282px;
+    width: 1300px;
+    background: #282D2B url(panoramarotator) no-repeat;
+}
+
+/*------------------- Bottom Panel -----------------*/
+
+#framepanel_bottom {
+    float: right;
+    clear: both;
+    margin-top: 282px;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+#pageheading {
+    position: relative;
+    float: left;
+    margin-top: -5.4em;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+#pageheading h1 {
+    color: #ffffff;
+    font-size: 280%;
+    margin-left: .3em;
+}
+
+#contentbox, #contentbox2 {
+    background: #ffffff;
+    padding-left: .6em;
+    padding-right: .4em;
+    padding-top: .4em;
+    padding-bottom: .2em;
+}
+
+#contentbox {
+    border-right: 18em #e7eeeb solid; /* Border is width of download box + padding */
+}
+
+/*----------------------- Footer ----------------------*/
+
+#footer {
+    width: 100%;
+    font-size: xx-small;
+    line-height: 110%;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align: center;
+    margin-top: 1em;
+}
+
+p.disclaimer a {
+    color: rgb(50,140,100);
+}
+
+p.legal {
+    color: rgb(180,180,180);
+}
+
+p.legal a {
+    color: rgb(195,195,195);
+    font-weight: bold;
+}
+
+/*---------------------- NewsFeed ---------------------*/
+
+#projectnews-label {
+    color: #ffffff;
+    font-weight: bold;
+    min-height: 139px;
+}
+
+#projectnews {
+    position: relative;
+    top: -282px; /* minus image height */
+    min-width: 201px;
+    padding-left: .5em;
+    padding-top: .5em;
+    float: left;
+    text-align: left;
+    color: #ff8a00;
+    font-size: xx-small;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    min-height: 139px;
+    background: url(http://code.iki.fi/dengine.net/images/shadow.png) no-repeat;
+}
+
+#projectnews ul {
+    padding: 0;
+}
+
+#projectnews ul li {
+    list-style-type: none;
+}
+
+#projectnews a {
+    color: #ff8a00;
+}
+
+#projectnews a:hover, #projectnews a:visited:hover {
+    color: #ffffff;
+}
+
+/*-------------------- GameServers -------------------*/
+
+#servers-label {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+#servers {
+    position: relative;
+    min-width: 201px;
+    top: -282px; /* minus image height */
+    padding-right: .5em;
+    padding-top: .5em;
+    float: right;
+    text-align: right;
+    color: #ff8a00;
+    font-size: xx-small;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    min-height: 139px;
+    background: url(http://code.iki.fi/dengine.net/images/shadow2.png) no-repeat;
+    background-position: top right;
+}
+
+.server {
+    margin-right: .7em;
+}
+
+.server img {
+    margin-top: .5em;
+}
+
+#servers ul li {
+    list-style-type: none;
+}
+
+/*----------------- Get It Now Panel ---------------*/
+
+#downloadbox {
+    width: 17em;
+    background: #e7eeeb;
+    float: right;
+    padding: 0.5em;
+    display: block;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+#downloadbox div.hnav ul li, div.platform_buttons ul li {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+#downloadbox a.platform_icon {
+    display: inline-block;
+    width: 63px;
+    height: 69px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    text-decoration: none;
+}
+
+#downloadbox ul li {
+    margin-bottom: .4em;
+}
+
+#downloadbox a.windows_icon {
+    background-image: url(http://code.iki.fi/dengine.net/images/windowslogo.png);
+    background-position: 0 0;
+}
+
+#downloadbox a.macos_icon {
+    background-image: url(http://code.iki.fi/dengine.net/images/macosxlogo.png);
+    background-position: 0 0;
+}
+
+#downloadbox a.ubuntu_icon {
+    background-image: url(images/ubuntulogo.png);
+    background-position: 0 0;
+}
+
+#downloadbox a.linux_icon {
+    background-image: url(http://code.iki.fi/dengine.net/images/linuxlogo.png);
+    background-position: 0 0;
+}
+
+#downloadbox div.project_links {
+    margin-top:2em;
+    padding-left:.8em;
+    text-align:left;
+}
+
+#downloadbox div.socialbookmark_buttons {
+    margin-left:-.4em;
+    margin-right:-.4em;
+}
+
+#downloadbox div.package_links {
+    font-size: xx-small;
+}
+
+#downloadbox div.platform_buttons ul, div.package_links ul {
+    margin-top:0;
+}
+
+#downloadbox div.package_links ul li {
+    list-style-type: none;
+    padding-left:1em;
+}
+
+.getitnow-label {
+    font-size: x-large;
+    text-align:center;
+    margin-left:-1em;
+}
+
+.getitnow-label a, a:hover, a:visited:hover {
+    text-decoration: none;
+}
+
+.getitnow-label span.free-label {
+    font-style: italic;
+    font-size: medium;
+}
+
+.getitnow-label span.version-label {
+    padding-left: 1em;
+}
+
+.fb-like {
+    margin-top: 1em;
+    padding-left: .1em;
+}
+
+.google-plusone {
+    margin-top: 1em;
+    padding-left: 1.4em;
+}
+
+/*-------------------- Builds ---------------------*/
+
+/* Panel */
+#builds {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
+/* Stream navigation widget */
+#buildsnav {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin:1em 0;
+}
+
+#buildsnav span.title {
+    font-size:small;
+}
+
+#buildsnav ul {
+    margin:.5em;
+}
+
+#buildsnav ul li {
+    padding:.25em 3em;
+}
+
+.buildnews_list {
+    padding:inherit;
+    margin:0;
+}
+
+.buildnews_list table {
+    margin:1em 0;
+    padding:inherit;
+    border:none;
+}
+
+.buildnews_list table td {
+    padding-left:.5em;
+}
+
+.commit_list ul {
+    padding-left:0;
+}
+
+.commit_list ul li {
+    list-style-type:none;
+}
+
+.commit_list ol {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.commit_list ol li {
+    list-style-type:circle;
+}
+
+.commit_list ol li.more {
+    list-style-type:disc;
+}
+
+.commit_list hr {
+    visibility:hidden;
+    margin:0;
+}
+
+.commit_list p.collapsible {
+    cursor: pointer;
+    position: relative;
+}
+
+.commit_list p.collapsible:hover {
+    color: #ff8a00;
+}
+
+.commit_list span.tag {
+    color:#558866;
+    font-family:Verdana, Arial, Helvetica, sans-serif;
+    margin-right:.8em;
+}
+
+.commit_list ol.jumplist li {
+    list-style-type:none;
+}
+
+.commit_list ol.jumplist a {
+    color:#558866;
+}
+
+.commit_list ol.jumplist a:hover {
+    text-decoration: underline;
+    color: #ff8a00;
+}
+
+.commit span.heading,
+.commit blockquote {
+    font-size:medium;
+}
+
+.commit blockquote {
+    margin-left:2em;
+}
+
+/*.commit span.title { }*/
+
+span.metadata {
+    font-size:smaller;
+    margin-right:1em;
+}
+
+.commit_list p.heading {
+    display:inline-block;
+}
+
+/*----------*/
+
+.buildevent table {
+    border-collapse:separate;
+    border-spacing:.5em;
+    margin-top:1em;
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.buildevent table tr th {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    text-align:left;
+}
+
+.buildevent table td.issue_level {
+    text-align:center;
+}
+
+/*------------------ Screens Page ------------------*/
+
+#screenshots {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
+#screenshots h2, #screenshots h3, #screenshots h4, #screenshots h5, #screenshots h6, #screenshots h7 {
+    margin:0;
+}
+
+/*------------------- Games Page -------------------*/
+
+.games_list ul {
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+.games_list li {
+    position: relative;
+    list-style-type: none;
+}
+
+.games_list a {
+    color: #495f5f;
+    text-decoration: none;
+}
+
+ul.games_list li a.game_badge {
+    background-color: transparent;
+    display: block;
+    height: 200px
+}
+
+ul.games_list li a.game_badge span {
+    display: block;
+    padding-left: 3em;
+    padding-top: 140px;
+}
+
+.game_badge_doom {
+    background: url(http://code.iki.fi/dengine.net/images/doom_badge.png) no-repeat;
+}
+
+.game_badge_heretic {
+    background: url(http://code.iki.fi/dengine.net/images/heretic_badge.png) no-repeat;
+}
+
+.game_badge_hexen {
+    background: url(http://code.iki.fi/dengine.net/images/hexen_badge.png) no-repeat;
+}
+
+.game_badge_hacx {
+    background: url(http://dengine.net/images/hacx_badge.png) no-repeat;
+}
+
+.game_badge_chex {
+    background: url(http://dengine.net/images/chex_badge.png) no-repeat;
+}
+
+/*---------------- Platform Pages -----------------*/
+
+.downloads_list {
+    vertical-align:top;
+    margin:0 3em;
+}
+
+.downloads_list ul {
+    padding:inherit;
+    margin:1em 0;
+}
+
+.downloads_list ul li {
+    list-style-type:none;
+}
+
+.downloads_list div.package_badge {
+    margin: 1em;
+    display: inline-block;
+}
+
+.package_badge {
+    background-color: transparent;
+    background: url(http://code.iki.fi/dengine.net/images/download_badge.png) no-repeat;
+    height: 60px;
+    width: 400px;
+    padding-top: 2em;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    text-decoration: none;
+    font-size: x-large;
+}
+
+.package_badge a.package_name {
+    padding-top: 2em;
+    padding-bottom: 2em;
+    padding-left: 4em;
+}
+
+.package_badge a[class = "package_name"]:hover, .package_badge a[class = "package_name"]:visited:hover {
+    color: #495f5f;
+}
+
+.package_badge span.metalink {
+    position: absolute;
+    margin-left: 8em;
+    margin-top: .5em;
+    font-size: small;
+}

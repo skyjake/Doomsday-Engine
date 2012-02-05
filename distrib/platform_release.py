@@ -201,7 +201,7 @@ def mac_release():
     shutil.rmtree('imaging/Doomsday Engine.app', True)
     remove('imaging/Read Me.rtf')
     duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
-    shutil.copy(LAUNCH_DIR + "/mac/Read Me.rtf", 'imaging/Read Me.rtf')
+    shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
 
     os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') +
         ' "' + "Doomsday Engine " + DOOMSDAY_VERSION_FULL + '"')

@@ -24,6 +24,17 @@
 #ifndef LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 #define LIBDENG_GL_TEXTUREVARIANTSPECIFICATION_H
 
+/**
+ * Texture (content) Source.
+ */
+typedef enum {
+    TEXS_NONE,                    /// Not a valid source.
+    TEXS_ORIGINAL,                /// An "original".
+    TEXS_EXTERNAL                 /// An "external" replacement.
+} TexSource;
+
+const char* TexSource_Name(TexSource source);
+
 typedef enum {
     TC_UNKNOWN = -1,
     TEXTUREVARIANTUSAGECONTEXT_FIRST = 0,
@@ -48,7 +59,7 @@ typedef enum {
     (tc) >= TEXTUREVARIANTUSAGECONTEXT_FIRST && (tc) <= TEXTUREVARIANTUSAGECONTEXT_LAST)
 
 /**
- * @defGroup textureVariantSpecificationFlags  Texture Variant Specification Flags
+ * @defgroup textureVariantSpecificationFlags  Texture Variant Specification Flags
  */
 /*@{*/
 #define TSF_ZEROMASK                0x1 // Set pixel alpha to fully opaque.
@@ -106,6 +117,7 @@ typedef struct {
      * user's preference for that class) or a constant value.
      *
      * Texture class:
+     * -3: UI class
      * -2: Sprite class
      * -1: No class
      *

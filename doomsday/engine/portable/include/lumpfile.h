@@ -39,14 +39,16 @@ typedef struct lumpfile_s {
     // Base file.
     abstractfile_t _base;
     void** _cacheData;
-} lumpfile_t;
+} LumpFile;
 
-lumpfile_t* LumpFile_New(DFile* file, const lumpinfo_t* info);
-void LumpFile_Delete(lumpfile_t* lf);
+LumpFile* LumpFile_New(DFile* file, const char* path, const LumpInfo* info);
+void LumpFile_Delete(LumpFile* lump);
 
-int LumpFile_PublishLumpsToDirectory(lumpfile_t* lf, struct lumpdirectory_s* directory);
+int LumpFile_PublishLumpsToDirectory(LumpFile* lump, struct lumpdirectory_s* directory);
 
-const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx);
+ddstring_t* LumpFile_ComposeLumpPath(LumpFile* lump, int lumpIdx, char delimiter);
+
+const LumpInfo* LumpFile_LumpInfo(LumpFile* lump, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
@@ -56,8 +58,8 @@ const lumpinfo_t* LumpFile_LumpInfo(lumpfile_t* lf, int lumpIdx);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t LumpFile_ReadLump2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t LumpFile_ReadLump(lumpfile_t* lf, int lumpIdx, uint8_t* buffer);
+size_t LumpFile_ReadLump2(LumpFile* lump, int lumpIdx, uint8_t* buffer, boolean tryCache);
+size_t LumpFile_ReadLump(LumpFile* lump, int lumpIdx, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with the specified lump index into @a buffer.
@@ -69,9 +71,9 @@ size_t LumpFile_ReadLump(lumpfile_t* lf, int lumpIdx, uint8_t* buffer);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t LumpFile_ReadLumpSection2(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection2(LumpFile* lump, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length, boolean tryCache);
-size_t LumpFile_ReadLumpSection(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
+size_t LumpFile_ReadLumpSection(LumpFile* lump, int lumpIdx, uint8_t* buffer,
     size_t startOffset, size_t length);
 
 /**
@@ -81,7 +83,7 @@ size_t LumpFile_ReadLumpSection(lumpfile_t* lf, int lumpIdx, uint8_t* buffer,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const uint8_t* LumpFile_CacheLump(lumpfile_t* lf, int lumpIdx, int tag);
+const uint8_t* LumpFile_CacheLump(LumpFile* lump, int lumpIdx, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.
@@ -89,15 +91,15 @@ const uint8_t* LumpFile_CacheLump(lumpfile_t* lf, int lumpIdx, int tag);
  * @param lumpIdx  Lump index associated with the cached data being changed.
  * @param tag  Zone purge level/cache tag to use.
  */
-void LumpFile_ChangeLumpCacheTag(lumpfile_t* lf, int lumpIdx, int tag);
+void LumpFile_ChangeLumpCacheTag(LumpFile* lump, int lumpIdx, int tag);
 
-void LumpFile_ClearLumpCache(lumpfile_t* lf);
+void LumpFile_ClearLumpCache(LumpFile* lump);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of lumps contained within this file.
-int LumpFile_LumpCount(lumpfile_t* lf);
+int LumpFile_LumpCount(LumpFile* lump);
 
 #endif /* LIBDENG_FILESYS_LUMPFILE_H */

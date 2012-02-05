@@ -1,4 +1,4 @@
-/**\file
+/**\file sys_findfile.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -26,41 +26,22 @@
  * Win32-Style File Finding (findfirst/findnext)
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <stdlib.h>
 #include <string.h>
 #include <glob.h>
 #include <sys/stat.h>
 
-#include "sys_findfile.h"
-#include "../include/sys_path.h"
+#include "de_filesys.h"
 
-// MACROS ------------------------------------------------------------------
+#include "dd_string.h"
 
 #define FIND_ERROR  -1
-
-// TYPES -------------------------------------------------------------------
 
 typedef struct fdata_s {
     char* pattern;
     glob_t buf;
     int pos;
 } fdata_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 /**
  * Get the info for the next file.
@@ -69,7 +50,6 @@ static int nextfinddata(finddata_t* fd)
 {
     fdata_t* data = fd->finddata;
     char* fn, *last;
-    char ext[256];
     struct stat st;
 
     if(data->buf.gl_pathc <= data->pos)
@@ -89,27 +69,24 @@ static int nextfinddata(finddata_t* fd)
     else
         fd->size = 0;
 
-    if(fd->name)
-        free(fd->name);
-    fd->name = malloc(strlen(fn) + 1);
-
     // Is it a directory?
     last = fn + strlen(fn) - 1;
     if(*last == '/')
     {
         // Return the name of the last directory in the path.
-        char *slash = last - 1;
-        int len;
+        char* slash = last - 1;
         while(*slash != '/' && slash > fn) --slash;
-        len = last - slash - 1;
-        strncpy(fd->name, slash + 1, len);
-        fd->name[len] = 0;
+        Str_Set(&fd->name, slash + 1);
         fd->attrib = A_SUBDIR;
     }
     else
     {
-        _splitpath(fn, NULL, NULL, fd->name, ext);
-        strcat(fd->name, ext);
+        char ext[256];
+        char name[356];
+
+        _splitpath(fn, NULL, NULL, name, ext);
+        Str_Clear(&fd->name); // It may have previously been populated.
+        Str_Appendf(&fd->name, "%s%s", name, ext);
         fd->attrib = 0;
     }
 
@@ -124,7 +101,7 @@ int myfindfirst(const char* filename, finddata_t* fd)
 
     // Allocate a new glob struct.
     fd->finddata = data = calloc(1, sizeof(*data));
-    fd->name = NULL;
+    Str_InitStd(&fd->name);
 
     // Make a copy of the pattern.
     data->pattern = malloc(strlen(filename) + 1);
@@ -147,7 +124,7 @@ void myfindend(finddata_t* fd)
 {
     globfree(&((fdata_t*) fd->finddata)->buf);
     free(((fdata_t*) fd->finddata)->pattern);
-    free(fd->name);
+    Str_Free(&fd->name);
     free(fd->finddata);
     fd->finddata = NULL;
 }

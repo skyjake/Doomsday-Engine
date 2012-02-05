@@ -2,7 +2,7 @@
  *\section License
  * License: LGPL
  *
- *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © Max Horn <max@quendi.de>
  *\author Copyright © Darrell Walisser <dwaliss1@purdue.edu>
  */

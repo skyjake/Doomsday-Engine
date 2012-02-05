@@ -43,6 +43,9 @@ void Sys_Init(void);
 void Sys_Shutdown(void);
 void Sys_Quit(void);
 
+/// @return  @c true if shutdown is in progress.
+boolean Sys_IsShuttingDown(void);
+
 int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
 
@@ -55,7 +58,15 @@ void Sys_OpenTextEditor(const char* filename);
 thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void Sys_SuspendThread(thread_t handle, boolean dopause);
 int Sys_WaitThread(thread_t handle);
-uint Sys_ThreadID(void);
+
+/**
+ * @param handle  Handle to the thread to return the id of.
+ *                Can be @c NULL in which case the current thread is assumed.
+ * @return  Identifier of the thread.
+ */
+uint Sys_ThreadId(thread_t handle);
+
+uint Sys_CurrentThreadId(void);
 
 mutex_t Sys_CreateMutex(const char* name);
 void Sys_DestroyMutex(mutex_t mutexHandle);

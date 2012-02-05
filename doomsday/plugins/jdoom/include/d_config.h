@@ -114,6 +114,8 @@ typedef struct jdoom_config_s {
     int             inludePatchReplaceMode;
 
     byte            confirmQuickGameSave;
+
+    int             hudPatchReplaceMode;
     byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
     byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
     float           hudScale; // How to scale HUD data?
@@ -164,6 +166,7 @@ typedef struct jdoom_config_s {
 
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
+    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
 
     // Automap stuff.
 /*  int             automapPos;
@@ -177,6 +180,7 @@ typedef struct jdoom_config_s {
     float           automapBack[3];
     float           automapOpacity;
     float           automapLineAlpha;
+    float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;
     int             automapHudDisplay;
     int             automapCustomColors;

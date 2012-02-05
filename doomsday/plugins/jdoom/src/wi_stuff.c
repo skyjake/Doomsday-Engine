@@ -322,7 +322,7 @@ static void drawEnteringTitle(void)
 
     // See if there is a map name.
     mapUri = G_ComposeMapUri(wbs->episode, wbs->nextMap);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)

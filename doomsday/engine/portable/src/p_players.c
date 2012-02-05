@@ -90,6 +90,11 @@ int P_ConsoleToLocal(int playerNum)
     int                 i, count = 0;
     player_t*           plr = &ddPlayers[playerNum];
 
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+    {
+        // Invalid.
+        return -1;
+    }
     if(playerNum == consolePlayer)
     {
         return 0;

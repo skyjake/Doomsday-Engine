@@ -1,49 +1,59 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file dd_string.h
+ * Dynamic text string.
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ * Simple dynamic string management. @ingroup base
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Uses @ref memzone or standard malloc for memory allocation, chosen during
+ * initialization of a string. The string itself is always allocated with
+ * malloc. (The @ref memzone is not thread-safe.)
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @todo Rename to Str? (str.h)
+ * @todo AutoStr for automatically garbage-collected strings (good for return values,
+ *       temporary variables when printing).
+ * @todo Make this opaque for better forward compatibility -- prevents initialization
+ *       with static C strings, though (which is probably for the better anyway).
+ * @todo Derive from Qt::QString
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, 
- * Boston, MA  02110-1301  USA
+ * @authors Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_API_STRING_H
 #define LIBDENG_API_STRING_H
 
 #include <stddef.h>
+#include "reader.h"
+#include "writer.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
- * Dynamic String. Simple dynamic string management.
+ * Dynamic string instance. Use Str_New() to allocate one from the heap, or
+ * Str_Init() to initialize a string located on the stack.
  *
- * You can init with static string constants, for example:
- *      ddstring_t mystr = { "Hello world." };
- *
- * \note Uses de::Zone or standard malloc for memory allocation, chosen during
- *       initialization of a string. The string itself is always allocated with
- *       malloc. The Zone is not thread-safe.
- *
- * \todo Derive from Qt::QString
- * \todo Make this opaque for better forward compatibility -- prevents initialization
- *       with static C strings, though.
+ * You can init global ddstring_t variables with static string constants,
+ * for example: @code ddstring_t mystr = { "Hello world." }; @endcode
  */
 typedef struct ddstring_s {
     /// String buffer.
-	char* str;
+    char* str;
 
     /// String length (no terminating nulls).
     size_t length;
@@ -51,10 +61,10 @@ typedef struct ddstring_s {
     /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
     size_t size;
 
-	// Memory management.
-	void (*memFree)(void*);
-	void* (*memAlloc)(size_t n);
-	void* (*memCalloc)(size_t n);
+    // Memory management.
+    void (*memFree)(void*);
+    void* (*memAlloc)(size_t n);
+    void* (*memCalloc)(size_t n);
 } ddstring_t;
 
 // Format checking for Str_Appendf in GCC2
@@ -85,6 +95,12 @@ ddstring_t* Str_New(void);
 ddstring_t* Str_NewStd(void);
 
 /**
+ * Constructs a new string by reading it from @a reader.
+ * Memory for the string is allocated with de::Zone.
+ */
+ddstring_t* Str_NewFromReader(Reader* reader);
+
+/**
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
@@ -95,6 +111,13 @@ void Str_Init(ddstring_t* ds);
  * malloc for memory allocations.
  */
 void Str_InitStd(ddstring_t* ds);
+
+/**
+ * Initializes @a ds with a static const C string. No memory allocation
+ * model is selected; use this for strings that remain constant.
+ * If the string is never modified calling Str_Free() is not needed.
+ */
+void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same
@@ -156,18 +179,33 @@ ddstring_t* Str_Copy(ddstring_t* dest, const ddstring_t* src);
 
 /**
  * Strip whitespace from beginning.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_StripLeft(ddstring_t* ds);
+ddstring_t* Str_StripLeft2(ddstring_t* ds, int* count);
+ddstring_t* Str_StripLeft(ddstring_t* ds);
 
 /**
  * Strip whitespace from end.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_StripRight(ddstring_t* ds);
+ddstring_t* Str_StripRight2(ddstring_t* ds, int* count);
+ddstring_t* Str_StripRight(ddstring_t* ds);
 
 /**
  * Strip whitespace from beginning and end.
+ *
+ * @param ds  String instance.
+ * @param count  If not @c NULL the number of characters stripped is written here.
+ * @return  Same as @a str for caller convenience.
  */
-int Str_Strip(ddstring_t* ds);
+ddstring_t* Str_Strip2(ddstring_t* ds, int* count);
+ddstring_t* Str_Strip(ddstring_t* ds);
 
 /**
  * Extract a line of text from the source.
@@ -175,7 +213,7 @@ int Str_Strip(ddstring_t* ds);
 const char* Str_GetLine(ddstring_t* ds, const char* src);
 
 /**
- * @defGroup copyDelimiterFlags Copy Delimiter Flags.
+ * @defgroup copyDelimiterFlags Copy Delimiter Flags
  */
 /*@{*/
 #define CDF_OMIT_DELIMITER      0x1 // Do not copy delimiters into the dest path.
@@ -188,7 +226,7 @@ const char* Str_GetLine(ddstring_t* ds, const char* src);
  * @param dest          Destination string.
  * @param src           Source string.
  * @param delimiter     Delimiter character.
- * @param flags         @see copyDelimiterFlags.
+ * @param flags         @ref copyDelimiterFlags
  *
  * @return              Pointer to the character within @a src where copy stopped
  *                      else @c NULL if the end was reached.
@@ -197,7 +235,12 @@ const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, in
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter);
 
 /**
- * Performs a string comparison, ignoring differences in case.
+ * Case sensitive comparison.
+ */
+int Str_Compare(const ddstring_t* str, const char* text);
+
+/**
+ * Non case sensitive comparison.
  */
 int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
 
@@ -222,5 +265,42 @@ char Str_At(const ddstring_t* str, int index);
 char Str_RAt(const ddstring_t* str, int reverseIndex);
 
 void Str_Truncate(ddstring_t* str, int position);
+
+/**
+ * Percent-encode characters in string. Will encode the default set of
+ * characters for the unicode utf8 charset.
+ *
+ * @param str           String instance.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentEncode(ddstring_t* str);
+
+/**
+ * Percent-encode characters in string.
+ *
+ * @param str           String instance.
+ * @param excludeChars  List of characters that should NOT be encoded. @c 0 terminated.
+ * @param includeChars  List of characters that will always be encoded (has precedence over
+ *                      @a excludeChars). @c 0 terminated.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeCars);
+
+/**
+ * Decode the percent-encoded string. Will match codes for the unicode
+ * utf8 charset.
+ *
+ * @param str           String instance.
+ * @return              Same as @a str.
+ */
+ddstring_t* Str_PercentDecode(ddstring_t* str);
+
+void Str_Write(const ddstring_t* str, Writer* writer);
+
+void Str_Read(ddstring_t* str, Reader* reader);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* LIBDENG_API_STRING_H */

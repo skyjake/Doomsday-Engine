@@ -29,32 +29,26 @@
 #include "abstractfile.h"
 
 struct lumpdirectory_s;
-
-typedef struct {
-    size_t baseOffset;
-    lumpinfo_t info;
-} wadfile_lumprecord_t;
+struct pathdirectorynode_s;
 
 /**
  * WadFile. Runtime representation of a WAD file.
  *
  * @ingroup FS
  */
-typedef struct wadfile_s {
-    // Base file.
-    abstractfile_t _base;
-    int _lumpCount;
-    size_t _lumpRecordsOffset;
-    wadfile_lumprecord_t* _lumpRecords;
-    void** _lumpCache;
-} wadfile_t;
+struct wadfile_s; // The wadfile instance (opaque)
+typedef struct wadfile_s WadFile;
 
-wadfile_t* WadFile_New(DFile* file, const lumpinfo_t* info);
-void WadFile_Delete(wadfile_t* wad);
+WadFile* WadFile_New(DFile* file, const char* path, const LumpInfo* info);
+void WadFile_Delete(WadFile* wad);
 
-int WadFile_PublishLumpsToDirectory(wadfile_t* file, struct lumpdirectory_s* directory);
+int WadFile_PublishLumpsToDirectory(WadFile* wad, struct lumpdirectory_s* directory);
 
-const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx);
+struct pathdirectorynode_s* WadFile_LumpDirectoryNode(WadFile* wad, int lumpIdx);
+
+ddstring_t* WadFile_ComposeLumpPath(WadFile* wad, int lumpIdx, char delimiter);
+
+const LumpInfo* WadFile_LumpInfo(WadFile* wad, int lumpIdx);
 
 /**
  * Read the data associated with the specified lump index into @a buffer.
@@ -64,8 +58,8 @@ const lumpinfo_t* WadFile_LumpInfo(wadfile_t* file, int lumpIdx);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t WadFile_ReadLump2(wadfile_t* wad, int lumpIdx, uint8_t* buffer, boolean tryCache);
-size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* buffer);
+size_t WadFile_ReadLump2(WadFile* wad, int lumpIdx, uint8_t* buffer, boolean tryCache);
+size_t WadFile_ReadLump(WadFile* wad, int lumpIdx, uint8_t* buffer);
 
 /**
  * Read a subsection of the data associated with the specified lump index into @a buffer.
@@ -77,9 +71,9 @@ size_t WadFile_ReadLump(wadfile_t* wad, int lumpIdx, uint8_t* buffer);
  * @param tryCache  @c true = try the lump cache first.
  * @return  Number of bytes read.
  */
-size_t WadFile_ReadLumpSection2(wadfile_t* wad, int lumpIdx,
+size_t WadFile_ReadLumpSection2(WadFile* wad, int lumpIdx,
     uint8_t* buffer, size_t startOffset, size_t length, boolean tryCache);
-size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx,
+size_t WadFile_ReadLumpSection(WadFile* wad, int lumpIdx,
     uint8_t* buffer, size_t startOffset, size_t length);
 
 /**
@@ -89,7 +83,7 @@ size_t WadFile_ReadLumpSection(wadfile_t* wad, int lumpIdx,
  * @param tag  Zone purge level/cache tag to use.
  * @return  Ptr to the cached copy of the associated data.
  */
-const uint8_t* WadFile_CacheLump(wadfile_t* wad, int lumpIdx, int tag);
+const uint8_t* WadFile_CacheLump(WadFile* wad, int lumpIdx, int tag);
 
 /**
  * Change the Zone purge level/cache tag associated with a cached data lump.
@@ -97,22 +91,22 @@ const uint8_t* WadFile_CacheLump(wadfile_t* wad, int lumpIdx, int tag);
  * @param lumpIdx  Lump index associated with the cached data being changed.
  * @param tag  Zone purge level/cache tag to use.
  */
-void WadFile_ChangeLumpCacheTag(wadfile_t* wad, int lumpIdx, int tag);
+void WadFile_ChangeLumpCacheTag(WadFile* wad, int lumpIdx, int tag);
 
-void WadFile_ClearLumpCache(wadfile_t* wad);
+void WadFile_ClearLumpCache(WadFile* wad);
 
 /**
  * An extremely simple formula. Does not conform to any CRC standard.
  * (So why's it called CRC, then?)
  */
-uint WadFile_CalculateCRC(const wadfile_t* wad);
+uint WadFile_CalculateCRC(WadFile* wad);
 
 /**
  * Accessors:
  */
 
 /// @return  Number of lumps contained within this file.
-int WadFile_LumpCount(wadfile_t* wad);
+int WadFile_LumpCount(WadFile* wad);
 
 /**
  * Static members:

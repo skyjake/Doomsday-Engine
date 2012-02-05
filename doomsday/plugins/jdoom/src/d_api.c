@@ -68,32 +68,31 @@ int G_RegisterGames(int hookType, int param, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     const GameDef hacxDef = {
-        "hacx", DATAPATH, DEFSPATH, MAINCONFIG, "HACX - Twitch 'n Kill", "Banjo Software"
+        "hacx", DATAPATH, DEFSPATH, "hacx", "HACX - Twitch 'n Kill", "Banjo Software"
     };
     const GameDef chexDef = {
-        "chex", DATAPATH, DEFSPATH, MAINCONFIG, "Chex(R) Quest", "Digital Cafe"
+        "chex", DATAPATH, DEFSPATH, "chex", "Chex(R) Quest", "Digital Cafe"
     };
     const GameDef doom2TntDef = {
-        "doom2-tnt", DATAPATH, DEFSPATH, MAINCONFIG, "Final DOOM: TNT: Evilution", "Team TNT"
+        "doom2-tnt", DATAPATH, DEFSPATH, "doom", "Final DOOM: TNT: Evilution", "Team TNT"
     };
     const GameDef doom2PlutDef = {
-        "doom2-plut", DATAPATH, DEFSPATH, MAINCONFIG, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
+        "doom2-plut", DATAPATH, DEFSPATH, "doom", "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali"
     };
     const GameDef doom2Def = {
-        "doom2", DATAPATH, DEFSPATH, MAINCONFIG, "DOOM 2: Hell on Earth", "id Software"
+        "doom2", DATAPATH, DEFSPATH, "doom", "DOOM 2: Hell on Earth", "id Software"
     };
     const GameDef doomUltimateDef = {
-        "doom1-ultimate", DATAPATH, DEFSPATH, MAINCONFIG, "Ultimate DOOM", "id Software"
+        "doom1-ultimate", DATAPATH, DEFSPATH, "doom", "Ultimate DOOM", "id Software"
     };
     const GameDef doomDef = {
-        "doom1", DATAPATH, DEFSPATH, MAINCONFIG, "DOOM Registered", "id Software"
+        "doom1", DATAPATH, DEFSPATH, "doom", "DOOM Registered", "id Software"
     };
     const GameDef doomShareDef = {
-        "doom1-share", DATAPATH, DEFSPATH, MAINCONFIG, "DOOM Shareware", "id Software"
+        "doom1-share", DATAPATH, DEFSPATH, "doom", "DOOM Shareware", "id Software"
     };
 
     /* HacX */
@@ -146,7 +145,6 @@ int G_RegisterGames(int hookType, int param, void* data)
     return true;
 
 #undef STARTUPPK3
-#undef MAINCONFIG
 #undef DEFSPATH
 #undef DATAPATH
 }
@@ -234,6 +232,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.FinaleResponder = FI_PrivilegedResponder;
     gx.PrivilegedResponder = G_PrivilegedResponder;
     gx.Responder = G_Responder;
+    gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.MobjCheckPosition3f = P_CheckPosition3f;

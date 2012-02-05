@@ -35,40 +35,74 @@
 
 typedef struct texture_variantlist_node_s {
     struct texture_variantlist_node_s* next;
-    texturevariant_t* variant;
+    TextureVariant* variant;
 } texture_variantlist_node_t;
 
-texture_t* Texture_New(int flags, textureid_t bindId, void* userData)
-{
-    texture_t* tex = (texture_t*)malloc(sizeof *tex);
-    if(!tex)
-        Con_Error("Texture::Construct: Failed on allocation of %lu bytes for new Texture.", (unsigned long) sizeof *tex);
+struct texture_s {
+    /// @see textureFlags
+    int flags;
 
-    tex->_flags = flags;
-    tex->_size = Size2_New();
-    tex->_variants = NULL;
-    tex->_primaryBind = bindId;
-    tex->_userData = userData;
-    memset(tex->_analyses, 0, sizeof(tex->_analyses));
+    /// Size in logical pixels (not necessarily the same as pixel dimensions).
+    Size2* size;
+
+    /// Unique identifier of the primary binding in the owning collection.
+    textureid_t primaryBind;
+
+    /// List of variants (e.g., color translations).
+    struct texture_variantlist_node_s* variants;
+
+    /// Table of analyses object ptrs, used for various purposes depending
+    /// on the variant specification.
+    void* analyses[TEXTURE_ANALYSIS_COUNT];
+
+    /// User data associated with this texture.
+    void* userData;
+};
+
+Texture* Texture_New(int flags, textureid_t bindId, void* userData)
+{
+    Texture* tex = (Texture*)malloc(sizeof *tex);
+    if(!tex)
+        Con_Error("Texture::New: Failed on allocation of %lu bytes for new Texture.",
+                  (unsigned long) sizeof *tex);
+
+    tex->flags = flags;
+    tex->size = Size2_New();
+    tex->variants = NULL;
+    tex->primaryBind = bindId;
+    tex->userData = userData;
+    memset(tex->analyses, 0, sizeof(tex->analyses));
 
     return tex;
 }
 
-texture_t* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size,
+Texture* Texture_NewWithSize(int flags, textureid_t bindId, const Size2Raw* size,
     void* userData)
 {
-    texture_t* tex = Texture_New(flags, bindId, userData);
+    Texture* tex = Texture_New(flags, bindId, userData);
     Texture_SetSize(tex, size);
     return tex;
 }
 
-static void destroyVariants(texture_t* tex)
+static uint countVariants(const Texture* tex)
+{
+    texture_variantlist_node_t* node;
+    uint count = 0;
+    assert(tex);
+    for(node = tex->variants; node; node = node->next)
+    {
+        count += 1;
+    }
+    return count;
+}
+
+static void destroyVariants(Texture* tex)
 {
     assert(tex);
-    while(tex->_variants)
+    while(tex->variants)
     {
-        texturevariant_t* variant = tex->_variants->variant;
-        texture_variantlist_node_t* next = tex->_variants->next;
+        TextureVariant* variant = tex->variants->variant;
+        texture_variantlist_node_t* next = tex->variants->next;
 #if _DEBUG
         DGLuint glName = TextureVariant_GLName(variant);
         if(glName)
@@ -84,76 +118,81 @@ static void destroyVariants(texture_t* tex)
         }
 #endif
         TextureVariant_Delete(variant);
-        free(tex->_variants);
-        tex->_variants = next;
+        free(tex->variants);
+        tex->variants = next;
     }
 }
 
-static void destroyAnalyses(texture_t* tex)
+static void destroyAnalyses(Texture* tex)
 {
     int i;
     assert(tex);
     for(i = 0; i < TEXTURE_ANALYSIS_COUNT; ++i)
     {
-        if(tex->_analyses[i]) free(tex->_analyses[i]);
+        if(tex->analyses[i]) free(tex->analyses[i]);
     }
 }
 
-void Texture_Delete(texture_t* tex)
+void Texture_Delete(Texture* tex)
 {
     assert(tex);
     destroyVariants(tex);
     destroyAnalyses(tex);
-    Size2_Delete(tex->_size);
+    Size2_Delete(tex->size);
     free(tex);
 }
 
-textureid_t Texture_PrimaryBind(const texture_t* tex)
+textureid_t Texture_PrimaryBind(const Texture* tex)
 {
     assert(tex);
-    return tex->_primaryBind;
+    return tex->primaryBind;
 }
 
-void Texture_SetPrimaryBind(texture_t* tex, textureid_t bindId)
+void Texture_SetPrimaryBind(Texture* tex, textureid_t bindId)
 {
     assert(tex);
-    tex->_primaryBind = bindId;
+    tex->primaryBind = bindId;
 }
 
-void Texture_AttachUserData(texture_t* tex, void* userData)
+void Texture_AttachUserData(Texture* tex, void* userData)
 {
     assert(tex);
 #if _DEBUG
-    if(tex->_userData)
+    if(tex->userData)
     {
         Con_Message("Warning:Texture::AttachUserData: User data is already present for [%p id:%i], it will be replaced.\n", (void*)tex, Textures_Id(tex));
     }
 #endif
-    tex->_userData = userData;
+    tex->userData = userData;
 }
 
-void* Texture_DetachUserData(texture_t* tex)
+void* Texture_DetachUserData(Texture* tex)
 {
     void* data;
     assert(tex);
-    data = tex->_userData;
-    tex->_userData = NULL;
+    data = tex->userData;
+    tex->userData = NULL;
     return data;
 }
 
-void* Texture_UserData(const texture_t* tex)
+void* Texture_UserData(const Texture* tex)
 {
     assert(tex);
-    return tex->_userData;
+    return tex->userData;
 }
 
-void Texture_ClearVariants(texture_t* tex)
+void Texture_ClearVariants(Texture* tex)
 {
     assert(tex);
     destroyVariants(tex);
 }
 
-texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
+uint Texture_VariantCount(const Texture* tex)
+{
+    return countVariants(tex);
+}
+
+TextureVariant* Texture_AddVariant(Texture* tex, TextureVariant* variant)
 {
     texture_variantlist_node_t* node;
     assert(tex);
@@ -171,78 +210,78 @@ texturevariant_t* Texture_AddVariant(texture_t* tex, texturevariant_t* variant)
         Con_Error("Texture::AddVariant: Failed on allocation of %lu bytes for new node.", (unsigned long) sizeof *node);
 
     node->variant = variant;
-    node->next = tex->_variants;
-    tex->_variants = node;
+    node->next = tex->variants;
+    tex->variants = node;
     return variant;
 }
 
-boolean Texture_IsCustom(const texture_t* tex)
+boolean Texture_IsCustom(const Texture* tex)
 {
     assert(tex);
-    return (tex->_flags & TXF_CUSTOM) != 0;
+    return (tex->flags & TXF_CUSTOM) != 0;
 }
 
-int Texture_Flags(const texture_t* tex)
+int Texture_Flags(const Texture* tex)
 {
     assert(tex);
-    return tex->_flags;
+    return tex->flags;
 }
 
-void Texture_SetFlags(texture_t* tex, int flags)
+void Texture_SetFlags(Texture* tex, int flags)
 {
     assert(tex);
-    tex->_flags = flags;
+    tex->flags = flags;
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_Width(const texture_t* tex)
+int Texture_Width(const Texture* tex)
 {
     assert(tex);
-    return Size2_Width(tex->_size);
+    return Size2_Width(tex->size);
 }
 
-void Texture_SetWidth(texture_t* tex, int width)
+void Texture_SetWidth(Texture* tex, int width)
 {
     assert(tex);
-    Size2_SetWidth(tex->_size, width);
+    Size2_SetWidth(tex->size, width);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_Height(const texture_t* tex)
+int Texture_Height(const Texture* tex)
 {
     assert(tex);
-    return Size2_Height(tex->_size);
+    return Size2_Height(tex->size);
 }
 
-void Texture_SetHeight(texture_t* tex, int height)
+void Texture_SetHeight(Texture* tex, int height)
 {
     assert(tex);
-    Size2_SetHeight(tex->_size, height);
+    Size2_SetHeight(tex->size, height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-const Size2* Texture_Size(const texture_t* tex)
+const Size2* Texture_Size(const Texture* tex)
 {
     assert(tex);
-    return tex->_size;
+    return tex->size;
 }
 
-void Texture_SetSize(texture_t* tex, const Size2Raw* size)
+void Texture_SetSize(Texture* tex, const Size2Raw* size)
 {
     assert(tex && size);
-    Size2_SetWidthHeight(tex->_size, size->width, size->height);
+    Size2_SetWidthHeight(tex->size, size->width, size->height);
     /// \fixme Update any Materials (and thus Surfaces) which reference this.
 }
 
-int Texture_IterateVariants(texture_t* tex,
-    int (*callback)(texturevariant_t* variant, void* paramaters), void* paramaters)
+int Texture_IterateVariants(Texture* tex,
+    int (*callback)(TextureVariant* variant, void* paramaters), void* paramaters)
 {
     int result = 0;
     assert(tex);
 
     if(callback)
     {
-        texture_variantlist_node_t* node = tex->_variants;
+        texture_variantlist_node_t* node = tex->variants;
         while(node)
         {
             texture_variantlist_node_t* next = node->next;
@@ -254,18 +293,18 @@ int Texture_IterateVariants(texture_t* tex,
     return result;
 }
 
-void* Texture_Analysis(const texture_t* tex, texture_analysisid_t analysis)
+void* Texture_Analysis(const Texture* tex, texture_analysisid_t analysis)
 {
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
-    return tex->_analyses[analysis];
+    return tex->analyses[analysis];
 }
 
-void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
+void Texture_AttachAnalysis(Texture* tex, texture_analysisid_t analysis,
     void* data)
 {
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
 #if _DEBUG
-    if(tex->_analyses[analysis])
+    if(tex->analyses[analysis])
     {
         Uri* uri = Textures_ComposeUri(Textures_Id(tex));
         ddstring_t* path = Uri_ToString(uri);
@@ -275,15 +314,15 @@ void Texture_AttachAnalysis(texture_t* tex, texture_analysisid_t analysis,
         Uri_Delete(uri);
     }
 #endif
-    tex->_analyses[analysis] = data;
+    tex->analyses[analysis] = data;
 }
 
-void* Texture_DetachAnalysis(texture_t* tex, texture_analysisid_t analysis)
+void* Texture_DetachAnalysis(Texture* tex, texture_analysisid_t analysis)
 {
     void* data;
     assert(tex && VALID_TEXTURE_ANALYSISID(analysis));
 
-    data = tex->_analyses[analysis];
-    tex->_analyses[analysis] = NULL;
+    data = tex->analyses[analysis];
+    tex->analyses[analysis] = NULL;
     return data;
 }

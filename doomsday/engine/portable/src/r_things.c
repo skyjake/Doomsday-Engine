@@ -326,8 +326,8 @@ static spriterecord_t* findSpriteRecordForName(const ddstring_t* name)
 
 static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
 {
+    ddstring_t* path, decodedPath;
     spriterecord_frame_t* frame;
-    ddstring_t* path;
     spriterecord_t* rec;
     boolean link;
     Uri* uri;
@@ -350,12 +350,15 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     }
 
     // Add the frame(s).
+    Str_Init(&decodedPath);
+    Str_PercentDecode(Str_Set(&decodedPath, Str_Text(path)));
+
     link = false;
     frame = rec->frames;
     if(rec->frames)
     {
-        while(!(frame->frame[0]    == Str_At(path, 4) - 'a' + 1 &&
-                frame->rotation[0] == Str_At(path, 5) - '0') &&
+        while(!(frame->frame[0]    == toupper(Str_At(&decodedPath, 4)) - 'A' + 1 &&
+                frame->rotation[0] == toupper(Str_At(&decodedPath, 5)) - '0') &&
               (frame = frame->next)) {}
     }
 
@@ -371,16 +374,17 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
     frame->mat = Materials_ToMaterial(Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
-    frame->frame[0]    = Str_At(path, 4) - 'a' + 1;
-    frame->rotation[0] = Str_At(path, 5) - '0';
-    if(Str_At(path, 6))
+    frame->frame[0]    = toupper(Str_At(&decodedPath, 4)) - 'A' + 1;
+    frame->rotation[0] = toupper(Str_At(&decodedPath, 5)) - '0';
+    if(Str_At(&decodedPath, 6))
     {
-        frame->frame[1]    = Str_At(path, 6) - 'a' + 1;
-        frame->rotation[1] = Str_At(path, 7) - '0';
+        frame->frame[1]    = toupper(Str_At(&decodedPath, 6)) - 'A' + 1;
+        frame->rotation[1] = toupper(Str_At(&decodedPath, 7)) - '0';
     }
     else
     {
         frame->frame[1] = 0;
+        frame->rotation[1] = 0;
     }
 
     if(link)
@@ -389,6 +393,7 @@ static int buildSpriteRotationsWorker(textureid_t texId, void* paramaters)
         rec->frames = frame;
     }
 
+    Str_Free(&decodedPath);
     Str_Delete(path);
     return 0; // Continue iteration.
 }
@@ -547,22 +552,26 @@ void R_InitSprites(void)
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
-    { int max = MAX_OF(numSpriteRecords, countSprNames.num);
-    if(max > 0)
+    if(numSpriteRecords)
     {
-        spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
-        int n = max-1;
-        rec = spriteRecords;
-        do
+        int max = MAX_OF(numSpriteRecords, countSprNames.num);
+        if(max > 0)
         {
-            int idx = Def_GetSpriteNum(rec->name);
-            list[idx == -1? n-- : idx] = rec;
-        } while((rec = rec->next));
+            spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
+            int n = max-1;
 
-        // Create sprite definitions from the located sprite patch lumps.
-        initSpriteDefs(list, max);
-        M_Free(list);
-    }}
+            rec = spriteRecords;
+            do
+            {
+                int idx = Def_GetSpriteNum(rec->name);
+                list[idx == -1? n-- : idx] = rec;
+            } while((rec = rec->next));
+
+            // Create sprite definitions from the located sprite patch lumps.
+            initSpriteDefs(list, max);
+            M_Free(list);
+        }
+    }
     /// \kludge end
 
     // We are now done with the sprite records.
@@ -931,28 +940,13 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
                                           boolean viewAligned)
 {
     const materialvariantspecification_t* spec;
-    const materialsnapshot_t* ms;
-    patchtex_t* pTex;
-    const variantspecification_t* texSpec;
+    materialvariant_t* variant;
 
     if(!params) return; // Wha?
 
     spec = Materials_VariantSpecificationForContext(MC_SPRITE, 0, 1, tClass, tMap,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
-    ms = Materials_Prepare(mat, spec, true);
-
-#if _DEBUG
-    if(Textures_Namespace(Textures_Id(MSU_texture(ms, MTU_PRIMARY))) != TN_SPRITES)
-        Con_Error("setupSpriteParamsForVisSprite: Internal error, material snapshot's primary texture is not a SpriteTex!");
-#endif
-
-    pTex = (patchtex_t*) Texture_UserData(MSU_texture(ms, MTU_PRIMARY));
-    assert(pTex);
-    texSpec = TS_GENERAL(MSU_texturespec(ms, MTU_PRIMARY));
-    assert(texSpec);
-
-    params->width  = ms->size.width  + texSpec->border*2;
-    params->height = ms->size.height + texSpec->border*2;
+    variant = Materials_ChooseVariant(mat, spec, true, true);
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -961,15 +955,11 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) -pTex->offX - params->width/2;
-    params->viewOffY = 0;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
 
-    params->mat = mat;
-    params->tMap = tMap;
-    params->tClass = tClass;
+    params->material = variant;
     params->matFlip[0] = matFlipS;
     params->matFlip[1] = matFlipT;
     params->blendMode = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -1212,6 +1202,7 @@ void R_ProjectSprite(mobj_t* mo)
         align = true;
 
     // Perform visibility checking.
+    /// @fixme R_VisualRadius() does not consider sprite rotation.
     {
     float center[2], v1[2], v2[2];
     float width = R_VisualRadius(mo)*2, offset = 0;

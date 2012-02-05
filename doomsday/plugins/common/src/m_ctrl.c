@@ -46,6 +46,7 @@
 #define CCF_STAGED              0x4
 #define CCF_REPEAT              0x8
 #define CCF_SIDESTEP_MODIFIER   0x10
+#define CCF_MULTIPLAYER         0x20
 
 #define SMALL_SCALE             .75f
 
@@ -65,27 +66,6 @@ typedef struct bindingdrawerdata_s {
 
 static mn_object_t* ControlsMenuItems;
 static mndata_text_t* ControlsMenuTexts;
-
-mn_page_t ControlsMenu = {
-    NULL,
-#if __JDOOM__ || __JDOOM64__
-    { 32, 40 },
-#elif __JHERETIC__
-    { 32, 26 },
-#elif __JHEXEN__
-    { 32, 21 },
-#endif
-    { (fontid_t)GF_FONTA, (fontid_t)GF_FONTB }, { 0, 1, 2 },
-    Hu_MenuDrawControlsPage, NULL,
-    &OptionsMenu,
-#if __JDOOM__ || __JDOOM64__
-    //0, 17, { 17, 40 }
-#elif __JHERETIC__
-    //0, 15, { 15, 26 }
-#elif __JHEXEN__
-    //0, 16, { 16, 21 }
-#endif
-};
 
 static mndata_bindings_t controlConfig[] =
 {
@@ -183,20 +163,20 @@ static mndata_bindings_t controlConfig[] =
 #endif
 
     { "Chat" },
-    { "Open Chat", 0, 0, "beginchat" },
+    { "Open Chat", 0, 0, "beginchat", CCF_MULTIPLAYER },
 
 #if __JDOOM__ || __JDOOM64__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Indigo Chat", 0, 0, "beginchat 1" },
-    { "Brown Chat", 0, 0, "beginchat 2" },
-    { "Red Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Indigo Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Brown Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
 #if __JHERETIC__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Yellow Chat", 0, 0, "beginchat 1" },
-    { "Red Chat", 0, 0, "beginchat 2" },
-    { "Blue Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Yellow Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Blue Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
     { "Send Message", "chat", 0, "chatcomplete" },
@@ -280,11 +260,19 @@ int Hu_MenuActivateBindingsGrab(mn_object_t* obj, mn_actionid_t action, void* pa
 
 void Hu_MenuInitControlsPage(void)
 {
+#if __JDOOM__ || __JDOOM64__
+    const Point2Raw pageOrigin = { 32, 40 };
+#elif __JHERETIC__
+    const Point2Raw pageOrigin = { 32, 40 };
+#elif __JHEXEN__
+    const Point2Raw pageOrigin = { 32, 40 };
+#endif
     int i, textCount, bindingsCount, totalItems, group;
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     size_t objectIdx, textIdx;
+    mn_page_t* page;
 
-    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") );
+    VERBOSE( Con_Message("Hu_MenuInitControlsPage: Creating controls items.\n") )
 
     textCount = 0;
     bindingsCount = 0;
@@ -369,15 +357,15 @@ void Hu_MenuInitControlsPage(void)
             bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
             bindingsObj->_typedata = binds;
             bindingsObj->_group = group;
-
-            if(!ControlsMenu.focus)
-                ControlsMenu.focus = bindingsObj - ControlsMenuItems;
         }
     }
     ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
 
-    ControlsMenu.objects = ControlsMenuItems;
-    ControlsMenu.objectsCount = totalItems;
+    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuDrawControlsPage, NULL, NULL);
+    page->objects = ControlsMenuItems;
+    MNPage_SetTitle(page, "Controls");
+    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
 }
 
 static void drawSmallText(const char* string, int x, int y, float alpha)
@@ -422,7 +410,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
+        DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);
@@ -567,6 +555,31 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
     }
 }
 
+mn_object_t* MNBindings_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for new MNBindings.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for mndata_bindings_t.", (unsigned long) sizeof(mndata_bindings_t));
+
+    ob->_type = MN_BINDINGS;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->updateGeometry = MNBindings_UpdateGeometry;
+    ob->drawer = MNBindings_Drawer;
+    ob->cmdResponder = MNBindings_CommandResponder;
+    ob->privilegedResponder = MNBindings_PrivilegedResponder;
+
+    return ob;
+}
+
+void MNBindings_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_BINDINGS);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
@@ -633,19 +646,12 @@ void MNBindings_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin)
+void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* offset)
 {
-    Hu_MenuDrawPageTitle("Controls", SCREENWIDTH/2, origin->y - 28);
-    Hu_MenuDrawPageNavigation(page, SCREENWIDTH/2, origin->y - 12);
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
-    FR_SetAlpha(mnRendState->pageAlpha);
-
-    FR_DrawTextXY3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    DGL_Disable(DGL_TEXTURE_2D);
+    Point2Raw origin;
+    origin.x = SCREENWIDTH/2;
+    origin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin.x, origin.y);
 }
 
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
@@ -704,7 +710,8 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 
         if(binds->command)
         {
-            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], binds->command);
+            const char* extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
+            sprintf(cmd, "bindevent {%s:%s%s} {%s}", bindContext, &symbol[5], extraCondition, binds->command);
 
             // Check for repeats.
             if(binds->flags & CCF_REPEAT)

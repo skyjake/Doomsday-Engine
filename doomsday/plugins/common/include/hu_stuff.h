@@ -44,6 +44,7 @@ typedef enum {
 #if __JHERETIC__ || __JHEXEN__
     GF_SMALLIN,
 #endif
+    GF_MAPPOINT, ///< Marked points on the automap
     NUM_GAME_FONTS
 } gamefontid_t;
 
@@ -94,6 +95,8 @@ void            Hu_Ticker(void);
 void            HU_Start(int player);
 void            Hu_UnloadData(void);
 
+void            Hu_MapTitleDrawer(const RectRaw* portGeometry);
+
 void            Hu_FogEffectTicker(timespan_t time);
 void            Hu_FogEffectSetAlphaTarget(float alpha);
 void            Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2], float texAngle, float alpha, float arg1);
@@ -101,7 +104,7 @@ void            Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2], 
 void            HU_ScoreBoardUnHide(int player);
 void            HU_DrawScoreBoard(int player);
 
-void            Hu_DrawMapTitle(int x, int y, float scale);
+void            Hu_DrawMapTitle(const Point2Raw* offset);
 
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);

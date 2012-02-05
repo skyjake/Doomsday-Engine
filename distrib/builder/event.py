@@ -249,7 +249,7 @@ class Event:
         chgFn = self.file_path('changes.html')
         if os.path.exists(chgFn):
             if utils.count_word('<li>', file(chgFn).read()):
-                msg += '<p><b>Commits</b></p>' + file(chgFn, 'rt').read()
+                msg += '<h2>Commits</h2>' + file(chgFn, 'rt').read()
 
         # Enclose it in a CDATA block if needed.
         if encoded: return '<![CDATA[' + msg + ']]>'    

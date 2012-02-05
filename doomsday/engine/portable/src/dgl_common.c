@@ -331,46 +331,9 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
     return true;
 }
 
-static __inline void enableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glEnable(GL_TEXTURE_2D);
-}
-
-static __inline void disableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glDisable(GL_TEXTURE_2D);
-
-    // Implicit disabling of texcoord array.
-    if(!GL_state.features.elementArrays)
-    {
-        GL_DisableArrays(0, 0, 1 << id);
-    }
-}
-
-/**
- * The first selected unit is active after this call.
- */
-void GL_SelectTexUnits(int count)
-{
-    int i;
-    for(i = numTexUnits - 1; i >= count; i--)
-        disableTexUnit(i);
-
-    // Enable the selected units.
-    for(i = count - 1; i >= 0; i--)
-    {
-        if(i >= numTexUnits)
-            continue;
-        enableTexUnit(i);
-    }
-}
-
 void GL_SetVSync(boolean on)
 {
-    if(!GL_state.features.vsync)
-        return;
+    if(!GL_state.features.vsync) return;
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
 #endif
@@ -380,22 +343,47 @@ void GL_SetMultisample(boolean on)
 {
     if(!GL_state.features.multisample) return;
 #if WIN32
-    if(on)
-        glEnable(GL_MULTISAMPLE_ARB);
-    else
-        glDisable(GL_MULTISAMPLE_ARB);
+    if(on) glEnable(GL_MULTISAMPLE_ARB);
+    else  glDisable(GL_MULTISAMPLE_ARB);
 #endif
 }
 
-void DGL_Scissor(int x, int y, int width, int height)
+void DGL_SetScissor(const RectRaw* rect)
 {
-    glScissor(x, FLIP(y + height - 1), width, height);
+    if(!rect) return;
+    glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
 
-boolean DGL_GetIntegerv(int name, int *v)
+void DGL_SetScissor2(int x, int y, int width, int height)
 {
-    int         i;
-    float       color[4];
+    RectRaw rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = width;
+    rect.size.height = height;
+    DGL_SetScissor(&rect);
+}
+
+void DGL_Scissor(RectRaw* rect)
+{
+    GLint v[4];
+
+    if(!rect) return;
+
+    glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
+    // Y is flipped.
+    v[1] = FLIP(v[1] + v[3] - 1);
+
+    rect->origin.x = v[0];
+    rect->origin.y = v[1];
+    rect->size.width  = v[2];
+    rect->size.height = v[3];
+}
+
+boolean DGL_GetIntegerv(int name, int* v)
+{
+    float color[4];
+    int i;
 
     switch(name)
     {
@@ -405,11 +393,6 @@ boolean DGL_GetIntegerv(int name, int *v)
 
     case DGL_SCISSOR_TEST:
         glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
-        break;
-
-    case DGL_SCISSOR_BOX:
-        glGetIntegerv(GL_SCISSOR_BOX, (GLint*) v);
-        v[1] = FLIP(v[1] + v[3] - 1);
         break;
 
     case DGL_FOG:
@@ -669,24 +652,34 @@ if(glGetError() == GL_STACK_OVERFLOW)
 #endif
 }
 
-void DGL_SetMaterialUI(material_t* mat)
-{
-    GL_SetMaterialUI(mat);
-}
-
 void DGL_SetNoMaterial(void)
 {
     GL_SetNoTexture();
 }
 
-void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
+static int DGL_ToGLWrapCap(DGLint cap)
 {
-    texture_t* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
-    if(!tex) return;
+    switch(cap)
+    {
+    case DGL_CLAMP:         return GL_CLAMP;
+    case DGL_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+    case DGL_REPEAT:        return GL_REPEAT;
+    default:
+        Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
+        exit(1); // Unreachable.
+    }
+}
 
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+void DGL_SetMaterialUI(material_t* mat, DGLint wrapS, DGLint wrapT)
+{
+    GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
+}
+
+void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
+{
+    Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
+    if(!tex) return;
+    GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
 }
 
 void DGL_SetPSprite(material_t* mat)
@@ -699,13 +692,9 @@ void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
     GL_SetPSprite(mat, tclass, tmap);
 }
 
-void DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 {
-    GL_SetRawImage(lumpNum,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
 void DGL_PopMatrix(void)
@@ -754,7 +743,7 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
 
 int DGL_Bind(DGLuint texture)
 {
-    glBindTexture(GL_TEXTURE_2D, texture);
+    GL_BindTextureUnmanaged(texture, GL_LINEAR);
     assert(!Sys_GLCheckError());
     return 0;
 }

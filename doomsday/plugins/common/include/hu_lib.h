@@ -194,11 +194,18 @@ typedef struct mn_object_s {
     void* data1;
     int data2;
 
+    // Auto initialized:
+
     /// Current geometry.
     Rect* _geometry;
+
+    /// MenuPage which owns this object (if any).
+    struct mn_page_s* _page;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
+
+struct mn_page_s* MNObject_Page(const mn_object_t* obj);
 
 int MNObject_Flags(const mn_object_t* obj);
 
@@ -260,7 +267,7 @@ boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t action);
 int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t action, void* paramaters);
 
 typedef enum {
-    MENU_COLOR1,
+    MENU_COLOR1 = 0,
     MENU_COLOR2,
     MENU_COLOR3,
     MENU_COLOR4,
@@ -276,7 +283,7 @@ typedef enum {
 #define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
 
 typedef enum {
-    MENU_FONT1,
+    MENU_FONT1 = 0,
     MENU_FONT2,
     MENU_FONT3,
     MENU_FONT4,
@@ -292,22 +299,47 @@ typedef enum {
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
 typedef struct mn_page_s {
-    mn_object_t* objects; // List of objects.
-    Point2Raw origin;
-    fontid_t fonts[MENU_FONT_COUNT];
-    uint colors[MENU_COLOR_COUNT];
-    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin);
-    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
-    struct mn_page_s* previous; // Pointer to the previous page, if any.
-    void* data;
-
-    // Auto-initialized.
+    /// Collection of objects on this page.
+    mn_object_t* objects;
     int objectsCount;
-    int focus; // Index of the focus object.
+
+    /// "Physical" geometry in fixed 320x200 screen coordinate space.
+    Point2Raw origin;
     Rect* geometry;
+
+    /// Previous page else @c NULL
+    struct mn_page_s* previous;
+
+    /// Title of this page.
+    ddstring_t title;
+
+    /// Index of the currently focused object else @c -1
+    int focus;
+
+    /// Predefined fonts objects on this page.
+    fontid_t fonts[MENU_FONT_COUNT];
+
+    /// Predefined colors for objects on this page.
+    uint colors[MENU_COLOR_COUNT];
+
+    /// Page drawing routine.
+    void (*drawer) (struct mn_page_s* page, const Point2Raw* offset);
+
+    /// Menu command responder routine.
+    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
+
+    /// User data.
+    void* userData;
 } mn_page_t;
 
 void MNPage_Initialize(mn_page_t* page);
+
+void MNPage_SetTitle(mn_page_t* page, const char* title);
+
+void MNPage_SetX(mn_page_t* page, int x);
+void MNPage_SetY(mn_page_t* page, int y);
+
+void MNPage_SetPreviousPage(mn_page_t* page, mn_page_t* prevPage);
 
 /// @return  Currently focused object else @c NULL
 mn_object_t* MNPage_FocusObject(mn_page_t* page);
@@ -348,6 +380,8 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
  */
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
+void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
+
 /**
  * Text objects.
  */
@@ -357,6 +391,9 @@ typedef struct mndata_text_s {
     /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
     patchid_t* patch;
 } mndata_text_t;
+
+mn_object_t* MNText_New(void);
+void MNText_Delete(mn_object_t* ob);
 
 void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
@@ -372,6 +409,9 @@ typedef struct mndata_button_s {
     patchid_t* patch;
     const char* yes, *no;
 } mndata_button_t;
+
+mn_object_t* MNButton_New(void);
+void MNButton_Delete(mn_object_t* ob);
 
 void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -409,6 +449,9 @@ typedef struct mndata_edit_s {
     void* data1;
     int data2;
 } mndata_edit_t;
+
+mn_object_t* MNEdit_New(void);
+void MNEdit_Delete(mn_object_t* ob);
 
 void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -457,14 +500,13 @@ typedef struct mndata_list_s {
     int numvis;
 } mndata_list_t;
 
-void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
+mn_object_t* MNList_New(void);
+void MNList_Delete(mn_object_t* ob);
 
+void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
 
 void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
-void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
 int MNList_Selection(mn_object_t* obj);
@@ -474,6 +516,13 @@ boolean MNList_SelectionIsVisible(mn_object_t* obj);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
 int MNList_FindItem(const mn_object_t* obj, int dataValue);
+
+mn_object_t* MNListInline_New(void);
+void MNListInline_Delete(mn_object_t* ob);
+
+void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
+int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 
 /**
  * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
@@ -515,6 +564,9 @@ typedef struct mndata_colorbox_s {
     void* data3;
     void* data4;
 } mndata_colorbox_t;
+
+mn_object_t* MNColorBox_New(void);
+void MNColorBox_Delete(mn_object_t* ob);
 
 void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* origin);
 int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -612,6 +664,9 @@ typedef struct mndata_slider_s {
     void* data5;
 } mndata_slider_t;
 
+mn_object_t* MNSlider_New(void);
+void MNSlider_Delete(mn_object_t* ob);
+
 void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin);
 void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin);
 int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
@@ -649,6 +704,9 @@ typedef struct mndata_mobjpreview_s {
     int plrClass; /// Player class identifier.
 } mndata_mobjpreview_t;
 
+mn_object_t* MNMobjPreview_New(void);
+void MNMobjPreview_Delete(mn_object_t* ob);
+
 void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType);
 void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);
 void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
@@ -680,7 +738,6 @@ extern const mn_rendstate_t* mnRendState;
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-int MN_CountObjects(mn_object_t* list);
 mn_object_t* MN_MustFindObjectOnPage(mn_page_t* page, int group, int flags);
 
 void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor);
@@ -757,7 +814,7 @@ typedef struct uiwidget_s {
     Size2Raw maxSize;
 
     /// Geometry of this widget in pixels.
-    RectRaw geometry;
+    Rect* geometry;
 
     /// Local player number associated with this widget.
     /// \todo refactor away.
@@ -784,7 +841,7 @@ int UIWidget_Alignment(uiwidget_t* obj);
 
 float UIWidget_Opacity(uiwidget_t* obj);
 
-const RectRaw* UIWidget_Geometry(uiwidget_t* obj);
+const Rect* UIWidget_Geometry(uiwidget_t* obj);
 
 int UIWidget_MaximumHeight(uiwidget_t* obj);
 
@@ -792,7 +849,7 @@ const Size2Raw* UIWidget_MaximumSize(uiwidget_t* obj);
 
 int UIWidget_MaximumWidth(uiwidget_t* obj);
 
-const Point2Raw* UIWidget_Origin(uiwidget_t* obj);
+const Point2* UIWidget_Origin(uiwidget_t* obj);
 
 /// @return  Local player number of the owner of this widget.
 int UIWidget_Player(uiwidget_t* obj);
@@ -813,18 +870,23 @@ void UIWidget_SetMaximumSize(uiwidget_t* obj, const Size2Raw* size);
 void UIWidget_SetMaximumWidth(uiwidget_t* obj, int width);
 
 /**
- * @defgroup uiWidgetGroupFlags  UI Widget Group Flags.
+ * @defgroup uiWidgetGroupFlags  UIWidget Group Flags
  */
-/*@{*/
-#define UWGF_LEFTTORIGHT        0x0001
-#define UWGF_RIGHTTOLEFT        0x0002
+///@{
 #define UWGF_VERTICAL           0x0004
-/*@}*/
+///@}
 
 typedef struct {
+    /// Order of child objects.
+    order_t order;
+
+    /// @ref uiWidgetGroupFlags
     int flags;
+
     int padding;
+
     int widgetIdCount;
+
     uiwidgetid_t* widgetIds;
 } guidata_group_t;
 
@@ -1012,7 +1074,7 @@ uiwidgetid_t GUI_CreateWidget(guiwidgettype_t type, int player, int alignFlags,
     void (*updateGeometry) (uiwidget_t* obj), void (*drawer) (uiwidget_t* obj, const Point2Raw* offset),
     void (*ticker) (uiwidget_t* obj, timespan_t ticLength), void* typedata);
 
-uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, int padding);
+uiwidgetid_t GUI_CreateGroup(int groupFlags, int player, int alignFlags, order_t order, int padding);
 
 typedef struct ui_rendstate_s {
     float pageAlpha;

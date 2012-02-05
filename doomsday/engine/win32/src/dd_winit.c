@@ -54,6 +54,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "fs_util.h"
 #include "dd_winit.h"
 
 // MACROS ------------------------------------------------------------------
@@ -337,8 +338,7 @@ static void determineGlobalPaths(application_t* app)
 
     dd_snprintf(path, FILENAME_T_MAXLEN, "%s", DENG_LIBRARY_DIR);
     // Ensure it ends with a directory separator.
-    if(path[strlen(path)-1] != '/')
-        strncat(path, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(path, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(path);
     temp = Dir_ConstructFromPathDir(path);
     strncpy(ddBinPath, Str_Text(temp), FILENAME_T_MAXLEN);
@@ -364,7 +364,15 @@ static void determineGlobalPaths(application_t* app)
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
     {
-        directory_t* temp = Dir_ConstructFromPathDir(ArgNext());
+        filename_t runtimePath;
+        directory_t* temp;
+
+        strncpy(runtimePath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_CleanPath(runtimePath, FILENAME_T_MAXLEN);
+        // Ensure the path is closed with a directory separator.
+        F_AppendMissingSlashCString(runtimePath, FILENAME_T_MAXLEN);
+
+        temp = Dir_New(runtimePath);
         app->usingUserDir = Dir_SetCurrent(Dir_Path(temp));
         if(app->usingUserDir)
         {
@@ -394,8 +402,7 @@ static void determineGlobalPaths(application_t* app)
     Dir_CleanPath(ddBasePath, FILENAME_T_MAXLEN);
     Dir_MakeAbsolutePath(ddBasePath, FILENAME_T_MAXLEN);
     // Ensure it ends with a directory separator.
-    if(ddBasePath[strlen(ddBasePath)-1] != '/')
-        strncat(ddBasePath, "/", FILENAME_T_MAXLEN);
+    F_AppendMissingSlashCString(ddBasePath, FILENAME_T_MAXLEN);
 }
 
 static BOOL createMainWindow(int lnCmdShow)
@@ -545,7 +552,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
         PostQuitMessage(0);
-        ignoreInput = TRUE;
+        DD_IgnoreInput(true);
         forwardMsg = FALSE;
         break;
 
@@ -598,12 +605,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
-                ignoreInput = FALSE;
+                DD_IgnoreInput(false);
             }
             else
             {
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-                ignoreInput = TRUE;
+                DD_IgnoreInput(true);
             }
         }
         forwardMsg = FALSE;

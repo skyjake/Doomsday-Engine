@@ -42,16 +42,14 @@
 
 #include "de_base.h"
 #include "de_filesys.h"
+#include "de_misc.h"
 
 void F_FileDir(ddstring_t* dst, const ddstring_t* src)
 {
-    assert(NULL != dst && NULL != src);
-    {
     /// \fixme Potentially truncates @a src to FILENAME_T_MAXLEN
     directory_t* dir = Dir_ConstructFromPathDir(Str_Text(src));
     Str_Set(dst, Dir_Path(dir));
     Dir_Delete(dir);
-    }
 }
 
 void F_FileName(ddstring_t* dst, const char* src)
@@ -61,6 +59,10 @@ void F_FileName(ddstring_t* dst, const char* src)
 #else
     char name[NAME_MAX];
 #endif
+
+    if(!dst) return;
+    Str_Clear(dst);
+    if(!src) return;
     _splitpath(src, 0, 0, name, 0);
     Str_Set(dst, name);
 }
@@ -196,6 +198,26 @@ boolean F_FixSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
         }
     }
     return result;
+}
+
+boolean F_AppendMissingSlash(ddstring_t* pathStr)
+{
+    if(Str_RAt(pathStr, 0) != '/')
+    {
+        Str_AppendChar(pathStr, '/');
+        return true;
+    }
+    return false;
+}
+
+boolean F_AppendMissingSlashCString(char* path, size_t maxLen)
+{
+    if(path[strlen(path) - 1] != '/')
+    {
+        M_StrCat(path, "/", maxLen);
+        return true;
+    }
+    return false;
 }
 
 boolean F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
@@ -400,8 +422,10 @@ boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
 
     if(!F_IsAbsolute(src))
     {
-        Str_Prepend(dst, Dir_CurrentPath());
+        char* curPath = Dir_CurrentPath();
+        Str_Prepend(dst, curPath);
         Dir_CleanPathStr(dst);
+        free(curPath);
         return true;
     }
 
@@ -453,8 +477,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
 
             Str_Set(&homeStr, getenv("HOME"));
             F_FixSlashes(&buf, &homeStr);
-            if(Str_RAt(&buf, 0) != '/')
-                Str_AppendChar(&buf, '/');
+            F_AppendMissingSlash(&buf);
 
             // Append the rest of the original path.
             Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
@@ -483,8 +506,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
                 Str_Init(&pwStr);
                 Str_Set(&pwStr, pw->pw_dir);
                 F_FixSlashes(&buf, &pwStr);
-                if(Str_RAt(&buf, 0) != '/')
-                    Str_AppendChar(&buf, '/');
+                F_AppendMissingSlash(&buf);
                 result = true;
                 Str_Free(&pwStr);
             }

@@ -418,11 +418,8 @@ static void printConfiguration(void)
  */
 boolean GL_EarlyInit(void)
 {
-    if(isDedicated)
-        return true;
-
-    if(initGLOk)
-        return true; // Already initialized.
+    if(isDedicated) return true;
+    if(initGLOk) return true; // Already initialized.
 
     Con_Message("Initializing Render subsystem...\n");
 
@@ -434,7 +431,10 @@ boolean GL_EarlyInit(void)
     envModAdd = (GL_state.extensions.texEnvCombNV || GL_state.extensions.texEnvCombATI);
 
     GL_InitDeferredTask();
-    GL_InitArrays();
+
+    // Model renderer must be initialized early as it may need to configure
+    // gl-element arrays.
+    Rend_ModelInit();
 
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
@@ -915,7 +915,7 @@ int GL_GetTexAnisoMul(int level)
     return mul;
 }
 
-void GL_SetMaterialUI(material_t* mat)
+void GL_SetMaterialUI2(material_t* mat, int wrapS, int wrapT)
 {
     const materialvariantspecification_t* spec;
     const materialsnapshot_t* ms;
@@ -923,9 +923,14 @@ void GL_SetMaterialUI(material_t* mat)
     if(!mat) return; // \fixme we need a "NULL material".
 
     spec = Materials_VariantSpecificationForContext(MC_UI, 0, 1, 0, 0,
-        GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+        wrapS, wrapT, 0, 1, 0, false, false, false, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
+}
+
+void GL_SetMaterialUI(material_t* mat)
+{
+    GL_SetMaterialUI2(mat, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 }
 
 void GL_SetPSprite(material_t* mat, int tClass, int tMap)
@@ -938,7 +943,7 @@ void GL_SetPSprite(material_t* mat, int tClass, int tMap)
     spec = Materials_VariantSpecificationForContext(MC_PSPRITE, 0, 1, tClass,
         tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
@@ -946,15 +951,15 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(rawTex)
     {
-        GL_BindTexture(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
+        GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }
 }
 
-void GL_BindTexture(DGLuint glName, int magMode)
+void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_IsBusy()) return;
+    if(Con_IsBusyWorker()) return;
     if(glName == 0)
     {
         GL_SetNoTexture();
@@ -969,6 +974,8 @@ void GL_BindTexture(DGLuint glName, int magMode)
 
 void GL_SetNoTexture(void)
 {
+    /// @todo Don't actually change the current binding.
+    ///       Simply disable any currently enabled texture types.
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

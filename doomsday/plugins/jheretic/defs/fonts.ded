@@ -18,6 +18,20 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
+  ID = "game:mappoint";
+  048 { Texture = "FONTA16"; } # 0
+  049 { Texture = "FONTA17"; } # 1
+  050 { Texture = "FONTA18"; } # 2
+  051 { Texture = "FONTA19"; } # 3
+  052 { Texture = "FONTA20"; } # 4
+  053 { Texture = "FONTA21"; } # 5
+  054 { Texture = "FONTA22"; } # 6
+  055 { Texture = "FONTA23"; } # 7
+  056 { Texture = "FONTA24"; } # 8
+  057 { Texture = "FONTA25"; } # 9
+}
+
+Composite BitmapFont {
   ID = "game:smallin";
   048 { Texture = "SMALLIN0"; } # 0
   049 { Texture = "SMALLIN1"; } # 1

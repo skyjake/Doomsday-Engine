@@ -38,6 +38,8 @@
 #include "b_util.h"
 #include "b_context.h"
 
+#include "net_main.h" // netGame
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -269,7 +271,13 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
 
-    if(!Str_CompareIgnoreCase(str, "modifier"))
+    if(!Str_CompareIgnoreCase(str, "multiplayer"))
+    {
+        // This is only intended for multiplayer games.
+        cond->type = SCT_STATE;
+        cond->flags.multiplayer = true;
+    }
+    else if(!Str_CompareIgnoreCase(str, "modifier"))
     {
         cond->device = 0; // not used
         cond->type = SCT_MODIFIER_STATE;
@@ -392,7 +400,7 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "not"))
     {
-        cond->negate = true;
+        cond->flags.negate = true;
     }
 
     // Anything left that wasn't used?
@@ -442,11 +450,16 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
 
 boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
 {
-    boolean fulfilled = !cond->negate;
+    boolean fulfilled = !cond->flags.negate;
     inputdev_t* dev = I_GetDevice(cond->device, false);
 
     switch(cond->type)
     {
+    case SCT_STATE:
+        if(cond->flags.multiplayer && netGame)
+            return fulfilled;
+        break;
+
     case SCT_MODIFIER_STATE:
         if(context)
         {
@@ -571,7 +584,14 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
  */
 void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 {
-    if(cond->type == SCT_MODIFIER_STATE)
+    if(cond->type == SCT_STATE)
+    {
+        if(cond->flags.multiplayer)
+        {
+            Str_Append(str, "multiplayer");
+        }
+    }
+    else if(cond->type == SCT_MODIFIER_STATE)
     {
         Str_Appendf(str, "modifier-%i", cond->id - CTL_MODIFIER_1 + 1);
     }
@@ -597,7 +617,7 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     }
 
     // Flags.
-    if(cond->negate)
+    if(cond->flags.negate)
     {
         Str_Append(str, "-not");
     }

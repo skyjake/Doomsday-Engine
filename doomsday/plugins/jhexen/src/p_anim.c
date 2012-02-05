@@ -33,17 +33,22 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
     boolean ignore = true, done;
     int groupNumber = 0;
     int texNumBase = -1;
-    Uri* path;
+    ddstring_t path;
+    Uri* uri;
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    path = Uri_New();
-    Uri_SetScheme(path, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
-    Uri_SetPath(path, sc_String);
-    texNumBase = R_TextureUniqueId2(path, !isCustom);
+    uri = Uri_New();
+    Uri_SetScheme(uri, isTexture? TN_TEXTURES_NAME : TN_FLATS_NAME);
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, sc_String));
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+
+    texNumBase = R_TextureUniqueId2(uri, !isCustom);
     if(texNumBase != -1)
         ignore = false;
 
@@ -77,7 +82,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
                 }
                 else
                 {
-                    Uri_Delete(path);
+                    Uri_Delete(uri);
                     SC_ScriptError(0);
                 }
 
@@ -108,7 +113,7 @@ static void parseAnimGroup(boolean isTexture, boolean isCustom)
         }
     } while(!done);
 
-    Uri_Delete(path);
+    Uri_Delete(uri);
 }
 
 void P_InitPicAnims(void)

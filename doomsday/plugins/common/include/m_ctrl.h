@@ -31,8 +31,6 @@
 
 #include "hu_lib.h"
 
-extern mn_page_t ControlsMenu;
-
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuControlGrabDrawer(const char* niceName, float alpha);
@@ -47,6 +45,9 @@ typedef struct mndata_bindings_s {
     const char* command;
     int flags;
 } mndata_bindings_t;
+
+mn_object_t* MNBindings_New(void);
+void MNBindings_Delete(mn_object_t* ob);
 
 const char* MNBindings_ControlName(mn_object_t* obj);
 

@@ -646,11 +646,11 @@ void IN_Drawer(void)
 
 void IN_DrawStatBack(void)
 {
-    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MN_FLATS_NAME":FLOOR16")));
+    DGL_SetMaterialUI(P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(MN_FLATS_NAME":FLOOR16")), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+    DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

@@ -391,7 +391,7 @@ int Cht_WarpFunc(const int* args, int player)
     }
 
     uri = G_ComposeMapUri(0, map);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if(!P_MapExists(Str_Text(path)))
     {
         Str_Delete(path);
