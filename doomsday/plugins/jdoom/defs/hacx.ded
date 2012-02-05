@@ -16,6 +16,7 @@ Include "hacx/materials.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
 Include "hacx/menu.ded";
+Include "hacx/hud.ded";
 Include "hacx/inlude.ded";
 Include "hacx/lights.ded";
 
