@@ -89,7 +89,7 @@ Material Mods "textures:ZZZFACE1" {
 }
 
 # Laser trip wire:
-Material Mods "textures:BLAKWALL1" {
+Material Mods "textures:BLAKWAL1" {
   Layer {
       Stage { Glow = 1.8; Tics = 17; Rnd = .8; }
       Stage { Glow = 1.6; Tics = 17; Rnd = .8; }
