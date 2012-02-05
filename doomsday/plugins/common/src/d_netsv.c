@@ -113,7 +113,6 @@ char    gameConfigString[128];
 static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
 static int cycleRulesCounter[MAXPLAYERS];
-static int oldPals[MAXPLAYERS];
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int oldClasses[MAXPLAYERS];
@@ -158,8 +157,8 @@ void NetSv_UpdateGameConfig(void)
  */
 void NetSv_Ticker(void)
 {
-    int                 i;
-    float               power;
+    float power;
+    int i;
 
     // Map rotation checker.
     NetSv_MapCycleTicker();
@@ -170,78 +169,7 @@ void NetSv_Ticker(void)
     // Set the camera filters for players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr;
-        int                 red, palette = 0;
-
-        if(!players[i].plr->inGame)
-            continue;
-        plr = &players[i];
-
-        red = plr->damageCount;
-#if __JDOOM__ || __JDOOM64__
-        if(plr->powers[PT_STRENGTH])
-        {
-            int         bz;
-            // Slowly fade the berzerk out.
-            bz = 12 - (plr->powers[PT_STRENGTH] >> 6);
-            if(bz > red)
-                red = bz;
-        }
-#endif
-
-        if(red)
-        {
-            palette = (red + 7) >> 3;
-            if(palette >= NUMREDPALS)
-            {
-                palette = NUMREDPALS - 1;
-            }
-            palette += STARTREDPALS;
-        }
-        else if(plr->bonusCount)
-        {
-            palette = (plr->bonusCount + 7) >> 3;
-            if(palette >= NUMBONUSPALS)
-            {
-                palette = NUMBONUSPALS - 1;
-            }
-            palette += STARTBONUSPALS;
-        }
-#if __JDOOM__ || __JDOOM64__
-        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-                plr->powers[PT_IRONFEET] & 8)
-        {
-            palette = 13; //RADIATIONPAL;
-        }
-#elif __JHEXEN__
-        else if(plr->poisonCount)
-        {
-            palette = (plr->poisonCount + 7) >> 3;
-            if(palette >= NUMPOISONPALS)
-            {
-                palette = NUMPOISONPALS - 1;
-            }
-            palette += STARTPOISONPALS;
-        }
-        else if(plr->plr->mo && plr->plr->mo->flags2 & MF2_ICEDAMAGE)
-        {
-            palette = STARTICEPAL;
-        }
-#endif
-
-        if(palette > 0)
-            plr->plr->flags |= DDPF_VIEW_FILTER;
-        else
-            plr->plr->flags &= ~DDPF_VIEW_FILTER;
-
-        // $democam
-        if(oldPals[i] != palette)
-        {   // The filter changes.
-            R_ViewFilterColor(plr->plr->filterColor, palette);
-            // If we are the server, we'll need inform the client.
-            //plr->plr->flags |= DDPF_FILTER;
-            oldPals[i] = palette;
-        }
+        R_UpdateViewFilter(i);
     }
 
     // Inform clients about jumping?
