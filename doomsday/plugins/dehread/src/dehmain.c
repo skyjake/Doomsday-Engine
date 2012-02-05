@@ -1209,15 +1209,16 @@ static int parseThing(int elementIndex)
         const char* label;
         size_t labelLen;
         statename_t name;
+        const char* ddayName;
     } stateNames[] = {
-        { "Initial",       7, SN_SPAWN },
-        { "First moving", 12, SN_SEE },
-        { "Injury",        6, SN_PAIN },
-        { "Close attack", 12, SN_MELEE },
-        { "Far attack",   10, SN_MISSILE },
-        { "Death",         5, SN_DEATH },
-        { "Exploding",     9, SN_XDEATH },
-        { "Respawn",       7, SN_RAISE },
+        { "Initial",       7, SN_SPAWN,   "Spawn" },
+        { "First moving", 12, SN_SEE,     "See" },
+        { "Injury",        6, SN_PAIN,    "Pain" },
+        { "Close attack", 12, SN_MELEE,   "Melee" },
+        { "Far attack",   10, SN_MISSILE, "Missile" },
+        { "Death",         5, SN_DEATH,   "Death" },
+        { "Exploding",     9, SN_XDEATH,  "XDeath" },
+        { "Respawn",       7, SN_RAISE,   "Raise" },
         { NULL }
     };
     // Flags can be specified by name (a .bex extension):
@@ -1334,11 +1335,20 @@ static int parseThing(int elementIndex)
 
                 for(i = 0; stateNames[i].label; ++i)
                 {
-                    if(!strnicmp(stateNames[i].label, Line1,
-                                 stateNames[i].labelLen))
+                    if(!strnicmp(stateNames[i].label, Line1, stateNames[i].labelLen))
                     {
-                        strcpy(info->states[stateNames[i].name],
-                               ded->states[value].id);
+                        if(value >= 0 && value < ded->count.states.num)
+                        {
+                            ded_state_t* state = &ded->states[value];
+#if _DEBUG
+                            VERBOSE2( LPrintf("Thing \"%s\" (#%i) State:%s is now \"%s\".\n", info->id, (int)thingNum, stateNames[i].ddayName, state->id) )
+#endif
+                            strcpy(info->states[stateNames[i].name], state->id);
+                        }
+                        else
+                        {
+                            LPrintf("Warning: Frame #%i out of range, ignoring...\n", value);
+                        }
                         break;
                     }
                 }
@@ -1538,11 +1548,36 @@ static int parseFrame(int stateNum)
         if(HandleKey(keys, info, Line1, value))
         {
             if(!stricmp(Line1, "Sprite number"))
-                Def_Set(DD_DEF_STATE, stateNum, DD_SPRITE, &value);
+            {
+                if(value >= 0 && value < ded->count.sprites.num)
+                {
+#if _DEBUG
+                    VERBOSE2( LPrintf("State \"%s\" (#%i) Sprite is now \"%s\".\n", info->id, (int)stateNum, ded->sprites[value].id) )
+#endif
+
+                    strcpy((char*) info->sprite.id, ded->sprites[value].id);
+                }
+                else
+                {
+                    LPrintf("Warning: Sprite #%i out of range, ignoring...\n", value);
+                }
+            }
             else if(!stricmp(Line1, "Sprite subnumber"))
-                Def_Set(DD_DEF_STATE, stateNum, DD_FRAME, &value);
+            {
+#define FF_FULLBRIGHT       0x8000
+
+                if(value & FF_FULLBRIGHT)
+                    info->flags |= STF_FULLBRIGHT;
+                else
+                    info->flags &= ~STF_FULLBRIGHT;
+                info->frame = value & ~FF_FULLBRIGHT;
+
+#undef FF_FULLBRIGHT
+            }
             else
+            {
                 LPrintf(unknown_str, Line1, "State", stateNum);
+            }
         }
     }
 
@@ -1728,7 +1763,7 @@ static int parsePointer(int ptrNum)
             const char* newAction = OrgActionNames[actionIdx];
 
 #if _DEBUG
-            VERBOSE( LPrintf("State (\"%s\" #%i) Action is now \"%s\".\n", def->id, (int)stateIdx, newAction) )
+            VERBOSE2( LPrintf("State \"%s\" (#%i) Action is now \"%s\".\n", def->id, (int)stateIdx, newAction) )
 #endif
             strcpy(def->action, newAction);
         }
