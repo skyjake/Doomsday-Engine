@@ -104,12 +104,12 @@ static void rendSpecialFilter(int player, const RectRaw* region)
 
 boolean R_ViewFilterColor(float rgba[4], int filter)
 {
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
@@ -118,7 +118,8 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
     }
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Gold.
+    {
+        // Gold.
         rgba[CR] = 1;
         rgba[CG] = .8f;
         rgba[CB] = .5f;
@@ -126,8 +127,9 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
         return true;
     }
 
-    if(filter == 13) // RADIATIONPAL
-    {   // Green.
+    if(filter == 13)
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;
@@ -146,7 +148,7 @@ void R_UpdateViewFilter(int player)
 #define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
     player_t* plr = players + player;
-    int palette = 0, cnt, bzc;
+    int palette = 0, cnt;
 
     if(player < 0 || player >= MAXPLAYERS)
     {
@@ -162,26 +164,35 @@ void R_UpdateViewFilter(int player)
     cnt = plr->damageCount;
 
     if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
+    {
+        // Slowly fade the berzerk out.
+        int bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
+        cnt = MAX_OF(cnt, bzc);
     }
 
     if(cnt)
     {
-        palette = (cnt + 7) >> 3;
+        // In Chex Quest the green palette shift is used instead (perhaps to
+        // suggest the player is being covered in goo?).
+        if(gameMode == doom_chex)
+        {
+            palette = RADIATIONPAL;
+        }
+        else
+        {
+            palette = (cnt + 7) >> 3;
+            if(palette >= NUMREDPALS)
+                palette = NUMREDPALS - 1;
 
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-        palette += STARTREDPALS;
+            palette += STARTREDPALS;
+        }
     }
     else if(plr->bonusCount)
     {
         palette = (plr->bonusCount + 7) >> 3;
         if(palette >= NUMBONUSPALS)
             palette = NUMBONUSPALS - 1;
+
         palette += STARTBONUSPALS;
     }
     else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
