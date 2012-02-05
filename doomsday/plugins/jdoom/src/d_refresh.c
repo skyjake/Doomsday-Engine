@@ -119,11 +119,24 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
     {
-        // Gold.
-        rgba[CR] = 1;
-        rgba[CG] = .8f;
-        rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        if(gameMode == doom2_hacx)
+        {
+            // The original palette shift desaturates everything evenly.
+            // Rather than mess with this right now when we'll be replacing
+            // all the filter stuff entirely soon enough - simply use gray.
+            rgba[CR] = .5f;
+            rgba[CG] = .5f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        }
+        else
+        {
+            // Gold.
+            rgba[CR] = 1;
+            rgba[CG] = .8f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        }
         return true;
     }
 
