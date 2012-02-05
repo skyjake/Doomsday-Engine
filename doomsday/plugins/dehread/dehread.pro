@@ -9,6 +9,8 @@ TARGET = dpdehread
 
 VERSION = $$DEHREAD_VERSION
 
+INCLUDEPATH += include
+
 HEADERS += include/version.h
 
 SOURCES += src/dehmain.c
