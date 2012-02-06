@@ -1,29 +1,23 @@
-/**\file gl_tex.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Image manipulation and evaluation algorithms.
+ * @file gl_tex.h
+ * Image manipulation and evaluation algorithms. @ingroup gl
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_IMAGE_MANIPULATION_H
@@ -88,7 +82,7 @@ void ColorOutlinesIdx(uint8_t* pixels, int width, int height);
 void Desaturate(uint8_t* pixels, int width, int height, int pixelSize);
 
 /**
- * \important Does not conform to any standard technique and adjustments
+ * @important Does not conform to any standard technique and adjustments
  * are applied symmetrically for all color components.
  *
  * @param pixels  RGB(a) image to be enhanced.
@@ -102,7 +96,7 @@ void EnhanceContrast(uint8_t* pixels, int width, int height, int pixelSize);
  * Equalize the specified luminance map such that the minimum and maximum
  * brightness covers the whole [0...255] range.
  *
- * \algorithm Calculates shift deltas for bright and dark-side pixels by
+ * @algorithm Calculates shift deltas for bright and dark-side pixels by
  * averaging the luminosity of all pixels in the original image.
  *
  * @param pixels  Luminance image to equalize.
@@ -154,7 +148,7 @@ void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.
- * \algorithm: Cross spread from bottom > top, right > left (inside out).
+ * @algorithm: Cross spread from bottom > top, right > left (inside out).
  *
  * @param pixels  Image data to be processed.
  * @param width  Width of the image in pixels.
@@ -217,4 +211,4 @@ boolean GL_QuantizeImageToPalette(uint8_t* out, int outformat,
 void GL_DeSaturatePalettedImage(uint8_t* buffer, struct colorpalette_s* palette,
     int width, int height);
 
-#endif /* LIBDENG_IMAGE_MANIPULATION_H */
+#endif /// LIBDENG_IMAGE_MANIPULATION_H
