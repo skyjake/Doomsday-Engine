@@ -515,7 +515,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_SIZE:
-        if(!appShutdown)
+        if(!Sys_IsShuttingDown())
         {
             switch(wParam)
             {
@@ -599,7 +599,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATE:
-        if(!appShutdown)
+        if(!Sys_IsShuttingDown())
         {
             if(LOWORD(wParam) == WA_ACTIVE || (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
             {

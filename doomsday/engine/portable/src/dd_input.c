@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_infine.h"
@@ -38,6 +39,7 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "con_busy.h"
 #include "gl_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -93,6 +95,10 @@ boolean shiftDown = false, altDown = false;
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+#ifdef WIN32
+static boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
+#endif
 
 static boolean ignoreInput = false;
 
@@ -968,11 +974,46 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
     }
 }
 
+#ifdef WIN32
+void DD_Win32_SuspendMessagePump(boolean suspend)
+{
+    suspendMsgPump = suspend;
+}
+#endif
+
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
 static void postEvents(timespan_t ticLength)
 {
+#ifdef WIN32
+    if(!Con_IsBusyWorker())
+    {
+        MSG msg;
+
+        /**
+         * Checking native Windows messages. This must be in the same thread as
+         * that which registered the window it is handling messages for (main
+         * thread).
+         */
+        while(!suspendMsgPump &&
+              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+        {
+            if(msg.message == WM_QUIT)
+            {
+                DD_Win32_SuspendMessagePump(true);
+                DD_SetGameLoopExitCode(msg.wParam);
+                Sys_Quit();
+            }
+            else
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+    }
+#endif
+
     if(ArgExists("-noinput")) return;
 
     DD_ReadKeyboard();
@@ -987,6 +1028,7 @@ static void postEvents(timespan_t ticLength)
 
 /**
  * Process all incoming input for the given timestamp.
+ * This is called only in the main thread, and also from the busy loop.
  *
  * This gets called at least 35 times per second. Usually more frequently
  * than that.

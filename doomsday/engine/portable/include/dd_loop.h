@@ -29,11 +29,6 @@
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
 
-extern boolean appShutdown;
-#ifdef WIN32
-extern boolean suspendMsgPump;
-#endif
-
 extern int rFrameCount;
 extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
 extern boolean tickFrame;
@@ -47,5 +42,6 @@ float           DD_GetFrameRate(void);
 void            DD_ResetTimer(void);
 boolean         DD_IsSharpTick(void);
 boolean         DD_IsFrameTimeAdvancing(void);
+void            DD_SetGameLoopExitCode(int code);
 
 #endif
