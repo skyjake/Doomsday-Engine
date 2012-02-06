@@ -348,7 +348,8 @@ boolean Dir_mkpath(const char* path)
             M_StrCat(buf, ptr, FILENAME_T_MAXLEN);
         else
             M_StrnCat(buf, ptr, endptr - ptr, FILENAME_T_MAXLEN);
-        if(access(buf, 0))
+
+        if(buf[0] && access(buf, 0))
         {
             // Path doesn't exist, create it.
 #if defined(WIN32)

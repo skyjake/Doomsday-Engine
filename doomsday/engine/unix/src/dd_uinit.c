@@ -242,7 +242,7 @@ static void determineGlobalPaths(application_t* app)
     {
         filename_t homePath;
         directory_t* temp;
-        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.deng/", getenv("HOME"));
+        dd_snprintf(homePath, FILENAME_T_MAXLEN, "%s/.doomsday/runtime/", getenv("HOME"));
         temp = Dir_New(homePath);
         Dir_mkpath(Dir_Path(temp));
         app->usingHomeDir = Dir_SetCurrent(Dir_Path(temp));

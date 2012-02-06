@@ -1308,6 +1308,12 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     sfragment = PathMap_Fragment(searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
+//#ifdef _DEBUG
+//#  define EXIT_POINT(ep) fprintf(stderr, "MatchDirectory exit point %i\n", ep)
+//#else
+#  define EXIT_POINT(ep)
+//#endif
+
     // In reverse order, compare path fragments in the search term.
     fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
@@ -1318,7 +1324,10 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
             dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
             fragment = PathDirectory_GetFragment(pd, node);
             if(!F_MatchFileName(Str_Text(fragment), buf))
+            {
+                EXIT_POINT(1);
                 return false;
+            }
         }
         else
         {
@@ -1330,10 +1339,13 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
 
                 // If the hashes don't match it can't possibly be this.
                 if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+                {
+                    EXIT_POINT(2);
                     return false;
+                }
 
                 // Determine length of the sfragment.
-                if(sfragment->to == sfragment->from && sfragment->from == "")
+                if(!strcmp(sfragment->to, "") && !strcmp(sfragment->from, ""))
                     sfraglen = 0;
                 else
                     sfraglen = (sfragment->to - sfragment->from) + 1;
@@ -1342,23 +1354,35 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
                 fragment = PathDirectory_GetFragment(pd, node);
                 if(Str_Length(fragment) < sfraglen ||
                    strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
+                {
+                    EXIT_POINT(3);
                     return false;
+                }
             }
         }
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)
+        {
+            EXIT_POINT(4);
             return (!(flags & PCF_MATCH_FULL) || !PathDirectoryNode_Parent(node));
+        }
 
         // Are there no more parent directories?
         if(!PathDirectoryNode_Parent(node))
+        {
+            EXIT_POINT(5);
             return false;
+        }
 
         // So far so good. Move one directory level upwards.
         node = PathDirectoryNode_Parent(node);
         sfragment = PathMap_Fragment(searchPattern, i+1);
     }
+    EXIT_POINT(6);
     return false;
+
+#undef EXIT_POINT
 }
 
 void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)

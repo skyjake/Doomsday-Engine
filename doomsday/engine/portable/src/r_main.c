@@ -180,8 +180,14 @@ static fontid_t loadSystemFont(const char* name)
     // Compose the resource data path.
     // \todo This is currently rather awkward due
     Str_Init(&resourcePath);
-    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);
+    Str_Appendf(&resourcePath, "}data/"FONTS_RESOURCE_NAMESPACE_NAME"/%s.dfn", name);    
+#if defined(UNIX) && !defined(MACOSX)
+    // Case-sensitive file system.
+    /// @todo Unkludge this: handle in a more generic manner.
+    strlwr(resourcePath.str);
+#endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
+
 
     font = R_CreateFontFromFile(uri, Str_Text(&resourcePath));
     Str_Free(&resourcePath);
