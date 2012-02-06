@@ -170,7 +170,7 @@ char* M_StrnCat(char* buf, const char* str, size_t nChars, size_t bufSize)
 {
     int n = nChars;
     int destLen = strlen(buf);
-    if((int)bufSize - destLen - 1 > n)
+    if((int)bufSize - destLen - 1 < n)
     {
         // Cannot copy more than fits in the buffer.
         // The 1 is for the null character.
