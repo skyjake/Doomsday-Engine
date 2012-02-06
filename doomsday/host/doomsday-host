@@ -126,7 +126,7 @@ def timeInRange(mark, start, end):
         return (time.strftime('%a', gt),
                 time.strftime('%H', gt),
                 time.strftime('%M', gt))
-    def mins(h, m): return m + 60 * h
+    def mins(h, m): return int(m) + 60 * int(h)
         
     s = breakTime(start)
     e = breakTime(end)
