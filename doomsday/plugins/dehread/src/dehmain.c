@@ -90,7 +90,7 @@ static int parseStrings(int);
 static int parsePars(int);
 static int parseCodePtr(int);
 static int parseInclude(int);
-void ApplyDEH(char* patch, int length);
+static void ApplyDEH(char* patch, int length);
 
 ded_t* ded;
 
