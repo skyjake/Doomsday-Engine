@@ -73,10 +73,14 @@ float quitDarkenOpacity = 0;
 static void rendSpecialFilter(int player, const RectRaw* region)
 {
     player_t* plr = players + player;
-    const int filter = plr->powers[PT_INVULNERABILITY];
     float max = 30, str, r, g, b;
+    int filter;
     assert(region);
 
+    // In HacX a simple blue shift is used instead.
+    if(gameMode == doom2_hacx) return;
+
+    filter = plr->powers[PT_INVULNERABILITY];
     if(!filter) return;
 
     if(filter < max)
@@ -113,7 +117,18 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        return true;
+    }
+
+    if(gameMode == doom2_hacx &&
+       filter >= STARTINVULPALS && filter < STARTINVULPALS + NUMINVULPALS)
+    {
+        // Blue.
+        rgba[CR] = .16f;
+        rgba[CG] = .16f;
+        rgba[CB] = .92f;
+        rgba[CA] = cfg.filterStrength * .98f * (filter - STARTINVULPALS + 1) / (float)NUMINVULPALS;
         return true;
     }
 
@@ -127,7 +142,7 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
             rgba[CR] = .5f;
             rgba[CG] = .5f;
             rgba[CB] = .5f;
-            rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
         }
         else
         {
@@ -135,7 +150,7 @@ boolean R_ViewFilterColor(float rgba[4], int filter)
             rgba[CR] = 1;
             rgba[CG] = .8f;
             rgba[CB] = .5f;
-            rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
         }
         return true;
     }
@@ -161,7 +176,7 @@ void R_UpdateViewFilter(int player)
 #define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
     player_t* plr = players + player;
-    int palette = 0, cnt;
+    int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
     {
@@ -174,44 +189,66 @@ void R_UpdateViewFilter(int player)
     // Not currently present?
     if(!plr->plr->inGame) return;
 
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
+    if(gameMode == doom2_hacx && plr->powers[PT_INVULNERABILITY])
     {
-        // Slowly fade the berzerk out.
-        int bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-        cnt = MAX_OF(cnt, bzc);
+        // A blue shift is used in HacX.
+        const int max = 10;
+        const int cnt = plr->powers[PT_INVULNERABILITY];
+
+        if(cnt < max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)cnt / max);
+        else if(cnt < 4 * 32 && !(cnt & 8))
+            palette = .5f + (NUMINVULPALS-1) * .7f;
+        else if(cnt > INVULNTICS - max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)(INVULNTICS - cnt) / max);
+        else
+            palette = NUMINVULPALS-1; // Full shift.
+
+        if(palette >= NUMINVULPALS)
+            palette = NUMINVULPALS - 1;
+        palette += STARTINVULPALS;
     }
-
-    if(cnt)
+    else
     {
-        // In Chex Quest the green palette shift is used instead (perhaps to
-        // suggest the player is being covered in goo?).
-        if(gameMode == doom_chex)
+        int cnt = plr->damageCount;
+
+        if(plr->powers[PT_STRENGTH])
+        {
+            // Slowly fade the berzerk out.
+            int bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
+            cnt = MAX_OF(cnt, bzc);
+        }
+
+        if(cnt)
+        {
+            // In Chex Quest the green palette shift is used instead (perhaps to
+            // suggest the player is being covered in goo?).
+            if(gameMode == doom_chex)
+            {
+                palette = RADIATIONPAL;
+            }
+            else
+            {
+                palette = (cnt + 7) >> 3;
+                if(palette >= NUMREDPALS)
+                    palette = NUMREDPALS - 1;
+
+                palette += STARTREDPALS;
+            }
+        }
+        else if(plr->bonusCount)
+        {
+            palette = (plr->bonusCount + 7) >> 3;
+            if(palette >= NUMBONUSPALS)
+                palette = NUMBONUSPALS - 1;
+
+            palette += STARTBONUSPALS;
+        }
+        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+                plr->powers[PT_IRONFEET] & 8)
         {
             palette = RADIATIONPAL;
         }
-        else
-        {
-            palette = (cnt + 7) >> 3;
-            if(palette >= NUMREDPALS)
-                palette = NUMREDPALS - 1;
-
-            palette += STARTREDPALS;
-        }
-    }
-    else if(plr->bonusCount)
-    {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
     }
 
     // $democam
