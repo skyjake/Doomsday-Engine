@@ -743,7 +743,7 @@ float R_ShadowStrength(mobj_t* mo)
             // We use an average which factors in the coverage ratio
             // of alpha:non-alpha pixels.
             /// @todo Constant weights could stand some tweaking...
-            weightedSpriteAlpha = aa->alpha * 0.4f + (1-aa->coverage) * 0.6f;
+            weightedSpriteAlpha = aa->alpha * (0.4f + (1-aa->coverage) * 0.6f);
 
             // Almost entirely translucent sprite? => no shadow.
             if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
