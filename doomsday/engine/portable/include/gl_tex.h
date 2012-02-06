@@ -38,6 +38,11 @@ typedef struct averagecolor_analysis_s {
     ColorRawf color;
 } averagecolor_analysis_t;
 
+typedef struct averagealpha_analysis_s {
+    float alpha; ///< Result of the average.
+    float coverage; ///< Fraction representing the ratio of alpha to non-alpha pixels.
+} averagealpha_analysis_t;
+
 /**
  * @param pixels  Luminance image to be enhanced.
  * @param width  Width of the image in pixels.
@@ -145,6 +150,27 @@ void FindAverageLineColor(const uint8_t* pixels, int width, int height,
  */
 void FindAverageLineColorIdx(const uint8_t* pixels, int width, int height,
     int line, const struct colorpalette_s* palette, boolean hasAlpha, ColorRawf* color);
+
+/**
+ * @param pixels  RGB(a) image to evaluate.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
+ * @param alpha  Determined average alpha written here.
+ * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
+ */
+void FindAverageAlpha(const uint8_t* pixels, int width, int height, int pixelSize,
+    float* alpha, float* coverage);
+
+/**
+ * @param pixels  Index-color image to evaluate.
+ * @param width  Width of the image in pixels.
+ * @param height  Height of the image in pixels.
+ * @param palette  Color palette to use.
+ * @param alpha  Determined average alpha written here.
+ * @param coverage  Fraction representing the ratio of alpha to non-alpha pixels.
+ */
+void FindAverageAlphaIdx(const uint8_t* pixels, int width, int height,
+    const struct colorpalette_s* palette, float* alpha, float* coverage);
 
 /**
  * Calculates a clip region for the image that excludes alpha pixels.

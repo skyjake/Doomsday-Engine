@@ -34,6 +34,7 @@ typedef enum {
     TA_SPRITE_AUTOLIGHT,
     TA_COLOR,                  ///< Average.
     TA_COLOR_AMPLIFIED,        ///< Average amplified (max component ==1).
+    TA_ALPHA,                  ///< Average.
     TA_LINE_TOP_COLOR,         ///< Average.
     TA_LINE_BOTTOM_COLOR,      ///< Average.
     TEXTURE_ANALYSIS_COUNT

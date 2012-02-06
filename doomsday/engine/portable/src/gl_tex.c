@@ -1024,6 +1024,90 @@ void FindAverageColorIdx(const uint8_t* data, int w, int h, const colorpalette_t
                        avg[CB] / count * reciprocal255);
 }
 
+void FindAverageAlpha(const uint8_t* pixels, int width, int height,
+    int pixelSize, float* alpha, float* coverage)
+{
+    long i, numPels, avg = 0, alphaCount = 0;
+    const uint8_t* src;
+
+    if(!pixels || !alpha) return;
+
+    if(width <= 0 || height <= 0)
+    {
+        // Transparent.
+        *alpha = 0;
+        if(coverage) *coverage = 1;
+        return;
+    }
+
+    if(pixelSize != 3 && pixelSize != 4)
+    {
+#if _DEBUG
+        Con_Error("FindAverageAlpha: Attempted on non-rgb(a) image (pixelSize=%i).", pixelSize);
+#endif
+        // Assume opaque.
+        *alpha = 1;
+        if(coverage) *coverage = 0;
+        return;
+    }
+
+    if(pixelSize == 3)
+    {
+        // Opaque. Well that was easy...
+        *alpha = 1;
+        if(coverage) *coverage = 0;
+        return;
+    }
+
+    numPels = width * height;
+    src = pixels;
+    for(i = 0; i < numPels; ++i, src += 4)
+    {
+        const uint8_t val = src[CA];
+        avg += val;
+        if(val < 255) alphaCount++;
+    }
+
+    *alpha = avg / numPels * reciprocal255;
+
+    // Calculate coverage?
+    if(coverage) *coverage = (float)alphaCount / numPels;
+}
+
+void FindAverageAlphaIdx(const uint8_t* pixels, int w, int h, const colorpalette_t* palette,
+    float* alpha, float* coverage)
+{
+    long i, numPels, avg = 0, alphaCount = 0;
+    const uint8_t* alphaStart;
+
+    if(!pixels || !alpha) return;
+
+    if(w <= 0 || h <= 0)
+    {
+        // Transparent.
+        *alpha = 0;
+        if(coverage) *coverage = 1;
+        return;
+    }
+
+    numPels = w * h;
+    alphaStart = pixels + numPels;
+    for(i = 0; i < numPels; ++i)
+    {
+        const uint8_t val = alphaStart[i];
+        avg += val;
+        if(val < 255)
+        {
+            alphaCount++;
+        }
+    }
+
+    *alpha = avg / numPels * reciprocal255;
+
+    // Calculate coverage?
+    if(coverage) *coverage = (float)alphaCount / numPels;
+}
+
 void FindClipRegionNonAlpha(const uint8_t* buffer, int width, int height,
     int pixelsize, int retRegion[4])
 {
