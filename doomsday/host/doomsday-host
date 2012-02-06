@@ -19,6 +19,7 @@ from xml.dom.minidom import parse
 def homeFile(fn):
     return os.path.join(os.getenv('HOME'), fn)
 
+doomsdayBinary = 'doomsday'
 commonOptions = []
 rebuildTimes = []
 branch = 'master'
@@ -87,6 +88,7 @@ def parseServers(nodes):
 def parseConfig(fn):
     global commonOptions
     global rebuildTimes
+    global doomsdayBinary
     global mainLogFileName
     global branch
     global servers
@@ -101,6 +103,7 @@ def parseConfig(fn):
     rebuildTimes = \
         parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
         
+    doomsdayBinary = getContent(cfg.getElementsByTagName('doomsday')[0])
     mainLogFileName = getContent(cfg.getElementsByTagName('logFile')[0])
     branch = getContent(cfg.getElementsByTagName('branch')[0])
     buildDir = getContent(cfg.getElementsByTagName('buildDir')[0])
@@ -114,7 +117,7 @@ def parseConfig(fn):
 def isStale(fn):
     """Files are considered stale after some time has passed."""
     age = time.time() - os.stat(fn).st_ctime
-    if age > 2*60*60:
+    if age > 60*60:
         msg(fn + ' is stale, ignoring it.')
         return True
     return False
@@ -190,7 +193,7 @@ class State:
             msg('Server %i already running according to state!' % (sv.port))
             return
         
-        args = ['/usr/bin/doomsday']
+        args = [doomsdayBinary]
         
         cfgFn = homeFile('server%i.cfg' % sv.port)
         cfgFile = file(cfgFn, 'wt')
@@ -248,11 +251,11 @@ def rebuildAndInstall():
         os.chdir(buildDir)
         run('git checkout ' + branch)
         run('git pull')
-        run('sudo make uninstall', mustSucceed=False)
+        run('make uninstall', mustSucceed=False)
         run('make clean')
         run(qmakeCommand)
         run('make')
-        run('sudo make install')
+        run('make install')
     except Exception:
         msg('Failed to build!')
         return False
