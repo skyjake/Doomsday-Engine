@@ -45,8 +45,10 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-//int       systics = 0;    // System tics (every game tic).
 int novideo;                // if true, stay in text mode for debugging
+
+static boolean appShutdown = false; // Set to true when we should exit (normally).
+
 
 #ifdef WIN32
 /**
@@ -156,19 +158,19 @@ static int showCriticalMessage(const char* msg)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP, TEXT("Sys_CriticalMessage: Main window not available."),
                    NULL, MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return false;
     }
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, buf, 255);
     ret = (MessageBox(hWnd, WIN_STRING(msg), buf, MB_OK | MB_ICONEXCLAMATION) == IDYES);
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
     ShowCursor(FALSE);
     ShowCursor(FALSE);
     return ret;
@@ -265,19 +267,19 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP,
                    TEXT("Sys_MessageBox: Main window not available."), NULL,
                    MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return;
     }
 
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, title, 300);
     MessageBox(hWnd, WIN_STRING(msg), title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
 #endif
 #ifdef UNIX
     fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);

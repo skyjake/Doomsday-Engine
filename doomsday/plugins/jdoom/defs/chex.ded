@@ -16,6 +16,10 @@ Include "chex/finales.ded";
 # Chex Quest's fonts use the same Patch identifiers/names as Doom
 Include "doom1/fonts.ded";
 
+# Use the same patch replacments as Doom
+Include "doom1/menu.ded";
+Include "doom1/inlude.ded";
+
 Include "chex/text.ded";
 Include "chex/lights.ded";
 Include "chex/materials.ded";

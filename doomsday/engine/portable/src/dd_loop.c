@@ -80,11 +80,6 @@ void            DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean appShutdown = false; // Set to true when we should exit (normally).
-#ifdef WIN32
-boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
-
 int maxFrameRate = 200; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
@@ -99,6 +94,8 @@ boolean tickFrame = true; // If false frame tickers won't be tick'd (unless netG
 boolean drawGame = true; // If false the game viewport won't be rendered
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static int gameLoopExitCode = 0;
 
 static double lastFrameTime;
 static float fps;
@@ -120,56 +117,35 @@ void DD_RegisterLoop(void)
               CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
 }
 
+void DD_SetGameLoopExitCode(int code)
+{
+    gameLoopExitCode = code;
+}
+
 /**
  * This is the refresh thread (the main thread).
  */
 int DD_GameLoop(void)
 {
-    int                 exitCode = 0;
-#ifdef WIN32
-    MSG                 msg;
-#endif
-
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
     {
         maxFrameRate = 35;
     }
 
-    while(!appShutdown)
+    while(!Sys_IsShuttingDown())
     {
-#ifdef WIN32
-        /**
-         * Start by checking Windows messages.
-         * \note Must be in the same thread as that which registered the
-         *       window it is handling messages for - DJS.
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                appShutdown = true;
-                suspendMsgPump = true;
-                exitCode = msg.wParam;
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-
-        if(appShutdown)
-            continue;
-#endif
-
         // Frame syncronous I/O operations.
         DD_StartFrame();
 
         // Run at least one tic. If no tics are available (maxfps interval
         // not reached yet), the function blocks.
         DD_RunTics();
+
+        // We may have received a Quit message from the windowing system
+        // during events/tics processing.
+        if(Sys_IsShuttingDown())
+            continue;
 
         // Update clients.
         Sv_TransmitFrame();
@@ -186,7 +162,7 @@ int DD_GameLoop(void)
         DD_CheckTimeDemo();
     }
 
-    return exitCode;
+    return gameLoopExitCode;
 }
 
 /**

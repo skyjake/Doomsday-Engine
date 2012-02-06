@@ -1430,16 +1430,17 @@ void P_PlayerThinkPsprites(player_t *player)
 
 void P_PlayerThinkHUD(player_t* player)
 {
-    playerbrain_t*      brain = &player->brain;
+    uint playerIdx = player - players;
+    playerbrain_t* brain = &player->brain;
 
     if(brain->hudShow)
-        ST_HUDUnHide(player - players, HUE_FORCE);
+        ST_HUDUnHide(playerIdx, HUE_FORCE);
 
     if(brain->scoreShow)
-        HU_ScoreBoardUnHide(player - players);
+        HU_ScoreBoardUnHide(playerIdx);
 
     if(brain->logRefresh)
-        ST_LogRefresh(player - players);
+        ST_LogRefresh(playerIdx);
 }
 
 void P_PlayerThinkMap(player_t* player)

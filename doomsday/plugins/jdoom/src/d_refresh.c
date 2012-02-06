@@ -73,10 +73,14 @@ float quitDarkenOpacity = 0;
 static void rendSpecialFilter(int player, const RectRaw* region)
 {
     player_t* plr = players + player;
-    const int filter = plr->powers[PT_INVULNERABILITY];
     float max = 30, str, r, g, b;
+    int filter;
     assert(region);
 
+    // In HacX a simple blue shift is used instead.
+    if(gameMode == doom2_hacx) return;
+
+    filter = plr->powers[PT_INVULNERABILITY];
     if(!filter) return;
 
     if(filter < max)
@@ -104,30 +108,56 @@ static void rendSpecialFilter(int player, const RectRaw* region)
 
 boolean R_ViewFilterColor(float rgba[4], int filter)
 {
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        return true;
+    }
+
+    if(gameMode == doom2_hacx &&
+       filter >= STARTINVULPALS && filter < STARTINVULPALS + NUMINVULPALS)
+    {
+        // Blue.
+        rgba[CR] = .16f;
+        rgba[CG] = .16f;
+        rgba[CB] = .92f;
+        rgba[CA] = cfg.filterStrength * .98f * (filter - STARTINVULPALS + 1) / (float)NUMINVULPALS;
         return true;
     }
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Gold.
-        rgba[CR] = 1;
-        rgba[CG] = .8f;
-        rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+    {
+        if(gameMode == doom2_hacx)
+        {
+            // The original palette shift desaturates everything evenly.
+            // Rather than mess with this right now when we'll be replacing
+            // all the filter stuff entirely soon enough - simply use gray.
+            rgba[CR] = .5f;
+            rgba[CG] = .5f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
+        }
+        else
+        {
+            // Gold.
+            rgba[CR] = 1;
+            rgba[CG] = .8f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
+        }
         return true;
     }
 
-    if(filter == 13) // RADIATIONPAL
-    {   // Green.
+    if(filter == 13)
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;
@@ -146,7 +176,7 @@ void R_UpdateViewFilter(int player)
 #define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
     player_t* plr = players + player;
-    int palette = 0, cnt, bzc;
+    int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
     {
@@ -159,35 +189,66 @@ void R_UpdateViewFilter(int player)
     // Not currently present?
     if(!plr->plr->inGame) return;
 
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
-    }
-
-    if(cnt)
+    if(gameMode == doom2_hacx && plr->powers[PT_INVULNERABILITY])
     {
-        palette = (cnt + 7) >> 3;
+        // A blue shift is used in HacX.
+        const int max = 10;
+        const int cnt = plr->powers[PT_INVULNERABILITY];
 
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-        palette += STARTREDPALS;
+        if(cnt < max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)cnt / max);
+        else if(cnt < 4 * 32 && !(cnt & 8))
+            palette = .5f + (NUMINVULPALS-1) * .7f;
+        else if(cnt > INVULNTICS - max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)(INVULNTICS - cnt) / max);
+        else
+            palette = NUMINVULPALS-1; // Full shift.
+
+        if(palette >= NUMINVULPALS)
+            palette = NUMINVULPALS - 1;
+        palette += STARTINVULPALS;
     }
-    else if(plr->bonusCount)
+    else
     {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
+        int cnt = plr->damageCount;
+
+        if(plr->powers[PT_STRENGTH])
+        {
+            // Slowly fade the berzerk out.
+            int bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
+            cnt = MAX_OF(cnt, bzc);
+        }
+
+        if(cnt)
+        {
+            // In Chex Quest the green palette shift is used instead (perhaps to
+            // suggest the player is being covered in goo?).
+            if(gameMode == doom_chex)
+            {
+                palette = RADIATIONPAL;
+            }
+            else
+            {
+                palette = (cnt + 7) >> 3;
+                if(palette >= NUMREDPALS)
+                    palette = NUMREDPALS - 1;
+
+                palette += STARTREDPALS;
+            }
+        }
+        else if(plr->bonusCount)
+        {
+            palette = (plr->bonusCount + 7) >> 3;
+            if(palette >= NUMBONUSPALS)
+                palette = NUMBONUSPALS - 1;
+
+            palette += STARTBONUSPALS;
+        }
+        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+                plr->powers[PT_IRONFEET] & 8)
+        {
+            palette = RADIATIONPAL;
+        }
     }
 
     // $democam

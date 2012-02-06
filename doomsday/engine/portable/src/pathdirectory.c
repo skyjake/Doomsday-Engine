@@ -1326,13 +1326,21 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
 
             if(!isWild)
             {
+                int sfraglen = 0;
+
                 // If the hashes don't match it can't possibly be this.
                 if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
                     return false;
 
+                // Determine length of the sfragment.
+                if(sfragment->to == sfragment->from && sfragment->from == "")
+                    sfraglen = 0;
+                else
+                    sfraglen = (sfragment->to - sfragment->from) + 1;
+
                 // Compare the path fragment to that of the search term.
                 fragment = PathDirectory_GetFragment(pd, node);
-                if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
+                if(Str_Length(fragment) < sfraglen ||
                    strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
                     return false;
             }

@@ -41,8 +41,6 @@ typedef struct {
 #else
     LPCSTR className;
 #endif
-    BOOL suspendMsgPump; /// @c true = do not pump the Windows message thread.
-
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 

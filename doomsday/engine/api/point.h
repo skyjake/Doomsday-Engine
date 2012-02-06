@@ -66,7 +66,8 @@ void Point2_SetY(Point2* point, int y);
 const int* Point2_XY(const Point2* point);
 void Point2_SetXY(Point2* point, int x, int y);
 
-void Point2_Translate(Point2* point, int x, int y);
+void Point2_Translate(Point2* point, const Point2Raw* delta);
+void Point2_TranslateXY(Point2* point, int x, int y);
 void Point2_TranslateX(Point2* point, int x);
 void Point2_TranslateY(Point2* point, int y);
 
@@ -115,7 +116,8 @@ void Point2f_SetY(Point2f* point, double y);
 const double* Point2f_XY(const Point2f* point);
 void Point2f_SetXY(Point2f* point, double x, double y);
 
-void Point2f_Translate(Point2f* point, double x, double y);
+void Point2f_Translate(Point2f* point, const Point2Rawf* delta);
+void Point2f_TranslateXY(Point2f* point, double x, double y);
 void Point2f_TranslateX(Point2f* point, double x);
 void Point2f_TranslateY(Point2f* point, double y);
 

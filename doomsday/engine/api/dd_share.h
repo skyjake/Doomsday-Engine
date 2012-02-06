@@ -1096,7 +1096,7 @@ typedef struct aaboxf_s {
  * @defgroup alignmentFlags  Alignment Flags
  * @ingroup apiFlags
  */
-/*@{*/
+///@{
 #define ALIGN_LEFT          (0x1)
 #define ALIGN_RIGHT         (0x2)
 #define ALIGN_TOP           (0x4)
@@ -1108,7 +1108,13 @@ typedef struct aaboxf_s {
 #define ALIGN_BOTTOMRIGHT   (ALIGN_BOTTOM|ALIGN_RIGHT)
 
 #define ALL_ALIGN_FLAGS     (ALIGN_LEFT|ALIGN_RIGHT|ALIGN_TOP|ALIGN_BOTTOM)
-/*@}*/
+///@}
+
+typedef enum {
+    ORDER_NONE = 0,
+    ORDER_LEFTTORIGHT,
+    ORDER_RIGHTTOLEFT
+} order_t;
 
 typedef enum {
     SCALEMODE_FIRST = 0,

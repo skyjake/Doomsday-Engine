@@ -1,25 +1,23 @@
-/**\file texture.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file texture.h
+ * Abstract Texture component used to model a logical texture. @ingroup refresh
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2005-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_REFRESH_TEXTURE_H
@@ -34,10 +32,11 @@ typedef enum {
     TEXTURE_ANALYSIS_FIRST = 0,
     TA_COLORPALETTE = TEXTURE_ANALYSIS_FIRST,
     TA_SPRITE_AUTOLIGHT,
-    TA_COLOR,                  // Average.
-    TA_COLOR_AMPLIFIED,        // Average amplified (max component ==1).
-    TA_LINE_TOP_COLOR,         // Average.
-    TA_LINE_BOTTOM_COLOR,      // Average.
+    TA_COLOR,                  ///< Average.
+    TA_COLOR_AMPLIFIED,        ///< Average amplified (max component ==1).
+    TA_ALPHA,                  ///< Average.
+    TA_LINE_TOP_COLOR,         ///< Average.
+    TA_LINE_BOTTOM_COLOR,      ///< Average.
     TEXTURE_ANALYSIS_COUNT
 } texture_analysisid_t;
 
@@ -46,10 +45,10 @@ typedef enum {
 
 /**
  * @defgroup textureFlags  Texture Flags.
- * @{
  */
-#define TXF_CUSTOM              0x1 /// Texture does not originate from the current game.
-/**@}*/
+///@{
+#define TXF_CUSTOM              0x1 ///< Texture does not originate from the current game.
+///@}
 
 /**
  * Texture
@@ -63,7 +62,7 @@ typedef struct texture_s Texture;
 /**
  * Construct a new Texture.
  *
- * @param flags  @see textureFlags
+ * @param flags  @ref textureFlags
  * @param bindId  Unique identifier of the primary binding in the owning
  *    collection. Can be @c NOTEXTUREID in which case there is no binding
  *    for the resultant texture.
@@ -184,4 +183,4 @@ int Texture_Height(const Texture* tex);
  */
 void Texture_SetHeight(Texture* tex, int height);
 
-#endif /* LIBDENG_REFRESH_TEXTURE_H */
+#endif /// LIBDENG_REFRESH_TEXTURE_H

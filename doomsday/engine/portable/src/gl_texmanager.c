@@ -3043,6 +3043,35 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
                 R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
     }
 
+    // Average alpha for shadow factor?
+    if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
+    {
+        averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
+        boolean firstInit = (!aa);
+
+        if(firstInit)
+        {
+            aa = (averagealpha_analysis_t*) malloc(sizeof *aa);
+            if(!aa)
+                Con_Error("Textures::performImageAnalyses: Failed on allocation of %lu bytes for new AverageAlphaAnalysis.", (unsigned long) sizeof *aa);
+            Texture_AttachAnalysis(tex, TA_ALPHA, aa);
+        }
+
+        if(firstInit || forceUpdate)
+        {
+            if(0 == image->paletteId)
+            {
+                FindAverageAlpha(image->pixels, image->size.width, image->size.height,
+                                 image->pixelSize, &aa->alpha, &aa->coverage);
+            }
+            else
+            {
+                FindAverageAlphaIdx(image->pixels, image->size.width, image->size.height,
+                                    R_ToColorPalette(image->paletteId), &aa->alpha, &aa->coverage);
+            }
+        }
+    }
+
     // Average color for sky ambient color?
     if(TST_GENERAL == spec->type && TC_SKYSPHERE_DIFFUSE == TS_GENERAL(spec)->context)
     {

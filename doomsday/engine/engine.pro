@@ -592,9 +592,23 @@ OTHER_FILES += \
 
 data.files = $$OUT_PWD/../doomsday.pk3
 
+startupdata.files = \
+    data/cphelp.txt
+
+# These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
+    data/fonts/console11.dfn \
+    data/fonts/console14.dfn \
+    data/fonts/console18.dfn \
     data/fonts/normal12.dfn \
-    data/fonts/normal18.dfn
+    data/fonts/normal18.dfn \
+    data/fonts/normal24.dfn \
+    data/fonts/normalbold12.dfn \
+    data/fonts/normalbold18.dfn \
+    data/fonts/normalbold24.dfn \
+    data/fonts/normallight12.dfn \
+    data/fonts/normallight18.dfn \
+    data/fonts/normallight24.dfn
 
 startupgfx.files = \
     data/graphics/background.pcx \
@@ -620,10 +634,11 @@ macx {
         mac/res/deng.icns
 
     data.path = $$res.path
+    startupdata.path = $${res.path}/Data
     startupfonts.path = $${res.path}/Data/Fonts
     startupgfx.path = $${res.path}/Data/Graphics
 
-    QMAKE_BUNDLE_DATA += res data startupfonts startupgfx
+    QMAKE_BUNDLE_DATA += res data startupfonts startupdata startupgfx
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 }
@@ -632,11 +647,12 @@ macx {
 
 win32 {
     # Windows installation.
-    INSTALLS += target data startupgfx startupfonts license
+    INSTALLS += target data startupdata startupgfx startupfonts license
 
     target.path = $$DENG_LIB_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR/data
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
@@ -645,11 +661,12 @@ win32 {
 }
 else:unix:!macx {
     # Generic Unix installation.
-    INSTALLS += target data startupgfx startupfonts desktop readme
+    INSTALLS += target data startupdata startupgfx startupfonts desktop readme
 
     target.path = $$DENG_BIN_DIR
 
     data.path = $$DENG_DATA_DIR
+    startupdata.path = $$DENG_DATA_DIR/data
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 

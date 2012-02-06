@@ -2596,50 +2596,56 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
-//// \kludge Doom/Heretic Fast Monters/Missiles
+#if __JDOOM__
+    // Disabled in Chex and HacX because this messes with the original games' values.
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+#endif
+    {
+        /// @kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__ || __JDOOM64__
-    // Fast monsters?
-    if(fastParm
-# if __JDOOM__
-        || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
-# endif
-        )
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 1;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 4;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 1;
-    }
-    else
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 2;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 8;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 2;
-    }
+        // Fast monsters?
+        if(fastParm
+        # if __JDOOM__
+                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        # endif
+                )
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 1;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 4;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 1;
+        }
+        else
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 2;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 8;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 2;
+        }
 #endif
 
-    // Fast missiles?
+        // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # if __JDOOM64__
-    speed = fastParm;
+        speed = fastParm;
 # elif __JDOOM__
-    speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
+        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
 # else
-    speed = skill == SM_NIGHTMARE;
+        speed = skill == SM_NIGHTMARE;
 # endif
 
-    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-    {
-        MOBJINFO[MonsterMissileInfo[i].type].speed =
-            MonsterMissileInfo[i].speed[speed];
-    }
+        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        {
+            MOBJINFO[MonsterMissileInfo[i].type].speed =
+                    MonsterMissileInfo[i].speed[speed];
+        }
 #endif
-// <-- KLUDGE
+        // <-- KLUDGE
+    }
 
     if(!IS_CLIENT)
     {

@@ -167,6 +167,9 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, "hud-ammo" },
     { 0, "hud-armor" },
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { 0, "hud-cheat-counter-show-mapopen" },
+#endif
 #if __JHERETIC__ || __JHEXEN__
     { 0, "hud-currentitem" },
 #endif
@@ -424,7 +427,7 @@ static mn_object_t SkillMenuObjects[] = {
     { MN_BUTTON,    0,  MNF_ID1,                'r', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
     { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    'h', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
     { MN_BUTTON,    0,  MNF_ID3,                'u', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4|MNF_NO_ALTTEXT, 'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  MNF_ID4,                'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
     { MN_NONE }
 };
 #endif
@@ -633,6 +636,9 @@ mndata_text_t txt_hud_full_show_keys = { "Show Keys" };
 #if __JHERETIC__ || __JHEXEN__
 mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item" };
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_text_t txt_hud_cntr_mapopen = { "Automap Only" };
+#endif
 
 mndata_button_t btn_hud_single_key_display = { true, "hud-keys-combine" };
 mndata_button_t btn_hud_unhide_receive_damage = { true, "hud-unhide-damage" };
@@ -666,6 +672,9 @@ mndata_button_t btn_hud_full_show_keys = { true, "hud-keys" };
 #endif
 #if __JHERETIC__ || __JHEXEN__
 mndata_button_t btn_hud_full_show_readyitem = { true, "hud-currentitem" };
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_button_t btn_hud_cntr_mapopen = { true, "hud-cheat-counter-show-mapopen" };
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -727,12 +736,14 @@ static mn_object_t HudMenuObjects[] = {
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_counters },
-    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
-    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_items },
     { MN_LISTINLINE, 5, 0,  'i',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_items },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
+    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_secrets },
     { MN_LISTINLINE, 5, 0,  's',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_secrets },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_mapopen },
+    { MN_BUTTON,    5,  0,  0,  MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_cntr_mapopen },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_size },
     { MN_SLIDER,    5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_cntr_size },
 #endif
@@ -1485,11 +1496,19 @@ void Hu_MenuInitSkillMenu(void)
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
         const struct skillbutton_s* sb = &skillButtons[i];
-        mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
-        mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
+        mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
 
         btn->text = GET_TXT(sb->textDefId);
-        MNObject_SetShortcut(obj, btn->text[0]);
+        MNObject_SetShortcut(ob, btn->text[0]);
+    }
+#endif
+
+#if __JDOOM__
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+    {
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, MNF_ID4);
+        MNObject_SetFlags(ob, FO_SET, MNF_NO_ALTTEXT);
     }
 #endif
 }

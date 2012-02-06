@@ -198,32 +198,32 @@ void GL_DrawRectf2Tiled(double x, double y, double w, double h, int tw, int th)
     glEnd();
 }
 
-void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
-    int txoff, int tyoff, double cx, double cy, double cw, double ch)
+void GL_DrawCutRectfTiled(const RectRawf* rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf* cutRect)
 {
     float ftw = tw, fth = th;
     float txo = (1.0f / (float)tw) * (float)txoff;
     float tyo = (1.0f / (float)th) * (float)tyoff;
 
     // We'll draw at max four rectangles.
-    float toph = cy - y;
-    float bottomh = y + h - (cy + ch);
-    float sideh = h - toph - bottomh;
-    float lefth = cx - x;
-    float righth = x + w - (cx + cw);
+    float toph = cutRect->origin.y - rect->origin.y;
+    float bottomh = rect->origin.y + rect->size.height - (cutRect->origin.y + cutRect->size.height);
+    float sideh = rect->size.height - toph - bottomh;
+    float lefth = cutRect->origin.x - rect->origin.x;
+    float righth = rect->origin.x + rect->size.width - (cutRect->origin.x + cutRect->size.width);
 
     glBegin(GL_QUADS);
     if(toph > 0)
     {
         // The top rectangle.
         glTexCoord2f(txo, tyo);
-        glVertex2f(x, y);
-        glTexCoord2f(txo + (w / ftw), tyo);
-        glVertex2f(x + w, y );
-        glTexCoord2f(txo + (w / ftw), tyo + (toph / fth));
-        glVertex2f(x + w, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo);
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y);
+        glTexCoord2f(txo + (rect->size.width / ftw), tyo + (toph / fth));
+        glVertex2f(rect->origin.x + rect->size.width, rect->origin.y + toph);
         glTexCoord2f(txo, tyo + (toph / fth));
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
     }
 
     if(lefth > 0 && sideh > 0)
@@ -232,47 +232,65 @@ void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int t
 
         // The left rectangle.
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, y + toph);
+        glVertex2f(rect->origin.x, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo);
-        glVertex2f(x + lefth, y + toph);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph);
         glTexCoord2f(txo + (lefth / ftw), yoff + tyo + sideh / fth);
-        glVertex2f(x + lefth, y + toph + sideh);
+        glVertex2f(rect->origin.x + lefth, rect->origin.y + toph + sideh);
         glTexCoord2f(txo, yoff + tyo + sideh / fth);
-        glVertex2f(x, y + toph + sideh);
+        glVertex2f(rect->origin.x, rect->origin.y + toph + sideh);
     }
 
     if(righth > 0 && sideh > 0)
     {
-        float ox = x + lefth + cw;
-        float xoff = (lefth + cw) / ftw;
+        float ox = rect->origin.x + lefth + cutRect->size.width;
+        float xoff = (lefth + cutRect->size.width) / ftw;
         float yoff = toph / fth;
 
         // The left rectangle.
         glTexCoord2f(xoff + txo, yoff + tyo);
-        glVertex2f(ox, y + toph);
+        glVertex2f(ox, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo);
-        glVertex2f(ox + righth, y + toph);
+        glVertex2f(ox + righth, rect->origin.y + toph);
         glTexCoord2f(xoff + txo + righth / ftw, yoff + tyo + sideh / fth);
-        glVertex2f(ox + righth, y + toph + sideh);
+        glVertex2f(ox + righth, rect->origin.y + toph + sideh);
         glTexCoord2f(xoff + txo, yoff + tyo + sideh / fth);
-        glVertex2f(ox, y + toph + sideh);
+        glVertex2f(ox, rect->origin.y + toph + sideh);
     }
 
     if(bottomh > 0)
     {
-        float oy = y + toph + sideh;
+        float oy = rect->origin.y + toph + sideh;
         float yoff = (toph + sideh) / fth;
 
         glTexCoord2f(txo, yoff + tyo);
-        glVertex2f(x, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo);
-        glVertex2f(x + w, oy);
-        glTexCoord2f(txo + w / ftw, yoff + tyo + bottomh / fth);
-        glVertex2f(x + w, oy + bottomh);
+        glVertex2f(rect->origin.x, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo);
+        glVertex2f(rect->origin.x + rect->size.width, oy);
+        glTexCoord2f(txo + rect->size.width / ftw, yoff + tyo + bottomh / fth);
+        glVertex2f(rect->origin.x + rect->size.width, oy + bottomh);
         glTexCoord2f(txo, yoff + tyo + bottomh / fth);
-        glVertex2f(x, oy + bottomh);
+        glVertex2f(rect->origin.x, oy + bottomh);
     }
     glEnd();
+}
+
+void GL_DrawCutRectf2Tiled(double x, double y, double w, double h, int tw, int th,
+    int txoff, int tyoff, double cx, double cy, double cw, double ch)
+{
+    RectRawf rect, cutRect;
+
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = w;
+    rect.size.height = h;
+
+    cutRect.origin.x = cx;
+    cutRect.origin.y = cy;
+    cutRect.size.width  = cw;
+    cutRect.size.height = ch;
+
+    GL_DrawCutRectfTiled(&rect, tw, th, txoff, tyoff, &cutRect);
 }
 
 /**
