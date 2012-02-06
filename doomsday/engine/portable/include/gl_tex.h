@@ -63,6 +63,15 @@ uint8_t* ApplyColorKeying(uint8_t* pixels, int width, int height,
     int pixelSize);
 
 /**
+ * Sets the RGB color of transparent pixels along the image's non-transparent
+ * areas to black. When the image is then drawn with magnification,
+ * RGB interpolation along the edges will go to (0, 0, 0) while the alpha
+ * value is interpolated to zero. The end result is that the edges are
+ * highlighted against the background -- i.e., this is a cheap way to make
+ * the edges of small sprites stand out more clearly. The effect was originally
+ * used by jDoom on font characters and other such graphics to make them appear
+ * less blurry.
+ *
  * @param pixels  RGBA data. Input read here, and output written here.
  * @param width  Width of the image in pixels.
  * @param height  Height of the image in pixels.
