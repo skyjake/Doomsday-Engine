@@ -198,6 +198,8 @@ static fontid_t loadSystemFont(const char* name)
 
 void R_LoadSystemFonts(void)
 {
+    if(isDedicated) return;
+
     fontFixed = loadSystemFont(R_ChooseFixedFont());
     fontVariable[FS_NORMAL] = loadSystemFont(R_ChooseVariableFont(FS_NORMAL, theWindow->geometry.size.width, theWindow->geometry.size.height));
     fontVariable[FS_BOLD]   = loadSystemFont(R_ChooseVariableFont(FS_BOLD,   theWindow->geometry.size.width, theWindow->geometry.size.height));
