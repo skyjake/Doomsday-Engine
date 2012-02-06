@@ -842,6 +842,8 @@ fontid_t R_MustFindFontForName(const char* name)
 
 void R_InitRefresh(void)
 {
+    if(IS_DEDICATED) return;
+
     VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
 
     // Setup the view border.
