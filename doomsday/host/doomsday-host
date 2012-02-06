@@ -132,7 +132,7 @@ def timeInRange(mark, start, end):
     e = breakTime(end)
     if mark[0] != s[0] or mark[0] != e[0]: return False
     markMins = mins(mark[1], mark[2])
-    if markMins < mins(s[1], s[2]) or markMins > mins(e[1], e[2]):
+    if markMins < mins(s[1], s[2]) or markMins >= mins(e[1], e[2]):
         return False
     return True
 
