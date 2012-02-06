@@ -2596,8 +2596,10 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
+#if __JDOOM__
     // Disabled in Chex and HacX because this messes with the original games' values.
     if(gameMode != doom2_hacx && gameMode != doom_chex)
+#endif
     {
         /// @kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__ || __JDOOM64__
