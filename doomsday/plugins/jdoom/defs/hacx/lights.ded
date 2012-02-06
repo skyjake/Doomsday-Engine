@@ -34,6 +34,17 @@ Copy Light {
   Size = .4;
 }
 
+Light {
+  State = "PLASEXP";
+  Flags = nohalo;
+  Color { .82 0 0 };
+  Size = .4;
+}
+
+Copy Light { State = "PLASEXP2"; Color { .7 0 0 }; Size = .5; }
+Copy Light { State = "PLASEXP3"; Color { .3 0 0 }; Size = .5; }
+Copy Light { State = "PLASEXP4"; Size = .2; }
+
 #####====--- LIGHT DECORATIONS ---====#####
 #
 # The default flags allow using these only with the original textures.
