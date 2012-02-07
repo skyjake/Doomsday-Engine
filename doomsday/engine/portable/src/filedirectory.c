@@ -276,7 +276,7 @@ void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* pat
     }
 
 #if _DEBUG
-    VERBOSE( Con_Message("Adding paths to FileDirectory...\n") );
+    VERBOSE2( Con_Message("Adding paths to FileDirectory...\n") );
     VERBOSE2( printPaths(paths, pathsCount) );
 #endif
     resolveAndAddSearchPathsToDirectory(fd, flags, paths, pathsCount, callback, paramaters);
