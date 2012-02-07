@@ -378,6 +378,8 @@ int Sys_ChangeVideoMode(int width, int height, int bpp)
     if(!winManagerInited || width < 0 || height < 0)
         return 0;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     Sys_GetDesktopBPP(&screenBPP);
 
     // First get the current settings.
@@ -1331,6 +1333,7 @@ boolean Sys_SetWindowTitle(uint idx, const char *title)
     if(winManagerInited)
     {
         ddwindow_t* window = getWindow(idx - 1);
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
         if(window)
         {
             return (SetWindowText(window->hWnd, WIN_STRING(title))? true : false);
