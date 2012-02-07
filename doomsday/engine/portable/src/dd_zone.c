@@ -190,9 +190,11 @@ memvolume_t *Z_Create(size_t volumeSize)
     return vol;
 }
 
-/**
- * Initialize the memory zone.
- */
+boolean Z_IsInited(void)
+{
+    return zoneMutex != 0;
+}
+
 int Z_Init(void)
 {
     zoneMutex = Sys_CreateMutex("ZONE_MUTEX");

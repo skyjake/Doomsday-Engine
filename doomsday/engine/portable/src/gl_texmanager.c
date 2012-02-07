@@ -660,8 +660,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, const textureconte
         GL_UploadTextureContent(content);
         return;
     }
-    // Defer this operation. Need to make a copy.
-    GL_EnqueueDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+    GL_DeferTextureUpload(content);
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
