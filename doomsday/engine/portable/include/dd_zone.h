@@ -29,6 +29,7 @@
 #define LIBDENG_ZONE_H
 
 /**
+ * @def FAKE_MEMORY_ZONE
  * Define this to force all memory blocks to be allocated from
  * the real heap. Useful when debugging memory-related problems.
  */
