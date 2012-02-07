@@ -1545,7 +1545,7 @@ int DD_Main(void)
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
-            F_AddSearchPathToResourceNamespace(rnId, 0, searchPath, SPG_DEFAULT);
+            F_AddSearchPathToResourceNamespace(rnId, SPF_NO_DECEND, searchPath, SPG_DEFAULT);
 
             Uri_Delete(searchPath);
             Dir_Delete(dir);

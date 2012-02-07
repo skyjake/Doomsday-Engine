@@ -700,7 +700,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < searchPathsCount; ++i)
         {
-            ResourceNamespace_AddSearchPath(rnamespace, 0, searchPaths[i], SPG_DEFAULT);
+            ResourceNamespace_AddSearchPath(rnamespace, SPF_NO_DECEND, searchPaths[i], SPG_DEFAULT);
         }
     }
 
