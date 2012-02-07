@@ -42,6 +42,57 @@ struct filedirectory_s {
 static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* filePath,
     int (*callback) (PathDirectoryNode*, void*), void* paramaters);
 
+static PathDirectoryNode* attachMissingNodeInfo(PathDirectoryNode* node)
+{
+    filedirectory_nodeinfo_t* info;
+
+    if(!node) return NULL;
+
+    // Has this already been processed?
+    info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
+    if(!info)
+    {
+        // Clearly not. Attach our node info.
+        info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
+        if(!info) Con_Error("FileDirectory::addMissingNodeInfo: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
+
+        info->processed = false;
+        PathDirectoryNode_AttachUserData(node, info);
+    }
+
+    return node;
+}
+
+static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* _path)
+{
+    const ddstring_t* relPath;
+    PathDirectoryNode* node;
+    ddstring_t path;
+
+    assert(fd);
+
+    if(!_path || Str_IsEmpty(_path)) return NULL;
+
+    // Let's try to make it a relative path.
+    if(F_IsAbsolute(_path))
+    {
+        Str_Init(&path);
+        F_RemoveBasePath(&path, _path);
+        relPath = &path;
+    }
+    else
+    {
+        relPath = _path;
+    }
+
+    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
+    attachMissingNodeInfo(node);
+
+    if(relPath == &path) Str_Free(&path);
+
+    return node;
+}
+
 typedef struct {
     FileDirectory* fileDirectory;
     int flags; /// @see searchPathFlags
@@ -64,91 +115,60 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
  * @param paramaters  Passed to the callback.
  * @return  Non-zero if iteration should stop else @c 0.
  */
-static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* _searchPath,
+static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* searchPath,
     int (*callback) (PathDirectoryNode*, void*), void* paramaters)
 {
     int result = 0; // Continue iteration.
-    filedirectory_nodeinfo_t* info;
-    const ddstring_t* relPath;
-    PathDirectoryNode* node;
-    ddstring_t searchPath;
-    assert(fd);
-
-    if(!_searchPath || Str_IsEmpty(_searchPath)) return result;
-
-    // Let's try to make it a relative path.
-    if(F_IsAbsolute(_searchPath))
+    PathDirectoryNode* node = addPathNodes(fd, searchPath);
+    if(node)
     {
-        Str_Init(&searchPath);
-        F_RemoveBasePath(&searchPath, _searchPath);
-        relPath = &searchPath;
-    }
-    else
-    {
-        relPath = _searchPath;
-    }
+        filedirectory_nodeinfo_t* info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
 
-    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
-
-    // Has this already been processed?
-    info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
-    if(!info)
-    {
-        // Clearly not. Attach our node info.
-        info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
-        if(!info) Con_Error("FileDirectory::addNodesOnSearchPath: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
-
-        info->processed = false;
-        PathDirectoryNode_AttachUserData(node, info);
-    }
-
-    if(info->processed)
-    {
-        // Does caller want to process it again?
-        if(callback)
+        if(info->processed)
+        {
+            // Does caller want to process it again?
+            if(callback)
+            {
+                if(PT_BRANCH == PathDirectoryNode_Type(node))
+                {
+                    result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
+                                                    PATHDIRECTORY_NOHASH, callback, paramaters);
+                }
+                else
+                {
+                    result = callback(node, paramaters);
+                }
+            }
+        }
+        else
         {
             if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
-                result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
-                                                PATHDIRECTORY_NOHASH, callback, paramaters);
+                addpathworker_paramaters_t p;
+                ddstring_t searchPattern;
+
+                // Compose the search pattern. Resolve relative to the base path
+                // if not already absolute. We're interested in *everything*.
+                Str_Init(&searchPattern);
+                Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
+
+                p.callback = callback;
+                p.fileDirectory = fd;
+                p.flags = flags;
+                p.paramaters = paramaters;
+
+                // Process this search.
+                result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
+                Str_Free(&searchPattern);
             }
-            else
+            else if(callback)
             {
                 result = callback(node, paramaters);
             }
+
+            info->processed = true;
         }
     }
-    else
-    {
-        if(PT_BRANCH == PathDirectoryNode_Type(node))
-        {
-            addpathworker_paramaters_t p;
-            ddstring_t searchPattern;
-
-            // Compose the search pattern. Resolve relative to the base path
-            // if not already absolute. We're interested in *everything*.
-            Str_Init(&searchPattern);
-            Str_Appendf(&searchPattern, "%s*", Str_Text(_searchPath));
-            //F_PrependBasePath(&searchPattern, &searchPattern);
-
-            p.callback = callback;
-            p.fileDirectory = fd;
-            p.flags = flags;
-            p.paramaters = paramaters;
-
-            // Process this search.
-            F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
-            Str_Free(&searchPattern);
-        }
-        else if(callback)
-        {
-            callback(node, paramaters);
-        }
-
-        info->processed = true;
-    }
-
-    if(relPath == &searchPath) Str_Free(&searchPath);
 
     return result;
 }
