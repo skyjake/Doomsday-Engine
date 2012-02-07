@@ -3252,6 +3252,8 @@ boolean R_DrawVLightVector(const vlight_t* light, void* context)
     {
         float alpha = 1 - distFromViewer / 1600, scale = 100;
 
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glBegin(GL_LINES);
             glColor4f(light->color[CR], light->color[CG], light->color[CB], alpha);
             glVertex3f(scale * light->vector[VX], scale * light->vector[VZ], scale * light->vector[VY]);

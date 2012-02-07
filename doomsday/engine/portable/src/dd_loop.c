@@ -179,6 +179,8 @@ void DD_DrawAndBlit(void)
         Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(renderWireframe)
     {
         // When rendering is wireframe mode, we must clear the screen

@@ -148,6 +148,8 @@ void GL_ReserveNames(void)
     Sys_Lock(deferredMutex);
     if(reservedCount < NUM_RESERVED_TEXTURENAMES)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
         reservedCount = NUM_RESERVED_TEXTURENAMES;
@@ -159,6 +161,8 @@ void GL_ReleaseReservedNames(void)
 {
     if(!inited)
         return; // Just ignore.
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     Sys_Lock(deferredMutex);
     glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);

@@ -63,6 +63,8 @@ static boolean inPrim = false;
 
 boolean GL_NewList(DGLuint list, int mode)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // We enter a New/End list section.
 #ifdef _DEBUG
 if(inList)
@@ -81,7 +83,8 @@ Con_Error("GL_NewList: List %u already in use.", (unsigned int) list);
         }
     }
     else
-    {   // Just get a new list id, it doesn't matter.
+    {
+        // Just get a new list id, it doesn't matter.
         list = glGenLists(1);
     }
 
@@ -93,6 +96,8 @@ Con_Error("GL_NewList: List %u already in use.", (unsigned int) list);
 DGLuint GL_EndList(void)
 {
     DGLuint currentList = inList;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glEndList();
 #ifdef _DEBUG
@@ -106,86 +111,121 @@ DGLuint GL_EndList(void)
 void GL_CallList(DGLuint list)
 {
     if(!list) return; // We do not consider zero a valid list id.
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glCallList(list);
 }
 
 void GL_DeleteLists(DGLuint list, int range)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glDeleteLists(list, range);
 }
 
 void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor3ub(r, g, b);
 }
 
 void DGL_Color3ubv(const DGLubyte* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor3ubv(vec);
 }
 
 void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4ub(r, g, b, a);
 }
 
 void DGL_Color4ubv(const DGLubyte* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4ubv(vec);
 }
 
 void DGL_Color3f(float r, float g, float b)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor3f(r, g, b);
 }
 
 void DGL_Color3fv(const float* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor3fv(vec);
 }
 
 void DGL_Color4f(float r, float g, float b, float a)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4f(r, g, b, a);
 }
 
 void DGL_Color4fv(const float* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4fv(vec);
 }
 
 void DGL_TexCoord2f(byte target, float s, float t)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
 }
 
 void DGL_TexCoord2fv(byte target, float* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
 }
 
 void DGL_Vertex2f(float x, float y)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glVertex2f(x, y);
 }
 
 void DGL_Vertex2fv(const float* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glVertex2fv(vec);
 }
 
 void DGL_Vertex3f(float x, float y, float z)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glVertex3f(x, y, z);
 }
 
 void DGL_Vertex3fv(const float* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glVertex3fv(vec);
 }
 
 void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     for(; num > 0; num--, vec++)
     {
         glTexCoord2fv(vec->tex);
@@ -195,6 +235,8 @@ void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 
 void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     for(; num > 0; num--, vec++)
     {
         glTexCoord2fv(vec->tex);
@@ -204,6 +246,8 @@ void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 
 void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     for(; num > 0; num--, vec++)
     {
         glColor4fv(vec->color);
@@ -216,6 +260,8 @@ void DGL_Begin(dglprimtype_t mode)
 {
     if(novideo)
         return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // We enter a Begin/End section.
     primLevel++;
@@ -239,6 +285,8 @@ void DGL_End(void)
 {
     if(novideo)
         return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(primLevel > 0)
     {
@@ -299,6 +347,8 @@ void DGL_DrawRectf2(double x, double y, double w, double h)
 
 void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glColor4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
@@ -324,6 +374,8 @@ void DGL_DrawQuadOutline(const Point2Raw* tl, const Point2Raw* tr, const Point2R
     const Point2Raw* bl, const float color[4])
 {
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(color) DGL_Color4fv(color);
     glBegin(GL_LINE_LOOP);

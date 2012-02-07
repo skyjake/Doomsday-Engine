@@ -169,6 +169,8 @@ void GL_DoUpdate(void)
        oldbright != vid_bright)
         GL_SetGamma();
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Blit screen to video.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -529,6 +531,8 @@ void GL_Shutdown(void)
     if(!initGLOk)
         return; // Not yet initialized fully.
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // We won't be drawing anything further but we don't want to shutdown
     // with the previous frame still visible as this can lead to unwanted
     // artefacts during video context switches on some displays.
@@ -570,6 +574,8 @@ void GL_Init2DState(void)
     glNearClip = 5;
     glFarClip = 16500;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -601,6 +607,8 @@ void GL_Init2DState(void)
 
 void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewdata_t* viewData)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(push_state)
     {
         // Push the 2D matrices on the stack.
@@ -627,6 +635,8 @@ void GL_SwitchTo3DState(boolean push_state, const viewport_t* port, const viewda
 
 void GL_Restore2DState(int step, const viewport_t* port, const viewdata_t* viewData)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(step)
     {
     case 1: { // After Restore Step 1 normal player sprites are rendered.
@@ -697,6 +707,8 @@ void GL_ProjectionMatrix(void)
 {
     // We're assuming pixels are squares.
     float aspect = viewpw / (float) viewph;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -801,6 +813,8 @@ unsigned char* GL_GrabScreen(void)
  */
 void GL_BlendMode(blendmode_t mode)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(mode)
     {
     case BM_ZEROALPHA:
@@ -951,6 +965,8 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
     rawtex_t* rawTex = R_GetRawTex(lumpNum);
     if(rawTex)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(rawTex), (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
@@ -966,6 +982,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
         return;
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBindTexture(GL_TEXTURE_2D, glName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     if(GL_state.features.texFilterAniso)
@@ -974,6 +992,8 @@ void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 
 void GL_SetNoTexture(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     /// @todo Don't actually change the current binding.
     ///       Simply disable any currently enabled texture types.
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -1319,6 +1339,9 @@ D_CMD(Fog)
             ("Start and end are for linear fog, density for exponential.\n");
         return true;
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(!stricmp(argv[1], "on"))
     {
         GL_UseFog(true);
