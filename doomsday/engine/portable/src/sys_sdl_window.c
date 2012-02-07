@@ -845,6 +845,8 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  */
 void Sys_UpdateWindow(uint idx)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(GL_state.forceFinishBeforeSwap)
     {
         glFinish();

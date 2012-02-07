@@ -1302,6 +1302,8 @@ void Sys_UpdateWindow(uint idx)
                 // framebuffer visible.
                 HDC hdc = GetDC(window->hWnd);
 
+                LIBDENG_ASSERT_IN_MAIN_THREAD();
+
                 if(GL_state.forceFinishBeforeSwap)
                 {
                     glFinish();

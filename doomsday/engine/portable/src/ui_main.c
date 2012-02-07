@@ -291,6 +291,8 @@ void UI_LoadTextures(void)
 
 void UI_ReleaseTextures(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glDeleteTextures(NUM_UITEXTURES, (const GLuint*) uiTextures);
     memset(uiTextures, 0, sizeof(uiTextures));
 }
@@ -544,6 +546,8 @@ void UI_Ticker(timespan_t time)
 void UI_Drawer(void)
 {
     if(!uiActive || !uiCurrentPage) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);

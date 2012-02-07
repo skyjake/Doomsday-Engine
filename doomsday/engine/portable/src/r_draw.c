@@ -215,6 +215,8 @@ void R_DrawViewBorder(void)
     if(0 == vd->window.size.width || 0 == vd->window.size.height) return;
     if(vd->window.size.width == port->geometry.size.width && vd->window.size.height == port->geometry.size.height) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_TEXTURE);
