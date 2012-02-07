@@ -1,31 +1,8 @@
-/**\file dd_zone.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- *\author Copyright © 1993-1996 by id Software, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * Memory Zone
+ * @file dd_zone.c
+ * Implementation of the memory zone. @ingroup memzone
+ *
+ * The zone is composed of multiple memory volumes.
  *
  * There is never any space between memblocks, and there will never be
  * two contiguous free memblocks.
@@ -35,24 +12,40 @@
  * It is of no value to free a cachable block, because it will get
  * overwritten automatically if needed.
  *
- * The zone is composed of multiple memory volumes.
- *
  * When fast malloc mode is enabled, memory volumes aren't checked for purgable
  * blocks. If the rover block isn't suitable, a new empty volume is created
  * without further checking. This is suitable for cases where lots of blocks
  * are being allocated in a rapid sequence, with no frees in between (e.g.,
  * map setup).
  *
- * Block sequences. The PU_MAPSTATIC purge tag has a special purpose.
+ * @par Block Sequences
+ * The PU_MAPSTATIC purge tag has a special purpose.
  * It works like PU_MAP so that it is purged on a per map basis, but
  * blocks allocated as PU_MAPSTATIC should not be freed at any time when the
  * map is being used. Internally, the map-static blocks are linked into
  * sequences so that Z_Malloc knows to skip all of them efficiently. This is
  * possible because no block inside the sequence could be purged by Z_Malloc
  * anyway.
+ *
+ * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <assert.h> // Define NDEBUG in release builds.
@@ -62,8 +55,6 @@
 #include "de_system.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Size of one memory zone volume.
 #define MEMORY_VOLUME_SIZE  0x2000000   // 32 Mb
 
@@ -72,8 +63,6 @@
 #define MINFRAGMENT (sizeof(memblock_t)+32)
 
 #define ALIGNED(x) (((x) + sizeof(void*) - 1)&(~(sizeof(void*) - 1)))
-
-// TYPES -------------------------------------------------------------------
 
 /**
  * The memory is composed of multiple volumes.  New volumes are
@@ -100,18 +89,6 @@ typedef struct zblockset_block_s {
     void* elements;
 } zblockset_block_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static memvolume_t *volumeRoot;
 
 /**
@@ -122,9 +99,20 @@ static memvolume_t *volumeRoot;
  * enabled during map setup because a large number of mallocs will occur
  * during setup.
  */
-static boolean  fastMalloc = false;
+static boolean fastMalloc = false;
 
-// CODE --------------------------------------------------------------------
+static mutex_t zoneMutex = 0;
+
+static __inline void lockZone(void)
+{
+    assert(zoneMutex != 0);
+    Sys_Lock(zoneMutex);
+}
+
+static __inline void unlockZone(void)
+{
+    Sys_Unlock(zoneMutex);
+}
 
 /**
  * Conversion from string to long, with the "k" and "m" suffixes.
@@ -150,7 +138,11 @@ long superatol(char *s)
  */
 void Z_EnableFastMalloc(boolean isEnabled)
 {
+    lockZone();
+
     fastMalloc = isEnabled;
+
+    unlockZone();
 }
 
 /**
@@ -161,6 +153,8 @@ memvolume_t *Z_Create(size_t volumeSize)
 {
     memblock_t     *block;
     memvolume_t    *vol = M_Calloc(sizeof(memvolume_t));
+
+    lockZone();
 
     vol->next = volumeRoot;
     volumeRoot = vol;
@@ -189,6 +183,8 @@ memvolume_t *Z_Create(size_t volumeSize)
     block->seqFirst = block->seqLast = NULL;
     block->size = vol->zone->size - sizeof(memzone_t);
 
+    unlockZone();
+
     VERBOSE(Con_Message("Z_Create: New %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0));
 
     return vol;
@@ -199,6 +195,8 @@ memvolume_t *Z_Create(size_t volumeSize)
  */
 int Z_Init(void)
 {
+    zoneMutex = Sys_CreateMutex("ZONE_MUTEX");
+
     // Create the first volume.
     Z_Create(MEMORY_VOLUME_SIZE);
     return true;
@@ -232,6 +230,9 @@ void Z_Shutdown(void)
 
     printf("Z_Shutdown: Used %i volumes, total %lu bytes.\n",
            numVolumes, (long unsigned int) totalMemory);
+
+    Sys_DestroyMutex(zoneMutex);
+    zoneMutex = 0;
 }
 
 #ifdef FAKE_MEMORY_ZONE
@@ -271,9 +272,12 @@ void Z_Free(void *ptr)
         return;
     }
 
+    lockZone();
+
     block = Z_GetBlock(ptr);
     if(block->id != ZONEID)
     {
+        unlockZone();
         Con_Error("Z_Free: Attempt to free pointer without ZONEID.");
     }
 
@@ -330,6 +334,8 @@ void Z_Free(void *ptr)
         if(other == volume->zone->rover)
             volume->zone->rover = block;
     }
+
+    unlockZone();
 }
 
 /**
@@ -352,6 +358,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // You can't allocate "nothing."
         return NULL;
     }
+
+    lockZone();
 
     // Align to pointer size.
     size = ALIGNED(size);
@@ -378,6 +386,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
         if(!volume->zone)
         {
+            unlockZone();
             Con_Error("Z_Malloc: Volume without zone.");
         }
 
@@ -516,8 +525,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 else
                 {
                     if(tag >= PU_PURGELEVEL)
+                    {
+                        unlockZone();
                         Con_Error("Z_Malloc: an owner is required for "
                                   "purgable blocks.\n");
+                    }
                     base->user = (void *) 2;    // mark as in use, but unowned
                 }
                 base->tag = tag;
@@ -546,6 +558,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 base->volume = volume;
                 base->id = ZONEID;
 
+                unlockZone();
+
 #ifdef FAKE_MEMORY_ZONE
                 return base->area;
 #else
@@ -567,6 +581,8 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
     int     tag = ptr ? Z_GetTag(ptr) : mallocTag;
     void   *p;
 
+    lockZone();
+
     n = ALIGNED(n);
     p = Z_Malloc(n, tag, 0);    // User always 0;
 
@@ -584,6 +600,8 @@ void *Z_Realloc(void *ptr, size_t n, int mallocTag)
         memcpy(p, ptr, MIN_OF(n, bsize));
         Z_Free(ptr);
     }
+
+    unlockZone();
     return p;
 }
 
@@ -627,6 +645,8 @@ void Z_CheckHeap(void)
 #ifdef _DEBUG
     VERBOSE2( Con_Message("Z_CheckHeap\n") );
 #endif
+
+    lockZone();
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
@@ -679,6 +699,8 @@ void Z_CheckHeap(void)
                 isDone = true; // all blocks have been hit
         }
     }
+
+    unlockZone();
 }
 
 /**
@@ -686,14 +708,18 @@ void Z_CheckHeap(void)
  */
 void Z_ChangeTag2(void *ptr, int tag)
 {
-    memblock_t *block = Z_GetBlock(ptr);
+    lockZone();
+    {
+        memblock_t *block = Z_GetBlock(ptr);
 
-    if(block->id != ZONEID)
-        Con_Error("Z_ChangeTag: Modifying a block without ZONEID.");
+        if(block->id != ZONEID)
+            Con_Error("Z_ChangeTag: Modifying a block without ZONEID.");
 
-    if(tag >= PU_PURGELEVEL && (unsigned long) block->user < 0x100)
-        Con_Error("Z_ChangeTag: An owner is required for purgable blocks.");
-    block->tag = tag;
+        if(tag >= PU_PURGELEVEL && (unsigned long) block->user < 0x100)
+            Con_Error("Z_ChangeTag: An owner is required for purgable blocks.");
+        block->tag = tag;
+    }
+    unlockZone();
 }
 
 /**
@@ -701,11 +727,15 @@ void Z_ChangeTag2(void *ptr, int tag)
  */
 void Z_ChangeUser(void *ptr, void *newUser)
 {
-    memblock_t *block = Z_GetBlock(ptr);
+    lockZone();
+    {
+        memblock_t *block = Z_GetBlock(ptr);
 
-    if(block->id != ZONEID)
-        Con_Error("Z_ChangeUser: Block without ZONEID.");
-    block->user = newUser;
+        if(block->id != ZONEID)
+            Con_Error("Z_ChangeUser: Block without ZONEID.");
+        block->user = newUser;
+    }
+    unlockZone();
 }
 
 /**
@@ -752,6 +782,8 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     void           *p;
     size_t          bsize;
 
+    lockZone();
+
     n = ALIGNED(n);
 
     if(ptr)                     // Has old data.
@@ -780,6 +812,8 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
         p = Z_Calloc(n, callocTag, NULL);
     }
 
+    unlockZone();
+
     return p;
 }
 
@@ -792,8 +826,9 @@ size_t Z_FreeMemory(void)
     memblock_t     *block;
     size_t          free = 0;
 
-    Z_CheckHeap();
+    lockZone();
 
+    Z_CheckHeap();
     for(volume = volumeRoot; volume; volume = volume->next)
     {
         for(block = volume->zone->blockList.next;
@@ -807,6 +842,7 @@ size_t Z_FreeMemory(void)
         }
     }
 
+    unlockZone();
     return free;
 }
 
@@ -838,13 +874,17 @@ static void addBlockToSet(zblockset_t* set)
 
 void* ZBlockSet_Allocate(zblockset_t* set)
 {
+    zblockset_block_t* block = 0;
+    void* element = 0;
+
     assert(set);
-    {
-    zblockset_block_t* block = &set->_blocks[set->_blockCount - 1];
+    lockZone();
+
+    block = &set->_blocks[set->_blockCount - 1];
 
     // When this is called, there is always an available element in the topmost
     // block. We will return it.
-    void* element = ((byte*)block->elements) + (block->elementSize * block->count);
+    element = ((byte*)block->elements) + (block->elementSize * block->count);
 
     // Reserve the element.
     block->count++;
@@ -859,8 +899,8 @@ void* ZBlockSet_Allocate(zblockset_t* set)
         addBlockToSet(set);
     }
 
+    unlockZone();
     return element;
-    }
 }
 
 zblockset_t* ZBlockSet_New(size_t sizeOfElement, unsigned int batchSize, int tag)
@@ -887,6 +927,7 @@ zblockset_t* ZBlockSet_New(size_t sizeOfElement, unsigned int batchSize, int tag
 
 void ZBlockSet_Delete(zblockset_t* set)
 {
+    lockZone();
     assert(set);
 
     // Free the elements from each block.
@@ -897,4 +938,5 @@ void ZBlockSet_Delete(zblockset_t* set)
 
     Z_Free(set->_blocks);
     Z_Free(set);
+    unlockZone();
 }
