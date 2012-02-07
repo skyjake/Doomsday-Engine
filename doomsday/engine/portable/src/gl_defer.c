@@ -52,7 +52,7 @@ typedef struct deferredtask_s {
 
 typedef struct apifunc_s {
     union {
-        void (*ptr_1e)(GLenum);
+        void (GL_CALL *ptr_1e)(GLenum);
     } func;
     union {
         GLenum e;
@@ -322,7 +322,7 @@ void GL_DeferTextureUpload(const struct texturecontent_s* content)
     GL_AddDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
 }
 
-void GL_Defer1e(void (*ptr)(GLenum), GLenum param)
+void GL_Defer1e(void (GL_CALL *ptr)(GLenum), GLenum param)
 {
     apifunc_t* api = malloc(sizeof(apifunc_t));
     api->func.ptr_1e = ptr;
