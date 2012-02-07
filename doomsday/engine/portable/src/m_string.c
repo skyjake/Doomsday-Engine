@@ -106,6 +106,14 @@ void Str_Init(ddstring_t *str)
         Con_Error("Attempted String::Init with invalid reference (this==0).");
         return; // Unreachable.
     }
+
+    if(!Z_IsInited())
+    {
+        // The memory zone is not available at the moment.
+        Str_InitStd(str);
+        return;
+    }
+
     memset(str, 0, sizeof(*str));
 
     // Init the memory management.

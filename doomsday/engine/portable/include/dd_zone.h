@@ -38,7 +38,16 @@
 #define PU_REFRESHTRANS     13
 #define PU_REFRESHRAW       17
 
-int             Z_Init(void);
+/**
+ * Determines if the memory zone is available for allocations.
+ */
+boolean Z_IsInited(void);
+
+/**
+ * Initialize the memory zone.
+ */
+int Z_Init(void);
+
 void            Z_Shutdown(void);
 void            Z_EnableFastMalloc(boolean isEnabled);
 //void            Z_PrintStatus(void);
