@@ -78,6 +78,7 @@ uint Sys_ThreadId(thread_t handle);
 
 uint Sys_CurrentThreadId(void);
 
+void Sys_MarkAsMainThread(void);
 boolean Sys_InMainThread(void);
 
 mutex_t Sys_CreateMutex(const char* name);

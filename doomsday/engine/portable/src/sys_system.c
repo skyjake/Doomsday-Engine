@@ -67,6 +67,12 @@ static void C_DECL handler(int s)
 }
 #endif
 
+void Sys_MarkAsMainThread(void)
+{
+    // This is the main thread.
+    mainThreadId = Sys_CurrentThreadId();
+}
+
 boolean Sys_InMainThread(void)
 {
     return mainThreadId == Sys_CurrentThreadId();
@@ -81,9 +87,6 @@ boolean Sys_InMainThread(void)
 void Sys_Init(void)
 {
     uint startTime = (verbose >= 2? Sys_GetRealTime() : 0);
-
-    // This is the main thread.
-    mainThreadId = Sys_CurrentThreadId();
 
     Con_Message("Setting up platform state...\n");
 

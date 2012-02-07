@@ -1351,6 +1351,8 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
+    Sys_MarkAsMainThread();
+
     // Determine the requested degree of verbosity.
     verbose = ArgExists("-verbose");
 
