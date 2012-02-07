@@ -959,7 +959,7 @@ void GL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
 
 void GL_BindTextureUnmanaged(DGLuint glName, int magMode)
 {
-    if(Con_IsBusyWorker()) return;
+    if(Con_InBusyWorker()) return;
     if(glName == 0)
     {
         GL_SetNoTexture();

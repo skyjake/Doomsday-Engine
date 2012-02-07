@@ -288,7 +288,7 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
-boolean Con_IsBusyWorker(void)
+boolean Con_InBusyWorker(void)
 {
     boolean result;
     if(!Con_IsBusy()) return false;

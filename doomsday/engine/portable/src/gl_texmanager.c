@@ -3386,7 +3386,7 @@ void GL_BindTexture(TextureVariant* tex)
 {
     texturevariantspecification_t* spec = NULL;
 
-    if(Con_IsBusyWorker()) return;
+    if(Con_InBusyWorker()) return;
 
     if(tex)
     {

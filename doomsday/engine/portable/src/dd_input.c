@@ -987,7 +987,7 @@ void DD_Win32_SuspendMessagePump(boolean suspend)
 static void postEvents(timespan_t ticLength)
 {
 #ifdef WIN32
-    if(!Con_IsBusyWorker())
+    if(!Con_InBusyWorker())
     {
         MSG msg;
 
