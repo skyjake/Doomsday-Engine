@@ -35,7 +35,10 @@
 
 typedef enum {
     DEFERREDTASK_TYPES_FIRST = 0,
+
     DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
+    DTT_FUNC_PTR_1E,
+
     DEFERREDTASK_TYPES_COUNT
 } deferredtask_type_t;
 
@@ -46,6 +49,15 @@ typedef struct deferredtask_s {
     deferredtask_type_t type;
     void* data;
 } deferredtask_t;
+
+typedef struct apifunc_s {
+    union {
+        void (*ptr_1e)(GLenum);
+    } func;
+    union {
+        GLenum e;
+    } param;
+} apifunc_t;
 
 static deferredtask_t* nextDeferredTask(void);
 static void destroyDeferredTask(deferredtask_t* d);
@@ -83,6 +95,9 @@ static void destroyDeferredTask(deferredtask_t* d)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
         GL_DestroyTextureContent(d->data);
+        break;
+    case DTT_FUNC_PTR_1E:
+        free(d->data);
         break;
     default:
         Con_Error("destroyDeferredTask: Unknown task type %i.", (int) d->type);
@@ -226,24 +241,24 @@ static void GL_AddDeferredTask(deferredtask_type_t type, void* data)
     d = allocDeferredTask(type, data);
     Sys_Lock(deferredMutex);
     if(deferredTaskLast)
+    {
         deferredTaskLast->next = d;
+    }
     if(!deferredTaskFirst)
+    {
         deferredTaskFirst = d;
+    }
     deferredTaskLast = d;
     Sys_Unlock(deferredMutex);
-}
-
-void GL_DeferTextureUpload(const struct texturecontent_s* content)
-{
-    // Defer this operation. Need to make a copy.
-    GL_AddDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
 }
 
 static deferredtask_t* GL_NextDeferredTask(void)
 {
     deferredtask_t* d = NULL;
     if(!inited)
+    {
         return NULL;
+    }
     Sys_Lock(deferredMutex);
     d = nextDeferredTask();
     Sys_Unlock(deferredMutex);
@@ -252,10 +267,19 @@ static deferredtask_t* GL_NextDeferredTask(void)
 
 static void processDeferredTask(deferredtask_t* task)
 {
+    apifunc_t* api = (apifunc_t*) task->data;
+
     switch(task->type)
     {
     case DTT_UPLOAD_TEXTURECONTENT:
         GL_UploadTextureContent(task->data);
+        break;
+
+    case DTT_FUNC_PTR_1E:
+#ifdef _DEBUG
+        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_1e, api->param.e);
+#endif
+        api->func.ptr_1e(api->param.e);
         break;
 
     default:
@@ -290,4 +314,23 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     }
 
     GL_ReserveNames();
+}
+
+void GL_DeferTextureUpload(const struct texturecontent_s* content)
+{
+    // Defer this operation. Need to make a copy.
+    GL_AddDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+}
+
+void GL_Defer1e(void (*ptr)(GLenum), GLenum param)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_1e = ptr;
+    api->param.e = param;
+
+#ifdef _DEBUG
+    fprintf(stderr, "GL_Defer1e: ptr=%p param=%i\n", ptr, param);
+#endif
+
+    GL_AddDeferredTask(DTT_FUNC_PTR_1E, api);
 }

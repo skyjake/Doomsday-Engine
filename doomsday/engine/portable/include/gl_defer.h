@@ -26,6 +26,8 @@
 #ifndef LIBDENG_GL_DEFERRED_H
 #define LIBDENG_GL_DEFERRED_H
 
+#include "sys_opengl.h"
+
 struct texturecontent_s;
 
 /**
@@ -69,5 +71,7 @@ void GL_ReleaseReservedNames(void);
  *                 a copy is made for the deferred task.
  */
 void GL_DeferTextureUpload(const struct texturecontent_s* content);
+
+void GL_Defer1e(void (*ptr)(GLenum), GLenum param);
 
 #endif /* LIBDENG_GL_DEFERRED_H */
