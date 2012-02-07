@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 820 <--
+; Highest ordinal is currently: --> 821 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -311,6 +311,9 @@ EXPORTS
     Uri_Write2                  @736 NONAME
     Uri_Read                    @737 NONAME
     Uri_ReadWithDefaultScheme   @738 NONAME
+    Uri_Print                   @821 NONAME
+    Uri_Print2                  @822 NONAME
+    Uri_Print3                  @823 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME

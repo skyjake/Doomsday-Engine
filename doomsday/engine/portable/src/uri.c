@@ -467,3 +467,40 @@ void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultSche
         Str_Set(&uri->_scheme, defaultScheme);
     }
 }
+
+void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedText)
+{
+    ddstring_t* raw;
+    assert(uri);
+
+    indent = MAX_OF(0, indent);
+    if(!unresolvedText) unresolvedText = "--(!)incomplete";
+
+    raw = Uri_ToString(uri);
+
+    Con_Printf("*%s\"%s\"", indent, "",
+               (flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(raw)) : Str_Text(raw));
+
+    if(flags & UPF_OUTPUT_RESOLVED)
+    {
+        ddstring_t* resolved = Uri_Resolved(uri);
+        Con_Printf("%s%s\n", (resolved != 0? "=> " : unresolvedText),
+                   resolved != 0? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)?
+                                         F_PrettyPath(Str_Text(resolved)) : Str_Text(resolved))
+                                : "");
+        if(resolved) Str_Delete(resolved);
+    }
+    Con_Printf("\n");
+
+    Str_Delete(raw);
+}
+
+void Uri_Print2(const Uri* uri, int indent, int flags)
+{
+    Uri_Print3(uri, indent, flags, NULL/*use the default unresolved text*/);
+}
+
+void Uri_Print(const Uri* uri, int indent)
+{
+    Uri_Print2(uri, indent, DEFAULT_PRINTURIFLAGS);
+}
