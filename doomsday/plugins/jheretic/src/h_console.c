@@ -192,10 +192,6 @@ ccmdtemplate_t gameCCmds[] = {
     {NULL}
 };
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 /**
  * Add the console variables and commands.
  */
