@@ -53,6 +53,8 @@
 #  endif
 #endif
 
+#include "gl_deferredapi.h"
+
 #include <string.h>
 
 #include "sys_window.h"

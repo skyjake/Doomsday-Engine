@@ -26,24 +26,20 @@
 #include "gl_defer.h"
 #include "gl_deferredapi.h"
 
-static int __inline mustDefer(void)
+static boolean mustDefer(void)
 {
     return !Sys_InMainThread();
 }
 
+#define GL_CALL1(form, func, p) \
+    if(mustDefer()) GL_Defer##form(func, p); else func(p);
+
 void Deferred_glEnable(GLenum e)
 {
-    if(mustDefer())
-    {
-        GL_Defer1e(glEnable, e);
-    }
-    else
-    {
-        glEnable(e);
-    }
+    GL_CALL1(1e, glEnable, e);
 }
 
 void Deferred_glDisable(GLenum e)
 {
-
+    GL_CALL1(1e, glDisable, e);
 }
