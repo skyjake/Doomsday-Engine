@@ -24,9 +24,8 @@
 
 #include "de_system.h"
 #include "gl_defer.h"
-#include "gl_deferredapi.h"
 
-static boolean mustDefer(void)
+static boolean __inline mustDefer(void)
 {
     return !Sys_InMainThread();
 }
