@@ -1240,7 +1240,7 @@ void R_RenderViewPorts(void)
     if(!devRendSkyMode)
         bits |= GL_STENCIL_BUFFER_BIT;
 
-    if(/*firstFrameAfterLoad ||*/ freezeRLs)
+    if(freezeRLs)
     {
         bits |= GL_COLOR_BUFFER_BIT;
     }

@@ -166,7 +166,7 @@ static void processTask(deferredtask_t* task)
 
     case DTT_FUNC_PTR_E:
 #ifdef _DEBUG
-        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_e, api->param.e);
+        fprintf(stderr, "processDeferred: ptr=%p enum=%i\n", api->func.ptr_e, api->param.e);
 #endif
         api->func.ptr_e(api->param.e);
         break;
