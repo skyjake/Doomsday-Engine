@@ -395,6 +395,9 @@ static void rlBind(const rendlist_texmapunit_t* tmu)
 static void rlBindTo(int unit, const rendlist_texmapunit_t* tmu)
 {
     if(!unitHasTexture(&tmu->texture)) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glActiveTexture(GL_TEXTURE0 + (byte)unit);
     rlBind(tmu);
 }
@@ -1256,6 +1259,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
     if(conditions & DCF_SKIP)
         return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(unitHasTexture(&TU(list, TU_INTER)->texture))
     {
         // Is blending allowed?
@@ -1419,6 +1424,9 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
 static void selectTexUnits(int count)
 {
     int i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     for(i = numTexUnits - 1; i >= count; i--)
     {
         glActiveTexture(GL_TEXTURE0 + i);
@@ -1442,6 +1450,8 @@ static void selectTexUnits(int count)
  */
 static int setupListState(listmode_t mode, rendlist_t* list)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(mode)
     {
     case LM_SKYMASK:
@@ -2095,6 +2105,7 @@ void RL_RenderAllLists(void)
     uint count;
 
     assert(!Sys_GLCheckError());
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 

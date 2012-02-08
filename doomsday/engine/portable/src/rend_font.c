@@ -583,6 +583,8 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 
     if(renderWireframe)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
@@ -1189,6 +1191,8 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     // If we aren't aligning to top-left we need to know the dimensions.
     if(alignFlags & ALIGN_RIGHT)
         FR_TextSize(&textSize, text);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);

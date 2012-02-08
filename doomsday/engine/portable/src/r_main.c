@@ -1056,6 +1056,8 @@ void R_RenderPlayerViewBorder(void)
  */
 void R_UseViewPort(viewport_t* vp)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(!vp)
     {
         currentViewport = NULL;
@@ -1260,6 +1262,8 @@ void R_RenderViewPorts(void)
             }
         }
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // This is all the clearing we'll do.
     glClear(bits);

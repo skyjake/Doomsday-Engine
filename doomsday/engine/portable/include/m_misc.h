@@ -41,6 +41,7 @@
 void*           M_Malloc(size_t size);
 void*           M_Calloc(size_t size);
 void*           M_Realloc(void* ptr, size_t size);
+void*           M_MemDup(const void* ptr, size_t size);
 void            M_Free(void* ptr);
 
 // File system utility routines.

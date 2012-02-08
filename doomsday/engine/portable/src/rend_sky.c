@@ -101,8 +101,10 @@ static void renderSkyModels(void)
     skymodel_t* sky;
     float pos[3];
     float inter;
-
     int i, c;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
 

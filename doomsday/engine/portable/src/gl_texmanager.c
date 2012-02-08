@@ -641,6 +641,7 @@ static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
         {
             // Delete and mark it not-loaded.
             DGLuint glName = TextureVariant_GLName(variant);
+            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glDeleteTextures(1, (const GLuint*) &glName);
             TextureVariant_SetGLName(variant, 0);
             TextureVariant_FlagUploaded(variant, false);
@@ -659,8 +660,7 @@ static void uploadContent(uploadcontentmethod_t uploadMethod, const textureconte
         GL_UploadTextureContent(content);
         return;
     }
-    // Defer this operation. Need to make a copy.
-    GL_EnqueueDeferredTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+    GL_DeferTextureUpload(content);
 }
 
 static uploadcontentmethod_t uploadContentForVariant(uploadcontentmethod_t uploadMethod,
@@ -1753,6 +1753,8 @@ boolean GL_UploadTexture(int glFormat, int loadFormat, const uint8_t* pixels,
         genMipmaps = 0;
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Automatic mipmap generation?
     if(GL_state.extensions.genMipmapSGIS && genMipmaps)
         glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
@@ -2019,6 +2021,8 @@ void GL_UploadTextureContent(const texturecontent_t* content)
         }
     }
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBindTexture(GL_TEXTURE_2D, content->name);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, content->minFilter);
@@ -2874,6 +2878,8 @@ void GL_SetRawTextureParams(int minMode)
         rawtex_t* r = (*ptr);
         if(r->tex) // Is the texture loaded?
         {
+            LIBDENG_ASSERT_IN_MAIN_THREAD();
+
             glBindTexture(GL_TEXTURE_2D, r->tex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMode);
         }
@@ -2964,6 +2970,8 @@ void GL_ReleaseTexturesForRawImages(void)
         rawtex_t* r = (*ptr);
         if(r->tex)
         {
+            LIBDENG_ASSERT_IN_MAIN_THREAD();
+
             glDeleteTextures(1, (const GLuint*) &r->tex);
             r->tex = 0;
         }
@@ -3386,7 +3394,7 @@ void GL_BindTexture(TextureVariant* tex)
 {
     texturevariantspecification_t* spec = NULL;
 
-    if(Con_IsBusyWorker()) return;
+    if(Con_InBusyWorker()) return;
 
     if(tex)
     {
@@ -3408,6 +3416,9 @@ void GL_BindTexture(TextureVariant* tex)
         GL_SetNoTexture();
         return;
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
 
     // Apply dynamic adjustments to the GL texture state according to our spec.

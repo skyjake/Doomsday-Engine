@@ -47,8 +47,9 @@
 
 int novideo;                // if true, stay in text mode for debugging
 
-static boolean appShutdown = false; // Set to true when we should exit (normally).
+static boolean appShutdown = false; ///< Set to true when we should exit (normally).
 
+static uint mainThreadId = 0; ///< ID of the main thread.
 
 #ifdef WIN32
 /**
@@ -65,6 +66,17 @@ static void C_DECL handler(int s)
               s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
 }
 #endif
+
+void Sys_MarkAsMainThread(void)
+{
+    // This is the main thread.
+    mainThreadId = Sys_CurrentThreadId();
+}
+
+boolean Sys_InMainThread(void)
+{
+    return mainThreadId == Sys_CurrentThreadId();
+}
 
 /**
  * Initialize platform level services.

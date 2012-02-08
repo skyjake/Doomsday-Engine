@@ -221,6 +221,8 @@ void Rend_ModelViewMatrix(boolean useAngles)
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     if(useAngles)

@@ -1297,6 +1297,8 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
     if(!t->text) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);

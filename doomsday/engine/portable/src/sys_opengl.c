@@ -196,6 +196,8 @@ static void printGLUInfo(void)
     GLfloat fVals[2];
     GLint iVal;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     Con_Message("OpenGL information:\n");
     Con_Message("  Vendor: %s\n", glGetString(GL_VENDOR));
     Con_Message("  Renderer: %s\n", glGetString(GL_RENDERER));
@@ -462,6 +464,8 @@ boolean Sys_GLInitialize(void)
     if(!initedGL)
         return false;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(firstTimeInit)
     {
         double version = strtod((const char*) glGetString(GL_VERSION), NULL);
@@ -507,6 +511,8 @@ void Sys_GLShutdown(void)
 void Sys_GLConfigureDefaultState(void)
 {
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);

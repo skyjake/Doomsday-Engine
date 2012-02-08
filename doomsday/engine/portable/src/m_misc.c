@@ -94,6 +94,13 @@ void *M_Realloc(void *ptr, size_t size)
     return realloc(ptr, size);
 }
 
+void* M_MemDup(const void* ptr, size_t size)
+{
+    void* copy = M_Malloc(size);
+    memcpy(copy, ptr, size);
+    return copy;
+}
+
 void M_Free(void *ptr)
 {
     free(ptr);

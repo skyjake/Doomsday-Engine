@@ -2066,7 +2066,7 @@ void Con_Error(const char* error, ...)
     {
         Con_BusyWorkerError(buff);
 
-        if(Con_IsBusyWorker())
+        if(Con_InBusyWorker())
         {
             for(;;)
             {

@@ -300,6 +300,8 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
     const SDL_VideoInfo *info = NULL;
     int         windowflags;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     windowflags = (theWindow->flags);
     if(windowflags & DDWF_FULLSCREEN)
         flags |= SDL_FULLSCREEN;
@@ -845,6 +847,8 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  */
 void Sys_UpdateWindow(uint idx)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(GL_state.forceFinishBeforeSwap)
     {
         glFinish();
@@ -865,6 +869,8 @@ void Sys_UpdateWindow(uint idx)
 boolean Sys_SetWindowTitle(uint idx, const char *title)
 {
     ddwindow_t *window = getWindow(idx - 1);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(window)
     {

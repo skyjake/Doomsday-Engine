@@ -1351,6 +1351,8 @@ int DD_EarlyInit(void)
 {
     ddstring_t dataPath, defsPath;
 
+    Sys_MarkAsMainThread();
+
     // Determine the requested degree of verbosity.
     verbose = ArgExists("-verbose");
 
@@ -1543,7 +1545,7 @@ int DD_Main(void)
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
-            F_AddSearchPathToResourceNamespace(rnId, 0, searchPath, SPG_DEFAULT);
+            F_AddSearchPathToResourceNamespace(rnId, SPF_NO_DESCEND, searchPath, SPG_DEFAULT);
 
             Uri_Delete(searchPath);
             Dir_Delete(dir);

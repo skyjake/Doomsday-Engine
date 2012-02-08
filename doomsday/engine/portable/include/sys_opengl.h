@@ -40,6 +40,7 @@
 #  include <GL/wglext.h>
 #  include <GL/glext.h>
 #  include <GL/glu.h>
+#  define GL_CALL   __stdcall
 #endif
 
 #ifdef UNIX
@@ -51,7 +52,10 @@
 #    include <SDL.h>
 #    include <SDL_opengl.h>
 #  endif
+#  define GL_CALL
 #endif
+
+#include "gl_deferredapi.h"
 
 #include <string.h>
 

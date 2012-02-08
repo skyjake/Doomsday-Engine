@@ -288,7 +288,7 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
-boolean Con_IsBusyWorker(void)
+boolean Con_InBusyWorker(void)
 {
     boolean result;
     if(!Con_IsBusy()) return false;
@@ -361,6 +361,8 @@ static void Con_BusyDeleteTextures(void)
     if(isDedicated)
         return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
@@ -408,6 +410,8 @@ void Con_AcquireScreenshotTexture(void)
 
 void Con_ReleaseScreenshotTexture(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glDeleteTextures(1, (const GLuint*) &texScreenshot);
     texScreenshot = 0;
 }
@@ -424,6 +428,8 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
@@ -471,6 +477,8 @@ static void Con_BusyLoop(void)
 
     if(canDraw)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
     }
@@ -484,6 +492,8 @@ static void Con_DrawScreenshotBackground(float x, float y, float width, float he
 {
     if(texScreenshot)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         GL_BindTextureUnmanaged(texScreenshot, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
 
@@ -520,6 +530,8 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
 
     pos = MINMAX_OF(0, pos, 1);
     edgeCount = MAX_OF(1, pos * 30);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Draw a background.
     GL_BlendMode(BM_NORMAL);
@@ -670,6 +682,8 @@ void Con_BusyDrawConsoleOutput(void)
         }
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     GL_BlendMode(BM_NORMAL);
 
     // Dark gradient as background.
@@ -807,6 +821,8 @@ void Con_DrawTransition(void)
 {
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

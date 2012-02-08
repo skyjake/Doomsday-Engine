@@ -545,6 +545,8 @@ void UI_Drawer(void)
 {
     if(!uiActive || !uiCurrentPage) return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Go into screen projection mode.
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

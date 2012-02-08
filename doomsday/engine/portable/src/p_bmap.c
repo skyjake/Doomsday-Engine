@@ -1438,6 +1438,8 @@ void Rend_BlockmapDebug(void)
         break;
     }
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     /**
      * Draw the blockmap.
      */

@@ -6,7 +6,7 @@
  *
  * Uses @ref memzone or standard malloc for memory allocation, chosen during
  * initialization of a string. The string itself is always allocated with
- * malloc. (The @ref memzone is not thread-safe.)
+ * malloc.
  *
  * @todo Rename to Str? (str.h)
  * @todo AutoStr for automatically garbage-collected strings (good for return values,

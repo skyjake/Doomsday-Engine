@@ -203,6 +203,7 @@ void Rend_ParticleLoadExtraTextures(void)
 void Rend_ParticleReleaseSystemTextures(void)
 {
     if(novideo) return;
+
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
@@ -210,6 +211,7 @@ void Rend_ParticleReleaseSystemTextures(void)
 void Rend_ParticleReleaseExtraTextures(void)
 {
     if(novideo) return;
+
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
@@ -490,6 +492,8 @@ static void renderParticles(int rtype, boolean withBlend)
     DGLuint tex = 0;
     size_t i;
     int c;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
