@@ -1239,7 +1239,7 @@ static int findLumpWorker(const LumpInfo* lumpInfo, void* paramaters)
 
     if(!node) return 0; // Most irregular...
 
-    if(!(p->flags & SPF_NO_DECEND))
+    if(!(p->flags & SPF_NO_DESCEND))
     {
         filePath = F_ComposeLumpPath(lumpInfo->container, lumpInfo->lumpIdx);
         patternMatched = F_MatchFileName(Str_Text(filePath), Str_Text(&p->pattern));

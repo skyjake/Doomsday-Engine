@@ -23,16 +23,12 @@
  */
 
 /**
- * 3D Model Renderer v2.0
- *
- * Note: Light vectors and triangle normals are in an entirely independent,
- * right-handed coordinate system.
+ * @note Light vectors and triangle normals are in an entirely independent,
+ *       right-handed coordinate system.
  *
  * There is some more confusion with Y and Z axes as the game uses Z as the
  * vertical axis and the rendering code and model definitions use the Y axis.
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <math.h>
@@ -50,16 +46,11 @@
 #include "texturevariant.h"
 #include "materialvariant.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define MAX_VERTS           4096    // Maximum number of vertices per model.
 #define DOTPROD(a, b)       (a[0]*b[0] + a[1]*b[1] + a[2]*b[2])
 #define QATAN2(y,x)         qatan2(y,x)
 #define QASIN(x)            asin(x) // \fixme Precalculate arcsin.
 
 #define MAX_ARRAYS  (2 + MAX_TEX_UNITS)
-
-// TYPES -------------------------------------------------------------------
 
 typedef enum rendcmd_e {
     RC_COMMAND_COORDS,
@@ -72,67 +63,140 @@ typedef struct array_s {
     void* data;
 } array_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+int modelLight = 4;
+int frameInter = true;
+int mirrorHudModels = false;
+int modelShinyMultitex = true;
+float modelShinyFactor = 1.0f;
+int modelTriCount;
+float rend_model_lod = 256;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-int     modelLight = 4;
-int     frameInter = true;
-int     mirrorHudModels = false;
-int     modelShinyMultitex = true;
-float   modelShinyFactor = 1.0f;
-int     modelTriCount;
-float   rend_model_lod = 256;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static boolean inited = false;
 
 static array_t arrays[MAX_ARRAYS];
 
-// Fixed-size vertex arrays for the model.
-static dgl_vertex_t modelVertices[MAX_VERTS];
-static dgl_vertex_t modelNormals[MAX_VERTS];
-static dgl_color_t modelColors[MAX_VERTS];
-static dgl_texcoord_t modelTexCoords[MAX_VERTS];
+// The global vertex render buffer.
+static dgl_vertex_t* modelVertices;
+static dgl_vertex_t* modelNormals;
+static dgl_color_t* modelColors;
+static dgl_texcoord_t* modelTexCoords;
 
 // Global variables for ease of use. (Egads!)
 static float modelCenter[3];
 static int activeLod;
 static char* vertexUsage;
 
-// CODE --------------------------------------------------------------------
+static uint vertexBufferMax; ///< Maximum number of vertices we'll be required to render per submodel.
+static uint vertexBufferSize; ///< Current number of vertices supported by the render buffer.
+#if _DEBUG
+static boolean announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
+#endif
+
+static void errorIfNotInited(const char* callerName)
+{
+    if(inited) return;
+    Con_Error("%s: Model Renderer is not presently initialized.", callerName);
+    // Unreachable. Prevents static analysers from getting rather confused, poor things.
+    exit(1);
+}
 
 void Rend_ModelRegister(void)
 {
-    C_VAR_BYTE("rend-model", &useModels, 0, 0, 1);
-    C_VAR_INT("rend-model-lights", &modelLight, 0, 0, 10);
-    C_VAR_INT("rend-model-inter", &frameInter, 0, 0, 1);
-    C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod,
-                CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    C_VAR_INT("rend-model-distance", &maxModelDistance, CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-model-precache", &precacheSkins, 0, 0, 1);
+    C_VAR_BYTE ("rend-model", &useModels, 0, 0, 1);
+    C_VAR_INT  ("rend-model-lights", &modelLight, 0, 0, 10);
+    C_VAR_INT  ("rend-model-inter", &frameInter, 0, 0, 1);
+    C_VAR_FLOAT("rend-model-aspect", &rModelAspectMod, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+    C_VAR_INT  ("rend-model-distance", &maxModelDistance, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE ("rend-model-precache", &precacheSkins, 0, 0, 1);
     C_VAR_FLOAT("rend-model-lod", &rend_model_lod, CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1);
-    C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed,
-                CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    C_VAR_INT("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1);
+    C_VAR_INT  ("rend-model-mirror-hud", &mirrorHudModels, 0, 0, 1);
+    C_VAR_FLOAT("rend-model-spin-speed", &modelSpinSpeed, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+    C_VAR_INT  ("rend-model-shiny-multitex", &modelShinyMultitex, 0, 0, 1);
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor, 0, 0, 10);
 }
 
-void Mod_InitArrays(void)
+boolean Rend_ModelExpandVertexBuffers(uint numVertices)
+{
+    errorIfNotInited("Rend_ModelExpandVertexBuffers");
+
+    if(numVertices <= vertexBufferMax) return true;
+
+    // Sanity check a sane maximum...
+    if(numVertices >= RENDER_MAX_MODEL_VERTS)
+    {
+#if _DEBUG
+        if(!announcedVertexBufferMaxBreach)
+        {
+            Con_Message("Warning: Rend_ModelExpandVertexBuffers: Attempted to expand to %u vertices (max %u), ignoring...\n", numVertices, RENDER_MAX_MODEL_VERTS);
+            announcedVertexBufferMaxBreach = true;
+        }
+#endif
+        return false;
+    }
+
+    // Defer resizing of the render buffer until draw time as it may be repeatedly expanded.
+    vertexBufferMax = numVertices;
+    return true;
+}
+
+/// @return  @c true= Vertex buffer is large enough to handle @a numVertices.
+static boolean Mod_ExpandVertexBuffer(uint numVertices)
+{
+    // Mark the vertex buffer if a resize is necessary.
+    Rend_ModelExpandVertexBuffers(numVertices);
+
+    // Do we need to resize the buffers?
+    if(vertexBufferMax != vertexBufferSize)
+    {
+        dgl_vertex_t* newVertices;
+        dgl_vertex_t* newNormals;
+        dgl_color_t* newColors;
+        dgl_texcoord_t* newTexCoords;
+
+        /// @todo Align access to this memory along a 4-byte boundary?
+        newVertices = calloc(1, sizeof(*newVertices) * vertexBufferMax);
+        if(!newVertices) return false;
+
+        newNormals = calloc(1, sizeof(*newNormals) * vertexBufferMax);
+        if(!newNormals) return false;
+
+        newColors = calloc(1, sizeof(*newColors) * vertexBufferMax);
+        if(!newColors) return false;
+
+        newTexCoords = calloc(1, sizeof(*newTexCoords) * vertexBufferMax);
+        if(!newTexCoords) return false;
+
+        // Swap over the buffers.
+        if(modelVertices) free(modelVertices);
+        modelVertices = newVertices;
+
+        if(modelNormals) free(modelNormals);
+        modelNormals = newNormals;
+
+        if(modelColors) free(modelColors);
+        modelColors = newColors;
+
+        if(modelTexCoords) free(modelTexCoords);
+        modelTexCoords = newTexCoords;
+
+        vertexBufferSize = vertexBufferMax;
+    }
+
+    // Is the buffer large enough?
+    return vertexBufferSize >= numVertices;
+}
+
+static void Mod_InitArrays(void)
 {
     if(!GL_state.features.elementArrays) return;
     memset(arrays, 0, sizeof(arrays));
 }
 
-void Mod_EnableArrays(int vertices, int colors, int coords)
+static void Mod_EnableArrays(int vertices, int colors, int coords)
 {
     int i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(vertices)
     {
@@ -169,9 +233,11 @@ void Mod_EnableArrays(int vertices, int colors, int coords)
     assert(!Sys_GLCheckError());
 }
 
-void Mod_DisableArrays(int vertices, int colors, int coords)
+static void Mod_DisableArrays(int vertices, int colors, int coords)
 {
     int i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(vertices)
     {
@@ -211,12 +277,16 @@ void Mod_DisableArrays(int vertices, int colors, int coords)
 
 static __inline void enableTexUnit(byte id)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
 }
 
 static __inline void disableTexUnit(byte id)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
 
@@ -230,7 +300,7 @@ static __inline void disableTexUnit(byte id)
 /**
  * The first selected unit is active after this call.
  */
-void Mod_SelectTexUnits(int count)
+static void Mod_SelectTexUnits(int count)
 {
     int i;
     for(i = numTexUnits - 1; i >= count; i--)
@@ -249,9 +319,12 @@ void Mod_SelectTexUnits(int count)
 /**
  * Enable, set and optionally lock all enabled arrays.
  */
-void Mod_Arrays(void* vertices, void* colors, int numCoords, void** coords, int lock)
+static void Mod_Arrays(void* vertices, void* colors, int numCoords,
+    void** coords, int lock)
 {
     int i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(vertices)
     {
@@ -262,6 +335,7 @@ void Mod_Arrays(void* vertices, void* colors, int numCoords, void** coords, int 
         }
         else
         {
+            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(3, GL_FLOAT, 16, vertices);
         }
@@ -308,15 +382,20 @@ void Mod_Arrays(void* vertices, void* colors, int numCoords, void** coords, int 
     assert(!Sys_GLCheckError());
 }
 
-void Mod_UnlockArrays(void)
+static void Mod_UnlockArrays(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(!GL_state.features.elementArrays) return;
+
     glUnlockArraysEXT();
     assert(!Sys_GLCheckError());
 }
 
-void Mod_ArrayElement(int index)
+static void Mod_ArrayElement(int index)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(GL_state.features.elementArrays)
     {
         glArrayElement(index);
@@ -340,10 +419,12 @@ void Mod_ArrayElement(int index)
     }
 }
 
-void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
+static void Mod_DrawElements(dglprimtype_t type, int count, const uint* indices)
 {
     GLenum primType = (type == DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN :
                        type == DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(GL_state.features.elementArrays)
     {
@@ -376,7 +457,7 @@ static __inline float qatan2(float y, float x)
 /**
  * Linear interpolation between two values.
  */
-__inline float Mod_Lerp(float start, float end, float pos)
+static __inline float Mod_Lerp(float start, float end, float pos)
 {
     return end * pos + start * (1 - pos);
 }
@@ -384,10 +465,10 @@ __inline float Mod_Lerp(float start, float end, float pos)
 /**
  * Return a pointer to the visible model frame.
  */
-model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
+static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mobjid)
 {
-    model_t    *mdl = modellist[mf->sub[subnumber].model];
-    int         index = mf->sub[subnumber].frame;
+    model_t* mdl = modellist[mf->sub[subnumber].model];
+    int index = mf->sub[subnumber].frame;
 
     if(mf->flags & MFF_IDFRAME)
     {
@@ -404,14 +485,15 @@ model_frame_t *Mod_GetVisibleFrame(modeldef_t *mf, int subnumber, int mobjid)
 /**
  * Render a set of GL commands using the given data.
  */
-void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
-                        dgl_vertex_t *vertices, dgl_color_t *colors,
-                        dgl_texcoord_t *texCoords)
+static void Mod_RenderCommands(rendcmd_t mode, void* glCommands, /*uint numVertices,*/
+    dgl_vertex_t* vertices, dgl_color_t* colors, dgl_texcoord_t* texCoords)
 {
-    byte       *pos;
-    glcommand_vertex_t *v;
-    int         count;
-    void       *coords[2];
+    glcommand_vertex_t* v;
+    void* coords[2];
+    int count;
+    byte* pos;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Disable all vertex arrays.
     Mod_DisableArrays(true, true, DDMAXINT);
@@ -469,11 +551,11 @@ void Mod_RenderCommands(rendcmd_t mode, void *glCommands, /*uint numVertices,*/
 /**
  * Interpolate linearly between two sets of vertices.
  */
-void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
-                      model_vertex_t *end, dgl_vertex_t *out)
+static void Mod_LerpVertices(float pos, int count, model_vertex_t* start,
+    model_vertex_t* end, dgl_vertex_t* out)
 {
-    int         i;
-    float       inv;
+    float inv;
+    int i;
 
     if(start == end || pos == 0)
     {
@@ -512,24 +594,24 @@ void Mod_LerpVertices(float pos, int count, model_vertex_t *start,
 /**
  * Negate all Z coordinates.
  */
-void Mod_MirrorVertices(int count, dgl_vertex_t *v, int axis)
+static void Mod_MirrorVertices(int count, dgl_vertex_t* v, int axis)
 {
     for(; count-- > 0; v++)
         v->xyz[axis] = -v->xyz[axis];
 }
 
 typedef struct {
-    float               color[3], extra[3], rotateYaw, rotatePitch;
-    dgl_vertex_t*        normal;
-    uint                processedLights, maxLights;
-    boolean             invert;
+    float color[3], extra[3], rotateYaw, rotatePitch;
+    dgl_vertex_t* normal;
+    uint processedLights, maxLights;
+    boolean invert;
 } lightmodelvertexparams_t;
 
 static boolean lightModelVertex(const vlight_t* vlight, void* context)
 {
-    float               dot;
-    float*              dest, lightVector[3];
+    float* dest, lightVector[3];
     lightmodelvertexparams_t* params = (lightmodelvertexparams_t*) context;
+    float dot;
 
     // Take a copy of the light vector as we intend to change it.
     lightVector[0] = vlight->vector[0];
@@ -550,7 +632,8 @@ static boolean lightModelVertex(const vlight_t* vlight, void* context)
     dot += vlight->offset; // Shift a bit towards the light.
 
     if(!vlight->affectedByAmbient)
-    {   // Won't be affected by ambient.
+    {
+        // Won't be affected by ambient.
         dest = params->extra;
     }
     else
@@ -584,12 +667,12 @@ static boolean lightModelVertex(const vlight_t* vlight, void* context)
 /**
  * Calculate vertex lighting.
  */
-void Mod_VertexColors(int count, dgl_color_t* out, dgl_vertex_t* normal,
-                      uint vLightListIdx, uint maxLights, float ambient[4],
-                      boolean invert, float rotateYaw, float rotatePitch)
+static void Mod_VertexColors(int count, dgl_color_t* out, dgl_vertex_t* normal,
+    uint vLightListIdx, uint maxLights, float ambient[4], boolean invert,
+    float rotateYaw, float rotatePitch)
 {
-    int                 i, k;
     lightmodelvertexparams_t params;
+    int i, k;
 
     for(i = 0; i < count; ++i, out++, normal++)
     {
@@ -628,7 +711,7 @@ void Mod_VertexColors(int count, dgl_color_t* out, dgl_vertex_t* normal,
 /**
  * Set all the colors in the array to bright white.
  */
-void Mod_FullBrightVertexColors(int count, dgl_color_t *colors, float alpha)
+static void Mod_FullBrightVertexColors(int count, dgl_color_t* colors, float alpha)
 {
     for(; count-- > 0; colors++)
     {
@@ -640,9 +723,9 @@ void Mod_FullBrightVertexColors(int count, dgl_color_t *colors, float alpha)
 /**
  * Set all the colors into the array to the same values.
  */
-void Mod_FixedVertexColors(int count, dgl_color_t *colors, float *color)
+static void Mod_FixedVertexColors(int count, dgl_color_t* colors, float* color)
 {
-    byte        rgba[4];
+    byte rgba[4];
 
     rgba[0] = color[0] * 255;
     rgba[1] = color[1] * 255;
@@ -655,13 +738,11 @@ void Mod_FixedVertexColors(int count, dgl_color_t *colors, float *color)
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-void Mod_ShinyCoords(int count, dgl_texcoord_t *coords, dgl_vertex_t *normals,
-                     float normYaw, float normPitch, float shinyAng,
-                     float shinyPnt, float reactSpeed)
+static void Mod_ShinyCoords(int count, dgl_texcoord_t* coords, dgl_vertex_t* normals,
+    float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
 {
-    int         i;
-    float       u, v;
-    float       rotatedNormal[3];
+    float u, v, rotatedNormal[3];
+    int i;
 
     for(i = 0; i < count; ++i, coords++, normals++)
     {
@@ -711,6 +792,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     blendmode_t blending;
     TextureVariant* skinTexture = NULL, *shinyTexture = NULL;
     int         zSign = (params->mirror? -1 : 1);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // Do not bother with infinitely small models...
     if(mf->scale[VX] == 0 && (int)mf->scale[VY] == 0 && mf->scale[VZ] == 0) return;
@@ -811,6 +894,16 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         mfNext = mf;
     }
 
+    // Determine the total number of vertices we have.
+    numVerts = mdl->info.numVertices;
+
+    // Ensure our vertex render buffers can accommodate this.
+    if(!Mod_ExpandVertexBuffer(numVerts))
+    {
+        // No can do, we aint got the power!
+        return;
+    }
+
     // Setup transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -849,8 +942,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     glTranslatef(smf->offset[VX], smf->offset[VY], smf->offset[VZ]);
 
-    // Now we can draw.
-    numVerts = mdl->info.numVertices;
+    /**
+     * Now we can draw.
+     */
 
     // Determine the suitable LOD.
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
@@ -1157,7 +1251,57 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
 void Rend_ModelInit(void)
 {
+    if(inited) return; // Already been here.
+
+    modelVertices = 0;
+    modelNormals = 0;
+    modelColors = 0;
+    modelTexCoords = 0;
+
+    vertexBufferMax = vertexBufferSize = 0;
+#if _DEBUG
+    announcedVertexBufferMaxBreach = false;
+#endif
+
     Mod_InitArrays();
+
+    inited = true;
+}
+
+void Rend_ModelShutdown(void)
+{
+    if(!inited) return;
+
+    if(modelVertices)
+    {
+        free(modelVertices);
+        modelVertices = 0;
+    }
+
+    if(modelNormals)
+    {
+        free(modelNormals);
+        modelNormals = 0;
+    }
+
+    if(modelColors)
+    {
+        free(modelColors);
+        modelColors = 0;
+    }
+
+    if(modelTexCoords)
+    {
+        free(modelTexCoords);
+        modelTexCoords = 0;
+    }
+
+    vertexBufferMax = vertexBufferSize = 0;
+#if _DEBUG
+    announcedVertexBufferMaxBreach = false;
+#endif
+
+    inited = false;
 }
 
 /**
@@ -1166,6 +1310,10 @@ void Rend_ModelInit(void)
 void Rend_RenderModel(const rendmodelparams_t* params)
 {
     uint i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    errorIfNotInited("Rend_RenderModel");
 
     if(!params || !params->mf) return;
 
@@ -1180,7 +1328,6 @@ void Rend_RenderModel(const rendmodelparams_t* params)
             if(disableZ)
                 glDepthMask(GL_FALSE);
 
-            // Render the submodel.
             Mod_RenderSubModel(i, params);
 
             if(disableZ)
@@ -1189,7 +1336,8 @@ void Rend_RenderModel(const rendmodelparams_t* params)
     }
 
     if(devMobjVLights && params->vLightListIdx)
-    {   // Draw the vlight vectors, for debug.
+    {
+        // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
 

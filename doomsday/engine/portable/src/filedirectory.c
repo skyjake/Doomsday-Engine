@@ -1,25 +1,23 @@
-/**\file filedirectory.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file filedirectory.c
+ * FileDirectory implementation. @ingroup fs
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -41,6 +39,57 @@ struct filedirectory_s {
 
 static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* filePath,
     int (*callback) (PathDirectoryNode*, void*), void* paramaters);
+
+static PathDirectoryNode* attachMissingNodeInfo(PathDirectoryNode* node)
+{
+    filedirectory_nodeinfo_t* info;
+
+    if(!node) return NULL;
+
+    // Has this already been processed?
+    info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
+    if(!info)
+    {
+        // Clearly not. Attach our node info.
+        info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
+        if(!info) Con_Error("FileDirectory::addMissingNodeInfo: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
+
+        info->processed = false;
+        PathDirectoryNode_AttachUserData(node, info);
+    }
+
+    return node;
+}
+
+static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* _path)
+{
+    const ddstring_t* relPath;
+    PathDirectoryNode* node;
+    ddstring_t path;
+
+    assert(fd);
+
+    if(!_path || Str_IsEmpty(_path)) return NULL;
+
+    // Let's try to make it a relative path.
+    if(F_IsAbsolute(_path))
+    {
+        Str_Init(&path);
+        F_RemoveBasePath(&path, _path);
+        relPath = &path;
+    }
+    else
+    {
+        relPath = _path;
+    }
+
+    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
+    attachMissingNodeInfo(node);
+
+    if(relPath == &path) Str_Free(&path);
+
+    return node;
+}
 
 typedef struct {
     FileDirectory* fileDirectory;
@@ -64,91 +113,60 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
  * @param paramaters  Passed to the callback.
  * @return  Non-zero if iteration should stop else @c 0.
  */
-static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* _searchPath,
+static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* searchPath,
     int (*callback) (PathDirectoryNode*, void*), void* paramaters)
 {
     int result = 0; // Continue iteration.
-    filedirectory_nodeinfo_t* info;
-    const ddstring_t* relPath;
-    PathDirectoryNode* node;
-    ddstring_t searchPath;
-    assert(fd);
-
-    if(!_searchPath || Str_IsEmpty(_searchPath)) return result;
-
-    // Let's try to make it a relative path.
-    if(F_IsAbsolute(_searchPath))
+    PathDirectoryNode* node = addPathNodes(fd, searchPath);
+    if(node)
     {
-        Str_Init(&searchPath);
-        F_RemoveBasePath(&searchPath, _searchPath);
-        relPath = &searchPath;
-    }
-    else
-    {
-        relPath = _searchPath;
-    }
+        filedirectory_nodeinfo_t* info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
 
-    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
-
-    // Has this already been processed?
-    info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
-    if(!info)
-    {
-        // Clearly not. Attach our node info.
-        info = (filedirectory_nodeinfo_t*) malloc(sizeof *info);
-        if(!info) Con_Error("FileDirectory::addNodesOnSearchPath: Failed on allocation of %lu bytes for new FileDirectory::NodeInfo.", (unsigned long) sizeof *info);
-
-        info->processed = false;
-        PathDirectoryNode_AttachUserData(node, info);
-    }
-
-    if(info->processed)
-    {
-        // Does caller want to process it again?
-        if(callback)
+        if(info->processed)
+        {
+            // Does caller want to process it again?
+            if(callback)
+            {
+                if(PT_BRANCH == PathDirectoryNode_Type(node))
+                {
+                    result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
+                                                    PATHDIRECTORY_NOHASH, callback, paramaters);
+                }
+                else
+                {
+                    result = callback(node, paramaters);
+                }
+            }
+        }
+        else
         {
             if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
-                result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
-                                                PATHDIRECTORY_NOHASH, callback, paramaters);
+                addpathworker_paramaters_t p;
+                ddstring_t searchPattern;
+
+                // Compose the search pattern. Resolve relative to the base path
+                // if not already absolute. We're interested in *everything*.
+                Str_Init(&searchPattern);
+                Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
+
+                p.callback = callback;
+                p.fileDirectory = fd;
+                p.flags = flags;
+                p.paramaters = paramaters;
+
+                // Process this search.
+                result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
+                Str_Free(&searchPattern);
             }
-            else
+            else if(callback)
             {
                 result = callback(node, paramaters);
             }
+
+            info->processed = true;
         }
     }
-    else
-    {
-        if(PT_BRANCH == PathDirectoryNode_Type(node))
-        {
-            addpathworker_paramaters_t p;
-            ddstring_t searchPattern;
-
-            // Compose the search pattern. Resolve relative to the base path
-            // if not already absolute. We're interested in *everything*.
-            Str_Init(&searchPattern);
-            Str_Appendf(&searchPattern, "%s*", Str_Text(_searchPath));
-            //F_PrependBasePath(&searchPattern, &searchPattern);
-
-            p.callback = callback;
-            p.fileDirectory = fd;
-            p.flags = flags;
-            p.paramaters = paramaters;
-
-            // Process this search.
-            F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
-            Str_Free(&searchPattern);
-        }
-        else if(callback)
-        {
-            callback(node, paramaters);
-        }
-
-        info->processed = true;
-    }
-
-    if(relPath == &searchPath) Str_Free(&searchPath);
 
     return result;
 }
@@ -175,23 +193,15 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
 #endif*/
 }
 
-static void printPaths(const Uri* const* paths, size_t pathsCount)
+static void printUriList(const Uri* const* pathList, size_t pathCount, int indent)
 {
-    const Uri* const* ptr = paths;
+    const Uri* const* pathsIt = pathList;
     size_t i;
-    assert(paths);
+    if(!pathList) return;
 
-    for(i = 0; i < pathsCount && NULL != *ptr; ++i, ptr++)
+    for(i = 0; i < pathCount && NULL != *pathsIt; ++i, pathsIt++)
     {
-        const Uri* path = *ptr;
-        ddstring_t* rawPath = Uri_ToString(path);
-        ddstring_t* resolvedPath = Uri_Resolved(path);
-
-        Con_Printf("  \"%s\" %s%s\n", Str_Text(rawPath), (resolvedPath != 0? "-> " : "--(!)incomplete"),
-                   resolvedPath != 0? F_PrettyPath(Str_Text(resolvedPath)) : "");
-
-        Str_Delete(rawPath);
-        if(resolvedPath) Str_Delete(resolvedPath);
+        Uri_Print(*pathsIt, indent);
     }
 }
 
@@ -233,7 +243,7 @@ FileDirectory* FileDirectory_New(void)
     return FileDirectory_NewWithPathListStr(NULL, 0);
 }
 
-static int freeNodeInfo(PathDirectoryNode* node, void* paramaters)
+static int deleteNodeInfo(PathDirectoryNode* node, void* paramaters)
 {
     filedirectory_nodeinfo_t* info = PathDirectoryNode_DetachUserData(node);
     if(info) free(info);
@@ -244,7 +254,7 @@ static void clearNodeInfo(FileDirectory* fd)
 {
     assert(fd);
     if(!fd->_pathDirectory) return;
-    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_NOHASH, freeNodeInfo);
+    PathDirectory_Iterate(fd->_pathDirectory, 0, NULL, PATHDIRECTORY_NOHASH, deleteNodeInfo);
 }
 
 void FileDirectory_Delete(FileDirectory* fd)
@@ -276,9 +286,10 @@ void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* pat
     }
 
 #if _DEBUG
-    VERBOSE2( Con_Message("Adding paths to FileDirectory...\n") );
-    VERBOSE2( printPaths(paths, pathsCount) );
+    VERBOSE2( Con_Message("Adding paths to FileDirectory...\n");
+              printUriList(paths, pathsCount, 2/*indent*/) )
 #endif
+
     resolveAndAddSearchPathsToDirectory(fd, flags, paths, pathsCount, callback, paramaters);
 }
 
@@ -320,7 +331,8 @@ void FileDirectory_AddPathList(FileDirectory* fd, int flags, const char* pathLis
 }
 
 int FileDirectory_Iterate2(FileDirectory* fd, pathdirectorynode_type_t nodeType,
-    PathDirectoryNode* parent, ushort hash, filedirectory_iteratecallback_t callback, void* paramaters)
+    PathDirectoryNode* parent, ushort hash, filedirectory_iteratecallback_t callback,
+    void* paramaters)
 {
     int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
     assert(fd);
@@ -334,7 +346,8 @@ int FileDirectory_Iterate(FileDirectory* fd, pathdirectorynode_type_t nodeType,
 }
 
 int FileDirectory_Iterate2_Const(const FileDirectory* fd, pathdirectorynode_type_t nodeType,
-    const PathDirectoryNode* parent, ushort hash, filedirectory_iterateconstcallback_t callback, void* paramaters)
+    const PathDirectoryNode* parent, ushort hash,
+    filedirectory_iterateconstcallback_t callback, void* paramaters)
 {
     int flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF);
     assert(fd);
@@ -348,7 +361,8 @@ int FileDirectory_Iterate_Const(const FileDirectory* fd, pathdirectorynode_type_
 }
 
 boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
-    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath, char foundDelimiter)
+    const char* _searchPath, char searchDelimiter, ddstring_t* foundPath,
+    char foundDelimiter)
 {
     const PathDirectoryNode* foundNode;
     ddstring_t searchPath;
@@ -374,35 +388,58 @@ boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
     // Does caller want to know the full path?
     if(foundPath && foundNode)
     {
-        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode, foundPath, NULL, foundDelimiter);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(foundNode), foundNode,
+                                  foundPath, NULL, foundDelimiter);
     }
 
     return !!foundNode;
 }
 
+/// @return Lexicographical delta between the two ddstring_ts @a and @a b.
 static int C_DECL comparePaths(const void* a, const void* b)
 {
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
 }
 
 #if _DEBUG
+static void printPathList(const ddstring_t* pathList, size_t numPaths, int indent)
+{
+    size_t n = 0;
+    if(!pathList) return;
+    for(n = 0; n < numPaths; ++n)
+    {
+        const ddstring_t* path = pathList + n;
+        Con_Printf("%*s\n", indent, F_PrettyPath(Str_Text(path)));
+    }
+}
+
+static void deletePathList(ddstring_t* pathList, size_t numPaths)
+{
+    size_t n = 0;
+    if(!pathList) return;
+    for(n = 0; n < numPaths; ++n)
+    {
+        ddstring_t* path = pathList + n;
+        Str_Free(path);
+    }
+    free(pathList);
+}
+
 void FileDirectory_Print(FileDirectory* fd)
 {
     size_t numFiles, n = 0;
-    ddstring_t* fileList;
+    ddstring_t* pathList;
     assert(fd);
 
     Con_Printf("FileDirectory [%p]:\n", (void*)fd);
-    fileList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, DIR_SEP_CHAR, &numFiles);
-    if(fileList)
+    pathList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, DIR_SEP_CHAR, &numFiles);
+    if(pathList)
     {
-        qsort(fileList, numFiles, sizeof *fileList, comparePaths);
-        do
-        {
-            Con_Printf("  %s\n", F_PrettyPath(Str_Text(fileList + n)));
-            Str_Free(fileList + n);
-        } while(++n < numFiles);
-        free(fileList);
+        qsort(pathList, numFiles, sizeof *pathList, comparePaths);
+
+        printPathList(pathList, numFiles, 2/*indent*/);
+
+        deletePathList(pathList, numFiles);
     }
     Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
 }
