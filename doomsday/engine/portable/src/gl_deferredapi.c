@@ -30,15 +30,22 @@ static boolean __inline mustDefer(void)
     return !Sys_InMainThread();
 }
 
-#define GL_CALL1(form, func, p) \
-    if(mustDefer()) GL_Defer##form(func, p); else func(p);
+#define GL_CALL1(form, func, x) \
+    if(mustDefer()) GL_Defer_##form(func, x); else func(x);
+#define GL_CALL2(form, func, x, y) \
+    if(mustDefer()) GL_Defer_##form(func, x, y); else func(x, y);
 
 void Deferred_glEnable(GLenum e)
 {
-    GL_CALL1(1e, glEnable, e);
+    GL_CALL1(e, glEnable, e);
 }
 
 void Deferred_glDisable(GLenum e)
 {
-    GL_CALL1(1e, glDisable, e);
+    GL_CALL1(e, glDisable, e);
+}
+
+void Deferred_glDeleteTextures(GLsizei num, const GLuint* names)
+{
+    GL_CALL2(uintArray, glDeleteTextures, num, names);
 }

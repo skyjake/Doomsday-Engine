@@ -30,9 +30,9 @@
 
 #include "sys_opengl.h"
 
-#define glEnable(x)         Deferred_glEnable(x)
-#define glDisable(x)        Deferred_glDisable(x)
-#define glDeleteTextures(x) Deferred_glDeleteTextures(x)
+#define glEnable(x)             Deferred_glEnable(x)
+#define glDisable(x)            Deferred_glDisable(x)
+#define glDeleteTextures(x, y)  Deferred_glDeleteTextures(x, y)
 
 void Deferred_glEnable(GLenum e);
 void Deferred_glDisable(GLenum e);
