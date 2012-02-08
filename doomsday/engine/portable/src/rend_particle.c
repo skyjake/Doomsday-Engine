@@ -203,6 +203,7 @@ void Rend_ParticleLoadExtraTextures(void)
 void Rend_ParticleReleaseSystemTextures(void)
 {
     if(novideo) return;
+
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
@@ -210,6 +211,7 @@ void Rend_ParticleReleaseSystemTextures(void)
 void Rend_ParticleReleaseExtraTextures(void)
 {
     if(novideo) return;
+
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }
@@ -491,6 +493,8 @@ static void renderParticles(int rtype, boolean withBlend)
     size_t i;
     int c;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     // viewSideVec points to the left.
@@ -523,8 +527,10 @@ static void renderParticles(int rtype, boolean withBlend)
     {
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
-        glBindTexture(GL_TEXTURE_2D, tex);
+
+        GL_BindTextureUnmanaged(tex, GL_LINEAR);
         glEnable(GL_TEXTURE_2D);
+
         glDepthFunc(GL_LEQUAL);
         glBegin(primType = GL_QUADS);
     }

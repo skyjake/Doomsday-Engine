@@ -135,11 +135,11 @@ D_CMD(EndGame);
 D_CMD(HelpScreen);
 D_CMD(ListMaps);
 D_CMD(LoadGame);
-D_CMD(LoadGameName);
+D_CMD(OpenLoadMenu);
 D_CMD(QuickLoadGame);
 D_CMD(QuickSaveGame);
 D_CMD(SaveGame);
-D_CMD(SaveGameName);
+D_CMD(OpenSaveMenu);
 
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
@@ -164,6 +164,9 @@ void    H2_AdvanceDemo(void);
 #endif
 
 void    G_StopDemo(void);
+
+void R_LoadColorPalettes(void);
+void R_LoadVectorGraphics(void);
 
 int Hook_DemoStop(int hookType, int val, void* paramaters);
 
@@ -415,12 +418,15 @@ ccmdtemplate_t gameCmds[] = {
     { "endgame",        "",     CCmdEndGame },
     { "helpscreen",     "",     CCmdHelpScreen },
     { "listmaps",       "",     CCmdListMaps },
-    { "loadgame",       "s",    CCmdLoadGameName },
-    { "loadgame",       "",     CCmdLoadGame },
+    { "loadgame",       "ss",   CCmdLoadGame },
+    { "loadgame",       "s",    CCmdLoadGame },
+    { "loadgame",       "",     CCmdOpenLoadMenu },
     { "quickload",      "",     CCmdQuickLoadGame },
     { "quicksave",      "",     CCmdQuickSaveGame },
-    { "savegame",       "s*",   CCmdSaveGameName },
-    { "savegame",       "",     CCmdSaveGame },
+    { "savegame",       "sss",  CCmdSaveGame },
+    { "savegame",       "ss",   CCmdSaveGame },
+    { "savegame",       "s",    CCmdSaveGame },
+    { "savegame",       "",     CCmdOpenSaveMenu },
     { "togglegamma",    "",     CCmdCycleTextureGamma },
     { NULL }
 };
@@ -470,6 +476,8 @@ gameaction_t G_GameAction(void)
  */
 void G_CommonPreInit(void)
 {
+    int i, j;
+
     quitInProgress = false;
     verbose = ArgExists("-verbose");
 
@@ -477,7 +485,6 @@ void G_CommonPreInit(void)
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     // Setup the players.
-    { int i, j;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         player_t* pl = players + i;
@@ -493,11 +500,15 @@ void G_CommonPreInit(void)
             pl->pSprites[j].state = NULL;
             pl->plr->pSprites[j].statePtr = NULL;
         }
-    }}
+    }
 
     G_RegisterBindClasses();
     G_RegisterPlayerControls();
     P_RegisterMapObjs();
+
+    R_LoadVectorGraphics();
+    R_LoadColorPalettes();
+
     P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
@@ -831,10 +842,9 @@ fontid_t R_MustFindFontForName(const char* name)
 
 void R_InitRefresh(void)
 {
-    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
+    if(IS_DEDICATED) return;
 
-    R_LoadColorPalettes();
-    R_LoadVectorGraphics();
+    VERBOSE( Con_Message("R_InitRefresh: Loading data for referesh.\n") );
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
@@ -850,18 +860,19 @@ void R_InitRefresh(void)
     R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
 
     // Locate our fonts.
-    fonts[GF_FONTA]   = R_MustFindFontForName("a");
-    fonts[GF_FONTB]   = R_MustFindFontForName("b");
-    fonts[GF_STATUS]  = R_MustFindFontForName("status");
+    fonts[GF_FONTA]    = R_MustFindFontForName("a");
+    fonts[GF_FONTB]    = R_MustFindFontForName("b");
+    fonts[GF_STATUS]   = R_MustFindFontForName("status");
 #if __JDOOM__
-    fonts[GF_INDEX]   = R_MustFindFontForName("index");
+    fonts[GF_INDEX]    = R_MustFindFontForName("index");
 #endif
 #if __JDOOM__ || __JDOOM64__
-    fonts[GF_SMALL]   = R_MustFindFontForName("small");
+    fonts[GF_SMALL]    = R_MustFindFontForName("small");
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    fonts[GF_SMALLIN] = R_MustFindFontForName("smallin");
+    fonts[GF_SMALLIN]  = R_MustFindFontForName("smallin");
 #endif
+    fonts[GF_MAPPOINT] = R_MustFindFontForName("mappoint");
 
     { float mul = 1.4f;
     DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
@@ -2013,7 +2024,7 @@ void G_StartNewInit(void)
 void G_StartNewGame(skillmode_t skill)
 {
     G_StartNewInit();
-    G_InitNew(skill, 0, 0);
+    G_InitNew(skill, 0, P_TranslateMap(0)); // Hexen has translated map numbers.
 }
 #endif
 
@@ -2048,7 +2059,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     if(secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
         Uri* mapUri = G_ComposeMapUri(0, 30);
-        ddstring_t* mapPath = Uri_ComposePath(mapUri);
+        ddstring_t* mapPath = Uri_Compose(mapUri);
         if(!P_MapExists(Str_Text(mapPath)))
             secretExit = false;
         Str_Delete(mapPath);
@@ -2158,7 +2169,7 @@ void G_DoMapCompleted(void)
     {
     ddmapinfo_t minfo;
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     if(Def_Get(DD_DEF_MAP_INFO, Str_Text(mapPath), &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
         Str_Delete(mapPath);
@@ -2231,7 +2242,7 @@ void G_DoMapCompleted(void)
 void G_PrepareWIData(void)
 {
     Uri* mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     wbstartstruct_t* info = &wmInfo;
     ddmapinfo_t minfo;
     int i;
@@ -2326,7 +2337,7 @@ boolean G_LoadGame(int slot)
 
     // Check whether this slot is in use. We do this here also because we
     // need to provide our caller with instant feedback. Naturally this is
-    // no guarantee that the game-save will be acessible come load time.
+    // no guarantee that the game-save will be accessible come load time.
 
     // First ensure we have up-to-date info.
     SV_UpdateGameSaveInfo();
@@ -2414,7 +2425,7 @@ ddstring_t* G_GenerateSaveGameName(void)
     seconds = time;
 
     mapUri = G_ComposeMapUri(gameEpisode, gameMap);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
 
     mapName = P_GetMapNiceName();
 #if __JHEXEN__
@@ -2587,50 +2598,56 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
         respawnMonsters = cfg.respawnMonstersNightmare;
 #endif
 
-//// \kludge Doom/Heretic Fast Monters/Missiles
+#if __JDOOM__
+    // Disabled in Chex and HacX because this messes with the original games' values.
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+#endif
+    {
+        /// @kludge Doom/Heretic Fast Monters/Missiles
 #if __JDOOM__ || __JDOOM64__
-    // Fast monsters?
-    if(fastParm
-# if __JDOOM__
-        || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
-# endif
-        )
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 1;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 4;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 1;
-    }
-    else
-    {
-        for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
-            STATES[i].tics = 2;
-        for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
-            STATES[i].tics = 8;
-        for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
-            STATES[i].tics = 2;
-    }
+        // Fast monsters?
+        if(fastParm
+        # if __JDOOM__
+                || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE)
+        # endif
+                )
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 1;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 4;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 1;
+        }
+        else
+        {
+            for(i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+                STATES[i].tics = 2;
+            for(i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+                STATES[i].tics = 8;
+            for(i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+                STATES[i].tics = 2;
+        }
 #endif
 
-    // Fast missiles?
+        // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # if __JDOOM64__
-    speed = fastParm;
+        speed = fastParm;
 # elif __JDOOM__
-    speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
+        speed = (fastParm || (skill == SM_NIGHTMARE && gameSkill != SM_NIGHTMARE));
 # else
-    speed = skill == SM_NIGHTMARE;
+        speed = skill == SM_NIGHTMARE;
 # endif
 
-    for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
-    {
-        MOBJINFO[MonsterMissileInfo[i].type].speed =
-            MonsterMissileInfo[i].speed[speed];
-    }
+        for(i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        {
+            MOBJINFO[MonsterMissileInfo[i].type].speed =
+                    MonsterMissileInfo[i].speed[speed];
+        }
 #endif
-// <-- KLUDGE
+        // <-- KLUDGE
+    }
 
     if(!IS_CLIENT)
     {
@@ -2850,7 +2867,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
 
     // Check that the map truly exists.
     uri = G_ComposeMapUri(*episode, *map);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if(!P_MapExists(Str_Text(path)))
     {
         // (0,0) should exist always?
@@ -2999,7 +3016,7 @@ const char* P_GetShortMapName(uint episode, uint map)
 const char* P_GetMapName(uint episode, uint map)
 {
     Uri* mapUri = G_ComposeMapUri(episode, map);
-    ddstring_t* mapPath = Uri_ComposePath(mapUri);
+    ddstring_t* mapPath = Uri_Compose(mapUri);
     ddmapinfo_t info;
     void* ptr;
 
@@ -3122,7 +3139,7 @@ void G_PrintMapList(void)
         for(map = 0; map < maxMapsPerEpisode; ++map)
         {
             Uri* uri = G_ComposeMapUri(episode, map);
-            ddstring_t* path = Uri_ComposePath(uri);
+            ddstring_t* path = Uri_Compose(uri);
             sourceList[map] = P_MapSourceFile(Str_Text(path));
             Str_Delete(path);
             Uri_Delete(uri);
@@ -3147,7 +3164,7 @@ int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 
     // Is there such a finale definition?
     mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_BEFORE, Str_Text(mapPath), fin);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);
@@ -3178,7 +3195,7 @@ int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
 
     // Is there such a finale definition?
     mapUri = G_ComposeMapUri(episode, map);
-    mapPath = Uri_ComposePath(mapUri);
+    mapPath = Uri_Compose(mapUri);
     result = Def_Get(DD_DEF_FINALE_AFTER, Str_Text(mapPath), fin);
     Str_Delete(mapPath);
     Uri_Delete(mapUri);
@@ -3270,7 +3287,7 @@ static ddstring_t* composeScreenshotFileName(void)
 void G_DoScreenShot(void)
 {
     ddstring_t* name = composeScreenshotFileName();
-    if(NULL == name)
+    if(!name)
     {
         Con_Message("G_DoScreenShot: Failed composing file name, screenshot not saved.\n");
         return;
@@ -3301,129 +3318,71 @@ static void openSaveMenu(void)
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
 }
 
-int G_QuickLoadGameResponse(msgresponse_t response, void* context)
+D_CMD(OpenLoadMenu)
+{
+    if(!G_IsLoadGamePossible()) return false;
+    openLoadMenu();
+    return true;
+}
+
+D_CMD(OpenSaveMenu)
+{
+    if(!G_IsSaveGamePossible()) return false;
+    openSaveMenu();
+    return true;
+}
+
+int loadGameConfirmResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
     {
-        const int slot = Con_GetInteger("game-save-quick-slot");
+        const int slot = *(int*)context;
         G_LoadGame(slot);
     }
     return true;
 }
 
-void G_QuickLoadGame(void)
+D_CMD(LoadGame)
 {
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    const gamesaveinfo_t* info;
-    char buf[80];
+    const boolean confirm = (argc == 3 && !stricmp(argv[2], "confirm"));
+    int slot;
 
-    if(G_QuitInProgress()) return;
+    if(G_QuitInProgress()) return false;
+    if(!G_IsLoadGamePossible()) return false;
 
     if(IS_NETGAME)
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, NULL);
-        return;
+        return false;
     }
 
-    if(0 > slot || !SV_IsGameSaveSlotUsed(slot))
+    slot = SV_ParseGameSaveSlot(argv[1]);
+    if(SV_IsGameSaveSlotUsed(slot))
+    {
+        // A known used slot identifier.
+        const gamesaveinfo_t* info;
+        char buf[80];
+
+        if(confirm || !cfg.confirmQuickGameSave)
+        {
+            // Try to schedule a GA_LOADGAME action.
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            return G_LoadGame(slot);
+        }
+
+        info = SV_GetGameSaveInfoForSlot(slot);
+        dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
+
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+        Hu_MsgStart(MSG_YESNO, buf, loadGameConfirmResponse, (void*)&slot);
+        return true;
+    }
+    else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, NULL);
-        return;
-    }
-
-    if(!cfg.confirmQuickGameSave)
-    {
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_LoadGame(slot);
-        return;
-    }
-
-    info = SV_GetGameSaveInfoForSlot(slot);
-    dd_snprintf(buf, 80, QLPROMPT, Str_Text(&info->name));
-
-    S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, G_QuickLoadGameResponse, NULL);
-}
-
-int G_QuickSaveGameResponse(msgresponse_t response, void* context)
-{
-    if(response == MSG_YES)
-    {
-        const int slot = Con_GetInteger("game-save-quick-slot");
-        G_SaveGame(slot);
-    }
-    return true;
-}
-
-void G_QuickSaveGame(void)
-{
-    player_t* player = &players[CONSOLEPLAYER];
-    const int slot = Con_GetInteger("game-save-quick-slot");
-    boolean slotIsUsed;
-    char buf[80];
-
-    if(G_QuitInProgress()) return;
-
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
-        return;
-    }
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
-        return;
-    }
-
-    // If no quick-save slot has been nominated - allow doing so now.
-    if(0 > slot)
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-        Hu_MenuUpdateGameSaveWidgets();
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
-        menuNominatingQuickSaveSlot = true;
-        return;
-    }
-
-    slotIsUsed = SV_IsGameSaveSlotUsed(slot);
-    if(!slotIsUsed || !cfg.confirmQuickGameSave)
-    {
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        G_SaveGame(slot);
-        return;
-    }
-
-    if(slotIsUsed)
-    {
-        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
-        sprintf(buf, QSPROMPT, Str_Text(&info->name));
-    }
-    else
-    {
-        char identifier[11];
-        dd_snprintf(identifier, 10, "#%10.i", slot);
-        dd_snprintf(buf, 80, QLPROMPT, identifier);
-    }
-
-    S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-    Hu_MsgStart(MSG_YESNO, buf, G_QuickSaveGameResponse, NULL);
-}
-
-D_CMD(LoadGameName)
-{
-    int slot;
-    if(!G_IsLoadGamePossible()) return false;
-
-    slot = SV_ParseGameSaveSlot(argv[1]);
-    if(slot >= 0)
-    {
-        // A known slot identifier. Try to schedule a GA_LOADGAME action.
-        return G_LoadGame(slot);
+        return true;
     }
 
     // Clearly the caller needs some assistance...
@@ -3444,24 +3403,85 @@ D_CMD(LoadGameName)
     return false;
 }
 
-D_CMD(LoadGame)
+D_CMD(QuickLoadGame)
 {
-    if(!G_IsLoadGamePossible()) return false;
-    openLoadMenu();
+    /// @todo Implement console command scripts?
+    return DD_Execute(true, "loadgame quick");
+}
+
+typedef struct {
+    int slot;
+    const char* name;
+} savegameconfirmresponse_params_t;
+
+int saveGameConfirmResponse(msgresponse_t response, void* context)
+{
+    if(response == MSG_YES)
+    {
+        savegameconfirmresponse_params_t* p = (savegameconfirmresponse_params_t*)context;
+        G_SaveGame2(p->slot, p->name);
+    }
     return true;
 }
 
-D_CMD(SaveGameName)
+D_CMD(SaveGame)
 {
+    const boolean confirm = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    player_t* player = &players[CONSOLEPLAYER];
     int slot;
-    if(!G_IsSaveGamePossible()) return false;
+
+    if(G_QuitInProgress()) return false;
+
+    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+        return true;
+    }
+
+    if(G_GameState() != GS_MAP)
+    {
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        return true;
+    }
 
     slot = SV_ParseGameSaveSlot(argv[1]);
     if(slot >= 0)
     {
-        // A known slot identifier. Try to schedule a GA_SAVEGAME action.
-        // We do not care if there is a save already present in this slot.
-        return G_SaveGame2(slot, argc > 2? argv[2] : NULL);
+        // A known slot identifier.
+        const boolean slotIsUsed = SV_IsGameSaveSlotUsed(slot);
+        const char* name = (argc >= 3 && stricmp(argv[2], "confirm"))? argv[2] : NULL;
+        char buf[80];
+
+        if(!slotIsUsed || confirm || !cfg.confirmQuickGameSave)
+        {
+            // Try to schedule a GA_LOADGAME action.
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            return G_SaveGame2(slot, name);
+        }
+
+        {
+        savegameconfirmresponse_params_t p;
+        const gamesaveinfo_t* info = SV_GetGameSaveInfoForSlot(slot);
+        dd_snprintf(buf, 80, QSPROMPT, Str_Text(&info->name));
+
+        p.slot = slot;
+        p.name = name;
+
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+        Hu_MsgStart(MSG_YESNO, buf, saveGameConfirmResponse, (void*)&p);
+        }
+        return true;
+    }
+    else if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
+    {
+        // No quick-save slot has been nominated - allow doing so now.
+        Hu_MenuCommand(MCMD_OPEN);
+        Hu_MenuUpdateGameSaveWidgets();
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
+        menuNominatingQuickSaveSlot = true;
+        return true;
     }
 
     // Clearly the caller needs some assistance...
@@ -3470,23 +3490,10 @@ D_CMD(SaveGameName)
     return false;
 }
 
-D_CMD(SaveGame)
-{
-    if(!G_IsSaveGamePossible()) return false;
-    openSaveMenu();
-    return true;
-}
-
-D_CMD(QuickLoadGame)
-{
-    G_QuickLoadGame();
-    return true;
-}
-
 D_CMD(QuickSaveGame)
 {
-    G_QuickSaveGame();
-    return true;
+    /// @todo Implement console command scripts?
+    return DD_Execute(true, "savegame quick");
 }
 
 D_CMD(HelpScreen)

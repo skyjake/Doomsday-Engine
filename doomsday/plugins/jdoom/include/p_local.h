@@ -47,6 +47,11 @@
 #define NUMREDPALS          (8)
 #define NUMBONUSPALS        (4)
 
+// For HacX's invulnerablity blue palette shift.
+/// @note These do not correspond to real palette indices.
+#define STARTINVULPALS      (14)
+#define NUMINVULPALS        (4)
+
 #define FLOATSPEED          (4)
 
 #define DELTAMUL            (6.324555320) // Used when calculating ticcmd_t.lookdirdelta

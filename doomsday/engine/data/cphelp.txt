@@ -349,9 +349,6 @@ desc = Modify console font settings.
 [help]
 desc = Show information about the console.
 
-[huffman]
-desc = Print Huffman efficiency and number of bytes sent.
-
 [if]
 desc = Execute a command if the condition is true.
 
@@ -956,6 +953,12 @@ desc = Automatically generate reject data when necessary, 0=Never, 1=When needed
 
 [refresh-rate-maximum]
 desc = Maximum limit for the frame rate (default: 200).
+
+[input-toggle-sharp]
+desc = 1=Process toggle events only on sharp ticks for backwards compatible behavior.
+
+[input-conflict-zerocontrol]
+desc = 1=If a control is influenced by two or more conflicting input device states, the control position gets zeroed.
 
 [input-key-delay1]
 desc = The number of milliseconds to wait before first key repeat.

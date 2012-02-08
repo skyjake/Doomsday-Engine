@@ -73,10 +73,14 @@ float quitDarkenOpacity = 0;
 static void rendSpecialFilter(int player, const RectRaw* region)
 {
     player_t* plr = players + player;
-    const int filter = plr->powers[PT_INVULNERABILITY];
     float max = 30, str, r, g, b;
+    int filter;
     assert(region);
 
+    // In HacX a simple blue shift is used instead.
+    if(gameMode == doom2_hacx) return;
+
+    filter = plr->powers[PT_INVULNERABILITY];
     if(!filter) return;
 
     if(filter < max)
@@ -95,7 +99,7 @@ static void rendSpecialFilter(int player, const RectRaw* region)
     g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
     b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
-    DGL_DrawRectColor(region->origin.x, region->origin.y,
+    DGL_DrawRectf2Color(region->origin.x, region->origin.y,
         region->size.width, region->size.height, r, g, b, 1);
 
     // Restore the normal rendering state.
@@ -104,30 +108,56 @@ static void rendSpecialFilter(int player, const RectRaw* region)
 
 boolean R_ViewFilterColor(float rgba[4], int filter)
 {
-    if(!rgba)
-        return false;
+    if(!rgba) return false;
 
     // We have to choose the right color and alpha.
     if(filter >= STARTREDPALS && filter < STARTREDPALS + NUMREDPALS)
-    {   // Red.
+    {
+        // Red.
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        return true;
+    }
+
+    if(gameMode == doom2_hacx &&
+       filter >= STARTINVULPALS && filter < STARTINVULPALS + NUMINVULPALS)
+    {
+        // Blue.
+        rgba[CR] = .16f;
+        rgba[CG] = .16f;
+        rgba[CB] = .92f;
+        rgba[CA] = cfg.filterStrength * .98f * (filter - STARTINVULPALS + 1) / (float)NUMINVULPALS;
         return true;
     }
 
     if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
-    {   // Gold.
-        rgba[CR] = 1;
-        rgba[CG] = .8f;
-        rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+    {
+        if(gameMode == doom2_hacx)
+        {
+            // The original palette shift desaturates everything evenly.
+            // Rather than mess with this right now when we'll be replacing
+            // all the filter stuff entirely soon enough - simply use gray.
+            rgba[CR] = .5f;
+            rgba[CG] = .5f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
+        }
+        else
+        {
+            // Gold.
+            rgba[CR] = 1;
+            rgba[CG] = .8f;
+            rgba[CB] = .5f;
+            rgba[CA] = cfg.filterStrength * .25f * (filter - STARTBONUSPALS + 1) / (float)NUMBONUSPALS;
+        }
         return true;
     }
 
-    if(filter == 13) // RADIATIONPAL
-    {   // Green.
+    if(filter == 13)
+    {
+        // Green.
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;
@@ -146,7 +176,7 @@ void R_UpdateViewFilter(int player)
 #define RADIATIONPAL            (13) /// Radiation suit, green shift.
 
     player_t* plr = players + player;
-    int palette = 0, cnt, bzc;
+    int palette = 0;
 
     if(player < 0 || player >= MAXPLAYERS)
     {
@@ -159,35 +189,66 @@ void R_UpdateViewFilter(int player)
     // Not currently present?
     if(!plr->plr->inGame) return;
 
-    cnt = plr->damageCount;
-
-    if(plr->powers[PT_STRENGTH])
-    {   // Slowly fade the berzerk out.
-        bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
-
-        if(bzc > cnt)
-            cnt = bzc;
-    }
-
-    if(cnt)
+    if(gameMode == doom2_hacx && plr->powers[PT_INVULNERABILITY])
     {
-        palette = (cnt + 7) >> 3;
+        // A blue shift is used in HacX.
+        const int max = 10;
+        const int cnt = plr->powers[PT_INVULNERABILITY];
 
-        if(palette >= NUMREDPALS)
-            palette = NUMREDPALS - 1;
-        palette += STARTREDPALS;
+        if(cnt < max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)cnt / max);
+        else if(cnt < 4 * 32 && !(cnt & 8))
+            palette = .5f + (NUMINVULPALS-1) * .7f;
+        else if(cnt > INVULNTICS - max)
+            palette = .5f + (NUMINVULPALS-1) * ((float)(INVULNTICS - cnt) / max);
+        else
+            palette = NUMINVULPALS-1; // Full shift.
+
+        if(palette >= NUMINVULPALS)
+            palette = NUMINVULPALS - 1;
+        palette += STARTINVULPALS;
     }
-    else if(plr->bonusCount)
+    else
     {
-        palette = (plr->bonusCount + 7) >> 3;
-        if(palette >= NUMBONUSPALS)
-            palette = NUMBONUSPALS - 1;
-        palette += STARTBONUSPALS;
-    }
-    else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-            plr->powers[PT_IRONFEET] & 8)
-    {
-        palette = RADIATIONPAL;
+        int cnt = plr->damageCount;
+
+        if(plr->powers[PT_STRENGTH])
+        {
+            // Slowly fade the berzerk out.
+            int bzc = 12 - (plr->powers[PT_STRENGTH] >> 6);
+            cnt = MAX_OF(cnt, bzc);
+        }
+
+        if(cnt)
+        {
+            // In Chex Quest the green palette shift is used instead (perhaps to
+            // suggest the player is being covered in goo?).
+            if(gameMode == doom_chex)
+            {
+                palette = RADIATIONPAL;
+            }
+            else
+            {
+                palette = (cnt + 7) >> 3;
+                if(palette >= NUMREDPALS)
+                    palette = NUMREDPALS - 1;
+
+                palette += STARTREDPALS;
+            }
+        }
+        else if(plr->bonusCount)
+        {
+            palette = (plr->bonusCount + 7) >> 3;
+            if(palette >= NUMBONUSPALS)
+                palette = NUMBONUSPALS - 1;
+
+            palette += STARTBONUSPALS;
+        }
+        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
+                plr->powers[PT_IRONFEET] & 8)
+        {
+            palette = RADIATIONPAL;
+        }
     }
 
     // $democam
@@ -217,10 +278,6 @@ static void rendPlayerView(int player)
         // Server updates mobj flags in NetSv_Ticker.
         R_SetAllDoomsdayFlags();
     }
-
-    // View angles are updated with fractional ticks, so we can just use the current values.
-    R_SetViewAngle(player, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player)));
-    R_SetViewPitch(player, plr->plr->lookDir);
 
     pspriteOffsetY = HU_PSpriteYOffset(plr);
     DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
@@ -255,8 +312,6 @@ static void rendHUD(int player, const RectRaw* portGeometry)
 void D_DrawViewPort(int port, const RectRaw* portGeometry,
     const RectRaw* windowGeometry, int player, int layer)
 {
-    player_t* plr = players + player;
-
     if(layer != 0)
     {
         rendHUD(player, portGeometry);
@@ -265,7 +320,9 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
 
     switch(G_GameState())
     {
-    case GS_MAP:
+    case GS_MAP: {
+        player_t* plr = players + player;
+
         if(!ST_AutomapObscures2(player, windowGeometry))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
@@ -278,13 +335,12 @@ void D_DrawViewPort(int port, const RectRaw* portGeometry,
                 X_Drawer(player);
         }
         break;
-
+      }
     case GS_STARTUP:
-        DGL_DrawRectColor(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
+        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
         break;
 
-    default:
-        break;
+    default: break;
     }
 }
 
@@ -300,7 +356,25 @@ void D_DrawWindow(const Size2Raw* windowSize)
 
     if(G_QuitInProgress())
     {
-        DGL_DrawRectColor(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+        DGL_DrawRectf2Color(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+    }
+}
+
+void D_EndFrame(void)
+{
+    int i;
+
+    if(G_GameState() != GS_MAP) return;
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t* plr = players + i;
+
+        if(!plr->plr->inGame || !plr->plr->mo) continue;
+
+        // View angles are updated with fractional ticks, so we can just use the current values.
+        R_SetViewAngle(i, plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(i)));
+        R_SetViewPitch(i, plr->plr->lookDir);
     }
 }
 

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2011 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2012 Jaakko Kernen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,8 +41,6 @@ typedef struct {
 #else
     LPCSTR className;
 #endif
-    BOOL suspendMsgPump; /// @c true = do not pump the Windows message thread.
-
     /// @c true = We are using a custom user dir specified on the command line.
     BOOL usingUserDir;
 

@@ -29,6 +29,10 @@
 #ifndef __DOOMSDAY_DEFS_H__
 #define __DOOMSDAY_DEFS_H__
 
+/**
+ * @defgroup flags Flags (Internal)
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,7 +98,7 @@
 #define DEG2RAD(a)      (a * PI_D) / 180.0
 #define RAD2DEG(a)      (a / PI_D) * 180.0
 
-#define SECONDS_TO_TICKS(sec) ((int)(sec*35))
+#define SECONDS_TO_TICKS(sec) ((int)((sec)*35))
 
 // Heap relations.
 #define HEAP_PARENT(i)  (((i) + 1)/2 - 1)

@@ -44,10 +44,17 @@ typedef struct viewer_s {
 
 typedef struct viewdata_s {
     viewer_t current;
-    viewer_t lastSharp[2]; // For smoothing.
-    viewer_t latest; // Sharp values taken from here.
+    viewer_t lastSharp[2]; ///< For smoothing.
+    viewer_t latest; ///< "Sharp" values taken from here.
 
+    /**
+     * These vectors are in the DGL coordinate system, which is a left-handed
+     * one (same as in the game, but Y and Z have been swapped). Anyone who uses
+     * these must note that it might be necessary to fix the aspect ratio of the
+     * Y axis by dividing the Y coordinate by 1.2.
+     */
     float frontVec[3], upVec[3], sideVec[3];
+
     float viewCos, viewSin;
 
     RectRaw window, windowTarget, windowOld;
@@ -72,26 +79,32 @@ extern fontid_t fontFixed, fontVariable[FONTSTYLE_COUNT];
 
 extern fixed_t  fineTangent[FINEANGLES / 2];
 
-void            R_Register(void);
-void            R_Init(void);
-void            R_Update(void);
-void            R_Shutdown(void);
+void R_Register(void);
+void R_Init(void);
+void R_Update(void);
+void R_Shutdown(void);
 
-void            R_Ticker(timespan_t time);
-void            R_BeginWorldFrame(void);
-void            R_EndWorldFrame(void);
-void            R_RenderPlayerView(int num);
-void            R_RenderPlayerViewBorder(void);
-void            R_RenderBlankView(void);
-void            R_RenderViewPorts(void);
+void R_Ticker(timespan_t time);
+
+void R_BeginWorldFrame(void);
+void R_EndWorldFrame(void);
+
+void R_RenderViewPorts(void);
+
+void R_RenderBlankView(void);
+void R_RenderPlayerView(int num);
+void R_RenderPlayerViewBorder(void);
 
 /// @return  Current viewport else @c NULL.
 const viewport_t* R_CurrentViewPort(void);
 
 const viewdata_t* R_ViewData(int consoleNum);
-void            R_ResetViewer(void);
 
-void            R_NewSharpWorld(void);
+void R_UpdateViewer(int consoleNum);
+
+void R_ResetViewer(void);
+
+void R_NewSharpWorld(void);
 
 boolean R_SetViewGrid(int numCols, int numRows);
 

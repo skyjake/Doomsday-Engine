@@ -1,24 +1,22 @@
-/**\file pathmap.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file pathmap.c
+ * Fragment map of a delimited string @ingroup fs
  *
- *\author Copyright © 2011-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include "de_base.h"
@@ -32,10 +30,48 @@ static ushort PathMap_HashFragment(PathMap* pm, PathMapFragment* fragment)
     // Is it time to compute the hash for this fragment?
     if(fragment->hash == PATHDIRECTORY_NOHASH)
     {
-        fragment->hash = PathDirectory_HashName(fragment->from,
-            (fragment->to - fragment->from) + 1, pm->_delimiter);
+        fragment->hash = PathDirectory_HashPath(fragment->from,
+            (fragment->to - fragment->from) + 1, pm->delimiter);
     }
     return fragment->hash;
+}
+
+/// @return  @c true iff @a fragment comes from the static fragment buffer
+///          allocated along with @a pm.
+static __inline boolean PathMap_IsStaticFragment(const PathMap* pm, const PathMapFragment* fragment)
+{
+    assert(pm && fragment);
+    return fragment >= pm->fragmentBuffer &&
+           fragment < (pm->fragmentBuffer + sizeof(*pm->fragmentBuffer) * PATHMAP_FRAGMENTBUFFER_SIZE);
+}
+
+static PathMapFragment* PathMap_AllocFragment(PathMap* pm)
+{
+    PathMapFragment* fragment;
+    assert(pm);
+
+    // Retrieve another fragment.
+    if(pm->fragmentCount < PATHMAP_FRAGMENTBUFFER_SIZE)
+    {
+        fragment = pm->fragmentBuffer + pm->fragmentCount;
+    }
+    else
+    {
+        // Allocate an "extra" fragment.
+        fragment = (PathMapFragment*)malloc(sizeof *fragment);
+        if(!fragment) Con_Error("PathMap::AllocFragment: Failed on allocation of %lu bytes for new PathMap::Fragment.", (unsigned long) sizeof *fragment);
+    }
+
+    fragment->from = fragment->to = NULL;
+
+    // Hashing is deferred; means not-hashed yet.
+    fragment->hash = PATHDIRECTORY_NOHASH;
+    fragment->next = NULL;
+
+    // There is now one more fragment in the map.
+    pm->fragmentCount += 1;
+
+    return fragment;
 }
 
 static void PathMap_MapAllFragments(PathMap* pm, const char* path, size_t pathLen)
@@ -45,50 +81,42 @@ static void PathMap_MapAllFragments(PathMap* pm, const char* path, size_t pathLe
     const char* to = begin + pathLen - 1;
     const char* from;
     size_t i;
-    assert(pm && path && path[0] && pathLen != 0);
+    assert(pm);
+
+    pm->fragmentCount = 0;
+    pm->extraFragments = NULL;
+
+    if(pathLen == 0) return;
 
     // Skip over any trailing delimiters.
-    for(i = pathLen; *to && *to == pm->_delimiter && i-- > 0; to--) {}
-
-    pm->_fragmentCount = 0;
-    pm->_extraFragments = NULL;
+    for(i = pathLen; *to && *to == pm->delimiter && i-- > 0; to--) {}
 
     // Scan for discreet fragments in the path, in reverse order.
     for(;;)
     {
         // Find the start of the next path fragment.
-        for(from = to; from > begin && !(*from == pm->_delimiter); from--) {}
+        for(from = to; from > begin && !(*from == pm->delimiter); from--) {}
 
-        // Retrieve another fragment.
-        if(pm->_fragmentCount < PATHMAP_FRAGMENTBUFFER_SIZE)
-        {
-            fragment = pm->_fragmentBuffer + pm->_fragmentCount;
-        }
-        else
-        {
-            // Allocate another "extra" fragment.
-            PathMapFragment* f = (PathMapFragment*)malloc(sizeof *f);
-            if(!f) Con_Error("PathMap::MapAllFragments: Failed on allocation of %lu bytes for new PathMap::Fragment.", (unsigned long) sizeof *f);
+        { PathMapFragment* newFragment = PathMap_AllocFragment(pm);
 
-            if(!pm->_extraFragments)
+        // If this is an "extra" fragment, link it to the tail of the list.
+        if(!PathMap_IsStaticFragment(pm, newFragment))
+        {
+            if(!pm->extraFragments)
             {
-                pm->_extraFragments = fragment = f;
+                pm->extraFragments = newFragment;
             }
             else
             {
-                fragment->next = f;
-                fragment = f;
+                fragment->next = pm->extraFragments;
             }
         }
 
-        fragment->from = (*from == pm->_delimiter? from + 1 : from);
-        fragment->to   = to;
-        // Hashing is deferred; means not-hashed yet.
-        fragment->hash = PATHDIRECTORY_NOHASH;
-        fragment->next = NULL;
+        fragment = newFragment;
+        }
 
-        // There is now one more fragment in the map.
-        pm->_fragmentCount += 1;
+        fragment->from = (*from == pm->delimiter? from + 1 : from);
+        fragment->to   = to;
 
         // Are there no more parent directories?
         if(from == begin) break;
@@ -97,55 +125,40 @@ static void PathMap_MapAllFragments(PathMap* pm, const char* path, size_t pathLe
         // The next fragment ends here.
         to = from-1;
     }
+
+    // Deal with the special case of a Unix style zero-length root name.
+    if(*begin == pm->delimiter)
+    {
+        fragment = PathMap_AllocFragment(pm);
+        fragment->from = fragment->to = "";
+    }
 }
 
 static void PathMap_ClearFragments(PathMap* pm)
 {
     assert(pm);
-    while(pm->_extraFragments)
+    while(pm->extraFragments)
     {
-        PathMapFragment* next = pm->_extraFragments->next;
-        free(pm->_extraFragments);
-        pm->_extraFragments = next;
+        PathMapFragment* next = pm->extraFragments->next;
+        free(pm->extraFragments);
+        pm->extraFragments = next;
     }
-}
-
-static void PathMap_ClearPath(PathMap* pm)
-{
-    assert(pm);
-    if(pm->_path) free(pm->_path), pm->_path = NULL;
 }
 
 PathMap* PathMap_Initialize2(PathMap* pm, const char* path, char delimiter)
 {
-    char* pathBuffer;
-    size_t pathLen;
     assert(pm);
 
-     // Take a copy of the search term.
-    pathLen = (path? strlen(path) : 0);
-    if(pathLen <= PATHMAP_SHORT_PATH)
-    {
-        // Use the small search path buffer.
-        pm->_path = NULL;
-        pathBuffer = pm->_shortPath;
-    }
-    else
-    {
-        // Allocate a buffer large enough to hold the whole path.
-        pm->_path = (char*)malloc(pathLen+1);
-        pathBuffer = pm->_path;
-    }
-    if(pathLen)
-    {
-        memcpy(pathBuffer, path, pathLen);
-    }
-    pathBuffer[pathLen] = '\0';
+#if _DEBUG
+    // Perform unit tests.
+    PathMap_Test();
+#endif
 
-    pm->_delimiter = delimiter;
+    pm->path = path;
+    pm->delimiter = delimiter;
 
     // Create the fragment map of the path.
-    PathMap_MapAllFragments(pm, pathBuffer, pathLen);
+    PathMap_MapAllFragments(pm, pm->path, pm->path? strlen(pm->path) : 0);
 
     // Hash the first (i.e., rightmost) fragment right away.
     PathMap_Fragment(pm, 0);
@@ -162,27 +175,26 @@ void PathMap_Destroy(PathMap* pm)
 {
     assert(pm);
     PathMap_ClearFragments(pm);
-    PathMap_ClearPath(pm);
 }
 
 uint PathMap_Size(PathMap* pm)
 {
     assert(pm);
-    return pm->_fragmentCount;
+    return pm->fragmentCount;
 }
 
 const PathMapFragment* PathMap_Fragment(PathMap* pm, uint idx)
 {
     PathMapFragment* fragment;
-    if(!pm || idx >= pm->_fragmentCount) return NULL;
+    if(!pm || idx >= pm->fragmentCount) return NULL;
     if(idx < PATHMAP_FRAGMENTBUFFER_SIZE)
     {
-        fragment = pm->_fragmentBuffer + idx;
+        fragment = pm->fragmentBuffer + idx;
     }
     else
     {
         uint n = PATHMAP_FRAGMENTBUFFER_SIZE;
-        fragment = pm->_extraFragments;
+        fragment = pm->extraFragments;
         while(n++ < idx)
         {
             fragment = fragment->next;
@@ -191,3 +203,75 @@ const PathMapFragment* PathMap_Fragment(PathMap* pm, uint idx)
     PathMap_HashFragment(pm, fragment);
     return fragment;
 }
+
+#if _DEBUG
+void PathMap_Test(void)
+{
+    static boolean alreadyTested = false;
+
+    const PathMapFragment* fragment;
+    size_t len;
+    PathMap pm;
+
+    if(alreadyTested) return;
+    alreadyTested = true;
+
+    // Test a zero-length path.
+    PathMap_Initialize(&pm, "");
+    assert(PathMap_Size(&pm) == 0);
+    PathMap_Destroy(&pm);
+
+    // Test a Windows style path with a drive plus file path.
+    PathMap_Initialize(&pm, "c:/something.ext");
+    assert(PathMap_Size(&pm) == 2);
+
+    fragment = PathMap_Fragment(&pm, 0);
+    len = fragment->to - fragment->from;
+    assert(len == 12);
+    assert(!strncmp(fragment->from, "something.ext", len+1));
+
+    fragment = PathMap_Fragment(&pm, 1);
+    len = fragment->to - fragment->from;
+    assert(len == 1);
+    assert(!strncmp(fragment->from, "c:", len+1));
+
+    PathMap_Destroy(&pm);
+
+    // Test a Unix style path with a zero-length root node name.
+    PathMap_Initialize(&pm, "/something.ext");
+    assert(PathMap_Size(&pm) == 2);
+
+    fragment = PathMap_Fragment(&pm, 0);
+    len = fragment->to - fragment->from;
+    assert(len == 12);
+    assert(!strncmp(fragment->from, "something.ext", len+1));
+
+    fragment = PathMap_Fragment(&pm, 1);
+    len = fragment->to - fragment->from;
+    assert(len == 0);
+    assert(!strncmp(fragment->from, "", len));
+
+    PathMap_Destroy(&pm);
+
+    // Test a relative directory.
+    PathMap_Initialize(&pm, "some/dir/structure/");
+    assert(PathMap_Size(&pm) == 3);
+
+    fragment = PathMap_Fragment(&pm, 0);
+    len = fragment->to - fragment->from;
+    assert(len == 8);
+    assert(!strncmp(fragment->from, "structure", len+1));
+
+    fragment = PathMap_Fragment(&pm, 1);
+    len = fragment->to - fragment->from;
+    assert(len == 2);
+    assert(!strncmp(fragment->from, "dir", len+1));
+
+    fragment = PathMap_Fragment(&pm, 2);
+    len = fragment->to - fragment->from;
+    assert(len == 3);
+    assert(!strncmp(fragment->from, "some", len+1));
+
+    PathMap_Destroy(&pm);
+}
+#endif

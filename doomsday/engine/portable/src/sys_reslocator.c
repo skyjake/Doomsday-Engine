@@ -55,7 +55,7 @@ typedef struct {
 } resourcetypeinfo_t;
 
 /**
- * @defGroup ResourceNamespaceFlags Resource Namespace Flags
+ * @defgroup ResourceNamespaceFlags Resource Namespace Flags
  * @ingroup core.
  */
 /*@{*/
@@ -700,7 +700,7 @@ static void createPackagesResourceNamespace(void)
         uint i;
         for(i = 0; i < searchPathsCount; ++i)
         {
-            ResourceNamespace_AddSearchPath(rnamespace, 0, searchPaths[i], SPG_DEFAULT);
+            ResourceNamespace_AddSearchPath(rnamespace, SPF_NO_DESCEND, searchPaths[i], SPG_DEFAULT);
         }
     }
 
@@ -719,37 +719,38 @@ void F_CreateNamespacesForFileResourcePaths(void)
         const char* optFallbackPath;
         byte flags; /// @see resourceNamespaceFlags
         int searchPathFlags; /// @see searchPathFlags
+        /// Priority is right to left.
         const char* searchPaths[NAMESPACEDEF_MAX_SEARCHPATHS];
     } defs[] = {
         { DEFINITIONS_RESOURCE_NAMESPACE_NAME,  NULL,           NULL,           0, 0,
-            { "$(Game.DefsPath)/$(Game.IdentityKey)/", "$(Game.DefsPath)/", "$(App.DefsPath)/" }
+            { "$(App.DefsPath)/", "$(Game.DefsPath)/", "$(Game.DefsPath)/$(Game.IdentityKey)/" }
         },
         { GRAPHICS_RESOURCE_NAMESPACE_NAME,     "-gfxdir2",     "-gfxdir",      0, 0,
             { "$(App.DataPath)/graphics/" }
         },
         { MODELS_RESOURCE_NAMESPACE_NAME,       "-modeldir2",   "-modeldir",    RNF_USE_VMAP, 0,
-            { "$(Game.DataPath)/models/$(Game.IdentityKey)/", "$(Game.DataPath)/models/" }
+            { "$(Game.DataPath)/models/", "$(Game.DataPath)/models/$(Game.IdentityKey)/" }
         },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/sfx/$(Game.IdentityKey)/", "$(Game.DataPath)/sfx/" }
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,       "-sfxdir2",     "-sfxdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(Game.DataPath)/sfx/", "$(Game.DataPath)/sfx/$(Game.IdentityKey)/" }
         },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/music/$(Game.IdentityKey)/", "$(Game.DataPath)/music/" }
+        { MUSIC_RESOURCE_NAMESPACE_NAME,        "-musdir2",     "-musdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(Game.DataPath)/music/", "$(Game.DataPath)/music/$(Game.IdentityKey)/" }
         },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/textures/$(Game.IdentityKey)/", "$(Game.DataPath)/textures/" }
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,     "-texdir2",     "-texdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(Game.DataPath)/textures/", "$(Game.DataPath)/textures/$(Game.IdentityKey)/" }
         },
-        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/flats/$(Game.IdentityKey)/", "$(Game.DataPath)/flats/" }
+        { FLATS_RESOURCE_NAMESPACE_NAME,        "-flatdir2",    "-flatdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(Game.DataPath)/flats/", "$(Game.DataPath)/flats/$(Game.IdentityKey)/" }
         },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/patches/$(Game.IdentityKey)/", "$(Game.DataPath)/patches/" }
+        { PATCHES_RESOURCE_NAMESPACE_NAME,      "-patdir2",     "-patdir",      RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(Game.DataPath)/patches/", "$(Game.DataPath)/patches/$(Game.IdentityKey)/" }
         },
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,    "-lmdir2",      "-lmdir",       RNF_USE_VMAP, 0,
             { "$(Game.DataPath)/lightmaps/" }
         },
-        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DECEND,
-            { "$(Game.DataPath)/fonts/$(Game.IdentityKey)/", "$(Game.DataPath)/fonts/", "$(App.DataPath)/fonts/" }
+        { FONTS_RESOURCE_NAMESPACE_NAME,        "-fontdir2",    "-fontdir",     RNF_USE_VMAP, SPF_NO_DESCEND,
+            { "$(App.DataPath)/fonts/", "$(Game.DataPath)/fonts/", "$(Game.DataPath)/fonts/$(Game.IdentityKey)/" }
         },
         { NULL }
     };

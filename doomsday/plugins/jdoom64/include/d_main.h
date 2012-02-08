@@ -56,6 +56,9 @@ extern boolean monsterInfight;
 void D_PreInit(void);
 void D_PostInit(void);
 void D_Shutdown(void);
+
+void D_EndFrame(void);
+
 int D_GetInteger(int id);
 void* D_GetVariable(int id);
 

@@ -63,11 +63,11 @@ byte smoothTexAnim = true;
 int useShinySurfaces = true;
 
 int useDynlights = true;
-float dynlightFactor = .7f;
+float dynlightFactor = .5f;
 float dynlightFogBright = .15f;
 
 int useWallGlow = true;
-float glowFactor = 1.0f;
+float glowFactor = .5f;
 float glowHeightFactor = 3; // Glow height as a multiplier.
 int glowHeightMax = 100; // 100 is the default (0-1024).
 
@@ -126,7 +126,7 @@ void Rend_Register(void)
 {
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
 
-    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 1);
+    C_VAR_FLOAT("rend-glow", &glowFactor, 0, 0, 2);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
@@ -220,6 +220,8 @@ void Rend_ModelViewMatrix(boolean useAngles)
     vz = viewData->current.pos[VY];
     vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
     vpitch = viewData->current.pitch * 85.0 / 110.0;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -666,55 +668,95 @@ int RIT_FirstDynlightIterator(const dynlight_t* dyn, void* paramaters)
     return 1; // Stop iteration.
 }
 
+static __inline const materialvariantspecification_t*
+mapSurfaceMaterialSpec(int wrapS, int wrapT)
+{
+    return Materials_VariantSpecificationForContext(MC_MAPSURFACE, 0, 0, 0, 0,
+                                                    wrapS, wrapT, -1, -1, -1,
+                                                    true, true, false, false);
+}
+
 /**
  * This doesn't create a rendering primitive but a vissprite! The vissprite
  * represents the masked poly and will be rendered during the rendering
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(const rvertex_t* rvertices,
-                        const ColorRawf* rcolors, float wallLength,
-                        DGLuint tex, int magMode, float texWidth, float texHeight,
-                        const float texOffset[2], blendmode_t blendMode,
-                        uint lightListIdx, float glow, boolean masked)
+void Rend_AddMaskedPoly(const rvertex_t* rvertices, const ColorRawf* rcolors,
+    float wallLength, materialvariant_t* material, const float texOffset[2],
+    blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t* vis = R_NewVisSprite();
-    float midpoint[3];
     int i, c;
 
-    midpoint[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
-    midpoint[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
-    midpoint[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
-
     vis->type = VSPR_MASKED_WALL;
-    vis->center[VX] = midpoint[VX];
-    vis->center[VY] = midpoint[VY];
-    vis->center[VZ] = midpoint[VZ];
-    vis->distance = Rend_PointDist2D(midpoint);
-    vis->data.wall.tex = tex;
-    vis->data.wall.magMode = magMode;
-    vis->data.wall.masked = masked;
+    vis->center[VX] = (rvertices[0].pos[VX] + rvertices[3].pos[VX]) / 2;
+    vis->center[VY] = (rvertices[0].pos[VY] + rvertices[3].pos[VY]) / 2;
+    vis->center[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
+    vis->distance = Rend_PointDist2D(vis->center);
+
+    if(texOffset)
+    {
+        VS_WALL(vis)->texOffset.x = texOffset[VX];
+        VS_WALL(vis)->texOffset.y = texOffset[VY];
+    }
+
+    // Masked walls are sometimes used for special effects like arcs,
+    // cobwebs and bottoms of sails. In order for them to look right,
+    // we need to disable texture wrapping on the horizontal axis (S).
+    // Most masked walls need wrapping, though. What we need to do is
+    // look at the texture coordinates and see if they require texture
+    // wrapping.
+    if(renderTextures)
+    {
+        const materialsnapshot_t* ms = Materials_PrepareVariant(material);
+        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+
+        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset.x / ms->size.width;
+        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms->size.width;
+        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset.y / ms->size.height;
+        VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
+                (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / ms->size.height;
+
+        if(ms && !ms->isOpaque)
+        {
+            if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
+                 VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
+            {
+                // Visible portion is within the actual [0..1] range.
+                wrapS = GL_CLAMP_TO_EDGE;
+            }
+
+            // Clamp on the vertical axis if the coords are in the normal [0..1] range.
+            if(!(VS_WALL(vis)->texCoord[0][VY] < 0 || VS_WALL(vis)->texCoord[0][VY] > 1 ||
+                 VS_WALL(vis)->texCoord[1][VY] < 0 || VS_WALL(vis)->texCoord[1][VY] > 1))
+            {
+                wrapT = GL_CLAMP_TO_EDGE;
+            }
+        }
+
+        // Choose an appropriate variant.
+        /// @fixme Can result in multiple variants being prepared.
+        ///        This decision should be made earlier (in rendSegSection()).
+        material = Materials_ChooseVariant(MaterialVariant_GeneralCase(material),
+                                           mapSurfaceMaterialSpec(wrapS, wrapT), true, true);
+    }
+
+    VS_WALL(vis)->material = material;
+    VS_WALL(vis)->blendMode = blendMode;
+
     for(i = 0; i < 4; ++i)
     {
-        vis->data.wall.vertices[i].pos[VX] = rvertices[i].pos[VX];
-        vis->data.wall.vertices[i].pos[VY] = rvertices[i].pos[VY];
-        vis->data.wall.vertices[i].pos[VZ] = rvertices[i].pos[VZ];
+        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].pos[VX];
+        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].pos[VY];
+        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].pos[VZ];
 
         for(c = 0; c < 4; ++c)
         {
-            vis->data.wall.vertices[i].color[c] =
-                MINMAX_OF(0, rcolors[i].rgba[c], 1);
+            /// @todo Do not clamp here.
+            VS_WALL(vis)->vertices[i].color[c] = MINMAX_OF(0, rcolors[i].rgba[c], 1);
         }
     }
-
-    vis->data.wall.texCoord[0][VX] = (texOffset? texOffset[VX] / texWidth : 0);
-    vis->data.wall.texCoord[1][VX] =
-        vis->data.wall.texCoord[0][VX] + wallLength / texWidth;
-    vis->data.wall.texCoord[0][VY] = (texOffset? texOffset[VY] / texHeight : 0);
-    vis->data.wall.texCoord[1][VY] =
-        vis->data.wall.texCoord[0][VY] +
-            (rvertices[3].pos[VZ] - rvertices[0].pos[VZ]) / texHeight;
-    vis->data.wall.blendMode = blendMode;
 
     //// \fixme Semitransparent masked polys arn't lit atm
     if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
@@ -728,17 +770,17 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
          */
         LO_IterateProjections2(lightListIdx, RIT_FirstDynlightIterator, (void*)&dyn);
 
-        vis->data.wall.modTex = dyn->texture;
-        vis->data.wall.modTexCoord[0][0] = dyn->s[0];
-        vis->data.wall.modTexCoord[0][1] = dyn->s[1];
-        vis->data.wall.modTexCoord[1][0] = dyn->t[0];
-        vis->data.wall.modTexCoord[1][1] = dyn->t[1];
+        VS_WALL(vis)->modTex = dyn->texture;
+        VS_WALL(vis)->modTexCoord[0][0] = dyn->s[0];
+        VS_WALL(vis)->modTexCoord[0][1] = dyn->s[1];
+        VS_WALL(vis)->modTexCoord[1][0] = dyn->t[0];
+        VS_WALL(vis)->modTexCoord[1][1] = dyn->t[1];
         for(c = 0; c < 4; ++c)
-            vis->data.wall.modColor[c] = dyn->color.rgba[c];
+            VS_WALL(vis)->modColor[c] = dyn->color.rgba[c];
     }
     else
     {
-        vis->data.wall.modTex = 0;
+        VS_WALL(vis)->modTex = 0;
     }
 }
 
@@ -852,8 +894,7 @@ static void flatShinyTexCoords(rtexcoord_t* tc, const float xyz[3])
 static float getSnapshots(const materialsnapshot_t** msA,
     const materialsnapshot_t** msB, material_t* mat)
 {
-    const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-        MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
+    const materialvariantspecification_t* spec = mapSurfaceMaterialSpec(GL_REPEAT, GL_REPEAT);
     float interPos = 0;
     assert(msA);
 
@@ -936,11 +977,11 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
     // Map RTU configuration from prepared MaterialSnapshot(s).
     const rtexmapunit_t* primaryRTU       = (!(p->flags & RPF_SKYMASK))? &MSU(msA, MTU_PRIMARY) : NULL;
-    const rtexmapunit_t* primaryDetailRTU = (r_detail && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_DETAIL).tex)? &MSU(msA, MTU_DETAIL) : NULL;
-    const rtexmapunit_t* interRTU         = (!(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_PRIMARY).tex)? &MSU(msB, MTU_PRIMARY) : NULL;
-    const rtexmapunit_t* interDetailRTU   = (r_detail && !(p->flags & RPF_SKYMASK) && msB && MSU(msB, MTU_DETAIL).tex)? &MSU(msB, MTU_DETAIL) : NULL;
-    const rtexmapunit_t* shinyRTU         = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex)? &MSU(msA, MTU_REFLECTION) : NULL;
-    const rtexmapunit_t* shinyMaskRTU     = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && MSU(msA, MTU_REFLECTION).tex && MSU(msA, MTU_REFLECTION_MASK).tex)? &MSU(msA, MTU_REFLECTION_MASK) : NULL;
+    const rtexmapunit_t* primaryDetailRTU = (r_detail && !(p->flags & RPF_SKYMASK) && Rtu_HasTexture(&MSU(msA, MTU_DETAIL)))? &MSU(msA, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* interRTU         = (!(p->flags & RPF_SKYMASK) && msB && Rtu_HasTexture(&MSU(msB, MTU_PRIMARY)))? &MSU(msB, MTU_PRIMARY) : NULL;
+    const rtexmapunit_t* interDetailRTU   = (r_detail && !(p->flags & RPF_SKYMASK) && msB && Rtu_HasTexture(&MSU(msB, MTU_DETAIL)))? &MSU(msB, MTU_DETAIL) : NULL;
+    const rtexmapunit_t* shinyRTU         = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && Rtu_HasTexture(&MSU(msA, MTU_REFLECTION)))? &MSU(msA, MTU_REFLECTION) : NULL;
+    const rtexmapunit_t* shinyMaskRTU     = (useShinySurfaces && !(p->flags & RPF_SKYMASK) && Rtu_HasTexture(&MSU(msA, MTU_REFLECTION)) && Rtu_HasTexture(&MSU(msA, MTU_REFLECTION_MASK)))? &MSU(msA, MTU_REFLECTION_MASK) : NULL;
 
     if(!p->forceOpaque && !(p->flags & RPF_SKYMASK) &&
        (!msA->isOpaque || p->alpha < 1 || p->blendMode > 0))
@@ -1201,21 +1242,16 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * This is needed because all masked polys must be sorted (sprites
          * are masked polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
-                           primaryRTU->tex, primaryRTU->magMode, msA->size.width, msA->size.height,
-                           p->texOffset,
-                           p->blendMode, p->lightListIdx, glowing,
-                           !msA->isOpaque);
+        Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength, msA->material,
+                           p->texOffset, p->blendMode, p->lightListIdx, glowing);
+
         R_FreeRendTexCoords(primaryCoords);
-        if(interCoords)
-            R_FreeRendTexCoords(interCoords);
-        if(modCoords)
-            R_FreeRendTexCoords(modCoords);
-        if(shinyTexCoords)
-            R_FreeRendTexCoords(shinyTexCoords);
         R_FreeRendColors(rcolors);
-        if(shinyColors)
-            R_FreeRendColors(shinyColors);
+
+        if(interCoords) R_FreeRendTexCoords(interCoords);
+        if(modCoords) R_FreeRendTexCoords(modCoords);
+        if(shinyTexCoords) R_FreeRendTexCoords(shinyTexCoords);
+        if(shinyColors) R_FreeRendColors(shinyColors);
 
         return false; // We HAD to use a vissprite, so it MUST not be opaque.
     }
@@ -2091,7 +2127,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
                    &vR_ZTop, &texOffset[VY], unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = matOffsetX;
-                //texOffset[VY] = 0;
+                if(!clipTop) texOffset[VY] = 0;
 
                 return true;
             }
@@ -3737,7 +3773,7 @@ static void Rend_RenderBoundingBoxes(void)
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
     ms = Materials_Prepare(mat, spec, true);
 
-    GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+    GL_BindTexture(MST(ms, MTU_PRIMARY));
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

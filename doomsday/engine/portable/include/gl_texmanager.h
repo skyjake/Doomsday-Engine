@@ -132,6 +132,11 @@ int GL_ReleaseGLTexturesByTexture2(Texture* texture, void* paramaters);
 int GL_ReleaseGLTexturesByTexture(Texture* texture); /*paramaters=NULL*/
 
 /**
+ * Release all textures associated with the specified variant @a texture.
+ */
+void GL_ReleaseVariantTexture(struct texturevariant_s* texture);
+
+/**
  * Release all variants of @a tex which match @a spec.
  *
  * @param texture  Logical Texture to process. Can be @c NULL, in which case this is a null-op.
@@ -188,30 +193,22 @@ void GL_UploadTextureContent(const struct texturecontent_s* content);
 uint8_t* GL_LoadImage(struct image_s* img, const char* filePath);
 uint8_t* GL_LoadImageStr(struct image_s* img, const ddstring_t* filePath);
 
-/**
- * Image loading routines:
- * @return  The outcome:
- *     0 = not prepared
- *     1 = found and prepared a lump resource.
- *     2 = found and prepared an external resource.
- */
+TexSource GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
 
-byte GL_LoadRawTex(struct image_s* image, const rawtex_t* r);
+TexSource GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
+TexSource GL_LoadExtTextureEX(struct image_s* image, const char* searchPath,
+    const char* optionalSuffix, boolean quiet);
 
-byte GL_LoadExtTexture(struct image_s* image, const char* name, gfxmode_t mode);
-byte GL_LoadExtTextureEX(struct image_s* image, const char* searchPath, const char* optionalSuffix,
-    boolean quiet);
+TexSource GL_LoadFlatLump(struct image_s* image, DFile* file);
 
-byte GL_LoadFlatLump(struct image_s* image, DFile* file);
+TexSource GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass,
+    int tmap, int border, Texture* tex);
 
-byte GL_LoadPatchLumpAsPatch(struct image_s* image, DFile* file, int tclass, int tmap,
-    int border, Texture* tex);
+TexSource GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
 
-byte GL_LoadDetailTextureLump(struct image_s* image, DFile* file);
+TexSource GL_LoadPatchComposite(struct image_s* image, Texture* tex);
 
-byte GL_LoadPatchComposite(struct image_s* image, Texture* tex);
-
-byte GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
+TexSource GL_LoadPatchCompositeAsSky(struct image_s* image, Texture* tex, boolean zeroMask);
 
 /**
  * Compare the given TextureVariantSpecifications and determine whether they can
@@ -285,10 +282,18 @@ DGLuint GL_PrepareTexture(Texture* tex, texturevariantspecification_t* spec); /*
 
 /**
  * Same as GL_PrepareTexture(2) except for visibility of TextureVariant.
- * \todo Should not need to be public.
  */
-const struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
-const struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+struct texturevariant_s* GL_PrepareTextureVariant2(Texture* tex, texturevariantspecification_t* spec, preparetextureresult_t* returnOutcome);
+struct texturevariant_s* GL_PrepareTextureVariant(Texture* tex, texturevariantspecification_t* spec); /* returnOutcome=NULL*/
+
+/**
+ * Bind this texture to the currently active texture unit.
+ * The bind process may result in modification of the GL texture state
+ * according to the specification used to define this variant.
+ *
+ * @param tex  TextureVariant object which represents the GL texture to be bound.
+ */
+void GL_BindTexture(struct texturevariant_s* tex);
 
 /**
  * Here follows miscellaneous routines currently awaiting refactoring into the
@@ -305,8 +310,10 @@ DGLuint GL_PrepareExtTexture(const char* name, gfxmode_t mode, int useMipmap,
 DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare);
 DGLuint GL_PrepareLightMap(const Uri* path);
 DGLuint GL_PrepareLSTexture(lightingtexid_t which);
-DGLuint GL_PreparePatchTexture(Texture* tex);
 DGLuint GL_PrepareRawTexture(rawtex_t* rawTex);
+
+struct texturevariant_s* GL_PreparePatchTexture2(Texture* tex, int wrapS, int wrapT);
+struct texturevariant_s* GL_PreparePatchTexture(Texture* tex);
 
 /**
  * Attempt to locate and prepare a flare texture.

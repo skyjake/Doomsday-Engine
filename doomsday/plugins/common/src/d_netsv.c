@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "common.h"
 #include "d_net.h"
@@ -112,7 +113,6 @@ char    gameConfigString[128];
 static int cycleIndex;
 static int cycleCounter = -1, cycleMode = CYCLE_IDLE;
 static int cycleRulesCounter[MAXPLAYERS];
-static int oldPals[MAXPLAYERS];
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
 static int oldClasses[MAXPLAYERS];
@@ -157,8 +157,8 @@ void NetSv_UpdateGameConfig(void)
  */
 void NetSv_Ticker(void)
 {
-    int                 i;
-    float               power;
+    float power;
+    int i;
 
     // Map rotation checker.
     NetSv_MapCycleTicker();
@@ -169,78 +169,7 @@ void NetSv_Ticker(void)
     // Set the camera filters for players.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr;
-        int                 red, palette = 0;
-
-        if(!players[i].plr->inGame)
-            continue;
-        plr = &players[i];
-
-        red = plr->damageCount;
-#if __JDOOM__ || __JDOOM64__
-        if(plr->powers[PT_STRENGTH])
-        {
-            int         bz;
-            // Slowly fade the berzerk out.
-            bz = 12 - (plr->powers[PT_STRENGTH] >> 6);
-            if(bz > red)
-                red = bz;
-        }
-#endif
-
-        if(red)
-        {
-            palette = (red + 7) >> 3;
-            if(palette >= NUMREDPALS)
-            {
-                palette = NUMREDPALS - 1;
-            }
-            palette += STARTREDPALS;
-        }
-        else if(plr->bonusCount)
-        {
-            palette = (plr->bonusCount + 7) >> 3;
-            if(palette >= NUMBONUSPALS)
-            {
-                palette = NUMBONUSPALS - 1;
-            }
-            palette += STARTBONUSPALS;
-        }
-#if __JDOOM__ || __JDOOM64__
-        else if(plr->powers[PT_IRONFEET] > 4 * 32 ||
-                plr->powers[PT_IRONFEET] & 8)
-        {
-            palette = 13; //RADIATIONPAL;
-        }
-#elif __JHEXEN__
-        else if(plr->poisonCount)
-        {
-            palette = (plr->poisonCount + 7) >> 3;
-            if(palette >= NUMPOISONPALS)
-            {
-                palette = NUMPOISONPALS - 1;
-            }
-            palette += STARTPOISONPALS;
-        }
-        else if(plr->plr->mo && plr->plr->mo->flags2 & MF2_ICEDAMAGE)
-        {
-            palette = STARTICEPAL;
-        }
-#endif
-
-        if(palette > 0)
-            plr->plr->flags |= DDPF_VIEW_FILTER;
-        else
-            plr->plr->flags &= ~DDPF_VIEW_FILTER;
-
-        // $democam
-        if(oldPals[i] != palette)
-        {   // The filter changes.
-            R_ViewFilterColor(plr->plr->filterColor, palette);
-            // If we are the server, we'll need inform the client.
-            //plr->plr->flags |= DDPF_FILTER;
-            oldPals[i] = palette;
-        }
+        R_UpdateViewFilter(i);
     }
 
     // Inform clients about jumping?
@@ -926,7 +855,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     Writer_WriteFloat(writer, z);
     Writer_WriteUInt32(writer, angle);
 
-    Net_SendPacket(plrNum | DDSP_ORDERED, GPT_PLAYER_SPAWN_POSITION,
+    Net_SendPacket(plrNum, GPT_PLAYER_SPAWN_POSITION,
         Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -977,7 +906,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, boolean re
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1190,7 +1119,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, boolean rel
 #endif
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum | (reliable ? DDSP_ORDERED : 0), pType,
+    Net_SendPacket(destPlrNum, pType,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1210,7 +1139,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 #if __JHERETIC__ || __JHEXEN__
     Writer_WriteByte(writer, cfg.playerClass[whose]);
 #endif
-    Net_SendPacket(to_whom | DDSP_ORDERED, GPT_PLAYER_INFO,
+    Net_SendPacket(to_whom, GPT_PLAYER_INFO,
                    Writer_Data(writer), Writer_Size(writer));
 }
 
@@ -1348,7 +1277,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 #endif
     writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
-    Net_SendPacket(plrNum | DDSP_CONFIRM, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
 
 /**
@@ -1363,7 +1292,7 @@ void NetSv_SendJumpPower(int target, float power)
 
     writer = D_NetWrite();
     Writer_WriteFloat(writer, power);
-    Net_SendPacket(target | DDSP_CONFIRM, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_ExecuteCheat(int player, const char* command)
@@ -1698,6 +1627,29 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
     Writer_WriteInt16(writer, ammo);
     Writer_WriteByte(writer, force != 0);
     Net_SendPacket(plrNum, GPT_MAYBE_CHANGE_WEAPON, Writer_Data(writer), Writer_Size(writer));
+}
+
+void NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName)
+{
+    Writer* msg;
+    ddstring_t name;
+
+    assert(mobj);
+
+    Str_InitStatic(&name, stateName);
+
+    // Inform the client about this.
+    msg = D_NetWrite();
+    Writer_WriteUInt16(msg, mobj->thinker.id);
+    Writer_WriteUInt16(msg, mobj->target? mobj->target->thinker.id : 0); // target id
+    Str_Write(&name, msg); // state to switch to
+#if !defined(__JDOOM__) && !defined(__JDOOM64__)
+    Writer_WriteInt32(msg, mobj->special1);
+#else
+    Writer_WriteInt32(msg, 0);
+#endif
+
+    Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
 void P_Telefrag(mobj_t *thing)

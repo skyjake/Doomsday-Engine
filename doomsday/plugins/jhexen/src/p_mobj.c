@@ -111,10 +111,9 @@ boolean P_MobjChangeState(mobj_t *mobj, statenum_t state)
     P_MobjSetState(mobj, state);
     mobj->turnTime = false; // $visangle-facetarget
 
-    st = &STATES[state];
-    if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
-       (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+    if(Mobj_ActionFunctionAllowed(mobj))
     {
+        st = &STATES[state];
         if(st->action) st->action(mobj); // Call action function.
     }
 

@@ -469,6 +469,8 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
     size.width  = FR_TextWidth(buf) + 16;
     size.height = FR_SingleLineHeight(buf)  + 16;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glEnable(GL_TEXTURE_2D);
 
     topLeft.x = origin->x - size.width;
@@ -495,6 +497,8 @@ static void drawConsoleTitleBar(float alpha)
 
     border = theWindow->geometry.size.width / 120;
     barHeight = calcConsoleTitleBarHeight();
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -558,7 +562,7 @@ static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size,
             MC_UI, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, 0, 1, 0, false, false, false, false);
         const materialsnapshot_t* ms = Materials_Prepare(consoleBackgroundMaterial, spec, Con_IsActive());
 
-        GL_BindTexture(MSU_gltexture(ms, MTU_PRIMARY), MSU(ms, MTU_PRIMARY).magMode);
+        GL_BindTexture(MST(ms, MTU_PRIMARY));
 
         bgX = (int) (ms->size.width  * consoleBackgroundZoom);
         bgY = (int) (ms->size.height * consoleBackgroundZoom);
@@ -575,7 +579,7 @@ static void drawConsoleBackground(const Point2Raw* origin, const Size2Raw* size,
     }
 
     glColor4f(consoleBackgroundLight, consoleBackgroundLight, consoleBackgroundLight, closeFade * consoleBackgroundAlpha);
-    GL_DrawRectTiled(origin->x, origin->y, size->width, size->height, bgX, bgY);
+    GL_DrawRectf2Tiled(origin->x, origin->y, size->width, size->height, bgX, bgY);
 
     if(consoleBackgroundMaterial)
     {
@@ -651,6 +655,8 @@ static void drawConsole(float consoleAlpha)
     Point2Raw origin;
     Size2Raw size;
     assert(inited);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     FR_SetFont(Con_Font());
     FR_LoadDefaultAttrib();
@@ -849,7 +855,7 @@ static void drawConsole(float consoleAlpha)
 
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2],
                   consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
-        GL_DrawRect(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
+        GL_DrawRectf2(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
                     (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
 

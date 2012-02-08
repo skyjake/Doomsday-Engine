@@ -10,8 +10,312 @@ Include "jdoom.ded";
 Include "doom1/anim.ded";
 Include "doom2/anim.ded";
 Include "doom2/skies.ded";
-Include "doom2/maps.ded";
+Include "hacx/maps.ded";
 Include "doom2/finales.ded";
-Include "doom1/materials.ded";
+Include "hacx/materials.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
+Include "hacx/menu.ded";
+Include "hacx/hud.ded";
+Include "hacx/inlude.ded";
+Include "hacx/lights.ded";
+
+# Make the photon rocket ammo's fullbright so we can add a light.
+State {
+  ID = "ROCK";
+  Sprite = "ROCK";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "BROK";
+  Sprite = "BROK";
+  Frame = 0;
+  Flags = fullbright;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+# Nerf the lights on fullbright but non-light emitting objects.
+State {
+  ID = "RKEY";
+  Flags = noautolight;
+  Sprite = "RKEY";
+  Frame = 0;
+  Tics = 10;
+  Next state = "RKEY2";
+}
+
+State {
+  ID = "PSTR";
+  Sprite = "PSTR";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+State {
+  ID = "PINS";
+  Sprite = "PINS";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS2";
+}
+
+State {
+  ID = "PINS2";
+  Sprite = "PINS";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS3";
+}
+
+State {
+  ID = "PINS3";
+  Sprite = "PINS";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS4";
+}
+
+State {
+  ID = "PINS4";
+  Sprite = "PINS";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "PINS";
+}
+
+State {
+  ID = "BON1";
+  Sprite = "BON1";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1A";
+}
+
+State {
+  ID = "BON1A";
+  Sprite = "BON1";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1B";
+}
+
+State {
+  ID = "BON1B";
+  Sprite = "BON1";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1C";
+}
+
+State {
+  ID = "BON1C";
+  Sprite = "BON1";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1D";
+}
+
+State {
+  ID = "BON1D";
+  Sprite = "BON1";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1E";
+}
+
+State {
+  ID = "BON1E";
+  Sprite = "BON1";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "BON1";
+}
+
+State {
+  ID = "GREENTORCH";
+  Sprite = "TGRN";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH2";
+}
+
+State {
+  ID = "GREENTORCH2";
+  Sprite = "TGRN";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH3";
+}
+
+State {
+  ID = "GREENTORCH3";
+  Sprite = "TGRN";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH4";
+}
+
+State {
+  ID = "GREENTORCH4";
+  Sprite = "TGRN";
+  Frame = 3;
+  Flags = fullbright|noautolight;
+  Tics = 4;
+  Next state = "GREENTORCH";
+}
+
+State {
+  ID = "FLOATSKULL";
+  Sprite = "FSKU";
+  Frame = 0;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL2";
+}
+
+State {
+  ID = "FLOATSKULL2";
+  Sprite = "FSKU";
+  Frame = 1;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL3";
+}
+
+State {
+  ID = "FLOATSKULL3";
+  Sprite = "FSKU";
+  Frame = 2;
+  Flags = fullbright|noautolight;
+  Tics = 6;
+  Next state = "FLOATSKULL";
+}
+
+State {
+  ID = "BFUG";
+  Sprite = "BFUG";
+  Frame = 0;
+  Flags = noautolight;
+  Tics = -1;
+  Next state = "NULL";
+}
+
+# The BFG shot is a metal bomb-like object in HacX so do not blend it when drawing.
+Thing {
+  ID = "BFG";
+  DoomEd number = -1;
+  Spawn state = "BFGSHOT";
+  See state = "NULL";
+  Pain state = "NULL";
+  Melee state = "NULL";
+  Missile state = "NULL";
+  Death state = "BFGLAND";
+  Xdeath state = "NULL";
+  Raise state = "NULL";
+  See sound = "None";
+  Attack sound = "None";
+  Pain sound = "None";
+  Death sound = "rxplod";
+  Active sound = "None";
+  Reaction time = 8;
+  Spawn health = 1000;
+  Speed = 25;
+  Radius = 13;
+  Height = 8;
+  Mass = 100;
+  Damage = 100;
+  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags2 = noteleport;
+}
+
+# HacX uses different weapon names.
+Text {
+  ID = "WEAPON1";
+  Text = "Kick";
+}
+
+Text {
+  ID = "WEAPON2";
+  Text = "Pistol";
+}
+
+Text {
+  ID = "WEAPON3";
+  Text = "Tazer";
+}
+
+Text {
+  ID = "WEAPON4";
+  Text = "UZI";
+}
+
+Text {
+  ID = "WEAPON5";
+  Text = "Photon 'Zooka";
+}
+
+Text {
+  ID = "WEAPON6";
+  Text = "Big Stick";
+}
+
+Text {
+  ID = "WEAPON7";
+  Text = "Nuker";
+}
+
+Text {
+  ID = "WEAPON8";
+  Text = "HOIG Reznator";
+}
+
+Text {
+  ID = "WEAPON9";
+  Text = "Cryogun";
+}
+
+# HacX uses different skill level names.
+Text {
+  ID = "SKILL1";
+  Text = "Please don't shoot!";
+}
+
+Text {
+  ID = "SKILL2";
+  Text = "Arrgh, I need health!";
+}
+
+Text {
+  ID = "SKILL3";
+  Text = "Let's rip them apart!";
+}
+
+Text {
+  ID = "SKILL4";
+  Text = "I am immortal";
+}
+
+Text {
+  ID = "SKILL5";
+  Text = "Insanity!";
+}

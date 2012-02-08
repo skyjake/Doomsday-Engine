@@ -117,7 +117,7 @@ void Cl_CleanUp(void)
 
     Cl_DestroyClientMobjs();
     Cl_InitPlayers();
-    Cl_RemoveMovers();
+    Cl_WorldReset();
     GL_SetFilter(false);
 }
 
@@ -207,7 +207,7 @@ void Cl_AnswerHandshake(void)
 
     // Prepare the client-side data.
     Cl_InitClientMobjs();
-    Cl_InitMovers();
+    Cl_WorldInit();
 
     // Get ready for ticking.
     DD_ResetTimer();
@@ -322,6 +322,18 @@ void Cl_GetPackets(void)
 
         case PSV_HANDSHAKE:
             Cl_AnswerHandshake();
+            break;
+
+        case PSV_MATERIAL_ARCHIVE:
+            Cl_ReadServerMaterials();
+            break;
+
+        case PSV_MOBJ_TYPE_ID_LIST:
+            Cl_ReadServerMobjTypeIDs();
+            break;
+
+        case PSV_MOBJ_STATE_ID_LIST:
+            Cl_ReadServerMobjStateIDs();
             break;
 
         case PKT_PLAYER_INFO:

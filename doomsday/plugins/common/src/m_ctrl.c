@@ -46,6 +46,7 @@
 #define CCF_STAGED              0x4
 #define CCF_REPEAT              0x8
 #define CCF_SIDESTEP_MODIFIER   0x10
+#define CCF_MULTIPLAYER         0x20
 
 #define SMALL_SCALE             .75f
 
@@ -162,20 +163,20 @@ static mndata_bindings_t controlConfig[] =
 #endif
 
     { "Chat" },
-    { "Open Chat", 0, 0, "beginchat" },
+    { "Open Chat", 0, 0, "beginchat", CCF_MULTIPLAYER },
 
 #if __JDOOM__ || __JDOOM64__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Indigo Chat", 0, 0, "beginchat 1" },
-    { "Brown Chat", 0, 0, "beginchat 2" },
-    { "Red Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Indigo Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Brown Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
 #if __JHERETIC__
-    { "Green Chat", 0, 0, "beginchat 0" },
-    { "Yellow Chat", 0, 0, "beginchat 1" },
-    { "Red Chat", 0, 0, "beginchat 2" },
-    { "Blue Chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0", CCF_MULTIPLAYER },
+    { "Yellow Chat", 0, 0, "beginchat 1", CCF_MULTIPLAYER },
+    { "Red Chat", 0, 0, "beginchat 2", CCF_MULTIPLAYER },
+    { "Blue Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
     { "Send Message", "chat", 0, "chatcomplete" },
@@ -409,7 +410,7 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name,
         height = FR_TextHeight(name);
 
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
+        DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
 
         DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);
@@ -554,6 +555,31 @@ static void iterateBindings(const mndata_bindings_t* binds, const char* bindings
     }
 }
 
+mn_object_t* MNBindings_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for new MNBindings.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNBindings::New: Failed on allocation of %lu bytes for mndata_bindings_t.", (unsigned long) sizeof(mndata_bindings_t));
+
+    ob->_type = MN_BINDINGS;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->updateGeometry = MNBindings_UpdateGeometry;
+    ob->drawer = MNBindings_Drawer;
+    ob->cmdResponder = MNBindings_CommandResponder;
+    ob->privilegedResponder = MNBindings_PrivilegedResponder;
+
+    return ob;
+}
+
+void MNBindings_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_BINDINGS);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
 void MNBindings_Drawer(mn_object_t* obj, const Point2Raw* origin)
 {
     mndata_bindings_t* binds = (mndata_bindings_t*)obj->_typedata;
@@ -684,7 +710,8 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
 
         if(binds->command)
         {
-            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], binds->command);
+            const char* extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
+            sprintf(cmd, "bindevent {%s:%s%s} {%s}", bindContext, &symbol[5], extraCondition, binds->command);
 
             // Check for repeats.
             if(binds->flags & CCF_REPEAT)

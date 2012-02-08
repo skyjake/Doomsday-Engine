@@ -168,12 +168,13 @@ boolean FR_Available(void)
 
 void FR_Ticker(timespan_t ticLength)
 {
-    static trigger_t fixed = { 1 / 35.0 };
-
     if(!inited)
         return;
+
     // Restricted to fixed 35 Hz ticks.
-    if(!M_RunTrigger(&fixed, ticLength))
+    /// @fixme We should not be synced to the games' fixed "sharp" timing.
+    ///        This font renderer is used by the engine's UI also.
+    if(!DD_IsSharpTick())
         return; // It's too soon.
 
     ++typeInTime;
@@ -582,12 +583,15 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
 
     if(renderWireframe)
     {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
+
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glDisable(GL_TEXTURE_2D);
     }
     if(Font_Type(font) == FT_BITMAP && 0 != BitmapFont_GLTextureName(font))
     {
-        glBindTexture(GL_TEXTURE_2D, BitmapFont_GLTextureName(font));
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glLoadIdentity();
@@ -798,7 +802,6 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     float x = (float) posX, y = (float) posY;
     Point2Raw coords[4];
     RectRaw geometry;
-    DGLuint glTex;
 
     if(alignFlags & ALIGN_RIGHT)
         x -= Fonts_CharWidth(font, ch);
@@ -816,7 +819,10 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     switch(Font_Type(font))
     {
     case FT_BITMAP:
-        glTex = BitmapFont_GLTextureName(font);
+        /// @fixme Filtering should be determined at a higher level.
+        /// @fixme We should not need to re-bind this texture here.
+        GL_BindTextureUnmanaged(BitmapFont_GLTextureName(font), filterUI? GL_LINEAR : GL_NEAREST);
+
         memcpy(&geometry, BitmapFont_CharGeometry(font, ch), sizeof(geometry));
         BitmapFont_CharCoords(font, ch, coords);
         break;
@@ -824,9 +830,8 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
     case FT_BITMAPCOMPOSITE: {
         const uint8_t border = BitmapCompositeFont_CharBorder(font, ch);
 
-        glTex = BitmapCompositeFont_CharGLTexture(font, ch);
+        GL_BindTexture(BitmapCompositeFont_CharTexture(font, ch));
         memcpy(&geometry, BitmapCompositeFont_CharGeometry(font, ch), sizeof(geometry));
-
         if(border)
         {
             geometry.origin.x -= border;
@@ -853,16 +858,12 @@ static void drawChar(unsigned char ch, int posX, int posY, font_t* font,
         geometry.size.height += font->_marginHeight*2;
     }
 
-    if(glTex)
-    {
-        /// \fixme Filtering should be determined at a higher level.
-        GL_BindTexture(glTex, filterUI? GL_LINEAR : GL_NEAREST);
-    }
-    else
+    GL_DrawRectWithCoords(&geometry, coords);
+
+    if(Font_Type(font) == FT_BITMAPCOMPOSITE)
     {
         GL_SetNoTexture();
     }
-    GL_DrawRectWithCoords(&geometry, coords);
 
     glMatrixMode(GL_MODELVIEW);
     glTranslatef(-x, -y, 0);
@@ -883,7 +884,7 @@ static void drawFlash(const Point2Raw* origin, const Size2Raw* size, int bright)
     w = (int) fw;
     h = (int) fh;
 
-    glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
+    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
 
     if(bright)
         GL_BlendMode(BM_ADD);
@@ -1175,6 +1176,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     drawtextstate_t state;
     const char* fragment;
     int pass, curCase;
+    Size2Raw textSize;
     size_t charCount;
     float origColor[4];
     short textFlags;
@@ -1185,6 +1187,12 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
     if(!text || !text[0] || !origin) return;
 
     origTextFlags &= ~(DTF_INTERNAL_MASK);
+
+    // If we aren't aligning to top-left we need to know the dimensions.
+    if(alignFlags & ALIGN_RIGHT)
+        FR_TextSize(&textSize, text);
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     // We need to change the current color, so remember for restore.
     glGetFloatv(GL_CURRENT_COLOR, origColor);
@@ -1305,7 +1313,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                     // We'll take care of horizontal positioning of the fragment so align left.
                     fragmentAlignFlags = (alignFlags & ~(ALIGN_RIGHT)) | ALIGN_LEFT;
                     if(alignFlags & ALIGN_RIGHT)
-                        alignx = -textFragmentWidth(fragment) * state.scaleX;
+                        alignx = -textSize.width * state.scaleX;
                 }
 
                 // Setup the scaling.

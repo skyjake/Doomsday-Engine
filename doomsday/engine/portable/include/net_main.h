@@ -83,6 +83,7 @@ enum {
     PSV_CONSOLE_TEXT = 11,
     PCL_ACK_SHAKE = 12,
     PSV_SYNC = 13,
+    PSV_MATERIAL_ARCHIVE = 14,
     PCL_FINALE_REQUEST = 15,
     PKT_LOGIN = 16,
     PCL_ACK_SETS = 17,
@@ -100,6 +101,8 @@ enum {
     PKT_COMMAND2 = 29,
     PSV_PLAYER_FIX = 30,            // Fix angles/pos/mom.
     PCL_GOODBYE = 31,
+    PSV_MOBJ_TYPE_ID_LIST = 32,
+    PSV_MOBJ_STATE_ID_LIST = 33,
 
     // Game specific events.
     PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64

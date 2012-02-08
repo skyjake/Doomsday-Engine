@@ -1,0 +1,9 @@
+# API documentation for the engine
+@INCLUDE = ../../doomsday.doxy
+
+PROJECT_NAME        = jDoom
+OUTPUT_DIRECTORY    = ../../apidoc/jdoom/
+
+INPUT               = src include res ../common/src ../common/include
+
+PREDEFINED          = __JDOOM__

@@ -75,12 +75,13 @@ void SV_UpdateGameSaveInfo(void);
  * game-save slot.
  *
  * @param str  String to be parsed. Parse is divided into three passes.
- *   Pass 1: Check for a known game-save name which matches this.
- *      Search is in ascending logical slot order 0...N (where N is
- *      the number of available save slots in the current game).
- *   Pass 2: Check for keyword identifiers.
- *      <quick> = The currently nominated "quick save" slot.
- *   Pass 3: Check for a logical save slot identifier.
+ *             Pass 1: Check for a known game-save name which matches this.
+ *                 Search is in ascending logical slot order 0..N (where N is the
+ *                 number of available save slots in the current game).
+ *             Pass 2: Check for keyword identifiers.
+ *                 <last> = The last used slot.
+ *                 <quick> = The currently nominated "quick save" slot.
+ *             Pass 3: Check for a logical save slot number.
  *
  * @return  Save slot identifier of the slot else @c -1
  */

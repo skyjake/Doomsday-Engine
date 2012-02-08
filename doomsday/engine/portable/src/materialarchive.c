@@ -28,7 +28,7 @@
 #include "materialarchive.h"
 
 /// For identifying the archived format version. Written to disk.
-#define MATERIALARCHIVE_VERSION (2)
+#define MATERIALARCHIVE_VERSION (4)
 
 #define ASEG_MATERIAL_ARCHIVE   112
 
@@ -36,7 +36,7 @@
 #define UNKNOWN_MATERIALNAME    "DD_BADTX"
 
 typedef struct materialarchive_record_s {
-    Uri* uri;
+    Uri* uri; ///< Percent encoded.
     material_t* material;
 } materialarchive_record_t;
 
@@ -53,7 +53,7 @@ static MaterialArchive* create(void)
     return malloc(sizeof(MaterialArchive));
 }
 
-static void destroy(MaterialArchive* mArc)
+static void clearTable(MaterialArchive* mArc)
 {
     if(mArc->table)
     {
@@ -63,7 +63,14 @@ static void destroy(MaterialArchive* mArc)
             Uri_Delete(mArc->table[i].uri);
         }
         free(mArc->table);
+        mArc->table = 0;
     }
+    mArc->count = 0;
+}
+
+static void destroy(MaterialArchive* mArc)
+{
+    clearTable(mArc);
     free(mArc);
 }
 
@@ -98,8 +105,7 @@ static materialarchive_serialid_t insertSerialIdForMaterial(MaterialArchive* mAr
     return mArc->count; // 1-based index.
 }
 
-static materialarchive_serialid_t getSerialIdForMaterial(MaterialArchive* mArc,
-    material_t* mat)
+static materialarchive_serialid_t getSerialIdForMaterial(MaterialArchive* mArc, material_t* mat)
 {
     materialarchive_serialid_t id = 0;
     uint i;
@@ -162,9 +168,7 @@ static void populate(MaterialArchive* mArc)
 
 static int writeRecord(const MaterialArchive* mArc, materialarchive_record_t* rec, Writer* writer)
 {
-    ddstring_t* path = Uri_ComposePath(rec->uri);
-    Str_Write(path, writer);
-    Str_Delete(path);
+    Uri_Write(rec->uri, writer);
     return true; // Continue iteration.
 }
 
@@ -175,19 +179,33 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
         rec->uri = Uri_New();
     }
 
-    if(mArc->version >= 2)
+    if(mArc->version >= 4)
+    {
+        Uri_Read(rec->uri, reader);
+    }
+    else if(mArc->version >= 2)
     {
         ddstring_t* path = Str_NewFromReader(reader);
         Uri_SetUri3(rec->uri, Str_Text(path), RC_NULL);
+        if(mArc->version == 2)
+        {
+            // We must encode the path.
+            Str_PercentEncode(Str_Set(path, Str_Text(Uri_Path(rec->uri))));
+            Uri_SetPath(rec->uri, Str_Text(path));
+        }
         Str_Delete(path);
     }
     else
     {
+        ddstring_t path;
         char name[9];
         byte oldMNI;
 
         Reader_Read(reader, name, 8);
         name[8] = 0;
+
+        Str_Init(&path);
+        Str_PercentEncode(Str_StripRight(Str_Set(&path, name)));
 
         oldMNI = Reader_ReadByte(reader);
         switch(oldMNI % 4)
@@ -197,7 +215,8 @@ static int readRecord(MaterialArchive* mArc, materialarchive_record_t* rec, Read
         case 2: Uri_SetScheme(rec->uri, MN_SPRITES_NAME);  break;
         case 3: Uri_SetScheme(rec->uri, MN_SYSTEM_NAME);   break;
         }
-        Uri_SetPath(rec->uri, name);
+        Uri_SetPath(rec->uri, Str_Text(&path));
+        Str_Free(&path);
     }
     return true; // Continue iteration.
 }
@@ -215,8 +234,9 @@ static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace
     if(!rec->uri)
         rec->uri = Uri_New();
     Str_Init(&path);
-    Str_Appendf(&path, "%s:%s", mnamespace, buf);
-    Uri_SetUri(rec->uri, &path);
+    Str_PercentEncode(Str_StripRight(Str_Appendf(&path, "%s", buf)));
+    Uri_SetPath(rec->uri, Str_Text(&path));
+    Uri_SetScheme(rec->uri, mnamespace);
     Str_Free(&path);
     return true; // Continue iteration.
 }
@@ -324,6 +344,12 @@ struct material_s* MaterialArchive_Find(MaterialArchive* arc, materialarchive_se
     return materialForSerialId(arc, serialId, group);
 }
 
+size_t MaterialArchive_Count(MaterialArchive* arc)
+{
+    assert(arc);
+    return arc->count;
+}
+
 void MaterialArchive_Write(MaterialArchive* arc, Writer* writer)
 {
     assert(arc);
@@ -334,6 +360,7 @@ void MaterialArchive_Write(MaterialArchive* arc, Writer* writer)
 void MaterialArchive_Read(MaterialArchive* arc, int forcedVersion, Reader* reader)
 {
     assert(arc);
+    clearTable(arc);
 
     readHeader(arc, reader);
 

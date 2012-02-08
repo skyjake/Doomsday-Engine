@@ -436,7 +436,7 @@ void Con_Shutdown(void)
 {
     if(!ConsoleInited) return;
 
-    Con_Message("Shuting down the console...\n");
+    Con_Message("Shutting down the console...\n");
 
     Con_ClearExecBuffer();
     Con_ShutdownDatabases();
@@ -2064,13 +2064,15 @@ void Con_Error(const char* error, ...)
 
     if(Con_IsBusy())
     {
-        // In busy mode, the other thread will handle this.
         Con_BusyWorkerError(buff);
-        for(;;)
+
+        if(Con_InBusyWorker())
         {
-            // We'll stop here.
-            // \todo Kill this thread?
-            Sys_Sleep(10000);
+            for(;;)
+            {
+                // We'll stop here. The main thread will shut down the process.
+                Sys_Sleep(500);
+            }
         }
     }
     else

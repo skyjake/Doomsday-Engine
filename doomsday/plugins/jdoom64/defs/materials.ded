@@ -58,21 +58,21 @@ Material Mods "textures:F_SKYK" {
 #
 
 Material Mods "textures:CBTRAKA" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:CRTRAKA" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:CYTRAKA" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:SEXIT" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:SEXITA" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }

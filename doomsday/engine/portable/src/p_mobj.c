@@ -217,21 +217,35 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
 {
     if(!origin) return;
 
-    origin[VX] = origin[VY] = origin[VZ] = 0;
-
+    V3_Set(origin, 0, 0, 0);
     if(!mo) return;
 
-    origin[VX] = mo->pos[VX];
-    origin[VY] = mo->pos[VY];
-    origin[VZ] = mo->pos[VZ];
+    V3_Copy(origin, mo->pos);
 
     // Apply a Short Range Visual Offset?
     if(useSRVO && mo->state && mo->tics >= 0)
     {
-        float mul = mo->tics / (float) mo->state->tics;
-        origin[VX] += mo->srvo[VX] * mul;
-        origin[VY] += mo->srvo[VY] * mul;
-        origin[VZ] += mo->srvo[VZ] * mul;
+        const float mul = mo->tics / (float) mo->state->tics;
+        vec3_t srvo;
+
+        V3_Copy(srvo, mo->srvo);
+        V3_Scale(srvo, mul);
+        V3_Sum(origin, origin, srvo);
+    }
+
+    if(mo->dPlayer)
+    {
+        /// @fixme What about splitscreen? We have smoothed coords for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            V3_Copy(origin, vd->current.pos);
+        }
+        // The client may have a Smoother for this object.
+        else if(isClient)
+        {
+            Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, origin);
+        }
     }
 }
 

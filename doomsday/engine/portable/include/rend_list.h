@@ -131,7 +131,7 @@ void RL_Rtu_TranslateOffset(uint idx, float s, float t);
 void RL_Rtu_TranslateOffsetv(uint idx, float const st[2]);
 
 /// Change the texture assigned to the identified @idx texture unit.
-void RL_Rtu_SetTexture(uint idx, DGLuint glName);
+void RL_Rtu_SetTextureUnmanaged(uint idx, DGLuint glName);
 
 /**
  * @param primType  Type of primitive being written.

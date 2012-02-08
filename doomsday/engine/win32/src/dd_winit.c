@@ -515,7 +515,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_SIZE:
-        if(!appShutdown)
+        if(!Sys_IsShuttingDown())
         {
             switch(wParam)
             {
@@ -552,7 +552,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     case WM_CLOSE:
         PostQuitMessage(0);
-        ignoreInput = TRUE;
+        DD_IgnoreInput(true);
         forwardMsg = FALSE;
         break;
 
@@ -599,18 +599,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATE:
-        if(!appShutdown)
+        if(!Sys_IsShuttingDown())
         {
             if(LOWORD(wParam) == WA_ACTIVE || (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
             {
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
-                ignoreInput = FALSE;
+                DD_IgnoreInput(false);
             }
             else
             {
                 SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-                ignoreInput = TRUE;
+                DD_IgnoreInput(true);
             }
         }
         forwardMsg = FALSE;

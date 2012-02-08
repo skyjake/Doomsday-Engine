@@ -77,6 +77,7 @@ const float defFontRGB[]  = { 1, 1, 1 };
 const float defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.
+// Percent-encoded.
 char* borderGraphics[] = {
     "Flats:FTILEABC", // Background.
     "BRDR_T", // Top.
@@ -297,6 +298,7 @@ void D_PreInit(void)
     cfg.automapBack[2] = 0.f;
     cfg.automapOpacity = .7f;
     cfg.automapLineAlpha = .7f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
@@ -306,7 +308,9 @@ void D_PreInit(void)
     cfg.automapPanSpeed = .5f;
     cfg.automapPanResetOnOpen = true;
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
-    cfg.hudCheatCounterScale = .7f; // From jHeretic.
+
+    cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 1;
     cfg.msgScale = .8f;
@@ -452,7 +456,7 @@ void D_PostInit(void)
 
     // Validate episode and map.
     uri = G_ComposeMapUri(0, startMap);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;

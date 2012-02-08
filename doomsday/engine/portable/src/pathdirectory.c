@@ -97,7 +97,7 @@ static blockset_t* NodeBlockSet;
 /// Linked list of used directory nodes for re-use. Linked with PathDirectoryNode::next
 static PathDirectoryNode* UsedNodes;
 
-ushort PathDirectory_HashName(const char* path, size_t len, char delimiter)
+ushort PathDirectory_HashPath(const char* path, size_t len, char delimiter)
 {
     const char* c = path + len - 1;
     ushort key = 0;
@@ -306,7 +306,7 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     // Do we need a new name identifier (and hash)?
     if(!internId)
     {
-        hash = PathDirectory_HashName(Str_Text(name), Str_Length(name), delimiter);
+        hash = PathDirectory_HashPath(Str_Text(name), Str_Length(name), delimiter);
         internId = internNameAndUpdateIdHashMap(pd, name, hash);
     }
     else
@@ -1285,6 +1285,12 @@ StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
     return node->pair.internId;
 }
 
+ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
+{
+    assert(node);
+    return hashForInternId(node->directory, node->pair.internId);
+}
+
 /// \note This routine is also used as an iteration callback, so only return
 /// a non-zero value when the node is a match for the search term.
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
@@ -1302,6 +1308,12 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     sfragment = PathMap_Fragment(searchPattern, 0);
     if(!sfragment) return false; // Hmm...
 
+//#ifdef _DEBUG
+//#  define EXIT_POINT(ep) fprintf(stderr, "MatchDirectory exit point %i\n", ep)
+//#else
+#  define EXIT_POINT(ep)
+//#endif
+
     // In reverse order, compare path fragments in the search term.
     fragmentCount = PathMap_Size(searchPattern);
     for(i = 0; i < fragmentCount; ++i)
@@ -1312,7 +1324,10 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
             dd_snprintf(buf, 256, "%*s", sfragment->to - sfragment->from + 1, sfragment->from);
             fragment = PathDirectory_GetFragment(pd, node);
             if(!F_MatchFileName(Str_Text(fragment), buf))
+            {
+                EXIT_POINT(1);
                 return false;
+            }
         }
         else
         {
@@ -1320,31 +1335,54 @@ int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
 
             if(!isWild)
             {
+                int sfraglen = 0;
+
                 // If the hashes don't match it can't possibly be this.
                 if(sfragment->hash != hashForInternId(pd, PathDirectoryNode_InternId(node)))
+                {
+                    EXIT_POINT(2);
                     return false;
+                }
+
+                // Determine length of the sfragment.
+                if(!strcmp(sfragment->to, "") && !strcmp(sfragment->from, ""))
+                    sfraglen = 0;
+                else
+                    sfraglen = (sfragment->to - sfragment->from) + 1;
 
                 // Compare the path fragment to that of the search term.
                 fragment = PathDirectory_GetFragment(pd, node);
-                if(Str_Length(fragment) < (sfragment->to - sfragment->from)+1 ||
+                if(Str_Length(fragment) < sfraglen ||
                    strnicmp(Str_Text(fragment), sfragment->from, Str_Length(fragment)))
+                {
+                    EXIT_POINT(3);
                     return false;
+                }
             }
         }
 
         // Have we arrived at the search target?
         if(i == fragmentCount-1)
+        {
+            EXIT_POINT(4);
             return (!(flags & PCF_MATCH_FULL) || !PathDirectoryNode_Parent(node));
+        }
 
         // Are there no more parent directories?
         if(!PathDirectoryNode_Parent(node))
+        {
+            EXIT_POINT(5);
             return false;
+        }
 
         // So far so good. Move one directory level upwards.
         node = PathDirectoryNode_Parent(node);
         sfragment = PathMap_Fragment(searchPattern, i+1);
     }
+    EXIT_POINT(6);
     return false;
+
+#undef EXIT_POINT
 }
 
 void PathDirectoryNode_AttachUserData(PathDirectoryNode* node, void* userData)

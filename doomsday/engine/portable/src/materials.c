@@ -305,8 +305,8 @@ static int compareVariantSpecifications(const materialvariantspecification_t* a,
     const materialvariantspecification_t* b)
 {
     assert(a && b);
-    if(a == b) return 0;
-    if(a->context != b->context) return 1;
+    if(a == b) return 1;
+    if(a->context != b->context) return 0;
     return GL_CompareTextureVariantSpecifications(a->primarySpec, b->primarySpec);
 }
 
@@ -344,7 +344,7 @@ static materialvariantspecification_t* findVariantSpecification(
     materialvariantspecificationlist_node_t* node;
     for(node = variantSpecs; node; node = node->next)
     {
-        if(!compareVariantSpecifications(node->spec, tpl))
+        if(compareVariantSpecifications(node->spec, tpl))
             return node->spec;
     }
     if(!canCreate)
@@ -404,7 +404,7 @@ static int chooseVariantWorker(materialvariant_t* variant, void* paramaters)
     const materialvariantspecification_t* cand = MaterialVariant_Spec(variant);
     assert(p);
 
-    if(!compareVariantSpecifications(cand, p->spec))
+    if(compareVariantSpecifications(cand, p->spec))
     {
         // This will do fine.
         p->chosen = variant;
@@ -720,15 +720,6 @@ void Materials_Rebuild(material_t* mat, ded_material_t* def)
     /// \todo We should be able to rebuild the variants.
     Material_DestroyVariants(mat);
     Material_SetDefinition(mat, def);
-    Material_SetFlags(mat, def->flags);
-    Material_SetWidth(mat, def->width);
-    Material_SetHeight(mat, def->height);
-    Material_SetEnvironmentClass(mat, S_MaterialEnvClassForUri(def->uri));
-
-    // Textures are updated automatically at prepare-time, so just clear them.
-    Material_SetDetailTexture(mat, NULL);
-    Material_SetShinyTexture(mat, NULL);
-    Material_SetShinyMaskTexture(mat, NULL);
 
     // Update bindings.
     for(i = 0; i < bindingCount; ++i)
@@ -1142,8 +1133,8 @@ static void updateMaterialTextureLinks(materialbind_t* mb)
     Material_SetShinyStrength(mat,    (refDef? refDef->shininess : 0));
 }
 
-static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* texture,
-    blendmode_t blendMode, int magMode, float sScale, float tScale, float sOffset,
+static void setTexUnit(materialsnapshot_t* ms, byte unit, TextureVariant* texture,
+    blendmode_t blendMode, float sScale, float tScale, float sOffset,
     float tOffset, float opacity)
 {
     rtexmapunit_t* tu;
@@ -1151,9 +1142,9 @@ static void setTexUnit(materialsnapshot_t* ms, byte unit, const TextureVariant* 
 
     ms->textures[unit] = texture;
     tu = &ms->units[unit];
-    tu->tex = (texture? TextureVariant_GLName(texture) : 0);
+    tu->texture.variant = texture;
+    tu->texture.flags = TUF_TEXTURE_IS_MANAGED;
     tu->blendMode = blendMode;
-    tu->magMode = magMode;
     V2_Set(tu->scale, sScale, tScale);
     V2_Set(tu->offset, sOffset, tOffset);
     tu->opacity = MINMAX_OF(0, opacity, 1);
@@ -1170,6 +1161,7 @@ void Materials_InitSnapshot(materialsnapshot_t* ms)
         ms->textures[i] = NULL;
     }
 
+    ms->material = NULL;
     ms->size.width = ms->size.height = 0;
     ms->glowing = 0;
     ms->isOpaque = true;
@@ -1181,7 +1173,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     materialsnapshot_t* snapshot)
 {
     static struct materialtextureunit_s {
-        const TextureVariant* tex;
+        TextureVariant* tex;
     } texUnits[NUM_MATERIAL_TEXTURE_UNITS];
     material_t* mat = MaterialVariant_GeneralCase(variant);
     const materialvariantspecification_t* spec = MaterialVariant_Spec(variant);
@@ -1218,7 +1210,8 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
             // Are we inheriting the logical dimensions from the texture?
             if(0 == Material_Width(mat) && 0 == Material_Height(mat))
             {
-                Material_SetSize(mat, Texture_Size(ml->texture));
+                Size2Raw texSize;
+                Material_SetSize(mat, Size2_Raw(Texture_Size(ml->texture), &texSize));
             }
         }
     }
@@ -1256,6 +1249,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     MaterialVariant_SetSnapshotPrepareFrame(variant, frameCount);
 
     Materials_InitSnapshot(snapshot);
+    snapshot->material = variant;
     memcpy(&snapshot->size, Material_Size(mat), sizeof snapshot->size);
 
     if(0 == snapshot->size.width && 0 == snapshot->size.height) return snapshot;
@@ -1267,16 +1261,11 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
     // Setup the primary texture unit.
     if(texUnits[MTU_PRIMARY].tex)
     {
-        const TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
-        int magMode = glmode[texMagMode];
-        float sScale, tScale;
+        TextureVariant* tex = texUnits[MTU_PRIMARY].tex;
+        const float sScale = 1.f / snapshot->size.width;
+        const float tScale = 1.f / snapshot->size.height;
 
-        if(TN_SPRITES == Textures_Namespace(Textures_Id(TextureVariant_GeneralCase(tex))))
-            magMode = filterSprites? GL_LINEAR : GL_NEAREST;
-        sScale = 1.f / snapshot->size.width;
-        tScale = 1.f / snapshot->size.height;
-
-        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL, magMode,
+        setTexUnit(snapshot, MTU_PRIMARY, tex, BM_NORMAL,
             sScale, tScale, MaterialVariant_Layer(variant, 0)->texOrigin[0],
             MaterialVariant_Layer(variant, 0)->texOrigin[1], 1);
     }
@@ -1291,7 +1280,7 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
         // Setup the detail texture unit?
         if(texUnits[MTU_DETAIL].tex && snapshot->isOpaque)
         {
-            const TextureVariant* tex = texUnits[MTU_DETAIL].tex;
+            TextureVariant* tex = texUnits[MTU_DETAIL].tex;
             const float width  = Texture_Width(TextureVariant_GeneralCase(tex));
             const float height = Texture_Height(TextureVariant_GeneralCase(tex));
             float scale = Material_DetailScale(mat);
@@ -1301,25 +1290,24 @@ const materialsnapshot_t* updateMaterialSnapshot(materialvariant_t* variant,
                 scale *= detailScale;
 
             setTexUnit(snapshot, MTU_DETAIL, tex, BM_NORMAL,
-                texMagMode?GL_LINEAR:GL_NEAREST, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
+                       1.f / width * scale, 1.f / height * scale, 0, 0, 1);
         }
 
         // Setup the shiny texture units?
         if(texUnits[MTU_REFLECTION].tex)
         {
-            const TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
+            TextureVariant* tex = texUnits[MTU_REFLECTION].tex;
             const blendmode_t blendmode = Material_ShinyBlendmode(mat);
             const float strength = Material_ShinyStrength(mat);
 
-            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, GL_LINEAR, 1, 1, 0, 0, strength);
+            setTexUnit(snapshot, MTU_REFLECTION, tex, blendmode, 1, 1, 0, 0, strength);
         }
 
         if(texUnits[MTU_REFLECTION_MASK].tex)
         {
-            const TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
+            TextureVariant* tex = texUnits[MTU_REFLECTION_MASK].tex;
 
             setTexUnit(snapshot, MTU_REFLECTION_MASK, tex, BM_NORMAL,
-                snapshot->units[MTU_PRIMARY].magMode,
                 1.f / (snapshot->size.width * Texture_Width(TextureVariant_GeneralCase(tex))),
                 1.f / (snapshot->size.height * Texture_Height(TextureVariant_GeneralCase(tex))),
                 snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
@@ -1349,6 +1337,7 @@ const materialsnapshot_t* Materials_PrepareVariant2(materialvariant_t* variant, 
             Con_Error("Materials::Prepare: Failed on allocation of %lu bytes for new MaterialSnapshot.", (unsigned long) sizeof *snapshot);
         snapshot = MaterialVariant_AttachSnapshot(variant, snapshot);
         Materials_InitSnapshot(snapshot);
+        snapshot->material = variant;
 
         // Update the snapshot right away.
         updateSnapshot = true;
@@ -1397,7 +1386,7 @@ const ded_decor_t* Materials_DecorationDef(material_t* mat)
 
 const ded_ptcgen_t* Materials_PtcGenDef(material_t* mat)
 {
-    if(!mat) return NULL;
+    if(!mat || isDedicated) return NULL;
     if(!Material_Prepared(mat))
     {
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
@@ -1534,15 +1523,14 @@ static void printMaterialOverview(material_t* mat, boolean printNamespace)
 {
     int numUidDigits = MAX_OF(3/*uid*/, M_NumDigits(Materials_Size()));
     Uri* uri = Materials_ComposeUri(Materials_Id(mat));
-    const ddstring_t* path = (printNamespace? Uri_ToString(uri) : Uri_Path(uri));
+    ddstring_t* path = (printNamespace? Uri_ToString(uri) : Str_PercentDecode(Str_Set(Str_New(), Str_Text(Uri_Path(uri)))));
 
     Con_Printf("%-*s %*u %s\n", printNamespace? 22 : 14, F_PrettyPath(Str_Text(path)),
         numUidDigits, Materials_Id(mat),
         !Material_IsCustom(mat) ? "game" : (Material_Definition(mat)->autoGenerated? "addon" : "def"));
 
     Uri_Delete(uri);
-    if(printNamespace)
-        Str_Delete((ddstring_t*)path);
+    Str_Delete((ddstring_t*)path);
 }
 
 /**
@@ -1632,8 +1620,9 @@ static PathDirectoryNode** collectDirectoryNodes(materialnamespaceid_t namespace
 
 static int composeAndCompareDirectoryNodePaths(const void* nodeA, const void* nodeB)
 {
-    ddstring_t* a = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER);
-    ddstring_t* b = composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER);
+    // Decode paths before determining a lexicographical delta.
+    ddstring_t* a = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeA, MATERIALS_PATH_DELIMITER));
+    ddstring_t* b = Str_PercentDecode(composePathForDirectoryNode(*(const PathDirectoryNode**)nodeB, MATERIALS_PATH_DELIMITER));
     int delta = stricmp(Str_Text(a), Str_Text(b));
     Str_Delete(b);
     Str_Delete(a);
@@ -2139,8 +2128,14 @@ D_CMD(ListMaterials)
 
 D_CMD(InspectMaterial)
 {
-    Uri* search = Uri_NewWithPath2(argv[1], RC_NULL);
+    ddstring_t path;
     material_t* mat;
+    Uri* search;
+
+    // Path is assumed to be in a human-friendly, non-encoded representation.
+    Str_Init(&path); Str_PercentEncode(Str_Set(&path, argv[1]));
+    search = Uri_NewWithPath2(Str_Text(&path), RC_NULL);
+    Str_Free(&path);
 
     if(!Str_IsEmpty(Uri_Scheme(search)))
     {

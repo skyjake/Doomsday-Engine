@@ -43,6 +43,9 @@ void Sys_Init(void);
 void Sys_Shutdown(void);
 void Sys_Quit(void);
 
+/// @return  @c true if shutdown is in progress.
+boolean Sys_IsShuttingDown(void);
+
 int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
 
@@ -52,10 +55,31 @@ void Sys_HideMouse(void);
 void Sys_MessageBox(const char* msg, boolean iserror);
 void Sys_OpenTextEditor(const char* filename);
 
+/**
+ * @def LIBDENG_ASSERT_IN_MAIN_THREAD
+ * In a debug build, this asserts that the current code is executing in the main thread.
+ */
+#ifdef _DEBUG
+#  define LIBDENG_ASSERT_IN_MAIN_THREAD() {assert(Sys_InMainThread());}
+#else
+#  define LIBDENG_ASSERT_IN_MAIN_THREAD()
+#endif
+
 thread_t Sys_StartThread(systhreadfunc_t startpos, void* parm);
 void Sys_SuspendThread(thread_t handle, boolean dopause);
 int Sys_WaitThread(thread_t handle);
-uint Sys_ThreadID(void);
+
+/**
+ * @param handle  Handle to the thread to return the id of.
+ *                Can be @c NULL in which case the current thread is assumed.
+ * @return  Identifier of the thread.
+ */
+uint Sys_ThreadId(thread_t handle);
+
+uint Sys_CurrentThreadId(void);
+
+void Sys_MarkAsMainThread(void);
+boolean Sys_InMainThread(void);
 
 mutex_t Sys_CreateMutex(const char* name);
 void Sys_DestroyMutex(mutex_t mutexHandle);

@@ -47,6 +47,7 @@
 
 #include "m_args.h"
 #include "def_main.h"
+#include "huffman.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -94,11 +95,11 @@ void DD_ErrorBox(boolean error, char* format, ...)
     va_end(args);
 
 #ifdef WIN32
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     MessageBox(NULL, WIN_STRING(buff),
                TEXT(DOOMSDAY_NICENAME) DOOMSDAY_VERSION_TEXT_WSTR,
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
 #endif
 
 #ifdef UNIX
@@ -255,6 +256,7 @@ void DD_ShutdownAll(void)
     Def_Destroy();
     F_ShutdownResourceLocator();
     F_Shutdown();
+    Huffman_Shutdown();
     ArgShutdown();
     Z_Shutdown();
     Sys_ShutdownWindowManager();

@@ -523,6 +523,13 @@ static int R_LoadModel(const Uri* uri)
         registerModelSkin(mdl, i);
     }
 
+    // Enlarge the vertex buffers to enable drawing of this model.
+    if(!Rend_ModelExpandVertexBuffers(mdl->info.numVertices))
+    {
+        Con_Message("Warning: Model \"%s\" contains more than %u vertices (%u), it will not be rendered.\n",
+                    Str_Text(&foundPath), (uint)RENDER_MAX_MODEL_VERTS, (uint)mdl->info.numVertices);
+    }
+
     Str_Free(&foundPath);
     return index;
 }

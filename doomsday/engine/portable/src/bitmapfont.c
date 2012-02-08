@@ -35,6 +35,7 @@
 #include "m_misc.h"
 #include "fonts.h"
 
+#include "texturevariant.h"
 #include "bitmapfont.h"
 
 void Font_Init(font_t* font, fonttype_t type, fontid_t bindId)
@@ -404,7 +405,10 @@ void BitmapFont_DeleteGLTexture(font_t* font)
     font->_isDirty = true;
     if(Con_IsBusy()) return;
     if(bf->_tex)
+    {
+        LIBDENG_ASSERT_IN_MAIN_THREAD();
         glDeleteTextures(1, (const GLuint*) &bf->_tex);
+    }
     bf->_tex = 0;
 }
 
@@ -490,7 +494,7 @@ font_t* BitmapCompositeFont_New(fontid_t bindId)
 
 void BitmapCompositeFont_Delete(font_t* font)
 {
-    BitmapCompositeFont_DeleteGLTextures(font);
+    BitmapCompositeFont_ReleaseTextures(font);
     free(font);
 }
 
@@ -522,7 +526,7 @@ static __inline texturevariantspecification_t* BitmapCompositeFont_CharSpec(void
 {
     return GL_TextureVariantSpecificationForContext(
                 TC_UI, TSF_MONOCHROME | TSF_UPSCALE_AND_SHARPEN, 0, 0, 0,
-                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
 }
 
 void BitmapCompositeFont_Prepare(font_t* font)
@@ -536,7 +540,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
     if(!font->_isDirty) return;
     if(novideo || isDedicated || Con_IsBusy()) return;
 
-    BitmapCompositeFont_DeleteGLTextures(font);
+    BitmapCompositeFont_ReleaseTextures(font);
 
     avgSize.width = avgSize.height = 0;
     numPatches = 0;
@@ -545,8 +549,8 @@ void BitmapCompositeFont_Prepare(font_t* font)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
         patchid_t patch = ch->patch;
+        textureid_t texId;
         patchinfo_t info;
-        Texture* tex;
 
         if(0 == patch) continue;
 
@@ -557,13 +561,15 @@ void BitmapCompositeFont_Prepare(font_t* font)
         ch->geometry.origin.y -= font->_marginHeight;
         ch->geometry.size.width  += font->_marginWidth  * 2;
         ch->geometry.size.height += font->_marginHeight * 2;
+        ch->border = 0;
 
-        tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, patch));
-        ch->tex = GL_PrepareTexture(tex, BitmapCompositeFont_CharSpec());
-        /// \todo Border is determined according to what we uploaded:
-        /// original texture (thus applied Upscale & Sharpen +=1)
-        /// custom (=0).
-        ch->border = 1;
+        texId = Textures_TextureForUniqueId(TN_PATCHES, patch);
+        ch->tex = GL_PrepareTextureVariant(Textures_ToTexture(texId), BitmapCompositeFont_CharSpec());
+        if(ch->tex && TextureVariant_Source(ch->tex) == TEXS_ORIGINAL)
+        {
+            // Upscale & Sharpen will have been applied.
+            ch->border = 1;
+        }
 
         avgSize.width  += ch->geometry.size.width;
         avgSize.height += ch->geometry.size.height;
@@ -577,7 +583,7 @@ void BitmapCompositeFont_Prepare(font_t* font)
     font->_isDirty = false;
 }
 
-void BitmapCompositeFont_DeleteGLTextures(font_t* font)
+void BitmapCompositeFont_ReleaseTextures(font_t* font)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     int i;
@@ -591,13 +597,8 @@ void BitmapCompositeFont_DeleteGLTextures(font_t* font)
     for(i = 0; i < 256; ++i)
     {
         bitmapcompositefont_char_t* ch = &cf->_chars[i];
-        Texture* tex;
-
-        if(!ch->patch) continue;
-        tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, ch->patch));
-        assert(tex);
-
-        GL_ReleaseVariantTexturesBySpec(tex, BitmapCompositeFont_CharSpec());
+        if(!ch->tex) continue;
+        GL_ReleaseVariantTexture(ch->tex);
         ch->tex = 0;
     }
 }
@@ -616,7 +617,7 @@ void BitmapCompositeFont_SetDefinition(font_t* font, struct ded_compositefont_s*
     cf->_def = def;
 }
 
-DGLuint BitmapCompositeFont_CharGLTexture(font_t* font, unsigned char ch)
+TextureVariant* BitmapCompositeFont_CharTexture(font_t* font, unsigned char ch)
 {
     bitmapcompositefont_t* cf = (bitmapcompositefont_t*)font;
     assert(font->_type == FT_BITMAPCOMPOSITE);

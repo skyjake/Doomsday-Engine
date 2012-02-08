@@ -167,6 +167,9 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, "hud-ammo" },
     { 0, "hud-armor" },
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { 0, "hud-cheat-counter-show-mapopen" },
+#endif
 #if __JHERETIC__ || __JHEXEN__
     { 0, "hud-currentitem" },
 #endif
@@ -424,7 +427,7 @@ static mn_object_t SkillMenuObjects[] = {
     { MN_BUTTON,    0,  MNF_ID1,                'r', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_easy, NULL, SM_EASY },
     { MN_BUTTON,    0,  MNF_ID2|MNF_DEFAULT,    'h', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_medium, NULL, SM_MEDIUM },
     { MN_BUTTON,    0,  MNF_ID3,                'u', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_hard, NULL, SM_HARD },
-    { MN_BUTTON,    0,  MNF_ID4|MNF_NO_ALTTEXT, 'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
+    { MN_BUTTON,    0,  MNF_ID4,                'n', MENU_FONT1, MENU_COLOR1, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionInitNewGame, NULL, NULL, NULL, Hu_MenuFocusSkillMode }, MNButton_CommandResponder, NULL, NULL, &btn_skill_nightmare, NULL, SM_NIGHTMARE },
     { MN_NONE }
 };
 #endif
@@ -439,47 +442,6 @@ static mn_object_t FilesMenuObjects[] = {
     { MN_NONE }
 };
 #endif
-
-mndata_edit_t edit_saveslots[NUMSAVESLOTS] = {
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 0 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 1 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 2 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 3 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 4 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 5 },
-#if !__JHEXEN__
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 6 },
-    { "", "", 0, (const char*) TXT_EMPTYSTRING, NULL, 7 }
-#endif
-};
-
-static mn_object_t LoadMenuObjects[] = {
-    { MN_EDIT,  0,  MNF_ID0|MNF_DISABLED,  '0', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[0], NULL, MNF_ID0 },
-    { MN_EDIT,  0,  MNF_ID1|MNF_DISABLED,  '1', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[1], NULL, MNF_ID1 },
-    { MN_EDIT,  0,  MNF_ID2|MNF_DISABLED,  '2', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[2], NULL, MNF_ID2 },
-    { MN_EDIT,  0,  MNF_ID3|MNF_DISABLED,  '3', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[3], NULL, MNF_ID3 },
-    { MN_EDIT,  0,  MNF_ID4|MNF_DISABLED,  '4', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[4], NULL, MNF_ID4 },
-    { MN_EDIT,  0,  MNF_ID5|MNF_DISABLED,  '5', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[5], NULL, MNF_ID5 },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,  0,  MNF_ID6|MNF_DISABLED,  '6', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[6], NULL, MNF_ID6 },
-    { MN_EDIT,  0,  MNF_ID7|MNF_DISABLED,  '7', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectLoadSlot, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNObject_DefaultCommandResponder, NULL, NULL, &edit_saveslots[7], NULL, MNF_ID7 },
-#endif
-    { MN_NONE }
-};
-
-static mn_object_t SaveMenuObjects[] = {
-    { MN_EDIT,  0,  MNF_ID0,  '0', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[0], NULL, MNF_ID0 },
-    { MN_EDIT,  0,  MNF_ID1,  '1', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[1], NULL, MNF_ID1 },
-    { MN_EDIT,  0,  MNF_ID2,  '2', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[2], NULL, MNF_ID2 },
-    { MN_EDIT,  0,  MNF_ID3,  '3', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[3], NULL, MNF_ID3 },
-    { MN_EDIT,  0,  MNF_ID4,  '4', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[4], NULL, MNF_ID4 },
-    { MN_EDIT,  0,  MNF_ID5,  '5', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[5], NULL, MNF_ID5 },
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    { MN_EDIT,  0,  MNF_ID6,  '6', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[6], NULL, MNF_ID6 },
-    { MN_EDIT,  0,  MNF_ID7,  '7', MENU_FONT1, MENU_COLOR1, MNEdit_UpdateGeometry, MNEdit_Drawer, { NULL, Hu_MenuSelectSaveSlot, Hu_MenuSaveSlotEdit, NULL, NULL, Hu_MenuDefaultFocusAction }, MNEdit_CommandResponder, MNEdit_Responder, NULL, &edit_saveslots[7], NULL, MNF_ID7 },
-#endif
-    { MN_NONE }
-};
 
 mndata_button_t btn_options_end_game = { false, NULL, "End Game" };
 mndata_button_t btn_options_control_panel = { false, NULL, "Control Panel" };
@@ -674,6 +636,9 @@ mndata_text_t txt_hud_full_show_keys = { "Show Keys" };
 #if __JHERETIC__ || __JHEXEN__
 mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item" };
 #endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_text_t txt_hud_cntr_mapopen = { "Automap Only" };
+#endif
 
 mndata_button_t btn_hud_single_key_display = { true, "hud-keys-combine" };
 mndata_button_t btn_hud_unhide_receive_damage = { true, "hud-unhide-damage" };
@@ -707,6 +672,9 @@ mndata_button_t btn_hud_full_show_keys = { true, "hud-keys" };
 #endif
 #if __JHERETIC__ || __JHEXEN__
 mndata_button_t btn_hud_full_show_readyitem = { true, "hud-currentitem" };
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_button_t btn_hud_cntr_mapopen = { true, "hud-cheat-counter-show-mapopen" };
 #endif
 
 static mn_object_t HudMenuObjects[] = {
@@ -768,12 +736,14 @@ static mn_object_t HudMenuObjects[] = {
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_counters },
-    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
-    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_items },
     { MN_LISTINLINE, 5, 0,  'i',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_items },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_kills },
+    { MN_LISTINLINE, 5, 0,  'k',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_secrets },
     { MN_LISTINLINE, 5, 0,  's',MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_secrets },
+    { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_mapopen },
+    { MN_BUTTON,    5,  0,  0,  MENU_FONT1, MENU_COLOR3, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_cntr_mapopen },
     { MN_TEXT,      5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_cntr_size },
     { MN_SLIDER,    5,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_cntr_size },
 #endif
@@ -954,7 +924,8 @@ static mn_object_t WeaponMenuObjects[] = {
 };
 
 mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
-mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-alpha-lines" };
+mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-line-opacity" };
+mndata_slider_t sld_map_linewidth = { .1f, 2, 0, 0.1f, true, "map-line-width" };
 mndata_slider_t sld_map_doorglow = { 0, 200, 0, 5, true, "map-door-glow" };
 
 mndata_listitem_t lstit_map_statusbar[] = {
@@ -1002,6 +973,7 @@ mndata_colorbox_t cbox_map_background_color = {
 
 mndata_text_t txt_map_opacity = { "Background Opacity" };
 mndata_text_t txt_map_line_opacity = { "Line Opacity" };
+mndata_text_t txt_map_line_width = { "Line Width" };
 mndata_text_t txt_map_hud_display = { "HUD Display" };
 mndata_text_t txt_map_door_colors = { "Door Colors" };
 mndata_text_t txt_map_door_glow = { "Door Glow" };
@@ -1020,6 +992,8 @@ mn_object_t AutomapMenuObjects[] = {
     { MN_SLIDER,    0,  0,  'o', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_opacity },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_opacity },
     { MN_SLIDER,    0,  0,  'l', MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_line_width },
+    { MN_SLIDER,    0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_map_linewidth },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_hud_display },
     { MN_LISTINLINE, 0, 0,  'h', MENU_FONT1, MENU_COLOR3, MNListInline_UpdateGeometry, MNListInline_Drawer, { Hu_MenuCvarList, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNListInline_CommandResponder, NULL, NULL, &lst_map_statusbar },
     { MN_TEXT,      0,  0,  0,   MENU_FONT1, MENU_COLOR1, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_map_door_colors },
@@ -1305,7 +1279,6 @@ cvartemplate_t menuCVars[] = {
     { "menu-shadow",    0,  CVT_FLOAT,  &cfg.menuShadow, 0, 1 },
     { "menu-patch-replacement", 0, CVT_INT, &cfg.menuPatchReplaceMode, PRM_FIRST, PRM_LAST },
     { "menu-slam",      0,  CVT_BYTE,   &cfg.menuSlam,  0, 1 },
-    { "menu-quick-ask", 0,  CVT_BYTE,   &cfg.confirmQuickGameSave, 0, 1 },
     { "menu-hotkeys",   0,  CVT_BYTE,   &cfg.menuShortcutsEnabled, 0, 1 },
 #if __JDOOM__ || __JDOOM64__
     { "menu-quitsound", 0,  CVT_INT,    &cfg.menuQuitSound, 0, 1 },
@@ -1523,11 +1496,19 @@ void Hu_MenuInitSkillMenu(void)
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
         const struct skillbutton_s* sb = &skillButtons[i];
-        mn_object_t* obj = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
-        mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, sb->pageObjectId);
+        mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
 
         btn->text = GET_TXT(sb->textDefId);
-        MNObject_SetShortcut(obj, btn->text[0]);
+        MNObject_SetShortcut(ob, btn->text[0]);
+    }
+#endif
+
+#if __JDOOM__
+    if(gameMode != doom2_hacx && gameMode != doom_chex)
+    {
+        mn_object_t* ob = MN_MustFindObjectOnPage(page, 0, MNF_ID4);
+        MNObject_SetFlags(ob, FO_SET, MNF_NO_ALTTEXT);
     }
 #endif
 }
@@ -2063,7 +2044,7 @@ void Hu_MenuDrawPageHelp(const char* help, int x, int y)
 static void drawOverlayBackground(float darken)
 {
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
+    DGL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, darken);
 }
 
 static void beginOverlayDraw(void)
@@ -2424,24 +2405,79 @@ static void initAllPages(void)
 #else
     const Point2Raw origin = { 70, 30 };
 #endif
+    mn_object_t* loadMenuObjects, *saveMenuObjects;
+    mndata_edit_t* saveSlots;
+    const int saveSlotObjectIds[NUMSAVESLOTS] = {
+        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+#if !__JHEXEN__
+        MNF_ID6, MNF_ID7
+#endif
+    };
+    int i;
+
+    saveSlots = Z_Calloc(sizeof(*saveSlots) * NUMSAVESLOTS, PU_GAMESTATIC, 0);
+    if(!saveSlots) Con_Error("initAllPages: Failed on allocation of %lu bytes for load/save menu edit fields.", (unsigned long) (sizeof(*saveSlots) * NUMSAVESLOTS));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mndata_edit_t* slot = saveSlots + i;
+        slot->emptyString = (const char*) TXT_EMPTYSTRING;
+        slot->data2 = i;
+    }
+
+    loadMenuObjects = Z_Calloc(sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!loadMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for load menu objects.", (unsigned long) (sizeof(*loadMenuObjects) * (NUMSAVESLOTS+1)));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mn_object_t* ob = loadMenuObjects + i;
+        ob->_type = MN_EDIT;
+        ob->_flags = saveSlotObjectIds[i] | MNF_DISABLED;
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNObject_DefaultCommandResponder;
+        ob->_typedata = (void*)(saveSlots + i);
+        ob->data2 = saveSlotObjectIds[i];
+    }
+    loadMenuObjects[i]._type = MN_NONE;
+
+    saveMenuObjects = Z_Calloc(sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1), PU_GAMESTATIC, 0);
+    if(!saveMenuObjects) Con_Error("initAllPages: Failed on allocation of %lu bytes for save menu objects.", (unsigned long) (sizeof(*saveMenuObjects) * (NUMSAVESLOTS+1)));
+
+    for(i = 0; i < NUMSAVESLOTS; ++i)
+    {
+        mn_object_t* ob = saveMenuObjects + i;
+        ob->_type = MN_EDIT;
+        ob->_flags = saveSlotObjectIds[i];
+        ob->_shortcut = '0' + i;
+        ob->_pageFontIdx = MENU_FONT1;
+        ob->_pageColorIdx = MENU_COLOR1;
+        ob->updateGeometry = MNEdit_UpdateGeometry;
+        ob->drawer = MNEdit_Drawer;
+        ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
+        ob->actions[MNA_ACTIVE].callback = Hu_MenuSaveSlotEdit;
+        ob->actions[MNA_FOCUSOUT].callback = Hu_MenuDefaultFocusAction;
+        ob->cmdResponder = MNEdit_CommandResponder;
+        ob->responder = MNEdit_Responder;
+        ob->_typedata = (void*)(saveSlots + i);
+        ob->data2 = saveSlotObjectIds[i];
+    }
+    saveMenuObjects[i]._type = MN_NONE;
 
     page = Hu_MenuNewPage("LoadGame", &origin, Hu_MenuDrawLoadGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = LoadMenuObjects;
-    }
-
-    {
-#if __JDOOM__ || __JDOOM64__
-    const Point2Raw origin = { 80, 54 };
-#else
-    const Point2Raw origin = { 64, 10 };
-#endif
+    page->objects = loadMenuObjects;
 
     page = Hu_MenuNewPage("SaveGame", &origin, Hu_MenuDrawSaveGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = SaveMenuObjects;
+    page->objects = saveMenuObjects;
     }
 
     {
@@ -3535,23 +3571,28 @@ int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* param
 
 int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters)
 {
+    mn_object_t* plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID1);
+#if __JHEXEN__
+    mn_object_t* plrClassList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID2);
+#endif
+    mn_object_t* plrColorList = MN_MustFindObjectOnPage(MNObject_Page(obj), 0, MNF_ID3);
     char buf[300];
 
-    cfg.netColor = list_player_color.selection;
 #if __JHEXEN__
-    cfg.netClass = list_player_class.selection;
+    cfg.netClass = MNList_Selection(plrClassList);
 #endif
+    cfg.netColor = MNList_Selection(plrColorList);
 
     if(MNA_ACTIVEOUT != action) return 1;
 
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, edit_player_name.text, 300);
+    M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         strcpy(buf, "setname ");
-        M_StrCatQuoted(buf, edit_player_name.text, 300);
+        M_StrCatQuoted(buf, MNEdit_Text(plrNameEdit), 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change

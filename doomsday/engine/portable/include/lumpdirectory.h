@@ -1,25 +1,27 @@
-/**\file lumpdirectory.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file lumpdirectory.h
+ * Indexed directory of lumps. @ingroup fs
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * Virtual file system component used to model an indexable collection of
+ * lumps. A single directory may include lumps originating from many different
+ * file containers.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBDENG_FILESYS_LUMPDIRECTORY_H
@@ -28,83 +30,107 @@
 #include "abstractfile.h"
 #include "lumpinfo.h"
 
-/**
- * LumpDirectory.
- *
- * @ingroup fs
- */
-struct lumpdirectory_s; // The lumpdirectory instance (opaque)
-typedef struct lumpdirectory_s lumpdirectory_t;
+struct lumpdirectory_s;
 
-lumpdirectory_t* LumpDirectory_New(void);
-void LumpDirectory_Delete(lumpdirectory_t* ld);
+/**
+ * LumpDirectory instance.
+ */
+typedef struct lumpdirectory_s LumpDirectory;
+
+/**
+ * @defgroup lumpDirectoryFlags Lump Directory Flags
+ */
+///{
+#define LDF_UNIQUE_PATHS                0x1 ///< Lumps in the directory must have unique paths.
+                                            /// Inserting a lump with the same path as one which
+                                            /// already exists will result in the earlier lump
+                                            /// being pruned.
+///}
+
+/**
+ * Construct a new (empty) instance of LumpDirectory.
+ *
+ * @param flags  @ref lumpDirectoryFlags
+ */
+LumpDirectory* LumpDirectory_NewWithFlags(int flags);
+LumpDirectory* LumpDirectory_New(void); /*flags=0*/
+
+void LumpDirectory_Delete(LumpDirectory* dir);
 
 /// Number of lumps in the directory.
-int LumpDirectory_NumLumps(lumpdirectory_t* ld);
+int LumpDirectory_Size(LumpDirectory* dir);
 
 /// Clear the directory back to its default (i.e., empty state).
-void LumpDirectory_Clear(lumpdirectory_t* ld);
+void LumpDirectory_Clear(LumpDirectory* dir);
 
 /**
- * Iterate over LumpInfo records in the directory making a callback for each.
- * Iteration ends when all LumpInfos have been processed or a callback returns non-zero.
+ * Are any lumps from @a file published in this directory?
  *
- * @param fsObject  If not @c NULL only consider lumps from this file.
- * @param callback  Callback to make for each iteration.
- * @param paramaters  User data to be passed to the callback.
- *
- * @return  @c 0 iff iteration completed wholly.
+ * @param dir  LumpDirectory instance.
+ * @param file  File containing the lumps to look for.
+ * @return  @c true if one or more lumps are included.
  */
-int LumpDirectory_Iterate2(lumpdirectory_t* ld, abstractfile_t* fsObject,
-    int (*callback) (const LumpInfo*, void*), void* paramaters);
-int LumpDirectory_Iterate(lumpdirectory_t* ld, abstractfile_t* fsObject,
-    int (*callback) (const LumpInfo*, void*));
-
-/// @return  Index associated with the last lump with @a name if found else @c -1
-lumpnum_t LumpDirectory_IndexForName(lumpdirectory_t* ld, const char* name);
+boolean LumpDirectory_Catalogues(LumpDirectory* dir, abstractfile_t* file);
 
 /// @return  Index associated with the last lump with variable-length @a path if found else @c -1
-lumpnum_t LumpDirectory_IndexForPath(lumpdirectory_t* ld, const char* path);
+lumpnum_t LumpDirectory_IndexForPath(LumpDirectory* dir, const char* path);
 
 /// @return  @c true iff @a lumpNum can be interpreted as a valid lump index.
-boolean LumpDirectory_IsValidIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
+boolean LumpDirectory_IsValidIndex(LumpDirectory* dir, lumpnum_t lumpNum);
+
+/// @return  LumpInfo for the lump with index @a lumpNum.
+const LumpInfo* LumpDirectory_LumpInfo(LumpDirectory* dir, lumpnum_t lumpNum);
 
 /**
  * Append a new set of lumps to the directory.
  *
  * \post Lump name hashes may be invalidated (will be rebuilt upon next search).
  *
- * @param fsObject  File system record object for the file from which lumps are being added.
+ * @param dir  LumpDirectory instance.
+ * @param file  File from which lumps are to be being added.
  * @param lumpIdxBase  Base index for the range of lumps being added.
  * @param lumpIdxCount  Number of lumps in the range being added.
  */
-void LumpDirectory_Append(lumpdirectory_t* ld, abstractfile_t* fsObject,
+void LumpDirectory_CatalogLumps(LumpDirectory* dir, abstractfile_t* file,
     int lumpIdxBase, int lumpIdxCount);
 
 /**
- * Prune all lumps in the directory originating from @a fsObject.
- * @return  Number of pruned lumps.
+ * Prune all lumps catalogued from @a file.
+ *
+ * @param dir  LumpDirectory instance.
+ * @param file  File containing the lumps to prune
+ * @return  Number of lumps pruned.
  */
-int LumpDirectory_PruneByFile(lumpdirectory_t* ld, abstractfile_t* fsObject);
+int LumpDirectory_PruneByFile(LumpDirectory* dir, abstractfile_t* file);
 
 /**
- * @param matchLumpName  @c true = Use lump name when performing comparisions,
- *      else use lump path (with Zips).
+ * Prune the lump referenced by @a lumpInfo.
+ *
+ * @param dir  LumpDirectory instance.
+ * @param lumpInfo  Unique info descriptor for the lump to prune.
+ * @return  @c true if found and pruned.
  */
-void LumpDirectory_PruneDuplicateRecords(lumpdirectory_t* ld, boolean matchLumpName);
+boolean LumpDirectory_PruneLump(LumpDirectory* dir, LumpInfo* lumpInfo);
 
-/// @return  Info associated to the lump with id @a lumpNum.
-const LumpInfo* LumpDirectory_LumpInfo(lumpdirectory_t* ld, lumpnum_t lumpNum);
-
-/// @return  File system object associated to the lump with id @a lumpNum.
-abstractfile_t* LumpDirectory_SourceFile(lumpdirectory_t* ld, lumpnum_t lumpNum);
-
-/// @return  File system object's lump index for the lump wih id @a lumpNum.
-int LumpDirectory_LumpIndex(lumpdirectory_t* ld, lumpnum_t lumpNum);
+/**
+ * Iterate over lumps in the directory making a callback for each.
+ * Iteration ends when all LumpInfos have been processed or a callback returns non-zero.
+ *
+ * @param dir  LumpDirectory instance.
+ * @param file  If not @c NULL only consider lumps from this file.
+ * @param callback  Callback to make for each iteration.
+ * @param paramaters  User data to be passed to the callback.
+ *
+ * @return  @c 0 iff iteration completed wholly.
+ */
+int LumpDirectory_Iterate2(LumpDirectory* dir, abstractfile_t* file,
+    int (*callback) (const LumpInfo*, void*), void* paramaters);
+int LumpDirectory_Iterate(LumpDirectory* dir, abstractfile_t* file,
+    int (*callback) (const LumpInfo*, void*));
 
 /**
  * Print a content listing of lumps in this directory to stdout (for debug).
  */
-void LumpDirectory_Print(lumpdirectory_t* ld);
+void LumpDirectory_Print(LumpDirectory* dir);
 
-#endif /* LIBDENG_FILESYS_LUMPDIRECTORY_H */
+#endif // LIBDENG_FILESYS_LUMPDIRECTORY_H

@@ -16,19 +16,19 @@ SkipIf -nodefaultfx;
 #
 
 Material Mods "flats:X_001" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "flats:X_002" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "flats:X_003" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "flats:X_004" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 #
@@ -36,101 +36,101 @@ Material Mods "flats:X_004" {
 #
 
 Material Mods "textures:X_FIRE01" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FIRE02" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FIRE03" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FIRE04" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC01" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC02" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC03" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC04" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC05" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC06" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC07" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC08" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC09" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC10" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC11" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:X_FAC12" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT1" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT2" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT3" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT4" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT5" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT6" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT7" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT8" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }
 
 Material Mods "textures:TPORT9" {
-  Layer { Stage { Glow = .9; } }
+  Layer { Stage { Glow = 1.8; } }
 }

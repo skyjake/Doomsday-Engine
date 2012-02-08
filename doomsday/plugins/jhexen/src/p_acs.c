@@ -1289,13 +1289,18 @@ static int CmdPolyWaitDirect(void)
 static int CmdChangeFloor(void)
 {
     sector_t* sec = NULL;
-    material_t* mat;
     iterlist_t* list;
+    material_t* mat;
+    ddstring_t path;
     Uri* uri;
     int tag;
 
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
     uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, GetACString(Pop()));
+    Uri_SetPath(uri, Str_Text(&path));
+    Str_Free(&path);
+
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
 
@@ -1320,14 +1325,19 @@ static int CmdChangeFloorDirect(void)
     sector_t* sec = NULL;
     material_t* mat;
     iterlist_t* list;
+    ddstring_t path;
     Uri* uri;
     int tag;
 
     tag = LONG(*PCodePtr++);
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
     uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, GetACString(LONG(*PCodePtr++)));
+    Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1348,13 +1358,19 @@ static int CmdChangeCeiling(void)
     sector_t* sec = NULL;
     material_t* mat;
     iterlist_t* list;
+    ddstring_t path;
     Uri* uri;
     int tag;
 
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
     uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, GetACString(Pop()));
+    Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
+    Str_Free(&path);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1376,14 +1392,19 @@ static int CmdChangeCeilingDirect(void)
     sector_t* sec = NULL;
     material_t* mat;
     iterlist_t* list;
+    ddstring_t path;
     Uri* uri;
     int tag;
 
     tag = LONG(*PCodePtr++);
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(LONG(*PCodePtr++))));
+
     uri = Uri_NewWithPath2(MN_FLATS_NAME":", RC_NULL);
-    Uri_SetPath(uri, GetACString(LONG(*PCodePtr++)));
+    Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1726,12 +1747,17 @@ static int CmdSetLineTexture(void)
     material_t* mat;
     linedef_t* line;
     iterlist_t* list;
+    ddstring_t path;
     Uri* uri;
 
+    Str_Init(&path);
+    Str_PercentEncode(Str_Set(&path, GetACString(Pop())));
+
     uri = Uri_NewWithPath2(MN_TEXTURES_NAME":", RC_NULL);
-    Uri_SetPath(uri, GetACString(Pop()));
+    Uri_SetPath(uri, Str_Text(&path));
     mat = P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
     Uri_Delete(uri);
+    Str_Free(&path);
 
     position = Pop();
     side = Pop();

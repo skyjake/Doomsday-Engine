@@ -68,6 +68,11 @@ struct AbstractResource_s* Game_AddResource(Game* game, resourceclass_t rclass,
     struct AbstractResource_s* record);
 
 /**
+ * @return  @c true iff @a absolutePath points to a required resource.
+ */
+boolean Game_IsRequiredResource(Game* game, const char* absolutePath);
+
+/**
  * Change the identfier of the plugin associated with this.
  * @param pluginId  New identifier.
  * @return  Same as @a pluginId for convenience.
@@ -101,8 +106,7 @@ const ddstring_t* Game_BindingConfig(Game* game);
  * @param rclass  Class of resource to collect.
  * @return  Vector of selected resource records.
  */
-struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass,
-    size_t* count);
+struct AbstractResource_s* const* Game_Resources(Game* game, resourceclass_t rclass, int* count);
 
 /**
  * \note Unless caller is the resource locator then you probably shouldn't be calling.

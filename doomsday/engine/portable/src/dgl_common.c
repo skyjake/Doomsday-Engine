@@ -56,6 +56,8 @@
  */
 void envAddColoredAlpha(int activate, GLenum addFactor)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     if(activate)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
@@ -107,6 +109,8 @@ void envAddColoredAlpha(int activate, GLenum addFactor)
  */
 void envModMultiTex(int activate)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // Setup TU 2: The modulated texture.
     glActiveTexture(GL_TEXTURE1);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -132,6 +136,8 @@ void envModMultiTex(int activate)
  */
 void GL_ModulateTexture(int mode)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(mode)
     {
     case 0:
@@ -318,6 +324,9 @@ void GL_BlendOp(int op)
 {
     if(!GL_state.features.blendSubtract)
         return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBlendEquationEXT(op);
 }
 
@@ -325,52 +334,20 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
 {
     if(format != DGL_RGB) return false;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     // y+height-1 is the bottom edge of the rectangle. It's
     // flipped to change the origin.
     glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
     return true;
 }
 
-static __inline void enableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glEnable(GL_TEXTURE_2D);
-}
-
-static __inline void disableTexUnit(byte id)
-{
-    glActiveTexture(GL_TEXTURE0 + id);
-    glDisable(GL_TEXTURE_2D);
-
-    // Implicit disabling of texcoord array.
-    if(!GL_state.features.elementArrays)
-    {
-        GL_DisableArrays(0, 0, 1 << id);
-    }
-}
-
-/**
- * The first selected unit is active after this call.
- */
-void GL_SelectTexUnits(int count)
-{
-    int i;
-    for(i = numTexUnits - 1; i >= count; i--)
-        disableTexUnit(i);
-
-    // Enable the selected units.
-    for(i = count - 1; i >= 0; i--)
-    {
-        if(i >= numTexUnits)
-            continue;
-        enableTexUnit(i);
-    }
-}
-
 void GL_SetVSync(boolean on)
 {
-    if(!GL_state.features.vsync)
-        return;
+    if(!GL_state.features.vsync) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
 #endif
@@ -379,23 +356,58 @@ void GL_SetVSync(boolean on)
 void GL_SetMultisample(boolean on)
 {
     if(!GL_state.features.multisample) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
 #if WIN32
-    if(on)
-        glEnable(GL_MULTISAMPLE_ARB);
-    else
-        glDisable(GL_MULTISAMPLE_ARB);
+    if(on) glEnable(GL_MULTISAMPLE_ARB);
+    else  glDisable(GL_MULTISAMPLE_ARB);
 #endif
 }
 
-void DGL_Scissor(int x, int y, int width, int height)
+void DGL_SetScissor(const RectRaw* rect)
 {
-    glScissor(x, FLIP(y + height - 1), width, height);
+    if(!rect) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    glScissor(rect->origin.x, FLIP(rect->origin.y + rect->size.height - 1), rect->size.width, rect->size.height);
 }
 
-boolean DGL_GetIntegerv(int name, int *v)
+void DGL_SetScissor2(int x, int y, int width, int height)
 {
-    int         i;
-    float       color[4];
+    RectRaw rect;
+    rect.origin.x = x;
+    rect.origin.y = y;
+    rect.size.width  = width;
+    rect.size.height = height;
+    DGL_SetScissor(&rect);
+}
+
+void DGL_Scissor(RectRaw* rect)
+{
+    GLint v[4];
+
+    if(!rect) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    glGetIntegerv(GL_SCISSOR_BOX, (GLint*)v);
+    // Y is flipped.
+    v[1] = FLIP(v[1] + v[3] - 1);
+
+    rect->origin.x = v[0];
+    rect->origin.y = v[1];
+    rect->size.width  = v[2];
+    rect->size.height = v[3];
+}
+
+boolean DGL_GetIntegerv(int name, int* v)
+{
+    float color[4];
+    int i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     switch(name)
     {
@@ -405,11 +417,6 @@ boolean DGL_GetIntegerv(int name, int *v)
 
     case DGL_SCISSOR_TEST:
         glGetIntegerv(GL_SCISSOR_TEST, (GLint*) v);
-        break;
-
-    case DGL_SCISSOR_BOX:
-        glGetIntegerv(GL_SCISSOR_BOX, (GLint*) v);
-        v[1] = FLIP(v[1] + v[3] - 1);
         break;
 
     case DGL_FOG:
@@ -459,6 +466,8 @@ int DGL_GetInteger(int name)
 
 boolean DGL_SetInteger(int name, int value)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
@@ -479,6 +488,8 @@ boolean DGL_SetInteger(int name, int value)
 boolean DGL_GetFloatv(int name, float* v)
 {
     float color[4];
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     switch(name)
     {
@@ -534,6 +545,8 @@ float DGL_GetFloat(int name)
 
 boolean DGL_SetFloat(int name, float value)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(name)
     {
     case DGL_LINE_WIDTH:
@@ -555,6 +568,8 @@ boolean DGL_SetFloat(int name, float value)
 
 int DGL_Enable(int cap)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(cap)
     {
     case DGL_TEXTURE_2D:
@@ -589,6 +604,8 @@ int DGL_Enable(int cap)
 
 void DGL_Disable(int cap)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     switch(cap)
     {
     case DGL_TEXTURE_2D:
@@ -626,6 +643,8 @@ void DGL_BlendOp(int op)
 
 void DGL_BlendFunc(int param1, int param2)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBlendFunc(param1 == DGL_ZERO ? GL_ZERO : param1 ==
                 DGL_ONE ? GL_ONE : param1 ==
                 DGL_DST_COLOR ? GL_DST_COLOR : param1 ==
@@ -654,6 +673,8 @@ void DGL_BlendMode(blendmode_t mode)
 
 void DGL_MatrixMode(int mode)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
                  mode == DGL_TEXTURE ? GL_TEXTURE :
                  GL_MODELVIEW);
@@ -661,6 +682,8 @@ void DGL_MatrixMode(int mode)
 
 void DGL_PushMatrix(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glPushMatrix();
 
 #if _DEBUG
@@ -669,24 +692,34 @@ if(glGetError() == GL_STACK_OVERFLOW)
 #endif
 }
 
-void DGL_SetMaterialUI(material_t* mat)
-{
-    GL_SetMaterialUI(mat);
-}
-
 void DGL_SetNoMaterial(void)
 {
     GL_SetNoTexture();
 }
 
-void DGL_SetPatch(patchid_t id, int wrapS, int wrapT)
+static int DGL_ToGLWrapCap(DGLint cap)
+{
+    switch(cap)
+    {
+    case DGL_CLAMP:         return GL_CLAMP;
+    case DGL_CLAMP_TO_EDGE: return GL_CLAMP_TO_EDGE;
+    case DGL_REPEAT:        return GL_REPEAT;
+    default:
+        Con_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
+        exit(1); // Unreachable.
+    }
+}
+
+void DGL_SetMaterialUI(material_t* mat, DGLint wrapS, DGLint wrapT)
+{
+    GL_SetMaterialUI2(mat, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
+}
+
+void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
 {
     Texture* tex = Textures_ToTexture(Textures_TextureForUniqueId(TN_PATCHES, id));
     if(!tex) return;
-
-    GL_BindTexture(GL_PreparePatchTexture(tex), (filterUI ? GL_LINEAR : GL_NEAREST));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_BindTexture(GL_PreparePatchTexture2(tex, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT)));
 }
 
 void DGL_SetPSprite(material_t* mat)
@@ -699,17 +732,15 @@ void DGL_SetPSprite2(material_t* mat, int tclass, int tmap)
     GL_SetPSprite(mat, tclass, tmap);
 }
 
-void DGL_SetRawImage(lumpnum_t lumpNum, int wrapS, int wrapT)
+void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
 {
-    GL_SetRawImage(lumpNum,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
 void DGL_PopMatrix(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glPopMatrix();
 
 #if _DEBUG
@@ -720,27 +751,37 @@ if(glGetError() == GL_STACK_UNDERFLOW)
 
 void DGL_LoadIdentity(void)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glLoadIdentity();
 }
 
 void DGL_Translatef(float x, float y, float z)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glTranslatef(x, y, z);
 }
 
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glRotatef(angle, x, y, z);
 }
 
 void DGL_Scalef(float x, float y, float z)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glScalef(x, y, z);
 }
 
 void DGL_Ortho(float left, float top, float right, float bottom, float znear,
                float zfar)
 {
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glOrtho(left, right, bottom, top, znear, zfar);
 }
 
@@ -749,12 +790,14 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
     if(!num || !names)
         return;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glDeleteTextures(num, (const GLuint*) names);
 }
 
 int DGL_Bind(DGLuint texture)
 {
-    glBindTexture(GL_TEXTURE_2D, texture);
+    GL_BindTextureUnmanaged(texture, GL_LINEAR);
     assert(!Sys_GLCheckError());
     return 0;
 }

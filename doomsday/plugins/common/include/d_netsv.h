@@ -72,6 +72,7 @@ void            NetSv_DoDamage(int player, Reader *reader);
 void            NetSv_DoFloorHit(int player, Reader* msg);
 void            NetSv_SendJumpPower(int target, float power);
 void            NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force);
+void            NetSv_SendLocalMobjState(mobj_t* mobj, const char* stateName);
 
 D_CMD(MapCycle);
 

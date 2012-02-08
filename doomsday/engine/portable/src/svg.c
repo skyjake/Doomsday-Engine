@@ -55,6 +55,9 @@ svgid_t Svg_UniqueId(Svg* svg)
 static void draw(const Svg* svg)
 {
     uint i;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glBegin(GL_LINES);
     for(i = 0; i < svg->lineCount; ++i)
     {

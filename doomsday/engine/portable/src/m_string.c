@@ -106,6 +106,14 @@ void Str_Init(ddstring_t *str)
         Con_Error("Attempted String::Init with invalid reference (this==0).");
         return; // Unreachable.
     }
+
+    if(!Z_IsInited())
+    {
+        // The memory zone is not available at the moment.
+        Str_InitStd(str);
+        return;
+    }
+
     memset(str, 0, sizeof(*str));
 
     // Init the memory management.
@@ -280,6 +288,7 @@ ddstring_t* Str_Appendf(ddstring_t* str, const char* format, ...)
 
 ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
+    int partLen;
     char* copied;
 
     if(!str)
@@ -297,13 +306,14 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     if(start < 0 || count <= 0)
         return str;
 
-    copied = M_Malloc(count);
+    copied = M_Calloc(count+1);
 
-    memcpy(copied, append + start, count);
+    strncat(copied, append + start, count);
+    partLen = strlen(copied);
 
-    allocateString(str, str->length + count + 1, true);
-    memcpy(str->str + str->length, copied, count);
-    str->length += count;
+    allocateString(str, str->length + partLen + 1, true);
+    memcpy(str->str + str->length, copied, partLen);
+    str->length += partLen;
 
     // Terminate the appended part.
     str->str[str->length] = 0;
@@ -402,7 +412,7 @@ ddstring_t* Str_Copy(ddstring_t* str, const ddstring_t* other)
     return str;
 }
 
-int Str_StripLeft(ddstring_t* str)
+ddstring_t* Str_StripLeft2(ddstring_t* str, int* count)
 {
     int i, num;
     boolean isDone;
@@ -410,11 +420,14 @@ int Str_StripLeft(ddstring_t* str)
     if(!str)
     {
         Con_Error("Attempted String::StripLeft with invalid reference (this==0).");
-        return 0; // Unreachable.
+        exit(1); // Unreachable.
     }
 
     if(!str->length)
-        return 0;
+    {
+        if(count) *count = 0;
+        return str;
+    }
 
     // Find out how many whitespace chars are at the beginning.
     isDone = false;
@@ -438,21 +451,34 @@ int Str_StripLeft(ddstring_t* str)
         str->length -= num;
         str->str[str->length] = 0;
     }
-    return num;
+
+    if(count) *count = num;
+    return str;
 }
 
-int Str_StripRight(ddstring_t* str)
+ddstring_t* Str_StripLeft(ddstring_t* str)
 {
+    return Str_StripLeft2(str, NULL/*not interested in the stripped character count*/);
+}
+
+ddstring_t* Str_StripRight2(ddstring_t* str, int* count)
+{
+    int i, num;
+
     if(!str)
     {
         Con_Error("Attempted String::StripRight with invalid reference (this==0).");
-        return 0; // Unreachable.
+        exit(1); // Unreachable.
     }
 
     if(str->length == 0)
-        return 0;
+    {
+        if(count) *count = 0;
+        return str;
+    }
 
-    { int i = str->length - 1, num = 0;
+    i = str->length - 1;
+    num = 0;
     if(isspace(str->str[i]))
     do
     {
@@ -461,13 +487,27 @@ int Str_StripRight(ddstring_t* str)
         str->str[i] = '\0';
         str->length--;
     } while(i != 0 && isspace(str->str[--i]));
-    return num;
-    }
+
+    if(count) *count = num;
+    return str;
 }
 
-int Str_Strip(ddstring_t* str)
+ddstring_t* Str_StripRight(ddstring_t* str)
 {
-    return Str_StripLeft(str) + Str_StripRight(str);
+    return Str_StripRight2(str, NULL/*not interested in the stripped character count*/);
+}
+
+ddstring_t* Str_Strip2(ddstring_t* str, int* count)
+{
+    int right_count, left_count;
+    Str_StripLeft2(Str_StripRight2(str, &right_count), &left_count);
+    if(count) *count = right_count + left_count;
+    return str;
+}
+
+ddstring_t* Str_Strip(ddstring_t* str)
+{
+    return Str_Strip2(str, NULL/*not interested in the stripped character count*/);
 }
 
 const char* Str_GetLine(ddstring_t* str, const char* src)
@@ -554,8 +594,8 @@ char Str_At(const ddstring_t* str, int index)
 {
     if(!str)
     {
-        Con_Error("Attempted String::At with invalid reference (this==0).");
-        return 0; // Unreachable.
+        Con_Error("Attempted String::At with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     if(index < 0 || index >= (int)str->length)
         return 0;
@@ -566,8 +606,8 @@ char Str_RAt(const ddstring_t* str, int reverseIndex)
 {
     if(!str)
     {
-        Con_Error("Attempted String::RAt with invalid reference (this==0).");
-        return 0; // Unreachable.
+        Con_Error("Attempted String::RAt with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     if(reverseIndex < 0 || reverseIndex >= (int)str->length)
         return 0;
@@ -582,6 +622,136 @@ void Str_Truncate(ddstring_t* str, int position)
         return;
     str->length = position;
     str->str[str->length] = '\0';
+}
+
+/// @note Derived from Qt's QByteArray q_toPercentEncoding
+ddstring_t* Str_PercentEncode2(ddstring_t* str, const char* excludeChars, const char* includeChars)
+{
+    boolean didEncode = false;
+    int i, span, begin, len;
+    ddstring_t buf;
+
+    if(!str)
+    {
+        Con_Error("Attempted String::PercentEncode with invalid reference (=NULL).");
+        exit(1); // Unreachable.
+    }
+
+    if(Str_IsEmpty(str)) return str;
+
+    len = Str_Length(str);
+    begin = span = 0;
+    for(i = 0; i < len; ++i)
+    {
+        char ch = str->str[i];
+
+        // Are we encoding this?
+        if(((ch >= 0x61 && ch <= 0x7A) // ALPHA
+            || (ch >= 0x41 && ch <= 0x5A) // ALPHA
+            || (ch >= 0x30 && ch <= 0x39) // DIGIT
+            || ch == 0x2D // -
+            || ch == 0x2E // .
+            || ch == 0x5F // _
+            || ch == 0x7E // ~
+            || (excludeChars && strchr(excludeChars, ch)))
+           && !(includeChars && strchr(includeChars, ch)))
+        {
+            // Not an encodeable. Span grows.
+            span++;
+        }
+        else
+        {
+            // Found an encodeable.
+            if(!didEncode)
+            {
+                Str_InitStd(&buf);
+                Str_Reserve(&buf, len*3); // Worst case.
+                didEncode = true;
+            }
+
+            Str_PartAppend(&buf, str->str, begin, span);
+            Str_Appendf(&buf, "%%%X", (uint)ch);
+
+            // Start a new span.
+            begin += span + 1;
+            span = 0;
+        }
+    }
+
+    if(didEncode)
+    {
+        // Copy anything remaining.
+        if(span)
+        {
+            Str_PartAppend(&buf, str->str, begin, span);
+        }
+
+        Str_Set(str, Str_Text(&buf));
+        Str_Free(&buf);
+    }
+
+    return str;
+}
+
+ddstring_t* Str_PercentEncode(ddstring_t* str)
+{
+    return Str_PercentEncode2(str, 0/*no exclusions*/, 0/*no forced inclussions*/);
+}
+
+/// @note Derived from Qt's QByteArray q_fromPercentEncoding
+ddstring_t* Str_PercentDecode(ddstring_t* str)
+{
+    int i, len, outlen, a, b;
+    const char* inputPtr;
+    char* data;
+    char c;
+
+    if(!str)
+    {
+        Con_Error("Attempted String::PercentDecode with invalid reference (=NULL).");
+        exit(1); // Unreachable.
+    }
+
+    if(Str_IsEmpty(str)) return str;
+
+    data = str->str;
+    inputPtr = data;
+
+    i = 0;
+    len = Str_Length(str);
+    outlen = 0;
+
+    while(i < len)
+    {
+        c = inputPtr[i];
+        if(c == '%' && i + 2 < len)
+        {
+            a = inputPtr[++i];
+            b = inputPtr[++i];
+
+            if(a >= '0' && a <= '9') a -= '0';
+            else if(a >= 'a' && a <= 'f') a = a - 'a' + 10;
+            else if(a >= 'A' && a <= 'F') a = a - 'A' + 10;
+
+            if(b >= '0' && b <= '9') b -= '0';
+            else if(b >= 'a' && b <= 'f') b  = b - 'a' + 10;
+            else if(b >= 'A' && b <= 'F') b  = b - 'A' + 10;
+
+            *data++ = (char)((a << 4) | b);
+        }
+        else
+        {
+            *data++ = c;
+        }
+
+        ++i;
+        ++outlen;
+    }
+
+    if(outlen != len)
+        Str_Truncate(str, outlen);
+
+    return str;
 }
 
 void Str_Write(const ddstring_t* str, Writer* writer)

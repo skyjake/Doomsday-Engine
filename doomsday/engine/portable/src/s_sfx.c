@@ -1242,6 +1242,8 @@ void Sfx_DebugInfo(void)
     char buf[200];
     uint cachesize, ccnt;
 
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
     glEnable(GL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);

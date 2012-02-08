@@ -622,7 +622,7 @@ static void drawTable(float x, float ly, float width, float height,
             else
                 val = .8f;
 
-            DGL_DrawRectColor(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
+            DGL_DrawRectf2Color(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
         }
 
         // Now draw the fields:
@@ -638,7 +638,7 @@ static void drawTable(float x, float ly, float width, float height,
 
 /*#if _DEBUG
 DGL_Disable(DGL_TEXTURE_2D);
-GL_DrawRectColor(cX + CELL_PADDING, cY + CELL_PADDING,
+GL_DrawRectf2Color(cX + CELL_PADDING, cY + CELL_PADDING,
             colW[n] - CELL_PADDING * 2,
             lineHeight - CELL_PADDING * 2,
             1, 1, 1, .1f * alpha);
@@ -691,7 +691,7 @@ DGL_Enable(DGL_TEXTURE_2D);
                     cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
                     cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
 
-                    DGL_SetMaterialUI(sprInfo.material);
+                    DGL_SetMaterialUI(sprInfo.material, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
                     drawQuad(cX, cY, w, h, sprInfo.texCoord[0], sprInfo.texCoord[1], 1, 1, 1, alpha);
                 }
@@ -819,10 +819,11 @@ void HU_DrawScoreBoard(int player)
 
     // Scale by HUD scale.
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
-    DGL_DrawRectColor(x, y, width, height, 0, 0, 0, .4f * ss->alpha);
+    DGL_DrawRectf2Color(x, y, width, height, 0, 0, 0, .4f * ss->alpha);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -838,6 +839,9 @@ void HU_DrawScoreBoard(int player)
 
     DGL_Disable(DGL_TEXTURE_2D);
 
+    // Restore earlier matrices.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
@@ -1266,7 +1270,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     if(effectID == 4)
     {
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
+        DGL_DrawRectf2Color(0, 0, 320, 200, 0.0f, 0.0f, 0.0f, MIN_OF(alpha, .5f));
         return;
     }
 
@@ -1274,7 +1278,7 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     {
         DGL_Color4f(alpha, alpha / 2, 0, alpha / 3);
         DGL_BlendMode(BM_INVERSE_MUL);
-        DGL_DrawRectTiled(0, 0, 320, 200, 1, 1);
+        DGL_DrawRectf2Tiled(0, 0, 320, 200, 1, 1);
     }
 
     DGL_Bind(tex);
@@ -1352,11 +1356,11 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
         DGL_Rotatef(texAngle * (effectID == 0 ? 0.5 : 1), 0, 0, 1);
         DGL_Translatef(-texOffset[VX] / 320, -texOffset[VY] / 200, 0);
         if(effectID == 2)
-            DGL_DrawRectTiled(0, 0, 320, 200, 270 / 8, 4 * 225);
+            DGL_DrawRectf2Tiled(0, 0, 320, 200, 270 / 8, 4 * 225);
         else if(effectID == 0)
-            DGL_DrawRectTiled(0, 0, 320, 200, 270 / 4, 8 * 225);
+            DGL_DrawRectf2Tiled(0, 0, 320, 200, 270 / 4, 8 * 225);
         else
-            DGL_DrawRectTiled(0, 0, 320, 200, 270, 225);
+            DGL_DrawRectf2Tiled(0, 0, 320, 200, 270, 225);
     }
 
     DGL_MatrixMode(DGL_TEXTURE);

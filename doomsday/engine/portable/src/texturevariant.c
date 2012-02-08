@@ -32,6 +32,9 @@ struct texturevariant_s {
     /// Superior Texture of which this is a derivative.
     struct texture_s* generalCase;
 
+    /// Source of this texture.
+    TexSource source;
+
     /// @see textureVariantFlags
     int flags;
 
@@ -45,7 +48,7 @@ struct texturevariant_s {
     texturevariantspecification_t* spec;
 };
 
-TextureVariant* TextureVariant_New(Texture* generalCase,
+TextureVariant* TextureVariant_New(Texture* generalCase, TexSource source,
     texturevariantspecification_t* spec)
 {
     TextureVariant* tex;
@@ -61,6 +64,7 @@ TextureVariant* TextureVariant_New(Texture* generalCase,
                   (unsigned long) sizeof(*tex));
 
     tex->generalCase = generalCase;
+    tex->source = source;
     tex->spec = spec;
     tex->flags = 0;
     tex->s = tex->t = 0;
@@ -78,6 +82,18 @@ struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex)
 {
     assert(tex);
     return tex->generalCase;
+}
+
+TexSource TextureVariant_Source(const TextureVariant* tex)
+{
+    assert(tex);
+    return tex->source;
+}
+
+void TextureVariant_SetSource(TextureVariant* tex, TexSource source)
+{
+    assert(tex);
+    tex->source = source;
 }
 
 boolean TextureVariant_IsMasked(const TextureVariant* tex)

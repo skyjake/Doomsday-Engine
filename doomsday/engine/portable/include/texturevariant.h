@@ -41,16 +41,25 @@ typedef struct texturevariant_s TextureVariant;
 
 /**
  * @param generalCase  Texture from which this variant is derived.
- * @param spec  Specification used to derive this variant. Ownership of
- *      specifcation is NOT given to the resultant TextureVariant
+ * @param spec  Specification used to derive this variant. Ownership
+ *              is NOT given to the resultant TextureVariant
  */
 TextureVariant* TextureVariant_New(struct texture_s* generalCase,
-    texturevariantspecification_t* spec);
+    TexSource source, texturevariantspecification_t* spec);
 
 void TextureVariant_Delete(TextureVariant* tex);
 
 /// @return  Superior Texture of which this is a derivative.
 struct texture_s* TextureVariant_GeneralCase(const TextureVariant* tex);
+
+/// @return  Source of this variant.
+TexSource TextureVariant_Source(const TextureVariant* tex);
+
+/**
+ * Change the source of this variant.
+ * @param source  New TextureSource.
+ */
+void TextureVariant_SetSource(TextureVariant* tex, TexSource source);
 
 /// @return  TextureVariantSpecification used to derive this variant.
 texturevariantspecification_t* TextureVariant_Spec(const TextureVariant* tex);

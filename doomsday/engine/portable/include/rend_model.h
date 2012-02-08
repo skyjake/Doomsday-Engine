@@ -1,34 +1,32 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2012 Daniel Swanson <danij@dengine.net>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * rend_model.h: 3D Models
+ * @file rend_model.h
+ * 3D Model Renderer (v2.1). @ingroup gl
+ *
+ * @authors Copyright &copy; 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2007-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#ifndef __DOOMSDAY_RENDER_MODEL_H__
-#define __DOOMSDAY_RENDER_MODEL_H__
+#ifndef LIBDENG_RENDER_MODEL_H
+#define LIBDENG_RENDER_MODEL_H
 
+/// Absolute maximum number of vertices per submodel supported by this module.
+#define RENDER_MAX_MODEL_VERTS  16192
+
+/// @todo Split this large inflexible structure into logical subcomponent pieces.
 typedef struct rendmodelparams_s {
 // Animation, frame interpolation.
     struct modeldef_s *mf, *nextMF;
@@ -41,7 +39,7 @@ typedef struct rendmodelparams_s {
     float           center[3], gzt; // The real center point and global top z for silhouette clipping.
     float           srvo[3]; // Short-range visual offset.
     float           distance; // Distance from viewer.
-    float           yaw, extraYawAngle, yawAngleOffset; // \todo we don't need three sets of angles, update users of this struct instead.
+    float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
     float           pitch, extraPitchAngle, pitchAngleOffset;
 
     float           extraScale;
@@ -57,20 +55,56 @@ typedef struct rendmodelparams_s {
     float           ambientColor[4];
     uint            vLightListIdx;
 
-    // Shinemaping:
+    // Shiney texture mapping:
     float           shineYawOffset;
     float           shinePitchOffset;
     boolean         shineTranslateWithViewerPos;
     boolean         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
 } rendmodelparams_t;
 
-extern int      modelLight;
-extern int      frameInter;
-extern int      mirrorHudModels;
-extern int      modelShinyMultitex;
-extern float    rendModelLOD;
+extern int modelLight;
+extern int frameInter;
+extern int mirrorHudModels;
+extern int modelShinyMultitex;
+extern float rendModelLOD;
 
-void            Rend_ModelRegister(void);
-void            Rend_RenderModel(const rendmodelparams_t *params);
+/**
+ * Registers the console commands and variables used by this module.
+ */
+void Rend_ModelRegister(void);
 
-#endif
+/**
+ * Initialize this module.
+ */
+void Rend_ModelInit(void);
+
+/**
+ * Shuts down this module.
+ */
+void Rend_ModelShutdown(void);
+
+/**
+ * Expand the render buffer to accommodate rendering models containing at most
+ * this number of vertices.
+ *
+ * @note It is not actually necessary to call this. The vertex buffer will be
+ *       enlarged automatically at render time to accommodate a given model so
+ *       long as it contains less than RENDER_MAX_MODEL_VERTS. If not the model
+ *       will simply not be rendered at all.
+ *
+ * @note Buffer reallocation is deferred until necessary, so repeatedly calling
+ *       this routine during initialization is OK.
+ *
+ * @param numVertices  New maximum number of vertices we'll be required to handle.
+ *
+ * @return  @c true= successfully expanded. May fail if @a numVertices is larger
+ *          than RENDER_MAX_MODEL_VERTS.
+ */
+boolean Rend_ModelExpandVertexBuffers(uint numVertices);
+
+/**
+ * Render a submodel according to paramaters.
+ */
+void Rend_RenderModel(const rendmodelparams_t* params);
+
+#endif /// LIBDENG_RENDER_MODEL_H

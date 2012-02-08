@@ -723,7 +723,7 @@ void SBarChain_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     R_GetColorPaletteRGBf(0, theirColors[pColor], rgb, false);
-    DGL_DrawRectColor(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - iconAlpha));
+    DGL_DrawRectf2Color(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - iconAlpha));
 
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
@@ -791,7 +791,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
          * rectangle over it.
          */
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, 1);
+        DGL_DrawRectf2Color(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, 1);
         //// \kludge end
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -891,10 +891,10 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
          * Mask out the chain on the statusbar by cutting a window out and
          * drawing a solid near-black rectangle to fill the hole.
          */
-        DGL_DrawCutRectTiled(ORIGINX+38, ORIGINY+31, 244, 8, 320, 65, 38, 192-134, ORIGINX+44, ORIGINY+31, 232, 7);
+        DGL_DrawCutRectf2Tiled(ORIGINX+38, ORIGINY+31, 244, 8, 320, 65, 38, 192-134, ORIGINX+44, ORIGINY+31, 232, 7);
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_SetNoMaterial();
-        DGL_DrawRectColor(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, iconAlpha);
+        DGL_DrawRectf2Color(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, iconAlpha);
         DGL_Color4f(1, 1, 1, iconAlpha);
         //// \kludge end
 
@@ -913,7 +913,7 @@ void SBarBackground_Drawer(uiwidget_t* obj, const Point2Raw* offset)
                     w = deathmatch?214:244;
                     h = 31;
                     DGL_SetPatch(pStatBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-                    DGL_DrawCutRectTiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
+                    DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
                 }
 
                 GL_DrawPatchXY(pWeaponSlot[pClass], ORIGINX+190, ORIGINY);
@@ -1934,7 +1934,7 @@ void SBarBlueManaVial_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(ORIGINX+95, -ST_HEIGHT+3, 3, (int) (VIALHEIGHT * (1-vial->filled) + .5f), 0, 0, 0, iconAlpha);
+    DGL_DrawRectf2Color(ORIGINX+95, -ST_HEIGHT+3, 3, (int) (VIALHEIGHT * (1-vial->filled) + .5f), 0, 0, 0, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -2022,7 +2022,7 @@ void SBarGreenManaVial_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 
     DGL_SetNoMaterial();
-    DGL_DrawRectColor(ORIGINX+103, -ST_HEIGHT+3, 3, (int) (VIALHEIGHT * (1-vial->filled) + .5f), 0, 0, 0, iconAlpha);
+    DGL_DrawRectf2Color(ORIGINX+103, -ST_HEIGHT+3, 3, (int) (VIALHEIGHT * (1-vial->filled) + .5f), 0, 0, 0, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -3016,6 +3016,7 @@ void ST_BuildWidgets(int player)
 typedef struct {
     int group;
     int alignFlags;
+    order_t order;
     int groupFlags;
     int padding; // In fixed 320x200 pixels.
 } uiwidgetgroupdef_t;
@@ -3035,16 +3036,16 @@ typedef struct {
     const uiwidgetgroupdef_t widgetGroupDefs[] = {
         { UWG_STATUSBAR,    ALIGN_BOTTOM },
         { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  UWGF_LEFTTORIGHT, PADDING },
-        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      UWGF_VERTICAL|UWGF_RIGHTTOLEFT, PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOM,      UWGF_LEFTTORIGHT },
-        { UWG_TOP,          ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT },
-        { UWG_TOPCENTER,    ALIGN_TOP,         UWGF_VERTICAL|UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT,      ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPLEFT3,     ALIGN_TOPLEFT,     UWGF_LEFTTORIGHT, PADDING },
-        { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    UWGF_RIGHTTOLEFT, PADDING },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,  ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT, ORDER_RIGHTTOLEFT, 0, PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,      ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOM,      ORDER_LEFTTORIGHT },
+        { UWG_TOP,          ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT },
+        { UWG_TOPCENTER,    ALIGN_TOP,         ORDER_LEFTTORIGHT, UWGF_VERTICAL, PADDING },
+        { UWG_TOPLEFT,      ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_TOPLEFT2,     ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_TOPLEFT3,     ALIGN_TOPLEFT,     ORDER_LEFTTORIGHT, 0, PADDING },
+        { UWG_TOPRIGHT,     ALIGN_TOPRIGHT,    ORDER_RIGHTTOLEFT, 0, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
     const uiwidgetdef_t widgetDefs[] = {
@@ -3091,7 +3092,7 @@ typedef struct {
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->padding);
+        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, def->order, def->padding);
     }
 
     for(i = 0; widgetDefs[i].type != GUI_NONE; ++i)
@@ -3304,9 +3305,11 @@ boolean ST_AutomapObscures(int player, int x, int y, int width, int height)
 
 void ST_AutomapClearPoints(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_ClearPoints(obj);
+    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
+    if(!ob) return;
+
+    UIAutomap_ClearPoints(ob);
+    P_SetMessage(&players[player], AMSTR_MARKSCLEARED, false);
 }
 
 /**
@@ -3533,21 +3536,22 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     float scale;
     assert(plr);
 
-    // Scale from viewport space to fixed 320x200 space.
     R_ViewPortSize(playerNum, &portSize);
+
+    // The automap is drawn in a viewport scaled coordinate space (of viewwindow dimensions).
+    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
+    UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
+    UIWidget_SetMaximumSize(obj, &portSize);
+    GUI_DrawWidgetXY(obj, 0, 0);
+
+    // The rest of the UI is drawn in a fixed 320x200 coordinate space.
+    // Determine scale factors.
     R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
         portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Scalef(scale, scale, 1);
-
-    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]);
-    UIWidget_SetOpacity(obj, ST_AutomapOpacity(playerNum));
-    size.width = SCREENWIDTH; size.height = SCREENHEIGHT;
-    UIWidget_SetMaximumSize(obj, &size);
-
-    GUI_DrawWidgetXY(obj, 0, 0);
 
     if(hud->statusbarActive || (displayMode < 3 || hud->alpha > 0))
     {

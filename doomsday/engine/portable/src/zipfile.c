@@ -32,6 +32,7 @@
 #include "lumpdirectory.h"
 #include "pathdirectory.h"
 #include "zipfile.h"
+#include "m_misc.h"
 
 typedef struct {
     size_t baseOffset;
@@ -180,11 +181,29 @@ static void ZipFile_ApplyPathMappings(ddstring_t* dest, const ddstring_t* src)
     if(Str_At(src, 0) == '#')
     {
         ddstring_t* out = (dest == src? Str_New() : dest);
-        int dist;
+        int dist = 0;
+        char* slash;
 
         Str_Appendf(out, "%sauto/", Str_Text(Game_DataPath(theGame)));
-        dist = (Str_At(src, 1) == '/'? 2 : 1);
-        Str_PartAppend(out, Str_Text(src), dist, Str_Length(src)-dist);
+        slash = strrchr(Str_Text(src), '/');
+        dist = slash - Str_Text(src);
+        // Copy the path up to and including the last directory separator if present.
+        if(slash - Str_Text(src) > 1)
+            Str_PartAppend(out, Str_Text(src), 1, dist);
+
+        if(slash)
+        {
+            // Is there a prefix to be omitted in the name?
+            // The slash must not be too early in the string.
+            if(slash >= Str_Text(src) + 2)
+            {
+                // Good old negative indices.
+                if(slash[-2] == '.' && slash[-1] >= '1' && slash[-1] <= '9')
+                    dist += slash[-1] - '1' + 1;
+            }
+        }
+
+        Str_PartAppend(out, Str_Text(src), dist+1, Str_Length(src)-(dist+1));
 
         if(dest == src)
         {
@@ -496,7 +515,7 @@ ZipFile* ZipFile_New(DFile* file, const char* path, const LumpInfo* info)
     return zip;
 }
 
-int ZipFile_PublishLumpsToDirectory(ZipFile* zip, lumpdirectory_t* directory)
+int ZipFile_PublishLumpsToDirectory(ZipFile* zip, LumpDirectory* directory)
 {
     int numPublished = 0;
     assert(zip);
@@ -507,8 +526,7 @@ int ZipFile_PublishLumpsToDirectory(ZipFile* zip, lumpdirectory_t* directory)
         if(ZipFile_LumpCount(zip) > 0)
         {
             // Insert the lumps into their rightful places in the directory.
-            LumpDirectory_Append(directory, (abstractfile_t*)zip, 0, ZipFile_LumpCount(zip));
-            LumpDirectory_PruneDuplicateRecords(directory, false);
+            LumpDirectory_CatalogLumps(directory, (abstractfile_t*)zip, 0, ZipFile_LumpCount(zip));
             numPublished += ZipFile_LumpCount(zip);
         }
     }
@@ -611,11 +629,141 @@ void ZipFile_ClearLumpCache(ZipFile* zip)
     }
 }
 
-/**
- * Use zlib to inflate a compressed lump.
- * @return  @c true if successful.
- */
-static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
+uint8_t* ZipFile_Compress(uint8_t* in, size_t inSize, size_t* outSize)
+{
+    return ZipFile_CompressAtLevel(in, inSize, outSize, Z_DEFAULT_COMPRESSION);
+}
+
+uint8_t* ZipFile_CompressAtLevel(uint8_t* in, size_t inSize, size_t* outSize, int level)
+{
+#define CHUNK_SIZE 32768
+    z_stream stream;
+    uint8_t chunk[CHUNK_SIZE];
+    size_t allocSize = CHUNK_SIZE;
+    uint8_t* output = M_Malloc(allocSize); // some initial space
+    int result;
+    int have;
+
+    assert(outSize);
+    *outSize = 0;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*) in;
+    stream.avail_in = (uInt) inSize;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+
+    if(level < Z_NO_COMPRESSION)
+    {
+        level = Z_NO_COMPRESSION;
+    }
+    if(level > Z_BEST_COMPRESSION)
+    {
+        level = Z_BEST_COMPRESSION;
+    }
+    result = deflateInit(&stream, level);
+    if(result != Z_OK)
+    {
+        free(output);
+        return 0;
+    }
+
+    // Compress until all the data has been exhausted.
+    do {
+        stream.next_out = chunk;
+        stream.avail_out = CHUNK_SIZE;
+        result = deflate(&stream, Z_FINISH);
+        if(result == Z_STREAM_ERROR)
+        {
+            free(output);
+            *outSize = 0;
+            return 0;
+        }
+        have = CHUNK_SIZE - stream.avail_out;
+        if(have)
+        {
+            // Need more memory?
+            if(*outSize + have > allocSize)
+            {
+                // Need more memory.
+                allocSize *= 2;
+                output = M_Realloc(output, allocSize);
+            }
+            // Append.
+            memcpy(output + *outSize, chunk, have);
+            *outSize += have;
+        }
+    } while(!stream.avail_out); // output chunk full, more data may follow
+
+    assert(result == Z_STREAM_END);
+    assert(stream.total_out == *outSize);
+
+    deflateEnd(&stream);
+    return output;
+#undef CHUNK_SIZE
+}
+
+uint8_t* ZipFile_Uncompress(uint8_t* in, size_t inSize, size_t* outSize)
+{
+#define INF_CHUNK_SIZE 4096 // Uncompress in 4KB chunks.
+    z_stream stream;
+    uint8_t chunk[INF_CHUNK_SIZE];
+    size_t allocSize = INF_CHUNK_SIZE;
+    uint8_t* output = M_Malloc(allocSize); // some initial space
+    int result;
+    int have;
+
+    assert(outSize);
+    *outSize = 0;
+
+    memset(&stream, 0, sizeof(stream));
+    stream.next_in = (Bytef*) in;
+    stream.avail_in = (uInt) inSize;
+
+    result = inflateInit(&stream);
+    if(result != Z_OK)
+    {
+        free(output);
+        return 0;
+    }
+
+    // Uncompress until all the input data has been exhausted.
+    do {
+        stream.next_out = chunk;
+        stream.avail_out = INF_CHUNK_SIZE;
+        result = inflate(&stream, Z_FINISH);
+        if(result == Z_STREAM_ERROR)
+        {
+            free(output);
+            *outSize = 0;
+            return 0;
+        }
+        have = INF_CHUNK_SIZE - stream.avail_out;
+        if(have)
+        {
+            // Need more memory?
+            if(*outSize + have > allocSize)
+            {
+                // Need more memory.
+                allocSize *= 2;
+                output = M_Realloc(output, allocSize);
+            }
+            // Append.
+            memcpy(output + *outSize, chunk, have);
+            *outSize += have;
+        }
+    } while(!stream.avail_out); // output chunk full, more data may follow
+
+    // We should now be at the end.
+    assert(result == Z_STREAM_END);
+
+    inflateEnd(&stream);
+    return output;
+#undef INF_CHUNK_SIZE
+}
+
+boolean ZipFile_UncompressRaw(uint8_t* in, size_t inSize, uint8_t* out, size_t outSize)
 {
     z_stream stream;
     int result;
@@ -636,7 +784,9 @@ static boolean ZipFile_InflateLump(uint8_t* in, size_t inSize, uint8_t* out, siz
 
     if(stream.total_out != outSize)
     {
-        Con_Message("ZipFile::InflateLump: Failure due to %s.\n", (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"));
+        inflateEnd(&stream);
+        Con_Message("ZipFile::Uncompress: Failure due to %s (result code %i).\n",
+                    (result == Z_DATA_ERROR ? "corrupt data" : "zlib error"), result);
         return false;
     }
 
@@ -661,7 +811,8 @@ static size_t ZipFile_BufferLump(ZipFile* zip, const zipfile_lumprecord_t* lumpR
 
         // Read the compressed data into a temporary buffer for decompression.
         DFile_Read(zip->base._file, compressedData, lumpRecord->info.compressedSize);
-        result = ZipFile_InflateLump(compressedData, lumpRecord->info.compressedSize, buffer, lumpRecord->info.size);
+        result = ZipFile_UncompressRaw(compressedData, lumpRecord->info.compressedSize,
+                                       buffer, lumpRecord->info.size);
         free(compressedData);
         if(!result) return 0; // Inflate failed.
     }

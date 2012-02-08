@@ -888,8 +888,9 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
             normal[VX] = -unit[VY];
             normal[VY] = unit[VX];
 
-            glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
+            GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
             glEnable(GL_TEXTURE_2D);
+
             GL_BlendOp(GL_FUNC_ADD);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
@@ -1436,6 +1437,8 @@ void Rend_BlockmapDebug(void)
         cellInfoDrawer = drawPolyobjCellInfoBox;
         break;
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     /**
      * Draw the blockmap.

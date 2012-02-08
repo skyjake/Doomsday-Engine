@@ -179,6 +179,37 @@ AbstractResource* Game_AddResource(Game* g, resourceclass_t rclass,
     return record;
 }
 
+boolean Game_IsRequiredResource(Game* game, const char* absolutePath)
+{
+    AbstractResource* const* records = Game_Resources(game, RC_PACKAGE, 0);
+    if(records)
+    {
+        AbstractResource* const* recordIt;
+        // Is this resource from a container?
+        abstractfile_t* file = F_FindLumpFile(absolutePath, NULL);
+        if(file)
+        {
+            // Yes; use the container's path instead.
+            absolutePath = Str_Text(AbstractFile_Path(file));
+        }
+
+        for(recordIt = records; *recordIt; recordIt++)
+        {
+            AbstractResource* rec = *recordIt;
+            if(AbstractResource_ResourceFlags(rec) & RF_STARTUP)
+            {
+                const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+                if(resolvedPath && !Str_CompareIgnoreCase(resolvedPath, absolutePath))
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    // Not found, so no.
+    return false;
+}
+
 pluginid_t Game_SetPluginId(Game* g, pluginid_t pluginId)
 {
     assert(g);
@@ -233,7 +264,7 @@ const ddstring_t* Game_Author(Game* g)
     return &g->author;
 }
 
-AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, size_t* count)
+AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, int* count)
 {
     assert(g);
     if(!VALID_RESOURCE_CLASS(rclass))
@@ -242,7 +273,7 @@ AbstractResource* const* Game_Resources(Game* g, resourceclass_t rclass, size_t*
         return NULL;
     }
 
-    if(count) *count = g->requiredResources[rclass].numRecords;
+    if(count) *count = (int)g->requiredResources[rclass].numRecords;
     return g->requiredResources[rclass].records? g->requiredResources[rclass].records : 0;
 }
 

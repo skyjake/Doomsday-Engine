@@ -27,8 +27,6 @@
  * Abstract interfaces to platform-level services.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>
@@ -47,26 +45,11 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-//int       systics = 0;    // System tics (every game tic).
 int novideo;                // if true, stay in text mode for debugging
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+static boolean appShutdown = false; ///< Set to true when we should exit (normally).
 
-// CODE --------------------------------------------------------------------
+static uint mainThreadId = 0; ///< ID of the main thread.
 
 #ifdef WIN32
 /**
@@ -83,6 +66,17 @@ static void C_DECL handler(int s)
               s==SIGTERM ? "Killed\n" : "Terminated by signal\n");
 }
 #endif
+
+void Sys_MarkAsMainThread(void)
+{
+    // This is the main thread.
+    mainThreadId = Sys_CurrentThreadId();
+}
+
+boolean Sys_InMainThread(void)
+{
+    return mainThreadId == Sys_CurrentThreadId();
+}
 
 /**
  * Initialize platform level services.
@@ -129,10 +123,14 @@ void Sys_Init(void)
 #endif
 
     VERBOSE( Con_Message("Initializing Network subsystem...\n") )
-    Huff_Init();
     N_Init();
 
     VERBOSE2( Con_Message("Sys_Init: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+}
+
+boolean Sys_IsShuttingDown(void)
+{
+    return appShutdown;
 }
 
 /**
@@ -148,7 +146,6 @@ void Sys_Shutdown(void)
     Sys_ShutdownTimer();
 
     Net_Shutdown();
-    Huff_Shutdown();
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
@@ -173,19 +170,19 @@ static int showCriticalMessage(const char* msg)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP, TEXT("Sys_CriticalMessage: Main window not available."),
                    NULL, MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return false;
     }
 
     ShowCursor(TRUE);
     ShowCursor(TRUE);
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, buf, 255);
     ret = (MessageBox(hWnd, WIN_STRING(msg), buf, MB_OK | MB_ICONEXCLAMATION) == IDYES);
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
     ShowCursor(FALSE);
     ShowCursor(FALSE);
     return ret;
@@ -282,19 +279,19 @@ void Sys_MessageBox(const char *msg, boolean iserror)
 
     if(!hWnd)
     {
-        suspendMsgPump = true;
+        DD_Win32_SuspendMessagePump(true);
         MessageBox(HWND_DESKTOP,
                    TEXT("Sys_MessageBox: Main window not available."), NULL,
                    MB_ICONERROR | MB_OK);
-        suspendMsgPump = false;
+        DD_Win32_SuspendMessagePump(false);
         return;
     }
 
-    suspendMsgPump = true;
+    DD_Win32_SuspendMessagePump(true);
     GetWindowText(hWnd, title, 300);
     MessageBox(hWnd, WIN_STRING(msg), title,
                MB_OK | (iserror ? MB_ICONERROR : MB_ICONINFORMATION));
-    suspendMsgPump = false;
+    DD_Win32_SuspendMessagePump(false);
 #endif
 #ifdef UNIX
     fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);
@@ -339,22 +336,27 @@ void Sys_SuspendThread(thread_t handle, boolean dopause)
 }
 
 /**
- * @return              The return value of the thread.
+ * @return  Return value of the thread.
  */
 int Sys_WaitThread(thread_t thread)
 {
-    int             result = 0;
-
+    int result = 0;
     SDL_WaitThread(thread, &result);
     return result;
 }
 
-/**
- * @return              The identifier of the current thread.
- */
-uint Sys_ThreadID(void)
+uint Sys_ThreadId(thread_t handle)
 {
+    if(handle)
+    {
+        return SDL_GetThreadID(handle);
+    }
     return SDL_ThreadID();
+}
+
+uint Sys_CurrentThreadId(void)
+{
+    return Sys_ThreadId(NULL/*this thread*/);
 }
 
 mutex_t Sys_CreateMutex(const char *name)

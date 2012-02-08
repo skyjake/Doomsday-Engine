@@ -43,6 +43,9 @@
 
 // MACROS ------------------------------------------------------------------
 
+/// Development utility: on sharp tics, print player 0 movement state.
+//#define LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+
 /**
  * There needs to be at least this many tics per second. A smaller value
  * is likely to cause unpredictable changes in playsim.
@@ -77,11 +80,6 @@ void            DD_RunTics(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean appShutdown = false; // Set to true when we should exit (normally).
-#ifdef WIN32
-boolean suspendMsgPump = false; // Set to true to disable checking windows msgs.
-#endif
-
 int maxFrameRate = 200; // Zero means 'unlimited'.
 // Refresh frame count (independant of the viewport-specific frameCount).
 int rFrameCount = 0;
@@ -97,11 +95,15 @@ boolean drawGame = true; // If false the game viewport won't be rendered
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static int gameLoopExitCode = 0;
+
 static double lastFrameTime;
 static float fps;
 static int lastFrameCount;
 static boolean firstTic = true;
 static boolean tickIsSharp = false;
+
+static float realFrameTimePos = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -115,56 +117,35 @@ void DD_RegisterLoop(void)
               CVF_NO_ARCHIVE | CVF_PROTECTED, 0, 0);
 }
 
+void DD_SetGameLoopExitCode(int code)
+{
+    gameLoopExitCode = code;
+}
+
 /**
  * This is the refresh thread (the main thread).
  */
 int DD_GameLoop(void)
 {
-    int                 exitCode = 0;
-#ifdef WIN32
-    MSG                 msg;
-#endif
-
     // Limit the frame rate to 35 when running in dedicated mode.
     if(isDedicated)
     {
         maxFrameRate = 35;
     }
 
-    while(!appShutdown)
+    while(!Sys_IsShuttingDown())
     {
-#ifdef WIN32
-        /**
-         * Start by checking Windows messages.
-         * \note Must be in the same thread as that which registered the
-         *       window it is handling messages for - DJS.
-         */
-        while(!suspendMsgPump &&
-              PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-        {
-            if(msg.message == WM_QUIT)
-            {
-                appShutdown = true;
-                suspendMsgPump = true;
-                exitCode = msg.wParam;
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-
-        if(appShutdown)
-            continue;
-#endif
-
         // Frame syncronous I/O operations.
         DD_StartFrame();
 
         // Run at least one tic. If no tics are available (maxfps interval
         // not reached yet), the function blocks.
         DD_RunTics();
+
+        // We may have received a Quit message from the windowing system
+        // during events/tics processing.
+        if(Sys_IsShuttingDown())
+            continue;
 
         // Update clients.
         Sv_TransmitFrame();
@@ -181,7 +162,7 @@ int DD_GameLoop(void)
         DD_CheckTimeDemo();
     }
 
-    return exitCode;
+    return gameLoopExitCode;
 }
 
 /**
@@ -197,6 +178,8 @@ void DD_DrawAndBlit(void)
     {
         Con_Error("DD_DrawAndBlit: Console is busy, can't draw!\n");
     }
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(renderWireframe)
     {
@@ -246,8 +229,7 @@ void DD_DrawAndBlit(void)
         Net_Drawer();
         S_Drawer();
 
-        // Finish up any tasks that must be completed after view(s) have
-        // been drawn.
+        // Finish up any tasks that must be completed after view(s) have been drawn.
         R_EndWorldFrame();
     }
 
@@ -283,9 +265,9 @@ void DD_StartFrame(void)
 
 void DD_EndFrame(void)
 {
-    static uint         lastFpsTime = 0;
+    static uint lastFpsTime = 0;
 
-    uint                nowTime = Sys_GetRealTime();
+    uint nowTime = Sys_GetRealTime();
 
     // Increment the (local) frame counter.
     rFrameCount++;
@@ -293,14 +275,15 @@ void DD_EndFrame(void)
     // Count the frames every other second.
     if(nowTime - 2000 >= lastFpsTime)
     {
-        fps = (rFrameCount - lastFrameCount) /
-            ((nowTime - lastFpsTime)/1000.0f);
+        fps = (rFrameCount - lastFrameCount) / ((nowTime - lastFpsTime)/1000.0f);
         lastFpsTime = nowTime;
         lastFrameCount = rFrameCount;
     }
 
     if(gx.EndFrame)
+    {
         gx.EndFrame();
+    }
 
     S_EndFrame();
 }
@@ -320,24 +303,26 @@ boolean DD_IsSharpTick(void)
 }
 
 /**
- * This is the main ticker of the engine. We'll call all the other tickers
- * from here.
- *
- * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
+ * Determines whether frame time is advancing.
  */
-void DD_Ticker(timespan_t time)
+boolean DD_IsFrameTimeAdvancing(void)
 {
-    static float realFrameTimePos = 0;
+    if(Con_IsBusy()) return false;
+    if(Con_TransitionInProgress()) return false;
+    return tickFrame || netGame;
+}
 
-    // Sharp ticks are the ones that occur 35 per second. The rest are interpolated
-    // (smoothed) somewhere in between.
+void DD_CheckSharpTick(timespan_t time)
+{
+    // Sharp ticks are the ones that occur 35 per second. The rest are
+    // interpolated (smoothed) somewhere in between.
     tickIsSharp = false;
 
-    if(!Con_TransitionInProgress() && (tickFrame || netGame)) // Advance frametime?
+    if(DD_IsFrameTimeAdvancing())
     {
         /**
-         * realFrameTimePos will be reduced when new sharp world positions are calculated,
-         * so that frametime always stays within the range 0..1.
+         * realFrameTimePos will be reduced when new sharp world positions are
+         * calculated, so that frametime always stays within the range 0..1.
          */
         realFrameTimePos += time * TICSPERSEC;
 
@@ -346,7 +331,19 @@ void DD_Ticker(timespan_t time)
         {
             tickIsSharp = true;
         }
+    }
+}
 
+/**
+ * This is the main ticker of the engine. We'll call all the other tickers
+ * from here.
+ *
+ * @param time  Duration of the tick. This will never be longer than 1.0/TICSPERSEC.
+ */
+void DD_Ticker(timespan_t time)
+{
+    if(DD_IsFrameTimeAdvancing())
+    {
         // Demo ticker. Does stuff like smoothing of view angles.
         Demo_Ticker(time);
         P_Ticker(time);
@@ -371,26 +368,45 @@ void DD_Ticker(timespan_t time)
 
         if(DD_IsSharpTick())
         {
-            // A new 35 Hz tick begins.
             // Set frametime back by one tick (to stay in the 0..1 range).
             realFrameTimePos -= 1;
-            //assert(realFrameTimePos < 1);
 
             // Camera smoothing: now that the world tic has occurred, the next sharp
             // position can be processed.
             R_NewSharpWorld();
+
+#ifdef LIBDENG_PLAYER0_MOVEMENT_ANALYSIS
+            if(ddPlayers[0].shared.inGame && ddPlayers[0].shared.mo)
+            {
+                mobj_t* mo = ddPlayers[0].shared.mo;
+                static float prevPos[3] = { 0, 0, 0 };
+                static float prevSpeed = 0;
+                float speed = V2_Length(mo->mom);
+                float actualMom[2] = { mo->pos[0] - prevPos[0], mo->pos[1] - prevPos[1] };
+                float actualSpeed = V2_Length(actualMom);
+
+                Con_Message("%i,%f,%f,%f,%f\n", SECONDS_TO_TICKS(sysTime + time),
+                            ddPlayers[0].shared.forwardMove, speed, actualSpeed, speed - prevSpeed);
+
+                V3_Copy(prevPos, mo->pos);
+                prevSpeed = speed;
+            }
+#endif
         }
 
         // While paused, don't modify frametime so things keep still.
         if(!clientPaused)
+        {
             frameTimePos = realFrameTimePos;
+        }
     }
 
     // Console is always ticking.
     Con_Ticker(time);
 
+    // User interface ticks.
     if(tickUI)
-    {   // User interface ticks.
+    {
         UI_Ticker(time);
     }
 
@@ -499,11 +515,18 @@ void DD_RunTics(void)
         ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
         frameTime -= ticLength;
 
+        // Will this be a sharp tick?
+        DD_CheckSharpTick(ticLength);
+
         // Process input events.
         DD_ProcessEvents(ticLength);
 
         // Call all the tickers.
         DD_Ticker(ticLength);
+
+        // Some events are only processed during sharp tics.
+        // This is done after tickers for compatibility with ye olde game logic.
+        DD_ProcessSharpEvents(ticLength);
 
         // Various global variables are used for counting time.
         DD_AdvanceTime(ticLength);

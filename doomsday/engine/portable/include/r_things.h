@@ -34,6 +34,8 @@
 #include "materials.h"
 #include "rend_model.h"
 
+struct materialvariant_s;
+
 // Sprites are patches with a special naming convention so they can be
 // recognized by R_InitSprites.  The sprite and frame specified by a
 // mobj is range checked at run time.
@@ -66,28 +68,25 @@ typedef enum {
 } visspritetype_t;
 
 typedef struct rendmaskedwallparams_s {
-    DGLuint         tex;
-    int             magMode;
-    boolean         masked;
-    blendmode_t     blendMode; // Blendmode to be used when drawing
-                               // (two sided mid textures only)
+    struct materialvariant_s* material;
+    blendmode_t blendMode; ///< Blendmode to be used when drawing
+                               /// (two sided mid textures only)
     struct wall_vertex_s {
-        float           pos[3]; // x y and z coordinates.
-        float           color[4];
+        float pos[3]; ///< x y and z coordinates.
+        float color[4];
     } vertices[4];
-    float           texCoord[2][2]; // u and v coordinates.
 
-    DGLuint         modTex; // Texture to modulate with.
-    float           modTexCoord[2][2]; // u and v coordinates.
-    float           modColor[4];
+    Point2Rawf texOffset;
+    float texCoord[2][2]; ///< u and v coordinates.
+
+    DGLuint modTex; ///< Texture to modulate with.
+    float modTexCoord[2][2]; ///< u and v coordinates.
+    float modColor[4];
 } rendmaskedwallparams_t;
 
 typedef struct rendspriteparams_s {
 // Position/Orientation/Scale
     float           center[3]; // The real center point.
-    float           width, height;
-    float           viewOffX; // View-aligned offset to center point.
-    float           viewOffY;
     float           srvo[3]; // Short-range visual offset.
     float           distance; // Distance from viewer.
     boolean         viewAligned;
@@ -97,8 +96,7 @@ typedef struct rendspriteparams_s {
     blendmode_t     blendMode;
 
     // Material:
-    material_t*     mat;
-    int             tMap, tClass;
+    struct materialvariant_s* material;
     boolean         matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
@@ -148,6 +146,11 @@ typedef struct vissprite_s {
         rendflareparams_t flare;
     } data;
 } vissprite_t;
+
+#define VS_SPRITE(v)        (&((v)->data.sprite))
+#define VS_WALL(v)          (&((v)->data.wall))
+#define VS_MODEL(v)         (&((v)->data.model))
+#define VS_FLARE(v)         (&((v)->data.flare))
 
 typedef enum {
     VPSPR_SPRITE,

@@ -20,6 +20,20 @@ Composite BitmapFont {
 }
 
 Composite BitmapFont {
+  ID = "game:mappoint";
+  048 { Texture = "AMMNUM0"; } # 0
+  049 { Texture = "AMMNUM1"; } # 1
+  050 { Texture = "AMMNUM2"; } # 2
+  051 { Texture = "AMMNUM3"; } # 3
+  052 { Texture = "AMMNUM4"; } # 4
+  053 { Texture = "AMMNUM5"; } # 5
+  054 { Texture = "AMMNUM6"; } # 6
+  055 { Texture = "AMMNUM7"; } # 7
+  056 { Texture = "AMMNUM8"; } # 8
+  057 { Texture = "AMMNUM9"; } # 9
+}
+
+Composite BitmapFont {
   ID = "game:status";
   037 { Texture = "STTPRCNT"; } # %
   045 { Texture = "STTMINUS"; } # -

@@ -226,11 +226,12 @@ class Changes:
                             otherGroups.append(tag)
                             
                     others = self.pretty_group_list(otherGroups)
-                    if others: others = ' <i>(also %s)</i>' % others
-                        
-                    print >> out, '<li><b>%s</b>%s' % (entry.subject, others)
-                    print >> out, 'by <i>%s</i> on ' % entry.author
-                    print >> out, '<a href="%s">%s</a>' % (entry.link, entry.date[:10])
+                    if others: others = ' (&rarr; %s)' % others
+                    
+                    print >> out, '<li>'    
+                    print >> out, '<a href="%s">%s</a>: ' % (entry.link, entry.date[:10])
+                    print >> out, '<b>%s</b>' % entry.subject
+                    print >> out, 'by <i>%s</i>%s' % (entry.author, others)
                     print >> out, '<blockquote style="color:#666;">%s</blockquote>' % entry.message(encodeHtml=True)
                     
                 print >> out, '</ul>'

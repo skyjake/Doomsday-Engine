@@ -75,6 +75,7 @@ float defFontRGB2[3];
 float defFontRGB3[3];
 
 // The patches used in drawing the view border.
+// Percent-encoded.
 char* borderGraphics[] = {
     "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
@@ -301,10 +302,9 @@ void D_PreInit(void)
     {
         cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
         memcpy(cfg.menuTextColors[1], defFontRGB, sizeof(cfg.menuTextColors[1]));
-        cfg.menuTextColors[2][CR] = .2f;
-        cfg.menuTextColors[2][CG] = .2f;
-        cfg.menuTextColors[2][CB] = .9f;
-        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+        cfg.menuTextColors[2][CR] = cfg.menuTextColors[3][CR] = .2f;
+        cfg.menuTextColors[2][CG] = cfg.menuTextColors[3][CG] = .2f;
+        cfg.menuTextColors[2][CB] = cfg.menuTextColors[3][CB] = .9f;
     }
     else
     {
@@ -361,6 +361,7 @@ void D_PreInit(void)
     cfg.automapBack[2] = 0.f;
     cfg.automapOpacity = .7f;
     cfg.automapLineAlpha = .7f;
+    cfg.automapLineWidth = 1.1f;
     cfg.automapShowDoors = true;
     cfg.automapDoorGlow = 8;
     cfg.automapHudDisplay = 2;
@@ -372,6 +373,7 @@ void D_PreInit(void)
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
 
     cfg.hudCheatCounterScale = .7f;
+    cfg.hudCheatCounterShowWithAutomap = true;
 
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
@@ -548,7 +550,7 @@ void D_PostInit(void)
 
     // Validate episode and map.
     uri = G_ComposeMapUri((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap);
-    path = Uri_ComposePath(uri);
+    path = Uri_Compose(uri);
     if((autoStart || IS_NETGAME) && !P_MapExists(Str_Text(path)))
     {
         startEpisode = 0;

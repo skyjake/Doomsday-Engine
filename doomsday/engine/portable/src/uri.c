@@ -191,7 +191,7 @@ void Uri_Clear(Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Clear with invalid reference (this==0).");
+        Con_Error("Attempted Uri::Clear with invalid reference (=NULL).");
         return; // Unreachable.
     }
     Str_Clear(&uri->_scheme);
@@ -239,7 +239,7 @@ void Uri_Delete(Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Delete with invalid reference (this==0).");
+        Con_Error("Attempted Uri::Delete with invalid reference (=NULL).");
         return; // Unreachable.
     }
     Str_Free(&uri->_scheme);
@@ -251,7 +251,7 @@ Uri* Uri_Copy(Uri* uri, const Uri* other)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Copy with invalid reference (this==0).");
+        Con_Error("Attempted Uri::Copy with invalid reference (=NULL).");
         return 0; // Unreachable.
     }
     if(!other)
@@ -268,8 +268,8 @@ const ddstring_t* Uri_Scheme(const Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Scheme with invalid reference (this==0).");
-        return 0; // Unreachable.
+        Con_Error("Attempted Uri::Scheme with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     return &uri->_scheme;
 }
@@ -278,8 +278,8 @@ const ddstring_t* Uri_Path(const Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Path with invalid reference (this==0).");
-        return 0; // Unreachable.
+        Con_Error("Attempted Uri::Path with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     return &uri->_path;
 }
@@ -288,43 +288,45 @@ ddstring_t* Uri_Resolved(const Uri* uri)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::Resolved with invalid reference (this==0).");
-        return 0; // Unreachable.
+        Con_Error("Attempted Uri::Resolved with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     return resolveUri(uri);
 }
 
-void Uri_SetScheme(Uri* uri, const char* scheme)
+Uri* Uri_SetScheme(Uri* uri, const char* scheme)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::SetScheme with invalid reference (this==0).");
-        return; // Unreachable.
+        Con_Error("Attempted Uri::SetScheme with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     Str_Set(&uri->_scheme, scheme);
+    return uri;
 }
 
-void Uri_SetPath(Uri* uri, const char* path)
+Uri* Uri_SetPath(Uri* uri, const char* path)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::SetPath with invalid reference (this==0).");
-        return; // Unreachable.
+        Con_Error("Attempted Uri::SetPath with invalid reference (=NULL).");
+        exit(1); // Unreachable.
     }
     Str_Set(&uri->_path, path);
+    return uri;
 }
 
 Uri* Uri_SetUri3(Uri* uri, const char* path, resourceclass_t defaultResourceClass)
 {
     if(!uri)
     {
-        Con_Error("Attempted Uri::SetUri with invalid reference (this==0).");
+        Con_Error("Attempted Uri::SetUri with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
     if(!path)
     {
 #if _DEBUG
-        Con_Message("Attempted Uri::SetUri with invalid reference (@a path==0).\n");
+        Con_Message("Attempted Uri::SetUri with invalid reference (@a path=NULL).\n");
 #endif
         Uri_Clear(uri);
         return uri;
@@ -345,7 +347,7 @@ Uri* Uri_SetUri(Uri* uri, const ddstring_t* path)
     return Uri_SetUri2(uri, path != 0? Str_Text(path) : 0);
 }
 
-ddstring_t* Uri_ComposePath(const Uri* uri)
+ddstring_t* Uri_Compose(const Uri* uri)
 {
     ddstring_t* out;
     if(!uri) return Str_Set(Str_New(), "(nullptr)");
@@ -357,10 +359,18 @@ ddstring_t* Uri_ComposePath(const Uri* uri)
     return out;
 }
 
-ddstring_t* Uri_ToString(const Uri* uri)
+ddstring_t* Uri_ToString2(const Uri* uri, boolean percentDecode)
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
-    return Uri_ComposePath(uri);
+    ddstring_t* path = Uri_Compose(uri);
+    if(percentDecode)
+        Str_PercentDecode(path);
+    return path;
+}
+
+ddstring_t* Uri_ToString(const Uri* uri)
+{
+    return Uri_ToString2(uri, true/*apply percent-decoding*/);
 }
 
 boolean Uri_Equality(const Uri* uri, const Uri* other)
@@ -414,30 +424,39 @@ static writeUri(const ddstring_t* scheme, const ddstring_t* path, Writer* writer
     Str_Write(path, writer);
 }
 
-void Uri_Write(const Uri* uri, Writer* writer)
+void Uri_Write2(const Uri* uri, Writer* writer, int omitComponents)
 {
-    assert(uri);
-    assert(writer);    
-    writeUri(&uri->_scheme, &uri->_path, writer);
-}
-
-void Uri_WriteOmitScheme(const Uri* uri, Writer* writer)
-{
-    ddstring_t emptyScheme;
-    Str_InitStatic(&emptyScheme, "");
-
+    ddstring_t emptyString;
+    const ddstring_t* scheme;
     assert(uri);
     assert(writer);
-    writeUri(&emptyScheme, &uri->_path, writer);
+
+    if(omitComponents & UCF_SCHEME)
+    {
+        Str_InitStatic(&emptyString, "");
+        scheme = &emptyString;
+    }
+    else
+    {
+        scheme = &uri->_scheme;
+    }
+    writeUri(scheme, &uri->_path, writer);
 }
 
-void Uri_Read(Uri* uri, Reader* reader)
+void Uri_Write(const Uri* uri, Writer* writer)
+{
+    Uri_Write2(uri, writer, 0/*include everything*/);
+}
+
+Uri* Uri_Read(Uri* uri, Reader* reader)
 {
     assert(uri);
     assert(reader);
 
     Str_Read(&uri->_scheme, reader);
     Str_Read(&uri->_path, reader);
+
+    return uri;
 }
 
 void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultScheme)
@@ -447,4 +466,42 @@ void Uri_ReadWithDefaultScheme(Uri* uri, Reader* reader, const char* defaultSche
     {
         Str_Set(&uri->_scheme, defaultScheme);
     }
+}
+
+void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedText)
+{
+    ddstring_t* raw;
+    assert(uri);
+
+    indent = MAX_OF(0, indent);
+    if(!unresolvedText) unresolvedText = "--(!)incomplete";
+
+    raw = Uri_ToString(uri);
+
+    /// @todo  Why was the indent argument used like this? -jk
+    Con_Printf("*%s\"%s\"", /*indent,*/ "",
+               (flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(raw)) : Str_Text(raw));
+
+    if(flags & UPF_OUTPUT_RESOLVED)
+    {
+        ddstring_t* resolved = Uri_Resolved(uri);
+        Con_Printf("%s%s\n", (resolved != 0? "=> " : unresolvedText),
+                   resolved != 0? ((flags & UPF_TRANSFORM_PATH_MAKEPRETTY)?
+                                         F_PrettyPath(Str_Text(resolved)) : Str_Text(resolved))
+                                : "");
+        if(resolved) Str_Delete(resolved);
+    }
+    Con_Printf("\n");
+
+    Str_Delete(raw);
+}
+
+void Uri_Print2(const Uri* uri, int indent, int flags)
+{
+    Uri_Print3(uri, indent, flags, NULL/*use the default unresolved text*/);
+}
+
+void Uri_Print(const Uri* uri, int indent)
+{
+    Uri_Print2(uri, indent, DEFAULT_PRINTURIFLAGS);
 }
