@@ -45,10 +45,10 @@ typedef enum {
         DTT_FUNC_PTR_UINT_ARRAY,
     DTT_FUNC_PTR_END,
 
-    DEFERREDTASK_TYPES_COUNT
+    DEFERREDTASK_TYPES_LAST
 } deferredtask_type_t;
 
-#define VALID_DEFERREDTASK_TYPE(t)      ((t) >= DEFERREDTASK_TYPES_FIRST || (t) < DEFERREDTASK_TYPES_COUNT)
+#define VALID_DEFERREDTASK_TYPE(t)      ((t) >= DEFERREDTASK_TYPES_FIRST || (t) < DEFERREDTASK_TYPES_LAST)
 
 typedef struct deferredtask_s {
     struct deferredtask_s* next;

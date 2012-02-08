@@ -1315,8 +1315,6 @@ void GL_ReleaseSystemTextures(void)
 
     VERBOSE( Con_Message("Releasing System textures...\n") )
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     // The rendering lists contain persistent references to texture names.
     // Which, obviously, can't persist any longer...
     RL_DeleteLists();

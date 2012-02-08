@@ -5,6 +5,9 @@
  * Redefines GL API functions so that they're replaced with ones that defer the
  * call when needed.
  *
+ * @note  Only the GL API functions declared in this file are safe to call from
+ * outside the main thread!
+ *
  * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2012 Daniel Swanson <danij@dengine.net>
  *

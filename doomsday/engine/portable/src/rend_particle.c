@@ -204,8 +204,6 @@ void Rend_ParticleReleaseSystemTextures(void)
 {
     if(novideo) return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
 }
@@ -213,8 +211,6 @@ void Rend_ParticleReleaseSystemTextures(void)
 void Rend_ParticleReleaseExtraTextures(void)
 {
     if(novideo) return;
-
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
