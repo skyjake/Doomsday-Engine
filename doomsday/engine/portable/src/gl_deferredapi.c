@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#define LIBDENG_DEFERRED_GL_API_H // using regular GL API calls
+#define LIBDENG_DISABLE_DEFERRED_GL_API // using regular GL API calls
 
 #include "de_system.h"
 #include "gl_defer.h"

@@ -26,12 +26,18 @@
 #ifndef LIBDENG_DEFERRED_GL_API_H
 #define LIBDENG_DEFERRED_GL_API_H
 
+#ifndef LIBDENG_DISABLE_DEFERRED_GL_API
+
 #include "sys_opengl.h"
 
-#define glEnable(x)     Deferred_glEnable(x)
-#define glDisable(x)    Deferred_glDisable(x)
+#define glEnable(x)         Deferred_glEnable(x)
+#define glDisable(x)        Deferred_glDisable(x)
+#define glDeleteTextures(x) Deferred_glDeleteTextures(x)
 
 void Deferred_glEnable(GLenum e);
 void Deferred_glDisable(GLenum e);
+void Deferred_glDeleteTextures(GLsizei num, const GLuint* names);
+
+#endif
 
 #endif // LIBDENG_DEFERRED_GL_API_H
