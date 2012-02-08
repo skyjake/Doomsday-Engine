@@ -478,8 +478,7 @@ void Uri_Print3(const Uri* uri, int indent, int flags, const char* unresolvedTex
 
     raw = Uri_ToString(uri);
 
-    /// @todo  Why was the indent argument used like this? -jk
-    Con_Printf("*%s\"%s\"", /*indent,*/ "",
+    Con_Printf("%*s\"%s\"", /*indent,*/ "",
                (flags & UPF_TRANSFORM_PATH_MAKEPRETTY)? F_PrettyPath(Str_Text(raw)) : Str_Text(raw));
 
     if(flags & UPF_OUTPUT_RESOLVED)
