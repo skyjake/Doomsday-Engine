@@ -72,8 +72,11 @@ void GL_ReleaseReservedNames(void);
  */
 void GL_DeferTextureUpload(const struct texturecontent_s* content);
 
-void GL_Defer_e(void (GL_CALL *ptr)(GLenum), GLenum param);
+// Deferring functions for various function signatures.
+#define LIBDENG_GL_DEFER1(form, x)      void GL_Defer_##form(void (GL_CALL *ptr)(x), x)
+#define LIBDENG_GL_DEFER2(form, x, y)   void GL_Defer_##form(void (GL_CALL* ptr)(x, y), x, y)
 
-void GL_Defer_uintArray(void (GL_CALL *ptr)(GLsizei, const GLuint*), GLsizei s, const GLuint* v);
+LIBDENG_GL_DEFER1(e,         GLenum e);
+LIBDENG_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
 
 #endif /* LIBDENG_GL_DEFERRED_H */

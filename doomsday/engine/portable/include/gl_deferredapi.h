@@ -26,9 +26,14 @@
 #ifndef LIBDENG_DEFERRED_GL_API_H
 #define LIBDENG_DEFERRED_GL_API_H
 
+/**
+ * @def LIBDENG_DISABLE_DEFERRED_GL_API
+ * Disables the automatic rerouting of GL API calls to the deferring queue.
+ * Put this in the beginning of a source file, before all #includes.
+ */
 #ifndef LIBDENG_DISABLE_DEFERRED_GL_API
 
-#include "sys_opengl.h"
+#include "sys_opengl.h" // ensure native OpenGL has been included
 
 #define glEnable(x)             Deferred_glEnable(x)
 #define glDisable(x)            Deferred_glDisable(x)

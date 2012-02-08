@@ -40,10 +40,10 @@ typedef enum {
 
     DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
 
-DTT_FUNC_PTR_BEGIN,
-    DTT_FUNC_PTR_1E = DTT_FUNC_PTR_BEGIN,
-    DTT_FUNC_PTR_UINT_ARRAY,
-DTT_FUNC_PTR_END,
+    DTT_FUNC_PTR_BEGIN,
+        DTT_FUNC_PTR_E = DTT_FUNC_PTR_BEGIN,
+        DTT_FUNC_PTR_UINT_ARRAY,
+    DTT_FUNC_PTR_END,
 
     DEFERREDTASK_TYPES_COUNT
 } deferredtask_type_t;
@@ -58,7 +58,7 @@ typedef struct deferredtask_s {
 
 typedef struct apifunc_s {
     union {
-        void (GL_CALL *ptr_1e)(GLenum);
+        void (GL_CALL *ptr_e)(GLenum);
         void (GL_CALL *ptr_uintArray)(GLsizei, const GLuint*);
     } func;
     union {
@@ -151,20 +151,20 @@ static void destroyTask(deferredtask_t* d)
     free(d);
 }
 
-void GL_Defer1e(void (GL_CALL *ptr)(GLenum), GLenum param)
+LIBDENG_GL_DEFER1(e, GLenum e)
 {
     apifunc_t* api = malloc(sizeof(apifunc_t));
-    api->func.ptr_1e = ptr;
-    api->param.e = param;
+    api->func.ptr_e = ptr;
+    api->param.e = e;
 
 #ifdef _DEBUG
-    fprintf(stderr, "GL_Defer1e: ptr=%p param=%i\n", ptr, param);
+    fprintf(stderr, "GL_Defer1e: ptr=%p enum=%i\n", ptr, e);
 #endif
 
-    enqueueTask(DTT_FUNC_PTR_1E, api);
+    enqueueTask(DTT_FUNC_PTR_E, api);
 }
 
-void GL_Defer_uintArray(void (GL_CALL *ptr)(GLsizei, const GLuint*), GLsizei s, const GLuint* v)
+LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
     apifunc_t* api = malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
@@ -323,11 +323,11 @@ static void processTask(deferredtask_t* task)
         GL_UploadTextureContent(task->data);
         break;
 
-    case DTT_FUNC_PTR_1E:
+    case DTT_FUNC_PTR_E:
 #ifdef _DEBUG
-        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_1e, api->param.e);
+        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_e, api->param.e);
 #endif
-        api->func.ptr_1e(api->param.e);
+        api->func.ptr_e(api->param.e);
         break;
 
     case DTT_FUNC_PTR_UINT_ARRAY:
