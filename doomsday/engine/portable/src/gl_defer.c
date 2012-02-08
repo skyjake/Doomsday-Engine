@@ -116,6 +116,71 @@ static void enqueueTask(deferredtask_type_t type, void* data)
     Sys_Unlock(deferredMutex);
 }
 
+static deferredtask_t* nextTask(void)
+{
+    assert(inited);
+    {
+    deferredtask_t* d = NULL;
+    if(NULL != (d = (deferredtask_t*) deferredTaskFirst))
+    {
+        deferredTaskFirst = d->next;
+    }
+    if(!deferredTaskFirst)
+        deferredTaskLast = NULL;
+    return d;
+    }
+}
+
+LIBDENG_GL_DEFER1(e, GLenum e)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_e = ptr;
+    api->param.e = e;
+
+#ifdef _DEBUG
+    fprintf(stderr, "GL_Defer1e: ptr=%p enum=%i\n", ptr, e);
+#endif
+
+    enqueueTask(DTT_FUNC_PTR_E, api);
+}
+
+LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_uintArray = ptr;
+    api->param.uintArray.count = s;
+    api->param.uintArray.values = malloc(sizeof(GLuint) * s);
+    memcpy(api->param.uintArray.values, v, sizeof(GLuint) * s);
+    enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
+}
+
+static void processTask(deferredtask_t* task)
+{
+    apifunc_t* api = (apifunc_t*) task->data;
+
+    switch(task->type)
+    {
+    case DTT_UPLOAD_TEXTURECONTENT:
+        GL_UploadTextureContent(task->data);
+        break;
+
+    case DTT_FUNC_PTR_E:
+#ifdef _DEBUG
+        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_e, api->param.e);
+#endif
+        api->func.ptr_e(api->param.e);
+        break;
+
+    case DTT_FUNC_PTR_UINT_ARRAY:
+        api->func.ptr_uintArray(api->param.uintArray.count, api->param.uintArray.values);
+        break;
+
+    default:
+        Con_Error("Unknown deferred GL task type %i.", (int) task->type);
+        break;
+    }
+}
+
 static void destroyTaskData(deferredtask_t* d)
 {
     apifunc_t* api = (apifunc_t*) d->data;
@@ -149,44 +214,6 @@ static void destroyTask(deferredtask_t* d)
     assert(inited && d);
     destroyTaskData(d);
     free(d);
-}
-
-LIBDENG_GL_DEFER1(e, GLenum e)
-{
-    apifunc_t* api = malloc(sizeof(apifunc_t));
-    api->func.ptr_e = ptr;
-    api->param.e = e;
-
-#ifdef _DEBUG
-    fprintf(stderr, "GL_Defer1e: ptr=%p enum=%i\n", ptr, e);
-#endif
-
-    enqueueTask(DTT_FUNC_PTR_E, api);
-}
-
-LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
-{
-    apifunc_t* api = malloc(sizeof(apifunc_t));
-    api->func.ptr_uintArray = ptr;
-    api->param.uintArray.count = s;
-    api->param.uintArray.values = malloc(sizeof(GLuint) * s);
-    memcpy(api->param.uintArray.values, v, sizeof(GLuint) * s);
-    enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
-}
-
-static deferredtask_t* nextTask(void)
-{
-    assert(inited);
-    {
-    deferredtask_t* d = NULL;
-    if(NULL != (d = (deferredtask_t*) deferredTaskFirst))
-    {
-        deferredTaskFirst = d->next;
-    }
-    if(!deferredTaskFirst)
-        deferredTaskLast = NULL;
-    return d;
-    }
 }
 
 void GL_InitDeferredTask(void)
@@ -311,33 +338,6 @@ static deferredtask_t* GL_NextDeferredTask(void)
     d = nextTask();
     Sys_Unlock(deferredMutex);
     return d;
-}
-
-static void processTask(deferredtask_t* task)
-{
-    apifunc_t* api = (apifunc_t*) task->data;
-
-    switch(task->type)
-    {
-    case DTT_UPLOAD_TEXTURECONTENT:
-        GL_UploadTextureContent(task->data);
-        break;
-
-    case DTT_FUNC_PTR_E:
-#ifdef _DEBUG
-        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_e, api->param.e);
-#endif
-        api->func.ptr_e(api->param.e);
-        break;
-
-    case DTT_FUNC_PTR_UINT_ARRAY:
-        api->func.ptr_uintArray(api->param.uintArray.count, api->param.uintArray.values);
-        break;
-
-    default:
-        Con_Error("Unknown deferred GL task type %i.", (int) task->type);
-        break;
-    }
 }
 
 void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
