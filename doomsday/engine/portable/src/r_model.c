@@ -431,8 +431,10 @@ static void registerModelSkin(model_t* mdl, int index)
     mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
 
     if(!mdl->skins[index].texture)
-    {   // Not found!
-        VERBOSE(Con_Printf("  \"%s\" (#%i) not found.\n", mdl->skins[index].name, index));
+    {
+        Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n"
+                    "  This model will be rendered without a skin.\n",
+                    mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
     }
 }
 
