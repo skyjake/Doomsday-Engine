@@ -2264,7 +2264,7 @@ int MNButton_CommandResponder(mn_object_t* obj, menucommand_e cmd)
     mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
     assert(obj->_type == MN_BUTTON);
 
-    if(MCMD_SELECT == cmd)
+    if(cmd == MCMD_SELECT)
     {
         boolean justActivated = false;
         if(!(obj->_flags & MNF_ACTIVE))
