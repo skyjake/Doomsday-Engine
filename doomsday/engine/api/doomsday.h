@@ -497,6 +497,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
     int             P_MobjUnlink(struct mobj_s* mo);
     struct mobj_s*  P_MobjForID(int id);
     void            Mobj_OriginSmoothed(struct mobj_s* mobj, float origin[3]);
+    angle_t         Mobj_AngleSmoothed(struct mobj_s* mobj);
     boolean         ClMobj_IsValid(struct mobj_s* mo);
     struct mobj_s*  ClPlayer_ClMobj(int plrNum);
 

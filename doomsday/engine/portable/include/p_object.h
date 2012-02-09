@@ -71,4 +71,6 @@ boolean         P_MobjSetPos(struct mobj_s* mo, float x, float y, float z);
  */
 void Mobj_OriginSmoothed(struct mobj_s* mobj, float origin[3]);
 
+angle_t Mobj_AngleSmoothed(struct mobj_s* mobj);
+
 #endif
