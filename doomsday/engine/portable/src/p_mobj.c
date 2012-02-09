@@ -249,6 +249,29 @@ void Mobj_OriginSmoothed(mobj_t* mo, float origin[3])
     }
 }
 
+angle_t Mobj_AngleSmoothed(mobj_t* mo)
+{
+    if(!mo) return 0;
+
+    if(mo->dPlayer)
+    {
+        /// @fixme What about splitscreen? We have smoothed angles for all local players.
+        if(P_GetDDPlayerIdx(mo->dPlayer) == consolePlayer)
+        {
+            const viewdata_t* vd = R_ViewData(consolePlayer);
+            return vd->current.angle;
+        }
+    }
+
+    // Apply a Short Range Visual Offset?
+    if(useSRVOAngle && !netGame && !playback)
+    {
+        return mo->visAngle << 16;
+    }
+
+    return mo->angle;
+}
+
 D_CMD(InspectMobj)
 {
     mobj_t* mo = 0;

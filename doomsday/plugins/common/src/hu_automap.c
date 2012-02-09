@@ -917,7 +917,7 @@ static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
     svgId  = AM_GetVectorGraphic(config, AMO_THINGPLAYER);
     Mobj_OriginSmoothed(mo, origin);
     /* $unifiedangles */
-    angle  = (mo->visAngle << 16) / (float) ANGLE_MAX * 360;
+    angle  = Mobj_AngleSmoothed(mo) / (float) ANGLE_MAX * 360;
     radius = PLAYERRADIUS;
 
     R_GetColorPaletteRGBf(0, playerPaletteColor(consoleNum), color, false);
@@ -1002,7 +1002,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
             if(keyColor != -1)
             {
                 R_GetColorPaletteRGBf(0, keyColor, keyColorRGB, false);
-                vgId  = VG_KEYSQUARE;
+                vgId  = VG_KEY;
                 color = keyColorRGB;
                 angle = 0;
                 isVisible = true;
@@ -1013,7 +1013,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
         if(!isVisible)
         {
             isVisible = !!(p->flags & AMF_REND_THINGS);
-            angle = (mo->visAngle << 16) / (float) ANGLE_MAX * 360; // In degrees.
+            angle = Mobj_AngleSmoothed(mo) / (float) ANGLE_MAX * 360; // In degrees.
         }
 
         if(isVisible)

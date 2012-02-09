@@ -30,6 +30,7 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
+#include "m_misc.h"
 
 #include "texturecontent.h"
 
@@ -149,8 +150,7 @@ LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
     apifunc_t* api = malloc(sizeof(apifunc_t));
     api->func.ptr_uintArray = ptr;
     api->param.uintArray.count = s;
-    api->param.uintArray.values = malloc(sizeof(GLuint) * s);
-    memcpy(api->param.uintArray.values, v, sizeof(GLuint) * s);
+    api->param.uintArray.values = M_MemDup(v, sizeof(GLuint) * s);
     enqueueTask(DTT_FUNC_PTR_UINT_ARRAY, api);
 }
 
@@ -166,7 +166,7 @@ static void processTask(deferredtask_t* task)
 
     case DTT_FUNC_PTR_E:
 #ifdef _DEBUG
-        fprintf(stderr, "processDeferred: ptr=%p param=%i\n", api->func.ptr_e, api->param.e);
+        fprintf(stderr, "processDeferred: ptr=%p enum=%i\n", api->func.ptr_e, api->param.e);
 #endif
         api->func.ptr_e(api->param.e);
         break;

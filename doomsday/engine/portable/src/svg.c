@@ -1,25 +1,23 @@
-/**\file svg.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/**
+ * @file svg.h
+ * Scalable Vector Graphic (SVG) implementation. @ingroup gl
  *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright &copy; 2012 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <assert.h>
@@ -32,16 +30,28 @@
 #include "svg.h"
 
 struct Svg_s {
+    /// Unique identifier for this graphic.
     svgid_t id;
+
+    /// GL display list containing all commands for drawing all primitives (no state changes).
     DGLuint dlist;
-    size_t lineCount;
+
+    /// List of lines for this graphic.
+    uint lineCount;
     SvgLine* lines;
 };
 
 void Svg_Delete(Svg* svg)
 {
+    uint i;
     assert(svg);
+
     Svg_Unload(svg);
+
+    for(i = 0; i < svg->lineCount; ++i)
+    {
+        free(svg->lines[i].points);
+    }
     free(svg->lines);
     free(svg);
 }
@@ -54,20 +64,59 @@ svgid_t Svg_UniqueId(Svg* svg)
 
 static void draw(const Svg* svg)
 {
-    uint i;
+    GLenum nextPrimType, primType = GL_LINE_STRIP;
+    const SvgLine* lIt;
+    const Point2Rawf* pIt;
+    uint i, j;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    glBegin(GL_LINES);
-    for(i = 0; i < svg->lineCount; ++i)
+    lIt = svg->lines;
+    for(i = 0; i < svg->lineCount; ++i, lIt++)
     {
-        SvgLine* l = &svg->lines[i];
-        glTexCoord2f(l->from.x, l->from.y);
-        glVertex2f(l->from.x, l->from.y);
-        glTexCoord2f(l->to.x, l->to.y);
-        glVertex2f(l->to.x, l->to.y);
+        if(lIt->numPoints != 2)
+        {
+            nextPrimType = (lIt->flags & SLF_IS_LOOP)? GL_LINE_LOOP : GL_LINE_STRIP;
+
+            // Do we need to end the current primitive?
+            if(primType == GL_LINES)
+            {
+                glEnd(); // 2-vertex set ends.
+            }
+
+            // A new n-vertex primitive begins.
+            glBegin(nextPrimType);
+        }
+        else
+        {
+            // Do we need to start a new 2-vertex primitive set?
+            if(primType != GL_LINES)
+            {
+                primType = GL_LINES;
+                glBegin(GL_LINES);
+            }
+        }
+
+        // Write the vertex data.
+        pIt = lIt->points;
+        for(j = 0; j < lIt->numPoints; ++j, pIt++)
+        {
+            /// @todo Use TexGen?
+            glTexCoord2dv((const GLdouble*)pIt->xy);
+            glVertex2dv((const GLdouble*)pIt->xy);
+        }
+
+        if(lIt->numPoints != 2)
+        {
+            glEnd(); // N-vertex primitive ends.
+        }
     }
-    glEnd();
+
+    if(primType == GL_LINES)
+    {
+        // Close any remaining open 2-vertex set.
+        glEnd();
+    }
 }
 
 static DGLuint constructDisplayList(DGLuint name, const Svg* svg)
@@ -127,10 +176,15 @@ void Svg_Unload(Svg* svg)
     }
 }
 
-Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t lineCount)
+Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, size_t lineCount)
 {
+    const def_svgline_t* slIt;
+    const Point2Rawf* spIt;
+    uint finalLineCount;
+    Point2Rawf* dpIt;
+    SvgLine* dlIt;
+    uint i, j;
     Svg* svg;
-    size_t i;
 
     if(!lines || lineCount == 0) return NULL;
 
@@ -139,13 +193,64 @@ Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t lineCount)
 
     svg->id = uniqueId;
     svg->dlist = 0;
-    svg->lineCount = lineCount;
-    svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * lineCount);
-    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SVGLine list.", (unsigned long) (sizeof(*svg->lines) * lineCount));
 
-    for(i = 0; i < lineCount; ++i)
+    // Count how many lines we actually need.
+    finalLineCount = 0;
+    slIt = lines;
+    for(i = 0; i < lineCount; ++i, slIt++)
     {
-        memcpy(&svg->lines[i], &lines[i], sizeof(*svg->lines));
+        // Skip lines with missing vertices...
+        if(slIt->numPoints < 2) continue;
+
+        ++finalLineCount;
+    }
+
+    // Allocate the final line set.
+    svg->lineCount = finalLineCount;
+    svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * finalLineCount);
+    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine list.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
+
+    // Setup the lines.
+    slIt = lines;
+    dlIt = svg->lines;
+    for(i = 0; i < lineCount; ++i, slIt++)
+    {
+        // Skip lines with missing vertices...
+        if(slIt->numPoints < 2) continue;
+
+        dlIt->flags = 0;
+
+        // Determine how many points we'll need.
+        dlIt->numPoints = slIt->numPoints;
+        if(slIt->numPoints > 2)
+        {
+            // If the end point is equal to the start point, we'll ommit it and
+            // set this line up as a loop.
+            if(FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
+               FEQUAL(slIt->points[slIt->numPoints-1].y, slIt->points[0].y))
+            {
+                dlIt->numPoints -= 1;
+                dlIt->flags |= SLF_IS_LOOP;
+            }
+        }
+
+        // Allocate points.
+        /// @todo Calculate point total and allocate them all using a continuous
+        ///       region of memory.
+        dlIt->points = (Point2Rawf*)malloc(sizeof(*dlIt->points) * dlIt->numPoints);
+        if(!dlIt->points) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine Point list.", (unsigned long) (sizeof(*dlIt->points) * dlIt->numPoints));
+
+        // Copy points.
+        spIt = slIt->points;
+        dpIt = dlIt->points;
+        for(j = 0; j < dlIt->numPoints; ++j, spIt++, dpIt++)
+        {
+            dpIt->x = spIt->x;
+            dpIt->y = spIt->y;
+        }
+
+        // On to the next line!
+        dlIt++;
     }
 
     return svg;

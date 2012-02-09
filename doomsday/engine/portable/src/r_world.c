@@ -1375,6 +1375,7 @@ void R_SetupMap(int mode, int flags)
         R_InitSkyFix();
         R_MapInitSurfaces(false);
         P_MapInitPolyobjs();
+        DD_ResetTimer();
         return;
       }
     case DDSMM_FINALIZE: {

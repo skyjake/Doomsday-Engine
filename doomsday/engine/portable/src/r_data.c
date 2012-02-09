@@ -2621,7 +2621,7 @@ void R_PrecacheMobjNum(int num)
             continue;
         state = &states[i];
 
-        R_PrecacheSkinsForState(i);
+        R_PrecacheModelsForState(i);
 
         if(precacheSprites)
         {
@@ -2710,7 +2710,7 @@ void R_PrecacheForMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
+        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
     }
 }
 

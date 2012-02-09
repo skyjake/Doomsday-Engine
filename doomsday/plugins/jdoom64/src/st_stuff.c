@@ -699,7 +699,9 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
     }
+#endif
 
+#if __JDOOM__
     if(!IS_NETGAME && hud->automapCheatLevel)
         AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_CHEATARROW);
 #endif

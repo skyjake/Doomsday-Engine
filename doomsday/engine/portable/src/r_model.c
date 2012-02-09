@@ -268,7 +268,9 @@ static void R_LoadModelMD2(DFile* file, model_t* mdl)
         // Translate each vertex.
         for(k = 0, pVtx = pfr->vertices; k < inf->numVertices; ++k, pVtx++)
         {
-            memcpy(frame->normals[k].xyz, avertexnormals[pVtx->lightNormalIndex], sizeof(float) * 3);
+            const byte lightNormalIndex = pVtx->lightNormalIndex;
+
+            memcpy(frame->normals[k].xyz, avertexnormals[lightNormalIndex], sizeof(float) * 3);
 
             for(c = 0; c < 3; ++c)
             {
@@ -429,8 +431,10 @@ static void registerModelSkin(model_t* mdl, int index)
     mdl->skins[index].texture = R_RegisterModelSkin(0, mdl->skins[index].name, mdl->fileName, false);
 
     if(!mdl->skins[index].texture)
-    {   // Not found!
-        VERBOSE(Con_Printf("  \"%s\" (#%i) not found.\n", mdl->skins[index].name, index));
+    {
+        Con_Message("Warning: Failed locating skin \"%s\" (#%i) for model \"%s\".\n"
+                    "  This model will be rendered without a skin.\n",
+                    mdl->skins[index].name, index, F_PrettyPath(mdl->fileName));
     }
 }
 
@@ -493,16 +497,18 @@ static int R_LoadModel(const Uri* uri)
     // Now we can load in the data.
     DFile_Read(file, (uint8_t*)&mdl->header, sizeof(mdl->header));
     if(LONG(mdl->header.magic) == MD2_MAGIC)
-    {   // Load as MD2.
+    {
+        // Load as MD2.
         DFile_Rewind(file);
         R_LoadModelMD2(file, mdl);
     }
     else if(LONG(mdl->header.magic) == DMD_MAGIC)
-    {   // Load as DMD.
+    {
+        // Load as DMD.
         R_LoadModelDMD(file, mdl);
     }
-    else
-    {   // Bad magic!
+    else // Bad magic!
+    {
         // Cancel the loading.
         M_Free(mdl);
         modellist[index] = 0;
@@ -553,45 +559,45 @@ int R_ModelFrameNumForName(int modelnum, char* fname)
 /**
  * Returns the appropriate modeldef for the given state.
  */
-static modeldef_t *GetStateModel(state_t *st, int select)
+static modeldef_t* GetStateModel(state_t* st, int select)
 {
-    modeldef_t         *modef, *iter;
-    int                 mosel;
+    modeldef_t* modef, *iter;
+    int mosel;
 
-    if(!st || !stateModefs[st - states])
-        return 0;
+    if(!st || !stateModefs[st - states]) return 0;
 
     modef = stateModefs[st - states];
     mosel = select & DDMOBJ_SELECTOR_MASK;
 
     if(select)
     {
-        boolean             found;
+        boolean found;
 
-        // Choose the correct selector, or selector zero if the given
-        // one not available.
+        // Choose the correct selector, or selector zero if the given one not available.
         found = false;
         for(iter = modef; iter && !found; iter = iter->selectNext)
-            if(iter->select == mosel)
-            {
-                modef = iter;
-                found = true;
-            }
+        {
+            if(iter->select != mosel) continue;
+
+            modef = iter;
+            found = true;
+        }
     }
 
     return modef;
 }
 
-modeldef_t *R_CheckIDModelFor(const char *id)
+modeldef_t* R_CheckIDModelFor(const char* id)
 {
-    int                 i;
+    int i;
 
-    if(!id[0])
-        return NULL;
+    if(!id[0]) return NULL;
 
     for(i = 0; i < numModelDefs; ++i)
+    {
         if(!strcmp(modefs[i].id, id))
             return modefs + i;
+    }
     return NULL;
 }
 
@@ -600,24 +606,23 @@ modeldef_t *R_CheckIDModelFor(const char *id)
  * state and tics of the mobj. Returns the modeldefs that are in effect
  * at the moment (interlinks checked appropriately).
  */
-float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
+float R_CheckModelFor(mobj_t* mo, modeldef_t** modef, modeldef_t** nextmodef)
 {
-    float               interp = -1;
-    state_t            *st = mo->state;
-    modeldef_t         *mdit;
-    boolean             worldTime = false;
+    float interp = -1;
+    state_t* st = mo->state;
+    modeldef_t* mdit;
+    boolean worldTime = false;
 
     // By default there are no models.
     *nextmodef = NULL;
     *modef = GetStateModel(st, mo->selector);
-    if(!*modef)
-        return -1; // No model available.
+    if(!*modef) return -1; // No model available.
 
     // World time animation?
     if((*modef)->flags & MFF_WORLD_TIME_ANIM)
     {
-        float               duration = (*modef)->interRange[0];
-        float               offset = (*modef)->interRange[1];
+        float duration = (*modef)->interRange[0];
+        float offset = (*modef)->interRange[1];
 
         // Validate/modify the values.
         if(duration == 0)
@@ -634,12 +639,11 @@ float R_CheckModelFor(mobj_t *mo, modeldef_t **modef, modeldef_t **nextmodef)
         // Calculate the currently applicable intermark.
         interp = 1.0f - (mo->tics - frameTimePos) / (float) st->tics;
     }
-/*
-#if _DEBUG
-if(mo->dPlayer)
-    Con_Printf("itp:%f mot:%i stt:%i\n", interp, mo->tics, st->tics);
-#endif
-*/
+
+/*#if _DEBUG
+    if(mo->dPlayer)
+        Con_Printf("itp:%f mot:%i stt:%i\n", interp, mo->tics, st->tics);
+#endif*/
 
     // First find the modef for the interpoint. Intermark is 'stronger'
     // than interrange.
@@ -667,16 +671,16 @@ if(mo->dPlayer)
     }
     else if(st->nextState > 0) // Check next state.
     {
-        int                 max;
-        boolean             foundNext;
-        state_t            *it;
+        boolean foundNext;
+        state_t* it;
+        int max;
 
         // Find the appropriate state based on interrange.
         it = states + st->nextState;
         foundNext = false;
         if((*modef)->interRange[1] < 1)
         {
-            boolean             stopScan;
+            boolean stopScan;
 
             // Current modef doesn't interpolate to the end, find the
             // proper destination modef (it isn't just the next one).
@@ -696,7 +700,8 @@ if(mo->dPlayer)
                     // Scan interlinks, then go to the next state.
                     if((mdit = GetStateModel(it, mo->selector)) && mdit->interNext)
                     {
-                        boolean                 isDone = false;
+                        boolean isDone = false;
+
                         while(!isDone)
                         {
                             mdit = mdit->interNext;
@@ -751,10 +756,9 @@ static model_frame_t* R_GetModelFrame(int model, int frame)
     return modellist[model]->frames + frame;
 }
 
-static void R_GetModelBounds(int model, int frame, float min[3],
-                             float max[3])
+static void R_GetModelBounds(int model, int frame, float min[3], float max[3])
 {
-    model_frame_t*      mframe = R_GetModelFrame(model, frame);
+    model_frame_t* mframe = R_GetModelFrame(model, frame);
 
     if(!mframe)
         Con_Error("R_GetModelBounds: bad model/frame.\n");
@@ -768,7 +772,7 @@ static void R_GetModelBounds(int model, int frame, float min[3],
  */
 static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
 {
-    float               min[3], max[3];
+    float min[3], max[3];
 
     R_GetModelBounds(model, frame, min, max);
     *top = max[VY];
@@ -781,15 +785,14 @@ static float R_GetModelHRange(int model, int frame, float *top, float *bottom)
  * The measurements are based on submodel zero. The scaling is done
  * uniformly!
  */
-static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
+static void R_ScaleModel(modeldef_t* mf, float destHeight, float offset)
 {
-    submodeldef_t      *smf = &mf->sub[0];
-    int                 i;
-    float               top, bottom, height;
-    float               scale;
+    submodeldef_t* smf = &mf->sub[0];
+    float top, bottom, height, scale;
+    int i;
 
-    if(!smf->model)
-        return;                 // No model to scale!
+    // No model to scale?
+    if(!smf->model) return;
 
     // Find the top and bottom heights.
     height = R_GetModelHRange(smf->model, smf->frame, &top, &bottom);
@@ -835,8 +838,8 @@ static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 
 float R_GetModelVisualRadius(modeldef_t* mf)
 {
-    int                 i;
-    float               maxRadius = 0;
+    float maxRadius = 0;
+    int i;
 
     if(!mf->sub[0].model)
         return 0;
@@ -844,10 +847,9 @@ float R_GetModelVisualRadius(modeldef_t* mf)
     // Use the first frame bounds.
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
-        float               min[3], max[3], radius;
+        float min[3], max[3], radius;
 
-        if(!mf->sub[i].model)
-            break;
+        if(!mf->sub[i].model) break;
 
         R_GetModelBounds(mf->sub[i].model, mf->sub[i].frame, min, max);
 
@@ -1311,7 +1313,7 @@ void R_SetModelFrame(modeldef_t* modef, int frame)
     }
 }
 
-void R_PrecacheModelSkins(modeldef_t* modef)
+void R_PrecacheModel(modeldef_t* modef)
 {
     int k, sub;
     model_t* mdl;
@@ -1330,35 +1332,33 @@ void R_PrecacheModelSkins(modeldef_t* modef)
             tex = mdl->skins[k].texture;
             if(tex)
             {
-                texturevariantspecification_t* texSpec =
-                    GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                        (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
-                        GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-                GL_PrepareTexture(tex, texSpec);
+                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
+        }
+
+        // Load the shiny skin too.
+        tex = modef->sub[sub].shinySkin;
+        if(tex)
+        {
+            GL_PrepareTexture(tex, Rend_ModelShinyTextureSpec());
         }
     }
 }
 
-void R_PrecacheSkinsForState(int stateIndex)
+void R_PrecacheModelsForState(int stateIndex)
 {
-    if(stateIndex <= 0 || stateIndex >= defs.count.states.num ||
-       !stateModefs[stateIndex])
-        return;
+    if(!useModels) return;
+    if(stateIndex <= 0 || stateIndex >= defs.count.states.num) return;
+    if(!stateModefs[stateIndex]) return;
 
-    if(useModels)
-        R_PrecacheModelSkins(stateModefs[stateIndex]);
+    R_PrecacheModel(stateModefs[stateIndex]);
 }
 
-/**
- * The skins are also bound here once so they should be ready for use the
- * next time they're needed.
- */
-int R_PrecacheSkinsForMobj(thinker_t* th, void* context)
+int R_PrecacheModelsForMobj(thinker_t* th, void* context)
 {
-    int                 i;
-    mobj_t*             mo = (mobj_t*) th;
-    modeldef_t*         modef;
+    mobj_t* mo = (mobj_t*) th;
+    modeldef_t* modef;
+    int i;
 
     if(!(useModels && precacheSkins))
         return true;
@@ -1366,14 +1366,11 @@ int R_PrecacheSkinsForMobj(thinker_t* th, void* context)
     // Check through all the model definitions.
     for(i = 0, modef = modefs; i < numModelDefs; ++i, modef++)
     {
-        if(!modef->state)
-            continue;
-        if(mo->type < 0 || mo->type >= defs.count.mobjs.num)
-            continue; // Hmm?
-        if(stateOwners[modef->state - states] != &mobjInfo[mo->type])
-            continue;
+        if(!modef->state) continue;
+        if(mo->type < 0 || mo->type >= defs.count.mobjs.num) continue; // Hmm?
+        if(stateOwners[modef->state - states] != &mobjInfo[mo->type]) continue;
 
-        R_PrecacheModelSkins(modef);
+        R_PrecacheModel(modef);
     }
 
     return false; // Used as iterator.

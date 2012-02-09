@@ -678,152 +678,165 @@ void R_LoadColorPalettes(void)
 }
 
 /**
- * \todo Read this information from a definition (ideally with more user
- * friendly mnemonics).
+ * @todo Read this information from a definition (ideally with more user
+ *       friendly mnemonics...).
  */
 void R_LoadVectorGraphics(void)
 {
-#define R (1.0f)
-    const SvgLine keysquare[] = {
-        { {0, 0}, {R / 4, -R / 2} },
-        { {R / 4, -R / 2}, {R / 2, -R / 2} },
-        { {R / 2, -R / 2}, {R / 2, R / 2} },
-        { {R / 2, R / 2}, {R / 4, R / 2} },
-        { {R / 4, R / 2}, {0, 0} }, // Handle part type thing.
-        { {0, 0}, {-R, 0} }, // Stem.
-        { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
-        { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
+#define R                          (1.0f)
+#define NUMITEMS(x)                (sizeof(x)/sizeof((x)[0]))
+
+    const Point2Rawf keyPoints[] = {
+        {-3 * R / 4, 0}, {-3 * R / 4, -R / 4}, // Mid tooth.
+        {    0,      0}, {   -R,      0}, {   -R, -R / 2}, // Shaft and end tooth.
+
+        {    0,      0}, {R / 4, -R / 2}, // Bow.
+        {R / 2, -R / 2}, {R / 2,  R / 2},
+        {R / 4,  R / 2}, {    0,      0},
     };
-    const SvgLine thintriangle_guy[] = {
-        { {-R / 2, R - R / 2}, {R, 0} }, // >
-        { {R, 0}, {-R / 2, -R + R / 2} },
-        { {-R / 2, -R + R / 2}, {-R / 2, R - R / 2} } // |>
+    const def_svgline_t key[] = {
+        { 2, &keyPoints[ 0] },
+        { 3, &keyPoints[ 2] },
+        { 6, &keyPoints[ 5] }
+    };
+    const Point2Rawf thintrianglePoints[] = {
+        {-R / 2,  R - R / 2},
+        {     R,          0}, // `
+        {-R / 2, -R + R / 2}, // /
+        {-R / 2,  R - R / 2} // |>
+    };
+    const def_svgline_t thintriangle[] = {
+        { 4, thintrianglePoints },
     };
 #if __JDOOM__ || __JDOOM64__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 4} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 4} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 4} }, // >---->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 4} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 4} }, // >>--->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4} }
+    const Point2Rawf arrowPoints[] = {
+        {    -R + R / 8, 0},  {             R, 0}, // -----
+        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
+        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
+        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
     };
-    const SvgLine cheat_player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 6} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 6} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
-        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
-        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
-        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
-        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
-        { {-R / 6, -R / 6}, {0, -R / 6} },
-        { {0, -R / 6}, {0, R / 4} },
-        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
-        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
-        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
+    const def_svgline_t arrow[] = {
+        { 2, &arrowPoints[ 0] },
+        { 3, &arrowPoints[ 2] },
+        { 3, &arrowPoints[ 5] },
+        { 3, &arrowPoints[ 8] }
     };
-#elif __JHERETIC__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 4, 0}, {0, 0} }, // center line.
-        { {-R + R / 4, R / 8}, {R, 0} }, // blade
-        { {-R + R / 4, -R / 8}, {R, 0} },
-        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
-        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
-        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, //crosspiece connectors
-        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
-        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
-        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
-        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+#elif __JHERETIC__ || __JHEXEN__
+    const Point2Rawf arrowPoints[] = {
+        {-R + R / 4,      0}, {         0,      0}, // center line.
+        {-R + R / 4,  R / 8}, {         R,      0}, {-R + R / 4, -R / 8}, // blade
+
+        {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}, // guard
+        {-R + R / 4,  R / 4}, {-R + R / 8,  R / 4},
+        {-R + R / 8, -R / 4},
+
+        {-R + R / 8, -R / 8}, {-R - R / 4, -R / 8}, // hilt
+        {-R - R / 4,  R / 8}, {-R + R / 8,  R / 8},
     };
-    const SvgLine cheat_player_arrow[] = {
-        { {-R + R / 8, 0}, {R, 0} }, // -----
-        { {R, 0}, {R - R / 2, R / 6} }, // ----->
-        { {R, 0}, {R - R / 2, -R / 6} },
-        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
-        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
-        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
-        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
-        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
-        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
-        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
-        { {-R / 6, -R / 6}, {0, -R / 6} },
-        { {0, -R / 6}, {0, R / 4} },
-        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
-        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
-        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
-    };
-#elif __JHEXEN__
-    const SvgLine player_arrow[] = {
-        { {-R + R / 4, 0}, {0, 0} }, // center line.
-        { {-R + R / 4, R / 8}, {R, 0} }, // blade
-        { {-R + R / 4, -R / 8}, {R, 0} },
-        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
-        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
-        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, // crosspiece connectors
-        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
-        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
-        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
-        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+    const def_svgline_t arrow[] = {
+        { 2, &arrowPoints[ 0] },
+        { 3, &arrowPoints[ 2] },
+        { 5, &arrowPoints[ 5] },
+        { 4, &arrowPoints[10] }
     };
 #endif
-#undef R
-    const SvgLine crossHair1[] = { // + (open center)
-        { {-1,  0}, {-.4f, 0} },
-        { { 0, -1}, { 0,  -.4f} },
-        { { 1,  0}, { .4f, 0} },
-        { { 0,  1}, { 0,   .4f} }
+#if __JDOOM__
+    const Point2Rawf cheatarrowPoints[] = {
+        {    -R + R / 8, 0},  {             R, 0}, // -----
+        { R - R / 2, -R / 4}, {             R, 0}, { R - R / 2,  R / 4}, // ----->
+        {-R - R / 8, -R / 4}, {    -R + R / 8, 0}, {-R - R / 8,  R / 4}, // >---->
+        {-R + R / 8, -R / 4}, {-R + 3 * R / 8, 0}, {-R + R / 8,  R / 4}, // >>--->
+
+        {        -R / 2,      0}, {        -R / 2, -R / 6}, // >>-d--->
+        {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6,  R / 4},
+
+        {        -R / 6,      0}, {        -R / 6, -R / 6}, // >>-dd-->
+        {             0, -R / 6}, {             0,  R / 4},
+
+        {         R / 6,  R / 4}, {         R / 6, -R / 7}, // >>-ddt->
+        {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}
     };
-    const SvgLine crossHair2[] = { // > <
-        { {-1, -.714f}, {-.286f, 0} },
-        { {-1,  .714f}, {-.286f, 0} },
-        { { 1, -.714f}, { .286f, 0} },
-        { { 1,  .714f}, { .286f, 0} }
+    const def_svgline_t cheatarrow[] = {
+        { 2, &cheatarrowPoints[ 0] },
+        { 3, &cheatarrowPoints[ 2] },
+        { 3, &cheatarrowPoints[ 5] },
+        { 3, &cheatarrowPoints[ 8] },
+        { 4, &cheatarrowPoints[11] },
+        { 4, &cheatarrowPoints[15] },
+        { 4, &cheatarrowPoints[19] }
     };
-    const SvgLine crossHair3[] = { // square
-        { {-1, -1}, {-1,  1} },
-        { {-1,  1}, { 1,  1} },
-        { { 1,  1}, { 1, -1} },
-        { { 1, -1}, {-1, -1} }
+#endif
+
+    const Point2Rawf crossPoints[] = { // + (open center)
+        {-R,  0}, {-R / 5 * 2,          0},
+        { 0, -R}, {         0, -R / 5 * 2},
+        { R,  0}, { R / 5 * 2,          0},
+        { 0,  R}, {         0,  R / 5 * 2}
     };
-    const SvgLine crossHair4[] = { // square (open center)
-        { {-1, -1}, {-1, -.5f} },
-        { {-1, .5f}, {-1, 1} },
-        { {-1, 1}, {-.5f, 1} },
-        { {.5f, 1}, {1, 1} },
-        { { 1, 1}, {1, .5f} },
-        { { 1, -.5f}, {1, -1} },
-        { { 1, -1}, {.5f, -1} },
-        { {-.5f, -1}, {-1, -1} }
+    const def_svgline_t cross[] = {
+        { 2, &crossPoints[0] },
+        { 2, &crossPoints[2] },
+        { 2, &crossPoints[4] },
+        { 2, &crossPoints[6] }
     };
-    const SvgLine crossHair5[] = { // diamond
-        { { 0, -1}, { 1,  0} },
-        { { 1,  0}, { 0,  1} },
-        { { 0,  1}, {-1,  0} },
-        { {-1,  0}, { 0, -1} }
+    const Point2Rawf dblanglePoints[] = { // > <
+        {-R, -R * 10 / 14}, {-(R - (R * 10 / 14)), 0}, {-R,  R * 10 / 14}, // >
+        { R, -R * 10 / 14}, {  R - (R * 10 / 14) , 0}, { R,  R * 10 / 14}, // <
     };
-    const SvgLine crossHair6[] = { // ^
-        { {-1, -1}, { 0,  0} },
-        { { 0,  0}, { 1, -1} }
+    const def_svgline_t dblangle[] = {
+        { 3, &dblanglePoints[0] },
+        { 3, &dblanglePoints[3] }
+    };
+    const Point2Rawf squarePoints[] = { // square
+        {-R, -R}, {-R,  R},
+        { R,  R}, { R, -R},
+        {-R, -R}
+    };
+    const def_svgline_t square[] = {
+        { 5, squarePoints },
+    };
+    const Point2Rawf squarecornersPoints[] = { // square (open center)
+        {   -R, -R / 2}, {-R, -R}, {-R / 2,      -R}, // topleft
+        {R / 2,     -R}, { R, -R}, {     R,  -R / 2}, // topright
+        {   -R,  R / 2}, {-R,  R}, {-R / 2,       R}, // bottomleft
+        {R / 2,      R}, { R,  R}, {     R,   R / 2}, // bottomright
+    };
+    const def_svgline_t squarecorners[] = {
+        { 3, &squarecornersPoints[ 0] },
+        { 3, &squarecornersPoints[ 3] },
+        { 3, &squarecornersPoints[ 6] },
+        { 3, &squarecornersPoints[ 9] }
+    };
+    const Point2Rawf diamondPoints[] = { // diamond
+        { 0, -R}, { R,  0},
+        { 0,  R}, {-R,  0},
+        { 0, -R}
+    };
+    const def_svgline_t diamond[] = {
+        { 5, diamondPoints }
+    };
+    const Point2Rawf anglePoints[] = { // v
+        {-R, -R}, { 0,  0}, { R, -R}
+    };
+    const def_svgline_t angle[] = {
+        { 3, anglePoints }
     };
 
-    R_NewSvg(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
-    R_NewSvg(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
-    R_NewSvg(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
-#if !__JHEXEN__
-    R_NewSvg(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
+    R_NewSvg(VG_KEY, key, NUMITEMS(key));
+    R_NewSvg(VG_TRIANGLE, thintriangle, NUMITEMS(thintriangle));
+    R_NewSvg(VG_ARROW, arrow, NUMITEMS(arrow));
+#if __JDOOM__
+    R_NewSvg(VG_CHEATARROW, cheatarrow, NUMITEMS(cheatarrow));
 #endif
-    R_NewSvg(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
-    R_NewSvg(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
-    R_NewSvg(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
-    R_NewSvg(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
-    R_NewSvg(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
-    R_NewSvg(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
+    R_NewSvg(VG_XHAIR1, cross, NUMITEMS(cross));
+    R_NewSvg(VG_XHAIR2, dblangle, NUMITEMS(dblangle));
+    R_NewSvg(VG_XHAIR3, square, NUMITEMS(square));
+    R_NewSvg(VG_XHAIR4, squarecorners, NUMITEMS(squarecorners));
+    R_NewSvg(VG_XHAIR5, diamond, NUMITEMS(diamond));
+    R_NewSvg(VG_XHAIR6, angle, NUMITEMS(angle));
+
+#undef NUMITEMS
+#undef R
 }
 
 /**

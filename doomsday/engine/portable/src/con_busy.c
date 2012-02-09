@@ -187,6 +187,7 @@ int Con_Busy2(BusyTask* task)
     }
 
     DD_IgnoreInput(wasIgnoringInput);
+    DD_ResetTimer();
 
     return result;
 }

@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 823 <--
+; Highest ordinal is currently: --> 824 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -576,6 +576,7 @@ EXPORTS
     P_MobjSectorsIterator       @72 NONAME
     P_MobjForID                 @333 NONAME
     Mobj_OriginSmoothed         @702 NONAME
+    Mobj_AngleSmoothed          @824 NONAME
     ClMobj_IsValid              @103 NONAME
     ClMobj_Find                 @753 NONAME
     ClMobj_EnableLocalActions   @754 NONAME
@@ -612,7 +613,7 @@ EXPORTS
     R_SetupMap                  @89 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
-    R_PrecacheSkinsForState     @240 NONAME
+    R_PrecacheModelsForState    @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
 
