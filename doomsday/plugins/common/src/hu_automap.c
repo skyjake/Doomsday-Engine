@@ -1002,7 +1002,7 @@ static int rendThingPoint(mobj_t* mo, void* context)
             if(keyColor != -1)
             {
                 R_GetColorPaletteRGBf(0, keyColor, keyColorRGB, false);
-                vgId  = VG_KEYSQUARE;
+                vgId  = VG_KEY;
                 color = keyColorRGB;
                 angle = 0;
                 isVisible = true;

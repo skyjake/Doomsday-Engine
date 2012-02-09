@@ -28,6 +28,19 @@
 #include "dd_vectorgraphic.h"
 
 /**
+ * @defgroup svgLineFlags  SVG Line Flags
+ */
+///@{
+#define SLF_IS_LOOP                 0x1 ///< Cap the line joining the rightmost edge to the leftmost with additional segment(s).
+///@}
+
+typedef struct SvgLine_s {
+    uint numPoints;
+    Point2Rawf* points;
+    int flags;
+} SvgLine;
+
+/**
  * Svg. Scaleable Vector Graphic.
  */
 struct Svg_s; // The svg instance (opaque).
@@ -53,6 +66,6 @@ svgid_t Svg_UniqueId(Svg* svg);
  *
  * @return  Newly created Svg instance if definition was valid else @a NULL
  */
-Svg* Svg_FromDef(svgid_t uniqueId, const SvgLine* lines, size_t numLines);
+Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, size_t numLines);
 
 #endif /* LIBDENG_SVG_H */

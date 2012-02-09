@@ -206,7 +206,7 @@ void GL_DrawSvg(svgid_t id, const Point2Rawf* origin)
     GL_DrawSvg2(id, origin, DEFAULT_SCALE);
 }
 
-void R_NewSvg(svgid_t id, const SvgLine* lines, size_t numLines)
+void R_NewSvg(svgid_t id, const def_svgline_t* lines, uint numLines)
 {
     Svg* svg, *oldSvg;
 
