@@ -1357,7 +1357,7 @@ void R_SetupMap(int mode, int flags)
     case DDSMM_INITIALIZE:
         // Switch to fast malloc mode in the zone. This is intended for large
         // numbers of mallocs with no frees in between.
-        Z_EnableFastMalloc(false);
+        Z_EnableFastMalloc(true);
 
 #ifdef _DEBUG
         Con_Message("R_SetupMap: ddMapSetup begins (fast mallocs).\n");
