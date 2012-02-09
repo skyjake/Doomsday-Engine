@@ -280,7 +280,7 @@ void R_SkyPrecache(void)
         for(i = 0, sky = skyModels; i < MAX_SKY_MODELS; ++i, sky++)
         {
             if(!sky->def) continue;
-            R_PrecacheModelSkins(sky->model);
+            R_PrecacheModel(sky->model);
         }
     }
 }

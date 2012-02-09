@@ -612,7 +612,7 @@ EXPORTS
     R_SetupMap                  @89 NONAME
 
     R_PrecacheMobjNum           @427 NONAME
-    R_PrecacheSkinsForState     @240 NONAME
+    R_PrecacheModelsForState    @240 NONAME
 
     R_RenderPlayerView          @90 NONAME
 

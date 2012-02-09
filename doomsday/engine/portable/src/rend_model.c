@@ -767,31 +767,86 @@ static void Mod_ShinyCoords(int count, dgl_texcoord_t* coords, dgl_vertex_t* nor
     }
 }
 
+static int chooseSelSkin(modeldef_t* mf, int submodel, int selector)
+{
+    int i = (selector >> DDMOBJ_SELECTOR_SHIFT) &
+            mf->def->sub[submodel].selSkinBits[0]; // Selskin mask
+    int c = mf->def->sub[submodel].selSkinBits[1]; // Selskin shift
+
+    if(c > 0)
+        i >>= c;
+    else
+        i <<= -c;
+
+    if(i > 7)
+        i = 7; // Maximum number of skins for selskin.
+    if(i < 0)
+        i = 0; // Improbable (impossible?), but doesn't hurt.
+
+    return mf->def->sub[submodel].selSkins[i];
+}
+
+static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tmap)
+{
+    submodeldef_t* smf = &mf->sub[submodel];
+    model_t* mdl = modellist[smf->model];
+    int skin = smf->skin;
+
+    // Selskin overrides the skin range.
+    if(smf->flags & MFF_SELSKIN)
+    {
+        skin = chooseSelSkin(mf, submodel, selector);
+    }
+
+    // Is there a skin range for this frame?
+    // (During model setup skintics and skinrange are set to >0.)
+    if(smf->skinRange > 1)
+    {
+        int offset;
+
+        // What rule to use for determining the skin?
+        if(smf->flags & MFF_IDSKIN)
+        {
+            offset = id;
+        }
+        else
+        {
+            offset = SECONDS_TO_TICKS(ddMapTime) / mf->skinTics;
+        }
+
+        skin += offset % smf->skinRange;
+    }
+
+    // Need translation?
+    if(smf->flags & MFF_SKINTRANS)
+        skin = tmap;
+
+    if(skin < 0 || skin >= mdl->info.numSkins)
+        skin = 0;
+
+    return skin;
+}
+
 /**
  * Render a submodel from the vissprite.
  */
 static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 {
-    modeldef_t *mf = params->mf, *mfNext = params->nextMF;
-    submodeldef_t *smf = &mf->sub[number];
-    model_t    *mdl = modellist[smf->model];
-    model_frame_t *frame = Mod_GetVisibleFrame(mf, number, params->id);
-    model_frame_t *nextFrame = NULL;
+    modeldef_t* mf = params->mf, *mfNext = params->nextMF;
+    submodeldef_t* smf = &mf->sub[number];
+    model_t* mdl = modellist[smf->model];
+    model_frame_t* frame = Mod_GetVisibleFrame(mf, number, params->id);
+    model_frame_t* nextFrame = NULL;
 
-    int         subFlags = smf->flags;
-    int         numVerts;
-    int         useSkin;
-    int         i, c;
-    float       endPos, offset;
-    float       alpha;
-    float       delta[3], color[4];
-    float       ambient[4];
-    float       shininess, *shinyColor;
-    float       normYaw, normPitch, shinyAng, shinyPnt;
-    float       inter = params->inter;
+    int numVerts, useSkin, c;
+    float endPos, offset, alpha;
+    float delta[3], color[4], ambient[4];
+    float shininess, *shinyColor;
+    float normYaw, normPitch, shinyAng, shinyPnt;
+    float inter = params->inter;
     blendmode_t blending;
     TextureVariant* skinTexture = NULL, *shinyTexture = NULL;
-    int         zSign = (params->mirror? -1 : 1);
+    int zSign = (params->mirror? -1 : 1);
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -818,39 +873,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         blending = smf->blendMode;
     }
 
-    useSkin = smf->skin;
-
-    // Selskin overrides the skin range.
-    if(subFlags & MFF_SELSKIN)
-    {
-        i = (params->selector >> DDMOBJ_SELECTOR_SHIFT) &
-            mf->def->sub[number].selSkinBits[0]; // Selskin mask
-        c = mf->def->sub[number].selSkinBits[1]; // Selskin shift
-        if(c > 0)
-            i >>= c;
-        else
-            i <<= -c;
-        if(i > 7)
-            i = 7; // Maximum number of skins for selskin.
-        if(i < 0)
-            i = 0; // Improbable (impossible?), but doesn't hurt.
-        useSkin = mf->def->sub[number].selSkins[i];
-    }
-
-    // Is there a skin range for this frame?
-    // (During model setup skintics and skinrange are set to >0.)
-    if(smf->skinRange > 1)
-    {
-        // What rule to use for determining the skin?
-        useSkin +=
-            (subFlags & MFF_IDSKIN ? params->id : SECONDS_TO_TICKS(ddMapTime) / mf->skinTics) % smf->skinRange;
-    }
+    useSkin = chooseSkin(mf, number, params->id, params->selector, params->tmap);
 
     // Scale interpos. Intermark becomes zero and endmark becomes one.
     // (Full sub-interpolation!) But only do it for the standard
     // interrange. If a custom one is defined, don't touch interpos.
     if((mf->interRange[0] == 0 && mf->interRange[1] == 1) ||
-       (subFlags & MFF_WORLD_TIME_ANIM))
+       (smf->flags & MFF_WORLD_TIME_ANIM))
     {
         endPos = (mf->interNext ? mf->interNext->interMark : 1);
         inter = (params->inter - mf->interMark) / (endPos - mf->interMark);
@@ -867,7 +896,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     else
     {
         // Check for possible interpolation.
-        if(frameInter && mfNext && !(subFlags & MFF_DONT_INTERPOLATE))
+        if(frameInter && mfNext && !(smf->flags & MFF_DONT_INTERPOLATE))
         {
             if(mfNext->sub[number].model == smf->model)
             {
@@ -875,10 +904,6 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             }
         }
     }
-
-    // Need translation?
-    if(subFlags & MFF_SKINTRANS)
-        useSkin = params->tmap;
 
     // Clamp interpolation.
     if(inter < 0)
@@ -949,7 +974,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     // Determine the suitable LOD.
     if(mdl->info.numLODs > 1 && rend_model_lod != 0)
     {
-        float   lodFactor;
+        float lodFactor;
 
         lodFactor = rend_model_lod * theWindow->geometry.size.width / 640.0f / (fieldOfView / 90.0f);
         if(lodFactor)
@@ -987,13 +1012,15 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                         mf->offset[VY];
 
     // Calculate lighting.
-    if((subFlags & MFF_FULLBRIGHT) && !(subFlags & MFF_DIM))
-    {   // Submodel-specific lighting override.
+    if((smf->flags & MFF_FULLBRIGHT) && !(smf->flags & MFF_DIM))
+    {
+        // Submodel-specific lighting override.
         ambient[CR] = ambient[CG] = ambient[CB] = ambient[CA] = 1;
         Mod_FullBrightVertexColors(numVerts, modelColors, alpha);
     }
     else if(!params->vLightListIdx)
-    {   // Lit uniformly.
+    {
+        // Lit uniformly.
         ambient[CR] = params->ambientColor[CR];
         ambient[CG] = params->ambientColor[CG];
         ambient[CB] = params->ambientColor[CB];
@@ -1001,7 +1028,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         Mod_FixedVertexColors(numVerts, modelColors, ambient);
     }
     else
-    {   // Lit normally.
+    {
+        // Lit normally.
         ambient[CR] = params->ambientColor[CR];
         ambient[CG] = params->ambientColor[CG];
         ambient[CB] = params->ambientColor[CB];
@@ -1033,22 +1061,21 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     if(shininess > 0)
-    {   // Calculate shiny coordinates.
+    {
+        // Calculate shiny coordinates.
         shinyColor = mf->def->sub[number].shinyColor;
 
         // With psprites, add the view angle/pitch.
         offset = params->shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
-        normYaw =
-            M_CycleIntoRange(((params->viewAlign ? params->yawAngleOffset :
-                                params->yaw) + offset) / 360, 1);
+        normYaw = M_CycleIntoRange(((params->viewAlign ? params->yawAngleOffset
+                                                       : params->yaw) + offset) / 360, 1);
 
         offset = params->shinePitchOffset;
 
-        normPitch =
-            M_CycleIntoRange(((params->viewAlign ? params->pitchAngleOffset :
-                                params->pitch) + offset) / 360, 1);
+        normPitch = M_CycleIntoRange(((params->viewAlign ? params->pitchAngleOffset
+                                                         : params->pitch) + offset) / 360, 1);
 
         if(params->shinepspriteCoordSpace)
         {
@@ -1069,9 +1096,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                 delta[VZ] += vy;
             }
 
-            shinyAng = QATAN2(delta[VZ],
-                              M_ApproxDistancef(delta[VX], delta[VY])) / PI
-                + 0.5f; // shinyAng is [0,1]
+            shinyAng = QATAN2(delta[VZ], M_ApproxDistancef(delta[VX], delta[VY])) / PI + 0.5f; // shinyAng is [0,1]
 
             shinyPnt = QATAN2(delta[VY], delta[VX]) / (2 * PI);
         }
@@ -1081,7 +1106,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
                         mf->def->sub[number].shinyReact);
 
         // Shiny color.
-        if(subFlags & MFF_SHINY_LIT)
+        if(smf->flags & MFF_SHINY_LIT)
         {
             for(c = 0; c < 3; ++c)
                 color[c] = ambient[c] * shinyColor[c];
@@ -1095,7 +1120,8 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     if(renderTextures == 2)
-    {   // For lighting debug, render all surfaces using the gray texture.
+    {
+        // For lighting debug, render all surfaces using the gray texture.
         material_t* mat = Materials_ToMaterial(Materials_ResolveUriCString(MN_SYSTEM_NAME":gray"));
         if(mat)
         {
@@ -1112,13 +1138,9 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
     else
     {
-        Texture* tex;
+        Texture* tex = mdl->skins[useSkin].texture;
 
         skinTexture = 0;
-        if(useSkin < 0 || useSkin >= mdl->info.numSkins)
-            useSkin = 0;
-
-        tex = mdl->skins[useSkin].texture;
         if(tex)
         {
             texturevariantspecification_t* texSpec =
@@ -1136,18 +1158,18 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     }
 
     // Twosided models won't use backface culling.
-    if(subFlags & MFF_TWO_SIDED)
+    if(smf->flags & MFF_TWO_SIDED)
         glDisable(GL_CULL_FACE);
 
     glEnable(GL_TEXTURE_2D);
 
     // Render using multiple passes?
     if(!modelShinyMultitex || shininess <= 0 || alpha < 1 ||
-       blending != BM_NORMAL || !(subFlags & MFF_SHINY_SPECULAR) ||
+       blending != BM_NORMAL || !(smf->flags & MFF_SHINY_SPECULAR) ||
        numTexUnits < 2 || !envModAdd)
     {
         // The first pass can be skipped if it won't be visible.
-        if(shininess < 1 || subFlags & MFF_SHINY_SPECULAR)
+        if(shininess < 1 || smf->flags & MFF_SHINY_SPECULAR)
         {
             Mod_SelectTexUnits(1);
             GL_BlendMode(blending);
@@ -1163,7 +1185,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
             glDepthFunc(GL_LEQUAL);
 
             // Set blending mode, two choices: reflected and specular.
-            if(subFlags & MFF_SHINY_SPECULAR)
+            if(smf->flags & MFF_SHINY_SPECULAR)
                 GL_BlendMode(BM_ADD);
             else
                 GL_BlendMode(BM_NORMAL);
@@ -1237,7 +1259,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
     glPopMatrix();
 
     // Normally culling is always enabled.
-    if(subFlags & MFF_TWO_SIDED)
+    if(smf->flags & MFF_TWO_SIDED)
         glEnable(GL_CULL_FACE);
 
     if(zSign < 0)

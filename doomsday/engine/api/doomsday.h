@@ -577,7 +577,7 @@ int DD_GetFrameRate(void);
 void R_SetupMap(int mode, int flags);
 
 void R_PrecacheMobjNum(int mobjtypeNum);
-void R_PrecacheSkinsForState(int stateIndex);
+void R_PrecacheModelsForState(int stateIndex);
 
 void R_RenderPlayerView(int num);
 
