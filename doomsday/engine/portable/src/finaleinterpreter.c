@@ -1109,7 +1109,7 @@ boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
     {int last = 0;
     while(!fi->_gotoEnd && !fi->_wait && !fi->_waitingText && !fi->_waitingPic && !last)
         last = !executeNextCommand(fi);
-    return (fi->_gotoEnd || last);}
+    return (fi->_gotoEnd || (last && fi->flags.can_skip));}
 }
 
 boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
