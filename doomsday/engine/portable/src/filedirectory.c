@@ -103,7 +103,41 @@ static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t no
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
     assert(VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
+
     return addNodesOnSearchPath(p->fileDirectory, p->flags, filePath, p->callback, p->paramaters);
+}
+
+static int addChildNodes(FileDirectory* fd, PathDirectoryNode* node, int flags,
+    int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
+{
+    int result = 0; // Continue iteration.
+
+    assert(fd);
+
+    if(node && PT_BRANCH == PathDirectoryNode_Type(node))
+    {
+        addpathworker_paramaters_t p;
+        ddstring_t searchPattern;
+
+        // Compose the search pattern.
+        Str_Init(&searchPattern);
+        PathDirectory_ComposePath(PathDirectoryNode_Directory(node), node, &searchPattern, NULL, '/');
+        // We're interested in *everything*.
+        Str_AppendChar(&searchPattern, '*');
+
+        // Take a copy of the caller's iteration paramaters.
+        p.fileDirectory = fd;
+        p.callback = callback;
+        p.flags = flags;
+        p.paramaters = paramaters;
+
+        // Process this search.
+        result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
+
+        Str_Free(&searchPattern);
+    }
+
+    return result;
 }
 
 /**
@@ -129,6 +163,7 @@ static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* 
             {
                 if(PT_BRANCH == PathDirectoryNode_Type(node))
                 {
+                    // Descend into this subdirectory.
                     result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
                                                     PATHDIRECTORY_NOHASH, callback, paramaters);
                 }
@@ -142,22 +177,8 @@ static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* 
         {
             if(PT_BRANCH == PathDirectoryNode_Type(node))
             {
-                addpathworker_paramaters_t p;
-                ddstring_t searchPattern;
-
-                // Compose the search pattern. Resolve relative to the base path
-                // if not already absolute. We're interested in *everything*.
-                Str_Init(&searchPattern);
-                Str_Appendf(&searchPattern, "%s*", Str_Text(searchPath));
-
-                p.callback = callback;
-                p.fileDirectory = fd;
-                p.flags = flags;
-                p.paramaters = paramaters;
-
-                // Process this search.
-                result = F_AllResourcePaths2(Str_Text(&searchPattern), flags, addPathWorker, (void*)&p);
-                Str_Free(&searchPattern);
+                // Descend into this subdirectory.
+                result = addChildNodes(fd, node, flags, callback, paramaters);
             }
             else if(callback)
             {
@@ -171,7 +192,7 @@ static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* 
     return result;
 }
 
-static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
+static void resolveSearchPathsAndAddNodes(FileDirectory* fd,
     int flags, const Uri* const* searchPaths, uint searchPathsCount,
     int (*callback) (PathDirectoryNode* node, void* paramaters), void* paramaters)
 {
@@ -182,7 +203,6 @@ static void resolveAndAddSearchPathsToDirectory(FileDirectory* fd,
     {
         ddstring_t* searchPath = Uri_Resolved(searchPaths[i]);
         if(!searchPath) continue;
-        F_AppendMissingSlash(searchPath);
 
         addNodesOnSearchPath(fd, flags, searchPath, callback, paramaters);
         Str_Delete(searchPath);
@@ -216,7 +236,7 @@ FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList, int 
     {
         size_t count;
         Uri** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        resolveAndAddSearchPathsToDirectory(fd, flags, (const Uri**)uris, (uint)count, 0, 0);
+        resolveSearchPathsAndAddNodes(fd, flags, (const Uri**)uris, (uint)count, 0, 0);
         F_DestroyUriList(uris);
     }
     return fd;
@@ -290,7 +310,7 @@ void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* pat
               printUriList(paths, pathsCount, 2/*indent*/) )
 #endif
 
-    resolveAndAddSearchPathsToDirectory(fd, flags, paths, pathsCount, callback, paramaters);
+    resolveSearchPathsAndAddNodes(fd, flags, paths, pathsCount, callback, paramaters);
 }
 
 void FileDirectory_AddPaths2(FileDirectory* fd, int flags, const Uri* const* paths,
