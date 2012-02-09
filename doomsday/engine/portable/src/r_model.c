@@ -1330,12 +1330,15 @@ void R_PrecacheModel(modeldef_t* modef)
             tex = mdl->skins[k].texture;
             if(tex)
             {
-                texturevariantspecification_t* texSpec =
-                    GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                        (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0,
-                        GL_REPEAT, GL_REPEAT, 1, -2, -1, true, true, false, false);
-                GL_PrepareTexture(tex, texSpec);
+                GL_PrepareTexture(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
             }
+        }
+
+        // Load the shiny skin too.
+        tex = modef->sub[sub].shinySkin;
+        if(tex)
+        {
+            GL_PrepareTexture(tex, Rend_ModelShinyTextureSpec());
         }
     }
 }

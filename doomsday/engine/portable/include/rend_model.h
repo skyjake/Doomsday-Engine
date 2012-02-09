@@ -23,6 +23,8 @@
 #ifndef LIBDENG_RENDER_MODEL_H
 #define LIBDENG_RENDER_MODEL_H
 
+struct texturevariantspecification_s;
+
 /// Absolute maximum number of vertices per submodel supported by this module.
 #define RENDER_MAX_MODEL_VERTS  16192
 
@@ -101,6 +103,21 @@ void Rend_ModelShutdown(void);
  *          than RENDER_MAX_MODEL_VERTS.
  */
 boolean Rend_ModelExpandVertexBuffers(uint numVertices);
+
+/**
+ * Lookup the texture specification for diffuse model skins.
+ *
+ * @param  noCompression  @c true= disable texture compression.
+ * @return  Specification to be used when preparing such textures.
+ */
+struct texturevariantspecification_s* Rend_ModelDiffuseTextureSpec(boolean noCompression);
+
+/**
+ * Lookup the texture specification for shiny model skins.
+ *
+ * @return  Specification to be used when preparing such textures.
+ */
+struct texturevariantspecification_s* Rend_ModelShinyTextureSpec(void);
 
 /**
  * Render a submodel according to paramaters.

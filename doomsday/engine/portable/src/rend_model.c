@@ -827,6 +827,22 @@ static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tm
     return skin;
 }
 
+texturevariantspecification_t* Rend_ModelDiffuseTextureSpec(boolean noCompression)
+{
+    return GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
+                                                    (noCompression? TSF_NO_COMPRESSION : 0),
+                                                    0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                                    true, true, false, false);
+}
+
+texturevariantspecification_t* Rend_ModelShinyTextureSpec(void)
+{
+    return GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
+                                                    TSF_NO_COMPRESSION, 0, 0, 0,
+                                                    GL_REPEAT, GL_REPEAT, 1, -2, -1,
+                                                    false, false, false, false);
+}
+
 /**
  * Render a submodel from the vissprite.
  */
@@ -1048,11 +1064,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         Texture* tex = mf->sub[number].shinySkin;
         if(tex)
         {
-            texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_REFLECTION,
-                    TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1,
-                    false, false, false, false);
-            shinyTexture = GL_PrepareTextureVariant(tex, texSpec);
+            shinyTexture = GL_PrepareTextureVariant(tex, Rend_ModelShinyTextureSpec());
         }
         else
         {
@@ -1143,11 +1155,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
         skinTexture = 0;
         if(tex)
         {
-            texturevariantspecification_t* texSpec =
-                GL_TextureVariantSpecificationForContext(TC_MODELSKIN_DIFFUSE,
-                    (!mdl->allowTexComp? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT,
-                    GL_REPEAT, 1, -2, -1, true, true, false, false);
-            skinTexture = GL_PrepareTextureVariant(tex, texSpec);
+            skinTexture = GL_PrepareTextureVariant(tex, Rend_ModelDiffuseTextureSpec(!mdl->allowTexComp));
         }
     }
 
