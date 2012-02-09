@@ -213,10 +213,10 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     // Setup the lines.
     slIt = lines;
     dlIt = svg->lines;
-    for(i = 0; i < finalLineCount; ++i, slIt++)
+    for(i = 0; i < lineCount; ++i, slIt++)
     {
         // Skip lines with missing vertices...
-        if(slIt->numPoints <= 1) continue;
+        if(slIt->numPoints < 2) continue;
 
         dlIt->flags = 0;
 
