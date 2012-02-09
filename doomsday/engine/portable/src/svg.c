@@ -176,7 +176,7 @@ void Svg_Unload(Svg* svg)
     }
 }
 
-Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
+Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, size_t lineCount)
 {
     const def_svgline_t* slIt;
     const Point2Rawf* spIt;
