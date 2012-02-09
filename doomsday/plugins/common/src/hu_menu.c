@@ -125,6 +125,7 @@ static void initAllPages(void);
 static void destroyAllPages(void);
 
 static void initAllObjectsOnAllPages(void);
+static void updatePageObjects(mn_page_t* page);
 
 static void Hu_MenuUpdateCursorState(void);
 
@@ -1951,6 +1952,8 @@ void Hu_MenuSetActivePage(mn_page_t* page)
 
     if(menuActivePage == page) return;
 
+    updatePageObjects(page);
+
     // This is now the "active" page.
     menuActivePage = page;
     MNPage_Initialize(page);
@@ -2168,39 +2171,113 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
 
 static void initPageObjects(mn_page_t* page)
 {
-    mn_object_t* obj;
+    mn_object_t* ob;
     assert(page);
 
     page->objectsCount = 0;
 
-    for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
+    for(ob = page->objects; MNObject_Type(ob) != MN_NONE; ob++)
     {
         page->objectsCount += 1;
 
-        obj->_page = page;
-        obj->_geometry = Rect_New();
+        ob->_page = page;
+        ob->_geometry = Rect_New();
 
-        MNObject_SetFlags(obj, FO_CLEAR, MNF_FOCUS);
-        if(0 != obj->_shortcut)
+        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+        if(0 != ob->_shortcut)
         {
-            int shortcut = obj->_shortcut;
-            obj->_shortcut = 0; // Clear invalid defaults.
-            MNObject_SetShortcut(obj, shortcut);
+            int shortcut = ob->_shortcut;
+            ob->_shortcut = 0; // Clear invalid defaults.
+            MNObject_SetShortcut(ob, shortcut);
         }
 
-        // Update objects linked to cvars.
-        switch(MNObject_Type(obj))
+        switch(MNObject_Type(ob))
         {
+        case MN_TEXT:
+        case MN_MOBJPREVIEW:
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            break;
+
         case MN_BUTTON: {
-            const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
-            mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+
+            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
+            {
+                btn->text = GET_TXT(PTR2INT(btn->text));
+                /// @fixme Should not be done here.
+                MNObject_SetShortcut(ob, btn->text[0]);
+            }
+            break; }
+
+        case MN_EDIT: {
+            mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+
+            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
+            {
+                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
+            }
+            break; }
+
+        case MN_LIST:
+        case MN_LISTINLINE: {
+            mndata_list_t* list = (mndata_list_t*) ob->_typedata;
+            int i;
+
+            for(i = 0; i < list->count; ++i)
+            {
+                mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[i];
+                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
+                {
+                    item->text = GET_TXT(PTR2INT(item->text));
+                }
+            }
+            break; }
+
+        case MN_COLORBOX: {
+            mndata_colorbox_t* cbox = (mndata_colorbox_t*) ob->_typedata;
+
+            if(!cbox->rgbaMode)
+                cbox->a = 1.f;
+            if(0 >= cbox->width)
+                cbox->width = MNDATA_COLORBOX_WIDTH;
+            if(0 >= cbox->height)
+                cbox->height = MNDATA_COLORBOX_HEIGHT;
+            break; }
+
+        default: break;
+        }
+    }
+}
+
+/**
+ * Main task is to update objects linked to cvars.
+ */
+static void updatePageObjects(mn_page_t* page)
+{
+    mn_object_t* ob;
+    assert(page);
+
+    for(ob = page->objects; MNObject_Type(ob) != MN_NONE; ob++)
+    {
+        switch(MNObject_Type(ob))
+        {
+        case MN_TEXT:
+        case MN_MOBJPREVIEW:
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            break;
+
+        case MN_BUTTON: {
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
+
             if(action && action->callback == Hu_MenuCvarButton)
             {
                 cvarbutton_t* cvb;
-                if(obj->data1)
+                if(ob->data1)
                 {
                     // This button has already been initialized.
-                    cvb = (cvarbutton_t*) obj->data1;
+                    cvb = (cvarbutton_t*) ob->data1;
                     cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
                     //strcpy(obj->text, cvb->active ? cvb->yes : cvb->no);
                     btn->text = cvb->active ? cvb->yes : cvb->no;
@@ -2210,10 +2287,10 @@ static void initPageObjects(mn_page_t* page)
                 // Find the cvarbutton representing this one.
                 for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
                 {
-                    if(!strcmp(btn->data, cvb->cvarname) && obj->data2 == cvb->mask)
+                    if(!strcmp(btn->data, cvb->cvarname) && ob->data2 == cvb->mask)
                     {
                         cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
-                        obj->data1 = (void*) cvb;
+                        ob->data1 = (void*) cvb;
                         btn->yes = cvb->yes;
                         btn->no  = cvb->no;
                         btn->text = (cvb->active ? btn->yes : btn->no);
@@ -2222,29 +2299,32 @@ static void initPageObjects(mn_page_t* page)
                 }
                 cvb = NULL;
             }
-            break;
-          }
-        case MN_LIST: {
-            const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
-            mndata_list_t* list = (mndata_list_t*) obj->_typedata;
+            break; }
+
+        case MN_LIST:
+        case MN_LISTINLINE: {
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_list_t* list = (mndata_list_t*) ob->_typedata;
+
             if(action && action->callback == Hu_MenuCvarList)
             {
-                MNList_SelectItemByValue(obj, MNLIST_SIF_NO_ACTION, Con_GetInteger(list->data));
+                MNList_SelectItemByValue(ob, MNLIST_SIF_NO_ACTION, Con_GetInteger(list->data));
             }
-            break;
-          }
+            break; }
+
         case MN_EDIT: {
-            const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
-            mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_edit_t* edit = (mndata_edit_t*) ob->_typedata;
+
             if(action && action->callback == Hu_MenuCvarEdit)
             {
-                MNEdit_SetText(obj, MNEDIT_STF_NO_ACTION, Con_GetString(edit->data1));
+                MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, Con_GetString(edit->data1));
             }
-            break;
-          }
+            break; }
+
         case MN_SLIDER: {
-            const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
-            mndata_slider_t* sldr = (mndata_slider_t*) obj->_typedata;
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_slider_t* sldr = (mndata_slider_t*) ob->_typedata;
             if(action && action->callback == Hu_MenuCvarSlider)
             {
                 float value;
@@ -2252,13 +2332,14 @@ static void initPageObjects(mn_page_t* page)
                     value = Con_GetFloat(sldr->data1);
                 else
                     value = Con_GetInteger(sldr->data1);
-                MNSlider_SetValue(obj, MNSLIDER_SVF_NO_ACTION, value);
+                MNSlider_SetValue(ob, MNSLIDER_SVF_NO_ACTION, value);
             }
-            break;
-          }
+            break; }
+
         case MN_COLORBOX: {
-            const mn_actioninfo_t* action = MNObject_Action(obj, MNA_MODIFIED);
-            mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->_typedata;
+            mndata_colorbox_t* cbox = (mndata_colorbox_t*) ob->_typedata;
+            const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
+
             if(action && action->callback == Hu_MenuCvarColorBox)
             {
                 float rgba[4];
@@ -2266,10 +2347,10 @@ static void initPageObjects(mn_page_t* page)
                 rgba[CG] = Con_GetFloat(cbox->data2);
                 rgba[CB] = Con_GetFloat(cbox->data3);
                 rgba[CA] = (cbox->rgbaMode? Con_GetFloat(cbox->data4) : 1.f);
-                MNColorBox_SetColor4fv(obj, MNCOLORBOX_SCF_NO_ACTION, rgba);
+                MNColorBox_SetColor4fv(ob, MNCOLORBOX_SCF_NO_ACTION, rgba);
             }
-            break;
-          }
+            break; }
+
         default: break;
         }
     }

@@ -1165,55 +1165,27 @@ void MNPage_SetFocus(mn_page_t* page, mn_object_t* obj)
 
 void MNPage_Initialize(mn_page_t* page)
 {
-    mn_object_t* obj;
+    mn_object_t* ob;
     int i;
     assert(page);
 
     // (Re)init objects.
-    for(i = 0, obj = page->objects; i < page->objectsCount; ++i, obj++)
+    for(i = 0, ob = page->objects; i < page->objectsCount; ++i, ob++)
     {
-        switch(MNObject_Type(obj))
+        switch(MNObject_Type(ob))
         {
-        case MN_TEXT:
-        case MN_MOBJPREVIEW:
-            MNObject_SetFlags(obj, FO_SET, MNF_NO_FOCUS);
-            break;
         case MN_BUTTON: {
-            mndata_button_t* btn = (mndata_button_t*)obj->_typedata;
-            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
-            {
-                btn->text = GET_TXT(PTR2INT(btn->text));
-                MNObject_SetShortcut(obj, btn->text[0]);
-            }
-
+            mndata_button_t* btn = (mndata_button_t*)ob->_typedata;
             if(btn->staydownMode)
             {
-                const boolean activate = (*(char*) obj->data1);
-                MNObject_SetFlags(obj, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
+                const boolean activate = (*(char*) ob->data1);
+                MNObject_SetFlags(ob, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
-            break;
-          }
-        case MN_EDIT: {
-            mndata_edit_t* edit = (mndata_edit_t*) obj->_typedata;
-            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
-            {
-                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
-            }
+            break; }
 
-            break;
-          }
         case MN_LIST:
         case MN_LISTINLINE: {
-            mndata_list_t* list = obj->_typedata;
-            int j;
-            for(j = 0; j < list->count; ++j)
-            {
-                mndata_listitem_t* item = &((mndata_listitem_t*)list->items)[j];
-                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
-                {
-                    item->text = GET_TXT(PTR2INT(item->text));
-                }
-            }
+            mndata_list_t* list = ob->_typedata;
 
             // Determine number of potentially visible items.
             list->numvis = list->count;
@@ -1224,18 +1196,8 @@ void MNPage_Initialize(mn_page_t* page)
                 if(list->selection > list->first + list->numvis - 1)
                     list->first = list->selection - list->numvis + 1;
             }
-            break;
-          }
-        case MN_COLORBOX: {
-            mndata_colorbox_t* cbox = (mndata_colorbox_t*) obj->_typedata;
-            if(!cbox->rgbaMode)
-                cbox->a = 1.f;
-            if(0 >= cbox->width)
-                cbox->width = MNDATA_COLORBOX_WIDTH;
-            if(0 >= cbox->height)
-                cbox->height = MNDATA_COLORBOX_HEIGHT;
-            break;
-          }
+            break; }
+
         default: break;
         }
     }
@@ -1256,8 +1218,8 @@ void MNPage_Initialize(mn_page_t* page)
         // but find the last with this flag...
         for(i = 0; i < page->objectsCount; ++i)
         {
-            mn_object_t* obj = &page->objects[i];
-            if((MNObject_Flags(obj) & MNF_DEFAULT) && !(MNObject_Flags(obj) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            mn_object_t* ob = &page->objects[i];
+            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
             }
@@ -1267,8 +1229,8 @@ void MNPage_Initialize(mn_page_t* page)
         if(-1 == giveFocus)
         for(i = 0; i < page->objectsCount; ++i)
         {
-            mn_object_t* obj = &page->objects[i];
-            if(!(MNObject_Flags(obj) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            mn_object_t* ob = &page->objects[i];
+            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
                 break;
