@@ -17,6 +17,7 @@ else:
     EVENT_DIR = '.'
 DISTRIB_DIR = '.'
 APT_REPO_DIR = ''
+TAG_MODIFIER = ''
 
 val = get_arg('--distrib')
 if val is not None: DISTRIB_DIR = val
@@ -26,3 +27,6 @@ if val is not None: EVENT_DIR = val
 
 val = get_arg('--apt')
 if val is not None: APT_REPO_DIR = val
+
+val = get_arg('--tagmod')
+if val is not None: TAG_MODIFIER = val

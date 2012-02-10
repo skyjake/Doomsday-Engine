@@ -52,7 +52,7 @@ def todays_platform_release():
     ev = builder.Event()
     
     git_pull()
-    git_checkout(ev.tag())
+    git_checkout(ev.tag() + builder.config.TAG_MODIFIER)
     
     # We'll copy the new files to the build dir.
     os.chdir(builder.config.DISTRIB_DIR)
@@ -394,6 +394,7 @@ if __name__ == '__main__':
         print '--distrib  Doomsday distrib directory'
         print '--events   Event directory (builds are stored here in subdirs)'
         print '--apt      Apt repository'
+        print '--tagmod   Additional suffix for build tag for platform_release'
         sys.exit(1)
 
     if sys.argv[1] not in commands:
