@@ -74,11 +74,11 @@ CONFIG(debug, debug|release) {
 }
 
 win32 {
-    win32-gcc* {
+    win32-g++* {
         error("Sorry, gcc is not supported in the Windows build.")
     }
 
-    DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS
+    DEFINES += WIN32 _CRT_SECURE_NO_WARNINGS _USE_MATH_DEFINES
 
     # Library location.
     DENG_EXPORT_LIB = $$OUT_PWD/../engine/doomsday.lib
