@@ -1044,7 +1044,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Use a table.
 ?><table><tbody><tr><th>OS</th><th>Package</th><th>Logs</th><th>Issues</th></tr><?php
 
-            /// \todo Copy the package list and apply a custom sort.
             $packs = $build->packages;
             uasort($packs, array('self', 'packageSorter'));
 
