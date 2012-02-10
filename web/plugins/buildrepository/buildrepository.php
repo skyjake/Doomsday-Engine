@@ -30,23 +30,23 @@ require_once(DIR_CLASSES.'/outputcache.class.php');
  * @defgroup platformId  Platform Identifier
  * @ingroup builds
  */
-///{
-define('PID_ANY',             0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
+///@{
+define('PID_ANY',             0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('PID_WIN_X86',         1);
 define('PID_MAC10_4_X86_PPC', 2);
 define('PID_LINUX_X86',       3);
 define('PID_LINUX_X86_64',    4);
-///}
+///@}
 
 /**
  * @defgroup releaseType  Release Type
  * @ingroup builds
  */
-///{
-define('RT_UNSTABLE',         0); ///> (Enumeration). Ordinals are meaningless (can change) however must be unique.
+///@{
+define('RT_UNSTABLE',         0); ///< (Enumeration). Ordinals are meaningless (can change) however must be unique.
 define('RT_CANDIDATE',        1);
 define('RT_STABLE',           2);
-///}
+///@}
 
 require_once('buildevent.class.php');
 require_once('packagefactory.class.php');
@@ -674,18 +674,22 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      * be found the special NullPackage is returned.
      *
      * @param platformId  (Integer) PlatformId filter.
+     * @param title  (String) Symbolic name of the package to download. Default="Doomsday".
      * @param unstable  (Boolean) @c true= Only consider 'unstable' packs.
      * @return  (Object) Chosen package.
      */
-    private function &choosePackage($platformId=PID_ANY, $unstable=FALSE)
+    private function &choosePackage($platformId=PID_ANY, $title="Doomsday", $unstable=FALSE)
     {
         $unstable = (boolean)$unstable;
 
         if(isset($this->packages))
         {
+            $matchTitle = (boolean)(strlen($title) > 0);
+
             foreach($this->packages as &$pack)
             {
                 if($pack->platformId() !== $platformId) continue;
+                if($matchTitle && strcmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
 
                 // Found something suitable.
@@ -730,8 +734,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $platformId = $this->parsePlatformId($uriArgs['platform']);
                 $unstable = isset($uriArgs['unstable']);
 
+                // Default to downloading Doomsday if a pack is not specified.
+                $packTitle = "Doomsday";
+                if(isset($uriArgs['pack']))
+                    $packTitle = trim($uriArgs['pack']);
+
                 // Try to find a suitable package...
-                $pack = &$this->choosePackage($platformId, $unstable);
+                $pack = &$this->choosePackage($platformId, $packTitle, $unstable);
                 if(!($pack instanceof NullPackage))
                 {
                     $FrontController->enqueueAction($this, array('getpackage' => $pack));
@@ -1035,6 +1044,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Use a table.
 ?><table><tbody><tr><th>OS</th><th>Package</th><th>Logs</th><th>Issues</th></tr><?php
 
+            /// \todo Copy the package list and apply a custom sort.
             $packs = $build->packages;
             uasort($packs, array('self', 'packageSorter'));
 
