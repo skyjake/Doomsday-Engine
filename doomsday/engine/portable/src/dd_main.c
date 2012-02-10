@@ -484,36 +484,50 @@ void DD_StartTitle(void)
 static boolean recognizeWAD(const char* filePath, void* data)
 {
     lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
-    boolean result;
+    boolean result = false;
 
-    if(auxLumpBase == -1) return false;
-
-    // Ensure all identity lumps are present.
-    result = true;
-    if(data)
+    if(auxLumpBase >= 0)
     {
-        const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
-        for(; result && *lumpNames; lumpNames++)
+        // Ensure all identity lumps are present.
+        if(data)
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
-            if(lumpNum == -1)
+            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
+            result = true;
+            for(; result && *lumpNames; lumpNames++)
             {
-                result = false;
+                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
+                if(lumpNum < 0)
+                {
+                    result = false;
+                }
             }
         }
-    }
+        else
+        {
+            // Matched.
+            result = true;
+        }
 
-    F_CloseAuxiliary();
+        F_CloseAuxiliary();
+    }
     return result;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeZIP(const char* filePath, void* data)
 {
-    /// \todo dj: write me.
-    return F_FileExists(filePath);
+    DFile* dfile = F_Open(filePath, "bf");
+    boolean result = false;
+    if(dfile)
+    {
+        result = ZipFile_Recognise(dfile);
+        /// @todo Check files. We should implement an auxiliary zip lumpdirectory...
+        F_Close(dfile);
+    }
+    return result;
 }
 
+/// @todo This logic should be encapsulated by AbstractResource.
 static int validateResource(AbstractResource* rec, void* paramaters)
 {
     int validated = false;
@@ -533,9 +547,14 @@ static int validateResource(AbstractResource* rec, void* paramaters)
                 validated = true;
             }
             break;
-        default: break;
+        default:
+            // Other resource types are not validated.
+            validated = true;
+            break;
         }
     }
+
+    AbstractResource_MarkAsFound(rec, validated);
 
     return validated;
 }
@@ -595,9 +614,9 @@ static boolean allGameResourcesFound(Game* game)
             for(recordIt = records; *recordIt; recordIt++)
             {
                 AbstractResource* rec = *recordIt;
+                const int flags = AbstractResource_ResourceFlags(rec);
 
-                if((AbstractResource_ResourceFlags(rec) & RF_STARTUP) &&
-                   !AbstractResource_ResolvedPath(rec, false))
+                if((flags & RF_STARTUP) && !(flags & RF_FOUND))
                     return false;
             }
         }
@@ -769,6 +788,7 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
 static void loadResource(AbstractResource* res)
 {
     if(!res) return;
+
     switch(AbstractResource_ResourceClass(res))
     {
     case RC_PACKAGE: {
@@ -777,8 +797,8 @@ static void loadResource(AbstractResource* res)
         {
             F_AddFile(Str_Text(path), 0, false);
         }
-        break;
-      }
+        break; }
+
     default: Con_Error("loadGameResource: No resource loader found for %s.",
                        F_ResourceClassStr(AbstractResource_ResourceClass(res)));
     }

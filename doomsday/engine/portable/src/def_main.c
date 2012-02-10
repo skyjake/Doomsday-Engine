@@ -837,9 +837,9 @@ static void readAllDefinitions(void)
         for(recordIt = records; *recordIt; recordIt++)
         {
             AbstractResource* rec = *recordIt;
-            const ddstring_t* resolvedPath = AbstractResource_ResolvedPath(rec, true);
+            const ddstring_t* path;
 
-            if(!resolvedPath)
+            if(!(AbstractResource_ResourceFlags(rec) & RF_FOUND))
             {
                 ddstring_t* names = AbstractResource_NameStringList(rec);
                 Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", Str_Text(names));
@@ -847,9 +847,10 @@ static void readAllDefinitions(void)
                 Str_Delete(names);
             }
 
-            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(resolvedPath))) )
+            path = AbstractResource_ResolvedPath(rec, true);
+            VERBOSE( Con_Message("  Processing '%s'...\n", F_PrettyPath(Str_Text(path))) )
 
-            readDefinitionFile(Str_Text(resolvedPath));
+            readDefinitionFile(Str_Text(path));
         }
     }
 

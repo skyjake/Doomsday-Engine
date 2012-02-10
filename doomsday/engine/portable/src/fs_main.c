@@ -754,7 +754,7 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
     // We must have an absolute path, so prepend the current working directory if necessary.
     F_PrependWorkPath(&searchPath, &searchPath);
 
-    /// \todo Allow opening WAD/ZIP files from lumps in other containers.
+    /// @todo Allow opening WAD/ZIP files from lumps in other containers.
     file = findRealFile(Str_Text(&searchPath), "rb", &foundPath);
     Str_Free(&searchPath);
     if(!file)
@@ -807,8 +807,8 @@ lumpnum_t F_OpenAuxiliary3(const char* path, size_t baseOffset, boolean silent)
             Con_Message("Warning:F_OpenAuxiliary: Cannot open a resource with neither a path nor a handle to it.\n");
     }
 
-    if(foundPath)
-        Str_Delete(foundPath);
+    if(foundPath) Str_Delete(foundPath);
+    DFile_Delete(dfile, true);
     return -1;
 }
 

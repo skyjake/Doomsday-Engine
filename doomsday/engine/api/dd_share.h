@@ -385,6 +385,7 @@ typedef struct gameinfo_s {
  */
 ///@{
 #define RF_STARTUP          0x1 ///< A required resource needed for and loaded during game start up (can't be a virtual file).
+#define RF_FOUND            0x2 ///< Resource has been located.
 ///@}
 
 //------------------------------------------------------------------------

@@ -68,6 +68,15 @@ void AbstractResource_Print(AbstractResource* resource, boolean printStatus);
 ddstring_t* AbstractResource_NameStringList(AbstractResource* resource);
 
 /**
+ * Update the "found" status for this resource.
+ *
+ * @param resource  AbstractResource instance.
+ * @param yes  @c true = mark as found, else mark not-found.
+ * @return  Same as @a resource for caller convenience.
+ */
+AbstractResource* AbstractResource_MarkAsFound(AbstractResource* r, boolean yes);
+
+/**
  * Accessor methods.
  */
 
