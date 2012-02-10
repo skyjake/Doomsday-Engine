@@ -37,8 +37,20 @@ struct filedirectory_s {
     PathDirectory* _pathDirectory;
 };
 
-static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* filePath,
-    int (*callback) (PathDirectoryNode*, void*), void* paramaters);
+typedef struct {
+    FileDirectory* fileDirectory; ///< FileDirectory instance.
+
+    int flags; ///< @ref searchPathFlags
+
+    /// If not @c NULL the callback's logic dictates whether iteration continues.
+    int (*callback) (PathDirectoryNode* node, void* paramaters);
+
+    /// Passed to the callback.
+    void* paramaters;
+} addpathworker_paramaters_t;
+
+static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
+    pathdirectorynode_type_t nodeType, void* paramaters);
 
 static PathDirectoryNode* attachMissingNodeInfo(PathDirectoryNode* node)
 {
@@ -91,20 +103,11 @@ static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* _pat
     return node;
 }
 
-typedef struct {
-    FileDirectory* fileDirectory;
-    int flags; /// @see searchPathFlags
-    int (*callback) (PathDirectoryNode* node, void* paramaters);
-    void* paramaters;
-} addpathworker_paramaters_t;
-
 static int addPathWorker(const ddstring_t* filePath, pathdirectorynode_type_t nodeType,
     void* paramaters)
 {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
-    assert(VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
-
-    return addNodesOnSearchPath(p->fileDirectory, p->flags, filePath, p->callback, p->paramaters);
+    return addPathNodesAndMaybeDescendBranch(p->flags, filePath, nodeType, paramaters);
 }
 
 static int addChildNodes(FileDirectory* fd, PathDirectoryNode* node, int flags,
@@ -141,50 +144,56 @@ static int addChildNodes(FileDirectory* fd, PathDirectoryNode* node, int flags,
 }
 
 /**
- * @param flags  @see searchPathFlags
- * @param searchPath  Base of the target search path to add files from.
- * @param callback  Caller's logic dictates iteration.
- * @param paramaters  Passed to the callback.
+ * @param filePath  Possibly-relative path to an element in the virtual file system.
+ * @param nodeType  Type of element, either a branch (directory) or a leaf (file).
+ * @param paramaters  Caller's iteration paramaters.
  * @return  Non-zero if iteration should stop else @c 0.
  */
-static int addNodesOnSearchPath(FileDirectory* fd, int flags, const ddstring_t* searchPath,
-    int (*callback) (PathDirectoryNode*, void*), void* paramaters)
+static int addPathNodesAndMaybeDescendBranch(int flags, const ddstring_t* filePath,
+    pathdirectorynode_type_t nodeType, void* paramaters)
 {
+    addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
+    FileDirectory* fd = p->fileDirectory;
+    PathDirectoryNode* node;
     int result = 0; // Continue iteration.
-    PathDirectoryNode* node = addPathNodes(fd, searchPath);
+
+    assert(VALID_PATHDIRECTORYNODE_TYPE(nodeType) && p);
+
+    // Add this path to the directory.
+    node = addPathNodes(p->fileDirectory, filePath);
     if(node)
     {
         filedirectory_nodeinfo_t* info = (filedirectory_nodeinfo_t*) PathDirectoryNode_UserData(node);
 
-        if(info->processed)
+        if(PT_BRANCH == PathDirectoryNode_Type(node))
         {
-            // Does caller want to process it again?
-            if(callback)
+            // Descend into this subdirectory?
+            if(!(flags & SPF_NO_DESCEND))
             {
-                if(PT_BRANCH == PathDirectoryNode_Type(node))
+                if(info->processed)
                 {
-                    // Descend into this subdirectory.
-                    result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
-                                                    PATHDIRECTORY_NOHASH, callback, paramaters);
+                    // Does caller want to process it again?
+                    if(p->callback)
+                    {
+                        result = PathDirectory_Iterate2(fd->_pathDirectory, PCF_MATCH_PARENT, node,
+                                                        PATHDIRECTORY_NOHASH, p->callback, p->paramaters);
+                    }
                 }
                 else
                 {
-                    result = callback(node, paramaters);
+                    result = addChildNodes(fd, node, p->flags, p->callback, p->paramaters);
+
+                    // This node is now considered processed.
+                    info->processed = true;
                 }
             }
         }
-        else
+        // Node is a leaf.
+        else if(p->callback)
         {
-            if(PT_BRANCH == PathDirectoryNode_Type(node))
-            {
-                // Descend into this subdirectory.
-                result = addChildNodes(fd, node, flags, callback, paramaters);
-            }
-            else if(callback)
-            {
-                result = callback(node, paramaters);
-            }
+            result = p->callback(node, p->paramaters);
 
+            // This node is now considered processed (if it wasn't already).
             info->processed = true;
         }
     }
@@ -202,9 +211,18 @@ static void resolveSearchPathsAndAddNodes(FileDirectory* fd,
     for(i = 0; i < searchPathsCount; ++i)
     {
         ddstring_t* searchPath = Uri_Resolved(searchPaths[i]);
+        addpathworker_paramaters_t p;
         if(!searchPath) continue;
 
-        addNodesOnSearchPath(fd, flags, searchPath, callback, paramaters);
+        // Take a copy of the caller's iteration paramaters.
+        p.fileDirectory = fd;
+        p.callback = callback;
+        p.paramaters = paramaters;
+        p.flags = flags;
+
+        // Add new nodes on this path and/or re-process previously seen nodes.
+        addPathNodesAndMaybeDescendBranch(0/*do descend*/, searchPath, PT_BRANCH, (void*)&p);
+
         Str_Delete(searchPath);
     }
 
