@@ -29,17 +29,20 @@
 
 #include "svg.h"
 
-/**
- * @defgroup svgLineFlags  SVG Line Flags
- */
-///@{
-#define SLF_IS_LOOP                 0x1 ///< Cap the line joining the rightmost edge to the leftmost with additional segment(s).
-///@}
+typedef struct svglinepoint_s {
+    /// Next and previous points on this line.
+    struct svglinepoint_s* next, *prev;
+
+    /// Coordinates for this line in the normalized coordinate space of the owning SVG.
+    Point2Rawf coords;
+} SvgLinePoint;
 
 struct svgline_s {
+    /// Total number of points for this line.
     uint numPoints;
-    Point2Rawf* points;
-    int flags;
+
+    /// Head of the list of points for this line.
+    SvgLinePoint* head;
 };
 
 struct svg_s {
@@ -49,23 +52,29 @@ struct svg_s {
     /// GL display list containing all commands for drawing all primitives (no state changes).
     DGLuint dlist;
 
-    /// List of lines for this graphic.
+    /// Set of lines for this graphic.
     uint lineCount;
     SvgLine* lines;
+
+    /// Set of points for this graphic.
+    uint numPoints;
+    SvgLinePoint* points;
 };
+
+boolean SvgLine_IsLoop(const SvgLine* line)
+{
+    assert(line);
+    return line->head && line->head->prev != NULL;
+}
 
 void Svg_Delete(Svg* svg)
 {
-    uint i;
     assert(svg);
 
     Svg_Unload(svg);
 
-    for(i = 0; i < svg->lineCount; ++i)
-    {
-        free(svg->lines[i].points);
-    }
     free(svg->lines);
+    free(svg->points);
     free(svg);
 }
 
@@ -79,8 +88,7 @@ static void draw(const Svg* svg)
 {
     GLenum nextPrimType, primType = GL_LINE_STRIP;
     const SvgLine* lIt;
-    const Point2Rawf* pIt;
-    uint i, j;
+    uint i;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -89,7 +97,7 @@ static void draw(const Svg* svg)
     {
         if(lIt->numPoints != 2)
         {
-            nextPrimType = (lIt->flags & SLF_IS_LOOP)? GL_LINE_LOOP : GL_LINE_STRIP;
+            nextPrimType = SvgLine_IsLoop(lIt)? GL_LINE_LOOP : GL_LINE_STRIP;
 
             // Do we need to end the current primitive?
             if(primType == GL_LINES)
@@ -111,12 +119,15 @@ static void draw(const Svg* svg)
         }
 
         // Write the vertex data.
-        pIt = lIt->points;
-        for(j = 0; j < lIt->numPoints; ++j, pIt++)
+        if(lIt->head)
         {
-            /// @todo Use TexGen?
-            glTexCoord2dv((const GLdouble*)pIt->xy);
-            glVertex2dv((const GLdouble*)pIt->xy);
+            const SvgLinePoint* pIt = lIt->head;
+            do
+            {
+                /// @todo Use TexGen?
+                glTexCoord2dv((const GLdouble*)pIt->coords.xy);
+                glVertex2dv((const GLdouble*)pIt->coords.xy);
+            } while(NULL != (pIt = pIt->next) && pIt != lIt->head);
         }
 
         if(lIt->numPoints != 2)
@@ -191,10 +202,11 @@ void Svg_Unload(Svg* svg)
 
 Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
 {
+    uint finalLineCount, finalPointCount;
     const def_svgline_t* slIt;
     const Point2Rawf* spIt;
-    uint finalLineCount;
-    Point2Rawf* dpIt;
+    boolean lineIsLoop;
+    SvgLinePoint* dpIt, *prev;
     SvgLine* dlIt;
     uint i, j;
     Svg* svg;
@@ -207,8 +219,9 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     svg->id = uniqueId;
     svg->dlist = 0;
 
-    // Count how many lines we actually need.
+    // Count how many lines and points we actually need.
     finalLineCount = 0;
+    finalPointCount = 0;
     slIt = lines;
     for(i = 0; i < lineCount; ++i, slIt++)
     {
@@ -216,25 +229,42 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
         if(slIt->numPoints < 2) continue;
 
         ++finalLineCount;
+
+        finalPointCount += slIt->numPoints;
+        if(slIt->numPoints > 2)
+        {
+            // If the end point is equal to the start point, we'll ommit it and
+            // set this line up as a loop.
+            if(FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
+               FEQUAL(slIt->points[slIt->numPoints-1].y, slIt->points[0].y))
+            {
+                finalPointCount -= 1;
+            }
+        }
     }
+
+    // Allocate the final point set.
+    svg->numPoints = finalPointCount;
+    svg->points = (SvgLinePoint*)malloc(sizeof(*svg->points) * svg->numPoints);
+    if(!svg->points) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLinePoint set.", (unsigned long) (sizeof(*svg->points) * finalPointCount));
 
     // Allocate the final line set.
     svg->lineCount = finalLineCount;
     svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * finalLineCount);
-    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine list.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
+    if(!svg->lines) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine set.", (unsigned long) (sizeof(*svg->lines) * finalLineCount));
 
     // Setup the lines.
     slIt = lines;
     dlIt = svg->lines;
+    dpIt = svg->points;
     for(i = 0; i < lineCount; ++i, slIt++)
     {
         // Skip lines with missing vertices...
         if(slIt->numPoints < 2) continue;
 
-        dlIt->flags = 0;
-
         // Determine how many points we'll need.
         dlIt->numPoints = slIt->numPoints;
+        lineIsLoop = false;
         if(slIt->numPoints > 2)
         {
             // If the end point is equal to the start point, we'll ommit it and
@@ -243,24 +273,33 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
                FEQUAL(slIt->points[slIt->numPoints-1].y, slIt->points[0].y))
             {
                 dlIt->numPoints -= 1;
-                dlIt->flags |= SLF_IS_LOOP;
+                lineIsLoop = true;
             }
         }
 
-        // Allocate points.
-        /// @todo Calculate point total and allocate them all using a continuous
-        ///       region of memory.
-        dlIt->points = (Point2Rawf*)malloc(sizeof(*dlIt->points) * dlIt->numPoints);
-        if(!dlIt->points) Con_Error("Svg::FromDef: Failed on allocation of %lu bytes for new SvgLine Point list.", (unsigned long) (sizeof(*dlIt->points) * dlIt->numPoints));
-
         // Copy points.
         spIt = slIt->points;
-        dpIt = dlIt->points;
-        for(j = 0; j < dlIt->numPoints; ++j, spIt++, dpIt++)
+        dlIt->head = dpIt;
+        prev = NULL;
+        for(j = 0; j < dlIt->numPoints; ++j, spIt++)
         {
-            dpIt->x = spIt->x;
-            dpIt->y = spIt->y;
+            SvgLinePoint* next = (j < dlIt->numPoints-1)? dpIt + 1 : NULL;
+
+            dpIt->coords.x = spIt->x;
+            dpIt->coords.y = spIt->y;
+
+            // Link in list.
+            dpIt->next = next;
+            dpIt->prev = prev;
+
+            // On to the next point!
+            prev = dpIt;
+            dpIt++;
         }
+
+        // Link circularly?
+        prev->next = lineIsLoop? dlIt->head : NULL;
+        dlIt->head->prev = lineIsLoop? prev : NULL;
 
         // On to the next line!
         dlIt++;
