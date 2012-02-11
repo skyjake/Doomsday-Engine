@@ -596,7 +596,7 @@ int Def_GetFlagValue(const char* flag)
         if(!stricmp(defs.flags[i].id, flag))
             return defs.flags[i].value;
 
-    Con_Message("Def_GetFlagValue: Undefined flag '%s'.\n", flag);
+    Con_Message("Warning: Def_GetFlagValue: Undefined flag '%s'.\n", flag);
     return 0;
 }
 
@@ -1196,8 +1196,7 @@ void Def_Read(void)
             // It's probably a bias light definition, then?
             if(!defs.lights[i].uniqueMapID[0])
             {
-                Con_Message("Def_Read: Lights: Undefined state '%s'.\n",
-                            defs.lights[i].state);
+                Con_Message("Warning: Def_Read: Undefined state '%s' in Light definition.\n", defs.lights[i].state);
             }
             continue;
         }

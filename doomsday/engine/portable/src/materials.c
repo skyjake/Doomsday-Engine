@@ -874,7 +874,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning:Materials::ResolveUri: Uri \"%s\" failed to validate, returing NULL.\n", Str_Text(uriStr));
+        Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returing NOMATERIALID.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOMATERIALID;
@@ -888,7 +888,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     if(!quiet && !ddMapSetup) // Do not announce during map setup.
     {
         ddstring_t* path = Uri_ToString(uri);
-        Con_Message("Materials::ResolveUri: \"%s\" not found!\n", Str_Text(path));
+        Con_Message("Warning: Materials::ResolveUri: \"%s\" not found, returning NOMATERIALID.\n", Str_Text(path));
         Str_Delete(path);
     }
     return NOMATERIALID;
