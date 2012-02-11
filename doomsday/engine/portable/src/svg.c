@@ -1,5 +1,5 @@
 /**
- * @file svg.h
+ * @file svg.c
  * Scalable Vector Graphic (SVG) implementation. @ingroup gl
  *
  * @authors Copyright &copy; 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -29,7 +29,20 @@
 
 #include "svg.h"
 
-struct Svg_s {
+/**
+ * @defgroup svgLineFlags  SVG Line Flags
+ */
+///@{
+#define SLF_IS_LOOP                 0x1 ///< Cap the line joining the rightmost edge to the leftmost with additional segment(s).
+///@}
+
+struct svgline_s {
+    uint numPoints;
+    Point2Rawf* points;
+    int flags;
+};
+
+struct svg_s {
     /// Unique identifier for this graphic.
     svgid_t id;
 
