@@ -450,6 +450,7 @@ static void Con_BusyLoop(void)
 
         // Post and discard all input events.
         DD_ProcessEvents(0);
+        DD_ProcessSharpEvents(0);
 
         Sys_Sleep(20);
 
