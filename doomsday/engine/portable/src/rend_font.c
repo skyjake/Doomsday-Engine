@@ -220,7 +220,7 @@ void FR_LoadDefaultAttrib(void)
 void FR_PushAttrib(void)
 {
     errorIfNotInited("FR_PushAttrib");
-    if(fr.attribStackDepth == FR_MAX_ATTRIB_STACK_DEPTH)
+    if(fr.attribStackDepth+1 == FR_MAX_ATTRIB_STACK_DEPTH)
     {
         Con_Error("FR_PushAttrib: STACK_OVERFLOW.");
         exit(1); // Unreachable.
