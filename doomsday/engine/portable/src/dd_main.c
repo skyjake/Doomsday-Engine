@@ -559,7 +559,7 @@ static int validateResource(AbstractResource* rec, void* paramaters)
     return validated;
 }
 
-static void locateGameResources(Game* game)
+static void locateGameStartupResources(Game* game)
 {
     Game* oldGame = theGame;
     uint i;
@@ -600,7 +600,7 @@ static void locateGameResources(Game* game)
     }
 }
 
-static boolean allGameResourcesFound(Game* game)
+static boolean allGameStartupResourcesFound(Game* game)
 {
     if(!DD_IsNullGame(game))
     {
@@ -654,7 +654,7 @@ static void printGameResources(Game* game, boolean printStatus, int rflags)
         {
             AbstractResource* rec = *recordIt;
 
-            if(AbstractResource_ResourceFlags(rec) == rflags)
+            if((rflags & RF_STARTUP) == (AbstractResource_ResourceFlags(rec) & RF_STARTUP))
             {
                 AbstractResource_Print(rec, printStatus);
                 count += 1;
@@ -696,14 +696,13 @@ void DD_PrintGame(Game* game, int flags)
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
-        /*@todo dj: we need a resource flag for "located"*/
         Con_Printf("   ");
         printGameResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
     }
 
     if(flags & PGF_STATUS)
         Con_Printf("Status: %s\n",       theGame == game? "Loaded" :
-                                   allGameResourcesFound(game)? "Complete/Playable" :
+                                   allGameStartupResourcesFound(game)? "Complete/Playable" :
                                                                 "Incomplete/Not playable");
 }
 
@@ -1322,7 +1321,7 @@ static int countPlayableGames(void)
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(!allGameResourcesFound(game)) continue;
+        if(!allGameStartupResourcesFound(game)) continue;
         ++count;
     }
     return count;
@@ -1334,7 +1333,7 @@ static Game* findFirstPlayableGame(void)
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(allGameResourcesFound(game)) return game;
+        if(allGameStartupResourcesFound(game)) return game;
     }
     return NULL;
 }
@@ -1351,7 +1350,7 @@ Game* DD_AutoselectGame(void)
         const char* identityKey = ArgNext();
         Game* game = findGameForIdentityKey(identityKey);
 
-        if(game && allGameResourcesFound(game))
+        if(game && allGameStartupResourcesFound(game))
         {
             return game;
         }
@@ -1430,7 +1429,7 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
 
-        locateGameResources(game);
+        locateGameStartupResources(game);
         Con_SetProgress((i+1) * 200/gamesCount -1);
 
         VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
@@ -2416,7 +2415,7 @@ D_CMD(Load)
     game = findGameForIdentityKey(Str_Text(&searchPath));
     if(game)
     {
-        if(!allGameResourcesFound(game))
+        if(!allGameStartupResourcesFound(game))
         {
             Con_Message("Failed to locate all required startup resources:\n");
             printGameResources(game, true, RF_STARTUP);
@@ -2565,11 +2564,11 @@ D_CMD(ListGames)
             Game* game = gamePtrs[i];
 
             Con_Printf(" %s %-16s %s (%s)\n", theGame == game? "*" :
-                                          !allGameResourcesFound(game)? "!" : " ",
+                                          !allGameStartupResourcesFound(game)? "!" : " ",
                        Str_Text(Game_IdentityKey(game)), Str_Text(Game_Title(game)),
                        Str_Text(Game_Author(game)));
 
-            if(allGameResourcesFound(game))
+            if(allGameStartupResourcesFound(game))
                 numCompleteGames++;
         }
 
