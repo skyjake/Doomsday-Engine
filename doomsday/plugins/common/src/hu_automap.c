@@ -153,6 +153,7 @@ static void calcViewScaleFactors(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float dx, dy, dist, a, b;
+    float oldMinScale = am->minScaleMTOF;
     assert(obj->type == GUI_AUTOMAP);
 
     dx = am->bounds[BOXRIGHT] - am->bounds[BOXLEFT];
@@ -166,6 +167,16 @@ static void calcViewScaleFactors(uiwidget_t* obj)
 
     am->minScaleMTOF = (a < b ? a : b);
     am->maxScaleMTOF = Rect_Height(UIWidget_Geometry(obj)) / am->minScale;
+
+#ifdef _DEBUG
+    Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f\n",
+                dx, dy, dist, Rect_Width(UIWidget_Geometry(obj)),
+                Rect_Height(UIWidget_Geometry(obj)), a, b, am->minScaleMTOF);
+#endif
+
+    // Update previously set view scale accordingly.
+    /// @todo  The view scale factor needs to be resolution independent!
+    am->targetViewScale = am->viewScale = am->minScaleMTOF/oldMinScale * am->targetViewScale;
 
     am->updateViewScale = false;
 }
@@ -1851,6 +1862,13 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     // the position and/or size of the automap must therefore change too.
     R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
 
+/*#ifdef _DEBUG
+    Con_Message("UIAutomap_UpdateGeometry: newGeom %i,%i %i,%i current %i,%i %i,%i\n",
+                newGeom.origin.x, newGeom.origin.y,
+                newGeom.size.width, newGeom.size.height,
+                Rect_X(obj->geometry), Rect_Y(obj->geometry), Rect_Width(obj->geometry), Rect_Height(obj->geometry));
+#endif*/
+
     if(newGeom.origin.x != Rect_X(obj->geometry) ||
        newGeom.origin.y != Rect_Y(obj->geometry) ||
        newGeom.size.width != Rect_Width(obj->geometry) ||
@@ -2242,8 +2260,16 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
     am->bounds[BOXBOTTOM] = lowY;
     am->updateViewScale = true;
 
+    // Update minScaleMTOF.
+    calcViewScaleFactors(obj);
+
+#ifdef _DEBUG
+    Con_Message("SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f\n", lowX, lowY, hiX, hiY,
+                am->minScaleMTOF);
+#endif
+
     // Choose a default view scale factor.
-    UIAutomap_SetScale(obj, am->minScaleMTOF * 20);
+    UIAutomap_SetScale(obj, am->minScaleMTOF * 2.4f);
 }
 
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale)
