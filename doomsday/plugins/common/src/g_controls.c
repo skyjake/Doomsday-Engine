@@ -177,7 +177,7 @@ void G_ControlRegister(void)
     for(i = 0; controlCmds[i].name; ++i)
         Con_AddCommand(controlCmds + i);
 
-    // FIXME: Is this is the proper place, this being a console registering function?
+    /// @todo  Move the control setup to a separate function.
     P_NewPlayerControl(CTL_WALK, CTLT_NUMERIC, "walk", "game");
     P_NewPlayerControl(CTL_SIDESTEP, CTLT_NUMERIC, "sidestep", "game");
     P_NewPlayerControl(CTL_ZFLY, CTLT_NUMERIC, "zfly", "game");
