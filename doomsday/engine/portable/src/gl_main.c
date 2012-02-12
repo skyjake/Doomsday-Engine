@@ -1341,8 +1341,6 @@ D_CMD(Fog)
         return true;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     if(!stricmp(argv[1], "on"))
     {
         GL_UseFog(true);
@@ -1398,6 +1396,7 @@ D_CMD(Fog)
     }
     else
         return false;
+
     // Exit with a success.
     return true;
 }
