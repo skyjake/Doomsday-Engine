@@ -1169,13 +1169,14 @@ static void freeTextBuffer(void)
 }
 
 /// \note Member of the Doomsday public API.
-void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, short origTextFlags)
+void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short origTextFlags)
 {
     fontid_t origFont = FR_Font();
     float cx, cy, extraScale;
     drawtextstate_t state;
     const char* fragment;
     int pass, curCase;
+    Point2Raw origin;
     Size2Raw textSize;
     size_t charCount;
     float origColor[4];
@@ -1184,7 +1185,10 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
 
     errorIfNotInited("FR_DrawText");
 
-    if(!text || !text[0] || !origin) return;
+    if(!text || !text[0]) return;
+
+    origin.x = _origin? _origin->x : 0;
+    origin.y = _origin? _origin->y : 0;
 
     origTextFlags &= ~(DTF_INTERNAL_MASK);
 
@@ -1201,8 +1205,8 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
         pass < ((origTextFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
     {
         // Configure the next pass.
-        cx = (float) origin->x;
-        cy = (float) origin->y;
+        cx = (float) origin.x;
+        cy = (float) origin.y;
         curCase = -1;
         charCount = 0;
         switch(pass)
@@ -1240,7 +1244,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                 {
                     do
                     {
-                        cx = (float) origin->x;
+                        cx = (float) origin.x;
                         cy += state.lastLineHeight * (1+lastLeading);
                     } while(--numBreaks > 0);
                 }
@@ -1327,11 +1331,11 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
                     /// \fixme Do not assume the aspect ratio and therefore whether
                     // correction is even needed.
-                    glTranslatef((float)origin->x, (float)origin->y, 0);
+                    glTranslatef((float)origin.x, (float)origin.y, 0);
                     glScalef(1, 200.0f / 240.0f, 1);
                     glRotatef(state.angle, 0, 0, 1);
                     glScalef(1, 240.0f / 200.0f, 1);
-                    glTranslatef(-(float)origin->x, -(float)origin->y, 0);
+                    glTranslatef(-(float)origin.x, -(float)origin.y, 0);
                 }
 
                 glTranslatef(cx + state.offX + alignx, cy + state.offY + (FR_CaseScale() ? state.caseMod[curCase].offset : 0), 0);
@@ -1352,7 +1356,7 @@ void FR_DrawText3(const char* text, const Point2Raw* origin, int alignFlags, sho
                     if(strlen(fragment) > 0)
                         state.lastLineHeight = textFragmentHeight(fragment);
 
-                    cx = (float) origin->x;
+                    cx = (float) origin.x;
                     cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
                 }
 
