@@ -463,6 +463,7 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
 
     sprintf(buf, "%.1f FPS", DD_GetFrameRate());
     FR_SetFont(fontFixed);
+    FR_PushAttrib();
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -482,6 +483,8 @@ void Rend_ConsoleFPS(const Point2Raw* origin)
     labelOrigin.y = origin->y + size.height / 2;
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx2(buf, &labelOrigin, UI_Color(UIC_TITLE), 1, ALIGN_RIGHT, DTF_ONLY_SHADOW);
+
+    FR_PopAttrib();
 
     glDisable(GL_TEXTURE_2D);
 }
@@ -523,6 +526,7 @@ static void drawConsoleTitleBar(float alpha)
     UI_Gradient(&origin, &size, UI_Color(UIC_BG_DARK), UI_Color(UIC_SHADOW), .2f * alpha, 0);
 
     FR_SetFont(fontVariable[FS_BOLD]);
+    FR_PushAttrib();
     FR_LoadDefaultAttrib();
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
@@ -545,6 +549,8 @@ static void drawConsoleTitleBar(float alpha)
         origin.y = barHeight / 2;
         UI_TextOutEx2(statusText, &origin, UI_Color(UIC_TEXT), .75f * alpha, ALIGN_RIGHT, DTF_ONLY_SHADOW);
     }
+
+    FR_PopAttrib();
 
     glDisable(GL_TEXTURE_2D);
     glMatrixMode(GL_PROJECTION);
@@ -606,6 +612,7 @@ static void drawSideText(const char* text, int line, float alpha)
     assert(inited);
 
     FR_SetFont(Con_Font());
+    FR_PushAttrib();
     FR_LoadDefaultAttrib();
     Con_FontScale(&scale[0], &scale[1]);
     fontScaledY = FR_SingleLineHeight("Con") * scale[1];
@@ -628,6 +635,8 @@ static void drawSideText(const char* text, int line, float alpha)
         FR_SetColorAndAlpha(CcolYellow[0], CcolYellow[1], CcolYellow[2], alpha * .75f);
         FR_DrawTextXY3(text, ssw - 3, y / scale[1], ALIGN_TOPRIGHT, DTF_NO_TYPEIN|DTF_NO_GLITTER|(!consoleTextShadow?DTF_NO_SHADOW:0));
     }
+
+    FR_PopAttrib();
 }
 
 /**
@@ -659,6 +668,7 @@ static void drawConsole(float consoleAlpha)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     FR_SetFont(Con_Font());
+    FR_PushAttrib();
     FR_LoadDefaultAttrib();
     FR_SetTracking(Con_FontTracking());
     FR_SetColorAndAlpha(1, 1, 1, consoleAlpha);
@@ -858,6 +868,8 @@ static void drawConsole(float consoleAlpha)
         GL_DrawRectf2(XORIGIN + PADDING + xOffset, (int)((YORIGIN + y + yOffset) / scale[1]),
                     (int)width, MAX_OF(1, (int)(height / scale[1])));
     }
+
+    FR_PopAttrib();
 
     // Restore the original matrices.
     glMatrixMode(GL_MODELVIEW);
