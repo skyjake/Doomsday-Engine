@@ -1519,7 +1519,11 @@ DGL_End();
     {
         rendThingPoints(obj);
     }
+
+    // Sharp player markers.
+    DGL_SetFloat(DGL_LINE_WIDTH, 1.f);
     rendPlayerMarkers(obj);
+
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
     if(amMaskTexture)
