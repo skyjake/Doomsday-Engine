@@ -790,8 +790,6 @@ void DGL_DeleteTextures(int num, const DGLuint *names)
     if(!num || !names)
         return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(num, (const GLuint*) names);
 }
 

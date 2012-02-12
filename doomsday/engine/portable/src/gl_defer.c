@@ -274,7 +274,7 @@ void GL_ReleaseReservedNames(void)
     if(!inited)
         return; // Just ignore.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
 
     Sys_Lock(deferredMutex);
     glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
