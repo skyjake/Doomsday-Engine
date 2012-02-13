@@ -533,6 +533,8 @@ enum {
     DDKEY_SUBTRACT, ///< '-' on numeric keypad.
     DDKEY_ADD, ///< '+' on numeric keypad.
     DDKEY_PRINT,
+    DDKEY_ENTER, ///< on the numeric keypad.
+    DDKEY_DIVIDE, ///< '/' on numeric keypad.
     DD_HIGHEST_KEYCODE
 };
 ///@}

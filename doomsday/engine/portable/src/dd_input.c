@@ -1068,6 +1068,11 @@ byte DD_ModKey(byte key)
         };
         return numPadKeys[key - DDKEY_NUMPAD7];
     }
+    else if(key == DDKEY_DIVIDE)
+    {
+        return '/';
+    }
+
     return key;
 }
 
