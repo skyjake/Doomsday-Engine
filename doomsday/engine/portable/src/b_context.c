@@ -301,7 +301,7 @@ static void B_RemoveContext(bcontext_t* bc)
  */
 bcontext_t* B_NewContext(const char* name)
 {
-    bcontext_t*           bc = M_Calloc(sizeof(bcontext_t));
+    bcontext_t* bc = M_Calloc(sizeof(bcontext_t));
 
     bc->name = strdup(name);
     B_InitCommandBindingList(&bc->commandBinds);
@@ -368,6 +368,16 @@ void B_AcquireAll(bcontext_t* bc, boolean doAcquire)
     if(doAcquire)
         bc->flags |= BCF_ACQUIRE_ALL;
     B_UpdateDeviceStateAssociations();
+}
+
+void B_SetContextFallbackForDDEvents(const char* name, int (*ddResponderFunc)(const ddevent_t*))
+{
+    bcontext_t *ctx = B_ContextByName(name);
+
+    if(!ctx)
+        return;
+
+    ctx->ddFallbackResponder = ddResponderFunc;
 }
 
 void B_SetContextFallback(const char* name, int (*responderFunc)(event_t*))
@@ -562,7 +572,7 @@ boolean B_TryEvent(ddevent_t* event)
 
     for(i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t*           bc = bindContexts[i];
+        bcontext_t* bc = bindContexts[i];
 
         if(!(bc->flags & BCF_ACTIVE))
             continue;
@@ -574,7 +584,9 @@ boolean B_TryEvent(ddevent_t* event)
                 return true;
         }
 
-        // Try the fallback.
+        // Try the fallbacks.
+        if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
+            return true;
         if(bc->fallbackResponder && bc->fallbackResponder(&ev))
             return true;
     }
