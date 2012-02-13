@@ -190,12 +190,16 @@ void B_Init(void)
         return;
     }
 
+    // The contexts are defined in reverse order, with the context of lowest
+    // priority defined first.
+
     B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
 
     // Game contexts.
     /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
     B_NewContext("map");
     B_NewContext("map-freepan");
+    B_NewContext("finale"); // uses a fallback responder to handle script events
     B_AcquireAll(B_NewContext("menu"), true);
     B_NewContext("gameui");
     B_NewContext("shortcut");

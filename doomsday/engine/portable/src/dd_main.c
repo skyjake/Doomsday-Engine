@@ -1193,16 +1193,15 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-
-        Materials_Init();
-        FI_Init();
-        P_PtcInit(); /// @todo not needed in this mode.
-
         if(!exchangeEntryPoints(Game_PluginId(game)))
         {
             Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
             return false;
         }
+
+        Materials_Init();
+        FI_Init();
+        P_PtcInit(); /// @todo not needed in this mode.
     }
 
     // This is now the current game.

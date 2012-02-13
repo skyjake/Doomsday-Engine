@@ -944,9 +944,17 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
 
         DD_ConvertEvent(ddev, &ev);
 
+        /**
+         * @todo Refactor: all event processing should occur within the binding
+         * context stack. Convert all of these special case handlers to context
+         * fallbacks (may require adding new contexts).
+         */
+
         if(callGameResponders)
         {
-            // Does the game's special responder use this event?
+            // Does the game's special responder use this event? This is
+            // intended for grabbing events when creating bindings in the
+            // Controls menu.
             if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
                 continue;
         }
@@ -956,9 +964,6 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength)
 
         if(callGameResponders)
         {
-            if(gx.FinaleResponder && gx.FinaleResponder((void*)ddev))
-                continue;
-
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting).
             if(gx.Responder(&ev))

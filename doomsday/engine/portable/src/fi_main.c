@@ -223,6 +223,9 @@ void FI_Init(void)
         return; // Already been here.
     finales = 0; finalesSize = 0;
 
+    B_SetContextFallbackForDDEvents("finale", (int (*)(const ddevent_t*)) gx.FinaleResponder);
+    B_ActivateContext(B_ContextByName("finale"), true); // always on
+
     inited = true;
 }
 
@@ -242,6 +245,9 @@ void FI_Shutdown(void)
         Z_Free(finales);
     }
     finales = 0; finalesSize = 0;
+
+    B_SetContextFallbackForDDEvents("finale", NULL);
+    B_ActivateContext(B_ContextByName("finale"), false);
 
     inited = false;
 }

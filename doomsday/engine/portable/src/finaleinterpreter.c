@@ -898,7 +898,7 @@ static void initDefaultState(finaleinterpreter_t* fi)
 
     fi->flags.suspended = false;
     fi->flags.paused = false;
-    fi->flags.show_menu = true; // Enabled by default.
+    fi->flags.show_menu = true; // Unhandled events will show a menu.
     fi->flags.can_skip = true; // By default skipping is enabled.
 
     fi->_cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
@@ -1029,6 +1029,12 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
 boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
 {
     assert(fi);
+    if(fi->flags.paused || fi->flags.can_skip)
+    {
+        // We want events to be used for unpausing/skipping.
+        return false;
+    }
+    // If skipping is not allowed, we should show the menu, too.
     return (fi->flags.show_menu != 0);
 }
 
