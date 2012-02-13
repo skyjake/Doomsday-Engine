@@ -1072,6 +1072,18 @@ byte DD_ModKey(byte key)
     {
         return '/';
     }
+    else if(key == DDKEY_SUBTRACT)
+    {
+        return '-';
+    }
+    else if(key == DDKEY_ADD)
+    {
+        return '+';
+    }
+    else if(key == DDKEY_DECIMAL)
+    {
+        return '.';
+    }
 
     return key;
 }
