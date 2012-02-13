@@ -1629,6 +1629,7 @@ boolean Con_Responder(ddevent_t* ev)
         return true;
 
     case DDKEY_RETURN:
+    case DDKEY_ENTER:
         if(conInputLock)
             break;
 
