@@ -464,14 +464,17 @@ static void drawWidget2(uiwidget_t* obj, const Point2Raw* offset)
         Point2_Raw(Rect_Origin(obj->geometry), &origin);
 
         // Configure the page render state.
-        /// \todo Initial font renderer setup.
         uiRS.pageAlpha = obj->opacity;
+
+        FR_PushAttrib();
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(origin.x, origin.y, 0);
 
         // Do not pass a zero length offset.
         obj->drawer(obj, ((offset && (offset->x || offset->y))? offset : NULL));
+
+        FR_PopAttrib();
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-origin.x, -origin.y, 0);
@@ -525,6 +528,13 @@ void GUI_DrawWidget(uiwidget_t* obj, const Point2Raw* offset)
     FR_SetLeading(0);
 
     updateWidgetGeometry(obj);
+
+    FR_PopAttrib();
+
+    // Draw.
+    FR_PushAttrib();
+    FR_LoadDefaultAttrib();
+    FR_SetLeading(0);
 
     // Do not pass a zero length offset.
     drawWidget(obj, ((offset && (offset->x || offset->y))? offset : NULL));
