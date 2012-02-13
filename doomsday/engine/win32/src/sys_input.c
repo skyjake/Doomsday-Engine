@@ -174,7 +174,7 @@ static void initDIKeyToDDKeyTlat(void)
     //keymap[DIK_KANJI] = ;
     keymap[DIK_L] = 'l';
     keymap[DIK_LBRACKET] = '[';
-    keymap[DIK_LCONTROL] = ']';
+    keymap[DIK_LCONTROL] = DDKEY_LCTRL;
     keymap[DIK_LEFT] = DDKEY_LEFTARROW;
     keymap[DIK_LMENU] = DDKEY_LALT; // Left Alt
     keymap[DIK_LSHIFT] = DDKEY_LSHIFT;
