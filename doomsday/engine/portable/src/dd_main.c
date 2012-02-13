@@ -418,9 +418,7 @@ gameid_t DD_GameIdForKey(const char* identityKey)
     {
         return DD_GameId(game);
     }
-#ifdef _DEBUG
-    Con_Message("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey);
-#endif
+    DEBUG_Message(("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
     return 0; // Invalid id.
 }
 
@@ -1149,9 +1147,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         { // Tell the plugin it is being unloaded.
             void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
-#ifdef _DEBUG
-            Con_Message("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader);
-#endif
+            DEBUG_Message(("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader));
             if(unloader) ((pluginfunc_t)unloader)();
         }
 
@@ -1250,9 +1246,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
-#ifdef _DEBUG
-            Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
-#endif
+            DEBUG_Message(("DD_ChangeGame2: Calling DP_Load (%p)\n", loader));
             if(loader) ((pluginfunc_t)loader)();
         }
 

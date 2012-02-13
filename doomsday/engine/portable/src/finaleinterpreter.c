@@ -1163,12 +1163,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
-#ifdef _DEBUG
-    if(isClient)
-    {
-        Con_Message("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type);
-    }
-#endif
+    DEBUG_VERBOSE2_Message(("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type));
 
     if(fi->flags.suspended)
         return false;
