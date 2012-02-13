@@ -1145,6 +1145,13 @@ boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
     assert(fi);
 
+    if(fi->_waitingText && fi->flags.can_skip && !fi->flags.paused)
+    {
+        // Instead of skipping, just complete the text.
+        FIData_TextAccelerate(fi->_waitingText);
+        return true;
+    }
+
     // Stop waiting for objects.
     fi->_waitingText = NULL;
     fi->_waitingPic = NULL;

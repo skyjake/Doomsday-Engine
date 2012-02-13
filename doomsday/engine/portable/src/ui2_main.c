@@ -1228,6 +1228,15 @@ void FIData_PicClearAnimation(fi_object_t* obj)
     p->animComplete = true;
 }
 
+void FIData_TextAccelerate(fi_object_t* obj)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSkipCursorToEnd: Not a FI_TEXT.");
+
+    // Fill in the rest very quickly.
+    t->wait = -10;
+}
+
 void FIData_TextThink(fi_object_t* obj)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
@@ -1242,8 +1251,18 @@ void FIData_TextThink(fi_object_t* obj)
     {
         if(--t->timer <= 0)
         {
-            t->timer = t->wait;
-            t->cursorPos++;
+            if(t->wait > 0)
+            {
+                // Positive wait: move cursor one position, wait again.
+                t->cursorPos++;
+                t->timer = t->wait;
+            }
+            else
+            {
+                // Negative wait: move cursor several positions, don't wait.
+                t->cursorPos += ABS(t->wait);
+                t->timer = 1;
+            }
         }
     }
 
