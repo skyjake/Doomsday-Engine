@@ -641,7 +641,6 @@ static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
         {
             // Delete and mark it not-loaded.
             DGLuint glName = TextureVariant_GLName(variant);
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glDeleteTextures(1, (const GLuint*) &glName);
             TextureVariant_SetGLName(variant, 0);
             TextureVariant_FlagUploaded(variant, false);
@@ -2970,8 +2969,6 @@ void GL_ReleaseTexturesForRawImages(void)
         rawtex_t* r = (*ptr);
         if(r->tex)
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
-
             glDeleteTextures(1, (const GLuint*) &r->tex);
             r->tex = 0;
         }

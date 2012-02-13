@@ -406,7 +406,6 @@ void BitmapFont_DeleteGLTexture(font_t* font)
     if(Con_IsBusy()) return;
     if(bf->_tex)
     {
-        LIBDENG_ASSERT_IN_MAIN_THREAD();
         glDeleteTextures(1, (const GLuint*) &bf->_tex);
     }
     bf->_tex = 0;

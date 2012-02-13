@@ -362,8 +362,6 @@ static void Con_BusyDeleteTextures(void)
     if(isDedicated)
         return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
@@ -411,8 +409,6 @@ void Con_AcquireScreenshotTexture(void)
 
 void Con_ReleaseScreenshotTexture(void)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(1, (const GLuint*) &texScreenshot);
     texScreenshot = 0;
 }
