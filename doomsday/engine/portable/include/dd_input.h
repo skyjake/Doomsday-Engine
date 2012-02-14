@@ -172,7 +172,7 @@ typedef struct inputdev_s {
     inputdevaxis_t *axes;
     uint    numKeys;        // Number of keys for this input device.
     inputdevkey_t *keys;
-    uint    numHats;        // NUmber of hats.
+    uint    numHats;        // Number of hats.
     inputdevhat_t *hats;
 } inputdev_t;
 
@@ -202,6 +202,7 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
+void        DD_ClearKeyRepeaterForKey(int key);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
 

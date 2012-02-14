@@ -169,9 +169,9 @@ static void calcViewScaleFactors(uiwidget_t* obj)
     am->maxScaleMTOF = Rect_Height(UIWidget_Geometry(obj)) / am->minScale;
 
 #ifdef _DEBUG
-    Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f\n",
-                dx, dy, dist, Rect_Width(UIWidget_Geometry(obj)),
-                Rect_Height(UIWidget_Geometry(obj)), a, b, am->minScaleMTOF);
+    VERBOSE2( Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f\n",
+                          dx, dy, dist, Rect_Width(UIWidget_Geometry(obj)),
+                          Rect_Height(UIWidget_Geometry(obj)), a, b, am->minScaleMTOF) );
 #endif
 
     // Update previously set view scale accordingly.

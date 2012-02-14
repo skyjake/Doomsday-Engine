@@ -1102,6 +1102,16 @@ void DD_ClearKeyRepeaters(void)
     memset(keyReps, 0, sizeof(keyReps));
 }
 
+void DD_ClearKeyRepeaterForKey(int key)
+{
+    int k;
+
+    // Clear any repeaters with this key.
+    for(k = 0; k < MAX_DOWNKEYS; ++k)
+        if(keyReps[k].key == key)
+            keyReps[k].key = 0;
+}
+
 /**
  * Checks the current keyboard state, generates input events
  * based on pressed/held keys and posts them.
@@ -1183,10 +1193,7 @@ void DD_ReadKeyboard(void)
         }
         else if(ev.toggle.state == ETOG_UP)
         {
-            // Clear any repeaters with this key.
-            for(k = 0; k < MAX_DOWNKEYS; ++k)
-                if(keyReps[k].key == ev.toggle.id)
-                    keyReps[k].key = 0;
+            DD_ClearKeyRepeaterForKey(ev.toggle.id);
         }
 
         // Post the event.
