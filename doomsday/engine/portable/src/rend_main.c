@@ -2285,6 +2285,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
        line->L_frontsector == line->L_backsector)
        return false;
 
+    /// @fixme Most of these cases are now irrelevant and can be removed.
+
     if(!solidSeg) // We'll have to determine whether we can...
     {
         if(backSec == frontSec)
@@ -2300,7 +2302,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
             // A closed gap.
             solidSeg = true;
         }
-        else if((!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
+        else if(bceil->visHeight <= bfloor->visHeight ||
+                (!(bceil->visHeight - bfloor->visHeight > 0) && bfloor->visHeight > ffloor->visHeight && bceil->visHeight < fceil->visHeight &&
                 (frontSide->SW_topmaterial /*&& !(frontSide->flags & SDF_MIDTEXUPPER)*/) &&
                 (frontSide->SW_bottommaterial)))
         {
