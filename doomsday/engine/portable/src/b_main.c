@@ -1091,26 +1091,31 @@ binding_t *B_Bind(ddevent_t *ev, char *command, int control, uint bindContext)
 }
 #endif
 
-const char *B_ShortNameForKey(int ddkey)
+const char* B_ShortNameForKey2(int ddKey, boolean forceLowercase)
 {
-    uint        idx;
     static char nameBuffer[40];
+    uint idx;
 
     for(idx = 0; keyNames[idx].key; ++idx)
     {
-        if(ddkey == keyNames[idx].key)
+        if(ddKey == keyNames[idx].key)
             return keyNames[idx].name;
     }
 
-    if(isalnum(ddkey))
+    if(isalnum(ddKey))
     {
         // Printable character, fabricate a single-character name.
-        nameBuffer[0] = tolower(ddkey);
+        nameBuffer[0] = forceLowercase? tolower(ddKey) : ddKey;
         nameBuffer[1] = 0;
         return nameBuffer;
     }
 
     return NULL;
+}
+
+const char* B_ShortNameForKey(int ddKey)
+{
+    return B_ShortNameForKey2(ddKey, true/*force lowercase*/);
 }
 
 int B_KeyForShortName(const char *key)
@@ -1449,7 +1454,7 @@ static void queEventsForHeldControls(uint deviceID, uint classID)
                 // being pressed that have a binding in the context being
                 // enabled/disabled (classID)
                 if(!(com->command[EVS_DOWN] != NULL && bind->controlID >= 0 &&
-                     I_IsDeviceKeyDown(deviceID, (uint) bind->controlID)))
+                     I_IsKeyDown(dev, (uint) bind->controlID)))
                     continue;
                 break;
 

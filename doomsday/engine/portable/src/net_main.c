@@ -710,6 +710,9 @@ void Net_Drawer(void)
     // Draw the light range debug display.
     R_DrawLightRange();
 
+    // Draw the input device debug display.
+    Rend_AllInputDeviceStateVisuals();
+
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 }
