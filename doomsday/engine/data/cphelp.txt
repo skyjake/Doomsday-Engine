@@ -624,6 +624,9 @@ desc = Display brightness: -1=dark, 0=normal, 1=light.
 [rend-dev-wireframe]
 desc = 1=Render player view in wireframe mode.
 
+[rend-dev-fakeradio-update]
+desc = 1=Enable updating of the shadow edges used with simulated radiosity.
+
 [rend-dev-framecount]
 desc = Frame counter.
 
