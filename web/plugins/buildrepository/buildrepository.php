@@ -994,8 +994,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             foreach($build->packages as &$pack)
             {
-                $downloadUri = $pack->downloadUri();
-                if($downloadUri && strlen($downloadUri) > 0)
+                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
                 {
                     $count++;
                 }
@@ -1084,7 +1083,19 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 // Ouput HTML for the package.
 ?><tr>
 <td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
-<td><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $pack->composeFullTitle(true/*include version*/, false/*do not include build Id*/); ?></a></td>
+<td><?php
+
+                $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include build Id*/);
+                if($pack instanceof iDownloadable && $pack->hasDownloadUri())
+                {
+?><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php
+                }
+                else
+                {
+                    echo $packTitle;
+                }
+
+?></td>
 <td><a href="<?php echo $pack->compileLogUri(); ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a></td>
 <td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
 </tr><?php
