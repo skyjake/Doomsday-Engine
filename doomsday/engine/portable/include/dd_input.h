@@ -288,7 +288,7 @@ void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
  */
 void Rend_AllInputDeviceStateVisuals(void);
 #else
-#  define Rend_AllInputDeviceStateVisuals
+#  define Rend_AllInputDeviceStateVisuals()
 #endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

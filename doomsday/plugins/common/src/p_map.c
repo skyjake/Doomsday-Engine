@@ -457,6 +457,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 #if !__JHEXEN__
     boolean             overlap = false;
 #endif
+    const float         EPSILON = (cfg.fracEpsilonForCollisions? FRACEPSILON : 0);
 
     // Don't clip against self.
     if(thing == tmThing)
@@ -486,8 +487,9 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 #endif
 
     blockdist = thing->radius + tmThing->radius;
-    if(fabs(thing->pos[VX] - tm[VX]) >= blockdist ||
-       fabs(thing->pos[VY] - tm[VY]) >= blockdist)
+    // floating point: f-EPSILON > g <==> fixed point: f >= g
+    if(fabs(thing->pos[VX] - tm[VX]) - EPSILON > blockdist ||
+       fabs(thing->pos[VY] - tm[VY]) - EPSILON > blockdist)
         return false; // Didn't hit thing.
 
     if(IS_CLIENT)
@@ -1122,6 +1124,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
 {
     sector_t* newSec;
     AABoxf tmBoxExpanded;
+    const float EPSILON = (cfg.fracEpsilonForCollisions? FRACEPSILON : 0);
 
     tmThing = thing;
 
@@ -1139,10 +1142,10 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tm[VY] = y;
     tm[VZ] = z;
 
-    tmBox.minX = tm[VX] - tmThing->radius;
-    tmBox.minY = tm[VY] - tmThing->radius;
-    tmBox.maxX = tm[VX] + tmThing->radius;
-    tmBox.maxY = tm[VY] + tmThing->radius;
+    tmBox.minX = tm[VX] - tmThing->radius + EPSILON;
+    tmBox.minY = tm[VY] - tmThing->radius + EPSILON;
+    tmBox.maxX = tm[VX] + tmThing->radius - EPSILON;
+    tmBox.maxY = tm[VY] + tmThing->radius - EPSILON;
 
     newSec = P_GetPtrp(R_PointInSubsector(tm[VX], tm[VY]), DMU_SECTOR);
 
