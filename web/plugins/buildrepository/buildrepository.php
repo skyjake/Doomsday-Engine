@@ -676,11 +676,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      * @param platformId  (Integer) PlatformId filter.
      * @param title  (String) Symbolic name of the package to download. Default="Doomsday".
      * @param unstable  (Boolean) @c true= Only consider 'unstable' packs.
+     * @param hasDownload  (Boolean) @c true= Only consider 'downloadable' packs.
      * @return  (Object) Chosen package.
      */
-    private function &choosePackage($platformId=PID_ANY, $title="Doomsday", $unstable=FALSE)
+    private function &choosePackage($platformId=PID_ANY, $title="Doomsday",
+        $unstable=FALSE, $downloadable=TRUE)
     {
         $unstable = (boolean)$unstable;
+        $downloadable = (boolean)$downloadable;
 
         if(isset($this->packages))
         {
@@ -691,6 +694,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 if($pack->platformId() !== $platformId) continue;
                 if($matchTitle && strcmp($pack->title(), $title)) continue;
                 if($unstable != ($pack instanceof AbstractUnstablePackage)) continue;
+                if($downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
 
                 // Found something suitable.
                 return $pack;
