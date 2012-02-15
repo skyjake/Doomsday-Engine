@@ -179,8 +179,10 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale);
 
 void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y);
-boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y);
-boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y);
+boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
+boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y /*, boolean forceInstantly=false*/);
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly);
 
 /**
  * @param max  Maximum view position delta in world units.

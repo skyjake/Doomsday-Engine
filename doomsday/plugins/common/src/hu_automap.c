@@ -1659,23 +1659,26 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
         UIAutomap_SetScale(obj, am->viewScale / zoomSpeed);
     }
 
-    // Map camera paning control.
+    // Map camera panning control.
     if(am->pan || NULL == mo)
     {
-        float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
+        float panUnitsPerSecond, xy[2] = { 0, 0 }; // deltas
 
-        // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        panUnitsPerTic = (UIAutomap_FrameToMap(obj, 140) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
-        if(panUnitsPerTic < 8)
-            panUnitsPerTic = 8;
+        // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
+        /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
+        panUnitsPerSecond = UIAutomap_FrameToMap(obj, 140 * Rect_Height(UIWidget_Geometry(obj))/200.f) * (2 * cfg.automapPanSpeed);
+        if(panUnitsPerSecond < 8)
+            panUnitsPerSecond = 8;
 
-        xy[VX] = panX[0] * panUnitsPerTic * ticLength + panX[1];
-        xy[VY] = panY[0] * panUnitsPerTic * ticLength + panY[1];
+        /// @todo Fix sensitivity for relative axes.
+
+        xy[VX] = panX[0] * panUnitsPerSecond * ticLength + panX[1];
+        xy[VY] = panY[0] * panUnitsPerSecond * ticLength + panY[1];
         V2_Rotate(xy, am->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
         {
-            UIAutomap_TranslateCameraOrigin(obj, xy[VX], xy[VY]);
+            UIAutomap_TranslateCameraOrigin2(obj, xy[VX], xy[VY], true /*instant change*/);
         }
     }
     else
@@ -1898,15 +1901,20 @@ void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
 
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
 {
+    return UIAutomap_SetCameraOrigin2(obj, x, y, false);
+}
+
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+{
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean instantChange = false;
+    boolean instantChange = forceInstantly;
     assert(obj->type == GUI_AUTOMAP);
 
     // Already at this target?
     if(x == am->targetViewX && y == am->targetViewY)
         return false;
 
-    if(am->maxViewPositionDelta > 0)
+    if(!forceInstantly && am->maxViewPositionDelta > 0)
     {
         float dx, dy, dist;
 
@@ -1939,10 +1947,15 @@ boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
 
 boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y)
 {
+    return UIAutomap_TranslateCameraOrigin2(obj, x, y, false);
+}
+
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+{
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
 
-    return UIAutomap_SetCameraOrigin(obj, am->viewX + x, am->viewY + y);
+    return UIAutomap_SetCameraOrigin2(obj, am->viewX + x, am->viewY + y, forceInstantly);
 }
 
 void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, float* x, float* y)
