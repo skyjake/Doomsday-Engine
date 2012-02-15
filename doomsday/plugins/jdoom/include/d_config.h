@@ -163,6 +163,7 @@ typedef struct jdoom_config_s {
     byte            fallOff; // Objects fall under their own weight.
     byte            fixOuchFace;
     byte            fixStatusbarOwnedWeapons;
+    byte            fracEpsilonForCollisions;
 
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
