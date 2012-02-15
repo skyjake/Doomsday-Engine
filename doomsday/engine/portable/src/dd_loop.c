@@ -475,6 +475,7 @@ void DD_ResetTimer(void)
 void DD_RunTics(void)
 {
     double elapsedTime, ticLength, nowTime;
+    static int timerBias = 0;
     const double minFrameTime = (maxFrameRate > 0? 1.0 / maxFrameRate : 0.001);
 
     // Do a network update first.
@@ -487,6 +488,7 @@ void DD_RunTics(void)
         // On the first tic, no time actually passes.
         firstTic = false;
         lastFrameTime = Sys_GetSeconds();
+        timerBias = 0;
         return;
     }
 
@@ -495,21 +497,33 @@ void DD_RunTics(void)
 
     // We'll sleep until we go past the maxfps interval (the shortest
     // allowed interval between tics).
-    if(maxFrameRate > 0)
+
     {
-        while((nowTime = Sys_GetSeconds()) - lastFrameTime < minFrameTime)
+        /*while((nowTime = Sys_GetSeconds()) - lastFrameTime < minFrameTime)
         {
             // Wait for a short while.
-            Sys_Sleep(2);
+            Sys_Sleep(1);
+        }*/
 
-            N_Update();
-            Net_Update();
+        for(;;)
+        {
+            int needSleepMs;
+
+            nowTime = Sys_GetSeconds();
+
+            // How much time do we have for this frame?
+            elapsedTime = nowTime - lastFrameTime;
+            if(elapsedTime >= minFrameTime) break; // Time to run the tics.
+
+            needSleepMs = (int)((minFrameTime - elapsedTime)/2 * 1000) + timerBias;
+            if(needSleepMs <= 0) break; // Let's go...
+
+            Sys_Sleep(needSleepMs);
         }
     }
 
-    // How much time do we have for this frame?
-    elapsedTime = nowTime - lastFrameTime;
     lastFrameTime = nowTime;
+    if(elapsedTime < minFrameTime) timerBias = 1;
 
     // Tic until all the elapsed time has been spent.
     while(elapsedTime > 0)
