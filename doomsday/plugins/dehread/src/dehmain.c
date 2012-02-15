@@ -431,6 +431,10 @@ static const char* MusicMap[] = {
     NULL
 };
 
+/**
+ * @note Replacing of texts which define strings used for the user
+ *       interface is disallowed.
+ */
 static const struct {
     const char*     id;
     const char*     str;
@@ -474,24 +478,24 @@ static const struct {
     { "CC_SPIDER", "THE SPIDER MASTERMIND" },
     { "CC_CYBER", "THE CYBERDEMON" },
     { "CC_HERO", "OUR HERO" },
-    { "D_DEVSTR", "Development mode ON.\n" },
-    { "D_CDROM", "CD-ROM Version: default.cfg from c:\\doomdata\n" },
-    { "LOADNET", "you can't do load while in a net game!\n\npress a key." },
-    { "SAVEDEAD", "you can't save if you aren't playing!\n\npress a key." },
-    { "QSPROMPT", "quicksave over your game named\n\n'%s'?\n\npress y or n." },
-    { "QLOADNET", "you can't quickload during a netgame!\n\npress a key." },
-    { "QSAVESPOT", "you haven't picked a quicksave slot yet!\n\npress a key." },
-    { "QLPROMPT", "do you want to quickload the game named\n\n'%s'?\n\npress y or n." },
-    { "NEWGAME", "you can't start a new game\nwhile in a network game.\n\npress a key." },
-    { "NIGHTMARE", "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n." },
-    { "SWSTRING", "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key." },
-    { "MSGOFF", "Messages OFF" },
-    { "MSGON", "Messages ON" },
-    { "NETEND", "you can't end a netgame!\n\npress a key." },
-    { "ENDGAME", "are you sure you want to end the game?\n\npress y or n." },
-    { "DOSY", "%s\n\n(press y to quit to dos.)" },
-    { "DETAILHI", "High detail" },
-    { "DETAILLO", "Low detail" },
+    //{ "D_DEVSTR", "Development mode ON.\n" },
+    //{ "D_CDROM", "CD-ROM Version: default.cfg from c:\\doomdata\n" },
+    //{ "LOADNET", "you can't do load while in a net game!\n\npress a key." },
+    //{ "SAVEDEAD", "you can't save if you aren't playing!\n\npress a key." },
+    //{ "QSPROMPT", "quicksave over your game named\n\n'%s'?\n\npress y or n." },
+    //{ "QLOADNET", "you can't quickload during a netgame!\n\npress a key." },
+    //{ "QSAVESPOT", "you haven't picked a quicksave slot yet!\n\npress a key." },
+    //{ "QLPROMPT", "do you want to quickload the game named\n\n'%s'?\n\npress y or n." },
+    //{ "NEWGAME", "you can't start a new game\nwhile in a network game.\n\npress a key." },
+    //{ "NIGHTMARE", "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n." },
+    //{ "SWSTRING", "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key." },
+    //{ "MSGOFF", "Messages OFF" },
+    //{ "MSGON", "Messages ON" },
+    //{ "NETEND", "you can't end a netgame!\n\npress a key." },
+    //{ "ENDGAME", "are you sure you want to end the game?\n\npress y or n." },
+    //{ "DOSY", "%s\n\n(press y to quit to dos.)" },
+    //{ "DETAILHI", "High detail" },
+    //{ "DETAILLO", "Low detail" },
     { "HUSTR_CHATMACRO0", "No" },
     { "HUSTR_CHATMACRO1", "I'm ready to kick butt!" },
     { "HUSTR_CHATMACRO2", "I'm OK." },
@@ -502,20 +506,20 @@ static const struct {
     { "HUSTR_CHATMACRO7", "Come here!" },
     { "HUSTR_CHATMACRO8", "I'll take care of it." },
     { "HUSTR_CHATMACRO9", "Yes" },
-    { "AMSTR_FOLLOWON", "Follow Mode ON" },
-    { "AMSTR_FOLLOWOFF", "Follow Mode OFF" },
-    { "AMSTR_GRIDON", "Grid ON" },
-    { "AMSTR_GRIDOFF", "Grid OFF" },
-    { "AMSTR_MARKEDSPOT", "Marked Spot" },
-    { "AMSTR_MARKSCLEARED", "All Marks Cleared" },
+    //{ "AMSTR_FOLLOWON", "Follow Mode ON" },
+    //{ "AMSTR_FOLLOWOFF", "Follow Mode OFF" },
+    //{ "AMSTR_GRIDON", "Grid ON" },
+    //{ "AMSTR_GRIDOFF", "Grid OFF" },
+    //{ "AMSTR_MARKEDSPOT", "Marked Spot" },
+    //{ "AMSTR_MARKSCLEARED", "All Marks Cleared" },
     { "PD_BLUEO", "You need a blue key to activate this object" },
     { "PD_REDO", "You need a red key to activate this object" },
     { "PD_YELLOWO", "You need a yellow key to activate this object" },
     { "PD_BLUEK", "You need a blue key to open this door" },
     { "PD_REDK", "You need a yellow key to open this door" },
     { "PD_YELLOWK", "You need a red key to open this door" },
-    { "EMPTYSTRING", "empty slot" },
-    { "GGSAVED", "game saved." },
+    //{ "EMPTYSTRING", "empty slot" },
+    //{ "GGSAVED", "game saved." },
     { "GOTARMOR", "Picked up the armor." },
     { "GOTMEGA", "Picked up the MegaArmor!" },
     { "GOTHTHBONUS", "Picked up a health bonus." },
@@ -707,7 +711,7 @@ static const struct {
     { "THUSTR_30", "Level 30: Last Call" },
     { "THUSTR_31", "Level 31: Pharaoh" },
     { "THUSTR_32", "Level 32: Caribbean" },
-    { NULL, NULL }
+    { NULL }
 };
 
 boolean BackedUpData = false;
