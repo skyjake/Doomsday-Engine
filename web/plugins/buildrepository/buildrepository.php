@@ -1082,7 +1082,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $issues   = $errors + $warnings;
 
                 // Determine issue level (think defcon).
-                if($errors > 0)
+                if($errors > 0 || !$pack->hasDownloadUri())
                     $issueLevel = 'major';
                 else if($warnings > 0)
                     $issueLevel = 'minor';
