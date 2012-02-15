@@ -116,6 +116,8 @@ typedef struct {
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     float           filterStrength;
 
+    byte            fracEpsilonForCollisions;
+
     byte            hudShownCheatCounters;
     float           hudCheatCounterScale;
     byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.

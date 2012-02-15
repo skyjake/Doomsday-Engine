@@ -37,13 +37,13 @@
 #include "de_infine.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
 #  include "de_refresh.h"
 #  include "de_render.h"
-#  include "de_ui.h"
 #endif
 
 #include "con_busy.h"

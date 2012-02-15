@@ -450,6 +450,8 @@ void G_Register(void)
 
     for(i = 0; gameCmds[i].name; ++i)
         Con_AddCommand(gameCmds + i);
+
+    C_VAR_BYTE("game-mobj-fracepsilon", &cfg.fracEpsilonForCollisions, 0, 0, 1);
 }
 
 boolean G_QuitInProgress(void)
