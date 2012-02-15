@@ -13,6 +13,7 @@ Include "doom2/skies.ded";
 Include "hacx/maps.ded";
 Include "doom2/finales.ded";
 Include "hacx/materials.ded";
+Include "doom1/materialenvironments.ded";
 Include "doom2/music.ded";
 Include "hacx/fonts.ded";
 Include "hacx/menu.ded";

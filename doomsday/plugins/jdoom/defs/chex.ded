@@ -23,4 +23,5 @@ Include "doom1/inlude.ded";
 Include "chex/text.ded";
 Include "chex/lights.ded";
 Include "chex/materials.ded";
+Include "doom1/materialenvironments.ded";
 Include "chex/music.ded";
