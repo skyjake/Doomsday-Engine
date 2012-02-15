@@ -987,6 +987,23 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->endPage();
     }
 
+    private function countInstallablePackages(&$build)
+    {
+        $count = 0;
+        if($build instanceof BuildEvent)
+        {
+            foreach($build->packages as &$pack)
+            {
+                $downloadUri = $pack->downloadUri();
+                if($downloadUri && strlen($downloadUri) > 0)
+                {
+                    $count++;
+                }
+            }
+        }
+        return $count;
+    }
+
     private function genBuildOverview(&$build)
     {
         $html = '';
@@ -1000,7 +1017,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             $html .= '<h2><a class="link-definition" href="'.$releaseTypeLink.'" title="'.$releaseTypeLinkTitle.'">'. htmlspecialchars(ucfirst($releaseTypeLabel)). '</a></h2>'
                     .'<p>The build event was started on '. date(DATE_RFC2822, $build->startDate()) .'. '
                     .'It contains '. count($build->commits) .' commits and produced '
-                    . count($build->packages) .' installable binary packages.</p>';
+                    . $this->countInstallablePackages($build) .' installable binary packages.</p>';
         }
         return $html;
     }
