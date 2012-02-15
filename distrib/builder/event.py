@@ -277,6 +277,13 @@ class Event:
             return file(fn).read().lower().strip()
         return 'unstable' # Default assumption.
         
+    def xml_log(self, logName):
+        msg = '<compileLogUri>%s</compileLogUri>' % self.download_uri(logName)
+        errors, warnings = utils.count_log_issues(self.file_path(logName))
+        msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
+        msg += '<compileErrorCount>%i</compileErrorCount>' % errors
+        return msg
+        
     def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
@@ -287,6 +294,9 @@ class Event:
         files = self.list_package_files()
         msg += '<packageCount>%i</packageCount>' % len(files)
         
+        # These logs were already linked to.
+        includedLogs = []
+        
         # Packages.
         for fn in files:
             msg += '<package type="%s">' % self.package_type(fn)
@@ -296,11 +306,21 @@ class Event:
             msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
             logName = self.compressed_log_filename(fn)
             if os.path.exists(self.file_path(logName)):
-                msg += '<compileLogUri>%s</compileLogUri>' % self.download_uri(logName)
-                errors, warnings = utils.count_log_issues(self.file_path(logName))
-                msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
-                msg += '<compileErrorCount>%i</compileErrorCount>' % errors
+                msg += self.xml_log(logName)
+                includedLogs.append(logName)
             msg += '</package>'
+
+        # Any other logs we might want to include?
+        for osName, osExt, osIdent in self.oses:
+            for pkg in self.packages:
+                logName = log_filename(pkg, osIdent)
+                if os.path.exists(self.file_path(logName)) and logName not in includedLogs:
+                    # Add an entry for this.
+                    msg += '<package type="%s">' % self.package_type(logName)
+                    msg += '<name>%s</name>' % self.packageName[pkg]
+                    msg += '<platform>%s</platform>' % self.platId[osIdent]
+                    msg += self.xml_log(logName)
+                    msg += '</package>'
         
         # Commits.
         chgFn = self.file_path('changes.xml')
