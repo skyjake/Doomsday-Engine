@@ -85,7 +85,7 @@ int maxFrameRate = 200; // Zero means 'unlimited'.
 int rFrameCount = 0;
 
 timespan_t sysTime, gameTime, demoTime, ddMapTime;
-timespan_t frameStartTime;
+//timespan_t frameStartTime;
 
 boolean stopTime = false; // If true the time counters won't be incremented
 boolean tickUI = false; // If true the UI will be tick'd
@@ -254,7 +254,7 @@ void DD_StartFrame(void)
     if(!isDedicated)
         GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
-    frameStartTime = Sys_GetTimef();
+    //frameStartTime = Sys_GetTimef();
 
     S_StartFrame();
     if(gx.BeginFrame)
@@ -474,8 +474,8 @@ void DD_ResetTimer(void)
  */
 void DD_RunTics(void)
 {
-    double              frameTime, ticLength;
-    double              nowTime = Sys_GetSeconds();
+    double elapsedTime, ticLength, nowTime;
+    const double minFrameTime = (maxFrameRate > 0? 1.0 / maxFrameRate : 0.001);
 
     // Do a network update first.
     N_Update();
@@ -486,18 +486,21 @@ void DD_RunTics(void)
     {
         // On the first tic, no time actually passes.
         firstTic = false;
-        lastFrameTime = nowTime;
+        lastFrameTime = Sys_GetSeconds();
         return;
     }
+
+    /// @todo Run the timer exactly according to maxFrameRate. Currently the
+    /// actual rate is always less than the max.
 
     // We'll sleep until we go past the maxfps interval (the shortest
     // allowed interval between tics).
     if(maxFrameRate > 0)
     {
-        while((nowTime = Sys_GetSeconds()) - lastFrameTime < 1.0 / maxFrameRate)
+        while((nowTime = Sys_GetSeconds()) - lastFrameTime < minFrameTime)
         {
             // Wait for a short while.
-            Sys_Sleep(3);
+            Sys_Sleep(2);
 
             N_Update();
             Net_Update();
@@ -505,14 +508,14 @@ void DD_RunTics(void)
     }
 
     // How much time do we have for this frame?
-    frameTime = nowTime - lastFrameTime;
+    elapsedTime = nowTime - lastFrameTime;
     lastFrameTime = nowTime;
 
-    // Tic length is determined by the minfps rate.
-    while(frameTime > 0)
+    // Tic until all the elapsed time has been spent.
+    while(elapsedTime > 0)
     {
-        ticLength = MIN_OF(MAX_FRAME_TIME, frameTime);
-        frameTime -= ticLength;
+        ticLength = MIN_OF(MAX_FRAME_TIME, elapsedTime);
+        elapsedTime -= ticLength;
 
         // Will this be a sharp tick?
         DD_CheckSharpTick(ticLength);
