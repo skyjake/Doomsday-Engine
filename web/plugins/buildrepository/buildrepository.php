@@ -895,8 +895,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     }
 
     private function outputPackageList(&$packages, $notThisPack=NULL,
-        $chosenPlatformId=NULL, $unstable=-1/*no filter*/, $maxPacks=-1/*no limit*/,
-        $listTitleHTML=NULL/*no title*/)
+        $chosenPlatformId=NULL, $unstable=-1/*no filter*/, $downloadable=-1/*no filter*/,
+        $maxPacks=-1/*no limit*/, $listTitleHTML=NULL/*no title*/)
     {
         if(!is_array($packages)) return;
 
@@ -905,10 +905,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if($maxPacks < 0) $maxPacks = -1;
 
         $unstable = intval($unstable);
-        if($unstable < 0)
-            $unstable = -1; // Any.
-        else
-            $unstable = $unstable? 1 : 0;
+        if($unstable < 0) $unstable = -1; // Any.
+        else              $unstable = $unstable? 1 : 0;
+
+        $downloadable = intval($downloadable);
+        if($downloadable < 0) $downloadable = -1; // Any.
+        else                  $downloadable = $downloadable? 1 : 0;
 
         // Generate package list:
         $numPacks = (integer)0;
@@ -917,6 +919,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             // Filtered out?
             if($pack === $notThisPack) continue;
             if($unstable != -1 && (boolean)$unstable != ($pack instanceof AbstractUnstablePackage)) continue;
+            if($downloadable != -1 && (boolean)$downloadable != ($pack instanceof iDownloadable && $pack->hasDownloadUri())) continue;
             if(!is_null($chosenPlatformId) && $pack->platformId() === $chosenPlatformId) continue;
 
             // Begin the list?
@@ -974,11 +977,13 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Latest stable packages.
         $packageListTitle = 'Latest packages:';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, FALSE/*stable*/, 8, $packageListTitle);
+        $this->outputPackageList(&$this->packages, $pack, PID_ANY, FALSE/*stable*/,
+                                 TRUE/*only downloadables*/, 8, $packageListTitle);
 
         // Latest unstable packages.
         $packageListTitle = 'Latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, TRUE/*unstable*/, 8, $packageListTitle);
+        $this->outputPackageList(&$this->packages, $pack, PID_ANY, TRUE/*unstable*/,
+                                 TRUE/*only downloadables*/, 8, $packageListTitle);
 
 ?></div><?php
 
@@ -1147,8 +1152,9 @@ jQuery(document).ready(function() {
             // Generate widgets for the symbolic packages.
             $packageListTitle = 'Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
 
-            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/,
-                PID_ANY, -1/*no stable filter*/, -1/*no result limit*/, $packageListTitle);
+            $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+                                     -1/*no stable filter*/, TRUE/*only downloadables*/,
+                                     -1/*no result limit*/, $packageListTitle);
 
 ?></div><?php
 
