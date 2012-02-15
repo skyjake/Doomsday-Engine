@@ -378,13 +378,14 @@ typedef struct gameinfo_s {
 #define FRACBITS            16
 #define FRACUNIT            (1<<FRACBITS)
 #define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
+#define FLOATEPSILON        .000001f
 
 #define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
 #define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
 #define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
 #define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
 #define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
-#define FEQUAL(x, y)        (INRANGE_OF(x, y, FRACEPSILON))
+#define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 #define ABS(x)              ((x) >= 0 ? (x) : -(x))
 
