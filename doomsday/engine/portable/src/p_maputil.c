@@ -482,7 +482,8 @@ void P_LineOpening(linedef_t* linedef)
     sector_t*           front, *back;
 
     if(!linedef->L_backside)
-    {   // Single sided line.
+    {
+        // Single sided line.
         openrange = 0;
         return;
     }
