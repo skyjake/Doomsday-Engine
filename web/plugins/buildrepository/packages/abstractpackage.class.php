@@ -30,30 +30,48 @@ require_once(dirname(__FILE__) . '/../downloadable.interface.php');
 
 abstract class AbstractPackage extends BasePackage implements iDownloadable
 {
-    protected $downloadUri = '';
+    static protected $emptyString = '';
+
+    protected $downloadUri = NULL;
 
     public function __construct($platformId=PID_ANY, $title=NULL, $version=NULL, $downloadUri=NULL)
     {
         parent::__construct($platformId, $title, $version);
 
-        if(!is_null($downloadUri))
+        if(!is_null($downloadUri) && strlen($downloadUri) > 0)
             $this->downloadUri = "$downloadUri";
     }
 
     // Implements iDownloadable
     public function &downloadUri()
     {
+        if(!$this->hasDownloadUri())
+        {
+            return $emptyString;
+        }
         return $this->downloadUri;
+    }
+
+    public function hasDownloadUri()
+    {
+        return !is_null($this->downloadUri);
     }
 
     // Implements iDownloadable
     public function genDownloadBadge()
     {
         $fullTitle = $this->composeFullTitle();
-        $downloadUriTitle = "Download $fullTitle";
+        if($this->hasDownloadUri())
+        {
+            $downloadUriTitle = "Download $fullTitle";
 
-        $html = "<a href=\"$this->downloadUri\" title=\"$downloadUriTitle\">".
-            htmlspecialchars($fullTitle) .'</a>';
+            $html = "<a href=\"$this->downloadUri\" title=\"$downloadUriTitle\">".
+                    htmlspecialchars($fullTitle) .'</a>';
+        }
+        else
+        {
+            $html = htmlspecialchars($fullTitle);
+        }
         return $html;
     }
 }
