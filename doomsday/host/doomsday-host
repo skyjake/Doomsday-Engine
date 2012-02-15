@@ -171,16 +171,31 @@ class State:
             if timeInRange(rebuild, self.lastRun, self.now()):
                 return True
         return False
+
+    def kill(self, port):
+        pid = self.pids[port]
+        msg('Stopping server at port %i (pid %i)...' % (port, pid))
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError:
+            pass
         
     def killAll(self):
         for port in self.pids:
-            pid = self.pids[port]
-            msg('Stopping server at port %i (pid %i)...' % (port, pid))
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except OSError:
-                pass
+            self.kill(port)
         self.pids = {}
+
+    def killObsolete(self):
+        for port in self.pids:
+            if checkPid(self.pids[port]):
+                # A server for this?
+                configured = False
+                for sv in servers:
+                    if sv.port == port:
+                        configured = True
+                if not configured:
+                    self.kill(port)
+                    del self.pids[port]
                 
     def isRunning(self, sv):
         if sv.port not in self.pids: return False
@@ -224,9 +239,9 @@ class State:
             j += 1                
 
         try:
-            msg('PATH=' + os.getenv('PATH'))
-            msg('HOME=' + os.getenv('HOME'))
-            msg('Start options: ' + string.join(args, ' '))
+            #msg('PATH=' + os.getenv('PATH'))
+            #msg('HOME=' + os.getenv('HOME'))
+            #msg('Start options: ' + string.join(args, ' '))
             outfile = file(os.path.join(sv.runtime, 'stdout-%s.log' % timestamp), 'wt')
             po = subprocess.Popen(args, stdout=outfile, stderr=outfile)
             pid = po.pid
@@ -299,7 +314,9 @@ def main():
     else:
         state = State()
 
-    # What should we do?
+    # Kill instances that no longer have a configuration.
+    state.killObsolete()
+
     # Is it time to rebuild from source?
     if state.isTimeForRebuild():
         state.killAll()
