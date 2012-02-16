@@ -103,9 +103,7 @@ unsigned int Sys_GetRealTime(void)
 #elif  UNIX
     now = SDL_GetTicks();
 #endif
-    //Sys_Unlock(timer_Mutex);
 
-    //Sys_Lock(timer_Mutex);
     if(first)
     {
         first = false;
@@ -114,9 +112,7 @@ unsigned int Sys_GetRealTime(void)
         Sys_Unlock(timer_Mutex);
         return 0;
     }
-    //Sys_Unlock(timer_Mutex);
 
-    //Sys_Lock(timer_Mutex);
     // Wrapped around? (Every 50 days...)
     if(now < start)
     {

@@ -236,6 +236,22 @@ void Sys_Sleep(int millisecs)
 #endif
 }
 
+void Sys_BlockUntilRealTime(uint realTimeMs)
+{
+    uint remaining = realTimeMs - Sys_GetRealTime();
+    if(remaining > 50)
+    {
+        // Target time is in the past; or the caller is attempting to wait for
+        // too long a time.
+        return;
+    }
+
+    while(Sys_GetRealTime() < realTimeMs)
+    {
+        // Do nothing; don't yield execution.
+    }
+}
+
 void Sys_ShowCursor(boolean show)
 {
 #ifdef WIN32

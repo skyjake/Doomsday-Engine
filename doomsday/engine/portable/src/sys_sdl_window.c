@@ -849,13 +849,14 @@ void Sys_UpdateWindow(uint idx)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+    /*
     if(GL_state.forceFinishBeforeSwap)
     {
         glFinish();
     }
+    */
 
-    // Swap buffers.
-    SDL_GL_SwapBuffers(); // Includes a call to glFlush()
+    SDL_GL_SwapBuffers();
 }
 
 /**

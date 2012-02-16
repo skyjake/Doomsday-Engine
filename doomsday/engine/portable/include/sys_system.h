@@ -50,6 +50,17 @@ int Sys_CriticalMessage(const char* msg);
 int Sys_CriticalMessagef(const char* format, ...) PRINTF_F(1,2);
 
 void Sys_Sleep(int millisecs);
+
+/**
+ * Blocks the thread for a very short period of time. If attempting to wait
+ * until a time in the past (or for more than 50 ms), returns immediately.
+ *
+ * @param realTimeMs  Block until this time is reached.
+ *
+ * @note Longer waits should use Sys_Sleep() -- this is a busy wait.
+ */
+void Sys_BlockUntilRealTime(uint realTimeMs);
+
 void Sys_ShowCursor(boolean show);
 void Sys_HideMouse(void);
 void Sys_MessageBox(const char* msg, boolean iserror);
