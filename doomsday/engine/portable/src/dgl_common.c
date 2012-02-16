@@ -351,6 +351,18 @@ void GL_SetVSync(boolean on)
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
 #endif
+
+#ifdef MACOSX
+    {
+        // Tell CGL to wait for vertical refresh.
+        CGLContextObj context = CGLGetCurrentContext();
+        if(context)
+        {
+            GLint params[1] = { 1 };
+            CGLSetParameter(context, kCGLCPSwapInterval, params);
+        }
+    }
+#endif
 }
 
 void GL_SetMultisample(boolean on)

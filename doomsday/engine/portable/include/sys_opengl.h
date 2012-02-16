@@ -48,6 +48,7 @@
 #  ifdef MACOSX
 #    include <SDL.h>
 #    include <SDL_opengl.h>
+#    include <OpenGL/OpenGL.h>
 #  else
 #    include <SDL.h>
 #    include <SDL_opengl.h>

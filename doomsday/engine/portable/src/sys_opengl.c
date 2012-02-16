@@ -186,6 +186,8 @@ static void initialize(void)
     }
     if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
         GL_state.features.vsync = false;
+#elif defined(MACOSX)
+    GL_state.features.vsync = true;
 #else
     GL_state.features.vsync = false;
 #endif
@@ -574,7 +576,17 @@ void Sys_GLConfigureDefaultState(void)
 
 #ifdef WIN32
     if(GL_state.features.vsync && wglSwapIntervalEXT != NULL)
-        wglSwapIntervalEXT(1);
+    {
+        GL_SetVSync(true);
+    }
+#endif
+
+#ifdef MACOSX
+    if(GL_state.features.vsync)
+    {
+        // Always use vsync on the Mac.
+        GL_SetVSync(true);
+    }
 #endif
 
 #if DRMESA
