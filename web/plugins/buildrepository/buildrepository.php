@@ -821,7 +821,14 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 ?></ul></div><?php
     }
 
-    private function findBuildByUniqueId($uniqueId=0)
+    /**
+     * Retrieve the BuildEvent object associated with @a uniqueId.
+     * If no match is found then the special 'unknown' platform is returned.
+     *
+     * @param uniqueId  (Integer) Unique identfier of the build event.
+     * @return  (Mixed) BuildEvent object for the build else Boolean @c NULL.
+     */
+    public function buildByUniqueId($uniqueId=0)
     {
         $uniqueId = intval($uniqueId);
         $build = NULL;
@@ -1099,6 +1106,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         global $FrontController;
 
+        date_default_timezone_set('EET');
+
         if(isset($args['getpackage']))
         {
             $this->outputPackageRedirect($args['getpackage']);
@@ -1112,7 +1121,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Determine whether we are detailing a single build event or listing all events.
         $uniqueId = $args['build'];
-        $build = $this->findBuildByUniqueId($uniqueId);
+        $build = $this->buildByUniqueId($uniqueId);
 
         $pageTitle = (!is_null($build)? $build->composeName() : 'Builds');
 
@@ -1125,8 +1134,6 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if(!is_null($build))
         {
             // Detailing a single build event.
-
-            date_default_timezone_set('EET');
 
 ?><div class="buildevent"><?php
 
