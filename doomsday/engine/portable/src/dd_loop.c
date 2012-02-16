@@ -561,7 +561,6 @@ static void runTics(void)
 
         if(processSharpEventsAfterTickers)
         {
-            // Some events are only processed during sharp tics.
             // This is done after tickers for compatibility with ye olde game logic.
             DD_ProcessSharpEvents(ticLength);
         }
