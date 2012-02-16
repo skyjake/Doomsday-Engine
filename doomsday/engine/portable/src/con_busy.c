@@ -37,6 +37,7 @@
 #include "de_misc.h"
 #include "de_network.h"
 
+#include "s_main.h"
 #include "image.h"
 #include "texturecontent.h"
 #include "cbuffer.h"
@@ -466,6 +467,9 @@ static void Con_BusyLoop(void)
         // Time for an update?
         if(canDraw)
             Con_BusyDrawer();
+
+        // Make sure the audio system gets regularly updated.
+        S_EndFrame();
     }
 
     if(verbose)

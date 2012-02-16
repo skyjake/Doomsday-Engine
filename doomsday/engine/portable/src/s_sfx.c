@@ -939,7 +939,10 @@ void Sfx_EndFrame(void)
     if(!sfxAvail)
         return;
 
-    Sfx_Update();
+    if(!Con_IsBusy())
+    {
+        Sfx_Update();
+    }
 
     // The sound frame ends.
     audioDriver->Event(SFXEV_END);
