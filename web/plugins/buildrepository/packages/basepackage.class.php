@@ -89,7 +89,7 @@ abstract class BasePackage
         $plat = &BuildRepositoryPlugin::platform($this->platformId());
 
         $tpl['platform_id']   = $this->platformId();
-        $tpl['platform_name'] = $plat['nicename'];
+        $tpl['platform_name'] = $plat['name'];
         $tpl['version'] = $this->version();
         $tpl['title'] = $this->title();
         $tpl['fulltitle'] = $this->composeFullTitle();
