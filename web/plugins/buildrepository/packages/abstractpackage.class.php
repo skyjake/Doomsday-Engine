@@ -42,6 +42,16 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
             $this->downloadUri = "$downloadUri";
     }
 
+    // Extends implementation in AbstractPackage.
+    public function populateGraphTemplate(&$tpl)
+    {
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        parent::populateGraphTemplate($tpl);
+        $tpl['download_uri'] = $this->downloadUri();
+    }
+
     // Implements iDownloadable
     public function &downloadUri()
     {
@@ -52,6 +62,7 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
         return $this->downloadUri;
     }
 
+    // Implements iDownloadable
     public function hasDownloadUri()
     {
         return !is_null($this->downloadUri);

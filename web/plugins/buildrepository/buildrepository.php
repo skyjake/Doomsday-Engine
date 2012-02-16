@@ -730,7 +730,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             $this->initPackages();
 
-            // Are we redirecting to the download URI for a specific package?
+            // Are we redirecting to a specific package?
             $getPackage = FALSE;
             if(isset($uriArgs['platform']))
             {
@@ -738,7 +738,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $platformId = $this->parsePlatformId($uriArgs['platform']);
                 $unstable = isset($uriArgs['unstable']);
 
-                // Default to downloading Doomsday if a pack is not specified.
+                // Default to Doomsday if a pack is not specified.
                 $packTitle = "Doomsday";
                 if(isset($uriArgs['pack']))
                     $packTitle = trim($uriArgs['pack']);
@@ -747,7 +747,21 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                 $pack = &$this->choosePackage($platformId, $packTitle, $unstable);
                 if(!($pack instanceof NullPackage))
                 {
-                    $FrontController->enqueueAction($this, array('getpackage' => $pack));
+                    $args = array();
+
+                    // Are we retrieving the object graph?
+                    if(isset($uriArgs['graph']))
+                    {
+                        // Return the object graph.
+                        $args['getgraph'] = $pack;
+                    }
+                    else
+                    {
+                        // Redirect to the package download.
+                        $args['getpackage'] = $pack;
+                    }
+
+                    $FrontController->enqueueAction($this, $args);
                     return true; // Eat the request.
                 }
             }
@@ -996,6 +1010,23 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->endPage();
     }
 
+    private function outputPackageGraph(&$pack)
+    {
+        global $FrontController;
+
+        if(!($pack instanceof AbstractPackage))
+            throw new Exception('Received invalid Package.');
+
+        // Generate a graph template for this package.
+        /// @todo cache the encoded graph!
+        $template = array();
+        $pack->populateGraphTemplate($template);
+        $json = json_encode_clean($template);
+
+        // Print to the output stream.
+        print($json);
+    }
+
     private function countInstallablePackages(&$build)
     {
         $count = 0;
@@ -1040,6 +1071,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if(isset($args['getpackage']))
         {
             $this->outputPackageRedirect($args['getpackage']);
+            return;
+        }
+        else if(isset($args['getgraph']))
+        {
+            $this->outputPackageGraph($args['getgraph']);
             return;
         }
 
