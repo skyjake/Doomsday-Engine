@@ -75,4 +75,23 @@ abstract class BasePackage
         $fullTitle = $this->composeFullTitle();
         return '('.get_class($this).":$title)";
     }
+
+    /**
+     * Add the object graph properties for this to the specified template.
+     *
+     * @param tpl  (Array) Array to be filled with graph properties.
+     */
+    public function populateGraphTemplate(&$tpl)
+    {
+        if(!is_array($tpl))
+            throw new Exception('Invalid template argument, array expected');
+
+        $plat = &BuildRepositoryPlugin::platform($this->platformId());
+
+        $tpl['platform_id']   = $this->platformId();
+        $tpl['platform_name'] = $plat['name'];
+        $tpl['version'] = $this->version();
+        $tpl['title'] = $this->title();
+        $tpl['fulltitle'] = $this->composeFullTitle();
+    }
 }

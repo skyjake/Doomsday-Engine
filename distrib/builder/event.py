@@ -3,6 +3,10 @@ import build_number
 import config
 import utils
 
+def log_filename(package, osIdent, ext='txt.gz'):
+    return 'buildlog-%s-%s.%s' % (package, osIdent, ext)
+
+
 class Event:
     """Build event. Manages the contents of a single build directory under
     the event directory."""
@@ -171,8 +175,8 @@ class Event:
         return "%s/%s/%s" % (config.BUILD_URI, self.name, fn)
                 
     def compressed_log_filename(self, binaryFn):
-        return 'buildlog-%s-%s.txt.gz' % (self.package_from_filename(binaryFn), 
-                                          self.os_from_filename(binaryFn)[2]) 
+        return log_filename(self.package_from_filename(binaryFn), 
+                            self.os_from_filename(binaryFn)[2])
 
     def sort_by_package(self, binaries):
         """Returns the list of binaries sorted by package."""
@@ -181,6 +185,23 @@ class Event:
             pl.append((self.package_from_filename(bin), bin))
         pl.sort()
         return [bin for pkg, bin in pl]
+               
+    def html_table_log_issues(self, logName):
+        # Link to the compressed log.
+        msg = '<td><a href="%s">txt.gz</a>' % self.download_uri(logName)
+
+        # Show a traffic light indicator based on warning and error counts.              
+        errors, warnings = utils.count_log_issues(self.file_path(logName))
+        form = '<td bgcolor="%s" style="text-align:center;">'
+        if errors > 0:
+            msg += form % '#ff4444' # red
+        elif warnings > 0:
+            msg += form % '#ffee00' # yellow
+        else:
+            msg += form % '#00ee00' # green
+        msg += str(errors + warnings)        
+
+        return msg
                 
     def html_description(self, encoded=True):
         """Composes an HTML build report."""
@@ -208,7 +229,14 @@ class Event:
 
             if not binaries:
                 # Nothing available for this OS.
-                msg += '<tr><td>' + osName + '<td>n/a</tr>'
+                msg += '<tr><td>' + osName + '<td>n/a'
+                
+                # Do we have a log?
+                logName = log_filename(self.packages[0], osIdent)
+                if os.path.exists(self.file_path(logName)):
+                    msg += self.html_table_log_issues(logName)
+                
+                msg += '</tr>'
                 continue
 
             # List all the binaries. One row per binary.
@@ -222,24 +250,12 @@ class Event:
 
                 # Status of the log.
                 logName = self.compressed_log_filename(binary)
-                logFileName = self.file_path(logName)
-                if not os.path.exists(logFileName):
+                if not os.path.exists(self.file_path(logName)):
                     msg += '</tr>'
                     continue                            
 
                 # Link to the compressed log.
-                msg += '<td><a href="%s">txt.gz</a>' % self.download_uri(logName)
-
-                # Show a traffic light indicator based on warning and error counts.              
-                errors, warnings = utils.count_log_issues(logFileName)
-                form = '<td bgcolor="%s" style="text-align:center;">'
-                if errors > 0:
-                    msg += form % '#ff4444' # red
-                elif warnings > 0:
-                    msg += form % '#ffee00' # yellow
-                else:
-                    msg += form % '#00ee00' # green
-                msg += str(errors + warnings)
+                msg += self.html_table_log_issues(logName)
 
             msg += '</tr>'
 
@@ -261,6 +277,13 @@ class Event:
             return file(fn).read().lower().strip()
         return 'unstable' # Default assumption.
         
+    def xml_log(self, logName):
+        msg = '<compileLogUri>%s</compileLogUri>' % self.download_uri(logName)
+        errors, warnings = utils.count_log_issues(self.file_path(logName))
+        msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
+        msg += '<compileErrorCount>%i</compileErrorCount>' % errors
+        return msg
+        
     def xml_description(self):
         msg = '<build>'
         msg += '<uniqueId>%i</uniqueId>' % self.number()
@@ -271,6 +294,9 @@ class Event:
         files = self.list_package_files()
         msg += '<packageCount>%i</packageCount>' % len(files)
         
+        # These logs were already linked to.
+        includedLogs = []
+        
         # Packages.
         for fn in files:
             msg += '<package type="%s">' % self.package_type(fn)
@@ -280,11 +306,21 @@ class Event:
             msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
             logName = self.compressed_log_filename(fn)
             if os.path.exists(self.file_path(logName)):
-                msg += '<compileLogUri>%s</compileLogUri>' % self.download_uri(logName)
-                errors, warnings = utils.count_log_issues(self.file_path(logName))
-                msg += '<compileWarnCount>%i</compileWarnCount>' % warnings
-                msg += '<compileErrorCount>%i</compileErrorCount>' % errors
+                msg += self.xml_log(logName)
+                includedLogs.append(logName)
             msg += '</package>'
+
+        # Any other logs we might want to include?
+        for osName, osExt, osIdent in self.oses:
+            for pkg in self.packages:
+                logName = log_filename(pkg, osIdent)
+                if os.path.exists(self.file_path(logName)) and logName not in includedLogs:
+                    # Add an entry for this.
+                    msg += '<package type="%s">' % self.package_type(logName)
+                    msg += '<name>%s</name>' % self.packageName[pkg]
+                    msg += '<platform>%s</platform>' % self.platId[osIdent]
+                    msg += self.xml_log(logName)
+                    msg += '</package>'
         
         # Commits.
         chgFn = self.file_path('changes.xml')
