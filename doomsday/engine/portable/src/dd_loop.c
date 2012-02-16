@@ -451,8 +451,8 @@ static void timeDeltaStatistics(int deltaMs)
             int i;
             for(i = 0; i < NUM_FRAMETIME_DELTAS; ++i)
             {
-                maxDelta = MAX_OF(timeDeltas[i], maxDelta);
-                minDelta = MIN_OF(timeDeltas[i], minDelta);
+                maxDelta = MAX_OF((int)timeDeltas[i], maxDelta);
+                minDelta = MIN_OF((int)timeDeltas[i], minDelta);
                 average += timeDeltas[i];
                 variance += timeDeltas[i] * timeDeltas[i];
             }
