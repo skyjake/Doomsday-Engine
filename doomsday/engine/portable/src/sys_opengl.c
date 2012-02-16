@@ -574,19 +574,9 @@ void Sys_GLConfigureDefaultState(void)
     glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
 
-#ifdef WIN32
-    if(GL_state.features.vsync && wglSwapIntervalEXT != NULL)
-    {
-        GL_SetVSync(true);
-    }
-#endif
-
-#ifdef MACOSX
-    if(GL_state.features.vsync)
-    {
-        // Always use vsync on the Mac.
-        GL_SetVSync(true);
-    }
+#if WIN32 || MACOSX
+    // Always use vsync if available.
+    GL_SetVSync(true);
 #endif
 
 #if DRMESA
