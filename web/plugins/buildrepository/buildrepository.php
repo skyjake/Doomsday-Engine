@@ -1046,6 +1046,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $cacheName = $this->composePackageGraphCacheName($pack);
         try
         {
+            header('Content-type: application/json');
             $FrontController->contentCache()->import($cacheName);
         }
         catch(Exception $e)
