@@ -1010,21 +1010,52 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         $FrontController->endPage();
     }
 
+    /**
+     * Compose the cache name for the Package's object graph.
+     * Packages produced by a build event go into that build's subdirectory.
+     * Other packages (i.e., stable or symbolic) are placed in the root.
+     */
+    private function composePackageGraphCacheName(&$pack)
+    {
+        if(!($pack instanceof BasePackage))
+            throw new Exception('Received invalid Package.');
+
+        $cacheName = 'buildrepository/';
+        if($pack instanceof iBuilderProduct)
+        {
+            $cacheName .= $pack->buildUniqueId().'/';
+        }
+        $cacheName .= md5(strtolower($pack->composeFullTitle())).'.json';
+
+        return $cacheName;
+    }
+
     private function outputPackageGraph(&$pack)
     {
         global $FrontController;
 
-        if(!($pack instanceof AbstractPackage))
+        if(!($pack instanceof BasePackage))
             throw new Exception('Received invalid Package.');
 
-        // Generate a graph template for this package.
-        /// @todo cache the encoded graph!
-        $template = array();
-        $pack->populateGraphTemplate($template);
-        $json = json_encode_clean($template);
+        $cacheName = $this->composePackageGraphCacheName($pack);
+        try
+        {
+            $FrontController->contentCache()->import($cacheName);
+        }
+        catch(Exception $e)
+        {
+            // Generate a graph template for this package.
+            $template = array();
+            $pack->populateGraphTemplate($template);
+            $json = json_encode_clean($template);
 
-        // Print to the output stream.
-        print($json);
+            // Store the graph in the cache.
+            $FrontController->contentCache()->store($cacheName, $json);
+
+            // Print to the output stream.
+            print($json);
+        }
+        return TRUE;
     }
 
     private function countInstallablePackages(&$build)
