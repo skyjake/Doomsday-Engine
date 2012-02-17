@@ -409,7 +409,8 @@ void Fonts_Shutdown(void)
         namespaces[i].directory = NULL;
 
         if(!fn->uniqueIdMap) continue;
-        free(fn->uniqueIdMap), fn->uniqueIdMap = NULL;
+        free(fn->uniqueIdMap);
+        fn->uniqueIdMap = NULL;
         fn->uniqueIdBase = 0;
         fn->uniqueIdMapSize = 0;
         fn->uniqueIdMapDirty = false;
@@ -418,11 +419,16 @@ void Fonts_Shutdown(void)
     // Clear the bindId to PathDirectoryNode LUT.
     if(fontIdMap)
     {
-        free(fontIdMap), fontIdMap = NULL;
+        free(fontIdMap);
+        fontIdMap = NULL;
     }
     fontIdMapSize = 0;
 
-    Uri_Delete(emptyUri), emptyUri = NULL;
+    if(emptyUri)
+    {
+        Uri_Delete(emptyUri);
+        emptyUri = NULL;
+    }
 }
 
 fontnamespaceid_t Fonts_ParseNamespace(const char* str)
