@@ -1169,11 +1169,12 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
 
     // Do we need a new GL context due to changes to the window?
     if(!novideo && newGLContext)
-    {   // Maybe requires a renderer restart.
+    {
+        // Maybe requires a renderer restart.
 extern boolean usingFog;
 
-        boolean         glIsInited = GL_IsInited();
-        boolean         hadFog;
+        boolean glIsInited = GL_IsInited();
+        boolean hadFog;
 
         if(glIsInited)
         {

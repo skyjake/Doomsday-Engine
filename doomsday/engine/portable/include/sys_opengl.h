@@ -167,6 +167,9 @@ boolean Sys_GLInitialize(void);
  */
 void Sys_GLShutdown(void);
 
+/**
+ * Configure the core features of OpenGL. Extensions are not configured here.
+ */
 void Sys_GLConfigureDefaultState(void);
 
 /**
