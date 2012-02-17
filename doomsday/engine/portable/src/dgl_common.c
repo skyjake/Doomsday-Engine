@@ -361,9 +361,10 @@ void GL_SetVSync(boolean on)
     {
         // Tell CGL to wait for vertical refresh.
         CGLContextObj context = CGLGetCurrentContext();
+        assert(context != 0);
         if(context)
         {
-            GLint params[1] = { 1 };
+            GLint params[1] = { on? 1 : 0 };
             CGLSetParameter(context, kCGLCPSwapInterval, params);
         }
     }
