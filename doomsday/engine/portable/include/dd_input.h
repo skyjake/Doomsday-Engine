@@ -122,6 +122,8 @@ typedef struct inputdevassoc_s {
 #define IDAF_EXPIRED    0x1 // The state has expired. The device is considered to remain
                             // in default state until the flag gets cleared (which happens when
                             // the real device state returns to its default).
+#define IDAF_TRIGGERED  0x2 // The state has been triggered. This is cleared when someone checks
+                            // the device state. (Only for toggles.)
 
 // Input device axis types.
 enum

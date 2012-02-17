@@ -65,7 +65,8 @@ void        B_DestroyDeviceBinding(dbinding_t* cb);
 void        B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str);
 void        B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot,
                                         float* pos, float* relativeOffset,
-                                        struct bcontext_s* controlClass);
+                                        struct bcontext_s* controlClass,
+                                        boolean allowTriggered);
 
 #endif // __DOOMSDAY_BIND_DEVICE_H__
 

@@ -625,9 +625,14 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
             key->time = Sys_GetRealTime();
         }
 
-        // We can clear the expiration when the key is released.
-        if(!key->isDown)
+        if(key->isDown)
         {
+            // This will get cleared after the state is checked by someone.
+            key->assoc.flags |= IDAF_TRIGGERED;
+        }
+        else
+        {
+            // We can clear the expiration when the key is released.
             key->assoc.flags &= ~IDAF_EXPIRED;
         }
     }
@@ -662,6 +667,7 @@ void I_ClearDeviceContextAssociations(void)
         {
             dev->keys[j].assoc.prevBContext = dev->keys[j].assoc.bContext;
             dev->keys[j].assoc.bContext = NULL;
+            dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED;
         }
         // Axes.
         for(j = 0; j < dev->numAxes; ++j)
@@ -1491,6 +1497,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
     const float upColor[] = { .3f, .3f, .3f, .6f };
     const float downColor[] = { .3f, .3f, 1, .6f };
     const float expiredMarkColor[] = { 1, 0, 0, 1 };
+    const float triggeredMarkColor[] = { 1, 0, 1, 1 };
     const char* keyLabel = NULL;
     const inputdevkey_t* key;
     char keyLabelBuf[2];
@@ -1571,6 +1578,19 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
         glVertex2i(textGeom.size.width, 0);
         glVertex2i(textGeom.size.width, markSize);
         glVertex2i(textGeom.size.width-markSize, 0);
+        glEnd();
+    }
+
+    // Mark triggered?
+    if(key->assoc.flags & IDAF_TRIGGERED)
+    {
+        const int markSize = .5f + MIN_OF(textGeom.size.width, textGeom.size.height) / 3.f;
+
+        glColor3fv(triggeredMarkColor);
+        glBegin(GL_TRIANGLES);
+        glVertex2i(0, 0);
+        glVertex2i(markSize, 0);
+        glVertex2i(0, markSize);
         glEnd();
     }
 

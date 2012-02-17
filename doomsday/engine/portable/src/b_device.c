@@ -278,7 +278,8 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset,
+                                 bcontext_t* controlClass, boolean allowTriggered)
 {
     dbinding_t* cb;
     int         i;
@@ -332,8 +333,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             if(dev->keys[cb->id].assoc.flags & IDAF_EXPIRED)
                 break;
 
-            devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
+            devicePos = (dev->keys[cb->id].isDown ||
+                         (allowTriggered && (dev->keys[cb->id].assoc.flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
             deviceTime = dev->keys[cb->id].time;
+
+            // We've checked it, so clear the flag.
+            dev->keys[cb->id].assoc.flags &= ~IDAF_TRIGGERED;
             break;
 
         case CBD_AXIS:
@@ -422,7 +427,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
                 *pos = 0;
     }
 
-    // Clamp appropriately.
+    // Clamp to the normalized range.
     *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
 }
 

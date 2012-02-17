@@ -1712,8 +1712,9 @@ enum {
 
 /// Control type.
 typedef enum controltype_e {
-    CTLT_NUMERIC,
-    CTLT_IMPULSE
+    CTLT_NUMERIC,               ///< Control with a numeric value determined by current device state.
+    CTLT_NUMERIC_TRIGGERED,     ///< Numeric, but accepts triggered states as well.
+    CTLT_IMPULSE                ///< Always accepts triggered states.
 } controltype_t;
 
 /**

@@ -429,6 +429,9 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
         if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
             return false; // Shadowed by a more important active class.
 
+        // We're checking it, so clear the triggered flag.
+        dev->keys[eb->id].assoc.flags &= ~IDAF_TRIGGERED;
+
         // Is the state as required?
         switch(eb->state)
         {
