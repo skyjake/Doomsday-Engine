@@ -2005,7 +2005,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkUpdateControls(player);
     P_PlayerThinkCamera(player); // $democam
 
-    if(!IS_CLIENT) // Locally only.
+    if(!IS_CLIENT) // Only singleplayer.
     {
         P_PlayerThinkCheat(player);
     }
@@ -2023,7 +2023,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     P_PlayerThinkView(player);
     P_PlayerThinkSpecial(player);
 
-    if(IS_CLIENT) // Locally only.
+    if(!IS_NETWORK_SERVER) // Locally only (client or singleplayer).
     {
         P_PlayerThinkSounds(player);
     }
