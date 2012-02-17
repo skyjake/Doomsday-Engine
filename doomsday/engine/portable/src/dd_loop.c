@@ -80,7 +80,7 @@ static boolean firstTic = true;
 static boolean tickIsSharp = false;
 
 #define NUM_FRAMETIME_DELTAS    200
-static uint timeDeltas[NUM_FRAMETIME_DELTAS];
+static int timeDeltas[NUM_FRAMETIME_DELTAS];
 static int timeDeltasIndex = 0;
 
 static float realFrameTimePos = 0;
@@ -450,18 +450,22 @@ static void timeDeltaStatistics(int deltaMs)
         {
             int maxDelta = timeDeltas[0], minDelta = timeDeltas[0];
             float average = 0, variance = 0;
+            int lateCount = 0;
             int i;
             for(i = 0; i < NUM_FRAMETIME_DELTAS; ++i)
             {
-                maxDelta = MAX_OF((int)timeDeltas[i], maxDelta);
-                minDelta = MIN_OF((int)timeDeltas[i], minDelta);
+                maxDelta = MAX_OF(timeDeltas[i], maxDelta);
+                minDelta = MIN_OF(timeDeltas[i], minDelta);
                 average += timeDeltas[i];
                 variance += timeDeltas[i] * timeDeltas[i];
+                if(timeDeltas[i] > 0) lateCount++;
             }
             average /= NUM_FRAMETIME_DELTAS;
             variance /= NUM_FRAMETIME_DELTAS;
-            Con_Message("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f var=%12.10f\n",
-                        NUM_FRAMETIME_DELTAS, minDelta, maxDelta, average, variance);
+            Con_Message("Time deltas [%i frames]: min=%-6i max=%-6i avg=%-11.7f late=%5.1f%% var=%12.10f\n",
+                        NUM_FRAMETIME_DELTAS, minDelta, maxDelta, average,
+                        lateCount/(float)NUM_FRAMETIME_DELTAS*100,
+                        variance);
         }
     }
 }
