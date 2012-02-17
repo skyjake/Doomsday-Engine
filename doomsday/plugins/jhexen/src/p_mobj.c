@@ -1160,6 +1160,9 @@ void P_MobjThinker(mobj_t* mobj)
 
                     mobj->pos[VZ] = mobj->onMobj->pos[VZ] + mobj->onMobj->height;
                     mobj->mom[MZ] = 0;
+
+                    // Adjust floorZ to the top of the contacted mobj.
+                    mobj->floorZ = MAX_OF(mobj->floorZ, mobj->onMobj->pos[VZ] + mobj->onMobj->height);
                 }
                 else
                 {   // hit the bottom of the blocking mobj
