@@ -39,8 +39,11 @@
 typedef enum {
     DEFERREDTASK_TYPES_FIRST = 0,
 
+    // Higher-level or non-OpenGL operations:
     DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
+    DTT_SET_VSYNC,
 
+    // OpenGL API calls:
     DTT_FUNC_PTR_BEGIN,
         DTT_FUNC_PTR_E = DTT_FUNC_PTR_BEGIN,
         DTT_FUNC_PTR_EI,
@@ -209,6 +212,10 @@ static void processTask(deferredtask_t* task)
         GL_UploadTextureContent(task->data);
         break;
 
+    case DTT_SET_VSYNC:
+        GL_SetVSync(*(boolean*)task->data);
+        break;
+
     case DTT_FUNC_PTR_E:
 #ifdef _DEBUG
         fprintf(stderr, "processDeferred: ptr=%p enum=%i\n", api->func.ptr_e, api->param.e);
@@ -251,8 +258,12 @@ static void destroyTaskData(deferredtask_t* d)
         GL_DestroyTextureContent(d->data);
         break;
 
+    case DTT_SET_VSYNC:
+        M_Free(d->data);
+        break;
+
     case DTT_FUNC_PTR_UINT_ARRAY:
-        free(api->param.uintArray.values);
+        M_Free(api->param.uintArray.values);
         break;
 
     default:
@@ -429,4 +440,9 @@ void GL_DeferTextureUpload(const struct texturecontent_s* content)
 {
     // Defer this operation. Need to make a copy.
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+}
+
+void GL_DeferSetVSync(boolean enableVSync)
+{
+    enqueueTask(DTT_SET_VSYNC, M_MemDup(&enableVSync, sizeof(enableVSync)));
 }

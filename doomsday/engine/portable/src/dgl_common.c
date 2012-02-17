@@ -344,9 +344,14 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
 
 void GL_SetVSync(boolean on)
 {
-    if(!GL_state.features.vsync) return;
+    // Outside the main thread we'll need to defer the call.
+    if(!Sys_InMainThread())
+    {
+        GL_DeferSetVSync(on);
+        return;
+    }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    if(!GL_state.features.vsync) return;
 
 #ifdef WIN32
     wglSwapIntervalEXT(on? 1 : 0);
