@@ -1236,7 +1236,7 @@ mndata_colorbox_t cbox_colorwidget_mixcolor = {
 mndata_text_t txt_colorwidget_red   = { "Red" };
 mndata_text_t txt_colorwidget_green = { "Green" };
 mndata_text_t txt_colorwidget_blue  = { "Blue" };
-mndata_text_t txt_colorwidget_alpha = { "Alpha" };
+mndata_text_t txt_colorwidget_alpha = { "Opacity" };
 
 static mn_object_t ColorWidgetMenuObjects[] = {
     { MN_COLORBOX,  0,  MNF_ID0|MNF_NO_FOCUS, 0, MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { NULL }, NULL, NULL, NULL, &cbox_colorwidget_mixcolor },
