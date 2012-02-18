@@ -85,6 +85,17 @@ void Rect_Copy(Rect* r, const Rect* other)
     Size2_SetWidthHeight(r->size, Rect_Width(other), Rect_Height(other));
 }
 
+Rect* Rect_CopyRaw(Rect* r, const RectRaw* rawRect)
+{
+    assert(r);
+    if(rawRect)
+    {
+        Point2_SetXY(r->origin, rawRect->origin.x, rawRect->origin.y);
+        Size2_SetWidthHeight(r->size, rawRect->size.width, rawRect->size.height);
+    }
+    return r;
+}
+
 RectRaw* Rect_Raw(const Rect* r, RectRaw* rawRect)
 {
     assert(r);
@@ -395,6 +406,17 @@ void Rectf_Copy(Rectf* r, const Rectf* other)
     if(!other) return;
     Point2f_SetXY(r->origin, Rectf_X(other), Rectf_Y(other));
     Size2f_SetWidthHeight(r->size, Rectf_Width(other), Rectf_Height(other));
+}
+
+Rectf* Rectf_CopyRaw(Rectf* r, const RectRawf* rawRect)
+{
+    assert(r);
+    if(rawRect)
+    {
+        Point2f_SetXY(r->origin, rawRect->origin.x, rawRect->origin.y);
+        Size2f_SetWidthHeight(r->size, rawRect->size.width, rawRect->size.height);
+    }
+    return r;
 }
 
 RectRawf* Rectf_Raw(const Rectf* r, RectRawf* rawRect)

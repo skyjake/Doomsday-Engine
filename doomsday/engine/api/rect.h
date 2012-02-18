@@ -52,6 +52,7 @@ Rect* Rect_NewFromRaw(const RectRaw* rawRect);
 void Rect_Delete(Rect* rect);
 
 void Rect_Copy(Rect* rect, const Rect* other);
+Rect* Rect_CopyRaw(Rect* rect, const RectRaw* rawRect);
 
 RectRaw* Rect_Raw(const Rect* rect, RectRaw* rawRect);
 
@@ -121,6 +122,7 @@ Rectf* Rectf_NewFromRaw(const RectRawf* rawRect);
 void Rectf_Delete(Rectf* rect);
 
 void Rectf_Copy(Rectf* rect, const Rectf* other);
+Rectf* Rectf_CopyRaw(Rectf* r, const RectRawf* rawRect);
 
 RectRawf* Rectf_Raw(const Rectf* rect, RectRawf* rawRect);
 
