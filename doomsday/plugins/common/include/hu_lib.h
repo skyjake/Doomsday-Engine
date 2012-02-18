@@ -58,6 +58,7 @@ typedef enum menucommand_e {
 // Menu object types.
 typedef enum {
     MN_NONE,
+    MN_RECT,
     MN_TEXT,
     MN_BUTTON,
     MN_EDIT,
@@ -383,6 +384,23 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
 
 /**
+ * Rect objects.
+ */
+typedef struct mndata_rect_s {
+    /// Dimensions of the rectangle.
+    Size2Raw dimensions;
+
+    /// Background patch.
+    patchid_t patch;
+} mndata_rect_t;
+
+mn_object_t* MNRect_New(void);
+void MNRect_Delete(mn_object_t* ob);
+
+void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+
+/**
  * Text objects.
  */
 typedef struct mndata_text_s {
@@ -395,8 +413,8 @@ typedef struct mndata_text_s {
 mn_object_t* MNText_New(void);
 void MNText_Delete(mn_object_t* ob);
 
-void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNText_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /**
  * Buttons.

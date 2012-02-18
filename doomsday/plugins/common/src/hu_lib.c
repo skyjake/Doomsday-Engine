@@ -1465,6 +1465,68 @@ int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
     return -1; // NOP
 }
 
+mn_object_t* MNRect_New(void)
+{
+    mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
+    if(!ob) Con_Error("MNRect::New: Failed on allocation of %lu bytes for new MNRect.", (unsigned long) sizeof(*ob));
+    ob->_typedata = Z_Calloc(sizeof(mndata_rect_t), PU_GAMESTATIC, 0);
+    if(!ob->_typedata) Con_Error("MNRect::New: Failed on allocation of %lu bytes for mndata_rect_t.", (unsigned long) sizeof(mndata_rect_t));
+
+    ob->_type = MN_RECT;
+    ob->_pageFontIdx = MENU_FONT1;
+    ob->_pageColorIdx = MENU_COLOR1;
+    ob->drawer = MNRect_Drawer;
+    ob->updateGeometry = MNRect_UpdateGeometry;
+
+    return ob;
+}
+
+void MNRect_Delete(mn_object_t* ob)
+{
+    assert(ob && ob->_type == MN_RECT);
+    Z_Free(ob->_typedata);
+    Z_Free(ob);
+}
+
+void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin)
+{
+    mndata_rect_t* rect = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_RECT);
+
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(origin->x, origin->y, 0);
+    }
+
+    if(rect->patch)
+    {
+        DGL_SetPatch(rect->patch, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_Enable(DGL_TEXTURE_2D);
+    }
+
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+    DGL_DrawRect2(0, 0, rect->dimensions.width, rect->dimensions.height);
+
+    if(rect->patch)
+    {
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
+
+    if(origin)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-origin->x, -origin->y, 0);
+    }
+}
+
+void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
+{
+    mndata_rect_t* rect = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_TEXT);
+    Rect_SetWidthHeight(ob->_geometry, rect->dimensions.width, rect->dimensions.height);
+}
+
 mn_object_t* MNText_New(void)
 {
     mn_object_t* ob = Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
@@ -3116,15 +3178,15 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
     mop->tMap = tMap;
 }
 
-/// \todo We can do better - the engine should be able to render this visual for us.
-void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin)
+/// @todo We can do better - the engine should be able to render this visual for us.
+void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin)
 {
-    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)obj->_typedata;
+    mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)ob->_typedata;
     float x, y, w, h, s, t, scale;
     int tClass, tMap, spriteFrame;
     spritetype_e sprite;
     spriteinfo_t info;
-    assert(obj->_type == MN_MOBJPREVIEW);
+    assert(ob->_type == MN_MOBJPREVIEW);
 
     if(MT_NONE == mop->mobjType) return;
 
@@ -3176,9 +3238,9 @@ void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page)
+void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
     // @fixme calculate visible dimensions properly!
-    assert(obj && obj->_type == MN_MOBJPREVIEW);
-    Rect_SetWidthHeight(obj->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
+    assert(ob && ob->_type == MN_MOBJPREVIEW);
+    Rect_SetWidthHeight(ob->_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }
