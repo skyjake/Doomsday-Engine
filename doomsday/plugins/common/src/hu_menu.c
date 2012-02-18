@@ -255,7 +255,6 @@ cvarbutton_t mnCVarButtons[] = {
 };
 
 int menuTime = 0;
-int menuFlashCounter = 0;
 boolean menuNominatingQuickSaveSlot = false;
 
 static mn_page_t* menuActivePage = NULL;
@@ -1890,10 +1889,6 @@ void Hu_MenuTicker(timespan_t ticLength)
 
     if(!menuActive) return;
 
-    menuFlashCounter += (int)(cfg.menuTextFlashSpeed * ticLength * TICRATE);
-    if(menuFlashCounter >= 100)
-        menuFlashCounter -= 100;
-
     // Animate cursor rotation?
     if(cfg.menuCursorRotate)
     {
@@ -1955,7 +1950,6 @@ void Hu_MenuSetActivePage(mn_page_t* page)
         FR_ResetTypeinTimer();
     }
 
-    menuFlashCounter = 0; // Restart selection flash animation.
     cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
     menuNominatingQuickSaveSlot = false;
 
@@ -1973,10 +1967,9 @@ boolean Hu_MenuIsVisible(void)
     return (menuActive || mnAlpha > .0001f);
 }
 
-int Hu_MenuDefaultFocusAction(mn_object_t* obj, mn_actionid_t action, void* paramaters)
+int Hu_MenuDefaultFocusAction(mn_object_t* ob, mn_actionid_t action, void* paramaters)
 {
     if(MNA_FOCUS != action) return 1;
-    menuFlashCounter = 0; // Restart selection flash animation.
     Hu_MenuUpdateCursorState();
     return 0;
 }
@@ -2200,7 +2193,9 @@ static void initPageObjects(mn_page_t* page)
         ob->_page = page;
         ob->_geometry = Rect_New();
 
+        ob->timer = 0;
         MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+
         if(0 != ob->_shortcut)
         {
             int shortcut = ob->_shortcut;
@@ -2880,6 +2875,8 @@ void Hu_MenuCommand(menucommand_e cmd)
             Hu_MenuSetAlpha(1);
             menuActive = true;
             menuTime = 0;
+
+            menuActivePage = NULL; // Always re-activate this page.
             Hu_MenuSetActivePage(Hu_MenuFindPageByName("Main"));
 
             // Enable the menu binding class

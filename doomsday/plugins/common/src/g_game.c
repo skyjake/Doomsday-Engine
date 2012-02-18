@@ -3318,7 +3318,7 @@ void G_DoScreenShot(void)
 static void openLoadMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
@@ -3327,7 +3327,7 @@ static void openLoadMenu(void)
 static void openSaveMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));

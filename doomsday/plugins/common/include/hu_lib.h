@@ -204,6 +204,8 @@ typedef struct mn_object_s {
 
     /// MenuPage which owns this object (if any).
     struct mn_page_s* _page;
+
+    int timer;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
@@ -336,6 +338,8 @@ typedef struct mn_page_s {
 
     /// User data.
     void* userData;
+
+    int timer;
 } mn_page_t;
 
 void MNPage_Initialize(mn_page_t* page);
@@ -390,6 +394,9 @@ void MNPage_PredefinedColor(mn_page_t* page, mn_page_colorid_t id, float rgb[3])
 fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
 void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
+
+/// @return  Current time in tics since page activation.
+int MNPage_Timer(mn_page_t* page);
 
 /**
  * Rect objects.
