@@ -63,45 +63,50 @@ typedef struct cvarbutton_s {
     int             mask;
 } cvarbutton_t;
 
-int Hu_MenuActionSetActivePage(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuActionInitNewGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuActionSetActivePage(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuActionInitNewGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 
-int Hu_MenuSelectLoadGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectSaveGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectLoadGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectSaveGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #if __JHEXEN__
-int Hu_MenuSelectFiles(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectFiles(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #endif
-int Hu_MenuSelectPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectJoinGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectPlayerSetup(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectJoinGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectHelp(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #endif
-int Hu_MenuSelectControlPanelLink(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectControlPanelLink(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 
-int Hu_MenuSelectSingleplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectMultiplayer(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectSingleplayer(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectMultiplayer(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuFocusEpisode(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #endif
 #if __JHEXEN__
-int Hu_MenuFocusOnPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuFocusOnPlayerClass(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectPlayerClass(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #endif
-int Hu_MenuFocusSkillMode(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectQuitGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectEndGame(mn_object_t* obj, mn_actionid_t action, void* paramaters);
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuFocusSkillMode(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectLoadSlot(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectQuitGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectEndGame(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 
-int Hu_MenuSelectSaveSlot(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectSaveSlot(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 
-int Hu_MenuChangeWeaponPriority(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuChangeWeaponPriority(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t* ob, mn_actionid_t action, void* paramaters);
 #endif
-int Hu_MenuSelectPlayerColor(mn_object_t* obj, mn_actionid_t action, void* paramaters);
+int Hu_MenuSelectPlayerColor(mn_object_t* ob, mn_actionid_t action, void* paramaters);
+
+#if __JHEXEN__
+void Hu_MenuPlayerClassBackgroundTicker(mn_object_t* ob);
+void Hu_MenuPlayerClassPreviewTicker(mn_object_t* ob);
+#endif
 
 void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin);
@@ -368,6 +373,7 @@ mn_object_t GameTypeMenuObjects[] = {
 };
 
 #if __JHEXEN__
+mndata_rect_t rect_playerclass_preview_bg;
 mndata_mobjpreview_t mop_playerclass_preview;
 
 mn_object_t* PlayerClassMenuObjects;
@@ -1606,6 +1612,7 @@ void Hu_MenuInitEpisodeMenu(void)
         btn->patch = &pEpisodeNames[i];
 #endif
         obj->_typedata = btn;
+        obj->ticker = MNButton_Ticker;
         obj->drawer = MNButton_Drawer;
         obj->cmdResponder = MNButton_CommandResponder;
         obj->updateGeometry = MNButton_UpdateGeometry;
@@ -1669,7 +1676,7 @@ void Hu_MenuInitPlayerClassMenu(void)
     }
 
     // Allocate the menu objects array.
-    PlayerClassMenuObjects = Z_Calloc(sizeof(mn_object_t) * (count+3), PU_GAMESTATIC, 0);
+    PlayerClassMenuObjects = Z_Calloc(sizeof(mn_object_t) * (count+4), PU_GAMESTATIC, 0);
     PlayerClassMenuButtons = Z_Calloc(sizeof(mndata_button_t) * (count+1), PU_GAMESTATIC, 0);
 
     // Add the selectable classes.
@@ -1686,6 +1693,7 @@ void Hu_MenuInitPlayerClassMenu(void)
         btn->text = info->niceName;
         obj->_typedata = btn;
         obj->drawer = MNButton_Drawer;
+        obj->ticker = MNButton_Ticker;
         obj->cmdResponder = MNButton_CommandResponder;
         obj->updateGeometry = MNButton_UpdateGeometry;
         obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
@@ -1703,6 +1711,7 @@ void Hu_MenuInitPlayerClassMenu(void)
     btn->text = GET_TXT(TXT_RANDOMPLAYERCLASS);
     obj->_typedata = btn;
     obj->drawer = MNButton_Drawer;
+    obj->ticker = MNButton_Ticker;
     obj->cmdResponder = MNButton_CommandResponder;
     obj->updateGeometry = MNButton_UpdateGeometry;
     obj->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
@@ -1713,9 +1722,28 @@ void Hu_MenuInitPlayerClassMenu(void)
     obj->_pageColorIdx = MENU_COLOR1;
     obj++;
 
+    // Mobj preview background.
+    /// @todo actually use this offset!
+#define BG_X            (108)
+#define BG_Y            (-58)
+
+    obj->_type = MN_RECT;
+    obj->_flags = MNF_NO_FOCUS|MNF_ID1;
+    obj->_typedata = &rect_playerclass_preview_bg;
+    obj->drawer = MNRect_Drawer;
+    obj->ticker = Hu_MenuPlayerClassBackgroundTicker;
+    obj->updateGeometry = MNRect_UpdateGeometry;
+    obj->_pageFontIdx = MENU_FONT1;
+    obj->_pageColorIdx = MENU_COLOR1;
+    obj++;
+
+#undef BG_Y
+#undef BG_X
+
     // Mobj preview.
     obj->_type = MN_MOBJPREVIEW;
     obj->_flags = MNF_ID0;
+    obj->ticker = Hu_MenuPlayerClassPreviewTicker;
     obj->updateGeometry = MNMobjPreview_UpdateGeometry;
     obj->drawer = MNMobjPreview_Drawer;
     obj->_typedata = &mop_playerclass_preview;
@@ -3055,37 +3083,81 @@ static void composeNotDesignedForMessage(const char* str)
 #endif
 
 #if __JHEXEN__
+/**
+ * A specialization of MNRect_Ticker() which implements the animation logic
+ * for the player class selection page's player visual background.
+ */
+void Hu_MenuPlayerClassBackgroundTicker(mn_object_t* ob)
+{
+    mn_object_t* mop;
+    assert(ob);
+
+    // Determine our selection according to the current focus object.
+    /// @fixme Do not search for the focus object, flag the "random"
+    ///        state through a focus action.
+    mop = MNPage_FocusObject(MNObject_Page(ob));
+    if(mop)
+    {
+        playerclass_t pClass = (playerclass_t) mop->data2;
+        if(pClass == PCLASS_NONE)
+        {
+            // Random class.
+            /// @todo Use this object's timer instead of menuTime.
+            pClass = (menuTime / 5);
+        }
+
+        /// @fixme Only change here if in the "random" state.
+        pClass %= 3; // Number of user-selectable classes.
+
+        MNRect_SetBackgroundPatch(ob, pPlayerClassBG[pClass]);
+    }
+
+    // Call MNRect's ticker now we've done our own processing.
+    MNRect_Ticker(ob);
+}
+
+/**
+ * A specialization of MNMobjPreview_Ticker() which implements the animation
+ * logic for the player class selection page's player visual.
+ */
+void Hu_MenuPlayerClassPreviewTicker(mn_object_t* ob)
+{
+    mn_object_t* mop;
+    assert(ob);
+
+    // Determine our selection according to the current focus object.
+    /// @fixme Do not search for the focus object, flag the "random"
+    ///        state through a focus action.
+    mop = MNPage_FocusObject(MNObject_Page(ob));
+    if(mop)
+    {
+        playerclass_t pClass = (playerclass_t) mop->data2;
+        if(pClass == PCLASS_NONE)
+        {
+            // Random class.
+            /// @todo Use this object's timer instead of menuTime.
+            pClass = PCLASS_FIRST + (menuTime / 5);
+            pClass %= 3; // Number of user-selectable classes.
+
+            MNMobjPreview_SetPlayerClass(ob, pClass);
+            MNMobjPreview_SetMobjType(ob, (PCLASS_NONE == pClass? MT_NONE : PCLASS_INFO(pClass)->mobjType));
+        }
+    }
+
+    // Call MNMobjPreview's ticker now we've done our own processing.
+    MNMobjPreview_Ticker(ob);
+}
+
 void Hu_MenuDrawPlayerClassPage(mn_page_t* page, const Point2Raw* origin)
 {
-#define BG_X            (108)
-#define BG_Y            (-58)
-
-    mn_object_t* obj;
-    int pClass;
-
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Choose class:", origin->x - 32, origin->y - 42, ALIGN_TOPLEFT,
-        MN_MergeMenuEffectWithDrawTextFlags(0));
-
-    obj = MNPage_FocusObject(page);
-    assert(obj);
-    pClass = obj->data2;
-    if(pClass < 0)
-    {   // Random class.
-        // Number of user-selectable classes.
-        pClass = (menuTime / 5);
-    }
-
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatchXY(pPlayerClassBG[pClass % 3], origin->x + BG_X, origin->y + BG_Y);
+                   MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
-
-#undef BG_X
-#undef BG_Y
 }
 #endif
 

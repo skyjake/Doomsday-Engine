@@ -417,6 +417,15 @@ void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin);
 void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /**
+ * Apply the Patch graphic referenced by @a patch as the background for this rect.
+ *
+ * @param ob  MNObject instance.
+ * @param patch  Unique identifier of the patch. If @c <= 0 the current background
+ *               will be cleared and the Rect will be drawn as a solid color.
+ */
+void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch);
+
+/**
  * @defgroup mnTextFlags  MNText Flags
  */
 ///@{

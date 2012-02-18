@@ -1587,9 +1587,26 @@ void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin)
 
 void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page)
 {
+    mndata_rect_t* rct = (mndata_rect_t*)ob->_typedata;
+    assert(ob->_type == MN_RECT);
+
+    if(rct->dimensions.width == 0 && rct->dimensions.height == 0)
+    {
+        // Inherit dimensions from the patch.
+        patchinfo_t info;
+        if(R_GetPatchInfo(rct->patch, &info))
+        {
+            memcpy(&rct->dimensions, &info.geometry.size, sizeof(rct->dimensions));
+        }
+    }
+    Rect_SetWidthHeight(ob->_geometry, rct->dimensions.width, rct->dimensions.height);
+}
+
+void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch)
+{
     mndata_rect_t* rect = (mndata_rect_t*)ob->_typedata;
-    assert(ob->_type == MN_TEXT);
-    Rect_SetWidthHeight(ob->_geometry, rect->dimensions.width, rect->dimensions.height);
+    assert(ob->_type == MN_RECT);
+    rect->patch = patch;
 }
 
 mn_object_t* MNText_New(void)
