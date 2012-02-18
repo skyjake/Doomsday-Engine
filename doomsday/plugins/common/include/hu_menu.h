@@ -112,6 +112,7 @@ boolean Hu_MenuIsVisible(void);
 mn_page_t* Hu_MenuFindPageByName(const char* name);
 
 mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin,
+    void (*ticker) (struct mn_page_s* page),
     void (*drawer) (struct mn_page_s* page, const Point2Raw* origin),
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd),
     void* userData);
@@ -122,6 +123,8 @@ mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin,
  * each menu obj.
  */
 void Hu_MenuDrawer(void);
+
+void Hu_MenuPageTicker(struct mn_page_s* page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
