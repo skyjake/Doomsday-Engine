@@ -504,12 +504,17 @@ mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, "hud-scale" };
 mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, "hud-cheat-counter-scale" };
 mndata_slider_t sld_hud_sbar_size = { 0, 1, 0, .1f, true, "hud-status-size" };
 mndata_slider_t sld_hud_sbar_opacity = { 0, 1, 0, .1f, true, "hud-status-alpha" };
-mndata_slider_t sld_hud_messages_size = { 0, 1, 0, .1f, true, "msg-scale" };
-mndata_slider_t sld_hud_messages_uptime = { 0, 60, 0, 1.f, true, "msg-uptime", "Disabled", NULL, " second", " seconds" };
+mndata_slider_t sld_hud_msg_size = { 0, 1, 0, .1f, true, "msg-scale" };
+mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, "msg-uptime", "Disabled", NULL, " second", " seconds" };
 
 mndata_colorbox_t cbox_hud_color = {
     0, 0, 0, 0, 0, 0, true,
     "hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a"
+};
+
+mndata_colorbox_t cbox_hud_msg_color = {
+    0, 0, 0, 0, 0, 0, false,
+    "msg-color-r", "msg-color-g", "msg-color-b"
 };
 
 mndata_listitem_t listit_hud_xhair_symbols[] = {
@@ -592,6 +597,7 @@ mndata_text_t txt_hud_unhide_pickup_item = { "Pickup Item" };
 mndata_text_t txt_hud_messages = { "Messages" };
 mndata_text_t txt_hud_msg_shown = { "Shown" };
 mndata_text_t txt_hud_msg_size = { "Size" };
+mndata_text_t txt_hud_msg_color = { "Color" };
 mndata_text_t txt_hud_msg_uptime = { "Uptime" };
 
 mndata_text_t txt_hud_crosshair = { "Crosshair" };
@@ -711,10 +717,12 @@ static mn_object_t HudMenuObjects[] = {
     { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_messages },
     { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_msg_shown },
     { MN_BUTTON,    2,  0,  'm',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_msg_shown },
-    { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_msg_size },
-    { MN_SLIDER,    2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_messages_size },
     { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_msg_uptime },
-    { MN_SLIDER,    2,  0,  0,  MENU_FONT1, MENU_COLOR3, MNSlider_Ticker, MNSlider_TextualValueUpdateGeometry, MNSlider_TextualValueDrawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_messages_uptime },
+    { MN_SLIDER,    2,  0,  0,  MENU_FONT1, MENU_COLOR3, MNSlider_Ticker, MNSlider_TextualValueUpdateGeometry, MNSlider_TextualValueDrawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_msg_uptime },
+    { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_msg_size },
+    { MN_SLIDER,    2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker, MNSlider_UpdateGeometry, MNSlider_Drawer, { Hu_MenuCvarSlider, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_msg_size },
+    { MN_TEXT,      2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_msg_color },
+    { MN_COLORBOX,  2,  0,  0,  MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker, MNColorBox_UpdateGeometry, MNColorBox_Drawer, { Hu_MenuCvarColorBox, Hu_MenuCvarColorBox, Hu_MenuActivateColorWidget, NULL, NULL, Hu_MenuDefaultFocusAction }, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_msg_color },
 
     { MN_TEXT,      3,  0,  0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_crosshair },
     { MN_TEXT,      3,  0,  'c',MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_xhair_symbol },
