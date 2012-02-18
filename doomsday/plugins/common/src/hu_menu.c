@@ -2412,7 +2412,7 @@ static void initAllPages(void)
 #if __JHERETIC__ || __JHEXEN__
     const Point2Raw origin = { 98, 60 };
 #else
-    const Point2Raw origin = { 98, 60 };
+    const Point2Raw origin = { 124, 60 };
 #endif
 
     page = Hu_MenuNewPage("ColorWidget", &origin, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
