@@ -634,7 +634,7 @@ mndata_text_t txt_hud_full_show_armor = { "Show Armor" };
 mndata_text_t txt_hud_full_show_powerkeys = { "Show PowerKeys" };
 #endif
 #if __JDOOM__
-mndata_text_t txt_hud_full_show_face = { "Show Face" };
+mndata_text_t txt_hud_full_show_status = { "Show Status" };
 #endif
 mndata_text_t txt_hud_full_show_health = { "Show Health" };
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -777,7 +777,7 @@ static mn_object_t HudMenuObjects[] = {
     { MN_BUTTON,    6,  0,  'p',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_powerkeys },
 #endif
 #if __JDOOM__
-    { MN_TEXT,      6,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_full_show_face },
+    { MN_TEXT,      6,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_full_show_status },
     { MN_BUTTON,    6,  0,  'f',MENU_FONT1, MENU_COLOR3, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { Hu_MenuCvarButton, NULL, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_face },
 #endif
     { MN_TEXT,      6,  0,  0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,   MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_hud_full_show_health },
