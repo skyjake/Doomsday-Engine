@@ -58,6 +58,7 @@ typedef enum menucommand_e {
 // Menu object types.
 typedef enum {
     MN_NONE,
+    MN_RECT,
     MN_TEXT,
     MN_BUTTON,
     MN_EDIT,
@@ -72,10 +73,10 @@ typedef enum {
 /**
  * @defgroup menuObjectFlags Menu Object Flags
  */
-/*@{*/
+///@{
 #define MNF_HIDDEN              0x1
 #define MNF_DISABLED            0x2 // Can't be interacted with.
-//#define MNF_PAUSED              0x4 // Ticker not called.
+#define MNF_PAUSED              0x4 // Ticker not called.
 #define MNF_CLICKED             0x8
 #define MNF_ACTIVE              0x10 // Object active.
 #define MNF_FOCUS               0x20 // Has focus.
@@ -84,9 +85,8 @@ typedef enum {
 //#define MNF_LEFT_ALIGN          0x100
 //#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
 //#define MNF_NEVER_FADE          0x400
-#define MNF_NO_ALTTEXT          0x800 // Don't use alt text instead of lump (M_NMARE)
 
-/// \todo We need a new dynamic id allocating mechanism.
+/// @todo We need a new dynamic id allocating mechanism.
 #define MNF_ID7                 0x1000000
 #define MNF_ID6                 0x2000000
 #define MNF_ID5                 0x4000000
@@ -95,7 +95,7 @@ typedef enum {
 #define MNF_ID2                 0x20000000
 #define MNF_ID1                 0x40000000
 #define MNF_ID0                 0x80000000
-/*@}*/
+///@}
 
 typedef enum {
     FO_CLEAR,
@@ -166,27 +166,30 @@ typedef struct mn_object_s {
     /// Index of the predefined page color to use when drawing this.
     int _pageColorIdx;
 
+    /// Process time (the "tick") for this object.
+    void (*ticker) (struct mn_object_s* ob);
+
     /// Calculate geometry for this when visible on the specified page.
-    void (*updateGeometry) (struct mn_object_s* obj, struct mn_page_s* page);
+    void (*updateGeometry) (struct mn_object_s* ob, struct mn_page_s* page);
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (struct mn_object_s* obj, const Point2Raw* origin);
+    void (*drawer) (struct mn_object_s* ob, const Point2Raw* origin);
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
 
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (struct mn_object_s* obj, menucommand_e command);
+    int (*cmdResponder) (struct mn_object_s* ob, menucommand_e command);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*responder) (struct mn_object_s* obj, event_t* ev);
+    int (*responder) (struct mn_object_s* ob, event_t* ev);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*privilegedResponder) (struct mn_object_s* obj, event_t* ev);
+    int (*privilegedResponder) (struct mn_object_s* ob, event_t* ev);
 
     void* _typedata; // Type-specific extra data.
 
@@ -201,6 +204,8 @@ typedef struct mn_object_s {
 
     /// MenuPage which owns this object (if any).
     struct mn_page_s* _page;
+
+    int timer;
 } mn_object_t;
 
 mn_obtype_e MNObject_Type(const mn_object_t* obj);
@@ -322,6 +327,9 @@ typedef struct mn_page_s {
     /// Predefined colors for objects on this page.
     uint colors[MENU_COLOR_COUNT];
 
+    /// Process time (the "tick") for this object.
+    void (*ticker) (struct mn_page_s* page);
+
     /// Page drawing routine.
     void (*drawer) (struct mn_page_s* page, const Point2Raw* offset);
 
@@ -330,9 +338,14 @@ typedef struct mn_page_s {
 
     /// User data.
     void* userData;
+
+    int timer;
 } mn_page_t;
 
 void MNPage_Initialize(mn_page_t* page);
+
+/// Call the ticker routine for each object.
+void MNPage_Ticker(mn_page_t* page);
 
 void MNPage_SetTitle(mn_page_t* page, const char* title);
 
@@ -382,6 +395,43 @@ fontid_t MNPage_PredefinedFont(mn_page_t* page, mn_page_fontid_t id);
 
 void MNPage_SetPredefinedFont(mn_page_t* page, mn_page_fontid_t id, fontid_t fontId);
 
+/// @return  Current time in tics since page activation.
+int MNPage_Timer(mn_page_t* page);
+
+/**
+ * Rect objects.
+ */
+typedef struct mndata_rect_s {
+    /// Dimensions of the rectangle.
+    Size2Raw dimensions;
+
+    /// Background patch.
+    patchid_t patch;
+} mndata_rect_t;
+
+mn_object_t* MNRect_New(void);
+void MNRect_Delete(mn_object_t* ob);
+
+void MNRect_Ticker(mn_object_t* ob);
+void MNRect_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNRect_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+
+/**
+ * Apply the Patch graphic referenced by @a patch as the background for this rect.
+ *
+ * @param ob  MNObject instance.
+ * @param patch  Unique identifier of the patch. If @c <= 0 the current background
+ *               will be cleared and the Rect will be drawn as a solid color.
+ */
+void MNRect_SetBackgroundPatch(mn_object_t* ob, patchid_t patch);
+
+/**
+ * @defgroup mnTextFlags  MNText Flags
+ */
+///@{
+#define MNTEXT_NO_ALTTEXT          0x1 ///< Do not use alt text instead of lump.
+///@}
+
 /**
  * Text objects.
  */
@@ -390,32 +440,56 @@ typedef struct mndata_text_s {
 
     /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
     patchid_t* patch;
+
+    /// @ref mnTextFlags
+    int flags;
 } mndata_text_t;
 
 mn_object_t* MNText_New(void);
 void MNText_Delete(mn_object_t* ob);
 
-void MNText_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNText_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNText_Ticker(mn_object_t* ob);
+void MNText_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNText_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+
+int MNText_SetFlags(mn_object_t* ob, flagop_t op, int flags);
+
+/**
+ * @defgroup mnButtonFlags  MNButton Flags
+ */
+///@{
+#define MNBUTTON_NO_ALTTEXT        0x1 ///< Do not use alt text instead of lump.
+///@}
 
 /**
  * Buttons.
  */
 typedef struct mndata_button_s {
     boolean staydownMode; /// @c true= this is operating in two-state "staydown" mode.
+
     void* data;
+
+    /// Label text.
     const char* text;
+
     /// Patch to be used when drawing this instead of text.
     patchid_t* patch;
+
     const char* yes, *no;
+
+    /// @ref mnButtonFlags
+    int flags;
 } mndata_button_t;
 
 mn_object_t* MNButton_New(void);
 void MNButton_Delete(mn_object_t* ob);
 
-void MNButton_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNButton_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNButton_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNButton_Ticker(mn_object_t* ob);
+void MNButton_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNButton_CommandResponder(mn_object_t* ob, menucommand_e command);
+void MNButton_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+
+int MNButton_SetFlags(mn_object_t* ob, flagop_t op, int flags);
 
 /**
  * Edit field.
@@ -453,10 +527,11 @@ typedef struct mndata_edit_s {
 mn_object_t* MNEdit_New(void);
 void MNEdit_Delete(mn_object_t* ob);
 
-void MNEdit_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNEdit_CommandResponder(mn_object_t* obj, menucommand_e command);
-int MNEdit_Responder(mn_object_t* obj, event_t* ev);
-void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNEdit_Ticker(mn_object_t* ob);
+void MNEdit_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNEdit_CommandResponder(mn_object_t* ob, menucommand_e command);
+int MNEdit_Responder(mn_object_t* ob, event_t* ev);
+void MNEdit_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
@@ -467,14 +542,14 @@ void MNEdit_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
 /**@}*/
 
 /// @return  A pointer to an immutable copy of the current contents of the edit field.
-const char* MNEdit_Text(mn_object_t* obj);
+const char* MNEdit_Text(mn_object_t* ob);
 
 /**
  * Change the current contents of the edit field.
  * @param flags  @see mneditSetTextFlags
  * @param string  New text string which will replace the existing string.
  */
-void MNEdit_SetText(mn_object_t* obj, int flags, const char* string);
+void MNEdit_SetText(mn_object_t* ob, int flags, const char* string);
 
 /**
  * List selection.
@@ -489,7 +564,7 @@ typedef struct {
     int data;
 } mndata_listitem_t;
 
-/// \note Also used for MN_LISTINLINE!
+/// @note Also used for MN_LISTINLINE!
 typedef struct mndata_list_s {
     void* items;
     int count; // Number of items.
@@ -503,33 +578,35 @@ typedef struct mndata_list_s {
 mn_object_t* MNList_New(void);
 void MNList_Delete(mn_object_t* ob);
 
-void MNList_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNList_CommandResponder(mn_object_t* obj, menucommand_e command);
+void MNList_Ticker(mn_object_t* ob);
+void MNList_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNList_CommandResponder(mn_object_t* ob, menucommand_e command);
 
-void MNList_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNList_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /// @return  Index of the currently selected item else -1.
-int MNList_Selection(mn_object_t* obj);
+int MNList_Selection(mn_object_t* ob);
 
 /// @return  @c true if the currently selected item is presently visible.
-boolean MNList_SelectionIsVisible(mn_object_t* obj);
+boolean MNList_SelectionIsVisible(mn_object_t* ob);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
-int MNList_FindItem(const mn_object_t* obj, int dataValue);
+int MNList_FindItem(const mn_object_t* ob, int dataValue);
 
 mn_object_t* MNListInline_New(void);
 void MNListInline_Delete(mn_object_t* ob);
 
-void MNListInline_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNListInline_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNListInline_Ticker(mn_object_t* ob);
+void MNListInline_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNListInline_CommandResponder(mn_object_t* ob, menucommand_e command);
+void MNListInline_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /**
  * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
- * @{
  */
+///@{
 #define MNLIST_SIF_NO_ACTION            0x1 /// Do not call any linked action function.
-/**@}*/
+///@}
 
 /**
  * Change the currently selected item.
@@ -537,7 +614,7 @@ void MNListInline_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
  * @param itemIndex  Index of the new selection.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex);
+boolean MNList_SelectItem(mn_object_t* ob, int flags, int itemIndex);
 
 /**
  * Change the currently selected item by looking up its data value.
@@ -545,7 +622,7 @@ boolean MNList_SelectItem(mn_object_t* obj, int flags, int itemIndex);
  * @param dataValue  Value associated to the candidate item being selected.
  * @return  @c true if the selected item changed.
  */
-boolean MNList_SelectItemByValue(mn_object_t* obj, int flags, int itemIndex);
+boolean MNList_SelectItemByValue(mn_object_t* ob, int flags, int itemIndex);
 
 /**
  * Color preview box.
@@ -568,67 +645,68 @@ typedef struct mndata_colorbox_s {
 mn_object_t* MNColorBox_New(void);
 void MNColorBox_Delete(mn_object_t* ob);
 
-void MNColorBox_Drawer(mn_object_t* obj, const Point2Raw* origin);
-int MNColorBox_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNColorBox_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNColorBox_Ticker(mn_object_t* ob);
+void MNColorBox_Drawer(mn_object_t* ob, const Point2Raw* origin);
+int MNColorBox_CommandResponder(mn_object_t* ob, menucommand_e command);
+void MNColorBox_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 /// @return  @c true if this colorbox is operating in RGBA mode.
-boolean MNColorBox_RGBAMode(mn_object_t* obj);
+boolean MNColorBox_RGBAMode(mn_object_t* ob);
 
 /// @return  Current red color component.
-float MNColorBox_Redf(const mn_object_t* obj);
+float MNColorBox_Redf(const mn_object_t* ob);
 
 /// @return  Current green color component.
-float MNColorBox_Greenf(const mn_object_t* obj);
+float MNColorBox_Greenf(const mn_object_t* ob);
 
 /// @return  Current blue color component.
-float MNColorBox_Bluef(const mn_object_t* obj);
+float MNColorBox_Bluef(const mn_object_t* ob);
 
 /// @return  Current alpha value or @c 1 if this colorbox is not
-///     operating in "rgba mode".
-float MNColorBox_Alphaf(const mn_object_t* obj);
+///          operating in "rgba mode".
+float MNColorBox_Alphaf(const mn_object_t* ob);
 
 /**
  * @defgroup mncolorboxSetColorFlags  MNColorBox Set Color Flags.
- * @{
  */
+///@{
 #define MNCOLORBOX_SCF_NO_ACTION        0x1 /// Do not call any linked action function.
-/**@}*/
+///@}
 
 /**
  * Change the current color of the color box.
  * @param flags  @see mncolorboxSetColorFlags
  * @param rgba  New color and alpha. Note: will be NOP if this colorbox
- *      is not operating in "rgba mode".
+ *              is not operating in "rgba mode".
  * @return  @c true if the current color changed.
  */
-boolean MNColorBox_SetColor4fv(mn_object_t* obj, int flags, float rgba[4]);
-boolean MNColorBox_SetColor4f(mn_object_t* obj, int flags, float red, float green,
+boolean MNColorBox_SetColor4fv(mn_object_t* ob, int flags, float rgba[4]);
+boolean MNColorBox_SetColor4f(mn_object_t* ob, int flags, float red, float green,
     float blue, float alpha);
 
 /// Change the current red color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetRedf(mn_object_t* obj, int flags, float red);
+boolean MNColorBox_SetRedf(mn_object_t* ob, int flags, float red);
 
 /// Change the current green color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetGreenf(mn_object_t* obj, int flags, float green);
+boolean MNColorBox_SetGreenf(mn_object_t* ob, int flags, float green);
 
 /// Change the current blue color component.
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetBluef(mn_object_t* obj, int flags, float blue);
+boolean MNColorBox_SetBluef(mn_object_t* ob, int flags, float blue);
 
 /// Change the current alpha value. Note: will be NOP if this colorbox
 /// is not operating in "rgba mode".
 /// @return  @c true if the value changed.
-boolean MNColorBox_SetAlphaf(mn_object_t* obj, int flags, float alpha);
+boolean MNColorBox_SetAlphaf(mn_object_t* ob, int flags, float alpha);
 
 /**
  * Copy the current color from @a other.
  * @param flags  @see mncolorboxSetColorFlags
  * @return  @c true if the current color changed.
  */
-boolean MNColorBox_CopyColor(mn_object_t* obj, int flags, const mn_object_t* otherObj);
+boolean MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* otherObj);
 
 /**
  * Graphical slider.
@@ -667,29 +745,30 @@ typedef struct mndata_slider_s {
 mn_object_t* MNSlider_New(void);
 void MNSlider_Delete(mn_object_t* ob);
 
-void MNSlider_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNSlider_TextualValueDrawer(mn_object_t* obj, const Point2Raw* origin);
-int MNSlider_CommandResponder(mn_object_t* obj, menucommand_e command);
-void MNSlider_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
-void MNSlider_TextualValueUpdateGeometry(mn_object_t* obj, mn_page_t* page);
-int MNSlider_ThumbPos(const mn_object_t* obj);
+void MNSlider_Ticker(mn_object_t* ob);
+void MNSlider_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNSlider_TextualValueDrawer(mn_object_t* ob, const Point2Raw* origin);
+int MNSlider_CommandResponder(mn_object_t* ob, menucommand_e command);
+void MNSlider_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
+void MNSlider_TextualValueUpdateGeometry(mn_object_t* ob, mn_page_t* page);
+int MNSlider_ThumbPos(const mn_object_t* ob);
 
 /// @return  Current value represented by the slider.
-float MNSlider_Value(const mn_object_t* obj);
+float MNSlider_Value(const mn_object_t* ob);
 
 /**
  * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
- * @{
  */
+///@{
 #define MNSLIDER_SVF_NO_ACTION            0x1 /// Do not call any linked action function.
-/**@}*/
+///@}
 
 /**
  * Change the current value represented by the slider.
  * @param flags  @see mnsliderSetValueFlags
  * @param value  New value.
  */
-void MNSlider_SetValue(mn_object_t* obj, int flags, float value);
+void MNSlider_SetValue(mn_object_t* ob, int flags, float value);
 
 /**
  * Mobj preview visual.
@@ -707,13 +786,14 @@ typedef struct mndata_mobjpreview_s {
 mn_object_t* MNMobjPreview_New(void);
 void MNMobjPreview_Delete(mn_object_t* ob);
 
-void MNMobjPreview_SetMobjType(mn_object_t* obj, int mobjType);
-void MNMobjPreview_SetPlayerClass(mn_object_t* obj, int plrClass);
-void MNMobjPreview_SetTranslationClass(mn_object_t* obj, int tClass);
-void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap);
+void MNMobjPreview_Ticker(mn_object_t* ob);
+void MNMobjPreview_SetMobjType(mn_object_t* ob, int mobjType);
+void MNMobjPreview_SetPlayerClass(mn_object_t* ob, int plrClass);
+void MNMobjPreview_SetTranslationClass(mn_object_t* ob, int tClass);
+void MNMobjPreview_SetTranslationMap(mn_object_t* ob, int tMap);
 
-void MNMobjPreview_Drawer(mn_object_t* obj, const Point2Raw* origin);
-void MNMobjPreview_UpdateGeometry(mn_object_t* obj, mn_page_t* page);
+void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin);
+void MNMobjPreview_UpdateGeometry(mn_object_t* ob, mn_page_t* page);
 
 // Menu render state:
 typedef struct mn_rendstate_s {
@@ -727,14 +807,14 @@ extern const mn_rendstate_t* mnRendState;
 
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
- * @{
  */
+///@{
 #define MEF_TEXT_TYPEIN             (DTF_NO_TYPEIN)
 #define MEF_TEXT_SHADOW             (DTF_NO_SHADOW)
 #define MEF_TEXT_GLITTER            (DTF_NO_GLITTER)
 
 #define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
-/**@}*/
+///@}
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 

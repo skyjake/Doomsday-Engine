@@ -450,8 +450,6 @@ void G_Register(void)
 
     for(i = 0; gameCmds[i].name; ++i)
         Con_AddCommand(gameCmds + i);
-
-    C_VAR_BYTE("game-mobj-fracepsilon", &cfg.fracEpsilonForCollisions, 0, 0, 1);
 }
 
 boolean G_QuitInProgress(void)
@@ -3318,7 +3316,7 @@ void G_DoScreenShot(void)
 static void openLoadMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
@@ -3327,7 +3325,7 @@ static void openLoadMenu(void)
 static void openSaveMenu(void)
 {
     Hu_MenuCommand(MCMD_OPEN);
-    /// \fixme This should be called automatically when opening the page
+    /// @fixme This should be called automatically when opening the page
     /// thus making this function redundant.
     Hu_MenuUpdateGameSaveWidgets();
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));

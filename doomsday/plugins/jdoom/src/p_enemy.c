@@ -192,16 +192,16 @@ static boolean checkMissileRange(mobj_t *actor)
  *
  * @return              @c false, if the move is blocked.
  */
-static boolean moveMobj(mobj_t *actor, boolean dropoff)
+static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
-    float               pos[3], step[3];
-    linedef_t          *ld;
-    boolean             good;
+    float pos[3], step[3];
+    linedef_t* ld;
+    boolean good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->moveDir >= DI_NODIR)
+    if(!VALID_MOVEDIR(actor->moveDir))
         Con_Error("Weird actor->moveDir!");
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][MX];
@@ -215,23 +215,13 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
         // Float up and down to the contacted floor height.
         if((actor->flags & MF_FLOAT) && floatOk)
         {
-            float oldZ = actor->pos[VZ];
             if(actor->pos[VZ] < tmFloorZ)
                 actor->pos[VZ] += FLOATSPEED;
             else
                 actor->pos[VZ] -= FLOATSPEED;
 
-            // What if we just floated into another mobj?
-            if(P_CheckPosition3fv(actor, actor->pos))
-            {
-                // Looks ok: floated to an unoccupied spot.
-                actor->flags |= MF_INFLOAT;
-            }
-            else
-            {
-                // Let's not do this; undo the float.
-                actor->pos[VZ] = oldZ;
-            }
+            // What if we just floated into another mobj??
+            actor->flags |= MF_INFLOAT;
             return true;
         }
 

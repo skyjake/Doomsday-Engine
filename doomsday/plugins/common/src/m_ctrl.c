@@ -312,56 +312,52 @@ void Hu_MenuInitControlsPage(void)
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mn_object_t* obj   = &ControlsMenuItems[objectIdx++];
+            mn_object_t* ob    = &ControlsMenuItems[objectIdx++];
             mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
-            obj->_type = MN_TEXT;
+            ob->_type = MN_TEXT;
             txt->text = (char*) binds->text;
-            obj->_typedata = txt;
-            obj->_pageFontIdx = MENU_FONT1;
-            obj->_pageColorIdx = MENU_COLOR2;
-            obj->drawer = MNText_Drawer;
-            obj->updateGeometry = MNText_UpdateGeometry;
+            ob->_typedata = txt;
+            ob->_pageFontIdx = MENU_FONT1;
+            ob->_pageColorIdx = MENU_COLOR2;
+            ob->ticker = MNText_Ticker;
+            ob->drawer = MNText_Drawer;
+            ob->updateGeometry = MNText_UpdateGeometry;
 
             // A new group begins;
-            obj->_group = ++group;
+            ob->_group = ++group;
         }
         else
         {
-            mn_object_t* labelObj    = &ControlsMenuItems[objectIdx++];
-            mn_object_t* bindingsObj = &ControlsMenuItems[objectIdx++];
+            mn_object_t* labelOb    = &ControlsMenuItems[objectIdx++];
+            mn_object_t* bindingsOb = &ControlsMenuItems[objectIdx++];
             mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
-            labelObj->_type = MN_TEXT;
-            if(binds->text && (PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT))
-            {
-                txt->text = GET_TXT(PTR2INT(binds->text));
-            }
-            else
-            {
-                txt->text = (char*)binds->text;
-            }
-            labelObj->_typedata = txt;
-            labelObj->drawer = MNText_Drawer;
-            labelObj->updateGeometry = MNText_UpdateGeometry;
-            labelObj->_pageFontIdx = MENU_FONT1;
-            labelObj->_pageColorIdx = MENU_COLOR1;
-            labelObj->_group = group;
+            labelOb->_type = MN_TEXT;
+            txt->text = binds->text;
+            labelOb->_typedata = txt;
+            labelOb->ticker = MNText_Ticker;
+            labelOb->drawer = MNText_Drawer;
+            labelOb->updateGeometry = MNText_UpdateGeometry;
+            labelOb->_pageFontIdx = MENU_FONT1;
+            labelOb->_pageColorIdx = MENU_COLOR1;
+            labelOb->_group = group;
 
-            bindingsObj->_type = MN_BINDINGS;
-            bindingsObj->drawer = MNBindings_Drawer;
-            bindingsObj->cmdResponder = MNBindings_CommandResponder;
-            bindingsObj->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsObj->updateGeometry = MNBindings_UpdateGeometry;
-            bindingsObj->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsObj->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
-            bindingsObj->_typedata = binds;
-            bindingsObj->_group = group;
+            bindingsOb->_type = MN_BINDINGS;
+            bindingsOb->ticker = MNBindings_Ticker;
+            bindingsOb->drawer = MNBindings_Drawer;
+            bindingsOb->cmdResponder = MNBindings_CommandResponder;
+            bindingsOb->privilegedResponder = MNBindings_PrivilegedResponder;
+            bindingsOb->updateGeometry = MNBindings_UpdateGeometry;
+            bindingsOb->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            bindingsOb->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+            bindingsOb->_typedata = binds;
+            bindingsOb->_group = group;
         }
     }
     ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
 
-    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuDrawControlsPage, NULL, NULL);
+    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
     page->objects = ControlsMenuItems;
     MNPage_SetTitle(page, "Controls");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
@@ -671,10 +667,12 @@ void Hu_MenuControlGrabDrawer(const char* niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-const char* MNBindings_ControlName(mn_object_t* obj)
+void MNBindings_Ticker(mn_object_t* ob)
 {
-    mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
-    return binds->text;
+    mndata_bindings_t* binds = (mndata_bindings_t*) ob->_typedata;
+    assert(ob && ob->_type == MN_BINDINGS);
+
+    // Stub.
 }
 
 int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
@@ -790,4 +788,10 @@ int MNBindings_PrivilegedResponder(mn_object_t* obj, event_t* ev)
     }
 
     return false;
+}
+
+const char* MNBindings_ControlName(mn_object_t* obj)
+{
+    mndata_bindings_t* binds = (mndata_bindings_t*) obj->_typedata;
+    return binds->text;
 }

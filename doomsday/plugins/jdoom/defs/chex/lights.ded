@@ -65,3 +65,10 @@ Copy Light {
   Color { .1 .1 .28 };
   Size = .35;
 }
+
+Light {
+  State = "ROCKET";
+  Color { .98 .72 .72 };
+  Size = .4;
+  Y Offset = 12;
+}

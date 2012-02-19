@@ -599,7 +599,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATE:
-        if(!Sys_IsShuttingDown())
+        // Do not alter high-level engine modes state/properties while busy.
+        /// @todo The window manager should not have the authority to make such changes.
+        ///       We should simply flag the desire to enter a "suspended mode" which
+        ///       will be actioned by the core loop as necessary.
+        if(!Sys_IsShuttingDown() && !Con_IsBusy())
         {
             if(LOWORD(wParam) == WA_ACTIVE || (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
             {

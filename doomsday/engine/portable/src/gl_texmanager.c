@@ -3048,8 +3048,10 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
                 R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
     }
 
-    // Average alpha for shadow factor?
-    if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
+    // Average alpha?
+    if(TST_GENERAL == spec->type &&
+       (TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context) ||
+       (TC_UI == TS_GENERAL(spec)->context))
     {
         averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
         boolean firstInit = (!aa);
