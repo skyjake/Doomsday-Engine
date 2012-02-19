@@ -192,7 +192,7 @@ boolean P_Move(mobj_t *actor, boolean dropoff)
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->moveDir >= DI_NODIR)
+    if(!VALID_MOVEDIR(actor->moveDir))
         Con_Error("Weird actor->moveDir!");
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][VX];

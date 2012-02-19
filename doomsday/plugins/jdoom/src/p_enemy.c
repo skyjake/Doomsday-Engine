@@ -192,16 +192,16 @@ static boolean checkMissileRange(mobj_t *actor)
  *
  * @return              @c false, if the move is blocked.
  */
-static boolean moveMobj(mobj_t *actor, boolean dropoff)
+static boolean moveMobj(mobj_t* actor, boolean dropoff)
 {
-    float               pos[3], step[3];
-    linedef_t          *ld;
-    boolean             good;
+    float pos[3], step[3];
+    linedef_t* ld;
+    boolean good;
 
     if(actor->moveDir == DI_NODIR)
         return false;
 
-    if((unsigned) actor->moveDir >= DI_NODIR)
+    if(!VALID_MOVEDIR(actor->moveDir))
         Con_Error("Weird actor->moveDir!");
 
     step[VX] = actor->info->speed * dirSpeed[actor->moveDir][MX];

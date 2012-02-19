@@ -256,6 +256,8 @@ typedef enum dirtype_s {
     NUMDIRS
 } dirtype_t;
 
+#define VALID_MOVEDIR(v)    ((v) >= DI_EAST && (v) <= DI_SOUTHEAST)
+
 // Map Object definition.
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.

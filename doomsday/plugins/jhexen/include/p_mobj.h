@@ -171,6 +171,8 @@ typedef enum dirtype_s {
     NUMDIRS
 } dirtype_t;
 
+#define VALID_MOVEDIR(v)    ((v) >= DI_EAST && (v) <= DI_SOUTHEAST)
+
 typedef struct mobj_s {
     // Defined in dd_share.h; required mobj elements.
     DD_BASE_MOBJ_ELEMENTS()
