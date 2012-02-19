@@ -29,7 +29,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -57,7 +57,7 @@ Thing {
   Height = 56;
   Mass = 100;
   Flags = solid | shootable |countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -85,7 +85,7 @@ Thing {
   Height = 100;
   Mass = 1000;
   Flags = solid | shootable | countkill;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 Thing {
@@ -114,7 +114,7 @@ Thing {
   Mass = 50;
   Damage = 3;
   Flags = solid | shootable | float | nogravity;
-  Flags2 = passmobj | telestomp;
+  Flags2 = telestomp;
 }
 
 State {
