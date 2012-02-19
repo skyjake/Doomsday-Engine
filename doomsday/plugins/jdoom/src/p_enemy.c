@@ -215,7 +215,6 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
         // Float up and down to the contacted floor height.
         if((actor->flags & MF_FLOAT) && floatOk)
         {
-            float oldZ = actor->pos[VZ];
             if(actor->pos[VZ] < tmFloorZ)
                 actor->pos[VZ] += FLOATSPEED;
             else
