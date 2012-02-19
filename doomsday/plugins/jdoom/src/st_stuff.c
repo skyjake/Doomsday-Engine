@@ -882,7 +882,14 @@ void SBarReadyAmmo_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1093,8 +1100,14 @@ void SBarHealth_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawCharXY('%', X, Y);
 
@@ -1164,8 +1177,14 @@ void SBarArmor_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     FR_DrawCharXY('%', X, Y);
 
@@ -1242,8 +1261,14 @@ void SBarFrags_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     FR_DrawTextXY3(buf, X, Y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1498,8 +1523,14 @@ void WeaponSlot_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Color4f(1, 1, 1, textAlpha);
 
     FR_SetFont(obj->font);
-    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
+    if(gameMode == doom_chex)
+    {
+        FR_SetColorAndAlpha(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    }
+    else
+    {
+        FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+    }
     WI_DrawPatch3(wpns->patchId, Hu_ChoosePatchReplacement(cfg.hudPatchReplaceMode, wpns->patchId),
                   element, ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
 

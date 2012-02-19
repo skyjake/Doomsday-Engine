@@ -195,17 +195,17 @@ void D_PreInit(void)
         break;
 
     case doom_chex:
-        defFontRGB[CR] = 1;
+        defFontRGB[CR] = .46f;
         defFontRGB[CG] = 1;
-        defFontRGB[CB] = 1;
+        defFontRGB[CB] = .4f;
 
-        defFontRGB2[CR] = .3f;
-        defFontRGB2[CG] = .9f;
-        defFontRGB2[CB] = .3f;
+        defFontRGB2[CR] = .46f;
+        defFontRGB2[CG] = 1;
+        defFontRGB2[CB] = .4f;
 
-        defFontRGB3[CR] = .85f;
-        defFontRGB3[CG] = .1f;
-        defFontRGB3[CB] = .1f;
+        defFontRGB3[CR] = 1;
+        defFontRGB3[CG] = 1;
+        defFontRGB3[CB] = .45f;
         break;
 
     default:
@@ -306,19 +306,21 @@ void D_PreInit(void)
         cfg.menuTextColors[2][CG] = cfg.menuTextColors[3][CG] = .2f;
         cfg.menuTextColors[2][CB] = cfg.menuTextColors[3][CB] = .9f;
     }
-    else if(gameMode == doom_chex)
-    {
-        memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
-        memcpy(cfg.menuTextColors[1], defFontRGB3, sizeof(cfg.menuTextColors[1]));
-        memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
-        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
-    }
     else
     {
         memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
-        cfg.menuTextColors[1][CR] = 1.f;
-        cfg.menuTextColors[1][CG] = .7f;
-        cfg.menuTextColors[1][CB] = .3f;
+        if(gameMode == doom_chex)
+        {
+            cfg.menuTextColors[1][CR] = .85f;
+            cfg.menuTextColors[1][CG] = .3f;
+            cfg.menuTextColors[1][CB] = .3f;
+        }
+        else
+        {
+            cfg.menuTextColors[1][CR] = 1.f;
+            cfg.menuTextColors[1][CG] = .7f;
+            cfg.menuTextColors[1][CB] = .3f;
+        }
         memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
         memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
     }
