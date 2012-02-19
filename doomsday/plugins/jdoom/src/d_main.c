@@ -384,6 +384,11 @@ void D_PreInit(void)
     cfg.hudCheatCounterScale = .7f;
     cfg.hudCheatCounterShowWithAutomap = true;
 
+    if(gameMode == doom_chex)
+    {
+        cfg.hudKeysCombine = true;
+    }
+
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;
