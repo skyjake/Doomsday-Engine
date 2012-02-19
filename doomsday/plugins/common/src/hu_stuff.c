@@ -1123,7 +1123,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     {
         patchinfo_t info;
         R_GetPatchInfo(patchId, &info);
-        if(!info.isCustom)
+        if(!info.flags.isCustom)
         {
             if(flags & PRF_NO_IWAD)
                 return NULL;
@@ -1148,7 +1148,7 @@ const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchI
         {
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            if(!info.isCustom)
+            if(!info.flags.isCustom)
             {
                 if(NULL == text || !text[0])
                 {

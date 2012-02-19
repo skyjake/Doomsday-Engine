@@ -1327,7 +1327,10 @@ typedef enum {
 /// Patch Info
 typedef struct {
     patchid_t id;
-    boolean isCustom; // @c true if the patch does not originate from the current game.
+    struct patchinfo_flags_s {
+        uint isCustom:1; ///< Patch does not originate from the current game.
+        uint isEmpty:1; ///< Patch contains no color information.
+    } flags;
     RectRaw geometry;
     // Temporary until the big DGL drawing rewrite.
     short extraOffset[2]; // Only used with upscaled and sharpened patches.
