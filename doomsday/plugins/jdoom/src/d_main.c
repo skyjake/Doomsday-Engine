@@ -328,6 +328,10 @@ void D_PreInit(void)
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestName = true;
+    if(gameMode == doom_chex)
+    {
+        cfg.menuCursorRotate = false;
+    }
 
     cfg.confirmQuickGameSave = true;
     cfg.maxSkulls = true;
