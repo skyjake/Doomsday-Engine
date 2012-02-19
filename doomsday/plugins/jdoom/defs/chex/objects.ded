@@ -4,117 +4,24 @@
 
 Header { Version = 6; }
 
-Thing {
-  ID = "POSSESSED";
-  Name = "Zombieman";
-  DoomEd number = 3004;
-  Spawn state = "POSS_STND";
-  See state = "POSS_RUN1";
-  Pain state = "POSS_PAIN";
+Thing Mods "POSSESSED" {
   Melee state = "POSS_ATK1";
   Missile state = "NULL";
-  Death state = "POSS_DIE1";
-  Xdeath state = "POSS_XDIE1";
-  Raise state = "POSS_RAISE1";
-  See sound = "posit1";
-  Attack sound = "pistol";
-  Pain sound = "popain";
-  Death sound = "podth1";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 200;
-  Spawn health = 20;
-  Speed = 8;
-  Radius = 20;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable | countkill;
-  Flags2 = telestomp;
 }
 
-Thing {
-  ID = "SHOTGUY";
-  Name = "Shotgun Guy";
-  DoomEd number = 9;
-  Spawn state = "SPOS_STND";
-  See state = "SPOS_RUN1";
-  Pain state = "SPOS_PAIN";
+Thing Mods "SHOTGUY" {
   Melee state = "SPOS_ATK1";
   Missile state = "NULL";
-  Death state = "SPOS_DIE1";
-  Xdeath state = "SPOS_XDIE1";
-  Raise state = "SPOS_RAISE1";
-  See sound = "posit2";
-  Attack sound = "None";
-  Pain sound = "popain";
-  Death sound = "podth2";
-  Active sound = "posact";
-  Reaction time = 8;
-  Pain chance = 170;
-  Spawn health = 30;
-  Speed = 8;
-  Radius = 20;
-  Height = 56;
-  Mass = 100;
-  Flags = solid | shootable |countkill;
-  Flags2 = telestomp;
 }
 
-Thing {
-  ID = "BRUISER";
-  Name = "Baron of Hell";
-  DoomEd number = 3003;
-  Spawn state = "BOSS_STND";
-  See state = "BOSS_RUN1";
-  Pain state = "BOSS_PAIN";
-  Melee state = "BOSS_ATK1";
-  Missile state = "BOSS_ATK1";
-  Death state = "BOSS_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "BOSS_RAISE1";
-  See sound = "brssit";
-  Attack sound = "None";
-  Pain sound = "dmpain";
-  Death sound = "brsdth";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 50;
-  Spawn health = 1000;
+Thing Mods "BRUISER" {
   Speed = 0;
   Radius = 44;
   Height = 100;
-  Mass = 1000;
-  Flags = solid | shootable | countkill;
-  Flags2 = telestomp;
 }
 
-Thing {
-  ID = "SKULL";
-  Name = "Lost Soul";
-  DoomEd number = 3006;
-  Spawn state = "SKULL_STND";
-  See state = "SKULL_RUN1";
-  Pain state = "SKULL_PAIN";
-  Melee state = "NULL";
-  Missile state = "SKULL_ATK1";
-  Death state = "SKULL_DIE1";
-  Xdeath state = "NULL";
-  Raise state = "NULL";
-  See sound = "None";
-  Attack sound = "sklatk";
-  Pain sound = "dmpain";
-  Death sound = "firxpl";
-  Active sound = "dmact";
-  Reaction time = 8;
-  Pain chance = 256;
-  Spawn health = 100;
-  Speed = 8;
-  Radius = 16;
+Thing Mods "SKULL" {
   Height = 0;
-  Mass = 50;
-  Damage = 3;
-  Flags = solid | shootable | float | nogravity;
-  Flags2 = telestomp;
 }
 
 State {
