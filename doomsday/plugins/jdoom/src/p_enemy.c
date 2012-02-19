@@ -221,17 +221,8 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
             else
                 actor->pos[VZ] -= FLOATSPEED;
 
-            // What if we just floated into another mobj?
-            if(P_CheckPosition3fv(actor, actor->pos))
-            {
-                // Looks ok: floated to an unoccupied spot.
-                actor->flags |= MF_INFLOAT;
-            }
-            else
-            {
-                // Let's not do this; undo the float.
-                actor->pos[VZ] = oldZ;
-            }
+            // What if we just floated into another mobj??
+            actor->flags |= MF_INFLOAT;
             return true;
         }
 
