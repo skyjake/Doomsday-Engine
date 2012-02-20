@@ -797,6 +797,11 @@ static void loadResource(AbstractResource* res)
             {
                 // Mark this as an original game resource.
                 AbstractFile_SetCustom(DFile_File(file), false);
+
+                // Print the 'CRC' number of IWADs, so they can be identified.
+                if(FT_WADFILE == AbstractFile_Type(DFile_File(file)))
+                    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)DFile_File(file)));
+
             }
         }
         break; }

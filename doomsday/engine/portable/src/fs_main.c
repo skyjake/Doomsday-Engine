@@ -1734,10 +1734,6 @@ DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
     case FT_WADFILE: {
         WadFile* wad = (WadFile*)fsObject;
         WadFile_PublishLumpsToDirectory(  (WadFile*)fsObject, ActiveWadLumpDirectory);
-        // Print the 'CRC' number of the IWAD, so it can be identified.
-        /// @todo Do not do this here.
-        if(!AbstractFile_HasCustom(fsObject))
-            Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
         break;
       }
     /*case FT_LUMPFILE:
