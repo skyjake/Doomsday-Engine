@@ -726,7 +726,7 @@ const char* F_LumpSourceFile(lumpnum_t absoluteLumpNum)
 boolean F_LumpIsCustom(lumpnum_t absoluteLumpNum)
 {
     abstractfile_t* fsObject = F_FindFileForLumpNum(absoluteLumpNum);
-    if(fsObject) return !AbstractFile_HasIWAD(fsObject);
+    if(fsObject) return AbstractFile_HasCustom(fsObject);
     return false;
 }
 
@@ -1023,7 +1023,7 @@ uint F_CRCNumber(void)
         do
         {
             file = FileList_GetFile(loadedFiles, i);
-            if(FT_WADFILE == AbstractFile_Type(file) && AbstractFile_HasIWAD(file))
+            if(FT_WADFILE == AbstractFile_Type(file) && !AbstractFile_HasCustom(file))
             {
                 found = file;
             }
@@ -1038,8 +1038,8 @@ uint F_CRCNumber(void)
 
 typedef struct {
     filetype_t type; // Only
-    boolean includeIWAD;
-    boolean includeOther;
+    boolean includeOriginal;
+    boolean includeCustom;
 } compositepathpredicateparamaters_t;
 
 boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
@@ -1048,8 +1048,8 @@ boolean C_DECL compositePathPredicate(DFile* hndl, void* paramaters)
     abstractfile_t* file = DFile_File(hndl);
     assert(p);
     if((!VALID_FILETYPE(p->type) || p->type == AbstractFile_Type(file)) &&
-       ((p->includeIWAD  &&  AbstractFile_HasIWAD(file)) ||
-        (p->includeOther && !AbstractFile_HasIWAD(file))))
+       ((p->includeOriginal && !AbstractFile_HasCustom(file)) ||
+        (p->includeCustom   &&  AbstractFile_HasCustom(file))))
     {
         const ddstring_t* path = AbstractFile_Path(file);
         if(stricmp(Str_Text(path) + Str_Length(path) - 3, "lmp"))
@@ -1700,7 +1700,7 @@ uint F_GetLastModified(const char* fileName)
     return modified;
 }
 
-boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
+DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
 {
     DFile* file = F_Open3(path, "rb", baseOffset, allowDuplicate);
     abstractfile_t* fsObject;
@@ -1715,7 +1715,7 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         {
             Con_Message("\"%s\" already loaded.\n", F_PrettyPath(path));
         }
-        return false;
+        return NULL;
     }
     fsObject = DFile_File(file);
 
@@ -1735,8 +1735,8 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         WadFile* wad = (WadFile*)fsObject;
         WadFile_PublishLumpsToDirectory(  (WadFile*)fsObject, ActiveWadLumpDirectory);
         // Print the 'CRC' number of the IWAD, so it can be identified.
-        /// \todo Do not do this here.
-        if(AbstractFile_HasIWAD(fsObject))
+        /// @todo Do not do this here.
+        if(!AbstractFile_HasCustom(fsObject))
             Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC(wad));
         break;
       }
@@ -1752,7 +1752,7 @@ boolean F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
         /*Con_Error("F_AddFile: Invalid file type %i.", (int) AbstractFile_Type(fsObject));
         exit(1); // Unreachable.*/
     }
-    return true;
+    return file;
 }
 
 boolean F_AddFiles(const char* const* paths, size_t num, boolean allowDuplicate)
@@ -2279,7 +2279,7 @@ D_CMD(ListFiles)
                 break;
             case FT_WADFILE: {
                 WadFile* wad = (WadFile*)*ptr;
-                crc = (AbstractFile_HasIWAD(*ptr)? WadFile_CalculateCRC(wad) : 0);
+                crc = (!AbstractFile_HasCustom(*ptr)? WadFile_CalculateCRC(wad) : 0);
                 fileCount = WadFile_LumpCount(wad);
                 break;
               }

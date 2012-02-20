@@ -624,7 +624,7 @@ static boolean allGameStartupResourcesFound(Game* game)
 
 /**
  * Print a game mode banner with rulers.
- * \todo dj: This has been moved here so that strings like the game
+ * @todo This has been moved here so that strings like the game
  * title and author can be overridden (e.g., via DEHACKED). Make it so!
  */
 static void printGameBanner(Game* game)
@@ -792,7 +792,12 @@ static void loadResource(AbstractResource* res)
         const ddstring_t* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            F_AddFile(Str_Text(path), 0, false);
+            DFile* file = F_AddFile(Str_Text(path), 0, false);
+            if(file)
+            {
+                // Mark this as an original game resource.
+                AbstractFile_SetCustom(DFile_File(file), false);
+            }
         }
         break; }
 
