@@ -139,7 +139,7 @@ mapped into @file{defs/<game>/auto/}.
 
 @section{ WAD files }
 
-Doomsday has a number of enhancements for how WAD files are handled.
+Doomsday has a number of advanced features for handling WAD files.
 
 
 @subsec{ Definitions inside WAD }
@@ -163,12 +163,12 @@ FILE002  Another.ded}
 
 Each line in @file{DD_DIREC} contains a lump/path pair. The paths that begin
 with a (back)slash are interpreted as paths that start from the Doomsday base
-directory (set with @opt{-basedir}; e.g. @file{C:\Doomsday}) and paths that
-don't begin with a (back)slash are located in the runtime directory. The
-engine will first search the @file{DD_DIREC}@nsp{s} before opening any file
-for reading. Note, however, that all kinds of files are not loaded using the
-@file{DD_DIREC}@nsp{s}: for instance demos (which are compressed with the LZSS
-library) must always be loaded from real files.
+directory (set with @opt{-basedir}) and paths that don't begin with a
+(back)slash are located in the runtime directory. The engine will first search
+the @file{DD_DIREC}@nsp{s} before opening any file for reading. Note, however,
+that all kinds of files are not loaded using the @file{DD_DIREC}@nsp{s}: for
+instance demos (which are compressed with the LZSS library) must always be
+loaded from real files.
 
 skyjake has created a simple utility for automatically creating a WAD file
 that contains the current directory and all its subdirectories plus a
@@ -234,8 +234,8 @@ example the contents of the PK3 might be:
 
 @section{ Textures and flats }
 
-Normal wall textures and flats can be replaced with TGA (Truevision Targa),
-PNG (Portable Network Graphics) or PCX (Zsoft Paintbrush) images. The
+Normal wall textures and flats can be replaced with PNG (Portable Network
+Graphics), TGA (Truevision Targa), or PCX (Zsoft Paintbrush) images. The
 engine currently supports these image formats:
 
 $ TODO: Is this information up to date?
@@ -243,25 +243,24 @@ $ TODO: Is this information up to date?
 @table{40 20 20 20}{
 	@header{Pixel size} @tab @header{PCX} @tab @header{PNG} @tab @header{TGA}
 	@row{single}
-	8-bit (paletted)* @tab Yes @tab Yes @tab - @row
-	16-bit @tab - @tab - @tab - @row
-	24-bit @tab - @tab Yes @tab Yes** @row
-	32-bit (alpha channel) @tab - @tab Yes @tab Yes**
+	8-bit (paletted)*      @tab Yes @tab Yes @tab - @row
+	16-bit                 @tab -   @tab -   @tab - @row
+	24-bit                 @tab -   @tab Yes @tab Yes** @row
+	32-bit (alpha channel) @tab -   @tab Yes @tab Yes**
 }
 
 @caption{* = the palette does not have to match the palette of the game @br
 ** = TGAs must be type 2 (uncompressed, unmapped RGB)}
 
-Note that 32-bit images are just 24-bit images with an additional 8 bits
-per pixel for the alpha channel. Contact me if you feel that it's necessary
-to add support for other formats.
+@note{32-bit images are just 24-bit images with an additional 8 bits per pixel
+for the alpha channel.}
 
 The recommended format for high-resolution textures is paletted PNG. It is the
 easiest format in which to distribute the textures due to its small size.
 Since the palette doesn't have to be the same as the game's, it should be
 enough for many textures.
 
-The high-resolution textures can be of any size. The engine will render them
+High-resolution textures can be of any size. The engine will render them
 scaled so that they fit the size of the original texture. This means the
 aspect ratio of the new texture doesn't have to be the same as of the original
 texture. Note that the engine will have to resize all textures so that their
@@ -269,25 +268,25 @@ dimensions are powers of two (e.g. 32, 64, 128, 256). This means TGA/PNG
 textures whose width and height are already powers of two can be loaded
 faster.
 
-Color keying is done if the file name of the image ends in "-ck", for example
-@file{brnbigc-ck.png}. Both cyan (0,255,255) and purple (255,0,255) are used
-as keys. An alternative way to have transparency is to use an alpha channel.
-In it, white (255) means opaque and black (0) is fully transparent. All values
-in between can be used, too, for partly translucent pixels. When using an
-alpha channel, the "-ck" suffix is not needed.
+Color keying allows having transparent pixels in an image format that has no
+alpha channel. Color keying is applied if the file name of the image ends in
+"-ck", for example @file{brnbigc-ck.png}. Both cyan (0,255,255) and purple
+(255,0,255) are used as keys, and will be replaced with transparent pixels.
 
-To create a high-resolution texture for the wall texture STARTAN3 you'd place
-a TGA file named @file{STARTAN3.tga} or a PNG file named @file{STARTAN3.png}
-into the @file{Textures} directory.
+Examples:
 
-The file names of images that replace flats must begin with "Flat-", e.g. to
-replace the flat FLOOR7_2 you'd need to have a TGA file
-@file{Flat-FLOOR7_2.tga} in the @file{Textures} directory. If there are both
-PNG and TGA versions of the same texture, the engine will use the PNG version.
+@list{
 
-Version 1.8.6 added the @file{Flats} external resource directory. In order to
-replace FLOOR7_2, it is enough to put @file{FLOOR7_2.png} into the
-@file{Flats} directory; no prefix is necessary.
+@item To create a high-resolution texture for the wall texture STARTAN3 you'd
+place a TGA file named @file{STARTAN3.tga} or a PNG file named
+@file{STARTAN3.png} into the @file{Textures} directory.
+
+@item In order to replace the flat FLOOR7_2, you'd to put @file{FLOOR7_2.png}
+into the @file{Flats} directory. It is also possible to have flats in the
+@file{Textures} directly if they are prefixed @file{Flat-}. For instance,
+@file{Flat-FLOOR7_2.tga}.
+
+}
 
 @notice{ The file names of the high-resolution textures must match the
 @em{texture} names, not the names of the patches that make up the textures.
@@ -295,8 +294,8 @@ For example: DOOR2_5 is a patch name, DOOR3 is the texture that uses DOOR2_5.
 }
 
 To disable high-resolution textures use the command line option
-@opt{-nohightex}. The option @opt{-texdir} can be used to change the
-directory from which the textures are searched.
+@opt{-nohightex}. The option @opt{-texdir} can be used to change the directory
+from which the textures are searched.
 
 
 
@@ -313,8 +312,10 @@ because the original data includes information about offsets and the on-screen
 size of the patch. This means the image from the external resource can be of
 any arbitrary resolution: it will be scaled to match the original patch.
 
-$Currently external patch resources are not precached, which may cause slight
-$delays when the patches are first loaded.
+$ TODO: Is this correct information?
+$
+$ Currently external patch resources are not precached, which may cause slight
+$ delays when the patches are first loaded.
 
 
 
@@ -330,19 +331,23 @@ for the resource.
 For example, in order to replace the Doom medikit (lump name MEDIA0), one
 would place the file @file{media0.png} into the @file{Patches} directory.
 
-Color-mapped versions of sprite frames can have external resources, too. To
-indicate that a resource is color-mapped, its name is formed like this:
+Doom uses color-mapping to change specific colors in some sprites, e.g., the
+players, so that the same image can be displayed with different coloring
+without having multiple copies of it in memory. Doomsday will not change
+colors on the fly in external resources. However, color-mapped versions of
+sprite frames can each have their own external resources. To indicate that a
+resource is color-mapped, its name is formed like this:
 
 @ind{@file{(patchName)-table(classNum)(tableNum).ext}}
 
 @file{(patchName)} is the sprite frame lump name. @file{(classNum)} is the
-number of the color translation class. This number is always zero in jDoom and
-jHeretic. In jHexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage).
-@file{tableNum} is the index number of the color translation table. jDoom and
-jHeretic have 4 tables, jHexen has 8. For example:
-@file{playa1-table01-ck.png} would be the Doom player sprite frame A1 with
-color table 1. The @file{-ck} suffix makes the image color keyed (i.e. special
-colors indicate transparent pixels).
+number of the color translation class. This number is always zero in Doom and
+Heretic. In Hexen, it's the player's class (0=Fighter, 1=Cleric, 2=Mage).
+@file{tableNum} is the index number of the color translation table. Doom and
+Heretic have 4 tables, Hexen has 8. For example: @file{playa1-table01-ck.png}
+would be the Doom player sprite frame A1 with color table 1. The @file{-ck}
+suffix makes the image color keyed (i.e. special colors indicate transparent
+pixels).
 
 
 
@@ -376,17 +381,15 @@ image formats are PCX, TGA and PNG. If @file{Round.pcx}, @file{Round.tga} or
 Detail textures are grayscale images that are rendered on top of normal
 textures when walls and planes are viewed from close by. A signed-add blending
 is used, which lets the detail texture either darken or brighten the
-underlying texture: black => dark, gray => no change, white => bright.
+underlying texture: black => darker, gray => no change, white => brighter.
 
 Detail textures can be assigned to specific wall textures and flats using
-Detail definitions (@file{Details.ded}). The definition is described in the
-Doomsday Engine Definitions Reference (@file{DEDDoc.txt}).
+Detail definitions.
 
 Detail textures can be loaded from external image resources (from the
 @file{Textures} directory), or PCX images and raw image data stored inside a
 WAD lump. When using the @opt{-file} option to load detail texture lumps, the
-file names of the images become lump names (see @ref{fileopt}{@opt{-file}
-option}).
+file names of the images become lump names.
 
 If an external resource is used as the detail texture, its dimensions must be
 powers of two (for example 128x64 or 256x256). The image file must be in one

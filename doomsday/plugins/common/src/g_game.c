@@ -1082,7 +1082,7 @@ void G_ChangeGameState(gamestate_t state)
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
-boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
+boolean G_StartFinale(const char* script, int flags, finale_mode_t mode, const char* defId)
 {
     assert(script && script[0]);
     { uint i;
@@ -1099,7 +1099,7 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
 #endif
     }}
     G_SetGameAction(GA_NONE);
-    FI_StackExecute(script, flags, mode);
+    FI_StackExecuteWithId(script, flags, mode, defId);
     return true;
 }
 
@@ -1117,7 +1117,7 @@ void G_StartTitle(void)
     if(!Def_Get(DD_DEF_FINALE, "title", &fin))
         Con_Error("G_StartTitle: A title script must be defined.");
 
-    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
+    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "title");
 }
 
 /**
@@ -1131,7 +1131,7 @@ void G_StartHelp(void)
     if(Def_Get(DD_DEF_FINALE, "help", &fin))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
+        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "help");
         return;
     }
     Con_Message("Warning: InFine script 'help' not defined, ignoring.\n");
@@ -1293,7 +1293,7 @@ void G_DoLoadMap(void)
     // Start a briefing, if there is one.
     if(hasBrief)
     {
-        G_StartFinale(fin.script, 0, FIMODE_BEFORE);
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE, 0);
     }
     else // No briefing, start the map.
     {
@@ -2300,7 +2300,7 @@ void G_WorldDone(void)
     FI_StackClear();
 
     if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
-       G_StartFinale(fin.script, 0, FIMODE_AFTER))
+       G_StartFinale(fin.script, 0, FIMODE_AFTER, 0))
     {
         return;
     }
