@@ -718,7 +718,7 @@ boolean MNColorBox_CopyColor(mn_object_t* ob, int flags, const mn_object_t* othe
 #  define MNDATA_SLIDER_OFFSET_Y        (0)
 #  define MNDATA_SLIDER_PATCH_LEFT      ("M_THERML")
 #  define MNDATA_SLIDER_PATCH_RIGHT     ("M_THERMR")
-#  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_THERM2")
+#  define MNDATA_SLIDER_PATCH_MIDDLE    ("M_THERMM")
 #  define MNDATA_SLIDER_PATCH_HANDLE    ("M_THERMO")
 #elif __JHERETIC__ || __JHEXEN__
 #  define MNDATA_SLIDER_OFFSET_X        (0)
