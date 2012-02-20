@@ -2236,10 +2236,15 @@ static void initPageObjects(mn_page_t* page)
 
         switch(MNObject_Type(ob))
         {
-        case MN_TEXT:
-        case MN_MOBJPREVIEW:
+        case MN_TEXT: {
+            mndata_text_t* txt = (mndata_text_t*)ob->_typedata;
             MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
-            break;
+
+            if(txt->text && (PTR2INT(txt->text) > 0 && PTR2INT(txt->text) < NUMTEXT))
+            {
+                txt->text = GET_TXT(PTR2INT(txt->text));
+            }
+            break; }
 
         case MN_BUTTON: {
             const mn_actioninfo_t* action = MNObject_Action(ob, MNA_MODIFIED);
@@ -2287,6 +2292,10 @@ static void initPageObjects(mn_page_t* page)
             if(0 >= cbox->height)
                 cbox->height = MNDATA_COLORBOX_HEIGHT;
             break; }
+
+        case MN_MOBJPREVIEW:
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            break;
 
         default: break;
         }

@@ -316,7 +316,7 @@ void Hu_MenuInitControlsPage(void)
             mndata_text_t* txt = &ControlsMenuTexts[textIdx++];
 
             ob->_type = MN_TEXT;
-            txt->text = (char*) binds->text;
+            txt->text = binds->text;
             ob->_typedata = txt;
             ob->_pageFontIdx = MENU_FONT1;
             ob->_pageColorIdx = MENU_COLOR2;
