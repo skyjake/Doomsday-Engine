@@ -1,0 +1,113 @@
+# Heretic - Material Environments
+
+Header { Version = 5; }
+
+Texture Environment {
+  ID = "Metal";
+  Material { ID = "textures:BADPATCH"; };
+  Material { ID = "textures:METL1"; };
+  Material { ID = "textures:METL2"; };
+  Material { ID = "textures:SAINT1"; };
+  Material { ID = "textures:SKULLSB1"; };
+  Material { ID = "textures:SKULLSB2"; };
+  Material { ID = "textures:STNGLS1"; };
+  Material { ID = "textures:STNGLS2"; };
+  Material { ID = "textures:STNGLS3"; };
+  Material { ID = "textures:SW1OFF"; };
+  Material { ID = "textures:SW1ON"; };
+  Material { ID = "textures:SW2OFF"; };
+  Material { ID = "textures:SW2ON"; };
+  Material { ID = "textures:HORSES1"; };
+  Material { ID = "textures:MOSAIC1"; };
+  Material { ID = "textures:MOSAIC2"; };
+  Material { ID = "textures:MOSAIC3"; };
+  Material { ID = "textures:MOSAIC4"; };
+  Material { ID = "textures:MOSAIC5"; };
+}
+
+Texture Environment {
+  ID = "Rock";
+  Material { ID = "textures:CHAINMAN"; };
+  Material { ID = "textures:CHAINSD"; };
+  Material { ID = "textures:CSTLRCK"; };
+  Material { ID = "textures:CTYSTCI1"; };
+  Material { ID = "textures:CTYSTCI2"; };
+  Material { ID = "textures:CTYSTCI4"; };
+  Material { ID = "textures:CTYSTUC1"; };
+  Material { ID = "textures:CTYSTUC2"; };
+  Material { ID = "textures:CTYSTUC3"; };
+  Material { ID = "textures:CTYSTUC4"; };
+  Material { ID = "textures:CTYSTUC5"; };
+  Material { ID = "textures:DMNMSK"; };
+  Material { ID = "textures:DOOREXIT"; };
+  Material { ID = "textures:DOORSTON"; };
+  Material { ID = "textures:GRSKULL1"; };
+  Material { ID = "textures:GRSKULL2"; };
+  Material { ID = "textures:GRSKULL3"; };
+  Material { ID = "textures:GRSTNPB"; };
+  Material { ID = "textures:GRSTNPBV"; };
+  Material { ID = "textures:GRSTNPBW"; };
+  Material { ID = "textures:MOSSRCK1"; };
+  Material { ID = "textures:ORNGRAY"; };
+  Material { ID = "textures:RCKSNMUD"; };
+  Material { ID = "textures:REDWALL"; };
+  Material { ID = "textures:SANDSQ2"; };
+  Material { ID = "textures:SNDBLCKS"; };
+  Material { ID = "textures:SNDCHNKS"; };
+  Material { ID = "textures:SNDPLAIN"; };
+  Material { ID = "textures:SPINE1"; };
+  Material { ID = "textures:SPINE2"; };
+  Material { ID = "textures:SQPEB1"; };
+  Material { ID = "textures:SQPEB2"; };
+  Material { ID = "textures:TMBSTON1"; };
+  Material { ID = "textures:TMBSTON2"; };
+  Material { ID = "textures:TRISTON1"; };
+  Material { ID = "textures:TRISTON2"; };
+  Material { ID = "textures:BLUEFRAG"; };
+  Material { ID = "textures:BRWNRCKS"; };
+  Material { ID = "textures:CELTIC"; };
+  Material { ID = "textures:CSTLMOSS"; };
+  Material { ID = "textures:GRNBLOK1"; };
+  Material { ID = "textures:GRNBLOK2"; };
+  Material { ID = "textures:GRNBLOK3"; };
+  Material { ID = "textures:GRNBLOK4"; };
+  Material { ID = "textures:LAVA1"; };
+  Material { ID = "textures:LOOSERCK"; };
+}
+
+Texture Environment {
+  ID = "Wood";
+  Material { ID = "textures:DOORWOOD"; };
+  Material { ID = "textures:DRIPWALL"; };
+  Material { ID = "textures:WOODWL"; };
+  Material { ID = "textures:ROOTWALL"; };
+}
+
+Texture Environment {
+  ID = "Cloth";
+  Material { ID = "textures:WDGAT64"; };
+  Material { ID = "textures:WEB1_B"; };
+  Material { ID = "textures:WEB1_F"; };
+  Material { ID = "textures:WEB2_B"; };
+  Material { ID = "textures:WEB2_F"; };
+  Material { ID = "textures:WEB3_M"; };
+  Material { ID = "textures:BANNER1"; };
+  Material { ID = "textures:BANNER2"; };
+  Material { ID = "textures:BANNER3"; };
+  Material { ID = "textures:BANNER4"; };
+  Material { ID = "textures:BANNER5"; };
+  Material { ID = "textures:BANNER6"; };
+  Material { ID = "textures:BANNER7"; };
+  Material { ID = "textures:BANNER8"; };
+  Material { ID = "textures:GATMETL"; };
+  Material { ID = "textures:GATMETL2"; };
+  Material { ID = "textures:GATMETL3"; };
+  Material { ID = "textures:GATMETL4"; };
+  Material { ID = "textures:GATMETL5"; };
+  Material { ID = "textures:LAVAFL1"; };
+  Material { ID = "textures:LAVAFL2"; };
+  Material { ID = "textures:LAVAFL3"; };
+  Material { ID = "textures:WATRWAL1"; };
+  Material { ID = "textures:WATRWAL2"; };
+  Material { ID = "textures:WATRWAL3"; };
+}
