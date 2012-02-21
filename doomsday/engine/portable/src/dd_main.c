@@ -875,8 +875,6 @@ static int DD_LoadGameStartupResourcesWorker(void* paramaters)
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
 
-#pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
-
     { int numResources;
     AbstractResource* const* resources;
     if((resources = Game_Resources(theGame, RC_PACKAGE, &numResources)))
