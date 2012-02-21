@@ -88,6 +88,32 @@ Texture Environment {
   Material { ID = "textures:SW2STON1"; }; # Switch
   Material { ID = "textures:SW2STON2"; }; # Switch
   Material { ID = "textures:SW2STONE"; }; # Switch
+
+  Material { ID = "flats:FLOOR0_3"; };
+  Material { ID = "flats:STEP1"; };
+  Material { ID = "flats:TLITE6_1"; };
+  Material { ID = "flats:TLITE6_4"; };
+  Material { ID = "flats:TLITE6_5"; };
+  Material { ID = "flats:TLITE6_6"; };
+  Material { ID = "flats:CEIL3_2"; };
+  Material { ID = "flats:CEIL3_5"; };
+  Material { ID = "flats:CEIL4_2"; };
+  Material { ID = "flats:CEIL4_3"; };
+  Material { ID = "flats:CEIL5_1"; };
+  Material { ID = "flats:CEIL5_2"; };
+  Material { ID = "flats:GATE1"; };
+  Material { ID = "flats:GATE2"; };
+  Material { ID = "flats:CEIL1_1"; };
+  Material { ID = "flats:CEIL1_2"; };
+  Material { ID = "flats:CEIL1_3"; };
+  Material { ID = "flats:CEIL3_3"; };
+  Material { ID = "flats:CEIL3_4"; };
+  Material { ID = "flats:CEIL3_6"; };
+  Material { ID = "flats:FLAT3"; };
+  Material { ID = "flats:FLAT4"; };
+  Material { ID = "flats:FLAT8"; };
+  Material { ID = "flats:FLAT9"; };
+  Material { ID = "flats:FLAT17"; };
 }
 
 Texture Environment {
@@ -215,6 +241,64 @@ Texture Environment {
   Material { ID = "textures:SW2COMM"; }; # Switch
   Material { ID = "textures:SW2PIPE"; }; # Switch
   Material { ID = "textures:SW2STRTN"; }; # Switch
+
+  Material { ID = "flats:FLOOR0_6"; };
+  Material { ID = "flats:FLOOR1_7"; };
+  Material { ID = "flats:FLOOR3_3"; };
+  Material { ID = "flats:FLOOR4_1"; };
+  Material { ID = "flats:FLOOR4_5"; };
+  Material { ID = "flats:FLOOR4_6"; };
+  Material { ID = "flats:FLOOR4_8"; };
+  Material { ID = "flats:FLOOR5_1"; };
+  Material { ID = "flats:FLOOR5_2"; };
+  Material { ID = "flats:FLOOR5_3"; };
+  Material { ID = "flats:FLOOR5_4"; };
+  Material { ID = "flats:STEP2"; };
+  Material { ID = "flats:FLOOR6_1"; };
+  Material { ID = "flats:FLOOR6_2"; };
+  Material { ID = "flats:FLOOR7_1"; };
+  Material { ID = "flats:FLOOR7_2"; };
+  Material { ID = "flats:MFLR8_1"; };
+  Material { ID = "flats:CEIL3_1"; };
+  Material { ID = "flats:FLAT1"; };
+  Material { ID = "flats:FLAT5"; };
+  Material { ID = "flats:FLAT10"; };
+  Material { ID = "flats:FLAT18"; };
+  Material { ID = "flats:FLAT20"; };
+  Material { ID = "flats:FLAT22"; };
+  Material { ID = "flats:FLAT23"; };
+  Material { ID = "flats:FLAT5_4"; };
+  Material { ID = "flats:FLAT5_5"; };
+  Material { ID = "flats:CONS1_1"; };
+  Material { ID = "flats:CONS1_5"; };
+  Material { ID = "flats:CONS1_7"; };
+  Material { ID = "flats:SFLR6_1"; };
+  Material { ID = "flats:SFLR6_4"; };
+  Material { ID = "flats:SFLR7_1"; };
+  Material { ID = "flats:SFLR7_4"; };
+  Material { ID = "flats:FLOOR0_5"; };
+  Material { ID = "flats:FLOOR0_7"; };
+  Material { ID = "flats:FLOOR1_6"; };
+  Material { ID = "flats:GATE3"; };
+  Material { ID = "flats:GATE4"; };
+  Material { ID = "flats:DEM1_5"; };
+  Material { ID = "flats:DEM1_6"; };
+  Material { ID = "flats:MFLR8_2"; };
+  Material { ID = "flats:MFLR8_3"; };
+  Material { ID = "flats:MFLR8_4"; };
+  Material { ID = "flats:FLAT1_1"; };
+  Material { ID = "flats:FLAT1_2"; };
+  Material { ID = "flats:FLAT1_3"; };
+  Material { ID = "flats:FLAT5_1"; };
+  Material { ID = "flats:FLAT5_2"; };
+  Material { ID = "flats:FLAT5_3"; };
+  Material { ID = "flats:FLAT5_6"; };
+  Material { ID = "flats:FLAT5_7"; };
+  Material { ID = "flats:FLAT5_8"; };
+  Material { ID = "flats:CRATOP1"; };
+  Material { ID = "flats:CRATOP2"; };
+  Material { ID = "flats:FLAT19"; };
+  Material { ID = "flats:COMP01"; };
 }
 
 Texture Environment {
@@ -227,6 +311,8 @@ Texture Environment {
   Material { ID = "textures:CRATTINY"; }; # Small red crates
   Material { ID = "textures:CRATWIDE"; }; # Wide brown and red crates
   Material { ID = "textures:MARBFAC2"; }; # Cupboard back
+
+  Material { ID = "flats:FLAT2"; };
 }
 
 Texture Environment {
@@ -287,4 +373,28 @@ Texture Environment {
   Material { ID = "textures:SW2METAL"; }; # Switch
   Material { ID = "textures:SW2SLAD"; }; # Switch
   Material { ID = "textures:SW2STARG"; }; # Switch
+
+  Material { ID = "flats:FLOOR0_1"; };
+  Material { ID = "flats:FLOOR1_1"; };
+  Material { ID = "flats:DEM1_1"; };
+  Material { ID = "flats:DEM1_2"; };
+  Material { ID = "flats:DEM1_3"; };
+  Material { ID = "flats:DEM1_4"; };
+  Material { ID = "flats:FLAT14"; };
+  Material { ID = "flats:NUKAGE1"; };
+  Material { ID = "flats:NUKAGE2"; };
+  Material { ID = "flats:NUKAGE3"; };
+  Material { ID = "flats:FLOOR0_2"; };
+  Material { ID = "flats:FWATER1"; };
+  Material { ID = "flats:FWATER2"; };
+  Material { ID = "flats:FWATER3"; };
+  Material { ID = "flats:FWATER4"; };
+  Material { ID = "flats:LAVA1"; };
+  Material { ID = "flats:LAVA2"; };
+  Material { ID = "flats:LAVA3"; };
+  Material { ID = "flats:LAVA4"; };
+  Material { ID = "flats:CEIL4_1"; };
+  Material { ID = "flats:BLOOD1"; };
+  Material { ID = "flats:BLOOD2"; };
+  Material { ID = "flats:BLOOD3"; };
 }
