@@ -23,6 +23,15 @@ Texture Environment {
   Material { ID = "textures:MOSAIC3"; };
   Material { ID = "textures:MOSAIC4"; };
   Material { ID = "textures:MOSAIC5"; };
+
+  Material { ID = "flats:FLOOR08"; };
+  Material { ID = "flats:FLTTELE1"; };
+  Material { ID = "flats:FLTTELE2"; };
+  Material { ID = "flats:FLTTELE3"; };
+  Material { ID = "flats:FLTTELE4"; };
+  Material { ID = "flats:FLOOR28"; };
+  Material { ID = "flats:FLOOR29"; };
+  Material { ID = "flats:FLOOR30"; };
 }
 
 Texture Environment {
@@ -73,6 +82,25 @@ Texture Environment {
   Material { ID = "textures:GRNBLOK4"; };
   Material { ID = "textures:LAVA1"; };
   Material { ID = "textures:LOOSERCK"; };
+
+  Material { ID = "flats:FLOOR00"; };
+  Material { ID = "flats:FLOOR01"; };
+  Material { ID = "flats:FLOOR03"; };
+  Material { ID = "flats:FLOOR04"; };
+  Material { ID = "flats:FLOOR05"; };
+  Material { ID = "flats:FLOOR06"; };
+  Material { ID = "flats:FLOOR11"; };
+  Material { ID = "flats:FLOOR12"; };
+  Material { ID = "flats:FLOOR17"; };
+  Material { ID = "flats:FLOOR18"; };
+  Material { ID = "flats:FLOOR19"; };
+  Material { ID = "flats:FLOOR21"; };
+  Material { ID = "flats:FLOOR22"; };
+  Material { ID = "flats:FLOOR23"; };
+  Material { ID = "flats:FLOOR24"; };
+  Material { ID = "flats:FLOOR25"; };
+  Material { ID = "flats:FLOOR26"; };
+  Material { ID = "flats:FLOOR27"; };
 }
 
 Texture Environment {
@@ -81,6 +109,9 @@ Texture Environment {
   Material { ID = "textures:DRIPWALL"; };
   Material { ID = "textures:WOODWL"; };
   Material { ID = "textures:ROOTWALL"; };
+
+  Material { ID = "flats:FLOOR10"; };
+  Material { ID = "flats:FLAT508"; };
 }
 
 Texture Environment {
@@ -110,4 +141,57 @@ Texture Environment {
   Material { ID = "textures:WATRWAL1"; };
   Material { ID = "textures:WATRWAL2"; };
   Material { ID = "textures:WATRWAL3"; };
+
+  Material { ID = "flats:FLOOR09"; };
+  Material { ID = "flats:FLOOR16"; };
+  Material { ID = "flats:FLTWAWA1"; };
+  Material { ID = "flats:FLTWAWA2"; };
+  Material { ID = "flats:FLTWAWA3"; };
+  Material { ID = "flats:FLTSLUD1"; };
+  Material { ID = "flats:FLTSLUD2"; };
+  Material { ID = "flats:FLTSLUD3"; };
+  Material { ID = "flats:FLTFLWW1"; };
+  Material { ID = "flats:FLTFLWW2"; };
+  Material { ID = "flats:FLTFLWW3"; };
+  Material { ID = "flats:FLTLAVA1"; };
+  Material { ID = "flats:FLTLAVA2"; };
+  Material { ID = "flats:FLTLAVA3"; };
+  Material { ID = "flats:FLTLAVA4"; };
+}
+
+# The rest of the file is skipped if Heretic Shareware.
+SkipIf heretic-share;
+
+Texture Environment {
+  ID = "Metal";
+  Material { ID = "flats:FLAT500"; };
+}
+
+Texture Environment {
+  ID = "Rock";
+  Material { ID = "flats:FLAT502"; };
+  Material { ID = "flats:FLAT503"; };
+  Material { ID = "flats:FLAT504"; };
+  Material { ID = "flats:FLAT506"; };
+  Material { ID = "flats:FLAT507"; };
+  Material { ID = "flats:FLAT509"; };
+  Material { ID = "flats:FLAT510"; };
+  Material { ID = "flats:FLAT513"; };
+  Material { ID = "flats:FLOOR07"; };
+  Material { ID = "flats:FLAT516"; };
+  Material { ID = "flats:FLOOR20"; };
+  Material { ID = "flats:FLAT520"; };
+  Material { ID = "flats:FLAT521"; };
+  Material { ID = "flats:FLAT522"; };
+  Material { ID = "flats:FLAT523"; };
+}
+
+Texture Environment {
+  ID = "Cloth";
+  Material { ID = "flats:FLATHUH1"; };
+  Material { ID = "flats:FLATHUH2"; };
+  Material { ID = "flats:FLATHUH3"; };
+  Material { ID = "flats:FLATHUH4"; };
+  Material { ID = "flats:FLAT512"; };
+  Material { ID = "flats:FLAT517"; };
 }
