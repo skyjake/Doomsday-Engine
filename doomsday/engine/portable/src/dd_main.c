@@ -1342,7 +1342,7 @@ static Game* findFirstPlayableGame(void)
 /**
  * Attempt to determine which game is to be played.
  *
- * \todo Logic here could be much more elaborate but is it necessary?
+ * @todo Logic here could be much more elaborate but is it necessary?
  */
 Game* DD_AutoselectGame(void)
 {
@@ -1560,8 +1560,8 @@ int DD_Main(void)
             directory_t* dir;
             Uri* searchPath;
 
-            /// \todo Do not add these as search paths, publish them directly
-            /// to the FileDirectory owned by the "packages" ResourceNamespace.
+            /// @todo Do not add these as search paths, publish them directly to
+            ///       the FileDirectory owned by the "packages" ResourceNamespace.
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
@@ -1619,8 +1619,8 @@ int DD_Main(void)
         }
     }
 
-    /// Re-initialize the resource locator as there are now new resources to be found
-    /// on existing search paths (probably that is).
+    // Re-initialize the resource locator as there are now new resources to be found
+    // on existing search paths (probably that is).
     F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
@@ -1733,7 +1733,7 @@ int DD_Main(void)
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!ArgExists("-noautoselect"))
-            Con_Printf("Automatic game selection failed.\n");
+            Con_Message("Automatic game selection failed.\n");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 

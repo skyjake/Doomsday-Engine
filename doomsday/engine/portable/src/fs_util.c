@@ -387,7 +387,7 @@ boolean F_IsAbsolute(const ddstring_t* str)
 {
     if(!str)
         return false;
-    /// \todo Should not handle both separators - refactor callers.
+    /// @todo Should not handle both separators - refactor callers.
     if(Str_At(str, 0) == DIR_SEP_CHAR || Str_At(str, 0) == DIR_WRONG_SEP_CHAR || Str_At(str, 1) == ':')
         return true;
 #ifdef UNIX
@@ -530,7 +530,7 @@ boolean F_ExpandBasePath(ddstring_t* dst, const ddstring_t* src)
     return false;
 }
 
-/// \note Part of the Doomsday public API
+/// @note Part of the Doomsday public API
 boolean F_TranslatePath(ddstring_t* dst, const ddstring_t* src)
 {
     F_ExpandBasePath(dst, src); // Will copy src to dst if not equal.

@@ -255,7 +255,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 #endif*/
 
     // (Re)populate the directory and insert found paths into the resource namespace.
-    // \todo It should not be necessary for a unique directory per namespace.
+    /// @todo It should not be necessary for a unique directory per namespace.
 
     ResourceNamespace_Clear(rnInfo->rnamespace);
     FileDirectory_Clear(rnInfo->directory);
