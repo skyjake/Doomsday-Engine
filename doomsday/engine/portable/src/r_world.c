@@ -1357,7 +1357,9 @@ void R_SetupMap(int mode, int flags)
     case DDSMM_INITIALIZE:
         // Switch to fast malloc mode in the zone. This is intended for large
         // numbers of mallocs with no frees in between.
-        Z_EnableFastMalloc(true);
+        /// @todo Fast mallocs are broken; they end up reserving more and more
+        /// new volumes as the old ones get "dirty".
+        Z_EnableFastMalloc(false /*true*/);
 
 #ifdef _DEBUG
         Con_Message("R_SetupMap: ddMapSetup begins (fast mallocs).\n");
@@ -1476,6 +1478,8 @@ void R_SetupMap(int mode, int flags)
         // Switch back to normal malloc mode in the zone. Z_Malloc will look
         // for free blocks in the entire zone and purge purgable blocks.
         Z_EnableFastMalloc(false);
+
+        Z_PrintStatus();
         return;
       }
     case DDSMM_AFTER_BUSY: {

@@ -823,6 +823,49 @@ void *Z_Recalloc(void *ptr, size_t n, int callocTag)
     return p;
 }
 
+uint Z_VolumeCount(void)
+{
+    memvolume_t    *volume;
+    size_t          count = 0;
+
+    lockZone();
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        count++;
+    }
+    unlockZone();
+
+    return count;
+}
+
+/**
+ * Calculate the size of allocated memory blocks in all volumes combined.
+ */
+size_t Z_AllocatedMemory(void)
+{
+    memvolume_t    *volume;
+    memblock_t     *block;
+    size_t          total = 0;
+
+    lockZone();
+
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        for(block = volume->zone->blockList.next;
+            block != &volume->zone->blockList;
+            block = block->next)
+        {
+            if(block->user)
+            {
+                total += block->size;
+            }
+        }
+    }
+
+    unlockZone();
+    return total;
+}
+
 /**
  * Calculate the amount of unused memory in all volumes combined.
  */
@@ -852,6 +895,17 @@ size_t Z_FreeMemory(void)
     return free;
 }
 
+void Z_PrintStatus(void)
+{
+#ifdef _DEBUG
+    size_t allocated = Z_AllocatedMemory();
+    size_t wasted = Z_FreeMemory();
+
+    Con_Message("Memory zone status: %u volumes, %u bytes allocated, %u bytes wasted (%f%%)\n",
+                Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)wasted/(float)allocated*100.f);
+#endif
+}
+
 /**
  * Allocate a new block of memory to be used for linear object allocations.
  * A "zblock" (its from the zone).
@@ -869,8 +923,9 @@ static void addBlockToSet(zblockset_t* set)
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
-    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u\n",
-                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock));
+    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
+                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
+                           (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock)));
 
     // Initialize the block's data.
     block = &set->_blocks[set->_blockCount - 1];
