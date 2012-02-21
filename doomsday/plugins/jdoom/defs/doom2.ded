@@ -15,6 +15,7 @@ Include "doom2/finales.ded";
 Include "doom1/fonts.ded";
 Include "doom1/materials.ded";
 Include "doom1/materialenvironments.ded";
+Include "doom2/materialenvironments.ded";
 Include "doom1/particles.ded";
 Include "doom2/particles.ded";
 Include "doom1/lights.ded";
