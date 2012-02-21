@@ -64,6 +64,9 @@
 
 #define ALIGNED(x) (((x) + sizeof(void*) - 1)&(~(sizeof(void*) - 1)))
 
+/// Special user pointer for blocks that are in use but have no single owner.
+#define MEMBLOCK_USER_ANONYMOUS    ((void*) 2)
+
 /**
  * The memory is composed of multiple volumes.  New volumes are
  * allocated when necessary.
@@ -532,7 +535,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                         Con_Error("Z_Malloc: an owner is required for "
                                   "purgable blocks.\n");
                     }
-                    base->user = (void *) 2;    // mark as in use, but unowned
+                    base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
                 }
                 base->tag = tag;
 
@@ -622,7 +625,8 @@ void Z_FreeTags(int lowTag, int highTag)
             block = next)
         {
             next = block->next;
-            if(block->user)
+
+            if(block->user) // An allocated block?
             {
                 if(block->tag >= lowTag && block->tag <= highTag)
 #ifdef FAKE_MEMORY_ZONE
@@ -864,6 +868,9 @@ static void addBlockToSet(zblockset_t* set)
     // seldom, since there is a large number of elements per each block.
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
+
+    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u\n",
+                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock));
 
     // Initialize the block's data.
     block = &set->_blocks[set->_blockCount - 1];
