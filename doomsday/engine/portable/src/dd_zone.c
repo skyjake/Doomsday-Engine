@@ -869,8 +869,9 @@ static void addBlockToSet(zblockset_t* set)
     set->_blockCount++;
     set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
-    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u\n",
-                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock));
+    DEBUG_VERBOSE_Message(("addBlockToSet: set=%p blockCount=%u elemSize=%u elemCount=%u (total=%u)\n",
+                           set, set->_blockCount, (uint)set->_elementSize, set->_elementsPerBlock,
+                           (uint)(set->_blockCount * set->_elementSize * set->_elementsPerBlock)));
 
     // Initialize the block's data.
     block = &set->_blocks[set->_blockCount - 1];
