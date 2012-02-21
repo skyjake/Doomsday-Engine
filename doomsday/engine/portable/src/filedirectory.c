@@ -445,7 +445,7 @@ static void printPathList(const ddstring_t* pathList, size_t numPaths, int inden
     for(n = 0; n < numPaths; ++n)
     {
         const ddstring_t* path = pathList + n;
-        Con_Printf("%*s\n", indent, F_PrettyPath(Str_Text(path)));
+        Con_Printf("%*s\n", indent, Str_Text(path));
     }
 }
 
@@ -468,7 +468,7 @@ void FileDirectory_Print(FileDirectory* fd)
     assert(fd);
 
     Con_Printf("FileDirectory [%p]:\n", (void*)fd);
-    pathList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, DIR_SEP_CHAR, &numFiles);
+    pathList = PathDirectory_CollectPaths(fd->_pathDirectory, PCF_NO_BRANCH, DIR_SEP_CHAR, &numFiles);
     if(pathList)
     {
         qsort(pathList, numFiles, sizeof *pathList, comparePaths);
