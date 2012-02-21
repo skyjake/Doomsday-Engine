@@ -317,9 +317,7 @@ void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* pat
     assert(fd);
     if(!paths || pathsCount == 0)
     {
-#if _DEBUG
-        Con_Message("Warning:FileDirectory::AddPaths: Attempt to add zero-sized path list, ignoring.\n");
-#endif
+        DEBUG_Message(("Warning: FileDirectory::AddPaths: Attempt to add zero-sized path list, ignoring.\n"));
         return;
     }
 

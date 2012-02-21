@@ -352,18 +352,16 @@ static PathDirectoryNode* buildDirecNodes(PathDirectory* pd, const char* path,
     while((p = Str_CopyDelim2(&part, p, delimiter, CDF_OMIT_DELIMITER))) // Get the next part.
     {
         node = direcNode(pd, parent, PT_BRANCH, &part, delimiter, NULL);
-        /// \todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
+        /// @todo Do not error here. If we're out of storage undo this action and return.
+        if(!node) Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
         parent = node;
     }
 
     if(Str_Length(&part) != 0)
     {
         node = direcNode(pd, parent, PT_LEAF, &part, delimiter, NULL);
-        /// \todo Do not error here. If we're out of storage undo this action and return.
-        if(!node)
-            Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
+        /// @todo Do not error here. If we're out of storage undo this action and return.
+        if(!node) Con_Error("PathDirectory::buildDirecNodes: Exhausted storage while attempting to insert nodes for path \"%s\".", path);
     }
 
     Str_Free(&part);
@@ -1291,8 +1289,8 @@ ushort PathDirectoryNode_Hash(const PathDirectoryNode* node)
     return hashForInternId(node->directory, node->pair.internId);
 }
 
-/// \note This routine is also used as an iteration callback, so only return
-/// a non-zero value when the node is a match for the search term.
+/// @note This routine is also used as an iteration callback, so only return
+///       a non-zero value when the node is a match for the search term.
 int PathDirectoryNode_MatchDirectory(PathDirectoryNode* node, int flags,
     PathMap* searchPattern, void* paramaters)
 {
