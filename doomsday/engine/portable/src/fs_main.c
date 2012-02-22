@@ -650,13 +650,13 @@ lumpnum_t F_CheckLumpNumForName2(const char* name, boolean silent)
         }
 
         if(!silent && lumpNum < 0)
-            Con_Message("Warning:F_CheckLumpNumForName: Lump \"%s\" not found.\n", name);
+            Con_Message("Warning: F_CheckLumpNumForName: Lump \"%s\" not found.\n", name);
 
         Str_Free(&searchPath);
     }
     else if(!silent)
     {
-        Con_Message("Warning:F_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n");
+        Con_Message("Warning: F_CheckLumpNumForName: Empty name, returning invalid lumpnum.\n");
     }
     return logicalLumpNum(lumpNum);
 }
@@ -1456,12 +1456,14 @@ abstractfile_t* F_FindLumpFile(const char* path, int* lumpIdx)
     return NULL;
 }
 
+static DFile* tryOpenFile3(DFile* file, const char* path, const LumpInfo* info);
+
 static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     const char* _absPath, boolean isDehackedPatch, boolean dontBuffer)
 {
+    DFile* file, *hndl;
     ddstring_t absPath;
     LumpInfo info;
-    DFile* file;
 
     Str_Init(&absPath);
     // Prepare the name of this single-lump file.
@@ -1480,17 +1482,30 @@ static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
         Str_Append(&absPath, _absPath);
     }
 
+    // Get a handle to the lump we intend to open.
+    /// @fixme The way this buffering works is nonsensical it should not be done here
+    ///        but should instead be deferred until the content of the lump is read.
+    hndl = DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, false/*dontBuffer*/);
+
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
     F_CopyLumpInfo(&info, F_LumpInfo(container, lumpIdx));
 
-    file = DFileBuilder_NewFromAbstractFile(
-        newLumpFile(DFileBuilder_NewFromAbstractFileLump(container, lumpIdx, dontBuffer),
-                    Str_Text(&absPath), &info));
+    // Try to open the referenced file as specialised file type.
+    file = tryOpenFile3(hndl, Str_Text(&absPath), &info);
 
-    Str_Free(&absPath);
+    // If not opened; assume its a generic LumpFile.
+    if(!file)
+    {
+        file = DFileBuilder_NewFromAbstractFile(newLumpFile(hndl, Str_Text(&absPath), &info));
+    }
+    assert(file);
+
     // We're done with the descriptor.
     F_DestroyLumpInfo(&info);
+
+    Str_Free(&absPath);
+
     return file;
 }
 
@@ -1539,7 +1554,7 @@ static DFile* tryOpenFile3(DFile* file, const char* path, const LumpInfo* info)
     }
 
     // If not yet loaded; try each recognisable format.
-    /// \todo Order here should be determined by the resource locator.
+    /// @todo Order here should be determined by the resource locator.
     while(!hndl && handlers[n].tryOpenFile)
     {
         if(hdlr != &handlers[n]) // We already know its not in this format.
@@ -1549,13 +1564,6 @@ static DFile* tryOpenFile3(DFile* file, const char* path, const LumpInfo* info)
         ++n;
     }
 
-    // If still not loaded; this an unknown format.
-    if(!hndl)
-    {
-        hndl = DFileBuilder_NewFromAbstractFile(newUnknownFile(file, path, info));
-    }
-
-    assert(hndl);
     return hndl;
 }
 
@@ -1569,8 +1577,8 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
 {
     ddstring_t searchPath, *foundPath = NULL;
     boolean dontBuffer, reqRealFile;
+    DFile* dfile, *hndl;
     LumpInfo info;
-    DFile* dfile;
     FILE* file;
 
     if(!path || !path[0])
@@ -1636,7 +1644,16 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
 
-    dfile = tryOpenFile3(DFileBuilder_NewFromFile(file, baseOffset), Str_Text(&searchPath), &info);
+    hndl = DFileBuilder_NewFromFile(file, baseOffset);
+
+    dfile = tryOpenFile3(hndl, Str_Text(&searchPath), &info);
+    // If still not loaded; this an unknown format.
+    if(!dfile)
+    {
+        dfile = DFileBuilder_NewFromAbstractFile(newUnknownFile(hndl, Str_Text(&searchPath), &info));
+    }
+
+    assert(hndl);
 
     Str_Delete(foundPath);
     Str_Free(&searchPath);
@@ -1731,11 +1748,9 @@ DFile* F_AddFile(const char* path, size_t baseOffset, boolean allowDuplicate)
     case FT_ZIPFILE:
         ZipFile_PublishLumpsToDirectory((ZipFile*)fsObject, zipLumpDirectory);
         break;
-    case FT_WADFILE: {
-        WadFile* wad = (WadFile*)fsObject;
-        WadFile_PublishLumpsToDirectory(  (WadFile*)fsObject, ActiveWadLumpDirectory);
+    case FT_WADFILE:
+        WadFile_PublishLumpsToDirectory((WadFile*)fsObject, ActiveWadLumpDirectory);
         break;
-      }
     /*case FT_LUMPFILE:
         LumpFile_PublishLumpsToDirectory((LumpFile*)fsObject, ActiveWadLumpDirectory);
         break;*/
