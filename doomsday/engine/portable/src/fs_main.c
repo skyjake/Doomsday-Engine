@@ -2179,7 +2179,7 @@ int printResourcePath(const ddstring_t* fileNameStr, pathdirectorynode_type_t ty
 {
     //assert(fileNameStr && VALID_PATHDIRECTORYNODE_TYPE(type));
     const char* fileName = Str_Text(fileNameStr);
-    boolean makePretty = F_IsRelativeToBasePath(fileName);
+    boolean makePretty = F_IsRelativeToBase(fileName, ddBasePath);
     Con_Printf("  %s\n", makePretty? F_PrettyPath(fileName) : fileName);
     return 0; // Continue the listing.
 }
