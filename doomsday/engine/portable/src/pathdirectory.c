@@ -682,7 +682,7 @@ const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirecto
     return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
 }
 
-/// Calculate the total length of the final composed path.
+// Calculate the total length of the final composed path.
 static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNode* node, char delimiter)
 {
     const int delimiterLen = delimiter? 1 : 0;
@@ -708,7 +708,9 @@ static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNo
     return requiredLen;
 }
 
-/// \assume @a foundPath already has sufficent characters reserved to hold the fully composed path.
+/**
+ * @assume @a foundPath already has sufficent characters reserved to hold the fully composed path.
+ */
 static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDirectoryNode* node,
     ddstring_t* foundPath, char delimiter)
 {
