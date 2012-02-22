@@ -654,7 +654,7 @@ win32 {
     target.path = $$DENG_LIB_DIR
 
     data.path = $$DENG_DATA_DIR
-    startupdata.path = $$DENG_DATA_DIR/data
+    startupdata.path = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
     startupgfx.path = $$DENG_DATA_DIR/graphics
 
