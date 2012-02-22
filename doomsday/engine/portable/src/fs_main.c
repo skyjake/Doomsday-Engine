@@ -1636,6 +1636,9 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
         return NULL;
     }
 
+    // Acquire a handle on the file we intend to open.
+    hndl = DFileBuilder_NewFromFile(file, baseOffset);
+
     // Prepare the temporary info descriptor.
     F_InitLumpInfo(&info);
     info.lastModified = F_LastModified(Str_Text(foundPath));
@@ -1644,21 +1647,20 @@ static DFile* tryOpenFile2(const char* path, const char* mode, size_t baseOffset
     // been mapped to another location. We want the file to be attributed with
     // the path it is to be known by throughout the virtual file system.
 
-    hndl = DFileBuilder_NewFromFile(file, baseOffset);
-
     dfile = tryOpenFile3(hndl, Str_Text(&searchPath), &info);
     // If still not loaded; this an unknown format.
     if(!dfile)
     {
         dfile = DFileBuilder_NewFromAbstractFile(newUnknownFile(hndl, Str_Text(&searchPath), &info));
     }
+    assert(dfile);
 
-    assert(hndl);
+    // We're done with the descriptor.
+    F_DestroyLumpInfo(&info);
 
     Str_Delete(foundPath);
     Str_Free(&searchPath);
-    // We're done with the descriptor.
-    F_DestroyLumpInfo(&info);
+
     return dfile;
 }
 
