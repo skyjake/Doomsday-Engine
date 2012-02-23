@@ -158,7 +158,11 @@ jQuery(document).ready(function()
 
         $FrontController->beginPage($this->title());
 
-?><div id="screenshots"><?php
+?><div id="screenshots">
+<script type="text/javascript">
+tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
+</script>
+<?php
 
         $this->generateHTML('Doom', 'doomCarousel');
         $this->generateHTML('Heretic', 'hereticCarousel');
