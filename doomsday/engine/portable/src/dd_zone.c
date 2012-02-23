@@ -1179,9 +1179,9 @@ void Z_DebugDrawer(void)
     for(volume = volumeRoot; volume; volume = volume->next, ++i)
     {
         RectRaw rect;
-        rect.size.width = theWindow->geometry.size.width;
-        rect.size.height = 250;
-        rect.origin.x = 0;
+        rect.size.width = MIN_OF(400, theWindow->geometry.size.width);
+        rect.size.height = 200;
+        rect.origin.x = theWindow->geometry.size.width - rect.size.width - 1;
         rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
         Z_DebugDrawVolume(volume, &rect);
     }
