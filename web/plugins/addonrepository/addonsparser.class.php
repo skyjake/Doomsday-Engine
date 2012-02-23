@@ -156,15 +156,23 @@ class AddonsParser
         if(!($list_addon instanceof SimpleXMLElement))
             throw new Exception('Received invalid list_addon');
 
-        $downloadUri = safe_url($list_addon->downloadUri);
-        $title       = clean_text($list_addon->title);
-        $description = clean_text($list_addon->description);
-        $notes       = clean_text($list_addon->notes);
+        $addon = array('title'=>clean_text($list_addon->title));
 
-        $addon = array('downloadUri'=>$downloadUri,
-                       'title'=>$title,
-                       'description'=>$description,
-                       'notes'=>$notes);
+        if(!empty($list_addon->homepageUri))
+            $addon['homepageUri'] = safe_url($list_addon->homepageUri);
+
+        if(!empty($list_addon->downloadUri))
+            $addon['downloadUri'] = safe_url($list_addon->downloadUri);
+
+        if(!empty($list_addon->version))
+            $addon['version'] = clean_text($list_addon->version);
+
+        if(!empty($list_addon->description))
+            $addon['description'] = clean_text($list_addon->description);
+
+        if(!empty($list_addon->notes))
+            $addon['notes'] = clean_text($list_addon->notes);
+
         return $addon;
     }
 }
