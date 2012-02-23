@@ -12,12 +12,6 @@
  * It is of no value to free a cachable block, because it will get
  * overwritten automatically if needed.
  *
- * When fast malloc mode is enabled, memory volumes aren't checked for purgable
- * blocks. If the rover block isn't suitable, a new empty volume is created
- * without further checking. This is suitable for cases where lots of blocks
- * are being allocated in a rapid sequence, with no frees in between (e.g.,
- * map setup).
- *
  * @par Block Sequences
  * The PU_MAPSTATIC purge tag has a special purpose.
  * It works like PU_MAP so that it is purged on a per map basis, but
@@ -101,16 +95,6 @@ typedef struct zblockset_block_s {
 static memvolume_t *volumeRoot;
 static memvolume_t *volumeLast;
 
-/**
- * If false, Z_Malloc will free purgable blocks and aggressively look for
- * free memory blocks inside each memory volume before creating new volumes.
- * This leads to slower mallocing performance, but reduces memory fragmentation
- * as free and purgable blocks are utilized within the volumes. Fast mode is
- * enabled during map setup because a large number of mallocs will occur
- * during setup.
- */
-static boolean fastMalloc = false;
-
 static mutex_t zoneMutex = 0;
 
 static __inline void lockZone(void)
@@ -137,22 +121,6 @@ long superatol(char *s)
     else if(*endptr == 'm' || *endptr == 'M')
         val *= 1048576;
     return val;
-}
-
-/**
- * Enables or disables fast malloc mode. Enable for added performance during
- * map setup. Disable fast mode during other times to save memory and reduce
- * fragmentation.
- *
- * @param isEnabled  true or false.
- */
-void Z_EnableFastMalloc(boolean isEnabled)
-{
-    lockZone();
-
-    fastMalloc = isEnabled;
-
-    unlockZone();
 }
 
 /**
@@ -412,6 +380,11 @@ static __inline boolean isVolumeTooFull(memvolume_t* vol)
     return vol->allocatedBytes > vol->size * .95f;
 }
 
+/**
+ * The static rovers should be rewound back near the beginning of the volume
+ * periodically. Currently this is done whenever tag ranges are purged (e.g.,
+ * before map changes).
+ */
 static void rewindStaticRovers(void)
 {
     memvolume_t* volume;
@@ -512,18 +485,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
         base = rewindRover(volume, base, 3, size);
 
         gotoNextVolume = false;
-
-        /*
-        if(fastMalloc)
-        {
-            // In fast malloc mode, if the rover block isn't large enough,
-            // just give up and move to the next volume right away.
-            if(base->user || base->size < size)
-            {
-                gotoNextVolume = true;
-            }
-        }
-        */
 
         numChecked = 0;
 

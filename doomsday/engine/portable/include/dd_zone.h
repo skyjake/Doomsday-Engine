@@ -49,8 +49,6 @@ boolean Z_IsInited(void);
 int Z_Init(void);
 
 void            Z_Shutdown(void);
-void            Z_EnableFastMalloc(boolean isEnabled);
-//void            Z_PrintStatus(void);
 void*           Z_Malloc(size_t size, int tag, void* ptr);
 void            Z_Free(void* ptr);
 void            Z_FreeTags(int lowTag, int highTag);
