@@ -553,8 +553,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
         extra = base->size - size;
         if(extra > MINFRAGMENT)
         {
-            // There will be a free fragment after the allocated
-            // block.
+            // There will be a free fragment after the allocated block.
             new = (memblock_t *) ((byte *) base + size);
             new->size = extra;
             new->user = NULL;       // free block
@@ -728,7 +727,7 @@ void Z_CheckHeap(void)
     {
         size_t total = 0;
 
-        // Does the memory in the blocks sum up the total volume size?
+        // Does the memory in the blocks sum up to the total volume size?
         for(block = volume->zone->blockList.next;
             block != &volume->zone->blockList; block = block->next)
         {
