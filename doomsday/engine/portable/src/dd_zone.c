@@ -442,7 +442,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
-        size_t bytesChecked = 0;
 
         if(volume == NULL)
         {
@@ -509,14 +508,12 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // We will scan ahead starting until we find something big enough.
         for(;; numChecked++)
         {
-            bytesChecked += base->size;
-
             // Is this a suitable block?
-            if(!base->user && base->size >= size)
+            if(isFreeBlock(base) && base->size >= size)
                 break; // We'll take it!
 
             // Check for purgable blocks we can dispose of.
-            if(base->user)
+            if(!isFreeBlock(base))
             {
                 if(base->tag >= PU_PURGELEVEL)
                 {
@@ -607,7 +604,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
         }
         base->tag = tag;
 
-        /*
         if(tag == PU_MAPSTATIC)
         {
             // Level-statics are linked into unpurgable sequences so they can
@@ -620,7 +616,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 base->seqFirst->seqLast = base;
             }
         }
-        else*/
+        else
         {
             // Not part of a sequence.
             base->seqLast = base->seqFirst = NULL;
