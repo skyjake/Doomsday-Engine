@@ -99,27 +99,31 @@ boolean F_IsAbsolute(const ddstring_t* path);
 /**
  * @return  @c true iff the path can be made into a relative path.
  */
-boolean F_IsRelativeToBasePath(const char* path);
+boolean F_IsRelativeToBase(const char* path, const char* base);
 
 /**
  * Attempt to remove the base path if found at the beginning of the path.
  *
  * @param dst  Potential base-relative path written here.
  * @param src  Possibly absolute path.
+ * @param base  Base to attempt to remove from @a src.
  *
  * @return  @c true iff the base path was found and removed.
  */
-boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src);
+boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the base path. If @a src is already absolute do nothing.
  *
  * @param dst  Absolute path written here.
  * @param src  Original path.
+ * @param base  Base to attempt to prepend to @a src.
  *
  * @return  @c true iff the path was prepended.
  */
-boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src);
+boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base);
+boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src /*, const ddstring_t* base=ddBasePath*/);
 
 /**
  * Attempt to prepend the current work path. If @a src is already absolute do nothing.

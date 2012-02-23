@@ -35,6 +35,12 @@ typedef struct filedirectory_nodeinfo_s {
 struct filedirectory_s {
     /// Path hash table.
     PathDirectory* _pathDirectory;
+
+    /// Used with relative path directories.
+    ddstring_t* _basePath;
+
+    /// Used with relative path directories.
+    PathDirectoryNode* _baseNode;
 };
 
 typedef struct {
@@ -73,32 +79,57 @@ static PathDirectoryNode* attachMissingNodeInfo(PathDirectoryNode* node)
     return node;
 }
 
-static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* _path)
+static PathDirectoryNode* addPathNodes(FileDirectory* fd, const ddstring_t* rawPath)
 {
-    const ddstring_t* relPath;
+    const ddstring_t* path;
     PathDirectoryNode* node;
-    ddstring_t path;
+    ddstring_t buf;
 
     assert(fd);
 
-    if(!_path || Str_IsEmpty(_path)) return NULL;
+    if(!rawPath || Str_IsEmpty(rawPath)) return NULL;
 
-    // Let's try to make it a relative path.
-    if(F_IsAbsolute(_path))
+    if(fd->_basePath)
     {
-        Str_Init(&path);
-        F_RemoveBasePath(&path, _path);
-        relPath = &path;
+        // Try to make it a relative path?
+        if(F_IsAbsolute(rawPath))
+        {
+            F_RemoveBasePath2(Str_InitStd(&buf), rawPath, fd->_basePath);
+            path = &buf;
+        }
+        else
+        {
+            path = rawPath;
+        }
+
+        // If this is equal to the base path, return that node.
+        if(Str_IsEmpty(path))
+        {
+            // Time to construct the relative base node?
+            // This node is purely symbolic, its only necessary for our internal use.
+            if(!fd->_baseNode)
+            {
+                fd->_baseNode = PathDirectory_Insert(fd->_pathDirectory, "./", '/');
+                attachMissingNodeInfo(fd->_baseNode);
+            }
+
+            if(path == &buf) Str_Free(&buf);
+            return fd->_baseNode;
+        }
     }
     else
     {
-        relPath = _path;
+        // Do not add relative paths.
+        if(!F_IsAbsolute(rawPath))
+        {
+            return NULL;
+        }
     }
 
-    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(relPath), '/');
+    node = PathDirectory_Insert(fd->_pathDirectory, Str_Text(path), '/');
     attachMissingNodeInfo(node);
 
-    if(relPath == &path) Str_Free(&path);
+    if(path == &buf) Str_Free(&buf);
 
     return node;
 }
@@ -243,13 +274,27 @@ static void printUriList(const Uri* const* pathList, size_t pathCount, int inden
     }
 }
 
-FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList, int flags)
+FileDirectory* FileDirectory_NewWithPathListStr(const char* basePath,
+    const ddstring_t* pathList, int flags)
 {
     FileDirectory* fd = (FileDirectory*) malloc(sizeof *fd);
     if(!fd)
         Con_Error("FileDirectory::Construct: Failed on allocation of %lu bytes for new FileDirectory.", (unsigned long) sizeof *fd);
 
     fd->_pathDirectory = PathDirectory_New();
+    fd->_baseNode = NULL;
+
+    if(basePath && basePath[0])
+    {
+        fd->_basePath = Str_Set(Str_NewStd(), basePath);
+        // Ensure path is correctly formed.
+        F_AppendMissingSlash(fd->_basePath);
+    }
+    else
+    {
+        fd->_basePath = NULL;
+    }
+
     if(pathList)
     {
         size_t count;
@@ -260,7 +305,8 @@ FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* pathList, int 
     return fd;
 }
 
-FileDirectory* FileDirectory_NewWithPathList(const char* pathList, int flags)
+FileDirectory* FileDirectory_NewWithPathList(const char* basePath,
+    const char* pathList, int flags)
 {
     FileDirectory* fd;
     ddstring_t _pathList, *paths = NULL;
@@ -271,14 +317,14 @@ FileDirectory* FileDirectory_NewWithPathList(const char* pathList, int flags)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_NewWithPathListStr(paths, flags);
+    fd = FileDirectory_NewWithPathListStr(basePath, paths, flags);
     if(len != 0) Str_Free(paths);
     return fd;
 }
 
-FileDirectory* FileDirectory_New(void)
+FileDirectory* FileDirectory_New(const char* basePath)
 {
-    return FileDirectory_NewWithPathListStr(NULL, 0);
+    return FileDirectory_NewWithPathListStr(basePath, NULL, 0);
 }
 
 static int deleteNodeInfo(PathDirectoryNode* node, void* paramaters)
@@ -300,6 +346,7 @@ void FileDirectory_Delete(FileDirectory* fd)
     assert(fd);
     clearNodeInfo(fd);
     if(fd->_pathDirectory) PathDirectory_Delete(fd->_pathDirectory);
+    if(fd->_basePath) Str_Delete(fd->_basePath);
     free(fd);
 }
 
@@ -308,6 +355,7 @@ void FileDirectory_Clear(FileDirectory* fd)
     assert(fd);
     clearNodeInfo(fd);
     PathDirectory_Clear(fd->_pathDirectory);
+    fd->_baseNode = NULL;
 }
 
 void FileDirectory_AddPaths3(FileDirectory* fd, int flags, const Uri* const* paths,
@@ -416,6 +464,12 @@ boolean FileDirectory_Find(FileDirectory* fd, pathdirectorynode_type_t nodeType,
     Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
     F_FixSlashes(&searchPath, &searchPath);
 
+    // Try to make it a relative path?
+    if(fd->_basePath && !F_IsAbsolute(&searchPath))
+    {
+        F_RemoveBasePath2(&searchPath, &searchPath, fd->_basePath);
+    }
+
     // Perform the search.
     flags = (nodeType == PT_LEAF? PCF_NO_BRANCH : PCF_NO_LEAF) | PCF_MATCH_FULL;
     foundNode = PathDirectory_Find(fd->_pathDirectory, flags, Str_Text(&searchPath), searchDelimiter);
@@ -445,7 +499,7 @@ static void printPathList(const ddstring_t* pathList, size_t numPaths, int inden
     for(n = 0; n < numPaths; ++n)
     {
         const ddstring_t* path = pathList + n;
-        Con_Printf("%*s\n", indent, F_PrettyPath(Str_Text(path)));
+        Con_Printf("%*s\n", indent, Str_Text(path));
     }
 }
 
@@ -468,7 +522,7 @@ void FileDirectory_Print(FileDirectory* fd)
     assert(fd);
 
     Con_Printf("FileDirectory [%p]:\n", (void*)fd);
-    pathList = PathDirectory_CollectPaths(fd->_pathDirectory, PT_LEAF, DIR_SEP_CHAR, &numFiles);
+    pathList = PathDirectory_CollectPaths(fd->_pathDirectory, 0, DIR_SEP_CHAR, &numFiles);
     if(pathList)
     {
         qsort(pathList, numFiles, sizeof *pathList, comparePaths);
@@ -477,7 +531,7 @@ void FileDirectory_Print(FileDirectory* fd)
 
         deletePathList(pathList, numFiles);
     }
-    Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "file":"files"));
+    Con_Printf("  %lu %s in directory.\n", (unsigned long)numFiles, (numFiles==1? "path":"paths"));
 }
 
 void FileDirectory_PrintHashDistribution(FileDirectory* fd)

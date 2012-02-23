@@ -347,31 +347,31 @@ void F_ResolveSymbolicPath(ddstring_t* dst, const ddstring_t* src)
     Str_Appendf(dst, "%s%s", ddRuntimePath, Str_Text(src));
 }
 
-boolean F_IsRelativeToBasePath(const char* path)
+boolean F_IsRelativeToBase(const char* path, const char* base)
 {
-    assert(path);
-    return !strnicmp(path, ddBasePath, strlen(ddBasePath));
+    assert(path && base);
+    return !strnicmp(path, base, strlen(base));
 }
 
-boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
+boolean F_RemoveBasePath2(ddstring_t* dst, const ddstring_t* absPath, const ddstring_t* basePath)
 {
-    assert(dst && absPath);
+    assert(dst && absPath && basePath);
 
-    if(F_IsRelativeToBasePath(Str_Text(absPath)))
+    if(F_IsRelativeToBase(Str_Text(absPath), Str_Text(basePath)))
     {
         boolean mustCopy = (dst == absPath);
         if(mustCopy)
         {
             ddstring_t buf;
             Str_Init(&buf);
-            Str_PartAppend(&buf, Str_Text(absPath), (int)strlen(ddBasePath), Str_Length(absPath) - (int)strlen(ddBasePath));
+            Str_PartAppend(&buf, Str_Text(absPath), Str_Length(basePath), Str_Length(absPath) - Str_Length(basePath));
             Str_Set(dst, Str_Text(&buf));
             Str_Free(&buf);
             return true;
         }
 
         Str_Clear(dst);
-        Str_PartAppend(dst, Str_Text(absPath), (int)strlen(ddBasePath), Str_Length(absPath) - (int)strlen(ddBasePath));
+        Str_PartAppend(dst, Str_Text(absPath), Str_Length(basePath), Str_Length(absPath) - Str_Length(basePath));
         return true;
     }
 
@@ -381,6 +381,13 @@ boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
 
     // This doesn't appear to be the base path.
     return false;
+}
+
+boolean F_RemoveBasePath(ddstring_t* dst, const ddstring_t* absPath)
+{
+    ddstring_t base;
+    Str_InitStatic(&base, ddBasePath);
+    return F_RemoveBasePath2(dst, absPath, &base);
 }
 
 boolean F_IsAbsolute(const ddstring_t* str)
@@ -397,15 +404,15 @@ boolean F_IsAbsolute(const ddstring_t* str)
     return false;
 }
 
-boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
+boolean F_PrependBasePath2(ddstring_t* dst, const ddstring_t* src, const ddstring_t* base)
 {
-    assert(dst && src);
+    assert(dst && src && base);
 
     if(!F_IsAbsolute(src))
     {
         if(dst != src)
             Str_Set(dst, Str_Text(src));
-        Str_Prepend(dst, ddBasePath);
+        Str_Prepend(dst, Str_Text(base));
         return true;
     }
 
@@ -414,6 +421,13 @@ boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
         Str_Set(dst, Str_Text(src));
 
     return false; // Not done.
+}
+
+boolean F_PrependBasePath(ddstring_t* dst, const ddstring_t* src)
+{
+    ddstring_t base;
+    Str_InitStatic(&base, ddBasePath);
+    return F_PrependBasePath2(dst, src, &base);
 }
 
 boolean F_PrependWorkPath(ddstring_t* dst, const ddstring_t* src)
@@ -572,7 +586,7 @@ const char* F_PrettyPath(const char* path)
     }
 
     // If within our the base directory cut out the base path.
-    if(F_IsRelativeToBasePath(path))
+    if(F_IsRelativeToBase(path, ddBasePath))
     {
         if(!buf)
         {
