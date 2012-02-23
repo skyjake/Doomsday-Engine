@@ -387,7 +387,7 @@ class FrontController
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <link rel="icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
     <link rel="shortcut icon" href="http://code.iki.fi/dengine.net/images/favicon.png" type="image/png" />
-    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news">
+    <link rel="alternate" type="application/rss+xml" title="Doomsday Engine RSS News Feed" href="http://dengine.net/forums/rss.php?mode=news" />
     <meta http-equiv="expires" content="0" />
     <meta name="resource-type" content="DOCUMENT" />
     <meta name="distribution" content="GLOBAL" />

@@ -69,7 +69,7 @@ class Feed implements Visual, Iterator, Countable
             foreach($this as $item)
             {
 ?>
-<li><a href="<?php echo preg_replace('/(&)/', '&amp;', $item['link']); ?>" title="<?php echo date("m/d/y", $item['date_timestamp']); ?> - <?php echo $item['title']; ?>"><?php echo $item['title']; ?></a></li>
+<li><a href="<?php echo preg_replace('/(&)/', '&amp;', $item['link']); ?>" title="<?php echo date("m/d/y", $item['date_timestamp']); ?> - <?php echo htmlspecialchars($item['title']); ?>"><?php echo htmlspecialchars($item['title']); ?></a></li>
 <?php
                 if(++$n >= $this->_maxItems)
                     break;

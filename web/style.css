@@ -655,6 +655,13 @@ p.legal a {
     padding-left: 1.4em;
 }
 
+/*-------------------- Addons ---------------------*/
+
+#addons {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
 /*-------------------- Builds ---------------------*/
 
 /* Panel */
@@ -843,11 +850,11 @@ ul.games_list li a.game_badge span {
 }
 
 .game_badge_hacx {
-    background: url(http://dengine.net/images/hacx_badge.png) no-repeat;
+    background: url(http://code.iki.fi/dengine.net/images/hacx_badge.png) no-repeat;
 }
 
 .game_badge_chex {
-    background: url(http://dengine.net/images/chex_badge.png) no-repeat;
+    background: url(http://code.iki.fi/dengine.net/images/chex_badge.png) no-repeat;
 }
 
 /*---------------- Platform Pages -----------------*/
