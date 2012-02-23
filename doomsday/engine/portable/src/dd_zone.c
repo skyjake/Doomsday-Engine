@@ -192,7 +192,7 @@ memvolume_t *Z_Create(size_t volumeSize)
     vol->zone->blockList.user = (void *) vol->zone;
     vol->zone->blockList.volume = vol;
     vol->zone->blockList.tag = PU_APPSTATIC;
-    vol->zone->rover = block;
+    vol->zone->rover = vol->zone->staticRover = block;
 
     block->prev = block->next = &vol->zone->blockList;
     block->user = NULL;         // free block
@@ -345,6 +345,8 @@ void Z_Free(void *ptr)
         other->next->prev = other;
         if(block == volume->zone->rover)
             volume->zone->rover = other;
+        if(block == volume->zone->staticRover)
+            volume->zone->staticRover = other;
         block = other;
     }
 
@@ -356,6 +358,8 @@ void Z_Free(void *ptr)
         block->next->prev = block;
         if(other == volume->zone->rover)
             volume->zone->rover = block;
+        if(other == volume->zone->staticRover)
+            volume->zone->staticRover = block;
     }
 
     unlockZone();
@@ -406,6 +410,25 @@ static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int
 static __inline boolean isVolumeTooFull(memvolume_t* vol)
 {
     return vol->allocatedBytes > vol->size * .95f;
+}
+
+static void rewindStaticRovers(void)
+{
+    memvolume_t* volume;
+    for(volume = volumeRoot; volume; volume = volume->next)
+    {
+        memblock_t* block;
+        for(block = volume->zone->blockList.next;
+            !isRootBlock(volume, block); block = block->next)
+        {
+            // Let's find the first free block at the beginning of the volume.
+            if(isFreeBlock(block))
+            {
+                volume->zone->staticRover = block;
+                break;
+            }
+        }
+    }
 }
 
 /**
@@ -471,8 +494,18 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // sufficient size, throwing out any purgable blocks along the
         // way.
 
-        // If there is a free block behind the rover, back up over it.
-        base = volume->zone->rover;
+        if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
+        {
+            // Appstatic allocations may be around for a long time so make sure
+            // they don't litter the volume. Their own rover will keep them as
+            // tightly bound as possible.
+            base = volume->zone->staticRover;
+        }
+        else
+        {
+            // Everything else is allocated using the rover.
+            base = volume->zone->rover;
+        }
         assert(base->prev);
 
         // Look back up a little to see if we have some space available nearby.
@@ -622,8 +655,15 @@ void *Z_Malloc(size_t size, int tag, void *user)
             base->seqLast = base->seqFirst = NULL;
         }
 
-        // next allocation will start looking here
-        volume->zone->rover = advanceBlock(volume, base);
+        // Next allocation will start looking here.
+        if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
+        {
+            volume->zone->staticRover = advanceBlock(volume, base);
+        }
+        else
+        {
+            volume->zone->rover = advanceBlock(volume, base);
+        }
 
         // Keep tabs on how much memory is used.
         volume->allocatedBytes += base->size;
@@ -702,6 +742,10 @@ void Z_FreeTags(int lowTag, int highTag)
             }
         }
     }
+
+    // Now that there's plenty of new free space, let's keep the static
+    // rover near the beginning of the volume.
+    rewindStaticRovers();
 }
 
 /**

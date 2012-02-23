@@ -84,6 +84,7 @@ typedef struct {
     size_t          size; // Total bytes malloced, including header.
     memblock_t      blockList; // Start / end cap for linked list.
     memblock_t*     rover;
+    memblock_t*     staticRover;
 } memzone_t;
 
 struct zblockset_block_s;
