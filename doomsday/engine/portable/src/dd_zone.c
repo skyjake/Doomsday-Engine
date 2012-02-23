@@ -356,16 +356,57 @@ void Z_Free(void *ptr)
     unlockZone();
 }
 
+static __inline boolean isFreeBlock(memblock_t* block)
+{
+    return !block->user;
+}
+
+static __inline boolean isRootBlock(memvolume_t* vol, memblock_t* block)
+{
+    return block == &vol->zone->blockList;
+}
+
+static __inline memblock_t* advanceBlock(memvolume_t* vol, memblock_t* block)
+{
+    block = block->next;
+    if(isRootBlock(vol, block))
+    {
+        // Continue from the beginning.
+        block = vol->zone->blockList.next;
+    }
+    return block;
+}
+
+static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int maxSteps, size_t optimal)
+{
+    memblock_t* base = rover;
+    size_t prevBest = 0;
+    int i;
+
+    rover = rover->prev;
+    for(i = 0; i < maxSteps && !isRootBlock(vol, rover); ++i)
+    {
+        // Looking for the smallest suitable free block.
+        if(isFreeBlock(rover) && rover->size >= optimal && (!prevBest || rover->size < prevBest))
+        {
+            // Let's use this one.
+            prevBest = rover->size;
+            base = rover;
+        }
+        rover = rover->prev;
+    }
+    return base;
+}
+
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
  */
 void *Z_Malloc(size_t size, int tag, void *user)
 {
     size_t          extra;
-    memblock_t     *start, /* *rover, */ *new, *base;
+    memblock_t     *start, *new, *base;
     memvolume_t    *volume;
     boolean         gotoNextVolume;
-    int             i;
 
     if(tag < PU_APPSTATIC || tag > PU_CACHE)
     {
@@ -386,13 +427,11 @@ void *Z_Malloc(size_t size, int tag, void *user)
     // Account for size of block header.
     size += sizeof(memblock_t);
 
-    // Iterate through memory volumes until we can find one with
-    // enough free memory.  (Note: we *will* find one that's large
-    // enough.)
+    // Iterate through memory volumes until we can find one with enough free
+    // memory. (Note: we *will* find one that's large enough.)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
-        size_t prevBest = 0;
 
         if(volume == NULL)
         {
@@ -412,8 +451,6 @@ void *Z_Malloc(size_t size, int tag, void *user)
             Con_Error("Z_Malloc: Volume without zone.");
         }
 
-        /// @todo Refactor with static helper funcs, e.g., isRoot(), cycleNext()
-
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
         // way.
@@ -421,32 +458,13 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // If there is a free block behind the rover, back up over it.
         base = volume->zone->rover;
         assert(base->prev);
-        /*if(!base->prev->user)
-        {
-            base = base->prev;
-            prevBest = base->size;
-        }
-        else
-        {
-            prevBest = 0;
-        }*/
-        //assert(base != &volume->zone->blockList);
 
-        // Look back a little to see if we have some space available nearby.
-        prevBest = 0;
-        start = base->prev;
-        for(i = 0; i < 4 && start != &volume->zone->blockList; ++i)
-        {
-            if(!start->user && start->size > prevBest)
-            {
-                // Let's use this one.
-                prevBest = start->size;
-                base = start;
-            }
-            start = start->prev;
-        }
+        // Look back up a little to see if we have some space available nearby.
+        base = rewindRover(volume, base, 3, size);
 
         gotoNextVolume = false;
+
+        /*
         if(fastMalloc)
         {
             // In fast malloc mode, if the rover block isn't large enough,
@@ -456,223 +474,152 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 gotoNextVolume = true;
             }
         }
+        */
 
-        if(!gotoNextVolume)
+        numChecked = 0;
+
+        // 'base' is the block that we'll end up using.
+        start = base;
+
+        // If the start is in a sequence, move it to the beginning of the
+        // entire sequence. Sequences are handled as a single unpurgable entity,
+        // so we can stop checking at its start.
+        if(start->seqFirst)
         {
-#if 0
-            boolean     isDone;
-#endif
+            start = start->seqFirst;
+        }
 
-            // 'base' is the block that we'll end up using.
+        // We will scan ahead starting until we find something big enough.
+        for(;; numChecked++)
+        {
+            // Is this a suitable block?
+            if(!base->user && base->size >= size)
+                break; // We'll take it!
 
-            //rover = base;
-            numChecked = 0;
-            start = base;
-
-            // If the start is in a sequence, move it to the beginning of the
-            // entire sequence. Sequences are handled as a single unpurgable entity,
-            // so we can stop checking at its start.
-            if(start->seqFirst)
+            // Check for purgable blocks we can dispose of.
+            if(base->user)
             {
-                start = start->seqFirst;
+                if(base->tag >= PU_PURGELEVEL)
+                {
+                    memblock_t* old = base;
+                    base = base->prev; // Step back.
+#ifdef FAKE_MEMORY_ZONE
+                    Z_Free(old->area);
+#else
+                    Z_Free((byte *) old + sizeof(memblock_t));
+#endif
+                }
+                else
+                {
+                    if(base->seqFirst)
+                    {
+                        // This block is part of a sequence of blocks, none of
+                        // which can be purged. Skip the entire sequence.
+                        base = base->seqFirst->seqLast;
+                    }
+                }
             }
 
-            // We will scan ahead starting until we find something big enough.
-            for(;; numChecked++)
+            // Move to the next block.
+            base = advanceBlock(volume, base);
+
+            if(base == start && numChecked > 0)
             {
-                // Is this a suitable block?
-                if(!base->user && base->size > size)
-                    break; // We'll take it!
-
-                // Check for purgable blocks we can dispose of.
-                if(base->user)
-                {
-                    if(base->tag >= PU_PURGELEVEL)
-                    {
-                        memblock_t* old = base;
-                        base = base->prev; // Step back.
-#ifdef FAKE_MEMORY_ZONE
-                        Z_Free(old->area);
-#else
-                        Z_Free((byte *) old + sizeof(memblock_t));
-#endif
-                    }
-                    else
-                    {
-                        if(base->seqFirst)
-                        {
-                            // This block is part of a sequence of blocks, none of
-                            // which can be purged. Skip the entire sequence.
-                            base = base->seqFirst->seqLast;
-                        }
-                    }
-                }
-
-                // Move to the next block.
-                base = base->next;
-                if(base == &volume->zone->blockList)
-                {
-                    // Continue from the beginning.
-                    base = volume->zone->blockList.next;
-                }
-
-                if(base == start && numChecked > 0)
-                {
-                    // Scanned all the way through, no suitable space found.
-                    gotoNextVolume = true;
+                // Scanned all the way through, no suitable space found.
+                gotoNextVolume = true;
 #ifdef _DEBUG
-                    fprintf(stderr, "Z_Malloc: gave up on volume after %i checks\n", numChecked);
+                fprintf(stderr, "Z_Malloc: gave up on volume after %i checks\n", numChecked);
 #endif
-                    break;
-                }
+                break;
             }
+        }
 
-#if 0
-            isDone = false;
-            do
-            {
-                if(rover != start)
-                {
-                    if(rover->user)
-                    {
-                        if(rover->tag < PU_PURGELEVEL)
-                        {
-                            if(rover->seqFirst)
-                            {
-                                // This block is part of a sequence of blocks, none of
-                                // which can be purged. Skip the entire sequence.
-                                base = rover = rover->seqFirst->seqLast->next;
-                            }
-                            else
-                            {
-                                // Hit a block that can't be purged, so move base
-                                // past it.
-                                base = rover = rover->next;
-                            }
-                        }
-                        else
-                        {
-                            // Free the rover block (adding the size to base).
-                            base = base->prev;  // the rover can be the base block
+        // At this point we've found/created a big enough block or we are
+        // skipping this volume entirely.
+
+        if(gotoNextVolume) continue;
+
+        // Found a block big enough.
+        extra = base->size - size;
+        if(extra > MINFRAGMENT)
+        {
+            // There will be a free fragment after the allocated
+            // block.
+            new = (memblock_t *) ((byte *) base + size);
+            new->size = extra;
+            new->user = NULL;       // free block
+            new->tag = 0;
+            new->volume = NULL;
+            new->prev = base;
+            new->next = base->next;
+            new->next->prev = new;
+            new->seqFirst = new->seqLast = NULL;
 #ifdef FAKE_MEMORY_ZONE
-                            Z_Free(rover->area);
+            new->area = 0;
+            new->areaSize = 0;
+#endif
+            base->next = new;
+            base->size = size;
+        }
+
+#ifdef FAKE_MEMORY_ZONE
+        base->areaSize = size - sizeof(memblock_t);
+        base->area = M_Malloc(base->areaSize);
+#endif
+
+        if(user)
+        {
+            base->user = user;      // mark as an in use block
+#ifdef FAKE_MEMORY_ZONE
+            *(void **) user = base->area;
 #else
-                            Z_Free((byte *) rover + sizeof(memblock_t));
-#endif
-                            base = base->next;
-                            rover = base->next;
-                        }
-                    }
-                    else
-                    {
-                        rover = rover->next;
-                    }
-                }
-                else
-                {
-                    // Scanned all the way around the list.
-                    // Move over to the next volume.
-                    gotoNextVolume = true;
-                }
-
-                // Have we finished?
-                if(gotoNextVolume)
-                    isDone = true;
-                else
-                    isDone = !(base->user || base->size < size);
-            } while(!isDone);
-#endif
-
-            // At this point we've found/created a big enough block or we are
-            // skipping this volume entirely.
-
-            if(gotoNextVolume) continue;
-
-            // Found a block big enough.
-            extra = base->size - size;
-            if(extra > MINFRAGMENT)
-            {
-                // There will be a free fragment after the allocated
-                // block.
-                new = (memblock_t *) ((byte *) base + size);
-                new->size = extra;
-                new->user = NULL;       // free block
-                new->tag = 0;
-                new->volume = NULL;
-                new->prev = base;
-                new->next = base->next;
-                new->next->prev = new;
-                new->seqFirst = new->seqLast = NULL;
-#ifdef FAKE_MEMORY_ZONE
-                new->area = 0;
-                new->areaSize = 0;
-#endif
-                base->next = new;
-                base->size = size;
-            }
-
-#ifdef FAKE_MEMORY_ZONE
-            base->areaSize = size - sizeof(memblock_t);
-            base->area = M_Malloc(base->areaSize);
-#endif
-
-            if(user)
-            {
-                base->user = user;      // mark as an in use block
-#ifdef FAKE_MEMORY_ZONE
-                *(void **) user = base->area;
-#else
-                *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
-#endif
-            }
-            else
-            {
-                if(tag >= PU_PURGELEVEL)
-                {
-                    unlockZone();
-                    Con_Error("Z_Malloc: an owner is required for "
-                              "purgable blocks.\n");
-                }
-                base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
-            }
-            base->tag = tag;
-
-            /*
-            if(tag == PU_MAPSTATIC)
-            {
-                // Level-statics are linked into unpurgable sequences so they can
-                // be skipped en masse.
-                base->seqFirst = base;
-                base->seqLast = base;
-                if(base->prev->seqFirst)
-                {
-                    base->seqFirst = base->prev->seqFirst;
-                    base->seqFirst->seqLast = base;
-                }
-            }
-            else*/
-            {
-                // Not part of a sequence.
-                base->seqLast = base->seqFirst = NULL;
-            }
-
-            // next allocation will start looking here
-            volume->zone->rover = base->next;
-            if(volume->zone->rover == &volume->zone->blockList)
-                volume->zone->rover = volume->zone->blockList.next;
-
-            base->volume = volume;
-            base->id = ZONEID;
-
-            unlockZone();
-
-#ifdef FAKE_MEMORY_ZONE
-            return base->area;
-#else
-            return (void *) ((byte *) base + sizeof(memblock_t));
+            *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
 #endif
         }
-        // Move to the next volume.
+        else
+        {
+            if(tag >= PU_PURGELEVEL)
+            {
+                unlockZone();
+                Con_Error("Z_Malloc: an owner is required for "
+                          "purgable blocks.\n");
+            }
+            base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
+        }
+        base->tag = tag;
+
+        /*
+        if(tag == PU_MAPSTATIC)
+        {
+            // Level-statics are linked into unpurgable sequences so they can
+            // be skipped en masse.
+            base->seqFirst = base;
+            base->seqLast = base;
+            if(base->prev->seqFirst)
+            {
+                base->seqFirst = base->prev->seqFirst;
+                base->seqFirst->seqLast = base;
+            }
+        }
+        else*/
+        {
+            // Not part of a sequence.
+            base->seqLast = base->seqFirst = NULL;
+        }
+
+        // next allocation will start looking here
+        volume->zone->rover = advanceBlock(volume, base);
+
+        base->volume = volume;
+        base->id = ZONEID;
+
+        unlockZone();
+
+#ifdef FAKE_MEMORY_ZONE
+        return base->area;
+#else
+        return (void *) ((byte *) base + sizeof(memblock_t));
+#endif
     }
 }
 
