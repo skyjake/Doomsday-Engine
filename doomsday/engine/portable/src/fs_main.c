@@ -207,15 +207,9 @@ static boolean removeLoadedFile(int loadedFilesNodeIndex)
 
     switch(AbstractFile_Type(af))
     {
-    case FT_UNKNOWNFILE: break;
-
-    case FT_ZIPFILE:  ZipFile_ClearLumpCache( ( ZipFile*)af); break;
-    case FT_WADFILE:  WadFile_ClearLumpCache( ( WadFile*)af); break;
-    case FT_LUMPFILE: LumpFile_ClearLumpCache((LumpFile*)af); break;
-
-    default:
-        Con_Error("WadCollection::removeLoadedFile: Invalid file type %i.", AbstractFile_Type(af));
-        exit(1); // Unreachable.
+    case FT_ZIPFILE:  ZipFile_ClearLumpCache((ZipFile*)af); break;
+    case FT_WADFILE:  WadFile_ClearLumpCache((WadFile*)af); break;
+    default: break;
     }
 
     F_ReleaseFileId(Str_Text(AbstractFile_Path(af)));
@@ -907,9 +901,10 @@ ddstring_t* F_ComposeLumpPath2(abstractfile_t* fsObject, int lumpIdx, char delim
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:  return  ZipFile_ComposeLumpPath( (ZipFile*)fsObject, lumpIdx, delimiter);
-    case FT_WADFILE:  return  WadFile_ComposeLumpPath( (WadFile*)fsObject, lumpIdx, delimiter);
-    case FT_LUMPFILE: return LumpFile_ComposeLumpPath((LumpFile*)fsObject, lumpIdx, delimiter);
+    case FT_ZIPFILE:  return ZipFile_ComposeLumpPath((ZipFile*)fsObject, lumpIdx, delimiter);
+    case FT_WADFILE:  return WadFile_ComposeLumpPath((WadFile*)fsObject, lumpIdx, delimiter);
+    case FT_LUMPFILE: return F_ComposeLumpPath2(AbstractFile_Container(fsObject),
+                                                LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, delimiter);
     default:
         Con_Error("F_ComposeLumpPath: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -927,9 +922,10 @@ size_t F_ReadLumpSection(abstractfile_t* fsObject, int lumpIdx, uint8_t* buffer,
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:  return  ZipFile_ReadLumpSection( (ZipFile*)fsObject, lumpIdx, buffer, startOffset, length);
-    case FT_WADFILE:  return  WadFile_ReadLumpSection( (WadFile*)fsObject, lumpIdx, buffer, startOffset, length);
-    case FT_LUMPFILE: return LumpFile_ReadLumpSection((LumpFile*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_ZIPFILE:  return ZipFile_ReadLumpSection((ZipFile*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_WADFILE:  return WadFile_ReadLumpSection((WadFile*)fsObject, lumpIdx, buffer, startOffset, length);
+    case FT_LUMPFILE: return F_ReadLumpSection(AbstractFile_Container(fsObject),
+                                               LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, buffer, startOffset, length);
     default:
         Con_Error("F_ReadLumpSection: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -941,9 +937,10 @@ const uint8_t* F_CacheLump(abstractfile_t* fsObject, int lumpIdx, int tag)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:    return  ZipFile_CacheLump( (ZipFile*)fsObject, lumpIdx, tag);
-    case FT_WADFILE:    return  WadFile_CacheLump( (WadFile*)fsObject, lumpIdx, tag);
-    case FT_LUMPFILE:   return LumpFile_CacheLump((LumpFile*)fsObject, lumpIdx, tag);
+    case FT_ZIPFILE:  return ZipFile_CacheLump((ZipFile*)fsObject, lumpIdx, tag);
+    case FT_WADFILE:  return WadFile_CacheLump((WadFile*)fsObject, lumpIdx, tag);
+    case FT_LUMPFILE: return F_CacheLump(AbstractFile_Container(fsObject),
+                                         LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, tag);
     default:
         Con_Error("F_CacheLump: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
@@ -955,9 +952,11 @@ void F_CacheChangeTag(abstractfile_t* fsObject, int lumpIdx, int tag)
     assert(fsObject);
     switch(AbstractFile_Type(fsObject))
     {
-    case FT_ZIPFILE:    ZipFile_ChangeLumpCacheTag( (ZipFile*)fsObject, lumpIdx, tag); break;
-    case FT_WADFILE:    WadFile_ChangeLumpCacheTag( (WadFile*)fsObject, lumpIdx, tag); break;
-    case FT_LUMPFILE:  LumpFile_ChangeLumpCacheTag((LumpFile*)fsObject, lumpIdx, tag); break;
+    case FT_ZIPFILE:  ZipFile_ChangeLumpCacheTag((ZipFile*)fsObject, lumpIdx, tag); break;
+    case FT_WADFILE:  WadFile_ChangeLumpCacheTag((WadFile*)fsObject, lumpIdx, tag); break;
+    case FT_LUMPFILE: F_CacheChangeTag(AbstractFile_Container(fsObject),
+                                       LumpFile_LumpInfo((LumpFile*)fsObject, lumpIdx)->lumpIdx, tag); break;
+
     default:
         Con_Error("F_CacheChangeTag: Invalid file type %i.", AbstractFile_Type(fsObject));
         exit(1); // Unreachable.
