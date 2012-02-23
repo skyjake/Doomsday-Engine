@@ -1176,7 +1176,7 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
 void Z_DebugDrawer(void)
 {
     memvolume_t* volume;
-    int i;
+    int i, volCount, h;
 
     if(!ArgExists("-zonedebug")) return;
 
@@ -1199,12 +1199,20 @@ void Z_DebugDrawer(void)
     // Draw each volume.
     lockZone();
 
+    // Make sure all the volumes fit vertically.
+    volCount = Z_VolumeCount();
+    h = 200;
+    if(h * volCount + 10*(volCount - 1) > theWindow->geometry.size.height)
+    {
+        h = (theWindow->geometry.size.height - 10*(volCount - 1))/volCount;
+    }
+
     i = 0;
     for(volume = volumeRoot; volume; volume = volume->next, ++i)
     {
         RectRaw rect;
         rect.size.width = MIN_OF(400, theWindow->geometry.size.width);
-        rect.size.height = 150;
+        rect.size.height = h;
         rect.origin.x = theWindow->geometry.size.width - rect.size.width - 1;
         rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
         Z_DebugDrawVolume(volume, &rect);
