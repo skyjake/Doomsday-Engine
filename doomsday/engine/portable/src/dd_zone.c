@@ -78,7 +78,8 @@
  */
 typedef struct memvolume_s {
     memzone_t  *zone;
-    size_t      size;
+    size_t size;
+    size_t allocatedBytes;  ///< Total number of allocated bytes.
     struct memvolume_s *next;
 } memvolume_t;
 
@@ -176,6 +177,7 @@ memvolume_t *Z_Create(size_t volumeSize)
     // Allocate memory for the zone volume.
     vol->size = volumeSize;
     vol->zone = M_Malloc(vol->size);
+    vol->allocatedBytes = 0;
 
     // Clear the start of the zone.
     memset(vol->zone, 0, sizeof(memzone_t) + sizeof(memblock_t));
@@ -332,6 +334,9 @@ void Z_Free(void *ptr)
         }
     }
 
+    // Keep tabs on how much memory is used.
+    volume->allocatedBytes -= block->size;
+
     other = block->prev;
     if(!other->user)
     {   // Merge with previous free block.
@@ -398,6 +403,11 @@ static __inline memblock_t* rewindRover(memvolume_t* vol, memblock_t* rover, int
     return base;
 }
 
+static __inline boolean isVolumeTooFull(memvolume_t* vol)
+{
+    return vol->allocatedBytes > vol->size * .95f;
+}
+
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
  */
@@ -432,6 +442,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
+        size_t bytesChecked = 0;
 
         if(volume == NULL)
         {
@@ -443,6 +454,12 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 newVolumeSize = size + 0x1000; // with some spare memory
 
             volume = Z_Create(newVolumeSize);
+        }
+
+        if(isVolumeTooFull(volume))
+        {
+            // We should skip this one.
+            continue;
         }
 
         if(!volume->zone)
@@ -492,6 +509,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // We will scan ahead starting until we find something big enough.
         for(;; numChecked++)
         {
+            bytesChecked += base->size;
+
             // Is this a suitable block?
             if(!base->user && base->size >= size)
                 break; // We'll take it!
@@ -609,6 +628,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
         // next allocation will start looking here
         volume->zone->rover = advanceBlock(volume, base);
+
+        // Keep tabs on how much memory is used.
+        volume->allocatedBytes += base->size;
 
         base->volume = volume;
         base->id = ZONEID;
@@ -1144,6 +1166,15 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
 
         Z_DrawRegion(volume, rect, (char*)block - base, block->size, color);
     }
+
+    if(isVolumeTooFull(volume))
+    {
+        glLineWidth(2);
+        glColor4f(1, 0, 0, 1);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        GL_DrawRect(rect);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 }
 
 void Z_DebugDrawer(void)
@@ -1177,7 +1208,7 @@ void Z_DebugDrawer(void)
     {
         RectRaw rect;
         rect.size.width = MIN_OF(400, theWindow->geometry.size.width);
-        rect.size.height = 200;
+        rect.size.height = 150;
         rect.origin.x = theWindow->geometry.size.width - rect.size.width - 1;
         rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
         Z_DebugDrawVolume(volume, &rect);
