@@ -36,7 +36,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     public function title()
     {
-        return 'Addons';
+        return 'Add-ons';
     }
 
     /**
@@ -144,19 +144,19 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         includeHTML('overview', self::$name);
 
 ?><h3>jDoom</h3>
-<p>The following addons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
+<p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
 <?php
 
         $this->outputAddonList($doomAddons);
 
 ?><h3>jHeretic</h3>
-<p>The following addons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
+<p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
 <?php
 
         $this->outputAddonList($hereticAddons);
 
 ?><h3>jHexen</h3>
-<p>The following addons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
+<p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
 <?php
 
         $this->outputAddonList($hexenAddons);
