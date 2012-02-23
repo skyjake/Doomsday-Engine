@@ -165,15 +165,16 @@ memvolume_t *Z_Create(size_t volumeSize)
 
     lockZone();
 
+    // Append to the end of the volume list.
     if(volumeLast)
         volumeLast->next = vol;
     volumeLast = vol;
     vol->next = 0;
     if(!volumeRoot)
         volumeRoot = vol;
-    vol->size = volumeSize;
 
     // Allocate memory for the zone volume.
+    vol->size = volumeSize;
     vol->zone = M_Malloc(vol->size);
 
     // Clear the start of the zone.
@@ -364,6 +365,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     memblock_t     *start, /* *rover, */ *new, *base;
     memvolume_t    *volume;
     boolean         gotoNextVolume;
+    int             i;
 
     if(tag < PU_APPSTATIC || tag > PU_CACHE)
     {
@@ -390,6 +392,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
+        size_t prevBest = 0;
 
         if(volume == NULL)
         {
@@ -409,6 +412,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
             Con_Error("Z_Malloc: Volume without zone.");
         }
 
+        /// @todo Refactor with static helper funcs, e.g., isRoot(), cycleNext()
+
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
         // way.
@@ -416,9 +421,30 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // If there is a free block behind the rover, back up over it.
         base = volume->zone->rover;
         assert(base->prev);
-        if(!base->prev->user)
+        /*if(!base->prev->user)
+        {
             base = base->prev;
-        assert(base != &volume->zone->blockList);
+            prevBest = base->size;
+        }
+        else
+        {
+            prevBest = 0;
+        }*/
+        //assert(base != &volume->zone->blockList);
+
+        // Look back a little to see if we have some space available nearby.
+        prevBest = 0;
+        start = base->prev;
+        for(i = 0; i < 4 && start != &volume->zone->blockList; ++i)
+        {
+            if(!start->user && start->size > prevBest)
+            {
+                // Let's use this one.
+                prevBest = start->size;
+                base = start;
+            }
+            start = start->prev;
+        }
 
         gotoNextVolume = false;
         if(fastMalloc)
@@ -490,7 +516,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
                     base = volume->zone->blockList.next;
                 }
 
-                if(base == start)
+                if(base == start && numChecked > 0)
                 {
                     // Scanned all the way through, no suitable space found.
                     gotoNextVolume = true;
