@@ -655,6 +655,13 @@ p.legal a {
     padding-left: 1.4em;
 }
 
+/*-------------------- Addons ---------------------*/
+
+#addons {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
 /*-------------------- Builds ---------------------*/
 
 /* Panel */
