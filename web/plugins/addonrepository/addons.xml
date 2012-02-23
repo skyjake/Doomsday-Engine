@@ -2,7 +2,7 @@
 <addons>
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
-    <title>DRP v1.01 (packaged)</title>
+    <title>jDRP v1.01 (packaged)</title>
     <description>DOOM Resource Pack</description>
     <notes><![CDATA[<em>Unzip</em> this pack into the Snowberry addon folder]]></notes>
     <games>
