@@ -111,8 +111,8 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             if(!$this->addonSupportsGameMode($addon, $gameModes)) continue;
 
-?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo htmlspecialchars($addon['title']); ?></a></td>
-<td><?php echo htmlspecialchars($addon['description']); ?></td>
+?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo $addon['title']; ?></a></td>
+<td><?php echo $addon['description']; ?></td>
 <td><?php echo $addon['notes']; ?></td></tr><?
         }
 
