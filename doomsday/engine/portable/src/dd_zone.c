@@ -1104,18 +1104,19 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
     memblock_t* block;
     char* base = ((char*)volume->zone) + sizeof(memzone_t);
     float opacity = .85f;
-    //float colHeader[4]      = { 1, 0, 1, .75f };
-    float colAppStatic[4]   = { 1, 1, 1, .75f };
-    float colGameStatic[4]  = { 1, 0, 0, .75f };
-    float colMap[4]         = { 0, 1, 0, .75f };
-    float colMapStatic[4]   = { 0, .5f, 0, .75f };
-    float colCache[4]       = { 1, 0, 1, .75f };
-    float colOther[4]       = { 0, 0, 1, .75f };
+    float colAppStatic[4]   = { 1, 1, 1, .65f };
+    float colGameStatic[4]  = { 1, 0, 0, .65f };
+    float colMap[4]         = { 0, 1, 0, .65f };
+    float colMapStatic[4]   = { 0, .5f, 0, .65f };
+    float colCache[4]       = { 1, 0, 1, .65f };
+    float colOther[4]       = { 0, 0, 1, .65f };
 
     // Clear the background.
     glColor4f(0, 0, 0, opacity);
     GL_DrawRect(rect);
 
+    // Outline.
+    glLineWidth(1);
     glColor4f(1, 1, 1, opacity/2);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     GL_DrawRect(rect);
@@ -1127,11 +1128,7 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
         block = block->next)
     {
         const float* color = colOther;
-
         if(!block->user) continue; // Free is black.
-
-        // Draw the header separately.
-        //Z_DrawRegion(volume, rect, (char*)block - base, sizeof(memblock_t), colHeader);
 
         // Choose the color for this block.
         switch(block->tag)
