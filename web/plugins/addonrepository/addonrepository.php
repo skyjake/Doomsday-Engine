@@ -111,8 +111,8 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         {
             if(!$this->addonSupportsGameMode($addon, $gameModes)) continue;
 
-?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo htmlspecialchars($addon['title']); ?></a></td>
-<td><?php echo htmlspecialchars($addon['description']); ?></td>
+?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo $addon['title']; ?></a></td>
+<td><?php echo $addon['description']; ?></td>
 <td><?php echo $addon['notes']; ?></td></tr><?
         }
 
@@ -131,21 +131,21 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         includeHTML('overview', self::$name);
 
-?><h3>jDoom</h3>
+?><h3>DOOM</h3>
 <p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
 <?php
 
         $doomGames = array('doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt');
         $this->outputAddonList($addons, $doomGames);
 
-?><h3>jHeretic</h3>
+?><h3>Heretic</h3>
 <p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
 <?php
 
         $hereticGames = array('heretic', 'heretic-share', 'heretic-ext');
         $this->outputAddonList($addons, $hereticGames);
 
-?><h3>jHexen</h3>
+?><h3>Hexen</h3>
 <p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
 <?php
 
