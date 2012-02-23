@@ -715,6 +715,10 @@ void Net_Drawer(void)
 
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
+
+#ifdef _DEBUG
+    Z_DebugDrawer();
+#endif
 }
 
 /**

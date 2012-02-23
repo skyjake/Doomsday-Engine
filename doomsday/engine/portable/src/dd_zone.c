@@ -55,6 +55,11 @@
 #include "de_system.h"
 #include "de_misc.h"
 
+#ifdef _DEBUG
+#  include "de_graphics.h"
+#  include "de_render.h"
+#endif
+
 // Size of one memory zone volume.
 #define MEMORY_VOLUME_SIZE  0x2000000   // 32 Mb
 
@@ -93,6 +98,7 @@ typedef struct zblockset_block_s {
 } zblockset_block_t;
 
 static memvolume_t *volumeRoot;
+static memvolume_t *volumeLast;
 
 /**
  * If false, Z_Malloc will free purgable blocks and aggressively look for
@@ -159,8 +165,12 @@ memvolume_t *Z_Create(size_t volumeSize)
 
     lockZone();
 
-    vol->next = volumeRoot;
-    volumeRoot = vol;
+    if(volumeLast)
+        volumeLast->next = vol;
+    volumeLast = vol;
+    vol->next = 0;
+    if(!volumeRoot)
+        volumeRoot = vol;
     vol->size = volumeSize;
 
     // Allocate memory for the zone volume.
@@ -189,6 +199,8 @@ memvolume_t *Z_Create(size_t volumeSize)
     unlockZone();
 
     VERBOSE(Con_Message("Z_Create: New %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0));
+
+    Z_CheckHeap();
 
     return vol;
 }
@@ -349,7 +361,7 @@ void Z_Free(void *ptr)
 void *Z_Malloc(size_t size, int tag, void *user)
 {
     size_t          extra;
-    memblock_t     *start, *rover, *new, *base;
+    memblock_t     *start, /* *rover, */ *new, *base;
     memvolume_t    *volume;
     boolean         gotoNextVolume;
 
@@ -377,6 +389,8 @@ void *Z_Malloc(size_t size, int tag, void *user)
     // enough.)
     for(volume = volumeRoot; ; volume = volume->next)
     {
+        uint numChecked = 0;
+
         if(volume == NULL)
         {
             // We've run out of volumes.  Let's allocate a new one
@@ -399,11 +413,12 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // sufficient size, throwing out any purgable blocks along the
         // way.
 
-        // If there is a free block behind the rover, back up over them.
+        // If there is a free block behind the rover, back up over it.
         base = volume->zone->rover;
         assert(base->prev);
         if(!base->prev->user)
             base = base->prev;
+        assert(base != &volume->zone->blockList);
 
         gotoNextVolume = false;
         if(fastMalloc)
@@ -418,10 +433,15 @@ void *Z_Malloc(size_t size, int tag, void *user)
 
         if(!gotoNextVolume)
         {
+#if 0
             boolean     isDone;
+#endif
 
-            rover = base;
-            start = base->prev;
+            // 'base' is the block that we'll end up using.
+
+            //rover = base;
+            numChecked = 0;
+            start = base;
 
             // If the start is in a sequence, move it to the beginning of the
             // entire sequence. Sequences are handled as a single unpurgable entity,
@@ -431,6 +451,57 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 start = start->seqFirst;
             }
 
+            // We will scan ahead starting until we find something big enough.
+            for(;; numChecked++)
+            {
+                // Is this a suitable block?
+                if(!base->user && base->size > size)
+                    break; // We'll take it!
+
+                // Check for purgable blocks we can dispose of.
+                if(base->user)
+                {
+                    if(base->tag >= PU_PURGELEVEL)
+                    {
+                        memblock_t* old = base;
+                        base = base->prev; // Step back.
+#ifdef FAKE_MEMORY_ZONE
+                        Z_Free(old->area);
+#else
+                        Z_Free((byte *) old + sizeof(memblock_t));
+#endif
+                    }
+                    else
+                    {
+                        if(base->seqFirst)
+                        {
+                            // This block is part of a sequence of blocks, none of
+                            // which can be purged. Skip the entire sequence.
+                            base = base->seqFirst->seqLast;
+                        }
+                    }
+                }
+
+                // Move to the next block.
+                base = base->next;
+                if(base == &volume->zone->blockList)
+                {
+                    // Continue from the beginning.
+                    base = volume->zone->blockList.next;
+                }
+
+                if(base == start)
+                {
+                    // Scanned all the way through, no suitable space found.
+                    gotoNextVolume = true;
+#ifdef _DEBUG
+                    fprintf(stderr, "Z_Malloc: gave up on volume after %i checks\n", numChecked);
+#endif
+                    break;
+                }
+            }
+
+#if 0
             isDone = false;
             do
             {
@@ -484,93 +555,96 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 else
                     isDone = !(base->user || base->size < size);
             } while(!isDone);
+#endif
 
             // At this point we've found/created a big enough block or we are
             // skipping this volume entirely.
 
-            if(!gotoNextVolume)
+            if(gotoNextVolume) continue;
+
+            // Found a block big enough.
+            extra = base->size - size;
+            if(extra > MINFRAGMENT)
             {
-                // Found a block big enough.
-                extra = base->size - size;
-                if(extra > MINFRAGMENT)
-                {
-                    // There will be a free fragment after the allocated
-                    // block.
-                    new = (memblock_t *) ((byte *) base + size);
-                    new->size = extra;
-                    new->user = NULL;       // free block
-                    new->tag = 0;
-                    new->volume = NULL;
-                    new->prev = base;
-                    new->next = base->next;
-                    new->next->prev = new;
-                    new->seqFirst = new->seqLast = NULL;
+                // There will be a free fragment after the allocated
+                // block.
+                new = (memblock_t *) ((byte *) base + size);
+                new->size = extra;
+                new->user = NULL;       // free block
+                new->tag = 0;
+                new->volume = NULL;
+                new->prev = base;
+                new->next = base->next;
+                new->next->prev = new;
+                new->seqFirst = new->seqLast = NULL;
 #ifdef FAKE_MEMORY_ZONE
-                    new->area = 0;
-                    new->areaSize = 0;
+                new->area = 0;
+                new->areaSize = 0;
 #endif
-                    base->next = new;
-                    base->size = size;
-                }
+                base->next = new;
+                base->size = size;
+            }
 
 #ifdef FAKE_MEMORY_ZONE
-                base->areaSize = size - sizeof(memblock_t);
-                base->area = M_Malloc(base->areaSize);
+            base->areaSize = size - sizeof(memblock_t);
+            base->area = M_Malloc(base->areaSize);
 #endif
 
-                if(user)
-                {
-                    base->user = user;      // mark as an in use block
+            if(user)
+            {
+                base->user = user;      // mark as an in use block
 #ifdef FAKE_MEMORY_ZONE
-                    *(void **) user = base->area;
+                *(void **) user = base->area;
 #else
-                    *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
-#endif
-                }
-                else
-                {
-                    if(tag >= PU_PURGELEVEL)
-                    {
-                        unlockZone();
-                        Con_Error("Z_Malloc: an owner is required for "
-                                  "purgable blocks.\n");
-                    }
-                    base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
-                }
-                base->tag = tag;
-
-                if(tag == PU_MAPSTATIC)
-                {
-                    // Level-statics are linked into unpurgable sequences so they can
-                    // be skipped en masse.
-                    base->seqFirst = base;
-                    base->seqLast = base;
-                    if(base->prev->seqFirst)
-                    {
-                        base->seqFirst = base->prev->seqFirst;
-                        base->seqFirst->seqLast = base;
-                    }
-                }
-                else
-                {
-                    // Not part of a sequence.
-                    base->seqLast = base->seqFirst = NULL;
-                }
-
-                // next allocation will start looking here
-                volume->zone->rover = base->next;
-
-                base->volume = volume;
-                base->id = ZONEID;
-
-                unlockZone();
-
-#ifdef FAKE_MEMORY_ZONE
-                return base->area;
-#else
-                return (void *) ((byte *) base + sizeof(memblock_t));
+                *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
 #endif
             }
+            else
+            {
+                if(tag >= PU_PURGELEVEL)
+                {
+                    unlockZone();
+                    Con_Error("Z_Malloc: an owner is required for "
+                              "purgable blocks.\n");
+                }
+                base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
+            }
+            base->tag = tag;
+
+            /*
+            if(tag == PU_MAPSTATIC)
+            {
+                // Level-statics are linked into unpurgable sequences so they can
+                // be skipped en masse.
+                base->seqFirst = base;
+                base->seqLast = base;
+                if(base->prev->seqFirst)
+                {
+                    base->seqFirst = base->prev->seqFirst;
+                    base->seqFirst->seqLast = base;
+                }
+            }
+            else*/
+            {
+                // Not part of a sequence.
+                base->seqLast = base->seqFirst = NULL;
+            }
+
+            // next allocation will start looking here
+            volume->zone->rover = base->next;
+            if(volume->zone->rover == &volume->zone->blockList)
+                volume->zone->rover = volume->zone->blockList.next;
+
+            base->volume = volume;
+            base->id = ZONEID;
+
+            unlockZone();
+
+#ifdef FAKE_MEMORY_ZONE
+            return base->area;
+#else
+            return (void *) ((byte *) base + sizeof(memblock_t));
+#endif
         }
         // Move to the next volume.
     }
@@ -656,8 +730,28 @@ void Z_CheckHeap(void)
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
+        size_t total = 0;
+
+        // Does the memory in the blocks sum up the total volume size?
+        for(block = volume->zone->blockList.next;
+            block != &volume->zone->blockList; block = block->next)
+        {
+            total += block->size;
+        }
+        if(total != volume->size - sizeof(memzone_t))
+            Con_Error("Z_CheckHeap: invalid total size of blocks (%u != %u)\n",
+                      total, volume->size - sizeof(memzone_t));
+
+        // Does the last block extend all the way to the end?
+        block = volume->zone->blockList.prev;
+        if((byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size != volume->size - sizeof(memzone_t))
+            Con_Error("Z_CheckHeap: last block does not cover the end (%u != %u)\n",
+                      (byte*)block - ((byte*)volume->zone + sizeof(memzone_t)) + block->size,
+                      volume->size - sizeof(memzone_t));
+
         block = volume->zone->blockList.next;
         isDone = false;
+
         while(!isDone)
         {
             if(block->next != &volume->zone->blockList)
@@ -1004,3 +1098,130 @@ void ZBlockSet_Delete(zblockset_t* set)
     Z_Free(set);
     unlockZone();
 }
+
+#ifdef _DEBUG
+void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size, const float* color)
+{
+    const int bytesPerRow = (volume->size - sizeof(memzone_t)) / rect->size.height;
+    const float toPixelScale = (float)rect->size.width / (float)bytesPerRow;
+    const size_t edge = rect->origin.x + rect->size.width;
+    int x = (start % bytesPerRow)*toPixelScale + rect->origin.x;
+    int y = start / bytesPerRow + rect->origin.y;
+    uint pixels = MAX_OF(1, ceil(size * toPixelScale));
+
+    assert(start + size <= volume->size);
+
+    while(pixels > 0)
+    {
+        const int availPixels = edge - x;
+        const int usedPixels = MIN_OF(availPixels, pixels);
+
+        GL_DrawLine(x, y, x + usedPixels, y, color[0], color[1], color[2], color[3]);
+
+        pixels -= usedPixels;
+
+        // Move to the next row.
+        y++;
+        x = rect->origin.x;
+    }
+}
+
+void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
+{
+    memblock_t* block;
+    char* base = ((char*)volume->zone) + sizeof(memzone_t);
+    float opacity = .85f;
+    //float colHeader[4]      = { 1, 0, 1, .75f };
+    float colAppStatic[4]   = { 1, 1, 1, .75f };
+    float colGameStatic[4]  = { 1, 0, 0, .75f };
+    float colMap[4]         = { 0, 1, 0, .75f };
+    float colMapStatic[4]   = { 0, .5f, 0, .75f };
+    float colCache[4]       = { 1, 0, 1, .75f };
+    float colOther[4]       = { 0, 0, 1, .75f };
+
+    // Clear the background.
+    glColor4f(0, 0, 0, opacity);
+    GL_DrawRect(rect);
+
+    glColor4f(1, 1, 1, opacity/2);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    GL_DrawRect(rect);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // Visualize each block.
+    for(block = volume->zone->blockList.next;
+        block != &volume->zone->blockList;
+        block = block->next)
+    {
+        const float* color = colOther;
+
+        if(!block->user) continue; // Free is black.
+
+        // Draw the header separately.
+        //Z_DrawRegion(volume, rect, (char*)block - base, sizeof(memblock_t), colHeader);
+
+        // Choose the color for this block.
+        switch(block->tag)
+        {
+        case PU_GAMESTATIC: color = colGameStatic; break;
+        case PU_MAP:        color = colMap; break;
+        case PU_MAPSTATIC:  color = colMapStatic; break;
+        case PU_APPSTATIC:  color = colAppStatic; break;
+        case PU_CACHE:      color = colCache; break;
+        default:
+            break;
+        }
+
+        Z_DrawRegion(volume, rect, (char*)block - base, block->size, color);
+    }
+}
+
+void Z_DebugDrawer(void)
+{
+    memvolume_t* volume;
+    int i;
+
+    if(!ArgExists("-zonedebug")) return;
+
+    LIBDENG_ASSERT_IN_MAIN_THREAD();
+
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->geometry.size.width, theWindow->geometry.size.height, 0, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // Draw each volume.
+    lockZone();
+
+    i = 0;
+    for(volume = volumeRoot; volume; volume = volume->next, ++i)
+    {
+        RectRaw rect;
+        rect.size.width = theWindow->geometry.size.width;
+        rect.size.height = 250;
+        rect.origin.x = 0;
+        rect.origin.y = theWindow->geometry.size.height - rect.size.height*(i+1) - 10*i - 1;
+        Z_DebugDrawVolume(volume, &rect);
+    }
+
+    unlockZone();
+
+    // Cleanup.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glEnable(GL_TEXTURE_2D);
+}
+#endif

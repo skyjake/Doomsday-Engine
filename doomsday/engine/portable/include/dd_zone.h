@@ -64,6 +64,7 @@ void*           Z_Calloc(size_t size, int tag, void* user);
 void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
 size_t          Z_FreeMemory(void);
 void            Z_PrintStatus(void);
+void            Z_DebugDrawer(void);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
