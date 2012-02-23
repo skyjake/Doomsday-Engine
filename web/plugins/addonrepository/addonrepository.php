@@ -24,6 +24,8 @@
 
 includeGuard('AddonRepositoryPlugin');
 
+require_once('addonsparser.class.php');
+
 class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpreter
 {
     public static $name = 'addonrepository';
@@ -67,7 +69,37 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         return false; // Not for us.
     }
 
-    public function outputAddonList(&$addons)
+    /**
+     * Does the addon support any of these game modes?
+     *
+     * @param addon  (Array) Addon record object.
+     * @param gameModes  (Array) Associative array containing the list of
+     *                   game modes to look for (the needles).
+     */
+    private function addonSupportsGameMode(&$addon, &$gameModes)
+    {
+        if(!is_array($addon))
+            throw new Exception('Invalid addon argument, array expected');
+
+        if(!isset($addon['games'])) return true;
+        if(!is_array($gameModes)) return false;
+
+        $supportedModes = &$addon['games'];
+        foreach($gameModes as $mode)
+        {
+            if(isset($supportedModes[$mode])) return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Output an HTML list of addons to the output stream
+     *
+     * @param addons  (Array) Collection of Addon records to process.
+     * @param gameModes  (Array) Game modes to filter the addon list by.
+     */
+    private function outputAddonList(&$addons, &$gameModes)
     {
         if(!is_array($addons))
             throw new Exception('Invalid addons argument, array expected');
@@ -77,6 +109,8 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         foreach($addons as $addon)
         {
+            if(!$this->addonSupportsGameMode($addon, $gameModes)) continue;
+
 ?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo htmlspecialchars($addon['title']); ?></a></td>
 <td><?php echo htmlspecialchars($addon['description']); ?></td>
 <td><?php echo $addon['notes']; ?></td></tr><?
@@ -88,58 +122,12 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     public function generateHTML()
     {
-        $doomAddons = array(
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent',
-                  'title'=>'jDRP v1.01 (packaged)',
-                  'description'=>'DOOM Resource Pack',
-                  'notes'=>'<em>Unzip</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/jdmu-doom-classic-20080930.pk3.torrent',
-                  'title'=>'DOOM Classic Music',
-                  'description'=>'DOOM Music Recorded from a genuine Roland Sound Canvas SC-155',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/jdmu-doom2-classic-20080930.pk3.torrent',
-                  'title'=>'DOOM2 Classic Music',
-                  'description'=>'DOOM2 Music Recorded from a genuine Roland Sound Canvas SC-155',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/tnt-remix-lorcan-20071225.pk3.torrent',
-                  'title'=>'TNT Lorcan Remix',
-                  'description'=>'TNT Music Remixed by Lorcan',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/jdmu-all-remix-Sycraft-v4.pk3.torrent',
-                  'title'=>'Sycraft Remixes',
-                  'description'=>'DOOM, DOOMII and Final DOOM music remastered by Sycraft',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://dhtp.freelanzer.com/',
-                  'title'=>'DOOM High-resolution Texture Project',
-                  'description'=>'DOOM high resolution textures',
-                  'notes'=>''),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/jdui-all-20120223.pk3.torrent',
-                  'title'=>'DOOM High-resolution User interface Pack',
-                  'description'=>'DOOM High-resolution User interface Pack',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent',
-                  'title'=>'DOOM High-quality sound pack',
-                  'description'=>'Compiled by Per Kristian Risvik',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder'),
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/slide-skyboxes.torrent',
-                  'title'=>'Slide\'s Skyboxes',
-                  'description'=>'Created by slide for all the DOOM games',
-                  'notes'=>'<em>Move</em> these packs into the Snowberry addon folder')
-            );
+        global $FrontController;
 
-        $hereticAddons = array(
-            array('downloadUri'=>'http://torrage.com/torrent/584A6DDB49940C73753CB6B425B4301E6137E945.torrent',
-                  'title'=>'jHRP 2009.07.03 (packaged)',
-                  'description'=>'3D Models, hi-res interface elements and textures',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder')
-            );
+        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
 
-        $hexenAddons = array(
-            array('downloadUri'=>'http://files.dengine.net/tracker/torrents/xhtp-20100714.pk3.torrent',
-                  'title'=>'xHTP 2010.07.14 (packaged)',
-                  'description'=>'High resolution texture pack',
-                  'notes'=>'<em>Move</em> this pack into the Snowberry addon folder')
-            );
+        $addons = array();
+        AddonsParser::parse($addonListXml, $addons);
 
         includeHTML('overview', self::$name);
 
@@ -147,19 +135,22 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
 <?php
 
-        $this->outputAddonList($doomAddons);
+        $doomGames = array('doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt');
+        $this->outputAddonList($addons, $doomGames);
 
 ?><h3>jHeretic</h3>
 <p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
 <?php
 
-        $this->outputAddonList($hereticAddons);
+        $hereticGames = array('heretic', 'heretic-share', 'heretic-ext');
+        $this->outputAddonList($addons, $hereticGames);
 
 ?><h3>jHexen</h3>
 <p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
 <?php
 
-        $this->outputAddonList($hexenAddons);
+        $hexenGames = array('hexen', 'hexen-dk', 'hexen-demo');
+        $this->outputAddonList($addons, $hexenGames);
 
         includeHTML('instructions', self::$name);
     }
