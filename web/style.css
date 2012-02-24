@@ -106,25 +106,22 @@ table.directory {
     border-width: .5em;
     border-spacing: 0em;
     border-style: hidden;
-    border-color: black;
     border-collapse: separate;
-    background-color: white;
+    padding: inherit;
 }
 
 table.directory th {
-    border-width: .1em;
-    padding: .4em;
+    border-width: 1px;
+    padding: .6em;
     border-style: solid;
-    border-color: gray;
-    background-color: white;
+    border-color: lightgrey;
 }
 
 table.directory td {
-    border-width: .1em;
-    padding: .4em;
+    border-width: 1px;
+    padding: .6em;
     border-style: solid;
-    border-color: gray;
-    background-color: white;
+    border-color: lightgrey;
     font-size: small;
 }
 
@@ -660,6 +657,69 @@ p.legal a {
 #addons {
     background: #ffffff;
     padding:.5em 1em;
+}
+
+.addons_list {
+    vertical-align:top;
+    margin:0 3em;
+    text-align: center;
+}
+
+.addon_badge {
+    position: relative;
+    margin: 1em 2.5em;
+    display: inline-block;
+    text-align: left;
+}
+
+.addon_badge .name {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.addon_badge .icon img {
+    margin-top: 8px;
+    max-width: 48px;
+    max-height: 48px;
+}
+
+.addon_badge:hover .name, .addon_badge:visited:hover .name {
+    text-decoration: underline;
+    color: #495f5f;
+}
+
+.addon_badge .description {
+    display: block;
+    color: #807970;
+}
+
+.addon_badge .icon {
+    position: absolute;
+    left: -56px;
+    z-index: 1;
+}
+
+.addon_badge div.metadata {
+    font-size: small;
+}
+
+#overview {
+    padding-top:0;
+}
+
+#notes, #instructions {
+    font-size: small;
+}
+
+#updated {
+    font-size: small;
+    font-weight: normal;
+}
+
+#notes {
+    font-weight: 700;
+    margin-top: 1em;
 }
 
 /*-------------------- Builds ---------------------*/

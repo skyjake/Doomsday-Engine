@@ -85,6 +85,12 @@ function fopen_recursive($path, $mode, $chmod=0755)
     return fopen($path, $mode);
 }
 
+function implode_keys($glue="", $pieces=array())
+{
+    $keys = array_keys($pieces);
+    return implode($glue, $keys);
+}
+
 /**
  * Case insensitive version of array_key_exists.
  * Returns the matching key on success, else false.
