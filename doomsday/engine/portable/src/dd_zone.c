@@ -733,7 +733,7 @@ void Z_CheckHeap(void)
 
         // Validate the counter.
         if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
-            Con_Error("Z_CheckHeap: allocates bytes counter is off (counter:%u != actual:%u)\n",
+            Con_Error("Z_CheckHeap: allocated bytes counter is off (counter:%u != actual:%u)\n",
                       volume->allocatedBytes, allocatedMemoryInVolume(volume));
 
         // Does the memory in the blocks sum up to the total volume size?
