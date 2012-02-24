@@ -1111,7 +1111,9 @@ void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size,
         const int availPixels = edge - x;
         const int usedPixels = MIN_OF(availPixels, pixels);
 
-        GL_DrawLine(x, y, x + usedPixels, y, color[0], color[1], color[2], color[3]);
+        glColor4fv(color);
+        glVertex2i(x, y);
+        glVertex2i(x + usedPixels, y);
 
         pixels -= usedPixels;
 
@@ -1144,6 +1146,8 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
     GL_DrawRect(rect);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    glBegin(GL_LINES);
+
     // Visualize each block.
     for(block = volume->zone->blockList.next;
         block != &volume->zone->blockList;
@@ -1166,6 +1170,8 @@ void Z_DebugDrawVolume(memvolume_t* volume, RectRaw* rect)
 
         Z_DrawRegion(volume, rect, (char*)block - base, block->size, color);
     }
+
+    glEnd();
 
     if(isVolumeTooFull(volume))
     {
