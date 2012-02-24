@@ -548,7 +548,7 @@ static void textFragmentSize(int* width, int* height, const char* fragment)
 static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
     short textFlags, int initialCount)
 {
-    assert(fragment && fragment[0] && fr.fontNum != 0);
+    assert(fragment && fragment[0]);
     {
     font_t* font = Fonts_ToFont(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
@@ -1343,7 +1343,10 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 glScalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
-                textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+                if(fr.fontNum)
+                {
+                    textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
+                }
                 charCount += strlen(fragment);
 
                 // Advance the current position?
