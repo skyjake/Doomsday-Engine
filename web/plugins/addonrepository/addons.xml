@@ -18,6 +18,7 @@
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom-classic-20080930.pk3.torrent</downloadUri>
     <title>DOOM Classic Music</title>
+    <version>2008.09.30</version>
     <description>DOOM Music Recorded from a genuine Roland Sound Canvas SC-155</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -29,6 +30,7 @@
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-doom2-classic-20080930.pk3.torrent</downloadUri>
     <title>DOOM2 Classic Music</title>
+    <version>2008.09.30</version>
     <description>DOOM2 Music Recorded from a genuine Roland Sound Canvas SC-155</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -38,6 +40,7 @@
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/tnt-remix-lorcan-20071225.pk3.torrent</downloadUri>
     <title>TNT Lorcan Remix</title>
+    <version>2007.12.25</version>
     <description>TNT Music Remixed by Lorcan</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -47,6 +50,7 @@
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/jdmu-all-remix-Sycraft-v4.pk3.torrent</downloadUri>
     <title>Sycraft Remixes</title>
+    <version>4</version>
     <description>DOOM, DOOMII and Final DOOM music remastered by Sycraft</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -58,7 +62,7 @@
         <game>doom2-tnt</game>
     </games>
 </addon>
-<addon featured="true">
+<addon>
     <homepageUri>http://dhtp.freelanzer.com/</homepageUri>
     <title>DOOM High-resolution Texture Project</title>
     <description>DOOM high resolution textures</description>
@@ -74,6 +78,7 @@
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/jdui-all-20120223.pk3.torrent</downloadUri>
     <title>DOOM High-resolution User interface Pack</title>
+    <version>2012.02.23</version>
     <description>DOOM High-resolution User interface Pack</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -88,6 +93,7 @@
 <addon featured="true">
     <downloadUri>http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
     <title>DOOM High-quality sound pack</title>
+    <version>2010.01.09</version>
     <description>Compiled by Per Kristian Risvik</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
