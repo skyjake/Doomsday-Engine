@@ -1210,7 +1210,6 @@ void Z_DebugDrawer(void)
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
@@ -1254,7 +1253,5 @@ void Z_DebugDrawer(void)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
-    glEnable(GL_TEXTURE_2D);
 }
 #endif
