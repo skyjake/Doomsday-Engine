@@ -442,9 +442,8 @@ static void splitFreeBlock(memblock_t* block, size_t size)
  */
 void *Z_Malloc(size_t size, int tag, void *user)
 {
-    memblock_t     *start, *base;
-    memvolume_t    *volume;
-    boolean         gotoNextVolume;
+    memblock_t* start, *iter;
+    memvolume_t* volume;
 
     if(tag < PU_APPSTATIC || tag > PU_CACHE)
     {
@@ -470,6 +469,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     for(volume = volumeRoot; ; volume = volume->next)
     {
         uint numChecked = 0;
+        boolean gotoNextVolume = false;
 
         if(volume == NULL)
         {
@@ -503,22 +503,18 @@ void *Z_Malloc(size_t size, int tag, void *user)
         {
             // Appstatic allocations may be around for a long time so make sure
             // they don't litter the volume. Their own rover will keep them as
-            // tightly bound as possible.
-            base = volume->zone->staticRover;
+            // tightly packed as possible.
+            iter = volume->zone->staticRover;
         }
         else
         {
             // Everything else is allocated using the rover.
-            base = volume->zone->rover;
+            iter = volume->zone->rover;
         }
-        assert(base->prev);
+        assert(iter->prev);
 
-        // Look back up a little to see if we have some space available nearby.
-        base = rewindRover(volume, base, 3, size);
-
-        // 'base' is the block that we'll end up using.
-        start = base;
-        gotoNextVolume = false;
+        // Back up a little to see if we have some space available nearby.
+        start = iter = rewindRover(volume, iter, 3, size);
         numChecked = 0;
 
         // If the start is in a sequence, move it to the beginning of the
@@ -530,19 +526,15 @@ void *Z_Malloc(size_t size, int tag, void *user)
         }
 
         // We will scan ahead until we find something big enough.
-        for(;; numChecked++)
+        for( ; !(isFreeBlock(iter) && iter->size >= size); numChecked++)
         {
-            // Is this a suitable block?
-            if(isFreeBlock(base) && base->size >= size)
-                break; // We'll take it!
-
             // Check for purgable blocks we can dispose of.
-            if(!isFreeBlock(base))
+            if(!isFreeBlock(iter))
             {
-                if(base->tag >= PU_PURGELEVEL)
+                if(iter->tag >= PU_PURGELEVEL)
                 {
-                    memblock_t* old = base;
-                    base = base->prev; // Step back.
+                    memblock_t* old = iter;
+                    iter = iter->prev; // Step back.
 #ifdef FAKE_MEMORY_ZONE
                     Z_Free(old->area);
 #else
@@ -551,19 +543,19 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 }
                 else
                 {
-                    if(base->seqFirst)
+                    if(iter->seqFirst)
                     {
                         // This block is part of a sequence of blocks, none of
                         // which can be purged. Skip the entire sequence.
-                        base = base->seqFirst->seqLast;
+                        iter = iter->seqFirst->seqLast;
                     }
                 }
             }
 
             // Move to the next block.
-            base = advanceBlock(volume, base);
+            iter = advanceBlock(volume, iter);
 
-            if(base == start && numChecked > 0)
+            if(iter == start && numChecked > 0)
             {
                 // Scanned all the way through, no suitable space found.
                 gotoNextVolume = true;
@@ -580,23 +572,23 @@ void *Z_Malloc(size_t size, int tag, void *user)
         if(gotoNextVolume) continue;
 
         // Found a block big enough.
-        if(base->size - size > MINFRAGMENT)
+        if(iter->size - size > MINFRAGMENT)
         {
-            splitFreeBlock(base, size);
+            splitFreeBlock(iter, size);
         }
 
 #ifdef FAKE_MEMORY_ZONE
-        base->areaSize = size - sizeof(memblock_t);
-        base->area = M_Malloc(base->areaSize);
+        iter->areaSize = size - sizeof(memblock_t);
+        iter->area = M_Malloc(iter->areaSize);
 #endif
 
         if(user)
         {
-            base->user = user;      // mark as an in use block
+            iter->user = user;      // mark as an in use block
 #ifdef FAKE_MEMORY_ZONE
-            *(void **) user = base->area;
+            *(void **) user = iter->area;
 #else
-            *(void **) user = (void *) ((byte *) base + sizeof(memblock_t));
+            *(void **) user = (void *) ((byte *) iter + sizeof(memblock_t));
 #endif
         }
         else
@@ -607,50 +599,50 @@ void *Z_Malloc(size_t size, int tag, void *user)
                 Con_Error("Z_Malloc: an owner is required for "
                           "purgable blocks.\n");
             }
-            base->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
+            iter->user = MEMBLOCK_USER_ANONYMOUS; // mark as in use, but unowned
         }
-        base->tag = tag;
+        iter->tag = tag;
 
         if(tag == PU_MAPSTATIC)
         {
             // Level-statics are linked into unpurgable sequences so they can
             // be skipped en masse.
-            base->seqFirst = base;
-            base->seqLast = base;
-            if(base->prev->seqFirst)
+            iter->seqFirst = iter;
+            iter->seqLast = iter;
+            if(iter->prev->seqFirst)
             {
-                base->seqFirst = base->prev->seqFirst;
-                base->seqFirst->seqLast = base;
+                iter->seqFirst = iter->prev->seqFirst;
+                iter->seqFirst->seqLast = iter;
             }
         }
         else
         {
             // Not part of a sequence.
-            base->seqLast = base->seqFirst = NULL;
+            iter->seqLast = iter->seqFirst = NULL;
         }
 
         // Next allocation will start looking here, at the rover.
         if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
         {
-            volume->zone->staticRover = advanceBlock(volume, base);
+            volume->zone->staticRover = advanceBlock(volume, iter);
         }
         else
         {
-            volume->zone->rover = advanceBlock(volume, base);
+            volume->zone->rover = advanceBlock(volume, iter);
         }
 
         // Keep tabs on how much memory is used.
-        volume->allocatedBytes += base->size;
+        volume->allocatedBytes += iter->size;
 
-        base->volume = volume;
-        base->id = ZONEID;
+        iter->volume = volume;
+        iter->id = ZONEID;
 
         unlockZone();
 
 #ifdef FAKE_MEMORY_ZONE
-        return base->area;
+        return iter->area;
 #else
-        return (void *) ((byte *) base + sizeof(memblock_t));
+        return (void *) ((byte *) iter + sizeof(memblock_t));
 #endif
     }
 }
