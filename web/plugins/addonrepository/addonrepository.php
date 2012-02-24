@@ -121,7 +121,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         if(!is_array($addon['attributes'])) return false;
 
         $attribs = &$addon['attributes'];
-        return isset($attribs['featured']) && (boolean)$attribs['featured'];
+        return (boolean)$attribs['featured'];
     }
 
     private function outputAddonListElement(&$addon)
