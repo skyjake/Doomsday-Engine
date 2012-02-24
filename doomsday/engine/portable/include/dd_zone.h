@@ -49,8 +49,6 @@ boolean Z_IsInited(void);
 int Z_Init(void);
 
 void            Z_Shutdown(void);
-void            Z_EnableFastMalloc(boolean isEnabled);
-//void            Z_PrintStatus(void);
 void*           Z_Malloc(size_t size, int tag, void* ptr);
 void            Z_Free(void* ptr);
 void            Z_FreeTags(int lowTag, int highTag);
@@ -64,6 +62,7 @@ void*           Z_Calloc(size_t size, int tag, void* user);
 void*           Z_Recalloc(void* ptr, size_t n, int callocTag);
 size_t          Z_FreeMemory(void);
 void            Z_PrintStatus(void);
+void            Z_DebugDrawer(void);
 
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
@@ -83,6 +82,7 @@ typedef struct {
     size_t          size; // Total bytes malloced, including header.
     memblock_t      blockList; // Start / end cap for linked list.
     memblock_t*     rover;
+    memblock_t*     staticRover;
 } memzone_t;
 
 struct zblockset_block_s;

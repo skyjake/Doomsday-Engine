@@ -766,6 +766,10 @@ static void Con_BusyDrawer(void)
         Con_BusyDrawConsoleOutput();
     }
 
+#ifdef _DEBUG
+    Z_DebugDrawer();
+#endif
+
     Sys_UpdateWindow(windowIDX);
 }
 
