@@ -156,15 +156,35 @@ class AddonsParser
         if(!($list_addon instanceof SimpleXMLElement))
             throw new Exception('Received invalid list_addon');
 
-        $downloadUri = safe_url($list_addon->downloadUri);
-        $title       = clean_text($list_addon->title);
-        $description = clean_text($list_addon->description);
-        $notes       = clean_text($list_addon->notes);
+        $addon = array('title'=>clean_text($list_addon->title));
 
-        $addon = array('downloadUri'=>$downloadUri,
-                       'title'=>$title,
-                       'description'=>$description,
-                       'notes'=>$notes);
+        if(!empty($list_addon->homepageUri))
+            $addon['homepageUri'] = safe_url($list_addon->homepageUri);
+
+        if(!empty($list_addon->downloadUri))
+            $addon['downloadUri'] = safe_url($list_addon->downloadUri);
+
+        if(!empty($list_addon->version))
+            $addon['version'] = clean_text($list_addon->version);
+
+        if(!empty($list_addon->description))
+            $addon['description'] = clean_text($list_addon->description);
+
+        if(!empty($list_addon->notes))
+            $addon['notes'] = clean_text($list_addon->notes);
+
+        $attribs = array('featured'=>(integer)0);
+        foreach($list_addon->attributes() as $key => $value)
+        {
+            $attrib = strtolower(clean_text($key));
+            if(array_key_exists($attrib, $attribs))
+            {
+                $value = clean_text($value);
+                $attribs[$attrib] = (integer)eval('return ('.$value.');');
+            }
+        }
+        $addon['attributes'] = $attribs;
+
         return $addon;
     }
 }

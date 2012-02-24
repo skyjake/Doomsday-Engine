@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon>
+<addon featured="true">
     <downloadUri>http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
-    <title>jDRP v1.01 (packaged)</title>
+    <title>jDRP (packaged)</title>
+    <version>1.01</version>
     <description>DOOM Resource Pack</description>
     <notes><![CDATA[<em>Unzip</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -57,8 +58,8 @@
         <game>doom2-tnt</game>
     </games>
 </addon>
-<addon>
-    <downloadUri>http://dhtp.freelanzer.com/</downloadUri>
+<addon featured="true">
+    <homepageUri>http://dhtp.freelanzer.com/</homepageUri>
     <title>DOOM High-resolution Texture Project</title>
     <description>DOOM high resolution textures</description>
     <games>
@@ -84,7 +85,7 @@
         <game>doom2-tnt</game>
     </games>
 </addon>
-<addon>
+<addon featured="true">
     <downloadUri>http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
     <title>DOOM High-quality sound pack</title>
     <description>Compiled by Per Kristian Risvik</description>
@@ -114,7 +115,8 @@
 </addon>
 <addon>
     <downloadUri>http://torrage.com/torrent/584A6DDB49940C73753CB6B425B4301E6137E945.torrent</downloadUri>
-    <title>jHRP 2009.07.03 (packaged)</title>
+    <title>jHRP (packaged)</title>
+    <version>2009.07.03</version>
     <description>3D Models, hi-res interface elements and textures</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>
@@ -125,7 +127,8 @@
 </addon>
 <addon>
     <downloadUri>http://files.dengine.net/tracker/torrents/xhtp-20100714.pk3.torrent</downloadUri>
-    <title>xHTP 2010.07.14 (packaged)</title>
+    <title>xHTP (packaged)</title>
+    <version>2010.07.14</version>
     <description>High resolution texture pack</description>
     <notes><![CDATA[<em>Move</em> this pack into the Snowberry addon folder]]></notes>
     <games>

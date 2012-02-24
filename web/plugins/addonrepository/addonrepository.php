@@ -34,6 +34,21 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     private $_displayOptions = 0;
 
+    // Symbolic game mode names:
+    private static $doomGameModes = array(
+        'doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt'
+    );
+
+    private static $hereticGameModes = array(
+        'heretic', 'heretic-share', 'heretic-ext'
+    );
+
+    private static $hexenGameModes = array(
+        'hexen', 'hexen-dk', 'hexen-demo'
+    );
+
+    private $addons = NULL;
+
     public function __construct() {}
 
     public function title()
@@ -74,7 +89,9 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      *
      * @param addon  (Array) Addon record object.
      * @param gameModes  (Array) Associative array containing the list of
-     *                   game modes to look for (the needles).
+     *                   game modes to look for (the needles). If none are
+     *                   specified; assume this addon supports it.
+     * @return  (Boolean)
      */
     private function addonSupportsGameMode(&$addon, &$gameModes)
     {
@@ -82,7 +99,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             throw new Exception('Invalid addon argument, array expected');
 
         if(!isset($addon['games'])) return true;
-        if(!is_array($gameModes)) return false;
+        if(!is_array($gameModes)) return true;
 
         $supportedModes = &$addon['games'];
         foreach($gameModes as $mode)
@@ -94,63 +111,115 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     }
 
     /**
+     * @return  (Boolean) @c true if this addon is marked 'featured'.
+     */
+    private function addonHasFeatured(&$addon)
+    {
+        if(!is_array($addon))
+            throw new Exception('Invalid addon argument, array expected');
+
+        if(!is_array($addon['attributes'])) return false;
+
+        $attribs = &$addon['attributes'];
+        return (boolean)$attribs['featured'];
+    }
+
+    private function outputAddonListElement(&$addon)
+    {
+        if(!is_array($addon))
+            throw new Exception('Invalid addon argument, array expected');
+
+        $addonFullTitle = $addon['title'];
+        if(isset($addon['version']))
+            $addonFullTitle .= ' '. $addon['version'];
+
+?><tr><td><?php
+
+        if(isset($addon['downloadUri']))
+        {
+?><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+        }
+        else if(isset($addon['homepageUri']))
+        {
+?><a href="<?php echo $addon['homepageUri']; ?>" title="Visit homepage for <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+        }
+        else
+        {
+            echo $addonFullTitle;
+        }
+
+?></td>
+<td><?php if(isset($addon['description'])) echo $addon['description']; ?></td>
+<td><?php if(isset($addon['notes'])) echo $addon['notes']; ?></td></tr><?
+    }
+
+    /**
      * Output an HTML list of addons to the output stream
      *
      * @param addons  (Array) Collection of Addon records to process.
-     * @param gameModes  (Array) Game modes to filter the addon list by.
+     * @param filter_gameModes  (Array) Game modes to filter the addon list by.
+     * @param filter_featured  (Mixed) @c < 0 no filter
+     *                                    = 0 not featured
+     *                                    = 1 featured
      */
-    private function outputAddonList(&$addons, &$gameModes)
+    private function outputAddonList(&$addons, $filter_gameModes, $filter_featured=-1)
     {
         if(!is_array($addons))
             throw new Exception('Invalid addons argument, array expected');
 
+        // Sanitize filter arguments.
+        $filter_featured = intval($filter_featured);
+        if($filter_featured < 0) $filter_featured = -1; // Any.
+        else                     $filter_featured = $filter_featured? 1 : 0;
+
+        // Output the table.
 ?><table class="directory">
 <tr><th>Name</th><th>Description</th><th>Notes</th></tr><?php
 
-        foreach($addons as $addon)
+        foreach($addons as &$addon)
         {
-            if(!$this->addonSupportsGameMode($addon, $gameModes)) continue;
+            if($filter_featured != -1 && (boolean)$filter_featured != $this->addonHasFeatured($addon)) continue;
+            if(!$this->addonSupportsGameMode($addon, $filter_gameModes)) continue;
 
-?><tr><td><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addon['title']; ?>"><?php echo $addon['title']; ?></a></td>
-<td><?php echo $addon['description']; ?></td>
-<td><?php echo $addon['notes']; ?></td></tr><?
+            $this->outputAddonListElement($addon);
         }
 
 ?></table><?php
 
     }
 
+    public static function packageSorter($packA, $packB)
+    {
+        return strcmp($packA['title'], $packB['title']);
+    }
+
     public function generateHTML()
     {
-        global $FrontController;
-
-        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
-
-        $addons = array();
-        AddonsParser::parse($addonListXml, $addons);
-
         includeHTML('overview', self::$name);
+
+        if(0){
+?><h3>Featured Add-ons</h3><?php
+
+        $this->outputAddonList($this->addons, NULL/*no game mode filter*/, TRUE/*only featured*/);
+        }
 
 ?><h3>DOOM</h3>
 <p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
 <?php
 
-        $doomGames = array('doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt');
-        $this->outputAddonList($addons, $doomGames);
+        $this->outputAddonList($this->addons, self::$doomGameModes);
 
 ?><h3>Heretic</h3>
 <p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
 <?php
 
-        $hereticGames = array('heretic', 'heretic-share', 'heretic-ext');
-        $this->outputAddonList($addons, $hereticGames);
+        $this->outputAddonList($this->addons, self::$hereticGameModes);
 
 ?><h3>Hexen</h3>
 <p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
 <?php
 
-        $hexenGames = array('hexen', 'hexen-dk', 'hexen-demo');
-        $this->outputAddonList($addons, $hexenGames);
+        $this->outputAddonList($this->addons, self::$hexenGameModes);
 
         includeHTML('instructions', self::$name);
     }
@@ -162,6 +231,16 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         global $FrontController;
 
+        // Build the add-ons collection.
+        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
+
+        $this->addons = array();
+        AddonsParser::parse($addonListXml, $this->addons);
+
+        // Sort the collection.
+        uasort($this->addons, array('self', 'packageSorter'));
+
+        // Output the page.
         $FrontController->outputHeader($this->title());
         $FrontController->beginPage($this->title());
 

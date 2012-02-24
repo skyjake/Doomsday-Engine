@@ -415,10 +415,6 @@ class FrontController
     <meta http-equiv="content-style-type" content="text/css" />
     <link rel="stylesheet" href="/style.css" type="text/css" media="all" />
 </head>
-<script type="text/javascript">
-// Thickbox 3 loading image
-tb_pathToImage = "/external/thickbox/loading-thickbox.gif";
-</script>
 <?php
     }
 

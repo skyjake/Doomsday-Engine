@@ -74,10 +74,9 @@ abstract class AbstractPackage extends BasePackage implements iDownloadable
         $fullTitle = $this->composeFullTitle();
         if($this->hasDownloadUri())
         {
-            $downloadUriTitle = "Download $fullTitle";
-
-            $html = "<a href=\"$this->downloadUri\" title=\"$downloadUriTitle\">".
-                    htmlspecialchars($fullTitle) .'</a>';
+            $html = '<a href="'. htmlspecialchars($this->downloadUri)
+                   .'" title="'. ("Download $fullTitle")
+                          .'">'. htmlspecialchars($fullTitle) .'</a>';
         }
         else
         {
