@@ -1,25 +1,35 @@
 /**
  * @file dd_zone.c
- * Implementation of the memory zone. @ingroup memzone
+ * Memory zone implementation. @ingroup memzone
  *
- * The zone is composed of multiple memory volumes.
+ * The zone is composed of multiple memory volumes. New volumes get created on
+ * the fly when needed. This guarantees that all allocation requests will
+ * succeed.
  *
- * There is never any space between memblocks, and there will never be
- * two contiguous free memblocks.
+ * There is never any space between memblocks, and there will never be two
+ * contiguous free memblocks.
  *
- * The rover can be left pointing at a non-empty block.
+ * Each volume employs two rovers that are used to locate free blocks for new
+ * allocations. When an allocation succeeds, the rover is left pointing to the
+ * block after the new allocation. The rover can be left pointing at a
+ * non-empty block. One of the rovers is for the STATIC purgelevels while the
+ * other is for all other purgelevels. The purpose of this is to prevent memory
+ * fragmentation: when longer-lifespan allocations get mixed with
+ * short-lifespan ones, the end result is more longer-lifespan allocations with
+ * small amounts of potentially unusable free space between them. The static
+ * rover attempts to place all the longer-lifespan allocation near the start of
+ * the volume.
  *
- * It is of no value to free a cachable block, because it will get
- * overwritten automatically if needed.
+ * You should not explicitly call Z_Free() on PU_CACHE blocks because they
+ * will get automatically freed if necessary.
  *
  * @par Block Sequences
- * The PU_MAPSTATIC purge tag has a special purpose.
- * It works like PU_MAP so that it is purged on a per map basis, but
- * blocks allocated as PU_MAPSTATIC should not be freed at any time when the
- * map is being used. Internally, the map-static blocks are linked into
- * sequences so that Z_Malloc knows to skip all of them efficiently. This is
- * possible because no block inside the sequence could be purged by Z_Malloc
- * anyway.
+ * The PU_MAPSTATIC purge tag has a special purpose. It works like PU_MAP so
+ * that it is purged on a per map basis, but blocks allocated as PU_MAPSTATIC
+ * should not be freed at any time when the map is being used. Internally, the
+ * map-static blocks are linked into sequences so that Z_Malloc knows to skip
+ * all of them efficiently. This is possible because no block inside the
+ * sequence could be purged by Z_Malloc() anyway.
  *
  * @authors Copyright © 1999-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
@@ -385,8 +395,8 @@ static __inline boolean isVolumeTooFull(memvolume_t* vol)
 
 /**
  * The static rovers should be rewound back near the beginning of the volume
- * periodically. Currently this is done whenever tag ranges are purged (e.g.,
- * before map changes).
+ * periodically in order for them to be effective. Currently this is done
+ * whenever tag ranges are purged (e.g., before map changes).
  */
 static void rewindStaticRovers(void)
 {
