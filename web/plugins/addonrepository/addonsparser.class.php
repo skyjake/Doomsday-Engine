@@ -27,6 +27,8 @@
 
 includeGuard('AddonsParser');
 
+require_once('baseaddon.class.php');
+
 class AddonsParser
 {
     public static function parse($xmlAddonList, &$addons)
@@ -98,7 +100,8 @@ class AddonsParser
                     case 'games':
                         try
                         {
-                            $addon['games'] = self::parseGames($child);
+                            $games = self::parseGames($child);
+                            $addon->addGames($games);
                         }
                         catch(Exception $e)
                         {
@@ -156,34 +159,26 @@ class AddonsParser
         if(!($list_addon instanceof SimpleXMLElement))
             throw new Exception('Received invalid list_addon');
 
-        $addon = array('title'=>clean_text($list_addon->title));
+        $title = clean_text($list_addon->title);
+        $version = !empty($list_addon->version)? clean_text($list_addon->version) : NULL;
+        $downloadUri = !empty($list_addon->downloadUri)? safe_url($list_addon->downloadUri) : NULL;
+        $homepageUri = !empty($list_addon->homepageUri)? safe_url($list_addon->homepageUri) : NULL;
 
-        if(!empty($list_addon->homepageUri))
-            $addon['homepageUri'] = safe_url($list_addon->homepageUri);
+        // Construct and configure a new Addon instance.
+        $addon = new Addon($title, $version, $downloadUri, $homepageUri);
 
-        if(!empty($list_addon->downloadUri))
-            $addon['downloadUri'] = safe_url($list_addon->downloadUri);
-
-        if(!empty($list_addon->version))
-            $addon['version'] = clean_text($list_addon->version);
-
-        if(!empty($list_addon->description))
-            $addon['description'] = clean_text($list_addon->description);
-
-        if(!empty($list_addon->notes))
-            $addon['notes'] = clean_text($list_addon->notes);
-
-        $attribs = array('featured'=>(integer)0);
         foreach($list_addon->attributes() as $key => $value)
         {
-            $attrib = strtolower(clean_text($key));
-            if(array_key_exists($attrib, $attribs))
-            {
-                $value = clean_text($value);
-                $attribs[$attrib] = (integer)eval('return ('.$value.');');
-            }
+            $attrib = clean_text($key);
+            $value = clean_text($value);
+            $addon->setAttrib($attrib, (integer)eval('return ('.$value.');'));
         }
-        $addon['attributes'] = $attribs;
+
+        if(!empty($list_addon->description))
+            $addon->setDescription(clean_text($list_addon->description));
+
+        if(!empty($list_addon->notes))
+            $addon->setNotes(clean_text($list_addon->notes));
 
         return $addon;
     }
