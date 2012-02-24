@@ -394,7 +394,7 @@ static void determineGlobalPaths(application_t* app)
     {
         strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
     }
-    else if(ArgCheck("-stdbasedir"))
+    else
     {
         // The standard base directory is one level up from the bin dir.
         dd_snprintf(ddBasePath, FILENAME_T_MAXLEN, "%s../", ddBinPath);
