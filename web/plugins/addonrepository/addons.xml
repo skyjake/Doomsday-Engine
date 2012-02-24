@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon>
+<addon featured="true">
     <downloadUri>http://files.dengine.net/tracker/torrents/jdrp-packaged-20070404.zip.torrent</downloadUri>
     <title>jDRP (packaged)</title>
     <version>1.01</version>
@@ -58,7 +58,7 @@
         <game>doom2-tnt</game>
     </games>
 </addon>
-<addon>
+<addon featured="true">
     <homepageUri>http://dhtp.freelanzer.com/</homepageUri>
     <title>DOOM High-resolution Texture Project</title>
     <description>DOOM high resolution textures</description>
@@ -85,7 +85,7 @@
         <game>doom2-tnt</game>
     </games>
 </addon>
-<addon>
+<addon featured="true">
     <downloadUri>http://files.dengine.net/tracker/torrents/pk-doom-sfx-20100109.pk3.torrent</downloadUri>
     <title>DOOM High-quality sound pack</title>
     <description>Compiled by Per Kristian Risvik</description>

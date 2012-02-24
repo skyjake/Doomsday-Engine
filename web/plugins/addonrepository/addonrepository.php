@@ -74,7 +74,9 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
      *
      * @param addon  (Array) Addon record object.
      * @param gameModes  (Array) Associative array containing the list of
-     *                   game modes to look for (the needles).
+     *                   game modes to look for (the needles). If none are
+     *                   specified; assume this addon supports it.
+     * @return  (Boolean)
      */
     private function addonSupportsGameMode(&$addon, &$gameModes)
     {
@@ -82,7 +84,7 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             throw new Exception('Invalid addon argument, array expected');
 
         if(!isset($addon['games'])) return true;
-        if(!is_array($gameModes)) return false;
+        if(!is_array($gameModes)) return true;
 
         $supportedModes = &$addon['games'];
         foreach($gameModes as $mode)
@@ -94,45 +96,77 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     }
 
     /**
+     * @return  (Boolean) @c true if this addon is marked 'featured'.
+     */
+    private function addonHasFeatured(&$addon)
+    {
+        if(!is_array($addon))
+            throw new Exception('Invalid addon argument, array expected');
+
+        if(!is_array($addon['attributes'])) return false;
+
+        $attribs = &$addon['attributes'];
+        return isset($attribs['featured']) && (boolean)$attribs['featured'];
+    }
+
+    private function outputAddonListElement(&$addon)
+    {
+        if(!is_array($addon))
+            throw new Exception('Invalid addon argument, array expected');
+
+        $addonFullTitle = $addon['title'];
+        if(isset($addon['version']))
+            $addonFullTitle .= ' '. $addon['version'];
+
+?><tr><td><?php
+
+        if(isset($addon['downloadUri']))
+        {
+?><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+        }
+        else if(isset($addon['homepageUri']))
+        {
+?><a href="<?php echo $addon['homepageUri']; ?>" title="Visit homepage for <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
+        }
+        else
+        {
+            echo $addonFullTitle;
+        }
+
+?></td>
+<td><?php if(isset($addon['description'])) echo $addon['description']; ?></td>
+<td><?php if(isset($addon['notes'])) echo $addon['notes']; ?></td></tr><?
+    }
+
+    /**
      * Output an HTML list of addons to the output stream
      *
      * @param addons  (Array) Collection of Addon records to process.
-     * @param gameModes  (Array) Game modes to filter the addon list by.
+     * @param filter_gameModes  (Array) Game modes to filter the addon list by.
+     * @param filter_featured  (Mixed) @c < 0 no filter
+     *                                    = 0 not featured
+     *                                    = 1 featured
      */
-    private function outputAddonList(&$addons, &$gameModes)
+    private function outputAddonList(&$addons, $filter_gameModes, $filter_featured=-1)
     {
         if(!is_array($addons))
             throw new Exception('Invalid addons argument, array expected');
 
+        // Sanitize filter arguments.
+        $filter_featured = intval($filter_featured);
+        if($filter_featured < 0) $filter_featured = -1; // Any.
+        else                     $filter_featured = $filter_featured? 1 : 0;
+
+        // Output the table.
 ?><table class="directory">
 <tr><th>Name</th><th>Description</th><th>Notes</th></tr><?php
 
-        foreach($addons as $addon)
+        foreach($addons as &$addon)
         {
-            if(!$this->addonSupportsGameMode($addon, $gameModes)) continue;
+            if($filter_featured != -1 && (boolean)$filter_featured != $this->addonHasFeatured($addon)) continue;
+            if(!$this->addonSupportsGameMode($addon, $filter_gameModes)) continue;
 
-            $addonFullTitle = $addon['title'];
-            if(isset($addon['version']))
-                $addonFullTitle .= ' '. $addon['version'];
-
-?><tr><td><?php
-
-            if(isset($addon['downloadUri']))
-            {
-?><a href="<?php echo $addon['downloadUri']; ?>" title="Download <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
-            }
-            else if(isset($addon['homepageUri']))
-            {
-?><a href="<?php echo $addon['homepageUri']; ?>" title="Visit homepage for <?php echo $addonFullTitle; ?>" rel="nofollow"><?php echo $addonFullTitle; ?></a><?php
-            }
-            else
-            {
-                echo $addonFullTitle;
-            }
-
-?></td>
-<td><?php echo $addon['description']; ?></td>
-<td><?php echo $addon['notes']; ?></td></tr><?
+            $this->outputAddonListElement($addon);
         }
 
 ?></table><?php

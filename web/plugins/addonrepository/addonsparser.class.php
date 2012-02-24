@@ -173,6 +173,19 @@ class AddonsParser
         if(!empty($list_addon->notes))
             $addon['notes'] = clean_text($list_addon->notes);
 
+        $attribs = array();
+        foreach($list_addon->attributes() as $key => $value)
+        {
+            $attrib = clean_text($key);
+            if(strcasecmp($attrib, 'featured') == 0)
+            {
+                $value = clean_text($value);
+                $attribs[strtolower($attrib)] = (integer)eval('return ('.$value.');');
+            }
+        }
+
+        $addon['attributes'] = $attribs;
+
         return $addon;
     }
 }
