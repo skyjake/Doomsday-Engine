@@ -34,6 +34,21 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     private $_displayOptions = 0;
 
+    // Symbolic game mode names:
+    private static $doomGameModes = array(
+        'doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt'
+    );
+
+    private static $hereticGameModes = array(
+        'heretic', 'heretic-share', 'heretic-ext'
+    );
+
+    private static $hexenGameModes = array(
+        'hexen', 'hexen-dk', 'hexen-demo'
+    );
+
+    private $addons = NULL;
+
     public function __construct() {}
 
     public function title()
@@ -173,37 +188,38 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
     }
 
+    public static function packageSorter($packA, $packB)
+    {
+        return strcmp($packA['title'], $packB['title']);
+    }
+
     public function generateHTML()
     {
-        global $FrontController;
-
-        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
-
-        $addons = array();
-        AddonsParser::parse($addonListXml, $addons);
-
         includeHTML('overview', self::$name);
+
+        if(0){
+?><h3>Featured Add-ons</h3><?php
+
+        $this->outputAddonList($this->addons, NULL/*no game mode filter*/, TRUE/*only featured*/);
+        }
 
 ?><h3>DOOM</h3>
 <p>The following add-ons are for use with <strong>DOOM</strong>, <strong>DOOM2</strong>, <strong>Ultimate DOOM</strong> and <strong>Final DOOM (TNT/Plutonia)</strong>. Some of which may even be used with the shareware version of DOOM (check the <em>Notes</em>).</p>
 <?php
 
-        $doomGames = array('doom1', 'doom1-ultimate', 'doom1-share', 'doom2', 'doom2-plut', 'doom2-tnt');
-        $this->outputAddonList($addons, $doomGames);
+        $this->outputAddonList($this->addons, self::$doomGameModes);
 
 ?><h3>Heretic</h3>
 <p>The following add-ons are for use with <strong>Heretic</strong> and <strong>Heretic: Shadow of the Serpent Riders </strong>. Some of which may even be used with the shareware version of Heretic (check the <em>Notes</em>).</p>
 <?php
 
-        $hereticGames = array('heretic', 'heretic-share', 'heretic-ext');
-        $this->outputAddonList($addons, $hereticGames);
+        $this->outputAddonList($this->addons, self::$hereticGameModes);
 
 ?><h3>Hexen</h3>
 <p>The following add-ons are for use with <strong>Hexen</strong> and <strong>Hexen:Deathkings of the Dark Citadel</strong>. Some of which may even be used with the shareware version of Hexen (check the <em>Notes</em>).</p>
 <?php
 
-        $hexenGames = array('hexen', 'hexen-dk', 'hexen-demo');
-        $this->outputAddonList($addons, $hexenGames);
+        $this->outputAddonList($this->addons, self::$hexenGameModes);
 
         includeHTML('instructions', self::$name);
     }
@@ -215,6 +231,16 @@ class AddonRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     {
         global $FrontController;
 
+        // Build the add-ons collection.
+        $addonListXml = file_get_contents(FrontController::nativePath("plugins/addonrepository/addons.xml"));
+
+        $this->addons = array();
+        AddonsParser::parse($addonListXml, $this->addons);
+
+        // Sort the collection.
+        uasort($this->addons, array('self', 'packageSorter'));
+
+        // Output the page.
         $FrontController->outputHeader($this->title());
         $FrontController->beginPage($this->title());
 
