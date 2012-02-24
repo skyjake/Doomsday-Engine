@@ -1120,7 +1120,7 @@ void Z_DrawRegion(memvolume_t* volume, RectRaw* rect, size_t start, size_t size,
     const size_t edge = rect->origin.x + rect->size.width;
     int x = (start % bytesPerRow)*toPixelScale + rect->origin.x;
     int y = start / bytesPerRow + rect->origin.y;
-    uint pixels = MAX_OF(1, ceil(size * toPixelScale));
+    int pixels = MAX_OF(1, ceil(size * toPixelScale));
 
     assert(start + size <= volume->size);
 
