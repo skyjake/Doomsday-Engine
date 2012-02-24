@@ -97,6 +97,9 @@ static memvolume_t *volumeLast;
 
 static mutex_t zoneMutex = 0;
 
+static size_t Z_AllocatedMemory(void);
+static size_t allocatedMemoryInVolume(memvolume_t* volume);
+
 static __inline void lockZone(void)
 {
     assert(zoneMutex != 0);
@@ -727,6 +730,11 @@ void Z_CheckHeap(void)
     {
         size_t total = 0;
 
+        // Validate the counter.
+        if(allocatedMemoryInVolume(volume) != volume->allocatedBytes)
+            Con_Error("Z_CheckHeap: allocates bytes counter is off (counter:%u != actual:%u)\n",
+                      volume->allocatedBytes, allocatedMemoryInVolume(volume));
+
         // Does the memory in the blocks sum up to the total volume size?
         for(block = volume->zone->blockList.next;
             block != &volume->zone->blockList; block = block->next)
@@ -927,28 +935,35 @@ uint Z_VolumeCount(void)
     return count;
 }
 
+static size_t allocatedMemoryInVolume(memvolume_t* volume)
+{
+    memblock_t* block;
+    size_t total = 0;
+
+    for(block = volume->zone->blockList.next; !isRootBlock(volume, block);
+        block = block->next)
+    {
+        if(!isFreeBlock(block))
+        {
+            total += block->size;
+        }
+    }
+    return total;
+}
+
 /**
  * Calculate the size of allocated memory blocks in all volumes combined.
  */
-size_t Z_AllocatedMemory(void)
+static size_t Z_AllocatedMemory(void)
 {
-    memvolume_t    *volume;
-    memblock_t     *block;
-    size_t          total = 0;
+    memvolume_t* volume;
+    size_t total = 0;
 
     lockZone();
 
     for(volume = volumeRoot; volume; volume = volume->next)
     {
-        for(block = volume->zone->blockList.next;
-            block != &volume->zone->blockList;
-            block = block->next)
-        {
-            if(block->user)
-            {
-                total += block->size;
-            }
-        }
+        total += allocatedMemoryInVolume(volume);
     }
 
     unlockZone();
@@ -990,8 +1005,8 @@ void Z_PrintStatus(void)
     size_t allocated = Z_AllocatedMemory();
     size_t wasted = Z_FreeMemory();
 
-    Con_Message("Memory zone status: %u volumes, %u bytes allocated, %u bytes wasted (%f%%)\n",
-                Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)wasted/(float)allocated*100.f);
+    Con_Message("Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)\n",
+                Z_VolumeCount(), (uint)allocated, (uint)wasted, (float)allocated/(float)(allocated+wasted)*100.f);
 #endif
 }
 
