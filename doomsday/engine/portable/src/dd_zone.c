@@ -407,13 +407,32 @@ static void rewindStaticRovers(void)
     }
 }
 
+static void splitFreeBlock(memblock_t* block, size_t size)
+{
+    // There will be a new free fragment after the block.
+    memblock_t* newBlock = (memblock_t *) ((byte*) block + size);
+    newBlock->size = block->size - size;
+    newBlock->user = NULL;       // free block
+    newBlock->tag = 0;
+    newBlock->volume = NULL;
+    newBlock->prev = block;
+    newBlock->next = block->next;
+    newBlock->next->prev = newBlock;
+    newBlock->seqFirst = newBlock->seqLast = NULL;
+#ifdef FAKE_MEMORY_ZONE
+    newBlock->area = 0;
+    newBlock->areaSize = 0;
+#endif
+    block->next = newBlock;
+    block->size = size;
+}
+
 /**
  * You can pass a NULL user if the tag is < PU_PURGELEVEL.
  */
 void *Z_Malloc(size_t size, int tag, void *user)
 {
-    size_t          extra;
-    memblock_t     *start, *new, *base;
+    memblock_t     *start, *base;
     memvolume_t    *volume;
     boolean         gotoNextVolume;
 
@@ -487,12 +506,10 @@ void *Z_Malloc(size_t size, int tag, void *user)
         // Look back up a little to see if we have some space available nearby.
         base = rewindRover(volume, base, 3, size);
 
-        gotoNextVolume = false;
-
-        numChecked = 0;
-
         // 'base' is the block that we'll end up using.
         start = base;
+        gotoNextVolume = false;
+        numChecked = 0;
 
         // If the start is in a sequence, move it to the beginning of the
         // entire sequence. Sequences are handled as a single unpurgable entity,
@@ -502,7 +519,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             start = start->seqFirst;
         }
 
-        // We will scan ahead starting until we find something big enough.
+        // We will scan ahead until we find something big enough.
         for(;; numChecked++)
         {
             // Is this a suitable block?
@@ -553,25 +570,9 @@ void *Z_Malloc(size_t size, int tag, void *user)
         if(gotoNextVolume) continue;
 
         // Found a block big enough.
-        extra = base->size - size;
-        if(extra > MINFRAGMENT)
+        if(base->size - size > MINFRAGMENT)
         {
-            // There will be a free fragment after the allocated block.
-            new = (memblock_t *) ((byte *) base + size);
-            new->size = extra;
-            new->user = NULL;       // free block
-            new->tag = 0;
-            new->volume = NULL;
-            new->prev = base;
-            new->next = base->next;
-            new->next->prev = new;
-            new->seqFirst = new->seqLast = NULL;
-#ifdef FAKE_MEMORY_ZONE
-            new->area = 0;
-            new->areaSize = 0;
-#endif
-            base->next = new;
-            base->size = size;
+            splitFreeBlock(base, size);
         }
 
 #ifdef FAKE_MEMORY_ZONE
@@ -618,7 +619,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
             base->seqLast = base->seqFirst = NULL;
         }
 
-        // Next allocation will start looking here.
+        // Next allocation will start looking here, at the rover.
         if(tag == PU_APPSTATIC || tag == PU_GAMESTATIC)
         {
             volume->zone->staticRover = advanceBlock(volume, base);
