@@ -31,12 +31,14 @@ void SideDef_UpdateSurfaceTangents(sidedef_t* side)
 {
     surface_t* surface = &side->SW_topsurface;
     linedef_t* line = side->line;
+    byte sid;
     assert(side);
 
     if(!line) return;
 
-    surface->normal[VY] = (line->L_v1pos[VX] - line->L_v2pos[VX]) / line->length;
-    surface->normal[VX] = (line->L_v2pos[VY] - line->L_v1pos[VY]) / line->length;
+    sid = line->L_frontside == side? FRONT : BACK;
+    surface->normal[VY] = (line->L_vpos(sid  )[VX] - line->L_vpos(sid^1)[VX]) / line->length;
+    surface->normal[VX] = (line->L_vpos(sid^1)[VY] - line->L_vpos(sid  )[VY]) / line->length;
     surface->normal[VZ] = 0;
     V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
