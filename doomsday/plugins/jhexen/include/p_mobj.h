@@ -207,14 +207,6 @@ typedef struct mobj_s {
     struct mobj_s*  lastEnemy;
 } mobj_t;
 
-typedef struct polyobj_s {
-    // Defined in dd_share.h; required polyobj elements.
-    DD_BASE_POLYOBJ_ELEMENTS()
-
-    // Hexen-specific data:
-    void*           specialData; /* Pointer a thinker, if the poly is moving. */
-} polyobj_t;
-
 mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
                           angle_t angle, int spawnFlags);
 mobj_t*     P_SpawnMobj3fv(mobjtype_t type, const float pos[3],

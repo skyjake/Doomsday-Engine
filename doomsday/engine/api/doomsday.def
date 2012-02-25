@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 826 <--
+; Highest ordinal is currently: --> 827 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -586,12 +586,13 @@ EXPORTS
     ClPlayer_ClMobj             @588 NONAME
 
 ; Play: Polyobjs.
-    P_PolyobjMove               @79 NONAME
+    P_PolyobjMoveXY             @79 NONAME
     P_PolyobjRotate             @80 NONAME
     P_PolyobjLink               @82 NONAME
     P_PolyobjUnLink             @81 NONAME
 
-    P_GetPolyobj                @424 NONAME
+    P_PolyobjByID               @424 NONAME
+    P_PolyobjByTag              @827 NONAME
     P_SetPolyobjCallback        @83 NONAME
 
 ; Materials.

@@ -74,10 +74,10 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
     {
         // No mobj ID => it's not a real mobj.
 
-        if(P_IsPolyobjOrigin(*origin))
-            *poly = (polyobj_t*) *origin;
-        else
-        {   // It wasn't a polyobj.
+        *poly = P_PolyobjByOrigin(*origin);
+        if(!*poly)
+        {
+            // It wasn't a polyobj.
             // Try the sectors instead.
             *sector = R_GetSectorForOrigin(*origin);
         }
