@@ -88,12 +88,23 @@ void P_PolyobjLink(polyobj_t* polyobj);
  * Unlink @a polyobj from the current map. To be called prior to moving,
  * rotating or any other translation of the Polyobj within the map.
  */
-void P_PolyobjUnLink(polyobj_t* polyobj);
+void P_PolyobjUnlink(polyobj_t* polyobj);
 
 /**
- * Update the polyobj's axis-aligned bounding box.
+ * Update the Polyobj's map space axis-aligned bounding box to encompass
+ * the points defined by it's vertices.
+ *
+ * @param polyobj  Polyobj instance.
  */
-void P_PolyobjUpdateAABox(polyobj_t* polyobj);
+void Polyobj_UpdateAABox(polyobj_t* polyobj);
+
+/**
+ * Update the Polyobj's map space surface tangents according to the points
+ * defined by the associated LineDef's vertices.
+ *
+ * @param polyobj  Polyobj instance.
+ */
+void Polyobj_UpdateSurfaceTangents(polyobj_t* polyobj);
 
 /**
  * Iterate over the LineDefs of the Polyobj making a callback for each.
@@ -109,7 +120,7 @@ void P_PolyobjUpdateAABox(polyobj_t* polyobj);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int P_PolyobjLinesIterator(polyobj_t* polyobj,
+int Polyobj_LineDefIterator(polyobj_t* polyobj,
     int (*callback) (struct linedef_s*, void* paramaters), void* paramaters);
 
 #endif /// LIBDENG_MAP_POLYOB_H

@@ -589,7 +589,7 @@ EXPORTS
     P_PolyobjMoveXY             @79 NONAME
     P_PolyobjRotate             @80 NONAME
     P_PolyobjLink               @82 NONAME
-    P_PolyobjUnLink             @81 NONAME
+    P_PolyobjUnlink             @81 NONAME
 
     P_PolyobjByID               @424 NONAME
     P_PolyobjByTag              @827 NONAME

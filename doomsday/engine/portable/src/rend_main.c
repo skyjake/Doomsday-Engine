@@ -3212,7 +3212,7 @@ static int drawVertex1(linedef_t* li, void* context)
 
 int drawPolyObjVertexes(polyobj_t* po, void* context)
 {
-    return P_PolyobjLinesIterator(po, drawVertex1, po);
+    return Polyobj_LineDefIterator(po, drawVertex1, po);
 }
 
 /**

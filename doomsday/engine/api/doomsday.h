@@ -520,7 +520,7 @@ void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* infli
 boolean P_PolyobjMoveXY(struct polyobj_s* po, float x, float y);
 boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle);
 void P_PolyobjLink(struct polyobj_s* po);
-void P_PolyobjUnLink(struct polyobj_s* po);
+void P_PolyobjUnlink(struct polyobj_s* po);
 
 struct polyobj_s* P_PolyobjByID(uint id);
 struct polyobj_s* P_PolyobjByTag(int tag);
