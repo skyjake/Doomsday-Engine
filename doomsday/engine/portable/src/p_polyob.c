@@ -31,7 +31,7 @@ static void rotatePoint(int an, float* x, float* y, float startSpotX, float star
 static boolean checkMobjBlocking(seg_t* seg, polyobj_t* po);
 
 // Called when the polyobj hits a mobj.
-static void (*po_callback) (mobj_t* mobj, void* seg, void* po);
+static void (*po_callback) (mobj_t* mobj, void* lineDef, void* polyobj);
 
 polyobj_t** polyObjs; // List of all poly-objects in the map.
 uint numPolyObjs;
@@ -473,7 +473,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
             if(P_BoxOnLineSide(&moBox, params->lineDef) == -1)
             {
                 if(po_callback)
-                    po_callback(mo, params->seg, params->polyobj);
+                    po_callback(mo, params->lineDef, params->polyobj);
 
                 params->blocked = true;
             }
