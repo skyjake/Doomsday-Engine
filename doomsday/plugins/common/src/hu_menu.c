@@ -349,7 +349,9 @@ mndata_button_t btn_main_help       = { false, NULL, "Info" };
 mndata_button_t btn_main_quit_game  = { false, NULL, "Quit Game" };
 #endif
 
+#if __JDOOM__ || __JDOOM64__
 mndata_text_t txt_main_title = { NULL, &pMainTitle };
+#endif
 
 mn_object_t MainMenuObjects[] = {
 #if __JHERETIC__ || __JHEXEN__
