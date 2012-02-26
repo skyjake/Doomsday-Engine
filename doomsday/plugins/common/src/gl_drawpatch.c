@@ -31,11 +31,11 @@ void GL_DrawPatch3(patchid_t id, const Point2Raw* origin, int alignFlags, int pa
     RectRaw rect;
     patchinfo_t info;
 
-    if(id == 0 || !origin || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
+    if(id == 0 || DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return;
     if(!R_GetPatchInfo(id, &info)) return;
 
-    rect.origin.x = origin->x;
-    rect.origin.y = origin->y;
+    rect.origin.x = origin? origin->x : 0;
+    rect.origin.y = origin? origin->y : 0;
 
     if(alignFlags & ALIGN_RIGHT)
         rect.origin.x -= info.geometry.size.width;
