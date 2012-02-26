@@ -138,10 +138,6 @@ boolean Sys_IsShuttingDown(void)
  */
 void Sys_Shutdown(void)
 {
-    // Time to unload *everything*.
-    if(DD_GameLoaded())
-        Con_Execute(CMDS_DDAY, "unload", true, false);
-
     B_Shutdown();
     Sys_ShutdownTimer();
 
