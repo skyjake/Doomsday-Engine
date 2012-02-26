@@ -115,7 +115,10 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t* ob);
 void Hu_MenuPlayerClassPreviewTicker(mn_object_t* ob);
 #endif
 
+#if __JHERETIC__ || __JHEXEN__
 void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin);
+#endif
+
 void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin);
 void Hu_MenuDrawSkillPage(mn_page_t* page, const Point2Raw* origin);
 #if __JHEXEN__
@@ -346,8 +349,17 @@ mndata_button_t btn_main_help       = { false, NULL, "Info" };
 mndata_button_t btn_main_quit_game  = { false, NULL, "Quit Game" };
 #endif
 
+mndata_text_t txt_main_title = { NULL, &pMainTitle };
+
 mn_object_t MainMenuObjects[] = {
-#if __JDOOM__
+#if __JHERETIC__ || __JHEXEN__
+    { MN_BUTTON,    0,  0,  { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
+    { MN_BUTTON,    0,  0,  { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
+    { MN_BUTTON,    0,  0,  { 0, 2*FIXED_LINE_HEIGHT }, 'f', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_game_files, "Files" },
+    { MN_BUTTON,    0,  0,  { 0, 3*FIXED_LINE_HEIGHT }, 'i', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectHelp, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_help },
+    { MN_BUTTON,    0,  0,  { 0, 4*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
+#elif __JDOOM__
+    { MN_TEXT,      0,  0,       { -3, -70 }, 0, MENU_FONT1, MENU_COLOR1, MNText_Ticker, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_main_title },
     { MN_BUTTON,    0,  0,       { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
     { MN_BUTTON,    0,  0,       { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
     { MN_BUTTON,    0,  0,       { 0, 2*FIXED_LINE_HEIGHT }, 'l', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectLoadGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_load_game },
@@ -355,16 +367,11 @@ mn_object_t MainMenuObjects[] = {
     { MN_BUTTON,    0,  MNF_ID0, { 0, 4*FIXED_LINE_HEIGHT }, 'r', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectHelp, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_help },
     { MN_BUTTON,    0,  MNF_ID1, { 0, 5*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
 #elif __JDOOM64__
+    { MN_TEXT,      0,  0,       { -3, -70 }, 0, MENU_FONT1, MENU_COLOR1, MNText_Ticker, MNText_UpdateGeometry, MNText_Drawer, { NULL }, NULL, NULL, NULL, &txt_main_title },
     { MN_BUTTON,    0,  0,  { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
     { MN_BUTTON,    0,  0,  { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
     { MN_BUTTON,    0,  0,  { 0, 2*FIXED_LINE_HEIGHT }, 'l', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectLoadGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_load_game },
     { MN_BUTTON,    0,  0,  { 0, 3*FIXED_LINE_HEIGHT }, 's', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectSaveGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_save_game },
-    { MN_BUTTON,    0,  0,  { 0, 4*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
-#else
-    { MN_BUTTON,    0,  0,  { 0,   0 }, 'n', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_new_game, "GameType" },
-    { MN_BUTTON,    0,  0,  { 0,   FIXED_LINE_HEIGHT }, 'o', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_options, "Options" },
-    { MN_BUTTON,    0,  0,  { 0, 2*FIXED_LINE_HEIGHT }, 'f', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuActionSetActivePage, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_game_files, "Files" },
-    { MN_BUTTON,    0,  0,  { 0, 3*FIXED_LINE_HEIGHT }, 'i', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectHelp, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_help },
     { MN_BUTTON,    0,  0,  { 0, 4*FIXED_LINE_HEIGHT }, 'q', MENU_FONT1, MENU_COLOR1, MNButton_Ticker, MNButton_UpdateGeometry, MNButton_Drawer, { NULL, Hu_MenuSelectQuitGame, NULL, NULL, NULL, Hu_MenuDefaultFocusAction }, MNButton_CommandResponder, NULL, NULL, &btn_main_quit_game },
 #endif
     { MN_NONE }
@@ -2489,7 +2496,12 @@ static void initAllPages(void)
         origin.y += 8;
 #endif
 
+#if __JDOOM__ || __JDOOM64__
+    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, NULL, NULL, NULL);
+#else
     page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
+#endif
+
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     page->objects = MainMenuObjects;
     }
@@ -3049,15 +3061,11 @@ int Hu_MenuSelectLoadSlot(mn_object_t* obj, mn_actionid_t action, void* paramate
     return 0;
 }
 
+#if __JHERETIC__ || __JHEXEN__
 void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin)
 {
-#if __JDOOM__ || __JDOOM64__
-#  define TITLEOFFSET_X         (-3)
-#  define TITLEOFFSET_Y         (-62)
-#else
-#  define TITLEOFFSET_X         (-22)
-#  define TITLEOFFSET_Y         (-56)
-#endif
+#define TITLEOFFSET_X         (-22)
+#define TITLEOFFSET_Y         (-56)
 
 #if __JHEXEN__
     int frame = (menuTime / 5) % 7;
@@ -3083,6 +3091,7 @@ void Hu_MenuDrawMainPage(mn_page_t* page, const Point2Raw* origin)
 #undef TITLEOFFSET_Y
 #undef TITLEOFFSET_X
 }
+#endif
 
 void Hu_MenuDrawGameTypePage(mn_page_t* page, const Point2Raw* origin)
 {

@@ -815,9 +815,9 @@ static void updatePageObjectGeometries(mn_page_t* page)
 }
 
 /// @return  @c true iff this object is drawable (potentially visible).
-boolean MNObject_IsDrawable(mn_object_t* obj)
+boolean MNObject_IsDrawable(mn_object_t* ob)
 {
-    return !(MNObject_Type(obj) == MN_NONE || !obj->drawer || (MNObject_Flags(obj) & MNF_HIDDEN));
+    return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
 }
 
 static void applyPageLayout(mn_page_t* page)
