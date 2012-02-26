@@ -827,16 +827,35 @@ static void applyPageLayout(mn_page_t* page)
 
     if(!page) return;
 
-    // Calculate leading/line offset.
-    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    /// \kludge We cannot yet query line height from the font.
-    lineHeight = FR_TextHeight("{case}WyQ");
-    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
-
     Rect_SetXY(page->geometry, 0, 0);
     Rect_SetWidthHeight(page->geometry, 0, 0);
 
     // Apply layout logic to this page.
+
+    if(page->flags & MPF_LAYOUT_FIXED)
+    {
+        // This page uses a fixed layout.
+        for(i = 0; i < page->objectsCount; ++i)
+        {
+            mn_object_t* ob = &page->objects[i];
+
+            if(!MNObject_IsDrawable(ob)) continue;
+
+            Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
+            Rect_Unite(page->geometry, ob->_geometry);
+        }
+        return;
+    }
+
+    // This page uses a dynamic layout.
+
+    // Calculate leading/line offset.
+    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
+    /// @kludge We cannot yet query line height from the font.
+    lineHeight = FR_TextHeight("{case}WyQ");
+    lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
+    // kludge end.
+
     for(i = 0; i < page->objectsCount;)
     {
         mn_object_t* ob = &page->objects[i];
@@ -854,7 +873,7 @@ static void applyPageLayout(mn_page_t* page)
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other object
         // on the right.
-        // \todo Do not assume pairing, an object should designate it's pair.
+        // @todo Do not assume pairing, an object should designate it's pair.
         if(MNObject_Type(ob) == MN_TEXT && nextOb)
         {
             if(MNObject_IsDrawable(nextOb) &&
@@ -943,8 +962,9 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
 
     if(!page) return;
 
-    /// \kludge no title = no heading.
+    /// @kludge no title = no heading.
     if(Str_IsEmpty(&page->title)) return;
+    // kludge end.
 
     origin.x = SCREENWIDTH/2;
     origin.y = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2-5)/cfg.menuScale);
@@ -955,8 +975,8 @@ static void drawPageHeading(mn_page_t* page, const Point2Raw* offset)
     }
 
     FR_PushAttrib();
-      Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
-      drawPageNavigation(page, origin.x, origin.y);
+    Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
+    drawPageNavigation(page, origin.x, origin.y);
     FR_PopAttrib();
 }
 
@@ -997,11 +1017,11 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
         focusObjHeight = Size2_Height(MNObject_Size(focusObj));
 
         // Determine the origin and dimensions of the cursor.
-        // \todo Each object should define a focus origin...
+        // @todo Each object should define a focus origin...
         cursorOrigin.x = 0;
         cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
 
-        /// \kludge
+        /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
         if(MN_LIST == MNObject_Type(focusObj) && (MNObject_Flags(focusObj) & MNF_ACTIVE) &&
@@ -1064,7 +1084,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
     }
 
     // How about a focus cursor?
-    /// \todo cursor should be drawn on top of the page drawer.
+    /// @todo cursor should be drawn on top of the page drawer.
     if(showFocusCursor && focusObj)
     {
         Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
@@ -3347,13 +3367,15 @@ void MNMobjPreview_SetTranslationMap(mn_object_t* obj, int tMap)
 }
 
 /// @todo We can do better - the engine should be able to render this visual for us.
-void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin)
+void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* offset)
 {
     mndata_mobjpreview_t* mop = (mndata_mobjpreview_t*)ob->_typedata;
-    float x, y, w, h, s, t, scale;
     int tClass, tMap, spriteFrame;
     spritetype_e sprite;
     spriteinfo_t info;
+    float s, t, scale;
+    Point2Raw origin;
+    Size2Raw size;
     assert(ob->_type == MN_MOBJPREVIEW);
 
     if(MT_NONE == mop->mobjType) return;
@@ -3361,16 +3383,16 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin)
     findSpriteForMobjType(mop->mobjType, &sprite, &spriteFrame);
     if(!R_GetSpriteInfo(sprite, spriteFrame, &info)) return;
 
-    x = origin->x;
-    y = origin->y;
-    w = info.geometry.size.width;
-    h = info.geometry.size.height;
-    scale = (h > w? MNDATA_MOBJPREVIEW_HEIGHT / h : MNDATA_MOBJPREVIEW_WIDTH / w);
-    w *= scale;
-    h *= scale;
+    origin.x = info.geometry.origin.x;
+    origin.y = info.geometry.origin.y;
+    size.width  = info.geometry.size.width;
+    size.height = info.geometry.size.height;
 
-    x += MNDATA_MOBJPREVIEW_WIDTH/2 - info.geometry.size.width/2 * scale;
-    y += MNDATA_MOBJPREVIEW_HEIGHT  - info.geometry.size.height  * scale;
+    scale = (size.height > size.width? (float)MNDATA_MOBJPREVIEW_HEIGHT / size.height :
+                                       (float)MNDATA_MOBJPREVIEW_WIDTH  / size.width);
+
+    s = info.texCoord[0];
+    t = info.texCoord[1];
 
     tClass = mop->tClass;
     tMap = mop->tMap;
@@ -3382,26 +3404,34 @@ void MNMobjPreview_Drawer(mn_object_t* ob, const Point2Raw* origin)
         R_GetTranslation(mop->plrClass, tMap, &tClass, &tMap);
 #endif
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Scalef(scale, scale, 1);
+    // Translate origin to the top left.
+    DGL_Translatef(-origin.x, -origin.y, 0);
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_SetPSprite2(info.material, tClass, tMap);
-
-    s = info.texCoord[0];
-    t = info.texCoord[1];
-
     DGL_Color4f(1, 1, 1, rs.pageAlpha);
+
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
-        DGL_Vertex2f(x, y);
+        DGL_Vertex2f(0, 0);
 
         DGL_TexCoord2f(0, 1 * s, 0);
-        DGL_Vertex2f(x + w, y);
+        DGL_Vertex2f(size.width, 0);
 
         DGL_TexCoord2f(0, 1 * s, t);
-        DGL_Vertex2f(x + w, y + h);
+        DGL_Vertex2f(size.width, size.height);
 
         DGL_TexCoord2f(0, 0 * s, t);
-        DGL_Vertex2f(x, y + h);
+        DGL_Vertex2f(0, size.height);
     DGL_End();
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

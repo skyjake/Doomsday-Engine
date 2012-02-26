@@ -111,10 +111,19 @@ boolean Hu_MenuIsVisible(void);
 
 mn_page_t* Hu_MenuFindPageByName(const char* name);
 
-mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin,
-    void (*ticker) (struct mn_page_s* page),
-    void (*drawer) (struct mn_page_s* page, const Point2Raw* origin),
-    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd),
+/**
+ * @param name  Symbolic name.
+ * @param origin  Topleft corner.
+ * @param flags  @see menuPageFlags.
+ * @param ticker  Ticker callback.
+ * @param drawer  Page drawing routine.
+ * @param cmdResponder  Menu-command responder routine.
+ * @param userData  User data pointer to be associated with the page.
+ */
+mn_page_t* Hu_MenuNewPage(const char* name, const Point2Raw* origin, int flags,
+    void (*ticker) (mn_page_t* page),
+    void (*drawer) (mn_page_t* page, const Point2Raw* origin),
+    int (*cmdResponder) (mn_page_t* page, menucommand_e cmd),
     void* userData);
 
 /**

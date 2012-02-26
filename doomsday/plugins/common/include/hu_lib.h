@@ -153,8 +153,12 @@ typedef struct mn_object_s {
     /// Object group identifier.
     int _group;
 
-    /// @see menuObjectFlags.
+    /// @ref menuObjectFlags.
     int _flags;
+
+    /// Used with the fixed layout method for positioning this object in
+    /// the owning page's coordinate space.
+    Point2Raw _origin;
 
     /// DDKEY shortcut used to switch focus to this object directly.
     /// @c 0= no shortcut defined.
@@ -303,6 +307,13 @@ typedef enum {
 
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
+/**
+ * @defgroup menuPageFlags  Menu Page Flags
+ */
+///@{
+#define MPF_LAYOUT_FIXED            0x1 ///< Page uses a fixed layout.
+///@}
+
 typedef struct mn_page_s {
     /// Collection of objects on this page.
     mn_object_t* objects;
@@ -321,6 +332,9 @@ typedef struct mn_page_s {
     /// Index of the currently focused object else @c -1
     int focus;
 
+    /// @ref menuPageFlags
+    int flags;
+
     /// Predefined fonts objects on this page.
     fontid_t fonts[MENU_FONT_COUNT];
 
@@ -333,7 +347,7 @@ typedef struct mn_page_s {
     /// Page drawing routine.
     void (*drawer) (struct mn_page_s* page, const Point2Raw* offset);
 
-    /// Menu command responder routine.
+    /// Menu-command responder routine.
     int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd);
 
     /// User data.
@@ -773,8 +787,8 @@ void MNSlider_SetValue(mn_object_t* ob, int flags, float value);
 /**
  * Mobj preview visual.
  */
-#define MNDATA_MOBJPREVIEW_WIDTH    38
-#define MNDATA_MOBJPREVIEW_HEIGHT   52
+#define MNDATA_MOBJPREVIEW_WIDTH    44
+#define MNDATA_MOBJPREVIEW_HEIGHT   66
 
 typedef struct mndata_mobjpreview_s {
     int mobjType;

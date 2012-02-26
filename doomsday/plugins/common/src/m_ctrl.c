@@ -357,7 +357,7 @@ void Hu_MenuInitControlsPage(void)
     }
     ControlsMenuItems[objectIdx]._type = MN_NONE; // Terminate.
 
-    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
     page->objects = ControlsMenuItems;
     MNPage_SetTitle(page, "Controls");
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
