@@ -1662,7 +1662,7 @@ void Hu_MenuInitEpisodeMenu(void)
     }
     ob->_type = MN_NONE;
 
-    page = Hu_MenuNewPage("Episode", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
+    page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
     page->objects = EpisodeMenuObjects;
@@ -1892,7 +1892,7 @@ void Hu_MenuInit(void)
         MNObject_SetFlags(ob, FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
 
         ob = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID1); // Quit Game
-        MNObject_SetFixedY(ob, MNObject_FixedY(ob) - 16);
+        MNObject_SetFixedY(ob, MNObject_FixedY(ob) - FIXED_LINE_HEIGHT);
     }
 #endif
 
@@ -2547,7 +2547,7 @@ static void initAllPages(void)
     {
     Point2Raw origin = { 110, 60 };
 
-    page = Hu_MenuNewPage("Files", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
     page->objects = FilesMenuObjects;
