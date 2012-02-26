@@ -120,6 +120,7 @@ D_CMD(Version);
 D_CMD(Wait);
 D_CMD(InspectMobj);
 D_CMD(DebugCrash);
+D_CMD(DebugError);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -214,6 +215,7 @@ void Con_Register(void)
     C_CMD("write",          "s",    WriteConsole);
 #ifdef _DEBUG
     C_CMD("crash",          NULL,   DebugCrash);
+    C_CMD("fatalerror",     NULL,   DebugError);
 #endif
 
     // Console
@@ -2615,5 +2617,11 @@ D_CMD(DebugCrash)
 
     // Goodbye cruel world.
     *ptr = 0;
+    return true;
+}
+
+D_CMD(DebugError)
+{
+    Con_Error("Fatal error.\n");
     return true;
 }
