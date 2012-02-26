@@ -138,6 +138,13 @@ boolean Sys_IsShuttingDown(void)
  */
 void Sys_Shutdown(void)
 {
+    // We are now shutting down.
+    appShutdown = true;
+
+    // Time to unload *everything*.
+    if(DD_GameLoaded())
+        Con_Execute(CMDS_DDAY, "unload", true, false);
+
     B_Shutdown();
     Sys_ShutdownTimer();
 
@@ -272,7 +279,7 @@ void Sys_HideMouse(void)
 }
 
 /**
- * Called when Doomsday should quit (will be deferred until convienent).
+ * Called when Doomsday should quit (will be deferred until convenient).
  */
 void Sys_Quit(void)
 {
