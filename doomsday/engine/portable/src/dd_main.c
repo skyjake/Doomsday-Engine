@@ -1169,7 +1169,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_InitSvgs();
         R_InitViewWindow();
 
-        /// \fixme Assumes we only cache lumps from non-startup wads.
+        /// @fixme Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
@@ -1179,7 +1179,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// \fixme Materials database should not be shutdown during a reload.
+    /// @fixme Materials database should not be shutdown during a reload.
     Materials_Shutdown();
 
     VERBOSE(
@@ -1257,7 +1257,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             if(loader) ((pluginfunc_t)loader)();
         }
 
-        /// \kludge Use more appropriate task names when unloading a game.
+        /// @kludge Use more appropriate task names when unloading a game.
         if(DD_IsNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";
@@ -1283,8 +1283,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     /**
      * Clear any input events we may have accumulated during this process.
-     * \note Only necessary here because we might not have been able to use
-     * busy mode (which would normally do this for us on end).
+     * @note Only necessary here because we might not have been able to use
+     *       busy mode (which would normally do this for us on end).
      */
     DD_ClearEvents();
     return true;
