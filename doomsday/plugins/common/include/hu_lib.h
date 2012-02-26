@@ -240,6 +240,27 @@ const Point2* MNObject_Origin(const mn_object_t* obj);
  */
 const Size2* MNObject_Size(const mn_object_t* obj);
 
+/**
+ * Retreive the current fixed origin coordinates.
+ *
+ * @param ob  MNObject-derived instance.
+ * @return  Fixed origin.
+ */
+const Point2Raw* MNObject_FixedOrigin(const mn_object_t* ob);
+int MNObject_FixedX(const mn_object_t* ob);
+int MNObject_FixedY(const mn_object_t* ob);
+
+/**
+ * Change the current fixed origin coordinates.
+ *
+ * @param ob  MNObject-derived instance.
+ * @param origin  New origin coordinates.
+ * @return  Same as @a ob for caller convenience.
+ */
+mn_object_t* MNObject_SetFixedOrigin(mn_object_t* ob, const Point2Raw* origin);
+mn_object_t* MNObject_SetFixedX(mn_object_t* ob, int x);
+mn_object_t* MNObject_SetFixedY(mn_object_t* ob, int y);
+
 /// @return  Flags value post operation for caller convenience.
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags);
 

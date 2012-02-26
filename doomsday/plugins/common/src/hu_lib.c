@@ -1018,7 +1018,7 @@ void MN_DrawPage(mn_page_t* page, float alpha, boolean showFocusCursor)
 
         // Determine the origin and dimensions of the cursor.
         // @todo Each object should define a focus origin...
-        cursorOrigin.x = 0;
+        cursorOrigin.x = -1;
         cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
 
         /// @kludge
@@ -1397,40 +1397,83 @@ int MNPage_Timer(mn_page_t* page)
     return page->timer;
 }
 
-mn_obtype_e MNObject_Type(const mn_object_t* obj)
+mn_obtype_e MNObject_Type(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_type;
+    assert(ob);
+    return ob->_type;
 }
 
-mn_page_t* MNObject_Page(const mn_object_t* obj)
+mn_page_t* MNObject_Page(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_page;
+    assert(ob);
+    return ob->_page;
 }
 
-int MNObject_Flags(const mn_object_t* obj)
+int MNObject_Flags(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_flags;
+    assert(ob);
+    return ob->_flags;
 }
 
-const Rect* MNObject_Geometry(const mn_object_t* obj)
+const Rect* MNObject_Geometry(const mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_geometry;
+    assert(ob);
+    return ob->_geometry;
 }
 
-const Point2* MNObject_Origin(const mn_object_t* obj)
+const Point2* MNObject_Origin(const mn_object_t* ob)
 {
-    assert(obj);
-    return Rect_Origin(obj->_geometry);
+    assert(ob);
+    return Rect_Origin(ob->_geometry);
 }
 
-const Size2* MNObject_Size(const mn_object_t* obj)
+const Size2* MNObject_Size(const mn_object_t* ob)
 {
-    assert(obj);
-    return Rect_Size(obj->_geometry);
+    assert(ob);
+    return Rect_Size(ob->_geometry);
+}
+
+const Point2Raw* MNObject_FixedOrigin(const mn_object_t* ob)
+{
+    assert(ob);
+    return &ob->_origin;
+}
+
+int MNObject_FixedX(const mn_object_t* ob)
+{
+    assert(ob);
+    return ob->_origin.x;
+}
+
+int MNObject_FixedY(const mn_object_t* ob)
+{
+    assert(ob);
+    return ob->_origin.y;
+}
+
+mn_object_t* MNObject_SetFixedOrigin(mn_object_t* ob, const Point2Raw* origin)
+{
+    assert(ob);
+    if(origin)
+    {
+        ob->_origin.x = origin->x;
+        ob->_origin.y = origin->y;
+    }
+    return ob;
+}
+
+mn_object_t* MNObject_SetFixedX(mn_object_t* ob, int x)
+{
+    assert(ob);
+    ob->_origin.x = x;
+    return ob;
+}
+
+mn_object_t* MNObject_SetFixedY(mn_object_t* ob, int y)
+{
+    assert(ob);
+    ob->_origin.y = y;
+    return ob;
 }
 
 int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
@@ -1448,96 +1491,96 @@ int MNObject_SetFlags(mn_object_t* obj, flagop_t op, int flags)
     return obj->_flags;
 }
 
-int MNObject_Shortcut(mn_object_t* obj)
+int MNObject_Shortcut(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_shortcut;
+    assert(ob);
+    return ob->_shortcut;
 }
 
-void MNObject_SetShortcut(mn_object_t* obj, int ddkey)
+void MNObject_SetShortcut(mn_object_t* ob, int ddkey)
 {
-    assert(obj);
+    assert(ob);
     if(isalnum(ddkey))
     {
-        obj->_shortcut = tolower(ddkey);
+        ob->_shortcut = tolower(ddkey);
     }
 }
 
-int MNObject_Font(mn_object_t* obj)
+int MNObject_Font(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_pageFontIdx;
+    assert(ob);
+    return ob->_pageFontIdx;
 }
 
-int MNObject_Color(mn_object_t* obj)
+int MNObject_Color(mn_object_t* ob)
 {
-    assert(obj);
-    return obj->_pageColorIdx;
+    assert(ob);
+    return ob->_pageColorIdx;
 }
 
-boolean MNObject_IsGroupMember(const mn_object_t* obj, int group)
+boolean MNObject_IsGroupMember(const mn_object_t* ob, int group)
 {
-    assert(obj);
-    return (obj->_group == group);
+    assert(ob);
+    return (ob->_group == group);
 }
 
-int MNObject_DefaultCommandResponder(mn_object_t* obj, menucommand_e cmd)
+int MNObject_DefaultCommandResponder(mn_object_t* ob, menucommand_e cmd)
 {
-    assert(obj);
-    if(MCMD_SELECT == cmd && (obj->_flags & MNF_FOCUS) && !(obj->_flags & MNF_DISABLED))
+    assert(ob);
+    if(MCMD_SELECT == cmd && (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_DISABLED))
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        if(!(obj->_flags & MNF_ACTIVE))
+        if(!(ob->_flags & MNF_ACTIVE))
         {
-            obj->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(obj, MNA_ACTIVE))
+            ob->_flags |= MNF_ACTIVE;
+            if(MNObject_HasAction(ob, MNA_ACTIVE))
             {
-                MNObject_ExecAction(obj, MNA_ACTIVE, NULL);
+                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
             }
         }
 
-        obj->_flags &= ~MNF_ACTIVE;
-        if(MNObject_HasAction(obj, MNA_ACTIVEOUT))
+        ob->_flags &= ~MNF_ACTIVE;
+        if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
         {
-            MNObject_ExecAction(obj, MNA_ACTIVEOUT, NULL);
+            MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
         }
         return true;
     }
     return false; // Not eaten.
 }
 
-static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* obj, mn_actionid_t id)
+static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t* ob, mn_actionid_t id)
 {
-    assert(obj);
+    assert(ob);
     if(VALID_MNACTION(id))
     {
-        return &obj->actions[id];
+        return &ob->actions[id];
     }
     return NULL; // Not found.
 }
 
-const mn_actioninfo_t* MNObject_Action(mn_object_t* obj, mn_actionid_t id)
+const mn_actioninfo_t* MNObject_Action(mn_object_t* ob, mn_actionid_t id)
 {
-    return MNObject_FindActionInfoForId(obj, id);
+    return MNObject_FindActionInfoForId(ob, id);
 }
 
-boolean MNObject_HasAction(mn_object_t* obj, mn_actionid_t id)
+boolean MNObject_HasAction(mn_object_t* ob, mn_actionid_t id)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
+    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
     return (info && MNActionInfo_IsActionExecuteable(info));
 }
 
-int MNObject_ExecAction(mn_object_t* obj, mn_actionid_t id, void* paramaters)
+int MNObject_ExecAction(mn_object_t* ob, mn_actionid_t id, void* paramaters)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(obj, id);
+    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
     if(info && MNActionInfo_IsActionExecuteable(info))
     {
-        return info->callback(obj, id, paramaters);
+        return info->callback(ob, id, paramaters);
     }
 #if _DEBUG
-    Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, obj);
+    Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, ob);
 #endif
-    /// \fixme Need an error handling mechanic.
+    /// @fixme Need an error handling mechanic.
     return -1; // NOP
 }
 
