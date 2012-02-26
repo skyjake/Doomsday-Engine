@@ -4661,7 +4661,7 @@ void C_DECL A_KSpiritSeeker(mobj_t* mo, angle_t thresh, angle_t turnMax)
             }
             else
             {
-                deltaZ = -15 * FRACUNIT;
+                deltaZ = -15;
             }
         }
 
