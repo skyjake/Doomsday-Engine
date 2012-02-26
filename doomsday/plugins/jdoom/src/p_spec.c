@@ -91,6 +91,7 @@ static void shootSpecialLine(mobj_t* thing, linedef_t* line);
 // These arrays are treated as a hardcoded replacements for data that can be
 // loaded from a lump, so we need to use little-endian byte ordering.
 static animdef_t animsShared[] = {
+    // Doom anims:
     {0, "BLOOD3",   "BLOOD1",   MACRO_LONG(8)},
     {0, "FWATER4",  "FWATER1",  MACRO_LONG(8)},
     {0, "SWATER4",  "SWATER1",  MACRO_LONG(8)},
@@ -106,10 +107,8 @@ static animdef_t animsShared[] = {
     {1, "SLADRIP3", "SLADRIP1", MACRO_LONG(8)},
     {1, "WFALL4",   "WFALL1",   MACRO_LONG(8)},
     {1, "BLODGR4",  "BLODGR1",  MACRO_LONG(8)},
-    {-1, "\0",      "\0"}
-};
 
-static animdef_t animsDoom2[] = {
+    // Doom 2 anims:
     {0, "RROCK08",  "RROCK05",  MACRO_LONG(8)},
     {0, "SLIME04",  "SLIME01",  MACRO_LONG(8)},
     {0, "SLIME08",  "SLIME05",  MACRO_LONG(8)},
@@ -248,8 +247,6 @@ void P_InitPicAnims(void)
 
     VERBOSE( Con_Message("Registering default texture animations...\n") );
     loadAnimDefs(animsShared, false);
-    if(gameModeBits & GM_ANY_DOOM2)
-        loadAnimDefs(animsDoom2, false);
 }
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)
