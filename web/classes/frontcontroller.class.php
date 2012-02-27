@@ -341,14 +341,13 @@ class FrontController
     private function outputMainMenu($page=NULL)
     {
         $leftTabs = array();
-        $leftTabs[] = array('page'=>'/engine',   'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
-        $leftTabs[] = array('page'=>'/games',    'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
-        $leftTabs[] = array('page'=>'/addons',   'label'=>'Add-ons',  'tooltip'=>'Add-ons for games playable with Doomsday Engine');
+        $leftTabs[] = array('page'=>'/engine',  'label'=>'Engine',   'tooltip'=>'About Doomsday Engine');
+        $leftTabs[] = array('page'=>'/games',   'label'=>'Games',    'tooltip'=>'Games playable with Doomsday Engine');
+        $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
 
         $rightTabs = array();
-        $rightTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
-        $rightTabs[] = array('page'=>'/forums/viewforum.php?f=24',    'label'=>'Dev Blog', 'tooltip'=>'Doomsday Engine Developer Blog');
-        $rightTabs[] = array('page'=>'/forums',  'label'=>'Forums',   'tooltip'=>'Doomsday Engine User Forums');
+        $rightTabs[] = array('page'=>'/addons',  'label'=>'Add-ons',      'tooltip'=>'Add-ons for games playable with Doomsday Engine');
+        $rightTabs[] = array('page'=>'/forums',  'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
 
 ?>
         <div id="menu" class="hnav">
