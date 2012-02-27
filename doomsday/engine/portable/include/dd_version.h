@@ -58,8 +58,8 @@
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
 //#define DOOMSDAY_RELEASE_TYPE   "Unstable"
-#define DOOMSDAY_RELEASE_TYPE   "Candidate"
-//#define DOOMSDAY_RELEASE_TYPE   "Stable"
+//#define DOOMSDAY_RELEASE_TYPE   "Candidate"
+#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
