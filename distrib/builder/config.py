@@ -30,3 +30,16 @@ if val is not None: APT_REPO_DIR = val
 
 val = get_arg('--tagmod')
 if val is not None: TAG_MODIFIER = val
+
+# Determine APT repository path.
+oldCwd = os.getcwd()
+if DISTRIB_DIR: os.chdir(DISTRIB_DIR)
+import build_version
+build_version.find_version(quiet=True)
+if build_version.DOOMSDAY_RELEASE_TYPE == 'Stable':
+    APT_DIST = 'dists/stable'
+    APT_CONF_FILE = '~/Dropbox/APT/ftparchive-release-stable.conf'
+else:
+    APT_DIST = 'dists/unstable'
+    APT_CONF_FILE = '~/Dropbox/APT/ftparchive-release.conf'
+os.chdir(oldCwd)

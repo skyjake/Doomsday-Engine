@@ -74,7 +74,8 @@ def todays_platform_release():
             arch = 'i386'
             if '_amd64' in n: arch = 'amd64'
             remote_copy(os.path.join('releases', n),
-                        os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-%s' % arch, n))
+                        os.path.join(builder.config.APT_REPO_DIR, 
+                                     builder.config.APT_DIST + '/main/binary-%s' % arch, n))
                                  
     # Also the build logs.
     remote_copy('buildlog.txt', ev.file_path('doomsday-out-%s.txt' % sys_id()))
@@ -139,9 +140,13 @@ def rebuild_apt_repository():
     print 'Rebuilding the apt repository in %s...' % aptDir
     
     os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
-    os.system("apt-ftparchive -c ~/Dropbox/APT/ftparchive-release.conf release %s/dists/unstable > %s/dists/unstable/Release" % (aptDir, aptDir))
-    os.chdir("%s/dists/unstable" % aptDir)
-    os.remove("Release.gpg")
+    os.system("apt-ftparchive -c %s release %s/%s > %s/%s/Release" % (builder.config.APT_CONF_FILE, aptDir, builder.config.APT_DIST, aptDir, builder.config.APT_DIST))
+    os.chdir("%s/%s" % (aptDir, builder.config.APT_DIST))
+    try:
+        os.remove("Release.gpg")
+    except OSError:
+        # Never mind.
+        pass
     os.system("gpg --output Release.gpg -ba Release")
     os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
 
@@ -214,7 +219,7 @@ def update_xml_feed():
 
 def purge_apt_repository(atLeastSeconds):
     for d in ['i386', 'amd64']:
-        binDir = os.path.join(builder.config.APT_REPO_DIR, 'dists/unstable/main/binary-') + d
+        binDir = os.path.join(builder.config.APT_REPO_DIR, builder.config.APT_DIST + '/main/binary-') + d
         print 'Pruning binary apt directory', binDir
         # Find the old files.
         for fn in os.listdir(binDir):
