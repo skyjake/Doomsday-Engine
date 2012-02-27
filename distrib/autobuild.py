@@ -142,7 +142,11 @@ def rebuild_apt_repository():
     os.system("apt-ftparchive generate ~/Dropbox/APT/ftparchive.conf")
     os.system("apt-ftparchive -c %s release %s/%s > %s/%s/Release" % (builder.config.APT_CONF_FILE, aptDir, builder.config.APT_DIST, aptDir, builder.config.APT_DIST))
     os.chdir("%s/%s" % (aptDir, builder.config.APT_DIST))
-    os.remove("Release.gpg")
+    try:
+        os.remove("Release.gpg")
+    except OSError:
+        # Never mind.
+        pass
     os.system("gpg --output Release.gpg -ba Release")
     os.system("~/Dropbox/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
 
