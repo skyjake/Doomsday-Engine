@@ -207,8 +207,37 @@ class FrontController
     {
         require_once(DIR_CLASSES.'/feed.class.php');
 
-        $NewsFeed = new Feed('http://dengine.net/forums/rss.php?mode=news');
-        $NewsFeed->generateHTML();
+        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 5);
+        $feed->setTitle('Project News via RSS', 'projectnews-label');
+        $feed->generateHTML();
+    }
+
+    /**
+     * Feed item HTML generator for formatting the customised output used
+     * with the Builds feed.
+     */
+    static public function generateBuildFeedItemHtml(&$item)
+    {
+        $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
+               .'" title="'. ('Read more about '. htmlspecialchars($item['title']) .', completed on '. date("m/d/y", $item['date_timestamp']))
+                       .'">'. htmlspecialchars($item['title']) .' complete</a>';
+
+        if(time() < strtotime('+2 days', $item['date_timestamp']))
+        {
+            $html .= '<span class="new-label">&nbsp;NEW</span>';
+        }
+
+        return $html;
+    }
+
+    private function outputBuildsFeed()
+    {
+        require_once(DIR_CLASSES.'/feed.class.php');
+
+        $feed = new Feed('http://code.iki.fi/builds/events.rss', 3);
+        $feed->setTitle('Build News via RSS', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateBuildFeedItemHtml');
+        $feed->generateHTML();
     }
 
     private function outputServerStatus()
@@ -339,6 +368,8 @@ class FrontController
 ?>              <div id="projectnews"><?php
 
         $this->outputNewsFeed();
+
+        $this->outputBuildsFeed();
 
 ?>              </div><?php
 

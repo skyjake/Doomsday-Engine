@@ -475,7 +475,7 @@ p.legal a {
 
 /*---------------------- NewsFeed ---------------------*/
 
-#projectnews-label {
+.projectnews-label {
     color: #ffffff;
     font-weight: bold;
     min-height: 139px;
@@ -508,8 +508,14 @@ p.legal a {
     color: #ff8a00;
 }
 
+#projectnews .new-label {
+    color: white;
+    font-weight: bold;
+}
+
 #projectnews a:hover, #projectnews a:visited:hover {
     color: #ffffff;
+    font-size: x-small;
 }
 
 /*-------------------- GameServers -------------------*/

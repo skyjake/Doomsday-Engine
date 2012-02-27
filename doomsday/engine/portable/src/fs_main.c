@@ -1490,7 +1490,7 @@ static DFile* openAsLumpFile(abstractfile_t* container, int lumpIdx,
     F_InitLumpInfo(&info);
     F_CopyLumpInfo(&info, F_LumpInfo(container, lumpIdx));
 
-    // Try to open the referenced file as specialised file type.
+    // Try to open the referenced file as a specialised file type.
     file = tryOpenFile3(hndl, Str_Text(&absPath), &info);
 
     // If not opened; assume its a generic LumpFile.
