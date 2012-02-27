@@ -203,24 +203,36 @@ class FrontController
         }
     }
 
-    private function outputNewsFeed()
-    {
-        require_once(DIR_CLASSES.'/feed.class.php');
-
-        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 5);
-        $feed->setTitle('Project News via RSS', 'projectnews-label');
-        $feed->generateHTML();
-    }
-
     /**
      * Feed item HTML generator for formatting the customised output used
-     * with the Builds feed.
+     * with feeds on the homepage.
      */
-    static public function generateBuildFeedItemHtml(&$item)
+    static public function generateFeedItemHtml(&$item, $params=NULL)
     {
+        $patterns     = array('/{title}/', '/{timestamp}/');
+        $replacements = array($item['title'], date("m/d/y", $item['date_timestamp']));
+
+        if(is_array($params) && isset($params['titleTemplate']))
+        {
+            $title = preg_replace($patterns, $replacements, $params['titleTemplate']);
+        }
+        else
+        {
+            $title = $item['title'];
+        }
+
+        if(is_array($params) && isset($params['labelTemplate']))
+        {
+            $label = preg_replace($patterns, $replacements, $params['labelTemplate']);
+        }
+        else
+        {
+            $label = $item['title'];
+        }
+
         $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
-               .'" title="'. ('Read more about '. htmlspecialchars($item['title']) .', completed on '. date("m/d/y", $item['date_timestamp']))
-                       .'">'. htmlspecialchars($item['title']) .' complete</a>';
+               .'" title="'. htmlspecialchars($label)
+                       .'">'. htmlspecialchars($title) .'</a>';
 
         if(time() < strtotime('+2 days', $item['date_timestamp']))
         {
@@ -230,13 +242,36 @@ class FrontController
         return $html;
     }
 
+    private function outputNewsFeed()
+    {
+        require_once(DIR_CLASSES.'/feed.class.php');
+
+        $feed = new Feed('http://dengine.net/forums/rss.php?mode=news', 3);
+        $feed->setTitle('Project News', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml');
+        $feed->generateHTML();
+    }
+
     private function outputBuildsFeed()
     {
         require_once(DIR_CLASSES.'/feed.class.php');
 
         $feed = new Feed('http://code.iki.fi/builds/events.rss', 3);
-        $feed->setTitle('Build News via RSS', 'projectnews-label');
-        $feed->setGenerateElementHTMLCallback('FrontController::generateBuildFeedItemHtml');
+        $feed->setTitle('Build News', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
+                                              array('titleTemplate'=>'{title} complete',
+                                                    'labelTemplate'=>'Read more about {title}, completed on {timestamp}'));
+        $feed->generateHTML();
+    }
+
+    private function outputDevBlogFeed()
+    {
+        require_once(DIR_CLASSES.'/feed.class.php');
+
+        $feed = new Feed('http://dengine.net/forums/rss.php?f=24', 3);
+        $feed->setTitle('Developer Blog', 'projectnews-label');
+        $feed->setGenerateElementHTMLCallback('FrontController::generateFeedItemHtml',
+                                              array('labelTemplate'=>'Read more about {title}, posted on {timestamp}'));
         $feed->generateHTML();
     }
 
@@ -370,6 +405,8 @@ class FrontController
         $this->outputNewsFeed();
 
         $this->outputBuildsFeed();
+
+        $this->outputDevBlogFeed();
 
 ?>              </div><?php
 
