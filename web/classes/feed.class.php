@@ -42,8 +42,9 @@ class Feed implements Visual, Iterator, Countable
     private $title = 'Untitled';
     private $labelSpanClass = NULL;
 
-    // Callback to make when generating HTML for a feed item.
-    private $func_genElementHTML = NULL;
+    // Callback to make when generating Html for a feed item.
+    private $func_genElementHtml = NULL;
+    private $func_genElementHtmlParams = NULL;
 
     public function __construct($feedURL, $maxItems=5)
     {
@@ -62,12 +63,13 @@ class Feed implements Visual, Iterator, Countable
             $this->_labelSpanClass = "$labelSpanClass";
     }
 
-    public function setGenerateElementHTMLCallback($funcName)
+    public function setGenerateElementHtmlCallback($funcName, $params=NULL)
     {
         $funcName = "$funcName";
         if(!is_callable($funcName)) return FALSE;
 
-        $this->func_genElementHTML = $funcName;
+        $this->func_genElementHtml = $funcName;
+        $this->func_genElementHtmlParams = $params;
         return TRUE;
     }
 
@@ -79,14 +81,14 @@ class Feed implements Visual, Iterator, Countable
         return $this->_displayOptions;
     }
 
-    private function generateElementHTML(&$item)
+    private function generateElementHtml(&$item)
     {
         if(!is_array($item))
             throw new Exception('Received invalid item, array expected.');
 
-        if(!is_null($this->func_genElementHTML))
+        if(!is_null($this->func_genElementHtml))
         {
-            return call_user_func($this->func_genElementHTML, $item);
+            return call_user_func_array($this->func_genElementHtml, array($item, $this->func_genElementHtmlParams));
         }
 
         $html = '<a href="'. preg_replace('/(&)/', '&amp;', $item['link'])
@@ -95,36 +97,37 @@ class Feed implements Visual, Iterator, Countable
         return $html;
     }
 
-    public function generateHTML()
+    public function generateHtml()
     {
-        if(count($this) > 0)
+        if(count($this) <= 0) return;
+
+        $feedTitle = "$this->_title via $this->_feedFormat";
+
+?><a href="<?php echo preg_replace('/(&)/', '&amp;', $this->_feedUri); ?>" class="link-rss" title="<?php echo htmlspecialchars($feedTitle); ?>"><span class="hidden"><?php echo htmlspecialchars($this->_feedFormat); ?></span></a><?php
+
+        if(!is_null($this->_labelSpanClass))
         {
-
-?><a href="<?php echo preg_replace('/(&)/', '&amp;', $this->_feedUri); ?>" class="link-rss" title="<?php echo htmlspecialchars($this->_title); ?>"><span class="hidden"><?php echo htmlspecialchars($this->_feedFormat); ?></span></a><?php
-
-            if(!is_null($this->_labelSpanClass))
-            {
 ?>&nbsp;<span class="<?php echo $this->_labelSpanClass; ?>"><?php
-            }
+        }
 
-            echo htmlspecialchars($this->_title);
 
-            if(!is_null($this->_labelSpanClass))
-            {
+        echo htmlspecialchars($feedTitle);
+
+        if(!is_null($this->_labelSpanClass))
+        {
 ?></span><?php
-            }
+        }
 
 ?><ul><?php
 
-            $n = (integer) 0;
-            foreach($this as $item)
-            {
-                $elementHtml = $this->generateElementHTML($item);
+        $n = (integer) 0;
+        foreach($this as $item)
+        {
+            $elementHtml = $this->generateElementHtml($item);
 
 ?><li><?php echo $elementHtml; ?></li><?php
 
-                if(++$n >= $this->_maxItems) break;
-            }
+            if(++$n >= $this->_maxItems) break;
         }
 
 ?></ul><?php
