@@ -317,7 +317,8 @@ function outputCommitLogHTML(&$build)
     if(!$build instanceof BuildEvent)
         throw new Exception('Received invalid BuildEvent');
 
-    if(count($build->commits))
+    $commitCount = count($build->commits);
+    if($commitCount)
     {
         $groups = array();
         groupBuildCommits($build, &$groups);
@@ -327,8 +328,11 @@ function outputCommitLogHTML(&$build)
         {
             ksort($groups);
 
-            // Generate a jump list.
-            outputCommitJumpList($groups);
+            // Generate a jump list?
+            if($commitCount > 15)
+            {
+                outputCommitJumpList($groups);
+            }
         }
 
         // Generate the commit list itself.
