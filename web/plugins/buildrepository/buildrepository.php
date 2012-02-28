@@ -1177,7 +1177,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 <td><?php if($pack->platformId() !== $lastPlatId) echo $plat['nicename']; ?></td>
 <td><?php
 
-                $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include build Id*/);
+                $packTitle = $pack->composeFullTitle(true/*include version*/, false/*do not include the platform name*/, false/*do not include build Id*/);
                 if($pack instanceof iDownloadable && $pack->hasDownloadUri())
                 {
 ?><a href="<?php echo $pack->downloadUri(); ?>" title="Download <?php echo $pack->composeFullTitle(); ?>"><?php echo $packTitle; ?></a><?php

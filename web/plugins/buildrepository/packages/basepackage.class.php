@@ -55,14 +55,14 @@ abstract class BasePackage
         return $this->version;
     }
 
-    public function composeFullTitle($includeVersion=true)
+    public function composeFullTitle($includeVersion=true, $includePlatformName=true)
     {
         $includeVersion = (boolean) $includeVersion;
 
         $title = $this->title;
         if($includeVersion && !is_null($this->version))
             $title .= ' '. $this->version;
-        if($this->platformId !== PID_ANY)
+        if($includePlatformName && $this->platformId !== PID_ANY)
         {
             $plat = &BuildRepositoryPlugin::platform($this->platformId);
             $title .= ' for '. $plat['nicename'];
