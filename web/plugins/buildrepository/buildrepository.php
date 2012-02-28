@@ -232,26 +232,29 @@ function outputCommitHTML(&$commit)
     $haveMessage = (bool)(strlen($message) > 0);
 
     // Compose the supplementary tag list.
-    $tagList = "";
+    $tagList = '<div class="tag_list">';
     if(is_array($commit['tags']))
     {
         $n = (integer)0;
-        foreach($commit['tags'] as $key => $value)
+        foreach($commit['tags'] as $tag => $value)
         {
             // Skip the first tag (its used for grouping).
-            if($n === 0) continue;
+            if($n++ === 0) continue;
 
             // Do not output guessed tags (mainly used for grouping).
             if(is_array($value) && isset($value['guessed']) && $value['guessed'] !== 0) continue;
 
-            $tagList .= '<span class="tag">'.$key.'</span>';
+            $tagList .= '<div class="tag"><label title="Tagged \''.$tag.'\'">'.$tag.'</label></div>';
         }
     }
+    $tagList .= '</div>';
 
     $repoLinkTitle = 'Show changes in the repository for this commit submitted on '. date(DATE_RFC2822, $commit['submitDate']) .'.';
 
     // Ouput HTML for the commit.
-?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo $repoLinkTitle; ?>"><?php echo date('Y-m-d', $commit['submitDate']); ?></a></span><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><?php echo $tagList; ?><span class="title"><?php echo $commit['title']; ?></span></strong> by <em><?php echo $commit['author']; ?></em></p><?php
+?><span class="metadata"><a href="<?php echo $commit['repositoryUri']; ?>" class="link-external" title="<?php echo $repoLinkTitle; ?>"><?php echo date('Y-m-d', $commit['submitDate']); ?></a></span><?php
+
+?><p class="heading <?php if($haveMessage) echo 'collapsible'; ?>" <?php if($haveMessage) echo 'title="Toggle commit message display"'; ?>><strong><span class="title"><?php echo $commit['title']; ?></span></strong> by <em><?php echo $commit['author']; ?></em></p><?php echo $tagList;
 
     if($haveMessage)
     {
@@ -337,7 +340,7 @@ function outputCommitLogHTML(&$build)
 
             if($groupCount > 1)
             {
-?><strong><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></strong><a name="<?php echo $groupName; ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
+?><strong><label title="<?php echo ("Commits with primary tag '$groupName'"); ?>"><span class="tag"><?php echo htmlspecialchars($groupName); ?></span></label></strong><a name="<?php echo $groupName; ?>"></a><a class="jump" href="#commitindex" title="Back to Commits index">index</a><br /><ol><?php
             }
 
             foreach($group as &$commit)
@@ -1202,7 +1205,7 @@ jQuery(document).ready(function() {
   jQuery(".commit").hide();
   jQuery(".collapsible").click(function()
   {
-    jQuery(this).next(".commit").slideToggle(300);
+    jQuery(this).next().next(".commit").slideToggle(300);
   });
 });
 </script><?php

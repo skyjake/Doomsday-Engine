@@ -804,9 +804,12 @@ p.legal a {
     color: #ff8a00;
 }
 
-.commit_list span.tag {
+.commit_list .tag {
     color:#558866;
     font-family:Verdana, Arial, Helvetica, sans-serif;
+}
+
+.commit_list span.tag {
     margin-right:.8em;
 }
 
@@ -832,8 +835,6 @@ p.legal a {
     margin-left:2em;
 }
 
-/*.commit span.title { }*/
-
 span.metadata {
     font-size:smaller;
     margin-right:1em;
@@ -841,6 +842,25 @@ span.metadata {
 
 .commit_list p.heading {
     display:inline-block;
+}
+
+.tag_list {
+    display:inline;
+    margin: 0;
+    padding: 0;
+}
+
+.tag_list .tag {
+    display:inline-block;
+    font-size: xx-small;
+    border: 1px solid;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    padding: .25em .4em;
+    margin-left: 1em;
+    margin-right: 0;
+    background-color: #F9FFF9;
+    border-color: #BBDDBB;
 }
 
 /*----------*/
