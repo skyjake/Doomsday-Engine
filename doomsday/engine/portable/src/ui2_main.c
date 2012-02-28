@@ -603,7 +603,7 @@ void FIPage_Drawer(fi_page_t* p)
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    if(renderWireframe)
+    if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
@@ -639,7 +639,7 @@ void FIPage_Drawer(fi_page_t* p)
     glDisable(GL_ALPHA_TEST);
     //glDisable(GL_CULL_FACE);
     // Back from wireframe mode?
-    if(renderWireframe)
+    if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Filter on top of everything. Only draw if necessary.

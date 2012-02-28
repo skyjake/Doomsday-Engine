@@ -581,7 +581,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
-    if(renderWireframe)
+    if(renderWireframe > 1)
     {
         LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -740,7 +740,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }}
 
     // Restore previous GL-state.
-    if(renderWireframe)
+    if(renderWireframe > 1)
     {
         /// \fixme do not assume previous state.
         glEnable(GL_TEXTURE_2D);

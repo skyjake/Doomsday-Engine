@@ -622,7 +622,7 @@ desc = Display contrast: 1=normal.
 desc = Display brightness: -1=dark, 0=normal, 1=light.
 
 [rend-dev-wireframe]
-desc = 1=Render player view in wireframe mode.
+desc = 1=Render player view in wireframe mode. 2=Also render UI and text as wireframes.
 
 [rend-dev-fakeradio-update]
 desc = 1=Enable updating of the shadow edges used with simulated radiosity.
