@@ -216,7 +216,7 @@ function make_pretty_hyperlink($matches)
     else
         $shortUri = $uri;
 
-    /// \fixme Do not assume all links are external ones.
+    /// @fixme Do not assume all links are external ones.
     return '<a class="link-external" href="'.$uri.'">'.$shortUri.'</a>';
 }
 
@@ -279,10 +279,12 @@ function outputCommitJumpList(&$groups)
     if(!is_array($groups))
         throw new Exception('Invalid groups argument, array expected');
 
-?><div class="jumplist_wrapper"><?php
+    $groupCount = count($groups);
+
+    // If only one list; apply the special 'hnav' class (force horizontal).
+?><div class="jumplist_wrapper <?php if($groupCount <= 5) echo 'hnav'; ?>"><?php
 
     // If the list is too long; split it into multiple sublists.
-    $groupCount = count($groups);
     if($groupCount > 5)
     {
         $numLists = ceil($groupCount / 5);
@@ -604,7 +606,7 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     private function populateSymbolicPackages(&$packages)
     {
         /**
-         * \todo Read this information from a config file, we should not
+         * @todo Read this information from a config file, we should not
          * expect to edit this file in order to change these...
          */
 
