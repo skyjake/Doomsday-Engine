@@ -475,12 +475,6 @@ p.legal a {
 
 /*---------------------- NewsFeed ---------------------*/
 
-.projectnews-label {
-    color: #ffffff;
-    font-weight: bold;
-    min-height: 139px;
-}
-
 #projectnews {
     position: relative;
     top: -282px; /* minus image height */
@@ -492,6 +486,7 @@ p.legal a {
     color: #ff8a00;
     font-size: xx-small;
     font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-weight: lighter;
     min-height: 139px;
     background: url(http://code.iki.fi/dengine.net/images/shadow.png) no-repeat;
 }
@@ -504,6 +499,7 @@ p.legal a {
 
 #projectnews ul li {
     list-style-type: none;
+    min-height: 1.6em;
 }
 
 #projectnews a {
@@ -518,6 +514,12 @@ p.legal a {
 #projectnews a:hover, #projectnews a:visited:hover {
     color: #ffffff;
     font-size: x-small;
+}
+
+.projectnews-label {
+    color: #ffffff;
+    font-weight: bold;
+    min-height: 139px;
 }
 
 /*-------------------- GameServers -------------------*/
