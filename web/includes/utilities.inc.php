@@ -85,6 +85,20 @@ function fopen_recursive($path, $mode, $chmod=0755)
     return fopen($path, $mode);
 }
 
+function file_get_contents_utf8($fn, $contentType, $charset)
+{
+    $opts = array(
+        'http' => array(
+            'method'=>"GET",
+            'header'=>"Content-Type:$contentType; charset=$charset"
+        )
+    );
+
+    $context = stream_context_create($opts);
+    $result = @file_get_contents($fn,false,$context);
+    return $result;
+}
+
 function implode_keys($glue="", $pieces=array())
 {
     $keys = array_keys($pieces);

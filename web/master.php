@@ -26,8 +26,7 @@
 
 require_once('classes/masterserver.class.php');
 
-define("XML_LOG_FILE", "masterfeed.xml");
-
+// Global Master Server instance.
 $ms = NULL;
 
 function MasterServer_inst()
@@ -102,147 +101,6 @@ function answer_request()
     $ms->close();
 }
 
-function file_get_contents_utf8($fn, $contentType, $charset)
-{
-    $opts = array(
-        'http' => array(
-            'method'=>"GET",
-            'header'=>"Content-Type:$contentType; charset=$charset"
-        )
-    );
-
-    $context = stream_context_create($opts);
-    $result = @file_get_contents($fn,false,$context);
-    return $result;
-}
-
-/**
- * @return  (Boolean) @c true iff the cached XML log file requires an update.
- */
-function mustUpdateXmlLog()
-{
-    $logPath = XML_LOG_FILE;
-    if(!file_exists($logPath)) return true;
-
-    $ms = MasterServer_inst();
-    return $ms->lastUpdate > @filemtime($logPath);
-}
-
-/**
- * Update the cached XML log file if necessary.
- *
- * @param includeDTD  (Boolean) @c true= Embed the DOCTYPE specification in file.
- *
- * @return  (Boolean) @c true= log was updated successfully (or didn't need updating).
- */
-function updateXmlLog($includeDTD=true)
-{
-    if(!mustUpdateXmlLog()) return TRUE;
-
-    $logFile = fopen(XML_LOG_FILE, 'w+');
-    if(!$logFile) throw new Exception('Failed opening master server log (XML)');
-
-    // Obtain write lock.
-    flock($logFile, 2);
-
-    $ms = MasterServer_inst();
-    $numServers = (is_array($ms->servers) ? count($ms->servers) : 0);
-
-    $urlStr = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')? 'https://' : 'http://')
-            . $_SERVER['HTTP_HOST'] . parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-    fwrite($logFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-
-    if($includeDTD !== 0)
-    {
-        // Embed our DTD so that our server lists can be transported more easily.
-        fwrite($logFile,
-          "\n<!DOCTYPE masterserver [
-          <!ELEMENT masterserver ((channel?),serverlist)>
-          <!ELEMENT channel (generator,(generatorurl?),(pubdate?),(language?))>
-          <!ELEMENT generator (#PCDATA)>
-          <!ELEMENT generatorurl (#PCDATA)>
-          <!ELEMENT pubdate (#PCDATA)>
-          <!ELEMENT language (#PCDATA)>
-          <!ELEMENT serverlist (server*)>
-          <!ATTLIST serverlist size CDATA #REQUIRED>
-          <!ELEMENT server (name,info,ip,port,open,version,gameinfo)>
-          <!ATTLIST server host CDATA #REQUIRED>
-          <!ELEMENT name (#PCDATA)>
-          <!ELEMENT info (#PCDATA)>
-          <!ELEMENT ip (#PCDATA)>
-          <!ELEMENT port (#PCDATA)>
-          <!ELEMENT open (#PCDATA)>
-          <!ELEMENT version (#PCDATA)>
-          <!ATTLIST version doomsday CDATA #REQUIRED>
-          <!ATTLIST version game CDATA #REQUIRED>
-          <!ELEMENT gameinfo (mode,iwad,(pwads?),setupstring,map,numplayers,maxplayers,(playernames?))>
-          <!ELEMENT mode (#PCDATA)>
-          <!ELEMENT iwad (#PCDATA)>
-          <!ATTLIST iwad crc CDATA #REQUIRED>
-          <!ELEMENT pwads (#PCDATA)>
-          <!ELEMENT setupstring (#PCDATA)>
-          <!ELEMENT map (#PCDATA)>
-          <!ELEMENT numplayers (#PCDATA)>
-          <!ELEMENT maxplayers (#PCDATA)>
-          <!ELEMENT playernames (#PCDATA)>
-        ]>");
-    }
-
-    fwrite($logFile, "\n<masterserver>");
-
-    fwrite($logFile,
-        "\n<channel>".
-        "\n<generator>". ('Doomsday Engine Master Server '. MasterServer::VERSION_MAJOR .'.'. MasterServer::VERSION_MINOR) .'</generator>'.
-        "\n<generatorurl>". $urlStr .'</generatorurl>'.
-        "\n<pubdate>". gmdate("D, d M Y H:i:s \G\M\T") .'</pubdate>'.
-        "\n<language>en</language>".
-        "\n</channel>");
-
-    fwrite($logFile, "\n<serverlist size=\"". $numServers .'">');
-    while(list($ident, $info) = each($ms->servers))
-    {
-        if($info['pwads'] !== '')
-        {
-            $pwadArr = array_filter(explode(";", $info['pwads']));
-            $pwadStr = implode(" ", $pwadArr);
-        }
-        else
-        {
-            $pwadStr = "";
-        }
-
-        fwrite($logFile,
-            "\n<server host=\"{$info['at']}:{$info['port']}\">".
-            "\n<name>". $info['name'] .'</name>'.
-            "\n<info>". $info['info'] .'</info>'.
-            "\n<ip>{$info['at']}</ip>".
-            "\n<port>{$info['port']}</port>".
-            "\n<open>". ($info['open']? 'yes' : 'no') .'</open>'.
-            "\n<version doomsday=\"{$info['ver']}\" game=\"{$info['game']}\"/>".
-            "\n<gameinfo>".
-                "\n<mode>{$info['mode']}</mode>".
-                "\n<iwad crc=\"". dechex($info['wcrc']) ."\">{$info['iwad']}</iwad>".
-            ($info['pwads'] !== ''? "\n<pwads>$pwadStr</pwads>" : '').
-                "\n<setupstring>{$info['setup']}</setupstring>".
-                "\n<map>{$info['map']}</map>".
-                "\n<numplayers>{$info['nump']}</numplayers>".
-                "\n<maxplayers>{$info['maxp']}</maxplayers>".
-            ($info['plrn'] !== ''? "\n<playernames>{$info['plrn']}</playernames>" : '').
-            "\n</gameinfo>".
-            "\n</server>");
-    }
-    fwrite($logFile, "\n</serverlist>");
-    fwrite($logFile, "\n</masterserver>");
-
-    flock($logFile, 3);
-    fclose($logFile);
-
-    $ms->close();
-
-    return TRUE;
-}
-
 $query  = $HTTP_SERVER_VARS['QUERY_STRING'];
 
 // There are four operating modes:
@@ -262,18 +120,12 @@ else if($query == 'list')
 }
 else if($query == 'xml')
 {
-    // Update the cached copy of the XML log if necessary.
-    try
-    {
-        updateXmlLog();
-    }
-    catch(Exception $e)
-    {
-        // @todo log the error.
-        exit;
-    }
+    $ms = MasterServer_inst();
 
-    $result = file_get_contents_utf8(XML_LOG_FILE, 'text/xml', 'utf-8');
+    $logPath = $ms->xmlLogFile();
+    if($logPath === false) exit;
+
+    $result = file_get_contents_utf8($logPath, 'text/xml', 'utf-8');
     if($result === false) exit; // Most peculiar...
 
     // Return the log to the client.
