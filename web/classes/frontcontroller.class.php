@@ -346,19 +346,20 @@ class FrontController
         $leftTabs[] = array('page'=>'/dew',     'label'=>'Wiki',     'tooltip'=>'Doomsday Engine Wiki');
 
         $rightTabs = array();
-        $rightTabs[] = array('page'=>'/addons',  'label'=>'Add-ons',      'tooltip'=>'Add-ons for games playable with Doomsday Engine');
-        $rightTabs[] = array('page'=>'/forums',  'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
+        $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with Doomsday Engine');
+        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine User Forums');
+        $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine Master Server');
 
 ?>
         <div id="menu" class="hnav">
-            <ul>
+            <ul><section class="left">
 <?php
             echo $this->buildTabs($leftTabs, $page, "paddle_left", "paddle_left_select");
-?>
-<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li>
+?></section>
+<li class="logo"><a href="/" title="<?=$this->homeURL()?>"><span class="hidden">.</span></a></li><section class="right">
 <?php
             echo $this->buildTabs($rightTabs, $page, "paddle_right", "paddle_right_select");
-?>
+?></section>
             </ul>
         </div>
 <?php

@@ -224,7 +224,7 @@ ol.jumplist {
     top: 0;
     left: 0;
     width: 100%;
-    min-width: 620px;
+    min-width: 640px;
     z-index: 0;
     overflow: hidden;
 }
@@ -251,6 +251,10 @@ ol.jumplist {
     float: right;
 }
 
+.collapsible {
+    cursor: pointer;
+}
+
 /*------------- Graphical Outer Border ------------*/
 
 .t {background: url(http://code.iki.fi/dengine.net/images/tc02.png) 0 0 repeat-x;}
@@ -268,7 +272,7 @@ ol.jumplist {
     max-width: 1280px;
     height: auto;
     clear: both;
-    min-width: 600px;
+    min-width: 624px;
     margin-top: 52px;
     margin-bottom: 0px;
     margin-left: auto;
@@ -317,6 +321,12 @@ ol.jumplist {
     margin: 0;
     border: 0;
     padding: 0;
+}
+
+#menu section {
+    display: inline-block;
+    min-width: 12em;
+    text-align: right;
 }
 
 #menu li {
@@ -799,11 +809,6 @@ p.legal a {
     margin:0;
 }
 
-.commit_list p.collapsible {
-    cursor: pointer;
-    position: relative;
-}
-
 .commit_list p.collapsible:hover {
     color: #ff8a00;
 }
@@ -884,6 +889,112 @@ span.metadata {
 
 .buildevent table td.issue_level {
     text-align:center;
+}
+
+/*----------------- Master Server ------------------*/
+
+#masterbrowser {
+    background: #ffffff;
+    padding:.5em 1em;
+}
+
+#masterbrowser #pubDate, #summary {
+    text-align: right;
+    padding: 0;
+}
+
+span.port:before {
+    content:":";
+}
+
+span.port {
+    padding: .5em;
+}
+
+.server_list {
+    vertical-align:top;
+    margin-left: 1em;
+    text-align: center;
+    overflow-y: scroll;
+    max-height: 600px;
+}
+
+.server_list ul {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 56px;
+}
+
+.server_list li {
+    list-style-type: none;    
+}
+
+.server_badge {
+    position: relative;
+    text-align: left;
+    margin: 1px 0;
+}
+
+.server_badge .wrapper {
+    padding: .2em .4em;
+    border: 2px solid #eee;
+    border-radius: 3px;
+}
+
+.server_badge .game-info {
+    display: block;
+    color: #807970;
+}
+
+.server_badge .name, .game-current-map, .game-setup {
+    font-weight: bold;
+}
+
+.server_badge .player-count, .player-max {
+    font-family: monospace;
+}
+
+.server_badge .player-count {
+    margin-right: .5em;
+}
+
+.server_badge .player-max {
+    margin-left: .5em;
+}
+
+.server_badge .game-mode {
+    position: absolute;
+    left: -56px;
+    max-width: 48px;
+    max-height: 48px;
+    overflow:hidden;
+    z-index: 1;
+}
+
+.server_badge .player-summary {
+    min-width: 3em;
+    display: inline-block;
+}
+
+.server_badge .name, .open .game-current-map, .game-setup {
+    padding: .6em;
+}
+
+.server_badge .game-info {
+    margin-left: 0;
+}
+
+.server_badge .server-metadata, .game-metadata {
+    font-size: small;
+    font-family: monospace;
+}
+
+.server_badge .server-metadata {
+    float: right;
+}
+
+.server_badge .address {
+    padding-left: .8em;
 }
 
 /*------------------ Screens Page ------------------*/
