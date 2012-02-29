@@ -965,9 +965,10 @@ span.port {
 .server_badge .game-mode {
     position: absolute;
     left: -56px;
-    max-width: 48px;
-    max-height: 48px;
+    max-width: 56px;
+    max-height: 56px;
     overflow:hidden;
+    font-size: smaller;
     z-index: 1;
 }
 
