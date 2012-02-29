@@ -342,5 +342,7 @@ else if($query == 'xml')
 }
 else
 {
-    html_page();
+    header("Location: http://dengine.net/masterserver");
+    exit;
+    //html_page();
 }
