@@ -24,6 +24,8 @@
  * @author Copyright &copy; 2009-2012 Daniel Swanson <danij@dengine.net>
  */
 
+require_once('includes/platform.inc.php');
+
 includeGuard('MasterServer');
 
 function get_ident($info)
