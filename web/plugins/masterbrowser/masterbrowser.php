@@ -144,7 +144,7 @@ jQuery(document).ready(function() {
 
         // Servers with active players get priority
         $diff = (integer)($b['nump'] - $a['nump']);
-        if($diff) return $diff;
+        if($diff) return -($diff);
 
         // Order by lexicographical difference in the server name.
         $diff = strcmp($b['mode'], $a['mode']);
