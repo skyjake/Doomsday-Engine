@@ -197,6 +197,7 @@ jQuery(document).ready(function() {
                     $servers = array();
                     while(list($ident, $info) = each($this->db->servers))
                     {
+                        if(!is_array($info)) continue;
                         $servers[] = $info;
                     }
 
@@ -217,7 +218,7 @@ jQuery(document).ready(function() {
                                     "<p id=\"summary\">{$serverCount} servers in total with {$playerCount} active players</p>".
                                     '<div class="server_list"><ul>';
 
-                        foreach($servers as $server)
+                        foreach($servers as &$server)
                         {
                             $content .= '<li>'. $this->generateServerBadgeHtml($server) .'</li>';
                         }
