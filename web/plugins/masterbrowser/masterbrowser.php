@@ -215,7 +215,7 @@ jQuery(document).ready(function() {
                         }
 
                         $content .= '<h3>Active servers</h3>'.
-                                    "<p id=\"summary\">{$serverCount} servers in total with {$playerCount} active players</p>".
+                                    "<p id=\"summary\">{$serverCount} ". ($serverCount === 1? 'server':'servers') ." in total with {$playerCount} active ". ($playerCount === 1? 'player':'players') .'</p>'.
                                     '<div class="server_list"><ul>';
 
                         foreach($servers as &$server)
