@@ -137,6 +137,20 @@ img {
     margin: 0;
 }
 
+fieldset {
+    border: 2px solid #EEE;
+    border-radius: 3px;
+}
+
+dl {
+    margin: 0;
+}
+
+dt.inline-term {
+    display: inline-block;
+    float: left;
+}
+
 div {
     background: none;
     border: none;
@@ -903,6 +917,12 @@ span.metadata {
     padding: 0;
 }
 
+#masterbrowser #serverLegend dd {
+    float: left;
+    margin-left: .5em;
+    margin-right: 2em;
+}
+
 span.port:before {
     content:":";
 }
@@ -994,7 +1014,7 @@ span.port {
     float: right;
 }
 
-div.lock-on, div.lock-off {
+.lock-on, .lock-off {
     background-image: url("/images/lock.png");
     background-size: 24px 12px;
     display: inline-block;
@@ -1004,7 +1024,7 @@ div.lock-on, div.lock-off {
     top: 2px;
 }
 
-div.lock-on {
+.lock-on {
     background-position-x: 12px;
 }
 
