@@ -96,8 +96,8 @@ class MasterBrowserPlugin extends Plugin implements Actioner, RequestInterpreter
                 '</div>'.
                 '<span class="name">'. htmlspecialchars($info['name']) .'</span>'.
                 '<div class="server-metadata">'.
-                     '<span class="open"><label title="'. htmlspecialchars($openStatusLabel) .'">'. htmlspecialchars($info['open']? 'Open' : 'Closed') .'</label></span>'.
                      '<span class="address"><label title="'. htmlspecialchars($addressLabel) .'">'. htmlspecialchars($info['at']) .'<span class="port">'. htmlspecialchars($info['port']) .'</span></label></span>'.
+                     '<label title="'. htmlspecialchars($openStatusLabel) .'"><div class="'. ($info['open']? 'lock-off' : 'lock-on') .'"></div></label>'.
                 '</div>'.
                 '<div class="game-metadata">'.
                     'Setup: <span class="game-setup">'. htmlspecialchars($setupStr) .'</span>'.

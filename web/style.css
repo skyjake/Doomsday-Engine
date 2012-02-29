@@ -994,8 +994,18 @@ span.port {
     float: right;
 }
 
-.server_badge .address {
-    padding-left: .8em;
+div.lock-on, div.lock-off {
+    background-image: url("/images/lock.png");
+    background-size: 24px 12px;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    position: relative;
+    top: 2px;
+}
+
+div.lock-on {
+    background-position-x: 12px;
 }
 
 /*------------------ Screens Page ------------------*/
