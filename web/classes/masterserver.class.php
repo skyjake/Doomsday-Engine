@@ -44,10 +44,10 @@ class MasterServer
     const VERSION_MINOR = 3;
 
     /// File used to store the current state of the server database.
-    const DATA_FILE = 'servers.dat';
+    const DATA_FILE = 'cache/master/servers.dat';
 
     /// File used to store the last published server feed.
-    const XML_LOG_FILE = 'masterfeed.xml';
+    const XML_LOG_FILE = 'cache/master/eventfeed.xml';
 
     public $servers;
     public $lastUpdate;
@@ -59,7 +59,7 @@ class MasterServer
     {
         global $HTTP_SERVER_VARS;
         $this->writable = $writable;
-        $this->file = fopen(self::DATA_FILE, $writable? 'r+' : 'r');
+        $this->file = fopen_recursive(self::DATA_FILE, $writable? 'r+' : 'r');
         if(!$this->file) die();
         $this->lastUpdate = @filemtime(self::DATA_FILE);
         $this->dbLock();
@@ -157,7 +157,7 @@ class MasterServer
     {
         if(!$this->mustUpdateXmlLog()) return TRUE;
 
-        $logFile = fopen(self::XML_LOG_FILE, 'w+');
+        $logFile = fopen_recursive(self::XML_LOG_FILE, 'w+');
         if(!$logFile) throw new Exception('Failed opening master server log (XML)');
 
         // Obtain write lock.

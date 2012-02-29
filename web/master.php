@@ -105,8 +105,9 @@ $query  = $HTTP_SERVER_VARS['QUERY_STRING'];
 
 // There are four operating modes:
 // 1. Server announcement processing.
-// 2. Answering a request for servers.
-// 3. XML output.
+// 2. Answering a request for servers (returns plain text).
+// 3. Retrieve a log of recent events (returns XML file).
+// 4. Web page.
 
 if(isset($GLOBALS['HTTP_RAW_POST_DATA']) && !$query)
 {
