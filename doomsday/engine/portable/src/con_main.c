@@ -1497,8 +1497,8 @@ boolean Con_Responder(ddevent_t* ev)
 
         if(!ConsoleActive)
         {
-            // We are only interested in the activation key.
-            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey))
+            // We are only interested in the activation key (without Shift).
+            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey) && !shiftDown)
             {
                 Con_Open(true);
                 return true;
@@ -1535,11 +1535,16 @@ boolean Con_Responder(ddevent_t* ev)
     {
         if(ev->toggle.id == consoleActiveKey)
         {
-            if(shiftDown) // Shift-Tilde to fullscreen and halfscreen.
+            if(altDown) // Alt-Tilde to fullscreen and halfscreen.
+            {
                 Rend_ConsoleToggleFullscreen();
-            else
+                return true;
+            }
+            if(!shiftDown)
+            {
                 Con_Open(false);
-            return true;
+                return true;
+            }
         }
         else
         {
@@ -1776,6 +1781,9 @@ boolean Con_Responder(ddevent_t* ev)
 
         ch = ev->toggle.id;
         ch = DD_ModKey(ch);
+#ifdef _DEBUG
+        fprintf(stderr, "ch %i (%i)\n", ch, ev->toggle.id);
+#endif
         if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
             return true;
 
@@ -2148,7 +2156,7 @@ D_CMD(Help)
     Con_FPrintf(CPF_YELLOW | CPF_CENTER, "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
     Con_Printf("Tilde          Open/close the console.\n");
-    Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
+    Con_Printf("Alt-Tilde      Switch between half and full screen mode.\n");
     Con_Printf("F5             Clear the buffer.\n");
     Con_Printf("Alt-C          Clear the command line.\n");
     Con_Printf("Insert         Switch between replace and insert modes.\n");
