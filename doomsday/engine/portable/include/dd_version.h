@@ -49,17 +49,17 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_VERSION_BASE   "1.9.7"
-#define DOOMSDAY_VERSION_NUMBER 1,9,7,0 // For WIN32 version info.
+#define DOOMSDAY_VERSION_BASE   "1.9.8"
+#define DOOMSDAY_VERSION_NUMBER 1,9,8,0 // For WIN32 version info.
 //#define DOOMSDAY_RELEASE_NAME   "Example"
 
 /**
  * DOOMSDAY_RELEASE_TYPE determines the classification of the release.
  * Possible values are "Unstable", "Candidate" and "Stable".
  */
-//#define DOOMSDAY_RELEASE_TYPE   "Unstable"
+#define DOOMSDAY_RELEASE_TYPE   "Unstable"
 //#define DOOMSDAY_RELEASE_TYPE   "Candidate"
-#define DOOMSDAY_RELEASE_TYPE   "Stable"
+//#define DOOMSDAY_RELEASE_TYPE   "Stable"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to
