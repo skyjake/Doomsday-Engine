@@ -1,20 +1,65 @@
 <h2>Install Packages</h2>
-<div class="downloads_list">
-    <div class="package_badge">
-        <a class="package_name" href="apt://doomsday" title="Download Doomsday 1.9.0-beta6.9 for Ubuntu (Beta)">Doomsday 1.9.0-beta6.9</a><br /><span class="metalink">(Beta) Ubuntu 11.10+ : <a href="http://www.dengine.net/dew/index.php?title=Version_1.9.0-beta6.9" title="Release notes for Doomsday 1.9.0 beta6.9 (Beta)">Release notes</a></span>
-        <p class="package_details"></p>
-    </div>
-    <div class="package_badge">
-        <a class="package_name" href="latestbuild?platform=linux-x86&unstable" title="Download latest Doomsday for 32bit Ubuntu (Unstable)">Doomsday</a><br /><span class="metalink">(Unstable) Ubuntu 10.04+ (32bit)</span>
-    </div>
-    <div class="package_badge">
-        <a class="package_name" href="latestbuild?platform=linux-x86_64&unstable" title="Download latest Doomsday for 64bit Ubuntu (Unstable)">Doomsday</a><br /><span class="metalink">(Unstable) Ubuntu 10.04+ (64bit)</span>
-    </div>
+<p>Select the package you wish to install by clicking on it. You will then be directed to our primary download server and after a few moments your download should begin automatically. Once downloaded, run the install package and follow the onsreen instructions to complete the install.</p>
+<div id="downloads_list1" class="downloads_list">
 </div>
-
 <h3>Minimum System Requirements</h3>
 <ul>
-<li>Display adapter capable of 3D hardware acceleration using OpenGL. Nouveau released in ubuntu 11.04+ works</li>
+<li>Display adapter capable of 3D hardware acceleration using OpenGL. (e.g., Nouveau in 11.04+).</li>
 <li>Original game data files for each supported game that you wish to play (e.g., in the case of <strong>DOOM</strong> the only file needed is <em>doom.wad</em>).</li>
-<li>Some <a href="http://files.dengine.net" title="Doomsday Add-ons">Add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
+<li>Some <a href="/addons" title="Doomsday Add-ons">Add-ons</a> may require a large amount of disk space (especially high quality texture and music packs).</li>
 </ul>
+
+<script type="text/javascript">
+// Generate a fancy HTML badge for this package.
+function genPackageBadgeHTML(json, query) {
+    // Compose badge title.
+    var cleanTitle = json.title + ' ' + json.version;
+
+    // Generate metadata HMTL.
+    var metaData = '<span class="metalink">';
+    if(json.hasOwnProperty('is_unstable'))
+    {
+        var isUnstable = json.is_unstable;
+        if(isUnstable)
+        {
+            metaData += '(Unstable) ';
+        }
+    }
+
+    if(json.platform_name == 'linux-x86')
+    {
+        metaData += /*json.platform_name + */ 'Ubuntu 11.10+ (32bit)</span>';
+    }
+    else
+    {
+        metaData += /*json.platform_name + */ 'Ubuntu 11.10+ (64bit)</span>';
+    }
+
+    var downloadUri = query; //json.download_uri;
+
+    return $('<div class="package_badge"><a class="package_name" href="' + downloadUri  + '" title="Download ' + json.fulltitle + '">' + cleanTitle + '</a><br />' + metaData + '</div>');
+}
+
+// Query packages, generate HTML badges and append them to
+// the specified DOM object.
+function populatePackages(query, objectName) {
+    $.getJSON(query + "&graph", function(json) {
+        genPackageBadgeHTML(json, query).appendTo(objectName);
+    });
+}
+
+// Query the latest packages, generate HTML badges and append
+// them to the specified DOM object.
+function populateAllPackages(platformName, objectName) {
+    var args = 'latestbuild?platform=' + platformName;
+
+    // First the latest stable packages.
+    populatePackages(args, objectName);
+
+    // Followed by the latest unstable packages.
+    populatePackages(args + '&unstable', objectName);
+}
+
+populateAllPackages('linux-x86', '#downloads_list1');
+populateAllPackages('linux-x86_64', '#downloads_list1');
+</script>
