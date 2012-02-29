@@ -1781,9 +1781,6 @@ boolean Con_Responder(ddevent_t* ev)
 
         ch = ev->toggle.id;
         ch = DD_ModKey(ch);
-#ifdef _DEBUG
-        fprintf(stderr, "ch %i (%i)\n", ch, ev->toggle.id);
-#endif
         if(ch < 32 || (ch > 127 && ch < DD_HIGHEST_KEYCODE))
             return true;
 
