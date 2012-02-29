@@ -395,9 +395,8 @@ int S_LocalSoundAtVolumeFrom(int soundIdAndFlags, mobj_t* origin,
     int                 result;
     boolean             isRepeating = false;
 
-    // A dedicated server never starts any local sounds (only logical
-    // sounds in the LSM).
-    if(isDedicated)
+    // A dedicated server never starts any local sounds (only logical sounds in the LSM).
+    if(isDedicated || Con_IsBusy())
         return false;
 
     if(soundId <= 0 || soundId >= defs.count.sounds.num || sfxVolume <= 0 ||

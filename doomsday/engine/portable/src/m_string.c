@@ -99,19 +99,18 @@ static void allocateString(ddstring_t *str, size_t for_length, int preserve)
  * automatically cleared, so they don't need initialization.
  * The string will use the memory zone.
  */
-void Str_Init(ddstring_t *str)
+ddstring_t* Str_Init(ddstring_t* str)
 {
     if(!str)
     {
         Con_Error("Attempted String::Init with invalid reference (this==0).");
-        return; // Unreachable.
+        exit(1); // Unreachable.
     }
 
     if(!Z_IsInited())
     {
         // The memory zone is not available at the moment.
-        Str_InitStd(str);
-        return;
+        return Str_InitStd(str);
     }
 
     memset(str, 0, sizeof(*str));
@@ -120,12 +119,13 @@ void Str_Init(ddstring_t *str)
     str->memFree = Z_Free;
     str->memAlloc = zoneAlloc;
     str->memCalloc = zoneCalloc;
+    return str;
 }
 
 /**
  * The string will use standard memory allocation.
  */
-void Str_InitStd(ddstring_t *str)
+ddstring_t* Str_InitStd(ddstring_t* str)
 {
     memset(str, 0, sizeof(*str));
 
@@ -133,12 +133,14 @@ void Str_InitStd(ddstring_t *str)
     str->memFree = free;
     str->memAlloc = malloc;
     str->memCalloc = stdCalloc;
+    return str;
 }
 
-void Str_InitStatic(ddstring_t* str, const char* staticConstStr)
+ddstring_t* Str_InitStatic(ddstring_t* str, const char* staticConstStr)
 {
     memset(str, 0, sizeof(*str));
     str->str = (char*) staticConstStr;
+    return str;
 }
 
 void Str_Free(ddstring_t* str)

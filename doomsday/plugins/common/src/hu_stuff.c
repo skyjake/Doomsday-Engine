@@ -351,21 +351,28 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 void HU_DrawText(const char* str, float x, float y, float scale,
     float r, float g, float b, float a, int alignFlags, short textFlags)
 {
-    if(!str || !str[0])
-        return;
+    const boolean applyScale = !FEQUAL(scale, 1.0f);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
+    if(!str || !str[0]) return;
 
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
-    DGL_Translatef(-x, -y, 0);
+    if(applyScale)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+
+        DGL_Translatef(x, y, 0);
+        DGL_Scalef(scale, scale, 1);
+        DGL_Translatef(-x, -y, 0);
+    }
 
     FR_SetColorAndAlpha(r, g, b, a);
     FR_DrawTextXY3(str, x, y, alignFlags, textFlags);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+    if(applyScale)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+    }
 }
 
 typedef struct {
@@ -515,14 +522,11 @@ static void drawTable(float x, float ly, float width, float height,
 #define CELL_PADDING    (1)
 
     int i, n, numCols, numStretchCols;
-    float cX, cY, fixedWidth, lineHeight, fontScale, fontHeight, fontOffsetY;
-    float* colX, *colW;
+    int cX, cY, fixedWidth, lineHeight, fontHeight, fontOffsetY;
+    float fontScale, *colX, *colW;
 
-    if(!columns)
-        return;
-
-    if(!(alpha > 0))
-        return;
+    if(!columns) return;
+    if(!(alpha > 0)) return;
 
     numStretchCols = 0;
     numCols = 0;
@@ -530,34 +534,26 @@ static void drawTable(float x, float ly, float width, float height,
     {
         numCols++;
 
-        if(columns[n].flags & CF_HIDE)
-            continue;
+        if(columns[n].flags & CF_HIDE) continue;
 
         if(!(columns[n].flags & CF_FIXEDWIDTH))
             numStretchCols++;
     }
 
-    if(!numCols)
-        return;
+    if(!numCols) return;
 
     colX = calloc(1, sizeof(*colX) * numCols);
     colW = calloc(1, sizeof(*colW) * numCols);
 
-    lineHeight = height / (MAXPLAYERS + 1);
+    lineHeight = .5f + height / (MAXPLAYERS + 1);
     fontHeight = FR_CharHeight('A');
-    fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
+    fontScale = (float)lineHeight / (fontHeight + CELL_PADDING * 2);
     fontOffsetY = 0;
-    if(fontScale > 1)
-    {
-        fontScale = 1;
-        fontOffsetY = (lineHeight - CELL_PADDING * 2 - fontHeight) / 2;
-    }
 
     fixedWidth = 0;
     for(n = 0; n < numCols; ++n)
     {
-        if(columns[n].flags & CF_HIDE)
-            continue;
+        if(columns[n].flags & CF_HIDE) continue;
 
         if(columns[n].flags & CF_FIXEDWIDTH)
         {
@@ -568,8 +564,7 @@ static void drawTable(float x, float ly, float width, float height,
 
     for(n = 0; n < numCols; ++n)
     {
-        if(columns[n].flags & CF_HIDE)
-            continue;
+        if(columns[n].flags & CF_HIDE) continue;
 
         if(!(columns[n].flags & CF_FIXEDWIDTH))
             colW[n] = (width - fixedWidth) / numStretchCols;
@@ -588,20 +583,18 @@ static void drawTable(float x, float ly, float width, float height,
     DGL_Enable(DGL_TEXTURE_2D);
     for(n = 0; n < numCols; ++n)
     {
-        if(columns[n].flags & CF_HIDE)
-            continue;
+        if(columns[n].flags & CF_HIDE) continue;
 
         cX = colX[n];
-        cY = ly + fontOffsetY;
+        cY = ly + lineHeight - CELL_PADDING + fontOffsetY;
 
-        cY += CELL_PADDING;
         if(columns[n].alignRight)
             cX += colW[n] - CELL_PADDING;
         else
             cX += CELL_PADDING;
 
         HU_DrawText(columns[n].label, cX, cY, fontScale, 1.f, 1.f, 1.f, alpha,
-            ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : 0), DTF_ONLY_SHADOW);
+                    ALIGN_BOTTOM|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT), DTF_ONLY_SHADOW);
     }
     ly += lineHeight;
     DGL_Disable(DGL_TEXTURE_2D);
@@ -614,13 +607,12 @@ static void drawTable(float x, float ly, float width, float height,
         char buf[5];
 
         if(info->player == player)
-        {   // Draw a background to make *me* stand out.
+        {
+            // Draw a background to make *me* stand out.
             float val = (info->color[0] + info->color[1] + info->color[2]) / 3;
 
-            if(val < .5f)
-                val = .2f;
-            else
-                val = .8f;
+            if(val < .5f) val = .2f;
+            else          val = .8f;
 
             DGL_DrawRectf2Color(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
         }
@@ -630,20 +622,10 @@ static void drawTable(float x, float ly, float width, float height,
 
         for(n = 0; n < numCols; ++n)
         {
-            if(columns[n].flags & CF_HIDE)
-                continue;
+            if(columns[n].flags & CF_HIDE) continue;
 
             cX = colX[n];
             cY = ly;
-
-/*#if _DEBUG
-DGL_Disable(DGL_TEXTURE_2D);
-GL_DrawRectf2Color(cX + CELL_PADDING, cY + CELL_PADDING,
-            colW[n] - CELL_PADDING * 2,
-            lineHeight - CELL_PADDING * 2,
-            1, 1, 1, .1f * alpha);
-DGL_Enable(DGL_TEXTURE_2D);
-#endif*/
 
             cY += CELL_PADDING;
             if(columns[n].alignRight)
@@ -680,16 +662,16 @@ DGL_Enable(DGL_TEXTURE_2D);
                     h = sprInfo.geometry.size.height;
 
                     if(h > w)
-                        scale = (lineHeight - CELL_PADDING * 2) / h;
+                        scale = (float) (lineHeight - CELL_PADDING * 2) / h;
                     else
-                        scale = (colW[n] - CELL_PADDING * 2) / w;
+                        scale = (float) (colW[n] - CELL_PADDING * 2) / w;
 
                     w *= scale;
                     h *= scale;
 
                     // Align to center on both X+Y axes.
-                    cX += ((colW[n] - CELL_PADDING * 2) - w) / 2;
-                    cY += ((lineHeight - CELL_PADDING * 2) - h) / 2;
+                    cX += ((colW[n] - CELL_PADDING * 2) - w) / 2.0f;
+                    cY += ((lineHeight - CELL_PADDING * 2) - h) / 2.0f;
 
                     DGL_SetMaterialUI(sprInfo.material, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -702,21 +684,24 @@ DGL_Enable(DGL_TEXTURE_2D);
             case 1: // Name.
                 HU_DrawText(name, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
+                            DTF_ONLY_SHADOW);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
+                            DTF_ONLY_SHADOW);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
                 HU_DrawText(buf, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+                            alpha, ALIGN_TOP|(columns[n].alignRight? ALIGN_RIGHT : ALIGN_LEFT),
+                            DTF_ONLY_SHADOW);
                 break;
             }
         }
@@ -735,37 +720,32 @@ const char* P_GetGameModeName(void)
     static const char* dm = "deathmatch";
     static const char* coop = "cooperative";
     static const char* sp = "singleplayer";
-
     if(IS_NETGAME)
     {
-        if(deathmatch)
-            return dm;
-
+        if(deathmatch) return dm;
         return coop;
     }
-
     return sp;
 }
 
 static void drawMapMetaData(float x, float y, float alpha)
 {
-    static const char*  unnamed = "unnamed";
+#define BORDER              2
+
+    static const char* unnamed = "Unnamed";
+
     const char* lname = P_GetMapNiceName();
+    char buf[256];
 
     if(!lname)
         lname = unnamed;
 
+    dd_snprintf(buf, 256, "map: %s gamemode: %s", lname, P_GetGameModeName());
+
     FR_SetColorAndAlpha(1, 1, 1, alpha);
+    FR_DrawTextXY2(buf, x + BORDER, y - BORDER, ALIGN_BOTTOMLEFT);
 
-    // Map name:
-    FR_DrawTextXY("map: ", x, y + 16);
-    FR_DrawTextXY(lname, x += FR_TextWidth("map: "), y + 16);
-
-    x += 8;
-
-    // Game mode:
-    FR_DrawTextXY("gamemode: ", x += FR_TextWidth(lname), y + 16);
-    FR_DrawTextXY(P_GetGameModeName(), x += FR_TextWidth("gamemode: "), y + 16);
+#undef BORDER
 }
 
 /**
@@ -773,30 +753,26 @@ static void drawMapMetaData(float x, float y, float alpha)
  */
 void HU_DrawScoreBoard(int player)
 {
-#define LINE_BORDER     4
+#define LINE_BORDER         4
 
     column_t columns[] = {
-        {"cl", 0, CF_FIXEDWIDTH, false},
-        {"name", 1, 0, false},
-        {"suicides", 2, CF_FIXEDWIDTH, true},
-        {"frags", 3, CF_FIXEDWIDTH, true},
-        {NULL, 0, 0}
+        { "cl",       0, CF_FIXEDWIDTH },
+        { "name",     1 },
+        { "suicides", 2, CF_FIXEDWIDTH, true },
+        { "frags",    3, CF_FIXEDWIDTH, true },
+        { NULL }
     };
 
     scoreinfo_t scoreBoard[MAXPLAYERS];
     int x, y, width, height, inCount;
     scoreboardstate_t* ss;
 
-    if(!IS_NETGAME)
-        return;
+    if(!IS_NETGAME) return;
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
+    if(player < 0 || player >= MAXPLAYERS) return;
     ss = &scoreStates[player];
 
-    if(!(ss->alpha > 0))
-        return;
+    if(!(ss->alpha > 0)) return;
 
     // Set up the fixed 320x200 projection.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -834,7 +810,7 @@ void HU_DrawScoreBoard(int player)
     FR_DrawTextXY3("ranking", x + width / 2, y + LINE_BORDER, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
-    drawMapMetaData(x, y + 16, ss->alpha);
+    drawMapMetaData(x, y + height, ss->alpha);
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, ss->alpha, player);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1147,7 +1123,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     {
         patchinfo_t info;
         R_GetPatchInfo(patchId, &info);
-        if(!info.isCustom)
+        if(!info.flags.isCustom)
         {
             if(flags & PRF_NO_IWAD)
                 return NULL;
@@ -1172,7 +1148,7 @@ const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchI
         {
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
-            if(!info.isCustom)
+            if(!info.flags.isCustom)
             {
                 if(NULL == text || !text[0])
                 {

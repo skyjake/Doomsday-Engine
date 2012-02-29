@@ -404,29 +404,56 @@ void P_PostMorphWeapon(player_t *plr, weapontype_t weapon)
 /**
  * Starts bringing the pending weapon up from the bottom of the screen.
  */
-void P_BringUpWeapon(struct player_s *plr)
+void P_BringUpWeapon(player_t* player)
 {
+#if _DEBUG
+    const weapontype_t oldPendingWeapon = player->pendingWeapon;
+#endif
+
+    weaponmodeinfo_t* wminfo = NULL;
+    weapontype_t raiseWeapon;
     statenum_t newState;
-    weaponmodeinfo_t *wminfo;
 
-    if(plr->pendingWeapon == WT_NOCHANGE)
-        plr->pendingWeapon = plr->readyWeapon;
+    if(!player) return;
 
-    wminfo = WEAPON_INFO(plr->pendingWeapon, plr->class_, 0);
+    if(player->plr->flags & DDPF_UNDEFINED_WEAPON)
+    {
+        // We'll do this when the server informs us about the client's current weapon.
+        return;
+    }
 
+    raiseWeapon = player->pendingWeapon;
+    if(raiseWeapon == WT_NOCHANGE)
+        raiseWeapon = player->readyWeapon;
+
+    player->pendingWeapon = WT_NOCHANGE;
+    player->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
+
+    if(!VALID_WEAPONTYPE(raiseWeapon))
+    {
+        return;
+    }
+
+    wminfo = WEAPON_INFO(raiseWeapon, player->class_, 0);
+
+#if _DEBUG
+    Con_Message("P_BringUpWeapon: Player %i, pending weapon was %i, weapon pspr to %i\n",
+                (int)(player - players), oldPendingWeapon, wminfo->states[WSN_UP]);
+#endif
+
+    if(wminfo->raiseSound)
+        S_StartSoundEx(wminfo->raiseSound, player->plr->mo);
+
+    /// @kludge
     newState = wminfo->states[WSN_UP];
-    if(plr->class_ == PCLASS_FIGHTER && plr->pendingWeapon == WT_SECOND &&
-       plr->ammo[AT_BLUEMANA].owned > 0)
+    if(player->class_ == PCLASS_FIGHTER && raiseWeapon == WT_SECOND &&
+       player->ammo[AT_BLUEMANA].owned > 0)
     {
         newState = S_FAXEUP_G;
     }
+    /// Kludge end.
 
-    if(wminfo->raiseSound)
-        S_StartSound(wminfo->raiseSound, plr->plr->mo);
-
-    plr->pendingWeapon = WT_NOCHANGE;
-    plr->pSprites[ps_weapon].pos[VY] = WEAPONBOTTOM;
-    P_SetPsprite(plr, ps_weapon, newState);
+    P_SetPsprite(player, ps_weapon, newState);
 }
 
 void P_FireWeapon(player_t *plr)

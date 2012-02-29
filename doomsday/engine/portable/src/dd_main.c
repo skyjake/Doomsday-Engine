@@ -418,9 +418,7 @@ gameid_t DD_GameIdForKey(const char* identityKey)
     {
         return DD_GameId(game);
     }
-#ifdef _DEBUG
-    Con_Message("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey);
-#endif
+    DEBUG_Message(("Warning:DD_GameIdForKey: Game \"%s\" not defined.\n", identityKey));
     return 0; // Invalid id.
 }
 
@@ -484,36 +482,50 @@ void DD_StartTitle(void)
 static boolean recognizeWAD(const char* filePath, void* data)
 {
     lumpnum_t auxLumpBase = F_OpenAuxiliary3(filePath, 0, true);
-    boolean result;
+    boolean result = false;
 
-    if(auxLumpBase == -1) return false;
-
-    // Ensure all identity lumps are present.
-    result = true;
-    if(data)
+    if(auxLumpBase >= 0)
     {
-        const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
-        for(; result && *lumpNames; lumpNames++)
+        // Ensure all identity lumps are present.
+        if(data)
         {
-            lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
-            if(lumpNum == -1)
+            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
+            result = true;
+            for(; result && *lumpNames; lumpNames++)
             {
-                result = false;
+                lumpnum_t lumpNum = F_CheckLumpNumForName2(Str_Text(*lumpNames), true);
+                if(lumpNum < 0)
+                {
+                    result = false;
+                }
             }
         }
-    }
+        else
+        {
+            // Matched.
+            result = true;
+        }
 
-    F_CloseAuxiliary();
+        F_CloseAuxiliary();
+    }
     return result;
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeZIP(const char* filePath, void* data)
 {
-    /// \todo dj: write me.
-    return F_FileExists(filePath);
+    DFile* dfile = F_Open(filePath, "bf");
+    boolean result = false;
+    if(dfile)
+    {
+        result = ZipFile_Recognise(dfile);
+        /// @todo Check files. We should implement an auxiliary zip lumpdirectory...
+        F_Close(dfile);
+    }
+    return result;
 }
 
+/// @todo This logic should be encapsulated by AbstractResource.
 static int validateResource(AbstractResource* rec, void* paramaters)
 {
     int validated = false;
@@ -533,14 +545,19 @@ static int validateResource(AbstractResource* rec, void* paramaters)
                 validated = true;
             }
             break;
-        default: break;
+        default:
+            // Other resource types are not validated.
+            validated = true;
+            break;
         }
     }
+
+    AbstractResource_MarkAsFound(rec, validated);
 
     return validated;
 }
 
-static void locateGameResources(Game* game)
+static void locateGameStartupResources(Game* game)
 {
     Game* oldGame = theGame;
     uint i;
@@ -581,7 +598,7 @@ static void locateGameResources(Game* game)
     }
 }
 
-static boolean allGameResourcesFound(Game* game)
+static boolean allGameStartupResourcesFound(Game* game)
 {
     if(!DD_IsNullGame(game))
     {
@@ -595,9 +612,9 @@ static boolean allGameResourcesFound(Game* game)
             for(recordIt = records; *recordIt; recordIt++)
             {
                 AbstractResource* rec = *recordIt;
+                const int flags = AbstractResource_ResourceFlags(rec);
 
-                if((AbstractResource_ResourceFlags(rec) & RF_STARTUP) &&
-                   !AbstractResource_ResolvedPath(rec, false))
+                if((flags & RF_STARTUP) && !(flags & RF_FOUND))
                     return false;
             }
         }
@@ -607,7 +624,7 @@ static boolean allGameResourcesFound(Game* game)
 
 /**
  * Print a game mode banner with rulers.
- * \todo dj: This has been moved here so that strings like the game
+ * @todo This has been moved here so that strings like the game
  * title and author can be overridden (e.g., via DEHACKED). Make it so!
  */
 static void printGameBanner(Game* game)
@@ -635,7 +652,7 @@ static void printGameResources(Game* game, boolean printStatus, int rflags)
         {
             AbstractResource* rec = *recordIt;
 
-            if(AbstractResource_ResourceFlags(rec) == rflags)
+            if((rflags & RF_STARTUP) == (AbstractResource_ResourceFlags(rec) & RF_STARTUP))
             {
                 AbstractResource_Print(rec, printStatus);
                 count += 1;
@@ -677,14 +694,13 @@ void DD_PrintGame(Game* game, int flags)
     if(flags & PGF_LIST_OTHER_RESOURCES)
     {
         Con_Printf("Other resources:\n");
-        /*@todo dj: we need a resource flag for "located"*/
         Con_Printf("   ");
         printGameResources(game, /*(flags & PGF_STATUS) != 0*/false, 0);
     }
 
     if(flags & PGF_STATUS)
         Con_Printf("Status: %s\n",       theGame == game? "Loaded" :
-                                   allGameResourcesFound(game)? "Complete/Playable" :
+                                   allGameStartupResourcesFound(game)? "Complete/Playable" :
                                                                 "Incomplete/Not playable");
 }
 
@@ -769,16 +785,27 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
 static void loadResource(AbstractResource* res)
 {
     if(!res) return;
+
     switch(AbstractResource_ResourceClass(res))
     {
     case RC_PACKAGE: {
         const ddstring_t* path = AbstractResource_ResolvedPath(res, false/*do not locate resource*/);
         if(path)
         {
-            F_AddFile(Str_Text(path), 0, false);
+            DFile* file = F_AddFile(Str_Text(path), 0, false);
+            if(file)
+            {
+                // Mark this as an original game resource.
+                AbstractFile_SetCustom(DFile_File(file), false);
+
+                // Print the 'CRC' number of IWADs, so they can be identified.
+                if(FT_WADFILE == AbstractFile_Type(DFile_File(file)))
+                    Con_Message("  IWAD identification: %08x\n", WadFile_CalculateCRC((WadFile*)DFile_File(file)));
+
+            }
         }
-        break;
-      }
+        break; }
+
     default: Con_Error("loadGameResource: No resource loader found for %s.",
                        F_ResourceClassStr(AbstractResource_ResourceClass(res)));
     }
@@ -847,8 +874,6 @@ static int DD_LoadGameStartupResourcesWorker(void* paramaters)
      *        against by the virtual file system layer.
      */
     Con_Message("Loading game resources%s\n", verbose >= 1? ":" : "...");
-
-#pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
 
     { int numResources;
     AbstractResource* const* resources;
@@ -1130,9 +1155,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
         { // Tell the plugin it is being unloaded.
             void* unloader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Unload");
-#ifdef _DEBUG
-            Con_Message("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader);
-#endif
+            DEBUG_Message(("DD_ChangeGame2: Calling DP_Unload (%p)\n", unloader));
             if(unloader) ((pluginfunc_t)unloader)();
         }
 
@@ -1146,7 +1169,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         R_InitSvgs();
         R_InitViewWindow();
 
-        /// \fixme Assumes we only cache lumps from non-startup wads.
+        /// @fixme Assumes we only cache lumps from non-startup wads.
         Z_FreeTags(PU_CACHE, PU_CACHE);
 
         F_Reset();
@@ -1156,7 +1179,7 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     FI_Shutdown();
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
-    /// \fixme Materials database should not be shutdown during a reload.
+    /// @fixme Materials database should not be shutdown during a reload.
     Materials_Shutdown();
 
     VERBOSE(
@@ -1178,16 +1201,15 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
     if(!DD_IsShuttingDown())
     {
         // Re-initialize subsystems needed even when in ringzero.
-
-        Materials_Init();
-        FI_Init();
-        P_PtcInit(); /// @todo not needed in this mode.
-
         if(!exchangeEntryPoints(Game_PluginId(game)))
         {
             Con_Message("Warning:DD_ChangeGame: Failed exchanging entrypoints with plugin %i, aborting.\n", (int)Game_PluginId(game));
             return false;
         }
+
+        Materials_Init();
+        FI_Init();
+        P_PtcInit(); /// @todo not needed in this mode.
     }
 
     // This is now the current game.
@@ -1231,13 +1253,11 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             // Tell the plugin it is being loaded.
             /// @todo Must this be done in the main thread?
             void* loader = DD_FindEntryPoint(Game_PluginId(theGame), "DP_Load");
-#ifdef _DEBUG
-            Con_Message("DD_ChangeGame2: Calling DP_Load (%p)\n", loader);
-#endif
+            DEBUG_Message(("DD_ChangeGame2: Calling DP_Load (%p)\n", loader));
             if(loader) ((pluginfunc_t)loader)();
         }
 
-        /// \kludge Use more appropriate task names when unloading a game.
+        /// @kludge Use more appropriate task names when unloading a game.
         if(DD_IsNullGame(game))
         {
             gameChangeTasks[0].name = "Unloading game...";
@@ -1263,8 +1283,8 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
 
     /**
      * Clear any input events we may have accumulated during this process.
-     * \note Only necessary here because we might not have been able to use
-     * busy mode (which would normally do this for us on end).
+     * @note Only necessary here because we might not have been able to use
+     *       busy mode (which would normally do this for us on end).
      */
     DD_ClearEvents();
     return true;
@@ -1302,7 +1322,7 @@ static int countPlayableGames(void)
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(!allGameResourcesFound(game)) continue;
+        if(!allGameStartupResourcesFound(game)) continue;
         ++count;
     }
     return count;
@@ -1314,7 +1334,7 @@ static Game* findFirstPlayableGame(void)
     for(i = 0; i < gamesCount; ++i)
     {
         Game* game = games[i];
-        if(allGameResourcesFound(game)) return game;
+        if(allGameStartupResourcesFound(game)) return game;
     }
     return NULL;
 }
@@ -1322,7 +1342,7 @@ static Game* findFirstPlayableGame(void)
 /**
  * Attempt to determine which game is to be played.
  *
- * \todo Logic here could be much more elaborate but is it necessary?
+ * @todo Logic here could be much more elaborate but is it necessary?
  */
 Game* DD_AutoselectGame(void)
 {
@@ -1331,7 +1351,7 @@ Game* DD_AutoselectGame(void)
         const char* identityKey = ArgNext();
         Game* game = findGameForIdentityKey(identityKey);
 
-        if(game && allGameResourcesFound(game))
+        if(game && allGameStartupResourcesFound(game))
         {
             return game;
         }
@@ -1410,7 +1430,7 @@ static int DD_LocateAllGameResourcesWorker(void* paramaters)
 
         VERBOSE( Con_Printf("Locating resources for \"%s\"...\n", Str_Text(Game_Title(game))) )
 
-        locateGameResources(game);
+        locateGameStartupResources(game);
         Con_SetProgress((i+1) * 200/gamesCount -1);
 
         VERBOSE( DD_PrintGame(game, PGF_LIST_STARTUP_RESOURCES|PGF_STATUS) )
@@ -1540,8 +1560,8 @@ int DD_Main(void)
             directory_t* dir;
             Uri* searchPath;
 
-            /// \todo Do not add these as search paths, publish them directly
-            /// to the FileDirectory owned by the "packages" ResourceNamespace.
+            /// @todo Do not add these as search paths, publish them directly to
+            ///       the FileDirectory owned by the "packages" ResourceNamespace.
             dir = Dir_ConstructFromPathDir(filePath);
             searchPath = Uri_NewWithPath2(Dir_Path(dir), RC_PACKAGE);
 
@@ -1599,8 +1619,8 @@ int DD_Main(void)
         }
     }
 
-    /// Re-initialize the resource locator as there are now new resources to be found
-    /// on existing search paths (probably that is).
+    // Re-initialize the resource locator as there are now new resources to be found
+    // on existing search paths (probably that is).
     F_InitLumpDirectoryMappings();
     F_ResetAllResourceNamespaces();
 
@@ -1713,7 +1733,7 @@ int DD_Main(void)
         // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
         if(!ArgExists("-noautoselect"))
-            Con_Printf("Automatic game selection failed.\n");
+            Con_Message("Automatic game selection failed.\n");
         Con_Execute(CMDS_DDAY, "listgames", false, false);
     }
 
@@ -2396,7 +2416,7 @@ D_CMD(Load)
     game = findGameForIdentityKey(Str_Text(&searchPath));
     if(game)
     {
-        if(!allGameResourcesFound(game))
+        if(!allGameStartupResourcesFound(game))
         {
             Con_Message("Failed to locate all required startup resources:\n");
             printGameResources(game, true, RF_STARTUP);
@@ -2545,11 +2565,11 @@ D_CMD(ListGames)
             Game* game = gamePtrs[i];
 
             Con_Printf(" %s %-16s %s (%s)\n", theGame == game? "*" :
-                                          !allGameResourcesFound(game)? "!" : " ",
+                                          !allGameStartupResourcesFound(game)? "!" : " ",
                        Str_Text(Game_IdentityKey(game)), Str_Text(Game_Title(game)),
                        Str_Text(Game_Author(game)));
 
-            if(allGameResourcesFound(game))
+            if(allGameStartupResourcesFound(game))
                 numCompleteGames++;
         }
 

@@ -49,3 +49,18 @@ void Deferred_glDeleteTextures(GLsizei num, const GLuint* names)
 {
     GL_CALL2(uintArray, glDeleteTextures, num, names);
 }
+
+void Deferred_glFogi(GLenum p, GLint v)
+{
+    GL_CALL2(i, glFogi, p, v);
+}
+
+void Deferred_glFogf(GLenum p, GLfloat v)
+{
+    GL_CALL2(f, glFogf, p, v);
+}
+
+void Deferred_glFogfv(GLenum p, const GLfloat* v)
+{
+    GL_CALL2(fv4, glFogfv, p, v);
+}

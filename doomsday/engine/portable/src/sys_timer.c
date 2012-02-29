@@ -97,33 +97,33 @@ unsigned int Sys_GetRealTime(void)
 #endif
 
     Sys_Lock(timer_Mutex);
+
 #ifdef WIN32
     now = timeGetTime();
 #elif  UNIX
     now = SDL_GetTicks();
 #endif
-    Sys_Unlock(timer_Mutex);
 
-    Sys_Lock(timer_Mutex);
     if(first)
     {
         first = false;
         start = now;
+
         Sys_Unlock(timer_Mutex);
         return 0;
     }
-    Sys_Unlock(timer_Mutex);
 
-    Sys_Lock(timer_Mutex);
     // Wrapped around? (Every 50 days...)
     if(now < start)
     {
         return_time = 0xffffffff - start + now + 1;
+
         Sys_Unlock(timer_Mutex);
         return return_time;
     }
 
     return_time = now - start;
+
     Sys_Unlock(timer_Mutex);
     return return_time;
 }

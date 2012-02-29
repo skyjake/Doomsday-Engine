@@ -72,6 +72,8 @@ void GL_ReleaseReservedNames(void);
  */
 void GL_DeferTextureUpload(const struct texturecontent_s* content);
 
+void GL_DeferSetVSync(boolean enableVSync);
+
 // Deferring functions for various function signatures.
 #define LIBDENG_GL_DEFER1(form, x)          void GL_Defer_##form(void (GL_CALL *ptr)(x), x)
 #define LIBDENG_GL_DEFER2(form, x, y)       void GL_Defer_##form(void (GL_CALL* ptr)(x, y), x, y)
@@ -79,6 +81,9 @@ void GL_DeferTextureUpload(const struct texturecontent_s* content);
 #define LIBDENG_GL_DEFER4(form, x, y, z, w) void GL_Defer_##form(void (GL_CALL* ptr)(x, y, z, w), x, y, z, w)
 
 LIBDENG_GL_DEFER1(e,         GLenum e);
+LIBDENG_GL_DEFER2(i,         GLenum e, GLint i);
+LIBDENG_GL_DEFER2(f,         GLenum e, GLfloat f);
+LIBDENG_GL_DEFER2(fv4,       GLenum e, const GLfloat* floatArrayFourValues);
 LIBDENG_GL_DEFER2(uintArray, GLsizei count, const GLuint* values);
 
 #endif /* LIBDENG_GL_DEFERRED_H */

@@ -31,6 +31,10 @@
 
 #define NUMKKEYS            256
 
+#if _DEBUG
+#  include "point.h" // For the debug visual.
+#endif
+
 // Input devices.
 enum
 {
@@ -42,6 +46,14 @@ enum
     IDEV_JOY4,
     NUM_INPUT_DEVICES       // Theoretical maximum.
 };
+
+// Input device control types
+typedef enum {
+    IDC_KEY,
+    IDC_AXIS,
+    IDC_HAT,
+    NUM_INPUT_DEVICE_CONTROL_TYPES
+} inputdev_controltype_t;
 
 typedef enum ddeventtype_e {
     E_TOGGLE,               // Two-state device
@@ -110,6 +122,8 @@ typedef struct inputdevassoc_s {
 #define IDAF_EXPIRED    0x1 // The state has expired. The device is considered to remain
                             // in default state until the flag gets cleared (which happens when
                             // the real device state returns to its default).
+#define IDAF_TRIGGERED  0x2 // The state has been triggered. This is cleared when someone checks
+                            // the device state. (Only for toggles.)
 
 // Input device axis types.
 enum
@@ -153,13 +167,14 @@ typedef struct inputdevhat_s {
 #define ID_ACTIVE 0x1       // The input device is active.
 
 typedef struct inputdev_s {
+    char    niceName[40];   // Human-friendly name of the device.
     char    name[20];       // Symbolic name of the device.
     int     flags;
     uint    numAxes;        // Number of axes in this input device.
     inputdevaxis_t *axes;
     uint    numKeys;        // Number of keys for this input device.
     inputdevkey_t *keys;
-    uint    numHats;        // NUmber of hats.
+    uint    numHats;        // Number of hats.
     inputdevhat_t *hats;
 } inputdev_t;
 
@@ -189,6 +204,7 @@ void        DD_ProcessEvents(timespan_t ticLength);
 void        DD_ProcessSharpEvents(timespan_t ticLength);
 void        DD_ClearEvents(void);
 void        DD_ClearKeyRepeaters(void);
+void        DD_ClearKeyRepeaterForKey(int key);
 byte        DD_ModKey(byte key);
 void        DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev);
 
@@ -196,15 +212,85 @@ void        I_InitVirtualInputDevices(void);
 void        I_ShutdownInputDevices(void);
 void        I_ClearDeviceContextAssociations(void);
 void        I_DeviceReset(uint ident);
-inputdev_t *I_GetDevice(uint ident, boolean ifactive);
-inputdev_t *I_GetDeviceByName(const char *name, boolean ifactive);
-boolean     I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
-inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
-int         I_GetAxisByName(inputdev_t *device, const char *name);
-int         I_GetKeyByName(inputdev_t* device, const char* name);
-float       I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
-boolean     I_IsDeviceKeyDown(uint ident, uint code);
+
+inputdev_t* I_GetDevice(uint ident, boolean ifactive);
+inputdev_t* I_GetDeviceByName(const char* name, boolean ifactive);
+
+float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos);
+
+/**
+ * Check through the axes registered for the given device, see if there is
+ * one identified by the given name.
+ *
+ * @return  @c false, if the string is invalid.
+ */
+boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis);
+
+/**
+ * Retrieve the index of a device's axis by name.
+ *
+ * @param device        Ptr to input device info, to get the axis index from.
+ * @param name          Ptr to string containing the name to be searched for.
+ *
+ * @return  Index of the device axis named; or -1, if not found.
+ */
+int I_GetAxisByName(inputdev_t* device, const char* name);
+
+/**
+ * Retrieve a ptr to the device axis specified by id.
+ *
+ * @param device        Ptr to input device info, to get the axis ptr from.
+ * @param id            Axis index, to search for.
+ *
+ * @return  Ptr to the device axis OR @c NULL, if not found.
+ */
+inputdevaxis_t* I_GetAxisByID(inputdev_t* device, uint id);
+
+/**
+ * Retrieve the index of a device's key by name.
+ *
+ * @param device        Ptr to input device info, to get the key index from.
+ * @param name          Ptr to string containing the name to be searched for.
+ *
+ * @return  Index of the device key named; or -1, if not found.
+ */
+int I_GetKeyByName(inputdev_t* device, const char* name);
+
+/**
+ * Retrieve a ptr to the device key specified by id.
+ *
+ * @param device        Ptr to input device info, to get the key ptr from.
+ * @param id            Key index, to search for.
+ *
+ * @return  Ptr to the device key OR @c NULL, if not found.
+ */
+inputdevkey_t* I_GetKeyByID(inputdev_t* device, uint id);
+
+/**
+ * @return  The key state from the downKeys array.
+ */
+boolean I_IsKeyDown(inputdev_t* device, uint id);
+
+/**
+ * Retrieve a ptr to the device hat specified by id.
+ *
+ * @param device        Ptr to input device info, to get the hat ptr from.
+ * @param id            Hat index, to search for.
+ *
+ * @return  Ptr to the device hat OR @c NULL, if not found.
+ */
+inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id);
+
 void        I_SetUIMouseMode(boolean on);
 void        I_TrackInput(ddevent_t *ev, timespan_t ticLength);
+
+#if _DEBUG
+/**
+ * Render a visual representation of the current state of all input devices.
+ */
+void Rend_AllInputDeviceStateVisuals(void);
+#else
+#  define Rend_AllInputDeviceStateVisuals()
+#endif
 
 #endif /* LIBDENG_CORE_INPUT_H */

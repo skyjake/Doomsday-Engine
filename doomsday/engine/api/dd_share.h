@@ -147,24 +147,6 @@ float           FloatSwap(float);
 #define ULONG(x)            ((uint32_t) LONG(x))
 ///@}
 
-#define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
-#define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
-#define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
-#define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
-#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
-#define FEQUAL(x, y)        (INRANGE_OF(x, y, .000001f))
-#define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
-#define ABS(x)              ((x) >= 0 ? (x) : -(x))
-/// Ceiling of integer quotient of @a a divided by @a b.
-#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
-
-/**
- * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
- * Note that this should err on the side of being < 1/255 to prevent result
- * exceeding 255 (e.g. 255 * reciprocal255).
- */
-#define reciprocal255   0.003921568627f
-
 /// Value types.
 typedef enum {
     DDVT_NONE = -1, ///< Not a read/writeable value type.
@@ -385,13 +367,8 @@ typedef struct gameinfo_s {
  */
 ///@{
 #define RF_STARTUP          0x1 ///< A required resource needed for and loaded during game start up (can't be a virtual file).
+#define RF_FOUND            0x2 ///< Resource has been located.
 ///@}
-
-//------------------------------------------------------------------------
-//
-// Fixed-Point Math
-//
-//------------------------------------------------------------------------
 
 /**
  * @defgroup math Math Routines
@@ -400,6 +377,27 @@ typedef struct gameinfo_s {
 ///@{
 #define FRACBITS            16
 #define FRACUNIT            (1<<FRACBITS)
+#define FRACEPSILON         (1.0f/65535.f) // ~ 1.5e-5
+#define FLOATEPSILON        .000001f
+
+#define MAX_OF(x, y)        ((x) > (y)? (x) : (y))
+#define MIN_OF(x, y)        ((x) < (y)? (x) : (y))
+#define MINMAX_OF(a, x, b)  ((x) < (a)? (a) : (x) > (b)? (b) : (x))
+#define SIGN_OF(x)          ((x) > 0? +1 : (x) < 0? -1 : 0)
+#define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
+#define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
+#define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
+#define ABS(x)              ((x) >= 0 ? (x) : -(x))
+
+/// Ceiling of integer quotient of @a a divided by @a b.
+#define CEILING(a, b)       ((a) % (b) == 0 ? (a)/(b) : (a)/(b)+1)
+
+/**
+ * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.
+ * Note that this should err on the side of being < 1/255 to prevent result
+ * exceeding 255 (e.g. 255 * reciprocal255).
+ */
+#define reciprocal255   0.003921568627f
 
 #define FINEANGLES          8192
 #define FINEMASK            (FINEANGLES-1)
@@ -532,6 +530,8 @@ enum {
     DDKEY_SUBTRACT, ///< '-' on numeric keypad.
     DDKEY_ADD, ///< '+' on numeric keypad.
     DDKEY_PRINT,
+    DDKEY_ENTER, ///< on the numeric keypad.
+    DDKEY_DIVIDE, ///< '/' on numeric keypad.
     DD_HIGHEST_KEYCODE
 };
 ///@}
@@ -1327,7 +1327,10 @@ typedef enum {
 /// Patch Info
 typedef struct {
     patchid_t id;
-    boolean isCustom; // @c true if the patch does not originate from the current game.
+    struct patchinfo_flags_s {
+        uint isCustom:1; ///< Patch does not originate from the current game.
+        uint isEmpty:1; ///< Patch contains no color information.
+    } flags;
     RectRaw geometry;
     // Temporary until the big DGL drawing rewrite.
     short extraOffset[2]; // Only used with upscaled and sharpened patches.
@@ -1712,8 +1715,9 @@ enum {
 
 /// Control type.
 typedef enum controltype_e {
-    CTLT_NUMERIC,
-    CTLT_IMPULSE
+    CTLT_NUMERIC,               ///< Control with a numeric value determined by current device state.
+    CTLT_NUMERIC_TRIGGERED,     ///< Numeric, but accepts triggered states as well.
+    CTLT_IMPULSE                ///< Always accepts triggered states.
 } controltype_t;
 
 /**

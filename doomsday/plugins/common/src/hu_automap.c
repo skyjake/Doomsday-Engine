@@ -153,6 +153,7 @@ static void calcViewScaleFactors(uiwidget_t* obj)
 {
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     float dx, dy, dist, a, b;
+    float oldMinScale = am->minScaleMTOF;
     assert(obj->type == GUI_AUTOMAP);
 
     dx = am->bounds[BOXRIGHT] - am->bounds[BOXLEFT];
@@ -166,6 +167,16 @@ static void calcViewScaleFactors(uiwidget_t* obj)
 
     am->minScaleMTOF = (a < b ? a : b);
     am->maxScaleMTOF = Rect_Height(UIWidget_Geometry(obj)) / am->minScale;
+
+#ifdef _DEBUG
+    VERBOSE2( Con_Message("calcViewScaleFactors: dx=%f dy=%f dist=%f w=%i h=%i a=%f b=%f minmtof=%f\n",
+                          dx, dy, dist, Rect_Width(UIWidget_Geometry(obj)),
+                          Rect_Height(UIWidget_Geometry(obj)), a, b, am->minScaleMTOF) );
+#endif
+
+    // Update previously set view scale accordingly.
+    /// @todo  The view scale factor needs to be resolution independent!
+    am->targetViewScale = am->viewScale = am->minScaleMTOF/oldMinScale * am->targetViewScale;
 
     am->updateViewScale = false;
 }
@@ -1508,7 +1519,11 @@ DGL_End();
     {
         rendThingPoints(obj);
     }
+
+    // Sharp player markers.
+    DGL_SetFloat(DGL_LINE_WIDTH, 1.f);
     rendPlayerMarkers(obj);
+
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
     if(amMaskTexture)
@@ -1644,23 +1659,26 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
         UIAutomap_SetScale(obj, am->viewScale / zoomSpeed);
     }
 
-    // Map camera paning control.
+    // Map camera panning control.
     if(am->pan || NULL == mo)
     {
-        float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
+        float panUnitsPerSecond, xy[2] = { 0, 0 }; // deltas
 
-        // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        panUnitsPerTic = (UIAutomap_FrameToMap(obj, 140) / TICSPERSEC) * (2 * cfg.automapPanSpeed) * TICRATE;
-        if(panUnitsPerTic < 8)
-            panUnitsPerTic = 8;
+        // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
+        /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
+        panUnitsPerSecond = UIAutomap_FrameToMap(obj, 140 * Rect_Height(UIWidget_Geometry(obj))/200.f) * (2 * cfg.automapPanSpeed);
+        if(panUnitsPerSecond < 8)
+            panUnitsPerSecond = 8;
 
-        xy[VX] = panX[0] * panUnitsPerTic * ticLength + panX[1];
-        xy[VY] = panY[0] * panUnitsPerTic * ticLength + panY[1];
+        /// @todo Fix sensitivity for relative axes.
+
+        xy[VX] = panX[0] * panUnitsPerSecond * ticLength + panX[1];
+        xy[VY] = panY[0] * panUnitsPerSecond * ticLength + panY[1];
         V2_Rotate(xy, am->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
         {
-            UIAutomap_TranslateCameraOrigin(obj, xy[VX], xy[VY]);
+            UIAutomap_TranslateCameraOrigin2(obj, xy[VX], xy[VY], true /*instant change*/);
         }
     }
     else
@@ -1851,6 +1869,13 @@ void UIAutomap_UpdateGeometry(uiwidget_t* obj)
     // the position and/or size of the automap must therefore change too.
     R_ViewWindowGeometry(UIWidget_Player(obj), &newGeom);
 
+/*#ifdef _DEBUG
+    Con_Message("UIAutomap_UpdateGeometry: newGeom %i,%i %i,%i current %i,%i %i,%i\n",
+                newGeom.origin.x, newGeom.origin.y,
+                newGeom.size.width, newGeom.size.height,
+                Rect_X(obj->geometry), Rect_Y(obj->geometry), Rect_Width(obj->geometry), Rect_Height(obj->geometry));
+#endif*/
+
     if(newGeom.origin.x != Rect_X(obj->geometry) ||
        newGeom.origin.y != Rect_Y(obj->geometry) ||
        newGeom.size.width != Rect_Width(obj->geometry) ||
@@ -1876,15 +1901,20 @@ void UIAutomap_CameraOrigin(uiwidget_t* obj, float* x, float* y)
 
 boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
 {
+    return UIAutomap_SetCameraOrigin2(obj, x, y, false);
+}
+
+boolean UIAutomap_SetCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+{
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
-    boolean instantChange = false;
+    boolean instantChange = forceInstantly;
     assert(obj->type == GUI_AUTOMAP);
 
     // Already at this target?
     if(x == am->targetViewX && y == am->targetViewY)
         return false;
 
-    if(am->maxViewPositionDelta > 0)
+    if(!forceInstantly && am->maxViewPositionDelta > 0)
     {
         float dx, dy, dist;
 
@@ -1917,10 +1947,15 @@ boolean UIAutomap_SetCameraOrigin(uiwidget_t* obj, float x, float y)
 
 boolean UIAutomap_TranslateCameraOrigin(uiwidget_t* obj, float x, float y)
 {
+    return UIAutomap_TranslateCameraOrigin2(obj, x, y, false);
+}
+
+boolean UIAutomap_TranslateCameraOrigin2(uiwidget_t* obj, float x, float y, boolean forceInstantly)
+{
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     assert(obj->type == GUI_AUTOMAP);
 
-    return UIAutomap_SetCameraOrigin(obj, am->viewX + x, am->viewY + y);
+    return UIAutomap_SetCameraOrigin2(obj, am->viewX + x, am->viewY + y, forceInstantly);
 }
 
 void UIAutomap_ParallaxLayerOrigin(uiwidget_t* obj, float* x, float* y)
@@ -2242,8 +2277,16 @@ void UIAutomap_SetWorldBounds(uiwidget_t* obj, float lowX, float hiX, float lowY
     am->bounds[BOXBOTTOM] = lowY;
     am->updateViewScale = true;
 
+    // Update minScaleMTOF.
+    calcViewScaleFactors(obj);
+
+#ifdef _DEBUG
+    Con_Message("SetWorldBounds: low=%f,%f hi=%f,%f minScaleMTOF=%f\n", lowX, lowY, hiX, hiY,
+                am->minScaleMTOF);
+#endif
+
     // Choose a default view scale factor.
-    UIAutomap_SetScale(obj, am->minScaleMTOF * 20);
+    UIAutomap_SetScale(obj, am->minScaleMTOF * 2.4f);
 }
 
 void UIAutomap_SetMinScale(uiwidget_t* obj, const float scale)

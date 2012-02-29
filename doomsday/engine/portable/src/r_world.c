@@ -1355,10 +1355,6 @@ void R_SetupMap(int mode, int flags)
     switch(mode)
     {
     case DDSMM_INITIALIZE:
-        // Switch to fast malloc mode in the zone. This is intended for large
-        // numbers of mallocs with no frees in between.
-        Z_EnableFastMalloc(false);
-
 #ifdef _DEBUG
         Con_Message("R_SetupMap: ddMapSetup begins (fast mallocs).\n");
 #endif
@@ -1473,9 +1469,7 @@ void R_SetupMap(int mode, int flags)
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
 
-        // Switch back to normal malloc mode in the zone. Z_Malloc will look
-        // for free blocks in the entire zone and purge purgable blocks.
-        Z_EnableFastMalloc(false);
+        Z_PrintStatus();
         return;
       }
     case DDSMM_AFTER_BUSY: {

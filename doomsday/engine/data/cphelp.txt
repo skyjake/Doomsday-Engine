@@ -622,7 +622,10 @@ desc = Display contrast: 1=normal.
 desc = Display brightness: -1=dark, 0=normal, 1=light.
 
 [rend-dev-wireframe]
-desc = 1=Render player view in wireframe mode.
+desc = 1=Render player view in wireframe mode. 2=Also render UI and text as wireframes.
+
+[rend-dev-fakeradio-update]
+desc = 1=Enable updating of the shadow edges used with simulated radiosity.
 
 [rend-dev-framecount]
 desc = Frame counter.
@@ -953,6 +956,9 @@ desc = Automatically generate reject data when necessary, 0=Never, 1=When needed
 
 [refresh-rate-maximum]
 desc = Maximum limit for the frame rate (default: 200).
+
+[input-sharp-lateprocessing]
+desc = 1=Process sharp events after tickers during sharp tics. Increases input latency by 1/35 seconds.
 
 [input-toggle-sharp]
 desc = 1=Process toggle events only on sharp ticks for backwards compatible behavior.

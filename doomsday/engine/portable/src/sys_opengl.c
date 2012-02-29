@@ -68,7 +68,8 @@ PFNGLUNLOCKARRAYSEXTPROC glUnlockArraysEXT = NULL;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean initedGL = false;
+static boolean doneEarlyInit = false;
+static boolean inited = false;
 static boolean firstTimeInit = true;
 
 #if WIN32
@@ -79,9 +80,9 @@ static PROC wglGetExtString;
 
 static int query(const char* ext)
 {
-    assert(ext);
-    {
     int result = 0;
+    assert(ext);
+
 #if WIN32
     // Prefer the wgl-specific extensions.
     if(wglGetExtString)
@@ -91,10 +92,10 @@ static int query(const char* ext)
         result = (Sys_GLQueryExtension(ext, extensions)? 1 : 0);
     }
 #endif
+
     if(!result)
         result = (Sys_GLQueryExtension(ext, glGetString(GL_EXTENSIONS))? 1 : 0);
     return result;
-    }
 }
 
 static void initialize(void)
@@ -186,6 +187,8 @@ static void initialize(void)
     }
     if(0 == GL_state.extensions.wglSwapIntervalEXT || NULL == wglSwapIntervalEXT)
         GL_state.features.vsync = false;
+#elif defined(MACOSX)
+    GL_state.features.vsync = true;
 #else
     GL_state.features.vsync = false;
 #endif
@@ -415,11 +418,8 @@ static void createDummyWindow(application_t* app)
 
 boolean Sys_GLPreInit(void)
 {
-    if(isDedicated)
-        return true;
-
-    if(initedGL)
-        return true; // Already inited.
+    if(novideo) return true;
+    if(doneEarlyInit) return true; // Already been here??
 
     memset(&GL_state.extensions, 0, sizeof(GL_state.extensions));
     // Init assuming ideal configuration.
@@ -452,18 +452,15 @@ boolean Sys_GLPreInit(void)
         GL_state.features.multisample = false;
 #endif
 
-    initedGL = true;
+    doneEarlyInit = true;
     return true;
 }
 
 boolean Sys_GLInitialize(void)
 {
-    if(isDedicated)
-        return true;
+    if(novideo) return true;
 
-    if(!initedGL)
-        return false;
-
+    assert(doneEarlyInit);
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     if(firstTimeInit)
@@ -486,7 +483,7 @@ boolean Sys_GLInitialize(void)
             }
             else
             {
-                Con_Message("Sys_GLInitialize: Warning: OpenGL implementation may be too old (1.4+ required).\n");
+                Con_Message("Warning: Sys_GLInitialize: OpenGL implementation may be too old (1.4+ required).\n");
                 Con_Message("  OpenGL version: %s\n", glGetString(GL_VERSION));
             }
         }
@@ -497,21 +494,45 @@ boolean Sys_GLInitialize(void)
         firstTimeInit = false;
     }
 
+    // GL system is now fully initialized.
+    inited = true;
+
+    /**
+     * We can now (re)configure GL state that is dependent upon extensions
+     * which may or may not be present on the host system.
+     */
+
+    // Use nice quality for mipmaps please.
+    if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
+        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+
+    // Always use vsync if available.
+    /// @fixme Should be determined by cvar.
+    GL_SetVSync(true);
+
     return true;
 }
 
 void Sys_GLShutdown(void)
 {
-    if(!initedGL)
-        return;
-
-    initedGL = false;
+    if(!inited) return;
+    // No cleanup.
+    inited = false;
 }
 
 void Sys_GLConfigureDefaultState(void)
 {
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
+    /**
+     * @note Only core OpenGL features can be configured at this time
+     *       because we have not yet queried for available extensions,
+     *       or configured our prefered feature default state.
+     *
+     *       This means that GL_state.extensions and GL_state.features
+     *       cannot be accessed here during initial startup.
+     */
+    assert(doneEarlyInit);
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glFrontFace(GL_CW);
@@ -556,10 +577,6 @@ void Sys_GLConfigureDefaultState(void)
     glShadeModel(GL_SMOOTH);
 #endif
 
-    // Use nice quality for mipmaps please.
-    if(GL_state.features.genMipmap && GL_state.extensions.genMipmapSGIS)
-        glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
-
     // Alpha blending is a go!
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -571,11 +588,6 @@ void Sys_GLConfigureDefaultState(void)
     glFogi(GL_FOG_MODE, GL_LINEAR);
     glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
-
-#ifdef WIN32
-    if(GL_state.features.vsync && wglSwapIntervalEXT != NULL)
-        wglSwapIntervalEXT(1);
-#endif
 
 #if DRMESA
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);

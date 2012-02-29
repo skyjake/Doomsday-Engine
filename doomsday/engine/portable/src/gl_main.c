@@ -123,7 +123,7 @@ static viewport_t currentView;
 void GL_Register(void)
 {
     // Cvars
-    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 1);
+    C_VAR_INT("rend-dev-wireframe", &renderWireframe, 0, 0, 2);
     C_VAR_INT("rend-fog-default", &fogModeDefault, 0, 0, 2);
     // * Render-HUD
     C_VAR_FLOAT("rend-hud-offset-scale", &weaponOffsetScale, CVF_NO_MAX,
@@ -171,12 +171,15 @@ void GL_DoUpdate(void)
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+    // Tell GL to finish drawing right now.
+    glFinish();
+
+    // Wait until the right time to show the frame so that the realized
+    // frame rate is exactly right.
+    DD_WaitForOptimalUpdateTime();
+
     // Blit screen to video.
-    if(renderWireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     Sys_UpdateWindow(windowIDX);
-    if(renderWireframe)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Increment frame counter.
     r_framecounter++;
@@ -1341,8 +1344,6 @@ D_CMD(Fog)
         return true;
     }
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     if(!stricmp(argv[1], "on"))
     {
         GL_UseFog(true);
@@ -1398,6 +1399,7 @@ D_CMD(Fog)
     }
     else
         return false;
+
     // Exit with a success.
     return true;
 }

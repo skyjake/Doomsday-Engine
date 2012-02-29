@@ -190,10 +190,8 @@ void ClMobj_SetPosition(mobj_t *mo)
         // Client mobjs that belong to players remain unlinked.
         return;
     }
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
-                          mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no") );
-#endif
+    DEBUG_VERBOSE2_Message(("ClMobj_SetPosition: id %i, x%f Y%f, solid:%s\n", mo->thinker.id,
+                            mo->pos[VX], mo->pos[VY], mo->ddFlags & DDMF_SOLID? "yes" : "no"));
 
     P_MobjLink(mo,
                 (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
@@ -206,16 +204,12 @@ void ClMobj_EnableLocalActions(struct mobj_s *mo, boolean enable)
     if(!isClient || !info) return;
     if(enable)
     {
-#ifdef _DEBUG
-        Con_Message("ClMobj_EnableLocalActions: Enabled for mobj %i.\n", mo->thinker.id);
-#endif
+        DEBUG_Message(("ClMobj_EnableLocalActions: Enabled for mobj %i.\n", mo->thinker.id));
         info->flags |= CLMF_LOCAL_ACTIONS;
     }
     else
     {
-#ifdef _DEBUG
-        Con_Message("ClMobj_EnableLocalActions: Disabled for mobj %i.\n", mo->thinker.id);
-#endif
+        DEBUG_Message(("ClMobj_EnableLocalActions: Disabled for mobj %i.\n", mo->thinker.id));
         info->flags &= ~CLMF_LOCAL_ACTIONS;
     }
 }
@@ -251,13 +245,11 @@ void ClMobj_SetState(mobj_t *mo, int stnum)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags, boolean onFloor)
 {
-#if _DEBUG
     if(!localMobj || !remoteClientMobj)
     {
-        VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", localMobj, remoteClientMobj) );
+        DEBUG_VERBOSE_Message(("Cl_UpdateRealPlayerMobj: mo=%p clmo=%p\n", localMobj, remoteClientMobj));
         return;
     }
-#endif
 
     localMobj->radius = remoteClientMobj->radius;
 

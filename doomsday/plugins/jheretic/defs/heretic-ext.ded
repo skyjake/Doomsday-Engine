@@ -14,4 +14,5 @@ Include "heretic/maps.ded";
 Include "heretic/finales.ded";
 Include "heretic/lights.ded";
 Include "heretic/materials.ded";
+Include "heretic/materialenvironments.ded";
 Include "heretic/music.ded";

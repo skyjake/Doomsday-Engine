@@ -245,6 +245,8 @@ typedef enum {
 #define WPIECE2             2
 #define WPIECE3             4
 
+#define VALID_WEAPONTYPE(val) ((val) >= WT_FIRST && (val) < WT_FIRST + NUM_WEAPON_TYPES)
+
 #define NUMWEAPLEVELS       1 // Number of weapon power levels.
 
 /**

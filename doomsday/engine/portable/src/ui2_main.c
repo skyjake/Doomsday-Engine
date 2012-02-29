@@ -603,7 +603,7 @@ void FIPage_Drawer(fi_page_t* p)
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    if(renderWireframe)
+    if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
@@ -639,7 +639,7 @@ void FIPage_Drawer(fi_page_t* p)
     glDisable(GL_ALPHA_TEST);
     //glDisable(GL_CULL_FACE);
     // Back from wireframe mode?
-    if(renderWireframe)
+    if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Filter on top of everything. Only draw if necessary.
@@ -1035,7 +1035,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             if(mat)
             {
                 const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
-                    MC_UI, 0, -3, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, 1, 0, false, false, false, false);
+                    MC_UI, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
                 const materialsnapshot_t* ms = Materials_Prepare(mat, spec, true);
 
                 GL_BindTexture(MST(ms, MTU_PRIMARY));
@@ -1228,6 +1228,15 @@ void FIData_PicClearAnimation(fi_object_t* obj)
     p->animComplete = true;
 }
 
+void FIData_TextAccelerate(fi_object_t* obj)
+{
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextSkipCursorToEnd: Not a FI_TEXT.");
+
+    // Fill in the rest very quickly.
+    t->wait = -10;
+}
+
 void FIData_TextThink(fi_object_t* obj)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
@@ -1242,8 +1251,18 @@ void FIData_TextThink(fi_object_t* obj)
     {
         if(--t->timer <= 0)
         {
-            t->timer = t->wait;
-            t->cursorPos++;
+            if(t->wait > 0)
+            {
+                // Positive wait: move cursor one position, wait again.
+                t->cursorPos++;
+                t->timer = t->wait;
+            }
+            else
+            {
+                // Negative wait: move cursor several positions, don't wait.
+                t->cursorPos += ABS(t->wait);
+                t->timer = 1;
+            }
         }
     }
 

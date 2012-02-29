@@ -28,5 +28,6 @@ includeGuard('iDownloadable');
 interface iDownloadable
 {
      public function &downloadUri();
+     public function hasDownloadUri();
      public function genDownloadBadge();
 }

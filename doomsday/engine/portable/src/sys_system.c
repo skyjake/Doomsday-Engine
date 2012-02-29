@@ -138,6 +138,9 @@ boolean Sys_IsShuttingDown(void)
  */
 void Sys_Shutdown(void)
 {
+    // We are now shutting down.
+    appShutdown = true;
+
     // Time to unload *everything*.
     if(DD_GameLoaded())
         Con_Execute(CMDS_DDAY, "unload", true, false);
@@ -236,6 +239,22 @@ void Sys_Sleep(int millisecs)
 #endif
 }
 
+void Sys_BlockUntilRealTime(uint realTimeMs)
+{
+    uint remaining = realTimeMs - Sys_GetRealTime();
+    if(remaining > 50)
+    {
+        // Target time is in the past; or the caller is attempting to wait for
+        // too long a time.
+        return;
+    }
+
+    while(Sys_GetRealTime() < realTimeMs)
+    {
+        // Do nothing; don't yield execution.
+    }
+}
+
 void Sys_ShowCursor(boolean show)
 {
 #ifdef WIN32
@@ -260,7 +279,7 @@ void Sys_HideMouse(void)
 }
 
 /**
- * Called when Doomsday should quit (will be deferred until convienent).
+ * Called when Doomsday should quit (will be deferred until convenient).
  */
 void Sys_Quit(void)
 {

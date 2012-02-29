@@ -898,7 +898,7 @@ static void initDefaultState(finaleinterpreter_t* fi)
 
     fi->flags.suspended = false;
     fi->flags.paused = false;
-    fi->flags.show_menu = true; // Enabled by default.
+    fi->flags.show_menu = true; // Unhandled events will show a menu.
     fi->flags.can_skip = true; // By default skipping is enabled.
 
     fi->_cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
@@ -1029,6 +1029,12 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
 boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
 {
     assert(fi);
+    if(fi->flags.paused || fi->flags.can_skip)
+    {
+        // We want events to be used for unpausing/skipping.
+        return false;
+    }
+    // If skipping is not allowed, we should show the menu, too.
     return (fi->flags.show_menu != 0);
 }
 
@@ -1139,6 +1145,13 @@ boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
     assert(fi);
 
+    if(fi->_waitingText && fi->flags.can_skip && !fi->flags.paused)
+    {
+        // Instead of skipping, just complete the text.
+        FIData_TextAccelerate(fi->_waitingText);
+        return true;
+    }
+
     // Stop waiting for objects.
     fi->_waitingText = NULL;
     fi->_waitingPic = NULL;
@@ -1163,12 +1176,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
-#ifdef _DEBUG
-    if(isClient)
-    {
-        Con_Message("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type);
-    }
-#endif
+    DEBUG_VERBOSE2_Message(("FinaleInterpreter_Responder: fi %i, ev %i\n", fi->_id, ev->type));
 
     if(fi->flags.suspended)
         return false;

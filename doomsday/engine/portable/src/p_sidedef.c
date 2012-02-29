@@ -27,6 +27,31 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+void SideDef_UpdateSurfaceTangents(sidedef_t* side)
+{
+    surface_t* surface = &side->SW_topsurface;
+    linedef_t* line = side->line;
+    byte sid;
+    assert(side);
+
+    if(!line) return;
+
+    sid = line->L_frontside == side? FRONT : BACK;
+    surface->normal[VY] = (line->L_vpos(sid  )[VX] - line->L_vpos(sid^1)[VX]) / line->length;
+    surface->normal[VX] = (line->L_vpos(sid^1)[VY] - line->L_vpos(sid  )[VY]) / line->length;
+    surface->normal[VZ] = 0;
+    V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
+
+    // All surfaces of a sidedef have the same vectors.
+    memcpy(side->SW_middletangent, surface->tangent, sizeof(surface->tangent));
+    memcpy(side->SW_middlebitangent, surface->bitangent, sizeof(surface->bitangent));
+    memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+
+    memcpy(side->SW_bottomtangent, surface->tangent, sizeof(surface->tangent));
+    memcpy(side->SW_bottombitangent, surface->bitangent, sizeof(surface->bitangent));
+    memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
+}
+
 int SideDef_SetProperty(sidedef_t* sid, const setargs_t* args)
 {
     switch(args->prop)

@@ -81,6 +81,7 @@ static ddwindow_t mainWindow;
 static boolean mainWindowInited = false;
 
 static int screenWidth, screenHeight, screenBPP;
+static boolean screenIsWindow;
 
 #if defined(UNIX)
 static WINDOW* cursesRootWin;
@@ -296,15 +297,26 @@ static void setConWindowCmdLine(uint idx, const char *text,
 
 boolean Sys_ChangeVideoMode(int width, int height, int bpp)
 {
-    int         flags = SDL_OPENGL;
+    int flags = SDL_OPENGL;
     const SDL_VideoInfo *info = NULL;
-    int         windowflags;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
-    windowflags = (theWindow->flags);
-    if(windowflags & DDWF_FULLSCREEN)
+    // Do we need to change it?
+    if(width == screenWidth && height == screenHeight && bpp == screenBPP &&
+       screenIsWindow == !(theWindow->flags & DDWF_FULLSCREEN))
+    {
+        // Got it already.
+        DEBUG_Message(("Sys_ChangeVideoMode: Ignoring because already using %ix%i bpp:%i window:%i\n",
+                       width, height, bpp, screenIsWindow));
+        return true;
+    }
+
+    if(theWindow->flags & DDWF_FULLSCREEN)
         flags |= SDL_FULLSCREEN;
+
+    DEBUG_Message(("Sys_ChangeVideoMode: Setting %ix%i bpp:%i window:%i\n",
+                   width, height, bpp, screenIsWindow));
 
     if(!SDL_SetVideoMode(width, height, bpp, flags))
     {
@@ -315,12 +327,11 @@ boolean Sys_ChangeVideoMode(int width, int height, int bpp)
         return false;
     }
 
-    Con_Message("createContext: OpenGL.\n");
-
     info = SDL_GetVideoInfo();
     screenWidth = info->current_w;
     screenHeight = info->current_h;
     screenBPP = info->vfmt->BitsPerPixel;
+    screenIsWindow = (theWindow->flags & DDWF_FULLSCREEN? false : true);
 
     return true;
 }
@@ -408,8 +419,7 @@ static boolean initOpenGL(void)
  *
  * @return              @c true if successful.
  */
-static boolean createContext(int width, int height, int bpp,
-                             boolean windowed, void *data)
+static boolean createContext(int width, int height, int bpp, boolean windowed, void *data)
 {
     Con_Message("createContext: OpenGL.\n");
 
@@ -426,6 +436,11 @@ static boolean createContext(int width, int height, int bpp,
     {
         Con_Error("createContext: OpenGL init failed.\n");
     }
+
+#ifdef MACOSX
+    // Vertical sync is a GL context property.
+    GL_SetVSync(true);
+#endif
 
     return true;
 }
@@ -849,13 +864,14 @@ void Sys_UpdateWindow(uint idx)
 {
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
+    /*
     if(GL_state.forceFinishBeforeSwap)
     {
         glFinish();
     }
+    */
 
-    // Swap buffers.
-    SDL_GL_SwapBuffers(); // Includes a call to glFlush()
+    SDL_GL_SwapBuffers();
 }
 
 /**

@@ -39,10 +39,16 @@
 typedef enum {
     DEFERREDTASK_TYPES_FIRST = 0,
 
+    // Higher-level or non-OpenGL operations:
     DTT_UPLOAD_TEXTURECONTENT = DEFERREDTASK_TYPES_FIRST,
+    DTT_SET_VSYNC,
 
+    // OpenGL API calls:
     DTT_FUNC_PTR_BEGIN,
         DTT_FUNC_PTR_E = DTT_FUNC_PTR_BEGIN,
+        DTT_FUNC_PTR_EI,
+        DTT_FUNC_PTR_EF,
+        DTT_FUNC_PTR_EFV4,
         DTT_FUNC_PTR_UINT_ARRAY,
     DTT_FUNC_PTR_END,
 
@@ -60,10 +66,25 @@ typedef struct deferredtask_s {
 typedef struct apifunc_s {
     union {
         void (GL_CALL *ptr_e)(GLenum);
+        void (GL_CALL *ptr_ei)(GLenum, GLint i);
+        void (GL_CALL *ptr_ef)(GLenum, GLfloat f);
+        void (GL_CALL *ptr_efv4)(GLenum, const GLfloat* fv4);
         void (GL_CALL *ptr_uintArray)(GLsizei, const GLuint*);
     } func;
     union {
         GLenum e;
+        struct {
+            GLenum e;
+            GLint i;
+        } ei;
+        struct {
+            GLenum e;
+            GLfloat f;
+        } ef;
+        struct {
+            GLenum e;
+            GLfloat fv4[4];
+        } efv4;
         struct {
             GLsizei count;
             GLuint* values;
@@ -145,6 +166,33 @@ LIBDENG_GL_DEFER1(e, GLenum e)
     enqueueTask(DTT_FUNC_PTR_E, api);
 }
 
+LIBDENG_GL_DEFER2(i, GLenum e, GLint i)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_ei = ptr;
+    api->param.ei.e = e;
+    api->param.ei.i = i;
+    enqueueTask(DTT_FUNC_PTR_EI, api);
+}
+
+LIBDENG_GL_DEFER2(f, GLenum e, GLfloat f)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_ef = ptr;
+    api->param.ef.e = e;
+    api->param.ef.f = f;
+    enqueueTask(DTT_FUNC_PTR_EF, api);
+}
+
+LIBDENG_GL_DEFER2(fv4, GLenum e, const GLfloat* floatArrayWithFourValues)
+{
+    apifunc_t* api = malloc(sizeof(apifunc_t));
+    api->func.ptr_efv4 = ptr;
+    api->param.efv4.e = e;
+    memcpy(api->param.efv4.fv4, floatArrayWithFourValues, sizeof(GLfloat) * 4);
+    enqueueTask(DTT_FUNC_PTR_EFV4, api);
+}
+
 LIBDENG_GL_DEFER2(uintArray, GLsizei s, const GLuint* v)
 {
     apifunc_t* api = malloc(sizeof(apifunc_t));
@@ -164,11 +212,27 @@ static void processTask(deferredtask_t* task)
         GL_UploadTextureContent(task->data);
         break;
 
+    case DTT_SET_VSYNC:
+        GL_SetVSync(*(boolean*)task->data);
+        break;
+
     case DTT_FUNC_PTR_E:
 #ifdef _DEBUG
         fprintf(stderr, "processDeferred: ptr=%p enum=%i\n", api->func.ptr_e, api->param.e);
 #endif
         api->func.ptr_e(api->param.e);
+        break;
+
+    case DTT_FUNC_PTR_EI:
+        api->func.ptr_ei(api->param.ei.e, api->param.ei.i);
+        break;
+
+    case DTT_FUNC_PTR_EF:
+        api->func.ptr_ef(api->param.ef.e, api->param.ef.f);
+        break;
+
+    case DTT_FUNC_PTR_EFV4:
+        api->func.ptr_efv4(api->param.efv4.e, api->param.efv4.fv4);
         break;
 
     case DTT_FUNC_PTR_UINT_ARRAY:
@@ -194,8 +258,12 @@ static void destroyTaskData(deferredtask_t* d)
         GL_DestroyTextureContent(d->data);
         break;
 
+    case DTT_SET_VSYNC:
+        M_Free(d->data);
+        break;
+
     case DTT_FUNC_PTR_UINT_ARRAY:
-        free(api->param.uintArray.values);
+        M_Free(api->param.uintArray.values);
         break;
 
     default:
@@ -274,7 +342,7 @@ void GL_ReleaseReservedNames(void)
     if(!inited)
         return; // Just ignore.
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
+    LIBDENG_ASSERT_IN_MAIN_THREAD(); // not deferring here
 
     Sys_Lock(deferredMutex);
     glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
@@ -372,4 +440,9 @@ void GL_DeferTextureUpload(const struct texturecontent_s* content)
 {
     // Defer this operation. Need to make a copy.
     enqueueTask(DTT_UPLOAD_TEXTURECONTENT, GL_ConstructTextureContentCopy(content));
+}
+
+void GL_DeferSetVSync(boolean enableVSync)
+{
+    enqueueTask(DTT_SET_VSYNC, M_MemDup(&enableVSync, sizeof(enableVSync)));
 }

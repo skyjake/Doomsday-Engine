@@ -1241,13 +1241,19 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         GL_PreparePatchTexture(tex);
 
         info->id = id;
-        info->isCustom = Texture_IsCustom(tex);
+        info->flags.isCustom = Texture_IsCustom(tex);
+
+        { averagealpha_analysis_t* aa = (averagealpha_analysis_t*)Texture_Analysis(tex, TA_ALPHA);
+        info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
+        }
+
         info->geometry.size.width = Texture_Width(tex);
         info->geometry.size.height = Texture_Height(tex);
         info->geometry.origin.x = pTex->offX;
         info->geometry.origin.y = pTex->offY;
-        /// \kludge:
+        /// @kludge:
         info->extraOffset[0] = info->extraOffset[1] = (pTex->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
+        // Kludge end.
         return true;
     }
     if(id != 0)

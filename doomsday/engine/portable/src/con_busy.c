@@ -37,6 +37,7 @@
 #include "de_misc.h"
 #include "de_network.h"
 
+#include "s_main.h"
 #include "image.h"
 #include "texturecontent.h"
 #include "cbuffer.h"
@@ -362,8 +363,6 @@ static void Con_BusyDeleteTextures(void)
     if(isDedicated)
         return;
 
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(2, (const GLuint*) texLoading);
     texLoading[0] = texLoading[1] = 0;
 
@@ -411,8 +410,6 @@ void Con_AcquireScreenshotTexture(void)
 
 void Con_ReleaseScreenshotTexture(void)
 {
-    LIBDENG_ASSERT_IN_MAIN_THREAD();
-
     glDeleteTextures(1, (const GLuint*) &texScreenshot);
     texScreenshot = 0;
 }
@@ -450,6 +447,7 @@ static void Con_BusyLoop(void)
 
         // Post and discard all input events.
         DD_ProcessEvents(0);
+        DD_ProcessSharpEvents(0);
 
         Sys_Sleep(20);
 
@@ -469,6 +467,9 @@ static void Con_BusyLoop(void)
         // Time for an update?
         if(canDraw)
             Con_BusyDrawer();
+
+        // Make sure the audio system gets regularly updated.
+        S_EndFrame();
     }
 
     if(verbose)
@@ -764,6 +765,10 @@ static void Con_BusyDrawer(void)
     {
         Con_BusyDrawConsoleOutput();
     }
+
+#ifdef _DEBUG
+    Z_DebugDrawer();
+#endif
 
     Sys_UpdateWindow(windowIDX);
 }

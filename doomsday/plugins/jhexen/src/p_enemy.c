@@ -228,19 +228,20 @@ boolean P_CheckMissileRange(mobj_t *mo)
  *
  * @return              @c false, if the move is blocked.
  */
-boolean P_Move(mobj_t *mo)
+boolean P_Move(mobj_t* mo)
 {
-    float       tryPos[2], step[2];
-    linedef_t     *ld;
-    boolean     good;
+    float tryPos[2], step[2];
+    linedef_t* ld;
+    boolean good;
 
     if(mo->flags2 & MF2_BLASTED)
         return true;
 
     if(mo->moveDir == DI_NODIR)
-    {
         return false;
-    }
+
+    if(!VALID_MOVEDIR(mo->moveDir))
+        Con_Error("Weird actor->moveDir!");
 
     step[VX] = mo->info->speed * dirSpeed[mo->moveDir][VX];
     step[VY] = mo->info->speed * dirSpeed[mo->moveDir][VY];
@@ -4660,7 +4661,7 @@ void C_DECL A_KSpiritSeeker(mobj_t* mo, angle_t thresh, angle_t turnMax)
             }
             else
             {
-                deltaZ = -15 * FRACUNIT;
+                deltaZ = -15;
             }
         }
 

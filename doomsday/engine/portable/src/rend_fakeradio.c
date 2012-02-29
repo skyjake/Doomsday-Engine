@@ -54,13 +54,17 @@ typedef struct edge_s {
 static void scanEdges(shadowcorner_t topCorners[2], shadowcorner_t bottomCorners[2],
     shadowcorner_t sideCorners[2], edgespan_t spans[2], const linedef_t* line, boolean backSide);
 
-int rendFakeRadio = true; // cvar
-float rendFakeRadioDarkness = 1.2f; // cvar
+int rendFakeRadio = true; ///< cvar
+float rendFakeRadioDarkness = 1.2f; ///< cvar
+
+static byte devFakeRadioUpdate = true; ///< cvar
 
 void Rend_RadioRegister(void)
 {
     C_VAR_INT("rend-fakeradio", &rendFakeRadio, 0, 0, 2);
     C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
+
+    C_VAR_BYTE("rend-dev-fakeradio-update", &devFakeRadioUpdate, CVF_NO_ARCHIVE, 0, 1);
 }
 
 float Rend_RadioCalcShadowDarkness(float lightLevel)
@@ -73,6 +77,9 @@ void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
     sidedef_t* s;
 
     if(!rendFakeRadio || levelFullBright || !line) return;
+
+    // Update disabled?
+    if(!devFakeRadioUpdate) return;
 
     // Have we yet determined the shadow properties to be used with segs
     // on this sidedef?
@@ -1430,7 +1437,7 @@ static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link,
     uint pln;
     assert(ssec && link && doPlanes);
 
-    if(!(shadowDark > .0001)) return;
+    if(!(shadowDark > .0001f)) return;
 
     if(doPlanes[PLN_FLOOR])
         processEdgeShadow(ssec, link->lineDef, link->side, PLN_FLOOR, shadowDark);
@@ -1469,9 +1476,12 @@ static void radioSubsectorEdges(const subsector_t* subsector)
         return; // No point drawing shadows in a PITCH black sector.
 
     // Determine the shadow properties.
-    // \fixme Make cvars out of constants.
+    /// @fixme Make cvars out of constants.
     shadowWallSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
+
+    // Any need to continue?
+    if(!(shadowDark > .0001f)) return;
 
     vec[VX] = vx - subsector->midPoint.pos[VX];
     vec[VY] = vz - subsector->midPoint.pos[VY];

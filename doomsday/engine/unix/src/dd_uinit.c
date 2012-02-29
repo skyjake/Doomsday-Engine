@@ -355,6 +355,9 @@ int main(int argc, char** argv)
 
     memset(&app, 0, sizeof(app));
 
+    // SDL lock key behavior: send up event when key released.
+    setenv("SDL_DISABLE_LOCK_KEYS", "1", true);
+
     /*if(!initApplication(&app))
     {
         DD_ErrorBox(true, "Failed to initialize application.\n");

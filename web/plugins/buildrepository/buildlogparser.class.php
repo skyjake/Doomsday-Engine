@@ -103,14 +103,18 @@ class BuildLogParser
                     case 'package':
                         try
                         {
-                            $pack = PackageFactory::newFromSimpleXMLElement($child);
-                            $pack->setBuildUniqueId($build->uniqueId());
+                            $pack = PackageFactory::newFromSimpleXMLElement($child, $build->releaseType());
+
+                            if($build->releaseType() !== RT_STABLE)
+                            {
+                                $pack->setBuildUniqueId($build->uniqueId());
+                            }
 
                             $build->addPackage($pack);
                         }
                         catch(Exception $e)
                         {
-                            /// \todo Log exception.
+                            /// @todo Log exception.
                         }
                         break;
 
@@ -127,7 +131,7 @@ class BuildLogParser
                             }
                             catch(Exception $e)
                             {
-                                /// \todo Log exception.
+                                /// @todo Log exception.
                             }
                         }
                         break;
@@ -141,7 +145,7 @@ class BuildLogParser
             }
             catch(Exception $e)
             {
-                /// \todo Log exception.
+                /// @todo Log exception.
             }
         }
 

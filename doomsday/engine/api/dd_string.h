@@ -104,20 +104,20 @@ ddstring_t* Str_NewFromReader(Reader* reader);
  * Call this for uninitialized strings. Global variables are
  * automatically cleared, so they don't need initialization.
  */
-void Str_Init(ddstring_t* ds);
+ddstring_t* Str_Init(ddstring_t* ds);
 
 /**
  * Call this for uninitialized strings. Makes the string use standard
  * malloc for memory allocations.
  */
-void Str_InitStd(ddstring_t* ds);
+ddstring_t* Str_InitStd(ddstring_t* ds);
 
 /**
  * Initializes @a ds with a static const C string. No memory allocation
  * model is selected; use this for strings that remain constant.
  * If the string is never modified calling Str_Free() is not needed.
  */
-void Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
+ddstring_t* Str_InitStatic(ddstring_t* ds, const char* staticConstStr);
 
 /**
  * Empty an existing string. After this the string is in the same

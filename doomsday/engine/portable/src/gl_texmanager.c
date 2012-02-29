@@ -641,7 +641,6 @@ static int releaseVariantGLTexture(TextureVariant* variant, void* paramaters)
         {
             // Delete and mark it not-loaded.
             DGLuint glName = TextureVariant_GLName(variant);
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
             glDeleteTextures(1, (const GLuint*) &glName);
             TextureVariant_SetGLName(variant, 0);
             TextureVariant_FlagUploaded(variant, false);
@@ -2970,8 +2969,6 @@ void GL_ReleaseTexturesForRawImages(void)
         rawtex_t* r = (*ptr);
         if(r->tex)
         {
-            LIBDENG_ASSERT_IN_MAIN_THREAD();
-
             glDeleteTextures(1, (const GLuint*) &r->tex);
             r->tex = 0;
         }
@@ -3051,8 +3048,10 @@ static void performImageAnalyses(Texture* tex, const image_t* image,
                 R_ToColorPalette(image->paletteId), &pl->originX, &pl->originY, &pl->color, &pl->brightMul);
     }
 
-    // Average alpha for shadow factor?
-    if(TST_GENERAL == spec->type && TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context)
+    // Average alpha?
+    if(TST_GENERAL == spec->type &&
+       (TC_SPRITE_DIFFUSE == TS_GENERAL(spec)->context) ||
+       (TC_UI == TS_GENERAL(spec)->context))
     {
         averagealpha_analysis_t* aa = (averagealpha_analysis_t*) Texture_Analysis(tex, TA_ALPHA);
         boolean firstInit = (!aa);

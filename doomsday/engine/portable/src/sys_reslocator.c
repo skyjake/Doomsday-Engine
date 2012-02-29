@@ -255,7 +255,7 @@ static void rebuildResourceNamespace(resourcenamespaceinfo_t* rnInfo)
 #endif*/
 
     // (Re)populate the directory and insert found paths into the resource namespace.
-    // \todo It should not be necessary for a unique directory per namespace.
+    /// @todo It should not be necessary for a unique directory per namespace.
 
     ResourceNamespace_Clear(rnInfo->rnamespace);
     FileDirectory_Clear(rnInfo->directory);
@@ -691,7 +691,7 @@ static void createPackagesResourceNamespace(void)
         Str_Delete(doomWadDir);
     }
 
-    directory = FileDirectory_New();
+    directory = FileDirectory_New(ddBasePath);
     rnamespace = F_CreateResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, directory,
         F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, 0);
 
@@ -765,7 +765,7 @@ void F_CreateNamespacesForFileResourcePaths(void)
     {
         uint j, searchPathCount;
         struct namespacedef_s* def = &defs[i];
-        FileDirectory* directory = FileDirectory_New();
+        FileDirectory* directory = FileDirectory_New(ddBasePath);
         resourcenamespace_t* rnamespace = F_CreateResourceNamespace(def->name, directory,
             F_ComposeHashNameForFilePath, F_HashKeyForFilePathHashName, def->flags);
 

@@ -58,17 +58,21 @@ typedef pathdirectory_iterateconstcallback_t filedirectory_iterateconstcallback_
 struct filedirectory_s; // The filedirectory instance (opaque).
 typedef struct filedirectory_s FileDirectory;
 
-FileDirectory* FileDirectory_New(void);
+FileDirectory* FileDirectory_New(const char* basePath);
 
 /**
  * Construct a new FileDirectory instance, populating it with nodes
  * for the given search paths.
  *
+ * @param basePath  Used with directories which represent the internal paths
+ *                  natively as relative paths. @c NULL means only absolute
+ *                  paths will be added to the directory (attempts to add
+ *                  relative paths will fail silently).
  * @param searchPathList  List of search paths. @c NULL terminated.
  * @param flags  @see searchPathFlags
  */
-FileDirectory* FileDirectory_NewWithPathListStr(const ddstring_t* searchPathList, int flags);
-FileDirectory* FileDirectory_NewWithPathList(const char* searchPathList, int flags);
+FileDirectory* FileDirectory_NewWithPathListStr(const char* basePath, const ddstring_t* searchPathList, int flags);
+FileDirectory* FileDirectory_NewWithPathList(const char* basePath, const char* searchPathList, int flags);
 
 void FileDirectory_Delete(FileDirectory* fd);
 

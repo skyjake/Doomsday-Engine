@@ -466,7 +466,7 @@ boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
             dbinding_t* binds = &B_GetControlBinding(context, cond->id)->deviceBinds[localNum];
-            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context);
+            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context, false /*no triggered*/);
             if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
                (cond->state == EBTOG_UP && fabs(pos) < .5))
                 return fulfilled;

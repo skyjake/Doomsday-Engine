@@ -96,7 +96,7 @@ AbstractResource* AbstractResource_NewWithName(resourceclass_t rclass, int flags
     if(!r) Con_Error("AbstractResource::NewWithName: Failed on allocation of %lu bytes.", (unsigned long) sizeof(*r));
 
     r->rclass = rclass;
-    r->flags = flags;
+    r->flags = flags & ~RF_FOUND;
     r->names = 0;
     r->namesCount = 0;
     r->identityKeys = 0;
@@ -207,6 +207,7 @@ const ddstring_t* AbstractResource_ResolvedPath(AbstractResource* r, boolean can
     {
         r->searchPathUsed = F_FindResourceForRecord(r, &r->foundPath);
     }
+    /// @todo Move resource validation here.
     if(r->searchPathUsed != 0)
     {
         return &r->foundPath;
@@ -226,6 +227,14 @@ int AbstractResource_ResourceFlags(AbstractResource* r)
     return r->flags;
 }
 
+AbstractResource* AbstractResource_MarkAsFound(AbstractResource* r, boolean yes)
+{
+    assert(r);
+    if(yes) r->flags |= RF_FOUND;
+    else    r->flags &= ~RF_FOUND;
+    return r;
+}
+
 ddstring_t* const* AbstractResource_IdentityKeys(AbstractResource* r)
 {
     assert(r);
@@ -235,16 +244,17 @@ ddstring_t* const* AbstractResource_IdentityKeys(AbstractResource* r)
 void AbstractResource_Print(AbstractResource* r, boolean printStatus)
 {
     ddstring_t* searchPaths = AbstractResource_NameStringList(r);
+    const boolean markedFound = !!(r->flags & RF_FOUND);
 
     if(printStatus)
-        Con_Printf("%s", r->searchPathUsed == 0? " ! ":"   ");
+        Con_Printf("%s", !markedFound? " ! ":"   ");
 
     Con_PrintPathList4(Str_Text(searchPaths), ';', " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
 
     if(printStatus)
     {
-        Con_Printf(" %s%s", r->searchPathUsed == 0? "- missing" : "- found ",
-                   r->searchPathUsed == 0? "" : F_PrettyPath(Str_Text(AbstractResource_ResolvedPath(r, false))));
+        Con_Printf(" %s%s", !markedFound? "- missing" : "- found ",
+                   !markedFound? "" : F_PrettyPath(Str_Text(AbstractResource_ResolvedPath(r, false))));
     }
     Con_Printf("\n");
     Str_Delete(searchPaths);
