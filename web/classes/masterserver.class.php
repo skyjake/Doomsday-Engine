@@ -95,7 +95,7 @@ class MasterServer
             else
             {
                 $parts = split(" ", $line);
-                $info[$parts[0]] = urldecode($parts[1]);
+                $info[$parts[0]] = isset($parts[1])? urldecode($parts[1]) : "";
             }
         }
     }
