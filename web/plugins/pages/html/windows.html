@@ -22,9 +22,16 @@ function genPackageBadgeHTML(json, query) {
     if(json.hasOwnProperty('is_unstable'))
     {
         var isUnstable = json.is_unstable;
+
+        var buildId = '';
+        if(json.hasOwnProperty('build_uniqueid'))
+        {
+            buildId += ' build' + json.build_uniqueid;
+        }
+
         if(isUnstable)
         {
-            metaData += '(Unstable) ';
+            metaData += '(Unstable' + buildId + ') ';
         }
     }
     metaData += /*json.platform_name + */'Windows XP sp2+</span>';
