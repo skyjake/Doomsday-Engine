@@ -109,16 +109,19 @@ unix:!macx {
     # Generic Unix build options.
     CONFIG += deng_nofixedasm deng_snowberry deng_packres
 
-    # Choose the apt repository to include in the distribution.
-    isStableRelease(): CONFIG += deng_aptstable        
-                 else: CONFIG += deng_aptunstable
+    exists(/etc/apt) {
+        # Choose the apt repository to include in the distribution.
+        isStableRelease(): CONFIG += deng_aptstable
+                     else: CONFIG += deng_aptunstable
+    }
 
     # Link against standard math library.
     LIBS += -lm
 
     # Install prefix.
     isEmpty(PREFIX) {
-        PREFIX = /usr
+        freebsd-*: PREFIX = /usr/local
+             else: PREFIX = /usr
     }
 
     # Binary location.

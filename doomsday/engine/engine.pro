@@ -43,7 +43,7 @@ unix:!macx {
 
     QMAKE_LFLAGS += -rdynamic
 
-    LIBS += -ldl
+    !freebsd-*: LIBS += -ldl
 }
 macx {
     useFramework(Cocoa)
