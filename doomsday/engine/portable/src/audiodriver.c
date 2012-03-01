@@ -201,7 +201,7 @@ static boolean initDriver(audiodriver_e id)
         return false; // Unreachable.
     }
 
-    // Initialize.
+    // All loaded drivers are automatically initialized so they are ready for use.
     assert(d->interface.Init != 0);
     return d->interface.Init();
 }
