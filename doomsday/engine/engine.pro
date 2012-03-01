@@ -112,6 +112,7 @@ DENG_API_HEADERS = \
 DENG_HEADERS = \
     portable/include/abstractfile.h \
     portable/include/abstractresource.h \
+    portable/include/audiodriver.h \
     portable/include/bitmapfont.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
@@ -284,7 +285,6 @@ DENG_HEADERS = \
     portable/include/svg.h \
     portable/include/sys_audio.h \
     portable/include/sys_audiod_dummy.h \
-    portable/include/sys_audiod_loader.h \
     portable/include/sys_console.h \
     portable/include/sys_direc.h \
     portable/include/sys_findfile.h \
@@ -360,7 +360,6 @@ HEADERS += \
 DENG_UNIX_SOURCES += \
     portable/src/sys_sdl_window.c \
     unix/src/dd_uinit.c \
-    unix/src/sys_audiod_loader.c \
     unix/src/sys_console.c \
     unix/src/sys_findfile.c \
     unix/src/sys_input.c \
@@ -368,7 +367,6 @@ DENG_UNIX_SOURCES += \
 
 DENG_WIN32_SOURCES += \
     win32/src/dd_winit.c \
-    win32/src/sys_audiod_loader.c \
     win32/src/sys_console.c \
     win32/src/sys_findfile.c \
     win32/src/sys_input.c \
@@ -376,6 +374,7 @@ DENG_WIN32_SOURCES += \
 
 SOURCES += \
     portable/src/abstractfile.c \
+    portable/src/audiodriver.c \
     portable/src/animator.c \
     portable/src/bitmapfont.c \
     portable/src/blockset.c \

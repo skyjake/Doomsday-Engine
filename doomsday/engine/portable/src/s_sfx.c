@@ -59,10 +59,6 @@ void            Sfx_SampleFormat(int newBits, int newRate);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-// SFX playback functions loaded from a sound driver plugin.
-extern audiodriver_t audiodExternal;
-extern audiointerface_sfx_t audiodExternalISFX;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 boolean sfxAvail = false;
@@ -79,9 +75,6 @@ int sfx16Bit = false;
 int sfxSampleRate = 11025;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// The interfaces.
-static audiointerface_sfx_generic_t* iSFX = NULL;
 
 static int numChannels = 0;
 static sfxchannel_t* channels;
@@ -132,7 +125,7 @@ int C_DECL Sfx_ChannelRefreshThread(void* parm)
                 if(!ch->buffer || !(ch->buffer->flags & SFXBF_PLAYING))
                     continue;
 
-                iSFX->Refresh(ch->buffer);
+                AudioDriver_SFX()->Refresh(ch->buffer);
             }
 
             refreshing = false;
@@ -197,7 +190,7 @@ void Sfx_StopSoundGroup(int group, mobj_t* emitter)
             continue;
 
         // This channel must stop.
-        iSFX->Stop(ch->buffer);
+        AudioDriver_SFX()->Stop(ch->buffer);
     }
 }
 
@@ -235,7 +228,7 @@ int Sfx_StopSound(int id, mobj_t* emitter)
         }
 
         // This channel must be stopped!
-        iSFX->Stop(ch->buffer);
+        AudioDriver_SFX()->Stop(ch->buffer);
         ++stopCount;
     }
 
@@ -292,7 +285,7 @@ void Sfx_UnloadSoundID(int id)
             continue;
 
         // Stop and unload.
-        iSFX->Reset(ch->buffer);
+        AudioDriver_SFX()->Reset(ch->buffer);
     }
 
     END_COP;
@@ -413,25 +406,25 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
     }
 
     // Frequency is common to both 2D and 3D sounds.
-    iSFX->Set(buf, SFXBP_FREQUENCY, ch->frequency);
+    AudioDriver_SFX()->Set(buf, SFXBP_FREQUENCY, ch->frequency);
 
     if(buf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
-        iSFX->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
+        AudioDriver_SFX()->Set(buf, SFXBP_VOLUME, ch->volume * sfxVolume / 255.0f);
         if(ch->emitter && ch->emitter == listener)
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            iSFX->Set(buf, SFXBP_RELATIVE_MODE, true);
-            iSFX->Setv(buf, SFXBP_POSITION, vec);
+            AudioDriver_SFX()->Set(buf, SFXBP_RELATIVE_MODE, true);
+            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, vec);
         }
         else
         {
             // Use the channel's real position.
-            iSFX->Set(buf, SFXBP_RELATIVE_MODE, false);
-            iSFX->Setv(buf, SFXBP_POSITION, ch->pos);
+            AudioDriver_SFX()->Set(buf, SFXBP_RELATIVE_MODE, false);
+            AudioDriver_SFX()->Setv(buf, SFXBP_POSITION, ch->pos);
         }
 
         // If the sound is emitted by the listener, speed is zero.
@@ -441,13 +434,13 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             vec[VX] = ch->emitter->mom[MX] * TICSPERSEC;
             vec[VY] = ch->emitter->mom[MY] * TICSPERSEC;
             vec[VZ] = ch->emitter->mom[MZ] * TICSPERSEC;
-            iSFX->Setv(buf, SFXBP_VELOCITY, vec);
+            AudioDriver_SFX()->Setv(buf, SFXBP_VELOCITY, vec);
         }
         else
         {
             // Not moving.
             vec[VX] = vec[VY] = vec[VZ] = 0;
-            iSFX->Setv(buf, SFXBP_VELOCITY, vec);
+            AudioDriver_SFX()->Setv(buf, SFXBP_VELOCITY, vec);
         }
     }
     else
@@ -513,8 +506,8 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
             }
         }
 
-        iSFX->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
-        iSFX->Set(buf, SFXBP_PAN, pan);
+        AudioDriver_SFX()->Set(buf, SFXBP_VOLUME, ch->volume * dist * sfxVolume / 255.0f);
+        AudioDriver_SFX()->Set(buf, SFXBP_PAN, pan);
     }
 }
 
@@ -534,19 +527,19 @@ void Sfx_ListenerUpdate(void)
     {
         // Position. At eye-level.
         Sfx_GetListenerXYZ(vec);
-        iSFX->Listenerv(SFXLP_POSITION, vec);
+        AudioDriver_SFX()->Listenerv(SFXLP_POSITION, vec);
 
         // Orientation. (0,0) will produce front=(1,0,0) and up=(0,0,1).
         vec[VX] = listener->angle / (float) ANGLE_MAX *360;
 
         vec[VY] = (listener->dPlayer? LOOKDIR2DEG(listener->dPlayer->lookDir) : 0);
-        iSFX->Listenerv(SFXLP_ORIENTATION, vec);
+        AudioDriver_SFX()->Listenerv(SFXLP_ORIENTATION, vec);
 
         // Velocity. The unit is world distance units per second.
         vec[VX] = listener->mom[MX] * TICSPERSEC;
         vec[VY] = listener->mom[MY] * TICSPERSEC;
         vec[VZ] = listener->mom[MZ] * TICSPERSEC;
-        iSFX->Listenerv(SFXLP_VELOCITY, vec);
+        AudioDriver_SFX()->Listenerv(SFXLP_VELOCITY, vec);
 
         // Reverb effects. Has the current sector changed?
         if(listenerSector != listener->subsector->sector)
@@ -560,12 +553,12 @@ void Sfx_ListenerUpdate(void)
                     vec[i] *= sfxReverbStrength;
             }
 
-            iSFX->Listenerv(SFXLP_REVERB, vec);
+            AudioDriver_SFX()->Listenerv(SFXLP_REVERB, vec);
         }
     }
 
     // Update all listener properties.
-    iSFX->Listener(SFXLP_UPDATE, 0);
+    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
 }
 
 void Sfx_ListenerNoReverb(void)
@@ -576,8 +569,8 @@ void Sfx_ListenerNoReverb(void)
         return;
 
     listenerSector = NULL;
-    iSFX->Listenerv(SFXLP_REVERB, rev);
-    iSFX->Listener(SFXLP_UPDATE, 0);
+    AudioDriver_SFX()->Listenerv(SFXLP_REVERB, rev);
+    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
 }
 
 /**
@@ -589,7 +582,7 @@ void Sfx_ChannelStop(sfxchannel_t* ch)
     if(!ch->buffer)
         return;
 
-    iSFX->Stop(ch->buffer);
+    AudioDriver_SFX()->Stop(ch->buffer);
 }
 
 void Sfx_GetChannelPriorities(float* prios)
@@ -795,9 +788,9 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     if(selCh->buffer->rate != sample->rate ||
        selCh->buffer->bytes != sample->bytesPer)
     {
-        iSFX->Destroy(selCh->buffer);
+        AudioDriver_SFX()->Destroy(selCh->buffer);
         // Create a new buffer with the correct format.
-        selCh->buffer = iSFX->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
+        selCh->buffer = AudioDriver_SFX()->Create(play3D ? SFXBF_3D : 0, sample->bytesPer * 8, sample->rate);
     }
 
     // Clear flags.
@@ -839,7 +832,7 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
      */
     if(!selCh->buffer->sample || selCh->buffer->sample->id != sample->id)
     {
-        iSFX->Load(selCh->buffer, sample);
+        AudioDriver_SFX()->Load(selCh->buffer, sample);
     }
 
     // Update channel properties.
@@ -850,20 +843,20 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
     {
         // Init the buffer's min/max distances.
         // This is only done once, when the sound is started (i.e., here).
-        iSFX->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
+        AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MIN_DISTANCE,
                   (selCh->flags & SFXCF_NO_ATTENUATION)? 10000 :
                   soundMinDist);
 
-        iSFX->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
+        AudioDriver_SFX()->Set(selCh->buffer, SFXBP_MAX_DISTANCE,
                   (selCh->flags & SFXCF_NO_ATTENUATION)? 20000 :
                   soundMaxDist);
     }
 
     // This'll commit all the deferred properties.
-    iSFX->Listener(SFXLP_UPDATE, 0);
+    AudioDriver_SFX()->Listener(SFXLP_UPDATE, 0);
 
     // Start playing.
-    iSFX->Play(selCh->buffer);
+    AudioDriver_SFX()->Play(selCh->buffer);
 
     END_COP;
 
@@ -910,7 +903,7 @@ void Sfx_StartFrame(void)
         return;
 
     // Tell the audioDriver that the sound frame begins.
-    audioDriver->Event(SFXEV_BEGIN);
+    AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
     Sfx_3DMode(sfx3D);
@@ -945,7 +938,7 @@ void Sfx_EndFrame(void)
     }
 
     // The sound frame ends.
-    audioDriver->Event(SFXEV_END);
+    AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_END);
 }
 
 /**
@@ -962,12 +955,12 @@ void Sfx_CreateChannels(int num2D, int bits, int rate)
     // Change the primary buffer's format to match the channel format.
     parm[0] = bits;
     parm[1] = rate;
-    iSFX->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
+    AudioDriver_SFX()->Listenerv(SFXLP_PRIMARY_FORMAT, parm);
 
     // Try to create a buffer for each channel.
     for(i = 0, ch = channels; i < numChannels; ++i, ch++)
     {
-        ch->buffer = iSFX->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
+        ch->buffer = AudioDriver_SFX()->Create(num2D-- > 0 ? 0 : SFXBF_3D, bits, rate);
         if(!ch->buffer)
         {
             Con_Message("Sfx_CreateChannels: Failed to create "
@@ -990,7 +983,7 @@ void Sfx_DestroyChannels(void)
         Sfx_ChannelStop(channels + i);
 
         if(channels[i].buffer)
-            iSFX->Destroy(channels[i].buffer);
+            AudioDriver_SFX()->Destroy(channels[i].buffer);
         channels[i].buffer = NULL;
     }
     END_COP;
@@ -1044,9 +1037,9 @@ void Sfx_StartRefresh(void)
     refreshing = false;
     allowRefresh = true;
 
-    if(!iSFX) goto noRefresh; // Nothing to refresh.
+    if(!AudioDriver_SFX()) goto noRefresh; // Nothing to refresh.
 
-    if(iSFX->Getv) iSFX->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
+    if(AudioDriver_SFX()->Getv) AudioDriver_SFX()->Getv(SFXIP_DISABLE_CHANNEL_REFRESH, &disableRefresh);
     if(!disableRefresh)
     {
         // Start the refresh thread. It will run until the Sfx module is shut down.
@@ -1080,24 +1073,7 @@ boolean Sfx_Init(void)
 
     VERBOSE( Con_Message("Initializing Sound Effects subsystem...\n") )
 
-    // Use the external SFX playback facilities, if available.
-    if(audioDriver == &audiod_dummy)
-    {
-        iSFX = (audiointerface_sfx_generic_t*) &audiod_dummy_sfx;
-    }
-#ifndef DENG_DISABLE_SDLMIXER
-    else if(audioDriver == &audiod_sdlmixer)
-    {
-        iSFX = (audiointerface_sfx_generic_t*) &audiod_sdlmixer_sfx;
-    }
-#endif
-    else
-    {
-        iSFX = (audiodExternalISFX.gen.Init?
-            (audiointerface_sfx_generic_t*) &audiodExternalISFX : 0);
-    }
-
-    if(!iSFX)
+    if(!AudioDriver_SFX())
     {   // No interface for SFX playback.
         return false;
     }
@@ -1105,8 +1081,8 @@ boolean Sfx_Init(void)
     // This is based on the scientific calculations that if the DOOM marine
     // is 56 units tall, 60 is about two meters.
     //// \fixme Derive from the viewheight.
-    iSFX->Listener(SFXLP_UNITS_PER_METER, 30);
-    iSFX->Listener(SFXLP_DOPPLER, 1.5f);
+    AudioDriver_SFX()->Listener(SFXLP_UNITS_PER_METER, 30);
+    AudioDriver_SFX()->Listener(SFXLP_DOPPLER, 1.5f);
 
     // The audioDriver is working, let's create the channels.
     Sfx_InitChannels();
