@@ -44,8 +44,6 @@ extern int      showSoundInfo;
 extern int      soundMinDist, soundMaxDist;
 extern int      sfxVolume, musVolume;
 
-extern audiodriver_t* audioDriver;
-
 void            S_Register(void);
 boolean         S_Init(void);
 void            S_Shutdown(void);

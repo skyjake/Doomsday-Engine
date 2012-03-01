@@ -102,102 +102,6 @@ void S_Register(void)
     Mus_Register();
 }
 
-const char* S_GetDriverName(audiodriver_e id)
-{
-    static const char* audioDrivers[AUDIODRIVER_COUNT] = {
-    /* AUDIOD_DUMMY */      "Dummy",
-    /* AUDIOD_SDL_MIXER */  "SDLMixer",
-    /* AUDIOD_OPENAL */     "OpenAL",
-    /* AUDIOD_FMOD */       "FMOD Ex",
-    /* AUDIOD_DSOUND */     "DirectSound", // Win32 only
-    /* AUDIOD_WINMM */      "Windows Multimedia" // Win32 only
-    };
-    if(VALID_AUDIODRIVER_IDENTIFIER(id))
-        return audioDrivers[id];
-    Con_Error("S_GetDriverName: Unknown driver id %i.\n", id);
-    return 0; // Unreachable.
-}
-
-/**
- * Initializes the audio driver interfaces.
- *
- * @return  @c true iff successful.
- */
-boolean S_InitDriver(audiodriver_e drvid)
-{
-    switch(drvid)
-    {
-    case AUDIOD_DUMMY:
-        audioDriver = &audiod_dummy;
-        break;
-
-#ifndef DENG_DISABLE_SDLMIXER
-    case AUDIOD_SDL_MIXER:
-        audioDriver = &audiod_sdlmixer;
-        break;
-#endif
-
-    case AUDIOD_FMOD:
-        if(!(audioDriver = Sys_LoadAudioDriver("fmod")))
-            return false;
-        break;
-
-    case AUDIOD_OPENAL:
-        if(!(audioDriver = Sys_LoadAudioDriver("openal")))
-            return false;
-        break;
-
-#ifdef WIN32
-    case AUDIOD_DSOUND:
-        if(!(audioDriver = Sys_LoadAudioDriver("directsound")))
-            return false;
-        break;
-
-    case AUDIOD_WINMM:
-        if(!(audioDriver = Sys_LoadAudioDriver("winmm")))
-            return false;
-        break;
-#endif
-    default:
-        Con_Error("S_InitDriver: Unknown driver id %i.\n", drvid);
-        return false; // Unreachable.
-    }
-
-    // Initialize.
-    return audioDriver->Init();
-}
-
-audiodriver_e S_ChooseAudioDriver(void)
-{
-    // No audio output?
-    if(isDedicated || ArgExists("-dummy"))
-        return AUDIOD_DUMMY;
-
-    if(ArgExists("-fmod"))
-        return AUDIOD_FMOD;
-
-    if(ArgExists("-oal"))
-        return AUDIOD_OPENAL;
-
-#ifdef WIN32
-    // DirectSound with 3D sound support, EAX effects?
-    if(ArgExists("-dsound"))
-        return AUDIOD_DSOUND;
-
-    // Windows Multimedia?
-    if(ArgExists("-winmm"))
-        return AUDIOD_WINMM;
-#endif
-
-#ifndef DENG_DISABLE_SDLMIXER
-    if(ArgExists("-sdlmixer"))
-        return AUDIOD_SDL_MIXER;
-#endif
-
-    // The default audio driver.
-    return AUDIOD_FMOD;
-}
-
 /**
  * Main sound system initialization. Inits both the Sfx and Mus modules.
  *
@@ -210,29 +114,11 @@ boolean S_Init(void)
     if(ArgExists("-nosound"))
         return true;
 
-    // First let's set up the drivers. First we must choose which one we want to use.
-    if(!ArgExists("-nosound"))
-    {
-        audiodriver_e drvid = S_ChooseAudioDriver();
-
-        ok = S_InitDriver(drvid);
-        if(!ok)
-            Con_Message("Warning: Failed initializing audio driver \"%s\"\n", S_GetDriverName(drvid));
-
-        // Fallback option for the default driver.
-#ifndef DENG_DISABLE_SDLMIXER
-        if(!ok)
-        {
-            ok = S_InitDriver(AUDIOD_SDL_MIXER);
-        }
-#endif
-    }
-
-    // Did we manage to load a driver?
-    if(!ok)
+    // Try to load the audio driver plugin(s).
+    if(!AudioDriver_Init())
     {
         Con_Message("Music and Sound Effects disabled.\n");
-        return ArgExists("-nosound");
+        return false;
     }
 
     // Disable random pitch changes?
@@ -241,8 +127,12 @@ boolean S_Init(void)
     sfxOK = Sfx_Init();
     musOK = Mus_Init();
 
-    Con_Message("S_Init: %s.\n", (sfxOK && musOK? "OK" : "Errors during initialization."));
-    return (sfxOK && musOK);
+    if(!sfxOK || !musOK)
+    {
+        Con_Message("Errors during audio subsystem initialization.\n");
+        return false;
+    }
+    return true;
 }
 
 /**
@@ -254,8 +144,7 @@ void S_Shutdown(void)
     Mus_Shutdown();
 
     // Finally, close the audio driver.
-    Sys_ShutdownAudioDriver();
-    audioDriver = NULL;
+    AudioDriver_Shutdown();
 }
 
 /**

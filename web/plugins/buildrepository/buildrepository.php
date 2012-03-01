@@ -1160,9 +1160,18 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
             {
                 $plat = &self::platform($pack->platformId());
 
-                $errors   = $pack->compileErrorCount();
-                $warnings = $pack->compileWarnCount();
-                $issues   = $errors + $warnings;
+                if($pack instanceof iBuilderProduct)
+                {
+                    $errors   = $pack->compileErrorCount();
+                    $warnings = $pack->compileWarnCount();
+                    $issues   = $errors + $warnings;
+                }
+                else
+                {
+                    $errors = 0;
+                    $warnings = 0;
+                    $issues = 0;
+                }
 
                 // Determine issue level (think defcon).
                 if($errors > 0 || !$pack->hasDownloadUri())
@@ -1187,9 +1196,24 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
                     echo $packTitle;
                 }
 
-?></td>
-<td><a href="<?php echo $pack->compileLogUri(); ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a></td>
-<td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
+
+
+
+?></td><td><?php
+
+                if($pack instanceof iBuilderProduct)
+                {
+                    $logUri = $pack->compileLogUri();
+
+?><a href="<?php echo $logUri; ?>" title="Download build logs for <?php echo $pack->composeFullTitle(); ?>">txt.gz</a><?php
+
+                }
+                else
+                {
+?>txt.gz<?php
+                }
+
+?></td><td class="issue_level <?php echo ($issueLevel.'_issue'); ?>"><?php echo $issues; ?></td>
 </tr><?php
 
                 $lastPlatId = $pack->platformId();
