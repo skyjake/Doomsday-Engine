@@ -1505,7 +1505,7 @@ void Hu_MenuInitSkillMenu(void)
     int i;
 #endif
 
-    page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
+    page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
     page->objects = SkillMenuObjects;
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
 #if __JHEXEN__
@@ -1671,7 +1671,7 @@ void Hu_MenuInitEpisodeMenu(void)
     }
     ob->_type = MN_NONE;
 
-    page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
+    page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
     page->objects = EpisodeMenuObjects;
@@ -1780,7 +1780,7 @@ void Hu_MenuInitPlayerClassMenu(void)
     // Terminate.
     ob->_type = MN_NONE;
 
-    page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
+    page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
     page->objects = PlayerClassMenuObjects;
@@ -2481,7 +2481,7 @@ static void initAllPages(void)
     const Point2Raw origin = { 124, 60 };
 #endif
 
-    page = Hu_MenuNewPage("ColorWidget", &origin, 0, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
+    page = Hu_MenuNewPage("ColorWidget", &origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     page->objects = ColorWidgetMenuObjects;
     }
@@ -2499,9 +2499,9 @@ static void initAllPages(void)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, NULL, NULL, NULL);
+    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
 #else
-    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
+    page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
 #endif
 
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
@@ -2561,7 +2561,7 @@ static void initAllPages(void)
     {
     Point2Raw origin = { 110, 60 };
 
-    page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, NULL, NULL, NULL);
+    page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
     page->objects = FilesMenuObjects;
@@ -2644,12 +2644,12 @@ static void initAllPages(void)
     }
     saveMenuObjects[i]._type = MN_NONE;
 
-    page = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
+    page = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
     page->objects = loadMenuObjects;
 
-    page = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
+    page = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
     MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
     MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
     page->objects = saveMenuObjects;
