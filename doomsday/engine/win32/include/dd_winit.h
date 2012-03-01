@@ -53,6 +53,8 @@ extern application_t app;
 
 void DD_Shutdown(void);
 
+const char* DD_Win32_GetLastErrorMessage(void);
+
 #ifdef UNICODE
 LPCWSTR ToWideString(const char* str);
 LPCSTR  ToAnsiString(const wchar_t* wstr);

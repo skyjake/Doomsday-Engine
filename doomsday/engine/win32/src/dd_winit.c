@@ -122,7 +122,7 @@ LPCSTR ToAnsiString(const wchar_t* wstr)
  * @return              Ptr to a string containing a textual representation of
  *                      the last error thrown in the current thread else @c NULL.
  */
-static const char* getLastWINAPIErrorMessage(void)
+const char* DD_Win32_GetLastErrorMessage(void)
 {
     static char* buffer = 0; /// \fixme Never free'd!
     static size_t currentBufferSize = 0;
@@ -180,7 +180,7 @@ static int loadPlugin(application_t* app, const char* pluginPath, void* paramate
     plugin = LoadLibrary(WIN_STRING(pluginPath));
     if(!plugin)
     {
-        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, getLastWINAPIErrorMessage());
+        Con_Printf("loadPlugin: Error loading \"%s\" (%s).\n", pluginPath, DD_Win32_GetLastErrorMessage());
         return 0; // Continue iteration.
     }
 
@@ -223,7 +223,7 @@ static BOOL unloadPlugin(HINSTANCE* handle)
     result = FreeLibrary(*handle);
     *handle = 0;
     if(!result)
-        Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", getLastWINAPIErrorMessage());
+        Con_Printf("unloadPlugin: Error unloading plugin (%s).\n", DD_Win32_GetLastErrorMessage());
     return result;
 }
 
@@ -442,6 +442,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         isDedicated = ArgCheck("-dedicated");
         novideo = ArgCheck("-novideo") || isDedicated;
 
+        Library_Init();
+
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);
 
@@ -637,6 +639,7 @@ void DD_Shutdown(void)
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
     unloadAllPlugins(&app);
+    Library_Shutdown();
 
 #ifdef UNICODE
     free(convBuf); convBuf = 0;

@@ -214,12 +214,26 @@ Library* Library_New(const char *fileName)
     }
 #endif
 
+#ifdef WIN32
+    Str_Clear(lastError);
+    handle = LoadLibrary(WIN_STRING(fileName));
+    if(!handle)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
+        printf("Library_New: Error opening \"%s\" (%s).\n", fileName, Library_LastError());
+        return 0;
+    }
+#endif
+
     // Create the Library instance.
     lib = calloc(1, sizeof(*lib));
     lib->handle = handle;
     lib->path = Str_NewStd();
 #ifdef UNIX
     Str_Set(lib->path, bundlePath);
+#endif
+#ifdef WIN32
+    Str_Set(lib->path, fileName);
 #endif
 
     addToLoaded(lib);
@@ -243,6 +257,9 @@ void Library_Delete(Library *lib)
 #ifdef UNIX
         dlclose(lib->handle);
 #endif
+#ifdef WIN32
+        FreeLibrary(lib->handle);
+#endif
     }
     Str_Delete(lib->path);
     removeFromLoaded(lib);
@@ -260,6 +277,13 @@ void* Library_Symbol(Library* lib, const char* symbolName)
     if(!ptr)
     {
         Str_Set(lastError, dlerror());
+    }
+#endif
+#ifdef WIN32
+    ptr = (void*)GetProcAddress(lib->handle, symbolName);
+    if(!ptr)
+    {
+        Str_Set(lastError, DD_Win32_GetLastErrorMessage());
     }
 #endif
     return ptr;
@@ -309,5 +333,10 @@ int Library_IterateAvailableLibraries(int (*func)(const char *, void *), void *d
     }
     closedir(dir);
 #endif
+
+#ifdef WIN32
+    printf("TODO: a similar routine should be in dd_winit.c; move the code here\n");
+#endif
+
     return 0;
 }
