@@ -153,6 +153,12 @@ void Sfx_StartLogical(int id, mobj_t *origin, boolean isRepeating)
         return;
     }
 
+    if(origin)
+    {
+        // Stop all previous sounds from this origin (only one per origin).
+        Sfx_StopLogical(0, origin);
+    }
+
     id &= ~DDSF_FLAG_MASK;
     node = Sfx_CreateLogical(id);
     node->origin = origin;
