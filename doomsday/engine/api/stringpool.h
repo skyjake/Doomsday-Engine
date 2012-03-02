@@ -12,6 +12,7 @@
  * @todo Add case-sensitive mode.
  *
  * @authors Copyright © 2010-2012 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2012 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -150,6 +151,20 @@ boolean StringPool_RemoveIntern(StringPool* pool, StringPoolInternId internId);
  * @return  @c 0 iff iteration completed wholly.
  */
 int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolInternId, void*), void* paramaters);
+
+/**
+ * Serializes the pool using @a writer.
+ * @param ar StringPool instance.
+ * @param writer  Writer instance.
+ */
+void StringPool_Write(const StringPool* ar, Writer* writer);
+
+/**
+ * Deserializes the pool from @a reader.
+ * @param ar StringPool instance.
+ * @param reader  Reader instance.
+ */
+void StringPool_Read(StringPool* ar, Reader* reader);
 
 #if _DEBUG
 /**

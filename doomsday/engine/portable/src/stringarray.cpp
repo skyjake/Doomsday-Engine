@@ -23,34 +23,7 @@
 #include <assert.h>
 #include <vector>
 #include <string.h>
-
-namespace de {
-
-/**
- * Minimal C++ wrapper for ddstring_t.
- */
-class Str {
-public:
-    Str(const char* text = 0) {
-        Str_InitStd(&str);
-        if(text) {
-            Str_Set(&str, text);
-        }
-    }
-    ~Str() {
-        Str_Free(&str);
-    }
-    operator ddstring_t* (void) {
-        return &str;
-    }
-    operator const ddstring_t* (void) const {
-        return &str;
-    }
-private:
-    ddstring_t str;
-};
-
-} // namespace de
+#include "string.hh"
 
 struct stringarray_s {
     typedef std::vector<de::Str*> Strings;
@@ -108,7 +81,7 @@ void StringArray_Clear(StringArray* ar)
     assert(ar);
     for(StringArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
-        delete *i;
+        (*i)->release();
     }
     ar->array.clear();
 }
@@ -152,7 +125,7 @@ void StringArray_Remove(StringArray* ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
-    delete ar->array[index];
+    ar->array[index]->release();
     ar->array.erase(ar->array.begin() + index);
 }
 
