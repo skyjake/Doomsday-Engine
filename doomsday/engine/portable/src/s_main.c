@@ -158,6 +158,12 @@ void S_MapChange(void)
     Sfx_MapChange();
 }
 
+void S_SetupForChangedMap(void)
+{
+    // Update who is listening now.
+    Sfx_SetListener(S_GetListenerMobj());
+}
+
 /**
  * Stop all channels and music, delete the entire sample cache.
  */

@@ -48,6 +48,12 @@ void            S_Register(void);
 boolean         S_Init(void);
 void            S_Shutdown(void);
 void            S_MapChange(void);
+
+/**
+ * Must be called after the map has been changed.
+ */
+void S_SetupForChangedMap(void);
+
 void            S_Reset(void);
 void            S_StartFrame(void);
 void            S_EndFrame(void);

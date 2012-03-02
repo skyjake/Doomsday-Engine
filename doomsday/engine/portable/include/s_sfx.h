@@ -66,6 +66,7 @@ void            Sfx_Shutdown(void);
 void            Sfx_Reset(void);
 void            Sfx_AllowRefresh(boolean allow);
 void            Sfx_MapChange(void);
+void            Sfx_SetListener(mobj_t* mobj);
 void            Sfx_StartFrame(void);
 void            Sfx_EndFrame(void);
 void            Sfx_PurgeCache(void);
