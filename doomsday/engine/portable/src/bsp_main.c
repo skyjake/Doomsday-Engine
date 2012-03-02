@@ -111,7 +111,7 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
 
     uint                i;
     int                 bw, bh;
-    hedge_t*            back, *front;
+    bsp_hedge_t* back, *front;
     superblock_t*       block;
     int                 mapBounds[4];
 
@@ -165,8 +165,8 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                front = HEdge_Create(line, line, line->v[0], line->v[1],
-                                     side->sector, false);
+                front = BSP_HEdge_Create(line, line, line->v[0], line->v[1],
+                                         side->sector, false);
                 BSP_AddHEdgeToSuperBlock(block, front);
             }
             else
@@ -179,8 +179,8 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                 if(!side->sector)
                     Con_Message("Warning: Bad sidedef on linedef #%d\n", line->buildData.index);
 
-                back = HEdge_Create(line, line, line->v[1], line->v[0],
-                                    side->sector, true);
+                back = BSP_HEdge_Create(line, line, line->v[1], line->v[0],
+                                        side->sector, true);
                 BSP_AddHEdgeToSuperBlock(block, back);
 
                 if(front)
@@ -203,11 +203,11 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
                 // Handle the 'One-Sided Window' trick.
                 if(line->buildData.windowEffect && front)
                 {
-                    hedge_t    *other;
+                    bsp_hedge_t* other;
 
-                    other = HEdge_Create(front->lineDef, line,
-                                         line->v[1], line->v[0],
-                                         line->buildData.windowEffect, true);
+                    other = BSP_HEdge_Create(front->lineDef, line,
+                                             line->v[1], line->v[0],
+                                             line->buildData.windowEffect, true);
 
                     BSP_AddHEdgeToSuperBlock(block, other);
 

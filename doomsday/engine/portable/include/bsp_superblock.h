@@ -56,7 +56,7 @@ typedef struct superblock_s {
     int         miniNum;
 
     // List of half-edges completely contained by this block.
-    struct hedge_s* hEdges;
+    struct bsp_hedge_s* hEdges;
 } superblock_t;
 
 void        BSP_InitSuperBlockAllocator(void);
@@ -72,7 +72,7 @@ void        BSP_SuperBlockPrintHEdges(superblock_t* superblock);
 superblock_t* CreateHEdges(void);
 
 void        BSP_LinkHEdgeToSuperBlock(superblock_t* superblock,
-                                      hedge_t* hEdge);
+                                      bsp_hedge_t* hEdge);
 void        BSP_IncSuperBlockHEdgeCounts(superblock_t* block,
                                          boolean lineLinked);
 
@@ -80,7 +80,7 @@ boolean     BSP_PickPartition(const superblock_t* hEdgeList, size_t depth,
                               bspartition_t* partition);
 void        BSP_FindNodeBounds(bspnodedata_t* node, superblock_t* hEdgeListRight,
                                superblock_t* hEdgeListLeft);
-void        BSP_DivideOneHEdge(hedge_t* hEdge, const bspartition_t* part,
+void        BSP_DivideOneHEdge(bsp_hedge_t* hEdge, const bspartition_t* part,
                                superblock_t* rightList, superblock_t* leftList,
                                cutlist_t* cutList);
 void        BSP_PartitionHEdges(superblock_t* hEdgeList,

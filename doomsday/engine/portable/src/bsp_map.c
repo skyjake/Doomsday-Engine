@@ -53,10 +53,10 @@
 // CODE --------------------------------------------------------------------
 
 static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
-                              hedge_t* hEdge)
+                              bsp_hedge_t* hEdge)
 {
-    uint                count;
-    hedge_t*            first, *other;
+    uint count;
+    bsp_hedge_t* first, *other;
 
     if(!side)
         return;
@@ -96,8 +96,8 @@ static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
 
 static int C_DECL hEdgeCompare(const void* p1, const void* p2)
 {
-    const hedge_t* a = ((const hedge_t**) p1)[0];
-    const hedge_t* b = ((const hedge_t**) p2)[0];
+    const bsp_hedge_t* a = ((const bsp_hedge_t**) p1)[0];
+    const bsp_hedge_t* b = ((const bsp_hedge_t**) p2)[0];
 
     if(a->index == b->index)
         return 0;
@@ -107,9 +107,9 @@ static int C_DECL hEdgeCompare(const void* p1, const void* p2)
 }
 
 typedef struct {
-    size_t              curIdx;
-    hedge_t***          indexPtr;
-    boolean             write;
+    size_t curIdx;
+    bsp_hedge_t*** indexPtr;
+    boolean write;
 } hedgecollectorparams_t;
 
 static boolean hEdgeCollector(binarytree_t* tree, void* data)
@@ -117,8 +117,8 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
     if(BinaryTree_IsLeaf(tree))
     {
         hedgecollectorparams_t* params = (hedgecollectorparams_t*) data;
-        bspleafdata_t*      leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
-        hedge_t*            hEdge;
+        bspleafdata_t* leaf = (bspleafdata_t*) BinaryTree_GetData(tree);
+        bsp_hedge_t* hEdge;
 
         for(hEdge = leaf->hEdges; hEdge; hEdge = hEdge->next)
         {
@@ -141,8 +141,8 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
 
 static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
 {
-    uint                i;
-    hedge_t**           index;
+    uint i;
+    bsp_hedge_t** index;
     hedgecollectorparams_t params;
 
     //
@@ -158,7 +158,7 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
         Con_Error("buildSegsFromHEdges: No halfedges?");
 
     // Allocate the sort buffer.
-    index = M_Malloc(sizeof(hedge_t*) * params.curIdx);
+    index = M_Malloc(sizeof(bsp_hedge_t*) * params.curIdx);
 
     // Pass 2: Collect ptrs the hedges and insert into the index.
     params.curIdx = 0;
@@ -166,14 +166,14 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
     BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
 
     // Sort the half-edges into ascending index order.
-    qsort(index, params.curIdx, sizeof(hedge_t*), hEdgeCompare);
+    qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hEdgeCompare);
 
     dest->numSegs = (uint) params.curIdx;
     dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_MAPSTATIC, 0);
     for(i = 0; i < dest->numSegs; ++i)
     {
-        seg_t*              seg = &dest->segs[i];
-        hedge_t*            hEdge = index[i];
+        seg_t* seg = &dest->segs[i];
+        bsp_hedge_t* hEdge = index[i];
 
         seg->header.type = DMU_SEG;
 
@@ -257,11 +257,11 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
 }
 
 static void hardenSSecSegList(gamemap_t* dest, subsector_t* ssec,
-                              hedge_t* list, size_t segCount)
+                              bsp_hedge_t* list, size_t segCount)
 {
-    size_t              i;
-    hedge_t*            cur;
-    seg_t**             segs;
+    size_t i;
+    bsp_hedge_t* cur;
+    seg_t** segs;
 
     segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_MAPSTATIC, 0);
 
@@ -278,10 +278,10 @@ static void hardenSSecSegList(gamemap_t* dest, subsector_t* ssec,
 static void hardenLeaf(gamemap_t* map, subsector_t* dest,
                        const bspleafdata_t* src)
 {
-    seg_t**             segp;
-    boolean             found;
-    size_t              hEdgeCount;
-    hedge_t*            hEdge;
+    seg_t** segp;
+    boolean found;
+    size_t hEdgeCount;
+    bsp_hedge_t* hEdge;
 
     hEdge = src->hEdges;
     hEdgeCount = 0;
