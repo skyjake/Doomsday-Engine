@@ -651,6 +651,13 @@ int Sfx_StartSound(sfxsample_t* sample, float volume, float freq,
        volume <= 0)
         return false;
 
+    if(emitter)
+    {
+        // Stop any other sounds from the same origin. Only one sound is
+        // allowed per emitter.
+        Sfx_StopSound(0, emitter);
+    }
+
     // Calculate the new sound's priority.
     nowTime = Sys_GetTime();
     myPrio = Sfx_Priority(emitter, fixedPos, volume, nowTime);
