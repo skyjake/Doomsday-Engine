@@ -37,6 +37,8 @@ DEFINES += __DOOMSDAY__
     !win32: echo(DENG_BUILD is not defined.)
 }
 
+OTHER_FILES += portable/include/mapdata.hs
+
 unix:!macx {
     DEFINES += DENG_BASE_DIR=\\\"$${DENG_BASE_DIR}/\\\"
     DEFINES += DENG_LIBRARY_DIR=\\\"$${DENG_LIB_DIR}/\\\"
