@@ -614,9 +614,9 @@ static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
     uint i, n, count;
 
     count = 0;
-    for(i = 0; i < map->numSSectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
-        subsector_t *ssec = &map->ssectors[i];
+        subsector_t *ssec = &map->subsectors[i];
         if(ssec->sector == sec)
             ++count;
     }
@@ -624,20 +624,20 @@ static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
     if(0 == count)
         return;
 
-    sec->ssectors = Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
+    sec->subsectors = Z_Malloc((count + 1) * sizeof(subsector_t*), PU_MAPSTATIC, NULL);
 
     n = 0;
-    for(i = 0; i < map->numSSectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
-        subsector_t* ssec = &map->ssectors[i];
+        subsector_t* ssec = &map->subsectors[i];
         if(ssec->sector == sec)
         {
             ssec->inSectorID = n;
-            sec->ssectors[n++] = ssec;
+            sec->subsectors[n++] = ssec;
         }
     }
-    sec->ssectors[n] = NULL; // Terminate.
-    sec->ssectorCount = count;
+    sec->subsectors[n] = NULL; // Terminate.
+    sec->subsectorCount = count;
     }
 }
 
@@ -982,13 +982,13 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->worldGridOffset[VY] = fmod(sub->aaBox.maxY, 64);
 }
 
-static void prepareSubSectors(gamemap_t *map)
+static void prepareSubsectors(gamemap_t* map)
 {
-    uint                i;
+    uint i;
 
-    for(i = 0; i < map->numSSectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
-        subsector_t *ssec = &map->ssectors[i];
+        subsector_t* ssec = &map->subsectors[i];
 
         updateSSecMidPoint(ssec);
     }
@@ -1893,7 +1893,7 @@ boolean MPE_End(void)
     // Announce any issues detected with the map.
     MPE_PrintMapErrors();
 
-    // Map must be polygonized and sector->ssectors must be built before
+    // Map must be polygonized and sector->subsectors must be built before
     // this is called!
     hardenPlanes(gamemap, map);
 
@@ -1913,8 +1913,8 @@ boolean MPE_End(void)
     finishLineDefs(gamemap);
     finishSectors(gamemap);
     updateMapBounds(gamemap);
-    S_DetermineSubSecsAffectingSectorReverb(gamemap);
-    prepareSubSectors(gamemap);
+    S_DetermineSubsecsAffectingSectorReverb(gamemap);
+    prepareSubsectors(gamemap);
 
     P_FreeBadTexList();
     MPE_FreeUnclosedSectorList();

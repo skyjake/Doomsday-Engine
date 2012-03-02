@@ -36,7 +36,6 @@
 #define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))
 #define numlines    (*(uint*) DD_GetVariable(DD_LINE_COUNT))
 #define numsides    (*(uint*) DD_GetVariable(DD_SIDE_COUNT))
-#define nummaterials (*(uint*) DD_GetVariable(DD_MATERIAL_COUNT))
 
 #if __JHEXEN__
 #define numpolyobjs (*(uint*) DD_GetVariable(DD_POLYOBJ_COUNT))

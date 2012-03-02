@@ -369,15 +369,15 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = &sectors[i];
-        if(sec->ssectors && *sec->ssectors)
+        if(sec->subsectors && *sec->subsectors)
         {
-            subsector_t** ssecPtr = sec->ssectors;
+            subsector_t** ssecIter = sec->subsectors;
             do
             {
-                subsector_t* ssec = *ssecPtr;
+                subsector_t* ssec = *ssecIter;
                 numVertIllums += ssec->numVertices * sec->planeCount;
-                ssecPtr++;
-            } while(*ssecPtr);
+                ssecIter++;
+            } while(*ssecIter);
         }
     }
 
@@ -416,12 +416,12 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = &sectors[i];
-        if(sec->ssectors && *sec->ssectors)
+        if(sec->subsectors && *sec->subsectors)
         {
-            subsector_t** ssecPtr = sec->ssectors;
+            subsector_t** ssecIter = sec->subsectors;
             do
             {
-                subsector_t* ssec = *ssecPtr;
+                subsector_t* ssec = *ssecIter;
                 uint j;
 
                 for(j = 0; j < sec->planeCount; ++j)
@@ -434,8 +434,8 @@ void SB_InitForMap(const char* uniqueID)
 
                     ssec->bsuf[j] = bsuf;
                 }
-                ssecPtr++;
-            } while(*ssecPtr);
+                ssecIter++;
+            } while(*ssecIter);
         }
     }
 
@@ -641,8 +641,8 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the ssec.
-        // \fixme This is probably too accurate an estimate.
+        // Calculate minimum 2D distance to the subsector.
+        /// @fixme This is probably too accurate an estimate.
         for(k = 0; k < bsuf->size; ++k)
         {
             V2_Set(delta,
@@ -926,13 +926,13 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param sectorLightLevel Sector light level.
  * @param mapObject     Ptr to either a hedge or subsector.
  * @param elmIdx        Used with subsectors to select a specific plane.
- * @param isSeg         @c true, if surface is to a hedge ELSE a subsector.
+ * @param isHEdge       @c true, if @a mapObject is a HEdge ELSE a Subsector.
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
                  size_t numVertices, const vectorcomp_t* normal,
                  float sectorLightLevel,
-                 void* mapObject, uint elmIdx, boolean isSeg)
+                 void* mapObject, uint elmIdx, boolean isHEdge)
 {
     uint                i;
     boolean             forced;
@@ -960,19 +960,19 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
     if(doUpdateAffected)
     {
         /**
-         * \todo This could be enhanced so that only the lights on the
+         * @todo This could be enhanced so that only the lights on the
          * right side of the surface are taken into consideration.
          */
-        if(isSeg)
+        if(isHEdge)
         {
-            HEdge*          hedge = (HEdge*) mapObject;
+            HEdge* hedge = (HEdge*) mapObject;
 
             updateAffected(bsuf, &hedge->HE_v1->v, &hedge->HE_v2->v, normal);
         }
         else
         {
-            subsector_t*    ssec = (subsector_t*) mapObject;
-            vec3_t          point;
+            subsector_t* ssec = (subsector_t*) mapObject;
+            vec3_t point;
 
             V3_Set(point, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY],
                    ssec->sector->planes[elmIdx]->height);
@@ -982,8 +982,8 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
     }
 
 /*#if _DEBUG
-// Assign primary colors rather than the real values.
-    if(isSeg)
+    // Assign primary colors rather than the real values.
+    if(isHEdge)
     {
         rcolors[0].rgba[CR] = 1; rcolors[0].rgba[CG] = 0; rcolors[0].rgba[CB] = 0; rcolors[0].rgba[CA] = 1;
         rcolors[1].rgba[CR] = 0; rcolors[1].rgba[CG] = 1; rcolors[1].rgba[CB] = 0; rcolors[1].rgba[CA] = 1;

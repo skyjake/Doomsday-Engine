@@ -236,7 +236,7 @@ void            R_ProjectPlayerSprites(void);
 
 void R_SortVisSprites(void);
 vissprite_t* R_NewVisSprite(void);
-void R_AddSprites(subsector_t* ssec);
+void R_AddSprites(subsector_t* subsector);
 
 /// To be called at the start of the current render frame to clear the vissprite list.
 void R_ClearVisSprites(void);

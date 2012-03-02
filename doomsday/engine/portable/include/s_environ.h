@@ -32,7 +32,7 @@
 #include "p_mapdata.h"
 
 void S_CalcSectorReverb(sector_t* sec);
-void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
+void S_DetermineSubsecsAffectingSectorReverb(gamemap_t* map);
 
 /// @return  Environment class name for identifier @a mclass.
 const char* S_MaterialEnvClassName(material_env_class_t mclass);

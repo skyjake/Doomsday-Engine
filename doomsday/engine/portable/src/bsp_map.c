@@ -321,7 +321,7 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
 
 typedef struct {
     gamemap_t*      dest;
-    uint            ssecCurIndex;
+    uint            subsectorCurIndex;
     uint            nodeCurIndex;
 } hardenbspparams_t;
 
@@ -362,10 +362,10 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         if(BinaryTree_IsLeaf(right))
         {
             bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(right);
-            uint            idx = params->ssecCurIndex++;
+            uint            idx = params->subsectorCurIndex++;
 
             node->children[RIGHT] = idx | NF_SUBSECTOR;
-            hardenLeaf(params->dest, &params->dest->ssectors[idx], leaf);
+            hardenLeaf(params->dest, &params->dest->subsectors[idx], leaf);
         }
         else
         {
@@ -381,10 +381,10 @@ static boolean C_DECL hardenNode(binarytree_t* tree, void* data)
         if(BinaryTree_IsLeaf(left))
         {
             bspleafdata_t*  leaf = (bspleafdata_t*) BinaryTree_GetData(left);
-            uint            idx = params->ssecCurIndex++;
+            uint            idx = params->subsectorCurIndex++;
 
             node->children[LEFT] = idx | NF_SUBSECTOR;
-            hardenLeaf(params->dest, &params->dest->ssectors[idx], leaf);
+            hardenLeaf(params->dest, &params->dest->subsectors[idx], leaf);
         }
         else
         {
@@ -422,22 +422,22 @@ static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
     else
         dest->nodes = 0;
 
-    dest->numSSectors = 0;
-    BinaryTree_PostOrder(rootNode, countSSec, &dest->numSSectors);
-    dest->ssectors = Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
+    dest->numSubsectors = 0;
+    BinaryTree_PostOrder(rootNode, countSSec, &dest->numSubsectors);
+    dest->subsectors = Z_Calloc(dest->numSubsectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
 
     if(!rootNode)
         return;
 
     if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenLeaf(dest, &dest->ssectors[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        hardenLeaf(dest, &dest->subsectors[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
         return;
     }
 
     { hardenbspparams_t p;
     p.dest = dest;
-    p.ssecCurIndex = 0;
+    p.subsectorCurIndex = 0;
     p.nodeCurIndex = 0;
     BinaryTree_PostOrder(rootNode, hardenNode, &p);
     }

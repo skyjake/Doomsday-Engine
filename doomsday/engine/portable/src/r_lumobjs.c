@@ -525,7 +525,7 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
 void LO_InitForMap(void)
 {
     // First initialize the subsector links (root pointers).
-    subLumObjList = Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
+    subLumObjList = Z_Calloc(sizeof(*subLumObjList) * numSubsectors, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -574,7 +574,7 @@ void LO_BeginWorldFrame(void)
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
     if(subLumObjList)
-        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSSectors);
+        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSubsectors);
     numLuminous = 0;
 }
 
@@ -957,8 +957,6 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
 /**
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
- *
- * @param ssec  Ptr to the subsector to process.
  */
 static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 {
@@ -970,13 +968,13 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         const averagecolor_analysis_t* avgColorAmplified;
         const materialvariantspecification_t* spec;
         const materialsnapshot_t* ms;
-        linkobjtossecparams_t params;
+        linkobjtosubsectorparams_t params;
         lumobj_t* lum;
         uint i;
 
         // Only produce a light for sectors with open space.
-        /// \todo Do not add surfaces from sectors with zero subsectors to the glowing list.
-        if(!sec->ssectorCount || sec->SP_floorvisheight >= sec->SP_ceilvisheight)
+        /// @todo Do not add surfaces from sectors with zero subsectors to the glowing list.
+        if(!sec->subsectorCount || sec->SP_floorvisheight >= sec->SP_ceilvisheight)
             return true; // Continue iteration.
 
         // Are we glowing at this moment in time?
@@ -991,7 +989,7 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
             Con_Error("createGlowLightForSurface: Texture id:%u has no TA_COLOR_AMPLIFIED analysis.", Textures_Id(MSU_texture(ms, MTU_PRIMARY)));
 
         // \note Plane lights do not spread so simply link to all subsectors of this sector.
-        lum = createLuminous(LT_PLANE, sec->ssectors[0]);
+        lum = createLuminous(LT_PLANE, sec->subsectors[0]);
         V3_Set(lum->pos, pln->soundOrg.pos[VX], pln->soundOrg.pos[VY], pln->visHeight);
 
         V3_Copy(LUM_PLANE(lum)->normal, pln->PS_normal);
@@ -1003,11 +1001,11 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 
         params.obj = lum;
         params.type = OT_LUMOBJ;
-        RIT_LinkObjToSubsector(sec->ssectors[0], (void*)&params);
-        for(i = 1; i < sec->ssectorCount; ++i)
+        RIT_LinkObjToSubsector(sec->subsectors[0], (void*)&params);
+        for(i = 1; i < sec->subsectorCount; ++i)
         {
-            linkLumObjToSSec(lum, sec->ssectors[i]);
-            RIT_LinkObjToSubsector(sec->ssectors[i], (void*)&params);
+            linkLumObjToSSec(lum, sec->subsectors[i]);
+            RIT_LinkObjToSubsector(sec->subsectors[i], (void*)&params);
         }
         break;
       }
@@ -1140,9 +1138,9 @@ boolean LOIT_ClipLumObj(void* data, void* context)
     return true; // Continue iteration.
 }
 
-void LO_ClipInSubsector(uint ssecidx)
+void LO_ClipInSubsector(uint ssecIdx)
 {
-    iterateSubsectorLumObjs(&ssectors[ssecidx], LOIT_ClipLumObj, NULL);
+    iterateSubsectorLumObjs(&subsectors[ssecIdx], LOIT_ClipLumObj, NULL);
 }
 
 boolean LOIT_ClipLumObjBySight(void* data, void* context)
@@ -1185,9 +1183,9 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
     return true; // Continue iteration.
 }
 
-void LO_ClipInSubsectorBySight(uint ssecidx)
+void LO_ClipInSubsectorBySight(uint ssecIdx)
 {
-    iterateSubsectorLumObjs(&ssectors[ssecidx], LOIT_ClipLumObjBySight, &ssectors[ssecidx]);
+    iterateSubsectorLumObjs(&subsectors[ssecIdx], LOIT_ClipLumObjBySight, &subsectors[ssecIdx]);
 }
 
 static boolean iterateSubsectorLumObjs(subsector_t* ssec, boolean (*func) (void*, void*),

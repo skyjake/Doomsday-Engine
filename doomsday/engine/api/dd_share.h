@@ -280,7 +280,6 @@ enum {
     DD_SUBSECTOR_COUNT,
     DD_NODE_COUNT,
     DD_POLYOBJ_COUNT,
-    DD_MATERIAL_COUNT,
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,

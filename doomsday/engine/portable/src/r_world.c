@@ -599,12 +599,12 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
      * as planes are created before the bias system is available.
      */
 
-    if(sec->ssectors && *sec->ssectors)
+    if(sec->subsectors && *sec->subsectors)
     {
-        subsector_t** ssecPtr = sec->ssectors;
+        subsector_t** ssecIter = sec->subsectors;
         do
         {
-            subsector_t* ssec = *ssecPtr;
+            subsector_t* ssec = *ssecIter;
             biassurface_t** newList;
             uint n = 0;
 
@@ -636,8 +636,8 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
 
             ssec->bsuf = newList;
 
-            ssecPtr++;
-        } while(*ssecPtr);
+            ssecIter++;
+        } while(*ssecIter);
     }
 
     return plane;
@@ -652,9 +652,9 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
  */
 void R_DestroyPlaneOfSector(uint id, sector_t* sec)
 {
-    uint                i;
-    plane_t*            plane, **newList = NULL;
-    subsector_t**       ssecPtr;
+    plane_t* plane, **newList = NULL;
+    subsector_t** ssecIter;
+    uint i;
 
     if(!sec)
         return; // Do wha?
@@ -693,14 +693,14 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     R_SurfaceListRemove(glowingSurfaceList, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
-    ssecPtr = sec->ssectors;
-    while(*ssecPtr)
+    ssecIter = sec->subsectors;
+    while(*ssecIter)
     {
-        subsector_t* ssec = *ssecPtr;
+        subsector_t* ssec = *ssecIter;
         SB_DestroySurface(ssec->bsuf[id]);
         if(id < sec->planeCount)
             memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
-        ssecPtr++;
+        ssecIter++;
     }
 
     // Destroy the specified plane.
@@ -1116,15 +1116,16 @@ void R_InitLinks(gamemap_t* map)
  * point cannot be found use the center of subsector instead (it will
  * always be valid as subsectors are convex).
  */
-static void triangulateSubSector(subsector_t *ssec)
+static void triangulateSubsector(subsector_t* ssec)
 {
-    uint                baseIDX = 0, i, n;
-    boolean             found = false;
+    uint baseIDX = 0, i, n;
+    boolean found = false;
 
     // We need to find a good tri-fan base vertex, (one that doesn't
     // generate zero-area triangles).
     if(ssec->hedgeCount <= 3)
-    {   // Always valid.
+    {
+        // Always valid.
         found = true;
     }
     else
@@ -1132,23 +1133,23 @@ static void triangulateSubSector(subsector_t *ssec)
         // the first good one.
 #define TRIFAN_LIMIT    0.1
 
-        fvertex_t          *base, *a, *b;
+        fvertex_t* base, *a, *b;
 
         baseIDX = 0;
         do
         {
-            HEdge              *hedge = ssec->hedges[baseIDX];
+            HEdge* hedge = ssec->hedges[baseIDX];
 
             base = &hedge->HE_v1->v;
             i = 0;
             do
             {
-                HEdge              *seg2 = ssec->hedges[i];
+                HEdge* hedge2 = ssec->hedges[i];
 
                 if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
                 {
-                    a = &seg2->HE_v1->v;
-                    b = &seg2->HE_v2->v;
+                    a = &hedge2->HE_v1->v;
+                    b = &hedge2->HE_v2->v;
 
                     if(TRIFAN_LIMIT >=
                        M_TriangleArea(base->pos, a->pos, b->pos))
@@ -1182,8 +1183,8 @@ static void triangulateSubSector(subsector_t *ssec)
         ssec->vertices[n++] = &ssec->midPoint;
     for(i = 0; i < ssec->hedgeCount; ++i)
     {
-        uint                idx;
-        HEdge              *hedge;
+        uint idx;
+        HEdge* hedge;
 
         idx = baseIDX + i;
         if(idx >= ssec->hedgeCount)
@@ -1202,18 +1203,17 @@ static void triangulateSubSector(subsector_t *ssec)
 /**
  * Polygonizes all subsectors in the map.
  */
-void R_PolygonizeMap(gamemap_t *map)
+void R_PolygonizeMap(gamemap_t* map)
 {
-    uint                i;
-    uint                startTime;
+    uint i, startTime;
 
     startTime = Sys_GetRealTime();
 
     // Polygonize each subsector.
-    for(i = 0; i < map->numSSectors; ++i)
+    for(i = 0; i < map->numSubsectors; ++i)
     {
-        subsector_t        *sub = &map->ssectors[i];
-        triangulateSubSector(sub);
+        subsector_t* ssec = &map->subsectors[i];
+        triangulateSubsector(ssec);
     }
 
     // How much time did we spend?
@@ -1450,7 +1450,7 @@ void R_SetupMap(int mode, int flags)
             {
                 subsector_t* ssec = R_PointInSubsector(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
 
-                //// \fixme $nplanes
+                /// @fixme $nplanes
                 if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
@@ -1660,7 +1660,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        subsector_t** ssecp;
+        subsector_t** ssecIter;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
@@ -1686,28 +1686,28 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
         pln->soundOrg.pos[VZ] = pln->height;
 
         // Inform the shadow bias of changed geometry.
-        if(sec->ssectors && *sec->ssectors)
+        if(sec->subsectors && *sec->subsectors)
         {
-            ssecp = sec->ssectors;
+            ssecIter = sec->subsectors;
             do
             {
-                subsector_t* ssec = *ssecp;
-                HEdge** segp = ssec->hedges;
-                while(*segp)
+                subsector_t* ssec = *ssecIter;
+                HEdge** hedgeIter = ssec->hedges;
+                while(*hedgeIter)
                 {
-                    HEdge* hedge = *segp;
+                    HEdge* hedge = *hedgeIter;
                     if(hedge->lineDef)
                     {
                         uint i;
                         for(i = 0; i < 3; ++i)
                             SB_SurfaceMoved(hedge->bsuf[i]);
                     }
-                    segp++;
+                    hedgeIter++;
                 }
 
                 SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
-                ssecp++;
-            } while(*ssecp);
+                ssecIter++;
+            } while(*ssecIter);
         }
 
         // We need the decorations updated.
@@ -1723,7 +1723,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 /**
  * Stub.
  */
-boolean R_UpdateSubSector(subsector_t* ssec, boolean forceUpdate)
+boolean R_UpdateSubsector(subsector_t* ssec, boolean forceUpdate)
 {
     return false; // Not changed.
 }

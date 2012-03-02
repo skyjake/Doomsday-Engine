@@ -115,10 +115,10 @@ void LO_UnlinkMobjLumobjs(void);
 uint LO_GetNumLuminous(void);
 
 /**
- * Construct a new lumobj and link it into subsector @a ssec.
+ * Construct a new lumobj and link it into subsector @a subsector.
  * @return  Logical index (name) for referencing the new lumobj.
  */
-uint LO_NewLuminous(lumtype_t type, subsector_t* ssec);
+uint LO_NewLuminous(lumtype_t type, subsector_t* subsector);
 
 /// @return  Lumobj associated with logical index @a idx else @c NULL.
 lumobj_t* LO_GetLuminous(uint idx);
@@ -148,18 +148,18 @@ float LO_AttenuationFactor(uint idx, float distance);
 /**
  * Clip lumobj, omni lights in the given subsector.
  *
- * @param ssecidx  Subsector index in which lights will be clipped.
+ * @param subsectorIdx  Subsector index in which lights will be clipped.
  */
-void LO_ClipInSubsector(uint ssecidx);
+void LO_ClipInSubsector(uint subsectorIdx);
 
 /**
  * In the situation where a subsector contains both lumobjs and a polyobj,
  * the lumobjs must be clipped more carefully. Here we check if the line of
  * sight intersects any of the polyobj hedges that face the camera.
  *
- * @param ssecidx  Subsector index in which lumobjs will be clipped.
+ * @param subsectorIdx  Subsector index in which lumobjs will be clipped.
  */
-void LO_ClipInSubsectorBySight(uint ssecidx);
+void LO_ClipInSubsectorBySight(uint subsectorIdx);
 
 /**
  * Iterate over all luminous objects within the specified origin range, making
@@ -199,7 +199,7 @@ int LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y, float rad
  * management which separates them according to their position in the BSP.
  *
  * @param flags  @see projectLightFlags
- * @param ssec  Subsector within which the quad wholly resides.
+ * @param subsector  Subsector within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
  * @param topLeft  Top left coordinates of the surface being projected to.
  * @param bottomRight  Bottom right coordinates of the surface being projected to.
@@ -211,7 +211,7 @@ int LO_LumobjsRadiusIterator(subsector_t* subsector, float x, float y, float rad
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint LO_ProjectToSurface(int flags, subsector_t* ssec, float blendFactor,
+uint LO_ProjectToSurface(int flags, subsector_t* subsector, float blendFactor,
     vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
 
 /**

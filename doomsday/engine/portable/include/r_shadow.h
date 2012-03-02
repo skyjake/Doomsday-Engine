@@ -60,7 +60,7 @@ float R_ShadowAttenuationFactor(float distance);
  * the subsector specified. This is due to an optimization within the mobj
  * management which separates them according to their position in the BSP.
  *
- * @param ssec  Subsector within which the quad wholly resides.
+ * @param subsector  Subsector within which the quad wholly resides.
  * @param blendFactor  Multiplied with projection alpha.
  * @param topLeft  Top left coordinates of the surface being projected to.
  * @param bottomRight  Bottom right coordinates of the surface being projected to.
@@ -70,7 +70,7 @@ float R_ShadowAttenuationFactor(float distance);
  *
  * @return  Projection list identifier if surface is lit else @c 0.
  */
-uint R_ProjectShadowsToSurface(subsector_t* ssec, float blendFactor,
+uint R_ProjectShadowsToSurface(subsector_t* subsector, float blendFactor,
     vec3_t topLeft, vec3_t bottomRight, vec3_t tangent, vec3_t bitangent, vec3_t normal);
 
 /**

@@ -292,10 +292,10 @@ typedef struct sector_s {
     struct mobj_s*      mobjList;      // List of mobjs in the sector.
     unsigned int        lineDefCount;
     struct linedef_s**  lineDefs;      // [lineDefCount+1] size.
-    unsigned int        ssectorCount;
-    struct subsector_s** ssectors;     // [ssectorCount+1] size.
+    unsigned int        subsectorCount;
+    struct subsector_s** subsectors;     // [subsectorCount+1] size.
     unsigned int        numReverbSSecAttributors;
-    struct subsector_s** reverbSSecs;  // [numReverbSSecAttributors] size.
+    struct subsector_s** reverbSubsectors;  // [numReverbSSecAttributors] size.
     ddmobj_base_t       soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.

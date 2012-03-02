@@ -256,13 +256,13 @@ float R_PointToDist(const float x, const float y)
     return dist;
 }
 
-subsector_t *R_PointInSubsector(const float x, const float y)
+subsector_t* R_PointInSubsector(const float x, const float y)
 {
-    node_t             *node = 0;
-    uint                nodenum = 0;
+    node_t* node = 0;
+    uint nodenum = 0;
 
-    if(!numNodes)               // single subsector is a special case
-        return (subsector_t *) ssectors;
+    if(!numNodes) // single subsector is a special case
+        return (subsector_t *) subsectors;
 
     nodenum = numNodes - 1;
 
@@ -351,7 +351,7 @@ boolean R_IsPointInSector(const float x, const float y,
  *
  * @param x             X coordinate to test.
  * @param y             Y coordinate to test.
- * @param ssec          Subsector to test.
+ * @param subsector     Subsector to test.
  *
  * @return              @c true, if the point is inside the subsector.
  */
@@ -404,12 +404,10 @@ boolean R_IsPointInSubsector(const float x, const float y,
 boolean R_IsPointInSector2(const float x, const float y,
                            const sector_t* sector)
 {
-    subsector_t*        ssec = R_PointInSubsector(x, y);
+    subsector_t* ssec = R_PointInSubsector(x, y);
 
-    if(ssec->sector != sector)
-    {   // Wrong sector.
-        return false;
-    }
+    // Wrong sector?
+    if(ssec->sector != sector) return false;
 
     return R_IsPointInSubsector(x, y, ssec);
 }

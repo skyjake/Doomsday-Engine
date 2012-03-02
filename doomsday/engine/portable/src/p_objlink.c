@@ -92,7 +92,7 @@ static objlinkblockmap_t blockmaps[NUM_OBJ_TYPES];
 static objcontact_t* contFirst = NULL, *contCursor = NULL;
 
 // List of contacts for each subsector.
-static objcontactlist_t* ssecContacts = NULL;
+static objcontactlist_t* subsectorContacts = NULL;
 
 static __inline objlinkblockmap_t* chooseObjlinkBlockmap(objtype_t type)
 {
@@ -169,9 +169,9 @@ static __inline void linkContact(objcontact_t* con, objcontact_t** list, uint in
     list[index] = con;
 }
 
-static void linkContactToSubSector(objcontact_t* node, objtype_t type, uint index)
+static void linkContactToSubsector(objcontact_t* node, objtype_t type, uint index)
 {
-    linkContact(node, &ssecContacts[index].head[type], 0);
+    linkContact(node, &subsectorContacts[index].head[type], 0);
 }
 
 /**
@@ -246,7 +246,7 @@ void R_InitObjlinkBlockmapForMap(void)
     }
 
     // Initialize obj => subsector contact lists.
-    ssecContacts = Z_Calloc(sizeof *ssecContacts * numSSectors, PU_MAPSTATIC, 0);
+    subsectorContacts = Z_Calloc(sizeof *subsectorContacts * numSubsectors, PU_MAPSTATIC, 0);
 }
 
 void R_DestroyObjlinkBlockmap(void)
@@ -259,10 +259,10 @@ void R_DestroyObjlinkBlockmap(void)
         Gridmap_Delete(obm->gridmap);
         obm->gridmap = NULL;
     }
-    if(ssecContacts)
+    if(subsectorContacts)
     {
-        Z_Free(ssecContacts);
-        ssecContacts = NULL;
+        Z_Free(subsectorContacts);
+        subsectorContacts = NULL;
     }
 }
 
@@ -311,40 +311,40 @@ void R_ObjlinkCreate(void* obj, objtype_t type)
 
 int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
 {
-    const linkobjtossecparams_t* p = (linkobjtossecparams_t*) paramaters;
+    const linkobjtosubsectorparams_t* p = (linkobjtosubsectorparams_t*) paramaters;
     objcontact_t* con = allocObjContact();
 
     con->obj = p->obj;
     // Link the contact list for this subsector.
-    linkContactToSubSector(con, p->type, GET_SUBSECTOR_IDX(subsector));
+    linkContactToSubsector(con, p->type, GET_SUBSECTOR_IDX(subsector));
 
     return false; // Continue iteration.
 }
 
 /**
- * Attempt to spread the obj from the given contact from the source ssec and
- * into the (relative) back ssec.
+ * Attempt to spread the obj from the given contact from the source
+ * subsector and into the (relative) back subsector.
  *
- * @param ssec  Subsector to attempt to spread over to.
+ * @param subsec  Subsector to attempt to spread over to.
  * @param data  @see contactfinderparams_t
  *
  * @return  @c true (always - this function is also used as an iterator).
  */
 static void spreadInSubsector(subsector_t* ssec, void* paramaters)
 {
-    HEdge** segPtr = ssec->hedges;
-    while(*segPtr) { processSeg(*segPtr++, paramaters); }
+    HEdge** segIter = ssec->hedges;
+    while(*segIter) { processSeg(*segIter++, paramaters); }
 }
 
 static void processSeg(HEdge* hedge, void* paramaters)
 {
     contactfinderparams_t* p = (contactfinderparams_t*) paramaters;
-    linkobjtossecparams_t loParams;
+    linkobjtosubsectorparams_t loParams;
     subsector_t* source, *dest;
     float distance;
     vertex_t* vtx;
 
-    // HEdge must be between two different ssecs.
+    // HEdge must be between two different subsectors.
     if(hedge->lineDef && (!hedge->twin || hedge->subsector == hedge->twin->subsector))
         return;
 
@@ -361,13 +361,13 @@ static void processSeg(HEdge* hedge, void* paramaters)
         return;
     }
 
-    // Is the dest ssector inside the objlink's AABB?
+    // Is the dest subsector inside the objlink's AABB?
     if(dest->aaBox.maxX <= p->box[BOXLEFT] ||
        dest->aaBox.minX >= p->box[BOXRIGHT] ||
        dest->aaBox.maxY <= p->box[BOXBOTTOM] ||
        dest->aaBox.minY >= p->box[BOXTOP])
     {
-        // The ssector is not inside the params's bounds.
+        // The subsector is not inside the params's bounds.
         return;
     }
 
@@ -439,10 +439,10 @@ static void processSeg(HEdge* hedge, void* paramaters)
 static void findContacts(objlink_t* link)
 {
     contactfinderparams_t cfParams;
-    linkobjtossecparams_t loParams;
+    linkobjtosubsectorparams_t loParams;
     float radius;
     pvec3_t pos;
-    subsector_t** ssec;
+    subsector_t** ssecAdr;
 
     switch(link->type)
     {
@@ -453,7 +453,7 @@ static void findContacts(objlink_t* link)
 
         pos = lum->pos;
         radius = LUM_OMNI(lum)->radius;
-        ssec = &lum->subsector;
+        ssecAdr = &lum->subsector;
         break;
       }
     case OT_MOBJ: {
@@ -461,7 +461,7 @@ static void findContacts(objlink_t* link)
 
         pos = mo->pos;
         radius = R_VisualRadius(mo);
-        ssec = &mo->subsector;
+        ssecAdr = &mo->subsector;
         break;
       }
     default:
@@ -469,8 +469,8 @@ static void findContacts(objlink_t* link)
         exit(1); // Unreachable.
     }
 
-    // Do the subsector spread. Begin from the obj's own ssec.
-    (*ssec)->validCount = ++validCount;
+    // Do the subsector spread. Begin from the obj's own subsector.
+    (*ssecAdr)->validCount = ++validCount;
 
     cfParams.obj = link->obj;
     cfParams.objType = link->type;
@@ -486,9 +486,9 @@ static void findContacts(objlink_t* link)
     // Always contact the obj's own subsector.
     loParams.obj = link->obj;
     loParams.type = link->type;
-    RIT_LinkObjToSubsector(*ssec, &loParams);
+    RIT_LinkObjToSubsector(*ssecAdr, &loParams);
 
-    spreadInSubsector(*ssec, &cfParams);
+    spreadInSubsector(*ssecAdr, &cfParams);
 }
 
 /**
@@ -608,14 +608,14 @@ void R_InitForNewFrame(void)
 
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
-    if(ssecContacts)
-        memset(ssecContacts, 0, numSSectors * sizeof *ssecContacts);
+    if(subsectorContacts)
+        memset(subsectorContacts, 0, numSubsectors * sizeof *subsectorContacts);
 }
 
 int R_IterateSubsectorContacts2(subsector_t* ssec, objtype_t type,
     int (*callback) (void* object, void* paramaters), void* paramaters)
 {
-    objcontact_t* con = ssecContacts[GET_SUBSECTOR_IDX(ssec)].head[type];
+    objcontact_t* con = subsectorContacts[GET_SUBSECTOR_IDX(ssec)].head[type];
     int result = false; // Continue iteration.
     while(con)
     {

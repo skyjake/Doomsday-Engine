@@ -2106,16 +2106,11 @@ void* DD_GetVariable(int ddvalue)
         return &numHEdges;
 
     case DD_SUBSECTOR_COUNT:
-        return &numSSectors;
+        return &numSubsectors;
 
     case DD_NODE_COUNT:
         return &numNodes;
 
-    case DD_MATERIAL_COUNT: {
-        static uint value;
-        value = Materials_Size();
-        return &value;
-      }
     case DD_TRACE_ADDRESS:
         return &traceLOS;
 

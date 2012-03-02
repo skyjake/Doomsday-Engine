@@ -65,7 +65,7 @@ typedef enum damsegment_e {
     DAMSEG_LINES,
     DAMSEG_SIDES,
     DAMSEG_SECTORS,
-    DAMSEG_SSECTORS,
+    DAMSEG_SUBSECTORS,
     DAMSEG_HEDGES,
     DAMSEG_NODES,
     DAMSEG_BLOCKMAP,
@@ -598,14 +598,14 @@ static void writeSector(const gamemap_t *map, uint idx)
         writeLong((s->lineDefs[i] - map->lineDefs) + 1);
 
     // Subsector list.
-    writeLong((long) s->ssectorCount);
-    for(i = 0; i < s->ssectorCount; ++i)
-        writeLong((s->ssectors[i] - map->ssectors) + 1);
+    writeLong((long) s->subsectorCount);
+    for(i = 0; i < s->subsectorCount; ++i)
+        writeLong((s->subsectors[i] - map->subsectors) + 1);
 
     // Reverb subsector attributors.
     writeLong((long) s->numReverbSSecAttributors);
     for(i = 0; i < s->numReverbSSecAttributors; ++i)
-        writeLong((s->reverbSSecs[i] - map->ssectors) + 1);
+        writeLong((s->reverbSubsectors[i] - map->subsectors) + 1);
 }
 
 static void readSector(const gamemap_t *map, uint idx)
@@ -682,20 +682,20 @@ static void readSector(const gamemap_t *map, uint idx)
     s->lineDefs[i] = NULL; // Terminate.
 
     // Subsector list.
-    s->ssectorCount = (uint) readLong();
-    s->ssectors =
-        Z_Malloc(sizeof(subsector_t*) * (s->ssectorCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->ssectorCount; ++i)
-        s->ssectors[i] = &map->ssectors[(unsigned) readLong() - 1];
-    s->ssectors[i] = NULL; // Terminate.
+    s->subsectorCount = (uint) readLong();
+    s->subsectors =
+        Z_Malloc(sizeof(subsector_t*) * (s->subsectorCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->subsectorCount; ++i)
+        s->subsectors[i] = &map->subsectors[(unsigned) readLong() - 1];
+    s->subsectors[i] = NULL; // Terminate.
 
     // Reverb subsector attributors.
     s->numReverbSSecAttributors = (uint) readLong();
-    s->reverbSSecs =
+    s->reverbSubsectors =
         Z_Malloc(sizeof(subsector_t*) * (s->numReverbSSecAttributors + 1), PU_MAP, 0);
     for(i = 0; i < s->numReverbSSecAttributors; ++i)
-        s->reverbSSecs[i] = &map->ssectors[(unsigned) readLong() - 1];
-    s->reverbSSecs[i] = NULL; // Terminate.
+        s->reverbSubsectors[i] = &map->subsectors[(unsigned) readLong() - 1];
+    s->reverbSubsectors[i] = NULL; // Terminate.
 }
 
 static void archiveSectors(gamemap_t *map, boolean write)
@@ -729,7 +729,7 @@ static void archiveSectors(gamemap_t *map, boolean write)
 static void writeSubsector(const gamemap_t *map, uint idx)
 {
     uint                i;
-    subsector_t        *s = &map->ssectors[idx];
+    subsector_t        *s = &map->subsectors[idx];
 
     writeLong((long) s->flags);
     writeFloat(s->aaBox.minX);
@@ -755,7 +755,7 @@ static void readSubsector(const gamemap_t *map, uint idx)
 {
     uint                i;
     long                obIdx;
-    subsector_t        *s = &map->ssectors[idx];
+    subsector_t        *s = &map->subsectors[idx];
 
     s->flags = (int) readLong();
     s->aaBox.minX = readFloat();
@@ -786,20 +786,20 @@ static void archiveSubsectors(gamemap_t *map, boolean write)
     uint                i;
 
     if(write)
-        beginSegment(DAMSEG_SSECTORS);
+        beginSegment(DAMSEG_SUBSECTORS);
     else
-        assertSegment(DAMSEG_SSECTORS);
+        assertSegment(DAMSEG_SUBSECTORS);
 
     if(write)
     {
-        writeLong(map->numSSectors);
-        for(i = 0; i < map->numSSectors; ++i)
+        writeLong(map->numSubsectors);
+        for(i = 0; i < map->numSubsectors; ++i)
             writeSubsector(map, i);
     }
     else
     {
-        map->numSSectors = readLong();
-        for(i = 0; i < map->numSSectors; ++i)
+        map->numSubsectors = readLong();
+        for(i = 0; i < map->numSubsectors; ++i)
             readSubsector(map, i);
     }
 
@@ -820,7 +820,7 @@ static void writeSeg(const gamemap_t *map, uint idx)
     writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
-    writeLong(s->subsector? ((s->subsector - map->ssectors) + 1) : 0);
+    writeLong(s->subsector? ((s->subsector - map->subsectors) + 1) : 0);
     writeLong(s->twin? ((s->twin - map->hedges) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
@@ -843,7 +843,7 @@ static void readSeg(const gamemap_t *map, uint idx)
     obIdx = readLong();
     s->sec[BACK] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->subsector = (obIdx == 0? NULL : &map->ssectors[(unsigned) obIdx - 1]);
+    s->subsector = (obIdx == 0? NULL : &map->subsectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
     s->twin = (obIdx == 0? NULL : &map->hedges[(unsigned) obIdx - 1]);
     s->angle = (angle_t) readLong();

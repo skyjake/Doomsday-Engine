@@ -46,7 +46,7 @@
 #define GET_LINE_IDX(li)        ( (int) ((li) - lineDefs) )
 #define GET_SIDE_IDX(si)        ( (int) ((si) - sideDefs) )
 #define GET_SECTOR_IDX(sec)     ( (int) ((sec) - sectors) )
-#define GET_SUBSECTOR_IDX(sub)  ( (int) ((sub) - ssectors) )
+#define GET_SUBSECTOR_IDX(sub)  ( (int) ((sub) - subsectors) )
 #define GET_HEDGE_IDX(he)       ( (int) ((he) - hedges) )
 #define GET_NODE_IDX(nd)        ( (int) ((nd) - nodes) )
 
@@ -56,7 +56,7 @@
 #define VERTEX_PTR(i)       (&vertexes[i])
 #define HEDGE_PTR(i)        (&hedges[i])
 #define SECTOR_PTR(i)       (&sectors[i])
-#define SUBSECTOR_PTR(i)    (&ssectors[i])
+#define SUBSECTOR_PTR(i)    (&subsectors[i])
 #define NODE_PTR(i)         (&nodes[i])
 #define LINE_PTR(i)         (&lineDefs[i])
 #define SIDE_PTR(i)         (&sideDefs[i])
@@ -274,8 +274,8 @@ extern HEdge* hedges;
 extern uint numSectors;
 extern sector_t* sectors;
 
-extern uint numSSectors;
-extern subsector_t* ssectors;
+extern uint numSubsectors;
+extern subsector_t* subsectors;
 
 extern uint numNodes;
 extern node_t* nodes;
@@ -308,8 +308,8 @@ typedef struct gamemap_s {
     uint            numSectors;
     sector_t*       sectors;
 
-    uint            numSSectors;
-    subsector_t*    ssectors;
+    uint            numSubsectors;
+    subsector_t*    subsectors;
 
     uint            numNodes;
     node_t*         nodes;

@@ -87,13 +87,13 @@ void R_InitForSubsector(subsector_t* subsector);
 typedef struct {
     void* obj;
     objtype_t type;
-} linkobjtossecparams_t;
+} linkobjtosubsectorparams_t;
 
 /**
  * Create a new object => Subsector contact in the objlink blockmap.
  * Can be used as an iterator.
  *
- * @params paramaters  @see linkobjtossecparams_t
+ * @params paramaters  @see linkobjtosubsectorparams_t
  * @return  @c false (always).
  */
 int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters);

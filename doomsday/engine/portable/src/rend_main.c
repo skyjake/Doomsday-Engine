@@ -2392,11 +2392,11 @@ static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
 
 /**
  * @defgroup skyCapFlags  Sky Cap Flags
- * @{
  */
+///@{
 #define SKYCAP_LOWER                0x1
 #define SKYCAP_UPPER                0x2
-/**@}*/
+///@}
 
 static __inline float skyCapZ(subsector_t* ssec, int skyCap)
 {
@@ -2719,10 +2719,10 @@ static void occludeSubsector(const subsector_t* ssec, boolean forwardFacing)
     }
 }
 
-static void Rend_RenderSubsector(uint ssecidx)
+static void Rend_RenderSubsector(uint subsectorIdx)
 {
     uint i;
-    subsector_t* ssec = SUBSECTOR_PTR(ssecidx);
+    subsector_t* ssec = SUBSECTOR_PTR(subsectorIdx);
     HEdge* hedge, **segIt;
     sector_t* sect;
     float sceil, sfloor;
@@ -2759,7 +2759,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_RadioSubsectorEdges(ssec);
 
     occludeSubsector(ssec, false);
-    LO_ClipInSubsector(ssecidx);
+    LO_ClipInSubsector(subsectorIdx);
     occludeSubsector(ssec, true);
 
     occludeFrontFacingSegsInSubsector(ssec);
@@ -2767,7 +2767,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     if(ssec->polyObj)
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
-        LO_ClipInSubsectorBySight(ssecidx);
+        LO_ClipInSubsectorBySight(subsectorIdx);
     }
 
     // Mark the particle generators in the sector visible.
@@ -3028,9 +3028,9 @@ void Rend_RenderSurfaceVectors(void)
         }
     }
 
-    for(i = 0; i < numSSectors; ++i)
+    for(i = 0; i < numSubsectors; ++i)
     {
-        subsector_t* ssec = &ssectors[i];
+        subsector_t* ssec = &subsectors[i];
         uint j;
 
         if(!ssec->sector) continue;

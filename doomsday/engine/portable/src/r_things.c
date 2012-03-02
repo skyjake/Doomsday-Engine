@@ -1570,14 +1570,14 @@ void R_ProjectSprite(mobj_t* mo)
 }
 
 typedef struct {
-    subsector_t* ssec;
+    subsector_t* subsector;
 } addspriteparams_t;
 
 int RIT_AddSprite(void* ptr, void* paramaters)
 {
     mobj_t* mo = (mobj_t*) ptr;
     addspriteparams_t* params = (addspriteparams_t*)paramaters;
-    sector_t* sec = params->ssec->sector;
+    sector_t* sec = params->subsector->sector;
 
     if(mo->addFrameCount != frameCount)
     {
@@ -1616,7 +1616,7 @@ void R_AddSprites(subsector_t* ssec)
     if(ssec->addSpriteCount == frameCount)
         return; // Already added.
 
-    params.ssec = ssec;
+    params.subsector = ssec;
     R_IterateSubsectorContacts2(ssec, OT_MOBJ, RIT_AddSprite, &params);
 
     ssec->addSpriteCount = frameCount;

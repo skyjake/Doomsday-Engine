@@ -44,7 +44,7 @@ boolean         R_IsPointInSector(const float x, const float y,
 boolean         R_IsPointInSector2(const float x, const float y,
                                    const sector_t* sector);
 boolean         R_IsPointInSubsector(const float x, const float y,
-                                     const subsector_t* ssec);
+                                     const subsector_t* subsector);
 sector_t*       R_GetSectorForOrigin(const void* ddMobjBase);
 
 /**

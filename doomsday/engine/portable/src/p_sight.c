@@ -200,7 +200,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
  */
 static boolean crossSSec(uint ssecIdx, losdata_t* los)
 {
-    const subsector_t*  ssec = &ssectors[ssecIdx];
+    const subsector_t*  ssec = &subsectors[ssecIdx];
     if(ssec->polyObj)
     {   // Check polyobj lines.
         polyobj_t* po = ssec->polyObj;

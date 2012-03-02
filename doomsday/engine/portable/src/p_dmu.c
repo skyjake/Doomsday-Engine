@@ -536,11 +536,11 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
             sector_t*           sec = (sector_t*) ptr;
             int                 result = false; // Continue iteration.
 
-            if(sec->ssectors)
+            if(sec->subsectors)
             {
-                subsector_t** ssecPtr = sec->ssectors;
-                while(*ssecPtr && !(result = callback(*ssecPtr, context)))
-                    ssecPtr++;
+                subsector_t** ssecIter = sec->subsectors;
+                while(*ssecIter && !(result = callback(*ssecIter, context)))
+                    ssecIter++;
             }
             return result;
           }
@@ -553,14 +553,14 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
         {
         case DMU_HEDGE:
             {
-            subsector_t*        ssec = (subsector_t*) ptr;
-            int                 result = false; // Continue iteration.
+            subsector_t* ssec = (subsector_t*) ptr;
+            int result = false; // Continue iteration.
 
             if(ssec->hedges)
             {
-                HEdge** segPtr = ssec->hedges;
-                while(*segPtr && !(result = callback(*segPtr, context)))
-                    segPtr++;
+                HEdge** segIter = ssec->hedges;
+                while(*segIter && !(result = callback(*segIter, context)))
+                    segIter++;
             }
             return result;
           }
@@ -621,7 +621,7 @@ int P_Callback(int type, uint index, void* context,
         break;
 
     case DMU_SUBSECTOR:
-        if(index < numSSectors)
+        if(index < numSubsectors)
             return callback(SUBSECTOR_PTR(index), context);
         break;
 
@@ -917,7 +917,7 @@ static int setProperty(void* obj, void* context)
     linedef_t*          updateLinedef = NULL;
     sidedef_t*          updateSidedef = NULL;
     surface_t*          updateSurface = NULL;
-    // subsector_t*        updateSubSector = NULL;
+    // subsector_t*       updateSubsector = NULL;
 
     /**
      * \algorithm:
@@ -938,7 +938,7 @@ static int setProperty(void* obj, void* context)
     // Dereference where necessary. Note the order, these cascade.
     if(args->type == DMU_SUBSECTOR)
     {
-        // updateSubSector = (subsector_t*) obj;
+        // updateSubsector = (subsector_t*) obj;
 
         if(args->modifiers & DMU_FLOOR_OF_SECTOR)
         {
@@ -1165,9 +1165,9 @@ static int setProperty(void* obj, void* context)
         R_UpdateSector(updateSector2, false);
     }
 
-/*  if(updateSubSector)
+/*  if(updateSubsector)
     {
-        R_UpdateSubSector(updateSubSector, false);
+        R_UpdateSubsector(updateSubsector, false);
     } */
 
     return true; // Continue iteration.

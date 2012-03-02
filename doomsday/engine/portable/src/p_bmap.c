@@ -72,7 +72,7 @@ struct blockmap_s
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = ssecs, 4 = polyobjs.
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = subsectors, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -752,18 +752,18 @@ int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
     return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellMobjsIterator, (void*) &args);
 }
 
-typedef struct sseciterparams_s {
+typedef struct subseciterparams_s {
     const AABoxf* box;
     sector_t* sector;
     int localValidCount;
     int (*func) (subsector_t*, void*);
     void* param;
-} bmapsseciterparams_t;
+} bmapsubsectoriterateparams_t;
 
 static int blockmapCellSubsectorsIterator(void* ptr, void* context)
 {
     BlockmapCell* cell = (BlockmapCell*) ptr;
-    bmapsseciterparams_t* args = (bmapsseciterparams_t*) context;
+    bmapsubsectoriterateparams_t* args = (bmapsubsectoriterateparams_t*) context;
     BlockmapRingNode* next, *link = cell->ringNodes;
     int result = false; // Continue iteration.
     while(link)
@@ -812,7 +812,7 @@ int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
     BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
     if(cell)
     {
-        bmapsseciterparams_t args;
+        bmapsubsectoriterateparams_t args;
         args.localValidCount = localValidCount;
         args.func = func;
         args.param = paramaters;
@@ -828,7 +828,7 @@ int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoor
     int (*func) (subsector_t*, void*), void* data)
 {
     Blockmap* blockmap = map->subsectorBlockmap;
-    bmapsseciterparams_t args;
+    bmapsubsectoriterateparams_t args;
     args.localValidCount = localValidCount;
     args.func = func;
     args.param = data;
@@ -988,7 +988,7 @@ int rendCellSubsectors(void* cellPtr, void* paramaters)
     BlockmapCell* cell = (BlockmapCell*)cellPtr;
     if(cell && cell->ringNodes)
     {
-        bmapsseciterparams_t bsiParams;
+        bmapsubsectoriterateparams_t bsiParams;
         bsiParams.localValidCount = validCount;
         bsiParams.func = rendSubsector;
         bsiParams.param = paramaters;

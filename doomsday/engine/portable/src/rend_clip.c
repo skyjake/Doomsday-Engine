@@ -1269,7 +1269,7 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 /**
  * @return              Non-zero if the subsector might be visible.
  */
-int C_CheckSubsector(subsector_t *ssec)
+int C_CheckSubsector(subsector_t* ssec)
 {
     uint        i;
     HEdge     **ptr;

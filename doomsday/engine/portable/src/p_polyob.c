@@ -135,7 +135,7 @@ void P_MapInitPolyobj(polyobj_t* po)
         if(ssec->polyObj)
         {
             Con_Message("Warning: P_MapInitPolyobj: Multiple polyobjs in a single subsector\n"
-                        "  (ssec %ld, sector %ld). Previous polyobj overridden.\n",
+                        "  (subsector %ld, sector %ld). Previous polyobj overridden.\n",
                         (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
         }
         ssec->polyObj = po;

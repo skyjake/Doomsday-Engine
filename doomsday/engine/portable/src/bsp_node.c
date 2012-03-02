@@ -39,9 +39,9 @@
  * does the least splitting and has the least difference in numbers of
  * half-edges on either side.
  *
- * If the ones on the left side make a SSector, then create another SSector
+ * If the ones on the left side make a Subsector, then create another Subsector
  * else put the half-edges into the left list.
- * If the ones on the right side make a SSector, then create another SSector
+ * If the ones on the right side make a Subsector, then create another Subsector
  * else put the half-edges into the right list.
  *
  * Rewritten by Andrew Apted (-AJA-), 1999-2000.
@@ -505,7 +505,7 @@ static void createBSPLeafWorker(bspleafdata_t *leaf, superblock_t *block)
             createBSPLeafWorker(leaf, a);
 
             if(a->realNum + a->miniNum > 0)
-                Con_Error("createSubSectorWorker: child %d not empty!", num);
+                Con_Error("createSubsectorWorker: child %d not empty!", num);
 
             BSP_SuperBlockDestroy(a);
             block->subs[num] = NULL;
@@ -685,7 +685,7 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 //       "second" SideDef, then create a flipped Seg.
 //   2 - Call CreateNodes with the current list of Segs.  The list of Segs is
 //       the only argument to CreateNodes.
-//   3 - Save the Nodes, Segs and SSectors to disk.  Start with the leaves of
+//   3 - Save the Nodes, Segs and Subsectors to disk.  Start with the leaves of
 //       the Nodes tree and continue up to the root (last Node).
 //
 // CreateNodes does the following:
@@ -696,11 +696,11 @@ Con_Message("BuildNodes: Partition %p (%1.0f,%1.0f) -> (%1.0f,%1.0f).\n",
 //   3 - If the first list (segs1) contains references to more than one
 //       Sector or if the angle between two adjacent Segs is greater than
 //       180 degrees, then call CreateNodes with this (smaller) list.
-//       Else, create a SubSector with all these Segs.
+//       Else, create a Subsector with all these Segs.
 //   4 - Do the same for the second list (segs2).
 //   5 - Return the new node (its two children are already OK).
 //
-// Each time CreateSSector is called, the Segs are put in a global list.
+// Each time CreateSubsector is called, the Segs are put in a global list.
 // When there is no more Seg in CreateNodes' list, then they are all in the
 // global list and ready to be saved to disk.
 //
