@@ -38,7 +38,11 @@ typedef enum {
     AUDIODRIVER_COUNT
 } audiodriver_e;
 
-#define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
+#ifdef WIN32
+#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) < AUDIODRIVER_COUNT)
+#else
+#  define VALID_AUDIODRIVER_IDENTIFIER(id)    ((id) >= AUDIOD_DUMMY && (id) <= AUDIOD_FMOD)
+#endif
 
 // Audio driver properties.
 enum {

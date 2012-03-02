@@ -37,6 +37,15 @@ typedef struct driver_s {
 
 static driver_t drivers[AUDIODRIVER_COUNT];
 
+static const char* driverIdentifier[AUDIODRIVER_COUNT] = {
+    "dummy",
+    "sdlmixer",
+    "openal",
+    "fmod",
+    "dsound",
+    "winmm"
+};
+
 // The active interfaces.
 static audiointerface_sfx_t* iSFX;
 static audiointerface_music_t* iMusic;
@@ -133,7 +142,6 @@ static boolean loadAudioDriver(driver_t* driver, const char* name)
     return ok;
 }
 
-
 static const char* getDriverName(audiodriver_e id)
 {
     static const char* audioDriverNames[AUDIODRIVER_COUNT] = {
@@ -150,6 +158,22 @@ static const char* getDriverName(audiodriver_e id)
     return 0; // Unreachable.
 }
 
+static int identifierToDriverId(const char* name)
+{
+    int i;
+    for(i = 0; i < AUDIODRIVER_COUNT; ++i)
+    {
+        if(!stricmp(name, driverIdentifier[i])) return i;
+    }
+    return -1;
+}
+
+static boolean isDriverInited(audiodriver_e id)
+{
+    if(!VALID_AUDIODRIVER_IDENTIFIER(id)) return false;
+    return drivers[id].interface.Init != 0;
+}
+
 /**
  * Initializes the audio driver interfaces.
  *
@@ -158,6 +182,14 @@ static const char* getDriverName(audiodriver_e id)
 static boolean initDriver(audiodriver_e id)
 {
     driver_t* d = &drivers[id];
+
+    if(!VALID_AUDIODRIVER_IDENTIFIER(id))
+    {
+        Con_Error("initDriver: Unknown audio driver id %i.\n", id);
+        return false;
+    }
+
+    assert(!isDriverInited(id));
     memset(d, 0, sizeof(*d));
 
     switch(id)
@@ -240,17 +272,66 @@ static audiodriver_e chooseAudioDriver(void)
     return AUDIOD_FMOD;
 }
 
+static audiodriver_e initDriverIfNeeded(const char* identifier)
+{
+    audiodriver_e drvId = identifierToDriverId(identifier);
+    if(!isDriverInited(drvId))
+    {
+        initDriver(drvId);
+    }
+    assert(VALID_AUDIODRIVER_IDENTIFIER(drvId));
+    return drvId;
+}
+
 static void selectInterfaces(audiodriver_e defaultDriverId)
 {
-    driver_t* d = &drivers[defaultDriverId];
+    driver_t* defaultDriver = &drivers[defaultDriverId];
+    audiodriver_e drvId;
+    int p;
 
     iSFX = 0;
     iMusic = 0;
     iCD = 0;
 
-    if(d->sfx.gen.Init) iSFX = &d->sfx;
-    if(d->music.gen.Init) iMusic = &d->music;
-    if(d->cd.gen.Init) iCD = &d->cd;
+    if(defaultDriver->sfx.gen.Init) iSFX = &defaultDriver->sfx;
+    if(defaultDriver->music.gen.Init) iMusic = &defaultDriver->music;
+    if(defaultDriver->cd.gen.Init) iCD = &defaultDriver->cd;
+
+    // Check for SFX override.
+    if((p = ArgCheckWith("-isfx", 1)) > 0)
+    {
+        drvId = initDriverIfNeeded(Argv(p + 1));
+        if(!drivers[drvId].sfx.gen.Init)
+        {
+            Con_Error("Audio driver '%s' does not provide an SFX interface.\n",
+                      getDriverName(drvId));
+        }
+        iSFX = &drivers[drvId].sfx;
+    }
+
+    // Check for Music override.
+    if((p = ArgCheckWith("-imusic", 1)) > 0)
+    {
+        drvId = initDriverIfNeeded(Argv(p + 1));
+        if(!drivers[drvId].music.gen.Init)
+        {
+            Con_Error("Audio driver '%s' does not provide a Music interface.\n",
+                      getDriverName(drvId));
+        }
+        iMusic = &drivers[drvId].music;
+    }
+
+    // Check for Music override.
+    if((p = ArgCheckWith("-icd", 1)) > 0)
+    {
+        drvId = initDriverIfNeeded(Argv(p + 1));
+        if(!drivers[drvId].cd.gen.Init)
+        {
+            Con_Error("Audio driver '%s' does not provide a CD interface.\n",
+                      getDriverName(drvId));
+        }
+        iCD = &drivers[drvId].cd;
+    }
 
 #ifdef MACOSX
     if(!iMusic && defaultDriverId != AUDIOD_DUMMY)
@@ -294,11 +375,11 @@ boolean AudioDriver_Init(void)
     }
 #endif
 
-    // Choose the interfaces to use.
-    selectInterfaces(defaultDriverId);
-
-    // TODO: Load overriding plugins for specific interfaces.
-
+    if(ok)
+    {
+        // Choose the interfaces to use.
+        selectInterfaces(defaultDriverId);
+    }
     return ok;
 }
 

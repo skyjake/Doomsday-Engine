@@ -874,7 +874,7 @@ materialid_t Materials_ResolveUri2(const Uri* uri, boolean quiet)
     {
 #if _DEBUG
         ddstring_t* uriStr = Uri_ToString(uri);
-        Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returing NOMATERIALID.\n", Str_Text(uriStr));
+        Con_Message("Warning: Materials::ResolveUri: \"%s\" failed to validate, returning NOMATERIALID.\n", Str_Text(uriStr));
         Str_Delete(uriStr);
 #endif
         return NOMATERIALID;
