@@ -138,8 +138,8 @@ void BSP_AddHEdgeToSuperBlock(superblock_t *block, bsp_hedge_t *hEdge)
             return;
         }
 
-        // The seg lies in one half of this block. Create the block if it
-        // doesn't already exist, and loop back to add the seg.
+        // The hedge lies in one half of this block. Create the block if it
+        // doesn't already exist, and loop back to add the hedge.
         if(!block->subs[child])
         {
             block->subs[child] = sub = BSP_SuperBlockCreate();

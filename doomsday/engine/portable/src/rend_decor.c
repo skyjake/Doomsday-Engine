@@ -72,7 +72,7 @@ typedef struct decorsource_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateSideSectionDecorations(sidedef_t* side, segsection_t section);
+static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t section);
 static void updatePlaneDecorations(plane_t* pln);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -390,7 +390,7 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         case DMU_SIDEDEF:
             {
             sidedef_t* side = (sidedef_t*)suf->owner;
-            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SEG_MIDDLE : &side->SW_bottomsurface == suf? SEG_BOTTOM : SEG_TOP);
+            updateSideSectionDecorations(side, &side->SW_middlesurface == suf? SS_MIDDLE : &side->SW_bottomsurface == suf? SS_BOTTOM : SS_TOP);
             break;
             }
         case DMU_PLANE:
@@ -569,7 +569,7 @@ static void updatePlaneDecorations(plane_t* pln)
     updateSurfaceDecorations2(suf, offsetS, offsetT, v1, v2, sec, suf->material? true : false);
 }
 
-static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
+static void updateSideSectionDecorations(sidedef_t* side, sidedefsection_t section)
 {
     linedef_t*          line;
     surface_t*          suf;
@@ -580,10 +580,10 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
     const plane_t*      frontCeil, *frontFloor, *backCeil = NULL, *backFloor = NULL;
     float               bottom, top;
 
-    if(!side->segs || !side->segs[0])
+    if(!side->hedges || !side->hedges[0])
         return;
 
-    line = side->segs[0]->lineDef;
+    line = side->hedges[0]->lineDef;
     sid = (line->L_backside && line->L_backside == side)? 1 : 0;
     frontCeil  = line->L_sector(sid)->SP_plane(PLN_CEILING);
     frontFloor = line->L_sector(sid)->SP_plane(PLN_FLOOR);
@@ -596,7 +596,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
 
     switch(section)
     {
-    case SEG_MIDDLE:
+    case SS_MIDDLE:
         suf = &side->SW_middlesurface;
         if(suf->material)
         {
@@ -611,7 +611,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             else
             {
                 float texOffset[2];
-                if(R_FindBottomTop(line, sid, SEG_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
+                if(R_FindBottomTop(line, sid, SS_MIDDLE, suf->visOffset[VX], suf->visOffset[VY],
                              frontFloor, frontCeil, backFloor, backCeil,
                              (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                              (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -628,7 +628,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
         }
         break;
 
-    case SEG_TOP:
+    case SS_TOP:
         suf = &side->SW_topsurface;
         if(suf->material)
             if(line->L_backside && backCeil->visHeight < frontCeil->visHeight &&
@@ -642,7 +642,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
             }
         break;
 
-    case SEG_BOTTOM:
+    case SS_BOTTOM:
         suf = &side->SW_bottomsurface;
         if(suf->material)
             if(line->L_backside && backFloor->visHeight > frontFloor->visHeight &&

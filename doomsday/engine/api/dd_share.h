@@ -276,7 +276,7 @@ enum {
     DD_LINE_COUNT,
     DD_SIDE_COUNT,
     DD_VERTEX_COUNT,
-    DD_SEG_COUNT,
+    DD_HEDGE_COUNT,
     DD_SUBSECTOR_COUNT,
     DD_NODE_COUNT,
     DD_POLYOBJ_COUNT,
@@ -653,7 +653,7 @@ enum {
     DMU_NONE = 0,
 
     DMU_VERTEX = 1,
-    DMU_SEG,
+    DMU_HEDGE,
     DMU_LINEDEF,
     DMU_SIDEDEF,
     DMU_NODE,
@@ -724,7 +724,7 @@ enum {
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT
+    DMU_HEDGE_COUNT
 };
 
 /**
@@ -1066,8 +1066,8 @@ typedef struct aaboxf_s {
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    unsigned int    numSegs; \
-    struct seg_s**  segs; \
+    unsigned int    numHEdges; \
+    struct hedge_s** hedges; \
     struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
     struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
     float           speed; /* Movement speed. */ \

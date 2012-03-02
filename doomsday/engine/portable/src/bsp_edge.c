@@ -266,7 +266,7 @@ Con_Message("Splitting hEdge->twin %p\n", oldHEdge->twin);
 
         newHEdge->twin = allocHEdge();
 
-        // Copy seg info.
+        // Copy hedge info.
         memcpy(newHEdge->twin, oldHEdge->twin, sizeof(bsp_hedge_t));
 
         // It is important to keep the twin relationship valid.

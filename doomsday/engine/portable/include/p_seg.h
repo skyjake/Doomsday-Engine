@@ -1,4 +1,4 @@
-/**\file p_seg.h
+/**\file p_hedge.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,23 +23,23 @@
  */
 
 /**
- * Map Seg.
+ * Map Half-edge.
  */
 
-#ifndef LIBDENG_MAP_SEG_H
-#define LIBDENG_MAP_SEG_H
+#ifndef LIBDENG_MAP_HEDGE_H
+#define LIBDENG_MAP_HEDGE_H
 
 #include "r_data.h"
 #include "p_dmu.h"
 
 /**
- * Update the seg, property is selected by DMU_* name.
+ * Update the half-edge, property is selected by DMU_* name.
  */
-int Seg_GetProperty(const seg_t* seg, setargs_t* args);
+int HEdge_GetProperty(const HEdge* hedge, setargs_t* args);
 
 /**
- * Get the value of a seg property, selected by DMU_* name.
+ * Get the value of a half-edge property, selected by DMU_* name.
  */
-int Seg_SetProperty(seg_t* seg, const setargs_t* args);
+int HEdge_SetProperty(HEdge* hedge, const setargs_t* args);
 
-#endif /* LIBDENG_MAP_SEG_H */
+#endif /* LIBDENG_MAP_HEDGE_H */

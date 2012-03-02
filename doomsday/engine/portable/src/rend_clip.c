@@ -1272,16 +1272,16 @@ clipnode_t *C_AngleClippedBy(binangle_t bang)
 int C_CheckSubsector(subsector_t *ssec)
 {
     uint        i;
-    seg_t     **ptr;
+    HEdge     **ptr;
 
-    if(!ssec || ssec->segCount < 3)
+    if(!ssec || ssec->hedgeCount < 3)
         return 0;
 
     if(devNoCulling)
         return 1;
 
     // Do we need to resize the angle list buffer?
-    if(ssec->segCount > anglistSize)
+    if(ssec->hedgeCount > anglistSize)
     {
         anglistSize *= 2;
         if(!anglistSize)
@@ -1291,11 +1291,11 @@ int C_CheckSubsector(subsector_t *ssec)
          Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_APPSTATIC);
     }
 
-    ptr = ssec->segs;
+    ptr = ssec->hedges;
     i = 0;
     while(*ptr) // Angles to all corners.
     {
-        vertex_t *vtx = (*ptr)->SG_v1;
+        vertex_t *vtx = (*ptr)->HE_v1;
 
         // Shift for more accuracy.
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
@@ -1304,7 +1304,7 @@ int C_CheckSubsector(subsector_t *ssec)
     }
 
     // Check each of the ranges defined by the edges.
-    for(i = 0; i < ssec->segCount - 1; ++i)
+    for(i = 0; i < ssec->hedgeCount - 1; ++i)
     {
         uint        end = i + 1;
         binangle_t  angLen;

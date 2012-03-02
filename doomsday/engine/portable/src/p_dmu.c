@@ -97,7 +97,7 @@ const char* DMU_Str(uint prop)
     {
         { DMU_NONE, "(invalid)" },
         { DMU_VERTEX, "DMU_VERTEX" },
-        { DMU_SEG, "DMU_SEG" },
+        { DMU_HEDGE, "DMU_HEDGE" },
         { DMU_LINEDEF, "DMU_LINEDEF" },
         { DMU_SIDEDEF, "DMU_SIDEDEF" },
         { DMU_NODE, "DMU_NODE" },
@@ -156,7 +156,7 @@ const char* DMU_Str(uint prop)
         { DMU_WIDTH, "DMU_WIDTH" },
         { DMU_HEIGHT, "DMU_HEIGHT" },
         { DMU_TARGET_HEIGHT, "DMU_TARGET_HEIGHT" },
-        { DMU_SEG_COUNT, "DMU_SEG_COUNT" },
+        { DMU_HEDGE_COUNT, "DMU_HEDGE_COUNT" },
         { DMU_SPEED, "DMU_SPEED" },
         { 0, NULL }
     };
@@ -189,7 +189,7 @@ int DMU_GetType(const void* ptr)
     switch(type)
     {
         case DMU_VERTEX:
-        case DMU_SEG:
+        case DMU_HEDGE:
         case DMU_LINEDEF:
         case DMU_SIDEDEF:
         case DMU_SUBSECTOR:
@@ -424,8 +424,8 @@ uint P_ToIndex(const void* ptr)
     case DMU_VERTEX:
         return GET_VERTEX_IDX((vertex_t*) ptr);
 
-    case DMU_SEG:
-        return GET_SEG_IDX((seg_t*) ptr);
+    case DMU_HEDGE:
+        return GET_HEDGE_IDX((HEdge*) ptr);
 
     case DMU_LINEDEF:
         return GET_LINE_IDX((linedef_t*) ptr);
@@ -464,8 +464,8 @@ void* P_ToPtr(int type, uint index)
     case DMU_VERTEX:
         return VERTEX_PTR(index);
 
-    case DMU_SEG:
-        return SEG_PTR(index);
+    case DMU_HEDGE:
+        return HEDGE_PTR(index);
 
     case DMU_LINEDEF:
         return LINE_PTR(index);
@@ -551,14 +551,14 @@ int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, vo
     case DMU_SUBSECTOR:
         switch(prop)
         {
-        case DMU_SEG:
+        case DMU_HEDGE:
             {
             subsector_t*        ssec = (subsector_t*) ptr;
             int                 result = false; // Continue iteration.
 
-            if(ssec->segs)
+            if(ssec->hedges)
             {
-                seg_t** segPtr = ssec->segs;
+                HEdge** segPtr = ssec->hedges;
                 while(*segPtr && !(result = callback(*segPtr, context)))
                     segPtr++;
             }
@@ -600,9 +600,9 @@ int P_Callback(int type, uint index, void* context,
             return callback(VERTEX_PTR(index), context);
         break;
 
-    case DMU_SEG:
-        if(index < numSegs)
-            return callback(SEG_PTR(index), context);
+    case DMU_HEDGE:
+        if(index < numHEdges)
+            return callback(HEDGE_PTR(index), context);
         break;
 
     case DMU_LINEDEF:
@@ -671,7 +671,7 @@ int P_Callbackp(int type, void* ptr, void* context,
     switch(type)
     {
     case DMU_VERTEX:
-    case DMU_SEG:
+    case DMU_HEDGE:
     case DMU_LINEDEF:
     case DMU_SIDEDEF:
     case DMU_NODE:
@@ -1081,8 +1081,8 @@ static int setProperty(void* obj, void* context)
         Vertex_SetProperty(obj, args);
         break;
 
-    case DMU_SEG:
-        Seg_SetProperty(obj, args);
+    case DMU_HEDGE:
+        HEdge_SetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:
@@ -1526,8 +1526,8 @@ static int getProperty(void* obj, void* context)
         Vertex_GetProperty(obj, args);
         break;
 
-    case DMU_SEG:
-        Seg_GetProperty(obj, args);
+    case DMU_HEDGE:
+        HEdge_GetProperty(obj, args);
         break;
 
     case DMU_LINEDEF:

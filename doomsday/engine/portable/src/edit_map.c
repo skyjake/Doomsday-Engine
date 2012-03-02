@@ -861,7 +861,7 @@ static void finishLineDefs(gamemap_t* map)
     uint                i;
     linedef_t          *ld;
     vertex_t           *v[2];
-    seg_t              *startSeg, *endSeg;
+    HEdge              *startSeg, *endSeg;
 
     VERBOSE2( Con_Message("Finalizing Linedefs...\n") )
 
@@ -869,13 +869,13 @@ static void finishLineDefs(gamemap_t* map)
     {
         ld = &map->lineDefs[i];
 
-        if(!ld->sideDefs[0]->segCount)
+        if(!ld->sideDefs[0]->hedgeCount)
             continue;
 
-        startSeg = ld->sideDefs[0]->segs[0];
-        endSeg = ld->sideDefs[0]->segs[ld->sideDefs[0]->segCount - 1];
-        ld->v[0] = v[0] = startSeg->SG_v1;
-        ld->v[1] = v[1] = endSeg->SG_v2;
+        startSeg = ld->sideDefs[0]->hedges[0];
+        endSeg = ld->sideDefs[0]->hedges[ld->sideDefs[0]->hedgeCount - 1];
+        ld->v[0] = v[0] = startSeg->HE_v1;
+        ld->v[1] = v[1] = endSeg->HE_v2;
         ld->dX = v[1]->V_pos[VX] - v[0]->V_pos[VX];
         ld->dY = v[1]->V_pos[VY] - v[0]->V_pos[VY];
 
@@ -947,19 +947,19 @@ static void updateMapBounds(gamemap_t* map)
 
 static void updateSSecMidPoint(subsector_t *sub)
 {
-    seg_t             **ptr;
+    HEdge             **ptr;
     fvertex_t          *vtx;
 
     // Find the center point. First calculate the bounding box.
-    ptr = sub->segs;
-    vtx = &((*ptr)->SG_v1->v);
+    ptr = sub->hedges;
+    vtx = &((*ptr)->HE_v1->v);
     sub->aaBox.minX = sub->aaBox.maxX = sub->midPoint.pos[VX] = vtx->pos[VX];
     sub->aaBox.minY = sub->aaBox.maxY = sub->midPoint.pos[VY] = vtx->pos[VY];
 
     ptr++;
     while(*ptr)
     {
-        vtx = &((*ptr)->SG_v1->v);
+        vtx = &((*ptr)->HE_v1->v);
         if(vtx->pos[VX] < sub->aaBox.minX)
             sub->aaBox.minX = vtx->pos[VX];
         if(vtx->pos[VY] < sub->aaBox.minY)
@@ -974,8 +974,8 @@ static void updateSSecMidPoint(subsector_t *sub)
         ptr++;
     }
 
-    sub->midPoint.pos[VX] /= sub->segCount; // num vertices.
-    sub->midPoint.pos[VY] /= sub->segCount;
+    sub->midPoint.pos[VX] /= sub->hedgeCount; // num vertices.
+    sub->midPoint.pos[VY] /= sub->hedgeCount;
 
     // Calculate the worldwide grid offset.
     sub->worldGridOffset[VX] = fmod(sub->aaBox.minX, 64);
@@ -1390,7 +1390,7 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
     {
         uint                j;
         polyobj_t*          destP, *srcP = src->polyObjs[i];
-        seg_t*              segs;
+        HEdge*              hedges;
 
         destP = Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
         destP->idx = i;
@@ -1400,40 +1400,40 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
         destP->pos[VX] = srcP->pos[VX];
         destP->pos[VY] = srcP->pos[VY];
 
-        destP->numSegs = srcP->buildData.lineCount;
+        destP->numHEdges = srcP->buildData.lineCount;
 
         destP->originalPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_MAP, 0);
+            Z_Malloc(destP->numHEdges * sizeof(fvertex_t), PU_MAP, 0);
         destP->prevPts =
-            Z_Malloc(destP->numSegs * sizeof(fvertex_t), PU_MAP, 0);
+            Z_Malloc(destP->numHEdges * sizeof(fvertex_t), PU_MAP, 0);
 
-        // Create a seg for each line of this polyobj.
-        segs = Z_Calloc(sizeof(seg_t) * destP->numSegs, PU_MAP, 0);
-        destP->segs = Z_Malloc(sizeof(seg_t*) * (destP->numSegs+1), PU_MAP, 0);
-        for(j = 0; j < destP->numSegs; ++j)
+        // Create a hedge for each line of this polyobj.
+        hedges = Z_Calloc(sizeof(HEdge) * destP->numHEdges, PU_MAP, 0);
+        destP->hedges = Z_Malloc(sizeof(HEdge*) * (destP->numHEdges+1), PU_MAP, 0);
+        for(j = 0; j < destP->numHEdges; ++j)
         {
             linedef_t*          line =
                 &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
-            seg_t*              seg = &segs[j];
+            HEdge*              hedge = &hedges[j];
             float               dx, dy;
 
             // This line is part of a polyobj.
             line->inFlags |= LF_POLYOBJ;
 
-            seg->header.type = DMU_SEG;
-            seg->lineDef = line;
+            hedge->header.type = DMU_HEDGE;
+            hedge->lineDef = line;
             dx = line->L_v2pos[VX] - line->L_v1pos[VX];
             dy = line->L_v2pos[VY] - line->L_v1pos[VY];
-            seg->length = P_AccurateDistance(dx, dy);
-            seg->backSeg = NULL;
-            seg->subsector = NULL;
-            seg->SG_frontsector = line->L_frontsector;
-            seg->SG_backsector = NULL;
-            seg->flags |= SEGF_POLYOBJ;
+            hedge->length = P_AccurateDistance(dx, dy);
+            hedge->twin = NULL;
+            hedge->subsector = NULL;
+            hedge->HE_frontsector = line->L_frontsector;
+            hedge->HE_backsector = NULL;
+            hedge->flags |= HEDGEF_POLYOBJ;
 
-            destP->segs[j] = seg;
+            destP->hedges[j] = hedge;
         }
-        destP->segs[j] = NULL; // Terminate.
+        destP->hedges[j] = NULL; // Terminate.
 
         // Add this polyobj to the global list.
         dest->polyObjs[i] = destP;
@@ -1863,22 +1863,22 @@ boolean MPE_End(void)
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
         polyobj_t* po = gamemap->polyObjs[i];
-        seg_t** segPtr;
+        HEdge** segPtr;
         size_t n;
 
-        segPtr = po->segs;
+        segPtr = po->hedges;
         n = 0;
         while(*segPtr)
         {
-            seg_t* seg = *segPtr;
+            HEdge* hedge = *segPtr;
 
-            seg->SG_v1 = seg->lineDef->L_v1;
-            seg->SG_v2 = seg->lineDef->L_v2;
+            hedge->HE_v1 = hedge->lineDef->L_v1;
+            hedge->HE_v2 = hedge->lineDef->L_v2;
 
             // The original Pts are based off the anchor Pt, and are unique
-            // to each seg, not each linedef.
-            po->originalPts[n].pos[VX] = seg->SG_v1pos[VX] - po->pos[VX];
-            po->originalPts[n].pos[VY] = seg->SG_v1pos[VY] - po->pos[VY];
+            // to each hedge, not each linedef.
+            po->originalPts[n].pos[VX] = hedge->HE_v1pos[VX] - po->pos[VX];
+            po->originalPts[n].pos[VY] = hedge->HE_v1pos[VY] - po->pos[VY];
 
             segPtr++;
             n++;

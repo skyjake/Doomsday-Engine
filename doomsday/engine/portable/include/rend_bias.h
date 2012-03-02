@@ -97,7 +97,7 @@ void            SB_RendPoly(struct ColorRawf_s* rcolors,
                             const struct rvertex_s* rvertices,
                             size_t numVertices, const vectorcomp_t* normal,
                             float sectorLightLevel,
-                            void* mapObject, uint elmIdx, boolean isSeg);
+                            void* mapObject, uint elmIdx, boolean isHEdge);
 void            SB_EndFrame(void);
 
 int             SB_NewSourceAt(float x, float y, float z, float size, float minLight,

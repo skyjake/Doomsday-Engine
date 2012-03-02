@@ -265,7 +265,7 @@ static boolean calcSSecReverb(subsector_t* ssec)
     material_env_class_t mclass;
     float total = 0;
     uint i, v;
-    seg_t** ptr;
+    HEdge** ptr;
 
     if(!ssec->sector)
     {
@@ -284,19 +284,19 @@ static boolean calcSSecReverb(subsector_t* ssec)
 
     // The other reverb properties can be found out by taking a look at the
     // materials of all surfaces in the subsector.
-    ptr = ssec->segs;
+    ptr = ssec->hedges;
     while(*ptr)
     {
-        seg_t* seg = *ptr;
-        if(seg->lineDef && SEG_SIDEDEF(seg) && SEG_SIDEDEF(seg)->SW_middlematerial)
+        HEdge* hedge = *ptr;
+        if(hedge->lineDef && HEDGE_SIDEDEF(hedge) && HEDGE_SIDEDEF(hedge)->SW_middlematerial)
         {
-            material_t* mat = SEG_SIDEDEF(seg)->SW_middlematerial;
+            material_t* mat = HEDGE_SIDEDEF(hedge)->SW_middlematerial;
 
             mclass = Material_EnvironmentClass(mat);
-            total += seg->length;
+            total += hedge->length;
             if(!(mclass >= 0 && mclass < NUM_MATERIAL_ENV_CLASSES))
                 mclass = MEC_WOOD; // Assume it's wood if unknown.
-            materials[mclass] += seg->length;
+            materials[mclass] += hedge->length;
         }
         ptr++;
     }
@@ -347,7 +347,7 @@ Con_Message("ssec %04i: vol:%3i sp:%3i dec:%3i dam:%3i\n",
 /**
  * Re-calculate the reverb properties of the given sector. Should be called
  * whenever any of the properties governing reverb properties have changed
- * (i.e. seg/plane texture or plane height changes).
+ * (i.e. hedge/plane texture or plane height changes).
  *
  * PRE: Subsector attributors must have been determined first.
  *

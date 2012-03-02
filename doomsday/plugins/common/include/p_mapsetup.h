@@ -30,7 +30,7 @@
 #define LIBCOMMON_PLAYSETUP_H
 
 #define numvertexes (*(uint*) DD_GetVariable(DD_VERTEX_COUNT))
-#define numsegs     (*(uint*) DD_GetVariable(DD_SEG_COUNT))
+#define numsegs     (*(uint*) DD_GetVariable(DD_HEDGE_COUNT))
 #define numsectors  (*(uint*) DD_GetVariable(DD_SECTOR_COUNT))
 #define numsubsectors (*(uint*) DD_GetVariable(DD_SUBSECTOR_COUNT))
 #define numnodes    (*(uint*) DD_GetVariable(DD_NODE_COUNT))

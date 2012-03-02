@@ -1043,7 +1043,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
         }
     }
 
-    // If the segs of this subsector are affected by glowing planes we need
+    // If the hedges of this subsector are affected by glowing planes we need
     // to create dynlights and link them.
     if(useWallGlow)
     {
@@ -1163,17 +1163,17 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
-        for(i = 0; i < ssec->polyObj->numSegs; ++i)
+        for(i = 0; i < ssec->polyObj->numHEdges; ++i)
         {
-            seg_t* seg = ssec->polyObj->segs[i];
+            HEdge* hedge = ssec->polyObj->hedges[i];
 
-            // Ignore segs facing the wrong way.
-            if(seg->frameFlags & SEGINF_FACINGFRONT)
+            // Ignore hedges facing the wrong way.
+            if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
                 vec2_t source;
 
                 V2_Set(source, lum->pos[VX], lum->pos[VY]);
-                if(V2_Intercept2(source, eye, seg->SG_v1pos, seg->SG_v2pos, NULL, NULL, NULL))
+                if(V2_Intercept2(source, eye, hedge->HE_v1pos, hedge->HE_v2pos, NULL, NULL, NULL))
                 {
                     luminousClipped[lumIdx] = 1;
                     break;

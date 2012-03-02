@@ -261,7 +261,7 @@ void BSP_DivideOneHEdge(bsp_hedge_t* cur, const bspartition_t* part,
         makeIntersection(cutList, cur->v[0], part, selfRef);
         makeIntersection(cutList, cur->v[1], part, selfRef);
 
-        // This seg runs along the same line as the partition. Check
+        // This hedge runs along the same line as the partition. Check
         // whether it goes in the same direction or the opposite.
         if(cur->pDX * part->pDX + cur->pDY * part->pDY < 0)
         {
@@ -588,7 +588,7 @@ static int evalPartition(const superblock_t* hEdgeList, bsp_hedge_t* part,
     if(evalPartitionWorker(hEdgeList, part, bestCost, &info))
         return -1;
 
-    // Make sure there is at least one real seg on each side.
+    // Make sure there is at least one real hedge on each side.
     if(!info.realLeft || !info.realRight)
     {
 /*#if _DEBUG
@@ -636,7 +636,7 @@ static boolean pickHEdgeWorker(const superblock_t* partList,
     for(part = partList->hEdges; part; part = part->next)
     {
 /*#if _DEBUG
-Con_Message("BSP_PickHEdge: %sSEG %p sector=%d  (%1.1f,%1.1f) -> "
+Con_Message("BSP_PickHEdge: %sHEdge %p sector=%d  (%1.1f,%1.1f) -> "
             "(%1.1f,%1.1f)\n", (part->lineDef? "" : "MINI"), part,
             (part->sector? part->sector->index : -1),
             part->v[0]->V_pos[VX], part->v[0]->V_pos[VY],

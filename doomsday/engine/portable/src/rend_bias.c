@@ -360,8 +360,8 @@ void SB_InitForMap(const char* uniqueID)
     uint i;
 
     // First, determine the total number of vertexillum_ts we need.
-    for(i = 0; i < numSegs; ++i)
-        if(segs[i].lineDef)
+    for(i = 0; i < numHEdges; ++i)
+        if(hedges[i].lineDef)
             numVertIllums++;
 
     numVertIllums *= 3 * 4;
@@ -384,7 +384,7 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numPolyObjs; ++i)
     {
         polyobj_t* po = polyObjs[i];
-        numVertIllums += po->numSegs * 3 * 4;
+        numVertIllums += po->numHEdges * 3 * 4;
     }
 
     // Allocate and initialize the vertexillum_ts.
@@ -393,12 +393,12 @@ void SB_InitForMap(const char* uniqueID)
         SB_InitVertexIllum(&illums[i]);
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    for(i = 0; i < numSegs; ++i)
+    for(i = 0; i < numHEdges; ++i)
     {
-        seg_t* seg = &segs[i];
+        HEdge* hedge = &hedges[i];
         int j;
 
-        if(!seg->lineDef)
+        if(!hedge->lineDef)
             continue;
 
         for(j = 0; j < 3; ++j)
@@ -409,7 +409,7 @@ void SB_InitForMap(const char* uniqueID)
             bsuf->illum = illums;
             illums += 4;
 
-            seg->bsuf[j] = bsuf;
+            hedge->bsuf[j] = bsuf;
         }
     }
 
@@ -444,9 +444,9 @@ void SB_InitForMap(const char* uniqueID)
         polyobj_t* po = polyObjs[i];
         uint j;
 
-        for(j = 0; j < po->numSegs; ++j)
+        for(j = 0; j < po->numHEdges; ++j)
         {
-            seg_t* seg = po->segs[j];
+            HEdge* hedge = po->hedges[j];
             int k;
 
             for(k = 0; k < 3; ++k)
@@ -457,7 +457,7 @@ void SB_InitForMap(const char* uniqueID)
                 bsuf->illum = illums;
                 illums += 4;
 
-                seg->bsuf[k] = bsuf;
+                hedge->bsuf[k] = bsuf;
             }
         }
     }
@@ -584,7 +584,7 @@ static void updateAffected(biassurface_t* bsuf, const fvertex_t* from,
         if(src->intensity <= 0)
             continue;
 
-        // Calculate minimum 2D distance to the seg.
+        // Calculate minimum 2D distance to the hedge.
         for(i = 0; i < 2; ++i)
         {
             if(!i)
@@ -744,7 +744,7 @@ static boolean SB_ChangeInAffected(biasaffection_t* affected,
 /**
  * Do initial processing that needs to be done before rendering a
  * frame.  Changed lights cause the tracker bits to the set for all
- * segs and planes.
+ * hedges and planes.
  */
 void SB_BeginFrame(void)
 {
@@ -924,9 +924,9 @@ static boolean SB_CheckColorOverride(biasaffection_t *affected)
  * @param numVertices   Number of vertices (in the array) to be lit.
  * @param normal        Surface normal.
  * @param sectorLightLevel Sector light level.
- * @param mapObject     Ptr to either a seg or subsector.
+ * @param mapObject     Ptr to either a hedge or subsector.
  * @param elmIdx        Used with subsectors to select a specific plane.
- * @param isSeg         @c true, if surface is to a seg ELSE a subsector.
+ * @param isSeg         @c true, if surface is to a hedge ELSE a subsector.
  */
 void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
                  const struct rvertex_s* rvertices,
@@ -965,9 +965,9 @@ void SB_RendPoly(struct ColorRawf_s* rcolors, biassurface_t* bsuf,
          */
         if(isSeg)
         {
-            seg_t*          seg = (seg_t*) mapObject;
+            HEdge*          hedge = (HEdge*) mapObject;
 
-            updateAffected(bsuf, &seg->SG_v1->v, &seg->SG_v2->v, normal);
+            updateAffected(bsuf, &hedge->HE_v1->v, &hedge->HE_v2->v, normal);
         }
         else
         {

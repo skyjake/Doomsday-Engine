@@ -69,7 +69,7 @@ extern "C" {
     typedef struct vertex_s {int type; } vertex_t;
     typedef struct linedef_s { int type; } linedef_t;
     typedef struct sidedef_s { int type; } sidedef_t;
-    typedef struct seg_s { int type; } seg_t;
+    typedef struct hedge_s { int type; } HEdge;
     typedef struct subsector_s { int type; } subsector_t;
     typedef struct sector_s { int type; } sector_t;
     typedef struct plane_s { int type; } plane_t;

@@ -49,38 +49,38 @@ typedef struct vertex_s {
     mvertex_t           buildData;
 } vertex_t;
 
-// Helper macros for accessing seg data elements.
+// Helper macros for accessing hedge data elements.
 #define FRONT 0
 #define BACK  1
 
-#define SG_v(n)                 v[(n)]
-#define SG_vpos(n)              SG_v(n)->V_pos
+#define HE_v(n)                 v[(n)? 1:0]
+#define HE_vpos(n)              HE_v(n)->V_pos
 
-#define SG_v1                   SG_v(0)
-#define SG_v1pos                SG_v(0)->V_pos
+#define HE_v1                   HE_v(0)
+#define HE_v1pos                HE_v(0)->V_pos
 
-#define SG_v2                   SG_v(1)
-#define SG_v2pos                SG_v(1)->V_pos
+#define HE_v2                   HE_v(1)
+#define HE_v2pos                HE_v(1)->V_pos
 
-#define SG_sector(n)            sec[(n)]
-#define SG_frontsector          SG_sector(FRONT)
-#define SG_backsector           SG_sector(BACK)
+#define HE_sector(n)            sec[(n)? 1:0]
+#define HE_frontsector          HE_sector(FRONT)
+#define HE_backsector           HE_sector(BACK)
 
-#define SEG_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
+#define HEDGE_SIDEDEF(s)          ((s)->lineDef->sideDefs[(s)->side])
 
-// Seg flags
-#define SEGF_POLYOBJ            0x1 // Seg is part of a poly object.
+// HEdge flags
+#define HEDGEF_POLYOBJ            0x1 // HEdge is part of a poly object.
 
-// Seg frame flags
-#define SEGINF_FACINGFRONT      0x0001
+// HEdge frame flags
+#define HEDGEINF_FACINGFRONT      0x0001
 
-typedef struct seg_s {
+typedef struct hedge_s {
     runtime_mapdata_header_t header;
     struct vertex_s*    v[2];          // [Start, End] of the segment.
     struct linedef_s*   lineDef;
     struct sector_s*    sec[2];
     struct subsector_s* subsector;
-    struct seg_s*       backSeg;
+    struct hedge_s*     twin;
     angle_t             angle;
     byte                side;          // 0=front, 1=back
     byte                flags;
@@ -88,14 +88,14 @@ typedef struct seg_s {
     float               offset;
     biassurface_t*      bsuf[3];       // 0=middle, 1=top, 2=bottom
     short               frameFlags;
-} seg_t;
+} HEdge;
 
 #define SUBF_MIDPOINT         0x80    // Midpoint is tri-fan centre.
 
 typedef struct subsector_s {
     runtime_mapdata_header_t header;
-    unsigned int        segCount;
-    struct seg_s**      segs;          // [segcount] size.
+    unsigned int        hedgeCount;
+    struct hedge_s**    hedges;        // [hedgeCount] size.
     struct polyobj_s*   polyObj;       // NULL, if there is no polyobj.
     struct sector_s*    sector;
     int                 addSpriteCount; // frame number of last R_AddSprites
@@ -306,12 +306,12 @@ typedef struct sector_s {
     msector_t           buildData;
 } sector_t;
 
-// Parts of a wall segment.
-typedef enum segsection_e {
-    SEG_MIDDLE,
-    SEG_TOP,
-    SEG_BOTTOM
-} segsection_t;
+// Sidedef sections.
+typedef enum sidedefsection_e {
+    SS_MIDDLE,
+    SS_TOP,
+    SS_BOTTOM
+} sidedefsection_t;
 
 // Helper macros for accessing sidedef top/middle/bottom section data elements.
 #define SW_surface(n)           sections[(n)]
@@ -326,42 +326,42 @@ typedef enum segsection_e {
 #define SW_surfacergba(n)       SW_surface(n).rgba
 #define SW_surfaceblendmode(n)  SW_surface(n).blendMode
 
-#define SW_middlesurface        SW_surface(SEG_MIDDLE)
-#define SW_middleflags          SW_surfaceflags(SEG_MIDDLE)
-#define SW_middleinflags        SW_surfaceinflags(SEG_MIDDLE)
-#define SW_middlematerial       SW_surfacematerial(SEG_MIDDLE)
-#define SW_middletangent        SW_surfacetangent(SEG_MIDDLE)
-#define SW_middlebitangent      SW_surfacebitangent(SEG_MIDDLE)
-#define SW_middlenormal         SW_surfacenormal(SEG_MIDDLE)
-#define SW_middletexmove        SW_surfacetexmove(SEG_MIDDLE)
-#define SW_middleoffset         SW_surfaceoffset(SEG_MIDDLE)
-#define SW_middlevisoffset      SW_surfacevisoffset(SEG_MIDDLE)
-#define SW_middlergba           SW_surfacergba(SEG_MIDDLE)
-#define SW_middleblendmode      SW_surfaceblendmode(SEG_MIDDLE)
+#define SW_middlesurface        SW_surface(SS_MIDDLE)
+#define SW_middleflags          SW_surfaceflags(SS_MIDDLE)
+#define SW_middleinflags        SW_surfaceinflags(SS_MIDDLE)
+#define SW_middlematerial       SW_surfacematerial(SS_MIDDLE)
+#define SW_middletangent        SW_surfacetangent(SS_MIDDLE)
+#define SW_middlebitangent      SW_surfacebitangent(SS_MIDDLE)
+#define SW_middlenormal         SW_surfacenormal(SS_MIDDLE)
+#define SW_middletexmove        SW_surfacetexmove(SS_MIDDLE)
+#define SW_middleoffset         SW_surfaceoffset(SS_MIDDLE)
+#define SW_middlevisoffset      SW_surfacevisoffset(SS_MIDDLE)
+#define SW_middlergba           SW_surfacergba(SS_MIDDLE)
+#define SW_middleblendmode      SW_surfaceblendmode(SS_MIDDLE)
 
-#define SW_topsurface           SW_surface(SEG_TOP)
-#define SW_topflags             SW_surfaceflags(SEG_TOP)
-#define SW_topinflags           SW_surfaceinflags(SEG_TOP)
-#define SW_topmaterial          SW_surfacematerial(SEG_TOP)
-#define SW_toptangent           SW_surfacetangent(SEG_TOP)
-#define SW_topbitangent         SW_surfacebitangent(SEG_TOP)
-#define SW_topnormal            SW_surfacenormal(SEG_TOP)
-#define SW_toptexmove           SW_surfacetexmove(SEG_TOP)
-#define SW_topoffset            SW_surfaceoffset(SEG_TOP)
-#define SW_topvisoffset         SW_surfacevisoffset(SEG_TOP)
-#define SW_toprgba              SW_surfacergba(SEG_TOP)
+#define SW_topsurface           SW_surface(SS_TOP)
+#define SW_topflags             SW_surfaceflags(SS_TOP)
+#define SW_topinflags           SW_surfaceinflags(SS_TOP)
+#define SW_topmaterial          SW_surfacematerial(SS_TOP)
+#define SW_toptangent           SW_surfacetangent(SS_TOP)
+#define SW_topbitangent         SW_surfacebitangent(SS_TOP)
+#define SW_topnormal            SW_surfacenormal(SS_TOP)
+#define SW_toptexmove           SW_surfacetexmove(SS_TOP)
+#define SW_topoffset            SW_surfaceoffset(SS_TOP)
+#define SW_topvisoffset         SW_surfacevisoffset(SS_TOP)
+#define SW_toprgba              SW_surfacergba(SS_TOP)
 
-#define SW_bottomsurface        SW_surface(SEG_BOTTOM)
-#define SW_bottomflags          SW_surfaceflags(SEG_BOTTOM)
-#define SW_bottominflags        SW_surfaceinflags(SEG_BOTTOM)
-#define SW_bottommaterial       SW_surfacematerial(SEG_BOTTOM)
-#define SW_bottomtangent        SW_surfacetangent(SEG_BOTTOM)
-#define SW_bottombitangent      SW_surfacebitangent(SEG_BOTTOM)
-#define SW_bottomnormal         SW_surfacenormal(SEG_BOTTOM)
-#define SW_bottomtexmove        SW_surfacetexmove(SEG_BOTTOM)
-#define SW_bottomoffset         SW_surfaceoffset(SEG_BOTTOM)
-#define SW_bottomvisoffset      SW_surfacevisoffset(SEG_BOTTOM)
-#define SW_bottomrgba           SW_surfacergba(SEG_BOTTOM)
+#define SW_bottomsurface        SW_surface(SS_BOTTOM)
+#define SW_bottomflags          SW_surfaceflags(SS_BOTTOM)
+#define SW_bottominflags        SW_surfaceinflags(SS_BOTTOM)
+#define SW_bottommaterial       SW_surfacematerial(SS_BOTTOM)
+#define SW_bottomtangent        SW_surfacetangent(SS_BOTTOM)
+#define SW_bottombitangent      SW_surfacebitangent(SS_BOTTOM)
+#define SW_bottomnormal         SW_surfacenormal(SS_BOTTOM)
+#define SW_bottomtexmove        SW_surfacetexmove(SS_BOTTOM)
+#define SW_bottomoffset         SW_surfaceoffset(SS_BOTTOM)
+#define SW_bottomvisoffset      SW_surfacevisoffset(SS_BOTTOM)
+#define SW_bottomrgba           SW_surfacergba(SS_BOTTOM)
 
 #define FRONT                   0
 #define BACK                    1
@@ -375,8 +375,8 @@ typedef struct msidedef_s {
 typedef struct sidedef_s {
     runtime_mapdata_header_t header;
     surface_t           sections[3];
-    unsigned int        segCount;
-    struct seg_s**      segs;          // [segcount] size, segs arranged left>right
+    unsigned int        hedgeCount;
+    struct hedge_s**    hedges;          // [hedgeCount] size, hedges arranged left>right
     struct linedef_s*   line;
     struct sector_s*    sector;
     short               flags;
@@ -433,7 +433,7 @@ typedef struct mlinedef_s {
 
     // Normally NULL, except when this linedef directly overlaps an earlier
     // one (a rarely-used trick to create higher mid-masked textures).
-    // No segs should be created for these overlapping linedefs.
+    // No hedges should be created for these overlapping linedefs.
     struct linedef_s *overlap;
 } mlinedef_t;
 

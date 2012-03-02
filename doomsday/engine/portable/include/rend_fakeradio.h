@@ -48,7 +48,7 @@ float Rend_RadioCalcShadowDarkness(float lightLevel);
 void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
 
 /**
- * Render FakeRadio for the given seg section.
+ * Render FakeRadio for the given hedge section.
  */
 void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
     const rendsegradio_params_t* params);

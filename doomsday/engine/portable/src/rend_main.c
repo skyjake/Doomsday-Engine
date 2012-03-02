@@ -375,31 +375,31 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
     }
 }
 
-static void markSegSectionsPVisible(seg_t* seg)
+static void markSegSectionsPVisible(HEdge* hedge)
 {
     const plane_t* fceil, *bceil, *ffloor, *bfloor;
     sidedef_t* side;
     uint i;
 
-    if(!seg->lineDef || !seg->lineDef->L_side(seg->side)) return;
-    side = seg->lineDef->L_side(seg->side);
+    if(!hedge->lineDef || !hedge->lineDef->L_side(hedge->side)) return;
+    side = hedge->lineDef->L_side(hedge->side);
 
     for(i = 0; i < 3; ++i)
     {
         side->sections[i].inFlags |= SUIF_PVIS;
     }
 
-    if(!seg->lineDef->L_backside)
+    if(!hedge->lineDef->L_backside)
     {
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
         return;
     }
 
-    fceil  = seg->lineDef->L_sector(seg->side  )->SP_plane(PLN_CEILING);
-    ffloor = seg->lineDef->L_sector(seg->side  )->SP_plane(PLN_FLOOR);
-    bceil  = seg->lineDef->L_sector(seg->side^1)->SP_plane(PLN_CEILING);
-    bfloor = seg->lineDef->L_sector(seg->side^1)->SP_plane(PLN_FLOOR);
+    fceil  = hedge->lineDef->L_sector(hedge->side  )->SP_plane(PLN_CEILING);
+    ffloor = hedge->lineDef->L_sector(hedge->side  )->SP_plane(PLN_FLOOR);
+    bceil  = hedge->lineDef->L_sector(hedge->side^1)->SP_plane(PLN_CEILING);
+    bfloor = hedge->lineDef->L_sector(hedge->side^1)->SP_plane(PLN_FLOOR);
 
     // Middle.
     if(!side->SW_middlematerial || !Material_IsDrawable(side->SW_middlematerial) || side->SW_middlergba[3] <= 0)
@@ -418,13 +418,13 @@ static void markSegSectionsPVisible(seg_t* seg)
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
 
-static void Rend_MarkSegSectionsPVisible(seg_t* seg)
+static void Rend_MarkSegSectionsPVisible(HEdge* hedge)
 {
-    assert(seg);
+    assert(hedge);
     // danij: Do we really need to do this for both sides? Surely not.
-    markSegSectionsPVisible(seg);
-    if(seg->backSeg)
-        markSegSectionsPVisible(seg->backSeg);
+    markSegSectionsPVisible(hedge);
+    if(hedge->twin)
+        markSegSectionsPVisible(hedge->twin);
 }
 
 /**
@@ -548,41 +548,41 @@ static void doCalcSegDivisions(walldiv_t* div, const linedef_t* line,
     } while(!stopScan);
 }
 
-static void calcSegDivisions(walldiv_t* div, const seg_t* seg,
+static void calcSegDivisions(walldiv_t* div, const HEdge* hedge,
     const sector_t* frontSec, float bottomZ, float topZ, boolean doRight)
 {
     sidedef_t* side;
 
     div->num = 0;
 
-    // Polyobj segs are never split.
-    if(seg->flags & SEGF_POLYOBJ) return;
+    // Polyobj hedges are never split.
+    if(hedge->flags & HEDGEF_POLYOBJ) return;
 
-    // Only segs at sidedef ends can/should be split.
-    side = SEG_SIDEDEF(seg);
-    if(!((seg == side->segs[0] && !doRight) ||
-         (seg == side->segs[side->segCount -1] && doRight)))
+    // Only hedges at sidedef ends can/should be split.
+    side = HEDGE_SIDEDEF(hedge);
+    if(!((hedge == side->hedges[0] && !doRight) ||
+         (hedge == side->hedges[side->hedgeCount -1] && doRight)))
         return;
 
-    doCalcSegDivisions(div, seg->lineDef, seg->side, frontSec, bottomZ, topZ, doRight);
+    doCalcSegDivisions(div, hedge->lineDef, hedge->side, frontSec, bottomZ, topZ, doRight);
 }
 
 /**
  * Division will only happen if it must be done.
  */
-static void applyWallHeightDivision(walldiv_t* divs, const seg_t* seg,
+static void applyWallHeightDivision(walldiv_t* divs, const HEdge* hedge,
     const sector_t* frontsec, float low, float hi)
 {
     walldiv_t* div;
     uint i;
 
     // Mini-segs are never drawn.
-    if(!seg->lineDef) return;
+    if(!hedge->lineDef) return;
 
     for(i = 0; i < 2; ++i)
     {
         div = &divs[i];
-        calcSegDivisions(div, seg, frontsec, low, hi, i);
+        calcSegDivisions(div, hedge, frontsec, low, hi, i);
 
         // We need to sort the divisions for the renderer.
         if(div->num > 1)
@@ -608,11 +608,11 @@ for(k = 0; k < div->num; ++k)
 }
 
 static void selectSurfaceColors(const float** topColor,
-    const float** bottomColor, sidedef_t* side, segsection_t section)
+    const float** bottomColor, sidedef_t* side, sidedefsection_t section)
 {
     switch(section)
     {
-    case SEG_MIDDLE:
+    case SS_MIDDLE:
         if(side->flags & SDF_BLENDMIDTOTOP)
         {
             *topColor = side->SW_toprgba;
@@ -630,7 +630,7 @@ static void selectSurfaceColors(const float** topColor,
         }
         break;
 
-    case SEG_TOP:
+    case SS_TOP:
         if(side->flags & SDF_BLENDTOPTOMID)
         {
             *topColor = side->SW_toprgba;
@@ -643,7 +643,7 @@ static void selectSurfaceColors(const float** topColor,
         }
         break;
 
-    case SEG_BOTTOM:
+    case SS_BOTTOM:
         if(side->flags & SDF_BLENDBOTTOMTOMID)
         {
             *topColor = side->SW_middlergba;
@@ -1433,7 +1433,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         !(p->alpha < 1 || !msA->isOpaque || p->blendMode > 0));
 }
 
-static boolean doRenderSeg(seg_t* seg,
+static boolean doRenderSeg(HEdge* hedge,
                            const fvertex_t* from, const fvertex_t* to,
                            float bottom, float top, const pvec3_t normal,
                            float alpha,
@@ -1456,7 +1456,7 @@ static boolean doRenderSeg(seg_t* seg,
                            boolean isTwosidedMiddle)
 {
     rendworldpoly_params_t params;
-    sidedef_t*          side = (seg->lineDef? SEG_SIDEDEF(seg) : NULL);
+    sidedef_t*          side = (hedge->lineDef? HEDGE_SIDEDEF(hedge) : NULL);
     rvertex_t*          rvertices;
 
     // Init the params.
@@ -1464,10 +1464,10 @@ static boolean doRenderSeg(seg_t* seg,
 
     params.flags = RPF_DEFAULT | (skyMask? RPF_SKYMASK : 0);
     params.isWall = true;
-    params.segLength = &seg->length;
+    params.segLength = &hedge->length;
     params.forceOpaque = (alpha < 0? true : false);
     params.alpha = (alpha < 0? 1 : alpha);
-    params.mapObject = seg;
+    params.mapObject = hedge;
     params.elmIdx = elmIdx;
     params.bsuf = bsuf;
     params.normal = normal;
@@ -1509,24 +1509,24 @@ static boolean doRenderSeg(seg_t* seg,
     // Top Right.
     V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-    // Draw this seg.
+    // Draw this hedge.
     if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
     {   // Drawn poly was opaque.
-        // Render Fakeradio polys for this seg?
+        // Render Fakeradio polys for this hedge?
         if(!(params.flags & RPF_SKYMASK) && addFakeRadio)
         {
             rendsegradio_params_t radioParams;
             float ll;
 
-            radioParams.linedefLength = &seg->lineDef->length;
+            radioParams.linedefLength = &hedge->lineDef->length;
             radioParams.botCn = side->bottomCorners;
             radioParams.topCn = side->topCorners;
             radioParams.sideCn = side->sideCorners;
             radioParams.spans = side->spans;
-            radioParams.segOffset = &seg->offset;
-            radioParams.segLength = &seg->length;
-            radioParams.frontSec = seg->SG_frontsector;
-            radioParams.backSec = (!isTwosidedMiddle? seg->SG_backsector : NULL);
+            radioParams.segOffset = &hedge->offset;
+            radioParams.segLength = &hedge->length;
+            radioParams.frontSec = hedge->HE_frontsector;
+            radioParams.backSec = (!isTwosidedMiddle? hedge->HE_backsector : NULL);
 
             /**
              * \kludge Revert the vertex coords as they may have been changed
@@ -1564,7 +1564,7 @@ static boolean doRenderSeg(seg_t* seg,
         }
 
         R_FreeRendVertices(rvertices);
-        return true; // Clip with this solid seg.
+        return true; // Clip with this solid hedge.
     }
 
     R_FreeRendVertices(rvertices);
@@ -1738,8 +1738,8 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type, float height,
     }
 }
 
-static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
-                              segsection_t section, surface_t* surface,
+static boolean rendSegSection(subsector_t* ssec, HEdge* hedge,
+                              sidedefsection_t section, surface_t* surface,
                               const fvertex_t* from, const fvertex_t* to,
                               float bottom, float top,
                               const float texOffset[2],
@@ -1752,9 +1752,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
     if(!Surface_IsDrawable(surface)) return false;
     if(bottom >= top) return true;
 
-    alpha = (section == SEG_MIDDLE? surface->rgba[3] : 1.0f);
+    alpha = (section == SS_MIDDLE? surface->rgba[3] : 1.0f);
 
-    if(section == SEG_MIDDLE && softSurface)
+    if(section == SS_MIDDLE && softSurface)
     {
         mobj_t* mo = viewPlayer->shared.mo;
         const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -1762,7 +1762,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         /**
          * Can the player walk through this surface?
          * If the player is close enough we should NOT add a
-         * solid seg otherwise they'd get HOM when they are
+         * solid hedge otherwise they'd get HOM when they are
          * directly on top of the line (eg passing through an
          * opaque waterfall).
          */
@@ -1771,7 +1771,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
            viewData->current.pos[VZ] < top)
         {
             float delta[2], pos, result[2];
-            linedef_t* lineDef = seg->lineDef;
+            linedef_t* lineDef = hedge->lineDef;
 
             delta[0] = lineDef->dX;
             delta[1] = lineDef->dY;
@@ -1809,8 +1809,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
         int                 rpFlags = RPF_DEFAULT;
-        boolean             isTwoSided = (seg->lineDef &&
-            seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
+        boolean             isTwoSided = (hedge->lineDef &&
+            hedge->lineDef->L_frontside && hedge->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
         boolean             addFakeRadio = false;
         const float*        color = NULL, *color2 = NULL;
@@ -1823,14 +1823,14 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         V3_Set(texBR, to->pos  [VX], to->pos  [VY], bottom);
 
         // Determine which Material to use.
-        if(devRendSkyMode && seg->SG_backsector &&
-           ((section == SEG_BOTTOM && R_IsSkySurface(&seg->SG_frontsector->SP_floorsurface) &&
-                                      R_IsSkySurface(&seg->SG_backsector->SP_floorsurface)) ||
-            (section == SEG_TOP    && R_IsSkySurface(&seg->SG_frontsector->SP_ceilsurface) &&
-                                      R_IsSkySurface(&seg->SG_backsector->SP_ceilsurface))))
+        if(devRendSkyMode && hedge->HE_backsector &&
+           ((section == SS_BOTTOM && R_IsSkySurface(&hedge->HE_frontsector->SP_floorsurface) &&
+                                      R_IsSkySurface(&hedge->HE_backsector->SP_floorsurface)) ||
+            (section == SS_TOP    && R_IsSkySurface(&hedge->HE_frontsector->SP_ceilsurface) &&
+                                      R_IsSkySurface(&hedge->HE_backsector->SP_ceilsurface))))
         {
             // Geometry not normally rendered however we do so in dev sky mode.
-            mat = seg->SG_frontsector->SP_planematerial(section == SEG_TOP? PLN_CEILING : PLN_FLOOR);
+            mat = hedge->HE_frontsector->SP_planematerial(section == SS_TOP? PLN_CEILING : PLN_FLOOR);
         }
         else
         {
@@ -1881,7 +1881,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                 surfaceInFlags &= ~(SUIF_FIX_MISSING_MATERIAL);
             }
 
-            if(section != SEG_MIDDLE || (section == SEG_MIDDLE && !isTwoSided))
+            if(section != SS_MIDDLE || (section == SS_MIDDLE && !isTwoSided))
             {
                 forceOpaque = true;
                 blendMode = BM_NORMAL;
@@ -1905,8 +1905,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             // Dynamic Lights?
             if(addDLights && msA->glowing < 1 && !(!useDynlights && !useWallGlow))
             {
-                lightListIdx = LO_ProjectToSurface(((section == SEG_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), ssec, 1,
-                    texTL, texBR, SEG_SIDEDEF(seg)->SW_middletangent, SEG_SIDEDEF(seg)->SW_middlebitangent, SEG_SIDEDEF(seg)->SW_middlenormal);
+                lightListIdx = LO_ProjectToSurface(((section == SS_MIDDLE && isTwoSided)? PLF_SORT_LUMINOSITY_DESC : 0), ssec, 1,
+                    texTL, texBR, HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
             }
 
             // Mobj shadows?
@@ -1914,33 +1914,33 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             {
                 // Glowing planes inversely diminish shadow strength.
                 shadowListIdx = R_ProjectShadowsToSurface(ssec, 1 - msA->glowing, texTL, texBR,
-                    SEG_SIDEDEF(seg)->SW_middletangent, SEG_SIDEDEF(seg)->SW_middlebitangent, SEG_SIDEDEF(seg)->SW_middlenormal);
+                    HEDGE_SIDEDEF(hedge)->SW_middletangent, HEDGE_SIDEDEF(hedge)->SW_middlebitangent, HEDGE_SIDEDEF(hedge)->SW_middlenormal);
             }
 
             addFakeRadio = ((addFakeRadio && msA->glowing == 0)? true : false);
 
-            selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
+            selectSurfaceColors(&color, &color2, HEDGE_SIDEDEF(hedge), section);
         }
 
         // Check for neighborhood division?
         divs[0].num = divs[1].num = 0;
-        if(!(section == SEG_MIDDLE && isTwoSided) &&
-           !(seg->lineDef->inFlags & LF_POLYOBJ))
+        if(!(section == SS_MIDDLE && isTwoSided) &&
+           !(hedge->lineDef->inFlags & LF_POLYOBJ))
         {
-            applyWallHeightDivision(divs, seg, frontsec, bottom, top);
+            applyWallHeightDivision(divs, hedge, frontsec, bottom, top);
         }
 
         {
         float deltaL, deltaR, diff;
 
-        LineDef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
+        LineDef_LightLevelDelta(hedge->lineDef, hedge->side, &deltaL, &deltaR);
 
-        // Linear interpolation of the linedef light deltas to the edges of the seg.
+        // Linear interpolation of the linedef light deltas to the edges of the hedge.
         diff = deltaR - deltaL;
-        deltaR = deltaL + ((seg->offset + seg->length) / seg->lineDef->length) * diff;
-        deltaL += (seg->offset / seg->lineDef->length) * diff;
+        deltaR = deltaL + ((hedge->offset + hedge->length) / hedge->lineDef->length) * diff;
+        deltaL += (hedge->offset / hedge->lineDef->length) * diff;
 
-        solidSeg = doRenderSeg(seg,
+        solidSeg = doRenderSeg(hedge,
                                from, to, bottom, top,
                                surface->normal, (forceOpaque? -1 : alpha),
                                &frontsec->lightLevel,
@@ -1952,9 +1952,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                addFakeRadio,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
-                               seg->bsuf[section], (uint) section,
+                               hedge->bsuf[section], (uint) section,
                                msA, inter, msB,
-                               (section == SEG_MIDDLE && isTwoSided));
+                               (section == SS_MIDDLE && isTwoSided));
         }
     }
 
@@ -1962,9 +1962,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 }
 
 /**
- * Renders the given single-sided seg into the world.
+ * Renders the given single-sided hedge into the world.
  */
-static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
+static boolean Rend_RenderSeg(subsector_t* ssec, HEdge* hedge)
 {
     boolean solidSeg = true;
     sidedef_t* side;
@@ -1974,12 +1974,12 @@ static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
     sector_t* frontsec;
     int pid;
 
-    side = SEG_SIDEDEF(seg);
+    side = HEDGE_SIDEDEF(hedge);
     if(!side) return false; // A one-way window?
 
     frontsec = ssec->sector;
-    backSide = seg->side;
-    ldef = seg->lineDef;
+    backSide = hedge->side;
+    ldef = hedge->lineDef;
 
     pid = viewPlayer - ddPlayers;
     if(!ldef->mapped[pid])
@@ -2004,16 +2004,16 @@ static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
         float texOffset[2];
         surface_t* surface = &side->SW_middlesurface;
 
-        texOffset[0] = surface->visOffset[0] + seg->offset;
+        texOffset[0] = surface->visOffset[0] + hedge->offset;
         texOffset[1] = surface->visOffset[1];
 
         if(ldef->flags & DDLF_DONTPEGBOTTOM)
             texOffset[1] += -(fceil - ffloor);
 
-        Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+        Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
 
-        solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
-                           &seg->SG_v1->v, &seg->SG_v2->v, ffloor, fceil,
+        solidSeg = rendSegSection(ssec, hedge, SS_MIDDLE, &side->SW_middlesurface,
+                           &hedge->HE_v1->v, &hedge->HE_v2->v, ffloor, fceil,
                            texOffset,
                            /*temp >*/ frontsec, /*< temp*/
                            false, true, true, side->flags);
@@ -2025,7 +2025,7 @@ static boolean Rend_RenderSeg(subsector_t* ssec, seg_t* seg)
     return solidSeg;
 }
 
-boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
+boolean R_FindBottomTop(linedef_t* lineDef, int side, sidedefsection_t section,
     float matOffsetX, float matOffsetY,
     const plane_t* ffloor, const plane_t* fceil,
     const plane_t* bfloor, const plane_t* bceil,
@@ -2035,7 +2035,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
 {
     switch(section)
     {
-    case SEG_TOP:
+    case SS_TOP:
         *top = fceil->visHeight;
         // Can't go over front ceiling, would induce polygon flaws.
         if(bceil->visHeight < ffloor->visHeight)
@@ -2055,7 +2055,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
         }
         break;
 
-    case SEG_BOTTOM: {
+    case SS_BOTTOM: {
         float t = bfloor->visHeight;
 
         *bottom = ffloor->visHeight;
@@ -2084,7 +2084,7 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
         }
         break;
       }
-    case SEG_MIDDLE: {
+    case SS_MIDDLE: {
         float ftop, fbottom, vR_ZBottom, vR_ZTop;
 
         if(isSelfRef)
@@ -2140,9 +2140,9 @@ boolean R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
 }
 
 /**
- * Render wall sections for a Seg belonging to a two-sided LineDef.
+ * Render wall sections for a HEdge belonging to a two-sided LineDef.
  */
-static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
+static boolean Rend_RenderSegTwosided(subsector_t* ssec, HEdge* hedge)
 {
     int                 pid = viewPlayer - ddPlayers;
     float               bottom, top, texOffset[2];
@@ -2152,11 +2152,11 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     linedef_t*          line;
     int                 solidSeg = false;
 
-    frontSide = SEG_SIDEDEF(seg);
-    backSide = SEG_SIDEDEF(seg->backSeg);
+    frontSide = HEDGE_SIDEDEF(hedge);
+    backSide = HEDGE_SIDEDEF(hedge->twin);
     frontSec = frontSide->sector;
     backSec = backSide->sector;
-    line = seg->lineDef;
+    line = hedge->lineDef;
 
     if(!line->mapped[pid])
     {
@@ -2172,7 +2172,7 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     if(backSec == frontSec &&
        !frontSide->SW_topmaterial && !frontSide->SW_bottommaterial &&
        !frontSide->SW_middlematerial)
-       return false; // Ugh... an obvious wall seg hack. Best take no chances...
+       return false; // Ugh... an obvious wall hedge hack. Best take no chances...
 
     ffloor = ssec->sector->SP_plane(PLN_FLOOR);
     fceil  = ssec->sector->SP_plane(PLN_CEILING);
@@ -2182,7 +2182,7 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     if((frontSide->SW_middleinflags & SUIF_PVIS) ||
        (frontSide->SW_topinflags & SUIF_PVIS) ||
        (frontSide->SW_bottominflags & SUIF_PVIS))
-        Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
+        Rend_RadioUpdateLinedef(hedge->lineDef, hedge->side);
 
     /**
      * Create the wall sections.
@@ -2196,8 +2196,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_middlesurface;
 
-        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_MIDDLE,
-               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+        if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_MIDDLE,
+               hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
                ffloor, fceil, bfloor, bceil,
                (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -2205,8 +2205,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
                LINE_SELFREF(line)? true : false,
                &bottom, &top, texOffset))
         {
-            solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, suf,
-                                      &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+            solidSeg = rendSegSection(ssec, hedge, SS_MIDDLE, suf,
+                                      &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
                                       frontSec,
                                       (((viewPlayer->shared.flags & (DDPF_NOCLIP|DDPF_CAMERA)) ||
                                         !(line->flags & DDLF_BLOCKING))? true : false),
@@ -2242,8 +2242,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*      suf = &frontSide->SW_topsurface;
 
-        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_TOP,
-               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+        if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_TOP,
+               hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
                ffloor, fceil, bfloor, bceil,
                (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -2251,8 +2251,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
                LINE_SELFREF(line)? true : false,
                &bottom, &top, texOffset))
         {
-            rendSegSection(ssec, seg, SEG_TOP, suf,
-                           &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+            rendSegSection(ssec, hedge, SS_TOP, suf,
+                           &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
                            frontSec, false, true, true, frontSide->flags);
         }
     }
@@ -2262,8 +2262,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_bottomsurface;
 
-        if(R_FindBottomTop(seg->lineDef, seg->side, SEG_BOTTOM,
-               seg->offset + suf->visOffset[VX], suf->visOffset[VY],
+        if(R_FindBottomTop(hedge->lineDef, hedge->side, SS_BOTTOM,
+               hedge->offset + suf->visOffset[VX], suf->visOffset[VY],
                ffloor, fceil, bfloor, bceil,
                (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -2271,8 +2271,8 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
                LINE_SELFREF(line)? true : false,
                &bottom, &top, texOffset))
         {
-            rendSegSection(ssec, seg, SEG_BOTTOM, suf,
-                           &seg->SG_v1->v, &seg->SG_v2->v, bottom, top, texOffset,
+            rendSegSection(ssec, hedge, SS_BOTTOM, suf,
+                           &hedge->HE_v1->v, &hedge->HE_v2->v, bottom, top, texOffset,
                            frontSec, false, true, true, frontSide->flags);
         }
     }
@@ -2320,72 +2320,72 @@ static boolean Rend_RenderSegTwosided(subsector_t* ssec, seg_t* seg)
 
 static void Rend_MarkSegsFacingFront(subsector_t *sub)
 {
-    seg_t* seg, **segIt;
+    HEdge* hedge, **segIt;
     uint i;
 
-    for(segIt = sub->segs; *segIt; segIt++)
+    for(segIt = sub->hedges; *segIt; segIt++)
     {
-        seg = *segIt;
+        hedge = *segIt;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->lineDef)
+        if(hedge->lineDef)
         {
             // Which way should it be facing?
-            if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
-                seg->frameFlags |= SEGINF_FACINGFRONT;
+            if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
+                hedge->frameFlags |= HEDGEINF_FACINGFRONT;
             else
-                seg->frameFlags &= ~SEGINF_FACINGFRONT;
+                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
 
-            Rend_MarkSegSectionsPVisible(seg);
+            Rend_MarkSegSectionsPVisible(hedge);
         }
     }
 
     if(sub->polyObj)
     {
-        for(i = 0; i < sub->polyObj->numSegs; ++i)
+        for(i = 0; i < sub->polyObj->numHEdges; ++i)
         {
-            seg = sub->polyObj->segs[i];
+            hedge = sub->polyObj->hedges[i];
 
             // Which way should it be facing?
-            if(!(segFacingViewerDot(seg->SG_v1pos, seg->SG_v2pos) < 0))
-                seg->frameFlags |= SEGINF_FACINGFRONT;
+            if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
+                hedge->frameFlags |= HEDGEINF_FACINGFRONT;
             else
-                seg->frameFlags &= ~SEGINF_FACINGFRONT;
+                hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
 
-            Rend_MarkSegSectionsPVisible(seg);
+            Rend_MarkSegSectionsPVisible(hedge);
         }
     }
 }
 
 static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
 {
-    seg_t** segIt;
-    seg_t* seg;
+    HEdge** segIt;
+    HEdge* hedge;
     uint i;
 
-    for(segIt = ssec->segs; *segIt; segIt++)
+    for(segIt = ssec->hedges; *segIt; segIt++)
     {
-        seg = *segIt;
-        if(!seg->lineDef || !(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
+        hedge = *segIt;
+        if(!hedge->lineDef || !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
-                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
+        if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                              hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
         {
-            seg->frameFlags &= ~SEGINF_FACINGFRONT;
+            hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
         }
     }
 
     if(!ssec->polyObj) return;
 
-    for(i = 0; i < ssec->polyObj->numSegs; ++i)
+    for(i = 0; i < ssec->polyObj->numHEdges; ++i)
     {
-        seg = ssec->polyObj->segs[i];
-        if(!(seg->frameFlags & SEGINF_FACINGFRONT)) continue;
+        hedge = ssec->polyObj->hedges[i];
+        if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
-        if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
-                              seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
+        if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                              hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]))
         {
-            seg->frameFlags &= ~SEGINF_FACINGFRONT;
+            hedge->frameFlags &= ~HEDGEINF_FACINGFRONT;
         }
     }
 }
@@ -2421,26 +2421,26 @@ static __inline float skyFixCeilZ(const plane_t* frontCeil, const plane_t* backC
 }
 
 /**
- * Determine which sky fixes are necessary for the specified @a seg.
- * @param seg  Seg to be evaluated.
+ * Determine which sky fixes are necessary for the specified @a hedge.
+ * @param hedge  HEdge to be evaluated.
  * @return  @see skyCapFlags
  */
-static int segSkyFixes(seg_t* seg)
+static int segSkyFixes(HEdge* hedge)
 {
     int fixes = 0;
-    if(seg && seg->lineDef) // "minisegs" have no linedefs.
+    if(hedge && hedge->lineDef) // "minisegs" have no linedefs.
     {
-        const sector_t* frontSec = seg->SG_frontsector;
-        const sector_t* backSec  = seg->SG_backsector;
+        const sector_t* frontSec = hedge->HE_frontsector;
+        const sector_t* backSec  = hedge->HE_backsector;
 
-        if(!backSec || backSec != seg->SG_frontsector)
+        if(!backSec || backSec != hedge->HE_frontsector)
         {
             const boolean hasSkyFloor   = R_IsSkySurface(&frontSec->SP_floorsurface);
             const boolean hasSkyCeiling = R_IsSkySurface(&frontSec->SP_ceilsurface);
 
             if(hasSkyFloor || hasSkyCeiling)
             {
-                const boolean hasClosedBack = LineDef_BackClosed(seg->lineDef, seg->side, true/*ignore opacity*/);
+                const boolean hasClosedBack = LineDef_BackClosed(hedge->lineDef, hedge->side, true/*ignore opacity*/);
 
                 // Lower fix?
                 if(hasSkyFloor)
@@ -2478,15 +2478,15 @@ static int segSkyFixes(seg_t* seg)
 }
 
 /**
- * @param seg  Seg from which to determine sky fix coordinates.
+ * @param hedge  HEdge from which to determine sky fix coordinates.
  * @param skyCap  Either SKYCAP_LOWER or SKYCAP_UPPER (SKYCAP_UPPER has precendence).
  * @param bottom  Z map space coordinate for the bottom of the skyfix written here.
  * @param top  Z map space coordinate for the top of the skyfix written here.
  */
-static void skyFixZCoords(seg_t* seg, int skyCap, float* bottom, float* top)
+static void skyFixZCoords(HEdge* hedge, int skyCap, float* bottom, float* top)
 {
-    const sector_t* frontSec = seg->SG_frontsector;
-    const sector_t* backSec  = seg->SG_backsector;
+    const sector_t* frontSec = hedge->HE_frontsector;
+    const sector_t* backSec  = hedge->HE_backsector;
     const plane_t* ffloor = frontSec->SP_plane(PLN_FLOOR);
     const plane_t* fceil  = frontSec->SP_plane(PLN_CEILING);
     const plane_t* bceil  = backSec? backSec->SP_plane(PLN_CEILING) : NULL;
@@ -2513,17 +2513,17 @@ static void writeSkyFixGeometry(subsector_t* ssec, int skyCap, int rendPolyFlags
     float zBottom, zTop;
     int segSkyCapFlags;
     rvertex_t verts[4];
-    seg_t** segPtr;
+    HEdge** segPtr;
 
-    if(!ssec || !ssec->segCount || !ssec->sector) return;
+    if(!ssec || !ssec->hedgeCount || !ssec->sector) return;
     if(!(skyCap & SKYCAP_LOWER|SKYCAP_UPPER)) return;
 
-    for(segPtr = ssec->segs; *segPtr; segPtr++)
+    for(segPtr = ssec->hedges; *segPtr; segPtr++)
     {
-        seg_t* seg = *segPtr;
+        HEdge* hedge = *segPtr;
 
-        // Is a fix or two necessary for this seg?
-        segSkyCapFlags = segSkyFixes(seg);
+        // Is a fix or two necessary for this hedge?
+        segSkyCapFlags = segSkyFixes(hedge);
         if(!(segSkyCapFlags & (SKYCAP_LOWER|SKYCAP_UPPER))) continue;
 
         /**
@@ -2532,15 +2532,15 @@ static void writeSkyFixGeometry(subsector_t* ssec, int skyCap, int rendPolyFlags
          *   |  |
          *   0--2
          */
-        V2_Copy(verts[0].pos, seg->SG_v1pos);
-        V2_Copy(verts[1].pos, seg->SG_v1pos);
-        V2_Copy(verts[2].pos, seg->SG_v2pos);
-        V2_Copy(verts[3].pos, seg->SG_v2pos);
+        V2_Copy(verts[0].pos, hedge->HE_v1pos);
+        V2_Copy(verts[1].pos, hedge->HE_v1pos);
+        V2_Copy(verts[2].pos, hedge->HE_v2pos);
+        V2_Copy(verts[3].pos, hedge->HE_v2pos);
 
         // First, lower fix:
         if(skyCap & segSkyCapFlags & SKYCAP_LOWER)
         {
-            skyFixZCoords(seg, SKYCAP_LOWER, &zBottom, &zTop);
+            skyFixZCoords(hedge, SKYCAP_LOWER, &zBottom, &zTop);
             if(zBottom < zTop)
             {
                 verts[0].pos[VZ] = verts[2].pos[VZ] = zBottom;
@@ -2552,7 +2552,7 @@ static void writeSkyFixGeometry(subsector_t* ssec, int skyCap, int rendPolyFlags
         // Upper fix:
         if(skyCap & segSkyCapFlags & SKYCAP_UPPER)
         {
-            skyFixZCoords(seg, SKYCAP_UPPER, &zBottom, &zTop);
+            skyFixZCoords(hedge, SKYCAP_UPPER, &zBottom, &zTop);
             if(zBottom < zTop)
             {
                 verts[0].pos[VZ] = verts[2].pos[VZ] = zBottom;
@@ -2572,7 +2572,7 @@ static void rendSubsectorSky(subsector_t* ssec, int skyCap)
 {
     const int rendPolyFlags = RPF_DEFAULT | RPF_SKYMASK;
 
-    if(!ssec || !ssec->segCount || !ssec->sector) return;
+    if(!ssec || !ssec->hedgeCount || !ssec->sector) return;
 
     // Sky caps are only necessary in sectors with skymasked planes.
     if((skyCap & SKYCAP_LOWER) && !R_IsSkySurface(&ssec->sector->SP_floorsurface))
@@ -2608,7 +2608,7 @@ static void rendSubsectorSky(subsector_t* ssec, int skyCap)
     }
 }
 
-static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
+static boolean skymaskSegIsVisible(HEdge* hedge, boolean clipBackFacing)
 {
     linedef_t* lineDef;
     sidedef_t* sideDef;
@@ -2616,18 +2616,18 @@ static boolean skymaskSegIsVisible(seg_t* seg, boolean clipBackFacing)
     sector_t* frontSec;
 
     // "minisegs" have no linedefs.
-    if(!seg->lineDef) return false;
-    lineDef = seg->lineDef;
+    if(!hedge->lineDef) return false;
+    lineDef = hedge->lineDef;
 
     // No SideDef on this side?
-    sideDef = SEG_SIDEDEF(seg);
+    sideDef = HEDGE_SIDEDEF(hedge);
     if(!sideDef) return false;
 
-    // Let's first check which way this seg is facing.
-    if(clipBackFacing && !(seg->frameFlags & SEGINF_FACINGFRONT)) return false;
+    // Let's first check which way this hedge is facing.
+    if(clipBackFacing && !(hedge->frameFlags & HEDGEINF_FACINGFRONT)) return false;
 
-    backSec  = seg->SG_backsector;
-    frontSec = seg->SG_frontsector;
+    backSec  = hedge->HE_backsector;
+    frontSec = hedge->HE_frontsector;
 
     // Avoid obvious hack (best take no chances...).
     return !(backSec == frontSec && !sideDef->SW_topmaterial && !sideDef->SW_bottommaterial &&
@@ -2649,15 +2649,15 @@ static void Rend_RenderSubsectorSky(subsector_t* ssec)
 /**
  * Creates new occlusion planes from the subsector's sides.
  * Before testing, occlude subsector's backfaces. After testing occlude
- * the remaining faces, i.e. the forward facing segs. This is done before
- * rendering segs, so solid segments cut out all unnecessary oranges.
+ * the remaining faces, i.e. the forward facing hedges. This is done before
+ * rendering hedges, so solid segments cut out all unnecessary oranges.
  */
 static void occludeSubsector(const subsector_t* ssec, boolean forwardFacing)
 {
     float fronth[2], backh[2];
     float* startv, *endv;
     sector_t* front = ssec->sector, *back;
-    seg_t* seg, **segIt;
+    HEdge* hedge, **segIt;
 
     if(devNoCulling || P_IsInVoid(viewPlayer))
         return;
@@ -2665,29 +2665,29 @@ static void occludeSubsector(const subsector_t* ssec, boolean forwardFacing)
     fronth[0] = front->SP_floorheight;
     fronth[1] = front->SP_ceilheight;
 
-    for(segIt = ssec->segs; *segIt; segIt++)
+    for(segIt = ssec->hedges; *segIt; segIt++)
     {
-        seg = *segIt;
+        hedge = *segIt;
 
         // Occlusions can only happen where two sectors contact.
-        if(seg->lineDef &&
-           seg->SG_backsector && !(seg->flags & SEGF_POLYOBJ) && // Polyobjects don't occlude.
-           (forwardFacing == ((seg->frameFlags & SEGINF_FACINGFRONT)? true : false)))
+        if(hedge->lineDef &&
+           hedge->HE_backsector && !(hedge->flags & HEDGEF_POLYOBJ) && // Polyobjects don't occlude.
+           (forwardFacing == ((hedge->frameFlags & HEDGEINF_FACINGFRONT)? true : false)))
         {
-            back = seg->SG_backsector;
+            back = hedge->HE_backsector;
             backh[0] = back->SP_floorheight;
             backh[1] = back->SP_ceilheight;
 
             // Choose start and end vertices so that it's facing forward.
             if(forwardFacing)
             {
-                startv = seg->SG_v1pos;
-                endv   = seg->SG_v2pos;
+                startv = hedge->HE_v1pos;
+                endv   = hedge->HE_v2pos;
             }
             else
             {
-                startv = seg->SG_v2pos;
-                endv   = seg->SG_v1pos;
+                startv = hedge->HE_v2pos;
+                endv   = hedge->HE_v1pos;
             }
 
             // Do not create an occlusion for sky floors.
@@ -2723,7 +2723,7 @@ static void Rend_RenderSubsector(uint ssecidx)
 {
     uint i;
     subsector_t* ssec = SUBSECTOR_PTR(ssecidx);
-    seg_t* seg, **segIt;
+    HEdge* hedge, **segIt;
     sector_t* sect;
     float sceil, sfloor;
 
@@ -2733,7 +2733,7 @@ static void Rend_RenderSubsector(uint ssecidx)
     sceil = sect->SP_ceilvisheight;
     sfloor = sect->SP_floorvisheight;
 
-    if(sceil - sfloor <= 0 || ssec->segCount < 3)
+    if(sceil - sfloor <= 0 || ssec->hedgeCount < 3)
     {
         // Skip this, it has no volume.
         // Neighbors handle adding the solid clipper segments.
@@ -2788,24 +2788,24 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_RenderSubsectorSky(ssec);
 
     // Draw the walls.
-    for(segIt = ssec->segs; *segIt; segIt++)
+    for(segIt = ssec->hedges; *segIt; segIt++)
     {
-        seg = *segIt;
+        hedge = *segIt;
 
-        if(!(seg->flags & SEGF_POLYOBJ)  &&// Not handled here.
-           seg->lineDef && // "minisegs" have no linedefs.
-           (seg->frameFlags & SEGINF_FACINGFRONT))
+        if(!(hedge->flags & HEDGEF_POLYOBJ)  &&// Not handled here.
+           hedge->lineDef && // "minisegs" have no linedefs.
+           (hedge->frameFlags & HEDGEINF_FACINGFRONT))
         {
             boolean solid;
-            if(!seg->SG_backsector || !seg->SG_frontsector)
-                solid = Rend_RenderSeg(ssec, seg);
+            if(!hedge->HE_backsector || !hedge->HE_frontsector)
+                solid = Rend_RenderSeg(ssec, hedge);
             else
-                solid = Rend_RenderSegTwosided(ssec, seg);
+                solid = Rend_RenderSegTwosided(ssec, hedge);
 
             if(solid)
             {
-                C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
-                                seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+                C_AddViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                                hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
             }
         }
     }
@@ -2813,17 +2813,17 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Is there a polyobj on board?
     if(ssec->polyObj)
     {
-        for(i = 0; i < ssec->polyObj->numSegs; ++i)
+        for(i = 0; i < ssec->polyObj->numHEdges; ++i)
         {
-            seg = ssec->polyObj->segs[i];
-            // Let's first check which way this seg is facing.
-            if(seg->frameFlags & SEGINF_FACINGFRONT)
+            hedge = ssec->polyObj->hedges[i];
+            // Let's first check which way this hedge is facing.
+            if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
-                boolean solid = Rend_RenderSeg(ssec, seg);
+                boolean solid = Rend_RenderSeg(ssec, hedge);
                 if(solid)
                 {
-                    C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
-                                    seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+                    C_AddViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
+                                    hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
                 }
             }
         }
@@ -2963,23 +2963,23 @@ void Rend_RenderSurfaceVectors(void)
 
     glDisable(GL_CULL_FACE);
 
-    for(i = 0; i < numSegs; ++i)
+    for(i = 0; i < numHEdges; ++i)
     {
-        seg_t* seg = &segs[i];
+        HEdge* hedge = &hedges[i];
         float x, y, bottom, top;
         sidedef_t* side;
         surface_t* suf;
         vec3_t origin;
 
-        if(!seg->lineDef || !seg->SG_frontsector ||
-           (seg->lineDef->inFlags & LF_POLYOBJ))
+        if(!hedge->lineDef || !hedge->HE_frontsector ||
+           (hedge->lineDef->inFlags & LF_POLYOBJ))
             continue;
 
-        side = SEG_SIDEDEF(seg);
-        x = seg->SG_v1pos[VX] + (seg->SG_v2pos[VX] - seg->SG_v1pos[VX]) / 2;
-        y = seg->SG_v1pos[VY] + (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / 2;
+        side = HEDGE_SIDEDEF(hedge);
+        x = hedge->HE_v1pos[VX] + (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX]) / 2;
+        y = hedge->HE_v1pos[VY] + (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]) / 2;
 
-        if(!seg->SG_backsector)
+        if(!hedge->HE_backsector)
         {
             bottom = side->sector->SP_floorvisheight;
             top = side->sector->SP_ceilvisheight;
@@ -2992,34 +2992,34 @@ void Rend_RenderSurfaceVectors(void)
         {
             if(side->SW_middlesurface.material)
             {
-                top = seg->SG_frontsector->SP_ceilvisheight;
-                bottom = seg->SG_frontsector->SP_floorvisheight;
+                top = hedge->HE_frontsector->SP_ceilvisheight;
+                bottom = hedge->HE_frontsector->SP_floorvisheight;
                 suf = &side->SW_middlesurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(seg->SG_backsector->SP_ceilvisheight <
-               seg->SG_frontsector->SP_ceilvisheight &&
-               !(R_IsSkySurface(&seg->SG_frontsector->SP_ceilsurface) &&
-                 R_IsSkySurface(&seg->SG_backsector->SP_ceilsurface)))
+            if(hedge->HE_backsector->SP_ceilvisheight <
+               hedge->HE_frontsector->SP_ceilvisheight &&
+               !(R_IsSkySurface(&hedge->HE_frontsector->SP_ceilsurface) &&
+                 R_IsSkySurface(&hedge->HE_backsector->SP_ceilsurface)))
             {
-                bottom = seg->SG_backsector->SP_ceilvisheight;
-                top = seg->SG_frontsector->SP_ceilvisheight;
+                bottom = hedge->HE_backsector->SP_ceilvisheight;
+                top = hedge->HE_frontsector->SP_ceilvisheight;
                 suf = &side->SW_topsurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
                 drawSurfaceTangentSpaceVectors(suf, origin);
             }
 
-            if(seg->SG_backsector->SP_floorvisheight >
-               seg->SG_frontsector->SP_floorvisheight &&
-               !(R_IsSkySurface(&seg->SG_frontsector->SP_floorsurface) &&
-                 R_IsSkySurface(&seg->SG_backsector->SP_floorsurface)))
+            if(hedge->HE_backsector->SP_floorvisheight >
+               hedge->HE_frontsector->SP_floorvisheight &&
+               !(R_IsSkySurface(&hedge->HE_frontsector->SP_floorsurface) &&
+                 R_IsSkySurface(&hedge->HE_backsector->SP_floorsurface)))
             {
-                bottom = seg->SG_frontsector->SP_floorvisheight;
-                top = seg->SG_backsector->SP_floorvisheight;
+                bottom = hedge->HE_frontsector->SP_floorvisheight;
+                top = hedge->HE_backsector->SP_floorvisheight;
                 suf = &side->SW_bottomsurface;
 
                 V3_Set(origin, x, y, bottom + (top - bottom) / 2);
@@ -3056,14 +3056,14 @@ void Rend_RenderSurfaceVectors(void)
         vec3_t origin;
         uint j;
 
-        for(j = 0; j < po->numSegs; ++j)
+        for(j = 0; j < po->numHEdges; ++j)
         {
-            seg_t* seg = po->segs[j];
-            linedef_t* lineDef = seg->lineDef;
+            HEdge* hedge = po->hedges[j];
+            linedef_t* lineDef = hedge->lineDef;
 
             V3_Set(origin, (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2,
                            (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&SEG_SIDEDEF(seg)->SW_middlesurface, origin);
+            drawSurfaceTangentSpaceVectors(&HEDGE_SIDEDEF(hedge)->SW_middlesurface, origin);
         }
     }
 
@@ -3803,10 +3803,10 @@ static void Rend_RenderBoundingBoxes(void)
         Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
 
         {uint j;
-        for(j = 0; j < po->numSegs; ++j)
+        for(j = 0; j < po->numHEdges; ++j)
         {
-            seg_t* seg = po->segs[j];
-            linedef_t* lineDef = seg->lineDef;
+            HEdge* hedge = po->hedges[j];
+            linedef_t* lineDef = hedge->lineDef;
             float width  = (lineDef->aaBox.maxX - lineDef->aaBox.minX)/2;
             float length = (lineDef->aaBox.maxY - lineDef->aaBox.minY)/2;
             float pos[3];

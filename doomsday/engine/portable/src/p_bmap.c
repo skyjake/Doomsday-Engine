@@ -861,15 +861,15 @@ static int rendSubsector(subsector_t* ssec, void* paramaters)
     const float scale = MAX_OF(bmapDebugSize, 1);
     const float width = (theWindow->geometry.size.width / 16) / scale;
     float length, dx, dy, normal[2], unit[2];
-    seg_t** segIter, *seg;
+    HEdge** hedgeIter, *hedge;
     vec2_t start, end;
 
-    for(segIter = ssec->segs; *segIter; segIter++)
+    for(hedgeIter = ssec->hedges; *hedgeIter; hedgeIter++)
     {
-        seg = *segIter;
+        hedge = *hedgeIter;
 
-        V2_Set(start, seg->SG_v1pos[VX], seg->SG_v1pos[VY]);
-        V2_Set(end,   seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
+        V2_Set(start, hedge->HE_v1pos[VX], hedge->HE_v1pos[VY]);
+        V2_Set(end,   hedge->HE_v2pos[VX], hedge->HE_v2pos[VY]);
 
         glBegin(GL_LINES);
             glVertex2fv(start);

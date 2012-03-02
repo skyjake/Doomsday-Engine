@@ -155,7 +155,7 @@ void LO_ClipInSubsector(uint ssecidx);
 /**
  * In the situation where a subsector contains both lumobjs and a polyobj,
  * the lumobjs must be clipped more carefully. Here we check if the line of
- * sight intersects any of the polyobj segs that face the camera.
+ * sight intersects any of the polyobj hedges that face the camera.
  *
  * @param ssecidx  Subsector index in which lumobjs will be clipped.
  */

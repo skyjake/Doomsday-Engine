@@ -66,7 +66,7 @@ typedef enum damsegment_e {
     DAMSEG_SIDES,
     DAMSEG_SECTORS,
     DAMSEG_SSECTORS,
-    DAMSEG_SEGS,
+    DAMSEG_HEDGES,
     DAMSEG_NODES,
     DAMSEG_BLOCKMAP,
     DAMSEG_REJECT
@@ -465,9 +465,9 @@ static void writeSide(const gamemap_t *map, uint idx)
     }
     writeLong(s->sector? ((s->sector - map->sectors) + 1) : 0);
     writeShort(s->flags);
-    writeLong((long) s->segCount);
-    for(i = 0; i < s->segCount; ++i)
-        writeLong((s->segs[i] - map->segs) + 1);
+    writeLong((long) s->hedgeCount);
+    for(i = 0; i < s->hedgeCount; ++i)
+        writeLong((s->hedges[i] - map->hedges) + 1);
 }
 
 static void readSide(const gamemap_t *map, uint idx)
@@ -501,11 +501,11 @@ static void readSide(const gamemap_t *map, uint idx)
     secIdx = readLong();
     s->sector = (secIdx == 0? NULL : &map->sectors[secIdx -1]);
     s->flags = readShort();
-    s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->segCount; ++i)
-        s->segs[i] = &map->segs[(unsigned) readLong() - 1];
-    s->segs[i] = NULL; // Terminate.
+    s->hedgeCount = (uint) readLong();
+    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->hedgeCount; ++i)
+        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+    s->hedges[i] = NULL; // Terminate.
 }
 
 static void archiveSides(gamemap_t *map, boolean write)
@@ -745,10 +745,10 @@ static void writeSubsector(const gamemap_t *map, uint idx)
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         writeLong((long) s->reverb[i]);
 
-    // Subsector segs list.
-    writeLong((long) s->segCount);
-    for(i = 0; i < s->segCount; ++i)
-        writeLong((s->segs[i] - map->segs) + 1);
+    // Subsector hedges list.
+    writeLong((long) s->hedgeCount);
+    for(i = 0; i < s->hedgeCount; ++i)
+        writeLong((s->hedges[i] - map->hedges) + 1);
 }
 
 static void readSubsector(const gamemap_t *map, uint idx)
@@ -773,12 +773,12 @@ static void readSubsector(const gamemap_t *map, uint idx)
     for(i = 0; i < NUM_REVERB_DATA; ++i)
         s->reverb[i] = (uint) readLong();
 
-    // Subsector segs list.
-    s->segCount = (uint) readLong();
-    s->segs = Z_Malloc(sizeof(seg_t*) * (s->segCount + 1), PU_MAP, 0);
-    for(i = 0; i < s->segCount; ++i)
-        s->segs[i] = &map->segs[(unsigned) readLong() - 1];
-    s->segs[i] = NULL; // Terminate.
+    // Subsector hedges list.
+    s->hedgeCount = (uint) readLong();
+    s->hedges = Z_Malloc(sizeof(HEdge*) * (s->hedgeCount + 1), PU_MAP, 0);
+    for(i = 0; i < s->hedgeCount; ++i)
+        s->hedges[i] = &map->hedges[(unsigned) readLong() - 1];
+    s->hedges[i] = NULL; // Terminate.
 }
 
 static void archiveSubsectors(gamemap_t *map, boolean write)
@@ -811,7 +811,7 @@ static void archiveSubsectors(gamemap_t *map, boolean write)
 
 static void writeSeg(const gamemap_t *map, uint idx)
 {
-    seg_t              *s = &map->segs[idx];
+    HEdge              *s = &map->hedges[idx];
 
     writeLong((s->v[0] - map->vertexes) + 1);
     writeLong((s->v[1] - map->vertexes) + 1);
@@ -821,7 +821,7 @@ static void writeSeg(const gamemap_t *map, uint idx)
     writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
     writeLong(s->sec[BACK]? ((s->sec[BACK] - map->sectors) + 1) : 0);
     writeLong(s->subsector? ((s->subsector - map->ssectors) + 1) : 0);
-    writeLong(s->backSeg? ((s->backSeg - map->segs) + 1) : 0);
+    writeLong(s->twin? ((s->twin - map->hedges) + 1) : 0);
     writeLong((long) s->angle);
     writeByte(s->side);
     writeByte(s->flags);
@@ -830,7 +830,7 @@ static void writeSeg(const gamemap_t *map, uint idx)
 static void readSeg(const gamemap_t *map, uint idx)
 {
     long                obIdx;
-    seg_t              *s = &map->segs[idx];
+    HEdge              *s = &map->hedges[idx];
 
     s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
     s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
@@ -845,7 +845,7 @@ static void readSeg(const gamemap_t *map, uint idx)
     obIdx = readLong();
     s->subsector = (obIdx == 0? NULL : &map->ssectors[(unsigned) obIdx - 1]);
     obIdx = readLong();
-    s->backSeg = (obIdx == 0? NULL : &map->segs[(unsigned) obIdx - 1]);
+    s->twin = (obIdx == 0? NULL : &map->hedges[(unsigned) obIdx - 1]);
     s->angle = (angle_t) readLong();
     s->side = readByte();
     s->flags = readByte();
@@ -856,20 +856,20 @@ static void archiveSegs(gamemap_t *map, boolean write)
     uint                i;
 
     if(write)
-        beginSegment(DAMSEG_SEGS);
+        beginSegment(DAMSEG_HEDGES);
     else
-        assertSegment(DAMSEG_SEGS);
+        assertSegment(DAMSEG_HEDGES);
 
     if(write)
     {
-        writeLong(map->numSegs);
-        for(i = 0; i < map->numSegs; ++i)
+        writeLong(map->numHEdges);
+        for(i = 0; i < map->numHEdges; ++i)
             writeSeg(map, i);
     }
     else
     {
-        map->numSegs = readLong();
-        for(i = 0; i < map->numSegs; ++i)
+        map->numHEdges = readLong();
+        for(i = 0; i < map->numHEdges; ++i)
             readSeg(map, i);
     }
 
@@ -996,10 +996,10 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeByte(p->crush? 1 : 0);
     writeLong((long) p->seqType);
 
-    writeLong((long) p->numSegs);
-    for(i = 0; i < p->numSegs; ++i)
+    writeLong((long) p->numHEdges);
+    for(i = 0; i < p->numHEdges; ++i)
     {
-        seg_t              *s = p->segs[i];
+        HEdge              *s = p->hedges[i];
 
         writeLong((s->v[0] - map->vertexes) + 1);
         writeLong((s->v[1] - map->vertexes) + 1);
@@ -1037,12 +1037,12 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->crush = (readByte()? true : false);
     p->seqType = (int) readLong();
 
-    // Polyobj seg list.
-    p->numSegs = (uint) readLong();
-    p->segs = Z_Malloc(sizeof(seg_t*) * (p->numSegs + 1), PU_MAP, 0);
-    for(i = 0; i < p->numSegs; ++i)
+    // Polyobj hedge list.
+    p->numHEdges = (uint) readLong();
+    p->hedges = Z_Malloc(sizeof(HEdge*) * (p->numHEdges + 1), PU_MAP, 0);
+    for(i = 0; i < p->numHEdges; ++i)
     {
-        seg_t              *s =
+        HEdge              *s =
             Z_Calloc(sizeof(*s), PU_MAP, 0);
 
         s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
@@ -1057,9 +1057,9 @@ static void readPolyobj(const gamemap_t *map, uint idx)
         s->side = (readByte()? 1 : 0);
         s->flags = readByte();
 
-        p->segs[i] = s;
+        p->hedges[i] = s;
     }
-    p->segs[i] = NULL; // Terminate.
+    p->hedges[i] = NULL; // Terminate.
 }
 
 static void archivePolyobjs(gamemap_t *map, boolean write)

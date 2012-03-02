@@ -496,20 +496,20 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
         if(!li->L_backside)
         {
             if(pln->type != PLN_MID)
-                Surface_Update(&li->L_frontside->SW_surface(SEG_MIDDLE));
+                Surface_Update(&li->L_frontside->SW_surface(SS_MIDDLE));
         }
         else if(li->L_backsector != li->L_frontsector)
         {
             byte                side =
                 (li->L_frontsector == pln->sector? FRONT : BACK);
 
-            Surface_Update(&li->L_side(side)->SW_surface(SEG_BOTTOM));
-            Surface_Update(&li->L_side(side)->SW_surface(SEG_TOP));
+            Surface_Update(&li->L_side(side)->SW_surface(SS_BOTTOM));
+            Surface_Update(&li->L_side(side)->SW_surface(SS_TOP));
 
             if(pln->type == PLN_FLOOR)
-                Surface_Update(&li->L_side(side^1)->SW_surface(SEG_BOTTOM));
+                Surface_Update(&li->L_side(side^1)->SW_surface(SS_BOTTOM));
             else
-                Surface_Update(&li->L_side(side^1)->SW_surface(SEG_TOP));
+                Surface_Update(&li->L_side(side^1)->SW_surface(SS_TOP));
         }
 
         linep++;
@@ -1105,10 +1105,10 @@ void R_InitLinks(gamemap_t* map)
  * Create a list of vertices for the subsector which are suitable for
  * use as the points of single a trifan.
  *
- * We are assured by the node building process that subsector->segs has
+ * We are assured by the node building process that subsector->hedges has
  * been ordered by angle, clockwise starting from the smallest angle.
  * So, most of the time, the points can be created directly from the
- * seg vertexes.
+ * hedge vertexes.
  *
  * However, we do not want any overlapping tris so check the area of
  * each triangle is > 0, if not; try the next vertice in the list until
@@ -1123,7 +1123,7 @@ static void triangulateSubSector(subsector_t *ssec)
 
     // We need to find a good tri-fan base vertex, (one that doesn't
     // generate zero-area triangles).
-    if(ssec->segCount <= 3)
+    if(ssec->hedgeCount <= 3)
     {   // Always valid.
         found = true;
     }
@@ -1137,18 +1137,18 @@ static void triangulateSubSector(subsector_t *ssec)
         baseIDX = 0;
         do
         {
-            seg_t              *seg = ssec->segs[baseIDX];
+            HEdge              *hedge = ssec->hedges[baseIDX];
 
-            base = &seg->SG_v1->v;
+            base = &hedge->HE_v1->v;
             i = 0;
             do
             {
-                seg_t              *seg2 = ssec->segs[i];
+                HEdge              *seg2 = ssec->hedges[i];
 
                 if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
                 {
-                    a = &seg2->SG_v1->v;
-                    b = &seg2->SG_v2->v;
+                    a = &seg2->HE_v1->v;
+                    b = &seg2->HE_v2->v;
 
                     if(TRIFAN_LIMIT >=
                        M_TriangleArea(base->pos, a->pos, b->pos))
@@ -1158,18 +1158,18 @@ static void triangulateSubSector(subsector_t *ssec)
                 }
 
                 i++;
-            } while(base && i < ssec->segCount);
+            } while(base && i < ssec->hedgeCount);
 
             if(!base)
                 baseIDX++;
-        } while(!base && baseIDX < ssec->segCount);
+        } while(!base && baseIDX < ssec->hedgeCount);
 
         if(base)
             found = true;
 #undef TRIFAN_LIMIT
     }
 
-    ssec->numVertices = ssec->segCount;
+    ssec->numVertices = ssec->hedgeCount;
     if(!found)
         ssec->numVertices += 2;
     ssec->vertices =
@@ -1180,19 +1180,19 @@ static void triangulateSubSector(subsector_t *ssec)
     n = 0;
     if(!found)
         ssec->vertices[n++] = &ssec->midPoint;
-    for(i = 0; i < ssec->segCount; ++i)
+    for(i = 0; i < ssec->hedgeCount; ++i)
     {
         uint                idx;
-        seg_t              *seg;
+        HEdge              *hedge;
 
         idx = baseIDX + i;
-        if(idx >= ssec->segCount)
-            idx = idx - ssec->segCount;
-        seg = ssec->segs[idx];
-        ssec->vertices[n++] = &seg->SG_v1->v;
+        if(idx >= ssec->hedgeCount)
+            idx = idx - ssec->hedgeCount;
+        hedge = ssec->hedges[idx];
+        ssec->vertices[n++] = &hedge->HE_v1->v;
     }
     if(!found)
-        ssec->vertices[n++] = &ssec->segs[0]->SG_v1->v;
+        ssec->vertices[n++] = &ssec->hedges[0]->HE_v1->v;
     ssec->vertices[n] = NULL; // terminate.
 
     if(!found)
@@ -1559,26 +1559,26 @@ boolean R_SectorContainsSkySurfaces(const sector_t* sec)
  * Non-animated materials are preferred.
  * Sky materials are ignored.
  */
-static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
+static material_t* chooseFixMaterial(sidedef_t* s, sidedefsection_t section)
 {
     material_t* choice1 = NULL, *choice2 = NULL;
 
-    if(section == SEG_BOTTOM || section == SEG_TOP)
+    if(section == SS_BOTTOM || section == SS_TOP)
     {
         byte sid = (s->line->L_frontside == s? 0 : 1);
         sector_t* frontSec = s->line->L_sector(sid);
         sector_t* backSec = s->line->L_sector(sid^1);
         surface_t* suf;
 
-        if(backSec && ((section == SEG_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
-                       (section == SEG_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
+        if(backSec && ((section == SS_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight) ||
+                       (section == SS_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight)))
         {
-            suf = &backSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
+            suf = &backSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
             if(suf->material && !R_IsSkySurface(suf))
                 choice1 = suf->material;
         }
 
-        suf = &frontSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
+        suf = &frontSec->SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
         if(suf->material && !R_IsSkySurface(suf))
             choice2 = suf->material;
     }
@@ -1594,17 +1594,17 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
     return NULL;
 }
 
-static void updateSidedefSection(sidedef_t* s, segsection_t section)
+static void updateSidedefSection(sidedef_t* s, sidedefsection_t section)
 {
     surface_t*          suf;
 
-    if(section == SEG_MIDDLE)
+    if(section == SS_MIDDLE)
         return; // Not applicable.
 
     suf = &s->sections[section];
     if(!suf->material /*&&
        !R_IsSkySurface(&s->sector->
-            SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
+            SP_plane(section == SS_BOTTOM? PLN_FLOOR : PLN_CEILING)->
                 surface)*/)
     {
         Surface_SetMaterial(suf, chooseFixMaterial(s, section));
@@ -1640,15 +1640,15 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
         // Check for missing lowers.
         if(frontSec->SP_floorheight < backSec->SP_floorheight)
-            updateSidedefSection(front, SEG_BOTTOM);
+            updateSidedefSection(front, SS_BOTTOM);
         else if(frontSec->SP_floorheight > backSec->SP_floorheight)
-            updateSidedefSection(back, SEG_BOTTOM);
+            updateSidedefSection(back, SS_BOTTOM);
 
         // Check for missing uppers.
         if(backSec->SP_ceilheight < frontSec->SP_ceilheight)
-            updateSidedefSection(front, SEG_TOP);
+            updateSidedefSection(front, SS_TOP);
         else if(backSec->SP_ceilheight > frontSec->SP_ceilheight)
-            updateSidedefSection(back, SEG_TOP);
+            updateSidedefSection(back, SS_TOP);
     }
 }
 
@@ -1692,15 +1692,15 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
             do
             {
                 subsector_t* ssec = *ssecp;
-                seg_t** segp = ssec->segs;
+                HEdge** segp = ssec->hedges;
                 while(*segp)
                 {
-                    seg_t* seg = *segp;
-                    if(seg->lineDef)
+                    HEdge* hedge = *segp;
+                    if(hedge->lineDef)
                     {
                         uint i;
                         for(i = 0; i < 3; ++i)
-                            SB_SurfaceMoved(seg->bsuf[i]);
+                            SB_SurfaceMoved(hedge->bsuf[i]);
                     }
                     segp++;
                 }

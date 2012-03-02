@@ -1045,7 +1045,7 @@ desc = 1=Filter camera movement between game tics (OBSOLETE).
 desc = 1=Load generated GL nodes data from the bspcache directory. 0=Always generate new GL data.
 
 [bsp-factor]
-desc = glBSP: changes the cost assigned to SEG splits (default: 7).
+desc = glBSP: changes the cost assigned to edge splits (default: 7).
 
 [con-show-during-setup]
 desc = 1=Show console when a map is being loaded.

@@ -180,7 +180,7 @@ void R_UpdateVertexShadowOffsets(vertex_t *vtx)
 }
 
 /**
- * Link a seg to an arbitary subsector for the purposes of shadowing.
+ * Link a hedge to an arbitary subsector for the purposes of shadowing.
  */
 static void linkShadowLineDefToSSec(linedef_t *line, byte side,
                                     subsector_t *subsector)

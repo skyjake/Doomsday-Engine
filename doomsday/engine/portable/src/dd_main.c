@@ -2102,8 +2102,8 @@ void* DD_GetVariable(int ddvalue)
     case DD_POLYOBJ_COUNT:
         return &numPolyObjs;
 
-    case DD_SEG_COUNT:
-        return &numSegs;
+    case DD_HEDGE_COUNT:
+        return &numHEdges;
 
     case DD_SUBSECTOR_COUNT:
         return &numSSectors;

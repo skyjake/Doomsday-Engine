@@ -74,8 +74,8 @@ Uri* mapUri; // Name by which the game referred to the current map.
 uint numVertexes = 0;
 vertex_t* vertexes = NULL;
 
-uint numSegs = 0;
-seg_t* segs = NULL;
+uint numHEdges = 0;
+HEdge* hedges = NULL;
 
 uint numSectors = 0;
 sector_t* sectors = NULL;
@@ -118,18 +118,18 @@ static gamemapobjdef_t* gameMapObjDefs;
 
 void P_PolyobjChanged(polyobj_t* po)
 {
-    seg_t** segIter = po->segs;
+    HEdge** hedgeIter = po->hedges;
     uint i;
 
-    for(i = 0; i < po->numSegs; ++i, segIter++)
+    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
     {
-        seg_t* seg = *segIter;
+        HEdge* hedge = *hedgeIter;
         int j;
 
         // Shadow bias must be told.
         for(j = 0; j < 3; ++j)
         {
-            SB_SurfaceMoved(seg->bsuf[j]);
+            SB_SurfaceMoved(hedge->bsuf[j]);
         }
     }
 }
@@ -181,8 +181,8 @@ void P_SetCurrentMap(gamemap_t* map)
         numVertexes = 0;
         vertexes = 0;
 
-        numSegs = 0;
-        segs = 0;
+        numHEdges = 0;
+        hedges = 0;
 
         numSectors = 0;
         sectors = 0;
@@ -222,8 +222,8 @@ void P_SetCurrentMap(gamemap_t* map)
     numVertexes = map->numVertexes;
     vertexes = map->vertexes;
 
-    numSegs = map->numSegs;
-    segs = map->segs;
+    numHEdges = map->numHEdges;
+    hedges = map->hedges;
 
     numSectors = map->numSectors;
     sectors = map->sectors;

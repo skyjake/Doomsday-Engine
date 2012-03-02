@@ -111,10 +111,10 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     boolean noBack;
 
     if(!interceptLineDef(li, los, &dl))
-        return true; // Ray does not intercept seg on the X/Y plane.
+        return true; // Ray does not intercept hedge on the X/Y plane.
 
     if(!li->L_side(side))
-        return true; // Seg is on the back side of a one-sided window.
+        return true; // HEdge is on the back side of a one-sided window.
 
     fsec = li->L_sector(side);
     bsec  = (li->L_backside? li->L_sector(side^1) : NULL);
@@ -130,7 +130,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
         if((los->flags & LS_PASSLEFT) &&
            P_PointOnLinedefSideXY(FIX2FLT(los->trace.pos[VX]),
                                 FIX2FLT(los->trace.pos[VY]), li))
-            return true; // Ray does not intercept seg from left to right.
+            return true; // Ray does not intercept hedge from left to right.
 
         if(!(los->flags & (LS_PASSOVER | LS_PASSUNDER)))
             return false; // Stop iteration.
@@ -204,15 +204,15 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
     if(ssec->polyObj)
     {   // Check polyobj lines.
         polyobj_t* po = ssec->polyObj;
-        seg_t** segPtr = po->segs;
+        HEdge** segPtr = po->hedges;
         while(*segPtr)
         {
-            seg_t* seg = *segPtr;
-            if(seg->lineDef && seg->lineDef->validCount != validCount)
+            HEdge* hedge = *segPtr;
+            if(hedge->lineDef && hedge->lineDef->validCount != validCount)
             {
-                linedef_t* li = seg->lineDef;
+                linedef_t* li = hedge->lineDef;
                 li->validCount = validCount;
-                if(!crossLineDef(li, seg->side, los))
+                if(!crossLineDef(li, hedge->side, los))
                     return false; // Stop iteration.
             }
             segPtr++;
@@ -220,15 +220,15 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
     }
 
     // Check lines.
-    { seg_t** segPtr = ssec->segs;
+    { HEdge** segPtr = ssec->hedges;
     while(*segPtr)
     {
-        const seg_t* seg = *segPtr;
-        if(seg->lineDef && seg->lineDef->validCount != validCount)
+        const HEdge* hedge = *segPtr;
+        if(hedge->lineDef && hedge->lineDef->validCount != validCount)
         {
-            linedef_t* li = seg->lineDef;
+            linedef_t* li = hedge->lineDef;
             li->validCount = validCount;
-            if(!crossLineDef(li, seg->side, los))
+            if(!crossLineDef(li, hedge->side, los))
                 return false;
         }
         segPtr++;

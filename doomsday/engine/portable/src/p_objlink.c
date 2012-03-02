@@ -80,7 +80,7 @@ typedef struct {
     objcontact_t* head[NUM_OBJ_TYPES];
 } objcontactlist_t;
 
-static void processSeg(seg_t* seg, void* data);
+static void processSeg(HEdge* hedge, void* data);
 
 static objlink_t* objlinks = NULL;
 static objlink_t* objlinkFirst = NULL, *objlinkCursor = NULL;
@@ -332,11 +332,11 @@ int RIT_LinkObjToSubsector(subsector_t* subsector, void* paramaters)
  */
 static void spreadInSubsector(subsector_t* ssec, void* paramaters)
 {
-    seg_t** segPtr = ssec->segs;
+    HEdge** segPtr = ssec->hedges;
     while(*segPtr) { processSeg(*segPtr++, paramaters); }
 }
 
-static void processSeg(seg_t* seg, void* paramaters)
+static void processSeg(HEdge* hedge, void* paramaters)
 {
     contactfinderparams_t* p = (contactfinderparams_t*) paramaters;
     linkobjtossecparams_t loParams;
@@ -344,16 +344,16 @@ static void processSeg(seg_t* seg, void* paramaters)
     float distance;
     vertex_t* vtx;
 
-    // Seg must be between two different ssecs.
-    if(seg->lineDef && (!seg->backSeg || seg->subsector == seg->backSeg->subsector))
+    // HEdge must be between two different ssecs.
+    if(hedge->lineDef && (!hedge->twin || hedge->subsector == hedge->twin->subsector))
         return;
 
     // Which way does the spread go?
-    if(seg->subsector->validCount == validCount &&
-       seg->backSeg->subsector->validCount != validCount)
+    if(hedge->subsector->validCount == validCount &&
+       hedge->twin->subsector->validCount != validCount)
     {
-        source = seg->subsector;
-        dest = seg->backSeg->subsector;
+        source = hedge->subsector;
+        dest = hedge->twin->subsector;
     }
     else
     {
@@ -372,7 +372,7 @@ static void processSeg(seg_t* seg, void* paramaters)
     }
 
     // Can the spread happen?
-    if(seg->lineDef)
+    if(hedge->lineDef)
     {
         if(dest->sector)
         {
@@ -387,24 +387,24 @@ static void processSeg(seg_t* seg, void* paramaters)
 
         // Don't spread if the middle material completely fills the gap between
         // floor and ceiling (direction is from dest to source).
-        if(LineDef_MiddleMaterialCoversOpening(seg->lineDef,
-            dest == seg->backSeg->subsector? false : true, false))
+        if(LineDef_MiddleMaterialCoversOpening(hedge->lineDef,
+            dest == hedge->twin->subsector? false : true, false))
             return;
     }
 
-    // Calculate 2D distance to seg.
+    // Calculate 2D distance to hedge.
     {
-    const float dx = seg->SG_v2pos[VX] - seg->SG_v1pos[VX];
-    const float dy = seg->SG_v2pos[VY] - seg->SG_v1pos[VY];
-    vtx = seg->SG_v1;
+    const float dx = hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX];
+    const float dy = hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY];
+    vtx = hedge->HE_v1;
     distance = ((vtx->V_pos[VY] - p->objPos[VY]) * dx -
-                (vtx->V_pos[VX] - p->objPos[VX]) * dy) / seg->length;
+                (vtx->V_pos[VX] - p->objPos[VX]) * dy) / hedge->length;
     }
 
-    if(seg->lineDef)
+    if(hedge->lineDef)
     {
-        if((source == seg->subsector && distance < 0) ||
-           (source == seg->backSeg->subsector && distance > 0))
+        if((source == hedge->subsector && distance < 0) ||
+           (source == hedge->twin->subsector && distance > 0))
         {
             // Can't spread in this direction.
             return;

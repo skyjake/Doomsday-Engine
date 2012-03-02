@@ -319,9 +319,9 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
         else
             rHeight = lHeight = 0;
 
-        VERBOSE( Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
+        VERBOSE( Con_Printf("BSP built: %d Nodes, %d Subsectors, %d HEdges, %d Vertexes\n"
                    "  Balance %+ld (l%ld - r%ld).\n",
-                   map->numNodes, map->numSSectors, map->numSegs, map->numVertexes,
+                   map->numNodes, map->numSSectors, map->numHEdges, map->numVertexes,
                    lHeight - rHeight, lHeight, rHeight) )
     }
 

@@ -32,7 +32,7 @@
  * wall segments and determining, which subsector vertices will be
  * shadowed.
  *
- * In other words, walls use shadow polygons (over entire segs), while
+ * In other words, walls use shadow polygons (over entire hedges), while
  * planes use vertex lighting.  Since planes are usually tesselated
  * into a great deal of subsectors (and triangles), they are better
  * suited for vertex lighting.  In some cases we will be forced to

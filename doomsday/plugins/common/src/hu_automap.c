@@ -579,11 +579,11 @@ static void rendLine2(uiwidget_t* obj, float x1, float y1, float x2, float y2,
     }
 }
 
-static int rendSeg(void* seg_, void* data)
+static int rendSeg(void* hedge_, void* data)
 {
-    assert(NULL != seg_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
+    assert(NULL != hedge_ && NULL != data && ((uiwidget_t*)data)->type == GUI_AUTOMAP);
     {
-    seg_t* seg = (seg_t*) seg_;
+    HEdge* hedge = (HEdge*) hedge_;
     uiwidget_t* obj = (uiwidget_t*)data;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     sector_t* frontSector, *backSector;
@@ -593,7 +593,7 @@ static int rendSeg(void* seg_, void* data)
     linedef_t* line;
     xline_t* xLine;
 
-    line = P_GetPtrp(seg, DMU_LINEDEF);
+    line = P_GetPtrp(hedge, DMU_LINEDEF);
     if(!line) return false;
 
     xLine = P_ToXLine(line);
@@ -677,7 +677,7 @@ static int rendSeg(void* seg_, void* data)
 
 static int rendSegsOfSubsector(subsector_t* ssec, void* context)
 {
-    return P_Iteratep(ssec, DMU_SEG, context, rendSeg);
+    return P_Iteratep(ssec, DMU_HEDGE, context, rendSeg);
 }
 
 /**
@@ -710,7 +710,7 @@ static void renderWalls(uiwidget_t* obj, int objType, boolean addToLists)
         // walls, not just those visible *now* (note rotation).
         for(i = 0; i < numsubsectors; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_SEG, obj, rendSeg);
+            P_Iteratep(P_ToPtr(DMU_SUBSECTOR, i), DMU_HEDGE, obj, rendSeg);
         }
     }
 }
@@ -774,12 +774,12 @@ static void rendLinedef(linedef_t* line, float r, float g, float b, float a,
 }
 
 /**
- * Rather than draw the segs instead this will draw the linedef of which
- * the seg is a part.
+ * Rather than draw the hedges instead this will draw the linedef of which
+ * the hedge is a part.
  */
 int rendPolyobjSeg(void* segPtr, void* context)
 {
-    seg_t* seg = (seg_t*)segPtr;
+    HEdge* hedge = (HEdge*)segPtr;
     uiwidget_t* obj = (uiwidget_t*)context;
     guidata_automap_t* am = (guidata_automap_t*)obj->typedata;
     const float alpha = uiRendState->pageAlpha;
@@ -788,7 +788,7 @@ int rendPolyobjSeg(void* segPtr, void* context)
     linedef_t* line;
     xline_t* xLine;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
+    if(!(line = P_GetPtrp(hedge, DMU_LINEDEF)) || !(xLine = P_ToXLine(line))) return false;
 
     // Already processed this frame?
     if(xLine->validCount == VALIDCOUNT) return false;
@@ -821,7 +821,7 @@ int rendPolyobjSeg(void* segPtr, void* context)
 int rendSegsOfPolyobj(polyobj_t* po, void* context)
 {
     int result = false; // Continue iteration.
-    seg_t** segPtr = po->segs;
+    HEdge** segPtr = po->hedges;
     while(*segPtr && !(result = rendPolyobjSeg(*segPtr, context)))
         segPtr++;
     return result;

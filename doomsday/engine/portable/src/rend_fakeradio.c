@@ -81,7 +81,7 @@ void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
     // Update disabled?
     if(!devFakeRadioUpdate) return;
 
-    // Have we yet determined the shadow properties to be used with segs
+    // Have we yet determined the shadow properties to be used with hedges
     // on this sidedef?
     s = line->sideDefs[backSide? BACK : FRONT];
     if(s->fakeRadioUpdateCount != frameCount)
@@ -210,7 +210,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
         lengthDelta = 0;
         if(!stopScan)
         {
-            // This line will attribute to this seg's shadow edge.
+            // This line will attribute to this hedge's shadow edge.
             // Store identity for later use.
             edge->diff = diff;
             edge->line = iter;
@@ -232,7 +232,7 @@ static void scanNeighbor(boolean scanTop, const linedef_t* line, uint side,
             }
 
             // Does this line's length contribute to the alignment of the
-            // texture on the seg shadow edge being rendered?
+            // texture on the hedge shadow edge being rendered?
             if(scanTop)
             {
                 if(iter->L_backside &&
@@ -1202,7 +1202,7 @@ static void setRelativeHeights(const sector_t* front, const sector_t* back, bool
 static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, const sector_t* back,
     int backside, boolean isCeiling, float fz, float bz)
 {
-    surface_t* surface = &line->L_side(backside)->sections[isCeiling? SEG_TOP:SEG_BOTTOM];
+    surface_t* surface = &line->L_side(backside)->sections[isCeiling? SS_TOP:SS_BOTTOM];
 
     if(fz < bz && !surface->material &&
        !(surface->inFlags & SUIF_FIX_MISSING_MATERIAL))

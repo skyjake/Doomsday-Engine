@@ -361,10 +361,10 @@ boolean R_IsPointInSubsector(const float x, const float y,
     uint                i;
     fvertex_t*          vi, *vj;
 
-    for(i = 0; i < ssec->segCount; ++i)
+    for(i = 0; i < ssec->hedgeCount; ++i)
     {
-        vi = &ssec->segs[i]->SG_v1->v;
-        vj = &ssec->segs[(i + 1) % ssec->segCount]->SG_v1->v;
+        vi = &ssec->hedges[i]->HE_v1->v;
+        vj = &ssec->hedges[(i + 1) % ssec->hedgeCount]->HE_v1->v;
 
         if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)

@@ -46,10 +46,10 @@ int Subsector_GetProperty(const subsector_t* sub, setargs_t* args)
     case DMT_MOBJS:
         DMU_GetValue(DMT_SECTOR_MOBJLIST, &sub->sector->mobjList, args, 0);
         break;
-    case DMU_SEG_COUNT: {
+    case DMU_HEDGE_COUNT: {
         // FIXME:
-        //DMU_GetValue(DMT_SUBSECTOR_SEGCOUNT, &sub->segCount, args, 0);
-        int val = (int) sub->segCount;
+        //DMU_GetValue(DMT_SUBSECTOR_HEDGECOUNT, &sub->hedgeCount, args, 0);
+        int val = (int) sub->hedgeCount;
         DMU_GetValue(DDVT_INT, &val, args, 0);
         break;
       }

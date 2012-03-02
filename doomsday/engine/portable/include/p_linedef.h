@@ -87,7 +87,7 @@ boolean LineDef_BackClosed(const linedef_t* lineDef, int side, boolean ignoreOpa
 
 /**
  * The DOOM lighting model applies a sector light level delta when drawing
- * Segs based on their 2D world angle.
+ * line segments based on their 2D world angle.
  *
  * @param lineDef  LineDef to calculate delta for.
  * @param side  Side of the LineDef we are interested in.

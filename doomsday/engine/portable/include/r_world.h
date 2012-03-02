@@ -104,7 +104,7 @@ void R_MapInitSurfaceLists(void);
 void            R_UpdateSkyFixForSec(const sector_t* sec);
 void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
                                 vertex_t* verts[2]);
-boolean         R_FindBottomTop(linedef_t* lineDef, int side, segsection_t section,
+boolean         R_FindBottomTop(linedef_t* lineDef, int side, sidedefsection_t section,
                                 float matOffsetX, float matOffsetY,
                                 const plane_t* ffloor, const plane_t* fceil,
                                 const plane_t* bfloor, const plane_t* bceil,

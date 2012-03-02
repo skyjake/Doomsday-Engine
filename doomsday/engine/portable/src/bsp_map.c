@@ -52,8 +52,8 @@
 
 // CODE --------------------------------------------------------------------
 
-static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
-                              bsp_hedge_t* hEdge)
+static void hardenSidedefHEdgeList(gamemap_t* map, sidedef_t* side, HEdge* hedge,
+    bsp_hedge_t* bspHEdge)
 {
     uint count;
     bsp_hedge_t* first, *other;
@@ -62,15 +62,15 @@ static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
         return;
 
     // Have we already processed this side?
-    if(side->segs)
+    if(side->hedges)
         return;
 
-    // Find the first seg.
-    first = hEdge;
+    // Find the first hedge.
+    first = bspHEdge;
     while(first->prevOnSide)
         first = first->prevOnSide;
 
-    // Count the segs for this side.
+    // Count the hedges for this side.
     count = 0;
     other = first;
     while(other)
@@ -79,19 +79,19 @@ static void hardenSideSegList(gamemap_t* map, sidedef_t* side, seg_t* seg,
         count++;
     }
 
-    // Allocate the final side seg table.
-    side->segCount = count;
-    side->segs =
-        Z_Malloc(sizeof(seg_t*) * (side->segCount + 1), PU_MAPSTATIC, 0);
+    // Allocate the final side hedge table.
+    side->hedgeCount = count;
+    side->hedges =
+        Z_Malloc(sizeof(HEdge*) * (side->hedgeCount + 1), PU_MAPSTATIC, 0);
 
     count = 0;
     other = first;
     while(other)
     {
-        side->segs[count++] = &map->segs[other->index];
+        side->hedges[count++] = &map->hedges[other->index];
         other = other->nextOnSide;
     }
-    side->segs[count] = NULL; // Terminate.
+    side->hedges[count] = NULL; // Terminate.
 }
 
 static int C_DECL hEdgeCompare(const void* p1, const void* p2)
@@ -139,7 +139,7 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
     return true; // Continue traversal.
 }
 
-static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
+static void buildHEdgesFromBSPHEdges(gamemap_t* dest, binarytree_t* rootNode)
 {
     uint i;
     bsp_hedge_t** index;
@@ -155,7 +155,7 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
     BinaryTree_InOrder(rootNode, hEdgeCollector, &params);
 
     if(!(params.curIdx > 0))
-        Con_Error("buildSegsFromHEdges: No halfedges?");
+        Con_Error("buildHEdgesFromBSPHEdges: No hedges?");
 
     // Allocate the sort buffer.
     index = M_Malloc(sizeof(bsp_hedge_t*) * params.curIdx);
@@ -168,76 +168,76 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
     // Sort the half-edges into ascending index order.
     qsort(index, params.curIdx, sizeof(bsp_hedge_t*), hEdgeCompare);
 
-    dest->numSegs = (uint) params.curIdx;
-    dest->segs = Z_Calloc(dest->numSegs * sizeof(seg_t), PU_MAPSTATIC, 0);
-    for(i = 0; i < dest->numSegs; ++i)
+    dest->numHEdges = (uint) params.curIdx;
+    dest->hedges = Z_Calloc(dest->numHEdges * sizeof(HEdge), PU_MAPSTATIC, 0);
+    for(i = 0; i < dest->numHEdges; ++i)
     {
-        seg_t* seg = &dest->segs[i];
-        bsp_hedge_t* hEdge = index[i];
+        HEdge* hedge = &dest->hedges[i];
+        bsp_hedge_t* bspHEdge = index[i];
 
-        seg->header.type = DMU_SEG;
+        hedge->header.type = DMU_HEDGE;
 
-        seg->SG_v1 = &dest->vertexes[hEdge->v[0]->buildData.index - 1];
-        seg->SG_v2 = &dest->vertexes[hEdge->v[1]->buildData.index - 1];
+        hedge->HE_v1 = &dest->vertexes[bspHEdge->v[0]->buildData.index - 1];
+        hedge->HE_v2 = &dest->vertexes[bspHEdge->v[1]->buildData.index - 1];
 
-        seg->side  = hEdge->side;
-        if(hEdge->lineDef)
-            seg->lineDef = &dest->lineDefs[hEdge->lineDef->buildData.index - 1];
-        if(hEdge->twin)
-            seg->backSeg = &dest->segs[hEdge->twin->index];
+        hedge->side  = bspHEdge->side;
+        if(bspHEdge->lineDef)
+            hedge->lineDef = &dest->lineDefs[bspHEdge->lineDef->buildData.index - 1];
+        if(bspHEdge->twin)
+            hedge->twin = &dest->hedges[bspHEdge->twin->index];
 
-        seg->flags = 0;
-        if(seg->lineDef)
+        hedge->flags = 0;
+        if(hedge->lineDef)
         {
-            linedef_t*          ldef = seg->lineDef;
-            vertex_t*           vtx = seg->lineDef->L_v(seg->side);
+            linedef_t*          ldef = hedge->lineDef;
+            vertex_t*           vtx = hedge->lineDef->L_v(hedge->side);
 
-            if(ldef->L_side(seg->side))
-                seg->SG_frontsector = ldef->L_side(seg->side)->sector;
+            if(ldef->L_side(hedge->side))
+                hedge->HE_frontsector = ldef->L_side(hedge->side)->sector;
 
             if(ldef->L_frontside && ldef->L_backside)
             {
-                seg->SG_backsector = ldef->L_side(seg->side ^ 1)->sector;
+                hedge->HE_backsector = ldef->L_side(hedge->side ^ 1)->sector;
             }
             else
             {
-                seg->SG_backsector = 0;
+                hedge->HE_backsector = 0;
             }
 
-            seg->offset = P_AccurateDistance(seg->SG_v1pos[VX] - vtx->V_pos[VX],
-                                             seg->SG_v1pos[VY] - vtx->V_pos[VY]);
+            hedge->offset = P_AccurateDistance(hedge->HE_v1pos[VX] - vtx->V_pos[VX],
+                                             hedge->HE_v1pos[VY] - vtx->V_pos[VY]);
         }
         else
         {
-            seg->lineDef = NULL;
-            seg->SG_frontsector = NULL;
-            seg->SG_backsector = NULL;
+            hedge->lineDef = NULL;
+            hedge->HE_frontsector = NULL;
+            hedge->HE_backsector = NULL;
         }
 
-        if(seg->lineDef)
-            hardenSideSegList(dest, SEG_SIDEDEF(seg), seg, hEdge);
+        if(hedge->lineDef)
+            hardenSidedefHEdgeList(dest, HEDGE_SIDEDEF(hedge), hedge, bspHEdge);
 
-        seg->angle =
-            bamsAtan2((int) (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]),
-                      (int) (seg->SG_v2pos[VX] - seg->SG_v1pos[VX])) << FRACBITS;
+        hedge->angle =
+            bamsAtan2((int) (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]),
+                      (int) (hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX])) << FRACBITS;
 
         // Calculate the length of the segment. We need this for
         // the texture coordinates. -jk
-        seg->length = P_AccurateDistance(seg->SG_v2pos[VX] - seg->SG_v1pos[VX],
-                                         seg->SG_v2pos[VY] - seg->SG_v1pos[VY]);
+        hedge->length = P_AccurateDistance(hedge->HE_v2pos[VX] - hedge->HE_v1pos[VX],
+                                         hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]);
 
-        if(seg->length == 0)
-            seg->length = 0.01f; // Hmm...
+        if(hedge->length == 0)
+            hedge->length = 0.01f; // Hmm...
 
         // Calculate the tangent space surface vectors.
         // Front first
-        if(seg->lineDef && SEG_SIDEDEF(seg))
+        if(hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
-            sidedef_t* side = SEG_SIDEDEF(seg);
+            sidedef_t* side = HEDGE_SIDEDEF(hedge);
             surface_t* surface = &side->SW_topsurface;
 
-            surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
-            surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
+            surface->normal[VY] = (hedge->HE_v1pos[VX] - hedge->HE_v2pos[VX]) / hedge->length;
+            surface->normal[VX] = (hedge->HE_v2pos[VY] - hedge->HE_v1pos[VY]) / hedge->length;
             surface->normal[VZ] = 0;
             V3_BuildTangents(surface->tangent, surface->bitangent, surface->normal);
 
@@ -256,29 +256,29 @@ static void buildSegsFromHEdges(gamemap_t* dest, binarytree_t* rootNode)
     M_Free(index);
 }
 
-static void hardenSSecSegList(gamemap_t* dest, subsector_t* ssec,
-                              bsp_hedge_t* list, size_t segCount)
+static void hardenSubsectorHEdgeList(gamemap_t* dest, subsector_t* ssec,
+                              bsp_hedge_t* list, size_t hedgeCount)
 {
     size_t i;
     bsp_hedge_t* cur;
-    seg_t** segs;
+    HEdge** hedges;
 
-    segs = Z_Malloc(sizeof(seg_t*) * (segCount + 1), PU_MAPSTATIC, 0);
+    hedges = Z_Malloc(sizeof(HEdge*) * (hedgeCount + 1), PU_MAPSTATIC, 0);
 
     for(cur = list, i = 0; cur; cur = cur->next, ++i)
-        segs[i] = &dest->segs[cur->index];
-    segs[segCount] = NULL; // Terminate.
+        hedges[i] = &dest->hedges[cur->index];
+    hedges[hedgeCount] = NULL; // Terminate.
 
-    if(i != segCount)
-        Con_Error("hardenSSecSegList: Miscounted?");
+    if(i != hedgeCount)
+        Con_Error("hardenSubsectorHEdgeList: Miscounted?");
 
-    ssec->segs = segs;
+    ssec->hedges = hedges;
 }
 
 static void hardenLeaf(gamemap_t* map, subsector_t* dest,
                        const bspleafdata_t* src)
 {
-    seg_t** segp;
+    HEdge** segp;
     boolean found;
     size_t hEdgeCount;
     bsp_hedge_t* hEdge;
@@ -291,25 +291,25 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     } while((hEdge = hEdge->next) != NULL);
 
     dest->header.type = DMU_SUBSECTOR;
-    dest->segCount = (uint) hEdgeCount;
+    dest->hedgeCount = (uint) hEdgeCount;
     dest->shadows = NULL;
     dest->vertices = NULL;
 
-    hardenSSecSegList(map, dest, src->hEdges, hEdgeCount);
+    hardenSubsectorHEdgeList(map, dest, src->hEdges, hEdgeCount);
 
     // Determine which sector this subsector belongs to.
-    segp = dest->segs;
+    segp = dest->hedges;
     found = false;
     while(*segp)
     {
-        seg_t* seg = *segp;
-        if(!found && seg->lineDef && SEG_SIDEDEF(seg))
+        HEdge* hedge = *segp;
+        if(!found && hedge->lineDef && HEDGE_SIDEDEF(hedge))
         {
-            sidedef_t* side = SEG_SIDEDEF(seg);
+            sidedef_t* side = HEDGE_SIDEDEF(hedge);
             dest->sector = side->sector;
             found = true;
         }
-        seg->subsector = dest;
+        hedge->subsector = dest;
         segp++;
     }
 
@@ -521,7 +521,7 @@ void SaveMap(gamemap_t* dest, void* rootNode, vertex_t*** vertexes,
 
     hardenVertexes(dest, vertexes, numVertexes);
     updateVertexLinks(dest);
-    buildSegsFromHEdges(dest, rn);
+    buildHEdgesFromBSPHEdges(dest, rn);
     hardenBSP(dest, rn);
 
     // How much time did we spend?
