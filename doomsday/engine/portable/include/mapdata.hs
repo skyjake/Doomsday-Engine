@@ -215,8 +215,8 @@ internal
 #define PS_offset               surface.offset
 #define PS_visoffset            surface.visOffset
 #define PS_rgba                 surface.rgba
-#define	PS_flags                surface.flags
-#define	PS_inflags              surface.inFlags
+#define PS_flags                surface.flags
+#define PS_inflags              surface.inFlags
 end
 
 struct plane
@@ -296,7 +296,7 @@ typedef struct msector_s {
 
     // Suppress superfluous mini warnings.
     int         warnedFacing;
-    int	        refCount;
+    int         refCount;
 } msector_t;
 end
 
@@ -393,7 +393,7 @@ internal
 typedef struct msidedef_s {
     // Sidedef index. Always valid after loading & pruning.
     int         index;
-    int	        refCount;
+    int         refCount;
 } msidedef_t;
 end
 
@@ -401,7 +401,7 @@ struct sidedef
     -       surface_t[3] sections
     UINT    uint        hedgeCount
     PTR     hedge_s**   hedges      // [hedgeCount] size, segs arranged left>right
-    PTR	    linedef_s*  line
+    PTR     linedef_s*  line
     PTR     sector_s*   sector
     SHORT   short       flags
     -       msidedef_t  buildData
