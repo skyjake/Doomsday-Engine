@@ -50,9 +50,6 @@
 #define GET_HEDGE_IDX(he)       ( (int) ((he) - hedges) )
 #define GET_NODE_IDX(nd)        ( (int) ((nd) - nodes) )
 
-// Return the index of plane within a sector's planes array.
-#define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )
-
 #define VERTEX_PTR(i)       (&vertexes[i])
 #define HEDGE_PTR(i)        (&hedges[i])
 #define SECTOR_PTR(i)       (&sectors[i])

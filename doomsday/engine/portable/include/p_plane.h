@@ -32,6 +32,9 @@
 #include "r_data.h"
 #include "p_dmu.h"
 
+// Return the index of plane within a sector's planes array.
+#define GET_PLANE_IDX(pln)      ( (int) ((pln) - (pln)->sector->planes[0]) )
+
 /**
  * Get the value of a plane property, selected by DMU_* name.
  */
