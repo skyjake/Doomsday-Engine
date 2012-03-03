@@ -2096,35 +2096,35 @@ void* DD_GetVariable(int ddvalue)
         return &gx;
 
     case DD_SECTOR_COUNT:
-        valueU = GameMap_SectorCount(theMap);
+        valueU = theMap? GameMap_SectorCount(theMap) : 0;
         return &valueU;
 
     case DD_LINE_COUNT:
-        valueU = GameMap_LineDefCount(theMap);
+        valueU = theMap? GameMap_LineDefCount(theMap) : 0;
         return &valueU;
 
     case DD_SIDE_COUNT:
-        valueU = GameMap_SideDefCount(theMap);
+        valueU = theMap? GameMap_SideDefCount(theMap) : 0;
         return &valueU;
 
     case DD_VERTEX_COUNT:
-        valueU = GameMap_VertexCount(theMap);
+        valueU = theMap? GameMap_VertexCount(theMap) : 0;
         return &valueU;
 
     case DD_POLYOBJ_COUNT:
-        valueU = GameMap_PolyobjCount(theMap);
+        valueU = theMap? GameMap_PolyobjCount(theMap) : 0;
         return &valueU;
 
     case DD_HEDGE_COUNT:
-        valueU = GameMap_HEdgeCount(theMap);
+        valueU = theMap? GameMap_HEdgeCount(theMap) : 0;
         return &valueU;
 
     case DD_SUBSECTOR_COUNT:
-        valueU = GameMap_SubsectorCount(theMap);
+        valueU = theMap? GameMap_SubsectorCount(theMap) : 0;
         return &valueU;
 
     case DD_NODE_COUNT:
-        valueU = GameMap_NodeCount(theMap);
+        valueU = theMap? GameMap_NodeCount(theMap) : 0;
         return &valueU;
 
     case DD_TRACE_ADDRESS:
@@ -2133,11 +2133,10 @@ void* DD_GetVariable(int ddvalue)
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
 
-    case DD_MAP_NAME: {
-        GameMap* map = theMap;
-        if(map)
+    case DD_MAP_NAME:
+        if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
             if(mapInfo && mapInfo->name[0])
             {
                 int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
@@ -2149,47 +2148,46 @@ void* DD_GetVariable(int ddvalue)
             }
         }
         return NULL;
-      }
-    case DD_MAP_AUTHOR: {
-        GameMap* map = theMap;
-        if(map)
+
+    case DD_MAP_AUTHOR:
+        if(theMap)
         {
-            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
             if(mapInfo && mapInfo->author[0])
             {
                 return mapInfo->author;
             }
         }
         return NULL;
-      }
-    case DD_MAP_MIN_X: {
-        GameMap* map = theMap;
-        if(map)
-            return &map->bBox[BOXLEFT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MIN_Y: {
-        GameMap* map = theMap;
-        if(map)
-            return &map->bBox[BOXBOTTOM];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_X: {
-        GameMap* map = theMap;
-        if(map)
-            return &map->bBox[BOXRIGHT];
-        else
-            return NULL;
-      }
-    case DD_MAP_MAX_Y: {
-        GameMap* map = theMap;
-        if(map)
-            return &map->bBox[BOXTOP];
-        else
-            return NULL;
-      }
+
+    case DD_MAP_MIN_X:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXLEFT];
+        }
+        return NULL;
+
+    case DD_MAP_MIN_Y:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXBOTTOM];
+        }
+        return NULL;
+
+    case DD_MAP_MAX_X:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXRIGHT];
+        }
+        return NULL;
+
+    case DD_MAP_MAX_Y:
+        if(theMap)
+        {
+            return &theMap->bBox[BOXTOP];
+        }
+        return NULL;
+
     case DD_PSPRITE_OFFSET_X:
         return &pspOffset[VX];
 
