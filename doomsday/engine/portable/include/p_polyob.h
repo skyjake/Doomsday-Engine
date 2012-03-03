@@ -30,9 +30,6 @@ DD_BASE_POLYOBJ_ELEMENTS()
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 
-extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
-extern uint numPolyObjs; ///< Number of polyobjs on the current map.
-
 /**
  * Initialize polyobjs on the current map. To be called after map load.
  */

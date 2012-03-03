@@ -591,7 +591,7 @@ void R_Update(void)
     }}
 
     { uint i;
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         polyobj_t* po = polyObjs[i];
         linedef_t** lineIter;

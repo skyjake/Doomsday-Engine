@@ -933,7 +933,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, vo
  */
 int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    if(numPolyObjs > 0)
+    if(NUM_POLYOBJS > 0)
     {
         int result = P_PolyobjLinesBoxIterator(box, callback, paramaters);
         if(result) return result;
@@ -1258,7 +1258,7 @@ int Map_PathTraverse(GameMap* map, float const from[2], float const to[2],
     // Step #1: Collect intercepts.
     if(flags & PT_ADDLINES)
     {
-        if(numPolyObjs != 0)
+        if(NUM_POLYOBJS != 0)
         {
             traverseCellPath(map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
         }

@@ -273,6 +273,14 @@ uint GameMap_HEdgeCount(GameMap* map);
  */
 uint GameMap_NodeCount(GameMap* map);
 
+/**
+ * Retrieve the number of Polyobj instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number Polyobj.
+ */
+uint GameMap_PolyobjCount(GameMap* map);
+
 void GameMap_InitNodePiles(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H

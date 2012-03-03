@@ -829,11 +829,11 @@ void Cl_ReadPolyDelta2(boolean skip)
         return;
 
 #ifdef _DEBUG
-if(num >= numPolyObjs)
-{
-    // This is worrisome.
-    Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
-}
+    if(num >= NUM_POLYOBJS)
+    {
+        // This is worrisome.
+        Con_Error("Cl_ReadPolyDelta2: PO %i out of range.\n", num);
+    }
 #endif
 
     po = polyObjs[num];

@@ -108,7 +108,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numPolyObjs)
+        if(index < NUM_POLYOBJS)
         {
             poly = polyObjs[index];
             emitter = (mobj_t *) poly;

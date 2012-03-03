@@ -32,9 +32,6 @@ static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po);
 // Called when the polyobj hits a mobj.
 static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
 
-polyobj_t** polyObjs; // List of all poly-objects in the map.
-uint numPolyObjs;
-
 void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
 {
     po_callback = func;
@@ -42,7 +39,7 @@ void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
 
 polyobj_t* P_PolyobjByID(uint id)
 {
-    if(id < numPolyObjs)
+    if(id < NUM_POLYOBJS)
         return polyObjs[id];
     return NULL;
 }
@@ -50,7 +47,7 @@ polyobj_t* P_PolyobjByID(uint id)
 polyobj_t* P_PolyobjByTag(int tag)
 {
     uint i;
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         polyobj_t* po = polyObjs[i];
         if(po->tag == tag)
@@ -64,7 +61,7 @@ polyobj_t* P_PolyobjByTag(int tag)
 polyobj_t* P_PolyobjByOrigin(void* ddMobjBase)
 {
     uint i;
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         polyobj_t* po = polyObjs[i];
         if(po == ddMobjBase)
@@ -167,7 +164,7 @@ void P_MapInitPolyobj(polyobj_t* po)
 void P_MapInitPolyobjs(void)
 {
     uint i;
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         P_MapInitPolyobj(polyObjs[i]);
     }

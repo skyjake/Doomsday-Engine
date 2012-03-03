@@ -66,6 +66,8 @@
 #define NUM_HEDGES              GameMap_HEdgeCount(theMap)
 #define NUM_NODES               GameMap_NodeCount(theMap)
 
+#define NUM_POLYOBJS            GameMap_PolyobjCount(theMap)
+
 // Node flags.
 #define NF_SUBSECTOR            0x80000000
 
@@ -277,6 +279,7 @@ extern subsector_t* subsectors;
 extern node_t* nodes;
 extern linedef_t* lineDefs;
 extern sidedef_t* sideDefs;
+extern polyobj_t** polyObjs; ///< List of all polyobjs on the current map.
 
 extern watchedplanelist_t* watchedPlaneList;
 extern surfacelist_t* movingSurfaceList;

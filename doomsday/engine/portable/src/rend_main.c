@@ -3056,7 +3056,7 @@ void Rend_RenderSurfaceVectors(void)
         }
     }
 
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         const polyobj_t* po = polyObjs[i];
         const sector_t* sec = po->subsector->sector;
@@ -3796,7 +3796,7 @@ static void Rend_RenderBoundingBoxes(void)
         P_IterateThinkers(gx.MobjThinker, 0x1, drawMobjBBox, NULL);
 
     if(devPolyobjBBox)
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         const polyobj_t* po = polyObjs[i];
         const sector_t* sec = po->subsector->sector;

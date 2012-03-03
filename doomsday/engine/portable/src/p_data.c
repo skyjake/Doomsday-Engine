@@ -79,6 +79,7 @@ subsector_t* subsectors = NULL;
 node_t* nodes = NULL;
 linedef_t* lineDefs = NULL;
 sidedef_t* sideDefs = NULL;
+polyobj_t** polyObjs = NULL; // List of all poly-objects in the map.
 
 watchedplanelist_t* watchedPlaneList = NULL;
 surfacelist_t* movingSurfaceList = NULL;
@@ -173,14 +174,13 @@ void P_SetCurrentMap(GameMap* map)
         nodes = 0;
         lineDefs = 0;
         sideDefs = 0;
+        polyObjs = 0;
 
         watchedPlaneList = 0;
         movingSurfaceList = 0;
         decoratedSurfaceList = 0;
         glowingSurfaceList = 0;
 
-        numPolyObjs = 0;
-        polyObjs = 0;
 
         mobjNodes = 0;
         lineNodes = 0;
@@ -201,14 +201,12 @@ void P_SetCurrentMap(GameMap* map)
     nodes = map->nodes;
     lineDefs = map->lineDefs;
     sideDefs = map->sideDefs;
+    polyObjs = map->polyObjs;
 
     watchedPlaneList = &map->watchedPlaneList;
     movingSurfaceList = &map->movingSurfaceList;
     decoratedSurfaceList = &map->decoratedSurfaceList;
     glowingSurfaceList = &map->glowingSurfaceList;
-
-    numPolyObjs = map->numPolyObjs;
-    polyObjs = map->polyObjs;
 
     mobjNodes = &map->mobjNodes;
     lineNodes = &map->lineNodes;

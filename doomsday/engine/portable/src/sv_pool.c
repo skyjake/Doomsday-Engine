@@ -999,7 +999,7 @@ boolean Sv_IsPlayerIgnored(int plrNum)
  */
 void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
 {
-    uint                i;
+    uint i, numPolyobjs;
 
     memset(reg, 0, sizeof(*reg));
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1022,12 +1022,18 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     }
 
     // Init polyobjs.
-    reg->polyObjs =
-        (numPolyObjs ?
-         Z_Calloc(sizeof(dt_poly_t) * numPolyObjs, PU_MAP, 0) : NULL);
-    for(i = 0; i < numPolyObjs; ++i)
+    numPolyobjs = NUM_POLYOBJS;
+    if(numPolyobjs)
     {
-        Sv_RegisterPoly(&reg->polyObjs[i], i);
+        reg->polyObjs = Z_Calloc(sizeof(dt_poly_t) * NUM_POLYOBJS, PU_MAP, 0);
+        for(i = 0; i < numPolyobjs; ++i)
+        {
+            Sv_RegisterPoly(&reg->polyObjs[i], i);
+        }
+    }
+    else
+    {
+        reg->polyObjs = NULL;
     }
 }
 
@@ -2332,7 +2338,7 @@ void Sv_NewPolyDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     polydelta_t         delta;
 
-    for(i = 0; i < numPolyObjs; ++i)
+    for(i = 0; i < NUM_POLYOBJS; ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {

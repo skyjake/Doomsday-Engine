@@ -196,6 +196,12 @@ uint GameMap_NodeCount(GameMap* map)
     return map->numNodes;
 }
 
+uint GameMap_PolyobjCount(GameMap* map)
+{
+    assert(map);
+    return map->numPolyObjs;
+}
+
 void GameMap_InitNodePiles(GameMap* map)
 {
     uint i, starttime = 0;
