@@ -32,7 +32,7 @@ namespace de {
  */
 class Str {
 public:
-    Str(const char* text = 0) : refs(1) {
+    Str(const char* text = 0) {
         Str_InitStd(&str);
         if(text) {
             Str_Set(&str, text);
@@ -40,14 +40,7 @@ public:
     }
     ~Str() {
         // This should never be called directly.
-        assert(!refs);
         Str_Free(&str);
-    }
-    void addRef() {
-        refs++;
-    }
-    void release() {
-        if(--refs == 0) delete this;
     }
     operator const char* (void) const {
         return str.str;
@@ -60,7 +53,6 @@ public:
     }
 private:
     ddstring_t str;
-    int refs;
 };
 
 } // namespace de

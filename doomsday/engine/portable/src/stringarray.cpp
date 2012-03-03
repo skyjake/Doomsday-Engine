@@ -81,7 +81,7 @@ void StringArray_Clear(StringArray* ar)
     assert(ar);
     for(StringArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
     {
-        (*i)->release();
+        delete *i;
     }
     ar->array.clear();
 }
@@ -125,7 +125,7 @@ void StringArray_Remove(StringArray* ar, int index)
 {
     assert(ar);
     ar->assertValidIndex(index);
-    ar->array[index]->release();
+    delete ar->array[index];
     ar->array.erase(ar->array.begin() + index);
 }
 
