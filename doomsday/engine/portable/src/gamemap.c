@@ -56,6 +56,104 @@ int GameMap_AmbientLightLevel(GameMap* map)
     return map->ambientLightLevel;
 }
 
+vertex_t* GameMap_Vertex(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numVertexes) return NULL;
+    return &map->vertexes[idx];
+}
+
+int GameMap_VertexIndex(GameMap* map, vertex_t* vtx)
+{
+    assert(map);
+    if(!vtx || !(vtx >= map->vertexes && vtx <= &map->vertexes[map->numVertexes])) return -1;
+    return vtx - map->vertexes;
+}
+
+int GameMap_LineDefIndex(GameMap* map, linedef_t* line)
+{
+    assert(map);
+    if(!line || !(line >= map->lineDefs && line <= &map->lineDefs[map->numLineDefs])) return -1;
+    return line - map->lineDefs;
+}
+
+linedef_t* GameMap_LineDef(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numLineDefs) return NULL;
+    return &map->lineDefs[idx];
+}
+
+int GameMap_SideDefIndex(GameMap* map, sidedef_t* side)
+{
+    assert(map);
+    if(!side || !(side >= map->sideDefs && side <= &map->sideDefs[map->numSideDefs])) return -1;
+    return side - map->sideDefs;
+}
+
+sidedef_t* GameMap_SideDef(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numSideDefs) return NULL;
+    return &map->sideDefs[idx];
+}
+
+int GameMap_SectorIndex(GameMap* map, sector_t* sec)
+{
+    assert(map);
+    if(!sec || !(sec >= map->sectors && sec <= &map->sectors[map->numSectors])) return -1;
+    return sec - map->sectors;
+}
+
+sector_t* GameMap_Sector(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numSectors) return NULL;
+    return &map->sectors[idx];
+}
+
+int GameMap_SubsectorIndex(GameMap* map, subsector_t* ssec)
+{
+    assert(map);
+    if(!ssec || !(ssec >= map->subsectors && ssec <= &map->subsectors[map->numSubsectors])) return -1;
+    return ssec - map->subsectors;
+}
+
+subsector_t* GameMap_Subsector(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numSubsectors) return NULL;
+    return &map->subsectors[idx];
+}
+
+int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge)
+{
+    assert(map);
+    if(!hedge || !(hedge >= map->hedges && hedge <= &map->hedges[map->numHEdges])) return -1;
+    return hedge - map->hedges;
+}
+
+HEdge* GameMap_HEdge(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numHEdges) return NULL;
+    return &map->hedges[idx];
+}
+
+int GameMap_NodeIndex(GameMap* map, node_t* node)
+{
+    assert(map);
+    if(!node || !(node >= map->nodes && node <= &map->nodes[map->numNodes])) return -1;
+    return node - map->nodes;
+}
+
+node_t* GameMap_Node(GameMap* map, uint idx)
+{
+    assert(map);
+    if(idx >= map->numNodes) return NULL;
+    return &map->nodes[idx];
+}
+
 void GameMap_InitNodePiles(GameMap* map)
 {
     uint i, starttime = 0;

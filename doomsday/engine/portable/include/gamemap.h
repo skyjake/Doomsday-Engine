@@ -91,6 +91,132 @@ void GameMap_Bounds(GameMap* map, float* min, float* max);
  */
 int GameMap_AmbientLightLevel(GameMap* map);
 
+/**
+ * Lookup a Vertex by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the vertex.
+ * @return  Pointer to Vertex with this index else @c NULL if @a idx is not valid.
+ */
+vertex_t* GameMap_Vertex(GameMap* map, uint idx);
+
+/**
+ * Lookup a LineDef by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the linedef.
+ * @return  Pointer to LineDef with this index else @c NULL if @a idx is not valid.
+ */
+linedef_t* GameMap_LineDef(GameMap* map, uint idx);
+
+/**
+ * Lookup a SideDef by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the sidedef.
+ * @return  Pointer to SideDef with this index else @c NULL if @a idx is not valid.
+ */
+sidedef_t* GameMap_SideDef(GameMap* map, uint idx);
+
+/**
+ * Lookup a Sector by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the sector.
+ * @return  Pointer to Sector with this index else @c NULL if @a idx is not valid.
+ */
+sector_t* GameMap_Sector(GameMap* map, uint idx);
+
+/**
+ * Lookup a Subsector by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the subsector.
+ * @return  Pointer to Subsector with this index else @c NULL if @a idx is not valid.
+ */
+subsector_t* GameMap_Subsector(GameMap* map, uint idx);
+
+/**
+ * Lookup a HEdge by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the hedge.
+ * @return  Pointer to HEdge with this index else @c NULL if @a idx is not valid.
+ */
+HEdge* GameMap_HEdge(GameMap* map, uint idx);
+
+/**
+ * Lookup a Node by its unique index.
+ *
+ * @param map  GameMap instance.
+ * @param idx  Unique index of the node.
+ * @return  Pointer to Node with this index else @c NULL if @a idx is not valid.
+ */
+node_t* GameMap_Node(GameMap* map, uint idx);
+
+/**
+ * Lookup the unique index for @a vertex.
+ *
+ * @param map  GameMap instance.
+ * @param vtx  Vertex to lookup.
+ * @return  Unique index for the Vertex else @c -1 if not present.
+ */
+int GameMap_VertexIndex(GameMap* map, vertex_t* vtx);
+
+/**
+ * Lookup the unique index for @a lineDef.
+ *
+ * @param map  GameMap instance.
+ * @param line  LineDef to lookup.
+ * @return  Unique index for the LineDef else @c -1 if not present.
+ */
+int GameMap_LineDefIndex(GameMap* map, linedef_t* line);
+
+/**
+ * Lookup the unique index for @a sideDef.
+ *
+ * @param map  GameMap instance.
+ * @param side  SideDef to lookup.
+ * @return  Unique index for the SideDef else @c -1 if not present.
+ */
+int GameMap_SideDefIndex(GameMap* map, sidedef_t* side);
+
+/**
+ * Lookup the unique index for @a sector.
+ *
+ * @param map  GameMap instance.
+ * @param sector  Sector to lookup.
+ * @return  Unique index for the Sector else @c -1 if not present.
+ */
+int GameMap_SectorIndex(GameMap* map, sector_t* sector);
+
+/**
+ * Lookup the unique index for @a subsector.
+ *
+ * @param map  GameMap instance.
+ * @param subsector  Subsector to lookup.
+ * @return  Unique index for the Subsector else @c -1 if not present.
+ */
+int GameMap_SubsectorIndex(GameMap* map, subsector_t* subsector);
+
+/**
+ * Lookup the unique index for @a hedge.
+ *
+ * @param map  GameMap instance.
+ * @param hedge  HEdge to lookup.
+ * @return  Unique index for the HEdge else @c -1 if not present.
+ */
+int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
+
+/**
+ * Lookup the unique index for @a node.
+ *
+ * @param map  GameMap instance.
+ * @param node  Node to lookup.
+ * @return  Unique index for the Node else @c -1 if not present.
+ */
+int GameMap_NodeIndex(GameMap* map, node_t* node);
+
 void GameMap_InitNodePiles(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H
