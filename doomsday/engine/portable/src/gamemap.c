@@ -25,19 +25,19 @@
 
 #include "gamemap.h"
 
-const Uri* P_MapUri(gamemap_t* map)
+const Uri* P_MapUri(GameMap* map)
 {
     if(!map) return NULL;
     return map->uri;
 }
 
-const char* P_GetUniqueMapId(gamemap_t* map)
+const char* P_GetUniqueMapId(GameMap* map)
 {
     if(!map) return NULL;
     return map->uniqueId;
 }
 
-void P_GetMapBounds(gamemap_t* map, float* min, float* max)
+void P_GetMapBounds(GameMap* map, float* min, float* max)
 {
     min[VX] = map->bBox[BOXLEFT];
     min[VY] = map->bBox[BOXBOTTOM];
@@ -49,7 +49,7 @@ void P_GetMapBounds(gamemap_t* map, float* min, float* max)
 /**
  * Get the ambient light level of the specified map.
  */
-int P_GetMapAmbientLightLevel(gamemap_t* map)
+int P_GetMapAmbientLightLevel(GameMap* map)
 {
     assert(map);
     return map->ambientLightLevel;

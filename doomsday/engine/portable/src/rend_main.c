@@ -3446,13 +3446,19 @@ void Rend_RenderMap(void)
  */
 void Rend_CalcLightModRange(void)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     int j, mapAmbient;
     float f;
 
     if(novideo) return;
 
     memset(lightModRange, 0, sizeof(float) * 255);
+
+    if(!map)
+    {
+        rAmbient = 0;
+        return;
+    }
 
     mapAmbient = P_GetMapAmbientLightLevel(map);
     if(mapAmbient > ambientLight)

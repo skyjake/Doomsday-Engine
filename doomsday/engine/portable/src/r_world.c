@@ -528,7 +528,7 @@ static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramate
 
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     if(NULL == material || NULL == map || ddMapSetup) return;
 
     // Light decorations will need a refresh.
@@ -1078,7 +1078,7 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 #undef SEP
 }
 
-void R_InitLinks(gamemap_t* map)
+void R_InitLinks(GameMap* map)
 {
     uint starttime = 0;
 
@@ -1233,7 +1233,7 @@ static void tessellateSubsector(subsector_t* ssec, boolean force)
 #undef MIN_TRIANGLE_EPSILON
 }
 
-void R_PolygonizeMap(gamemap_t* map)
+void R_PolygonizeMap(GameMap* map)
 {
     uint startTime = Sys_GetRealTime();
     uint i;
@@ -1257,7 +1257,7 @@ void R_PolygonizeMap(gamemap_t* map)
  * The test is done on subsectors.
  */
 #if 0 /* Currently unused. */
-static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
+static sector_t *getContainingSectorOf(GameMap* map, sector_t* sec)
 {
     uint                i;
     float               cdiff = -1, diff;
@@ -1402,7 +1402,7 @@ void R_SetupMap(int mode, int flags)
         return;
       }
     case DDSMM_FINALIZE: {
-        gamemap_t* map = P_GetCurrentMap();
+        GameMap* map = P_GetCurrentMap();
         ded_mapinfo_t* mapInfo;
         float startTime;
         char cmd[80];
@@ -1501,7 +1501,7 @@ void R_SetupMap(int mode, int flags)
       }
     case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
-        gamemap_t* map = P_GetCurrentMap();
+        GameMap* map = P_GetCurrentMap();
         ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
 
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))

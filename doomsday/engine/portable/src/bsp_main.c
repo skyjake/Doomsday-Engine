@@ -73,7 +73,7 @@ void BSP_Register(void)
     C_VAR_INT("bsp-factor", &bspFactor, CVF_NO_MAX, 0, 0);
 }
 
-static void findMapLimits(gamemap_t* src, int* bbox)
+static void findMapLimits(GameMap* src, int* bbox)
 {
     uint                i;
 
@@ -105,7 +105,7 @@ static void findMapLimits(gamemap_t* src, int* bbox)
  *
  * @return              The list of created half-edges.
  */
-static superblock_t* createInitialHEdges(gamemap_t* map)
+static superblock_t* createInitialHEdges(GameMap* map)
 {
     uint                startTime = Sys_GetRealTime();
 
@@ -262,7 +262,7 @@ static boolean C_DECL freeBSPData(binarytree_t *tree, void *data)
  * @param numVertexes   Number of vertexes in the array.
  * @return              @c true, if completed successfully.
  */
-boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
+boolean BSP_Build(GameMap* map, vertex_t*** vertexes, uint* numVertexes)
 {
     boolean             builtOK;
     uint                startTime;

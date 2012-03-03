@@ -423,15 +423,15 @@ ddstring_t* DAM_ComposeCacheDir(const char* sourcePath)
     return path;
 }
 
-static boolean loadMap(gamemap_t** map, archivedmap_t* dam)
+static boolean loadMap(GameMap** map, archivedmap_t* dam)
 {
-    *map = (gamemap_t*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
+    *map = (GameMap*) Z_Calloc(sizeof(**map), PU_MAPSTATIC, 0);
     if(NULL == *map)
         Con_Error("loadMap: Failed on allocation of %lu bytes for new Map.", (unsigned long) sizeof(**map));
     return DAM_MapRead(*map, Str_Text(&dam->cachedMapPath));
 }
 
-static boolean convertMap(gamemap_t** map, archivedmap_t* dam)
+static boolean convertMap(GameMap** map, archivedmap_t* dam)
 {
     boolean converted = false;
 
@@ -517,7 +517,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
     // Load it in.
     if(!dam->lastLoadAttemptFailed)
     {
-        gamemap_t* map = NULL;
+        GameMap* map = NULL;
         ded_mapinfo_t* mapInfo;
 
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);

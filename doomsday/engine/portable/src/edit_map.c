@@ -68,7 +68,7 @@ editmap_t editMap;
 static boolean editMapInited = false;
 static editmap_t* map = &editMap;
 
-static gamemap_t *lastBuiltMap = NULL;
+static GameMap *lastBuiltMap = NULL;
 
 static uint numUnclosedSectors;
 static usecrecord_t *unclosedSectors;
@@ -604,7 +604,7 @@ boolean MPE_Begin(const char* mapUri)
     return true;
 }
 
-static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
+static void hardenSectorSSecList(GameMap* map, uint secIDX)
 {
     assert(map && secIDX < map->numSectors);
     {
@@ -642,7 +642,7 @@ static void hardenSectorSSecList(gamemap_t* map, uint secIDX)
 /**
  * Build subsector tables for all sectors.
  */
-static void buildSectorSSecLists(gamemap_t *map)
+static void buildSectorSSecLists(GameMap *map)
 {
     VERBOSE( Con_Message(" Build subsector tables...\n") )
     { uint i;
@@ -652,7 +652,7 @@ static void buildSectorSSecLists(gamemap_t *map)
     }}
 }
 
-static void buildSectorLineLists(gamemap_t* map)
+static void buildSectorLineLists(GameMap* map)
 {
     typedef struct linelink_s {
         linedef_t* line;
@@ -816,7 +816,7 @@ void P_GetSectorBounds(sector_t *sec, float *min, float *max)
     max[VY] = sec->bBox[BOXTOP];
 }
 
-static void finishSectors(gamemap_t* map)
+static void finishSectors(GameMap* map)
 {
     uint i;
     for(i = 0; i < map->numSectors; ++i)
@@ -854,7 +854,7 @@ static void finishSectors(gamemap_t* map)
  * sector ptrs which we couldn't do earlier as the sidedefs
  * hadn't been loaded at the time.
  */
-static void finishLineDefs(gamemap_t* map)
+static void finishLineDefs(GameMap* map)
 {
     uint                i;
     linedef_t          *ld;
@@ -918,7 +918,7 @@ static void finishLineDefs(gamemap_t* map)
     }
 }
 
-static void updateMapBounds(gamemap_t* map)
+static void updateMapBounds(GameMap* map)
 {
     assert(map);
     {
@@ -980,7 +980,7 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->worldGridOffset[VY] = fmod(sub->aaBox.maxY, 64);
 }
 
-static void prepareSubsectors(gamemap_t* map)
+static void prepareSubsectors(GameMap* map)
 {
     uint i;
 
@@ -1191,7 +1191,7 @@ static void buildVertexOwnerRings(editmap_t* map)
     }
 }
 
-static void hardenVertexOwnerRings(gamemap_t* dest, editmap_t* src)
+static void hardenVertexOwnerRings(GameMap* dest, editmap_t* src)
 {
     uint                i;
 
@@ -1274,7 +1274,7 @@ do
     }
 }
 
-static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
+static void hardenLinedefs(GameMap *dest, editmap_t *src)
 {
     uint                i;
 
@@ -1300,7 +1300,7 @@ static void hardenLinedefs(gamemap_t *dest, editmap_t *src)
     }
 }
 
-static void hardenSidedefs(gamemap_t* dest, editmap_t* src)
+static void hardenSidedefs(GameMap* dest, editmap_t* src)
 {
     uint                i;
 
@@ -1326,7 +1326,7 @@ static void hardenSidedefs(gamemap_t* dest, editmap_t* src)
     }
 }
 
-static void hardenSectors(gamemap_t* dest, editmap_t* src)
+static void hardenSectors(GameMap* dest, editmap_t* src)
 {
     uint                i;
 
@@ -1344,7 +1344,7 @@ static void hardenSectors(gamemap_t* dest, editmap_t* src)
     }
 }
 
-static void hardenPlanes(gamemap_t* dest, editmap_t* src)
+static void hardenPlanes(GameMap* dest, editmap_t* src)
 {
     uint                i, j;
 
@@ -1369,7 +1369,7 @@ static void hardenPlanes(gamemap_t* dest, editmap_t* src)
     }
 }
 
-static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
+static void hardenPolyobjs(GameMap* dest, editmap_t* src)
 {
     uint i;
 
@@ -1705,7 +1705,7 @@ int testOverlaps(linedef_t* b, void* data)
 }
 
 typedef struct {
-    gamemap_t* map;
+    GameMap* map;
     uint coords[2]; // Blockmap cell coordinates.
 } findoverlaps_params_t;
 
@@ -1719,7 +1719,7 @@ int findOverlapsForLinedef(linedef_t* l, void* data)
 /**
  * \note Does not detect partially overlapping lines!
  */
-void MPE_DetectOverlappingLines(gamemap_t* map)
+void MPE_DetectOverlappingLines(GameMap* map)
 {
     uint x, y, bmapDimensions[2];
     findoverlaps_params_t params;
@@ -1792,7 +1792,7 @@ static void findBounds(vertex_t const** vertexes, uint numVertexes, vec2_t min, 
  */
 boolean MPE_End(void)
 {
-    gamemap_t* gamemap;
+    GameMap* gamemap;
     boolean builtOK;
     vec2_t min, max;
     uint i;
@@ -1956,7 +1956,7 @@ boolean MPE_End(void)
     return true;
 }
 
-gamemap_t* MPE_GetLastBuiltMap(void)
+GameMap* MPE_GetLastBuiltMap(void)
 {
     return lastBuiltMap;
 }

@@ -317,7 +317,7 @@ boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], voi
     return Blockmap_CreateCellAndLinkObjectXY(blockmap, coords[VX], coords[VY], object);
 }
 
-void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+void Map_InitLineDefBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
@@ -338,7 +338,7 @@ void Map_InitLineDefBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t m
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+void Map_InitMobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
@@ -359,7 +359,7 @@ void Map_InitMobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+void Map_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
@@ -380,7 +380,7 @@ void Map_InitPolyobjBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t m
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t max_)
+void Map_InitSubsectorBlockmap(GameMap* map, const_pvec2_t min_, const_pvec2_t max_)
 {
 #define BLOCKMAP_MARGIN      8 // size guardband around map
 #define CELL_SIZE            MAPBLOCKUNITS
@@ -401,7 +401,7 @@ void Map_InitSubsectorBlockmap(gamemap_t* map, const_pvec2_t min_, const_pvec2_t
 #undef BLOCKMAP_MARGIN
 }
 
-void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
+void Map_LinkMobjInBlockmap(GameMap* map, mobj_t* mo)
 {
     Blockmap* blockmap = map->mobjBlockmap;
     uint coords[2];
@@ -409,7 +409,7 @@ void Map_LinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
     Blockmap_CreateCellAndLinkObject(blockmap, coords, mo);
 }
 
-boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
+boolean Map_UnlinkMobjInBlockmap(GameMap* map, mobj_t* mo)
 {
     Blockmap* blockmap = map->mobjBlockmap;
     BlockmapCell* cell;
@@ -425,7 +425,7 @@ boolean Map_UnlinkMobjInBlockmap(gamemap_t* map, mobj_t* mo)
     return unlinked;
 }
 
-void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
+void Map_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef)
 {
     vec2_t origin, cellSize, cell, from, to;
     GridmapBlock blockCoords;
@@ -479,7 +479,7 @@ void Map_LinkLineDefInBlockmap(gamemap_t* map, linedef_t* lineDef)
     }
 }
 
-void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* ssec)
+void Map_LinkSubsectorInBlockmap(GameMap* map, subsector_t* ssec)
 {
     Blockmap* blockmap = map->subsectorBlockmap;
     GridmapBlock blockCoords;
@@ -503,7 +503,7 @@ void Map_LinkSubsectorInBlockmap(gamemap_t* map, subsector_t* ssec)
     }
 }
 
-void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
+void Map_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
     GridmapBlock blockCoords;
@@ -518,7 +518,7 @@ void Map_LinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
     }
 }
 
-void Map_UnlinkPolyobjInBlockmap(gamemap_t* map, polyobj_t* po)
+void Map_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
     GridmapBlock blockCoords;
@@ -559,7 +559,7 @@ static int blockmapCellLinesIterator(void* ptr, void* context)
     return result;
 }
 
-int Map_IterateCellLineDefs(gamemap_t* map, const uint coords[2],
+int Map_IterateCellLineDefs(GameMap* map, const uint coords[2],
     int (*func) (linedef_t*, void*), void* data)
 {
     Blockmap* blockmap = map->lineDefBlockmap;
@@ -575,7 +575,7 @@ int Map_IterateCellLineDefs(gamemap_t* map, const uint coords[2],
     return false;
 }
 
-int Map_IterateCellBlockLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+int Map_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
     int (*func) (linedef_t*, void*), void* data)
 {
     Blockmap* blockmap = map->lineDefBlockmap;
@@ -618,7 +618,7 @@ static int blockmapCellPolyobjsIterator(void* ptr, void* context)
     return result;
 }
 
-int Map_IterateCellPolyobjs(gamemap_t* map, const uint coords[2],
+int Map_IterateCellPolyobjs(GameMap* map, const uint coords[2],
     int (*func) (polyobj_t*, void*), void* data)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
@@ -634,7 +634,7 @@ int Map_IterateCellPolyobjs(gamemap_t* map, const uint coords[2],
     return false;
 }
 
-int Map_IterateCellBlockPolyobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+int Map_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
     int (*func) (polyobj_t*, void*), void* data)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
@@ -656,7 +656,7 @@ int PTR_PolyobjLines(polyobj_t* po, void* data)
     return Polyobj_LineIterator(po, args->func, args->param);
 }
 
-int Map_IterateCellPolyobjLineDefsIterator(gamemap_t* map, const uint coords[2],
+int Map_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2],
     int (*func) (linedef_t*, void*), void* data)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
@@ -676,7 +676,7 @@ int Map_IterateCellPolyobjLineDefsIterator(gamemap_t* map, const uint coords[2],
     return false;
 }
 
-int Map_IterateCellBlockPolyobjLineDefs(gamemap_t* map, const GridmapBlock* blockCoords,
+int Map_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
     int (*callback) (linedef_t*, void*), void* paramaters)
 {
     Blockmap* blockmap = map->polyobjBlockmap;
@@ -725,7 +725,7 @@ static int blockmapCellMobjsIterator(void* ptr, void* paramaters)
     return result;
 }
 
-int Map_IterateCellMobjs(gamemap_t* map, const uint coords[2],
+int Map_IterateCellMobjs(GameMap* map, const uint coords[2],
     int (*func) (mobj_t*, void*), void* data)
 {
     Blockmap* blockmap = map->mobjBlockmap;
@@ -741,7 +741,7 @@ int Map_IterateCellMobjs(gamemap_t* map, const uint coords[2],
     return false;
 }
 
-int Map_IterateCellBlockMobjs(gamemap_t* map, const GridmapBlock* blockCoords,
+int Map_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
     int (*func) (mobj_t*, void*), void* data)
 {
     Blockmap* blockmap = map->mobjBlockmap;
@@ -804,7 +804,7 @@ static int blockmapCellSubsectorsIterator(void* ptr, void* context)
     return result;
 }
 
-int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
+int Map_IterateCellSubsectors(GameMap* map, const uint coords[2],
     sector_t* sector, const AABoxf* box, int localValidCount,
     int (*func) (subsector_t*, void*), void* paramaters)
 {
@@ -823,7 +823,7 @@ int Map_IterateCellSubsectors(gamemap_t* map, const uint coords[2],
     return false;
 }
 
-int Map_IterateCellBlockSubsectors(gamemap_t* map, const GridmapBlock* blockCoords,
+int Map_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCoords,
     sector_t* sector,  const AABoxf* box, int localValidCount,
     int (*func) (subsector_t*, void*), void* data)
 {
@@ -1161,7 +1161,7 @@ static int countSubsectorLink(subsector_t* subsector, void* paramaters)
 
 static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     uint count = 0;
     char info[160];
     validCount++;
@@ -1172,7 +1172,7 @@ static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     uint count = 0;
     char info[160];
     validCount++;
@@ -1183,7 +1183,7 @@ static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     uint count = 0;
     char info[160];
     validCount++;
@@ -1194,7 +1194,7 @@ static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawSubsectorCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     uint count = 0;
     char info[160];
     validCount++;
@@ -1392,7 +1392,7 @@ void Rend_BlockmapDebug(void)
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
     Point2Raw origin;
-    gamemap_t* map;
+    GameMap* map;
     float scale;
 
     // Disabled?

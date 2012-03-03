@@ -753,7 +753,7 @@ void GL_TotalReset(void)
 void GL_TotalRestore(void)
 {
     ded_mapinfo_t* mapInfo = NULL;
-    gamemap_t* map;
+    GameMap* map;
 
     if(isDedicated) return;
 

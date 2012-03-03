@@ -70,18 +70,18 @@ typedef struct gamemap_s {
 
     float globalGravity; // Gravity for the current map.
     int ambientLightLevel; // Ambient lightlevel for the current map.
-} gamemap_t;
+} GameMap;
 
 /**
  * This ID is the name of the lump tag that marks the beginning of map
  * data, e.g. "MAP03" or "E2M8".
  */
-const Uri* P_MapUri(gamemap_t* map);
+const Uri* P_MapUri(GameMap* map);
 
 /// @return  The 'unique' identifier of the map.
-const char* P_GetUniqueMapId(gamemap_t* map);
+const char* P_GetUniqueMapId(GameMap* map);
 
-void P_GetMapBounds(gamemap_t* map, float* min, float* max);
-int P_GetMapAmbientLightLevel(gamemap_t* map);
+void P_GetMapBounds(GameMap* map, float* min, float* max);
+int P_GetMapAmbientLightLevel(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H

@@ -52,7 +52,7 @@
 
 // CODE --------------------------------------------------------------------
 
-static void hardenSidedefHEdgeList(gamemap_t* map, sidedef_t* side, HEdge* hedge,
+static void hardenSidedefHEdgeList(GameMap* map, sidedef_t* side, HEdge* hedge,
     bsp_hedge_t* bspHEdge)
 {
     uint count;
@@ -139,7 +139,7 @@ static boolean hEdgeCollector(binarytree_t* tree, void* data)
     return true; // Continue traversal.
 }
 
-static void buildHEdgesFromBSPHEdges(gamemap_t* dest, binarytree_t* rootNode)
+static void buildHEdgesFromBSPHEdges(GameMap* dest, binarytree_t* rootNode)
 {
     uint i;
     bsp_hedge_t** index;
@@ -256,7 +256,7 @@ static void buildHEdgesFromBSPHEdges(gamemap_t* dest, binarytree_t* rootNode)
     M_Free(index);
 }
 
-static void hardenSubsectorHEdgeList(gamemap_t* dest, subsector_t* ssec,
+static void hardenSubsectorHEdgeList(GameMap* dest, subsector_t* ssec,
                               bsp_hedge_t* list, size_t hedgeCount)
 {
     size_t i;
@@ -275,7 +275,7 @@ static void hardenSubsectorHEdgeList(gamemap_t* dest, subsector_t* ssec,
     ssec->hedges = hedges;
 }
 
-static void hardenLeaf(gamemap_t* map, subsector_t* dest,
+static void hardenLeaf(GameMap* map, subsector_t* dest,
                        const bspleafdata_t* src)
 {
     HEdge** segp;
@@ -320,7 +320,7 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
 }
 
 typedef struct {
-    gamemap_t*      dest;
+    GameMap*      dest;
     uint            subsectorCurIndex;
     uint            nodeCurIndex;
 } hardenbspparams_t;
@@ -413,7 +413,7 @@ static boolean C_DECL countSSec(binarytree_t* tree, void* data)
     return true; // Continue iteration.
 }
 
-static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
+static void hardenBSP(GameMap* dest, binarytree_t* rootNode)
 {
     dest->numNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
@@ -443,7 +443,7 @@ static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
     }
 }
 
-void BSP_InitForNodeBuild(gamemap_t* map)
+void BSP_InitForNodeBuild(GameMap* map)
 {
     uint                i;
 
@@ -476,7 +476,7 @@ void BSP_InitForNodeBuild(gamemap_t* map)
     }
 }
 
-static void hardenVertexes(gamemap_t* dest, vertex_t*** vertexes,
+static void hardenVertexes(GameMap* dest, vertex_t*** vertexes,
                            uint* numVertexes)
 {
     uint                i;
@@ -500,7 +500,7 @@ static void hardenVertexes(gamemap_t* dest, vertex_t*** vertexes,
     }
 }
 
-static void updateVertexLinks(gamemap_t* dest)
+static void updateVertexLinks(GameMap* dest)
 {
     uint                i;
 
@@ -513,7 +513,7 @@ static void updateVertexLinks(gamemap_t* dest)
     }
 }
 
-void SaveMap(gamemap_t* dest, void* rootNode, vertex_t*** vertexes,
+void SaveMap(GameMap* dest, void* rootNode, vertex_t*** vertexes,
              uint* numVertexes)
 {
     uint                startTime = Sys_GetRealTime();

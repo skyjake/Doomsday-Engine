@@ -178,7 +178,7 @@ void LG_InitForMap(void)
 
     sector_t  **ssamples;
     sector_t  **blkSampleSectors;
-    gamemap_t  *map = P_GetCurrentMap();
+    GameMap  *map = P_GetCurrentMap();
 
     if(!lgEnabled)
     {

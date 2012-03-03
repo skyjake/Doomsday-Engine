@@ -103,7 +103,7 @@ float mapGravity;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static gamemap_t* currentMap = NULL;
+static GameMap* currentMap = NULL;
 
 // Bad texture list
 static uint numBadTexNames = 0;
@@ -159,12 +159,12 @@ const char* P_GenerateUniqueMapId(const char* mapID)
 /**
  * @return              Ptr to the current map.
  */
-gamemap_t *P_GetCurrentMap(void)
+GameMap *P_GetCurrentMap(void)
 {
     return currentMap;
 }
 
-void P_SetCurrentMap(gamemap_t* map)
+void P_SetCurrentMap(GameMap* map)
 {
     if(!map)
     {
@@ -256,38 +256,6 @@ void P_SetCurrentMap(gamemap_t* map)
     currentMap = map;
 }
 
-const Uri* P_MapUri(gamemap_t* map)
-{
-    if(!map) return NULL;
-    return map->uri;
-}
-
-const char* P_GetUniqueMapId(gamemap_t* map)
-{
-    if(!map) return NULL;
-    return map->uniqueId;
-}
-
-void P_GetMapBounds(gamemap_t* map, float* min, float* max)
-{
-    min[VX] = map->bBox[BOXLEFT];
-    min[VY] = map->bBox[BOXBOTTOM];
-
-    max[VX] = map->bBox[BOXRIGHT];
-    max[VY] = map->bBox[BOXTOP];
-}
-
-/**
- * Get the ambient light level of the specified map.
- */
-int P_GetMapAmbientLightLevel(gamemap_t* map)
-{
-    if(!map)
-        return 0;
-
-    return map->ambientLightLevel;
-}
-
 /// \note Part of the Doomsday public API.
 boolean P_MapExists(const char* uriCString)
 {
@@ -366,7 +334,7 @@ boolean P_LoadMap(const char* uriCString)
 
     if(DAM_AttemptMapLoad(uri))
     {
-        gamemap_t* map = P_GetCurrentMap();
+        GameMap* map = P_GetCurrentMap();
 
         // Init the thinker lists (public and private).
         P_InitThinkerLists(0x1 | 0x2);
@@ -869,7 +837,7 @@ static uint countGameMapObjs(gameobjdata_t *moData, int identifier)
 
 uint P_CountGameMapObjs(int identifier)
 {
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
 
     return countGameMapObjs(&map->gameObjData, identifier);
 }
@@ -1154,7 +1122,7 @@ static void setValue(void *dst, valuetype_t dstType, void *src,
 byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     byte                returnVal = 0;
 
@@ -1168,7 +1136,7 @@ byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
 short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     short               returnVal = 0;
 
@@ -1182,7 +1150,7 @@ short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
 int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     int                 returnVal = 0;
 
@@ -1196,7 +1164,7 @@ int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
 fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     fixed_t             returnVal = 0;
 
@@ -1210,7 +1178,7 @@ fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
 angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     angle_t             returnVal = 0;
 
@@ -1224,7 +1192,7 @@ angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
 float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    gamemap_t*          map = P_GetCurrentMap();
+    GameMap*          map = P_GetCurrentMap();
     void*               ptr;
     float               returnVal = 0;
 

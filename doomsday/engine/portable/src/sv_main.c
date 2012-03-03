@@ -71,7 +71,7 @@ static MaterialArchive* materialDict;
  */
 void Sv_GetInfo(serverinfo_t* info)
 {
-    gamemap_t* currentMap = P_GetCurrentMap();
+    GameMap* currentMap = P_GetCurrentMap();
     ddstring_t* mapPath;
     int i;
 

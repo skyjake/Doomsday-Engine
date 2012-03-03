@@ -569,13 +569,13 @@ boolean P_UnlinkFromLines(mobj_t* mo)
  */
 void P_LinkToBlockmap(mobj_t* mo)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     Map_LinkMobjInBlockmap(map, mo);
 }
 
 boolean P_UnlinkFromBlockmap(mobj_t* mo)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     return Map_UnlinkMobjInBlockmap(map, mo);
 }
 
@@ -668,7 +668,7 @@ void P_LinkToLines(mobj_t* mo)
  */
 void P_MobjLink(mobj_t* mo, byte flags)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     sector_t* sec;
 
     // Link into the sector.
@@ -877,7 +877,7 @@ int P_SectorTouchingMobjsIterator(sector_t* sector,
 
 int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* paramaters)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
     return Map_IterateCellBlockMobjs(map, &blockCoords, func, paramaters);
@@ -890,7 +890,7 @@ int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* pa
  */
 int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* paramaters)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
     return Map_IterateCellBlockPolyobjs(map, &blockCoords, callback, paramaters);
@@ -898,7 +898,7 @@ int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*,
 
 int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
     return Map_IterateCellBlockLineDefs(map, &blockCoords, callback, paramaters);
@@ -908,7 +908,7 @@ int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
     int (*callback) (subsector_t*, void*), void* paramaters)
 {
     static int localValidCount = 0;
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     // This is only used here.
     localValidCount++;
@@ -920,7 +920,7 @@ int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
 
 int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     GridmapBlock blockCoords;
     Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
     return Map_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, paramaters);
@@ -1224,7 +1224,7 @@ static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
 
 static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)
 {
-    gamemap_t* map = (gamemap_t*)paramaters;
+    GameMap* map = (GameMap*)paramaters;
     iteratepolyobjlinedefs_params_t iplParams;
     iplParams.callback = PIT_AddLineDefIntercepts;
     iplParams.paramaters = NULL;
@@ -1233,13 +1233,13 @@ static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters
 
 static int collectLineDefIntercepts(uint const block[2], void* paramaters)
 {
-    gamemap_t* map = (gamemap_t*)paramaters;
+    GameMap* map = (GameMap*)paramaters;
     return Map_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
 }
 
 static int collectMobjIntercepts(uint const block[2], void* paramaters)
 {
-    gamemap_t* map = (gamemap_t*)paramaters;
+    GameMap* map = (GameMap*)paramaters;
     return Map_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
@@ -1248,7 +1248,7 @@ static int collectMobjIntercepts(uint const block[2], void* paramaters)
  * interceptable object linked within Blockmap cells which cover the path this
  * defines.
  */
-int Map_PathTraverse(gamemap_t* map, float const from[2], float const to[2],
+int Map_PathTraverse(GameMap* map, float const from[2], float const to[2],
     int flags, traverser_t callback, void* paramaters)
 {
     // A new intercept trace begins...
@@ -1277,7 +1277,7 @@ int Map_PathTraverse(gamemap_t* map, float const from[2], float const to[2],
 int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback,
     void* paramaters)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     return Map_PathTraverse(map, from, to, flags, callback, paramaters);
 }
 

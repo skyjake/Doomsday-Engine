@@ -384,7 +384,7 @@ static void SBE_Dupe(int which)
 
 static boolean SBE_Save(const char* name)
 {
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     const char* uid = P_GetUniqueMapId(map);
     ddstring_t fileName;
     source_t* s;
@@ -839,7 +839,7 @@ void SBE_DrawHUD(void)
     Point2Raw origin;
     Size2Raw size;
     char buf[80];
-    gamemap_t* map = P_GetCurrentMap();
+    GameMap* map = P_GetCurrentMap();
     source_t* s;
     int top;
 

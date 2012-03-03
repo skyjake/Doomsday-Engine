@@ -39,6 +39,6 @@
 
 struct superblock_s;
 
-void            BSP_InitForNodeBuild(gamemap_t* map);
+void            BSP_InitForNodeBuild(GameMap* map);
 
 #endif

@@ -97,6 +97,6 @@ boolean         MPE_RegisterUnclosedSectorNear(sector_t* sec, double x, double y
 void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
 
-gamemap_t*     MPE_GetLastBuiltMap(void);
+GameMap*     MPE_GetLastBuiltMap(void);
 vertex_t*      createVertex(void);
 #endif
