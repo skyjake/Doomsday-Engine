@@ -293,69 +293,10 @@ extern surfacelist_t* glowingSurfaceList;
 
 extern float mapGravity;
 
-typedef struct gamemap_s {
-    Uri* uri;
-    char            uniqueId[256];
-
-    float           bBox[4];
-
-    uint            numVertexes;
-    vertex_t*       vertexes;
-
-    uint            numHEdges;
-    HEdge*          hedges;
-
-    uint            numSectors;
-    sector_t*       sectors;
-
-    uint            numSubsectors;
-    subsector_t*    subsectors;
-
-    uint            numNodes;
-    node_t*         nodes;
-
-    uint            numLineDefs;
-    linedef_t*      lineDefs;
-
-    uint            numSideDefs;
-    sidedef_t*      sideDefs;
-
-    uint            numPolyObjs;
-    polyobj_t**     polyObjs;
-
-    gameobjdata_t   gameObjData;
-
-    watchedplanelist_t watchedPlaneList;
-    surfacelist_t   movingSurfaceList;
-    surfacelist_t   decoratedSurfaceList;
-    surfacelist_t   glowingSurfaceList;
-
-    Blockmap*       mobjBlockmap;
-    Blockmap*       polyobjBlockmap;
-    Blockmap*       lineDefBlockmap;
-    Blockmap*       subsectorBlockmap;
-
-    nodepile_t      mobjNodes, lineNodes; // All kinds of wacky links.
-    nodeindex_t*    lineLinks; // Indices to roots.
-
-    float           globalGravity; // Gravity for the current map.
-    int             ambientLightLevel; // Ambient lightlevel for the current map.
-} gamemap_t;
+#include "gamemap.h"
 
 gamemap_t*      P_GetCurrentMap(void);
 void            P_SetCurrentMap(gamemap_t* map);
-
-/**
- * This ID is the name of the lump tag that marks the beginning of map
- * data, e.g. "MAP03" or "E2M8".
- */
-const Uri* P_MapUri(gamemap_t* map);
-
-/// @return  The 'unique' identifier of the map.
-const char* P_GetUniqueMapId(gamemap_t* map);
-
-void            P_GetMapBounds(gamemap_t* map, float* min, float* max);
-int             P_GetMapAmbientLightLevel(gamemap_t* map);
 
 const char*     P_GenerateUniqueMapId(const char* mapId);
 
