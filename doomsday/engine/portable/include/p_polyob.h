@@ -31,11 +31,6 @@ DD_BASE_POLYOBJ_ELEMENTS()
 #define POLYOBJ_SIZE        gx.polyobjSize
 
 /**
- * Initialize polyobjs on the current map. To be called after map load.
- */
-void P_MapInitPolyobjs(void);
-
-/**
  * The po_callback is called when a polyobj hits a mobj.
  */
 void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*));

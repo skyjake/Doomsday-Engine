@@ -24,6 +24,7 @@
 #include "de_console.h"
 #include "de_play.h"
 #include "de_system.h"
+#include "de_refresh.h"
 
 #include "gamemap.h"
 
@@ -200,6 +201,105 @@ uint GameMap_PolyobjCount(GameMap* map)
 {
     assert(map);
     return map->numPolyObjs;
+}
+
+polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id)
+{
+    assert(map);
+    if(id < map->numPolyObjs)
+        return map->polyObjs[id];
+    return NULL;
+}
+
+polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numPolyObjs; ++i)
+    {
+        polyobj_t* po = map->polyObjs[i];
+        if(po->tag == tag)
+        {
+            return po;
+        }
+    }
+    return NULL;
+}
+
+polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numPolyObjs; ++i)
+    {
+        polyobj_t* po = map->polyObjs[i];
+        if(po == ddMobjBase)
+        {
+            return po;
+        }
+    }
+    return NULL;
+}
+
+static void initPolyobj(polyobj_t* po)
+{
+    linedef_t** lineIter;
+    subsector_t* ssec;
+    vec2_t avg; // < Used to find a polyobj's center, and hence subsector.
+
+    if(!po) return;
+
+    V2_Set(avg, 0, 0);
+    for(lineIter = po->lines; *lineIter; lineIter++)
+    {
+        linedef_t* line = *lineIter;
+        sidedef_t* front = line->L_frontside;
+
+        front->SW_topinflags |= SUIF_NO_RADIO;
+        front->SW_middleinflags |= SUIF_NO_RADIO;
+        front->SW_bottominflags |= SUIF_NO_RADIO;
+
+        if(line->L_backside)
+        {
+            sidedef_t* back = line->L_backside;
+
+            back->SW_topinflags |= SUIF_NO_RADIO;
+            back->SW_middleinflags |= SUIF_NO_RADIO;
+            back->SW_bottominflags |= SUIF_NO_RADIO;
+        }
+
+        V2_Sum(avg, avg, line->L_v1pos);
+    }
+    V2_Scale(avg, 1.f / po->lineCount);
+
+    ssec = R_PointInSubsector(avg[VX], avg[VY]);
+    if(ssec)
+    {
+        if(ssec->polyObj)
+        {
+            Con_Message("Warning: GameMap::initPolyobj: Multiple polyobjs in a single subsector\n"
+                        "  (subsector %ld, sector %ld). Previous polyobj overridden.\n",
+                        (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
+        }
+        ssec->polyObj = po;
+        po->subsector = ssec;
+    }
+
+    Polyobj_UpdateAABox(po);
+    Polyobj_UpdateSurfaceTangents(po);
+
+    P_PolyobjUnlink(po);
+    P_PolyobjLink(po);
+}
+
+void GameMap_InitPolyobjs(GameMap* map)
+{
+    uint i;
+    assert(map);
+    for(i = 0; i < map->numPolyObjs; ++i)
+    {
+        initPolyobj(map->polyObjs[i]);
+    }
 }
 
 void GameMap_InitNodePiles(GameMap* map)

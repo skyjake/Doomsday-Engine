@@ -281,6 +281,45 @@ uint GameMap_NodeCount(GameMap* map);
  */
 uint GameMap_PolyobjCount(GameMap* map);
 
+/**
+ * Lookup a Polyobj in the map by unique ID.
+ *
+ * @param map  GameMap instance.
+ * @param id  Unique identifier of the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+polyobj_t* GameMap_PolyobjByID(GameMap* map, uint id);
+
+/**
+ * Lookup a Polyobj in the map by tag.
+ *
+ * @param map  GameMap instance.
+ * @param tag  Tag associated with the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag);
+
+/**
+ * Lookup a Polyobj in the map by origin.
+ *
+ * @param map  GameMap instance.
+ * @param tag  Tag associated with the Polyobj to be found.
+ * @return  Found Polyobj instance else @c NULL.
+ */
+polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);
+
+/**
+ * Initialize all Polyobjs in the map. To be called after map load.
+ *
+ * @param map  GameMap instance.
+ */
+void GameMap_InitPolyobjs(GameMap* map);
+
+/**
+ * Initialize the node piles and link rings. To be called after map load.
+ *
+ * @param map  GameMap instance.
+ */
 void GameMap_InitNodePiles(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H

@@ -37,37 +37,32 @@ void P_SetPolyobjCallback(void (*func) (struct mobj_s*, void*, void*))
     po_callback = func;
 }
 
+/// @note Part of the Doomsday public API
 polyobj_t* P_PolyobjByID(uint id)
 {
-    if(id < NUM_POLYOBJS)
-        return polyObjs[id];
-    return NULL;
-}
-
-polyobj_t* P_PolyobjByTag(int tag)
-{
-    uint i;
-    for(i = 0; i < NUM_POLYOBJS; ++i)
+    if(theMap)
     {
-        polyobj_t* po = polyObjs[i];
-        if(po->tag == tag)
-        {
-            return po;
-        }
+        return GameMap_PolyobjByID(theMap, id);
     }
     return NULL;
 }
 
+/// @note Part of the Doomsday public API
+polyobj_t* P_PolyobjByTag(int tag)
+{
+    if(theMap)
+    {
+        return GameMap_PolyobjByTag(theMap, tag);
+    }
+    return NULL;
+}
+
+/// @note Part of the Doomsday public API
 polyobj_t* P_PolyobjByOrigin(void* ddMobjBase)
 {
-    uint i;
-    for(i = 0; i < NUM_POLYOBJS; ++i)
+    if(theMap)
     {
-        polyobj_t* po = polyObjs[i];
-        if(po == ddMobjBase)
-        {
-            return po;
-        }
+        return GameMap_PolyobjByOrigin(theMap, ddMobjBase);
     }
     return NULL;
 }
@@ -107,66 +102,6 @@ void Polyobj_UpdateSurfaceTangents(polyobj_t* po)
         {
             SideDef_UpdateSurfaceTangents(line->L_backside);
         }
-    }
-}
-
-void P_MapInitPolyobj(polyobj_t* po)
-{
-    linedef_t** lineIter;
-    subsector_t* ssec;
-    vec2_t avg; // < Used to find a polyobj's center, and hence subsector.
-
-    if(!po) return;
-
-    V2_Set(avg, 0, 0);
-    for(lineIter = po->lines; *lineIter; lineIter++)
-    {
-        linedef_t* line = *lineIter;
-        sidedef_t* front = line->L_frontside;
-
-        front->SW_topinflags |= SUIF_NO_RADIO;
-        front->SW_middleinflags |= SUIF_NO_RADIO;
-        front->SW_bottominflags |= SUIF_NO_RADIO;
-
-        if(line->L_backside)
-        {
-            sidedef_t* back = line->L_backside;
-
-            back->SW_topinflags |= SUIF_NO_RADIO;
-            back->SW_middleinflags |= SUIF_NO_RADIO;
-            back->SW_bottominflags |= SUIF_NO_RADIO;
-        }
-
-        V2_Sum(avg, avg, line->L_v1pos);
-    }
-    V2_Scale(avg, 1.f / po->lineCount);
-
-    ssec = R_PointInSubsector(avg[VX], avg[VY]);
-    if(ssec)
-    {
-        if(ssec->polyObj)
-        {
-            Con_Message("Warning: P_MapInitPolyobj: Multiple polyobjs in a single subsector\n"
-                        "  (subsector %ld, sector %ld). Previous polyobj overridden.\n",
-                        (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
-        }
-        ssec->polyObj = po;
-        po->subsector = ssec;
-    }
-
-    Polyobj_UpdateAABox(po);
-    Polyobj_UpdateSurfaceTangents(po);
-
-    P_PolyobjUnlink(po);
-    P_PolyobjLink(po);
-}
-
-void P_MapInitPolyobjs(void)
-{
-    uint i;
-    for(i = 0; i < NUM_POLYOBJS; ++i)
-    {
-        P_MapInitPolyobj(polyObjs[i]);
     }
 }
 

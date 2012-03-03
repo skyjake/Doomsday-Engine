@@ -1369,23 +1369,24 @@ void R_SetupMap(int mode, int flags)
         Materials_PurgeCacheQueue();
         return;
 
-    case DDSMM_AFTER_LOADING: {
+    case DDSMM_AFTER_LOADING:
+        assert(theMap);
+
         // Update everything again. Its possible that after loading we
         // now have more HOMs to fix, etc..
         R_InitSkyFix();
         R_MapInitSurfaces(false);
-        P_MapInitPolyobjs();
+        GameMap_InitPolyobjs(theMap);
         DD_ResetTimer();
         return;
-      }
+
     case DDSMM_FINALIZE: {
-        GameMap* map = theMap;
         ded_mapinfo_t* mapInfo;
         float startTime;
         char cmd[80];
         int i;
 
-        assert(map);
+        assert(theMap);
 
         if(gameTime > 20000000 / TICSPERSEC)
         {
@@ -1396,7 +1397,7 @@ void R_SetupMap(int mode, int flags)
         }
 
         // We are now finished with the game data, map object db.
-        P_DestroyGameMapObjDB(&map->gameObjData);
+        P_DestroyGameMapObjDB(&theMap->gameObjData);
 
         // Init server data.
         Sv_InitPools();
@@ -1404,7 +1405,7 @@ void R_SetupMap(int mode, int flags)
         // Recalculate the light range mod matrix.
         Rend_CalcLightModRange();
 
-        P_MapInitPolyobjs();
+        GameMap_InitPolyobjs(theMap);
         P_MapSpawnPlaneParticleGens();
 
         R_MapInitSurfaces(true);
@@ -1418,14 +1419,14 @@ void R_SetupMap(int mode, int flags)
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        { ddstring_t* mapPath = Uri_Resolved(GameMap_Uri(map));
+        { ddstring_t* mapPath = Uri_Resolved(GameMap_Uri(theMap));
         sprintf(cmd, "init-%s", Str_Text(mapPath));
         Str_Delete(mapPath);
         if(Con_IsValidCommand(cmd))
@@ -1480,12 +1481,11 @@ void R_SetupMap(int mode, int flags)
       }
     case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
-        GameMap* map = theMap;
         ded_mapinfo_t* mapInfo;
 
-        assert(map);
+        assert(theMap);
 
-        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(theMap));
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else
