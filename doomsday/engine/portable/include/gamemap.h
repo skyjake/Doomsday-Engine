@@ -217,6 +217,62 @@ int GameMap_HEdgeIndex(GameMap* map, HEdge* hedge);
  */
 int GameMap_NodeIndex(GameMap* map, node_t* node);
 
+/**
+ * Retrieve the number of Vertex instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number Vertexes.
+ */
+uint GameMap_VertexCount(GameMap* map);
+
+/**
+ * Retrieve the number of LineDef instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number LineDef.
+ */
+uint GameMap_LineDefCount(GameMap* map);
+
+/**
+ * Retrieve the number of SideDef instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number SideDef.
+ */
+uint GameMap_SideDefCount(GameMap* map);
+
+/**
+ * Retrieve the number of Sector instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number Sector.
+ */
+uint GameMap_SectorCount(GameMap* map);
+
+/**
+ * Retrieve the number of Subsector instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number Subsector.
+ */
+uint GameMap_SubsectorCount(GameMap* map);
+
+/**
+ * Retrieve the number of HEdge instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number HEdge.
+ */
+uint GameMap_HEdgeCount(GameMap* map);
+
+/**
+ * Retrieve the number of Node instances owned by this.
+ *
+ * @param map  GameMap instance.
+ * @return  Number Node.
+ */
+uint GameMap_NodeCount(GameMap* map);
+
 void GameMap_InitNodePiles(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H

@@ -154,6 +154,48 @@ node_t* GameMap_Node(GameMap* map, uint idx)
     return &map->nodes[idx];
 }
 
+uint GameMap_VertexCount(GameMap* map)
+{
+    assert(map);
+    return map->numVertexes;
+}
+
+uint GameMap_LineDefCount(GameMap* map)
+{
+    assert(map);
+    return map->numLineDefs;
+}
+
+uint GameMap_SideDefCount(GameMap* map)
+{
+    assert(map);
+    return map->numSideDefs;
+}
+
+uint GameMap_SectorCount(GameMap* map)
+{
+    assert(map);
+    return map->numSectors;
+}
+
+uint GameMap_SubsectorCount(GameMap* map)
+{
+    assert(map);
+    return map->numSubsectors;
+}
+
+uint GameMap_HEdgeCount(GameMap* map)
+{
+    assert(map);
+    return map->numHEdges;
+}
+
+uint GameMap_NodeCount(GameMap* map)
+{
+    assert(map);
+    return map->numNodes;
+}
+
 void GameMap_InitNodePiles(GameMap* map)
 {
     uint i, starttime = 0;
