@@ -973,10 +973,10 @@ static void archiveReject(gamemap_t *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void writePolyobj(const gamemap_t *map, uint idx)
+static void writePolyobj(const gamemap_t* map, uint idx)
 {
-    uint                i;
-    polyobj_t          *p = map->polyObjs[idx];
+    polyobj_t* p = map->polyObjs[idx];
+    uint i;
 
     writeLong((long) p->idx);
     writeFloat(p->pos[VX]);
@@ -996,28 +996,30 @@ static void writePolyobj(const gamemap_t *map, uint idx)
     writeByte(p->crush? 1 : 0);
     writeLong((long) p->seqType);
 
-    writeLong((long) p->numHEdges);
-    for(i = 0; i < p->numHEdges; ++i)
+    writeLong((long) p->lineCount);
+    for(i = 0; i < p->lineCount; ++i)
     {
-        HEdge              *s = p->hedges[i];
+        linedef_t* line = p->lines[i];
+        HEdge* he = line->L_frontside->hedges[0];
 
-        writeLong((s->v[0] - map->vertexes) + 1);
-        writeLong((s->v[1] - map->vertexes) + 1);
-        writeFloat(s->length);
-        writeFloat(s->offset);
-        writeLong(s->lineDef? ((s->lineDef - map->lineDefs) + 1) : 0);
-        writeLong(s->sec[FRONT]? ((s->sec[FRONT] - map->sectors) + 1) : 0);
-        writeLong((long) s->angle);
-        writeByte(s->side);
-        writeByte(s->flags);
+        writeLong((he->v[0] - map->vertexes) + 1);
+        writeLong((he->v[1] - map->vertexes) + 1);
+        writeFloat(he->length);
+        writeFloat(he->offset);
+        writeLong(he->lineDef? ((he->lineDef - map->lineDefs) + 1) : 0);
+        writeLong(he->sec[FRONT]? ((he->sec[FRONT] - map->sectors) + 1) : 0);
+        writeLong((long) he->angle);
+        writeByte(he->side);
+        writeByte(he->flags);
     }
 }
 
-static void readPolyobj(const gamemap_t *map, uint idx)
+static void readPolyobj(const gamemap_t* map, uint idx)
 {
-    uint                i;
-    long                obIdx;
-    polyobj_t          *p = map->polyObjs[idx];
+    polyobj_t* p = map->polyObjs[idx];
+    long obIdx;
+    HEdge* hedges;
+    uint i;
 
     p->idx = (uint) readLong();
     p->pos[VX] = readFloat();
@@ -1037,34 +1039,40 @@ static void readPolyobj(const gamemap_t *map, uint idx)
     p->crush = (readByte()? true : false);
     p->seqType = (int) readLong();
 
-    // Polyobj hedge list.
-    p->numHEdges = (uint) readLong();
-    p->hedges = Z_Malloc(sizeof(HEdge*) * (p->numHEdges + 1), PU_MAP, 0);
-    for(i = 0; i < p->numHEdges; ++i)
+    // Polyobj line list.
+    p->lineCount = (uint) readLong();
+
+    hedges = Z_Calloc(sizeof(HEdge) * p->lineCount, PU_MAP, 0);
+    p->lines = Z_Malloc(sizeof(HEdge*) * (p->lineCount + 1), PU_MAP, 0);
+    for(i = 0; i < p->lineCount; ++i)
     {
-        HEdge              *s =
-            Z_Calloc(sizeof(*s), PU_MAP, 0);
+        HEdge* he = hedges + i;
+        linedef_t* line;
 
-        s->v[0] = &map->vertexes[(unsigned) readLong() - 1];
-        s->v[1] = &map->vertexes[(unsigned) readLong() - 1];
-        s->length = readFloat();
-        s->offset = readFloat();
+        he->v[0] = &map->vertexes[(unsigned) readLong() - 1];
+        he->v[1] = &map->vertexes[(unsigned) readLong() - 1];
+        he->length = readFloat();
+        he->offset = readFloat();
         obIdx = readLong();
-        s->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
+        he->lineDef = (obIdx == 0? NULL : &map->lineDefs[(unsigned) obIdx - 1]);
         obIdx = readLong();
-        s->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
-        s->angle = (angle_t) readLong();
-        s->side = (readByte()? 1 : 0);
-        s->flags = readByte();
+        he->sec[FRONT] = (obIdx == 0? NULL : &map->sectors[(unsigned) obIdx - 1]);
+        he->angle = (angle_t) readLong();
+        he->side = (readByte()? 1 : 0);
+        he->flags = readByte();
 
-        p->hedges[i] = s;
+        line = he->lineDef;
+        line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
+        line->L_frontside->hedges[0] = he;
+
+        p->lines[i] = line;
     }
-    p->hedges[i] = NULL; // Terminate.
+    p->lines[i] = NULL; // Terminate.
 }
 
-static void archivePolyobjs(gamemap_t *map, boolean write)
+static void archivePolyobjs(gamemap_t* map, boolean write)
 {
-    uint                i;
+    uint i;
 
     if(write)
         beginSegment(DAMSEG_POLYOBJS);

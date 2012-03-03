@@ -653,7 +653,7 @@ typedef struct poiterparams_s {
 int PTR_PolyobjLines(polyobj_t* po, void* data)
 {
     poiterparams_t* args = (poiterparams_t*) data;
-    return Polyobj_LineDefIterator(po, args->func, args->param);
+    return Polyobj_LineIterator(po, args->func, args->param);
 }
 
 int Map_IterateCellPolyobjLineDefsIterator(gamemap_t* map, const uint coords[2],

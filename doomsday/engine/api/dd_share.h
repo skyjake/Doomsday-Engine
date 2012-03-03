@@ -1060,13 +1060,13 @@ typedef struct aaboxf_s {
     unsigned int    idx; /* Idx of polyobject. */ \
     int             tag; /* Reference tag. */ \
     int             validCount; \
-    AABoxf           aaBox; \
+    AABoxf          aaBox; \
     float           dest[2]; /* Destination XY. */ \
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    unsigned int    numHEdges; \
-    struct hedge_s** hedges; \
+    struct linedef_s** lines; \
+    unsigned int    lineCount; \
     struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
     struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
     float           speed; /* Movement speed. */ \
@@ -1074,8 +1074,6 @@ typedef struct aaboxf_s {
     int             seqType; \
     struct { \
         int         index; \
-        unsigned int lineCount; \
-        struct linedef_s** lineDefs; \
     } buildData;
 
 //------------------------------------------------------------------------

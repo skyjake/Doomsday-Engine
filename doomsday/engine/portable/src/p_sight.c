@@ -202,24 +202,24 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
 {
     const subsector_t*  ssec = &subsectors[ssecIdx];
     if(ssec->polyObj)
-    {   // Check polyobj lines.
+    {
+        // Check polyobj lines.
         polyobj_t* po = ssec->polyObj;
-        HEdge** segPtr = po->hedges;
-        while(*segPtr)
+        linedef_t** lineIter = po->lines;
+        while(*lineIter)
         {
-            HEdge* hedge = *segPtr;
-            if(hedge->lineDef && hedge->lineDef->validCount != validCount)
+            linedef_t* line = *lineIter;
+            if(line->validCount != validCount)
             {
-                linedef_t* li = hedge->lineDef;
-                li->validCount = validCount;
-                if(!crossLineDef(li, hedge->side, los))
+                line->validCount = validCount;
+                if(!crossLineDef(line, FRONT, los))
                     return false; // Stop iteration.
             }
-            segPtr++;
+            lineIter++;
         }
     }
 
-    // Check lines.
+    // Check edges.
     { HEdge** segPtr = ssec->hedges;
     while(*segPtr)
     {

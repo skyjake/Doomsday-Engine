@@ -118,18 +118,17 @@ static gamemapobjdef_t* gameMapObjDefs;
 
 void P_PolyobjChanged(polyobj_t* po)
 {
-    HEdge** hedgeIter = po->hedges;
-    uint i;
-
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+    linedef_t** lineIter;
+    for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        int j;
+        linedef_t* line = *lineIter;
+        HEdge* hedge = line->L_frontside->hedges[0];
+        int i;
 
         // Shadow bias must be told.
-        for(j = 0; j < 3; ++j)
+        for(i = 0; i < 3; ++i)
         {
-            SB_SurfaceMoved(hedge->bsuf[j]);
+            SB_SurfaceMoved(hedge->bsuf[i]);
         }
     }
 }

@@ -553,18 +553,16 @@ boolean EV_OpenPolyDoor(linedef_t* line, byte* args, podoortype_t type)
 
 static int getPolyobjMirror(uint poly)
 {
-    uint                i;
+    uint i;
 
     for(i = 0; i < numpolyobjs; ++i)
     {
-        polyobj_t*          po = P_GetPolyobj(i | 0x80000000);
+        polyobj_t* po = P_GetPolyobj(i | 0x80000000);
 
         if(po->tag == poly)
         {
-            HEdge*              hedge = po->hedges[0];
-            linedef_t*          linedef = P_GetPtrp(hedge, DMU_LINEDEF);
-
-            return P_ToXLine(linedef)->arg2;
+            linedef_t* line = po->lines[0];
+            return P_ToXLine(line)->arg2;
         }
     }
 

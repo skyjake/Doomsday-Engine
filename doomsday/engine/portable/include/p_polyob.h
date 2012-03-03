@@ -107,12 +107,12 @@ void Polyobj_UpdateAABox(polyobj_t* polyobj);
 void Polyobj_UpdateSurfaceTangents(polyobj_t* polyobj);
 
 /**
- * Iterate over the LineDefs of the Polyobj making a callback for each.
- * Iteration ends when all LineDefs have been visited or @a callback
+ * Iterate over the lines of the Polyobj making a callback for each.
+ * Iteration ends when all lines have been visited or @a callback
  * returns non-zero.
  *
  * Caller should increment validCount if necessary before calling this
- * function as it is used to prevent repeated processing of LineDefs.
+ * function as it is used to prevent repeated processing of lines.
  *
  * @param po          Polyobj instance.
  * @param callback    Callback function ptr.
@@ -120,7 +120,7 @@ void Polyobj_UpdateSurfaceTangents(polyobj_t* polyobj);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int Polyobj_LineDefIterator(polyobj_t* polyobj,
+int Polyobj_LineIterator(polyobj_t* polyobj,
     int (*callback) (struct linedef_s*, void* paramaters), void* paramaters);
 
 #endif /// LIBDENG_MAP_POLYOB_H

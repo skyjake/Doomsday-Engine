@@ -384,7 +384,7 @@ void SB_InitForMap(const char* uniqueID)
     for(i = 0; i < numPolyObjs; ++i)
     {
         polyobj_t* po = polyObjs[i];
-        numVertIllums += po->numHEdges * 3 * 4;
+        numVertIllums += po->lineCount * 3 * 4;
     }
 
     // Allocate and initialize the vertexillum_ts.
@@ -444,9 +444,10 @@ void SB_InitForMap(const char* uniqueID)
         polyobj_t* po = polyObjs[i];
         uint j;
 
-        for(j = 0; j < po->numHEdges; ++j)
+        for(j = 0; j < po->lineCount; ++j)
         {
-            HEdge* hedge = po->hedges[j];
+            linedef_t* line = po->lines[j];
+            HEdge* hedge = line->L_frontside->hedges[0];
             int k;
 
             for(k = 0; k < 3; ++k)

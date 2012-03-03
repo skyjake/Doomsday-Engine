@@ -1161,9 +1161,10 @@ boolean LOIT_ClipLumObjBySight(void* data, void* context)
 
         // We need to figure out if any of the polyobj's segments lies
         // between the viewpoint and the lumobj.
-        for(i = 0; i < ssec->polyObj->numHEdges; ++i)
+        for(i = 0; i < ssec->polyObj->lineCount; ++i)
         {
-            HEdge* hedge = ssec->polyObj->hedges[i];
+            linedef_t* line = ssec->polyObj->lines[i];
+            HEdge* hedge = line->L_frontside->hedges[0];
 
             // Ignore hedges facing the wrong way.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)

@@ -161,29 +161,27 @@ static void destroyEditablePolyObjs(editmap_t* map)
 {
     if(map->polyObjs)
     {
-        uint                i;
+        uint i;
         for(i = 0; i < map->numPolyObjs; ++i)
         {
-            polyobj_t          *po = map->polyObjs[i];
-            M_Free(po->buildData.lineDefs);
-
+            polyobj_t* po = map->polyObjs[i];
+            M_Free(po->lines);
             M_Free(po);
         }
-
         M_Free(map->polyObjs);
     }
     map->polyObjs = NULL;
     map->numPolyObjs = 0;
 }
 
-static void destroyEditableLineDefs(editmap_t *map)
+static void destroyEditableLineDefs(editmap_t* map)
 {
     if(map->lineDefs)
     {
-        uint                i;
+        uint i;
         for(i = 0; i < map->numLineDefs; ++i)
         {
-            linedef_t             *line = map->lineDefs[i];
+            linedef_t* line = map->lineDefs[i];
             M_Free(line);
         }
 
@@ -1373,7 +1371,7 @@ static void hardenPlanes(gamemap_t* dest, editmap_t* src)
 
 static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
 {
-    uint                i;
+    uint i;
 
     if(src->numPolyObjs == 0)
     {
@@ -1383,14 +1381,13 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
     }
 
     dest->numPolyObjs = src->numPolyObjs;
-    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*),
-                              PU_MAP, 0);
+    dest->polyObjs = Z_Malloc((dest->numPolyObjs+1) * sizeof(polyobj_t*), PU_MAP, 0);
 
     for(i = 0; i < dest->numPolyObjs; ++i)
     {
-        uint                j;
-        polyobj_t*          destP, *srcP = src->polyObjs[i];
-        HEdge*              hedges;
+        polyobj_t* destP, *srcP = src->polyObjs[i];
+        HEdge* hedges;
+        uint j;
 
         destP = Z_Calloc(POLYOBJ_SIZE, PU_MAP, 0);
         destP->idx = i;
@@ -1400,24 +1397,22 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
         destP->pos[VX] = srcP->pos[VX];
         destP->pos[VY] = srcP->pos[VY];
 
-        destP->numHEdges = srcP->buildData.lineCount;
+        destP->lineCount = srcP->lineCount;
 
-        destP->originalPts =
-            Z_Malloc(destP->numHEdges * sizeof(fvertex_t), PU_MAP, 0);
-        destP->prevPts =
-            Z_Malloc(destP->numHEdges * sizeof(fvertex_t), PU_MAP, 0);
+        destP->originalPts = Z_Malloc(destP->lineCount * sizeof(fvertex_t), PU_MAP, 0);
+        destP->prevPts     = Z_Malloc(destP->lineCount * sizeof(fvertex_t), PU_MAP, 0);
 
         // Create a hedge for each line of this polyobj.
-        hedges = Z_Calloc(sizeof(HEdge) * destP->numHEdges, PU_MAP, 0);
-        destP->hedges = Z_Malloc(sizeof(HEdge*) * (destP->numHEdges+1), PU_MAP, 0);
-        for(j = 0; j < destP->numHEdges; ++j)
-        {
-            linedef_t*          line =
-                &dest->lineDefs[srcP->buildData.lineDefs[j]->buildData.index - 1];
-            HEdge*              hedge = &hedges[j];
-            float               dx, dy;
+        hedges = Z_Calloc(sizeof(HEdge) * destP->lineCount, PU_MAP, 0);
 
-            // This line is part of a polyobj.
+        destP->lines = Z_Malloc(sizeof(*destP->lines) * (destP->lineCount+1), PU_MAP, 0);
+        for(j = 0; j < destP->lineCount; ++j)
+        {
+            linedef_t* line = &dest->lineDefs[srcP->lines[j]->buildData.index - 1];
+            HEdge* hedge = &hedges[j];
+            float dx, dy;
+
+            // This line belongs to a polyobj.
             line->inFlags |= LF_POLYOBJ;
 
             hedge->header.type = DMU_HEDGE;
@@ -1431,9 +1426,12 @@ static void hardenPolyobjs(gamemap_t* dest, editmap_t* src)
             hedge->HE_backsector = NULL;
             hedge->flags |= HEDGEF_POLYOBJ;
 
-            destP->hedges[j] = hedge;
+            line->L_frontside->hedges = Z_Malloc(sizeof(*line->L_frontside->hedges), PU_MAP, 0);
+            line->L_frontside->hedges[0] = hedge;
+
+            destP->lines[j] = line;
         }
-        destP->hedges[j] = NULL; // Terminate.
+        destP->lines[j] = NULL; // Terminate.
 
         // Add this polyobj to the global list.
         dest->polyObjs[i] = destP;
@@ -1863,25 +1861,21 @@ boolean MPE_End(void)
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
         polyobj_t* po = gamemap->polyObjs[i];
-        HEdge** segPtr;
-        size_t n;
+        linedef_t** lineIter;
+        uint n = 0;
 
-        segPtr = po->hedges;
-        n = 0;
-        while(*segPtr)
+        for(lineIter = po->lines; *lineIter; lineIter++, n++)
         {
-            HEdge* hedge = *segPtr;
+            linedef_t* line = *lineIter;
+            HEdge* hedge = line->L_frontside->hedges[0];
 
-            hedge->HE_v1 = hedge->lineDef->L_v1;
-            hedge->HE_v2 = hedge->lineDef->L_v2;
+            hedge->HE_v1 = line->L_v1;
+            hedge->HE_v2 = line->L_v2;
 
             // The original Pts are based off the anchor Pt, and are unique
             // to each hedge, not each linedef.
-            po->originalPts[n].pos[VX] = hedge->HE_v1pos[VX] - po->pos[VX];
-            po->originalPts[n].pos[VY] = hedge->HE_v1pos[VY] - po->pos[VY];
-
-            segPtr++;
-            n++;
+            po->originalPts[n].pos[VX] = line->L_v1pos[VX] - po->pos[VX];
+            po->originalPts[n].pos[VY] = line->L_v1pos[VY] - po->pos[VY];
         }
     }
 
@@ -1902,8 +1896,8 @@ boolean MPE_End(void)
     destroyMap();
 
     if(!builtOK)
-    {   // Argh, failed.
-        // Need to clean up.
+    {
+        // Failed. Need to clean up.
         P_DestroyGameMapObjDB(&gamemap->gameObjData);
         Z_Free(gamemap);
         return false;
@@ -2271,46 +2265,43 @@ uint MPE_SectorCreate(float lightlevel, float red, float green, float blue)
     return s->buildData.index;
 }
 
-uint MPE_PolyobjCreate(uint *lines, uint lineCount, int tag,
-                       int sequenceType, float anchorX, float anchorY)
+uint MPE_PolyobjCreate(uint* lines, uint lineCount, int tag, int sequenceType,
+    float anchorX, float anchorY)
 {
-    uint                i;
-    polyobj_t          *po;
+    polyobj_t* po;
+    uint i;
 
-    if(!editMapInited || !lineCount || !lines)
-        return 0;
+    if(!editMapInited || !lineCount || !lines) return 0;
 
     // First check that all the line indices are valid and that they arn't
     // already part of another polyobj.
     for(i = 0; i < lineCount; ++i)
     {
-        linedef_t             *line;
+        linedef_t* line;
 
-        if(lines[i] == 0 || lines[i] > map->numLineDefs)
-            return 0;
+        if(lines[i] == 0 || lines[i] > map->numLineDefs) return 0;
 
         line = map->lineDefs[lines[i] - 1];
-        if(line->inFlags & LF_POLYOBJ)
-            return 0;
+        if(line->inFlags & LF_POLYOBJ) return 0;
     }
 
     po = createPolyobj();
-    po->buildData.lineDefs = M_Calloc(sizeof(linedef_t*) * (lineCount+1));
-    for(i = 0; i < lineCount; ++i)
-    {
-        linedef_t             *line = map->lineDefs[lines[i] - 1];
-
-        // This line is part of a polyobj.
-        line->inFlags |= LF_POLYOBJ;
-
-        po->buildData.lineDefs[i] = line;
-    }
-    po->buildData.lineDefs[i] = NULL;
-    po->buildData.lineCount = lineCount;
     po->tag = tag;
     po->seqType = sequenceType;
     po->pos[VX] = anchorX;
     po->pos[VY] = anchorY;
+
+    po->lineCount = lineCount;
+    po->lines = M_Calloc(sizeof(linedef_t*) * (po->lineCount+1));
+    for(i = 0; i < lineCount; ++i)
+    {
+        linedef_t* line = map->lineDefs[lines[i] - 1];
+
+        // This line belongs to a polyobj.
+        line->inFlags |= LF_POLYOBJ;
+        po->lines[i] = line;
+    }
+    po->lines[i] = NULL;
 
     return po->buildData.index;
 }

@@ -2342,9 +2342,11 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
     if(sub->polyObj)
     {
-        for(i = 0; i < sub->polyObj->numHEdges; ++i)
+        for(i = 0; i < sub->polyObj->lineCount; ++i)
         {
-            hedge = sub->polyObj->hedges[i];
+            linedef_t* line = sub->polyObj->lines[i];
+
+            hedge = line->L_frontside->hedges[0];
 
             // Which way should it be facing?
             if(!(segFacingViewerDot(hedge->HE_v1pos, hedge->HE_v2pos) < 0))
@@ -2377,9 +2379,12 @@ static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
 
     if(!ssec->polyObj) return;
 
-    for(i = 0; i < ssec->polyObj->numHEdges; ++i)
+    for(i = 0; i < ssec->polyObj->lineCount; ++i)
     {
-        hedge = ssec->polyObj->hedges[i];
+        linedef_t* line = ssec->polyObj->lines[i];
+
+        hedge = line->L_frontside->hedges[0];
+
         if(!(hedge->frameFlags & HEDGEINF_FACINGFRONT)) continue;
 
         if(!C_CheckViewRelSeg(hedge->HE_v1pos[VX], hedge->HE_v1pos[VY],
@@ -2813,9 +2818,12 @@ static void Rend_RenderSubsector(uint subsectorIdx)
     // Is there a polyobj on board?
     if(ssec->polyObj)
     {
-        for(i = 0; i < ssec->polyObj->numHEdges; ++i)
+        for(i = 0; i < ssec->polyObj->lineCount; ++i)
         {
-            hedge = ssec->polyObj->hedges[i];
+            linedef_t* line = ssec->polyObj->lines[i];
+
+            hedge = line->L_frontside->hedges[0];
+
             // Let's first check which way this hedge is facing.
             if(hedge->frameFlags & HEDGEINF_FACINGFRONT)
             {
@@ -3056,14 +3064,13 @@ void Rend_RenderSurfaceVectors(void)
         vec3_t origin;
         uint j;
 
-        for(j = 0; j < po->numHEdges; ++j)
+        for(j = 0; j < po->lineCount; ++j)
         {
-            HEdge* hedge = po->hedges[j];
-            linedef_t* lineDef = hedge->lineDef;
+            linedef_t* line = po->lines[j];
 
-            V3_Set(origin, (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2,
-                           (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2, zPos);
-            drawSurfaceTangentSpaceVectors(&HEDGE_SIDEDEF(hedge)->SW_middlesurface, origin);
+            V3_Set(origin, (line->L_v2pos[VX] + line->L_v1pos[VX])/2,
+                           (line->L_v2pos[VY] + line->L_v1pos[VY])/2, zPos);
+            drawSurfaceTangentSpaceVectors(&line->L_frontside->SW_middlesurface, origin);
         }
     }
 
@@ -3212,7 +3219,7 @@ static int drawVertex1(linedef_t* li, void* context)
 
 int drawPolyObjVertexes(polyobj_t* po, void* context)
 {
-    return Polyobj_LineDefIterator(po, drawVertex1, po);
+    return Polyobj_LineIterator(po, drawVertex1, po);
 }
 
 /**
@@ -3803,28 +3810,27 @@ static void Rend_RenderBoundingBoxes(void)
         Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
 
         {uint j;
-        for(j = 0; j < po->numHEdges; ++j)
+        for(j = 0; j < po->lineCount; ++j)
         {
-            HEdge* hedge = po->hedges[j];
-            linedef_t* lineDef = hedge->lineDef;
-            float width  = (lineDef->aaBox.maxX - lineDef->aaBox.minX)/2;
-            float length = (lineDef->aaBox.maxY - lineDef->aaBox.minY)/2;
+            linedef_t* line = po->lines[j];
+            float width  = (line->aaBox.maxX - line->aaBox.minX)/2;
+            float length = (line->aaBox.maxY - line->aaBox.minY)/2;
             float pos[3];
 
             /** Draw a bounding box for the lineDef.
-            pos[VX] = lineDef->aaBox.minX+width;
-            pos[VY] = lineDef->aaBox.minY+length;
+            pos[VX] = line->aaBox.minX + width;
+            pos[VY] = line->aaBox.minY + length;
             pos[VZ] = sec->SP_floorheight;
             Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
             */
 
-            pos[VX] = (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2;
-            pos[VY] = (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2;
+            pos[VX] = (line->L_v2pos[VX] + line->L_v1pos[VX])/2;
+            pos[VY] = (line->L_v2pos[VY] + line->L_v1pos[VY])/2;
             pos[VZ] = sec->SP_floorheight;
             width = 0;
-            length = lineDef->length/2;
+            length = line->length/2;
 
-            Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90-lineDef->angle), green, alpha, 0, true);
+            Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90 - line->angle), green, alpha, 0, true);
         }}
     }
 

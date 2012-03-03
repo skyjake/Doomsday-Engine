@@ -27,10 +27,10 @@
 #include "de_misc.h"
 
 static void rotatePoint(int an, float* x, float* y, float startSpotX, float startSpotY);
-static boolean checkMobjBlocking(HEdge* hedge, polyobj_t* po);
+static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po);
 
 // Called when the polyobj hits a mobj.
-static void (*po_callback) (mobj_t* mobj, void* lineDef, void* polyobj);
+static void (*po_callback) (mobj_t* mobj, void* line, void* polyobj);
 
 polyobj_t** polyObjs; // List of all poly-objects in the map.
 uint numPolyObjs;
@@ -77,57 +77,72 @@ polyobj_t* P_PolyobjByOrigin(void* ddMobjBase)
 
 void Polyobj_UpdateAABox(polyobj_t* po)
 {
-    HEdge** hedgeIter;
+    linedef_t** lineIter;
     linedef_t* line;
-    uint i;
     assert(po);
 
-    hedgeIter = po->hedges;
-    line = (*hedgeIter)->lineDef;
-    V2_InitBox(po->aaBox.arvec2, line->L_v1pos);
+    lineIter = po->lines;
+    if(!*lineIter) return; // Very odd...
 
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+    line = *lineIter;
+    V2_InitBox(po->aaBox.arvec2, line->L_v1pos);
+    lineIter++;
+
+    while(*lineIter)
     {
-        HEdge* hedge = *hedgeIter;
-        line = hedge->lineDef;
+        line = *lineIter;
         V2_AddToBox(po->aaBox.arvec2, line->L_v1pos);
+        lineIter++;
     }
 }
 
 void Polyobj_UpdateSurfaceTangents(polyobj_t* po)
 {
-    HEdge** hedgeIter;
+    linedef_t** lineIter;
     assert(po);
 
-    for(hedgeIter = po->hedges; *hedgeIter; hedgeIter++)
+    for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        SideDef_UpdateSurfaceTangents(HEDGE_SIDEDEF(hedge));
+        linedef_t* line = *lineIter;
+
+        SideDef_UpdateSurfaceTangents(line->L_frontside);
+        if(line->L_backside)
+        {
+            SideDef_UpdateSurfaceTangents(line->L_backside);
+        }
     }
 }
 
 void P_MapInitPolyobj(polyobj_t* po)
 {
-    HEdge** hedgeIter;
+    linedef_t** lineIter;
     subsector_t* ssec;
     vec2_t avg; // < Used to find a polyobj's center, and hence subsector.
 
     if(!po) return;
 
     V2_Set(avg, 0, 0);
-    for(hedgeIter = po->hedges; *hedgeIter; hedgeIter++)
+    for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        linedef_t* line = hedge->lineDef;
-        sidedef_t* side = HEDGE_SIDEDEF(hedge);
+        linedef_t* line = *lineIter;
+        sidedef_t* front = line->L_frontside;
 
-        side->SW_topinflags |= SUIF_NO_RADIO;
-        side->SW_middleinflags |= SUIF_NO_RADIO;
-        side->SW_bottominflags |= SUIF_NO_RADIO;
+        front->SW_topinflags |= SUIF_NO_RADIO;
+        front->SW_middleinflags |= SUIF_NO_RADIO;
+        front->SW_bottominflags |= SUIF_NO_RADIO;
+
+        if(line->L_backside)
+        {
+            sidedef_t* back = line->L_backside;
+
+            back->SW_topinflags |= SUIF_NO_RADIO;
+            back->SW_middleinflags |= SUIF_NO_RADIO;
+            back->SW_bottominflags |= SUIF_NO_RADIO;
+        }
 
         V2_Sum(avg, avg, line->L_v1pos);
     }
-    V2_Scale(avg, 1.f / po->numHEdges);
+    V2_Scale(avg, 1.f / po->lineCount);
 
     ssec = R_PointInSubsector(avg[VX], avg[VY]);
     if(ssec)
@@ -160,15 +175,13 @@ void P_MapInitPolyobjs(void)
 
 static boolean mobjIsBlockingPolyobj(polyobj_t* po)
 {
-    HEdge** hedgeIter;
-    uint i;
+    linedef_t** lineIter;
     if(!po) return false;
 
-    hedgeIter = po->hedges;
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+    for(lineIter = po->lines; *lineIter; lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        if(checkMobjBlocking(hedge, po))
+        linedef_t* line = *lineIter;
+        if(checkMobjBlocking(line, po))
         {
             return true;
         }
@@ -180,30 +193,29 @@ static boolean mobjIsBlockingPolyobj(polyobj_t* po)
 boolean P_PolyobjMove(polyobj_t* po, float delta[2])
 {
     fvertex_t* prevPts;
-    HEdge** hedgeIter;
+    linedef_t** lineIter;
     uint i;
 
     if(!po) return false;
 
     P_PolyobjUnlink(po);
 
-    hedgeIter = po->hedges;
+    lineIter = po->lines;
     prevPts = po->prevPts;
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++, prevPts++)
+    for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
     {
-        HEdge* hedge = *hedgeIter;
-        linedef_t* line = hedge->lineDef;
-        HEdge** veryTempSeg;
+        linedef_t* line = *lineIter;
+        linedef_t** veryTempLine;
 
-        for(veryTempSeg = po->hedges; veryTempSeg != hedgeIter; veryTempSeg++)
+        for(veryTempLine = po->lines; veryTempLine != lineIter; veryTempLine++)
         {
-            if((*veryTempSeg)->lineDef->L_v1 == line->L_v1)
+            if((*veryTempLine)->L_v1 == line->L_v1)
             {
                 break;
             }
         }
 
-        if(veryTempSeg == hedgeIter)
+        if(veryTempLine == lineIter)
         {
             line->L_v1pos[VX] += delta[VX];
             line->L_v1pos[VY] += delta[VY];
@@ -213,11 +225,10 @@ boolean P_PolyobjMove(polyobj_t* po, float delta[2])
         (*prevPts).pos[VY] += delta[VY];
     }
 
-    hedgeIter = po->hedges;
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+    lineIter = po->lines;
+    for(i = 0; i < po->lineCount; ++i, lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        linedef_t* line = hedge->lineDef;
+        linedef_t* line = *lineIter;
         LineDef_UpdateAABox(line);
     }
     po->pos[VX] += delta[VX];
@@ -232,23 +243,22 @@ boolean P_PolyobjMove(polyobj_t* po, float delta[2])
         P_PolyobjUnlink(po);
 
         i = 0;
-        hedgeIter = po->hedges;
+        lineIter = po->lines;
         prevPts = po->prevPts;
-        for(i = 0; i < po->numHEdges; ++i, hedgeIter++, prevPts++)
+        for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
         {
-            HEdge* hedge = *hedgeIter;
-            linedef_t* line = hedge->lineDef;
-            HEdge** veryTempSeg;
+            linedef_t* line = *lineIter;
+            linedef_t** veryTempLine;
 
-            for(veryTempSeg = po->hedges; veryTempSeg != hedgeIter; veryTempSeg++)
+            for(veryTempLine = po->lines; veryTempLine != lineIter; veryTempLine++)
             {
-                if((*veryTempSeg)->lineDef->L_v1 == line->L_v1)
+                if((*veryTempLine)->L_v1 == line->L_v1)
                 {
                     break;
                 }
             }
 
-            if(veryTempSeg == hedgeIter)
+            if(veryTempLine == lineIter)
             {
                 line->L_v1pos[VX] -= delta[VX];
                 line->L_v1pos[VY] -= delta[VY];
@@ -258,11 +268,10 @@ boolean P_PolyobjMove(polyobj_t* po, float delta[2])
             (*prevPts).pos[VY] -= delta[VY];
         }
 
-        hedgeIter = po->hedges;
-        for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+        lineIter = po->lines;
+        for(i = 0; i < po->lineCount; ++i, lineIter++)
         {
-            HEdge* hedge = *hedgeIter;
-            linedef_t* line = hedge->lineDef;
+            linedef_t* line = *lineIter;
             LineDef_UpdateAABox(line);
         }
         po->pos[VX] -= delta[VX];
@@ -307,21 +316,21 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
 {
     fvertex_t* originalPts, *prevPts;
     uint i, fineAngle;
-    HEdge** hedgeIter;
+    linedef_t** lineIter;
 
     if(!po) return false;
 
     P_PolyobjUnlink(po);
 
-    hedgeIter = po->hedges;
+    lineIter = po->lines;
     originalPts = po->originalPts;
     prevPts = po->prevPts;
 
     fineAngle = (po->angle + angle) >> ANGLETOFINESHIFT;
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++, originalPts++, prevPts++)
+    for(i = 0; i < po->lineCount; ++i, lineIter++, originalPts++, prevPts++)
     {
-        HEdge* hedge = *hedgeIter;
-        vertex_t* vtx = hedge->lineDef->L_v1;
+        linedef_t* line = *lineIter;
+        vertex_t* vtx = line->L_v1;
 
         prevPts->pos[VX] = vtx->V_pos[VX];
         prevPts->pos[VY] = vtx->V_pos[VY];
@@ -331,18 +340,17 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
         rotatePoint2d(vtx->V_pos, po->pos, fineAngle);
     }
 
-    hedgeIter = po->hedges;
-    for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+    lineIter = po->lines;
+    for(i = 0; i < po->lineCount; ++i, lineIter++)
     {
-        HEdge* hedge = *hedgeIter;
-        linedef_t* line = hedge->lineDef;
+        linedef_t* line = *lineIter;
 
         LineDef_UpdateAABox(line);
         LineDef_UpdateSlope(line);
         line->angle += ANGLE_TO_BANG(angle);
 
         // HEdge angle must be kept in sync.
-        hedge->angle = BANG_TO_ANGLE(line->angle);
+        line->L_frontside->hedges[0]->angle = BANG_TO_ANGLE(line->angle);
     }
     Polyobj_UpdateAABox(po);
     po->angle += angle;
@@ -354,28 +362,27 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
         // Something is blocking our path. We must undo...
         P_PolyobjUnlink(po);
 
-        hedgeIter = po->hedges;
+        lineIter = po->lines;
         prevPts = po->prevPts;
-        for(i = 0; i < po->numHEdges; ++i, hedgeIter++, prevPts++)
+        for(i = 0; i < po->lineCount; ++i, lineIter++, prevPts++)
         {
-            HEdge* hedge = *hedgeIter;
-            vertex_t* vtx = hedge->lineDef->L_v1;
+            linedef_t* line = *lineIter;
+            vertex_t* vtx = line->L_v1;
             vtx->V_pos[VX] = prevPts->pos[VX];
             vtx->V_pos[VY] = prevPts->pos[VY];
         }
 
-        hedgeIter = po->hedges;
-        for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+        lineIter = po->lines;
+        for(i = 0; i < po->lineCount; ++i, lineIter++)
         {
-            HEdge* hedge = *hedgeIter;
-            linedef_t* line = hedge->lineDef;
+            linedef_t* line = *lineIter;
 
             LineDef_UpdateAABox(line);
             LineDef_UpdateSlope(line);
             line->angle -= ANGLE_TO_BANG(angle);
 
             // HEdge angle must be kept in sync.
-            hedge->angle = BANG_TO_ANGLE(line->angle);
+            line->L_frontside->hedges[0]->angle = BANG_TO_ANGLE(line->angle);
         }
         Polyobj_UpdateAABox(po);
         po->angle -= angle;
@@ -405,7 +412,7 @@ void P_PolyobjLink(polyobj_t* po)
 
 typedef struct ptrmobjblockingparams_s {
     boolean isBlocked;
-    linedef_t* lineDef;
+    linedef_t* line;
     polyobj_t* polyobj;
 } ptrmobjblockingparams_t;
 
@@ -422,15 +429,15 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
         moBox.maxX = mo->pos[VX] + mo->radius;
         moBox.maxY = mo->pos[VY] + mo->radius;
 
-        if(!(moBox.maxX <= params->lineDef->aaBox.minX ||
-             moBox.minX >= params->lineDef->aaBox.maxX ||
-             moBox.maxY <= params->lineDef->aaBox.minY ||
-             moBox.minY >= params->lineDef->aaBox.maxY))
+        if(!(moBox.maxX <= params->line->aaBox.minX ||
+             moBox.minX >= params->line->aaBox.maxX ||
+             moBox.maxY <= params->line->aaBox.minY ||
+             moBox.minY >= params->line->aaBox.maxY))
         {
-            if(P_BoxOnLineSide(&moBox, params->lineDef) == -1)
+            if(P_BoxOnLineSide(&moBox, params->line) == -1)
             {
                 if(po_callback)
-                    po_callback(mo, params->lineDef, params->polyobj);
+                    po_callback(mo, params->line, params->polyobj);
 
                 params->isBlocked = true;
             }
@@ -440,22 +447,21 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
     return false; // Continue iteration.
 }
 
-static boolean checkMobjBlocking(HEdge* hedge, polyobj_t* po)
+static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po)
 {
     gamemap_t* map = P_GetCurrentMap();
     ptrmobjblockingparams_t params;
     GridmapBlock blockCoords;
-    linedef_t* ld;
     AABoxf aaBox;
 
     params.isBlocked = false;
-    params.lineDef = ld = hedge->lineDef;
+    params.line = line;
     params.polyobj = po;
 
-    aaBox.minX = ld->aaBox.minX - DDMOBJ_RADIUS_MAX;
-    aaBox.minY = ld->aaBox.minY - DDMOBJ_RADIUS_MAX;
-    aaBox.maxX = ld->aaBox.maxX + DDMOBJ_RADIUS_MAX;
-    aaBox.maxY = ld->aaBox.maxY + DDMOBJ_RADIUS_MAX;
+    aaBox.minX = line->aaBox.minX - DDMOBJ_RADIUS_MAX;
+    aaBox.minY = line->aaBox.minY - DDMOBJ_RADIUS_MAX;
+    aaBox.maxX = line->aaBox.maxX + DDMOBJ_RADIUS_MAX;
+    aaBox.maxY = line->aaBox.maxY + DDMOBJ_RADIUS_MAX;
 
     validCount++;
     Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, &aaBox);
@@ -464,18 +470,16 @@ static boolean checkMobjBlocking(HEdge* hedge, polyobj_t* po)
     return params.isBlocked;
 }
 
-int Polyobj_LineDefIterator(polyobj_t* po, int (*callback) (struct linedef_s*, void*),
+int Polyobj_LineIterator(polyobj_t* po, int (*callback) (struct linedef_s*, void*),
     void* paramaters)
 {
     int result = false; // Continue iteration.
     if(callback)
     {
-        HEdge** hedgeIter = po->hedges;
-        uint i;
-        for(i = 0; i < po->numHEdges; ++i, hedgeIter++)
+        linedef_t** lineIter;
+        for(lineIter = po->lines; *lineIter; lineIter++)
         {
-            HEdge* hedge = *hedgeIter;
-            linedef_t* line = hedge->lineDef;
+            linedef_t* line = *lineIter;
 
             if(line->validCount == validCount) continue;
             line->validCount = validCount;
