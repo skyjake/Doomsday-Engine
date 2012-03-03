@@ -34,7 +34,7 @@
 #include "pathdirectory.h"
 
 typedef struct pathdirectorynode_userdatapair_s {
-    StringPoolInternId internId;
+    StringPoolId internId;
     void* data;
 } pathdirectorynode_userdatapair_t;
 
@@ -57,12 +57,12 @@ struct pathdirectorynode_s {
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData);
+    StringPoolId internId, void* userData);
 
 static void deleteNode(PathDirectoryNode* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node);
 
 typedef struct {
     PathDirectoryNode* head;
@@ -213,7 +213,7 @@ static size_t countNodes(PathDirectory* pd, int flags)
 }
 
 static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
-    pathdirectorynode_type_t nodeType, StringPoolInternId internId)
+    pathdirectorynode_type_t nodeType, StringPoolId internId)
 {
     pathdirectory_pathhash_t* ph = *hashAddressForNodeType(pd, nodeType);
     PathDirectoryNode* node = NULL;
@@ -230,7 +230,7 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     return node;
 }
 
-static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
+static ushort hashForInternId(PathDirectory* pd, StringPoolId internId)
 {
     assert(pd);
     if(0 == internId)
@@ -238,11 +238,11 @@ static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
     return pd->internPool.idHashMap[internId-1];
 }
 
-static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
+static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
     const ddstring_t* name, ushort hash)
 {
     StringPool* pool;
-    StringPoolInternId internId;
+    StringPoolId internId;
     uint oldSize;
     assert(pd);
 
@@ -253,7 +253,7 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
     }
     oldSize = StringPool_Size(pool);
 
-    internId = StringPool_Intern(pool, name);
+    internId = StringPool_Add(pool, name);
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
@@ -277,7 +277,7 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
 static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
-    StringPoolInternId internId = 0;
+    StringPoolId internId = 0;
     pathdirectory_pathhash_t** phAdr;
     PathDirectoryNode* node;
     ushort hash;
@@ -1211,7 +1211,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData)
+    StringPoolId internId, void* userData)
 {
     PathDirectoryNode* node;
 
@@ -1279,7 +1279,7 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
     return &nodeNames[1 + (type - PATHDIRECTORYNODE_TYPE_FIRST)];
 }
 
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
     return node->pair.internId;

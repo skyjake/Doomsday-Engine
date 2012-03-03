@@ -30,35 +30,64 @@
 #include "stringpool.h"
 #include "string.hh"
 
+#include <vector>
+#include <list>
 #include <set>
+#include <algorithm>
+
+/// Macro used for converting internal ids to StringPoolInternIds.
+#define EXPORT_ID(i)    (uint(i) + 1)
+#define IMPORT_ID(i)    (StringPoolId((i) - 1))
 
 static const de::Str nullString = "(nullptr)";
 
-class NoCaseStr
+typedef uint InternalId;
+
+/**
+ * Case-insensitive reference to a text string (ddstring).
+ * Does not take copies or retain ownership to the string.
+ */
+class CaselessStr
 {
 public:
-    NoCaseStr(const char* text = 0) : _userValue(0) {
-        _str = new de::Str(text);
+    typedef std::set<InternalId> InternalIds;
+
+public:
+    CaselessStr(const char* text = 0) : _userValue(0) {
+        setText(text);
     }
-    NoCaseStr(de::Str* str)  : _userValue(0) {
-        _str = str;
-        _str->addRef();
+    CaselessStr(const CaselessStr& other) : _ids(other._ids), _userValue(other._userValue) {
+        setText(other._str.str);
     }
-    NoCaseStr(const NoCaseStr& other) : _userValue(other._userValue) {
-        _str = const_cast<de::Str*>(other._str);
-        _str->addRef();
+    void setText(const char* text) {
+        Str_InitStatic(&_str, text);
     }
-    ~NoCaseStr() {
-        _str->release();
+    char* toCString() const {
+        return const_cast<char*>(_str.str);
     }
-    bool operator < (const NoCaseStr& other) const {
-        return stricmp(*_str, *other._str) < 0;
+    operator const char* () const {
+        return _str.str;
     }
-    bool operator == (const NoCaseStr& other) const {
-        return !stricmp(*_str, *other._str);
+    operator const ddstring_t* () const {
+        return &_str;
     }
-    operator const de::Str* () const {
-        return _str;
+    /// Returns one of the ids used to refer to this interned string.
+    InternalId id() const {
+        assert(!_ids.empty());
+        return *_ids.begin();
+    }
+    const InternalIds& ids() const {
+        return _ids;
+    }
+    void addId(InternalId i) {
+        _ids.insert(i);
+    }
+    void removeId(InternalId i) {
+        assert(_ids.find(i) != _ids.end()); // must have it
+        _ids.erase(i);
+    }
+    boolean refCount() const {
+        return _ids.size();
     }
     uint userValue() const {
         return _userValue;
@@ -66,24 +95,235 @@ public:
     void setUserValue(uint value) {
         _userValue = value;
     }
+    void serialize(Writer* writer) const {
+        Str_Write(&_str, writer);
+        Writer_WritePackedUInt32(writer, _ids.size());
+        for(InternalIds::const_iterator i = _ids.begin(); i != _ids.end(); ++i) {
+            Writer_WritePackedUInt32(writer, *i);
+        }
+        Writer_WriteUInt32(writer, _userValue);
+    }
+    void deserialize(Reader* reader, ddstring_t* text) {
+        _ids.clear();
+        Str_Read(text, reader);
+        _str.str = 0; // caller must handle this; we don't take ownership
+        uint numIds = Reader_ReadPackedUInt32(reader);
+        while(numIds--) {
+            _ids.insert(Reader_ReadPackedUInt32(reader));
+        }
+        _userValue = Reader_ReadPackedUInt32(reader);
+    }
 private:
-    de::Str* _str;
+    ddstring_t _str;
+    InternalIds _ids; ///< All the ids that refer to this string.
     uint _userValue;
 };
 
-struct CompareFunc {
-    bool operator() (const NoCaseStr* a, const NoCaseStr* b) const {
-        return *a < *b;
+class CaselessStrRef {
+public:
+    CaselessStrRef(const CaselessStr* s = 0) {
+        _str = s;
     }
+    CaselessStrRef(const CaselessStrRef& other) {
+        _str = other._str;
+    }
+    CaselessStr* toStr() const {
+        return const_cast<CaselessStr*>(_str);
+    }
+    InternalId id() const {
+        assert(_str);
+        return _str->id();
+    }
+    bool operator < (const CaselessStrRef& other) const {
+        assert(_str);
+        assert(other._str);
+        return stricmp(*_str, *other._str) < 0;
+    }
+    bool operator == (const CaselessStrRef& other) const {
+        assert(_str);
+        assert(other._str);
+        return !stricmp(*_str, *other._str);
+    }
+private:
+    const CaselessStr* _str;
 };
 
-typedef std::set<NoCaseStr*, CompareFunc> NoCaseStringSet;
+typedef std::set<CaselessStrRef> Interns;
+typedef std::vector<CaselessStr*> IdMap;
+typedef std::list<InternalId> AvailableIds;
 
 struct stringpool_s {
-    NoCaseStringSet interns;    ///< Interned strings.
-    size_t count;               ///< Logical number of strings in the pool.
+    Interns interns;            ///< Interned strings (owns the CaselessStr instances).
 
-    stringpool_s() : count(0) {}
+    /// InternId => CaselessStr*. More than one id can refer to the same CaselessStr*.
+    IdMap idMap;
+    size_t count;               /**< Logical number of strings in the pool
+                                     (must always be idMap.size() - available.size()). */
+
+    AvailableIds available;     ///< List of currently unused ids in idMap.
+
+    stringpool_s() : count(0)
+    {}
+
+    ~stringpool_s()
+    {
+        // Free all allocated memory.
+        clear();
+    }
+
+    void serialize(Writer* writer) const
+    {
+        // Number of strings altogether (includes unused ids).
+        Writer_WriteUInt32(writer, idMap.size());
+
+        // Write the interns.
+        Writer_WriteUInt32(writer, interns.size());
+        for(Interns::const_iterator i = interns.begin(); i != interns.end(); ++i)
+        {
+            i->toStr()->serialize(writer);
+        }
+    }
+
+    void deserialize(Reader* reader)
+    {
+        clear();
+
+        uint numStrings = Reader_ReadUInt32(reader);
+        idMap.resize(numStrings, 0);
+
+        uint numInterns = Reader_ReadUInt32(reader);
+        while(numInterns--)
+        {
+            ddstring_t text;
+            Str_InitStd(&text);
+
+            CaselessStr* str = new CaselessStr;
+            str->deserialize(reader, &text);
+            str->setText(strdup(Str_Text(&text)));
+            interns.insert(str);
+            Str_Free(&text);
+
+            // Update the id map.
+            for(CaselessStr::InternalIds::iterator i = str->ids().begin();
+                i != str->ids().end(); ++i)
+            {
+                idMap[*i] = str;
+                count++;
+            }
+        }
+
+        // Update the available ids.
+        for(uint i = 0; i < idMap.size(); ++i)
+        {
+            if(!idMap[i]) available.push_back(i);
+        }
+
+        assertCount();
+    }
+
+    void inline assertCount() const
+    {
+        assert(count == idMap.size() - available.size());
+    }
+
+    void clear()
+    {
+        for(uint i = 0; i < idMap.size(); ++i)
+        {
+            if(!idMap[i]) continue; // Available slot.
+            releaseAndDestroy(i);
+        }
+        assert(count == 0);
+        interns.clear();
+        idMap.clear();
+        available.clear();
+    }
+
+    Interns::iterator findIntern(const char* text)
+    {
+        const CaselessStr key(text);
+        return interns.find(CaselessStrRef(&key));
+    }
+
+    Interns::const_iterator findIntern(const char* text) const
+    {
+        const CaselessStr key(text);
+        return interns.find(CaselessStrRef(&key));
+    }
+
+    /**
+     * Before this is called make sure there is no duplicate of @a text in the
+     * interns set.
+     *
+     * @param text  Text string to add to the interned strings.
+     *              A copy is made of this.
+     */
+    InternalId copyAndAssignUniqueId(const char* text)
+    {
+        CaselessStr* str = new CaselessStr(strdup(text));
+
+        // This is a new string that is added to the pool.
+        interns.insert(str);
+
+        return assignUniqueId(str);
+    }
+
+    InternalId assignUniqueId(CaselessStr* str)
+    {
+        InternalId idx;
+
+        // Any available ids in the shortlist?
+        if(!available.empty())
+        {
+            idx = available.front();
+            available.pop_front();
+            idMap[idx] = str;
+        }
+        else
+        {
+            // Expand the idMap.
+            idx = idMap.size();
+            idMap.push_back(str);
+        }
+        str->addId(idx);
+
+        // We have one more logical string in the pool.
+        count++;
+        assertCount();
+
+        return idx;
+    }
+
+    void releaseAndDestroy(InternalId id, Interns::iterator* iterToErase = 0)
+    {
+        assert(id < idMap.size());
+
+        CaselessStr* interned = idMap[id];
+        assert(interned != 0);
+
+        idMap[id] = 0;
+        available.push_back(id);
+
+        // This id no longer refers to the string.
+        interned->removeId(id);
+
+        // No more references to the string?
+        if(!interned->refCount())
+        {
+            // Delete the string itself, no one refers to it any more.
+            free(interned->toCString()); // duplicated cstring
+            delete interned; // CaselessStr instance
+
+            // If the caller already located the interned string, let's use it
+            // to erase the string in O(1) time. Otherwise it's up to the
+            // caller to make sure it gets removed from the interns.
+            if(iterToErase) interns.erase(*iterToErase);
+        }
+
+        // One less string.
+        count--;
+        assertCount();
+    }
 };
 
 StringPool* StringPool_New(void)
@@ -97,7 +337,7 @@ StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count)
     StringPool* pool = StringPool_New();
     for(uint i = 0; strings && i < count; ++i)
     {
-        StringPool_Intern(pool, strings + i);
+        StringPool_Add(pool, strings + i);
     }
     return pool;
 }
@@ -111,8 +351,7 @@ void StringPool_Delete(StringPool* pool)
 void StringPool_Clear(StringPool* pool)
 {
     assert(pool);
-    pool->count = 0;
-    pool->interns.clear();
+    pool->clear();
 }
 
 boolean StringPool_Empty(const StringPool* pool)
@@ -127,49 +366,87 @@ uint StringPool_Size(const StringPool* pool)
     return uint(pool->count);
 }
 
-StringPoolInternId StringPool_Intern(StringPool* pool, const ddstring_t* str)
+StringPoolId StringPool_Add(StringPool* pool, const ddstring_t* str)
 {
-
+    assert(pool);
+    Interns::iterator found = pool->findIntern(Str_Text(str));
+    if(found != pool->interns.end())
+    {
+        // Already got this one.
+        return EXPORT_ID( pool->assignUniqueId(found->toStr()) );
+    }
+    return EXPORT_ID( pool->copyAndAssignUniqueId(Str_Text(str)) );
 }
 
 const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_t* str)
 {
-
+    assert(pool);
+    InternalId id = IMPORT_ID( StringPool_Add(pool, str) );
+    return *pool->idMap[id];
 }
 
-StringPoolInternId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)
+StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)
 {
-
+    assert(pool);
+    Interns::const_iterator found = pool->findIntern(Str_Text(str));
+    if(found != pool->interns.end())
+    {
+        return EXPORT_ID(found->id());
+    }
+    // Not found.
+    return 0;
 }
 
-const ddstring_t* StringPool_String(const StringPool* pool, StringPoolInternId internId)
+const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id)
 {
-
+    assert(pool);
+    return *pool->idMap[IMPORT_ID(id)];
 }
 
-boolean StringPool_Remove(StringPool* pool, ddstring_t* str)
+boolean StringPool_RemoveOne(StringPool* pool, const ddstring_t* str)
 {
-
+    assert(pool);
+    Interns::iterator found = pool->findIntern(Str_Text(str));
+    if(found != pool->interns.end())
+    {
+        pool->releaseAndDestroy(found->id(), &found);
+    }
 }
 
-boolean StringPool_RemoveIntern(StringPool* pool, StringPoolInternId internId)
+boolean StringPool_RemoveAllById(StringPool* pool, StringPoolId id)
 {
-
+    assert(pool);
+    CaselessStr* str = pool->idMap[IMPORT_ID(id)];
+    pool->interns.erase(str); // O(log n)
+    for(CaselessStr::InternalIds::iterator i = str->ids().begin(); i != str->ids().end(); ++i)
+    {
+        pool->releaseAndDestroy(*i);
+    }
 }
 
-int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolInternId, void*), void* paramaters)
+int StringPool_IterateAll(const StringPool* pool, int (*callback)(StringPoolId, void*), void* data)
 {
-
+    assert(pool);
+    if(!callback) return 0;
+    for(uint i = 0; i < pool->idMap.size(); ++i)
+    {
+        if(!pool->idMap[i]) continue;
+        int result = callback(EXPORT_ID(i), data);
+        if(result) return result;
+    }
+    return 0;
 }
 
-void StringPool_Write(const StringPool* ar, Writer* writer)
+void StringPool_Write(const StringPool* pool, Writer* writer)
 {
-
+    assert(pool);
+    pool->serialize(writer);
 }
 
-void StringPool_Read(StringPool* ar, Reader* reader)
+void StringPool_Read(StringPool* pool, Reader* reader)
 {
-
+    assert(pool);
+    pool->deserialize(reader);
 }
 
 
