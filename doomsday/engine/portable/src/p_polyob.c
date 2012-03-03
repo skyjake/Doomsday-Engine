@@ -400,13 +400,13 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
 
 void P_PolyobjUnlink(polyobj_t* po)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     Map_UnlinkPolyobjInBlockmap(map, po);
 }
 
 void P_PolyobjLink(polyobj_t* po)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     Map_LinkPolyobjInBlockmap(map, po);
 }
 
@@ -449,7 +449,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
 
 static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     ptrmobjblockingparams_t params;
     GridmapBlock blockCoords;
     AABoxf aaBox;

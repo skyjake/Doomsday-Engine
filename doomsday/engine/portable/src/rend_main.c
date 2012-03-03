@@ -3446,7 +3446,7 @@ void Rend_RenderMap(void)
  */
 void Rend_CalcLightModRange(void)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     int j, mapAmbient;
     float f;
 

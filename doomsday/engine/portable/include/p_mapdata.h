@@ -292,7 +292,8 @@ extern float mapGravity;
 
 #include "gamemap.h"
 
-GameMap*      P_GetCurrentMap(void);
+extern GameMap* theMap;
+
 void            P_SetCurrentMap(GameMap* map);
 
 const char*     P_GenerateUniqueMapId(const char* mapId);

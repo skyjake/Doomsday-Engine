@@ -1161,7 +1161,7 @@ static int countSubsectorLink(subsector_t* subsector, void* paramaters)
 
 static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     uint count = 0;
     char info[160];
     validCount++;
@@ -1172,7 +1172,7 @@ static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     uint count = 0;
     char info[160];
     validCount++;
@@ -1183,7 +1183,7 @@ static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     uint count = 0;
     char info[160];
     validCount++;
@@ -1194,7 +1194,7 @@ static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
 
 static void drawSubsectorCellInfoBox(const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     uint count = 0;
     char info[160];
     validCount++;
@@ -1398,7 +1398,7 @@ void Rend_BlockmapDebug(void)
     // Disabled?
     if(!bmapShowDebug || bmapShowDebug > 4) return;
 
-    map = P_GetCurrentMap();
+    map = theMap;
     if(!map) return;
 
     switch(bmapShowDebug)

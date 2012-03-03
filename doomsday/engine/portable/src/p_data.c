@@ -101,9 +101,9 @@ nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
 
 float mapGravity;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+GameMap* theMap = NULL;
 
-static GameMap* currentMap = NULL;
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Bad texture list
 static uint numBadTexNames = 0;
@@ -161,7 +161,7 @@ const char* P_GenerateUniqueMapId(const char* mapID)
  */
 GameMap *P_GetCurrentMap(void)
 {
-    return currentMap;
+    return theMap;
 }
 
 void P_SetCurrentMap(GameMap* map)
@@ -212,7 +212,7 @@ void P_SetCurrentMap(GameMap* map)
 
         mapGravity = 0;
 
-        currentMap = map;
+        theMap = map;
         return;
     }
 
@@ -253,7 +253,7 @@ void P_SetCurrentMap(GameMap* map)
 
     mapGravity = map->globalGravity;
 
-    currentMap = map;
+    theMap = map;
 }
 
 /// \note Part of the Doomsday public API.
@@ -334,7 +334,7 @@ boolean P_LoadMap(const char* uriCString)
 
     if(DAM_AttemptMapLoad(uri))
     {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
 
         // Init the thinker lists (public and private).
         P_InitThinkerLists(0x1 | 0x2);
@@ -837,7 +837,7 @@ static uint countGameMapObjs(gameobjdata_t *moData, int identifier)
 
 uint P_CountGameMapObjs(int identifier)
 {
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
 
     return countGameMapObjs(&map->gameObjData, identifier);
 }
@@ -1122,7 +1122,7 @@ static void setValue(void *dst, valuetype_t dstType, void *src,
 byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     byte                returnVal = 0;
 
@@ -1136,7 +1136,7 @@ byte P_GetGMOByte(int identifier, uint elmIdx, int propIdentifier)
 short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     short               returnVal = 0;
 
@@ -1150,7 +1150,7 @@ short P_GetGMOShort(int identifier, uint elmIdx, int propIdentifier)
 int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     int                 returnVal = 0;
 
@@ -1164,7 +1164,7 @@ int P_GetGMOInt(int identifier, uint elmIdx, int propIdentifier)
 fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     fixed_t             returnVal = 0;
 
@@ -1178,7 +1178,7 @@ fixed_t P_GetGMOFixed(int identifier, uint elmIdx, int propIdentifier)
 angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     angle_t             returnVal = 0;
 
@@ -1192,7 +1192,7 @@ angle_t P_GetGMOAngle(int identifier, uint elmIdx, int propIdentifier)
 float P_GetGMOFloat(int identifier, uint elmIdx, int propIdentifier)
 {
     valuetype_t         type;
-    GameMap*          map = P_GetCurrentMap();
+    GameMap*          map = theMap;
     void*               ptr;
     float               returnVal = 0;
 

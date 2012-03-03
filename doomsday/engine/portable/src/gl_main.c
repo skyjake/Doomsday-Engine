@@ -765,7 +765,7 @@ void GL_TotalRestore(void)
     R_LoadSystemFonts();
     Con_Resize();
 
-    map = P_GetCurrentMap();
+    map = theMap;
     if(map)
     {
         mapInfo = Def_GetMapInfo(GameMap_Uri(map));

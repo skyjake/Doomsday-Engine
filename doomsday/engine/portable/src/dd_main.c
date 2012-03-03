@@ -2050,7 +2050,7 @@ int DD_GetInteger(int ddvalue)
         return Cl_CurrentFinale();
 
     case DD_MAP_MUSIC: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
         {
             ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
@@ -2124,7 +2124,7 @@ void* DD_GetVariable(int ddvalue)
         return translationTables;
 
     case DD_MAP_NAME: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
         {
             ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
@@ -2141,7 +2141,7 @@ void* DD_GetVariable(int ddvalue)
         return NULL;
       }
     case DD_MAP_AUTHOR: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
         {
             ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
@@ -2153,28 +2153,28 @@ void* DD_GetVariable(int ddvalue)
         return NULL;
       }
     case DD_MAP_MIN_X: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
             return &map->bBox[BOXLEFT];
         else
             return NULL;
       }
     case DD_MAP_MIN_Y: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
             return &map->bBox[BOXBOTTOM];
         else
             return NULL;
       }
     case DD_MAP_MAX_X: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
             return &map->bBox[BOXRIGHT];
         else
             return NULL;
       }
     case DD_MAP_MAX_Y: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         if(map)
             return &map->bBox[BOXTOP];
         else

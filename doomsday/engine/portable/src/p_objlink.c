@@ -226,7 +226,7 @@ static objlink_t* allocObjlink(void)
 
 void R_InitObjlinkBlockmapForMap(void)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     float min[2], max[2];
     uint width, height;
     int i;

@@ -592,7 +592,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             }
 
             // \todo should be called from P_LoadMap() but R_InitMap requires the
-            // currentMap to be set first.
+            // theMap to be set first.
             P_SetCurrentMap(map);
 
             R_InitFakeRadioForMap();

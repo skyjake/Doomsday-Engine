@@ -528,7 +528,7 @@ static boolean markSurfaceForDecorationUpdate(surface_t* surface, void* paramate
 
 void R_UpdateMapSurfacesOnMaterialChange(material_t* material)
 {
-    GameMap* map = P_GetCurrentMap();
+    GameMap* map = theMap;
     if(NULL == material || NULL == map || ddMapSetup) return;
 
     // Light decorations will need a refresh.
@@ -1379,7 +1379,7 @@ void R_SetupMap(int mode, int flags)
         return;
       }
     case DDSMM_FINALIZE: {
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         ded_mapinfo_t* mapInfo;
         float startTime;
         char cmd[80];
@@ -1480,7 +1480,7 @@ void R_SetupMap(int mode, int flags)
       }
     case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
-        GameMap* map = P_GetCurrentMap();
+        GameMap* map = theMap;
         ded_mapinfo_t* mapInfo;
 
         assert(map);
