@@ -1102,37 +1102,48 @@ void R_InitLinks(gamemap_t* map)
 }
 
 /**
- * Create a list of vertices for the subsector which are suitable for
- * use as the points of single a trifan.
+ * Create a list of map space vertices for the subsector which are suitable for
+ * use as the points of a trifan primitive.
  *
- * We are assured by the node building process that subsector->hedges has
- * been ordered by angle, clockwise starting from the smallest angle.
- * So, most of the time, the points can be created directly from the
- * hedge vertexes.
+ * Note that we do not want any overlapping or zero-area (degenerate) triangles.
  *
- * However, we do not want any overlapping tris so check the area of
- * each triangle is > 0, if not; try the next vertice in the list until
- * we find a good one to use as the center of the trifan. If a suitable
- * point cannot be found use the center of subsector instead (it will
- * always be valid as subsectors are convex).
+ * We are assured by the node build process that subsector->hedges has been ordered
+ * by angle, clockwise starting from the smallest angle. So, most of the time, the
+ * points can be created directly from the hedge vertices.
+ *
+ * @algorithm:
+ * For each vertex
+ *    For each triangle
+ *        if area is not greater than minimum bound, move to next vertex
+ *    Vertex is suitable
+ *
+ * If a vertex exists which results in no zero-area triangles it is suitable for
+ * use as the center of our trifan. If a suitable vertex is not found then the
+ * center of subsector should be selected instead (it will always be valid as
+ * subsectors are convex).
  */
-static void triangulateSubsector(subsector_t* ssec)
+static void tessellateSubsector(subsector_t* ssec, boolean force)
 {
+#define MIN_TRIANGLE_EPSILON  (0.1) ///< Area
+
     uint baseIDX = 0, i, n;
-    boolean found = false;
+    boolean ok = false;
 
-    // We need to find a good tri-fan base vertex, (one that doesn't
-    // generate zero-area triangles).
-    if(ssec->hedgeCount <= 3)
+    // Already built?
+    if(ssec->vertices && !force) return;
+
+    // Destroy any pre-existing data.
+    if(ssec->vertices)
     {
-        // Always valid.
-        found = true;
+        Z_Free(ssec->vertices);
+        ssec->vertices = NULL;
     }
-    else
-    {   // Higher vertex counts need checking, we'll test each one and pick
-        // the first good one.
-#define TRIFAN_LIMIT    0.1
+    ssec->flags &= ~SUBF_MIDPOINT;
 
+    // Search for a good base.
+    if(ssec->hedgeCount > 3)
+    {
+        // Subsectors with higher vertex counts demand checking.
         fvertex_t* base, *a, *b;
 
         baseIDX = 0;
@@ -1146,80 +1157,96 @@ static void triangulateSubsector(subsector_t* ssec)
             {
                 HEdge* hedge2 = ssec->hedges[i];
 
+                // Test this triangle?
                 if(!(baseIDX > 0 && (i == baseIDX || i == baseIDX - 1)))
                 {
                     a = &hedge2->HE_v1->v;
                     b = &hedge2->HE_v2->v;
 
-                    if(TRIFAN_LIMIT >=
-                       M_TriangleArea(base->pos, a->pos, b->pos))
+                    if(M_TriangleArea(base->pos, a->pos, b->pos) <= MIN_TRIANGLE_EPSILON)
                     {
+                        // No good. We'll move on to the next vertex.
                         base = NULL;
                     }
                 }
 
+                // On to the next triangle.
                 i++;
             } while(base && i < ssec->hedgeCount);
 
             if(!base)
+            {
+                // No good. Select the next vertex and start over.
                 baseIDX++;
+            }
         } while(!base && baseIDX < ssec->hedgeCount);
 
-        if(base)
-            found = true;
-#undef TRIFAN_LIMIT
+        // Did we find something suitable?
+        if(base) ok = true;
+    }
+    else
+    {
+        // Implicitly suitable (or completely degenerate...).
+        ok = true;
     }
 
     ssec->numVertices = ssec->hedgeCount;
-    if(!found)
+    if(!ok)
+    {
+        // We'll use the midpoint.
+        ssec->flags |= SUBF_MIDPOINT;
         ssec->numVertices += 2;
-    ssec->vertices =
-        Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1),PU_MAP, 0);
+    }
 
-    // We can now create the subsector fvertex array.
-    // NOTE: The same polygon is used for all planes of this subsector.
+    // Construct the vertex list.
+    ssec->vertices = Z_Malloc(sizeof(fvertex_t*) * (ssec->numVertices + 1), PU_MAP, 0);
+
     n = 0;
-    if(!found)
+    // If this is a trifan the first vertex is always the midpoint.
+    if(ssec->flags & SUBF_MIDPOINT)
+    {
         ssec->vertices[n++] = &ssec->midPoint;
+    }
+
+    // Add the vertices for each hedge.
     for(i = 0; i < ssec->hedgeCount; ++i)
     {
-        uint idx;
         HEdge* hedge;
+        uint idx;
 
         idx = baseIDX + i;
         if(idx >= ssec->hedgeCount)
-            idx = idx - ssec->hedgeCount;
+            idx = idx - ssec->hedgeCount; // Wrap around.
+
         hedge = ssec->hedges[idx];
         ssec->vertices[n++] = &hedge->HE_v1->v;
     }
-    if(!found)
+
+    // If this is a trifan the last vertex is always equal to the first.
+    if(ssec->flags & SUBF_MIDPOINT)
+    {
         ssec->vertices[n++] = &ssec->hedges[0]->HE_v1->v;
+    }
+
     ssec->vertices[n] = NULL; // terminate.
 
-    if(!found)
-        ssec->flags |= SUBF_MIDPOINT;
+#undef MIN_TRIANGLE_EPSILON
 }
 
-/**
- * Polygonizes all subsectors in the map.
- */
 void R_PolygonizeMap(gamemap_t* map)
 {
-    uint i, startTime;
+    uint startTime = Sys_GetRealTime();
+    uint i;
 
-    startTime = Sys_GetRealTime();
-
-    // Polygonize each subsector.
     for(i = 0; i < map->numSubsectors; ++i)
     {
         subsector_t* ssec = &map->subsectors[i];
-        triangulateSubsector(ssec);
+        tessellateSubsector(ssec, true/*force rebuild*/);
     }
 
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_PolygonizeMap: Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - startTime) / 1000.0f));
+    VERBOSE( Con_Message("R_PolygonizeMap: Done in %.2f seconds.\n",
+                         (Sys_GetRealTime() - startTime) / 1000.0f) )
 
 #ifdef _DEBUG
     Z_CheckHeap();
