@@ -226,16 +226,18 @@ Con_Message("sector %i: (%f,%f) - (%f,%f)\n", c,
 
 /**
  * Called during map init to determine which subsectors affect the reverb
- * properties of all sectors. Given that subsectors do not change shape (in
+ * properties of each sector. Given that subsectors do not change shape (in
  * two dimensions at least), they do not move and are not created/destroyed
  * once the map has been loaded; this step can be pre-processed.
  */
 void S_DetermineSubsecsAffectingSectorReverb(GameMap* map)
 {
-    uint                startTime = Sys_GetRealTime();
+    uint i, startTime;
+    ownernode_t* node, *p;
 
-    uint                i;
-    ownernode_t*        node, *p;
+    assert(map);
+
+    startTime = Sys_GetRealTime();
 
     for(i = 0; i < map->numSectors; ++i)
     {

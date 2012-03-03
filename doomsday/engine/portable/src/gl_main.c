@@ -768,7 +768,7 @@ void GL_TotalRestore(void)
     map = P_GetCurrentMap();
     if(map)
     {
-        mapInfo = Def_GetMapInfo(P_MapUri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
     }
 
     // Restore map's fog settings.

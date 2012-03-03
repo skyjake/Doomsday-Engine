@@ -76,12 +76,21 @@ typedef struct gamemap_s {
  * This ID is the name of the lump tag that marks the beginning of map
  * data, e.g. "MAP03" or "E2M8".
  */
-const Uri* P_MapUri(GameMap* map);
+const Uri* GameMap_Uri(GameMap* map);
 
-/// @return  The 'unique' identifier of the map.
-const char* P_GetUniqueMapId(GameMap* map);
+/// @return  The old 'unique' identifier of the map.
+const char* GameMap_OldUniqueId(GameMap* map);
 
-void P_GetMapBounds(GameMap* map, float* min, float* max);
-int P_GetMapAmbientLightLevel(GameMap* map);
+void GameMap_Bounds(GameMap* map, float* min, float* max);
+
+/**
+ * Retrieve the map-global ambient light level.
+ *
+ * @param map  GameMap instance.
+ * @return  Ambient light level.
+ */
+int GameMap_AmbientLightLevel(GameMap* map);
+
+void GameMap_InitNodePiles(GameMap* map);
 
 #endif /// LIBDENG_GAMEMAP_H

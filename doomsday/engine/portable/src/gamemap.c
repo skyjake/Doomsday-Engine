@@ -25,20 +25,22 @@
 
 #include "gamemap.h"
 
-const Uri* P_MapUri(GameMap* map)
+const Uri* GameMap_Uri(GameMap* map)
 {
-    if(!map) return NULL;
+    assert(map);
     return map->uri;
 }
 
-const char* P_GetUniqueMapId(GameMap* map)
+const char* GameMap_OldUniqueId(GameMap* map)
 {
-    if(!map) return NULL;
+    assert(map);
     return map->uniqueId;
 }
 
-void P_GetMapBounds(GameMap* map, float* min, float* max)
+void GameMap_Bounds(GameMap* map, float* min, float* max)
 {
+    assert(map);
+
     min[VX] = map->bBox[BOXLEFT];
     min[VY] = map->bBox[BOXBOTTOM];
 
@@ -46,11 +48,33 @@ void P_GetMapBounds(GameMap* map, float* min, float* max)
     max[VY] = map->bBox[BOXTOP];
 }
 
-/**
- * Get the ambient light level of the specified map.
- */
-int P_GetMapAmbientLightLevel(GameMap* map)
+int GameMap_AmbientLightLevel(GameMap* map)
 {
     assert(map);
     return map->ambientLightLevel;
+}
+
+void GameMap_InitNodePiles(GameMap* map)
+{
+    uint i, starttime = 0;
+
+    assert(map);
+
+    VERBOSE( Con_Message("GameMap::InitNodePiles: Initializing...\n") )
+    VERBOSE2( starttime = Sys_GetRealTime() )
+
+    // Initialize node piles and line rings.
+    NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
+    NP_Init(&map->lineNodes, map->numLineDefs + 1000);
+
+    // Allocate the rings.
+    map->lineLinks = Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+
+    for(i = 0; i < map->numLineDefs; ++i)
+    {
+        map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
+    }
+
+    // How much time did we spend?
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
 }

@@ -61,8 +61,6 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
  */
 void R_SetupMap(int mode, int flags);
 
-void            R_InitLinks(GameMap* map);
-
 /**
  * Polygonizes all subsectors in the map.
  */

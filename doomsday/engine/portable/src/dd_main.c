@@ -2051,9 +2051,15 @@ int DD_GetInteger(int ddvalue)
 
     case DD_MAP_MUSIC: {
         GameMap* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(!mapInfo) return -1;
-        return Def_GetMusicNum(mapInfo->music);
+        if(map)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            if(mapInfo)
+            {
+                return Def_GetMusicNum(mapInfo->music);
+            }
+        }
+        return -1;
       }
     default: break;
     }
@@ -2119,25 +2125,32 @@ void* DD_GetVariable(int ddvalue)
 
     case DD_MAP_NAME: {
         GameMap* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-        if(mapInfo && mapInfo->name[0])
+        if(map)
         {
-            int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
-            if(id != -1)
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            if(mapInfo && mapInfo->name[0])
             {
-                return defs.text[id].text;
+                int id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL);
+                if(id != -1)
+                {
+                    return defs.text[id].text;
+                }
+                return mapInfo->name;
             }
-            return mapInfo->name;
         }
-        break;
+        return NULL;
       }
     case DD_MAP_AUTHOR: {
         GameMap* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
-
-        if(mapInfo && mapInfo->author[0])
-            return mapInfo->author;
-        break;
+        if(map)
+        {
+            ded_mapinfo_t* mapInfo = Def_GetMapInfo(GameMap_Uri(map));
+            if(mapInfo && mapInfo->author[0])
+            {
+                return mapInfo->author;
+            }
+        }
+        return NULL;
       }
     case DD_MAP_MIN_X: {
         GameMap* map = P_GetCurrentMap();

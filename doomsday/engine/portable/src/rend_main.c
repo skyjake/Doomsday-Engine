@@ -3460,7 +3460,7 @@ void Rend_CalcLightModRange(void)
         return;
     }
 
-    mapAmbient = P_GetMapAmbientLightLevel(map);
+    mapAmbient = GameMap_AmbientLightLevel(map);
     if(mapAmbient > ambientLight)
         rAmbient = mapAmbient;
     else

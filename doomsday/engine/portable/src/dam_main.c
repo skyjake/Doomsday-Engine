@@ -544,7 +544,7 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             P_InitUnusedMobjList();
 
             // Must be called before any mobjs are spawned.
-            R_InitLinks(map);
+            GameMap_InitNodePiles(map);
 
             Rend_DecorInit();
 

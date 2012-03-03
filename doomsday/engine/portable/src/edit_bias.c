@@ -385,7 +385,7 @@ static void SBE_Dupe(int which)
 static boolean SBE_Save(const char* name)
 {
     GameMap* map = P_GetCurrentMap();
-    const char* uid = P_GetUniqueMapId(map);
+    const char* uid = GameMap_OldUniqueId(map);
     ddstring_t fileName;
     source_t* s;
     FILE* file;
@@ -393,7 +393,7 @@ static boolean SBE_Save(const char* name)
     Str_Init(&fileName);
     if(!name || !name[0])
     {
-        ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        ddstring_t* mapPath = Uri_Resolved(GameMap_Uri(map));
         Str_Appendf(&fileName, "%s.ded", Str_Text(mapPath));
         Str_Delete(mapPath);
     }
@@ -843,7 +843,7 @@ void SBE_DrawHUD(void)
     source_t* s;
     int top;
 
-    if(!editActive || editHidden) return;
+    if(!editActive || editHidden || !map) return;
 
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
@@ -876,7 +876,7 @@ void SBE_DrawHUD(void)
 
     // The map ID.
     origin.y = top - size.height / 2;
-    UI_TextOutEx2(P_GetUniqueMapId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
+    UI_TextOutEx2(GameMap_OldUniqueId(map), &origin, UI_Color(UIC_TITLE), alpha, ALIGN_LEFT, DTF_ONLY_SHADOW);
 
     glDisable(GL_TEXTURE_2D);
 

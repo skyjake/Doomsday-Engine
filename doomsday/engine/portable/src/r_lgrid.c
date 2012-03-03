@@ -180,7 +180,7 @@ void LG_InitForMap(void)
     sector_t  **blkSampleSectors;
     GameMap  *map = P_GetCurrentMap();
 
-    if(!lgEnabled)
+    if(!lgEnabled || !map)
     {
         lgInited = false;
         return;
@@ -189,7 +189,7 @@ void LG_InitForMap(void)
     lgInited = true;
 
     // Allocate the grid.
-    P_GetMapBounds(map, &lgOrigin[0], &max[0]);
+    GameMap_Bounds(map, &lgOrigin[0], &max[0]);
 
     width  = max[VX] - lgOrigin[VX];
     height = max[VY] - lgOrigin[VY];

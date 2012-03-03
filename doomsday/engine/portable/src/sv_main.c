@@ -75,6 +75,8 @@ void Sv_GetInfo(serverinfo_t* info)
     ddstring_t* mapPath;
     int i;
 
+    assert(currentMap);
+
     memset(info, 0, sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
@@ -96,7 +98,7 @@ void Sv_GetInfo(serverinfo_t* info)
     info->canJoin = (isServer != 0 && Sv_GetNumPlayers() < svMaxPlayers);
 
     // Identifier of the current map.
-    mapPath = Uri_Resolved(P_MapUri(currentMap));
+    mapPath = Uri_Resolved(GameMap_Uri(currentMap));
     strncpy(info->map, Str_Text(mapPath), sizeof(info->map) - 1);
     Str_Delete(mapPath);
 

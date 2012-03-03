@@ -1078,29 +1078,6 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 #undef SEP
 }
 
-void R_InitLinks(GameMap* map)
-{
-    uint starttime = 0;
-
-    VERBOSE( Con_Message("R_InitLinks: Initializing...\n") )
-    VERBOSE2( starttime = Sys_GetRealTime() )
-
-    // Initialize node piles and line rings.
-    NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
-    NP_Init(&map->lineNodes, map->numLineDefs + 1000);
-
-    // Allocate the rings.
-    map->lineLinks = Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
-
-    { uint i;
-    for(i = 0; i < map->numLineDefs; ++i)
-        map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
-    }
-
-    // How much time did we spend?
-    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) )
-}
-
 /**
  * Create a list of map space vertices for the subsector which are suitable for
  * use as the points of a trifan primitive.
@@ -1408,6 +1385,8 @@ void R_SetupMap(int mode, int flags)
         char cmd[80];
         int i;
 
+        assert(map);
+
         if(gameTime > 20000000 / TICSPERSEC)
         {
             // In very long-running games, gameTime will become so large that it cannot be
@@ -1439,14 +1418,14 @@ void R_SetupMap(int mode, int flags)
         // Map setup has been completed.
 
         // Run any commands specified in Map Info.
-        mapInfo = Def_GetMapInfo(P_MapUri(map));
+        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
         if(mapInfo && mapInfo->execute)
         {
             Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
         // Run the special map setup command, which the user may alias to do something useful.
-        { ddstring_t* mapPath = Uri_Resolved(P_MapUri(map));
+        { ddstring_t* mapPath = Uri_Resolved(GameMap_Uri(map));
         sprintf(cmd, "init-%s", Str_Text(mapPath));
         Str_Delete(mapPath);
         if(Con_IsValidCommand(cmd))
@@ -1502,8 +1481,11 @@ void R_SetupMap(int mode, int flags)
     case DDSMM_AFTER_BUSY: {
         // Shouldn't do anything time-consuming, as we are no longer in busy mode.
         GameMap* map = P_GetCurrentMap();
-        ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_MapUri(map));
+        ded_mapinfo_t* mapInfo;
 
+        assert(map);
+
+        mapInfo = Def_GetMapInfo(GameMap_Uri(map));
         if(!mapInfo || !(mapInfo->flags & MIF_FOG))
             R_SetupFogDefaults();
         else

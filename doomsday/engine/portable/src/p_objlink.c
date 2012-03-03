@@ -232,7 +232,7 @@ void R_InitObjlinkBlockmapForMap(void)
     int i;
 
     // Determine the dimensions of the objlink blockmaps in blocks.
-    P_GetMapBounds(map, &min[0], &max[0]);
+    GameMap_Bounds(map, &min[0], &max[0]);
     width  = (uint)ceil((max[0] - min[0]) / (float)BLOCK_WIDTH);
     height = (uint)ceil((max[1] - min[1]) / (float)BLOCK_HEIGHT);
 
