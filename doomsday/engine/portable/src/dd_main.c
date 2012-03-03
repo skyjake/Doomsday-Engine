@@ -2088,34 +2088,43 @@ void DD_SetInteger(int ddvalue, int parm)
  */
 void* DD_GetVariable(int ddvalue)
 {
+    static uint valueU;
+
     switch(ddvalue)
     {
     case DD_GAME_EXPORTS:
         return &gx;
 
     case DD_SECTOR_COUNT:
-        return &numSectors;
+        valueU = GameMap_SectorCount(theMap);
+        return &valueU;
 
     case DD_LINE_COUNT:
-        return &numLineDefs;
+        valueU = GameMap_LineDefCount(theMap);
+        return &valueU;
 
     case DD_SIDE_COUNT:
-        return &numSideDefs;
+        valueU = GameMap_SideDefCount(theMap);
+        return &valueU;
 
     case DD_VERTEX_COUNT:
-        return &numVertexes;
+        valueU = GameMap_VertexCount(theMap);
+        return &valueU;
 
     case DD_POLYOBJ_COUNT:
         return &numPolyObjs;
 
     case DD_HEDGE_COUNT:
-        return &numHEdges;
+        valueU = GameMap_HEdgeCount(theMap);
+        return &valueU;
 
     case DD_SUBSECTOR_COUNT:
-        return &numSubsectors;
+        valueU = GameMap_SubsectorCount(theMap);
+        return &valueU;
 
     case DD_NODE_COUNT:
-        return &numNodes;
+        valueU = GameMap_NodeCount(theMap);
+        return &valueU;
 
     case DD_TRACE_ADDRESS:
         return &traceLOS;

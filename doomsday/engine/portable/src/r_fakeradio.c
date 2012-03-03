@@ -250,7 +250,7 @@ void R_InitFakeRadioForMap(void)
     vec2_t point;
     uint i, j;
 
-    for(i = 0; i < numVertexes; ++i)
+    for(i = 0; i < NUM_VERTEXES; ++i)
     {
         R_UpdateVertexShadowOffsets(VERTEX_PTR(i));
     }
@@ -269,7 +269,7 @@ void R_InitFakeRadioForMap(void)
      */
     shadowLinksBlockSet = ZBlockSet_New(sizeof(shadowlink_t), 1024, PU_MAP);
 
-    for(i = 0; i < numLineDefs; ++i)
+    for(i = 0; i < NUM_LINEDEFS; ++i)
     {
         linedef_t* line = LINE_PTR(i);
         if(!R_IsShadowingLinedef(line)) continue;

@@ -190,15 +190,15 @@ void Sv_InitPools(void)
     }
 
     // Find the owners of all sides.
-    sideOwners = Z_Malloc(sizeof(linedef_t *) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
+    sideOwners = Z_Malloc(sizeof(linedef_t *) * NUM_SIDEDEFS, PU_MAP, 0);
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         sideOwners[i] = R_GetLineForSide(i);
     }
 
     // Origins of sectors.
-    sectorOrigins = Z_Malloc(sizeof(origin_t) * numSectors, PU_MAP, 0);
-    for(i = 0; i < numSectors; ++i)
+    sectorOrigins = Z_Malloc(sizeof(origin_t) * NUM_SECTORS, PU_MAP, 0);
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = SECTOR_PTR(i);
 
@@ -209,8 +209,8 @@ void Sv_InitPools(void)
     }
 
     // Origins of sides.
-    sideOrigins = Z_Malloc(sizeof(origin_t) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
+    sideOrigins = Z_Malloc(sizeof(origin_t) * NUM_SIDEDEFS, PU_MAP, 0);
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         vertex_t*           vtx;
 
@@ -1008,15 +1008,15 @@ void Sv_RegisterWorld(cregister_t* reg, boolean isInitial)
     reg->isInitial = isInitial;
 
     // Init sectors.
-    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * numSectors, PU_MAP, 0);
-    for(i = 0; i < numSectors; ++i)
+    reg->sectors = Z_Calloc(sizeof(dt_sector_t) * NUM_SECTORS, PU_MAP, 0);
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         Sv_RegisterSector(&reg->sectors[i], i);
     }
 
     // Init sides.
-    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * numSideDefs, PU_MAP, 0);
-    for(i = 0; i < numSideDefs; ++i)
+    reg->sideDefs = Z_Calloc(sizeof(dt_side_t) * NUM_SIDEDEFS, PU_MAP, 0);
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         Sv_RegisterSide(&reg->sideDefs[i], i);
     }
@@ -2274,7 +2274,7 @@ void Sv_NewSectorDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     uint                i;
     sectordelta_t       delta;
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2299,15 +2299,15 @@ void Sv_NewSideDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     if(reg->isInitial)
     {
         start = 0;
-        end = numSideDefs;
+        end = NUM_SIDEDEFS;
     }
     else
     {
         // Because there are so many sides in a typical map, the number
         // of compared sides soon accumulates to millions. To reduce the
         // load, we'll check only a portion of all sides for a frame.
-        start = shift * numSideDefs / numShifts;
-        end = ++shift * numSideDefs / numShifts;
+        start = shift * NUM_SIDEDEFS / numShifts;
+        end = ++shift * NUM_SIDEDEFS / numShifts;
         shift %= numShifts;
     }
 

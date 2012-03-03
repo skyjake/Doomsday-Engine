@@ -180,7 +180,7 @@ void Rend_RenderMobjShadows(void)
     initShadowPrimitive();
 
     // Process all sectors:
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = sectors + i;
 

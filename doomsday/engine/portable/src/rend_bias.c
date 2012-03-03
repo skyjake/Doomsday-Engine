@@ -360,13 +360,13 @@ void SB_InitForMap(const char* uniqueID)
     uint i;
 
     // First, determine the total number of vertexillum_ts we need.
-    for(i = 0; i < numHEdges; ++i)
+    for(i = 0; i < NUM_HEDGES; ++i)
         if(hedges[i].lineDef)
             numVertIllums++;
 
     numVertIllums *= 3 * 4;
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = &sectors[i];
         if(sec->subsectors && *sec->subsectors)
@@ -393,7 +393,7 @@ void SB_InitForMap(const char* uniqueID)
         SB_InitVertexIllum(&illums[i]);
 
     // Allocate bias surfaces and attach vertexillum_ts.
-    for(i = 0; i < numHEdges; ++i)
+    for(i = 0; i < NUM_HEDGES; ++i)
     {
         HEdge* hedge = &hedges[i];
         int j;
@@ -413,7 +413,7 @@ void SB_InitForMap(const char* uniqueID)
         }
     }
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = &sectors[i];
         if(sec->subsectors && *sec->subsectors)

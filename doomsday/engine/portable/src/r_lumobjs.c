@@ -525,7 +525,7 @@ static int projectOmniLightToSurface(lumobj_t* lum, void* paramaters)
 void LO_InitForMap(void)
 {
     // First initialize the subsector links (root pointers).
-    subLumObjList = Z_Calloc(sizeof(*subLumObjList) * numSubsectors, PU_MAPSTATIC, 0);
+    subLumObjList = Z_Calloc(sizeof(*subLumObjList) * NUM_SUBSECTORS, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
     luminousBlockSet = 0; // Will have already been free'd.
@@ -574,7 +574,7 @@ void LO_BeginWorldFrame(void)
     // Start reusing nodes from the first one in the list.
     listNodeCursor = listNodeFirst;
     if(subLumObjList)
-        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * numSubsectors);
+        memset(subLumObjList, 0, sizeof(lumlistnode_t*) * NUM_SUBSECTORS);
     numLuminous = 0;
 }
 
@@ -1030,7 +1030,7 @@ BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
     {
         sector_t* seciter;
         uint i;
-        for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
+        for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
         {
             mobj_t* iter;
             for(iter = seciter->mobjList; iter; iter = iter->sNext)

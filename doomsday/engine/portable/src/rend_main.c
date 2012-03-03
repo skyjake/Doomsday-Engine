@@ -2971,7 +2971,7 @@ void Rend_RenderSurfaceVectors(void)
 
     glDisable(GL_CULL_FACE);
 
-    for(i = 0; i < numHEdges; ++i)
+    for(i = 0; i < NUM_HEDGES; ++i)
     {
         HEdge* hedge = &hedges[i];
         float x, y, bottom, top;
@@ -3036,7 +3036,7 @@ void Rend_RenderSurfaceVectors(void)
         }
     }
 
-    for(i = 0; i < numSubsectors; ++i)
+    for(i = 0; i < NUM_SUBSECTORS; ++i)
     {
         subsector_t* ssec = &subsectors[i];
         uint j;
@@ -3241,7 +3241,7 @@ void Rend_Vertexes(void)
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        for(i = 0; i < numVertexes; ++i)
+        for(i = 0; i < NUM_VERTEXES; ++i)
         {
             vertex_t* vtx = &vertexes[i];
             float alpha;
@@ -3273,7 +3273,7 @@ void Rend_Vertexes(void)
     oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    for(i = 0; i < numVertexes; ++i)
+    for(i = 0; i < NUM_VERTEXES; ++i)
     {
         vertex_t* vtx = &vertexes[i];
         float dist;
@@ -3305,7 +3305,7 @@ void Rend_Vertexes(void)
         eye[VY] = vz;
         eye[VZ] = vy;
 
-        for(i = 0; i < numVertexes; ++i)
+        for(i = 0; i < NUM_VERTEXES; ++i)
         {
             vertex_t* vtx = &vertexes[i];
             float pos[3], dist;
@@ -3407,9 +3407,9 @@ void Rend_RenderMap(void)
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;
-        if(numNodes != 0)
+        if(NUM_NODES != 0)
         {
-            Rend_RenderNode(numNodes - 1);
+            Rend_RenderNode(NUM_NODES - 1);
         }
         else
         {

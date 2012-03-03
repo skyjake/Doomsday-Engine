@@ -58,6 +58,14 @@
 #define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
 #define NODE_PTR(idx)           GameMap_Node(theMap, idx)
 
+#define NUM_VERTEXES            GameMap_VertexCount(theMap)
+#define NUM_LINEDEFS            GameMap_LineDefCount(theMap)
+#define NUM_SIDEDEFS            GameMap_SideDefCount(theMap)
+#define NUM_SECTORS             GameMap_SectorCount(theMap)
+#define NUM_SUBSECTORS          GameMap_SubsectorCount(theMap)
+#define NUM_HEDGES              GameMap_HEdgeCount(theMap)
+#define NUM_NODES               GameMap_NodeCount(theMap)
+
 // Node flags.
 #define NF_SUBSECTOR            0x80000000
 
@@ -262,25 +270,12 @@ typedef struct {
  * The map data arrays are accessible globally inside the engine.
  */
 extern Uri* mapUri;
-extern uint numVertexes;
 extern vertex_t* vertexes;
-
-extern uint numHEdges;
 extern HEdge* hedges;
-
-extern uint numSectors;
 extern sector_t* sectors;
-
-extern uint numSubsectors;
 extern subsector_t* subsectors;
-
-extern uint numNodes;
 extern node_t* nodes;
-
-extern uint numLineDefs;
 extern linedef_t* lineDefs;
-
-extern uint numSideDefs;
 extern sidedef_t* sideDefs;
 
 extern watchedplanelist_t* watchedPlaneList;

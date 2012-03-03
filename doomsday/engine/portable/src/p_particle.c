@@ -254,8 +254,8 @@ void P_PtcInitForMap(void)
 {
     uint startTime = Sys_GetRealTime();
 
-    pgLinks = Z_Malloc(sizeof(pglink_t *) * numSectors, PU_MAP, 0);
-    memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
+    pgLinks = Z_Malloc(sizeof(pglink_t *) * NUM_SECTORS, PU_MAP, 0);
+    memset(pgLinks, 0, sizeof(pglink_t *) * NUM_SECTORS);
 
     // We can link 64 generators each into four sectors before
     // running out of pgLinks.
@@ -279,7 +279,7 @@ void P_MapSpawnPlaneParticleGens(void)
         return;
 
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sector = SECTOR_PTR(i);
 
@@ -366,7 +366,7 @@ void P_ClearPtcGenLinks(void)
 {
     if(pgLinks == 0)
         return;
-    memset(pgLinks, 0, sizeof(*pgLinks) * numSectors);
+    memset(pgLinks, 0, sizeof(*pgLinks) * NUM_SECTORS);
     pgCursor = 0;
 }
 

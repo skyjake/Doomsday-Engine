@@ -93,7 +93,7 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
     {
         uint index = Reader_ReadUInt16(msgReader);
 
-        if(index < numSectors)
+        if(index < NUM_SECTORS)
         {
             sector = SECTOR_PTR(index);
         }
@@ -302,7 +302,7 @@ void Cl_Sound(void)
     else if(flags & SNDF_SECTOR)
     {
         num = Reader_ReadPackedUInt16(msgReader);
-        if(num >= numSectors)
+        if(num >= NUM_SECTORS)
         {
             Con_Message("Cl_Sound: Invalid sector number %i.\n", num);
             return;

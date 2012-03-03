@@ -855,7 +855,7 @@ void R_InitSkyFix(void)
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         R_UpdateSkyFixForSec(SECTOR_PTR(i));
     }}
@@ -1289,7 +1289,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     if(novideo) return;
 
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = SECTOR_PTR(i);
         uint j;
@@ -1305,7 +1305,7 @@ void R_MapInitSurfaces(boolean forceUpdate)
     }}
 
     { uint i;
-    for(i = 0; i < numSideDefs; ++i)
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         sidedef_t* si = SIDE_PTR(i);
 
@@ -1331,7 +1331,7 @@ void R_MapInitSurfaceLists(void)
     R_SurfaceListClear(glowingSurfaceList);
 
     { uint i;
-    for(i = 0; i < numSideDefs; ++i)
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         sidedef_t* side = SIDE_PTR(i);
 
@@ -1341,7 +1341,7 @@ void R_MapInitSurfaceLists(void)
     }}
 
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = SECTOR_PTR(i);
         if(0 == sec->lineDefCount)
@@ -1502,7 +1502,7 @@ void R_ClearSectorFlags(void)
     uint        i;
     sector_t   *sec;
 
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = SECTOR_PTR(i);
         // Clear all flags that can be cleared before each frame.

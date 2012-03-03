@@ -364,7 +364,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
                           dest, speed) );
 #endif
 
-    if(sectornum >= numSectors)
+    if(sectornum >= NUM_SECTORS)
         return;
 
     // Remove any existing movers for the same plane.
@@ -576,7 +576,7 @@ void Cl_ReadSectorDelta2(int deltaType, boolean skip)
     if(!skip)
     {
 #ifdef _DEBUG
-        if(num >= numSectors)
+        if(num >= NUM_SECTORS)
         {
             // This is worrisome.
             Con_Error("Cl_ReadSectorDelta2: Sector %i out of range.\n", num);
@@ -725,7 +725,7 @@ void Cl_ReadSideDelta2(int deltaType, boolean skip)
         return;
 
 #ifdef _DEBUG
-    if(num >= numSideDefs)
+    if(num >= NUM_SIDEDEFS)
     {
         // This is worrisome.
         Con_Error("Cl_ReadSideDelta2: Side %i out of range.\n", num);

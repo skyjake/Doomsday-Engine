@@ -1611,7 +1611,7 @@ void Rend_DrawShadowOffsetVerts(void)
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
     glEnable(GL_TEXTURE_2D);
 
-    for(i = 0; i < numLineDefs; ++i)
+    for(i = 0; i < NUM_LINEDEFS; ++i)
     {
         linedef_t* line = &lineDefs[i];
 

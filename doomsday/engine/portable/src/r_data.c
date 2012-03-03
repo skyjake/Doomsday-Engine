@@ -2659,7 +2659,7 @@ void R_PrecacheForMap(void)
             MC_MAPSURFACE, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, true, false, false);
         uint i, j;
 
-        for(i = 0; i < numSideDefs; ++i)
+        for(i = 0; i < NUM_SIDEDEFS; ++i)
         {
             sidedef_t* side = SIDE_PTR(i);
 
@@ -2673,7 +2673,7 @@ void R_PrecacheForMap(void)
                 Materials_Precache(side->SW_bottommaterial, spec, true);
         }
 
-        for(i = 0; i < numSectors; ++i)
+        for(i = 0; i < NUM_SECTORS; ++i)
         {
             sector_t* sec = SECTOR_PTR(i);
             if(!sec->lineDefCount) continue;

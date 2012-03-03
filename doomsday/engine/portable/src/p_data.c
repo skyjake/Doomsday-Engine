@@ -71,25 +71,13 @@ extern boolean mapSetup;
  * These map data arrays are internal to the engine.
  */
 Uri* mapUri; // Name by which the game referred to the current map.
-uint numVertexes = 0;
+
 vertex_t* vertexes = NULL;
-
-uint numHEdges = 0;
 HEdge* hedges = NULL;
-
-uint numSectors = 0;
 sector_t* sectors = NULL;
-
-uint numSubsectors = 0;
 subsector_t* subsectors = NULL;
-
-uint numNodes = 0;
 node_t* nodes = NULL;
-
-uint numLineDefs = 0;
 linedef_t* lineDefs = NULL;
-
-uint numSideDefs = 0;
 sidedef_t* sideDefs = NULL;
 
 watchedplanelist_t* watchedPlaneList = NULL;
@@ -177,25 +165,13 @@ void P_SetCurrentMap(GameMap* map)
         {
             Uri_Delete(mapUri), mapUri = NULL;
         }
-        numVertexes = 0;
+
         vertexes = 0;
-
-        numHEdges = 0;
         hedges = 0;
-
-        numSectors = 0;
         sectors = 0;
-
-        numSubsectors = 0;
         subsectors = 0;
-
-        numNodes = 0;
         nodes = 0;
-
-        numLineDefs = 0;
         lineDefs = 0;
-
-        numSideDefs = 0;
         sideDefs = 0;
 
         watchedPlaneList = 0;
@@ -218,25 +194,12 @@ void P_SetCurrentMap(GameMap* map)
 
     mapUri = map->uri;
 
-    numVertexes = map->numVertexes;
     vertexes = map->vertexes;
-
-    numHEdges = map->numHEdges;
     hedges = map->hedges;
-
-    numSectors = map->numSectors;
     sectors = map->sectors;
-
-    numSubsectors = map->numSubsectors;
     subsectors = map->subsectors;
-
-    numNodes = map->numNodes;
     nodes = map->nodes;
-
-    numLineDefs = map->numLineDefs;
     lineDefs = map->lineDefs;
-
-    numSideDefs = map->numSideDefs;
     sideDefs = map->sideDefs;
 
     watchedPlaneList = &map->watchedPlaneList;

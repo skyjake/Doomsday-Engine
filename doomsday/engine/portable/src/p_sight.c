@@ -317,5 +317,5 @@ boolean P_CheckLineSight(const float from[3], const float to[3],
     }
 
     validCount++;
-    return crossBSPNode(numNodes - 1, &los);
+    return crossBSPNode(NUM_NODES - 1, &los);
 }

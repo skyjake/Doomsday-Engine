@@ -596,37 +596,37 @@ int P_Callback(int type, uint index, void* context,
     switch(type)
     {
     case DMU_VERTEX:
-        if(index < numVertexes)
+        if(index < NUM_VERTEXES)
             return callback(VERTEX_PTR(index), context);
         break;
 
     case DMU_HEDGE:
-        if(index < numHEdges)
+        if(index < NUM_HEDGES)
             return callback(HEDGE_PTR(index), context);
         break;
 
     case DMU_LINEDEF:
-        if(index < numLineDefs)
+        if(index < NUM_LINEDEFS)
             return callback(LINE_PTR(index), context);
         break;
 
     case DMU_SIDEDEF:
-        if(index < numSideDefs)
+        if(index < NUM_SIDEDEFS)
             return callback(SIDE_PTR(index), context);
         break;
 
     case DMU_NODE:
-        if(index < numNodes)
+        if(index < NUM_NODES)
             return callback(NODE_PTR(index), context);
         break;
 
     case DMU_SUBSECTOR:
-        if(index < numSubsectors)
+        if(index < NUM_SUBSECTORS)
             return callback(SUBSECTOR_PTR(index), context);
         break;
 
     case DMU_SECTOR:
-        if(index < numSectors)
+        if(index < NUM_SECTORS)
             return callback(SECTOR_PTR(index), context);
         break;
 
@@ -646,7 +646,7 @@ int P_Callback(int type, uint index, void* context,
     case DMU_SECTOR_BY_ACT_TAG:
         Con_Error("P_Callback: Type %s not implemented yet.\n", DMU_Str(type));
         /*
-        for(i = 0; i < numLineDefs; ++i)
+        for(i = 0; i < NUM_LINEDEFS; ++i)
         {
             if(!callback(LINE_PTR(i), context)) return false;
         }

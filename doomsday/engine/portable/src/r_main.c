@@ -573,7 +573,7 @@ void R_Update(void)
 
     // Update all world surfaces.
     { uint i;
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sector_t* sec = &sectors[i];
         uint j;
@@ -582,7 +582,7 @@ void R_Update(void)
     }}
 
     { uint i;
-    for(i = 0; i < numSideDefs; ++i)
+    for(i = 0; i < NUM_SIDEDEFS; ++i)
     {
         sidedef_t* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
@@ -801,7 +801,7 @@ void R_CreateMobjLinks(void)
 
 BEGIN_PROF( PROF_MOBJ_INIT_ADD );
 
-    for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
+    for(i = 0, seciter = sectors; i < NUM_SECTORS; seciter++, ++i)
     {
         mobj_t*             iter;
 

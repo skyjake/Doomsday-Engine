@@ -261,10 +261,10 @@ subsector_t* R_PointInSubsector(const float x, const float y)
     node_t* node = 0;
     uint nodenum = 0;
 
-    if(!numNodes) // single subsector is a special case
+    if(!NUM_NODES) // single subsector is a special case
         return (subsector_t *) subsectors;
 
-    nodenum = numNodes - 1;
+    nodenum = NUM_NODES - 1;
 
     while(!(nodenum & NF_SUBSECTOR))
     {
@@ -555,7 +555,7 @@ sector_t* R_GetSectorForOrigin(const void* ddMobjBase)
     sector_t*           sec;
 
     // Check all sectors; find where the sound is coming from.
-    for(i = 0; i < numSectors; ++i)
+    for(i = 0; i < NUM_SECTORS; ++i)
     {
         sec = SECTOR_PTR(i);
 

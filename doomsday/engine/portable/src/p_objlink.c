@@ -246,7 +246,7 @@ void R_InitObjlinkBlockmapForMap(void)
     }
 
     // Initialize obj => subsector contact lists.
-    subsectorContacts = Z_Calloc(sizeof *subsectorContacts * numSubsectors, PU_MAPSTATIC, 0);
+    subsectorContacts = Z_Calloc(sizeof *subsectorContacts * NUM_SUBSECTORS, PU_MAPSTATIC, 0);
 }
 
 void R_DestroyObjlinkBlockmap(void)
@@ -609,7 +609,7 @@ void R_InitForNewFrame(void)
     // Start reusing nodes from the first one in the list.
     contCursor = contFirst;
     if(subsectorContacts)
-        memset(subsectorContacts, 0, numSubsectors * sizeof *subsectorContacts);
+        memset(subsectorContacts, 0, NUM_SUBSECTORS * sizeof *subsectorContacts);
 }
 
 int R_IterateSubsectorContacts2(subsector_t* ssec, objtype_t type,
