@@ -42,24 +42,24 @@
 #include "m_nodepile.h"
 #include "m_vector.h"
 
-#define GET_VERTEX_IDX(vtx)     ( (int) ((vtx) - vertexes) )
-#define GET_LINE_IDX(li)        ( (int) ((li) - lineDefs) )
-#define GET_SIDE_IDX(si)        ( (int) ((si) - sideDefs) )
-#define GET_SECTOR_IDX(sec)     ( (int) ((sec) - sectors) )
-#define GET_SUBSECTOR_IDX(sub)  ( (int) ((sub) - subsectors) )
-#define GET_HEDGE_IDX(he)       ( (int) ((he) - hedges) )
-#define GET_NODE_IDX(nd)        ( (int) ((nd) - nodes) )
+#define GET_VERTEX_IDX(vtx)     GameMap_VertexIndex(theMap, vtx)
+#define GET_LINE_IDX(li)        GameMap_LineDefIndex(theMap, li)
+#define GET_SIDE_IDX(si)        GameMap_SideDefIndex(theMap, si)
+#define GET_SECTOR_IDX(sec)     GameMap_SectorIndex(theMap, sec)
+#define GET_SUBSECTOR_IDX(ssec) GameMap_SubsectorIndex(theMap, ssec)
+#define GET_HEDGE_IDX(he)       GameMap_HEdgeIndex(theMap, he)
+#define GET_NODE_IDX(nd)        GameMap_NodeIndex(theMap, nd)
 
-#define VERTEX_PTR(i)       (&vertexes[i])
-#define HEDGE_PTR(i)        (&hedges[i])
-#define SECTOR_PTR(i)       (&sectors[i])
-#define SUBSECTOR_PTR(i)    (&subsectors[i])
-#define NODE_PTR(i)         (&nodes[i])
-#define LINE_PTR(i)         (&lineDefs[i])
-#define SIDE_PTR(i)         (&sideDefs[i])
+#define VERTEX_PTR(idx)         GameMap_Vertex(theMap, idx)
+#define LINE_PTR(idx)           GameMap_LineDef(theMap, idx)
+#define SIDE_PTR(idx)           GameMap_SideDef(theMap, idx)
+#define SECTOR_PTR(idx)         GameMap_Sector(theMap, idx)
+#define SUBSECTOR_PTR(idx)      GameMap_Subsector(theMap, idx)
+#define HEDGE_PTR(idx)          GameMap_HEdge(theMap, idx)
+#define NODE_PTR(idx)           GameMap_Node(theMap, idx)
 
 // Node flags.
-#define NF_SUBSECTOR        0x80000000
+#define NF_SUBSECTOR            0x80000000
 
 // Runtime map data objects, such as vertices, sectors, and subsectors all
 // have this header as their first member. This makes it possible to treat
