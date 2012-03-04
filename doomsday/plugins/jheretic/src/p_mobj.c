@@ -1114,7 +1114,7 @@ void P_RepositionMace(mobj_t* mo)
     spot = maceSpots[P_Random() % maceSpotCount];
     mo->pos[VX] = mapSpots[spot].pos[VX];
     mo->pos[VY] = mapSpots[spot].pos[VY];
-    ss = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
+    ss = P_SubsectorAtPointXY(mo->pos[VX], mo->pos[VY]);
 
     mo->floorZ = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
     mo->pos[VZ] = mo->floorZ;

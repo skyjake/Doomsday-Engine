@@ -400,7 +400,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->center[VY] = center[VZ];
     params->center[VZ] = params->gzt = center[VY];
     params->distance = dist;
-    ssec = R_PointInSubsector(center[VX], center[VZ]);
+    ssec = P_SubsectorAtPointXY(center[VX], center[VZ]);
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];

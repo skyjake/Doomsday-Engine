@@ -447,6 +447,7 @@ EXPORTS
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
     P_LineOpening               @64 NONAME
+    P_SubsectorAtPointXY        @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME
     P_AllLinesBoxIterator       @347 NONAME
@@ -649,7 +650,6 @@ EXPORTS
     R_AddAnimGroupFrame         @242 NONAME
 
     R_PointToAngle2             @101 NONAME
-    R_PointInSubsector          @102 NONAME
     R_HSVToRGB                  @439 NONAME
 
     R_CreateColorPalette        @444 NONAME

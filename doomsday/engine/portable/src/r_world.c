@@ -1455,7 +1455,7 @@ void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                subsector_t* ssec = R_PointInSubsector(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
+                subsector_t* ssec = P_SubsectorAtPointXY(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
 
                 /// @fixme $nplanes
                 if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)

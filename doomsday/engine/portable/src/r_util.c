@@ -62,14 +62,14 @@ extern int tantoangle[SLOPERANGE + 1];  // get from tables.c
 /**
  * Which side of the partition does the point lie?
  *
- * @param x             X coordinate to test.
- * @param y             Y coordinate to test.
- * @return int          @c 0 = front, else @c 1 = back.
+ * @param x  X coordinate to test.
+ * @param y  Y coordinate to test.
+ * @return int  @c 0 = front, else @c 1 = back.
  */
-int R_PointOnSide(const float x, const float y, const partition_t *par)
+int P_PointOnPartitionSide(const float x, const float y, const partition_t *par)
 {
-    float               dx, dy;
-    float               left, right;
+    float dx, dy;
+    float left, right;
 
     if(!par->dX)
     {
@@ -256,26 +256,6 @@ float R_PointToDist(const float x, const float y)
     return dist;
 }
 
-subsector_t* R_PointInSubsector(const float x, const float y)
-{
-    node_t* node = 0;
-    uint nodenum = 0;
-
-    if(!NUM_NODES) // single subsector is a special case
-        return (subsector_t *) subsectors;
-
-    nodenum = NUM_NODES - 1;
-
-    while(!(nodenum & NF_SUBSECTOR))
-    {
-        node = NODE_PTR(nodenum);
-        ASSERT_DMU_TYPE(node, DMU_NODE);
-        nodenum = node->children[R_PointOnSide(x, y, &node->partition)];
-    }
-
-    return SUBSECTOR_PTR(nodenum & ~NF_SUBSECTOR);
-}
-
 linedef_t *R_GetLineForSide(const uint sideNumber)
 {
     uint                i;
@@ -294,122 +274,6 @@ linedef_t *R_GetLineForSide(const uint sideNumber)
         }
 
     return NULL;
-}
-
-/**
- * Is the point inside the sector, according to the edge lines of the
- * subsector. Uses the well-known algorithm described here:
- * http://www.alienryderflex.com/polygon/
- *
- * @param               X coordinate to test.
- * @param               Y coordinate to test.
- * @param               Sector to test.
- *
- * @return              @c true, if the point is inside the sector.
- */
-boolean R_IsPointInSector(const float x, const float y,
-                          const sector_t *sector)
-{
-    uint                i;
-    boolean             isOdd = false;
-
-    for(i = 0; i < sector->lineDefCount; ++i)
-    {
-        linedef_t          *line = sector->lineDefs[i];
-        vertex_t           *vtx[2];
-
-        // Skip lines that aren't sector boundaries.
-        if(line->L_frontside && line->L_backside &&
-           line->L_frontsector == sector &&
-           line->L_backsector == sector)
-            continue;
-
-        vtx[0] = line->L_v1;
-        vtx[1] = line->L_v2;
-        // It shouldn't matter whether the line faces inward or outward.
-        if((vtx[0]->V_pos[VY] < y && vtx[1]->V_pos[VY] >= y) ||
-           (vtx[1]->V_pos[VY] < y && vtx[0]->V_pos[VY] >= y))
-        {
-            if(vtx[0]->V_pos[VX] +
-               (((y - vtx[0]->V_pos[VY]) / (vtx[1]->V_pos[VY] - vtx[0]->V_pos[VY])) *
-                (vtx[1]->V_pos[VX] - vtx[0]->V_pos[VX])) < x)
-            {
-                // Toggle oddness.
-                isOdd = !isOdd;
-            }
-        }
-    }
-
-    // The point is inside if the number of crossed nodes is odd.
-    return isOdd;
-}
-
-/**
- * Is the point inside the subsector, according to the edge lines of the
- * subsector. Uses the well-known algorithm described here:
- * http://www.alienryderflex.com/polygon/
- *
- * @param x             X coordinate to test.
- * @param y             Y coordinate to test.
- * @param subsector     Subsector to test.
- *
- * @return              @c true, if the point is inside the subsector.
- */
-boolean R_IsPointInSubsector(const float x, const float y,
-                             const subsector_t* ssec)
-{
-    uint                i;
-    fvertex_t*          vi, *vj;
-
-    for(i = 0; i < ssec->hedgeCount; ++i)
-    {
-        vi = &ssec->hedges[i]->HE_v1->v;
-        vj = &ssec->hedges[(i + 1) % ssec->hedgeCount]->HE_v1->v;
-
-        if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
-            (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
-        {
-            // Outside the subsector's edges.
-            return false;
-        }
-
-/*      if((vi->pos[VY] < y && vj->pos[VY] >= y) ||
-           (vj->pos[VY] < y && vi->pos[VY] >= y))
-        {
-            if(vi->pos[VX] + (((y - vi->pos[VY])/(vj->pos[VY] - vi->pos[VY])) *
-                              (vj->pos[VX] - vi->pos[VX])) < x)
-            {
-                // Toggle oddness.
-                isOdd = !isOdd;
-            }
-        }
-*/
-    }
-
-    return true;
-}
-
-/**
- * Is the point inside the sector, according to the edge lines of the
- * subsector.
- *
- * More accurate than R_IsPointInSector.
- *
- * @param               X coordinate to test.
- * @param               Y coordinate to test.
- * @param               Sector to test.
- *
- * @return              @c true, if the point is inside the sector.
- */
-boolean R_IsPointInSector2(const float x, const float y,
-                           const sector_t* sector)
-{
-    subsector_t* ssec = R_PointInSubsector(x, y);
-
-    // Wrong sector?
-    if(ssec->sector != sector) return false;
-
-    return R_IsPointInSubsector(x, y, ssec);
 }
 
 void R_AmplifyColor(float rgb[3])

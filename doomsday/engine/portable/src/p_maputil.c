@@ -509,6 +509,51 @@ void P_LineOpening(linedef_t* linedef)
     openrange = opentop - openbottom;
 }
 
+/// @note Part of the Doomsday public API
+subsector_t* P_SubsectorAtPointXY(float x, float y)
+{
+    if(theMap)
+    {
+        return GameMap_SubsectorAtPointXY(theMap, x, y);
+    }
+    return NULL;
+}
+
+boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* ssec)
+{
+    fvertex_t* vi, *vj;
+    uint i;
+
+    if(!ssec) return false; // I guess?
+
+    for(i = 0; i < ssec->hedgeCount; ++i)
+    {
+        vi = &ssec->hedges[i]->HE_v1->v;
+        vj = &ssec->hedges[(i + 1) % ssec->hedgeCount]->HE_v1->v;
+
+        if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
+            (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
+        {
+            // Outside the subsector's edges.
+            return false;
+        }
+    }
+
+    return true;
+}
+
+boolean P_IsPointXYInSector(float x, float y, const sector_t* sector)
+{
+    subsector_t* ssec;
+    if(!sector) return false; // I guess?
+
+    /// @fixme Do not assume @a sector is from the current map.
+    ssec = GameMap_SubsectorAtPointXY(theMap, x, y);
+    if(ssec->sector != sector) return false;
+
+    return P_IsPointXYInSubsector(x, y, ssec);
+}
+
 /**
  * Two links to update:
  * 1) The link to us from the previous node (sprev, always set) will
@@ -671,7 +716,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
     sector_t* sec;
 
     // Link into the sector.
-    mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
+    mo->subsector = P_SubsectorAtPointXY(mo->pos[VX], mo->pos[VY]);
     sec = mo->subsector->sector;
 
     if(flags & DDLINK_SECTOR)
@@ -715,7 +760,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
         ddplayer_t* player = mo->dPlayer;
 
         player->inVoid = true;
-        if(R_IsPointInSector2(player->mo->pos[VX],
+        if(P_IsPointXYInSector(player->mo->pos[VX],
                               player->mo->pos[VY],
                               player->mo->subsector->sector) &&
            (player->mo->pos[VZ] < player->mo->subsector->sector->SP_ceilvisheight + 4 &&

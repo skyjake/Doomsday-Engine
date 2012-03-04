@@ -753,7 +753,7 @@ static void SBE_DrawLevelGauge(const Point2Raw* origin, int height)
     else
         src = SBE_GetNearest();
 
-    ssec = R_PointInSubsector(src->pos[VX], src->pos[VY]);
+    ssec = P_SubsectorAtPointXY(src->pos[VX], src->pos[VY]);
     if(!ssec) return;
 
     sector = ssec->sector;

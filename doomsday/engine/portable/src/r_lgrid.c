@@ -309,8 +309,8 @@ void LG_InitForMap(void)
                 sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[0].pos[VY];
 
                 ssamples[idx] =
-                    R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
-                if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                    P_SubsectorAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                    ssamples[idx] = NULL;
 
                 n++; // Offset the index in the samplePoints array bellow.
@@ -358,8 +358,8 @@ void LG_InitForMap(void)
                         sample.pos[VY] = lgOrigin[VY] + off[VY] + samplePoints[n].pos[VY];
 
                         ssamples[idx] =
-                            R_PointInSubsector(sample.pos[VX], sample.pos[VY])->sector;
-                        if(!R_IsPointInSector2(sample.pos[VX], sample.pos[VY], ssamples[idx]))
+                            P_SubsectorAtPointXY(sample.pos[VX], sample.pos[VY])->sector;
+                        if(!P_IsPointXYInSector(sample.pos[VX], sample.pos[VY], ssamples[idx]))
                            ssamples[idx] = NULL;
                     }
                 }

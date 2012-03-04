@@ -3139,7 +3139,7 @@ D_CMD(MovePlane)
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {
         p = 4;
-        sector = P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
+        sector = P_GetPtrp(P_SubsectorAtPointXY((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {

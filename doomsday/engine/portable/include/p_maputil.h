@@ -73,6 +73,45 @@ int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
 void            P_LineOpening(linedef_t* linedef);
+
+/**
+ * Determine the BSP leaf (subsector) on the back side of the BS partition that
+ * lies in front of the specified point within the CURRENT map's coordinate space.
+ *
+ * @note Always returns a valid subsector although the point may not actually lay
+ *       within it (however it is on the same side of the space parition)!
+ *
+ * @param x  X coordinate of the point to test.
+ * @param y  Y coordinate of the point to test.
+ * @return  Subsector instance for that BSP node's leaf.
+ */
+subsector_t* P_SubsectorAtPointXY(float x, float y);
+
+/**
+ * Is the point inside the sector, according to the edge lines of the subsector.
+ *
+ * @param  X coordinate to test.
+ * @param  Y coordinate to test.
+ * @param  Sector to test.
+ *
+ * @return  @c true, if the point is inside the sector.
+ */
+boolean P_IsPointXYInSector(float x, float y, const sector_t* sector);
+
+/**
+ * Is the point inside the subsector, according to the edge lines of the subsector.
+ *
+ * @algorithm Uses the well-known algorithm described here:
+ * http://www.alienryderflex.com/polygon/
+ *
+ * @param x  X coordinate to test.
+ * @param y  Y coordinate to test.
+ * @param subsector Subsector to test.
+ *
+ * @return  @c true, if the point is inside the subsector.
+ */
+boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* subsector);
+
 void            P_MobjLink(mobj_t* mo, byte flags);
 int             P_MobjUnlink(mobj_t* mo);
 

@@ -811,7 +811,7 @@ static void P_NewParticle(ptcgen_t* gen)
             float               y =
                 (bbox[BOXBOTTOM] + RNG_RandFloat() * (bbox[BOXTOP]   - bbox[BOXBOTTOM]));
 
-            subsec = R_PointInSubsector(x, y);
+            subsec = P_SubsectorAtPointXY(x, y);
 
             if(subsec->sector == sector)
                 break;
@@ -832,7 +832,7 @@ static void P_NewParticle(ptcgen_t* gen)
             pt->pos[VX] = FLT2FIX(x);
             pt->pos[VY] = FLT2FIX(y);
 
-            if(R_PointInSubsector(x, y) == subsec)
+            if(P_SubsectorAtPointXY(x, y) == subsec)
                 break; // This is a good place.
         }
 
@@ -861,7 +861,7 @@ static void P_NewParticle(ptcgen_t* gen)
     if(gen->plane)
         pt->sector = gen->plane->sector;
     else
-        pt->sector = R_PointInSubsector(FIX2FLT(pt->pos[VX]),
+        pt->sector = P_SubsectorAtPointXY(FIX2FLT(pt->pos[VX]),
                                         FIX2FLT(pt->pos[VY]))->sector;
 
     // Play a stage sound?
@@ -1348,7 +1348,7 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
 
     // Should we update the sector pointer?
     if(tmcross)
-        pt->sector = R_PointInSubsector(FIX2FLT(x), FIX2FLT(y))->sector;
+        pt->sector = P_SubsectorAtPointXY(FIX2FLT(x), FIX2FLT(y))->sector;
 }
 
 /**

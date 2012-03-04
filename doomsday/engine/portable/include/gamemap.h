@@ -394,4 +394,19 @@ int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
 int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
     int (*callback) (linedef_t*, void*), void* paramaters);
 
+/**
+ * Determine the BSP leaf (subsector) on the back side of the BS partition that
+ * lies in front of the specified point within the map's coordinate space.
+ *
+ * @note Always returns a valid subsector although the point may not actually lay
+ *       within it (however it is on the same side of the space parition)!
+ *
+ * @param map  GameMap instance.
+ * @param x  X coordinate of the point to test.
+ * @param y  Y coordinate of the point to test.
+ * @return  Subsector instance for that BSP node's leaf.
+ */
+subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point[2]);
+subsector_t* GameMap_SubsectorAtPointXY(GameMap* map, float x, float y);
+
 #endif /// LIBDENG_GAMEMAP_H

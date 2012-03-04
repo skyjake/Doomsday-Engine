@@ -305,7 +305,7 @@ boolean P_TeleportMove(mobj_t* thing, float x, float y, boolean alwaysStomp)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSSec = R_PointInSubsector(tm[VX], tm[VY]);
+    newSSec = P_SubsectorAtPointXY(tm[VX], tm[VY]);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1159,7 +1159,7 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     tmBox.maxX = tm[VX] + tmThing->radius;
     tmBox.maxY = tm[VY] + tmThing->radius;
 
-    newSec = P_GetPtrp(R_PointInSubsector(tm[VX], tm[VY]), DMU_SECTOR);
+    newSec = P_GetPtrp(P_SubsectorAtPointXY(tm[VX], tm[VY]), DMU_SECTOR);
 
     ceilingLine = floorLine = NULL;
 #if !__JHEXEN__
@@ -1730,7 +1730,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
         lineWasHit = true;
 
         // This is the subsector where the trace originates.
-        originSub = R_PointInSubsector(tracePos[VX], tracePos[VY]);
+        originSub = P_SubsectorAtPointXY(tracePos[VX], tracePos[VY]);
 
         d[VX] = pos[VX] - tracePos[VX];
         d[VY] = pos[VY] - tracePos[VY];
@@ -1738,7 +1738,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
 
         if(!INRANGE_OF(d[VZ], 0, .0001f)) // Epsilon
         {
-            contact = R_PointInSubsector(pos[VX], pos[VY]);
+            contact = P_SubsectorAtPointXY(pos[VX], pos[VY]);
             step = P_ApproxDistance3(d[VX], d[VY], d[VZ]);
             stepv[VX] = d[VX] / step;
             stepv[VY] = d[VY] / step;
@@ -1755,7 +1755,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
                 pos[VX] = tracePos[VX] + d[VX];
                 pos[VY] = tracePos[VY] + d[VY];
                 pos[VZ] = tracePos[VZ] + d[VZ];
-                contact = R_PointInSubsector(pos[VX], pos[VY]);
+                contact = P_SubsectorAtPointXY(pos[VX], pos[VY]);
             }
 
             // Should we backtrack to hit a plane instead?
@@ -2965,7 +2965,7 @@ mobj_t* P_CheckOnMobj(mobj_t* thing)
     tmBox.maxX = pos[VX] + tmThing->radius;
     tmBox.maxY = pos[VY] + tmThing->radius;
 
-    newSSec = R_PointInSubsector(pos[VX], pos[VY]);
+    newSSec = P_SubsectorAtPointXY(pos[VX], pos[VY]);
     ceilingLine = floorLine = NULL;
 
     // The base floor/ceiling is from the subsector that contains the

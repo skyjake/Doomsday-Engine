@@ -2917,7 +2917,7 @@ static void Rend_RenderNode(uint bspnum)
         bsp = NODE_PTR(bspnum);
 
         // Decide which side the view point is on.
-        side = R_PointOnSide(viewData->current.pos[VX], viewData->current.pos[VY],
+        side = P_PointOnPartitionSide(viewData->current.pos[VX], viewData->current.pos[VY],
                              &bsp->partition);
 
         Rend_RenderNode(bsp->children[side]); // Recursively divide front space.

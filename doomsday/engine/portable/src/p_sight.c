@@ -245,12 +245,12 @@ static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
     while(!(bspNum & NF_SUBSECTOR))
     {
         const node_t*       node = &nodes[bspNum];
-        int                 side = R_PointOnSide(
+        int                 side = P_PointOnPartitionSide(
             FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
             &node->partition);
 
         // Would the trace completely cross this partition?
-        if(side == R_PointOnSide(los->to[VX], los->to[VY],
+        if(side == P_PointOnPartitionSide(los->to[VX], los->to[VY],
                                  &node->partition))
         {   // Yes, decend!
             bspNum = node->children[side];

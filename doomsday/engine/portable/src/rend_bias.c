@@ -41,8 +41,7 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 #include "de_misc.h"
-
-#include "p_sight.h"
+#include "de_play.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -782,8 +781,7 @@ BEGIN_PROF( PROF_BIAS_UPDATE );
             sector_t*           sector;
             float               oldIntensity = s->intensity;
 
-            sector =
-                R_PointInSubsector(s->pos[VX], s->pos[VY])->sector;
+            sector = P_SubsectorAtPointXY(s->pos[VX], s->pos[VY])->sector;
 
             // The lower intensities are useless for light emission.
             if(sector->lightLevel >= maxLevel)

@@ -272,7 +272,7 @@ static void initPolyobj(polyobj_t* po)
     }
     V2_Scale(avg, 1.f / po->lineCount);
 
-    ssec = R_PointInSubsector(avg[VX], avg[VY]);
+    ssec = P_SubsectorAtPointXY(avg[VX], avg[VY]);
     if(ssec)
     {
         if(ssec->polyObj)
@@ -852,4 +852,38 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
 
     return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
                                             blockmapCellPolyobjsIterator, (void*) &args);
+}
+
+subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])
+{
+    node_t* node = 0;
+    uint nodenum = 0;
+    float point[2];
+
+    point[0] = point_? point_[0] : 0;
+    point[1] = point_? point_[1] : 0;
+
+    // single subsector is a special case
+    if(!map->numNodes)
+    {
+        return (subsector_t*) map->subsectors;
+    }
+
+    nodenum = map->numNodes - 1;
+    while(!(nodenum & NF_SUBSECTOR))
+    {
+        node = map->nodes + nodenum;
+        ASSERT_DMU_TYPE(node, DMU_NODE);
+        nodenum = node->children[P_PointOnPartitionSide(point[0], point[1], &node->partition)];
+    }
+
+    return map->subsectors + (nodenum & ~NF_SUBSECTOR);
+}
+
+subsector_t* GameMap_SubsectorAtPointXY(GameMap* map, float x, float y)
+{
+    float point[2];
+    point[0] = x;
+    point[1] = y;
+    return GameMap_SubsectorAtPoint(map, point);
 }

@@ -476,7 +476,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
             if(sec)
             {
                 // The point must be inside the correct sector.
-                if(!R_IsPointInSector(pos[VX], pos[VY], sec))
+                if(!P_IsPointXYInSector(pos[VX], pos[VY], sec))
                     continue;
             }
 
@@ -484,7 +484,7 @@ static uint generateDecorLights(const ded_decorlight_t* def, surface_t* suf,
             if(d)
             {
                 V3_Copy(d->pos, pos);
-                d->subsector = R_PointInSubsector(d->pos[VX], d->pos[VY]);
+                d->subsector = P_SubsectorAtPointXY(d->pos[VX], d->pos[VY]);
                 d->def = def;
                 num++;
             }

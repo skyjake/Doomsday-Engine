@@ -556,7 +556,7 @@ static void loadMapSpots(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            subsector_t* ssec = R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
+            subsector_t* ssec = P_SubsectorAtPointXY(spot->pos[VX], spot->pos[VY]);
             xsector_t* xsector = P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;

@@ -417,11 +417,14 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
 
     int             P_PointOnLinedefSide(float xy[2], const struct linedef_s* lineDef);
     int             P_PointOnLinedefSideXY(float x, float y, const struct linedef_s* lineDef);
+
     int             P_BoxOnLineSide(const AABoxf* box, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
     void            P_LineOpening(struct linedef_s* linedef);
+
+    struct subsector_s* P_SubsectorAtPointXY(float x, float y);
 
     // Object in bounding box iterators.
     int             P_MobjsBoxIterator(const AABoxf* box,
@@ -640,7 +643,6 @@ void R_GetColorPaletteRGBf(colorpaletteid_t id, int colorIdx, float rgb[3], bool
 void R_HSVToRGB(float* rgb, float h, float s, float v);
 
 angle_t R_PointToAngle2(float x1, float y1, float x2, float y2);
-struct subsector_s* R_PointInSubsector(float x, float y);
 
 ///@}
 

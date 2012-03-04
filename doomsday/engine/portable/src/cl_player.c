@@ -356,7 +356,7 @@ void ClPlayer_MoveLocal(float dx, float dy, float z, boolean onground)
         P_MobjLink(mo, DDLINK_SECTOR | DDLINK_BLOCKMAP);
     }
 
-    mo->subsector = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
+    mo->subsector = P_SubsectorAtPointXY(mo->pos[VX], mo->pos[VY]);
     mo->floorZ = mo->subsector->sector->SP_floorheight;
     mo->ceilingZ = mo->subsector->sector->SP_ceilheight;
 
