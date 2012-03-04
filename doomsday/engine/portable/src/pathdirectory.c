@@ -253,7 +253,7 @@ static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
     }
     oldSize = StringPool_Size(pool);
 
-    internId = StringPool_Add(pool, name);
+    internId = StringPool_Intern(pool, name);
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
