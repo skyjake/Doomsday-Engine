@@ -34,11 +34,6 @@
 
 #include "p_mobj.h"
 
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
-
-void            P_ApplyTorque(mobj_t *mo);
+void P_ApplyTorque(mobj_t* mo);
 
 #endif

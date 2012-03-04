@@ -2089,6 +2089,7 @@ void DD_SetInteger(int ddvalue, int parm)
 void* DD_GetVariable(int ddvalue)
 {
     static uint valueU;
+    static float valueF;
 
     switch(ddvalue)
     {
@@ -2128,7 +2129,8 @@ void* DD_GetVariable(int ddvalue)
         return &valueU;
 
     case DD_TRACE_ADDRESS:
-        return &traceLOS;
+        /// @fixme Do not cast away const.
+        return (void*)P_TraceLOS();
 
     case DD_TRANSLATIONTABLES_ADDRESS:
         return translationTables;
@@ -2223,25 +2225,33 @@ void* DD_GetVariable(int ddvalue)
     case DD_GAMETIC: {
         static timespan_t       fracTic;
         fracTic = gameTime * TICSPERSEC;
-        return &fracTic;
-      }
-    case DD_OPENRANGE:
-        return &openrange;
+        return &fracTic; }
 
-    case DD_OPENTOP:
-        return &opentop;
+    case DD_OPENRANGE: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->range;
+        return &valueF; }
 
-    case DD_OPENBOTTOM:
-        return &openbottom;
+    case DD_OPENTOP: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->top;
+        return &valueF; }
 
-    case DD_LOWFLOOR:
-        return &lowfloor;
+    case DD_OPENBOTTOM: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->bottom;
+        return &valueF; }
+
+    case DD_LOWFLOOR: {
+        const TraceOpening* open = P_TraceOpening();
+        valueF = open->lowFloor;
+        return &valueF; }
 
     case DD_NUMLUMPS: {
         static int count;
         count = F_LumpCount();
-        return &count;
-      }
+        return &count; }
+
     default: break;
     }
 

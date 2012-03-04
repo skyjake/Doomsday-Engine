@@ -257,7 +257,7 @@ enum {
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
-    DD_TRACE_ADDRESS, ///< divline 'trace' used by PathTraverse.
+    DD_TRACE_ADDRESS, ///< obsolete divline 'trace' used by PathTraverse.
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
     DD_MAP_NAME,
@@ -283,10 +283,10 @@ enum {
     DD_XGFUNC_LINK, ///< XG line classes
     DD_SHARED_FIXED_TRIGGER_OBSOLETE, ///< obsolete
     DD_GAMETIC,
-    DD_OPENRANGE,
-    DD_OPENTOP,
-    DD_OPENBOTTOM,
-    DD_LOWFLOOR,
+    DD_OPENRANGE, ///< obsolete
+    DD_OPENTOP, ///< obsolete
+    DD_OPENBOTTOM, ///< obsolete
+    DD_LOWFLOOR, ///< obsolete
     DD_CPLAYER_THRUST_MUL_OBSOLETE, ///< obsolete
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, ///< 10x
@@ -873,7 +873,20 @@ typedef struct intercept_s {
 
 typedef int (*traverser_t) (const intercept_t* intercept, void* paramaters);
 
-#define NO_INDEX            0xffffffff
+/**
+ * A simple POD data structure for representing line trace openings.
+ */
+typedef struct {
+    /// Top and bottom z of the opening.
+    float top, bottom;
+
+    /// Distance from top to bottom.
+    float range;
+
+    /// Z height of the lowest Plane at the opening on the X|Y axis.
+    /// @todo Does not belong here?
+    float lowFloor;
+} TraceOpening;
 
 //------------------------------------------------------------------------
 //

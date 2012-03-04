@@ -37,9 +37,6 @@
 #define IS_SECTOR_LINKED(mo)    ((mo)->sPrev != NULL)
 #define IS_BLOCK_LINKED(mo)     ((mo)->bNext != NULL)
 
-extern float  opentop, openbottom, openrange, lowfloor;
-extern divline_t traceLOS;
-
 float           P_AccurateDistanceFixed(fixed_t dx, fixed_t dy);
 float           P_AccurateDistance(float dx, float dy);
 float           P_ApproxDistance(float dx, float dy);
@@ -72,7 +69,26 @@ float           P_InterceptVector(const divline_t* v2, const divline_t* v1);
 int             P_PointOnDivLineSidef(fvertex_t *pnt, fdivline_t *dline);
 float           P_FloatInterceptVertex(fvertex_t *start, fvertex_t *end,
                                        fdivline_t *fdiv, fvertex_t *inter);
-void            P_LineOpening(linedef_t* linedef);
+
+/**
+ * Retrieve an immutable copy of the LOS trace line for the CURRENT map.
+ *
+ * @note Always returns a valid divline_t even if there is no current map.
+ */
+const divline_t* P_TraceLOS(void);
+
+/**
+ * Retrieve an immutable copy of the TraceOpening state for the CURRENT map.
+ *
+ * @note Always returns a valid TraceOpening even if there is no current map.
+ */
+const TraceOpening* P_TraceOpening(void);
+
+/**
+ * Update the TraceOpening state for the CURRENT map according to the opening
+ * defined by the inner-minimal planes heights which intercept @a linedef
+ */
+void P_SetTraceOpening(linedef_t* linedef);
 
 /**
  * Determine the BSP leaf (subsector) on the back side of the BS partition that
@@ -154,4 +170,8 @@ int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser
  */
 int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback);
 int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+
+boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
+    float topSlope, int flags);
+
 #endif

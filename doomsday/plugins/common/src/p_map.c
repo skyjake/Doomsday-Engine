@@ -957,6 +957,7 @@ int PIT_CheckThing(mobj_t* thing, void* data)
 int PIT_CheckLine(linedef_t* ld, void* data)
 {
     AABoxf* aaBox = P_GetPtrp(ld, DMU_BOUNDING_BOX);
+    const TraceOpening* opening;
     xline_t* xline;
 
     if(tmBox.minX >= aaBox->maxX ||
@@ -1077,30 +1078,30 @@ int PIT_CheckLine(linedef_t* ld, void* data)
     }
 #endif
 
-    // Set OPENRANGE, OPENTOP, OPENBOTTOM.
-    P_LineOpening(ld);
+    P_SetTraceOpening(ld);
+    opening = P_TraceOpening();
 
     // Adjust floor / ceiling heights.
-    if(OPENTOP < tmCeilingZ)
+    if(opening->top < tmCeilingZ)
     {
-        tmCeilingZ = OPENTOP;
+        tmCeilingZ = opening->top;
         ceilingLine = ld;
 #if !__JHEXEN__
         blockLine = ld;
 #endif
     }
 
-    if(OPENBOTTOM > tmFloorZ)
+    if(opening->bottom > tmFloorZ)
     {
-        tmFloorZ = OPENBOTTOM;
+        tmFloorZ = opening->bottom;
         floorLine = ld;
 #if !__JHEXEN__
         blockLine = ld;
 #endif
     }
 
-    if(LOWFLOOR < tmDropoffZ)
-        tmDropoffZ = LOWFLOOR;
+    if(opening->lowFloor < tmDropoffZ)
+        tmDropoffZ = opening->lowFloor;
 
     // If contacted a special line, add it to the list.
     if(P_ToXLine(ld)->special)
@@ -1645,8 +1646,8 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
                         stepv[3], tracePos[3], cFloor, cCeil;
     linedef_t*          li;
     mobj_t*             th;
-    divline_t*          trace =
-        (divline_t *) DD_GetVariable(DD_TRACE_ADDRESS);
+    const divline_t* trace = P_TraceLOS();
+    const TraceOpening* opening;
     sector_t*           frontSec = NULL, *backSec = NULL;
     subsector_t* contact, *originSub;
     xline_t*            xline;
@@ -1679,13 +1680,15 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
 #endif
 
         // Crosses a two sided line.
-        P_LineOpening(li);
+        P_SetTraceOpening(li);
+        opening = P_TraceOpening();
+
         dist = attackRange * in->distance;
 
         if(P_GetFloatp(frontSec, DMU_FLOOR_HEIGHT) !=
            P_GetFloatp(backSec, DMU_FLOOR_HEIGHT))
         {
-            slope = (OPENBOTTOM - tracePos[VZ]) / dist;
+            slope = (opening->bottom - tracePos[VZ]) / dist;
             if(slope > aimSlope)
                 goto hitline;
         }
@@ -1693,7 +1696,7 @@ int PTR_ShootTraverse(const intercept_t* in, void* paramaters)
         if(P_GetFloatp(frontSec, DMU_CEILING_HEIGHT) !=
            P_GetFloatp(backSec, DMU_CEILING_HEIGHT))
         {
-            slope = (OPENTOP - tracePos[VZ]) / dist;
+            slope = (opening->top - tracePos[VZ]) / dist;
             if(slope < aimSlope)
                 goto hitline;
         }
@@ -1950,15 +1953,15 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
     {
         float               fFloor, bFloor;
         float               fCeil, bCeil;
+        const TraceOpening* opening;
 
         li = in->d.lineDef;
 
         if(!(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
            !(backSec  = P_GetPtrp(li, DMU_BACK_SECTOR)))
         {
-            float               tracePos[3];
-            divline_t*          trace =
-                (divline_t *) DD_GetVariable(DD_TRACE_ADDRESS);
+            float tracePos[3];
+            const divline_t* trace = P_TraceLOS();
 
             tracePos[VX] = FIX2FLT(trace->pos[VX]);
             tracePos[VY] = FIX2FLT(trace->pos[VY]);
@@ -1969,9 +1972,10 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
 
         // Crosses a two sided line.
         // A two sided line will restrict the possible target ranges.
-        P_LineOpening(li);
+        P_SetTraceOpening(li);
+        opening = P_TraceOpening();
 
-        if(OPENBOTTOM >= OPENTOP)
+        if(opening->bottom >= opening->top)
             return true; // Stop.
 
         dist = attackRange * in->distance;
@@ -1984,14 +1988,14 @@ int PTR_AimTraverse(const intercept_t* in, void* paramaters)
 
         if(fFloor != bFloor)
         {
-            slope = (OPENBOTTOM - shootZ) / dist;
+            slope = (opening->bottom - shootZ) / dist;
             if(slope > bottomSlope)
                 bottomSlope = slope;
         }
 
         if(fCeil != bCeil)
         {
-            slope = (OPENTOP - shootZ) / dist;
+            slope = (opening->top - shootZ) / dist;
             if(slope < topSlope)
                 topSlope = slope;
         }
@@ -2295,12 +2299,15 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
 
     if(!xline->special)
     {
-        P_LineOpening(in->d.lineDef);
-        if(OPENRANGE <= 0)
+        const TraceOpening* opening;
+
+        P_SetTraceOpening(in->d.lineDef);
+        opening = P_TraceOpening();
+
+        if(opening->range <= 0)
         {
             if(useThing->player)
-                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
-                             useThing);
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound, useThing);
 
             return true; // Can't use through a wall.
         }
@@ -2308,11 +2315,10 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
 #if __JHEXEN__
         if(useThing->player)
         {
-            float       pheight = useThing->pos[VZ] + useThing->height/2;
+            float pheight = useThing->pos[VZ] + useThing->height/2;
 
-            if((OPENTOP < pheight) || (OPENBOTTOM > pheight))
-                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound,
-                             useThing);
+            if((opening->top < pheight) || (opening->bottom > pheight))
+                S_StartSound(PCLASS_INFO(useThing->player->class_)->failUseSound, useThing);
         }
 #endif
         // Not a special line, but keep checking.
@@ -2320,11 +2326,10 @@ int PTR_UseTraverse(const intercept_t* in, void* paramaters)
     }
 
     side = 0;
-    if(1 == P_PointOnLinedefSideXY(useThing->pos[VX], useThing->pos[VY],
-                              in->d.lineDef))
+    if(1 == P_PointOnLinedefSideXY(useThing->pos[VX], useThing->pos[VY], in->d.lineDef))
         side = 1;
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     if(side == 1)
         return true;       // don't use back side
 #endif
@@ -2483,7 +2488,8 @@ static void P_HitSlideLine(linedef_t* ld)
 
 int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
 {
-    linedef_t*          li;
+    const TraceOpening* opening;
+    linedef_t* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_SlideTraverse: Not a line?");
@@ -2503,15 +2509,16 @@ int PTR_SlideTraverse(const intercept_t* in, void* paramaters)
         goto isblocking;
 #endif
 
-    P_LineOpening(li); // Set OPENRANGE, OPENTOP, OPENBOTTOM...
+    P_SetTraceOpening(li);
+    opening = P_TraceOpening();
 
-    if(OPENRANGE < slideMo->height)
+    if(opening->range < slideMo->height)
         goto isblocking; // Doesn't fit.
 
-    if(OPENTOP - slideMo->pos[VZ] < slideMo->height)
+    if(opening->top - slideMo->pos[VZ] < slideMo->height)
         goto isblocking; // mobj is too high.
 
-    if(OPENBOTTOM - slideMo->pos[VZ] > 24)
+    if(opening->bottom - slideMo->pos[VZ] > 24)
         goto isblocking; // Too big a step up.
 
     // This line doesn't block movement.
@@ -3094,7 +3101,8 @@ static void checkForPushSpecial(linedef_t* line, int side, mobj_t* mobj)
 
 int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
 {
-    linedef_t*          li;
+    const TraceOpening* opening;
+    linedef_t* li;
 
     if(in->type != ICPT_LINE)
         Con_Error("PTR_BounceTraverse: Not a line?");
@@ -3109,12 +3117,13 @@ int PTR_BounceTraverse(const intercept_t* in, void* paramaters)
         goto bounceblocking;
     }
 
-    P_LineOpening(li); // Set OPENRANGE, OPENTOP, OPENBOTTOM...
+    P_SetTraceOpening(li);
+    opening = P_TraceOpening();
 
-    if(OPENRANGE < slideMo->height)
+    if(opening->range < slideMo->height)
         goto bounceblocking; // Doesn't fit.
 
-    if(OPENTOP - slideMo->pos[VZ] < slideMo->height)
+    if(opening->top - slideMo->pos[VZ] < slideMo->height)
         goto bounceblocking; // Mobj is too high...
 
     return false; // This line doesn't block movement...
@@ -3196,11 +3205,14 @@ int PTR_PuzzleItemTraverse(const intercept_t* in, void* paramaters)
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
-            P_LineOpening(line);
+            const TraceOpening* opening;
 
-            if(OPENRANGE <= 0)
+            P_SetTraceOpening(line);
+            opening = P_TraceOpening();
+
+            if(opening->range <= 0)
             {
-                sfxenum_t           sound = SFX_NONE;
+                sfxenum_t sound = SFX_NONE;
 
                 if(puzzleItemUser->player)
                 {

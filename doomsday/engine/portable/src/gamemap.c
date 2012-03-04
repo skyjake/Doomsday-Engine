@@ -53,6 +53,55 @@ void GameMap_Bounds(GameMap* map, float* min, float* max)
     max[VY] = map->bBox[BOXTOP];
 }
 
+const divline_t* GameMap_TraceLOS(GameMap* map)
+{
+    assert(map);
+    return &map->traceLOS;
+}
+
+const TraceOpening* GameMap_TraceOpening(GameMap* map)
+{
+    assert(map);
+    return &map->traceOpening;
+}
+
+void GameMap_SetTraceOpening(GameMap* map, linedef_t* lineDef)
+{
+    sector_t* front, *back;
+    assert(map);
+
+    // Is the linedef part of this map?
+    if(-1 == GameMap_LineDefIndex(map, lineDef)) return; // Odd...
+
+    if(!lineDef->L_backside)
+    {
+        // A single-sided linedef.
+        map->traceOpening.range = 0;
+        return;
+    }
+
+    front = lineDef->L_frontsector;
+    back = lineDef->L_backsector;
+
+    if(front->SP_ceilheight < back->SP_ceilheight)
+        map->traceOpening.top = front->SP_ceilheight;
+    else
+        map->traceOpening.top = back->SP_ceilheight;
+
+    if(front->SP_floorheight > back->SP_floorheight)
+    {
+        map->traceOpening.bottom = front->SP_floorheight;
+        map->traceOpening.lowFloor = back->SP_floorheight;
+    }
+    else
+    {
+        map->traceOpening.bottom = back->SP_floorheight;
+        map->traceOpening.lowFloor = front->SP_floorheight;
+    }
+
+    map->traceOpening.range = map->traceOpening.top - map->traceOpening.bottom;
+}
+
 int GameMap_AmbientLightLevel(GameMap* map)
 {
     assert(map);
@@ -942,8 +991,9 @@ static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
     return false; // Continue iteration.
 }
 
-static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to_[2],
-    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
+    float const to_[2], int (*callback) (uint const block[2], void* paramaters),
+    void* paramaters)
 {
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
@@ -986,10 +1036,10 @@ static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to
     if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
     if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
 
-    traceLOS.pos[VX] = FLT2FIX(from[VX]);
-    traceLOS.pos[VY] = FLT2FIX(from[VY]);
-    traceLOS.dX = FLT2FIX(to[VX] - from[VX]);
-    traceLOS.dY = FLT2FIX(to[VY] - from[VY]);
+    map->traceLOS.pos[VX] = FLT2FIX(from[VX]);
+    map->traceLOS.pos[VY] = FLT2FIX(from[VY]);
+    map->traceLOS.dX = FLT2FIX(to[VX] - from[VX]);
+    map->traceLOS.dY = FLT2FIX(to[VY] - from[VY]);
 
     /**
      * It is possible that one or both points are outside the blockmap.
@@ -1080,13 +1130,13 @@ int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
     {
         if(NUM_POLYOBJS != 0)
         {
-            traverseCellPath(map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
+            traverseCellPath(map, map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
         }
-        traverseCellPath(map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
+        traverseCellPath(map, map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
     }
     if(flags & PT_ADDMOBJS)
     {
-        traverseCellPath(map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
+        traverseCellPath(map, map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
     }
 
     // Step #2: Process sorted intercepts.

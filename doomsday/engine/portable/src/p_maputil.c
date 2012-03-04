@@ -73,11 +73,6 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-float opentop, openbottom, openrange;
-float lowfloor;
-
-divline_t traceLOS;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -472,41 +467,37 @@ float P_InterceptVector(const divline_t* v2, const divline_t* v1)
     return frac;
 }
 
-/**
- * Sets opentop and openbottom to the window through a two sided line.
- * \fixme $nplanes.
- */
-void P_LineOpening(linedef_t* linedef)
+/// @note Part of the Doomsday public API
+const divline_t* P_TraceLOS(void)
 {
-    sector_t*           front, *back;
-
-    if(!linedef->L_backside)
+    static divline_t emptyLOS;
+    if(theMap)
     {
-        // Single sided line.
-        openrange = 0;
+        return GameMap_TraceLOS(theMap);
+    }
+    return &emptyLOS;
+}
+
+/// @note Part of the Doomsday public API
+const TraceOpening* P_TraceOpening(void)
+{
+    static TraceOpening zeroOpening;
+    if(theMap)
+    {
+        return GameMap_TraceOpening(theMap);
+    }
+    return &zeroOpening;
+}
+
+/// @note Part of the Doomsday public API
+void P_SetTraceOpening(linedef_t* linedef)
+{
+    if(!theMap)
+    {
+        DEBUG_Message(("Warning: P_SetTraceOpening() attempted with no current map, ignoring."));
         return;
     }
-
-    front = linedef->L_frontsector;
-    back = linedef->L_backsector;
-
-    if(front->SP_ceilheight < back->SP_ceilheight)
-        opentop = front->SP_ceilheight;
-    else
-        opentop = back->SP_ceilheight;
-
-    if(front->SP_floorheight > back->SP_floorheight)
-    {
-        openbottom = front->SP_floorheight;
-        lowfloor = back->SP_floorheight;
-    }
-    else
-    {
-        openbottom = back->SP_floorheight;
-        lowfloor = front->SP_floorheight;
-    }
-
-    openrange = opentop - openbottom;
+    GameMap_SetTraceOpening(theMap, linedef);
 }
 
 /// @note Part of the Doomsday public API
@@ -1015,32 +1006,31 @@ int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*)
  */
 int PIT_AddLineDefIntercepts(linedef_t* lineDef, void* paramaters)
 {
+    /// @fixme Do not assume lineDef is from the current map.
+    const divline_t* traceLOS = GameMap_TraceLOS(theMap);
     float distance;
     divline_t dl;
     int s1, s2;
 
     // Is this line crossed?
     // Avoid precision problems with two routines.
-    if(traceLOS.dX >  FRACUNIT * 16 || traceLOS.dY >  FRACUNIT * 16 ||
-       traceLOS.dX < -FRACUNIT * 16 || traceLOS.dY < -FRACUNIT * 16)
+    if(traceLOS->dX >  FRACUNIT * 16 || traceLOS->dY >  FRACUNIT * 16 ||
+       traceLOS->dX < -FRACUNIT * 16 || traceLOS->dY < -FRACUNIT * 16)
     {
-        s1 = P_PointOnDivlineSide(lineDef->L_v1pos[VX],
-                                  lineDef->L_v1pos[VY], &traceLOS);
-        s2 = P_PointOnDivlineSide(lineDef->L_v2pos[VX],
-                                  lineDef->L_v2pos[VY], &traceLOS);
+        s1 = P_PointOnDivlineSide(lineDef->L_v1pos[VX], lineDef->L_v1pos[VY], traceLOS);
+        s2 = P_PointOnDivlineSide(lineDef->L_v2pos[VX], lineDef->L_v2pos[VY], traceLOS);
     }
     else
     {
-        s1 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX]),
-                                    FIX2FLT(traceLOS.pos[VY]), lineDef);
-        s2 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS.pos[VX] + traceLOS.dX),
-                                    FIX2FLT(traceLOS.pos[VY] + traceLOS.dY), lineDef);
+        s1 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS->pos[VX]), FIX2FLT(traceLOS->pos[VY]), lineDef);
+        s2 = P_PointOnLinedefSideXY(FIX2FLT(traceLOS->pos[VX] + traceLOS->dX),
+                                    FIX2FLT(traceLOS->pos[VY] + traceLOS->dY), lineDef);
     }
     if(s1 == s2) return false;
 
     // Calculate interception point.
     P_MakeDivline(lineDef, &dl);
-    distance = P_InterceptVector(&traceLOS, &dl);
+    distance = P_InterceptVector(traceLOS, &dl);
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
@@ -1052,6 +1042,7 @@ int PIT_AddLineDefIntercepts(linedef_t* lineDef, void* paramaters)
 
 int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
 {
+    const divline_t* traceLOS;
     vec2_t from, to;
     float distance;
     divline_t dl;
@@ -1061,7 +1052,9 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
         return false; // $democam: ssshh, keep going, we're not here...
 
     // Check a corner to corner crossection for hit.
-    if((traceLOS.dX ^ traceLOS.dY) > 0)
+    /// @fixme Do not assume mobj is from the current map.
+    traceLOS = GameMap_TraceLOS(theMap);
+    if((traceLOS->dX ^ traceLOS->dY) > 0)
     {
         // \ Slope
         V2_Set(from, mobj->pos[VX] - mobj->radius,
@@ -1079,8 +1072,8 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
     }
 
     // Is this line crossed?
-    s1 = P_PointOnDivlineSide(from[VX], from[VY], &traceLOS);
-    s2 = P_PointOnDivlineSide(to[VX], to[VY], &traceLOS);
+    s1 = P_PointOnDivlineSide(from[VX], from[VY], traceLOS);
+    s2 = P_PointOnDivlineSide(to[VX], to[VY], traceLOS);
     if(s1 == s2) return false;
 
     // Calculate interception point.
@@ -1088,7 +1081,7 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
     dl.pos[VY] = FLT2FIX(from[VY]);
     dl.dX = FLT2FIX(to[VX] - from[VX]);
     dl.dY = FLT2FIX(to[VY] - from[VY]);
-    distance = P_InterceptVector(&traceLOS, &dl);
+    distance = P_InterceptVector(traceLOS, &dl);
     // On the correct side of the trace origin?
     if(!(distance < 0))
     {
@@ -1139,4 +1132,15 @@ int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags,
         return GameMap_PathXYTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
     }
     return false; // Continue iteration.
+}
+
+/// @note Part of the Doomsday public API.
+boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
+    float topSlope, int flags)
+{
+    if(theMap)
+    {
+        return GameMap_CheckLineSight(theMap, from, to, bottomSlope, topSlope, flags);
+    }
+    return true; // I guess?
 }

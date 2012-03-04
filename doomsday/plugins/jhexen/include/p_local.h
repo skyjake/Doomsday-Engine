@@ -145,11 +145,6 @@ mobj_t*     P_RoughMonsterSearch(mobj_t* mo, int distance);
 
 void        P_Validate();
 
-#define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
-#define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))
-#define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
-#define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
-
 extern int clipmana[NUM_AMMO_TYPES];
 
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);

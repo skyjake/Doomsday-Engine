@@ -523,12 +523,14 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         if(mapCache && dam->cachedMapFound)
-        {   // Attempt to load the cached map data.
+        {
+            // Attempt to load the cached map data.
             if(loadMap(&map, dam))
                 loadedOK = true;
         }
         else
-        {   // Try a JIT conversion with the help of a plugin.
+        {
+            // Try a JIT conversion with the help of a plugin.
             if(convertMap(&map, dam))
                 loadedOK = true;
         }

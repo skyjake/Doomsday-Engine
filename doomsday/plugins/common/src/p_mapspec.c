@@ -76,8 +76,8 @@ int spreadSoundToNeighbors(void* ptr, void* context)
 
     if(!(frontSec && backSec)) return false; // Continue iteration.
 
-    P_LineOpening(li);
-    if(!(OPENRANGE > 0)) return false; // Continue iteration.
+    P_SetTraceOpening(li);
+    if(!(P_TraceOpening()->range > 0)) return false; // Continue iteration.
 
     other = (frontSec == params->baseSec? backSec : frontSec);
     xline = P_ToXLine(li);

@@ -1,35 +1,24 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
- *
- *\author Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1998-2006 James Haley <haleyjd@hotmail.com>
- *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
- *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 /**
- * p_sight.c: Line of Sight Testing.
+ * @file p_sight.c
+ * Gamemap Line of Sight Testing. @ingroup map
+ *
+ * @authors Copyright © 2003-2012 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2012 Daniel Swanson <danij@dengine.net>
+ *
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
+ *
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
@@ -38,38 +27,19 @@
 #include "de_play.h"
 #include "de_refresh.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 typedef struct losdata_s {
-    int             flags; // LS_* flags @see lineSightFlags
-    divline_t       trace;
-    float           startZ; // Eye z of looker.
-    float           topSlope; // Slope to top of target.
-    float           bottomSlope; // Slope to bottom of target.
-    float           bBox[4];
-    float           to[3];
+    int flags; // LS_* flags @see lineSightFlags
+    divline_t trace;
+    float startZ; // Eye z of looker.
+    float topSlope; // Slope to top of target.
+    float bottomSlope; // Slope to bottom of target.
+    float bBox[4];
+    float to[3];
 } losdata_t;
 
-// CODE --------------------------------------------------------------------
-
-static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
-                                divline_t* dl)
+static boolean interceptLineDef(const linedef_t* li, losdata_t* los, divline_t* dl)
 {
-    divline_t           localDL, *dlPtr;
+    divline_t localDL, *dlPtr;
 
     // Try a quick, bounding-box rejection.
     if(li->aaBox.minX > los->bBox[BOXRIGHT] ||
@@ -78,10 +48,8 @@ static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
        li->aaBox.maxY < los->bBox[BOXBOTTOM])
         return false;
 
-    if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY],
-                            &los->trace) ==
-       P_PointOnDivlineSide(li->L_v2pos[VX], li->L_v2pos[VY],
-                            &los->trace))
+    if(P_PointOnDivlineSide(li->L_v1pos[VX], li->L_v1pos[VY], &los->trace) ==
+       P_PointOnDivlineSide(li->L_v2pos[VX], li->L_v2pos[VY], &los->trace))
         return false; // Not crossed.
 
     if(dl)
@@ -91,8 +59,7 @@ static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
 
     P_MakeDivline(li, dlPtr);
 
-    if(P_PointOnDivlineSide(FIX2FLT(los->trace.pos[VX]),
-                            FIX2FLT(los->trace.pos[VY]), dlPtr) ==
+    if(P_PointOnDivlineSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]), dlPtr) ==
        P_PointOnDivlineSide(los->to[VX], los->to[VY], dlPtr))
         return false; // Not crossed.
 
@@ -129,7 +96,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     {
         if((los->flags & LS_PASSLEFT) &&
            P_PointOnLinedefSideXY(FIX2FLT(los->trace.pos[VX]),
-                                FIX2FLT(los->trace.pos[VY]), li))
+                                  FIX2FLT(los->trace.pos[VY]), li))
             return true; // Ray does not intercept hedge from left to right.
 
         if(!(los->flags & (LS_PASSOVER | LS_PASSUNDER)))
@@ -196,11 +163,11 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 }
 
 /**
- * @return              @c true iff trace crosses the given subsector.
+ * @return  @c true iff trace crosses the given subsector.
  */
-static boolean crossSSec(uint ssecIdx, losdata_t* los)
+static boolean crossSSec(GameMap* map, uint ssecIdx, losdata_t* los)
 {
-    const subsector_t*  ssec = &subsectors[ssecIdx];
+    const subsector_t* ssec = &map->subsectors[ssecIdx];
     if(ssec->polyObj)
     {
         // Check polyobj lines.
@@ -238,49 +205,40 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
 }
 
 /**
- * @return              @c true iff trace crosses the node.
+ * @return  @c true iff trace crosses the node.
  */
-static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
+static boolean crossBSPNode(GameMap* map, unsigned int bspNum, losdata_t* los)
 {
     while(!(bspNum & NF_SUBSECTOR))
     {
-        const node_t*       node = &nodes[bspNum];
-        int                 side = P_PointOnPartitionSide(
-            FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
-            &node->partition);
+        const node_t* node = &map->nodes[bspNum];
+        int side = P_PointOnPartitionSide(FIX2FLT(los->trace.pos[VX]), FIX2FLT(los->trace.pos[VY]),
+                                          &node->partition);
 
         // Would the trace completely cross this partition?
-        if(side == P_PointOnPartitionSide(los->to[VX], los->to[VY],
-                                 &node->partition))
-        {   // Yes, decend!
+        if(side == P_PointOnPartitionSide(los->to[VX], los->to[VY], &node->partition))
+        {
+            // Yes, decend!
             bspNum = node->children[side];
         }
         else
-        {   // No.
-            if(!crossBSPNode(node->children[side], los))
+        {
+            // No.
+            if(!crossBSPNode(map, node->children[side], los))
                 return 0; // Cross the starting side.
-            else
-                bspNum = node->children[side^1]; // Cross the ending side.
+
+            bspNum = node->children[side^1]; // Cross the ending side.
         }
     }
 
-    return crossSSec(bspNum & ~NF_SUBSECTOR, los);
+    return crossSSec(map, bspNum & ~NF_SUBSECTOR, los);
 }
 
-/**
- * Traces a line of sight.
- *
- * @param from          World position, trace origin coordinates.
- * @param to            World position, trace target coordinates.
- * @param flags         Line Sight Flags (LS_*) @see lineSightFlags
- *
- * @return              @c true if the traverser function returns @c true
- *                      for all visited lines.
- */
-boolean P_CheckLineSight(const float from[3], const float to[3],
-                         float bottomSlope, float topSlope, int flags)
+boolean GameMap_CheckLineSight(GameMap* map, const float from[3], const float to[3],
+    float bottomSlope, float topSlope, int flags)
 {
-    losdata_t               los;
+    losdata_t los;
+    assert(map);
 
     los.flags = flags;
     los.startZ = from[VZ];
@@ -317,5 +275,5 @@ boolean P_CheckLineSight(const float from[3], const float to[3],
     }
 
     validCount++;
-    return crossBSPNode(NUM_NODES - 1, &los);
+    return crossBSPNode(map, map->numNodes - 1, &los);
 }

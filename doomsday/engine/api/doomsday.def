@@ -1,6 +1,6 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 827 <--
+; Highest ordinal is currently: --> 829 <--
 ; Other free ordinals: none
 
 NAME                            "DOOMSDAY"
@@ -446,7 +446,9 @@ EXPORTS
     P_MakeDivline               @61 NONAME
     P_PointOnDivlineSide        @62 NONAME
     P_InterceptVector           @63 NONAME
-    P_LineOpening               @64 NONAME
+    P_TraceLOS                  @829 NONAME
+    P_TraceOpening              @828 NONAME
+    P_SetTraceOpening           @64 NONAME
     P_SubsectorAtPointXY        @102 NONAME
     P_MobjsBoxIterator          @346 NONAME
     P_LinesBoxIterator          @435 NONAME

@@ -422,7 +422,10 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
     int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
-    void            P_LineOpening(struct linedef_s* linedef);
+
+    const divline_t* P_TraceLOS(void);
+    TraceOpening*   P_TraceOpening(void);
+    void            P_SetTraceOpening(struct linedef_s* linedef);
 
     struct subsector_s* P_SubsectorAtPointXY(float x, float y);
 

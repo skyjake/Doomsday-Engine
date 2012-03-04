@@ -73,6 +73,11 @@ typedef struct gamemap_s {
 
     float globalGravity; // Gravity for the current map.
     int ambientLightLevel; // Ambient lightlevel for the current map.
+
+    /// Current LOS trace state.
+    /// @todo Refactor to support concurrent traces.
+    TraceOpening traceOpening;
+    divline_t traceLOS;
 } GameMap;
 
 /**
@@ -85,6 +90,31 @@ const Uri* GameMap_Uri(GameMap* map);
 const char* GameMap_OldUniqueId(GameMap* map);
 
 void GameMap_Bounds(GameMap* map, float* min, float* max);
+
+/**
+ * Retrieve an immutable copy of the LOS trace line.
+ *
+ * @param map  GameMap instance.
+ */
+const divline_t* GameMap_TraceLOS(GameMap* map);
+
+/**
+ * Retrieve an immutable copy of the LOS TraceOpening state.
+ *
+ * @param map  GameMap instance.
+ */
+const TraceOpening* GameMap_TraceOpening(GameMap* map);
+
+/**
+ * Update the TraceOpening state for according to the opening defined by the
+ * inner-minimal planes heights which intercept @a linedef
+ *
+ * If @a lineDef is not owned by the map this is a no-op.
+ *
+ * @param map  GameMap instance.
+ * @param lineDef  LineDef to configure the opening for.
+ */
+void GameMap_SetTraceOpening(GameMap* map, linedef_t* lineDef);
 
 /**
  * Retrieve the map-global ambient light level.
