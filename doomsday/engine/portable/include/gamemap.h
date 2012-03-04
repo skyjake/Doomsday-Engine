@@ -395,11 +395,26 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
     int (*callback) (linedef_t*, void*), void* paramaters);
 
 /**
+ * Traces a line between @a from and @a to, making a callback for each
+ * interceptable object linked within Blockmap cells which cover the path this
+ * defines.
+ */
+int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
+    int flags, traverser_t callback, void* paramaters);
+int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
+    int flags, traverser_t callback/* void* paramaters=NULL*/);
+
+int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
+    int flags, traverser_t callback, void* paramaters);
+int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, float toY,
+    int flags, traverser_t callback);
+
+/**
  * Determine the BSP leaf (subsector) on the back side of the BS partition that
  * lies in front of the specified point within the map's coordinate space.
  *
  * @note Always returns a valid subsector although the point may not actually lay
- *       within it (however it is on the same side of the space parition)!
+ *       within it (however it is on the same side of the space partition)!
  *
  * @param map  GameMap instance.
  * @param x  X coordinate of the point to test.

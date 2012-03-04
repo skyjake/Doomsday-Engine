@@ -453,8 +453,8 @@ boolean ClMobj_LocalActionsEnabled(struct mobj_s* mo);
     int             P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback); /*paramaters=NULL*/
     int             P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
 
-    int             P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
-    int             P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+    int             P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback); /*paramaters=NULL*/
+    int             P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 
     boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 ///@}

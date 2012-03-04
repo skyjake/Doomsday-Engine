@@ -2096,7 +2096,7 @@ float P_AimLineAttack(mobj_t* t1, angle_t angle, float distance)
     lineTarget = NULL;
     shootThing = t1;
 
-    P_PathTraverseXY(t1->pos[VX], t1->pos[VY], pos[VX], pos[VY],
+    P_PathXYTraverse(t1->pos[VX], t1->pos[VY], pos[VX], pos[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_AimTraverse);
 
     if(lineTarget)
@@ -2150,7 +2150,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
     attackRange = distance;
     aimSlope = slope;
 
-    if(!P_PathTraverseXY(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
+    if(!P_PathXYTraverse(t1->pos[VX], t1->pos[VY], targetPos[VX], targetPos[VY],
                       PT_ADDLINES | PT_ADDMOBJS, PTR_ShootTraverse))
     {
 #if __JHEXEN__
@@ -2371,7 +2371,7 @@ void P_UseLines(player_t* player)
     pos[VX] += USERANGE * FIX2FLT(finecosine[an]);
     pos[VY] += USERANGE * FIX2FLT(finesine[an]);
 
-    P_PathTraverseXY(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY],
+    P_PathXYTraverse(mo->pos[VX], mo->pos[VY], pos[VX], pos[VY],
                    PT_ADDLINES, PTR_UseTraverse);
 }
 
@@ -2581,13 +2581,13 @@ void P_SlideMove(mobj_t* mo)
 
         bestSlideDistance = 1;
 
-        P_PathTraverseXY(leadpos[VX], leadpos[VY],
+        P_PathXYTraverse(leadpos[VX], leadpos[VY],
                        leadpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
-        P_PathTraverseXY(trailpos[VX], leadpos[VY],
+        P_PathXYTraverse(trailpos[VX], leadpos[VY],
                        trailpos[VX] + mo->mom[MX], leadpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
-        P_PathTraverseXY(leadpos[VX], trailpos[VY],
+        P_PathXYTraverse(leadpos[VX], trailpos[VY],
                        leadpos[VX] + mo->mom[MX], trailpos[VY] + mo->mom[MY],
                        PT_ADDLINES, PTR_SlideTraverse);
 
@@ -3158,7 +3158,7 @@ void P_BounceWall(mobj_t* mo)
 
     bestSlideLine = NULL;
     bestSlideDistance = 1;
-    P_PathTraverseXY(leadPos[VX], leadPos[VY],
+    P_PathXYTraverse(leadPos[VX], leadPos[VY],
                    leadPos[VX] + mo->mom[MX], leadPos[VY] + mo->mom[MY],
                    PT_ADDLINES, PTR_BounceTraverse);
 
@@ -3291,7 +3291,7 @@ boolean P_UsePuzzleItem(player_t* player, int itemType)
     pos2[VX] += FIX2FLT(USERANGE * finecosine[angle]);
     pos2[VY] += FIX2FLT(USERANGE * finesine[angle]);
 
-    P_PathTraverseXY(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
+    P_PathXYTraverse(pos1[VX], pos1[VY], pos2[VX], pos2[VY],
                    PT_ADDLINES | PT_ADDMOBJS, PTR_PuzzleItemTraverse);
 
     if(!puzzleActivated)

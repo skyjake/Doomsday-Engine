@@ -457,8 +457,8 @@ EXPORTS
     P_SectorTouchingMobjsIterator @74 NONAME
     P_PathTraverse              @692 NONAME
     P_PathTraverse2             @693 NONAME
-    P_PathTraverseXY            @75 NONAME
-    P_PathTraverseXY2           @694 NONAME
+    P_PathXYTraverse            @75 NONAME
+    P_PathXYTraverse2           @694 NONAME
     P_CheckLineSight            @76 NONAME
     P_MobjSetState              @207 NONAME
     P_SpawnDamageParticleGen    @233 NONAME

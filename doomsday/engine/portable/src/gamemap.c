@@ -20,6 +20,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_play.h"
@@ -852,6 +854,264 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
 
     return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
                                             blockmapCellPolyobjsIterator, (void*) &args);
+}
+
+static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
+    uint const toBlock[2], float const from[2], float const to[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+{
+    int result = false; // Continue iteration.
+    float intercept[2], delta[2], partial;
+    uint count, block[2];
+    int stepDir[2];
+    assert(bmap);
+
+    if(toBlock[VX] > fromBlock[VX])
+    {
+        stepDir[VX] = 1;
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = 1 - (partial - (int) partial);
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else if(toBlock[VX] < fromBlock[VX])
+    {
+        stepDir[VX] = -1;
+        partial = from[VX] / Blockmap_CellWidth(bmap);
+        partial = (partial - (int) partial);
+        delta[VY] = (to[VY] - from[VY]) / fabs(to[VX] - from[VX]);
+    }
+    else
+    {
+        stepDir[VX] = 0;
+        partial = 1;
+        delta[VY] = 256;
+    }
+    intercept[VY] = from[VY] / Blockmap_CellHeight(bmap) + partial * delta[VY];
+
+    if(toBlock[VY] > fromBlock[VY])
+    {
+        stepDir[VY] = 1;
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = 1 - (partial - (int) partial);
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else if(toBlock[VY] < fromBlock[VY])
+    {
+        stepDir[VY] = -1;
+        partial = from[VY] / Blockmap_CellHeight(bmap);
+        partial = (partial - (int) partial);
+        delta[VX] = (to[VX] - from[VX]) / fabs(to[VY] - from[VY]);
+    }
+    else
+    {
+        stepDir[VY] = 0;
+        partial = 1;
+        delta[VX] = 256;
+    }
+    intercept[VX] = from[VX] / Blockmap_CellWidth(bmap) + partial * delta[VX];
+
+    //
+    // Step through map blocks.
+    //
+
+    // Count is present to prevent a round off error from skipping the
+    // break and ending up in an infinite loop..
+    block[VX] = fromBlock[VX];
+    block[VY] = fromBlock[VY];
+    for(count = 0; count < 64; ++count)
+    {
+        result = callback(block, paramaters);
+        if(result) return result; // Early out.
+
+        if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
+            break;
+
+        /// \todo Replace incremental translation?
+        if((uint)intercept[VY] == block[VY])
+        {
+            block[VX] += stepDir[VX];
+            intercept[VY] += delta[VY];
+        }
+        else if((uint)intercept[VX] == block[VX])
+        {
+            block[VY] += stepDir[VY];
+            intercept[VX] += delta[VX];
+        }
+    }
+
+    return false; // Continue iteration.
+}
+
+static int traverseCellPath(Blockmap* bmap, float const from_[2], float const to_[2],
+    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+{
+    // Constant terms implicitly defined by DOOM's original version of this
+    // algorithm (we must honor these fudge factors for compatibility).
+    const float epsilon    = FIX2FLT(FRACUNIT);
+    const float unitOffset = FIX2FLT(FRACUNIT);
+    uint fromBlock[2], toBlock[2];
+    vec2_t from, to, min, max;
+    float dX, dY;
+    assert(bmap);
+
+    V2_Copy(min, Blockmap_Bounds(bmap)->min);
+    V2_Copy(max, Blockmap_Bounds(bmap)->max);
+
+    // We may need to clip and/or fudge these points.
+    V2_Copy(from, from_);
+    V2_Copy(to, to_);
+
+    if(!(from[VX] >= min[VX] && from[VX] <= max[VX] &&
+         from[VY] >= min[VY] && from[VY] <= max[VY]))
+    {
+        // 'From' is outside the blockmap (really? very unusual...)
+        return true;
+    }
+
+    // Check the easy case of a path that lies completely outside the bmap.
+    if((from[VX] < min[VX] && to[VX] < min[VX]) ||
+       (from[VX] > max[VX] && to[VX] > max[VX]) ||
+       (from[VY] < min[VY] && to[VY] < min[VY]) ||
+       (from[VY] > max[VY] && to[VY] > max[VY]))
+    {
+        // Nothing intercepts outside the blockmap!
+        return true;
+    }
+
+    // Lines should not be perfectly parallel to a blockmap axis.
+    // We honor these so-called fudge factors for compatible behavior
+    // with DOOM's algorithm.
+    dX = (from[VX] - Blockmap_Origin(bmap)[VX]) / Blockmap_CellWidth(bmap);
+    dY = (from[VY] - Blockmap_Origin(bmap)[VY]) / Blockmap_CellHeight(bmap);
+    if(INRANGE_OF(dX, 0, epsilon)) from[VX] += unitOffset;
+    if(INRANGE_OF(dY, 0, epsilon)) from[VY] += unitOffset;
+
+    traceLOS.pos[VX] = FLT2FIX(from[VX]);
+    traceLOS.pos[VY] = FLT2FIX(from[VY]);
+    traceLOS.dX = FLT2FIX(to[VX] - from[VX]);
+    traceLOS.dY = FLT2FIX(to[VY] - from[VY]);
+
+    /**
+     * It is possible that one or both points are outside the blockmap.
+     * Clip path so that 'to' is within the AABB of the blockmap (note we
+     * would have already abandoned if 'from' lay outside..
+     */
+    if(!(to[VX] >= min[VX] && to[VX] <= max[VX] &&
+         to[VY] >= min[VY] && to[VY] <= max[VY]))
+    {
+        // 'to' is outside the blockmap.
+        vec2_t bounds[4], point;
+        float ab;
+
+        V2_Set(bounds[0], min[VX], min[VY]);
+        V2_Set(bounds[1], min[VX], max[VY]);
+        V2_Set(bounds[2], max[VX], max[VY]);
+        V2_Set(bounds[3], max[VX], min[VY]);
+
+        ab = V2_Intercept(from, to, bounds[0], bounds[1], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(to, point);
+
+        ab = V2_Intercept(from, to, bounds[1], bounds[2], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(to, point);
+
+        ab = V2_Intercept(from, to, bounds[2], bounds[3], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(to, point);
+
+        ab = V2_Intercept(from, to, bounds[3], bounds[0], point);
+        if(ab >= 0 && ab <= 1)
+            V2_Copy(to, point);
+    }
+
+    // Clipping already applied above, so we don't need to check it again...
+    Blockmap_CellCoords(bmap, fromBlock, from);
+    Blockmap_CellCoords(bmap, toBlock, to);
+
+    V2_Subtract(from, from, min);
+    V2_Subtract(to, to, min);
+    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, paramaters);
+}
+
+typedef struct {
+    int (*callback) (linedef_t*, void*);
+    void* paramaters;
+} iteratepolyobjlinedefs_params_t;
+
+static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
+{
+    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
+    return Polyobj_LineIterator(po, p->callback, p->paramaters);
+}
+
+static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    GameMap* map = (GameMap*)paramaters;
+    iteratepolyobjlinedefs_params_t iplParams;
+    iplParams.callback = PIT_AddLineDefIntercepts;
+    iplParams.paramaters = NULL;
+    return GameMap_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
+}
+
+static int collectLineDefIntercepts(uint const block[2], void* paramaters)
+{
+    GameMap* map = (GameMap*)paramaters;
+    return GameMap_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
+}
+
+static int collectMobjIntercepts(uint const block[2], void* paramaters)
+{
+    GameMap* map = (GameMap*)paramaters;
+    return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
+}
+
+int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
+    int flags, traverser_t callback, void* paramaters)
+{
+    assert(map);
+
+    // A new intercept trace begins...
+    P_ClearIntercepts();
+    validCount++;
+
+    // Step #1: Collect intercepts.
+    if(flags & PT_ADDLINES)
+    {
+        if(NUM_POLYOBJS != 0)
+        {
+            traverseCellPath(map->polyobjBlockmap, from, to, collectPolyobjLineDefIntercepts, (void*)map);
+        }
+        traverseCellPath(map->lineDefBlockmap, from, to, collectLineDefIntercepts, (void*)map);
+    }
+    if(flags & PT_ADDMOBJS)
+    {
+        traverseCellPath(map->mobjBlockmap, from, to, collectMobjIntercepts, (void*)map);
+    }
+
+    // Step #2: Process sorted intercepts.
+    return P_TraverseIntercepts(callback, paramaters);
+}
+
+int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
+    int flags, traverser_t callback)
+{
+    return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no paramaters*/);
+}
+
+int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
+    int flags, traverser_t callback, void* paramaters)
+{
+    vec2_t from, to;
+    V2_Set(from, fromX, fromY);
+    V2_Set(to, toX, toY);
+    return GameMap_PathTraverse2(map, from, to, flags, callback, paramaters);
+}
+
+int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, float toY,
+    int flags, traverser_t callback)
+{
+    return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no paramaters*/);
 }
 
 subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])

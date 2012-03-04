@@ -79,7 +79,7 @@ void            P_LineOpening(linedef_t* linedef);
  * lies in front of the specified point within the CURRENT map's coordinate space.
  *
  * @note Always returns a valid subsector although the point may not actually lay
- *       within it (however it is on the same side of the space parition)!
+ *       within it (however it is on the same side of the space partition)!
  *
  * @param x  X coordinate of the point to test.
  * @param y  Y coordinate of the point to test.
@@ -152,6 +152,6 @@ int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser
  * Same as P_PathTraverse except 'from' and 'to' arguments are specified
  * as two sets of separate X and Y map space coordinates.
  */
-int P_PathTraverseXY(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback);
-int P_PathTraverseXY2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
+int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback);
+int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags, traverser_t callback, void* paramaters);
 #endif
