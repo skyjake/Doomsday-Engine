@@ -116,6 +116,7 @@ DENG_HEADERS = \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
     portable/include/bitmapfont.h \
+    portable/include/blockmapvisual.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
     portable/include/bsp_intersection.h \
@@ -223,7 +224,6 @@ DENG_HEADERS = \
     portable/include/net_event.h \
     portable/include/net_main.h \
     portable/include/net_msg.h \
-    portable/include/p_bmap.h \
     portable/include/p_cmd.h \
     portable/include/p_control.h \
     portable/include/p_dmu.h \
