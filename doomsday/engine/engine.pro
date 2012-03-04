@@ -387,6 +387,7 @@ SOURCES += \
     portable/src/b_device.c \
     portable/src/b_main.c \
     portable/src/b_util.c \
+    portable/src/blockmap.c \
     portable/src/blockmapvisual.c \
     portable/src/bsp_edge.c \
     portable/src/bsp_intersection.c \
@@ -475,7 +476,6 @@ SOURCES += \
     portable/src/net_main.c \
     portable/src/net_msg.c \
     portable/src/net_ping.c \
-    portable/src/p_bmap.c \
     portable/src/p_cmd.c \
     portable/src/p_control.c \
     portable/src/p_data.c \
