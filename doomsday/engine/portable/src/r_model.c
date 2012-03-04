@@ -1042,11 +1042,11 @@ static void setupModel(ded_model_t* def)
         }
         else if(sub->flags & MFF_SHADOW2)
         {
-            sub->alpha = .2f;
+            sub->alpha = (byte)(256 * .2f);
         }
         else if(sub->flags & MFF_SHADOW1)
         {
-            sub->alpha = .62f;
+            sub->alpha = (byte)(256 * .62f);
         }
 
         // Extra blendmodes:
