@@ -317,11 +317,13 @@ const ddstring_t* Uri_ResolvedConst(const Uri* uri)
         exit(1); // Unreachable.
     }
 
+#ifndef LIBDENG_DISABLE_URI_RESOLVE_CACHING
     if(uri->resolvedForGame && uri->resolvedForGame == (void*) theGame)
     {
         // We can just return the previously prepared resolved URI.
         return &uri->resolved;
     }
+#endif
 
     clearCachedResolved(modifiable);
 
