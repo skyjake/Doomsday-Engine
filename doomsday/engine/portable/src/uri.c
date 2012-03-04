@@ -34,7 +34,20 @@ struct uri_s
 {
     ddstring_t _scheme;
     ddstring_t _path;
+
+    /// Cached copy of the resolved Uri.
+    ddstring_t _resolved;
+
+    /// The cached copy only applies when this game is loaded. Add any other
+    /// conditions here that result in different results for resolveUri().
+    void* _resolvedForGame;
 };
+
+static void clearCachedResolved(Uri* uri)
+{
+    Str_Clear(&uri->_resolved);
+    uri->_resolvedForGame = 0;
+}
 
 static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceClass)
 {
@@ -46,6 +59,8 @@ static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceC
     }
     Str_Init(&uri->_scheme);
     Str_Init(&uri->_path);
+    Str_InitStd(&uri->_resolved);
+    uri->_resolvedForGame = 0;
     if(path)
         Uri_SetUri3(uri, path, defaultResourceClass);
     return uri;
@@ -53,6 +68,7 @@ static __inline Uri* allocUri(const char* path, resourceclass_t defaultResourceC
 
 static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
 {
+    clearCachedResolved(uri);
     Str_Clear(&uri->_scheme);
 
     { const char* p = Str_CopyDelim2(&uri->_scheme, Str_Text(&uri->_path), ':', CDF_OMIT_DELIMITER);
@@ -83,9 +99,9 @@ static void parseScheme(Uri* uri, resourceclass_t defaultResourceClass)
     }
 }
 
-static ddstring_t* resolveUri(const Uri* uri)
+static boolean resolveUri(const Uri* uri, ddstring_t* dest)
 {
-    ddstring_t part, *dest = Str_New();
+    ddstring_t part;
     boolean successful = false;
     const char* p;
     assert(uri);
@@ -179,12 +195,7 @@ static ddstring_t* resolveUri(const Uri* uri)
 
 parseEnded:
     Str_Free(&part);
-    if(!successful && dest)
-    {
-        Str_Delete(dest);
-        return 0;
-    }
-    return dest;
+    return successful;
 }
 
 void Uri_Clear(Uri* uri)
@@ -196,6 +207,7 @@ void Uri_Clear(Uri* uri)
     }
     Str_Clear(&uri->_scheme);
     Str_Clear(&uri->_path);
+    clearCachedResolved(uri);
 }
 
 Uri* Uri_NewWithPath2(const char* path, resourceclass_t defaultResourceClass)
@@ -244,6 +256,7 @@ void Uri_Delete(Uri* uri)
     }
     Str_Free(&uri->_scheme);
     Str_Free(&uri->_path);
+    Str_Free(&uri->_resolved);
     free(uri);
 }
 
@@ -286,12 +299,43 @@ const ddstring_t* Uri_Path(const Uri* uri)
 
 ddstring_t* Uri_Resolved(const Uri* uri)
 {
+    const ddstring_t* resolved = Uri_ResolvedConst(uri);
+    if(resolved)
+    {
+        return Str_Set(Str_New(), Str_Text(resolved));
+    }
+    return 0;
+}
+
+const ddstring_t* Uri_ResolvedConst(const Uri* uri)
+{
+    Uri* modifiable = (Uri*) uri;
+
     if(!uri)
     {
         Con_Error("Attempted Uri::Resolved with invalid reference (=NULL).");
         exit(1); // Unreachable.
     }
-    return resolveUri(uri);
+
+    if(uri->_resolvedForGame && uri->_resolvedForGame == (void*) theGame)
+    {
+        // We can just return the previously prepared resolved URI.
+        return &uri->_resolved;
+    }
+
+    clearCachedResolved(modifiable);
+
+    // Keep a copy of this, we'll likely need it many, many times.
+    if(resolveUri(uri, &modifiable->_resolved))
+    {
+        modifiable->_resolvedForGame = (void*) theGame;
+        return &uri->_resolved;
+    }
+    else
+    {
+        clearCachedResolved(modifiable);
+        return 0;
+    }
 }
 
 Uri* Uri_SetScheme(Uri* uri, const char* scheme)
@@ -302,6 +346,7 @@ Uri* Uri_SetScheme(Uri* uri, const char* scheme)
         exit(1); // Unreachable.
     }
     Str_Set(&uri->_scheme, scheme);
+    clearCachedResolved(uri);
     return uri;
 }
 
@@ -313,6 +358,7 @@ Uri* Uri_SetPath(Uri* uri, const char* path)
         exit(1); // Unreachable.
     }
     Str_Set(&uri->_path, path);
+    clearCachedResolved(uri);
     return uri;
 }
 
@@ -376,7 +422,7 @@ ddstring_t* Uri_ToString(const Uri* uri)
 boolean Uri_Equality(const Uri* uri, const Uri* other)
 {
     assert(uri && other);
-    { ddstring_t* thisPath, *otherPath;
+    { const ddstring_t* thisPath, *otherPath;
     int result;
 
     if(uri == other)
@@ -392,27 +438,17 @@ boolean Uri_Equality(const Uri* uri, const Uri* other)
         return true; // No resolve necessary.
 
     // For comparison purposes we must be able to resolve both paths.
-    if((thisPath = Uri_Resolved(uri)) == 0)
+    if((thisPath = Uri_ResolvedConst(uri)) == 0)
         return false;
 
-    if((otherPath = Uri_Resolved(other)) == 0)
-    {
-        Str_Delete(thisPath);
+    if((otherPath = Uri_ResolvedConst(other)) == 0)
         return false;
-    }
 
     // Do not match on partial paths.
     if(Str_Length(thisPath) != Str_Length(otherPath))
-    {
-        Str_Delete(thisPath);
-        Str_Delete(otherPath);
         return false;
-    }
 
     result = Str_CompareIgnoreCase(thisPath, Str_Text(otherPath));
-
-    Str_Delete(thisPath);
-    Str_Delete(otherPath);
 
     return (result == 0);
     }
