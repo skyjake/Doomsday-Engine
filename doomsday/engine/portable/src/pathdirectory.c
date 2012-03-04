@@ -71,10 +71,11 @@ typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH
 
 struct pathdirectory_s {
     /// Path name fragment intern pool.
-    struct pathdirectory_internpool_s {
+    /*struct pathdirectory_internpool_s {
         StringPool* strings;
         ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } internPool;
+    } internPool;*/
+    StringPool* stringPool;
 
     int flags; /// @see pathDirectoryFlags
 
@@ -153,10 +154,10 @@ static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 static void clearInternPool(PathDirectory* pd)
 {
     assert(pd);
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        StringPool_Delete(pd->internPool.strings), pd->internPool.strings = NULL;
-        free(pd->internPool.idHashMap), pd->internPool.idHashMap = NULL;
+        StringPool_Delete(pd->stringPool);
+        pd->stringPool = NULL;
     }
 }
 
@@ -219,7 +220,7 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     PathDirectoryNode* node = NULL;
     if(ph)
     {
-        ushort hash = pd->internPool.idHashMap[internId-1];
+        ushort hash = StringPool_UserValue(pd->stringPool, internId);
         for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
@@ -235,7 +236,7 @@ static ushort hashForInternId(PathDirectory* pd, StringPoolId internId)
     assert(pd);
     if(0 == internId)
         Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
-    return pd->internPool.idHashMap[internId-1];
+    return StringPool_UserValue(pd->stringPool, internId);
 }
 
 static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
@@ -243,17 +244,19 @@ static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
 {
     StringPool* pool;
     StringPoolId internId;
-    uint oldSize;
+    //uint oldSize;
     assert(pd);
 
-    pool = pd->internPool.strings;
-    if(!pool)
+    if(!pd->stringPool)
     {
-        pool = pd->internPool.strings = StringPool_New();
+        pd->stringPool = StringPool_New();
     }
-    oldSize = StringPool_Size(pool);
+    pool = pd->stringPool;
+    //oldSize = StringPool_Size(pool);
 
     internId = StringPool_Intern(pool, name);
+    StringPool_SetUserValue(pd->stringPool, internId, hash);
+    /*
     if(oldSize != StringPool_Size(pool))
     {
         // A new string was added to the pool.
@@ -266,7 +269,7 @@ static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
             memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
         }
         pd->internPool.idHashMap[internId-1] = hash;
-    }
+    }*/
     return internId;
 }
 
@@ -284,10 +287,10 @@ static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent
     assert(pd && name);
 
     // Have we already encountered this?
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        internId = StringPool_IsInterned(pd->internPool.strings, name);
-        if(0 != internId)
+        internId = StringPool_IsInterned(pd->stringPool, name);
+        if(internId)
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
@@ -517,8 +520,7 @@ PathDirectory* PathDirectory_NewWithFlags(int flags)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
     pd->flags = flags;
-    pd->internPool.strings = NULL;
-    pd->internPool.idHashMap = NULL;
+    pd->stringPool = NULL;
     pd->pathLeafHash = NULL;
     pd->pathBranchHash = NULL;
     pd->size = 0;
@@ -679,7 +681,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     assert(pd);
-    return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
+    return StringPool_String(pd->stringPool, PathDirectoryNode_InternId(node));
 }
 
 // Calculate the total length of the final composed path.
