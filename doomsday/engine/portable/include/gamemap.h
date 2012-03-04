@@ -23,6 +23,9 @@
 #ifndef LIBDENG_GAMEMAP_H
 #define LIBDENG_GAMEMAP_H
 
+/// Size of Blockmap blocks in map units. Must be an integer power of two.
+#define MAPBLOCKUNITS               (128)
+
 typedef struct gamemap_s {
     Uri* uri;
     char uniqueId[256];

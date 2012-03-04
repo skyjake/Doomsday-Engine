@@ -34,9 +34,6 @@
 #include "p_mapdata.h"
 #include "m_gridmap.h"
 
-/// Size of Blockmap blocks in map units. Must be an integer power of two.
-#define MAPBLOCKUNITS               (128)
-
 byte bmapShowDebug;
 float bmapDebugSize;
 

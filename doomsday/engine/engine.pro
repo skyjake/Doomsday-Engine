@@ -386,6 +386,7 @@ SOURCES += \
     portable/src/b_device.c \
     portable/src/b_main.c \
     portable/src/b_util.c \
+    portable/src/blockmapvisual.c \
     portable/src/bsp_edge.c \
     portable/src/bsp_intersection.c \
     portable/src/bsp_main.c \
