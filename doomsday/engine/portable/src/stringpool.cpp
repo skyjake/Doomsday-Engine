@@ -29,6 +29,7 @@
 #include "de_platform.h"
 #include "stringpool.h"
 #include "string.hh"
+#include "unittest.h"
 
 #include <vector>
 #include <list>
@@ -365,6 +366,24 @@ const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_
     assert(pool);
     InternalId id = IMPORT_ID(StringPool_Intern(pool, str));
     return *pool->idMap[id];
+}
+
+void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value)
+{
+    assert(pool);
+    const InternalId internalId = IMPORT_ID(id);
+    assert(internalId < pool->idMap.size());
+    assert(pool->idMap[internalId] != 0);
+    pool->idMap[internalId]->setUserValue(value); // O(1)
+}
+
+uint StringPool_UserValue(StringPool* pool, StringPoolId id)
+{
+    assert(pool);
+    const InternalId internalId = IMPORT_ID(id);
+    assert(internalId < pool->idMap.size());
+    assert(pool->idMap[internalId] != 0);
+    return pool->idMap[internalId]->userValue(); // O(1)
 }
 
 StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)
@@ -876,6 +895,8 @@ int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolInternI
     return result;
 }
 
+#endif // 0
+
 #if _DEBUG
 typedef struct {
     int padding; ///< Number of characters to left-pad output.
@@ -883,11 +904,11 @@ typedef struct {
     const StringPool* pool; ///< StringPool instance being printed.
 } printinternedstring_params_t;
 
-static int printInternedString(StringPoolInternId internId, void* params)
+static int printInternedString(StringPoolId internId, void* params)
 {
     printinternedstring_params_t* p = (printinternedstring_params_t*)params;
     const ddstring_t* string = StringPool_String(p->pool, internId);
-    Con_Printf("%*u: %s\n", p->padding, p->count++, Str_Text(string));
+    fprintf(stderr, "%*u %5u %s\n", p->padding, p->count++, internId, Str_Text(string));
     return 0; // Continue iteration.
 }
 
@@ -898,16 +919,81 @@ void StringPool_Print(const StringPool* pool)
 
     if(!pool) return;
 
-    numDigits =  MAX_OF(M_NumDigits(StringPool_Size(pool)), 3/*length of "idx"*/);
+    numDigits = 5;
     p.padding = 2 + numDigits;
     p.pool = pool;
     p.count = 0;
 
-    Con_Printf("StringPool [%p]\n  %*s: string\n", (void*)pool, numDigits, "idx");
+    fprintf(stderr, "StringPool [%p]\n    idx    id string\n", (void*)pool);
     StringPool_Iterate(pool, printInternedString, &p);
-    Con_Printf("  There is %u %s in the pool.\n", StringPool_Size(pool),
+    fprintf(stderr, "  There is %u %s in the pool.\n", StringPool_Size(pool),
                StringPool_Size(pool)==1? "string":"strings");
 }
 #endif
 
-#endif // 0
+#ifdef _DEBUG
+LIBDENG_DEFINE_UNITTEST(StringPool)
+{
+    StringPool* p = StringPool_New();
+    ddstring_t* s = Str_NewStd();
+    ddstring_t* s2 = Str_NewStd();
+
+    Str_Set(s, "Hello");
+    assert(!StringPool_IsInterned(p, s));
+    assert(StringPool_Empty(p));
+
+    // First string.
+    StringPool_Intern(p, s);
+    assert(StringPool_IsInterned(p, s) == 1);
+
+    // Re-insertion.
+    assert(StringPool_Intern(p, s) == 1);
+
+    // Case insensitivity.
+    Str_Set(s, "heLLO");
+    assert(StringPool_Intern(p, s) == 1);
+
+    // Another string.
+    Str_Set(s, "abc");
+    const ddstring_t* is = StringPool_InternAndRetrieve(p, s);
+    assert(!Str_Compare(is, Str_Text(s)));
+
+    Str_Set(s2, "ABC");
+    is = StringPool_InternAndRetrieve(p, s2);
+    assert(!Str_Compare(is, Str_Text(s)));
+
+    assert(StringPool_Intern(p, is) == 2);
+
+    assert(StringPool_Size(p) == 2);
+    StringPool_Print(p);
+
+    assert(!StringPool_Empty(p));
+
+    StringPool_SetUserValue(p, 1, 1234);
+    assert(StringPool_UserValue(p, 1) == 1234);
+
+    assert(StringPool_UserValue(p, 2) == 0);
+
+    Str_Set(s, "HELLO");
+    StringPool_Remove(p, s);
+    assert(!StringPool_IsInterned(p, s));
+    assert(StringPool_Size(p) == 1);
+    assert(!Str_Compare(StringPool_String(p, 2), "abc"));
+
+    Str_Set(s, "Third!");
+    assert(StringPool_Intern(p, s) == 1);
+    assert(StringPool_Size(p) == 2);
+
+    StringPool_Clear(p);
+    assert(StringPool_Empty(p));
+
+    StringPool_Delete(p);
+    Str_Delete(s);
+    Str_Delete(s2);
+
+    //exit(123);
+    return true;
+}
+#endif
+
+LIBDENG_RUN_UNITTEST(StringPool)
