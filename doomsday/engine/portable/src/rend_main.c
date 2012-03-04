@@ -41,6 +41,7 @@
 #include "net_main.h"
 #include "texturevariant.h"
 #include "materialvariant.h"
+#include "blockmapvisual.h"
 
 // Surface (tangent-space) Vector Flags.
 #define SVF_TANGENT             0x01

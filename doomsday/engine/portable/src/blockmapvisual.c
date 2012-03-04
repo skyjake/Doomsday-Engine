@@ -32,6 +32,9 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = subsectors, 4 = polyobjs.
+float bmapDebugSize = 1.5f;
+
 static int rendMobj(mobj_t* mo, void* paramaters)
 {
     vec2_t start, end;

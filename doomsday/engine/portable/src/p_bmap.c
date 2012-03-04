@@ -72,9 +72,6 @@ struct blockmap_s
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = subsectors, 4 = polyobjs.
-float bmapDebugSize = 1.5f;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
