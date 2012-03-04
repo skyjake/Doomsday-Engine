@@ -35,6 +35,8 @@
 byte bmapShowDebug = 0; // 1 = mobjs, 2 = linedefs, 3 = subsectors, 4 = polyobjs.
 float bmapDebugSize = 1.5f;
 
+#if 0
+
 static int rendMobj(mobj_t* mo, void* paramaters)
 {
     vec2_t start, end;
@@ -565,8 +567,11 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
     glPopMatrix();
 }
 
+#endif
+
 void Rend_BlockmapDebug(void)
 {
+#if 0
     int (*cellDrawer) (void* cellPtr, void* paramaters);
     void (*cellInfoDrawer) (Blockmap* blockmap, const Point2Raw* origin, uint coords[2]);
     mobj_t* followMobj = NULL;
@@ -669,4 +674,5 @@ void Rend_BlockmapDebug(void)
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
+#endif
 }
