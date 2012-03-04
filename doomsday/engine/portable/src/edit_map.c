@@ -1712,7 +1712,7 @@ typedef struct {
 int findOverlapsForLinedef(linedef_t* l, void* data)
 {
     findoverlaps_params_t* p = (findoverlaps_params_t*) data;
-    Map_IterateCellLineDefs(p->map, p->coords, testOverlaps, l);
+    GameMap_IterateCellLineDefs(p->map, p->coords, testOverlaps, l);
     return false; // Continue iteration.
 }
 
@@ -1735,7 +1735,7 @@ void MPE_DetectOverlappingLines(GameMap* map)
             params.coords[VX] = x;
             params.coords[VY] = y;
 
-            Map_IterateCellLineDefs(map, params.coords, findOverlapsForLinedef, &params);
+            GameMap_IterateCellLineDefs(map, params.coords, findOverlapsForLinedef, &params);
         }
 
     if(numOverlaps == 0) return;
@@ -1842,15 +1842,15 @@ boolean MPE_End(void)
      */
     findBounds((vertex_t const**)map->vertexes, map->numVertexes, min, max);
 
-    Map_InitLineDefBlockmap(gamemap, min, max);
+    GameMap_InitLineDefBlockmap(gamemap, min, max);
     for(i = 0; i < gamemap->numLineDefs; ++i)
     {
-        Map_LinkLineDefInBlockmap(gamemap, gamemap->lineDefs + i);
+        GameMap_LinkLineDefInBlockmap(gamemap, gamemap->lineDefs + i);
     }
 
     // Mobj and Polyobj blockmaps are maintained dynamically.
-    Map_InitMobjBlockmap(gamemap, min, max);
-    Map_InitPolyobjBlockmap(gamemap, min, max);
+    GameMap_InitMobjBlockmap(gamemap, min, max);
+    GameMap_InitPolyobjBlockmap(gamemap, min, max);
 
     /**
      * Build a BSP for this map.

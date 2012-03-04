@@ -333,13 +333,13 @@ boolean P_PolyobjRotate(polyobj_t* po, angle_t angle)
 void P_PolyobjUnlink(polyobj_t* po)
 {
     GameMap* map = theMap;
-    Map_UnlinkPolyobjInBlockmap(map, po);
+    GameMap_UnlinkPolyobjInBlockmap(map, po);
 }
 
 void P_PolyobjLink(polyobj_t* po)
 {
     GameMap* map = theMap;
-    Map_LinkPolyobjInBlockmap(map, po);
+    GameMap_LinkPolyobjInBlockmap(map, po);
 }
 
 typedef struct ptrmobjblockingparams_s {

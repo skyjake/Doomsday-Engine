@@ -551,10 +551,10 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             // Init blockmap for searching subsectors.
             V2_Set(min, map->bBox[BOXLEFT],  map->bBox[BOXBOTTOM]);
             V2_Set(max, map->bBox[BOXRIGHT], map->bBox[BOXTOP]);
-            Map_InitSubsectorBlockmap(map, min, max);
+            GameMap_InitSubsectorBlockmap(map, min, max);
             for(i = 0; i < map->numSubsectors; ++i)
             {
-                Map_LinkSubsectorInBlockmap(map, map->subsectors + i);
+                GameMap_LinkSubsectorInBlockmap(map, map->subsectors + i);
             }
 
             map->uri = Uri_NewCopy(dam->uri);

@@ -128,8 +128,7 @@ typedef struct biassurface_s {
 struct blockmap_s; // The Blockmap instance (opaque).
 typedef struct blockmap_s Blockmap;
 
-Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth,
-    uint cellHeight, size_t sizeOfCell);
+Blockmap* Blockmap_New(const pvec2_t min, const pvec2_t max, uint cellWidth, uint cellHeight);
 
 /**
  * @return  "Origin" map space point for the Blockmap (minimal [x,y]).
@@ -214,6 +213,22 @@ boolean Blockmap_CellCoords(Blockmap* blockmap, uint coords[2], float const pos[
  * @return  @c true iff Clamping was necessary.
  */
 boolean Blockmap_CellBlockCoords(Blockmap* blockmap, GridmapBlock* blockCoords, const AABoxf* box);
+
+boolean Blockmap_CreateCellAndLinkObject(Blockmap* blockmap, uint coords[2], void* object);
+
+boolean Blockmap_CreateCellAndLinkObjectXY(Blockmap* blockmap, uint x, uint y, void* object);
+
+boolean Blockmap_UnlinkObjectInCell(Blockmap* blockmap, uint coords[2], void* object);
+
+boolean Blockmap_UnlinkObjectInCellXY(Blockmap* blockmap, uint x, uint y, void* object);
+
+void Blockmap_UnlinkObjectInCellBlock(Blockmap* blockmap, GridmapBlock* blockCoords, void* object);
+
+int Blockmap_IterateCellObjects(Blockmap* blockmap, const uint coords[2],
+    int (*callback) (void* object, void* context), void* context);
+
+int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const GridmapBlock* blockCoords,
+    int (*callback) (void* object, void* context), void* context);
 
 #include "p_polyob.h"
 #include "p_maptypes.h"

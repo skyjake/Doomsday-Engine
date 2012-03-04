@@ -570,13 +570,13 @@ boolean P_UnlinkFromLines(mobj_t* mo)
 void P_LinkToBlockmap(mobj_t* mo)
 {
     GameMap* map = theMap;
-    Map_LinkMobjInBlockmap(map, mo);
+    GameMap_LinkMobjInBlockmap(map, mo);
 }
 
 boolean P_UnlinkFromBlockmap(mobj_t* mo)
 {
     GameMap* map = theMap;
-    return Map_UnlinkMobjInBlockmap(map, mo);
+    return GameMap_UnlinkMobjInBlockmap(map, mo);
 }
 
 /**
@@ -882,7 +882,7 @@ int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* pa
         Blockmap* blockmap = theMap->mobjBlockmap;
         GridmapBlock blockCoords;
         Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return Map_IterateCellBlockMobjs(theMap, &blockCoords, func, paramaters);
+        return GameMap_IterateCellBlockMobjs(theMap, &blockCoords, func, paramaters);
     }
     return false; // Continue iteration.
 }
@@ -899,7 +899,7 @@ int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*,
         Blockmap* blockmap = theMap->polyobjBlockmap;
         GridmapBlock blockCoords;
         Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return Map_IterateCellBlockPolyobjs(theMap, &blockCoords, callback, paramaters);
+        return GameMap_IterateCellBlockPolyobjs(theMap, &blockCoords, callback, paramaters);
     }
     return false; // Continue iteration.
 }
@@ -911,7 +911,7 @@ int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), v
         Blockmap* blockmap = theMap->lineDefBlockmap;
         GridmapBlock blockCoords;
         Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return Map_IterateCellBlockLineDefs(theMap, &blockCoords, callback, paramaters);
+        return GameMap_IterateCellBlockLineDefs(theMap, &blockCoords, callback, paramaters);
     }
     return false; // Continue iteration.
 }
@@ -923,7 +923,7 @@ int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, vo
         Blockmap* blockmap = theMap->polyobjBlockmap;
         GridmapBlock blockCoords;
         Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return Map_IterateCellBlockPolyobjLineDefs(theMap, &blockCoords, callback, paramaters);
+        return GameMap_IterateCellBlockPolyobjLineDefs(theMap, &blockCoords, callback, paramaters);
     }
     return false; // Continue iteration.
 }
@@ -941,7 +941,7 @@ int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
         localValidCount++;
 
         Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return Map_IterateCellBlockSubsectors(theMap, &blockCoords, sector, box,
+        return GameMap_IterateCellBlockSubsectors(theMap, &blockCoords, sector, box,
                                               localValidCount, callback, paramaters);
     }
     return false;
@@ -950,7 +950,7 @@ int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
 /**
  * The validCount flags are used to avoid checking lines that are marked
  * in multiple mapblocks, so increment validCount before the first call
- * to Map_IterateCellLineDefs(), then make one or more calls to it.
+ * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
  */
 int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
@@ -1249,19 +1249,19 @@ static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters
     iteratepolyobjlinedefs_params_t iplParams;
     iplParams.callback = PIT_AddLineDefIntercepts;
     iplParams.paramaters = NULL;
-    return Map_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
+    return GameMap_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
 }
 
 static int collectLineDefIntercepts(uint const block[2], void* paramaters)
 {
     GameMap* map = (GameMap*)paramaters;
-    return Map_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
+    return GameMap_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
 }
 
 static int collectMobjIntercepts(uint const block[2], void* paramaters)
 {
     GameMap* map = (GameMap*)paramaters;
-    return Map_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
+    return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
 /**

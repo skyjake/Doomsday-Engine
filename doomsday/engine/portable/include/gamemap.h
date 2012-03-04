@@ -322,4 +322,73 @@ void GameMap_InitPolyobjs(GameMap* map);
  */
 void GameMap_InitNodePiles(GameMap* map);
 
+/**
+ * Construct an initial (empty) Mobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitMobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+void GameMap_LinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
+boolean GameMap_UnlinkMobjInBlockmap(GameMap* map, struct mobj_s* mo);
+
+int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
+    int (*callback) (struct mobj_s*, void*), void* paramaters);
+int GameMap_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (struct mobj_s*, void*), void* paramaters);
+
+/**
+ * Construct an initial (empty) LineDef Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitLineDefBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef);
+
+int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
+    int (*callback) (linedef_t*, void*), void* paramaters);
+int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
+/**
+ * Construct an initial (empty) Subsector Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitSubsectorBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+void GameMap_LinkSubsectorInBlockmap(GameMap* map, subsector_t* subsector);
+
+int GameMap_IterateCellSubsectors(GameMap* map, const uint coords[2],
+    sector_t* sector, const AABoxf* box, int localValidCount,
+    int (*callback) (subsector_t*, void*), void* paramaters);
+int GameMap_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCoords,
+    sector_t* sector, const AABoxf* box, int localValidCount,
+    int (*callback) (subsector_t*, void*), void* paramaters);
+
+/**
+ * Construct an initial (empty) Polyobj Blockmap for this map.
+ *
+ * @param min  Minimal coordinates for the map.
+ * @param max  Maximal coordinates for the map.
+ */
+void GameMap_InitPolyobjBlockmap(GameMap* map, const_pvec2_t min, const_pvec2_t max);
+
+void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
+void  GameMap_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po);
+
+int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
+    int (*callback) (polyobj_t*, void*), void* paramaters);
+int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (polyobj_t*, void*), void* paramaters);
+
+int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
+    int (*callback) (linedef_t*, void*), void* paramaters);
+int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
 #endif /// LIBDENG_GAMEMAP_H
