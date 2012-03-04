@@ -19,7 +19,9 @@ function genPackageBadgeHTML(json, query) {
     var metaData = '<span class="metalink">';
     if(json.hasOwnProperty('is_unstable'))
     {
+        var isUnstable = json.is_unstable;
         var buildId = '';
+
         if(json.hasOwnProperty('build_uniqueid'))
         {
             buildId += ' build' + json.build_uniqueid;
@@ -27,7 +29,7 @@ function genPackageBadgeHTML(json, query) {
 
         if(isUnstable)
         {
-            metaData += '(Unstable' + buildId + ') ';
+            cleanTitle += ' (Unstable)';
         }
     }
     metaData += /*json.platform_name + */ 'Mac OS X 10.4+</span>';
