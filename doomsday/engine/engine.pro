@@ -116,6 +116,7 @@ DENG_HEADERS = \
     portable/include/abstractresource.h \
     portable/include/audiodriver.h \
     portable/include/bitmapfont.h \
+    portable/include/blockmap.h \
     portable/include/blockmapvisual.h \
     portable/include/blockset.h \
     portable/include/bsp_edge.h \
