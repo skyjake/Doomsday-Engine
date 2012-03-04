@@ -877,10 +877,14 @@ int P_SectorTouchingMobjsIterator(sector_t* sector,
 
 int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* paramaters)
 {
-    GameMap* map = theMap;
-    GridmapBlock blockCoords;
-    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockMobjs(map, &blockCoords, func, paramaters);
+    if(theMap)
+    {
+        Blockmap* blockmap = theMap->mobjBlockmap;
+        GridmapBlock blockCoords;
+        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+        return Map_IterateCellBlockMobjs(theMap, &blockCoords, func, paramaters);
+    }
+    return false; // Continue iteration.
 }
 
 /**
@@ -890,46 +894,63 @@ int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* pa
  */
 int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* paramaters)
 {
-    GameMap* map = theMap;
-    GridmapBlock blockCoords;
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockPolyobjs(map, &blockCoords, callback, paramaters);
+    if(theMap)
+    {
+        Blockmap* blockmap = theMap->polyobjBlockmap;
+        GridmapBlock blockCoords;
+        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+        return Map_IterateCellBlockPolyobjs(theMap, &blockCoords, callback, paramaters);
+    }
+    return false; // Continue iteration.
 }
 
 int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {
-    GameMap* map = theMap;
-    GridmapBlock blockCoords;
-    Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockLineDefs(map, &blockCoords, callback, paramaters);
+    if(theMap)
+    {
+        Blockmap* blockmap = theMap->lineDefBlockmap;
+        GridmapBlock blockCoords;
+        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+        return Map_IterateCellBlockLineDefs(theMap, &blockCoords, callback, paramaters);
+    }
+    return false; // Continue iteration.
+}
+
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
+{
+    if(theMap)
+    {
+        Blockmap* blockmap = theMap->polyobjBlockmap;
+        GridmapBlock blockCoords;
+        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+        return Map_IterateCellBlockPolyobjLineDefs(theMap, &blockCoords, callback, paramaters);
+    }
+    return false; // Continue iteration.
 }
 
 int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
     int (*callback) (subsector_t*, void*), void* paramaters)
 {
-    static int localValidCount = 0;
-    GameMap* map = theMap;
-    GridmapBlock blockCoords;
-    // This is only used here.
-    localValidCount++;
+    if(theMap)
+    {
+        static int localValidCount = 0;
+        Blockmap* blockmap = theMap->subsectorBlockmap;
+        GridmapBlock blockCoords;
 
-    Blockmap_CellBlockCoords(map->subsectorBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockSubsectors(map, &blockCoords, sector, box,
-                                          localValidCount, callback, paramaters);
-}
+        // This is only used here.
+        localValidCount++;
 
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
-{
-    GameMap* map = theMap;
-    GridmapBlock blockCoords;
-    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
-    return Map_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, paramaters);
+        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
+        return Map_IterateCellBlockSubsectors(theMap, &blockCoords, sector, box,
+                                              localValidCount, callback, paramaters);
+    }
+    return false;
 }
 
 /**
  * The validCount flags are used to avoid checking lines that are marked
  * in multiple mapblocks, so increment validCount before the first call
- * to Map_IterateCellLineDefs, then make one or more calls to it.
+ * to Map_IterateCellLineDefs(), then make one or more calls to it.
  */
 int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
 {

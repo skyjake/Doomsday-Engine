@@ -381,9 +381,7 @@ int PTR_checkMobjBlocking(mobj_t* mo, void* data)
 
 static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po)
 {
-    GameMap* map = theMap;
     ptrmobjblockingparams_t params;
-    GridmapBlock blockCoords;
     AABoxf aaBox;
 
     params.isBlocked = false;
@@ -396,8 +394,7 @@ static boolean checkMobjBlocking(linedef_t* line, polyobj_t* po)
     aaBox.maxY = line->aaBox.maxY + DDMOBJ_RADIUS_MAX;
 
     validCount++;
-    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, &aaBox);
-    Map_IterateCellBlockMobjs(map, &blockCoords, PTR_checkMobjBlocking, &params);
+    P_MobjsBoxIterator(&aaBox, PTR_checkMobjBlocking, &params);
 
     return params.isBlocked;
 }

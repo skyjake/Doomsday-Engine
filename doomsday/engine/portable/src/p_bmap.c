@@ -527,63 +527,118 @@ void Map_UnlinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
     Gridmap_BlockIterate2(blockmap->gridmap, &blockCoords, unlinkObjectInCell, (void*) po);
 }
 
-typedef struct bmapiterparams_s {
-    int localValidCount;
-    int (*func) (linedef_t*, void *);
-    void* param;
-} bmapiterparams_t;
-
-static int blockmapCellLinesIterator(void* ptr, void* context)
+int BlockmapCell_IterateObjects(BlockmapCell* cell,
+    int (*callback) (void* object, void* context), void* context)
 {
-    BlockmapCell* cell = (BlockmapCell*) ptr;
-    bmapiterparams_t* args = (bmapiterparams_t*) context;
-    BlockmapRingNode* next, *link = cell->ringNodes;
-    int result = false; // Continue iteration.
+    BlockmapRingNode* next, *link;
+    assert(cell);
+
+    link = cell->ringNodes;
     while(link)
     {
         next = link->next;
 
         if(link->object)
         {
-            linedef_t* lineDef = (linedef_t*)link->object;
-            if(lineDef->validCount != args->localValidCount)
-            {
-                lineDef->validCount = args->localValidCount;
-                result = args->func(lineDef, args->param);
-                if(result) return result; // Stop iteration.
-            }
+            int result = callback(link->object, context);
+            if(result) return result; // Stop iteration.
         }
 
         link = next;
     }
-    return result;
+    return false; // Continue iteration.
+}
+
+int Blockmap_IterateCellObjects(Blockmap* blockmap, const uint coords[2],
+    int (*callback) (void* object, void* context), void* context)
+{
+    BlockmapCell* cell;
+    assert(blockmap);
+
+    cell = Gridmap_Cell(blockmap->gridmap, coords, false);
+    if(cell)
+    {
+        return BlockmapCell_IterateObjects(cell, callback, context);
+    }
+    return false; // Continue iteration.
+}
+
+typedef struct {
+    int (*callback)(void* userData, void* context);
+    void* context;
+} cellobjectiterator_params_t;
+
+static int cellObjectIterator(void* userData, void* context)
+{
+    BlockmapCell* cell = (BlockmapCell*)userData;
+    cellobjectiterator_params_t* args = (cellobjectiterator_params_t*)context;
+    assert(args);
+
+    return BlockmapCell_IterateObjects(cell, args->callback, args->context);
+}
+
+int Blockmap_IterateCellBlockObjects(Blockmap* blockmap, const GridmapBlock* blockCoords,
+    int (*callback) (void* object, void* context), void* context)
+{
+    cellobjectiterator_params_t args;
+    assert(blockmap);
+
+    args.callback = callback;
+    args.context = context;
+
+    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, cellObjectIterator, (void*)&args);
+}
+
+typedef struct bmapiterparams_s {
+    int localValidCount;
+    int (*func) (linedef_t*, void *);
+    void* param;
+} bmapiterparams_t;
+
+static int blockmapCellLinesIterator(void* object, void* context)
+{
+    linedef_t* lineDef = (linedef_t*)object;
+    bmapiterparams_t* args = (bmapiterparams_t*) context;
+    if(lineDef->validCount != args->localValidCount)
+    {
+        int result;
+
+        // This linedef has now been processed for the current iteration.
+        lineDef->validCount = args->localValidCount;
+
+        // Action the callback.
+        result = args->func(lineDef, args->param);
+        if(result) return result; // Stop iteration.
+    }
+    return false; // Continue iteration.
 }
 
 int Map_IterateCellLineDefs(GameMap* map, const uint coords[2],
-    int (*func) (linedef_t*, void*), void* data)
+    int (*callback) (linedef_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->lineDefBlockmap;
-    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
-    if(cell)
-    {
-        bmapiterparams_t args;
-        args.localValidCount = validCount;
-        args.func = func;
-        args.param = data;
-        return blockmapCellLinesIterator(cell, &args);
-    }
-    return false;
+    bmapiterparams_t args;
+    assert(map);
+
+    args.localValidCount = validCount;
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellObjects(map->lineDefBlockmap, coords,
+                                       blockmapCellLinesIterator, (void*)&args);
 }
 
 int Map_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*func) (linedef_t*, void*), void* data)
+    int (*callback) (linedef_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->lineDefBlockmap;
     bmapiterparams_t args;
+    assert(map);
+
     args.localValidCount = validCount;
-    args.func = func;
-    args.param = data;
-    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellLinesIterator, (void*) &args);
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellBlockObjects(map->lineDefBlockmap, blockCoords,
+                                            blockmapCellLinesIterator, (void*) &args);
 }
 
 typedef struct bmappoiterparams_s {
@@ -592,57 +647,50 @@ typedef struct bmappoiterparams_s {
     void* param;
 } bmappoiterparams_t;
 
-static int blockmapCellPolyobjsIterator(void* ptr, void* context)
+static int blockmapCellPolyobjsIterator(void* object, void* context)
 {
-    BlockmapCell* cell = (BlockmapCell*) ptr;
+    polyobj_t* polyobj = (polyobj_t*)object;
     bmappoiterparams_t* args = (bmappoiterparams_t*) context;
-    BlockmapRingNode* next, *link = cell->ringNodes;
-    int result = false; // Continue iteration.
-    while(link)
+    if(polyobj->validCount != args->localValidCount)
     {
-        next = link->next;
+        int result;
 
-        if(link->object)
-        {
-            polyobj_t* polyobj = (polyobj_t*)link->object;
-            if(polyobj->validCount != args->localValidCount)
-            {
-                polyobj->validCount = args->localValidCount;
-                result = args->func(polyobj, args->param);
-                if(result) return result; // Stop iteration.
-            }
-        }
+        // This polyobj has now been processed for the current iteration.
+        polyobj->validCount = args->localValidCount;
 
-        link = next;
+        // Action the callback.
+        result = args->func(polyobj, args->param);
+        if(result) return result; // Stop iteration.
     }
-    return result;
+    return false; // Continue iteration.
 }
 
 int Map_IterateCellPolyobjs(GameMap* map, const uint coords[2],
-    int (*func) (polyobj_t*, void*), void* data)
+    int (*callback) (polyobj_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->polyobjBlockmap;
-    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
-    if(cell)
-    {
-        bmappoiterparams_t  args;
-        args.localValidCount = validCount;
-        args.func = func;
-        args.param = data;
-        return blockmapCellPolyobjsIterator(cell, (void*) &args);
-    }
-    return false;
+    bmappoiterparams_t args;
+    assert(map);
+
+    args.localValidCount = validCount;
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellObjects(map->polyobjBlockmap, coords,
+                                       blockmapCellPolyobjsIterator, (void*)&args);
 }
 
 int Map_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*func) (polyobj_t*, void*), void* data)
+    int (*callback) (polyobj_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->polyobjBlockmap;
     bmappoiterparams_t args;
+    assert(map);
+
     args.localValidCount = validCount;
-    args.func = func;
-    args.param = data;
-    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellPolyobjsIterator, (void*) &args);
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
+                                            blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 typedef struct poiterparams_s {
@@ -650,47 +698,48 @@ typedef struct poiterparams_s {
     void* param;
 } poiterparams_t;
 
-int PTR_PolyobjLines(polyobj_t* po, void* data)
+int PTR_PolyobjLines(void* object, void* context)
 {
-    poiterparams_t* args = (poiterparams_t*) data;
+    polyobj_t* po = (polyobj_t*)object;
+    poiterparams_t* args = (poiterparams_t*) context;
+
     return Polyobj_LineIterator(po, args->func, args->param);
 }
 
 int Map_IterateCellPolyobjLineDefsIterator(GameMap* map, const uint coords[2],
-    int (*func) (linedef_t*, void*), void* data)
+    int (*callback) (linedef_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->polyobjBlockmap;
-    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
-    if(cell)
-    {
-        bmappoiterparams_t args;
-        poiterparams_t poargs;
-        poargs.func = func;
-        poargs.param = data;
+    bmappoiterparams_t args;
+    poiterparams_t poargs;
+    assert(map);
 
-        args.localValidCount = validCount;
-        args.func = PTR_PolyobjLines;
-        args.param = &poargs;
-        return blockmapCellPolyobjsIterator(cell, &args);
-    }
-    return false;
+    poargs.func = callback;
+    poargs.param = context;
+
+    args.localValidCount = validCount;
+    args.func = PTR_PolyobjLines;
+    args.param = &poargs;
+
+    return Blockmap_IterateCellObjects(map->polyobjBlockmap, coords,
+                                       blockmapCellPolyobjsIterator, &args);
 }
 
 int Map_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*callback) (linedef_t*, void*), void* paramaters)
+    int (*callback) (linedef_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->polyobjBlockmap;
-    bmappoiterparams_t bpiParams;
-    poiterparams_t piParams;
+    bmappoiterparams_t args;
+    poiterparams_t poargs;
+    assert(map);
 
-    piParams.func = callback;
-    piParams.param = paramaters;
+    poargs.func = callback;
+    poargs.param = context;
 
-    bpiParams.localValidCount = validCount;
-    bpiParams.func = PTR_PolyobjLines;
-    bpiParams.param = &piParams;
+    args.localValidCount = validCount;
+    args.func = PTR_PolyobjLines;
+    args.param = &poargs;
 
-    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellPolyobjsIterator, (void*) &bpiParams);
+    return Blockmap_IterateCellBlockObjects(map->polyobjBlockmap, blockCoords,
+                                            blockmapCellPolyobjsIterator, (void*) &args);
 }
 
 typedef struct bmapmoiterparams_s {
@@ -699,57 +748,50 @@ typedef struct bmapmoiterparams_s {
     void* param;
 } bmapmoiterparams_t;
 
-static int blockmapCellMobjsIterator(void* ptr, void* paramaters)
+static int blockmapCellMobjsIterator(void* object, void* context)
 {
-    BlockmapCell* cell = (BlockmapCell*) ptr;
-    bmapmoiterparams_t* args = (bmapmoiterparams_t*) paramaters;
-    BlockmapRingNode* next, *link = cell->ringNodes;
-    int result = false; // Continue iteration.
-    while(link)
+    mobj_t* mobj = (mobj_t*)object;
+    bmapmoiterparams_t* args = (bmapmoiterparams_t*) context;
+    if(mobj->validCount != args->localValidCount)
     {
-        next = link->next;
+        int result;
 
-        if(link->object)
-        {
-            mobj_t* mobj = (mobj_t*)link->object;
-            if(mobj->validCount != args->localValidCount)
-            {
-                mobj->validCount = args->localValidCount;
-                result = args->func(mobj, args->param);
-                if(result) return result; // Stop iteration.
-            }
-        }
+        // This mobj has now been processed for the current iteration.
+        mobj->validCount = args->localValidCount;
 
-        link = next;
+        // Action the callback.
+        result = args->func(mobj, args->param);
+        if(result) return result; // Stop iteration.
     }
-    return result;
+    return false; // Continue iteration.
 }
 
 int Map_IterateCellMobjs(GameMap* map, const uint coords[2],
-    int (*func) (mobj_t*, void*), void* data)
+    int (*callback) (mobj_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->mobjBlockmap;
-    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
-    if(cell)
-    {
-        bmapmoiterparams_t  args;
-        args.localValidCount = validCount;
-        args.func = func;
-        args.param = data;
-        return blockmapCellMobjsIterator(cell, (void*) &args);
-    }
-    return false;
+    bmapmoiterparams_t args;
+    assert(map);
+
+    args.localValidCount = validCount;
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellObjects(map->mobjBlockmap, coords,
+                                       blockmapCellMobjsIterator, (void*)&args);
 }
 
 int Map_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*func) (mobj_t*, void*), void* data)
+    int (*callback) (mobj_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->mobjBlockmap;
     bmapmoiterparams_t args;
+    assert(map);
+
     args.localValidCount = validCount;
-    args.func = func;
-    args.param = data;
-    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellMobjsIterator, (void*) &args);
+    args.func = callback;
+    args.param = context;
+
+    return Blockmap_IterateCellBlockObjects(map->mobjBlockmap, blockCoords,
+                                            blockmapCellMobjsIterator, (void*) &args);
 }
 
 typedef struct subseciterparams_s {
@@ -760,81 +802,71 @@ typedef struct subseciterparams_s {
     void* param;
 } bmapsubsectoriterateparams_t;
 
-static int blockmapCellSubsectorsIterator(void* ptr, void* context)
+static int blockmapCellSubsectorsIterator(void* object, void* context)
 {
-    BlockmapCell* cell = (BlockmapCell*) ptr;
+    subsector_t* ssec = (subsector_t*)object;
     bmapsubsectoriterateparams_t* args = (bmapsubsectoriterateparams_t*) context;
-    BlockmapRingNode* next, *link = cell->ringNodes;
-    int result = false; // Continue iteration.
-    while(link)
+    if(ssec->validCount != args->localValidCount)
     {
-        next = link->next;
+        boolean ok = true;
 
-        if(link->object)
+        // This subsector has now been processed for the current iteration.
+        ssec->validCount = args->localValidCount;
+
+        // Check the sector restriction.
+        if(args->sector && ssec->sector != args->sector)
+            ok = false;
+
+        // Check the bounds.
+        if(args->box &&
+           (ssec->aaBox.maxX < args->box->minX ||
+            ssec->aaBox.minX > args->box->maxX ||
+            ssec->aaBox.minY > args->box->maxY ||
+            ssec->aaBox.maxY < args->box->minY))
+            ok = false;
+
+        if(ok)
         {
-            subsector_t* ssec = (subsector_t*)link->object;
-            if(ssec->validCount != args->localValidCount)
-            {
-                boolean ok = true;
-
-                ssec->validCount = args->localValidCount;
-
-                // Check the sector restriction.
-                if(args->sector && ssec->sector != args->sector)
-                    ok = false;
-
-                // Check the bounds.
-                if(args->box &&
-                   (ssec->aaBox.maxX < args->box->minX ||
-                    ssec->aaBox.minX > args->box->maxX ||
-                    ssec->aaBox.minY > args->box->maxY ||
-                    ssec->aaBox.maxY < args->box->minY))
-                    ok = false;
-
-                if(ok)
-                {
-                    result = args->func(ssec, args->param);
-                    if(result) return result; // Stop iteration.
-                }
-            }
+            // Action the callback.
+            int result = args->func(ssec, args->param);
+            if(result) return result; // Stop iteration.
         }
-
-        link = next;
     }
-    return result;
+    return false; // Continue iteration.
 }
 
 int Map_IterateCellSubsectors(GameMap* map, const uint coords[2],
     sector_t* sector, const AABoxf* box, int localValidCount,
-    int (*func) (subsector_t*, void*), void* paramaters)
+    int (*callback) (subsector_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->subsectorBlockmap;
-    BlockmapCell* cell = Gridmap_Cell(blockmap->gridmap, coords, false);
-    if(cell)
-    {
-        bmapsubsectoriterateparams_t args;
-        args.localValidCount = localValidCount;
-        args.func = func;
-        args.param = paramaters;
-        args.sector = sector;
-        args.box = box;
-        return blockmapCellSubsectorsIterator(cell, (void*) &args);
-    }
-    return false;
+    bmapsubsectoriterateparams_t args;
+    assert(map);
+
+    args.localValidCount = localValidCount;
+    args.func = callback;
+    args.param = context;
+    args.sector = sector;
+    args.box = box;
+
+    return Blockmap_IterateCellObjects(map->subsectorBlockmap, coords,
+                                       blockmapCellSubsectorsIterator, (void*)&args);
 }
 
 int Map_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCoords,
     sector_t* sector,  const AABoxf* box, int localValidCount,
-    int (*func) (subsector_t*, void*), void* data)
+    int (*callback) (subsector_t*, void*), void* context)
 {
-    Blockmap* blockmap = map->subsectorBlockmap;
     bmapsubsectoriterateparams_t args;
+    assert(map);
+
     args.localValidCount = localValidCount;
-    args.func = func;
-    args.param = data;
+    args.func = callback;
+    args.param = context;
     args.sector = sector;
     args.box = box;
-    return Gridmap_BlockIterate2(blockmap->gridmap, blockCoords, blockmapCellSubsectorsIterator, (void*) &args);
+
+    return Blockmap_IterateCellBlockObjects(map->subsectorBlockmap, blockCoords,
+                                            blockmapCellSubsectorsIterator, (void*) &args);
 }
 
 static int rendMobj(mobj_t* mo, void* paramaters)
@@ -938,7 +970,7 @@ int rendCellLineDefs(void* cellPtr, void* paramaters)
         biParams.param = paramaters;
 
         glBegin(GL_LINES);
-            blockmapCellLinesIterator(cell, (void*)&biParams);
+            BlockmapCell_IterateObjects(cell, blockmapCellLinesIterator, (void*)&biParams);
         glEnd();
     }
     return false; // Continue iteration.
@@ -960,7 +992,7 @@ int rendCellPolyobjs(void* cellPtr, void* paramaters)
         bpiParams.param = &piParams;
 
         glBegin(GL_LINES);
-            blockmapCellPolyobjsIterator(cell, (void*)&bpiParams);
+            BlockmapCell_IterateObjects(cell, blockmapCellPolyobjsIterator, (void*)&bpiParams);
         glEnd();
     }
     return false; // Continue iteration.
@@ -977,7 +1009,7 @@ int rendCellMobjs(void* cellPtr, void* paramaters)
         bmiParams.param = paramaters;
 
         glBegin(GL_QUADS);
-            blockmapCellMobjsIterator(cell, (void*)&bmiParams);
+            BlockmapCell_IterateObjects(cell, blockmapCellMobjsIterator, (void*)&bmiParams);
         glEnd();
     }
     return false; // Continue iteration.
@@ -995,7 +1027,7 @@ int rendCellSubsectors(void* cellPtr, void* paramaters)
         bsiParams.sector = NULL;
         bsiParams.box = NULL;
 
-        blockmapCellSubsectorsIterator(cell, (void*)&bsiParams);
+        BlockmapCell_IterateObjects(cell, blockmapCellSubsectorsIterator, (void*)&bsiParams);
     }
     return false; // Continue iteration.
 }
@@ -1131,75 +1163,53 @@ static void drawBlockmapInfo(const Point2Raw* _origin, Blockmap* blockmap)
     glDisable(GL_TEXTURE_2D);
 }
 
-static int countLineDefLink(linedef_t* lineDef, void* paramaters)
+static int countCellObject(void* object, void* paramaters)
 {
     uint* count = (uint*)paramaters;
     *count += 1;
     return false; // Continue iteration.
 }
 
-static int countMobjLink(mobj_t* mobj, void* paramaters)
+static void drawLineDefCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
 {
-    uint* count = (uint*)paramaters;
-    *count += 1;
-    return false; // Continue iteration.
-}
-
-static int countPolyobjLink(polyobj_t* polyobj, void* paramaters)
-{
-    uint* count = (uint*)paramaters;
-    *count += 1;
-    return false; // Continue iteration.
-}
-
-static int countSubsectorLink(subsector_t* subsector, void* paramaters)
-{
-    uint* count = (uint*)paramaters;
-    *count += 1;
-    return false; // Continue iteration.
-}
-
-static void drawLineDefCellInfoBox(const Point2Raw* origin, uint coords[2])
-{
-    GameMap* map = theMap;
     uint count = 0;
     char info[160];
-    validCount++;
-    Map_IterateCellLineDefs(map, coords, countLineDefLink, (void*)&count);
+
+    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
+
     dd_snprintf(info, 160, "Cell:[%u,%u] LineDefs:#%u", coords[VX], coords[VY], count);
     drawCellInfo(origin, info);
 }
 
-static void drawMobjCellInfoBox(const Point2Raw* origin, uint coords[2])
+static void drawMobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = theMap;
     uint count = 0;
     char info[160];
-    validCount++;
-    Map_IterateCellMobjs(map, coords, countMobjLink, (void*)&count);
+
+    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
+
     dd_snprintf(info, 160, "Cell:[%u,%u] Mobjs:#%u", coords[VX], coords[VY], count);
     drawCellInfo(origin, info);
 }
 
-static void drawPolyobjCellInfoBox(const Point2Raw* origin, uint coords[2])
+static void drawPolyobjCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = theMap;
     uint count = 0;
     char info[160];
-    validCount++;
-    Map_IterateCellPolyobjs(map, coords, countPolyobjLink, (void*)&count);
+
+    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
+
     dd_snprintf(info, 160, "Cell:[%u,%u] Polyobjs:#%u", coords[VX], coords[VY], count);
     drawCellInfo(origin, info);
 }
 
-static void drawSubsectorCellInfoBox(const Point2Raw* origin, uint coords[2])
+static void drawSubsectorCellInfoBox(Blockmap* blockmap, const Point2Raw* origin, uint coords[2])
 {
-    GameMap* map = theMap;
     uint count = 0;
     char info[160];
-    validCount++;
-    Map_IterateCellSubsectors(map, coords, NULL/*no sector requirement*/,
-        NULL/*no subregion requirement*/, validCount, countSubsectorLink, (void*)&count);
+
+    Blockmap_IterateCellObjects(blockmap, coords, countCellObject, (void*)&count);
+
     dd_snprintf(info, 160, "Cell:[%u,%u] Subsectors:#%u", coords[VX], coords[VY], count);
     drawCellInfo(origin, info);
 }
@@ -1388,7 +1398,7 @@ static void rendBlockmap(Blockmap* blockmap, mobj_t* followMobj,
 void Rend_BlockmapDebug(void)
 {
     int (*cellDrawer) (void* cellPtr, void* paramaters);
-    void (*cellInfoDrawer) (const Point2Raw* origin, uint coords[2]);
+    void (*cellInfoDrawer) (Blockmap* blockmap, const Point2Raw* origin, uint coords[2]);
     mobj_t* followMobj = NULL;
     Blockmap* blockmap;
     Point2Raw origin;
@@ -1478,7 +1488,7 @@ void Rend_BlockmapDebug(void)
         {
             origin.x = theWindow->geometry.size.width / 2;
             origin.y = 30;
-            cellInfoDrawer(&origin, coords);
+            cellInfoDrawer(blockmap, &origin, coords);
         }
     }
 

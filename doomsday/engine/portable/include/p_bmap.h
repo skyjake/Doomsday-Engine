@@ -111,7 +111,7 @@ int Map_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockC
 
 /**
  * Render the Blockmap debugging visual.
- * \todo Split this out into its own module.
+ * @todo Split this out into its own module.
  */
 void Rend_BlockmapDebug(void);
 
