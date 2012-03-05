@@ -61,7 +61,7 @@ deng_snowberry {
         message(Installing the launch-doomsday script.)
     }
 
-    INSTALLS += sb conf plugins
+    INSTALLS += conf plugins sb
 }
 
 deng_aptunstable {
