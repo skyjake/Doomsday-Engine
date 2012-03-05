@@ -128,41 +128,64 @@ boolean P_IsPointXYInSector(float x, float y, const sector_t* sector);
  */
 boolean P_IsPointXYInSubsector(float x, float y, const subsector_t* subsector);
 
-void            P_MobjLink(mobj_t* mo, byte flags);
-int             P_MobjUnlink(mobj_t* mo);
+void P_MobjLink(mobj_t* mo, byte flags);
+int P_MobjUnlink(mobj_t* mo);
 
-int PIT_AddLineDefIntercepts(linedef_t* ld, void* paramaters);
-int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters);
+/**
+ * @important Caller must ensure that the mobj is currently unlinked.
+ */
+void P_LinkMobjToLineDefs(mobj_t* mo);
 
-int             P_MobjLinesIterator(mobj_t *mo,
-                                    int (*func) (linedef_t *, void *),
-                                    void *);
-int             P_MobjSectorsIterator(mobj_t *mo,
-                                      int (*func) (sector_t *, void *),
-                                      void *data);
-int             P_LineMobjsIterator(linedef_t *line,
-                                    int (*func) (mobj_t *, void *),
-                                    void *data);
-int             P_SectorTouchingMobjsIterator(sector_t *sector,
-                                              int (*func) (mobj_t *,
-                                                               void *),
-                                              void *data);
+/**
+ * Unlinks the mobj from all the lines it's been linked to. Can be called
+ * without checking that the list does indeed contain lines.
+ */
+boolean P_UnlinkMobjFromLineDefs(mobj_t* mo);
 
-int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* paramaters);
+/**
+ * @important The mobj must be currently unlinked.
+ */
+void P_LinkMobjInBlockmap(mobj_t* mo);
 
-int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+boolean P_UnlinkMobjFromBlockmap(mobj_t* mo);
 
-int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* paramaters);
+int PIT_AddLineDefIntercepts(linedef_t* ld, void* parameters);
+int PIT_AddMobjIntercepts(mobj_t* mobj, void* parameters);
 
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+int P_MobjLinesIterator(mobj_t* mo, int (*func) (linedef_t*, void*), void* parameters);
 
-// LineDefs and Polyobj in LineDefs (note Polyobj LineDefs are iterated first).
-int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters);
+int P_MobjSectorsIterator(mobj_t* mo, int (*func) (sector_t*, void*), void* parameters);
 
-int P_SubsectorsBoxIterator(const AABoxf* box, sector_t *sector, int (*callback) (subsector_t*, void*), void* paramaters);
+int P_LineMobjsIterator(linedef_t* lineDef, int (*func) (mobj_t*, void*), void* parameters);
+
+int P_SectorTouchingMobjsIterator(sector_t* sector, int (*func) (mobj_t*, void*), void *parameters);
+
+int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* parameters);
+
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+
+/**
+ * The validCount flags are used to avoid checking polys that are marked in
+ * multiple mapblocks, so increment validCount before the first call, then
+ * make one or more calls to it.
+ */
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (polyobj_t*, void*), void* parameters);
+
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+
+/**
+ * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+ *
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
+ * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+ */
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters);
+
+int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector, int (*callback) (subsector_t*, void*), void* parameters);
 
 int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback);
-int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* paramaters);
+int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback, void* parameters);
 
 /**
  * Same as P_PathTraverse except 'from' and 'to' arguments are specified

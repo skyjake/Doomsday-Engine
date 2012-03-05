@@ -51,17 +51,12 @@
 #define DO_LINKS(it, end)   { \
     for(it = linkstore; it < end; it++) \
     { \
-        result = func(*it, data); \
+        result = callback(*it, parameters); \
         if(result) break; \
     } \
 }
 
 // TYPES -------------------------------------------------------------------
-
-typedef struct {
-    mobj_t*         mo;
-    AABoxf          box;
-} linelinker_data_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -552,7 +547,7 @@ boolean P_IsPointXYInSector(float x, float y, const sector_t* sector)
  * 2) If there is a node following us, set its sprev pointer to point
  *    to the pointer that points back to it (our sprev, just modified).
  */
-boolean P_UnlinkFromSector(mobj_t* mo)
+boolean P_UnlinkMobjFromSector(mobj_t* mo)
 {
     if(!IS_SECTOR_LINKED(mo))
         return false;
@@ -568,53 +563,6 @@ boolean P_UnlinkFromSector(mobj_t* mo)
 }
 
 /**
- * Unlinks the mobj from all the lines it's been linked to. Can be called
- * without checking that the list does indeed contain lines.
- */
-boolean P_UnlinkFromLines(mobj_t* mo)
-{
-    linknode_t*         tn = mobjNodes->nodes;
-    nodeindex_t         nix;
-
-    // Try unlinking from lines.
-    if(!mo->lineRoot)
-        return false; // A zero index means it's not linked.
-
-    // Unlink from each line.
-    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-        nix = tn[nix].next)
-    {
-        // Data is the linenode index that corresponds this mobj.
-        NP_Unlink(lineNodes, tn[nix].data);
-        // We don't need these nodes any more, mark them as unused.
-        // Dismissing is a macro.
-        NP_Dismiss(lineNodes, tn[nix].data);
-        NP_Dismiss(mobjNodes, nix);
-    }
-
-    // The mobj no longer has a line ring.
-    NP_Dismiss(mobjNodes, mo->lineRoot);
-    mo->lineRoot = 0;
-
-    return true;
-}
-
-/**
- * \pre The mobj must be currently unlinked.
- */
-void P_LinkToBlockmap(mobj_t* mo)
-{
-    GameMap* map = theMap;
-    GameMap_LinkMobjInBlockmap(map, mo);
-}
-
-boolean P_UnlinkFromBlockmap(mobj_t* mo)
-{
-    GameMap* map = theMap;
-    return GameMap_UnlinkMobjInBlockmap(map, mo);
-}
-
-/**
  * Unlinks a mobj from everything it has been linked to.
  *
  * @param mo            Ptr to the mobj to be unlinked.
@@ -625,75 +573,131 @@ int P_MobjUnlink(mobj_t* mo)
 {
     int links = 0;
 
-    if(P_UnlinkFromSector(mo))
+    if(P_UnlinkMobjFromSector(mo))
         links |= DDLINK_SECTOR;
-    if(P_UnlinkFromBlockmap(mo))
+    if(P_UnlinkMobjFromBlockmap(mo))
         links |= DDLINK_BLOCKMAP;
-    if(!P_UnlinkFromLines(mo))
+    if(!P_UnlinkMobjFromLineDefs(mo))
         links |= DDLINK_NOLINE;
 
     return links;
 }
 
 /**
- * The given line might cross the mobj. If necessary, link the mobj into
- * the line's mobj link ring.
+ * Unlinks the mobj from all the lines it's been linked to. Can be called
+ * without checking that the list does indeed contain lines.
  */
-int PIT_LinkToLines(linedef_t* ld, void* parm)
+boolean GameMap_UnlinkMobjFromLineDefs(GameMap* map, mobj_t* mo)
 {
-    linelinker_data_t*  data = parm;
-    nodeindex_t         nix;
+    linknode_t* tn;
+    nodeindex_t nix;
+    assert(map);
 
-    if(data->box.minX >= ld->aaBox.maxX ||
-       data->box.minY >= ld->aaBox.maxY ||
-       data->box.maxX <= ld->aaBox.minX ||
-       data->box.maxY <= ld->aaBox.minY)
-        // Bounding boxes do not overlap.
-        return false;
+    // Try unlinking from lines.
+    if(!mo || !mo->lineRoot)
+        return false; // A zero index means it's not linked.
 
-    if(P_BoxOnLineSide(&data->box, ld) != -1)
-        // Line does not cross the mobj's bounding box.
-        return false;
+    // Unlink from each line.
+    tn = map->mobjNodes.nodes;
+    for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
+        nix = tn[nix].next)
+    {
+        // Data is the linenode index that corresponds this mobj.
+        NP_Unlink((&map->lineNodes), tn[nix].data);
+        // We don't need these nodes any more, mark them as unused.
+        // Dismissing is a macro.
+        NP_Dismiss((&map->lineNodes), tn[nix].data);
+        NP_Dismiss((&map->mobjNodes), nix);
+    }
 
-    // One sided lines will not be linked to because a mobj
-    // can't legally cross one.
-    if(!ld->L_frontside || !ld->L_backside)
-        return false;
+    // The mobj no longer has a line ring.
+    NP_Dismiss((&map->mobjNodes), mo->lineRoot);
+    mo->lineRoot = 0;
 
-    // No redundant nodes will be creates since this routine is
-    // called only once for each line.
+    return true;
+}
+
+/**
+ * @important Caller must ensure a mobj is linked only once to any given linedef.
+ *
+ * @param map  GameMap instance.
+ * @param mo  Mobj to be linked.
+ * @param lineDef  LineDef to link the mobj to.
+ */
+void GameMap_LinkMobjToLineDef(GameMap* map, mobj_t* mo, linedef_t* lineDef)
+{
+    nodeindex_t nodeIndex;
+    int lineDefIndex;
+    assert(map);
+
+    if(!mo) return;
+
+    lineDefIndex = GameMap_LineDefIndex(map, lineDef);
+    if(lineDefIndex < 0) return;
 
     // Add a node to the mobj's ring.
-    NP_Link(mobjNodes, nix = NP_New(mobjNodes, ld), data->mo->lineRoot);
+    nodeIndex = NP_New(&map->mobjNodes, lineDef);
+    NP_Link(&map->mobjNodes, nodeIndex, mo->lineRoot);
 
     // Add a node to the line's ring. Also store the linenode's index
     // into the mobjring's node, so unlinking is easy.
-    NP_Link(lineNodes, mobjNodes->nodes[nix].data =
-            NP_New(lineNodes, data->mo), linelinks[GET_LINE_IDX(ld)]);
+    nodeIndex = map->mobjNodes.nodes[nodeIndex].data = NP_New(&map->lineNodes, mo);
+    NP_Link(&map->lineNodes, nodeIndex, map->lineLinks[lineDefIndex]);
+}
 
+typedef struct {
+    GameMap* map;
+    mobj_t* mo;
+    AABoxf box;
+} linelinker_data_t;
+
+/**
+ * The given line might cross the mobj. If necessary, link the mobj into
+ * the line's mobj link ring.
+ */
+int PIT_LinkToLines(linedef_t* ld, void* parameters)
+{
+    linelinker_data_t* p = parameters;
+    assert(p);
+
+    // Do the bounding boxes intercept?
+    if(p->box.minX >= ld->aaBox.maxX ||
+       p->box.minY >= ld->aaBox.maxY ||
+       p->box.maxX <= ld->aaBox.minX ||
+       p->box.maxY <= ld->aaBox.minY) return false;
+
+    // Line does not cross the mobj's bounding box?
+    if(P_BoxOnLineSide(&p->box, ld) != -1) return false;
+
+    // One sided lines will not be linked to because a mobj can't legally cross one.
+    if(!ld->L_frontside || !ld->L_backside) return false;
+
+    GameMap_LinkMobjToLineDef(p->map, p->mo, ld);
     return false;
 }
 
 /**
- * \pre The mobj must be currently unlinked.
+ * @important Caller must ensure that the mobj is currently unlinked.
  */
-void P_LinkToLines(mobj_t* mo)
+void GameMap_LinkMobjToLineDefs(GameMap* map, mobj_t* mo)
 {
-    linelinker_data_t data;
+    linelinker_data_t p;
     vec2_t point;
+    assert(map);
 
     // Get a new root node.
-    mo->lineRoot = NP_New(mobjNodes, NP_ROOT_NODE);
+    mo->lineRoot = NP_New(&map->mobjNodes, NP_ROOT_NODE);
 
     // Set up a line iterator for doing the linking.
-    data.mo = mo;
+    p.map = map;
+    p.mo = mo;
     V2_Set(point, mo->pos[VX] - mo->radius, mo->pos[VY] - mo->radius);
-    V2_InitBox(data.box.arvec2, point);
+    V2_InitBox(p.box.arvec2, point);
     V2_Set(point, mo->pos[VX] + mo->radius, mo->pos[VY] + mo->radius);
-    V2_AddToBox(data.box.arvec2, point);
+    V2_AddToBox(p.box.arvec2, point);
 
     validCount++;
-    P_AllLinesBoxIterator(&data.box, PIT_LinkToLines, &data);
+    P_AllLinesBoxIterator(&p.box, PIT_LinkToLines, (void*)&p);
 }
 
 /**
@@ -703,7 +707,6 @@ void P_LinkToLines(mobj_t* mo)
  */
 void P_MobjLink(mobj_t* mo, byte flags)
 {
-    GameMap* map = theMap;
     sector_t* sec;
 
     // Link into the sector.
@@ -714,7 +717,7 @@ void P_MobjLink(mobj_t* mo, byte flags)
     {
         // Unlink from the current sector, if any.
         if(mo->sPrev)
-            P_UnlinkFromSector(mo);
+            P_UnlinkMobjFromSector(mo);
 
         // Link the new mobj to the head of the list.
         // Prev pointers point to the pointer that points back to us.
@@ -730,18 +733,18 @@ void P_MobjLink(mobj_t* mo, byte flags)
     if(flags & DDLINK_BLOCKMAP)
     {
         // Unlink from the old block, if any.
-        P_UnlinkFromBlockmap(mo);
-        P_LinkToBlockmap(mo);
+        P_UnlinkMobjFromBlockmap(mo);
+        P_LinkMobjInBlockmap(mo);
     }
 
     // Link into lines.
     if(!(flags & DDLINK_NOLINE))
     {
         // Unlink from any existing lines.
-        P_UnlinkFromLines(mo);
+        P_UnlinkMobjFromLineDefs(mo);
 
         // Link to all contacted lines.
-        P_LinkToLines(mo);
+        P_LinkMobjToLineDefs(mo);
     }
 
     // If this is a player - perform additional tests to see if they have
@@ -764,16 +767,17 @@ void P_MobjLink(mobj_t* mo, byte flags)
  * The callback function will be called once for each line that crosses
  * trough the object. This means all the lines will be two-sided.
  */
-int P_MobjLinesIterator(mobj_t* mo,
-                            int (*func) (linedef_t*, void*),
-                            void* data)
+int GameMap_MobjLinesIterator(GameMap* map, mobj_t* mo,
+    int (*callback) (linedef_t*, void*), void* parameters)
 {
-    void*               linkstore[MAXLINKED];
-    void**              end = linkstore, **it;
-    nodeindex_t         nix;
-    linknode_t*         tn = mobjNodes->nodes;
+    void* linkstore[MAXLINKED];
+    void** end = linkstore, **it;
+    nodeindex_t nix;
+    linknode_t* tn;
     int result = false;
+    assert(map);
 
+    tn = map->mobjNodes.nodes;
     if(mo->lineRoot)
     {
         for(nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
@@ -791,17 +795,19 @@ int P_MobjLinesIterator(mobj_t* mo,
  * partly inside). This is not a 3D check; the mobj may actually reside
  * above or under the sector.
  */
-int P_MobjSectorsIterator(mobj_t* mo,
-                              int (*func) (sector_t*, void*),
-                              void* data)
+int GameMap_MobjSectorsIterator(GameMap* map, mobj_t* mo,
+    int (*callback) (sector_t*, void*), void* parameters)
 {
-    void*               linkstore[MAXLINKED];
-    void**              end = linkstore, **it;
-    nodeindex_t         nix;
-    linknode_t*         tn = mobjNodes->nodes;
-    linedef_t*          ld;
-    sector_t*           sec;
+    void* linkstore[MAXLINKED];
+    void** end = linkstore, **it;
+    nodeindex_t nix;
+    linknode_t* tn;
+    linedef_t* ld;
+    sector_t* sec;
     int result = false;
+    assert(map);
+
+    tn = map->mobjNodes.nodes;
 
     // Always process the mobj's own sector first.
     *end++ = sec = mo->subsector->sector;
@@ -840,15 +846,18 @@ int P_MobjSectorsIterator(mobj_t* mo,
     return result;
 }
 
-int P_LineMobjsIterator(linedef_t* line,
-                            int (*func) (mobj_t*, void*),
-                            void* data)
+int GameMap_LineMobjsIterator(GameMap* map, linedef_t* lineDef,
+    int (*callback) (mobj_t*, void*), void* parameters)
 {
-    void*               linkstore[MAXLINKED];
-    void**              end = linkstore, **it;
-    nodeindex_t         root = linelinks[GET_LINE_IDX(line)], nix;
-    linknode_t*         ln = lineNodes->nodes;
+    void* linkstore[MAXLINKED];
+    void** end = linkstore, **it;
+    nodeindex_t root, nix;
+    linknode_t* ln;
     int result = false;
+    assert(map);
+
+    root = map->lineLinks[GameMap_LineDefIndex(map, lineDef)], nix;
+    ln = map->lineNodes.nodes;
 
     for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         *end++ = ln[nix].ptr;
@@ -865,18 +874,20 @@ int P_LineMobjsIterator(linedef_t* line,
  * (Lovely name; actually this is a combination of SectorMobjs and
  * a bunch of LineMobjs iterations.)
  */
-int P_SectorTouchingMobjsIterator(sector_t* sector,
-                                      int (*func) (mobj_t*, void*),
-                                      void* data)
+int GameMap_SectorTouchingMobjsIterator(GameMap* map, sector_t* sector,
+    int (*callback) (mobj_t*, void*), void* parameters)
 {
-    uint                i;
-    void*               linkstore[MAXLINKED];
-    void**              end = linkstore, **it;
-    mobj_t*             mo;
-    linedef_t*          li;
-    nodeindex_t         root, nix;
-    linknode_t*         ln = lineNodes->nodes;
+    uint i;
+    void* linkstore[MAXLINKED];
+    void** end = linkstore, **it;
+    mobj_t* mo;
+    linedef_t* li;
+    nodeindex_t root, nix;
+    linknode_t* ln;
     int result = false;
+    assert(map);
+
+    ln = map->lineNodes.nodes;
 
     // First process the mobjs that obviously are in the sector.
     for(mo = sector->mobjList; mo; mo = mo->sNext)
@@ -894,7 +905,7 @@ int P_SectorTouchingMobjsIterator(sector_t* sector,
         li = sector->lineDefs[i];
 
         // Iterate all mobjs on the line.
-        root = linelinks[GET_LINE_IDX(li)];
+        root = map->lineLinks[GameMap_LineDefIndex(map, li)];
         for(nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
             mo = (mobj_t *) ln[nix].ptr;
@@ -908,93 +919,6 @@ int P_SectorTouchingMobjsIterator(sector_t* sector,
 
     DO_LINKS(it, end);
     return result;
-}
-
-int P_MobjsBoxIterator(const AABoxf* box, int (*func) (mobj_t*, void*), void* paramaters)
-{
-    if(theMap)
-    {
-        Blockmap* blockmap = theMap->mobjBlockmap;
-        GridmapBlock blockCoords;
-        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return GameMap_IterateCellBlockMobjs(theMap, &blockCoords, func, paramaters);
-    }
-    return false; // Continue iteration.
-}
-
-/**
- * The validCount flags are used to avoid checking polys that are marked in
- * multiple mapblocks, so increment validCount before the first call, then
- * make one or more calls to it.
- */
-int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* paramaters)
-{
-    if(theMap)
-    {
-        Blockmap* blockmap = theMap->polyobjBlockmap;
-        GridmapBlock blockCoords;
-        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return GameMap_IterateCellBlockPolyobjs(theMap, &blockCoords, callback, paramaters);
-    }
-    return false; // Continue iteration.
-}
-
-int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
-{
-    if(theMap)
-    {
-        Blockmap* blockmap = theMap->lineDefBlockmap;
-        GridmapBlock blockCoords;
-        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return GameMap_IterateCellBlockLineDefs(theMap, &blockCoords, callback, paramaters);
-    }
-    return false; // Continue iteration.
-}
-
-int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
-{
-    if(theMap)
-    {
-        Blockmap* blockmap = theMap->polyobjBlockmap;
-        GridmapBlock blockCoords;
-        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return GameMap_IterateCellBlockPolyobjLineDefs(theMap, &blockCoords, callback, paramaters);
-    }
-    return false; // Continue iteration.
-}
-
-int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
-    int (*callback) (subsector_t*, void*), void* paramaters)
-{
-    if(theMap)
-    {
-        static int localValidCount = 0;
-        Blockmap* blockmap = theMap->subsectorBlockmap;
-        GridmapBlock blockCoords;
-
-        // This is only used here.
-        localValidCount++;
-
-        Blockmap_CellBlockCoords(blockmap, &blockCoords, box);
-        return GameMap_IterateCellBlockSubsectors(theMap, &blockCoords, sector, box,
-                                              localValidCount, callback, paramaters);
-    }
-    return false;
-}
-
-/**
- * The validCount flags are used to avoid checking lines that are marked
- * in multiple mapblocks, so increment validCount before the first call
- * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
- */
-int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* paramaters)
-{
-    if(NUM_POLYOBJS > 0)
-    {
-        int result = P_PolyobjLinesBoxIterator(box, callback, paramaters);
-        if(result) return result;
-    }
-    return P_LinesBoxIterator(box, callback, paramaters);
 }
 
 /**
@@ -1091,56 +1015,154 @@ int PIT_AddMobjIntercepts(mobj_t* mobj, void* paramaters)
     return false;
 }
 
+void P_LinkMobjInBlockmap(mobj_t* mo)
+{
+    /// @fixme Do not assume mobj is from the current map.
+    if(!theMap) return;
+    GameMap_LinkMobjInBlockmap(theMap, mo);
+}
+
+boolean P_UnlinkMobjFromBlockmap(mobj_t* mo)
+{
+    /// @fixme Do not assume mobj is from the current map.
+    if(!theMap) return false;
+    return GameMap_UnlinkMobjInBlockmap(theMap, mo);
+}
+
+void P_LinkMobjToLineDefs(mobj_t* mo)
+{
+    /// @fixme Do not assume mobj is from the current map.
+    if(!theMap) return;
+    GameMap_LinkMobjToLineDefs(theMap, mo);
+}
+
+boolean P_UnlinkMobjFromLineDefs(mobj_t* mo)
+{
+    /// @fixme Do not assume mobj is from the current map.
+    if(!theMap) return false;
+    return GameMap_UnlinkMobjFromLineDefs(theMap, mo);
+}
+
+/**
+ * The callback function will be called once for each line that crosses
+ * trough the object. This means all the lines will be two-sided.
+ */
+int P_MobjLinesIterator(mobj_t* mo, int (*callback) (linedef_t*, void*), void* parameters)
+{
+    /// @fixme Do not assume mobj is in the current map.
+    return GameMap_MobjLinesIterator(theMap, mo, callback, parameters);
+}
+
+/**
+ * Increment validCount before calling this routine. The callback function
+ * will be called once for each sector the mobj is touching (totally or
+ * partly inside). This is not a 3D check; the mobj may actually reside
+ * above or under the sector.
+ */
+int P_MobjSectorsIterator(mobj_t* mo, int (*callback) (sector_t*, void*), void* parameters)
+{
+    /// @fixme Do not assume mobj is in the current map.
+    return GameMap_MobjSectorsIterator(theMap, mo, callback, parameters);
+}
+
+int P_LineMobjsIterator(linedef_t* lineDef, int (*callback) (mobj_t*, void*), void* parameters)
+{
+    /// @fixme Do not assume lineDef is in the current map.
+    return GameMap_LineMobjsIterator(theMap, lineDef, callback, parameters);
+}
+
+/**
+ * Increment validCount before using this. 'func' is called for each mobj
+ * that is (even partly) inside the sector. This is not a 3D test, the
+ * mobjs may actually be above or under the sector.
+ *
+ * (Lovely name; actually this is a combination of SectorMobjs and
+ * a bunch of LineMobjs iterations.)
+ */
+int P_SectorTouchingMobjsIterator(sector_t* sector, int (*callback) (mobj_t*, void*), void* parameters)
+{
+    /// @fixme Do not assume sector is in the current map.
+    return GameMap_SectorTouchingMobjsIterator(theMap, sector, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_MobjsBoxIterator(const AABoxf* box, int (*callback) (mobj_t*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_MobjsBoxIterator(theMap, box, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_PolyobjsBoxIterator(const AABoxf* box, int (*callback) (struct polyobj_s*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PolyobjsBoxIterator(theMap, box, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_LinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_LineDefsBoxIterator(theMap, box, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_PolyobjLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PolyobjLinesBoxIterator(theMap, box, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_SubsectorsBoxIterator(const AABoxf* box, sector_t* sector,
+    int (*callback) (subsector_t*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_SubsectorsBoxIterator(theMap, box, sector, callback, parameters);
+}
+
+/// @note Part of the Doomsday public API.
+int P_AllLinesBoxIterator(const AABoxf* box, int (*callback) (linedef_t*, void*), void* parameters)
+{
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_AllLineDefsBoxIterator(theMap, box, callback, parameters);
+}
+
 /// @note Part of the Doomsday public API.
 int P_PathTraverse2(float const from[2], float const to[2], int flags, traverser_t callback,
     void* paramaters)
 {
-    if(theMap)
-    {
-        return GameMap_PathTraverse2(theMap, from, to, flags, callback, paramaters);
-    }
-    return false; // Continue iteration.
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PathTraverse2(theMap, from, to, flags, callback, paramaters);
 }
 
 /// @note Part of the Doomsday public API.
 int P_PathTraverse(float const from[2], float const to[2], int flags, traverser_t callback)
 {
-    if(theMap)
-    {
-        return GameMap_PathTraverse(theMap, from, to, flags, callback);
-    }
-    return false; // Continue iteration.
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PathTraverse(theMap, from, to, flags, callback);
 }
 
 /// @note Part of the Doomsday public API.
 int P_PathXYTraverse2(float fromX, float fromY, float toX, float toY, int flags,
     traverser_t callback, void* paramaters)
 {
-    if(theMap)
-    {
-        return GameMap_PathXYTraverse2(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
-    }
-    return false; // Continue iteration.
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PathXYTraverse2(theMap, fromX, fromY, toX, toY, flags, callback, paramaters);
 }
 
 /// @note Part of the Doomsday public API.
 int P_PathXYTraverse(float fromX, float fromY, float toX, float toY, int flags,
     traverser_t callback)
 {
-    if(theMap)
-    {
-        return GameMap_PathXYTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
-    }
-    return false; // Continue iteration.
+    if(!theMap) return false; // Continue iteration.
+    return GameMap_PathXYTraverse(theMap, fromX, fromY, toX, toY, flags, callback);
 }
 
 /// @note Part of the Doomsday public API.
 boolean P_CheckLineSight(const float from[3], const float to[3], float bottomSlope,
     float topSlope, int flags)
 {
-    if(theMap)
-    {
-        return GameMap_CheckLineSight(theMap, from, to, bottomSlope, topSlope, flags);
-    }
-    return true; // I guess?
+    if(!theMap) return false; // I guess?
+    return GameMap_CheckLineSight(theMap, from, to, bottomSlope, topSlope, flags);
 }

@@ -74,8 +74,6 @@ byte rendSkyLightAuto = true;
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
 
-nodeindex_t* linelinks; // Indices to roots.
-
 skyfix_t skyFix[2];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

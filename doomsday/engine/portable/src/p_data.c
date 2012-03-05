@@ -86,8 +86,6 @@ surfacelist_t* movingSurfaceList = NULL;
 surfacelist_t* decoratedSurfaceList = NULL;
 surfacelist_t* glowingSurfaceList = NULL;
 
-nodepile_t* mobjNodes = NULL, *lineNodes = NULL; // All kinds of wacky links.
-
 float mapGravity;
 
 GameMap* theMap = NULL;
@@ -181,11 +179,6 @@ void P_SetCurrentMap(GameMap* map)
         decoratedSurfaceList = 0;
         glowingSurfaceList = 0;
 
-
-        mobjNodes = 0;
-        lineNodes = 0;
-        linelinks = 0;
-
         mapGravity = 0;
 
         theMap = map;
@@ -207,10 +200,6 @@ void P_SetCurrentMap(GameMap* map)
     movingSurfaceList = &map->movingSurfaceList;
     decoratedSurfaceList = &map->decoratedSurfaceList;
     glowingSurfaceList = &map->glowingSurfaceList;
-
-    mobjNodes = &map->mobjNodes;
-    lineNodes = &map->lineNodes;
-    linelinks = map->lineLinks;
 
     mapGravity = map->globalGravity;
 

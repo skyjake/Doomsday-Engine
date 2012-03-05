@@ -276,10 +276,8 @@ typedef struct {
 
 extern colorpaletteid_t defaultColorPalette;
 
-extern nodeindex_t* linelinks;
-extern nodepile_t* mobjNodes, *lineNodes;
-
 extern int levelFullBright;
+
 extern byte rendInfoRPolys;
 extern byte precacheMapMaterials, precacheSprites, precacheSkins;
 

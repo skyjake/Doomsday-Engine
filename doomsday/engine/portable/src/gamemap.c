@@ -547,6 +547,15 @@ int GameMap_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
                                             blockmapCellMobjsIterator, (void*) &args);
 }
 
+int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (mobj_t*, void*), void* parameters)
+{
+    GridmapBlock blockCoords;
+    assert(map);
+    Blockmap_CellBlockCoords(map->mobjBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockMobjs(map, &blockCoords, callback, parameters);
+}
+
 void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef)
 {
     vec2_t origin, cellSize, cell, from, to;
@@ -767,6 +776,21 @@ int GameMap_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCo
                                             blockmapCellSubsectorsIterator, (void*) &args);
 }
 
+int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+    int (*callback) (subsector_t*, void*), void* parameters)
+{
+    static int localValidCount = 0;
+    GridmapBlock blockCoords;
+    assert(map);
+
+    // This is only used here.
+    localValidCount++;
+
+    Blockmap_CellBlockCoords(map->subsectorBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockSubsectors(map, &blockCoords, sector, box,
+                                              localValidCount, callback, parameters);
+}
+
 void GameMap_LinkPolyobjInBlockmap(GameMap* map, polyobj_t* po)
 {
     Blockmap* blockmap;
@@ -856,6 +880,15 @@ int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoor
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
+int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (struct polyobj_s*, void*), void* parameters)
+{
+    GridmapBlock blockCoords;
+    assert(map);
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockPolyobjs(map, &blockCoords, callback, parameters);
+}
+
 typedef struct poiterparams_s {
     int (*func) (linedef_t*, void*);
     void* param;
@@ -905,9 +938,46 @@ int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* bl
                                             blockmapCellPolyobjsIterator, (void*) &args);
 }
 
+int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (linedef_t*, void*), void* parameters)
+{
+    GridmapBlock blockCoords;
+    assert(map);
+    Blockmap_CellBlockCoords(map->lineDefBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockLineDefs(map, &blockCoords, callback, parameters);
+}
+
+int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (linedef_t*, void*), void* parameters)
+{
+    GridmapBlock blockCoords;
+    assert(map);
+    Blockmap_CellBlockCoords(map->polyobjBlockmap, &blockCoords, box);
+    return GameMap_IterateCellBlockPolyobjLineDefs(map, &blockCoords, callback, parameters);
+}
+
+/**
+ * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+ *
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
+ * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+ */
+int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (linedef_t*, void*), void* parameters)
+{
+    assert(map);
+    if(map->numPolyObjs > 0)
+    {
+        int result = P_PolyobjLinesBoxIterator(box, callback, parameters);
+        if(result) return result;
+    }
+    return P_LinesBoxIterator(box, callback, parameters);
+}
+
 static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
     uint const toBlock[2], float const from[2], float const to[2],
-    int (*callback) (uint const block[2], void* paramaters), void* paramaters)
+    int (*callback) (uint const block[2], void* parameters), void* parameters)
 {
     int result = false; // Continue iteration.
     float intercept[2], delta[2], partial;
@@ -969,7 +1039,7 @@ static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
     block[VY] = fromBlock[VY];
     for(count = 0; count < 64; ++count)
     {
-        result = callback(block, paramaters);
+        result = callback(block, parameters);
         if(result) return result; // Early out.
 
         if(block[VX] == toBlock[VX] && block[VY] == toBlock[VY])
@@ -992,8 +1062,8 @@ static int traverseCellPath2(Blockmap* bmap, uint const fromBlock[2],
 }
 
 static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
-    float const to_[2], int (*callback) (uint const block[2], void* paramaters),
-    void* paramaters)
+    float const to_[2], int (*callback) (uint const block[2], void* parameters),
+    void* parameters)
 {
     // Constant terms implicitly defined by DOOM's original version of this
     // algorithm (we must honor these fudge factors for compatibility).
@@ -1081,43 +1151,43 @@ static int traverseCellPath(GameMap* map, Blockmap* bmap, float const from_[2],
 
     V2_Subtract(from, from, min);
     V2_Subtract(to, to, min);
-    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, paramaters);
+    return traverseCellPath2(bmap, fromBlock, toBlock, from, to, callback, parameters);
 }
 
 typedef struct {
     int (*callback) (linedef_t*, void*);
-    void* paramaters;
+    void* parameters;
 } iteratepolyobjlinedefs_params_t;
 
-static int iteratePolyobjLineDefs(polyobj_t* po, void* paramaters)
+static int iteratePolyobjLineDefs(polyobj_t* po, void* parameters)
 {
-    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)paramaters;
-    return Polyobj_LineIterator(po, p->callback, p->paramaters);
+    const iteratepolyobjlinedefs_params_t* p = (iteratepolyobjlinedefs_params_t*)parameters;
+    return Polyobj_LineIterator(po, p->callback, p->parameters);
 }
 
-static int collectPolyobjLineDefIntercepts(uint const block[2], void* paramaters)
+static int collectPolyobjLineDefIntercepts(uint const block[2], void* parameters)
 {
-    GameMap* map = (GameMap*)paramaters;
+    GameMap* map = (GameMap*)parameters;
     iteratepolyobjlinedefs_params_t iplParams;
     iplParams.callback = PIT_AddLineDefIntercepts;
-    iplParams.paramaters = NULL;
+    iplParams.parameters = NULL;
     return GameMap_IterateCellPolyobjs(map, block, iteratePolyobjLineDefs, (void*)&iplParams);
 }
 
-static int collectLineDefIntercepts(uint const block[2], void* paramaters)
+static int collectLineDefIntercepts(uint const block[2], void* parameters)
 {
-    GameMap* map = (GameMap*)paramaters;
+    GameMap* map = (GameMap*)parameters;
     return GameMap_IterateCellLineDefs(map, block, PIT_AddLineDefIntercepts, NULL);
 }
 
-static int collectMobjIntercepts(uint const block[2], void* paramaters)
+static int collectMobjIntercepts(uint const block[2], void* parameters)
 {
-    GameMap* map = (GameMap*)paramaters;
+    GameMap* map = (GameMap*)parameters;
     return GameMap_IterateCellMobjs(map, block, PIT_AddMobjIntercepts, NULL);
 }
 
 int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
-    int flags, traverser_t callback, void* paramaters)
+    int flags, traverser_t callback, void* parameters)
 {
     assert(map);
 
@@ -1140,28 +1210,28 @@ int GameMap_PathTraverse2(GameMap* map, float const from[2], float const to[2],
     }
 
     // Step #2: Process sorted intercepts.
-    return P_TraverseIntercepts(callback, paramaters);
+    return P_TraverseIntercepts(callback, parameters);
 }
 
 int GameMap_PathTraverse(GameMap* map, float const from[2], float const to[2],
     int flags, traverser_t callback)
 {
-    return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no paramaters*/);
+    return GameMap_PathTraverse2(map, from, to, flags, callback, NULL/*no parameters*/);
 }
 
 int GameMap_PathXYTraverse2(GameMap* map, float fromX, float fromY, float toX, float toY,
-    int flags, traverser_t callback, void* paramaters)
+    int flags, traverser_t callback, void* parameters)
 {
     vec2_t from, to;
     V2_Set(from, fromX, fromY);
     V2_Set(to, toX, toY);
-    return GameMap_PathTraverse2(map, from, to, flags, callback, paramaters);
+    return GameMap_PathTraverse2(map, from, to, flags, callback, parameters);
 }
 
 int GameMap_PathXYTraverse(GameMap* map, float fromX, float fromY, float toX, float toY,
     int flags, traverser_t callback)
 {
-    return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no paramaters*/);
+    return GameMap_PathXYTraverse2(map, fromX, fromY, toX, toY, flags, callback, NULL/*no parameters*/);
 }
 
 subsector_t* GameMap_SubsectorAtPoint(GameMap* map, float point_[2])

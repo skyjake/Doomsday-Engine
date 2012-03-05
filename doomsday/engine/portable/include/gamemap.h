@@ -371,6 +371,9 @@ int GameMap_IterateCellMobjs(GameMap* map, const uint coords[2],
 int GameMap_IterateCellBlockMobjs(GameMap* map, const GridmapBlock* blockCoords,
     int (*callback) (struct mobj_s*, void*), void* paramaters);
 
+int GameMap_MobjsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (struct mobj_s*, void*), void* parameters);
+
 /**
  * Construct an initial (empty) LineDef Blockmap for this map.
  *
@@ -384,6 +387,27 @@ void GameMap_LinkLineDefInBlockmap(GameMap* map, linedef_t* lineDef);
 int GameMap_IterateCellLineDefs(GameMap* map, const uint coords[2],
     int (*callback) (linedef_t*, void*), void* paramaters);
 int GameMap_IterateCellBlockLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
+int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
+    int (*callback) (linedef_t*, void*), void* paramaters);
+int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
+int GameMap_LineDefsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (linedef_t*, void*), void* paramaters);
+
+int GameMap_PolyobjLinesBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (linedef_t*, void*), void* parameters);
+
+/**
+ * LineDefs and Polyobj LineDefs (note Polyobj LineDefs are iterated first).
+ *
+ * The validCount flags are used to avoid checking lines that are marked
+ * in multiple mapblocks, so increment validCount before the first call
+ * to GameMap_IterateCellLineDefs(), then make one or more calls to it.
+ */
+int GameMap_AllLineDefsBoxIterator(GameMap* map, const AABoxf* box,
     int (*callback) (linedef_t*, void*), void* paramaters);
 
 /**
@@ -403,6 +427,9 @@ int GameMap_IterateCellBlockSubsectors(GameMap* map, const GridmapBlock* blockCo
     sector_t* sector, const AABoxf* box, int localValidCount,
     int (*callback) (subsector_t*, void*), void* paramaters);
 
+int GameMap_SubsectorsBoxIterator(GameMap* map, const AABoxf* box, sector_t* sector,
+    int (*callback) (subsector_t*, void*), void* parameters);
+
 /**
  * Construct an initial (empty) Polyobj Blockmap for this map.
  *
@@ -419,10 +446,13 @@ int GameMap_IterateCellPolyobjs(GameMap* map, const uint coords[2],
 int GameMap_IterateCellBlockPolyobjs(GameMap* map, const GridmapBlock* blockCoords,
     int (*callback) (polyobj_t*, void*), void* paramaters);
 
-int GameMap_IterateCellPolyobjLineDefs(GameMap* map, const uint coords[2],
-    int (*callback) (linedef_t*, void*), void* paramaters);
-int GameMap_IterateCellBlockPolyobjLineDefs(GameMap* map, const GridmapBlock* blockCoords,
-    int (*callback) (linedef_t*, void*), void* paramaters);
+/**
+ * The validCount flags are used to avoid checking polys that are marked in
+ * multiple mapblocks, so increment validCount before the first call, then
+ * make one or more calls to it.
+ */
+int GameMap_PolyobjsBoxIterator(GameMap* map, const AABoxf* box,
+    int (*callback) (struct polyobj_s*, void*), void* parameters);
 
 /**
  * Traces a line between @a from and @a to, making a callback for each
