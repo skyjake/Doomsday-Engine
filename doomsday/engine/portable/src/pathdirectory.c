@@ -34,7 +34,7 @@
 #include "pathdirectory.h"
 
 typedef struct pathdirectorynode_userdatapair_s {
-    StringPoolInternId internId;
+    StringPoolId internId;
     void* data;
 } pathdirectorynode_userdatapair_t;
 
@@ -57,12 +57,12 @@ struct pathdirectorynode_s {
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData);
+    StringPoolId internId, void* userData);
 
 static void deleteNode(PathDirectoryNode* node);
 
 /// @return  Intern id for the string fragment owned by the PathDirectory of which this node is a child of.
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node);
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node);
 
 typedef struct {
     PathDirectoryNode* head;
@@ -71,10 +71,7 @@ typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH
 
 struct pathdirectory_s {
     /// Path name fragment intern pool.
-    struct pathdirectory_internpool_s {
-        StringPool* strings;
-        ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } internPool;
+    StringPool* stringPool;
 
     int flags; /// @see pathDirectoryFlags
 
@@ -153,10 +150,10 @@ static void destroyPathHash(PathDirectory* pd, pathdirectorynode_type_t type)
 static void clearInternPool(PathDirectory* pd)
 {
     assert(pd);
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        StringPool_Delete(pd->internPool.strings), pd->internPool.strings = NULL;
-        free(pd->internPool.idHashMap), pd->internPool.idHashMap = NULL;
+        StringPool_Delete(pd->stringPool);
+        pd->stringPool = NULL;
     }
 }
 
@@ -213,13 +210,13 @@ static size_t countNodes(PathDirectory* pd, int flags)
 }
 
 static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
-    pathdirectorynode_type_t nodeType, StringPoolInternId internId)
+    pathdirectorynode_type_t nodeType, StringPoolId internId)
 {
     pathdirectory_pathhash_t* ph = *hashAddressForNodeType(pd, nodeType);
     PathDirectoryNode* node = NULL;
     if(ph)
     {
-        ushort hash = pd->internPool.idHashMap[internId-1];
+        ushort hash = StringPool_UserValue(pd->stringPool, internId);
         for(node = (*ph)[hash].head; node; node = node->next)
         {
             if(parent != PathDirectoryNode_Parent(node)) continue;
@@ -230,43 +227,29 @@ static PathDirectoryNode* findNode(PathDirectory* pd, PathDirectoryNode* parent,
     return node;
 }
 
-static ushort hashForInternId(PathDirectory* pd, StringPoolInternId internId)
+static ushort hashForInternId(PathDirectory* pd, StringPoolId internId)
 {
     assert(pd);
     if(0 == internId)
         Con_Error("PathDirectory::hashForInternId: Invalid internId %u.", internId);
-    return pd->internPool.idHashMap[internId-1];
+    return StringPool_UserValue(pd->stringPool, internId);
 }
 
-static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
+static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
     const ddstring_t* name, ushort hash)
 {
     StringPool* pool;
-    StringPoolInternId internId;
-    uint oldSize;
+    StringPoolId internId;
+    //uint oldSize;
     assert(pd);
 
-    pool = pd->internPool.strings;
-    if(!pool)
+    if(!pd->stringPool)
     {
-        pool = pd->internPool.strings = StringPool_New();
+        pd->stringPool = StringPool_New();
     }
-    oldSize = StringPool_Size(pool);
-
+    pool = pd->stringPool;
     internId = StringPool_Intern(pool, name);
-    if(oldSize != StringPool_Size(pool))
-    {
-        // A new string was added to the pool.
-        pd->internPool.idHashMap = (ushort*) realloc(pd->internPool.idHashMap, sizeof *pd->internPool.idHashMap * StringPool_Size(pool));
-        if(!pd->internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->internPool.idHashMap * StringPool_Size(pool)));
-
-        if(internId < StringPool_Size(pool))
-        {
-            memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
-        }
-        pd->internPool.idHashMap[internId-1] = hash;
-    }
+    StringPool_SetUserValue(pd->stringPool, internId, hash);
     return internId;
 }
 
@@ -277,17 +260,17 @@ static StringPoolInternId internNameAndUpdateIdHashMap(PathDirectory* pd,
 static PathDirectoryNode* direcNode(PathDirectory* pd, PathDirectoryNode* parent,
     pathdirectorynode_type_t nodeType, const ddstring_t* name, char delimiter, void* userData)
 {
-    StringPoolInternId internId = 0;
+    StringPoolId internId = 0;
     pathdirectory_pathhash_t** phAdr;
     PathDirectoryNode* node;
     ushort hash;
     assert(pd && name);
 
     // Have we already encountered this?
-    if(pd->internPool.strings)
+    if(pd->stringPool)
     {
-        internId = StringPool_IsInterned(pd->internPool.strings, name);
-        if(0 != internId)
+        internId = StringPool_IsInterned(pd->stringPool, name);
+        if(internId)
         {
             // The name is known. Perhaps we have.
             node = findNode(pd, parent, nodeType, internId);
@@ -517,8 +500,7 @@ PathDirectory* PathDirectory_NewWithFlags(int flags)
         Con_Error("PathDirectory::Construct: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof *pd);
 
     pd->flags = flags;
-    pd->internPool.strings = NULL;
-    pd->internPool.idHashMap = NULL;
+    pd->stringPool = NULL;
     pd->pathLeafHash = NULL;
     pd->pathBranchHash = NULL;
     pd->size = 0;
@@ -679,7 +661,7 @@ PathDirectoryNode* PathDirectory_Find(PathDirectory* pd, int flags,
 const ddstring_t* PathDirectory_GetFragment(PathDirectory* pd, const PathDirectoryNode* node)
 {
     assert(pd);
-    return StringPool_String(pd->internPool.strings, PathDirectoryNode_InternId(node));
+    return StringPool_String(pd->stringPool, PathDirectoryNode_InternId(node));
 }
 
 // Calculate the total length of the final composed path.
@@ -1211,7 +1193,7 @@ void PathDirectory_PrintHashDistribution(PathDirectory* pd)
 
 static PathDirectoryNode* newNode(PathDirectory* directory,
     pathdirectorynode_type_t type, PathDirectoryNode* parent,
-    StringPoolInternId internId, void* userData)
+    StringPoolId internId, void* userData)
 {
     PathDirectoryNode* node;
 
@@ -1279,7 +1261,7 @@ const ddstring_t* PathDirectoryNode_TypeName(pathdirectorynode_type_t type)
     return &nodeNames[1 + (type - PATHDIRECTORYNODE_TYPE_FIRST)];
 }
 
-StringPoolInternId PathDirectoryNode_InternId(const PathDirectoryNode* node)
+StringPoolId PathDirectoryNode_InternId(const PathDirectoryNode* node)
 {
     assert(node);
     return node->pair.internId;

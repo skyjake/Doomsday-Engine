@@ -275,6 +275,7 @@ DENG_HEADERS = \
     portable/include/r_things.h \
     portable/include/r_util.h \
     portable/include/r_world.h \
+    portable/include/string.hh \
     portable/include/stringarray.h \
     portable/include/sv_def.h \
     portable/include/sv_frame.h \
@@ -528,7 +529,7 @@ SOURCES += \
     portable/src/resourcenamespace.c \
     portable/src/abstractresource.c \
     portable/src/smoother.c \
-    portable/src/stringpool.c \
+    portable/src/stringpool.cpp \
     portable/src/s_cache.c \
     portable/src/s_environ.c \
     portable/src/s_logic.c \
