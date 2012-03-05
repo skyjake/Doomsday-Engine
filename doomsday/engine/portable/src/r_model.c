@@ -1029,7 +1029,7 @@ static void setupModel(ded_model_t* def)
         // Flags may override alpha and/or blendmode.
         if(sub->flags & MFF_BRIGHTSHADOW)
         {
-            sub->alpha = .80f;
+            sub->alpha = (byte)(256 * .80f);
             sub->blendMode = BM_ADD;
         }
         else if(sub->flags & MFF_BRIGHTSHADOW2)
