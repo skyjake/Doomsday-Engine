@@ -23,7 +23,7 @@
 #define LIBDENG_UNIT_TEST_H
 
 #ifdef _DEBUG
-#  define LIBDENG_RUN_UNITTEST(Name)    static int testResult_##Name = UNITTEST_##Name();
+#  define LIBDENG_RUN_UNITTEST(Name)    int testResult_##Name = UNITTEST_##Name();
 #else
 #  define LIBDENG_RUN_UNITTEST(Name)
 #endif

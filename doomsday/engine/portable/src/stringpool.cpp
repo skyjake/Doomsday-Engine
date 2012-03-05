@@ -965,7 +965,7 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     assert(StringPool_Intern(p, is) == 2);
 
     assert(StringPool_Size(p) == 2);
-    StringPool_Print(p);
+    //StringPool_Print(p);
 
     assert(!StringPool_Empty(p));
 
@@ -983,6 +983,29 @@ LIBDENG_DEFINE_UNITTEST(StringPool)
     Str_Set(s, "Third!");
     assert(StringPool_Intern(p, s) == 1);
     assert(StringPool_Size(p) == 2);
+
+    Str_Set(s, "FOUR");
+    StringPool_Intern(p, s);
+    StringPool_RemoveById(p, 1); // "Third!"
+
+    // Serialize.
+    Writer* w = Writer_NewWithDynamicBuffer(0);
+    StringPool_Write(p, w);
+
+    // Deserialize.
+    Reader* r = Reader_NewWithBuffer(Writer_Data(w), Writer_Size(w));
+    StringPool* p2 = StringPool_New();
+    StringPool_Read(p2, r);
+    //StringPool_Print(p2);
+    assert(StringPool_Size(p2) == 2);
+    assert(!Str_Compare(StringPool_String(p2, 2), "abc"));
+    assert(!Str_Compare(StringPool_String(p2, 3), "FOUR"));
+    Str_Set(s, "hello again");
+    assert(StringPool_Intern(p2, s) == 1);
+
+    StringPool_Delete(p2);
+    Reader_Delete(r);
+    Writer_Delete(w);
 
     StringPool_Clear(p);
     assert(StringPool_Empty(p));
