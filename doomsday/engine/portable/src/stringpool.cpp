@@ -27,6 +27,7 @@
 //#endif
 
 #include "de_platform.h"
+#include "dd_zone.h"
 #include "stringpool.h"
 #include "string.hh"
 #include "unittest.h"
@@ -35,6 +36,21 @@
 #include <list>
 #include <set>
 #include <algorithm>
+
+/**
+ * @def LIBDENG_STRINGPOOL_ZONE_ALLOCS
+ * Define this to make StringPool allocate memory from the memory zone instead
+ * of with system malloc().
+ */
+//#define LIBDENG_STRINGPOOL_ZONE_ALLOCS
+
+#ifdef LIBDENG_STRINGPOOL_ZONE_ALLOCS
+#  define STRINGPOOL_STRDUP(x)  Z_StrDup(x)
+#  define STRINGPOOL_FREE(x)    Z_Free(x)
+#else
+#  define STRINGPOOL_STRDUP(x)  strdup(x)
+#  define STRINGPOOL_FREE(x)    free(x)
+#endif
 
 /// Macro used for converting internal ids to externally visible StringPoolIds.
 #define EXPORT_ID(i)    (uint(i) + 1)
@@ -182,7 +198,7 @@ struct stringpool_s {
             CaselessStr* str = new CaselessStr;
             str->deserialize(reader, &text);
             // Create a copy of the string whose ownership StringPool controls.
-            str->setText(strdup(Str_Text(&text)));
+            str->setText(STRINGPOOL_STRDUP(Str_Text(&text)));
             interns.insert(str);
             Str_Free(&text);
 
@@ -243,7 +259,7 @@ struct stringpool_s {
      */
     InternalId copyAndAssignUniqueId(const char* text)
     {
-        CaselessStr* str = new CaselessStr(strdup(text));
+        CaselessStr* str = new CaselessStr(STRINGPOOL_STRDUP(text));
 
         // This is a new string that is added to the pool.
         interns.insert(str); // O(log n)
@@ -253,7 +269,7 @@ struct stringpool_s {
 
     void destroyStr(CaselessStr* str)
     {
-        free(str->toCString()); // duplicated cstring
+        STRINGPOOL_FREE(str->toCString()); // duplicated cstring
         delete str; // CaselessStr instance
     }
 
@@ -934,6 +950,10 @@ void StringPool_Print(const StringPool* pool)
 #ifdef _DEBUG
 LIBDENG_DEFINE_UNITTEST(StringPool)
 {
+#ifdef LIBDENG_STRINGPOOL_ZONE_ALLOCS
+    return 0; // Zone is not available yet.
+#endif
+
     StringPool* p = StringPool_New();
     ddstring_t* s = Str_NewStd();
     ddstring_t* s2 = Str_NewStd();
