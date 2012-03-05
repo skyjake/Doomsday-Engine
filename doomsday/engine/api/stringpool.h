@@ -4,20 +4,24 @@
  *
  * Container data structure for a set of unique case-insensitive strings.
  *
- * Each string added to the pool gets its own unique identifier. The string
- * identifiers are not unique over the lifetime of the container: if a string
- * is removed, its id is free to be reassigned to the next new string. Each
- * string can also have an associated, custom user-defined uint32 value.
+ * The term "intern" is used here to refer to the act of inserting a string to
+ * the pool. As a result of interning a string, a new internal copy of the
+ * string may be created in the pool.
  *
- * The implementation has, at worst, O(log n) performance for addition,
- * removal, string lookup, and user value set/get.
+ * Each string that actually gets added to the pool is assigned a unique
+ * identifier. If one tries to intern a string that already exists in the pool
+ * (case insensitively speaking), no new internal copy is created and no new
+ * identifier is assigned. Instead, the existing id of the previously interned
+ * string is returned. The string identifiers are not unique over the lifetime
+ * of the container: if a string is removed from the pool, its id is free to be
+ * reassigned to the next new string. Zero is not a valid id.
  *
- * Does not allow duplicates to be inserted; if multiple strings with the same
- * case-insensitive contents are added to the pool, only one (the first) copy
- * of the string is kept. In other words, the letter cases of the later
- * duplicate strings are ignored.
+ * Each string can also have an associated, custom user-defined uint32 value.
  *
- * StringPool is comparable to a std::set with unique IDs assigned to each
+ * The implementation has, at worst, O(log n) complexity for addition, removal,
+ * string lookup, and user value set/get.
+ *
+ * @note StringPool is comparable to a std::set with unique IDs assigned to each
  * contained string.
  *
  * @todo Add case-sensitive mode.
@@ -52,7 +56,7 @@ extern "C" {
 struct stringpool_s; // The stringpool instance (opaque).
 
 /**
- * StringPool instance. Use StringPool_New() or one of the other constructs to create.
+ * StringPool instance. Use StringPool_New() or one of the other constructors to create.
  */
 typedef struct stringpool_s StringPool;
 
@@ -66,10 +70,10 @@ typedef uint StringPoolId;
 StringPool* StringPool_New(void);
 
 /**
- * Constructs a new string pool and adds a number of strings into it. The pool
+ * Constructs an empty StringPool and interns a number of strings. The pool
  * must be destroyed with StringPool_Delete() when no longer needed.
  *
- * @param strings  Array of strings to be interned (must contain at least @a count strings!)
+ * @param strings  Array of strings to be interned (must contain at least @a count strings).
  * @param count  Number of strings to be interned.
  */
 StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count);
@@ -81,31 +85,29 @@ StringPool* StringPool_NewWithStrings(const ddstring_t* strings, uint count);
 void StringPool_Delete(StringPool* pool);
 
 /**
- * Clear the string pool (reset to default initial state).
+ * Clear the string pool. All strings in the pool will be destroyed.
  * @param pool  StringPool instance.
  */
 void StringPool_Clear(StringPool* pool);
 
 /**
+ * Is the pool empty?
  * @param pool  StringPool instance.
  * @return  @c true if there are no strings present in the pool.
  */
 boolean StringPool_Empty(const StringPool* pool);
 
 /**
+ * Determines the number of strings in the pool.
  * @param pool  StringPool instance.
- * @return Number of strings in the pool. The actual number of strings stored
- * in memory may be less than this.
+ * @return Number of strings in the pool.
  */
 uint StringPool_Size(const StringPool* pool);
 
 /**
- * Adds string @a str into the pool. If this is not a previously known string,
- * a new internal copy is created; otherwise, the existing internal copy is
- * re-used.
- *
- * @note If @a str is invalid this method does not return and a fatal error is
- * thrown.
+ * Interns string @a str. If this string is not already in the pool, a new
+ * internal copy is created; otherwise, the existing internal copy is returned.
+ * New internal copies will be assigned new identifiers.
  *
  * @param pool  StringPool instance.
  * @param str  String to be added (must not be of zero-length).
@@ -116,9 +118,9 @@ uint StringPool_Size(const StringPool* pool);
 StringPoolId StringPool_Intern(StringPool* pool, const ddstring_t* str);
 
 /**
- * Adds string @a str into the pool. If this is not a previously known string,
- * a new internal copy is created; otherwise, the existing internal copy is
- * re-used.
+ * Interns string @a str. If this string is not already in the pool, a new
+ * internal copy is created; otherwise, the existing internal copy is returned.
+ * New internal copies will be assigned new identifiers.
  *
  * @param pool  StringPool instance.
  * @param str  String to be added (must not be of zero-length).
@@ -130,21 +132,32 @@ const ddstring_t* StringPool_InternAndRetrieve(StringPool* pool, const ddstring_
 
 /**
  * Sets the user-specified custom value associated with the string @a id.
+ * The default user value is zero.
+ *
+ * @param pool   StringPool instance.
+ * @param id     Id of a string.
+ * @param value  User value.
  */
 void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
 
 /**
  * Retrieves the user-specified custom value associated with the string @a id.
+ * The default user value is zero.
+ *
+ * @param pool   StringPool instance.
+ * @param id     Id of a string.
+ *
+ * @return User value.
  */
 uint StringPool_UserValue(StringPool* pool, StringPoolId id);
 
 /**
- * Is @a str in the pool? Matching is case-insensitive.
+ * Is @a str considered to be in the pool?
  *
  * @param pool  StringPool instance.
- * @param str  Candidate string to look for.
+ * @param str   String to look for.
  *
- * @return  Id of the first matching string; else @c 0
+ * @return  Id of the matching string; else @c 0.
  */
 StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str);
 
@@ -153,20 +166,19 @@ StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str
  * string @a id.
  *
  * @param pool  StringPool instance.
- * @param id  Id of the string to retrieve.
+ * @param id    Id of the string to retrieve.
  *
- * @return  Interned string associated with @a internId.
+ * @return  Interned string associated with @a internId. Owned by the pool.
  */
 const ddstring_t* StringPool_String(const StringPool* pool, StringPoolId id);
 
 /**
- * Removes a string from the pool. After this the pool will not contain
- * anything matching @a str (case-insensitive).
+ * Removes a string from the pool.
  *
  * @param pool  StringPool instance.
- * @param str  String to be removed.
+ * @param str   String to be removed.
  *
- * @return  @c true, if string @a str was present and therefore was removed.
+ * @return  @c true, if string @a str was found and removed.
  */
 boolean StringPool_Remove(StringPool* pool, const ddstring_t* str);
 
@@ -174,9 +186,9 @@ boolean StringPool_Remove(StringPool* pool, const ddstring_t* str);
  * Removes a string from the pool.
  *
  * @param pool  StringPool instance.
- * @param id  Id of the string to remove.
+ * @param id    Id of the string to remove.
  *
- * @return  @c true if the string was removed.
+ * @return  @c true if the string was found and removed.
  */
 boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
 
@@ -188,7 +200,8 @@ boolean StringPool_RemoveById(StringPool* pool, StringPoolId id);
  * @param callback  Callback to make for each iteration.
  * @param parameters  User data to be passed to the callback.
  *
- * @return  @c 0 iff iteration completed wholly.
+ * @return  @c 0 iff iteration completed wholly. Otherwise the non-zero value returned
+ *          by @a callback.
  */
 int StringPool_Iterate(const StringPool* pool, int (*callback)(StringPoolId, void*), void* data);
 
