@@ -71,10 +71,6 @@ typedef pathdirectory_nodelist_t pathdirectory_pathhash_t[PATHDIRECTORY_PATHHASH
 
 struct pathdirectory_s {
     /// Path name fragment intern pool.
-    /*struct pathdirectory_internpool_s {
-        StringPool* strings;
-        ushort* idHashMap; // Index by @c StringPoolInternId-1
-    } internPool;*/
     StringPool* stringPool;
 
     int flags; /// @see pathDirectoryFlags
@@ -252,24 +248,8 @@ static StringPoolId internNameAndUpdateIdHashMap(PathDirectory* pd,
         pd->stringPool = StringPool_New();
     }
     pool = pd->stringPool;
-    //oldSize = StringPool_Size(pool);
-
     internId = StringPool_Intern(pool, name);
     StringPool_SetUserValue(pd->stringPool, internId, hash);
-    /*
-    if(oldSize != StringPool_Size(pool))
-    {
-        // A new string was added to the pool.
-        pd->internPool.idHashMap = (ushort*) realloc(pd->internPool.idHashMap, sizeof *pd->internPool.idHashMap * StringPool_Size(pool));
-        if(!pd->internPool.idHashMap)
-            Con_Error("PathDirectory::internNameAndUpdateIdHashMap: Failed on (re)allocation of %lu bytes for the IdHashMap", (unsigned long) (sizeof *pd->internPool.idHashMap * StringPool_Size(pool)));
-
-        if(internId < StringPool_Size(pool))
-        {
-            memmove(pd->internPool.idHashMap + internId, pd->internPool.idHashMap + (internId-1), sizeof *pd->internPool.idHashMap * (StringPool_Size(pool) - internId));
-        }
-        pd->internPool.idHashMap[internId-1] = hash;
-    }*/
     return internId;
 }
 
