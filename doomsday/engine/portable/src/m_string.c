@@ -140,6 +140,7 @@ ddstring_t* Str_InitStatic(ddstring_t* str, const char* staticConstStr)
 {
     memset(str, 0, sizeof(*str));
     str->str = (char*) staticConstStr;
+    str->length = (staticConstStr? strlen(staticConstStr) : 0);
     return str;
 }
 
