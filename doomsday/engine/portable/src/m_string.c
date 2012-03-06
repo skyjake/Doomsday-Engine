@@ -253,8 +253,9 @@ ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append)
     assert(append);
     assert(str->length + append->length + 1 <= str->size); // including the null
 
-    strcpy(str->str + str->length, append->str);
+    memcpy(str->str + str->length, append->str, append->length);
     str->length += append->length;
+    str->str[str->length] = 0;
     return str;
 }
 
@@ -343,7 +344,8 @@ ddstring_t* Str_PartAppend(ddstring_t* str, const char* append, int start, int c
     if(start < 0 || count <= 0)
         return str;
 
-    copied = M_Calloc(count+1);
+    copied = M_Malloc(count + 1);
+    copied[0] = 0; // empty string
 
     strncat(copied, append + start, count);
     partLen = strlen(copied);
