@@ -167,7 +167,7 @@ task['data'] = {
     graph: 'json',
     platform: 'win-x86'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=win-x86' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=win-x86';
 requests.push(task);
 
 // Latest unstable packages.
@@ -178,7 +178,7 @@ task['data'] = {
     platform: 'win-x86',
     unstable: 'yes'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=win-x86' + '&unstable' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=win-x86' + '&unstable';
 requests.push(task);
 
 updateLatestPackages(requests, '#downloads_list1');

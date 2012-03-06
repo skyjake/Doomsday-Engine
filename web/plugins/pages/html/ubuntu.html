@@ -173,7 +173,7 @@ task['data'] = {
     graph: 'json',
     platform: 'linux-x86'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86';
 requests.push(task);
 
 task = new Array();
@@ -182,7 +182,7 @@ task['data'] = {
     graph: 'json',
     platform: 'linux-x86_64'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64';
 requests.push(task);
 
 // Latest unstable packages.
@@ -193,7 +193,7 @@ task['data'] = {
     platform: 'linux-x86',
     unstable: 'yes'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&unstable' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86' + '&unstable';
 requests.push(task);
 
 task = new Array();
@@ -203,7 +203,7 @@ task['data'] = {
     platform: 'linux-x86_64',
     unstable: 'yes'
 };
-task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&unstable' + '&graph';
+task['downloadUri'] = 'latestbuild?' + 'platform=linux-x86_64' + '&unstable';
 requests.push(task);
 
 updateLatestPackages(requests, '#downloads_list1');
