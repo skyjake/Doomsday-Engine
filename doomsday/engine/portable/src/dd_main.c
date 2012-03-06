@@ -1136,11 +1136,18 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
             ddpl->extraLight = 0;
         }
 
-        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         // If a map was loaded; unload it.
+        if(theMap)
+        {
+            GameMap_ClMobjReset(theMap);
+        }
+        // Clear player data, too, since we just lost all clmobjs.
+        Cl_InitPlayers();
+
+        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
         P_SetCurrentMap(0);
+
         P_ShutdownGameMapObjDefs();
-        Cl_Reset();
 
         R_ShutdownSvgs();
         R_DestroyColorPalettes();

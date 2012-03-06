@@ -27,6 +27,17 @@
 #define MAPBLOCKUNITS               (128)
 
 struct thinkerlist_s;
+struct clmoinfo_s;
+
+/**
+ * The client mobj hash is used for quickly finding a client mobj by its identifier.
+ */
+typedef struct cmhash_s {
+    struct clmoinfo_s *first, *last;
+} cmhash_t;
+
+/// The client mobjs are stored into a hash to speed up the searching.
+#define CLIENT_MOBJ_HASH_SIZE       (256)
 
 typedef struct gamemap_s {
     Uri* uri;
@@ -42,6 +53,8 @@ typedef struct gamemap_s {
         struct thinkerlist_s** lists;
         boolean inited;
     } thinkers;
+
+    cmhash_t cmHash[CLIENT_MOBJ_HASH_SIZE];
 
     uint numVertexes;
     vertex_t* vertexes;
@@ -412,6 +425,41 @@ boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
  * @param map  GameMap instance.
  */
 void GameMap_SetMobjID(GameMap* map, thid_t id, boolean state);
+
+/**
+ * @param map  GameMap instance.
+ */
+void GameMap_InitClMobjs(GameMap* map);
+
+/**
+ * Called when the client is shut down. Unlinks everything from the
+ * sectors and the blockmap and clears the clmobj list.
+ */
+void GameMap_DestroyClMobjs(GameMap* map);
+
+/**
+ * Deletes hidden, unpredictable or nulled mobjs for which we have not received
+ * updates in a while.
+ *
+ * @param map  GameMap instance.
+ */
+void GameMap_ExpireClMobjs(GameMap* map);
+
+/**
+ * Reset the client status. To be called when the map changes.
+ *
+ * @param map  GameMap instance.
+ */
+void GameMap_ClMobjReset(GameMap* map);
+
+/**
+ * Iterate the client mobj hash, exec the callback on each. Abort if callback
+ * returns @c false.
+ *
+ * @param map  GameMap instance.
+ * @return  If the callback returns @c false.
+ */
+boolean GameMap_ClMobjIterator(GameMap* map, boolean (*callback) (struct mobj_s*, void*), void* context);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

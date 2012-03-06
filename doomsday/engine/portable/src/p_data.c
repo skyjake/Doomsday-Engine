@@ -292,7 +292,11 @@ boolean P_LoadMap(const char* uriCString)
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(GameMap_OldUniqueId(map));
 
-        Cl_Reset();
+        GameMap_ClMobjReset(map);
+
+        // Clear player data, too, since we just lost all clmobjs.
+        Cl_InitPlayers();
+
         RL_DeleteLists();
         Rend_CalcLightModRange();
 

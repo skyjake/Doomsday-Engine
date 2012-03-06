@@ -1394,7 +1394,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
                 // Client's should also check the client mobjs.
                 if(isClient)
                 {
-                    ClMobj_Iterator(PIT_ClientMobjParticles, gen);
+                    GameMap_ClMobjIterator(theMap, PIT_ClientMobjParticles, gen);
                 }
 
                 GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/,

@@ -371,9 +371,9 @@ Smoother* Net_PlayerSmoother(int player);
 boolean Sv_CanTrustClientPos(int player);
 
 /**
- * Searches through the client mobj hash table and returns the clmobj
- * with the specified ID, if that exists. Note that client mobjs
- * are also linked to the thinkers list.
+ * Searches through the client mobj hash table for the CURRENT map and
+ * returns the clmobj with the specified ID, if that exists. Note that
+ * client mobjs are also linked to the thinkers list.
  *
  * @param id  Mobj identifier.
  *

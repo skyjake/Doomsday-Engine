@@ -31,6 +31,7 @@
 #include "de_console.h"
 #include "de_dam.h"
 #include "de_misc.h"
+#include "de_network.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_defs.h"
@@ -548,6 +549,12 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
             // Must be called before any mobjs are spawned.
             GameMap_InitNodePiles(map);
 
+            // Prepare the client-side data.
+            if(isClient)
+            {
+                GameMap_InitClMobjs(map);
+            }
+
             Rend_DecorInit();
 
             // Init blockmap for searching subsectors.
@@ -593,8 +600,8 @@ boolean DAM_AttemptMapLoad(const Uri* uri)
                 map->ambientLightLevel = 0;
             }
 
-            // \todo should be called from P_LoadMap() but R_InitMap requires the
-            // theMap to be set first.
+            // @todo should be called from P_LoadMap() but R_InitMap requires the
+            //       theMap to be set first.
             P_SetCurrentMap(map);
 
             R_InitFakeRadioForMap();
