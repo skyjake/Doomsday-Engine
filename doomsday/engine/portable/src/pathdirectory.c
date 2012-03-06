@@ -691,52 +691,89 @@ static int PathDirectory_CalcPathLength(PathDirectory* pd, const PathDirectoryNo
 }
 
 /**
- * @assume @a foundPath already has sufficent characters reserved to hold the fully composed path.
+ * Recursive path constructor. First finds the root and the full length of the
+ * path (when descending), then allocates memory for the string, and finally
+ * copies each fragment with the delimiters (on the way out).
+ */
+static void pathConstructor(PathDirectory* pd, const PathDirectoryNode* trav,
+                            size_t* length, ddstring_t* dest, char delimiter)
+{
+    const size_t delimiterLen = (delimiter? 1 : 0);
+    const ddstring_t* fragment = PathDirectory_GetFragment(pd, trav);
+
+    *length += Str_Length(fragment);
+
+    if(PathDirectoryNode_Parent(trav))
+    {
+        // There also needs to be a separator.
+        *length += delimiterLen;
+
+        // Descend to parent level.
+        pathConstructor(pd, PathDirectoryNode_Parent(trav), length, dest, delimiter);
+
+        // Append the separator.
+        if(delimiter)
+            Str_AppendCharWithoutAllocs(dest, delimiter);
+    }
+    else
+    {
+        // We've arrived at the deepest level. The full length is now known.
+        // Ensure there's enough memory for the string.
+        Str_ReserveNotPreserving(dest, *length);
+    }
+
+    // Assemble the path by appending the fragment.
+    Str_AppendWithoutAllocs(dest, fragment);
+}
+
+/**
+ * @param pd         PathDirectory.
+ * @param node       Node whose path to construct.
+ * @param constructedPath  The constructed path is written here. Previous contents discarded.
+ * @param delimiter  Character to use for separating fragments.
+ *
+ * @return @a constructedPath
+ *
+ * @todo This is a good candidate for result caching: the constructed path
+ * could be saved and returned on subsequent calls. Are there any circumstances
+ * in which the cached result becomes obsolete? -jk
  */
 static ddstring_t* PathDirectory_ConstructPath(PathDirectory* pd, const PathDirectoryNode* node,
-    ddstring_t* foundPath, char delimiter)
+                                               ddstring_t* constructedPath, char delimiter)
 {
-    const int delimiterLen = delimiter? 1 : 0;
-    const PathDirectoryNode* trav;
-    const ddstring_t* fragment;
-    assert(pd && node && foundPath);
+    const size_t delimiterLen = (delimiter? 1 : 0);
+    size_t length = 0;
 
-    if(PT_BRANCH == PathDirectoryNode_Type(node) && 0 != delimiterLen)
-        Str_AppendChar(foundPath, delimiter);
+    assert(pd && node && constructedPath);
 
-    trav = node;
-    do
-    {
-        fragment = PathDirectory_GetFragment(pd, trav);
-        Str_Prepend(foundPath, Str_Text(fragment));
-        if(NULL != PathDirectoryNode_Parent(trav) && 0 != delimiterLen)
-            Str_PrependChar(foundPath, delimiter);
-    } while((trav = PathDirectoryNode_Parent(trav)));
-    return foundPath;
+    // Include a terminating path separator for branches (directories).
+    if(PathDirectoryNode_Type(node) == PT_BRANCH)
+        length += delimiterLen;
+
+    // Recursively construct the path from fragments and delimiters.
+    Str_Clear(constructedPath);
+    pathConstructor(pd, node, &length, constructedPath, delimiter);
+
+    // Terminating delimiter for branches.
+    if(delimiter && PathDirectoryNode_Type(node) == PT_BRANCH)
+        Str_AppendCharWithoutAllocs(constructedPath, delimiter);
+
+    assert(Str_Length(constructedPath) == length);
+
+    return constructedPath;
 }
 
 ddstring_t* PathDirectory_ComposePath(PathDirectory* pd, const PathDirectoryNode* node,
     ddstring_t* foundPath, int* length, char delimiter)
 {
     assert(pd && node);
-    if(!foundPath && length)
+
+    if(!foundPath)
     {
-        *length = PathDirectory_CalcPathLength(pd, node, delimiter);
-        return foundPath;
+        if(length) PathDirectory_ComposePath(pd, node, NULL, length, delimiter);
+        return 0;
     }
-    else
-    {
-        int fullLength;
-
-        PathDirectory_ComposePath(pd, node, NULL, &fullLength, delimiter);
-        if(length) *length = fullLength;
-
-        if(!foundPath) return foundPath;
-
-        Str_Clear(foundPath);
-        Str_Reserve(foundPath, fullLength);
-        return PathDirectory_ConstructPath(pd, node, foundPath, delimiter);
-    }
+    return PathDirectory_ConstructPath(pd, node, foundPath, delimiter);
 }
 
 static void PathDirectory_CollectPathsInHash(pathdirectory_pathhash_t* ph, char delimiter,
