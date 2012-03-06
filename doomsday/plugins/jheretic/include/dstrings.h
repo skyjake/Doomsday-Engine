@@ -33,7 +33,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#define GET_TXT(x)      ((*gi.text)[x].text)
+#define GET_TXT(x)      ((*gi.text)? (*gi.text)[x].text : "")
 
 #define NUM_QUITMESSAGES   0
 

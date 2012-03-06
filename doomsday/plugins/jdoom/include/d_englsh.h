@@ -34,7 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#define GET_TXT(x)          ((*gi.text)[x].text)
+#define GET_TXT(x)          ((*gi.text)? (*gi.text)[x].text : "")
 
 #define D_DEVSTR            GET_TXT(TXT_D_DEVSTR)
 #define D_CDROM             GET_TXT(TXT_D_CDROM)

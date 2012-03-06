@@ -1006,7 +1006,9 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             {
                 DGLuint glName = GL_PrepareRawTexture(rawTex);
                 V3_Set(offset, 0, 0, 0);
-                V3_Set(dimensions, rawTex->width, rawTex->height, 0);
+                // Raw images are always considered to have a logical size of 320x200
+                // even though the actual texture resolution may be different.
+                V3_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
                 GL_BindTextureUnmanaged(glName, (filterUI ? GL_LINEAR : GL_NEAREST));
                 if(glName)
                 {

@@ -3419,6 +3419,7 @@ void GL_BindTexture(TextureVariant* tex)
     LIBDENG_ASSERT_IN_MAIN_THREAD();
 
     glBindTexture(GL_TEXTURE_2D, TextureVariant_GLName(tex));
+    Sys_GLCheckError();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     if(spec->type == TST_GENERAL)
@@ -3428,8 +3429,10 @@ void GL_BindTexture(TextureVariant* tex)
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glMagFilterForVariantSpec(TS_GENERAL(spec)));
         if(GL_state.features.texFilterAniso)
+        {
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(logicalAnisoLevelForVariantSpec(TS_GENERAL(spec))));
+        }
     }
 }
 
