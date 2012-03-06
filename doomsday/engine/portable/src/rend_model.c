@@ -467,7 +467,7 @@ static __inline float Mod_Lerp(float start, float end, float pos)
  */
 static model_frame_t* Mod_GetVisibleFrame(modeldef_t* mf, int subnumber, int mobjid)
 {
-    model_t* mdl = modellist[mf->sub[subnumber].model];
+    model_t* mdl = R_ModelForId(mf->sub[subnumber].model);
     int index = mf->sub[subnumber].frame;
 
     if(mf->flags & MFF_IDFRAME)
@@ -789,7 +789,7 @@ static int chooseSelSkin(modeldef_t* mf, int submodel, int selector)
 static int chooseSkin(modeldef_t* mf, int submodel, int id, int selector, int tmap)
 {
     submodeldef_t* smf = &mf->sub[submodel];
-    model_t* mdl = modellist[smf->model];
+    model_t* mdl = R_ModelForId(smf->model);
     int skin = smf->skin;
 
     // Selskin overrides the skin range.
@@ -850,7 +850,7 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 {
     modeldef_t* mf = params->mf, *mfNext = params->nextMF;
     submodeldef_t* smf = &mf->sub[number];
-    model_t* mdl = modellist[smf->model];
+    model_t* mdl = R_ModelForId(smf->model);
     model_frame_t* frame = Mod_GetVisibleFrame(mf, number, params->id);
     model_frame_t* nextFrame = NULL;
 
