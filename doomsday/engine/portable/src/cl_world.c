@@ -200,13 +200,29 @@ void Cl_WorldInit(void)
     memset(&xlatMobjState, 0, sizeof(xlatMobjState));
 }
 
+void CL_MapReset(GameMap* map)
+{
+    int i;
+    if(!map) return;
+
+    for(i = 0; i < MAX_MOVERS; ++i)
+    {
+        if(Cl_IsMoverValid(i))
+        {
+            GameMap_ThinkerRemove(map, &activemovers[i]->thinker);
+        }
+        if(Cl_IsPolyValid(i))
+        {
+            GameMap_ThinkerRemove(map, &activepolys[i]->thinker);
+        }
+    }
+}
+
 /**
  * Removes all the active movers.
  */
 void Cl_WorldReset(void)
 {
-    int i;
-
     if(serverMaterials)
     {
         MaterialArchive_Delete(serverMaterials);
@@ -216,51 +232,39 @@ void Cl_WorldReset(void)
     setTableSize(&xlatMobjType, 0);
     setTableSize(&xlatMobjState, 0);
 
-    for(i = 0; i < MAX_MOVERS; ++i)
-    {
-        if(Cl_IsMoverValid(i))
-        {
-            P_ThinkerRemove(&activemovers[i]->thinker);
-        }
-        if(Cl_IsPolyValid(i))
-        {
-            P_ThinkerRemove(&activepolys[i]->thinker);
-        }
-    }
+    CL_MapReset(theMap);
 }
 
-void Cl_RemoveActiveMover(mover_t *mover)
+void Cl_RemoveActiveMover(mover_t* mover)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activemovers[i] == mover)
-        {
-#ifdef _DEBUG
-            Con_Message("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum);
-#endif
-            P_ThinkerRemove(&mover->thinker);
-            return;
-        }
+    {
+        if(activemovers[i] != mover) continue;
 
-#ifdef _DEBUG
-    Con_Message("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum);
-#endif
+        DEBUG_Message(("Cl_RemoveActiveMover: Removing mover [%i] in sector %i.\n", i, mover->sectornum));
+        GameMap_ThinkerRemove(theMap, &mover->thinker);
+        return;
+    }
+
+    DEBUG_Message(("Cl_RemoveActiveMover: Mover in sector %i not removed!\n", mover->sectornum));
 }
 
 /**
  * Removes the given polymover from the active polys array.
  */
-void Cl_RemoveActivePoly(polymover_t *mover)
+void Cl_RemoveActivePoly(polymover_t* mover)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
-        if(activepolys[i] == mover)
-        {
-            P_ThinkerRemove(&mover->thinker);
-            break;
-        }
+    {
+        if(activepolys[i] != mover) continue;
+
+        GameMap_ThinkerRemove(theMap, &mover->thinker);
+        break;
+    }
 }
 
 /**
@@ -407,7 +411,7 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_TARGET_HEIGHT, dest);
             P_SetFloat(DMU_SECTOR, sectornum, dmuPlane | DMU_SPEED, speed);
 
-            P_ThinkerAdd(&mov->thinker, false /*not public*/);
+            GameMap_ThinkerAdd(theMap, &mov->thinker, false /*not public*/);
 
             // Immediate move?
             if(FEQUAL(speed, 0))
@@ -500,14 +504,13 @@ polymover_t* Cl_FindOrMakeActivePoly(uint number)
     // Not found, make a new one.
     if(available >= 0)
     {
-#ifdef _DEBUG
-        Con_Message("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number);
-#endif
+        DEBUG_Message(("Cl_FindOrMakeActivePoly: New polymover [%i] in polyobj %i.\n", available, number));
+
         activepolys[available] = mover = Z_Calloc(sizeof(polymover_t), PU_MAP, &activepolys[available]);
         mover->thinker.function = Cl_PolyMoverThinker;
         mover->poly = polyObjs[number];
         mover->number = number;
-        P_ThinkerAdd(&mover->thinker, false /*not public*/);
+        GameMap_ThinkerAdd(theMap, &mover->thinker, false /*not public*/);
         return mover;
     }
 

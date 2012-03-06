@@ -1149,7 +1149,12 @@ boolean DD_ChangeGame2(Game* game, boolean allowReload)
         Textures_ClearRuntime();
 
         Sfx_InitLogical();
-        P_InitThinkerLists(0x1|0x2);
+
+        /// @fixme Why is this being done here?
+        if(theMap)
+        {
+            GameMap_InitThinkerLists(theMap, 0x1|0x2);
+        }
 
         Con_ClearDatabases();
 

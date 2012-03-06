@@ -1543,12 +1543,12 @@ uint Sv_DeltaAge(const delta_t* delta)
  * Approximate the distance to the given sector. Set 'mayBeGone' to true
  * if the mobj may have been destroyed and should not be processed.
  */
-float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info,
-                      boolean isReal)
+float Sv_MobjDistance(const mobj_t* mo, const ownerinfo_t* info, boolean isReal)
 {
-    float               z;
+    float z;
 
-    if(isReal && !P_IsUsedMobjID(mo->thinker.id))
+    /// @fixme Do not assume mobj is from the CURRENT map.
+    if(isReal && !GameMap_IsUsedMobjID(theMap, mo->thinker.id))
     {
         // This mobj does not exist any more!
         return DDMAXFLOAT;
@@ -2112,7 +2112,8 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // This reg_mobj_t might be removed.
             next = obj->next;
 
-            if(!P_IsUsedMobjID(obj->mo.thinker.id))
+            /// @fixme Do not assume mobj is from the CURRENT map.
+            if(!GameMap_IsUsedMobjID(theMap, obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2185,8 +2186,7 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
     params.doUpdate = doUpdate;
     params.targets = targets;
 
-    // Mobjs are always public.
-    P_IterateThinkers(gx.MobjThinker, 0x1, newMobjDelta, &params);
+    GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/, newMobjDelta, &params);
 }
 
 /**
@@ -2194,13 +2194,12 @@ void Sv_NewMobjDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
  */
 void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 {
-    uint                i;
-    playerdelta_t       player;
+    playerdelta_t player;
+    uint i;
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        if(Sv_IsPlayerIgnored(i))
-            continue;
+        if(Sv_IsPlayerIgnored(i)) continue;
 
         // Compare to produce a delta.
         if(Sv_RegisterComparePlayer(reg, i, &player))
@@ -2211,8 +2210,7 @@ void Sv_NewPlayerDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
             // flags).
             if(doUpdate && (player.delta.flags & PDF_MOBJ))
             {
-                reg_mobj_t*         registered =
-                    Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
+                reg_mobj_t* registered = Sv_RegisterFindMobj(reg, reg->ddPlayers[i].mobj);
 
                 if(registered)
                 {

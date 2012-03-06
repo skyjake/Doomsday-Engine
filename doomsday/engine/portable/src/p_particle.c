@@ -121,7 +121,7 @@ static void unlinkPtcGen(ptcgen_t* gen)
 static boolean destroyPtcGen(ptcgen_t* gen, void* paramaters)
 {
     assert(gen);
-    P_ThinkerRemove(&gen->thinker);
+    GameMap_ThinkerRemove(theMap, &gen->thinker);
     unlinkPtcGen(gen);
     destroyPtcGenParticles(gen, 0);
     return true; // Can be used as an iterator, so continue.
@@ -193,11 +193,11 @@ static boolean P_HasActivePtcGen(const plane_t* plane)
 
 static ptcgen_t* P_PtcGenCreate(void)
 {
-    ptcgen_t*           gen = Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
+    ptcgen_t* gen = Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
 
     // Link the thinker to the list of (private) thinkers.
     gen->thinker.function = P_PtcGenThinker;
-    P_ThinkerAdd(&gen->thinker, false);
+    GameMap_ThinkerAdd(theMap, &gen->thinker, false);
 
     return gen;
 }
@@ -205,16 +205,16 @@ static ptcgen_t* P_PtcGenCreate(void)
 /**
  * Allocates a new active ptcgen and adds it to the list of active ptcgens.
  *
- * \fixme Linear allocation when in-game is not good...
+ * @fixme Linear allocation when in-game is not good...
  */
 static ptcgen_t* P_NewPtcGen(void)
 {
-    ptcgenid_t          slot = findSlotForNewGen();
+    ptcgenid_t slot = findSlotForNewGen();
 
     // Find a suitable slot in the active ptcgens list.
     if(slot)
     {
-        ptcgen_t*           gen;
+        ptcgen_t* gen;
 
         // If there is already a generator here, destroy it.
         if(activePtcGens[slot-1])
@@ -1356,13 +1356,13 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
  */
 void P_PtcGenThinker(ptcgen_t* gen)
 {
-    int                 i;
-    particle_t*         pt;
-    float               newparts;
     const ded_ptcgen_t* def = gen->def;
+    particle_t* pt;
+    float newparts;
+    int i;
 
     // Source has been destroyed?
-    if(!(gen->flags & PGF_UNTRIGGERED) && !P_IsUsedMobjID(gen->srcid))
+    if(!(gen->flags & PGF_UNTRIGGERED) && !GameMap_IsUsedMobjID(theMap, gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         gen->source = NULL;
@@ -1397,8 +1397,8 @@ void P_PtcGenThinker(ptcgen_t* gen)
                     ClMobj_Iterator(PIT_ClientMobjParticles, gen);
                 }
 
-                P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
-                                  manyNewParticles, gen);
+                GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1 /*mobjs are public*/,
+                                        manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = NULL;

@@ -26,11 +26,22 @@
 /// Size of Blockmap blocks in map units. Must be an integer power of two.
 #define MAPBLOCKUNITS               (128)
 
+struct thinkerlist_s;
+
 typedef struct gamemap_s {
     Uri* uri;
     char uniqueId[256];
 
     float bBox[4];
+
+    struct thinkers_s {
+        int idtable[2048]; // 65536 bits telling which IDs are in use.
+        unsigned short iddealer;
+
+        size_t numLists;
+        struct thinkerlist_s** lists;
+        boolean inited;
+    } thinkers;
 
     uint numVertexes;
     vertex_t* vertexes;
@@ -340,6 +351,67 @@ polyobj_t* GameMap_PolyobjByTag(GameMap* map, int tag);
  * @return  Found Polyobj instance else @c NULL.
  */
 polyobj_t* GameMap_PolyobjByOrigin(GameMap* map, void* ddMobjBase);
+
+/**
+ * Have the thinker lists been initialized yet?
+ * @param map           GameMap instance.
+ */
+boolean GameMap_ThinkerListInited(GameMap* map);
+
+/**
+ * Init the thinker lists.
+ *
+ * @param map  GameMap instance.
+ * @params flags  0x1 = Init public thinkers.
+ *                0x2 = Init private (engine-internal) thinkers.
+ */
+void GameMap_InitThinkerLists(GameMap* map, byte flags);
+
+/**
+ * Iterate the list of thinkers making a callback for each.
+ *
+ * @param map  GameMap instance.
+ * @param thinkFunc  If not @c NULL, only make a callback for thinkers
+ *                   whose function matches this.
+ * @param flags  Thinker filter flags.
+ * @param callback  The callback to make. Iteration will continue
+ *                  until a callback returns a non-zero value.
+ * @param context  Passed to the callback function.
+ */
+int GameMap_IterateThinkers(GameMap* map, think_t thinkFunc, byte flags,
+    int (*callback) (thinker_t* th, void*), void* context);
+
+/**
+ * @param map  GameMap instance.
+ * @param thinker  Thinker to be added.
+ * @param makePublic  @c true = @a thinker will be visible publically
+ *                    via the Doomsday public API thinker interface(s).
+ */
+void GameMap_ThinkerAdd(GameMap* map, thinker_t* thinker, boolean makePublic);
+
+/**
+ * Deallocation is lazy -- it will not actually be freed until its
+ * thinking turn comes up.
+ *
+ * @param map  GameMap instance.
+ */
+void GameMap_ThinkerRemove(GameMap* map, thinker_t* thinker);
+
+/**
+ * Locates a mobj by it's unique identifier in the map.
+ * @param map  GameMap instance.
+ */
+struct mobj_s* GameMap_MobjByID(GameMap* map, int id);
+
+/**
+ * @param map  GameMap instance.
+ */
+boolean GameMap_IsUsedMobjID(GameMap* map, thid_t id);
+
+/**
+ * @param map  GameMap instance.
+ */
+void GameMap_SetMobjID(GameMap* map, thid_t id, boolean state);
 
 /**
  * Initialize all Polyobjs in the map. To be called after map load.

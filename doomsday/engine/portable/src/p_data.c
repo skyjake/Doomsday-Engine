@@ -287,7 +287,7 @@ boolean P_LoadMap(const char* uriCString)
         GameMap* map = theMap;
 
         // Init the thinker lists (public and private).
-        P_InitThinkerLists(0x1 | 0x2);
+        GameMap_InitThinkerLists(map, 0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(GameMap_OldUniqueId(map));

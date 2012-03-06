@@ -167,8 +167,7 @@ void Rend_DrawThinkerIds(void)
 {
     float eye[3];
 
-    if(!devThinkerIds)
-        return;
+    if(!devThinkerIds || !theMap) return;
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -177,7 +176,7 @@ void Rend_DrawThinkerIds(void)
     eye[VY] = vz;
     eye[VZ] = vy;
 
-    P_IterateThinkers(NULL, 0x1 | 0x2, drawThinkerId, eye);
+    GameMap_IterateThinkers(theMap, NULL, 0x1 | 0x2, drawThinkerId, eye);
 
     // Restore previous state.
     glEnable(GL_DEPTH_TEST);
@@ -185,7 +184,7 @@ void Rend_DrawThinkerIds(void)
 
 void Rend_Draw3DPlayerSprites(void)
 {
-    int                 i;
+    int i;
 
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);

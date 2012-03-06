@@ -540,26 +540,24 @@ mobj_t* ClMobj_Create(thid_t id)
     mo->ddFlags = DDMF_REMOTE;
 
     ClMobj_Link(mo, id);
-    P_SetMobjID(id, true);      // Mark this ID as used.
+    GameMap_SetMobjID(theMap, id, true); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = gx.MobjThinker;
-    P_ThinkerAdd((thinker_t*) mo, true);
+    GameMap_ThinkerAdd(theMap, (thinker_t*) mo, true);
 
     return mo;
 }
 
 /**
  * Destroys the client mobj. Before this is called, the client mobj should be
- * unlinked from the thinker list (P_ThinkerRemove).
+ * unlinked from the thinker list (GameMap_ThinkerRemove).
  */
-void ClMobj_Destroy(mobj_t *mo)
+void ClMobj_Destroy(mobj_t* mo)
 {
     clmoinfo_t* info = 0;
 
-#ifdef _DEBUG
-    VERBOSE2( Con_Message("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id) );
-#endif
+    DEBUG_VERBOSE2_Message(("ClMobj_Destroy: mobj %i being destroyed.\n", mo->thinker.id));
 
     CL_ASSERT_CLMOBJ(mo);
     info = ClMobj_GetInfo(mo);
@@ -568,7 +566,7 @@ void ClMobj_Destroy(mobj_t *mo)
     S_StopSound(0, mo);
 
     // The ID is free once again.
-    P_SetMobjID(mo->thinker.id, false);
+    GameMap_SetMobjID(theMap, mo->thinker.id, false);
     ClMobj_UnsetPosition(mo);
     ClMobj_Unlink(mo);
 

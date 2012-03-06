@@ -2689,12 +2689,15 @@ void R_PrecacheForMap(void)
         const materialvariantspecification_t* spec = Materials_VariantSpecificationForContext(
             MC_SPRITE, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, -2, -1, true, true, true, false);
         int i;
+
         for(i = 0; i < numSprites; ++i)
         {
             spritedef_t* sprDef = &sprites[i];
 
-            if(P_IterateThinkers(gx.MobjThinker, 0x1/* All mobjs are public*/, findSpriteOwner, sprDef))
-            {   // This sprite is used by some state of at least one mobj.
+            if(GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1/* All mobjs are public*/,
+                                       findSpriteOwner, sprDef))
+            {
+                // This sprite is used by some state of at least one mobj.
                 int j;
 
                 // Precache all the frames.
@@ -2716,7 +2719,7 @@ void R_PrecacheForMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, R_PrecacheModelsForMobj, NULL);
     }
 }
 

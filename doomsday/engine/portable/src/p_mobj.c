@@ -79,7 +79,7 @@ void P_InitUnusedMobjList(void)
 mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
                      angle_t angle, float radius, float height, int ddflags)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
     if(!function)
         Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
@@ -114,7 +114,7 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->thinker.function = function;
     if(mo->thinker.function)
     {
-        P_ThinkerAdd(&mo->thinker, true); // Make it public.
+        GameMap_ThinkerAdd(theMap, &mo->thinker, true); // Make it public.
     }
 
     return mo;
@@ -123,7 +123,7 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
 /**
  * All mobjs must be destroyed through this routine. Part of the public API.
  *
- * \note Does not actually destroy the mobj. Instead, mobj is marked as
+ * @note Does not actually destroy the mobj. Instead, mobj is marked as
  * awaiting removal (which occurs when its turn for thinking comes around).
  */
 void P_MobjDestroy(mobj_t* mo)
@@ -140,7 +140,7 @@ void P_MobjDestroy(mobj_t* mo)
 
     S_StopSound(0, mo);
 
-    P_ThinkerRemove((thinker_t *) mo);
+    GameMap_ThinkerRemove(theMap, (thinker_t *) mo);
 }
 
 /**
@@ -288,7 +288,7 @@ D_CMD(InspectMobj)
     id = strtol(argv[1], NULL, 10);
 
     // Find the mobj.
-    mo = P_MobjForID(id);
+    mo = GameMap_MobjByID(theMap, id);
     if(!mo)
     {
         Con_Printf("Mobj with id %i not found.\n", id);

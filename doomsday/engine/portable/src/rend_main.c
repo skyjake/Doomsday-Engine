@@ -3794,7 +3794,7 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
-        P_IterateThinkers(gx.MobjThinker, 0x1, drawMobjBBox, NULL);
+        GameMap_IterateThinkers(theMap, gx.MobjThinker, 0x1, drawMobjBBox, NULL);
 
     if(devPolyobjBBox)
     for(i = 0; i < NUM_POLYOBJS; ++i)
