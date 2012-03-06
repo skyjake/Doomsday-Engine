@@ -211,7 +211,7 @@ static void clearWidgets(void)
 
 uiwidget_t* GUI_FindObjectById(uiwidgetid_t id)
 {
-    errorIfNotInited("GUI_FindObjectById");
+    if(!inited) return NULL; // GUI not available.
     if(id >= 0)
     {
         int i;
