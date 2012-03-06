@@ -140,9 +140,33 @@ void Str_Delete(ddstring_t* ds);
 void Str_Clear(ddstring_t* ds);
 
 void Str_Reserve(ddstring_t* ds, int length);
+
+/**
+ * Reserves memory for the string. There will be at least @a length bytes
+ * allocated for the string after this. If the string needs to be resized, its
+ * contents are @em not preserved.
+ */
+void Str_ReserveNotPreserving(ddstring_t* str, int length);
+
 ddstring_t* Str_Set(ddstring_t* ds, const char* text);
 ddstring_t* Str_Append(ddstring_t* ds, const char* appendText);
 ddstring_t* Str_AppendChar(ddstring_t* ds, char ch);
+
+/**
+ * Appends the contents of another string. Enough memory must already be
+ * reserved before calling this. Use in situations where good performance is
+ * critical.
+ */
+ddstring_t* Str_AppendWithoutAllocs(ddstring_t* str, const ddstring_t* append);
+
+/**
+ * Appends a single character. Enough memory must already be reserved before
+ * calling this. Use in situations where good performance is critical.
+ *
+ * @param str  String.
+ * @param ch   Character to append. Cannot be 0.
+ */
+ddstring_t* Str_AppendCharWithoutAllocs(ddstring_t* str, char ch);
 
 /**
  * Append formated text.
