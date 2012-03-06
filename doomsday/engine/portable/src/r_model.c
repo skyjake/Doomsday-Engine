@@ -1182,6 +1182,8 @@ static int destroyModelInRepository(StringPoolId id, void* parm)
 
 static void clearModelList(void)
 {
+    if(!modelRepository) return;
+
     StringPool_Iterate(modelRepository, destroyModelInRepository, 0);
 }
 
