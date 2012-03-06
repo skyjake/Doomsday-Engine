@@ -151,8 +151,26 @@ void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
  */
 uint StringPool_UserValue(StringPool* pool, StringPoolId id);
 
+/**
+ * Sets the user-specified custom pointer associated with the string @a id.
+ * By default the pointer is NULL.
+ *
+ * @note  User pointer values are @em not serialized.
+ *
+ * @param pool   StringPool instance.
+ * @param id     Id of a string.
+ * @param ptr    User pointer.
+ */
 void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr);
 
+/**
+ * Retrieves the user-specified custom pointer associated with the string @a id.
+ *
+ * @param pool   StringPool instance.
+ * @param id     Id of a string.
+ *
+ * @return User pointer.
+ */
 void* StringPool_UserPointer(StringPool* pool, StringPoolId id);
 
 /**
