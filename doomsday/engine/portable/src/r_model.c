@@ -1222,7 +1222,12 @@ void R_InitModels(void)
     // Use the latest definition available for each sprite ID.
     for(i = defs.count.models.num - 1; i >= 0; --i)
     {
-        //Con_Progress(1, PBARF_DONTSHOW);
+        if(!(i % 100))
+        {
+            // This may take a while, so keep updating the progress.
+            Con_SetProgress(130 + 70*(defs.count.models.num - i)/defs.count.models.num);
+        }
+
         setupModel(defs.models + i);
     }
 
