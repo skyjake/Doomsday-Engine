@@ -61,10 +61,11 @@ typedef uint InternalId;
 class CaselessStr
 {
 public:
-    CaselessStr(const char* text = 0) : _id(0), _userValue(0) {
+    CaselessStr(const char* text = 0) : _id(0), _userValue(0), _userPointer(0) {
         setText(text);
     }
-    CaselessStr(const CaselessStr& other) : _id(other._id), _userValue(other._userValue) {
+    CaselessStr(const CaselessStr& other)
+        : _id(other._id), _userValue(other._userValue), _userPointer(0) {
         setText(other._str.str);
     }
     void setText(const char* text) {
@@ -91,6 +92,12 @@ public:
     void setUserValue(uint value) {
         _userValue = value;
     }
+    void* userPointer() const {
+        return _userPointer;
+    }
+    void setUserPointer(void* ptr) {
+        _userPointer = ptr;
+    }
     void serialize(Writer* writer) const {
         Str_Write(&_str, writer);
         Writer_WritePackedUInt32(writer, _id);
@@ -106,6 +113,7 @@ private:
     ddstring_t _str;
     InternalId _id; ///< The id that refers to this string.
     uint _userValue;
+    void* _userPointer;
 };
 
 /**
@@ -403,6 +411,28 @@ uint StringPool_UserValue(StringPool* pool, StringPoolId id)
     assert(pool->idMap[internalId] != 0);
 
     return pool->idMap[internalId]->userValue(); // O(1)
+}
+
+void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr)
+{
+    const InternalId internalId = IMPORT_ID(id);
+
+    assert(pool);
+    assert(internalId < pool->idMap.size());
+    assert(pool->idMap[internalId] != 0);
+
+    pool->idMap[internalId]->setUserPointer(ptr); // O(1)
+}
+
+void* StringPool_UserPointer(StringPool* pool, StringPoolId id)
+{
+    const InternalId internalId = IMPORT_ID(id);
+
+    assert(pool);
+    assert(internalId < pool->idMap.size());
+    assert(pool->idMap[internalId] != 0);
+
+    return pool->idMap[internalId]->userPointer(); // O(1)
 }
 
 StringPoolId StringPool_IsInterned(const StringPool* pool, const ddstring_t* str)

@@ -151,6 +151,10 @@ void StringPool_SetUserValue(StringPool* pool, StringPoolId id, uint value);
  */
 uint StringPool_UserValue(StringPool* pool, StringPoolId id);
 
+void StringPool_SetUserPointer(StringPool* pool, StringPoolId id, void* ptr);
+
+void* StringPool_UserPointer(StringPool* pool, StringPoolId id);
+
 /**
  * Is @a str considered to be in the pool?
  *
