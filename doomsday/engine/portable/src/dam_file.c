@@ -25,8 +25,6 @@
  * Doomsday Archived Map (DAM) reader/writer.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #include <lzss.h>
 #include <stdlib.h>
 
@@ -40,17 +38,9 @@
 
 #include "p_mapdata.h"
 
-// MACROS ------------------------------------------------------------------
-
 // Global archived map format version identifier. Increment when making
 // changes to the structure of the format.
 #define DAM_VERSION             1
-
-#define MAX_ARCHIVED_MATERIALS  2048
-#define BADTEXNAME  "DD_BADTX"  // string that will be written in the texture
-                                // archives to denote a missing texture.
-
-// TYPES -------------------------------------------------------------------
 
 // Segments of a doomsday archived map file.
 typedef enum damsegment_e {
@@ -72,116 +62,8 @@ typedef enum damsegment_e {
     DAMSEG_REJECT
 } damsegment_t;
 
-typedef struct {
-    ddstring_t path;
-} dictentry_t;
-
-typedef struct {
-    //// \todo Remove fixed limit.
-    dictentry_t     table[MAX_ARCHIVED_MATERIALS];
-    int             count;
-} materialdict_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static LZFILE *mapFile;
+static LZFILE* mapFile;
 static int mapFileVersion;
-
-static materialdict_t *materialDict;
-
-// CODE --------------------------------------------------------------------
-
-/**
- * Called for every material in the map before saving by
- * initMaterialArchives.
- */
-static void addMaterialToDict(materialdict_t* dict, material_t* mat)
-{
-#if 0
-    dictentry_t* e;
-
-    // Has this already been registered?
-    { int c;
-    for(c = 0; c < dict->count; c++)
-    {
-        if(dict->table[c].mnamespace == mat->mnamespace &&
-           !stricmp(Str_Text(&dict->table[c].path), mat->name))
-        {   // Yes. skip it...
-            return;
-        }
-    }}
-
-    e = &dict->table[dict->count]; dict->count++;
-
-    Str_Init(&e->path); Str_Set(&e->path, mat->name);
-#endif
-}
-
-/**
- * Initializes the material archives (translation tables).
- * Must be called before writing the tables!
- */
-static void initMaterialDict(const GameMap* map, materialdict_t* dict)
-{
-    uint                i, j;
-
-    for(i = 0; i < map->numSectors; ++i)
-    {
-        sector_t           *sec = &map->sectors[i];
-
-        for(j = 0; j < sec->planeCount; ++j)
-            addMaterialToDict(dict, sec->SP_planematerial(j));
-    }
-
-    for(i = 0; i < map->numSideDefs; ++i)
-    {
-        sidedef_t             *side = &map->sideDefs[i];
-
-        addMaterialToDict(dict, side->SW_middlematerial);
-        addMaterialToDict(dict, side->SW_topmaterial);
-        addMaterialToDict(dict, side->SW_bottommaterial);
-    }
-}
-
-static uint searchMaterialDict(materialdict_t *dict, const material_t* mat)
-{
-#if 0
-    int                 i;
-
-    for(i = 0; i < dict->count; i++)
-        if(dict->table[i].mnamespace == mat->mnamespace &&
-           !stricmp(dict->table[i].name, mat->name))
-            return i;
-#endif
-    // Not found?!!!
-    return 0;
-}
-
-/**
- * @return              The archive number of the given texture.
- */
-static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
-{
-    return searchMaterialDict(dict, mat);
-}
-
-static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
-{
-//    dictentry_t*e = &dict->table[idx];
-//    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
-        return NULL;
-//    return Materials_ResolveUriCString(Str_Text(&e->path), e->mnamespace);
-}
 
 static boolean openMapFile(const char* path, boolean write)
 {
@@ -451,7 +333,7 @@ static void writeSide(const GameMap *map, uint idx)
         surface_t          *suf = &s->sections[3];
 
         writeLong(suf->flags);
-        writeLong(getMaterialDictID(materialDict, suf->material));
+        //writeLong(getMaterialDictID(materialDict, suf->material));
         writeLong((long) suf->blendMode);
         writeFloat(suf->normal[VX]);
         writeFloat(suf->normal[VY]);
@@ -482,7 +364,7 @@ static void readSide(const GameMap *map, uint idx)
         surface_t          *suf = &s->sections[3];
 
         suf->flags = (int) readLong();
-        Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
+        //Surface_SetMaterial(suf, lookupMaterialFromDict(materialDict, readLong()));
         Surface_SetBlendMode(suf, (blendmode_t) readLong());
         suf->normal[VX] = readFloat();
         suf->normal[VY] = readFloat();
@@ -557,7 +439,7 @@ static void writeSector(const GameMap *map, uint idx)
         writeFloat(p->visHeightDelta);
 
         writeLong((long) p->surface.flags);
-        writeLong(getMaterialDictID(materialDict, p->surface.material));
+        //writeLong(getMaterialDictID(materialDict, p->surface.material));
         writeLong((long) p->surface.blendMode);
         writeFloat(p->surface.normal[VX]);
         writeFloat(p->surface.normal[VY]);
@@ -631,7 +513,7 @@ static void readSector(const GameMap *map, uint idx)
         p->visHeightDelta = readFloat();
 
         p->surface.flags = (int) readLong();
-        Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
+        //Surface_SetMaterial(&p->surface, lookupMaterialFromDict(materialDict, readLong()));
         Surface_SetBlendMode(&p->surface, (blendmode_t) readLong());
         p->surface.normal[VX] = readFloat();
         p->surface.normal[VY] = readFloat();
@@ -1145,31 +1027,6 @@ static void archiveMap(GameMap *map, boolean write)
         assertSegment(DAMSEG_END);
 }
 
-static void archiveMaterialDict(materialdict_t *dict, boolean write)
-{
-    int i;
-
-    if(write)
-    {
-        writeLong((long) dict->count);
-        for(i = 0; i < dict->count; ++i)
-        {
-            writeLong(Str_Length(&dict->table[i].path));
-            writeNBytes(Str_Text(&dict->table[i].path), Str_Length(&dict->table[i].path));
-        }
-    }
-    else
-    {
-        dict->count = readLong();
-        for(i = 0; i < dict->count; ++i)
-        {
-            int len = readLong();
-            Str_Clear(&dict->table[i].path);
-            Str_Reserve(&dict->table[i].path, len);
-            readNBytes(Str_Text(&dict->table[i].path), len);
-        }
-    }
-}
 static void archiveSymbolTables(boolean write)
 {
     if(write)
@@ -1177,7 +1034,7 @@ static void archiveSymbolTables(boolean write)
     else
         assertSegment(DAMSEG_SYMBOLTABLES);
 
-    archiveMaterialDict(materialDict, write);
+    //archiveMaterialDict(materialDict, write);
 
     if(write)
         endSegment();
@@ -1231,9 +1088,9 @@ static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
 
     Con_Message("DAM_MapRead: %s cached map %s.\n", write? "Saving" : "Loading", path);
 
-    materialDict = M_Calloc(sizeof(*materialDict));
+    /*materialDict = M_Calloc(sizeof(*materialDict));
     if(write)
-        initMaterialDict(map, materialDict);
+        initMaterialDict(map, materialDict);*/
 
     archiveHeader(write);
     archiveRelocationTables(write);
@@ -1243,7 +1100,7 @@ static boolean doArchiveMap(GameMap* map, const char* path, boolean write)
     // Close the file.
     closeMapFile();
 
-    M_Free(materialDict);
+    //M_Free(materialDict);
 
     return true;
 }
@@ -1266,7 +1123,8 @@ boolean DAM_MapIsValid(const char* cachedMapPath, lumpnum_t markerLumpNum)
         uint buildTime = F_GetLastModified(cachedMapPath);
 
         if(F_Access(cachedMapPath) && !(buildTime < sourceTime))
-        {   // Ok, lets check the header.
+        {
+            // Ok, lets check the header.
             if(openMapFile(cachedMapPath, false))
             {
                 archiveHeader(false);
